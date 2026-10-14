@@ -4,9 +4,20 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import luxonPlugin from '@fullcalendar/luxon3';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
+import {
+  resolveCalendarScrollTime,
+  resolveCalendarSlotTimeRange
+} from '../../../utils/scheduleCalendarSlotRange';
+import {
+  DEFAULT_ZONE,
+  formatDateKeyInZone,
+  parseScheduleDateKey,
+  toFloatingDateTimeInZone
+} from '../../../utils/zonedDateTime';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -36,12 +47,18 @@ import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import { SAME_DAY_PENDING_EVENT_CLASS } from '../../schedule/utils/sameDayPendingEventDecorator';
 import {
   INTEGRATED_MONTH_CHIP_I18N,
-  buildIntegratedMonthChipCopy
+  buildIntegratedMonthChipCopy,
+  formatIntegratedMonthChipShortTime
 } from './integratedMonthChipCopy';
+import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
+import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
+import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
+import TeacherColorDot from './TeacherColorDot';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
+import { getTeacherColor } from '../../../utils/getTeacherColor';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
@@ -57,12 +74,56 @@ const CALENDAR_VIEW_WEEK = 'timeGridWeek';
 const CALENDAR_VIEW_DAY = 'timeGridDay';
 const CALENDAR_VIEWS_ZOOM_FROM = new Set([CALENDAR_VIEW_MONTH, CALENDAR_VIEW_WEEK]);
 const ZOOM_OUT_BUTTON_ID = 'zoomOut';
-const ZOOM_OUT_BUTTON_TEXT = '전체 보기';
 /** opacity fade 전용. transform/scale 금지(DnD 히트테스트 보호). --animation-duration-fast(0.15s)와 맞춤 */
 const VIEW_FADE_CLASS = 'mg-v2-schedule-calendar-view--fading';
 const VIEW_FADE_MS = 150;
-/** 일/주 풀 카드 최소 높이(px) — --mg-v2-space-16(4rem)와 정합, 짧은 슬롯 본문 압착 방지 */
-const EVENT_MIN_HEIGHT_PX = 64;
+/**
+ * 일/주 풀 카드 FC eventMinHeight(px).
+ * CSS `--mg-v2-calendar-event-min-height`(→ `--mg-v2-space-4` = 1rem) 과 동기.
+ * 슬롯 min-height(`--mg-v2-calendar-slot-min-height`→space-8) 상향 후
+ * 15분 자연 높이(≈16px)를 넘지 않게 두어 연속 일정 겹침·글자 가림을 막는다.
+ */
+const EVENT_MIN_HEIGHT_PX = 16;
+
+/** FullCalendar plugins — IANA timeZone(Asia/Seoul) 용 luxon3 포함 */
+const SCHEDULE_CALENDAR_PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin];
+
+/**
+ * 기기 local 자정이 아니라 운영 타임존(DEFAULT_ZONE) 캘린더일로 past 판정.
+ * @param {Date|string|null|undefined} dateLike
+ * @returns {boolean}
+ */
+const isPastCalendarDayInZone = (dateLike) => {
+    if (dateLike == null || dateLike === '') {
+        return false;
+    }
+    const eventKey = parseScheduleDateKey(dateLike, DEFAULT_ZONE);
+    if (!eventKey) {
+        return false;
+    }
+    return eventKey < formatDateKeyInZone(new Date(), DEFAULT_ZONE);
+};
+
+/**
+ * absolute ISO(Z/+09:00) → floating KST. 일반 일정 floating 문자열은 유지.
+ * @param {object} event
+ * @returns {object}
+ */
+const normalizeCalendarEventForZone = (event) => {
+    if (!event || typeof event !== 'object') {
+        return event;
+    }
+    const start = typeof event.start === 'string'
+        ? toFloatingDateTimeInZone(event.start, DEFAULT_ZONE)
+        : event.start;
+    const end = typeof event.end === 'string'
+        ? toFloatingDateTimeInZone(event.end, DEFAULT_ZONE)
+        : event.end;
+    if (start === event.start && end === event.end) {
+        return event;
+    }
+    return { ...event, start, end };
+};
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -92,6 +153,7 @@ const isScheduleCalendarEditableRole = (role) =>
 const ScheduleCalendarView = ({
     events,
     userRole,
+    consultants = [],
     onDateClick,
     onEventClick,
     onEventDrop,
@@ -132,6 +194,19 @@ const ScheduleCalendarView = ({
     /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
+    useCalendarDragEscapeCancel();
+    /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
+    const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
+    /** 초기 스크롤: Asia/Seoul 현재시 − 2h (slotMin 클램프). 마운트 시점 기준 */
+    const scrollTime = useMemo(
+        () => resolveCalendarScrollTime(new Date(), slotTimeRange.slotMinTime),
+        [slotTimeRange.slotMinTime]
+    );
+    /** absolute 휴가 ISO 등을 floating KST로 맞춰 LA/Seoul 기기 벽시계 표시 동일화 */
+    const calendarEvents = useMemo(
+        () => (Array.isArray(events) ? events.map(normalizeCalendarEventForZone) : events),
+        [events]
+    );
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -275,10 +350,12 @@ const ScheduleCalendarView = ({
 
     const customButtons = useMemo(() => ({
         [ZOOM_OUT_BUTTON_ID]: {
-            text: ZOOM_OUT_BUTTON_TEXT,
+            text: t(SCHEDULE_CALENDAR_I18N.toolbar.zoomOut),
             click: zoomOutToPreviousView
         }
-    }), [zoomOutToPreviousView]);
+    }), [t, zoomOutToPreviousView]);
+
+    const calendarTextOptions = useMemo(() => buildScheduleCalendarTextOptions(t), [t]);
 
     const headerToolbar = useMemo(() => ({
         left: 'prev,next today',
@@ -380,7 +457,7 @@ const ScheduleCalendarView = ({
         info.el.querySelector(`.${KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS}`)?.remove();
     }, []);
 
-    // 지난 일정 판별 함수
+    // 지난 일정 판별 — 기기 local 자정이 아니라 Asia/Seoul 캘린더일
     const eventClassNames = (arg) => {
         if (arg.event.display === 'background') {
             if (arg.event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
@@ -388,12 +465,7 @@ const ScheduleCalendarView = ({
             }
             return [];
         }
-        const eventDate = new Date(arg.event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventDate.setHours(0, 0, 0, 0);
-        
-        return eventDate < today ? ['fc-event-past'] : [];
+        return isPastCalendarDayInZone(arg.event.start) ? ['fc-event-past'] : [];
     };
 
     // 과거 또는 완료·취소 예약 여부 (디저블 스타일 적용 대상)
@@ -493,11 +565,7 @@ const ScheduleCalendarView = ({
         const isMonthView = eventInfo.view?.type === CALENDAR_VIEW_MONTH;
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
-        const eventStart = new Date(event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventStart.setHours(0, 0, 0, 0);
-        const isPastDate = eventStart < today;
+        const isPastDate = isPastCalendarDayInZone(event.start);
         const isCancelled = extendedProps?.status === 'CANCELLED';
         const cancelledClass = isCancelled ? ' mg-v2-ad-calendar-event--cancelled' : '';
 
@@ -516,6 +584,14 @@ const ScheduleCalendarView = ({
         const clientNameFallback = t(INTEGRATED_MONTH_CHIP_I18N.clientNameFallback);
         const clientName = toDisplayString(extendedProps.clientName, clientNameFallback);
         const consultantName = toDisplayString(extendedProps.consultantName, '');
+        const consultantId = extendedProps?.consultantId ?? event.consultantId ?? null;
+        const teacherColor = consultantId != null && String(consultantId).trim() !== ''
+            ? getTeacherColor({
+                consultantId,
+                consultants,
+                colorFromData: extendedProps
+            })
+            : null;
         const statusLabel = resolveScheduleStatusDisplayLabel(
             extendedProps?.status,
             { codes: scheduleStatusOptions, translate: t }
@@ -568,6 +644,7 @@ const ScheduleCalendarView = ({
             translate: t,
             timeText: eventInfo.timeText,
             clientName,
+            consultantName,
             sessionAriaLabel: sessionInfo.ariaLabel,
             statusLabel,
             isSameDayPending,
@@ -604,7 +681,22 @@ const ScheduleCalendarView = ({
                     {integratedMonthEventLayout && (
                         <span className={dotClass} aria-hidden="true" />
                     )}
-                    <span className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</span>
+                    {integratedMonthEventLayout && teacherColor ? (
+                        <TeacherColorDot
+                            colorResult={teacherColor}
+                            className="mg-v2-ad-calendar-event__teacher-dot"
+                        />
+                    ) : null}
+                    <span className="mg-v2-ad-calendar-event__time">
+                        {integratedMonthEventLayout ? (
+                            <>
+                                <span className="mg-v2-ad-calendar-event__time-full">{eventInfo.timeText}</span>
+                                <span className="mg-v2-ad-calendar-event__time-short">
+                                    {formatIntegratedMonthChipShortTime(event.start)}
+                                </span>
+                            </>
+                        ) : eventInfo.timeText}
+                    </span>
                     <span className="mg-v2-ad-calendar-event__client">{clientName}</span>
                     {!integratedMonthEventLayout && (
                         <>
@@ -664,30 +756,25 @@ const ScheduleCalendarView = ({
         }
 
         // 주간/일간 뷰: 풀 카드 유지 (상태 텍스트로 구분 — 좌측 색 레일 없음)
+        // 기관연계 배지는 __time 안 인라인. fit 은 WeekDayScheduleEventChip(measure 단계) SSOT.
+        // #1499/#1510 rebase: 이 return ~ WeekDayScheduleEventChip 블록만 교체.
         return (
-            <div
-                className={`mg-v2-ad-calendar-event${pastClass}${cancelledClass}`.trim()}
-                title={`${clientName} - ${statusLabel}`}
-            >
-                <div className="mg-v2-ad-calendar-event__time">{eventInfo.timeText}</div>
-                <div className="mg-v2-ad-calendar-event__title">
-                    {sameDayPrefix}
-                    <span className="client-name">{clientName}</span>
-                    <ScheduleReminderSmsBadge
-                        sms={extendedProps?.[CLIENT_REMINDER_SMS_FIELD]}
-                        stopPropagation
-                        className="mg-v2-ad-calendar-event__reminder-sms"
-                    />
-                    <EngagementTypeBadge
-                        source={extendedProps}
-                        className="mg-v2-ad-calendar-event__engagement"
-                    />
-                    {consultantName && (
-                        <span className="counselor-name">{consultantName}</span>
-                    )}
-                </div>
-                <div className="mg-v2-ad-calendar-event__status">{statusLabel}</div>
-            </div>
+            <WeekDayScheduleEventChip
+                timeText={eventInfo.timeText}
+                eventStart={event.start}
+                clientName={clientName}
+                consultantName={consultantName}
+                consultantId={consultantId}
+                consultants={consultants}
+                statusLabel={statusLabel}
+                statusModifier={statusModifier}
+                sameDayPrefix={sameDayPrefix}
+                pastClass={pastClass}
+                cancelledClass={cancelledClass}
+                extendedProps={extendedProps}
+                showInstitutionMark={showInstitutionMark}
+                institutionLabel={institutionLabel}
+            />
         );
     };
 
@@ -695,18 +782,20 @@ const ScheduleCalendarView = ({
         <div ref={calendarWrapperRef} className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
             <FullCalendar
                 ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                plugins={SCHEDULE_CALENDAR_PLUGINS}
                 headerToolbar={headerToolbar}
                 customButtons={customButtons}
                 initialView={CALENDAR_VIEW_MONTH}
                 defaultView={CALENDAR_VIEW_MONTH}
                 locale="ko"
+                timeZone={DEFAULT_ZONE}
                 selectable={true}
                 selectMirror={true}
                 dayMaxEvents={8}
                 moreLinkClick="popover"
+                {...calendarTextOptions}
                 weekends={true}
-                events={events}
+                events={calendarEvents}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}
                 dayCellDidMount={handleDayCellDidMount}
                 dayCellWillUnmount={handleDayCellWillUnmount}
@@ -722,10 +811,12 @@ const ScheduleCalendarView = ({
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
                 height="100%"
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
-                slotMinTime="08:00:00"
-                slotMaxTime="20:00:00"
+                slotEventOverlap={false}
+                slotMinTime={slotTimeRange.slotMinTime}
+                slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"
-                scrollTime="09:00:00"
+                nowIndicator={true}
+                scrollTime={scrollTime}
                 scrollTimeReset={false}
                 allDaySlot={true}
                 eventDidMount={handleEventDidMount}

@@ -18,6 +18,11 @@ import {
   LABELS
 } from '../../../../constants/packagePricingConstants';
 import { parseExtraData, buildExtraDataString, isPublicVisible } from '../../../../utils/packagePricing';
+import {
+  calculateComposition,
+  clampDiscountRate,
+  mapPackageCodesToCompositionOptions
+} from '../../../../utils/packageComposition';
 import '../../../../styles/unified-design-tokens.css';
 import '../../AdminDashboard/AdminDashboardB0KlA.css';
 import '../PackagePricingPage.css';
@@ -60,16 +65,13 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
         discountRate: 0
       };
     }
-    const totalSessions = newItems.reduce((acc, curr) => acc + (Number(curr.sessions) || 0), 0);
-    const originalPrice = newItems.reduce((acc, curr) => acc + (Number(curr.price) || 0), 0);
-    const rate = Number(discountRate) || 0;
-    const packagePrice = Math.floor(originalPrice * (1 - rate / 100));
+    const { sessions, originalPrice, price } = calculateComposition(newItems, discountRate);
 
     return {
       ...prevForm,
       items: newItems,
-      sessions: String(totalSessions),
-      price: String(packagePrice),
+      sessions: String(sessions),
+      price: String(price),
       originalPrice,
       discountRate
     };
@@ -84,15 +86,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
       const codes = data?.codes ?? (Array.isArray(data) ? data : []);
       setListLength(codes.length);
 
-      const parsedItems = codes.map((c) => {
-        const extra = parseExtraData(c.extraData);
-        return {
-          value: c.codeValue,
-          label: c.koreanName || c.codeLabel,
-          sessions: extra.sessions || 0,
-          price: extra.price || 0
-        };
-      });
+      const parsedItems = mapPackageCodesToCompositionOptions(codes);
       setAvailableItems(parsedItems);
 
       if (!isNew) {
@@ -167,7 +161,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
 
   const handleDiscountChange = (e) => {
     const rateString = e.target.value;
-    const rate = rateString === '' ? 0 : Math.max(0, Math.min(100, Number(rateString) || 0));
+    const rate = rateString === '' ? 0 : clampDiscountRate(rateString);
     setForm((prev) => recalculatePricing(prev.items, rateString === '' ? '' : rate, prev));
   };
 
@@ -539,7 +533,7 @@ function PackagePricingDetailPage({ isNew: isNewProp }) {
                     <input
                       type="number"
                       min="0"
-                      max="100"
+                      max="99"
                       className="mg-v2-form-input mg-v2-package-pricing__discount-input"
                       value={form.discountRate === 0 ? '' : form.discountRate}
                       onChange={handleDiscountChange}

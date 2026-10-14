@@ -4,12 +4,19 @@
  * 어떤 테마(.mg-v2-ad-b0kla 등)와 결합되더라도 모달의 레이아웃, 크기 조절 등을 중앙에서 강력하게 캡슐화합니다.
  */
 
-/* 오버레이: 모달을 화면 정중앙에 배치 (왼쪽 상단 고정 방지) */
+/* 오버레이: 헤더 아래부터 · 모달을 화면 정중앙에 배치 (왼쪽 상단 고정 방지) */
 .mg-modal-overlay {
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   padding: var(--spacing-lg, 1rem);
+  top: var(--mg-layout-header-height, 64px) !important;
+}
+
+@media (max-width: 767px) {
+  .mg-modal-overlay {
+    top: var(--mg-layout-header-height-mobile, 56px) !important;
+  }
 }
 
 /* fullscreen 모달: 오버레이 패딩 제거하여 전체 화면 사용 */
@@ -17,6 +24,7 @@
   padding: 0 !important;
   align-items: stretch !important;
   justify-content: stretch !important;
+  top: 0 !important;
 }
 
 .mg-modal {

@@ -342,13 +342,20 @@ const ConsultantMessageScreen = () => {
       } else {
         // state가 없는 경우 API에서 데이터 로드
         const consultationResponse = await apiGet(`/api/v1/schedules/${consultationId}`);
-        if (consultationResponse.success) {
-          setConsultation(consultationResponse.data);
+        // apiGet unwrap → 스케줄 DTO 직접 사용
+        if (consultationResponse != null && consultationResponse.success !== false) {
+          const consultationPayload = consultationResponse.data != null
+            ? consultationResponse.data
+            : consultationResponse;
+          setConsultation(consultationPayload);
           
-          if (consultationResponse.data.clientId) {
-            const clientResponse = await apiGet(`/api/admin/users`);
-            if (clientResponse.success) {
-              const clientData = clientResponse.data.find(u => u.id === consultationResponse.data.clientId);
+          if (consultationPayload.clientId) {
+            const clientResponse = await apiGet(`/api/v1/admin/users`);
+            if (clientResponse != null && clientResponse.success !== false) {
+              const users = Array.isArray(clientResponse)
+                ? clientResponse
+                : (Array.isArray(clientResponse.data) ? clientResponse.data : []);
+              const clientData = users.find(u => u.id === consultationPayload.clientId);
               if (clientData) {
                 setClient(clientData);
                 setMessageData(prev => ({
@@ -401,11 +408,11 @@ const ConsultantMessageScreen = () => {
 
       const response = await apiPost(API_CONSULTATION_MESSAGES, messagePayload);
 
-      if (response.success) {
+      if (response != null && response.success !== false) {
         notificationManager.show('메시지가 전송되었습니다.', 'success');
         navigate('/consultant/schedule');
       } else {
-        throw new Error(response.message || '메시지 전송에 실패했습니다.');
+        throw new Error(response?.message || '메시지 전송에 실패했습니다.');
       }
     } catch (error) {
       console.error('메시지 전송 오류:', error);

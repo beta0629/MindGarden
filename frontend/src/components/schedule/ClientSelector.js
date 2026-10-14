@@ -206,12 +206,13 @@ const ClientSelector = ({
             console.log('📋 내담자 히스토리 조회 시작:', { displayId, clientId });
             
             const response = await apiGet(`/api/v1/consultations/client/${clientId}/history`);
-            
-            if (response.success) {
-                console.log('📋 내담자 히스토리 조회 완료:', response.data);
-                setClientHistory(prev => ({ ...prev, [displayId]: response.data }));
+            // apiGet unwrap → 히스토리 페이로드를 직접 사용 (response.success 게이트 금지)
+            if (response != null && response.success !== false) {
+                const historyPayload = response.data !== undefined ? response.data : response;
+                console.log('📋 내담자 히스토리 조회 완료:', historyPayload);
+                setClientHistory(prev => ({ ...prev, [displayId]: historyPayload }));
             } else {
-                console.warn('📋 내담자 히스토리 조회 실패:', response.message);
+                console.warn('📋 내담자 히스토리 조회 실패:', response?.message);
             }
         } catch (error) {
             console.error('📋 내담자 히스토리 조회 오류:', error);

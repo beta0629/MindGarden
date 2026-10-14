@@ -4,6 +4,7 @@ import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
+import com.coresolution.consultation.exception.CommonCodeInUseException;
 import com.coresolution.consultation.service.TenantCommonCodeService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -169,6 +171,8 @@ public class TenantCommonCodeController {
         try {
             tenantCommonCodeService.deleteTenantCode(tenantId, codeId);
             return ResponseEntity.ok(ApiResponse.success(null));
+        } catch (CommonCodeInUseException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(ApiResponse.error(e.getMessage()));
         } catch (IllegalArgumentException e) {
             log.error("테넌트 공통코드 삭제 실패: {}", e.getMessage());
             return ResponseEntity.badRequest()

@@ -18,6 +18,7 @@ export const INTEGRATED_MONTH_CHIP_I18N = Object.freeze({
     FAILED: 'schedule:calendar.reminderSms.aria.FAILED'
   }),
   legendStatus: 'schedule:calendar.legend.status',
+  legendInstitution: 'schedule:calendar.legend.institution',
   legendSms: 'schedule:calendar.legend.sms',
   legendUnresolved: 'schedule:calendar.legend.unresolved',
   legendHint: 'schedule:calendar.legend.hint'
@@ -44,6 +45,7 @@ const translateLabel = (translate, key, options) => {
  *   translate: Function,
  *   timeText?: string,
  *   clientName?: string,
+ *   consultantName?: string,
  *   sessionAriaLabel?: string,
  *   statusLabel?: string,
  *   isSameDayPending?: boolean,
@@ -91,6 +93,9 @@ export function buildIntegratedMonthChipCopy(input) {
   const sessionAria = input?.sessionAriaLabel ? String(input.sessionAriaLabel).trim() : '';
   const clientName = input?.clientName == null ? '' : String(input.clientName);
   const namePart = sessionAria ? `${clientName} ${sessionAria}` : clientName;
+  const consultantName = input?.consultantName == null
+    ? ''
+    : String(input.consultantName).trim();
 
   const ariaLabel = joinLabel([
     input?.isSameDayPending
@@ -98,6 +103,7 @@ export function buildIntegratedMonthChipCopy(input) {
       : '',
     input?.timeText,
     namePart,
+    consultantName,
     input?.statusLabel,
     input?.institutionLabel,
     reminderSmsAria,
@@ -112,4 +118,25 @@ export function buildIntegratedMonthChipCopy(input) {
     clientNameFallback,
     reminderSmsAria
   };
+}
+
+const CLOCK_DIGITS = 2;
+
+/**
+ * 좁은 칩(두 줄 단계 이하)용 24시 HH:mm. 오전/오후 글자 없이 시간이 잘리지 않게 한다.
+ *
+ * @param {Date|string|number|null|undefined} start
+ * @returns {string}
+ */
+export function formatIntegratedMonthChipShortTime(start) {
+  if (start == null) {
+    return '';
+  }
+  const date = start instanceof Date ? start : new Date(start);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+  const hours = String(date.getHours()).padStart(CLOCK_DIGITS, '0');
+  const minutes = String(date.getMinutes()).padStart(CLOCK_DIGITS, '0');
+  return `${hours}:${minutes}`;
 }

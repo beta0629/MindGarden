@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.util.ShopClientOfferSkuPolicy;
 import com.coresolution.consultation.constant.BankTransferConstants;
 import com.coresolution.consultation.constant.ShopAdminOrderConstants;
 import com.coresolution.consultation.constant.ShopCatalogCategory;
@@ -71,6 +72,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tid);
         List<ShopCatalogSkuAdminItem> out = new ArrayList<>(rows.size());
         for (ShopCatalogSku row : rows) {
+            if (ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
+                continue;
+            }
             out.add(toItem(row));
         }
         return out;
@@ -90,7 +94,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(tid);
         List<ShopCatalogLegacySkuItem> unlinked = new ArrayList<>();
         for (ShopCatalogSku row : rows) {
-            if (StringUtils.hasText(row.getSourcePackageCode())) {
+            if (StringUtils.hasText(row.getSourcePackageCode())
+                    || ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
                 continue;
             }
             unlinked.add(new ShopCatalogLegacySkuItem(
@@ -215,6 +220,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         String tid = requireTenant(tenantId);
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
+        rejectClientOfferSku(row, id);
         Long previousUnitPriceMinor = row.getUnitPriceMinor();
         applyUpsert(row, request);
         ShopCatalogSku saved = shopCatalogSkuRepository.save(row);
@@ -239,11 +245,19 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         String tid = requireTenant(tenantId);
         ShopCatalogSku row = shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(id, tid)
                 .orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, id));
+        rejectClientOfferSku(row, id);
         row.setCatalogVisible(catalogVisible);
         if (catalogVisible) {
             requireThumbnailUrl(row);
         }
         shopCatalogSkuRepository.save(row);
+    }
+
+    /** 내담자 전용 SKU 는 관리자 상품 화면에서 수정·노출 전환할 수 없다(몰 공개 방지). */
+    private static void rejectClientOfferSku(ShopCatalogSku row, Long id) {
+        if (ShopClientOfferSkuPolicy.isClientOfferSku(row)) {
+            throw new EntityNotFoundException(ENTITY_NAME, id);
+        }
     }
 
     private String resolveSkuCodeForCreate(String tenantId, String requestedSkuCode) {
@@ -469,7 +483,8 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
                 row.getFieldCode(),
-                row.getConsultantId());
+                row.getConsultantId(),
+                row.getSourcePackageCode());
     }
 
     private static ShopCatalogSkuAdminDetail toDetail(ShopCatalogSku row) {

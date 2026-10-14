@@ -11,6 +11,7 @@
 
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
 import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -19,12 +20,13 @@ import ContentCard from '../../dashboard-v2/content/ContentCard';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { toDateStr } from '../../../utils/dateUtils';
-import { getConsultantColor } from '../../../utils/consultantColor';
+import { resolvePersonName } from './consultationLogQuery';
+import '../../../i18n';
 import './ConsultationLogCalendarBlock.css';
 
-const EMPTY_TITLE = '등록된 상담일지가 없습니다.';
-const EMPTY_DESC = '다른 필터를 적용해 보시거나, 스케줄에서 상담일지를 작성해 주세요.';
 const CALENDAR_KEY_TODAY = 'today';
+const NS = 'adminConsultationLogs';
+const CALENDAR_DAY_MAX_EVENTS = 2;
 
 /**
  * FullCalendar initialDate 결정.
@@ -60,10 +62,13 @@ const ConsultationLogCalendarBlock = ({
   consultantNameMap,
   onOpenModal,
   startDate,
-  endDate
+  endDate,
+  onVisibleRangeChange
 }) => {
+  const { t } = useTranslation(NS);
   const [popover, setPopover] = useState(null);
   const popoverRef = useRef(null);
+  const unknownName = t('people.unknownName');
 
   const calendarInitialDate = useMemo(
     () => computeCalendarInitialDate(startDate, records),
@@ -78,30 +83,33 @@ const ConsultationLogCalendarBlock = ({
     return records.map((record) => {
       const sessionDate = toDateStr(record.sessionDate ?? record.consultationDate);
       if (!sessionDate) return null;
-      const clientName =
-        record.clientName ??
-        (record.clientId && clientNameMap
-          ? clientNameMap[Number(record.clientId)]
-          : null) ??
-        `내담자 #${record.clientId}`;
-      const consultantColor = getConsultantColor(record.consultantId);
-      // allDay: start만 사용 (end===start 는 FullCalendar exclusive-end로 당일 미표시)
+      const clientName = resolvePersonName(
+        record.clientName,
+        record.clientId,
+        clientNameMap,
+        unknownName
+      );
+      const done = record.isSessionCompleted === true;
       return {
         id: String(record.id),
         title: clientName,
         start: sessionDate,
         allDay: true,
-        backgroundColor: consultantColor,
-        borderColor: consultantColor,
+        classNames: [
+          'mg-v2-consultation-log-cal-event',
+          done
+            ? 'mg-v2-consultation-log-cal-event--done'
+            : 'mg-v2-consultation-log-cal-event--pending'
+        ],
         extendedProps: {
           recordId: record.id,
           clientName,
-          isSessionCompleted: record.isSessionCompleted === true,
+          isSessionCompleted: done,
           record
         }
       };
     }).filter(Boolean);
-  }, [records, clientNameMap]);
+  }, [records, clientNameMap, unknownName]);
 
   const getRecordsByDate = (dateStr) => {
     if (!records || !dateStr) return [];
@@ -140,30 +148,34 @@ const ConsultationLogCalendarBlock = ({
   };
 
   useEffect(() => {
-    if (!popover) return;
-    const onDocClick = (e) => {
-      if (popoverRef.current && !popoverRef.current.contains(e.target)) {
+    if (!popover) return undefined;
+    const onDocClick = (event) => {
+      if (popoverRef.current && !popoverRef.current.contains(event.target)) {
+        setPopover(null);
+      }
+    };
+    const onKey = (event) => {
+      if (event.key === 'Escape') {
         setPopover(null);
       }
     };
     document.addEventListener('click', onDocClick, true);
-    return () => document.removeEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onDocClick, true);
+      document.removeEventListener('keydown', onKey);
+    };
   }, [popover]);
 
-  const isEmpty = !records || records.length === 0;
-
-  if (isEmpty) {
-    return (
-      <ContentSection noCard className="mg-v2-consultation-log-calendar-block">
-        <ContentCard className="mg-v2-consultation-log-calendar-block__card">
-          <div className="mg-v2-consultation-log-calendar-block__empty">
-            <h3 className="mg-v2-consultation-log-calendar-block__empty-title">{EMPTY_TITLE}</h3>
-            <p className="mg-v2-consultation-log-calendar-block__empty-desc">{EMPTY_DESC}</p>
-          </div>
-        </ContentCard>
-      </ContentSection>
-    );
-  }
+  const handleDatesSet = (arg) => {
+    if (!onVisibleRangeChange || !arg?.startStr || !arg?.endStr) {
+      return;
+    }
+    onVisibleRangeChange({
+      startDate: String(arg.startStr).slice(0, 10),
+      endDate: String(arg.endStr).slice(0, 10)
+    });
+  };
 
   return (
     <ContentSection noCard className="mg-v2-consultation-log-calendar-block">
@@ -182,32 +194,35 @@ const ConsultationLogCalendarBlock = ({
               center: 'title',
               right: ''
             }}
-            buttonText={{ today: '오늘' }}
+            buttonText={{ today: t('calendar.today') }}
             height="auto"
             locale="ko"
-            dayMaxEvents={4}
-            dayMaxEventRows={3}
+            dayMaxEvents={CALENDAR_DAY_MAX_EVENTS}
+            moreLinkText={(count) => t('calendar.more', { n: count })}
+            datesSet={handleDatesSet}
           />
         </div>
         {popover && (
           <div
             ref={popoverRef}
             className="mg-v2-consultation-log-calendar-popover"
-            aria-label="해당 날짜 상담일지 목록"
-            style={{
-              left: popover.x,
-              top: (popover.y || 0) + 12
-            }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('calendar.dayList', { date: popover.dateStr })}
           >
             <div className="mg-v2-consultation-log-calendar-popover__title">
-              {popover.dateStr} 상담일지 {popover.records.length}건
+              {t('calendar.dayList', { date: popover.dateStr })}
+              {' '}
+              {t('calendar.dayCount', { n: popover.records.length })}
             </div>
             <ul className="mg-v2-consultation-log-calendar-popover__list">
               {popover.records.map((r) => {
-                const clientName =
-                  r.clientName ??
-                  (r.clientId && clientNameMap ? clientNameMap[Number(r.clientId)] : null) ??
-                  `내담자 #${r.clientId}`;
+                const clientName = resolvePersonName(
+                  r.clientName,
+                  r.clientId,
+                  clientNameMap,
+                  unknownName
+                );
                 return (
                   <li key={r.id}>
                     <MGButton
@@ -255,7 +270,17 @@ ConsultationLogCalendarBlock.propTypes = {
   consultantNameMap: PropTypes.object,
   onOpenModal: PropTypes.func.isRequired,
   startDate: PropTypes.string,
-  endDate: PropTypes.string
+  endDate: PropTypes.string,
+  onVisibleRangeChange: PropTypes.func
+};
+
+ConsultationLogCalendarBlock.defaultProps = {
+  records: [],
+  clientNameMap: {},
+  consultantNameMap: {},
+  startDate: '',
+  endDate: '',
+  onVisibleRangeChange: undefined
 };
 
 export default ConsultationLogCalendarBlock;

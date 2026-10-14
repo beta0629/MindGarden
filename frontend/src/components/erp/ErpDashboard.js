@@ -6,7 +6,7 @@
  * @since 2026-08-27
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { adminPendingPaymentMappingsGetAll } from '../../api/adminListFetch';
 import { useNavigate } from 'react-router-dom';
 import { useSession } from '../../contexts/SessionContext';
@@ -14,10 +14,11 @@ import { sessionManager } from '../../utils/sessionManager';
 import { fetchUserPermissions, PermissionChecks, PERMISSIONS } from '../../utils/permissionUtils';
 import { RoleUtils } from '../../constants/roles';
 import { AUTH_API, ERP_API } from '../../constants/api';
-import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { SALARY_API_ENDPOINTS } from '../../constants/salaryConstants';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
+import { useLatestRequest } from '../../hooks/useLatestRequest';
+import { isAbortError } from '../../utils/latestRequestGuard';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { ContentArea } from '../dashboard-v2/content';
@@ -68,6 +69,17 @@ import './ErpCommon.css';
 import './organisms/moneyCockpit/MoneyCockpit.css';
 
 const isDevEnv = process.env.NODE_ENV === 'development';
+
+/** 롤링 12개월 차트 — 기간 칩과 무관. 세션 내 중복 호출 방지용 메모리 캐시 */
+let rolling12ChartMemoryCache = null;
+
+/**
+ * 테스트 전용 — 롤링 12개월 인메모리 캐시 초기화.
+ * @returns {void}
+ */
+export function resetRolling12ChartMemoryCacheForTests() {
+  rolling12ChartMemoryCache = null;
+}
 
 /**
  * 권한 조회 실패 시 사용자 역할 기반 기본 권한 설정
@@ -123,12 +135,25 @@ const ErpDashboard = ({ user: propUser }) => {
   const [refundAmount, setRefundAmount] = useState(null);
   const [todoRuleComments, setTodoRuleComments] = useState([]);
 
+  const beginPeriodFinanceRequest = useLatestRequest();
+  const beginSecondaryTodosRequest = useLatestRequest();
+  const rolling12LoadedRef = useRef(false);
+
   const loadPeriodFinance = useCallback(async(periodKey) => {
+    const { signal, isStale } = beginPeriodFinanceRequest();
     setFinanceError(null);
     setHeroLoading(true);
     const { startDate, endDate } = getPeriodRange(periodKey);
+    const apiOptions = signal ? { signal } : {};
     try {
-      const raw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, { startDate, endDate });
+      const raw = await StandardizedApi.get(
+        ERP_API.FINANCE_DASHBOARD,
+        { startDate, endDate },
+        apiOptions
+      );
+      if (isStale()) {
+        return;
+      }
       const parsed = parseFinanceDashboardPayload(raw);
       setHero({
         income: parsed.totalRevenue,
@@ -161,28 +186,44 @@ const ErpDashboard = ({ user: propUser }) => {
       const prevRange = getPreviousComparableRange(periodKey);
       if (prevRange) {
         try {
-          const prevRaw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, {
-            startDate: prevRange.startDate,
-            endDate: prevRange.endDate
-          });
+          const prevRaw = await StandardizedApi.get(
+            ERP_API.FINANCE_DASHBOARD,
+            {
+              startDate: prevRange.startDate,
+              endDate: prevRange.endDate
+            },
+            apiOptions
+          );
+          if (isStale()) {
+            return;
+          }
           const prevParsed = parseFinanceDashboardPayload(prevRaw);
           remainingCaption = buildRemainingVsPreviousCaption(
             parsed.remaining,
             prevParsed.remaining
           );
         } catch (prevErr) {
+          if (isStale() || isAbortError(prevErr)) {
+            return;
+          }
           if (isDevEnv) {
             console.warn('이전 기간 비교 생략:', prevErr);
           }
         }
       }
 
+      if (isStale()) {
+        return;
+      }
       setHeroCaptions({
         income: incomeCaption,
         expense: expenseCaption,
         remaining: remainingCaption
       });
     } catch (err) {
+      if (isStale() || isAbortError(err)) {
+        return;
+      }
       console.error('머니 콕핏 대시보드 로드 실패:', err);
       setFinanceError(err?.message || OFD_ERRORS.FINANCE_LOAD);
       setHero({ income: 0, expense: 0, remaining: 0 });
@@ -193,11 +234,22 @@ const ErpDashboard = ({ user: propUser }) => {
       setExpenseMixItems([]);
       setRefundAmount(null);
     } finally {
-      setHeroLoading(false);
+      if (!isStale()) {
+        setHeroLoading(false);
+      }
     }
-  }, []);
+  }, [beginPeriodFinanceRequest]);
 
+  /**
+   * 롤링 12개월 차트 — moneyCockpitPeriod / 기간 칩과 무관.
+   * 마운트·권한 준비 시 1회(또는 캐시 히트)만 호출한다.
+   */
   const loadRolling12Chart = useCallback(async() => {
+    if (rolling12ChartMemoryCache) {
+      setMonthSeries(rolling12ChartMemoryCache);
+      setChartLoading(false);
+      return;
+    }
     setChartLoading(true);
     const keys = getRolling12MonthKeys();
     try {
@@ -224,6 +276,7 @@ const ErpDashboard = ({ user: propUser }) => {
           month: key.month
         };
       });
+      rolling12ChartMemoryCache = series;
       setMonthSeries(series);
     } catch (err) {
       console.error('롤링 12개월 차트 로드 실패:', err);
@@ -240,12 +293,20 @@ const ErpDashboard = ({ user: propUser }) => {
   }, []);
 
   const loadSecondaryTodos = useCallback(async(periodKey) => {
+    const { signal, isStale } = beginSecondaryTodosRequest();
     const { startDate, endDate } = getPeriodRange(periodKey);
+    const apiOptions = signal ? { signal } : {};
 
     try {
-      const pendingRaw = await adminPendingPaymentMappingsGetAll();
+      const pendingRaw = await adminPendingPaymentMappingsGetAll({}, apiOptions);
+      if (isStale()) {
+        return;
+      }
       setPendingConsultation(sumPendingConsultationFees(pendingRaw));
     } catch (err) {
+      if (isStale() || isAbortError(err)) {
+        return;
+      }
       if (isDevEnv) {
         console.warn('미수 상담료 로드 생략:', err);
       }
@@ -255,8 +316,12 @@ const ErpDashboard = ({ user: propUser }) => {
     try {
       const salaryRaw = await StandardizedApi.get(
         SALARY_API_ENDPOINTS.CALCULATIONS_BY_PERIOD,
-        { startDate, endDate }
+        { startDate, endDate },
+        apiOptions
       );
+      if (isStale()) {
+        return;
+      }
       const pending = sumPendingSalaryNet(salaryRaw);
       setPendingSalary(pending);
 
@@ -273,8 +338,12 @@ const ErpDashboard = ({ user: propUser }) => {
                 consultantId: query.consultantId,
                 periodStart: query.periodStart,
                 periodEnd: query.periodEnd
-              }
+              },
+              apiOptions
             );
+            if (isStale()) {
+              return null;
+            }
             const parsed = parsePreConfirmWarningPayload(response);
             if (!parsed) {
               return null;
@@ -284,6 +353,9 @@ const ErpDashboard = ({ user: propUser }) => {
               : query.fallbackPrimaryId;
             return [primaryId, parsed];
           } catch (warningErr) {
+            if (isStale() || isAbortError(warningErr)) {
+              return null;
+            }
             if (isDevEnv) {
               console.warn('빠진 회기 경고 조회 생략:', warningErr);
             }
@@ -291,13 +363,22 @@ const ErpDashboard = ({ user: propUser }) => {
           }
         })
       );
+      if (isStale()) {
+        return;
+      }
       const lateWarningsByPrimaryId = mergeLateWarningsFromEntries(lateWarningEntries);
 
       let dayOfMonth = 10;
       try {
         const payDayCodes = await getCommonCodes('SALARY_PAY_DAY');
+        if (isStale()) {
+          return;
+        }
         ({ dayOfMonth } = resolveSalaryPayDayFromCodes(payDayCodes));
       } catch (payDayErr) {
+        if (isStale() || isAbortError(payDayErr)) {
+          return;
+        }
         if (isDevEnv) {
           console.warn('급여일 체크리스트 생략:', payDayErr);
         }
@@ -305,9 +386,19 @@ const ErpDashboard = ({ user: propUser }) => {
 
       let profiles = [];
       try {
-        const profilesRaw = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
+        const profilesRaw = await StandardizedApi.get(
+          SALARY_API_ENDPOINTS.PROFILES,
+          {},
+          apiOptions
+        );
+        if (isStale()) {
+          return;
+        }
         profiles = unwrapEntityList(profilesRaw);
       } catch (profileErr) {
+        if (isStale() || isAbortError(profileErr)) {
+          return;
+        }
         if (isDevEnv) {
           console.warn('국세청 체크리스트 생략:', profileErr);
         }
@@ -320,10 +411,17 @@ const ErpDashboard = ({ user: propUser }) => {
           try {
             const taxRaw = await StandardizedApi.get(
               SALARY_API_ENDPOINTS.TAX_STATISTICS,
-              { period: taxPeriod }
+              { period: taxPeriod },
+              apiOptions
             );
+            if (isStale()) {
+              return;
+            }
             taxByType = extractTaxByTypeFromStatistics(taxRaw);
           } catch (taxErr) {
+            if (isStale() || isAbortError(taxErr)) {
+              return;
+            }
             if (isDevEnv) {
               console.warn('원천징수 통계 생략:', taxErr);
             }
@@ -331,6 +429,9 @@ const ErpDashboard = ({ user: propUser }) => {
         }
       }
 
+      if (isStale()) {
+        return;
+      }
       setTodoRuleComments(buildMoneyTodoRuleComments({
         today: new Date(),
         dayOfMonth,
@@ -341,13 +442,16 @@ const ErpDashboard = ({ user: propUser }) => {
         lateWarningsByPrimaryId
       }));
     } catch (err) {
+      if (isStale() || isAbortError(err)) {
+        return;
+      }
       if (isDevEnv) {
         console.warn('상담사 지급 예정 로드 생략:', err);
       }
       setPendingSalary(null);
       setTodoRuleComments([]);
     }
-  }, []);
+  }, [beginSecondaryTodosRequest]);
 
   const sessionUserId = sessionUser?.id;
   const sessionUserRole = sessionUser?.role;
@@ -431,14 +535,22 @@ const ErpDashboard = ({ user: propUser }) => {
 
   const permissionKey = userPermissions.join('|');
 
+  const resolveFinanceAccess = useCallback(() => {
+    const user = propUser || sessionUser;
+    const admin = user && RoleUtils.isAdmin(user);
+    const hasErp = PermissionChecks.canAccessERP(userPermissions, user) || admin;
+    const hasFinance =
+      PermissionChecks.canViewIntegratedFinance(userPermissions, user) || admin;
+    return { user, admin, hasErp, hasFinance };
+  }, [propUser, sessionUser, userPermissions]);
+
+  /** ERP 권한 게이트 — period 와 무관 */
   useEffect(() => {
     if (!permissionReady) {
       return;
     }
 
-    const user = propUser || sessionUser;
-    const admin = user && RoleUtils.isAdmin(user);
-    const hasErp = PermissionChecks.canAccessERP(userPermissions, user) || admin;
+    const { user, hasErp } = resolveFinanceAccess();
 
     if (!hasErp) {
       if (userPermissions.length === 0) {
@@ -455,22 +567,39 @@ const ErpDashboard = ({ user: propUser }) => {
         return () => clearTimeout(timeoutId);
       }
       navigate('/dashboard', { replace: true });
+    }
+    // userPermissions는 permissionKey로 내용 비교
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable identity for permission array
+  }, [
+    permissionReady,
+    permissionKey,
+    propUserId,
+    sessionUserId,
+    navigate,
+    resolveFinanceAccess
+  ]);
+
+  /**
+   * 기간 칩 의존 — finance dashboard + secondary todos 만 재조회.
+   * 롤링 12개월(monthly-report ×12)은 여기서 호출하지 않는다.
+   */
+  useEffect(() => {
+    if (!permissionReady) {
       return;
     }
 
-    const hasFinance =
-      PermissionChecks.canViewIntegratedFinance(userPermissions, user) || admin;
+    const { hasErp, hasFinance } = resolveFinanceAccess();
+    if (!hasErp) {
+      return;
+    }
 
     if (hasFinance) {
       loadPeriodFinance(period);
-      loadRolling12Chart();
       loadSecondaryTodos(period);
     } else {
       setHeroLoading(false);
-      setChartLoading(false);
       setHero({ income: 0, expense: 0, remaining: 0 });
       setHeroCaptions({ income: '', expense: '', remaining: '' });
-      setMonthSeries([]);
       setLedgerTx([]);
       setIncomeMixItems([]);
       setExpenseMixItems([]);
@@ -479,18 +608,55 @@ const ErpDashboard = ({ user: propUser }) => {
       setRefundAmount(null);
       setTodoRuleComments([]);
     }
-    // userPermissions는 permissionKey로 내용 비교
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable identity for permission array
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- permissionKey for array identity
   }, [
     permissionReady,
     permissionKey,
     period,
     propUserId,
     sessionUserId,
-    navigate,
     loadPeriodFinance,
+    loadSecondaryTodos,
+    resolveFinanceAccess
+  ]);
+
+  /**
+   * 롤링 12개월 차트 — 기간 칩과 무관.
+   * 권한 준비·재무 접근 가능 시 1회(캐시 포함)만 로드한다.
+   */
+  useEffect(() => {
+    if (!permissionReady) {
+      return;
+    }
+
+    const { hasErp, hasFinance } = resolveFinanceAccess();
+    if (!hasErp) {
+      return;
+    }
+
+    if (!hasFinance) {
+      setChartLoading(false);
+      setMonthSeries([]);
+      rolling12LoadedRef.current = false;
+      return;
+    }
+
+    if (rolling12LoadedRef.current && rolling12ChartMemoryCache) {
+      setMonthSeries(rolling12ChartMemoryCache);
+      setChartLoading(false);
+      return;
+    }
+
+    rolling12LoadedRef.current = true;
+    loadRolling12Chart();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- no period; mount/permission only
+  }, [
+    permissionReady,
+    permissionKey,
+    propUserId,
+    sessionUserId,
     loadRolling12Chart,
-    loadSecondaryTodos
+    resolveFinanceAccess
   ]);
 
   const layoutContentClassName = 'erp-dashboard__content money-cockpit-page';

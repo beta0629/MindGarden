@@ -71,10 +71,6 @@ import ScheduleNotesReminderModal from './integrated-schedule/molecules/Schedule
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
 import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
 import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
-import {
-  MAPPING_ENGAGEMENT_TYPE,
-  MAPPING_ENGAGEMENT_TYPE_LABELS
-} from '../../../constants/mappingEngagementType';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -1242,6 +1238,21 @@ const IntegratedMatchingSchedule = () => {
     }
   }, [cancelTargetMapping, cancelPendingProcessing, loadMappings]);
 
+  const handleMappingStatusClosed = useCallback(({ mappingId, status }) => {
+    if (mappingId == null) {
+      return;
+    }
+    const idKey = String(mappingId);
+    const nextStatus = status || 'TERMINATED';
+    setMappings((prev) => prev.map((m) => (
+      String(m.id) === idKey ? { ...m, status: nextStatus } : m
+    )));
+    setPeekMapping((prev) => (
+      prev && String(prev.id) === idKey ? { ...prev, status: nextStatus } : prev
+    ));
+    softRefresh(loadMappings);
+  }, [loadMappings]);
+
   const handleRequestDesyncAction = useCallback((mapping, desyncMeta) => {
     if (!mapping?.id || !desyncMeta?.kind || desyncProcessing) {
       return;
@@ -1580,36 +1591,18 @@ const IntegratedMatchingSchedule = () => {
                 />
               )}
               sameDayPendingLegendContent={(
-                <>
-                  <p
-                    className="integrated-schedule__legend integrated-schedule__legend--same-day"
-                    role="note"
-                  >
-                    <span
-                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
-                      aria-hidden="true"
-                    />
-                    <span className="integrated-schedule__legend-text">
-                      {t('admin:mapping.schedule.legend.sameDayPending')}
-                    </span>
-                  </p>
-                  <p
-                    className="integrated-schedule__legend integrated-schedule__legend--institution-link"
-                    role="note"
-                  >
-                    <span
-                      className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--institution-link"
-                      aria-hidden="true"
-                    />
-                    <span className="integrated-schedule__legend-text">
-                      {t('admin:mapping.schedule.legend.institutionLink', {
-                        defaultValue: MAPPING_ENGAGEMENT_TYPE_LABELS[
-                          MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK
-                        ]
-                      })}
-                    </span>
-                  </p>
-                </>
+                <p
+                  className="integrated-schedule__legend integrated-schedule__legend--same-day"
+                  role="note"
+                >
+                  <span
+                    className="integrated-schedule__legend-swatch integrated-schedule__legend-swatch--same-day"
+                    aria-hidden="true"
+                  />
+                  <span className="integrated-schedule__legend-text">
+                    {t('admin:mapping.schedule.legend.sameDayPending')}
+                  </span>
+                </p>
               )}
             />
           </div>
@@ -1625,6 +1618,7 @@ const IntegratedMatchingSchedule = () => {
             onVehiclePlateRegistered={handleVehiclePlateRegistered}
             onConsultantUpdated={handleConsultantUpdated}
             onChangePendingPackage={handleRequestChangePendingPackage}
+            onMappingStatusClosed={handleMappingStatusClosed}
             userRole={calendarUserRole}
           />
         </SidePeekShell>

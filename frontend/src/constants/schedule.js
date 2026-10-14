@@ -781,6 +781,15 @@ export const BUSINESS_HOURS_DISPLAY = {
   LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
 };
 
+/**
+ * 주·일 캘린더 시간축 기본 범위(HH:mm). 끝은 업무 종료(20시대 마지막 슬롯 포함).
+ * 범위 밖 일정이 있으면 resolveCalendarSlotTimeRange 가 그 일정이 보이도록 정시 단위로 넓힌다.
+ */
+export const CALENDAR_SLOT_TIME_RANGE = {
+  MIN: '08:00',
+  MAX: BUSINESS_HOURS.END
+};
+
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격
 export const TIME_SLOT_DURATION = 30; // 30분 슬롯
 

@@ -43,7 +43,7 @@ describe('redirectToLoginPageOnce — 이동 직전 보관 백업', () => {
   test('등록된 백업이 없으면 기존처럼 즉시 이동한다', () => {
     const { redirectToLoginPageOnce } = loadModule();
     expect(redirectToLoginPageOnce()).toBe(true);
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('백업이 끝난 뒤에 이동하고, 남은 백업의 returnUrl 을 붙인다', async() => {
@@ -66,7 +66,7 @@ describe('redirectToLoginPageOnce — 이동 직전 보관 백업', () => {
     registerLoginRedirectRescue(() => Promise.resolve({ persisted: false, returnUrl: PAGE }));
     redirectToLoginPageOnce();
     await flush();
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('반례: 다른 오리진·프로토콜 상대 returnUrl 은 버린다(오픈 리다이렉트)', async() => {
@@ -74,7 +74,7 @@ describe('redirectToLoginPageOnce — 이동 직전 보관 백업', () => {
     registerLoginRedirectRescue(() => Promise.resolve({ persisted: true, returnUrl: '//evil.example/x' }));
     redirectToLoginPageOnce();
     await flush();
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('반례: 백업이 예외를 던져도 다른 백업과 이동은 계속된다', async() => {
@@ -93,7 +93,7 @@ describe('redirectToLoginPageOnce — 이동 직전 보관 백업', () => {
     redirectToLoginPageOnce();
     expect(window.location.href).toBe(`${ORIGIN}${PAGE}`);
     jest.advanceTimersByTime(LOGIN_REDIRECT_RESCUE_TIMEOUT_MS);
-    expect(window.location.href).toBe(`${ORIGIN}/login`);
+    expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent(PAGE)}` /* 복귀 주소 없으면 현재 화면 */);
   });
 
   test('명시 search(중복 로그인)는 유지하되 백업은 실행한다', async() => {

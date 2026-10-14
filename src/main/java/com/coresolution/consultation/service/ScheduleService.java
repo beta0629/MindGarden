@@ -358,6 +358,20 @@ public interface ScheduleService {
         Long userId, String userRole, LocalDate startDate, LocalDate endDate);
 
     /**
+     * {@link #findSchedulesWithNamesByUserRole(Long, String)} 의 날짜 범위 버전 (일정 + 휴가 병합).
+     * 일정·휴가 모두 {@code startDate ≤ date ≤ endDate}(양끝 포함, 서버 LocalDate) 범위만 DB 에서 조회한다.
+     * 권한 스코프는 {@link #findSchedulesByUserRoleAndDateBetween} 와 동일하다.
+     *
+     * @param userId 요청 사용자(또는 대상 상담사) PK
+     * @param userRole 역할 문자열
+     * @param startDate 시작일(포함)
+     * @param endDate 종료일(포함)
+     * @return 일정 DTO 뒤에 휴가 DTO 를 붙인 목록
+     */
+    List<ScheduleResponse> findSchedulesWithNamesByUserRoleAndDateBetween(
+        Long userId, String userRole, LocalDate startDate, LocalDate endDate);
+
+    /**
      * 관리자용 전체 스케줄 통계 조회
      */
     Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate);
@@ -481,6 +495,21 @@ public interface ScheduleService {
      * @since 2026-09-14
      */
     boolean assignProvisionalSessionSequenceWithoutDeduction(Schedule schedule);
+
+    /**
+     * 같은 매핑의 점유 상담 일정 회차를 날짜·시작 시각·id 순으로 1..N 재부여한다.
+     *
+     * <p>usedSessions·remainingSessions·매핑 상태는 바꾸지 않는다.
+     * 회차가 바뀐 일정의 활성 상담일지 sessionNumber만 같은 테넌트에서 맞춘다.
+     * 취소된 일정과 다른 매핑의 일정은 포함하지 않는다.</p>
+     *
+     * @param mapping 대상 매핑. null이면 focus의 mappingId로 찾는다
+     * @param focus 이번에 포함할 일정. null이면 이미 회차가 있는 점유 일정만 재부여한다
+     * @return focus에 부여된 회차. focus가 없거나 매핑을 못 찾으면 null
+     * @author MindGarden
+     * @since 2026-10-11
+     */
+    Integer reorderOccupyingSessionSequences(ConsultantClientMapping mapping, Schedule focus);
 
     /**
      * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.

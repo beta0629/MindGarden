@@ -48,7 +48,20 @@ describe('MGPagination Clinic-OS', () => {
     const current = screen.getByRole('button', { name: '3' });
     expect(current).toHaveAttribute('aria-current', 'page');
     expect(current).toHaveClass('mg-button--primary');
+    expect(current).not.toHaveClass('mg-pagination__button--current-neutral');
     expect(screen.getByRole('button', { name: '4' })).toHaveClass('mg-button--outline');
+    expect(screen.getByRole('button', { name: '4' })).not.toHaveAttribute('aria-current');
+  });
+
+  test('중립 톤은 현재 쪽만 aria-current=page 이고 primary가 아니다', () => {
+    renderPagination({ activePageTone: 'neutral', currentPage: 2, totalPages: 3 });
+    const current = screen.getByRole('button', { current: 'page' });
+    expect(current).toHaveTextContent('2');
+    expect(current).toHaveClass('mg-pagination__button--current-neutral');
+    expect(current).toHaveClass('mg-button--outline');
+    expect(current).not.toHaveClass('mg-button--primary');
+    expect(screen.getByRole('button', { name: '1' })).not.toHaveAttribute('aria-current');
+    expect(screen.getByRole('button', { name: '3' })).not.toHaveAttribute('aria-current');
   });
 
   test('이전·다음은 아이콘 + aria-label, 클릭 시 onPageChange', () => {
@@ -77,5 +90,15 @@ describe('MGPagination Clinic-OS', () => {
     const declarations = cssSource.split('\n').filter((line) => !line.includes('@media')).join('\n');
     expect(declarations).not.toMatch(/\b\d+px\b/);
     expect(cssSource).not.toMatch(/!important/);
+    expect(cssSource).toMatch(
+      /\.mg-pagination \.mg-pagination__button\.mg-button\[aria-current='page'\]\.mg-pagination__button--current-neutral[\s\S]*background-color:\s*var\(--mg-v2-color-surface-stone\)/
+    );
+    expect(cssSource).toMatch(
+      /\.mg-pagination \.mg-pagination__button\.mg-button\[aria-current='page'\]\.mg-pagination__button--current-neutral[\s\S]*border-color:\s*var\(--mg-v2-color-border-strong\)/
+    );
+    expect(cssSource).toMatch(
+      /\.mg-pagination \.mg-pagination__button\.mg-button\[aria-current='page'\]\.mg-pagination__button--current-neutral[\s\S]*font-weight:\s*var\(--mg-v2-font-weight-bold\)/
+    );
+    expect(cssSource).not.toMatch(/\.mg-pagination__button--current-neutral\.mg-v2-button-outline\s*\{/);
   });
 });

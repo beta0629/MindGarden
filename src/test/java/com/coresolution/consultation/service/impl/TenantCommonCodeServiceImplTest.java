@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.exception.CommonCodeInUseException;
+import com.coresolution.consultation.service.CommonCodeDeletionGuard;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -69,8 +71,29 @@ class TenantCommonCodeServiceImplTest {
     @Mock
     private TenantCommonCodeCacheEvictor tenantCommonCodeCacheEvictor;
 
+    @Mock
+    private CommonCodeDeletionGuard commonCodeDeletionGuard;
+
     @InjectMocks
     private TenantCommonCodeServiceImpl tenantCommonCodeService;
+
+    @Test
+    @DisplayName("deleteTenantCode: 상품 이력 검사(공통 가드)가 막으면 409 예외 그대로, save never")
+    void deleteTenantCode_packageInUse_blocked() {
+        CommonCode row = baseRow(77L, TENANT);
+        row.setCodeGroup(ConsultationPackageCodeConstants.CODE_GROUP);
+        row.setCodeValue("PACKAGE001");
+        when(commonCodeRepository.findByTenantIdAndIdIgnoringDeleted(TENANT, 77L)).thenReturn(Optional.of(row));
+        org.mockito.Mockito.doThrow(new CommonCodeInUseException(
+                ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_ORDERS))
+            .when(commonCodeDeletionGuard).assertDeletable(TENANT, row);
+
+        CommonCodeInUseException ex = org.junit.jupiter.api.Assertions.assertThrows(CommonCodeInUseException.class,
+            () -> tenantCommonCodeService.deleteTenantCode(TENANT, 77L));
+        org.junit.jupiter.api.Assertions.assertEquals(
+            ConsultationPackageCodeConstants.MSG_DELETE_BLOCKED_BY_ORDERS, ex.getMessage());
+        verify(commonCodeRepository, org.mockito.Mockito.never()).save(any(CommonCode.class));
+    }
 
     @Test
     @DisplayName("getTenantCodeGroups: code_type=TENANT 이면 PROFESSIONAL_PROVIDER_TYPE 이 목록에 포함된다")
@@ -233,6 +256,105 @@ class TenantCommonCodeServiceImplTest {
         verify(commonCodeRepository).save(captor.capture());
         assertEquals("PACKAGE_004", captor.getValue().getCodeValue());
         assertEquals(TENANT, captor.getValue().getTenantId());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 비활성·삭제 행이 점유한 PACKAGE_010 을 건너뛰고 PACKAGE_011 발급 (유니크 키 충돌 400 방지)")
+    void createTenantCode_packageBlankCode_skipsInactiveOrDeletedOccupiedValues() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001"), packageRow("PACKAGE_003")));
+        when(commonCodeRepository.findAllCodeValuesIncludingInactiveAndDeleted(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of("PACKAGE_001", "PACKAGE_003", "PACKAGE_010"));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), eq("PACKAGE_011")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode saved = inv.getArgument(0);
+            saved.setId(101L);
+            return saved;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeLabel("신규")
+            .koreanName("신규")
+            .build();
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, request);
+
+        assertEquals("PACKAGE_011", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 연속 점유(010·011·012 비활성/삭제) 시 다음 미사용 PACKAGE_013 발급")
+    void createTenantCode_packageBlankCode_skipsConsecutiveOccupiedValues() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001")));
+        when(commonCodeRepository.findAllCodeValuesIncludingInactiveAndDeleted(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of("PACKAGE_001", "PACKAGE_010", "PACKAGE_011", "PACKAGE_012"));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), eq("PACKAGE_013")))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest());
+
+        assertEquals("PACKAGE_013", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 동시 저장으로 유니크 충돌 시 충돌 번호를 제외하고 재발급해 저장 (400 아님)")
+    void createTenantCode_packageBlankCode_retriesOnConcurrentUniqueViolation() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of(packageRow("PACKAGE_001")));
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), any()))
+            .thenReturn(Optional.empty());
+        List<String> attempted = new ArrayList<>();
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode c = inv.getArgument(0);
+            attempted.add(c.getCodeValue());
+            if (attempted.size() <= 2) {
+                throw new org.springframework.dao.DataIntegrityViolationException("uk_tenant_code_group_value");
+            }
+            return c;
+        });
+
+        var response = tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest());
+
+        assertEquals(List.of("PACKAGE_002", "PACKAGE_003", "PACKAGE_004"), attempted);
+        assertEquals("PACKAGE_004", response.getCodeValue());
+    }
+
+    @Test
+    @DisplayName("createTenantCode: 재시도 한도까지 계속 충돌하면 중복 코드 메시지로 실패")
+    void createTenantCode_packageBlankCode_givesUpAfterMaxAttempts() {
+        stubTenantGroupMetadata(ConsultationPackageCodeConstants.CODE_GROUP);
+        when(commonCodeRepository.findTenantCodesByGroup(TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+            .thenReturn(List.of());
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(
+                eq(TENANT), eq(ConsultationPackageCodeConstants.CODE_GROUP), any()))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class)))
+            .thenThrow(new org.springframework.dao.DataIntegrityViolationException("uk_tenant_code_group_value"));
+
+        assertThrows(IllegalArgumentException.class,
+            () -> tenantCommonCodeService.createTenantCode(TENANT, autoPackageRequest()));
+        verify(commonCodeRepository, times(TenantCommonCodeAutoValueConstants.GENERATION_MAX_ATTEMPTS))
+            .save(any(CommonCode.class));
+    }
+
+    private static CommonCodeCreateRequest autoPackageRequest() {
+        return CommonCodeCreateRequest.builder()
+            .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
+            .codeLabel("신규")
+            .koreanName("신규")
+            .build();
     }
 
     @Test

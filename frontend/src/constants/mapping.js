@@ -32,6 +32,17 @@ export const MAPPING_STATUS = {
 };
 
 /**
+ * Side Peek 「종료 처리」 비노출 상태.
+ * 백엔드 isClosedMappingStatus = TERMINATED+CANCELLED.
+ * SESSIONS_EXHAUSTED는 소진 상태라 CTA 숨김(잔여 있는 열린 상태만 노출).
+ */
+export const MAPPING_STATUS_CLOSE_HIDDEN_STATUSES = [
+  MAPPING_STATUS.TERMINATED,
+  MAPPING_STATUS.CANCELLED,
+  MAPPING_STATUS.SESSIONS_EXHAUSTED
+];
+
+/**
  * 내담자 홈·회기 잔여 KPI에 합산할 shop-paid(결제·입금 진행 후) 매핑 상태.
  * PENDING_PAYMENT(미결제)는 제외 — rem=0 unpaid 를 유료처럼 세지 않는다.
  * session-detail / home / Expo aggregateSessionBalance SSOT.

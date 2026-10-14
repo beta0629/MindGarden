@@ -6,6 +6,7 @@ import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
@@ -333,10 +334,14 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         try {
             const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
             logger.debug('📊 상담사 목록 응답:', response);
-            
-            if (response && response.success) {
-                const consultantsList = response.data?.consultants || response.data || [];
-                setConsultants(Array.isArray(consultantsList) ? consultantsList : []);
+            // apiGet unwrap → { consultants } / 배열 직접 수용
+            if (response != null && response.success !== false) {
+                const consultantsList = Array.isArray(response)
+                    ? response
+                    : (response.consultants || response.data?.consultants || response.data || []);
+                setConsultants(
+                    selectActiveConsultants(Array.isArray(consultantsList) ? consultantsList : [])
+                );
             } else {
                 console.warn('상담사 목록 응답 실패:', response);
                 setConsultants([]);
@@ -381,9 +386,12 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             if (Array.isArray(response)) {
                 logger.debug('✅ 상담 이력 배열로 처리:', response.length, '건');
                 setConsultations(response);
-            } else if (response && response.success) {
-                logger.debug('✅ 상담 이력 성공 응답:', response.data?.length || 0, '건');
-                setConsultations(response.data || []);
+            } else if (response != null && response.success !== false) {
+                const list = Array.isArray(response.data)
+                    ? response.data
+                    : (Array.isArray(response.consultations) ? response.consultations : []);
+                logger.debug('✅ 상담 이력 페이로드:', list.length, '건');
+                setConsultations(list);
             } else {
                 console.warn('⚠️ 상담 이력 응답 실패:', response);
                 setConsultations([]);

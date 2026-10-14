@@ -7,14 +7,16 @@
  */
 
 .mg-v2-desktop-gnb {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: var(--mg-layout-header-height, 64px);
-  padding: 0 24px;
+  padding: 0 var(--mg-v2-space-6);
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
-  border-bottom: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-layout-header-border, var(--mg-color-border-main));
   overflow: visible;
+  z-index: var(--mg-v2-z-header, var(--z-header, 1000));
 }
 
 .mg-v2-desktop-gnb__logo {
@@ -22,7 +24,9 @@
   align-items: center;
   gap: var(--mg-spacing-sm);
   min-width: 0;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  z-index: 2;
+  margin-right: var(--mg-v2-now-chip-gap-sides);
 }
 
 .mg-v2-desktop-gnb__logo-img {
@@ -66,15 +70,44 @@
   vertical-align: middle;
 }
 
-/* min-width:0 — 기본 min-width:auto 면 우측 그룹(고정폭 검색 + 아이콘) 최소폭이 좁은 데스크톱에서 헤더를 뷰포트 밖으로 민다 */
+/* LNB 제외 헤더 영역 가운데 — 시계는 축소·숨김 금지 */
 .mg-v2-desktop-gnb__center {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
-  justify-content: flex-end;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+  pointer-events: auto;
+  max-width: calc(100% - (2 * var(--mg-v2-now-chip-gap-sides)));
+}
+
+.mg-v2-desktop-gnb__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   min-width: 0;
-  margin-left: 24px;
+  flex-shrink: 1;
+  margin-left: auto;
+  padding-left: var(--mg-v2-now-chip-gap-sides);
+  z-index: 2;
   overflow: visible;
+}
+
+/* 공간 부족 시 축소 순서: 프로필 이름 → 검색 → 브랜드명 (시계 유지) */
+@media (max-width: 1024px) {
+  .mg-v2-desktop-gnb__brand-name {
+    max-width: min(20vw, 12ch);
+  }
+}
+
+@media (max-width: 900px) {
+  .mg-v2-desktop-gnb__brand-name {
+    display: none;
+  }
 }
 
 /* Phase 1 Set C — GNB 다크 모드 (layout + v2 text token cascade) */

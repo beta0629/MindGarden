@@ -41,8 +41,9 @@ const WellnessNotificationDetail = () => {
     try {
       const response = await StandardizedApi.get(`/api/v1/system-notifications/${id}`);
 
-      if (response && response.success) {
-        setNotification(response.data);
+      // StandardizedApi.get unwrap → 상세 DTO 직접 사용
+      if (response != null && response.success !== false) {
+        setNotification(response.data != null ? response.data : response);
       } else {
         setError('알림을 불러올 수 없습니다.');
         notificationManager.show('알림을 불러오는데 실패했습니다.', 'error');

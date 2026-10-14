@@ -1,173 +1,106 @@
-/* ConsultantMessages 스타일 - 디자인 시스템 적용 */
+/* 상담사 메시지 — 스위트 셸 안 목록 (공유 토큰만) */
 
-/* 세션/목록 로딩: 인라인 로더 영역 최소 높이 (ConsultantRecords session-load와 동일 패턴) */
-.consultant-messages__session-load,
-.consultant-messages__list-load {
+.consultant-messages__list {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: calc(var(--spacing-xl) * 6);
-}
-
-.consultant-messages-container {
-  padding: var(--spacing-lg);
-  max-width: var(--container-max-width);
-  margin: 0 auto;
-}
-
-.consultant-messages-header {
-  margin-bottom: var(--spacing-xl);
-  text-align: center;
-}
-
-.consultant-messages-title {
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--spacing-sm);
-}
-
-.consultant-messages-icon {
-  color: var(--color-primary);
-}
-
-.consultant-messages-subtitle {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+  flex-direction: column;
   margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  overflow: hidden;
 }
 
-.consultant-messages-search-container {
+.consultant-messages__list > li + li {
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
+}
+
+.consultant-messages__row {
   display: flex;
-  gap: var(--spacing-md);
-  margin-bottom: var(--spacing-xl);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.consultant-messages-search-field {
-  flex: 1;
-  min-width: calc(var(--spacing-xl) * 10);
-}
-
-.consultant-messages-search-input-container {
-  position: relative;
-}
-
-.consultant-messages-search-icon {
-  position: absolute;
-  left: var(--spacing-sm);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-text-secondary);
-}
-
-.consultant-messages-search-input {
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--mg-v2-space-1);
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) calc(var(--spacing-xl) * 2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  transition: all var(--transition-normal);
-}
-
-.consultant-messages-search-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.consultant-messages-filter-select {
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  transition: all var(--transition-normal);
-  background: white;
+  min-width: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-consultant-surface-card);
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: var(--mg-v2-color-text-primary);
   cursor: pointer;
 }
 
-.consultant-messages-filter-select:focus {
+.consultant-messages__row:hover {
+  background: var(--mg-v2-consultant-surface-stage);
+}
+
+.consultant-messages__row:focus-visible {
   outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  box-shadow: var(--mg-v2-shadow-focus);
 }
 
-.consultant-messages-loading-container {
-  text-align: center;
-  padding: var(--spacing-xxxl);
+.consultant-messages__row-head,
+.consultant-messages__row-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
 }
 
-.consultant-messages-loading-text {
-  color: var(--color-text-secondary);
-  margin-top: var(--spacing-md);
+.consultant-messages__row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
 }
 
-.consultant-messages-empty {
-  text-align: center;
-  padding: var(--spacing-xxxl);
+.consultant-messages__row-time {
+  flex-shrink: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-text-tertiary);
 }
 
-.consultant-messages-empty-icon {
-  font-size: calc(var(--font-size-xxxl) * 2);
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-lg);
+.consultant-messages__row-title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.consultant-messages-empty-title {
-  font-size: var(--font-size-xl);
-  color: var(--color-text-primary);
-  margin-bottom: var(--spacing-sm);
+.consultant-messages__row--unread .consultant-messages__row-title {
+  font-weight: var(--mg-v2-font-weight-bold);
 }
 
-.consultant-messages-empty-description {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xl);
+.consultant-messages__row-preview {
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.consultant-messages-empty-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  background: var(--color-primary);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font-size: var(--font-size-base);
-  transition: all var(--transition-normal);
+.consultant-messages__row-foot {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
 }
 
-.consultant-messages-empty-btn.mg-button.mg-button--primary {
-  background: var(--color-primary);
-  color: white;
-  border: none;
+.consultant-messages__row-counterparty {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.consultant-messages-empty-btn:hover {
-  background: var(--color-primary-dark);
+.consultant-messages__row-read {
+  flex-shrink: 0;
 }
 
-.consultant-messages-empty-btn.mg-button.mg-button--primary:hover:not(.mg-button--disabled):not(.mg-button--loading) {
-  background: var(--color-primary-dark);
-}
-
-
-/* 반응형 디자인 */
-@media (max-width: 768px) {
-  .consultant-messages-container {
-    padding: var(--spacing-md);
-  }
-  
-  .consultant-messages-search-container {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .consultant-messages-search-field {
-    min-width: 100%;
-  }
+.consultant-messages__row--unread .consultant-messages__row-read {
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
 }

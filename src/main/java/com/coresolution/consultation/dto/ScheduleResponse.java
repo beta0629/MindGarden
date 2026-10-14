@@ -83,6 +83,21 @@ public class ScheduleResponse {
     /** 일정 예약·차감 시점 매칭 ID ({@code schedules.mapping_id}). 없으면 null. */
     private Long mappingId;
 
+    /**
+     * 내담자 연계 유형({@code clients.engagement_type}) 또는 매핑 paymentTiming 파생.
+     * 관리자·상담사·상세 일정 API 공통. FE는 {@code schedule.engagementType} 만 읽는다.
+     *
+     * @since 2026-10-08
+     */
+    private String engagementType;
+
+    /**
+     * 일정 시점 매칭 {@code payment_timing}. 기관연계·당일카드 등.
+     *
+     * @since 2026-10-08
+     */
+    private String paymentTiming;
+
     /** 일정 시점 매칭 총 회기 수(단회기=1 → 캘린더 표기 없음). 없으면 null. */
     private Integer totalSessions;
 

@@ -459,4 +459,23 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             @Param("status") ConsultantClientMapping.MappingStatus status,
             @Param("targetArrow") String targetArrow,
             @Param("sourceMarker") String sourceMarker);
+
+    /**
+     * 짧은 시간창 내 동일 상담사·내담자·패키지명 매칭 중복 생성 가드.
+     *
+     * <p>관리자 매칭 배정 UI 다중 클릭/중복 제출 시 같은 tenant·상담사·내담자·packageName 조합의
+     * 매칭이 짧은 시간창(예: 30초) 안에 이미 존재하면 신규 생성을 거부하기 위한 존재 여부 조회.
+     * 서로 다른 packageName 은 이 메서드의 조건에 포함되지 않으므로 짧은 시간 안에도 허용된다.</p>
+     *
+     * @param tenantId    테넌트 ID
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId    내담자 사용자 ID
+     * @param packageName 패키지명 (trim 정규화된 값)
+     * @param createdAt   이 시각 이후(포함) 생성된 매핑만 대상
+     * @return 조건을 만족하는 매핑이 하나라도 있으면 true
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    boolean existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+            String tenantId, Long consultantId, Long clientId, String packageName, LocalDateTime createdAt);
 }

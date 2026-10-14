@@ -25,8 +25,71 @@ export const WRONG_PATH_MESSAGE = '잘못된 경로입니다. 테넌트 주소(�
 export const WRONG_PATH_REDIRECT_DELAY_MS = 1800;
 
 /**
+ * {@code REACT_APP_TENANT_HOST_ALIASES} 형식 host:subdomain[,host:subdomain...] 파싱.
+ * 백엔드 TENANT_HOST_ALIASES 와 동일 형식.
+ *
+ * @param {string|undefined|null} raw
+ * @returns {Record<string, string>} hostname(소문자) → tenant label
+ */
+export function parseTenantHostAliases(raw) {
+  const map = {};
+  if (!raw || typeof raw !== 'string') {
+    return map;
+  }
+  for (const part of raw.split(',')) {
+    const entry = typeof part === 'string' ? part.trim() : '';
+    if (!entry) {
+      continue;
+    }
+    const colon = entry.indexOf(':');
+    if (colon <= 0 || colon >= entry.length - 1) {
+      continue;
+    }
+    const host = entry.slice(0, colon).trim().toLowerCase();
+    const label = entry.slice(colon + 1).trim().toLowerCase();
+    if (!host || !label || label.includes('.')) {
+      continue;
+    }
+    map[host] = label;
+  }
+  return map;
+}
+
+/**
+ * 빌드/런타임 env 에서 호스트 별칭 맵을 읽는다 (호출 시점 평가 — 테스트에서 env 주입 가능).
+ *
+ * @returns {Record<string, string>}
+ */
+export function getTenantHostAliasMap() {
+  const raw =
+    typeof process !== 'undefined' && process.env
+      ? process.env.REACT_APP_TENANT_HOST_ALIASES
+      : '';
+  return parseTenantHostAliases(raw || '');
+}
+
+/**
+ * 호스트가 설정된 별칭이면 매핑된 테넌트 라벨, 아니면 null.
+ *
+ * @param {string} hostname 포트 포함 가능
+ * @returns {string|null}
+ */
+export function resolveTenantHostAliasLabel(hostname) {
+  if (!hostname || typeof hostname !== 'string') {
+    return null;
+  }
+  const hostWithoutPort = hostname.split(':')[0].trim().toLowerCase();
+  if (!hostWithoutPort) {
+    return null;
+  }
+  const label = getTenantHostAliasMap()[hostWithoutPort];
+  return label || null;
+}
+
+/**
  * 호스트명에서 테넌트 서브도메인 라벨 추출 (순수 함수, 윈도우 비의존).
  * e-trinity·기타 비 core-solution 호스트는 빈 문자열(테넌트 로비 아님).
+ * 별칭({@code REACT_APP_TENANT_HOST_ALIASES})은 suffix 추출보다 먼저 적용.
  *
  * @param {string} hostname 포트 포함 가능
  * @returns {string} 테넌트 라벨 또는 빈 문자열
@@ -38,6 +101,10 @@ export function extractTenantSubdomainFromHostname(hostname) {
   const hostWithoutPort = hostname.split(':')[0].trim().toLowerCase();
   if (!hostWithoutPort) {
     return '';
+  }
+  const aliasLabel = getTenantHostAliasMap()[hostWithoutPort];
+  if (aliasLabel) {
+    return aliasLabel;
   }
   for (const suffix of SUBDOMAIN_SUFFIXES) {
     if (!hostWithoutPort.endsWith(suffix)) {
@@ -69,10 +136,13 @@ export function getTenantSubdomainFromHost() {
   return extractTenantSubdomainFromHostname(hostname);
 }
 
-/** 현재 호스트가 테넌트 도메인 접미사 중 하나로 끝나는지 여부 */
+/** 현재 호스트가 테넌트 도메인 접미사 중 하나로 끝나거나 별칭 호스트인지 여부 */
 export function isOnTenantCapableDomain() {
   if (typeof globalThis === 'undefined' || !globalThis.window || !globalThis.window.location) return false;
   const hostname = globalThis.window.location.hostname.split(':')[0];
+  if (resolveTenantHostAliasLabel(hostname)) {
+    return true;
+  }
   return SUBDOMAIN_SUFFIXES.some((suffix) => hostname.endsWith(suffix));
 }
 
@@ -105,6 +175,7 @@ export function getMatchedSubdomainSuffixFromHostname(hostname) {
 /**
  * 로그아웃 등 테넌트 라벨 기준 로그인 페이지용 origin(scheme + host + port) 생성.
  * 현재 창과 동일한 프로토콜·포트·도메인 패밀리(dev.core-solution / core-solution)를 유지한다.
+ * 현재 호스트가 요청 테넌트 라벨의 별칭이면 현재 origin 을 그대로 반환한다(프로드 재조립 금지).
  * 호스트가 접미사와 맞지 않으면 목록의 마지막 항목(운영 .core-solution.co.kr)을 사용한다.
  *
  * @param {string} tenantSubdomain 테넌트 서브도메인 라벨 (예: mindgarden)
@@ -119,8 +190,16 @@ export function buildTenantAuthBaseUrl(tenantSubdomain) {
   if (typeof globalThis === 'undefined' || !globalThis.window?.location) {
     return null;
   }
-  const { protocol, hostname, port } = globalThis.window.location;
+  const { protocol, hostname, port, origin } = globalThis.window.location;
   const host = hostname.split(':')[0];
+  const aliasLabel = resolveTenantHostAliasLabel(host);
+  if (aliasLabel && aliasLabel === tenantSubdomain.trim().toLowerCase()) {
+    if (origin) {
+      return origin;
+    }
+    const portPart = port ? `:${port}` : '';
+    return `${protocol}//${host}${portPart}`;
+  }
   const matchedSuffix =
     getMatchedSubdomainSuffixFromHostname(host) ?? SUBDOMAIN_SUFFIXES.at(-1);
   const portPart = port ? `:${port}` : '';

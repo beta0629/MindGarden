@@ -14,6 +14,8 @@ import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.SessionSyncService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,10 +38,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * paid 회기 차감 경로의 sessionSequence 유일성(가용 순번) 단위 테스트.
+ * paid 회기 차감 경로의 sessionSequence 유일성 단위 테스트.
  *
- * <p>cancel→rebook 시 카운터식({@code total-rem+1})만 쓰면 형제 CONFIRMED가 유지한 순번과
- * 충돌할 수 있다. 점유 집합 기준 다음 가용 순번 부여를 검증한다.</p>
+ * <p>차감은 1회만 하고, 같은 매핑의 점유 회차는 날짜·시작 시각 순 1..N으로 다시 매긴다.
+ * 비어 있는 낮은 번호를 나중 일정이 가져가지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-09-18
@@ -106,16 +108,19 @@ class ScheduleServiceImplSessionSequenceUniquenessTest {
     }
 
     @Test
-    @DisplayName("cancel 후 rebook — 형제 CONFIRMED seq=6이 있으면 신규는 6이 아닌 가용 순번")
-    void cancelThenRebook_skipsOccupiedSequenceSix() {
-        // given: 총 10회, rem 기준으로 카운터식이 6을 내더라도(used=5, rem=5) 형제 CONFIRMED가 6 점유
+    @DisplayName("cancel 후 rebook — 더 이른 신규가 1, 늦은 형제는 2. 차감은 1회")
+    void cancelThenRebook_ordersByDateNotGap() {
         User consultant = user(consultantId);
         User client = user(clientId);
 
-        Schedule confirmedSix = consultationSchedule(nextId(), ScheduleStatus.CONFIRMED, 6);
-        Schedule cancelledFive = consultationSchedule(nextId(), ScheduleStatus.CANCELLED, null);
+        Schedule confirmedLater = consultationSchedule(nextId(), ScheduleStatus.CONFIRMED, 6);
+        confirmedLater.setDate(LocalDate.of(2026, 12, 1));
+        confirmedLater.setStartTime(LocalTime.of(19, 0));
+        Schedule cancelled = consultationSchedule(nextId(), ScheduleStatus.CANCELLED, null);
 
         Schedule rebook = consultationSchedule(nextId(), ScheduleStatus.BOOKED, null);
+        rebook.setDate(LocalDate.of(2026, 11, 1));
+        rebook.setStartTime(LocalTime.of(10, 0));
 
         ConsultantClientMapping mapping = activeMapping(10, 5, 5, consultant, client);
 
@@ -126,17 +131,15 @@ class ScheduleServiceImplSessionSequenceUniquenessTest {
         when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
                 eq(tenantId), eq(mappingId), eq(consultantId), eq(clientId),
                 eq(ScheduleStatus.occupyingStatusesForConsultationScheduleHistory())))
-                .thenReturn(List.of(confirmedSix, cancelledFive));
+                .thenReturn(List.of(confirmedLater, cancelled));
 
-        // when
         scheduleService.useSessionForSpecificMapping(
                 tenantId, mappingId, consultantId, clientId, rebook);
 
-        // then: 가용 최소 순번 1.. 중 6 제외 → 1 (CANCELLED는 점유 아님)
         assertThat(rebook.getSessionSequence()).isEqualTo(1);
-        assertThat(rebook.getSessionSequence()).isNotEqualTo(6);
+        assertThat(confirmedLater.getSessionSequence()).isEqualTo(2);
         assertThat(rebook.getMappingId()).isEqualTo(mappingId);
-        assertThat(confirmedSix.getSessionSequence()).isEqualTo(6);
+        assertThat(cancelled.getSessionSequence()).isNull();
         assertThat(mapping.getRemainingSessions()).isEqualTo(4);
         assertThat(mapping.getUsedSessions()).isEqualTo(6);
 
@@ -147,15 +150,18 @@ class ScheduleServiceImplSessionSequenceUniquenessTest {
     }
 
     @Test
-    @DisplayName("두 활성 일정이 동일 seq=6을 가질 수 없음 — rem 카운터식이 6이어도 점유 회피")
-    void twoActiveSchedules_cannotBothReceiveSequenceSix() {
+    @DisplayName("두 활성 일정은 날짜순으로 서로 다른 회차를 가진다")
+    void twoActiveSchedules_receiveDistinctChronologicalSequences() {
         User consultant = user(consultantId);
         User client = user(clientId);
 
         Schedule existingConfirmed = consultationSchedule(nextId(), ScheduleStatus.CONFIRMED, 6);
+        existingConfirmed.setDate(LocalDate.of(2026, 12, 2));
+        existingConfirmed.setStartTime(LocalTime.of(11, 0));
         Schedule newBooked = consultationSchedule(nextId(), ScheduleStatus.BOOKED, null);
+        newBooked.setDate(LocalDate.of(2026, 11, 2));
+        newBooked.setStartTime(LocalTime.of(9, 0));
 
-        // total=10, rem=5 → 구 카운터식 = 6. 이미 6이 점유되면 신규는 다른 값.
         ConsultantClientMapping mapping = activeMapping(10, 5, 5, consultant, client);
 
         when(mappingRepository.findByTenantIdAndId(eq(tenantId), eq(mappingId)))
@@ -170,28 +176,26 @@ class ScheduleServiceImplSessionSequenceUniquenessTest {
         scheduleService.useSessionForSpecificMapping(
                 tenantId, mappingId, consultantId, clientId, newBooked);
 
-        assertThat(newBooked.getSessionSequence()).isNotNull();
-        assertThat(newBooked.getSessionSequence()).isNotEqualTo(6);
-        assertThat(existingConfirmed.getSessionSequence()).isEqualTo(6);
         assertThat(newBooked.getSessionSequence()).isEqualTo(1);
+        assertThat(existingConfirmed.getSessionSequence()).isEqualTo(2);
+        assertThat(newBooked.getSessionSequence()).isNotEqualTo(existingConfirmed.getSessionSequence());
+        assertThat(mapping.getUsedSessions()).isEqualTo(6);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(4);
     }
 
     @Test
-    @DisplayName("seq 1~5 점유 + 6 빈자리 — rem 복원 후 재예약은 가용 5 또는 6이 아닌 빈 순번 중 최소")
-    void rebookAfterCancelSeqFive_assignsLowestGapNotOccupiedSix() {
+    @DisplayName("취소로 비운 번호 — 나중 일정은 1을 가져가지 않고 날짜순 다음 번호")
+    void rebookAfterCancel_laterScheduleFollowsEarlierCompleted() {
         User consultant = user(consultantId);
         User client = user(clientId);
 
-        Schedule seq1 = consultationSchedule(nextId(), ScheduleStatus.COMPLETED, 1);
-        Schedule seq2 = consultationSchedule(nextId(), ScheduleStatus.COMPLETED, 2);
-        Schedule seq3 = consultationSchedule(nextId(), ScheduleStatus.COMPLETED, 3);
-        Schedule seq4 = consultationSchedule(nextId(), ScheduleStatus.COMPLETED, 4);
-        Schedule confirmedSix = consultationSchedule(nextId(), ScheduleStatus.CONFIRMED, 6);
-        // BOOKED seq=5 취소됨 → seq null, rem 복원됨. 점유 조회에는 포함되지 않음(CANCELLED/seq null).
-
+        Schedule completed = consultationSchedule(nextId(), ScheduleStatus.COMPLETED, 2);
+        completed.setDate(LocalDate.of(2026, 10, 9));
+        completed.setStartTime(LocalTime.of(10, 0));
         Schedule rebook = consultationSchedule(nextId(), ScheduleStatus.BOOKED, null);
+        rebook.setDate(LocalDate.of(2026, 10, 12));
+        rebook.setStartTime(LocalTime.of(19, 0));
 
-        // 취소 복원 후: used=5, rem=5 → 구 카운터식=6(충돌). 가용 gap=5.
         ConsultantClientMapping mapping = activeMapping(10, 5, 5, consultant, client);
 
         when(mappingRepository.findByTenantIdAndId(eq(tenantId), eq(mappingId)))
@@ -201,14 +205,15 @@ class ScheduleServiceImplSessionSequenceUniquenessTest {
         when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
                 eq(tenantId), eq(mappingId), eq(consultantId), eq(clientId),
                 eq(ScheduleStatus.occupyingStatusesForConsultationScheduleHistory())))
-                .thenReturn(List.of(seq1, seq2, seq3, seq4, confirmedSix));
+                .thenReturn(List.of(completed));
 
         scheduleService.useSessionForSpecificMapping(
                 tenantId, mappingId, consultantId, clientId, rebook);
 
-        assertThat(rebook.getSessionSequence()).isEqualTo(5);
-        assertThat(rebook.getSessionSequence()).isNotEqualTo(6);
-        assertThat(confirmedSix.getSessionSequence()).isEqualTo(6);
+        assertThat(completed.getSessionSequence()).isEqualTo(1);
+        assertThat(rebook.getSessionSequence()).isEqualTo(2);
+        assertThat(mapping.getUsedSessions()).isEqualTo(6);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(4);
     }
 
     private ConsultantClientMapping activeMapping(

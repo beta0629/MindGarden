@@ -33,7 +33,9 @@ import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminMappingCreateDuplicateWindowConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.AdminListPageResult;
@@ -45,6 +47,7 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationDayItemResponse;
 import com.coresolution.consultation.dto.WeeklyReservationStatusItemResponse;
@@ -909,6 +912,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest dto) {
+        return createMappingInternal(dto, false);
+    }
+
+    @Override
+    public ConsultantClientMapping createMappingFromAdmin(ConsultantClientMappingCreateRequest dto) {
+        // 동시 관리자 요청을 내담자 단위로 직렬화: 트랜잭션의 첫 조회로 내담자 users 행을 FOR UPDATE 잠금.
+        String tenantId = getTenantId();
+        userRepository.lockClientRowForMappingCreate(tenantId, dto.getClientId());
+        return createMappingInternal(dto, true);
+    }
+
+    /**
+     * 매칭 생성 공통 처리.
+     *
+     * @param dto                  매칭 생성 요청
+     * @param applyDuplicateWindowGuard 짧은 시간창 중복 생성 가드 적용 여부.
+     *                             {@code true}이면 호출 전에 {@link #createMappingFromAdmin}에서
+     *                             내담자 행 잠금이 선행되어야 레이스 없이 직렬화된다.
+     * @return 생성된 매칭
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    private ConsultantClientMapping createMappingInternal(ConsultantClientMappingCreateRequest dto,
+            boolean applyDuplicateWindowGuard) {
         // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, dto.getConsultantId())
@@ -1009,7 +1036,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
-        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName()
+        // 요청 정규화: packageName trim. 비어 있으면 기존 DEFAULT_PACKAGE_NAME 처리 유지.
+        String normalizedPackageName = dto.getPackageName() != null ? dto.getPackageName().trim() : null;
+        if (normalizedPackageName != null && normalizedPackageName.isEmpty()) {
+            normalizedPackageName = null;
+        }
+        mapping.setPackageName(normalizedPackageName != null ? normalizedPackageName
                 : AdminServiceUserFacingMessages.DEFAULT_PACKAGE_NAME);
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
         String tenantIdForPayment = getTenantId();
@@ -1034,6 +1066,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 내담자 등록 유형이 SSOT. 타기관이면 기관연계만, 일반이면 회기·가예약만.
         mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
                 tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
+
+        // 짧은 시간창 중복 생성 가드: 관리자 수동 배정 경로(createMappingFromAdmin)에만 적용한다.
+        // 결제 확정(PaymentServiceImpl) 등 기존 호출자는 이 가드로 부분 성공(결제는 성공, 매칭만 거부)이
+        // 발생하지 않도록 미적용 상태를 유지한다. 같은 tenant + 상담사 + 내담자 + 동일 packageName
+        // (trim 정규화) 매칭이 시간창(기본 30초) 안에 이미 있으면 신규 생성을 거부한다.
+        // 서로 다른 packageName 은 허용.
+        if (applyDuplicateWindowGuard) {
+            LocalDateTime duplicateWindowStart = LocalDateTime.now()
+                    .minusSeconds(AdminMappingCreateDuplicateWindowConstants.MAPPING_CREATE_DUPLICATE_WINDOW_SECONDS);
+            boolean duplicateWithinWindow = mappingRepository
+                    .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                            tenantId, consultant.getId(), clientUser.getId(), mapping.getPackageName(),
+                            duplicateWindowStart);
+            if (duplicateWithinWindow) {
+                throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
+            }
+        }
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -4226,6 +4275,72 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * 병합 B 를 되돌릴 때 A 몫 환불액. B 회기를 뺀 A 회기·원래 회기로 {@link #calculateRefundableAmount} 를 쓴다.
+     *
+     * @param mapping 대상 A
+     * @param addonRefund 되돌리기로 판정된 B
+     * @param refundSessionsIncludingAddon 환불 회기 (B 회기 포함)
+     * @param alreadyRefunded 이미 환불한 A 금액 (활성 부분 환불 EXPENSE 합)
+     * @return A 몫 환불액 (0 이상)
+     */
+    private static long calculateTargetOnlyRefundableAmount(ConsultantClientMapping mapping,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund, int refundSessionsIncludingAddon,
+            long alreadyRefunded) {
+        int addonSessions = addonRefund.addonSessions();
+        int targetRefundSessions = refundSessionsIncludingAddon - addonSessions;
+        if (targetRefundSessions <= 0) {
+            return 0L;
+        }
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        return calculateRefundableAmount(mapping.getPackagePrice(), total - addonSessions,
+                resolveRefundBasisOriginalTotalSessions(mapping, addonRefund) - addonSessions,
+                targetRefundSessions, alreadyRefunded);
+    }
+
+    /**
+     * 환불 단가 분모로 쓰는 원래 총회기. 앞선 부분 환불로 이미 되돌린 병합 B 회기는 A 회기가 아니므로 뺀다.
+     *
+     * @param mapping 대상 A
+     * @param addonRefund 병합 B 판정 결과
+     * @return 원래 총회기 (현재 총회기 이상)
+     */
+    private static int resolveRefundBasisOriginalTotalSessions(ConsultantClientMapping mapping,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund) {
+        int total = mapping.getTotalSessions() != null ? mapping.getTotalSessions() : 0;
+        int reversed = addonRefund != null ? addonRefund.reversedAddonSessions() : 0;
+        return Math.max(total, resolveOriginalTotalSessions(mapping) - reversed);
+    }
+
+    /**
+     * 병합 B 되돌리기 판정. 판정은 {@link ConsultationDepositIncomeLedger#resolveMergedAddonRefund} 한 곳에서만 한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mapping 행 잠금된 A
+     * @return 판정 결과
+     */
+    private ConsultationDepositIncomeLedger.MergedAddonRefund resolveMergedAddonRefund(
+            String tenantId, ConsultantClientMapping mapping) {
+        return ConsultationDepositIncomeLedger.resolveMergedAddonRefund(financialTransactionRepository, tenantId,
+                mapping, findPairMappings(mapping), resolveOriginalTotalSessions(mapping));
+    }
+
+    /**
+     * 같은 테넌트·상담사·내담자 쌍의 매핑 목록.
+     *
+     * @param mapping 기준 매핑
+     * @return 쌍 매핑 (없으면 빈 목록)
+     */
+    private List<ConsultantClientMapping> findPairMappings(ConsultantClientMapping mapping) {
+        if (mapping == null || mapping.getConsultant() == null || mapping.getClient() == null) {
+            return List.of();
+        }
+        List<ConsultantClientMapping> found = mappingRepository.findByTenantIdAndConsultantAndClient(
+                mapping.getTenantId() != null ? mapping.getTenantId() : getTenantId(),
+                mapping.getConsultant(), mapping.getClient());
+        return found != null ? found : List.of();
+    }
+
+    /**
      * 부분 환불 차감 전 원래 총 회기.
      *
      * <p>원래 회기 수를 저장하는 컬럼은 없다. {@link #partialRefundMapping} 은 totalSessions 를 줄이는
@@ -5414,12 +5529,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return rows;
     }
     
-     /**
-     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+    /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링·선생님 색 팔레트용).
+     *
+     * <p>색 순번({@code getTeacherColor}) SSOT를 위해 <strong>비활성 상담사를 포함한다</strong>.
+     * 제외 기준은 {@code isDeleted = false} 만이다(삭제·소프트삭제 제외).
+     * Consultant/User에 퇴사 전용 상태 필드가 없으므로 퇴사는 {@code isDeleted}로만 배제한다.
+     * {@code isActive} 필드는 응답 Map에 유지되어 필터·칩·범례가 동일 배열로 색을 매기면서
+     * UI에서 활성만 표시할 수 있다.</p>
+     *
+     * @param date 휴무 조회 기준일 (yyyy-MM-dd)
+     * @return 상담사 Map 목록 (비활성 포함, isActive 유지)
      */
     @Override
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
-        log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
+        log.info("휴무 정보를 포함한 상담사 목록 조회(비활성 포함·삭제 제외): date={}", date);
         
         // 표준화 2025-12-05: tenantId 필터링 필수
         String tenantId = getTenantIdOrNull();
@@ -5428,7 +5552,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_IN_CONTEXT);
         }
         log.info("✅ tenantId 확인: {}", tenantId);
-        List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
+        // 색 팔레트: 비활성 포함 / 삭제(isDeleted=true)만 제외. findActive* 사용 금지(#1613).
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
 
@@ -5759,32 +5884,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             .collect(Collectors.toList());
     }
 
-    /**
-     * with-mapping-info 가시 필터에서 제외할 lifecycle (DELETED_BY_ADMIN + terminal).
-     */
-    private static final List<LifecycleState> CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES = List.of(
-            LifecycleState.DELETED_BY_ADMIN,
-            LifecycleState.ANONYMIZED,
-            LifecycleState.HARD_DELETED);
-
-    /**
-     * 통합 내담자 데이터(with-mapping-info) 목록에 노출할 내담자만 포함.
-     * DELETED_BY_ADMIN / ANONYMIZED / HARD_DELETED 는 삭제·종료 전용 화면으로 분리.
-     */
-    private boolean isVisibleInClientMappingList(User user) {
-        if (user == null) {
-            return false;
-        }
-        if (Boolean.FALSE.equals(user.getIsActive()) || Boolean.TRUE.equals(user.getIsDeleted())) {
-            return false;
-        }
-        LifecycleState state = user.getLifecycleState();
-        if (state == null) {
-            return true;
-        }
-        return state != LifecycleState.DELETED_BY_ADMIN && !state.isTerminal();
-    }
-
     private static boolean isSummaryClientsWithMappingView(String view) {
         return view != null
                 && ("summary".equalsIgnoreCase(view.trim())
@@ -5805,7 +5904,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
             String tenantId = getTenantId();
             List<User> clientUsers = userRepository.findByRole(tenantId, UserRole.CLIENT).stream()
-                    .filter(this::isVisibleInClientMappingList)
+                    .filter(ClientVisibilityPolicy::isVisible)
                     .collect(Collectors.toList());
             log.info("🔍 내담자 수: {}", clientUsers.size());
 
@@ -5829,7 +5928,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             String tenantId = getTenantId();
             Pageable safePageable = pageable != null ? pageable : org.springframework.data.domain.PageRequest.of(0, 20);
             Page<User> clientPage = userRepository.findVisibleClientsForMappingList(
-                    tenantId, UserRole.CLIENT, CLIENT_MAPPING_LIST_EXCLUDED_LIFECYCLES, safePageable);
+                    tenantId, UserRole.CLIENT, ClientVisibilityPolicy.EXCLUDED_LIFECYCLES, safePageable);
             List<User> clientUsers = clientPage.getContent();
             log.info("🔍 통합 내담자 페이지 조회 view={}, page={}, size={}, total={}",
                     summary ? "summary" : "full",
@@ -8027,11 +8126,27 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         final boolean unusedFullVoid = preDepositVoid
                 || additionalPackageUnused
                 || (totalSessions > 0 && refundedSessions == totalSessions && alreadyPartialRefunded <= 0);
-        long refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
-                resolveOriginalTotalSessions(mapping), refundedSessions, alreadyPartialRefunded);
+        // 부분 사용 종료: 병합 B 회기를 쓰지 않았으면 B 수입 취소 + 환불액에 B 가격 포함.
+        // A 몫은 B 회기를 뺀 A 회기로 계산하고, 전표(EXPENSE)는 A 몫만 남긴다(B 는 INCOME 취소로 이미 빠짐).
+        ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund = unusedFullVoid
+                ? ConsultationDepositIncomeLedger.MergedAddonRefund.none()
+                : resolveMergedAddonRefund(tenantId, mapping);
+        long ledgerRefundAmount;
+        long refundAmount;
+        if (addonRefund.reversible()) {
+            ledgerRefundAmount = calculateTargetOnlyRefundableAmount(
+                    mapping, addonRefund, refundedSessions, alreadyPartialRefunded);
+            refundAmount = ledgerRefundAmount + addonRefund.addonIncomeAmount();
+        } else {
+            ledgerRefundAmount = calculateRefundableAmount(mapping.getPackagePrice(), totalSessions,
+                    resolveRefundBasisOriginalTotalSessions(mapping, addonRefund), refundedSessions,
+                    alreadyPartialRefunded);
+            refundAmount = ledgerRefundAmount;
+        }
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
         if (unusedFullVoid || refundAmount > 0L) {
-            sendRefundToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid);
+            sendRefundToErp(mapping, refundedSessions, refundAmount, ledgerRefundAmount, reason, unusedFullVoid,
+                    addonRefund);
         } else {
             log.info("환불할 금액 없음 — 환불 전표 생략: MappingID={}, remaining={}, alreadyPartialRefunded={}",
                     id, refundedSessions, alreadyPartialRefunded);
@@ -8090,6 +8205,73 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 매칭 강제 종료(취소) 완료: ID={}, status={}, paymentStatus={}, 환불 회기={}, 환불 금액={}, 상담사={}, 내담자={}", 
                 id, mapping.getStatus(), mapping.getPaymentStatus(), refundedSessions, refundAmount,
                 mapping.getConsultant().getName(), mapping.getClient().getName());
+    }
+
+    /**
+     * 매칭 상태-only 종료 — {@link ConsultantClientMapping#terminate(String, String)} 재사용.
+     * 환불·remaining/used·paymentStatus·ERP 변경 금지. 이미 종료면 멱등 성공.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MappingStatusCloseResponse closeMappingStatusOnly(Long id, String reason, String terminatedBy) {
+        if (!StringUtils.hasText(reason)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_REASON_REQUIRED);
+        }
+        String trimmedReason = reason.trim();
+        String actor = StringUtils.hasText(terminatedBy) ? terminatedBy.trim() : "ADMIN";
+
+        log.info("🔧 매칭 상태-only 종료 시작: ID={}, 사유={}, by={}", id, trimmedReason, actor);
+        String tenantId = getTenantId();
+
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
+
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
+            log.info("ℹ️ 매칭 상태-only 종료 멱등: ID={}, status={}", id, mapping.getStatus());
+            return MappingStatusCloseResponse.builder()
+                    .mappingId(id)
+                    .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                    .alreadyClosed(true)
+                    .cancelledScheduleCount(0)
+                    .remainingSessions(mapping.getRemainingSessions())
+                    .usedSessions(mapping.getUsedSessions())
+                    .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                    .build();
+        }
+
+        mapping.terminate(trimmedReason, actor);
+
+        String nowLabel = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String statusCloseNote = String.format(
+                AdminServiceUserFacingMessages.NOTES_STATUS_CLOSE_LINE_FMT,
+                nowLabel,
+                trimmedReason,
+                actor);
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        mapping.setNotes(currentNotes.isEmpty() ? statusCloseNote : currentNotes + "\n" + statusCloseNote);
+
+        mappingRepository.save(mapping);
+
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMappingFailClosed(
+                mapping, tenantId, AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE);
+
+        log.info("✅ 매칭 상태-only 종료 완료: ID={}, status={}, remaining={}, used={}, paymentStatus={}, 취소일정={}건",
+                id, mapping.getStatus(), mapping.getRemainingSessions(), mapping.getUsedSessions(),
+                mapping.getPaymentStatus(), cancelledScheduleCount);
+
+        return MappingStatusCloseResponse.builder()
+                .mappingId(id)
+                .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                .alreadyClosed(false)
+                .cancelledScheduleCount(cancelledScheduleCount)
+                .remainingSessions(mapping.getRemainingSessions())
+                .usedSessions(mapping.getUsedSessions())
+                .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                .build();
     }
 
     @Override
@@ -8367,6 +8549,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE.equals(reason)) {
             return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL;
         }
+        if (AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE.equals(reason)) {
+            return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_STATUS_CLOSE_AUTO_CANCEL;
+        }
         return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
     }
 
@@ -8570,14 +8755,34 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     mapping.getPackagePrice(), alreadyPartialRefunded));
         }
         
-        if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
+        // 병합 B 회기가 전부 남아 있고 이번 환불이 B 회기를 모두 덮으면 B 수입 취소 + 환불액에 B 가격 포함.
+        // 덮지 못하면(환불 회기 < B 회기) B 를 쪼갤 수 없으므로 현행 계산을 유지한다.
+        ConsultationDepositIncomeLedger.MergedAddonRefund resolvedAddon = resolveMergedAddonRefund(tenantId, mapping);
+        ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund =
+                resolvedAddon.reversible() && refundSessions >= resolvedAddon.addonSessions()
+                        ? resolvedAddon
+                        : ConsultationDepositIncomeLedger.MergedAddonRefund.none();
+        long ledgerRefundAmount = 0L;
+        if (addonRefund.reversible()) {
+            ledgerRefundAmount = calculateTargetOnlyRefundableAmount(
+                    mapping, addonRefund, refundSessions, alreadyPartialRefunded);
+            if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+                ledgerRefundAmount = Math.min(ledgerRefundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+            }
+            refundAmount = ledgerRefundAmount + addonRefund.addonIncomeAmount();
+            calculationMethod = "병합 추가 패키지 미사용 포함";
+            log.info("💰 병합 추가 패키지 미사용 환불: addonIds={}, addon회기={}, addon금액={}, A몫={}",
+                    addonRefund.addonMappingIds(), addonRefund.addonSessions(),
+                    addonRefund.addonIncomeAmount(), ledgerRefundAmount);
+        } else if (lastAddedSessions > 0 && lastAddedPrice > 0 && refundSessions <= lastAddedSessions) {
             refundAmount = (lastAddedPrice * refundSessions) / lastAddedSessions;
             calculationMethod = "최근 추가 패키지 기준";
             log.info("💰 최근 추가 패키지 기준 환불: 추가가격={}, 추가회기={}, 환불회기={}, 환불금액={}", 
                     lastAddedPrice, lastAddedSessions, refundSessions, refundAmount);
         } else if (mapping.getPackagePrice() != null && mapping.getTotalSessions() > 0) {
             refundAmount = calculateRefundableAmount(mapping.getPackagePrice(), mapping.getTotalSessions(),
-                    resolveOriginalTotalSessions(mapping), refundSessions, alreadyPartialRefunded);
+                    resolveRefundBasisOriginalTotalSessions(mapping, resolvedAddon), refundSessions,
+                    alreadyPartialRefunded);
             calculationMethod = "전체 패키지 비례 계산";
             log.info("💰 전체 패키지 비례 계산: 전체가격={}, 전체회기={}, 환불회기={}, 환불금액={}", 
                     mapping.getPackagePrice(), mapping.getTotalSessions(), refundSessions, refundAmount);
@@ -8585,9 +8790,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.warn("❌ 환불 금액 계산 불가: 패키지 가격 정보 없음");
             throw new RuntimeException(AdminServiceUserFacingMessages.MSG_REFUND_AMOUNT_CALCULATION_IMPOSSIBLE);
         }
-        if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
-            // 누적 환불(기환불 + 이번 환불)은 결제액을 넘지 않는다 — 계산 방식과 무관한 최종 상한
-            refundAmount = Math.min(refundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+        if (!addonRefund.reversible()) {
+            if (mapping.getPackagePrice() != null && mapping.getPackagePrice() > 0) {
+                // 누적 환불(기환불 + 이번 환불)은 결제액을 넘지 않는다 — 계산 방식과 무관한 최종 상한
+                refundAmount = Math.min(refundAmount, mapping.getPackagePrice() - alreadyPartialRefunded);
+            }
+            ledgerRefundAmount = refundAmount;
         }
         
         log.info("💰 부분 환불 금액 계산 완료: 환불회기={}, 계산방식={}, 환불금액={}원", 
@@ -8595,11 +8803,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // 부분환불: ERP 페이로드 전송 + 부분 환불 전표(단일 write + 멱등)를 매칭 변경과 같은 트랜잭션에서 기록한다.
         // 전표를 기록하지 못하면 회기 차감까지 롤백(fail-closed). 전액 CONSULTATION_REFUND FT 는 생성하지 않음.
+        // 병합 B 를 되돌리면 B INCOME 을 같은 트랜잭션에서 취소하고 EXPENSE 는 A 몫만 남긴다.
         try {
             if (!sendRefundPayloadToErp(mapping, refundSessions, refundAmount, reason, false)) {
                 throw new IllegalStateException("ERP 부분 환불 페이로드 전송 실패");
             }
-            createPartialConsultationRefundTransaction(mapping, refundSessions, refundAmount, reason);
+            int addonCancelled = ConsultationDepositIncomeLedger.cancelMergedAddonIncome(
+                    financialTransactionService, addonRefund);
+            if (addonCancelled > 0) {
+                log.info("🛑 부분 환불 — 병합 추가 패키지 INCOME 취소: MappingID={}, addonIds={}, CANCELLED={}건",
+                        id, addonRefund.addonMappingIds(), addonCancelled);
+            }
+            createPartialConsultationRefundTransaction(mapping, refundSessions, ledgerRefundAmount, reason);
         } catch (RuntimeException e) {
             log.error("❌ 부분 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
                     id, e.getClass().getSimpleName(), e);
@@ -9626,29 +9841,40 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      *       EXPENSE도 스킵되고, 이미 소진된 INCOME은 취소하지 않는다.</li>
      * </ul>
      *
-     * @param mapping           대상 매핑
-     * @param refundedSessions  환불 회기 수
-     * @param refundAmount      환불 금액
-     * @param reason            사유
-     * @param unusedFullVoid    미사용 전액 무효 여부
+     * @param mapping            대상 매핑
+     * @param refundedSessions   환불 회기 수
+     * @param refundAmount       내담자 환불 금액 (병합 B 되돌림 포함)
+     * @param ledgerRefundAmount EXPENSE 로 남길 금액 (A 몫)
+     * @param reason             사유
+     * @param unusedFullVoid     미사용 전액 무효 여부
+     * @param addonRefund        병합 B 되돌리기 판정
      */
     private void sendRefundToErp(ConsultantClientMapping mapping, int refundedSessions, long refundAmount,
-            String reason, boolean unusedFullVoid) {
+            long ledgerRefundAmount, String reason, boolean unusedFullVoid,
+            ConsultationDepositIncomeLedger.MergedAddonRefund addonRefund) {
         try {
             if (!sendRefundPayloadToErp(mapping, refundedSessions, refundAmount, reason, unusedFullVoid)) {
                 throw new IllegalStateException("ERP 환불 페이로드 전송 실패");
             }
             log.info("✅ ERP 환불 데이터 전송 성공: MappingID={}, Amount={}", mapping.getId(), refundAmount);
             if (unusedFullVoid) {
-                int cancelled = ConsultationDepositIncomeLedger.cancelPostedMappingSlotIncome(
-                        financialTransactionService, mapping.getId());
+                int cancelled = ConsultationDepositIncomeLedger.cancelPostedIncomeForTerminatedMapping(
+                        financialTransactionService, mapping, findPairMappings(mapping));
                 log.info("🛑 미사용 전액 무효: MappingID={}, CANCELLED INCOME={}건, EXPENSE 환불 스킵",
                         mapping.getId(), cancelled);
                 return;
             }
-            createConsultationRefundTransaction(mapping, refundedSessions, refundAmount, reason);
-            log.info("💚 환불 거래 자동 생성 완료: MappingID={}, RefundAmount={}",
-                    mapping.getId(), refundAmount);
+            int addonCancelled = ConsultationDepositIncomeLedger.cancelMergedAddonIncome(
+                    financialTransactionService, addonRefund);
+            if (addonCancelled > 0) {
+                log.info("🛑 병합 추가 패키지 미사용 — INCOME 취소: MappingID={}, addonIds={}, CANCELLED={}건",
+                        mapping.getId(), addonRefund.addonMappingIds(), addonCancelled);
+            }
+            if (ledgerRefundAmount > 0L) {
+                createConsultationRefundTransaction(mapping, refundedSessions, ledgerRefundAmount, reason);
+                log.info("💚 환불 거래 자동 생성 완료: MappingID={}, LedgerRefundAmount={}, RefundAmount={}",
+                        mapping.getId(), ledgerRefundAmount, refundAmount);
+            }
         } catch (RuntimeException e) {
             log.error("❌ 환불 전표 기록 실패(매칭 변경 롤백): MappingID={}, cause={}",
                     mapping.getId(), e.getClass().getSimpleName(), e);

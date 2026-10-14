@@ -2,8 +2,13 @@ import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
+import StandardizedApi from '../../../utils/standardizedApi';
+import { normalizeApiListPayload } from '../../../utils/apiResponseNormalize';
 import './ConsultantTransferHistory.css';
 import { useTranslation } from 'react-i18next';
+
+const API_ADMIN_CLIENT_TRANSFER_HISTORY = (clientId) =>
+  `/api/v1/admin/clients/${clientId}/transfer-history`;
 
 /**
  * 상담사 변경 이력 컴포넌트
@@ -35,13 +40,12 @@ const ConsultantTransferHistory = ({ clientId, isOpen, onClose }) => {
     setError('');
     
     try {
-      const response = await fetch(`/api/admin/clients/${clientId}/transfer-history`);
-      const data = await response.json();
-      
-      if (data.success) {
-        setTransferHistory(data.data);
+      // StandardizedApi.get unwrap → 이력 배열 직접 수용
+      const payload = await StandardizedApi.get(API_ADMIN_CLIENT_TRANSFER_HISTORY(clientId));
+      if (payload != null && payload.success !== false) {
+        setTransferHistory(normalizeApiListPayload(payload));
       } else {
-        setError(data.message || '이력 조회에 실패했습니다.');
+        setError(payload?.message || '이력 조회에 실패했습니다.');
       }
     } catch (error) {
       console.error('상담사 변경 이력 로드 실패:', error);

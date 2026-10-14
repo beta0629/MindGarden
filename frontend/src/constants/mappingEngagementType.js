@@ -34,10 +34,48 @@ export const MAPPING_ENGAGEMENT_BADGE_TYPES = Object.freeze([
 
 export const ENGAGEMENT_TYPE_BADGE_TEST_ID = 'engagement-type-badge';
 export const ENGAGEMENT_TYPE_BADGE_CLASS = 'mg-engagement-type-badge';
+/** 좁은 칩 wrap 시 의도된 분리점 조각. 각 조각은 nowrap. */
+export const ENGAGEMENT_TYPE_BADGE_SEG_CLASS = 'mg-engagement-type-badge__seg';
+
+/** 라벨을 가운데 분리할 최소 길이. 바우처(3) 등은 한 조각 유지. */
+const ENGAGEMENT_LABEL_SPLIT_MIN_LENGTH = 4;
 
 const INSTITUTION_LINK_VALUE = MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK;
 const VOUCHER_VALUE = MAPPING_ENGAGEMENT_TYPE.VOUCHER;
 const SESSION_TICKET_VALUE = MAPPING_ENGAGEMENT_TYPE.SESSION_TICKET;
+
+/**
+ * 배지 라벨을 의도된 분리점(length/2)으로 나눈다. 한국어 리터럴을 새로 쓰지 않고
+ * {@link MAPPING_ENGAGEMENT_TYPE_LABELS} 에서만 파생한다.
+ * INSTITUTION_LINK(기관연계) → ["기관","연계"]. 짧은 라벨은 한 조각.
+ *
+ * @param {string|null|undefined} typeOrSource engagement type 또는 라벨 문자열
+ * @returns {string[]}
+ */
+export function getEngagementTypeLabelSegments(typeOrSource) {
+  let label = null;
+  if (typeof typeOrSource === 'string') {
+    const asType = normalizeEngagementTypeValue(typeOrSource);
+    if (asType && MAPPING_ENGAGEMENT_TYPE_LABELS[asType]) {
+      label = MAPPING_ENGAGEMENT_TYPE_LABELS[asType];
+    } else if (Object.values(MAPPING_ENGAGEMENT_TYPE_LABELS).includes(typeOrSource)) {
+      label = typeOrSource;
+    }
+  } else {
+    const resolved = resolveMappingEngagementType(typeOrSource);
+    if (resolved && MAPPING_ENGAGEMENT_TYPE_LABELS[resolved]) {
+      label = MAPPING_ENGAGEMENT_TYPE_LABELS[resolved];
+    }
+  }
+  if (label == null || label === '') {
+    return [];
+  }
+  if (label.length < ENGAGEMENT_LABEL_SPLIT_MIN_LENGTH) {
+    return [label];
+  }
+  const mid = Math.floor(label.length / 2);
+  return [label.slice(0, mid), label.slice(mid)];
+}
 
 /**
  * 계약 유형 문자열을 정규화한다. rem 은 보지 않는다.

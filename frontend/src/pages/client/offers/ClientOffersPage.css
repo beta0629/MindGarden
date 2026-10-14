@@ -1,0 +1,23 @@
+/* 내담자 「/client/offers」 — 시안 B. 기존 몰(ClientMall.css) 클래스 위에 지정 상품 전용 규칙만 더한다. 값은 var() 만 */
+.client-offers__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mg-mall-offer-card-gap); }
+.client-offers__cell { display: flex; min-inline-size: 0; }
+.client-offers__cell > .client-mall-card { flex: 1 1 auto; }
+.client-offers__card[aria-checked="true"] { background: var(--cs-slate-50); border-color: var(--client-web-ink); }
+.client-offers__card-head { display: flex; align-items: center; justify-content: space-between; gap: var(--mg-v2-space-2); }
+.client-offers__selected-tag { display: inline-flex; align-items: center; gap: var(--mg-v2-space-1); color: var(--client-web-ink); font-size: var(--mg-v2-font-size-caption); font-weight: var(--mg-v2-font-weight-semibold); }
+.client-offers__orig { display: flex; align-items: baseline; gap: var(--mg-v2-space-2); margin: 0; color: var(--client-web-mute); font-size: var(--mg-v2-font-size-caption); }
+.client-offers__orig s { text-decoration-thickness: var(--mg-v2-border-width-thin); }
+.client-offers__off { margin: 0; color: var(--client-web-ink); font-weight: var(--mg-v2-font-weight-semibold); font-size: var(--mg-v2-font-size-caption); }
+.client-offers__select[aria-pressed="true"] { background: var(--cs-slate-100); }
+.client-offers__icon { inline-size: var(--mg-icon-size-sm); block-size: var(--mg-icon-size-sm); flex: none; }
+.client-offers__list-head { color: var(--client-web-mute); font-size: var(--mg-v2-font-size-caption); }
+.client-offers__notice { display: flex; align-items: flex-start; gap: var(--mg-v2-space-2); padding: var(--mg-v2-space-3) var(--mg-v2-space-4); border: var(--mg-v2-border-width-thin) dashed var(--cs-slate-400); border-radius: var(--mg-v2-radius-lg); background: var(--cs-slate-50); color: var(--client-web-ink); }
+.client-offers__notice-body { display: flex; flex-direction: column; gap: var(--mg-v2-space-1); }
+.client-offers__notice-title { font-weight: var(--mg-v2-font-weight-bold); }
+.client-offers__bar-amount { font-size: var(--mg-v2-font-size-h2); font-weight: var(--mg-v2-font-weight-bold); font-variant-numeric: tabular-nums; line-height: var(--mg-v2-font-line-height-heading); white-space: nowrap; }
+.client-offers__bar-amount--empty { color: var(--client-web-mute); font-weight: var(--mg-v2-font-weight-regular); }
+.client-offers__state { display: flex; flex-direction: column; align-items: center; gap: var(--mg-v2-space-3); min-block-size: var(--mg-state-min-height); justify-content: center; text-align: center; }
+@media (max-width: 768px) {
+  .client-offers__grid { grid-template-columns: minmax(0, 1fr); }
+  .client-offers__select { min-block-size: var(--mg-v2-touch-target-min); }
+}

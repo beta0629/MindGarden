@@ -1,14 +1,18 @@
 /**
- * 상담사 전용 상담일지 검색 및 필터 (Molecule/Organism)
- * 
+ * 상담사 전용 상담일지 검색 및 상태 필터 — 검색 + slate 칩 단일 툴바
+ *
  * @author Core Solution
+ * @updated 2026-10-07 — 상담사 스위트 툴바(ConsultantSearchField + ConsultantFilterChips)
  */
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
-import MGButton from '../../common/MGButton';
-import './ConsultantRecordFilterBlock.css';
+import { useTranslation } from 'react-i18next';
+import ConsultantSearchField from '../suite/ConsultantSearchField';
+import ConsultantFilterChips from '../suite/ConsultantFilterChips';
+import { CONSULTANT_SUITE_CLASS, CONSULTANT_SUITE_NS } from '../../../constants/consultantSuite';
+
+const SEARCH_INPUT_ID = 'consultant-records-search';
 
 const ConsultantRecordFilterBlock = ({
   searchTerm,
@@ -17,42 +21,28 @@ const ConsultantRecordFilterBlock = ({
   onFilterStatusChange,
   statusOptions
 }) => {
-  return (
-    <div className="consultant-record-filter">
-      <div className="consultant-record-filter__search-wrap">
-        <i className="bi bi-search consultant-record-filter__search-icon" />
-        <input
-          type="text"
-          className="consultant-record-filter__search-input"
-          placeholder="내담자명, 제목, 내용으로 검색..."
-          value={searchTerm}
-          onChange={(e) => onSearchTermChange(e.target.value)}
-        />
-      </div>
+  const { t } = useTranslation(CONSULTANT_SUITE_NS);
+  const chipItems = statusOptions.map((option) => ({
+    key: String(option.value),
+    label: String(option.label)
+  }));
 
-      <div className="consultant-record-filter__button-group">
-        {statusOptions.map(option => {
-          const isActive = filterStatus === option.value;
-          return (
-            <MGButton
-              key={option.value}
-              type="button"
-              onClick={() => onFilterStatusChange(option.value)}
-              preventDoubleClick={false}
-              variant={isActive ? 'primary' : 'outline'}
-              className={`${buildErpMgButtonClassName({
-                variant: isActive ? 'primary' : 'outline',
-                size: 'md',
-                loading: false,
-                className: `mg-v2-badge ${isActive ? 'mg-v2-badge--primary' : 'mg-v2-badge--default'}`
-              })} consultant-record-filter__button ${isActive ? 'consultant-record-filter__button--active' : 'consultant-record-filter__button--inactive'}`}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            >
-              {option.label}
-            </MGButton>
-          );
-        })}
-      </div>
+  return (
+    <div className={CONSULTANT_SUITE_CLASS.TOOLBAR}>
+      <ConsultantSearchField
+        id={SEARCH_INPUT_ID}
+        value={searchTerm}
+        onChange={onSearchTermChange}
+        placeholder={t('records.searchPlaceholder')}
+        ariaLabel={t('records.searchAria')}
+      />
+      <ConsultantFilterChips
+        items={chipItems}
+        activeKey={String(filterStatus)}
+        onChange={onFilterStatusChange}
+        ariaLabel={t('records.statusFilterAria')}
+        testIdPrefix="consultant-records-filter"
+      />
     </div>
   );
 };
@@ -62,7 +52,10 @@ ConsultantRecordFilterBlock.propTypes = {
   onSearchTermChange: PropTypes.func.isRequired,
   filterStatus: PropTypes.string.isRequired,
   onFilterStatusChange: PropTypes.func.isRequired,
-  statusOptions: PropTypes.array.isRequired
+  statusOptions: PropTypes.arrayOf(PropTypes.shape({
+    value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    label: PropTypes.string.isRequired
+  })).isRequired
 };
 
 export default ConsultantRecordFilterBlock;

@@ -3,6 +3,7 @@ package com.coresolution.consultation.config;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
 import lombok.Data;
 
 /**
@@ -47,6 +48,31 @@ public class MindgardenSecurityProperties {
          * 동일 이메일당 하루(서버 {@link java.time.LocalDate}, 시스템 타임존) 최대 발송 성공 횟수
          */
         private int emailVerificationDailyLimit = 10;
+
+        /**
+         * 이메일당 인증 코드 검증 실패 허용 횟수. 도달하면 코드를 폐기하고 {@link #verifyLockMinutes} 동안 잠근다.
+         */
+        private int verifyMaxAttemptsPerEmail = 5;
+
+        /**
+         * 이메일 단위 잠금 시간(분)
+         */
+        private int verifyLockMinutes = 10;
+
+        /**
+         * IP당 인증 코드 검증 실패 허용 횟수({@link #ipWindowMinutes} 구간)
+         */
+        private int verifyMaxFailuresPerIp = 20;
+
+        /**
+         * IP당 인증 코드 발송 요청 허용 횟수({@link #ipWindowMinutes} 구간)
+         */
+        private int sendMaxRequestsPerIp = 10;
+
+        /**
+         * IP 단위 제한 구간·잠금 시간(분)
+         */
+        private int ipWindowMinutes = 10;
     }
 
     @Data
@@ -61,7 +87,7 @@ public class MindgardenSecurityProperties {
         /**
          * 민감 경로(계정 연동 공개 API) URI 접두사 — {@code HttpServletRequest#getRequestURI()} 기준 {@code startsWith}
          */
-        private String integrationPathPrefix = "/api/v1/accounts/integration/";
+        private String integrationPathPrefix = AccountIntegrationApiPaths.BASE_PREFIX;
 
         /**
          * Trinity 공개 온보딩 생성({@link #onboardingCreatePath}) POST에 대한 IP당 분당 허용 요청 수.

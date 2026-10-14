@@ -1,0 +1,84 @@
+/**
+ * ConsultantSalaryMonthCard — 흰 카드 · slate 테두리 · shadow 없음 · 행 divider
+ *
+ * @author CoreSolution
+ * @since 2026-10-07
+ */
+
+.consultant-salary-card {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: var(--mg-v2-space-6);
+  background: var(--mg-v2-consultant-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  box-shadow: none;
+}
+
+.consultant-salary-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+  margin-bottom: var(--mg-v2-space-4);
+}
+
+.consultant-salary-card__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  font-weight: var(--mg-v2-font-weight-bold);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+  color: var(--mg-v2-color-text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.consultant-salary-card__rows {
+  margin: 0;
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+}
+
+.consultant-salary-card__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-height: var(--mg-v2-component-touch-target);
+  padding: var(--mg-v2-space-2) 0;
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.consultant-salary-card__row:last-child {
+  border-bottom: 0;
+}
+
+.consultant-salary-card__row dt {
+  margin: 0;
+  color: var(--mg-v2-color-text-secondary);
+  min-width: 0;
+}
+
+.consultant-salary-card__row dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.consultant-salary-card__row--net dt {
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-salary-card__row--memo dd {
+  text-align: left;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 767px) {
+  .consultant-salary-card {
+    padding: var(--mg-v2-space-4);
+  }
+}

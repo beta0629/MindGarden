@@ -242,6 +242,16 @@
   --mg-v2-border-width-thick: 2px;
   /* 상태 점·문자 링·기관연계 사각. ScheduleReminderSmsBadge 가 이미 참조. */
   --mg-size-dot-sm: 0.375rem;
+  /*
+   * 칩 끝 표식(ScheduleEventMarks) 한 칸 폭. 절대 위치일 때 끝 여백은 이 값에서 계산한다.
+   * reserve = 끝 inset(space-0-5) + 표식 폭 + 본문과의 간격(space-1).
+   */
+  --mg-schedule-event-marks-size: var(--mg-size-dot-sm);
+  --mg-schedule-event-marks-reserve: calc(
+    var(--mg-v2-space-0-5) + var(--mg-schedule-event-marks-size) + var(--mg-v2-space-1)
+  );
+  /* 안내 패널 제목 토글·범례·본문 가로 inset 공유 */
+  --mg-schedule-legend-inline-pad: var(--mg-spacing-md);
   --mg-v2-border-width-focus: 1px;
   --mg-v2-border-elevation-1: none;
   --mg-v2-border-elevation-2: none;
@@ -262,6 +272,8 @@
   --mg-v2-z-modal: 10001;
   --mg-v2-z-toast: 20000;
   --mg-v2-z-tooltip: 30000;
+  /* 캘린더 지금선 — timegrid 이벤트 harness(z-index 3)보다 위, 드롭다운/모달보다 낮게 */
+  --mg-v2-z-now-line: 4;
 
   /* ----------------------------------------------------------
      9. TRANSITION
@@ -302,6 +314,98 @@
   --mg-v2-component-padding-lg: 0 var(--mg-v2-space-6);
 
   --mg-v2-component-touch-target: 2.75rem;
+
+  /* 상담일지 타임라인. 폭·간격은 기존 space·component 높이의 별칭이다. */
+  --mg-timeline-gutter: var(--mg-v2-space-8);
+  --mg-timeline-gutter-mobile: var(--mg-v2-space-6);
+  --mg-timeline-node-size: var(--mg-v2-space-3);
+  --mg-timeline-dot-size: var(--mg-v2-space-2);
+  --mg-timeline-node-top: var(--mg-v2-font-size-body-md);
+  --mg-timeline-node-top-mobile: 1.125rem;
+  --mg-timeline-label-height: var(--mg-v2-space-6);
+  --mg-timeline-label-gap: var(--mg-v2-space-3);
+  --mg-timeline-card-gap: var(--mg-v2-space-3);
+  --mg-timeline-group-gap: var(--mg-v2-space-8);
+  --mg-timeline-card-height: var(--mg-v2-component-height-md);
+  --mg-timeline-col-session: calc(var(--mg-v2-space-8) + var(--mg-v2-space-10));
+  --mg-timeline-group-name-size: 1.125rem;
+  --mg-table-col-date: calc(
+    var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4)
+  );
+  --mg-table-col-status: calc(var(--mg-v2-space-20) + var(--mg-v2-space-8) + var(--mg-v2-space-2));
+
+  /* 상담일지 조회 필터. 시안 폭(기간 15rem, 선택 8.5rem, 검색어 기준 9rem)의 별칭. */
+  --mg-consultation-log-filter-period: calc(var(--mg-v2-space-20) * 3);
+  --mg-consultation-log-filter-select: calc(
+    var(--mg-v2-space-16) + var(--mg-v2-space-8) + var(--mg-v2-space-6) + var(--mg-v2-space-4)
+  );
+  --mg-consultation-log-filter-keyword: calc(var(--mg-v2-space-12) * 3);
+  /* ISO 날짜 YYYY-MM-DD(10ch) + 좌우 여백 + 달력 아이콘 + 테두리. 글자 크기는 쓰는 칸을 따른다. */
+  --mg-consultation-log-filter-date: calc(
+    10ch
+    + var(--mg-v2-space-3)
+    + var(--mg-v2-space-3)
+    + var(--mg-v2-space-6)
+    + var(--mg-v2-border-width-thin)
+    + var(--mg-v2-border-width-thin)
+    + var(--mg-v2-space-1)
+  );
+
+  /* ----------------------------------------------------------
+     11b. COMPONENT — CurrentTimeChip / calendar now-indicator
+     slate cool (NOT warm stone --mg-v2-color-neutral-100). Teal/brick 금지.
+     ---------------------------------------------------------- */
+  --mg-v2-now-chip-bg: var(--cs-slate-100, #F1F5F9);
+  --mg-v2-now-chip-border: var(--cs-slate-300, #CBD5E1);
+  --mg-v2-now-chip-border-width: var(--mg-v2-border-width-thin);
+  --mg-v2-now-chip-text: var(--mg-v2-color-neutral-900);
+  --mg-v2-now-chip-date: var(--cs-slate-600, #475569);
+  --mg-v2-now-chip-icon: var(--mg-v2-color-neutral-700);
+  --mg-v2-now-chip-radius: var(--mg-v2-radius-lg);
+  --mg-v2-now-chip-height: var(--mg-v2-component-height-md);
+  --mg-v2-now-chip-height-mobile: 2.25rem;
+  --mg-v2-now-chip-padding-x: var(--mg-v2-space-3);
+  --mg-v2-now-chip-padding-x-mobile: var(--mg-v2-space-1);
+  --mg-v2-now-chip-gap: var(--mg-v2-space-2);
+  --mg-v2-now-chip-gap-mobile: var(--mg-v2-space-0-5);
+  --mg-v2-now-chip-gap-sides: var(--mg-v2-space-6);
+  --mg-v2-now-chip-time-size: 1.125rem;
+  --mg-v2-now-chip-time-size-mobile: var(--mg-v2-font-size-caption);
+  --mg-v2-now-chip-time-weight: var(--mg-v2-font-weight-semibold);
+  --mg-v2-now-chip-date-size: var(--mg-v2-font-size-body-md);
+  --mg-v2-now-chip-date-weight: var(--mg-v2-font-weight-medium);
+  --mg-v2-now-chip-icon-size: var(--mg-v2-space-4);
+  --mg-v2-now-chip-icon-size-mobile: var(--mg-v2-space-2);
+  /* MobileGnb: 알림+gap+프로필 ≈ 8rem, 가장자리 ≥12px. 좁은 폭 칩 여유를 위해 side gap 0 */
+  --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-space-3);
+  --mg-v2-mobile-gnb-side-min: calc(
+    var(--mg-v2-space-16) + var(--mg-v2-space-12) + var(--mg-v2-space-4)
+  );
+  --mg-v2-mobile-gnb-chip-gap-sides: 0;
+  --mg-v2-mobile-gnb-actions-gap: var(--mg-v2-space-1);
+  --mg-v2-mobile-gnb-profile-cluster-gap: var(--mg-v2-space-2);
+  --mg-v2-now-line-color: var(--mg-v2-color-neutral-900);
+  --mg-v2-now-line-width: var(--mg-v2-border-width-thick);
+  --mg-v2-now-line-dot-size: var(--mg-v2-space-2);
+  --mg-v2-today-col-bg: var(--cs-slate-50, #F8FAFC);
+
+  /* ----------------------------------------------------------
+     11c. COMPONENT — teacher color dots (schedule chips / filter)
+     Separate from §11b now-chip / now-line. Palette SSOT for
+     getTeacherColor ordinal mapping (not hash).
+     ---------------------------------------------------------- */
+  --mg-v2-teacher-1: #2563EB;
+  --mg-v2-teacher-2: #7C3AED;
+  --mg-v2-teacher-3: #B45309;
+  --mg-v2-teacher-4: #0284C7;
+  --mg-v2-teacher-5: #A21CAF;
+  --mg-v2-teacher-6: #4D7C0F;
+  --mg-v2-teacher-7: #C2410C;
+  --mg-v2-teacher-8: #78716C;
+  --mg-v2-teacher-dot-size: 8px;
+  --mg-v2-teacher-dot-ring: 1px;
+  --mg-v2-teacher-dot-gap: 4px;
+  --mg-v2-teacher-dot-hollow-border: 2px;
 
   /* ----------------------------------------------------------
      12. OPACITY
@@ -416,6 +520,11 @@
     --mg-v2-border-elevation-1: 1px solid #334155;
     --mg-v2-border-elevation-2: 1px solid #64748B;
     --mg-v2-border-elevation-3: 1px solid #94A3B8;
+
+    --mg-v2-now-chip-bg: var(--cs-slate-800, #1E293B);
+    --mg-v2-now-chip-border: var(--cs-slate-600, #475569);
+    --mg-v2-now-chip-date: var(--cs-slate-400, #94A3B8);
+    --mg-v2-today-col-bg: var(--cs-slate-800, #1E293B);
   }
 }
 
@@ -519,6 +628,11 @@
   --mg-v2-border-elevation-1: 1px solid #334155;
   --mg-v2-border-elevation-2: 1px solid #64748B;
   --mg-v2-border-elevation-3: 1px solid #94A3B8;
+
+  --mg-v2-now-chip-bg: var(--cs-slate-800, #1E293B);
+  --mg-v2-now-chip-border: var(--cs-slate-600, #475569);
+  --mg-v2-now-chip-date: var(--cs-slate-400, #94A3B8);
+  --mg-v2-today-col-bg: var(--cs-slate-800, #1E293B);
 }
 
 /* ================================================================
@@ -684,4 +798,26 @@
     --mg-v2-transition-normal: 0ms var(--mg-v2-transition-easing-default);
     --mg-v2-transition-slow: 0ms var(--mg-v2-transition-easing-default);
   }
+}
+
+/* ================================================================
+   5. 쇼핑 어드민 — 상품 구성 카드 (시안 shop-offers C, 2026-10)
+   ================================================================ */
+:root {
+  --mg-v2-touch-target-min: 2.75rem;
+  --mg-control-height-sm: var(--mg-v2-space-8);
+  --mg-card-title-size: 1.125rem;
+  --mg-icon-size-sm: var(--mg-v2-space-4);
+  --mg-comp-remove-size: var(--mg-v2-space-8);
+  --mg-comp-discount-width: 7.5rem;
+  --mg-comp-row-height: 2.75rem;
+  --mg-comp-col-sessions: 5rem;
+  --mg-comp-col-price: 8rem;
+  --mg-comp-select-max: 32rem;
+  --mg-msearch-max: 40rem;
+  --mg-msearch-pop-max-h: 20rem;
+  --mg-mlist-col-unit: 8rem;
+  --mg-mlist-col-qty: 7.5rem;
+  --mg-mlist-col-sub: 8rem;
+  --mg-msum-max: 34rem;
 }

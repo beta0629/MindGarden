@@ -18,6 +18,7 @@ import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.CodeGroupMetadata;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
+import com.coresolution.consultation.service.CommonCodeDeletionGuard;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.CommonCodePermissionService;
 import com.coresolution.consultation.entity.User;
@@ -49,6 +50,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     private final CodeGroupMetadataRepository codeGroupMetadataRepository;
     private final CommonCodePermissionService permissionService;
     private final UserRepository userRepository;
+    private final CommonCodeDeletionGuard commonCodeDeletionGuard;
 
     @Override
     @Transactional(readOnly = true)
@@ -236,6 +238,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.info("🗑️ 공통코드 삭제: {}", id);
         
         CommonCode commonCode = getCommonCodeById(id);
+        commonCodeDeletionGuard.assertDeletable(commonCode);
         commonCodeRepository.delete(commonCode);
     }
 
@@ -489,15 +492,18 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     }
 
     @Override
-    public int deactivateCommonCodes(List<String> codeValues) {
-        log.info("🔧 공통코드 비활성화 시작: {} 개", codeValues.size());
+    public int deactivateCommonCodes(String tenantId, List<String> codeValues) {
+        if (tenantId == null || tenantId.isEmpty()) {
+            throw new IllegalArgumentException("테넌트 정보가 없어 공통코드를 비활성화할 수 없습니다.");
+        }
+        log.info("🔧 공통코드 비활성화 시작: tenantId={}, {} 개", tenantId, codeValues.size());
         
         int deactivatedCount = 0;
         
         for (String codeValue : codeValues) {
             try {
-                // 해당 코드값을 가진 모든 공통코드 조회
-                List<CommonCode> codes = commonCodeRepository.findByCodeValue(codeValue);
+                // 해당 테넌트의 같은 코드값만 조회 (코어·타 테넌트 제외)
+                List<CommonCode> codes = commonCodeRepository.findByTenantIdAndCodeValue(tenantId, codeValue);
                 
                 for (CommonCode code : codes) {
                     if (code.getIsActive()) {
@@ -546,11 +552,20 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup) {
+        return getCurrentTenantCodesByGroup(codeGroup, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<CommonCode> getCurrentTenantCodesByGroup(String codeGroup, boolean includeInactive) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환 (코어 코드 폴백 없음)
             log.warn("⚠️ 테넌트 컨텍스트가 없어 빈 리스트를 반환합니다 (독립성 보장): {}", codeGroup);
             return Collections.emptyList();
+        }
+        if (includeInactive) {
+            return commonCodeRepository.findTenantCodesByGroupIncludingInactive(tenantId, codeGroup);
         }
         return getTenantCodesByGroup(tenantId, codeGroup);
     }
@@ -558,6 +573,12 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public CommonCodeListResponse findAllTenantCodes() {
+        return findAllTenantCodes(false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCodeListResponse findAllTenantCodes(boolean includeInactive) {
         String tenantId = TenantContextHolder.getTenantId();
         if (tenantId == null || tenantId.isEmpty()) {
             // 테넌트 독립성 보장: 테넌트 컨텍스트가 없으면 빈 리스트 반환
@@ -570,7 +591,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                     .build();
         }
         
-        List<CommonCode> codes = commonCodeRepository.findAllTenantCodes(tenantId);
+        List<CommonCode> codes = includeInactive
+                ? commonCodeRepository.findAllTenantCodesIncludingInactive(tenantId)
+                : commonCodeRepository.findAllTenantCodes(tenantId);
         List<CommonCodeResponse> responses = codes.stream()
                 .map(CommonCodeResponse::fromEntity)
                 .collect(Collectors.toList());
@@ -617,6 +640,26 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         }
         // 테넌트 컨텍스트가 없으면 코어 코드만
         return getCoreCodesByGroup(codeGroup);
+    }
+
+    /**
+     * {@link #getCodesByGroupWithCurrentTenant(String)}와 같은 테넌트 우선·코어 폴백 규칙으로 조회하되
+     * 비활성 코드도 포함한다(관리자 목록용, 소거 제외).
+     */
+    private List<CommonCode> getCodesByGroupWithCurrentTenantIncludingInactive(String codeGroup) {
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return commonCodeRepository.findCoreCodesByGroupIncludingInactive(codeGroup);
+        }
+        if (ExpenseCommonCodeSsotConstants.isTenantOperationalSsotGroup(codeGroup)) {
+            long tenantCount = commonCodeRepository
+                    .countByTenantIdAndCodeGroupAndIsDeletedFalse(tenantId, codeGroup);
+            if (tenantCount > 0) {
+                return commonCodeRepository.findTenantCodesByGroupIncludingInactive(tenantId, codeGroup);
+            }
+            return commonCodeRepository.findCoreCodesByGroupIncludingInactive(codeGroup);
+        }
+        return commonCodeRepository.findCodesByGroupWithFallbackIncludingInactive(tenantId, codeGroup);
     }
     
     @Override
@@ -844,6 +887,8 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             throw new SecurityException(message);
         }
         
+        commonCodeDeletionGuard.assertDeletable(code);
+
         // 활성 코드는 비활성화 후 삭제
         if (code.getIsActive() != null && code.getIsActive()) {
             log.warn("⚠️ 활성 코드는 먼저 비활성화 후 삭제해야 합니다. 비활성화 처리합니다.");
@@ -869,11 +914,19 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional(readOnly = true)
     public CommonCodeListResponse findAll(String codeGroup) {
-        log.info("🔍 공통코드 목록 조회 (표준화): codeGroup={}", codeGroup);
+        return findAll(codeGroup, false);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CommonCodeListResponse findAll(String codeGroup, boolean includeInactive) {
+        log.info("🔍 공통코드 목록 조회 (표준화): codeGroup={}, includeInactive={}", codeGroup, includeInactive);
         
         List<CommonCode> codes;
         if (codeGroup != null && !codeGroup.trim().isEmpty()) {
-            codes = getCodesByGroupWithCurrentTenant(codeGroup);
+            codes = includeInactive
+                    ? getCodesByGroupWithCurrentTenantIncludingInactive(codeGroup)
+                    : getCodesByGroupWithCurrentTenant(codeGroup);
         } else {
             codes = getAllCommonCodes();
         }

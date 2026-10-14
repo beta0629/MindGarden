@@ -44,7 +44,7 @@ describe('UnifiedScheduleComponent forceRefresh soft path', () => {
     expect(SOURCE).toMatch(/adminScheduleControllerListGetAll/);
     expect(SOURCE).toMatch(/API_SCHEDULE_CONTROLLER_ADMIN/);
     expect(SOURCE).not.toMatch(/apiGet\(`\$\{url\}\$\{separator\}_t=/);
-    expect(SOURCE).toMatch(/loadSchedulesInFlightKeyRef/);
+    expect(SOURCE).toMatch(/fetchDeduper\.run\(\s*adminFetchKey,\s*\(\) => adminScheduleControllerListGetAll\(listParams\)\)/);
   });
 
   test('admin load path sets listParams.page=0 and size=ADMIN_LIST_DRAIN_PAGE_SIZE before drain', () => {

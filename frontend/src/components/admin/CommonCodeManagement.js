@@ -245,7 +245,8 @@ const CommonCodeManagement = () => {
         try {
             setCodesLoading(true);
             const forceTenant = resolveForceTenantForManagementList(groupName);
-            const codes = await getCommonCodes(groupName, forceTenant ? true : null);
+            // 관리자 목록은 비활성 코드도 보여야 다시 활성화할 수 있다
+            const codes = await getCommonCodes(groupName, forceTenant ? true : null, { includeInactive: true });
             if (Array.isArray(codes)) {
                 setGroupCodes(codes);
             } else {

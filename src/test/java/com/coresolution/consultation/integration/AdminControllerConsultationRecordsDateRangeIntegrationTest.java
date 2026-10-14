@@ -1,6 +1,8 @@
 package com.coresolution.consultation.integration;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import com.coresolution.consultation.constant.SessionConstants;
@@ -8,6 +10,7 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
+import com.coresolution.consultation.service.ConsultationRecordPersonNameResolver;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
@@ -29,10 +32,15 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -77,6 +85,9 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
 
     @MockBean
     private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
+
+    @MockBean
+    private ConsultationRecordPersonNameResolver consultationRecordPersonNameResolver;
 
     private User adminUser;
 
@@ -176,8 +187,8 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
     }
 
     @Test
-    @DisplayName("consultantId + 기간 — 4-인자 Repository (Consultant + sessionDate BETWEEN) 호출")
-    void consultantPlusDateRange_callsConsultantBetweenRepository() throws Exception {
+    @DisplayName("consultantId + 기간 — 같은 조건의 기간 집계와 정렬 키를 조회하고 날짜 내림차순 목록은 쓰지 않는다")
+    void consultantPlusDateRange_usesPeriodAggregateNotDateDescPage() throws Exception {
         Long consultantId = 77L;
 
         mockMvc.perform(get("/api/v1/admin/consultation-records")
@@ -187,14 +198,75 @@ class AdminControllerConsultationRecordsDateRangeIntegrationTest {
                         .param("size", "100")
                         .sessionAttr(SessionConstants.USER_OBJECT, adminUser)
                         .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupSummary.mode").value("COUNSELOR"));
 
-        verify(consultationRecordRepository)
+        verify(consultationRecordRepository).aggregateConsultationLogByClient(
+                eq(TEST_TENANT_ID),
+                eq(consultantId),
+                isNull(),
+                eq(LocalDate.of(2026, 4, 1)),
+                eq(LocalDate.of(2026, 4, 30)),
+                isNull(),
+                eq(false),
+                eq("%"),
+                anyList());
+        verify(consultationRecordRepository).findConsultationLogSortKeys(
+                eq(TEST_TENANT_ID),
+                eq(consultantId),
+                isNull(),
+                eq(LocalDate.of(2026, 4, 1)),
+                eq(LocalDate.of(2026, 4, 30)),
+                isNull(),
+                eq(false),
+                eq("%"),
+                anyList());
+        verify(consultationRecordRepository, never())
                 .findByTenantIdAndConsultantIdAndSessionDateBetweenAndIsDeletedFalseOrderBySessionDateDesc(
-                        eq(TEST_TENANT_ID),
-                        eq(consultantId),
-                        eq(LocalDate.of(2026, 4, 1)),
-                        eq(LocalDate.of(2026, 4, 30)),
-                        any(Pageable.class));
+                        anyString(), anyLong(), any(LocalDate.class), any(LocalDate.class), any(Pageable.class));
+    }
+
+    @Test
+    @DisplayName("목록 응답에 복호화된 clientName·consultantName 이 있고, 맵에 없는 id 는 null, 이름 조회는 한 번")
+    void list_includesResolvedPersonNames_oncePerPage() throws Exception {
+        long namedClientId = 810L;
+        long namedConsultantId = 820L;
+        long missingClientId = 830L;
+        ConsultationRecord named = record(901L, namedClientId, namedConsultantId, "요약 첫 줄");
+        ConsultationRecord missing = record(902L, missingClientId, namedConsultantId, "본문은목록에없다");
+        when(consultationRecordRepository
+                .findByTenantIdAndIsDeletedFalseOrderBySessionDateDesc(eq(TEST_TENANT_ID), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(named, missing)));
+        when(consultationRecordPersonNameResolver.resolveForRecords(eq(TEST_TENANT_ID), any()))
+                .thenReturn(Map.of(namedClientId, "김내담", namedConsultantId, "이상담"));
+
+        mockMvc.perform(get("/api/v1/admin/consultation-records")
+                        .param("size", "20")
+                        .sessionAttr(SessionConstants.USER_OBJECT, adminUser)
+                        .sessionAttr(SessionConstants.TENANT_ID, TEST_TENANT_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].clientName").value("김내담"))
+                .andExpect(jsonPath("$.data[0].consultantName").value("이상담"))
+                .andExpect(jsonPath("$.data[0].clientId").value(namedClientId))
+                .andExpect(jsonPath("$.data[1].clientName").value(nullValue()))
+                .andExpect(jsonPath("$.data[1].consultantName").value("이상담"))
+                .andExpect(jsonPath("$.data[0].summaryPreview").value("요약 첫 줄"))
+                .andExpect(jsonPath("$.data[0].mainIssues").doesNotExist());
+
+        verify(consultationRecordPersonNameResolver, times(1))
+                .resolveForRecords(eq(TEST_TENANT_ID), any());
+    }
+
+    private static ConsultationRecord record(Long id, Long clientId, Long consultantId, String mainIssues) {
+        ConsultationRecord record = new ConsultationRecord();
+        record.setId(id);
+        record.setClientId(clientId);
+        record.setConsultantId(consultantId);
+        record.setSessionDate(LocalDate.of(2026, 10, 1));
+        record.setSessionNumber(1);
+        record.setIsSessionCompleted(Boolean.TRUE);
+        record.setMainIssues(mainIssues);
+        return record;
     }
 }

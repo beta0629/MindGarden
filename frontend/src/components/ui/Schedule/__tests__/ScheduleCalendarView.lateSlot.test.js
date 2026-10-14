@@ -8,6 +8,17 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+
+// node_modules 스냅샷에 luxon3가 없어도 FullCalendar plugin 계약만 맞춘다.
+jest.mock('@fullcalendar/luxon3', () => {
+  const { createPlugin } = require('@fullcalendar/core');
+  return {
+    __esModule: true,
+    default: createPlugin({ name: '@fullcalendar/luxon3' })
+  };
+}, { virtual: true });
+
+// eslint-disable-next-line import/first
 import ScheduleCalendarView from '../ScheduleCalendarView';
 
 class ResizeObserverStub {

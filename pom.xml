@@ -26,7 +26,6 @@
         <hibernate.version>6.4.0.Final</hibernate.version>
         <antlr4.version>4.13.0</antlr4.version>
         <mysql.version>8.0.33</mysql.version>
-        <testcontainers.version>1.20.4</testcontainers.version>
         <!-- local-mysql 태그는 기본 CI에서 제외. 로컬 실행 시 -Djunit.excludedGroups=none -->
         <junit.excludedGroups>local-mysql</junit.excludedGroups>
         <jwt.version>0.11.5</jwt.version>
@@ -208,16 +207,17 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- 버전은 Spring Boot parent BOM(testcontainers.version)에 맡긴다.
+             자식에서 testcontainers.version 을 올리면 parent 가 import 하는
+             testcontainers-bom 도 그 버전을 받아 오프라인(-o) POM 해석이 깨진다. -->
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>mysql</artifactId>
-            <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
 

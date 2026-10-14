@@ -910,6 +910,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest dto) {
+        return createMappingInternal(dto, false);
+    }
+
+    @Override
+    public ConsultantClientMapping createMappingFromAdmin(ConsultantClientMappingCreateRequest dto) {
+        // 동시 관리자 요청을 내담자 단위로 직렬화: 트랜잭션의 첫 조회로 내담자 users 행을 FOR UPDATE 잠금.
+        String tenantId = getTenantId();
+        userRepository.lockClientRowForMappingCreate(tenantId, dto.getClientId());
+        return createMappingInternal(dto, true);
+    }
+
+    /**
+     * 매칭 생성 공통 처리.
+     *
+     * @param dto                  매칭 생성 요청
+     * @param applyDuplicateWindowGuard 짧은 시간창 중복 생성 가드 적용 여부.
+     *                             {@code true}이면 호출 전에 {@link #createMappingFromAdmin}에서
+     *                             내담자 행 잠금이 선행되어야 레이스 없이 직렬화된다.
+     * @return 생성된 매칭
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    private ConsultantClientMapping createMappingInternal(ConsultantClientMappingCreateRequest dto,
+            boolean applyDuplicateWindowGuard) {
         // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, dto.getConsultantId())
@@ -1041,16 +1065,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
                 tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
 
-        // 짧은 시간창 중복 생성 가드: 같은 tenant + 상담사 + 내담자 + 동일 packageName(trim 정규화) 매칭이
-        // 시간창(기본 30초) 안에 이미 있으면 신규 생성을 거부한다. 서로 다른 packageName 은 허용.
-        LocalDateTime duplicateWindowStart = LocalDateTime.now()
-                .minusSeconds(AdminMappingCreateDuplicateWindowConstants.MAPPING_CREATE_DUPLICATE_WINDOW_SECONDS);
-        boolean duplicateWithinWindow = mappingRepository
-                .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
-                        tenantId, consultant.getId(), clientUser.getId(), mapping.getPackageName(),
-                        duplicateWindowStart);
-        if (duplicateWithinWindow) {
-            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
+        // 짧은 시간창 중복 생성 가드: 관리자 수동 배정 경로(createMappingFromAdmin)에만 적용한다.
+        // 결제 확정(PaymentServiceImpl) 등 기존 호출자는 이 가드로 부분 성공(결제는 성공, 매칭만 거부)이
+        // 발생하지 않도록 미적용 상태를 유지한다. 같은 tenant + 상담사 + 내담자 + 동일 packageName
+        // (trim 정규화) 매칭이 시간창(기본 30초) 안에 이미 있으면 신규 생성을 거부한다.
+        // 서로 다른 packageName 은 허용.
+        if (applyDuplicateWindowGuard) {
+            LocalDateTime duplicateWindowStart = LocalDateTime.now()
+                    .minusSeconds(AdminMappingCreateDuplicateWindowConstants.MAPPING_CREATE_DUPLICATE_WINDOW_SECONDS);
+            boolean duplicateWithinWindow = mappingRepository
+                    .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                            tenantId, consultant.getId(), clientUser.getId(), mapping.getPackageName(),
+                            duplicateWindowStart);
+            if (duplicateWithinWindow) {
+                throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
+            }
         }
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);

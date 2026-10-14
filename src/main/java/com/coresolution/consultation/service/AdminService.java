@@ -47,9 +47,24 @@ public interface AdminService {
     User registerStaff(StaffRegistrationRequest request);
 
     /**
-     * 상담사-내담자 매칭 생성
+     * 상담사-내담자 매칭 생성. 결제(PaymentServiceImpl)·TestData 등 기존 호출자 호환용이며,
+     * 짧은 시간창 중복 생성 가드가 없다. 관리자 수동 배정 UI 경로는 {@link #createMappingFromAdmin}을 사용한다.
      */
     ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest request);
+
+    /**
+     * 관리자 수동 매칭 배정(AdminController) 전용 매칭 생성.
+     *
+     * <p>내담자 users 행을 FOR UPDATE로 잠가 동시 요청을 직렬화한 뒤, 짧은 시간창(기본 30초) 내
+     * 동일 상담사·내담자·packageName 매칭이 이미 있으면 신규 생성을 거부한다. 그 외 동작은
+     * {@link #createMapping}과 동일하다.</p>
+     *
+     * @param request 매칭 생성 요청
+     * @return 생성된 매칭
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    ConsultantClientMapping createMappingFromAdmin(ConsultantClientMappingCreateRequest request);
 
     /**
      * 모든 상담사 조회

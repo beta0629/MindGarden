@@ -2336,7 +2336,8 @@ public class AdminController extends BaseApiController {
         String currentBranchCode = currentUser.getBranchCode();
         log.info("🔧 현재 사용자 지점코드: {}", currentBranchCode);
 
-        ConsultantClientMapping mapping = DeferredExternalCalls.run(() -> adminService.createMapping(request));
+        ConsultantClientMapping mapping =
+                DeferredExternalCalls.run(() -> adminService.createMappingFromAdmin(request));
 
         log.info("🔧 생성된 매칭 지점코드: {}", mapping.getBranchCode());
 

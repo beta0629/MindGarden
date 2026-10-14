@@ -1,6 +1,6 @@
 /**
- * 대시보드 등록 위젯(상담사·내담자) — 공통 비밀번호 정책(usePasswordPolicyField) 적용.
- * 두 위젯 모두 비밀번호 필수라 빈 값·정책 위반은 등록 API 를 부르지 않는다.
+ * 대시보드 등록 위젯(상담사·내담자) — 비밀번호는 서버가 만들고 문자로만 알린다.
+ * 화면은 비밀번호를 받지 않고, 필수 항목이 있으면 등록 API 를 부른다.
  */
 import React from 'react';
 import { webcrypto } from 'crypto';
@@ -57,10 +57,10 @@ const CASES = [
   }
 ];
 
-describe.each(CASES)('$label 비밀번호 정책', ({ Component, start, formSelector }) => {
+describe.each(CASES)('$label 임시 비밀번호 문자', ({ Component, start, formSelector }) => {
   beforeEach(() => {
     jest.clearAllMocks();
-    StandardizedApi.post.mockResolvedValue({ id: 'u-1' });
+    StandardizedApi.post.mockResolvedValue({ id: 'u-1', smsSent: true });
     fetchProfessionalProviderTypeSelectOptions.mockResolvedValue([]);
   });
 
@@ -73,28 +73,13 @@ describe.each(CASES)('$label 비밀번호 정책', ({ Component, start, formSele
     fill('phone', '010-1234-5678');
   }
 
-  test('대문자 없는 비밀번호는 등록 API 를 부르지 않고 정책 안내를 표시한다', async() => {
+  test('비밀번호 입력란 없이 등록하고 요청에 비밀번호를 넣지 않는다', async() => {
     await openForm();
-    const pwd = fill('password', 'noupper1!x');
-    fireEvent.submit(document.querySelector(formSelector));
+    expect(document.querySelector('input[name="password"]')).toBeNull();
+    expect(screen.getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
 
-    const alert = await screen.findByText(/대문자를 포함해야/);
-    expect(alert).toHaveAttribute('role', 'alert');
-    expect(alert).toHaveTextContent('특수문자');
-    expect(pwd).toHaveAttribute('aria-invalid', 'true');
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-  });
-
-  test('빈 비밀번호는 필수 입력 안내로 막고, 정책 통과 값은 등록한다', async() => {
-    await openForm();
-    fill('password', '');
-    fireEvent.submit(document.querySelector(formSelector));
-    expect(await screen.findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-
-    fill('password', 'Fake7!Qzm');
     fireEvent.submit(document.querySelector(formSelector));
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalled());
-    expect(StandardizedApi.post.mock.calls[0][1].password).toBe('Fake7!Qzm');
+    expect(StandardizedApi.post.mock.calls[0][1].password).toBeUndefined();
   });
 });

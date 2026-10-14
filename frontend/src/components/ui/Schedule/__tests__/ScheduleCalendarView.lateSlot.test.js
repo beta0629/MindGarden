@@ -13,7 +13,11 @@ jest.mock('@fullcalendar/luxon3', () => {
   try {
     return jest.requireActual('@fullcalendar/luxon3');
   } catch (_err) {
-    return { __esModule: true, default: { name: '@fullcalendar/luxon3', id: 'luxon3' } };
+    const { createPlugin } = jest.requireActual('@fullcalendar/core');
+    return {
+      __esModule: true,
+      default: createPlugin({ name: '@fullcalendar/luxon3' })
+    };
   }
 }, { virtual: true });
 

@@ -8,11 +8,12 @@
  * @since 2026-10-08
  */
 
-import React, { useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import ScheduleReminderSmsBadge from '../../admin/mapping-management/integrated-schedule/molecules/ScheduleReminderSmsBadge';
 import { formatIntegratedMonthChipShortTime } from './integratedMonthChipCopy';
+import TeacherColorDot from './TeacherColorDot';
 import useWeekDayChipFit from '../../../hooks/useWeekDayChipFit';
 import {
   WEEK_DAY_CHIP_HEIGHT_STAGE,
@@ -20,6 +21,7 @@ import {
   buildWeekDayChipA11yLabel,
   isWeekDayChipMarkerOnly
 } from '../../../utils/weekDayChipFit';
+import { getTeacherColor } from '../../../utils/getTeacherColor';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../../constants/scheduleClientReminderSms';
 
 /**
@@ -31,6 +33,8 @@ const WeekDayScheduleEventChip = ({
   eventStart,
   clientName,
   consultantName,
+  consultantId,
+  consultants,
   statusLabel,
   statusModifier,
   sameDayPrefix,
@@ -44,6 +48,17 @@ const WeekDayScheduleEventChip = ({
   const timeRef = useRef(null);
   const shortTime = formatIntegratedMonthChipShortTime(eventStart);
   const longTime = timeText || shortTime;
+  const hasConsultant = consultantId != null && String(consultantId).trim() !== '';
+  const teacherColor = useMemo(
+    () => (hasConsultant
+      ? getTeacherColor({
+        consultantId,
+        consultants,
+        colorFromData: extendedProps
+      })
+      : null),
+    [hasConsultant, consultantId, consultants, extendedProps]
+  );
   const fit = useWeekDayChipFit({
     chipRef,
     timeRef,
@@ -52,7 +67,8 @@ const WeekDayScheduleEventChip = ({
     badgeLabel: showInstitutionMark ? (institutionLabel || '') : '',
     considerBadge: Boolean(showInstitutionMark && institutionLabel),
     clientName,
-    counselorName: consultantName || ''
+    counselorName: consultantName || '',
+    considerTeacherDot: Boolean(hasConsultant && teacherColor)
   });
   const markerOnly = isWeekDayChipMarkerOnly(fit);
   const displayTime = fit.showTime
@@ -86,9 +102,20 @@ const WeekDayScheduleEventChip = ({
     cancelledClass
   ].filter(Boolean).join(' ');
 
+  const showTeacherDot = Boolean(fit.showTeacherDot && !markerOnly && teacherColor);
+  const teacherDotNode = teacherColor ? (
+    <TeacherColorDot
+      colorResult={teacherColor}
+      className={showTeacherDot
+        ? 'mg-v2-ad-calendar-event__teacher-dot'
+        : 'mg-v2-ad-calendar-event__teacher-dot mg-v2-ad-calendar-event__teacher-dot--measure'}
+    />
+  ) : null;
+
   // 측정용 시간 노드 — marker/hide-time 에서도 computed font 확보. 보이는 글자 0.
   const measureTimeBlock = (
     <div className="mg-v2-ad-calendar-event__time" aria-hidden="true">
+      {teacherDotNode}
       <span
         className="mg-v2-ad-calendar-event__time-text"
         hidden
@@ -134,6 +161,7 @@ const WeekDayScheduleEventChip = ({
 
   const timeBlock = (
     <div className="mg-v2-ad-calendar-event__time">
+      {teacherDotNode}
       {/* 측정용 노드는 항상 유지(hide-time 시에도 computed font 확보). 비가시일 때 aria-hidden. */}
       <span
         className="mg-v2-ad-calendar-event__time-text"
@@ -189,6 +217,8 @@ WeekDayScheduleEventChip.propTypes = {
   ]),
   clientName: PropTypes.string.isRequired,
   consultantName: PropTypes.string,
+  consultantId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  consultants: PropTypes.arrayOf(PropTypes.object),
   statusLabel: PropTypes.string.isRequired,
   statusModifier: PropTypes.string,
   sameDayPrefix: PropTypes.node,
@@ -203,6 +233,8 @@ WeekDayScheduleEventChip.defaultProps = {
   timeText: '',
   eventStart: null,
   consultantName: '',
+  consultantId: null,
+  consultants: [],
   statusModifier: '',
   sameDayPrefix: null,
   pastClass: '',

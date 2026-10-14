@@ -46,10 +46,12 @@ import {
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
+import TeacherColorDot from './TeacherColorDot';
 import {
   getKrPublicHolidayNameForLocalDate,
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
+import { getTeacherColor } from '../../../utils/getTeacherColor';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
@@ -104,6 +106,7 @@ const isScheduleCalendarEditableRole = (role) =>
 const ScheduleCalendarView = ({
     events,
     userRole,
+    consultants = [],
     onDateClick,
     onEventClick,
     onEventDrop,
@@ -538,6 +541,14 @@ const ScheduleCalendarView = ({
         const clientNameFallback = t(INTEGRATED_MONTH_CHIP_I18N.clientNameFallback);
         const clientName = toDisplayString(extendedProps.clientName, clientNameFallback);
         const consultantName = toDisplayString(extendedProps.consultantName, '');
+        const consultantId = extendedProps?.consultantId ?? event.consultantId ?? null;
+        const teacherColor = consultantId != null && String(consultantId).trim() !== ''
+            ? getTeacherColor({
+                consultantId,
+                consultants,
+                colorFromData: extendedProps
+            })
+            : null;
         const statusLabel = resolveScheduleStatusDisplayLabel(
             extendedProps?.status,
             { codes: scheduleStatusOptions, translate: t }
@@ -590,6 +601,7 @@ const ScheduleCalendarView = ({
             translate: t,
             timeText: eventInfo.timeText,
             clientName,
+            consultantName,
             sessionAriaLabel: sessionInfo.ariaLabel,
             statusLabel,
             isSameDayPending,
@@ -626,6 +638,12 @@ const ScheduleCalendarView = ({
                     {integratedMonthEventLayout && (
                         <span className={dotClass} aria-hidden="true" />
                     )}
+                    {integratedMonthEventLayout && teacherColor ? (
+                        <TeacherColorDot
+                            colorResult={teacherColor}
+                            className="mg-v2-ad-calendar-event__teacher-dot"
+                        />
+                    ) : null}
                     <span className="mg-v2-ad-calendar-event__time">
                         {integratedMonthEventLayout ? (
                             <>
@@ -703,6 +721,8 @@ const ScheduleCalendarView = ({
                 eventStart={event.start}
                 clientName={clientName}
                 consultantName={consultantName}
+                consultantId={consultantId}
+                consultants={consultants}
                 statusLabel={statusLabel}
                 statusModifier={statusModifier}
                 sameDayPrefix={sameDayPrefix}

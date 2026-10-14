@@ -1561,6 +1561,7 @@ const UnifiedScheduleComponent = ({
             <ScheduleCalendarView
                 events={filteredEvents}
                 userRole={userRole}
+                consultants={consultants}
                 scheduleStatusOptions={scheduleStatusOptions}
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}

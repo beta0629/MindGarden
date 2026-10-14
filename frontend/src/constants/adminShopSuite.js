@@ -540,7 +540,9 @@ export const ADMIN_SHOP_PG_COPY = Object.freeze({
   SMOKE_NEEDS_ACTIVE: '운영 승인 후 사용중이 되어야 열 수 있어요.',
   TEST_CONNECTION: '연결 시험',
   EDIT: '수정',
-  EDIT_LOCKED: '승인 후에는 수정 시 재승인이 필요해요.',
+  /** 승인·운영 후 수정 버튼 툴팁(비활성 아님) — 저장 시 재승인 안내 */
+  EDIT_LOCKED: '저장하면 재승인 요청이 올라가요. 운영 중인 결제는 그대로 유지됩니다.',
+  EDIT_REAPPROVAL_NOTICE: '승인·운영 중인 설정을 수정하면 재승인이 필요합니다. ACTIVE 설정은 승인 전까지 계속 결제됩니다.',
   MENU_ARIA: '결제 연결 더보기',
   MENU_LIST: '목록 보기',
   MENU_KEYS: '키 확인',

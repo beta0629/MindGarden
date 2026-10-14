@@ -145,6 +145,11 @@ export function buildCenterEnterUrl(subdomain: string | null | undefined): strin
 
   if (typeof window !== 'undefined' && window.location?.hostname) {
     const host = window.location.hostname;
+    const firstLabel = host.split('.')[0]?.toLowerCase() || '';
+    // Ops 호스트(ops.*) 에서 라벨을 벗겨 테넌트 URL을 만들지 않는다.
+    if (firstLabel === 'ops') {
+      return null;
+    }
     const parts = host.split('.');
     if (parts.length >= 2) {
       const parent = parts.slice(1).join('.');

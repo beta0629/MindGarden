@@ -87,6 +87,52 @@ const checks = [
   { ok: card.includes('ENTER_CENTER'), msg: 'card enter CTA' },
   { ok: card.includes('ISOLATION_BADGE'), msg: 'card isolation badge' },
   { ok: card.includes('buildCenterEnterUrl'), msg: 'card center enter url helper' },
+  {
+    ok: constants.includes("firstLabel === 'ops'") || constants.includes('firstLabel === "ops"'),
+    msg: 'buildCenterEnterUrl refuses ops-host peel'
+  },
+  {
+    ok: (() => {
+      const workflow = path.join(root, '../.github/workflows/deploy-ops-prod.yml');
+      const yml = read(workflow);
+      return yml.includes('NEXT_PUBLIC_TENANT_APP_BASE')
+        && yml.includes('{subdomain}');
+    })(),
+    msg: 'deploy-ops-prod emits TENANT_APP_BASE'
+  },
+  {
+    ok: (() => {
+      const webhookPage = path.join(root, 'app/billing/webhook-secret/page.tsx');
+      const src = read(webhookPage);
+      return !src.includes('OpsPlaceholderPage')
+        && src.includes('OPS_WEBHOOK_SECRET_TEST_IDS')
+        && src.includes('patchOpsWebhookSecret');
+    })(),
+    msg: 'webhook-secret page is not placeholder'
+  },
+  {
+    ok: (() => {
+      const svc = path.join(root, 'src/services/opsWebhookSecretService.ts');
+      const src = read(svc);
+      return src.includes('PG_CONFIGURATIONS.LIST')
+        && !src.includes('PG_CONFIGURATIONS.PENDING')
+        && src.indexOf('TENANT_WEBHOOK_SECRET') < src.indexOf('WEBHOOK_SECRET(configId)');
+    })(),
+    msg: 'webhook service uses LIST not PENDING; tenant PATCH primary'
+  },
+  {
+    ok: api.includes('LIST: "/ops/pg-configurations"')
+      || api.includes("LIST: '/ops/pg-configurations'"),
+    msg: 'API LIST path for ops pg-configurations'
+  },
+  {
+    ok: nav.includes('WEBHOOK_SECRET') && (() => {
+      const idx = nav.indexOf('id: OPS_NAV_ID.WEBHOOK_SECRET');
+      const slice = nav.slice(idx, idx + 220);
+      return slice.includes('placeholder: false');
+    })(),
+    msg: 'opsNav webhook-secret placeholder false'
+  },
   { ok: card.includes('onViewPg'), msg: 'card wires PG view menu' },
   { ok: strip.includes('STRIP_ALL'), msg: 'strip uses ALL filter' },
   { ok: overflow.includes('MENU_DETAIL'), msg: 'overflow detail' },

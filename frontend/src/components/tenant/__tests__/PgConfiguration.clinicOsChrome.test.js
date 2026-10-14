@@ -115,6 +115,18 @@ describe('PgConfiguration Clinic-OS chrome', () => {
     expect(detailJs).not.toMatch(/className="pg-config-detail pg-config-detail__body"/);
   });
 
+  test('Detail/Edit: 승인 후에도 수정 가능(재승인), PENDING-only 하드 블록 없음', () => {
+    expect(detailJs).toMatch(/showReapprovalEditHint/);
+    expect(detailJs).toMatch(/disabled=\{false\}/);
+    expect(detailJs).toMatch(/ADMIN_SHOP_PG_COPY\.EDIT_LOCKED/);
+    expect(detailJs).toMatch(/isPgConfigDeletable/);
+    expect(detailJs).not.toMatch(/const canEdit = config\.approvalStatus === ['"]PENDING['"]/);
+    expect(editJs).not.toMatch(/approvalStatus !== ['"]PENDING['"]/);
+    expect(editJs).toMatch(/ADMIN_SHOP_PG_COPY\.EDIT_REAPPROVAL_NOTICE/);
+    expect(formJs).toMatch(/PG_EDIT_REAPPROVAL_NOTICE/);
+    expect(formJs).toMatch(/id="portoneChannelKey"/);
+  });
+
   test('List (결제 연결): 1건이어도 자동 상세 이동 없음 · 행 클릭 시에만 상세', () => {
     expect(listJs).toMatch(/ADMIN_SHOP_PG_COPY\.TITLE/);
     expect(listJs).not.toMatch(/configurations\.length !== 1/);

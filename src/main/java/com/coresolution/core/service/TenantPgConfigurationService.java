@@ -22,6 +22,15 @@ public interface TenantPgConfigurationService {
      * 테넌트 PG 설정 목록 조회
      */
     List<TenantPgConfigurationResponse> getConfigurations(String tenantId, PgConfigurationStatus status, ApprovalStatus approvalStatus);
+
+    /**
+     * 운영 포털용 PG 설정 목록.
+     * {@code tenantId} 가 있으면 해당 테넌트 비삭제 설정, 없으면 전체 비삭제 설정.
+     *
+     * @param tenantId 센터 ID (선택)
+     * @return PG 설정 목록 (시크릿 마스킹)
+     */
+    List<TenantPgConfigurationResponse> listConfigurationsForOps(String tenantId);
     
     /**
      * 테넌트 PG 설정 상세 조회

@@ -46,6 +46,7 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationDayItemResponse;
 import com.coresolution.consultation.dto.WeeklyReservationStatusItemResponse;
@@ -8147,6 +8148,73 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
+    /**
+     * 매칭 상태-only 종료 — {@link ConsultantClientMapping#terminate(String, String)} 재사용.
+     * 환불·remaining/used·paymentStatus·ERP 변경 금지. 이미 종료면 멱등 성공.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MappingStatusCloseResponse closeMappingStatusOnly(Long id, String reason, String terminatedBy) {
+        if (!StringUtils.hasText(reason)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_REASON_REQUIRED);
+        }
+        String trimmedReason = reason.trim();
+        String actor = StringUtils.hasText(terminatedBy) ? terminatedBy.trim() : "ADMIN";
+
+        log.info("🔧 매칭 상태-only 종료 시작: ID={}, 사유={}, by={}", id, trimmedReason, actor);
+        String tenantId = getTenantId();
+
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
+
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
+            log.info("ℹ️ 매칭 상태-only 종료 멱등: ID={}, status={}", id, mapping.getStatus());
+            return MappingStatusCloseResponse.builder()
+                    .mappingId(id)
+                    .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                    .alreadyClosed(true)
+                    .cancelledScheduleCount(0)
+                    .remainingSessions(mapping.getRemainingSessions())
+                    .usedSessions(mapping.getUsedSessions())
+                    .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                    .build();
+        }
+
+        mapping.terminate(trimmedReason, actor);
+
+        String nowLabel = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String statusCloseNote = String.format(
+                AdminServiceUserFacingMessages.NOTES_STATUS_CLOSE_LINE_FMT,
+                nowLabel,
+                trimmedReason,
+                actor);
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        mapping.setNotes(currentNotes.isEmpty() ? statusCloseNote : currentNotes + "\n" + statusCloseNote);
+
+        mappingRepository.save(mapping);
+
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMappingFailClosed(
+                mapping, tenantId, AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE);
+
+        log.info("✅ 매칭 상태-only 종료 완료: ID={}, status={}, remaining={}, used={}, paymentStatus={}, 취소일정={}건",
+                id, mapping.getStatus(), mapping.getRemainingSessions(), mapping.getUsedSessions(),
+                mapping.getPaymentStatus(), cancelledScheduleCount);
+
+        return MappingStatusCloseResponse.builder()
+                .mappingId(id)
+                .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                .alreadyClosed(false)
+                .cancelledScheduleCount(cancelledScheduleCount)
+                .remainingSessions(mapping.getRemainingSessions())
+                .usedSessions(mapping.getUsedSessions())
+                .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                .build();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public boolean requiresShopOrderRefund(Long mappingId) {
@@ -8421,6 +8489,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE.equals(reason)) {
             return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL;
+        }
+        if (AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE.equals(reason)) {
+            return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_STATUS_CLOSE_AUTO_CANCEL;
         }
         return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
     }

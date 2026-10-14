@@ -317,7 +317,7 @@ export const KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER =
 
 /** 통합 스케줄(`data-calendar-skin="integrated"`) 월간 달력: 주말 틴트·공휴일 색 우선순위 안내 */
 export const SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE =
-  '월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).';
+  '월간: 토요일은 연한 파랑. 일요일·공휴일 숫자는 보조색이고 공휴일 이름은 숫자 옆. 다른 달 숫자는 비활성색.';
 
 /**
  * GET /api/v1/schedules/admin 등 ScheduleResponse·FullCalendar extendedProps 공통 필드명.

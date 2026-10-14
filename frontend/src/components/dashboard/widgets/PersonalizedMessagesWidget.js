@@ -78,11 +78,12 @@ const PersonalizedMessagesWidget = ({ widget, user }) => {
         const response = await apiGet(DASHBOARD_API.CLIENT_CONSULTANT_INFO, {
           userId: user.id
         });
-        
-        if (response?.success && response?.data) {
+        // apiGet unwrap → 상태 DTO 직접 사용
+        if (response != null && response.success !== false) {
+          const payload = response.data != null ? response.data : response;
           setClientStatus({
-            mappingStatus: response.data.mappingStatus || 'NONE',
-            consultantInfo: response.data.consultantInfo || null
+            mappingStatus: payload.mappingStatus || 'NONE',
+            consultantInfo: payload.consultantInfo || null
           });
         }
       } catch (error) {

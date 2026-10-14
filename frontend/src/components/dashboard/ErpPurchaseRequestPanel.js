@@ -25,10 +25,14 @@ const ErpPurchaseRequestPanel = ({ user }) => {
       try {
         setIsLoading(true);
         const response = await apiGet(`/api/v1/erp/purchase-requests/requester/${user.id}`);
-        
-        if (response?.success && response?.data) {
-          const requests = response.data;
-          
+        // apiGet unwrap → 요청 배열/{ requests } 직접 수용
+        const requests = Array.isArray(response)
+          ? response
+          : (Array.isArray(response?.requests)
+            ? response.requests
+            : (Array.isArray(response?.data) ? response.data : null));
+
+        if (requests) {
           const pendingCount = requests.filter(req => 
             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
             req.status === 'PENDING' || req.status === 'SUBMITTED'

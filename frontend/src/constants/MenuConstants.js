@@ -495,14 +495,17 @@ const cacheMenuConfig = (menuItem, config) => {
  * API에서 업종별 허용 메뉴 조회
  */
 const fetchAllowedMenusByBusinessType = async(businessType, userRole, features) => {
-  const response = await apiGet('/api/admin/menus/allowed', {
+  const response = await apiGet('/api/v1/menus/allowed', {
     businessType,
     userRole,
     features: Object.keys(features).filter(key => features[key])
   });
-  
-  if (response?.success) {
-    return response.data || [];
+  // apiGet unwrap → 메뉴 배열 직접 수용
+  if (response != null && response.success !== false) {
+    const list = Array.isArray(response)
+      ? response
+      : (Array.isArray(response.data) ? response.data : (response.menus || []));
+    return Array.isArray(list) ? list : [];
   }
   
   throw new Error(i18n.t('error:constants.MenuConstants.t_d782a170'));
@@ -512,10 +515,10 @@ const fetchAllowedMenusByBusinessType = async(businessType, userRole, features) 
  * API에서 메뉴 설정 조회
  */
 const fetchMenuConfig = async(menuItem) => {
-  const response = await apiGet(`/api/admin/menus/${menuItem}/config`);
-  
-  if (response?.success) {
-    return response.data || null;
+  const response = await apiGet(`/api/v1/menus/${menuItem}/config`);
+  // apiGet unwrap → 설정 DTO 직접 사용
+  if (response != null && response.success !== false) {
+    return response.data != null ? response.data : response;
   }
   
   throw new Error(i18n.t('error:constants.MenuConstants.t_b2e358fd'));

@@ -36,28 +36,34 @@ const PredictionDashboard = ({ clientId }) => {
         setError(null);
 
         try {
-            // 치료 경과 예측
+            // unwrap 후 예측 필드를 직접 사용 (success 게이트 금지)
             const treatmentData = await apiPost(PREDICTION_API.PREDICT_TREATMENT(clientId));
-            if (treatmentData && treatmentData.success) {
-                setTreatmentPrediction(treatmentData.prediction);
+            if (treatmentData != null && treatmentData.success !== false) {
+                setTreatmentPrediction(
+                    treatmentData.prediction ?? treatmentData.data?.prediction ?? treatmentData
+                );
             }
 
-            // 중도 탈락 위험 평가
             const dropoutData = await apiGet(PREDICTION_API.ASSESS_DROPOUT_RISK(clientId));
-            if (dropoutData && dropoutData.success) {
-                setDropoutRisk(dropoutData.assessment);
+            if (dropoutData != null && dropoutData.success !== false) {
+                setDropoutRisk(
+                    dropoutData.assessment ?? dropoutData.data?.assessment ?? dropoutData
+                );
             }
 
-            // 회기 수 추천
             const sessionData = await apiPost(PREDICTION_API.RECOMMEND_SESSIONS(clientId));
-            if (sessionData && sessionData.success) {
-                setSessionRecommendation(sessionData.recommendation);
+            if (sessionData != null && sessionData.success !== false) {
+                setSessionRecommendation(
+                    sessionData.recommendation ?? sessionData.data?.recommendation ?? sessionData
+                );
             }
 
-            // 유사 케이스
             const casesData = await apiGet(PREDICTION_API.FIND_SIMILAR_CASES(clientId), { limit: 5 });
-            if (casesData && casesData.success) {
-                setSimilarCases(casesData.similarCases || []);
+            if (casesData != null && casesData.success !== false) {
+                const cases = Array.isArray(casesData)
+                    ? casesData
+                    : (casesData.similarCases || casesData.data?.similarCases || []);
+                setSimilarCases(Array.isArray(cases) ? cases : []);
             }
 
         } catch (err) {

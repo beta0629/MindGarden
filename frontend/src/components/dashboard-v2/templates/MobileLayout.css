@@ -27,9 +27,21 @@
   min-height: 0;
 }
 
+.mg-v2-mobile-layout__search {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-bottom: var(--mg-v2-space-3);
+  max-width: 100%;
+}
+
 /* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
 .mg-v2-mobile-layout__main > * {
   flex: 1 1 0%;
+  min-height: 0;
+}
+
+.mg-v2-mobile-layout__main > .mg-v2-mobile-layout__search {
+  flex: 0 0 auto;
   min-height: 0;
 }
 

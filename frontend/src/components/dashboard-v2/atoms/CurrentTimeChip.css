@@ -1,0 +1,108 @@
+/**
+ * CurrentTimeChip — GNB 가운데 현재 시각 칩
+ *
+ * @author CoreSolution
+ * @since 2026-10-14
+ */
+
+.mg-v2-current-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-now-chip-gap);
+  flex-shrink: 0;
+  height: var(--mg-v2-now-chip-height);
+  padding: 0 var(--mg-v2-now-chip-padding-x);
+  box-sizing: border-box;
+  background: var(--mg-v2-now-chip-bg);
+  border: var(--mg-v2-now-chip-border-width) solid var(--mg-v2-now-chip-border);
+  border-radius: var(--mg-v2-now-chip-radius);
+  color: var(--mg-v2-now-chip-text);
+  white-space: nowrap;
+  max-width: none;
+  overflow: visible;
+}
+
+.mg-v2-current-time-chip__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--mg-v2-now-chip-icon);
+  width: var(--mg-v2-now-chip-icon-size);
+  height: var(--mg-v2-now-chip-icon-size);
+}
+
+.mg-v2-current-time-chip__lucide {
+  display: block;
+  width: var(--mg-v2-now-chip-icon-size);
+  height: var(--mg-v2-now-chip-icon-size);
+}
+
+.mg-v2-current-time-chip__text {
+  display: inline-flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.mg-v2-current-time-chip__label {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.mg-v2-current-time-chip__label--full {
+  display: none;
+  font-size: var(--mg-v2-now-chip-time-size);
+  font-weight: var(--mg-v2-now-chip-time-weight);
+  color: var(--mg-v2-now-chip-text);
+}
+
+.mg-v2-current-time-chip__label--medium {
+  display: none;
+  font-size: var(--mg-v2-now-chip-date-size);
+  font-weight: var(--mg-v2-now-chip-date-weight);
+  color: var(--mg-v2-now-chip-text);
+}
+
+.mg-v2-current-time-chip__label--compact {
+  display: inline;
+  font-size: var(--mg-v2-now-chip-time-size);
+  font-weight: var(--mg-v2-now-chip-time-weight);
+  color: var(--mg-v2-now-chip-text);
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-current-time-chip__label--full {
+    display: none;
+  }
+
+  .mg-v2-current-time-chip__label--medium {
+    display: inline;
+  }
+
+  .mg-v2-current-time-chip__label--compact {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .mg-v2-current-time-chip__label--full {
+    display: inline;
+  }
+
+  .mg-v2-current-time-chip__label--medium {
+    display: none;
+  }
+
+  .mg-v2-current-time-chip__label--compact {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .mg-v2-current-time-chip {
+    height: var(--mg-v2-now-chip-height-mobile);
+  }
+}

@@ -1,5 +1,5 @@
 /**
- * MobileGnb - GNB 56px: 햄버거 | 로고 | 알림/프로필
+ * MobileGnb - GNB 56px: 햄버거 | 로고 | CurrentTimeChip(가운데) | 알림/프로필
  * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px
  *
  * @author CoreSolution
@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
-import { NavIcon } from '../atoms';
+import { CurrentTimeChip, NavIcon } from '../atoms';
 import { NotificationDropdown, ProfileDropdown } from '../molecules';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './MobileGnb.css';
@@ -72,6 +72,9 @@ const MobileGnb = ({
           <span className="mg-v2-mobile-gnb__logo-text">{trimmedLogoLabel}</span>
         ) : null}
       </NavLink>
+      <div className="mg-v2-mobile-gnb__center">
+        <CurrentTimeChip />
+      </div>
       <div className="mg-v2-mobile-gnb__actions">
         <NotificationDropdown />
         <ProfileDropdown onLogout={onLogout} />

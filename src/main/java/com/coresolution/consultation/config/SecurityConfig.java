@@ -454,10 +454,13 @@ public class SecurityConfig {
         log.info("🔧 isLocal: {}, isDev: {}, isProd: {}", isLocal, isDev, isProd);
         
         if (isProd) {
-            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 + 서브도메인 허용");
-            // 운영: 실제 운영 도메인들 + 서브도메인 패턴
+            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 + 서브도메인 허용 (비운영 호스트 제외)");
+            // 운영: 와일드카드 *.core-solution.co.kr 는 mindgarden-dev / *.dev.core-solution 에도 매칭되므로
+            // TenantHostSubdomainUtil 로 비운영 Origin 을 checkOrigin 단계에서 거부한다.
+            // (Spring OriginPattern 만으로는 부정 매칭이 어렵다.)
+            configuration = createProductionCorsConfiguration();
             configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://*.core-solution.co.kr",  // 서브도메인 패턴
+                "https://*.core-solution.co.kr",  // 서브도메인 패턴 (비운영은 checkOrigin 에서 제외)
                 "http://*.core-solution.co.kr",
                 "https://core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
                 "http://core-solution.co.kr",
@@ -465,9 +468,9 @@ public class SecurityConfig {
                 "http://*.e-trinity.co.kr",
                 "https://e-trinity.co.kr",        // apex (와일드카드 *.e-trinity.co.kr 미매칭)
                 "http://e-trinity.co.kr",
-                "https://apply.e-trinity.co.kr", 
+                "https://apply.e-trinity.co.kr",
                 "http://apply.e-trinity.co.kr",
-                "https://ops.e-trinity.co.kr", 
+                "https://ops.e-trinity.co.kr",
                 "http://ops.e-trinity.co.kr"
             ));
         } else if (isDev) {
@@ -591,6 +594,29 @@ public class SecurityConfig {
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
+    }
+
+    /**
+     * 운영 CORS — {@link CorsConfiguration#checkOrigin(String)} 에서
+     * {@link TenantHostSubdomainUtil#isNonProductionOrigin(String)} 비운영 Origin 을 거부한다.
+     * {@code https://*.core-solution.co.kr} 패턴이 {@code *-dev}·{@code *.dev.core-solution.co.kr} 에도
+     * 매칭되는 것을 막는다. e-trinity 등 다른 도메인은 util 이 false 를 반환하므로 기존 pattern 을 따른다.
+     *
+     * @return 운영용 CorsConfiguration
+     */
+    static CorsConfiguration createProductionCorsConfiguration() {
+        return new CorsConfiguration() {
+            @Override
+            public String checkOrigin(String requestOrigin) {
+                if (requestOrigin == null || requestOrigin.isBlank()) {
+                    return null;
+                }
+                if (TenantHostSubdomainUtil.isNonProductionOrigin(requestOrigin)) {
+                    return null;
+                }
+                return super.checkOrigin(requestOrigin);
+            }
+        };
     }
 
     /**

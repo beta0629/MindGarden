@@ -38,8 +38,12 @@ const ScheduleEventMarks = ({
   return (
     <span className={rootClass} aria-hidden="true">
       {showInstitution ? (
-        <span className="mg-schedule-event-marks__institution" title={institutionTitle || undefined}>
-          <EngagementTypeBadge source={source} mapping={mapping} />
+        <span className="mg-schedule-event-marks__institution">
+          <EngagementTypeBadge
+            source={source}
+            mapping={mapping}
+            title={institutionTitle || undefined}
+          />
         </span>
       ) : null}
       <ScheduleReminderSmsBadge

@@ -1,87 +1,60 @@
 /**
- * ScheduleCalendarView 단위 테스트 — 2026-05-23 옵션 A 적용 후
- *
- * - TC1: 일요일과 공휴일 셀이 동일 토큰(`--mg-calendar-holiday-bg = --mg-calendar-weekend-sun-bg`) 으로 분홍 배경
- * - TC2: 토요일+공휴일 겹침 시 공휴일 배경(분홍)이 토요일(파랑)을 덮어쓴다(CSS override 블록)
- *
- * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §2,
- *       docs/project-management/2026-05-23/CALENDAR_HOLIDAY_BG_REGRESSION_ANALYSIS.md §5
+ * ScheduleCalendarView — 월간 셀 색.
+ * 일요일·공휴일 셀 배경은 칠하지 않는다. 숫자는 보조색.
+ * 다른 달 숫자는 비활성색이며 요일·공휴일보다 우선한다.
  */
 import fs from 'fs';
 import path from 'path';
 
 const CSS_PATH = path.resolve(__dirname, '..', 'ScheduleCalendarView.css');
-const TOKEN_PATH = path.resolve(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  '..',
-  'styles',
-  'unified-design-tokens.css'
-);
+const CALENDAR_JS = path.resolve(__dirname, '..', 'ScheduleCalendarView.js');
+const SCHEDULE_JSON = path.resolve(__dirname, '..', '..', '..', '..', 'locales', 'ko', 'schedule.json');
 
 const readFile = (filePath) => fs.readFileSync(filePath, 'utf8');
 
-describe('공휴일 셀 배경 SSOT (옵션 A)', () => {
+describe('월간 셀 날짜 색', () => {
   let css;
-  let tokens;
+  let calendarJs;
+  let scheduleJson;
 
   beforeAll(() => {
     css = readFile(CSS_PATH);
-    tokens = readFile(TOKEN_PATH);
+    calendarJs = readFile(CALENDAR_JS);
+    scheduleJson = JSON.parse(readFile(SCHEDULE_JSON));
   });
 
-  test('TC1: 일요일 셀과 공휴일 셀이 동일 톤(--mg-calendar-holiday-bg = --mg-calendar-weekend-sun-bg) 으로 분홍 배경을 받는다', () => {
-    // 토큰 alias 검증
-    expect(tokens).toMatch(/--mg-calendar-weekend-sun-bg:/);
-    expect(tokens).toMatch(
-      /--mg-calendar-holiday-bg:\s*var\(--mg-calendar-weekend-sun-bg\)/
-    );
-
-    // 공휴일 셀에 토큰 적용
-    const holidayCellRule = css.match(
-      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--kr-public-holiday\s*\{[^}]*background-color:\s*var\(--mg-calendar-holiday-bg\)[^}]*\}/
-    );
-    expect(holidayCellRule).not.toBeNull();
-
-    // 일요일 셀에 토큰 적용
-    const sundayCellRule = css.match(
-      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--weekend-sun\s*\{[^}]*background-color:\s*var\(--mg-calendar-weekend-sun-bg\)[^}]*\}/
-    );
-    expect(sundayCellRule).not.toBeNull();
-
-    // `transparent !important` 가 공휴일 셀에서 제거되었는지 검증
+  test('일요일·공휴일 셀에 붉은 배경을 칠하지 않고 숫자는 보조색이다', () => {
     expect(css).not.toMatch(
-      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--kr-public-holiday\s*\{[^}]*transparent\s*!important/
+      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--kr-public-holiday\s*\{[^}]*background-color:\s*var\(--mg-calendar-holiday-bg\)/
     );
+    expect(css).not.toMatch(
+      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--weekend-sun\s*\{[^}]*background-color:\s*var\(--mg-calendar-weekend-sun-bg\)/
+    );
+    expect(css).toMatch(
+      /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--weekend-sun \.fc-daygrid-day-number,[\s\S]*?color:\s*var\(--mg-v2-color-text-secondary\)/
+    );
+    expect(css).toMatch(
+      /mg-v2-ad-calendar-day-holiday-badge__name\s*\{[^}]*font-size:\s*var\(--mg-v2-font-size-caption\)/
+    );
+    expect(css).toMatch(/text-overflow:\s*ellipsis/);
+    expect(calendarJs).toMatch(/nameSpan\.title = safeName/);
   });
 
-  test('TC2: 토요일+공휴일 겹침 시 공휴일 배경(분홍)이 토요일(파랑)을 덮어쓴다 — CSS override 선언 순서 검증', () => {
-    // 셀 배경 토큰 rule 만 매칭 (트레일링 `{`)
-    const holidayBgRulePattern = /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--kr-public-holiday\s*\{/g;
-    const satBgRulePattern = /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--weekend-sat\s*\{/g;
-    const sunBgRulePattern = /td\.fc-daygrid-day\.mg-v2-ad-calendar-day--weekend-sun\s*\{/g;
+  test('다른 달 숫자는 비활성색이 요일·공휴일보다 뒤에 선언된다', () => {
+    const sundayColor = css.indexOf('mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number');
+    const otherMonth = css.indexOf('td.fc-daygrid-day.fc-day-other .fc-daygrid-day-number');
+    expect(sundayColor).toBeGreaterThan(-1);
+    expect(otherMonth).toBeGreaterThan(sundayColor);
+    const otherBlock = css.slice(otherMonth, otherMonth + 700);
+    expect(otherBlock).toMatch(/color:\s*var\(--mg-v2-color-text-disabled\)/);
+    expect(otherBlock).toMatch(/fc-day-other\.mg-v2-ad-calendar-day--kr-public-holiday/);
+  });
 
-    const lastIndex = (pattern) => {
-      const matches = [...css.matchAll(pattern)];
-      return matches.length > 0 ? matches[matches.length - 1].index : -1;
-    };
-
-    const holidayLast = lastIndex(holidayBgRulePattern);
-    const satLast = lastIndex(satBgRulePattern);
-    const sunLast = lastIndex(sunBgRulePattern);
-
-    expect(holidayLast).toBeGreaterThan(-1);
-    expect(satLast).toBeGreaterThan(-1);
-    expect(sunLast).toBeGreaterThan(-1);
-
-    // 마지막 holiday 배경 rule 이 weekend 배경 rule 뒤에 있어야 cascade 우선
-    expect(holidayLast).toBeGreaterThan(satLast);
-    expect(holidayLast).toBeGreaterThan(sunLast);
-
-    // 마지막 holiday 배경 rule 이 --mg-calendar-holiday-bg 토큰을 사용
-    const overrideBlock = css.slice(holidayLast, holidayLast + 250);
-    expect(overrideBlock).toMatch(/background-color:\s*var\(--mg-calendar-holiday-bg\)/);
+  test('월·주·일 버튼 문구는 locale 키를 쓴다', () => {
+    expect(calendarJs).toMatch(/schedule:calendar\.views\.month/);
+    expect(calendarJs).toMatch(/schedule:calendar\.views\.week/);
+    expect(calendarJs).toMatch(/schedule:calendar\.views\.day/);
+    expect(calendarJs).toMatch(/buttonText=\{calendarButtonText\}/);
+    expect(scheduleJson.calendar.views).toEqual({ month: '월', week: '주', day: '일' });
   });
 });

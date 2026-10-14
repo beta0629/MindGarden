@@ -27,7 +27,8 @@ function EngagementTypeBadge({
   mapping,
   source,
   size = 'sm',
-  className = ''
+  className = '',
+  title
 }) {
   const resolved = type
     ? normalizeEngagementTypeValue(type)
@@ -48,6 +49,7 @@ function EngagementTypeBadge({
       className={classes}
       data-testid={ENGAGEMENT_TYPE_BADGE_TEST_ID}
       data-engagement-type={resolved}
+      title={title || undefined}
     />
   );
 }
@@ -57,7 +59,8 @@ EngagementTypeBadge.propTypes = {
   mapping: PropTypes.object,
   source: PropTypes.object,
   size: PropTypes.oneOf(['sm', 'default', 'lg']),
-  className: PropTypes.string
+  className: PropTypes.string,
+  title: PropTypes.string
 };
 
 EngagementTypeBadge.defaultProps = {
@@ -65,7 +68,8 @@ EngagementTypeBadge.defaultProps = {
   mapping: null,
   source: null,
   size: 'sm',
-  className: ''
+  className: '',
+  title: undefined
 };
 
 export default EngagementTypeBadge;

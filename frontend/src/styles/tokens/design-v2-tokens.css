@@ -180,6 +180,8 @@
   --mg-v2-space-0-5: 0.125rem;
   --mg-v2-space-1: 0.25rem;
   --mg-v2-space-2: 0.5rem;
+  /* 월간 칩 끝 여백. 이름 말줄임과 표식(■·원)이 칩 가장자리에 닿지 않게 10px. */
+  --mg-v2-month-chip-padding-inline-end: 10px;
   --mg-v2-space-3: 0.75rem;
   --mg-v2-space-4: 1rem;
   --mg-v2-space-5: 1.25rem;

@@ -31,18 +31,20 @@
 }
 
 /*
- * 단계 B (하네스 < 224px): ■ 사각, 끝 패딩 안 절대 위치.
- * 10px = space-2 + space-0-5. 2px = space-0-5.
+ * 단계 B (하네스 < 224px): ■ 사각은 칩 끝 10px 안에 둔다.
+ * 말줄임은 표식 너비만큼 더 안쪽에서 끊긴다.
  */
 @container mg-month-event (width < 224px) {
   .mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+    padding-inline-end: calc(
+      var(--mg-v2-month-chip-padding-inline-end) + var(--mg-size-dot-sm) + var(--mg-v2-space-1)
+    );
   }
 
   .mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks {
     position: absolute;
     inset-block: 0;
-    inset-inline-end: var(--mg-v2-space-0-5);
+    inset-inline-end: var(--mg-v2-month-chip-padding-inline-end);
     margin-inline-start: 0;
     flex-direction: column-reverse;
     justify-content: center;
@@ -65,13 +67,15 @@
 /* 사이드바 행. 224px 는 월간 칩 단계 B 와 같은 값. 검증 실측 필요. */
 @container mg-compact-row (width < 224px) {
   .integrated-schedule__compact-row:has(.mg-schedule-event-marks) {
-    padding-inline-end: calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5));
+    padding-inline-end: calc(
+      var(--mg-v2-month-chip-padding-inline-end) + var(--mg-size-dot-sm) + var(--mg-v2-space-1)
+    );
   }
 
   .integrated-schedule__compact-row .mg-schedule-event-marks {
     position: absolute;
     inset-block: 0;
-    inset-inline-end: var(--mg-v2-space-0-5);
+    inset-inline-end: var(--mg-v2-month-chip-padding-inline-end);
     margin-inline-start: 0;
     flex-direction: column-reverse;
     justify-content: center;

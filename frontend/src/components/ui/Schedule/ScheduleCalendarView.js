@@ -288,15 +288,17 @@ const ScheduleCalendarView = ({
             : `${CALENDAR_VIEW_MONTH},${CALENDAR_VIEW_WEEK},${CALENDAR_VIEW_DAY}`
     }), [isDayZoomed]);
 
+    const calendarButtonText = useMemo(() => ({
+        month: t('schedule:calendar.views.month'),
+        week: t('schedule:calendar.views.week'),
+        day: t('schedule:calendar.views.day')
+    }), [t]);
+
     /**
      * 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식.
      * 통합 스킨일 때만 익일「대체」공휴일 전날 클래스(배지·스타일 정합).
-     *
-     * 2026-05-23 옵션 A 정착 — `!holidayName` 가드를 제거해 공휴일 셀에도 weekend 클래스를 부여한다.
-     * CSS 우선순위 규칙은 ScheduleCalendarView.css 의 공휴일 override 블록으로 명시하므로
-     * Sat+공휴일 → 분홍, Sun+공휴일 → 분홍(동일 톤) 으로 시각 정합한다.
-     * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §2,
-     *       docs/project-management/2026-05-23/CALENDAR_HOLIDAY_BG_REGRESSION_ANALYSIS.md §4.2
+     * 일요일·공휴일 숫자는 보조색, 다른 달 숫자는 비활성색이 우선한다.
+     * 셀 배경에 붉은색을 칠하지 않는다.
      */
     const dayCellClassNamesForKrHoliday = useCallback((arg) => {
       const list = [];
@@ -344,6 +346,7 @@ const ScheduleCalendarView = ({
             nameSpan.className = 'mg-v2-ad-calendar-day-holiday-badge__name';
             const safeName = toDisplayString(holidayName, '');
             nameSpan.textContent = safeName;
+            nameSpan.title = safeName;
             badge.appendChild(nameSpan);
             if (eveHint) {
                 const hintSpan = document.createElement('span');
@@ -697,6 +700,7 @@ const ScheduleCalendarView = ({
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 headerToolbar={headerToolbar}
+                buttonText={calendarButtonText}
                 customButtons={customButtons}
                 initialView={CALENDAR_VIEW_MONTH}
                 defaultView={CALENDAR_VIEW_MONTH}

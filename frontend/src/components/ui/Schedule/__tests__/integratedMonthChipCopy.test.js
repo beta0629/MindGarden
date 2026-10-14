@@ -165,7 +165,10 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(marksJs).toContain('aria-hidden="true"');
     expect(marksCss).toContain('@container mg-month-event (width < 224px)');
     expect(marksCss).toContain('@container mg-compact-row (width < 224px)');
-    expect(marksCss).toContain('var(--mg-v2-space-0-5)');
+    expect(marksCss).toContain('var(--mg-v2-month-chip-padding-inline-end)');
+    expect(marksCss).not.toMatch(/inset-inline-end:\s*var\(--mg-v2-space-0-5\)/);
+    expect(marksJs).toMatch(/title=\{institutionTitle/);
+    expect(marksJs).not.toMatch(/mg-schedule-event-marks__institution"[^>]*title=/);
     expect(marksCss).not.toMatch(/transform\s*:/);
     expect(marksCss).not.toMatch(/scale\s*\(/);
   });
@@ -177,6 +180,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(imsCss).toContain('@container mg-month-event (width < 146px)');
     expect(imsCss).toContain('@container mg-month-event (width < 109px)');
     expect(imsCss).toContain('opacity: 1');
+    expect(imsCss).toContain('.fc-event.fc-event-past');
+    expect(imsCss).toContain('var(--mg-v2-month-chip-padding-inline-end)');
     expect(imsCss).not.toMatch(/content:\s*"당일"/);
     expect(imsCss).not.toMatch(/grayscale/);
   });
@@ -196,5 +201,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(scheduleJson.calendar.legend.sms).toBe('문자 발송');
     expect(scheduleJson.calendar.legend.unresolved).toBe('미해소');
     expect(scheduleJson.calendar.legend.hint).toContain('마우스');
+    expect(scheduleJson.calendar.views.month).toBe('월');
+    expect(scheduleJson.calendar.views.week).toBe('주');
+    expect(scheduleJson.calendar.views.day).toBe('일');
   });
 });

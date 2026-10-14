@@ -91,7 +91,7 @@
     "legend": {
       "krPublicHoliday": "공휴일(참고)",
       "krPublicHolidayDisclaimer": "표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.",
-      "integratedWeekendHolidayNote": "월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).",
+      "integratedWeekendHolidayNote": "월간: 토요일은 연한 파랑. 일요일·공휴일 숫자는 보조색이고 공휴일 이름은 숫자 옆. 다른 달 숫자는 비활성색.",
       "sessionLabelsTitle": "회기 표기",
       "sessionBookingSequenceMeaning": "이 일정의 회차",
       "sessionRemainingMeaning": "예정 일정의 회차"
@@ -264,6 +264,11 @@
       "sms": "문자 발송",
       "unresolved": "미해소",
       "hint": "표식에 마우스를 올리면 내용이 보입니다"
+    },
+    "views": {
+      "month": "월",
+      "week": "주",
+      "day": "일"
     }
   }
 }

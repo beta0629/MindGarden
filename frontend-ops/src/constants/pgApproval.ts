@@ -36,6 +36,8 @@ export const PG_APPROVAL_LABELS = {
   REJECTION_REASON_REQUIRED: "거부 사유는 필수입니다 (최소 10자).",
   REJECTION_HINT: "거부 사유는 센터에게 전달됩니다.",
   TEST_BEFORE_APPROVE: "승인 전 연결 시험",
+  /** 대기 수정(pending) 승인 시 연결 시험 필수 — 스위치 비활성 힌트 */
+  TEST_BEFORE_APPROVE_PENDING_HINT: "대기 수정 시 연결 시험 필수",
   LOADING: "데이터를 불러오는 중입니다...",
   ERROR_LOAD: "승인 대기 목록을 불러오지 못했습니다.",
   APPROVE_SUCCESS: "PG 설정이 승인되었습니다.",
@@ -64,6 +66,7 @@ export const PG_APPROVAL_LABELS = {
   DIFF_STORE_ID: "스토어 ID",
   DIFF_MERCHANT_ID: "가맹 ID",
   DIFF_CHANNEL_KEY: "채널 키",
+  DIFF_CHANNEL_KEY_TEST: "테스트 채널 키",
   DIFF_WEBHOOK_URL: "Webhook URL",
   DIFF_RETURN_URL: "Return URL",
   DIFF_CANCEL_URL: "Cancel URL",
@@ -94,6 +97,32 @@ export function shouldShowReapprovalBadge(item?: {
     return true;
   }
   return item.status === "ACTIVE" && item.approvalStatus === "PENDING";
+}
+
+/**
+ * pending 수정이 있으면 승인 전 연결 시험을 강제·스위치 비활성.
+ *
+ * @param item 목록/상세 항목
+ * @returns 연결 시험 강제 시 true
+ */
+export function isConnectionTestForcedForPending(item?: {
+  hasPendingEdit?: boolean | null;
+} | null): boolean {
+  return item?.hasPendingEdit === true;
+}
+
+/**
+ * 승인 요청용 testConnection 값 — pending 이면 항상 true.
+ *
+ * @param hasPendingEdit 대기 수정 여부
+ * @param userChecked UI 스위치 값
+ * @returns API 에 전달할 testConnection
+ */
+export function resolveApproveTestConnection(
+  hasPendingEdit: boolean | null | undefined,
+  userChecked: boolean
+): boolean {
+  return hasPendingEdit === true ? true : userChecked;
 }
 
 /**

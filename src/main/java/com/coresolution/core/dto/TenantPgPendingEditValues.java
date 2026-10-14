@@ -34,12 +34,17 @@ public class TenantPgPendingEditValues {
     private String merchantId;
 
     /**
-     * 채널 키 마스킹 값 ({@code SecretValueMasking} — 끝 4자리만 노출)
+     * 라이브 채널 키 마스킹 값 ({@code SecretValueMasking} — 끝 4자리만 노출)
      */
     private String channelKeyMasked;
 
     /**
-     * 마스킹된 Webhook URL
+     * 테스트 채널 키 마스킹 값 ({@code SecretValueMasking} — 끝 4자리만 노출)
+     */
+    private String channelKeyTestMasked;
+
+    /**
+     * 마스킹된 Webhook URL (host+path 평문, query/fragment 마스킹)
      */
     private String webhookUrl;
 

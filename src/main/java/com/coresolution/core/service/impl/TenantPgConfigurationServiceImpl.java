@@ -20,6 +20,7 @@ import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.SecretValueMasking;
+import com.coresolution.consultation.util.UrlDisplayMasking;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -491,7 +492,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         validateApprovalRequest(configuration, request);
         
         boolean hasPendingEdit = configuration.hasPendingRequest();
-        boolean shouldTestConnection = request.getTestConnection() == null || request.getTestConnection();
+        // pending 수정이 있으면 testConnection=false 여도 연결 시험을 강제한다.
+        boolean shouldTestConnection = hasPendingEdit
+                || request.getTestConnection() == null
+                || Boolean.TRUE.equals(request.getTestConnection());
         if (shouldTestConnection) {
             ConnectionTestResponse testResult = hasPendingEdit
                     ? testConnectionWithPendingCredentials(configuration)
@@ -1409,18 +1413,21 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 return emptyPendingEditDiff();
             }
 
-            boolean useTestChannelKey = Boolean.TRUE.equals(configuration.getTestMode());
             TenantPgPendingEditValues current = TenantPgPendingEditValues.builder()
                     .provider(configuration.getPgProvider() != null
                             ? configuration.getPgProvider().name()
                             : null)
                     .storeId(maskForOpsDiff(configuration.getStoreId()))
                     .merchantId(maskForOpsDiff(configuration.getMerchantId()))
-                    .channelKeyMasked(maskChannelKeyFromSettings(
-                            configuration.getSettingsJson(), useTestChannelKey))
-                    .webhookUrl(maskForOpsDiff(configuration.getWebhookUrl()))
-                    .returnUrl(maskForOpsDiff(configuration.getReturnUrl()))
-                    .cancelUrl(maskForOpsDiff(configuration.getCancelUrl()))
+                    .channelKeyMasked(maskChannelKeyBySettingsKey(
+                            configuration.getSettingsJson(),
+                            TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY))
+                    .channelKeyTestMasked(maskChannelKeyBySettingsKey(
+                            configuration.getSettingsJson(),
+                            TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST))
+                    .webhookUrl(maskUrlForOpsDiff(configuration.getWebhookUrl()))
+                    .returnUrl(maskUrlForOpsDiff(configuration.getReturnUrl()))
+                    .cancelUrl(maskUrlForOpsDiff(configuration.getCancelUrl()))
                     .build();
 
             String pendingProvider = root.hasNonNull("pgProvider")
@@ -1436,10 +1443,15 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                     .provider(pendingProvider)
                     .storeId(maskForOpsDiff(textOrNull(root.get("storeId"))))
                     .merchantId(maskForOpsDiff(textOrNull(root.get("merchantId"))))
-                    .channelKeyMasked(maskChannelKeyFromSettings(pendingSettingsJson, useTestChannelKey))
-                    .webhookUrl(maskForOpsDiff(textOrNull(root.get("webhookUrl"))))
-                    .returnUrl(maskForOpsDiff(textOrNull(root.get("returnUrl"))))
-                    .cancelUrl(maskForOpsDiff(textOrNull(root.get("cancelUrl"))))
+                    .channelKeyMasked(maskChannelKeyBySettingsKey(
+                            pendingSettingsJson,
+                            TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY))
+                    .channelKeyTestMasked(maskChannelKeyBySettingsKey(
+                            pendingSettingsJson,
+                            TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST))
+                    .webhookUrl(maskUrlForOpsDiff(textOrNull(root.get("webhookUrl"))))
+                    .returnUrl(maskUrlForOpsDiff(textOrNull(root.get("returnUrl"))))
+                    .cancelUrl(maskUrlForOpsDiff(textOrNull(root.get("cancelUrl"))))
                     .build();
 
             String pendingApiEnc = root.hasNonNull("apiKeyEncrypted")
@@ -1492,26 +1504,36 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
 
     /**
-     * settings_json 에서 채널 키를 추출해 마스킹한다.
+     * OPS diff URL 표시용 마스킹. host+path 평문, query/fragment 만 가림.
+     *
+     * @param value 원본 URL
+     * @return 마스킹 문자열 (null/blank → empty)
+     */
+    private String maskUrlForOpsDiff(String value) {
+        return UrlDisplayMasking.maskQueryAndFragment(value);
+    }
+
+    /**
+     * settings_json 의 지정 채널 키를 추출해 마스킹한다. testMode 와 무관하게 단일 키만 본다.
      *
      * @param settingsJson settings_json
-     * @param useTestKey true 이면 테스트 채널 키 우선
-     * @return 마스킹된 채널 키
+     * @param settingsKey {@link TenantPgSettingsJsonKeys} 채널 키 이름
+     * @return 마스킹된 채널 키 (없으면 empty)
      */
-    private String maskChannelKeyFromSettings(String settingsJson, boolean useTestKey) {
-        String raw = extractChannelKeyFromSettings(settingsJson, useTestKey);
+    private String maskChannelKeyBySettingsKey(String settingsJson, String settingsKey) {
+        String raw = extractChannelKeyBySettingsKey(settingsJson, settingsKey);
         return maskForOpsDiff(raw);
     }
 
     /**
-     * settings_json 에서 PortOne 채널 키를 추출한다.
+     * settings_json 에서 지정 PortOne 채널 키만 추출한다 (live/test 교차 fallback 없음).
      *
      * @param settingsJson settings_json
-     * @param useTestKey true 이면 TEST 키 우선, 없으면 LIVE 키
+     * @param settingsKey 채널 키 JSON 필드명
      * @return 채널 키 평문 또는 null (응답에 직접 넣지 말 것)
      */
-    private String extractChannelKeyFromSettings(String settingsJson, boolean useTestKey) {
-        if (settingsJson == null || settingsJson.isBlank()) {
+    private String extractChannelKeyBySettingsKey(String settingsJson, String settingsKey) {
+        if (settingsJson == null || settingsJson.isBlank() || settingsKey == null || settingsKey.isBlank()) {
             return null;
         }
         try {
@@ -1519,17 +1541,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             if (root == null || !root.isObject()) {
                 return null;
             }
-            String primaryKey = useTestKey
-                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
-                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY;
-            String fallbackKey = useTestKey
-                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
-                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST;
-            String primary = textOrNull(root.get(primaryKey));
-            if (primary != null && !primary.isBlank()) {
-                return primary;
-            }
-            return textOrNull(root.get(fallbackKey));
+            return textOrNull(root.get(settingsKey));
         } catch (Exception e) {
             log.warn("settings_json 채널 키 추출 실패: {}", e.getMessage());
             return null;

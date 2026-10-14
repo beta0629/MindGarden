@@ -67,7 +67,14 @@ export const OPS_API_PATHS = {
     TEST_CONNECTION: (configId: string) => `/ops/pg-configurations/${configId}/test-connection`,
     HISTORY: (configId: string) => `/ops/pg-configurations/${configId}/history`,
     ACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/activate`,
-    DEACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/deactivate`
+    DEACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/deactivate`,
+    WEBHOOK_SECRET: (configId: string) => `/ops/pg-configurations/${configId}/webhook-secret`,
+    TEST_MODE: (configId: string) => `/ops/pg-configurations/${configId}/test-mode`,
+    /** 테넌트 경로 OPS alias — tenantId 가 있을 때 사용 */
+    TENANT_WEBHOOK_SECRET: (tenantId: string, configId: string) =>
+      `/tenants/${tenantId}/pg-configurations/${configId}/webhook-secret`,
+    TENANT_TEST_MODE: (tenantId: string, configId: string) =>
+      `/tenants/${tenantId}/pg-configurations/${configId}/test-mode`
   }
 } as const;
 

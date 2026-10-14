@@ -55,7 +55,8 @@ export const PG_APPROVAL_LABELS = {
   CONFIRM_REJECT_TITLE: "거부 확인",
   CONFIRM_APPROVE_HINT: "승인하면 해당 PG 설정이 사용중으로 전환됩니다.",
   CONFIRM_REJECT_HINT: "거부하면 센터에 사유가 전달됩니다.",
-  MERCHANT_EMPTY: "—"
+  MERCHANT_EMPTY: "—",
+  REAPPROVAL_BADGE: "재승인 대기"
 } as const;
 
 export const PG_APPROVAL_MIN_REJECTION_REASON_LENGTH = 10;

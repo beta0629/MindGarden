@@ -200,10 +200,11 @@ export const getConsultantGradeStyles = async() => {
 export const getConsultantWithStats = async(consultantId) => {
     try {
         const response = await apiGet(`${CONSULTANTS_WITH_STATS}/${consultantId}`);
-        if (response.success) {
-            return response.data;
+        // apiGet unwrap → 상담사+통계 DTO 직접 반환
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
-        console.error('상담사 통계 조회 실패:', response.message);
+        console.error('상담사 통계 조회 실패:', response?.message);
         return null;
     } catch (error) {
         console.error('상담사 통계 조회 중 오류:', error);
@@ -381,10 +382,10 @@ export const getClientWithStats = async(clientId) => {
     try {
         // 표준화 2025-12-08: API 경로 수정 (/api/v1/admin)
         const response = await apiGet(`${CLIENTS_WITH_STATS}/${clientId}`);
-        if (response.success) {
-            return response.data;
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
-        console.error('내담자 통계 조회 실패:', response.message);
+        console.error('내담자 통계 조회 실패:', response?.message);
         return null;
     } catch (error) {
         console.error('내담자 통계 조회 중 오류:', error);

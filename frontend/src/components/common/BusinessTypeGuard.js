@@ -159,11 +159,14 @@ const getUserBusinessType = async(user) => {
 
   try {
     // API에서 조회
-    const response = await apiGet(`/api/users/${user.id}/business-type`);
-    if (response?.success) {
-      const businessType = response.data?.businessType;
-      cacheBusinessType(user.id, businessType);
-      return businessType;
+    const response = await apiGet(`/api/v1/users/${user.id}/business-type`);
+    // apiGet unwrap → { businessType } 직접 사용
+    if (response != null && response.success !== false) {
+      const businessType = response.businessType ?? response.data?.businessType;
+      if (businessType) {
+        cacheBusinessType(user.id, businessType);
+        return businessType;
+      }
     }
   } catch (error) {
     console.warn('사용자 업종 API 조회 실패:', error);

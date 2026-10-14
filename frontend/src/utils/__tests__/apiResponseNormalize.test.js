@@ -1,4 +1,36 @@
-import { asArray, normalizeApiListPayload, normalizeMappingsListPayload } from '../apiResponseNormalize';
+import {
+  asArray,
+  hasApiGetPayload,
+  normalizeApiListPayload,
+  normalizeConsultantsPayload,
+  normalizeMappingsListPayload
+} from '../apiResponseNormalize';
+
+describe('hasApiGetPayload — apiGet unwrap 후 success 게이트 대체', () => {
+  it('null·undefined는 false', () => {
+    expect(hasApiGetPayload(null)).toBe(false);
+    expect(hasApiGetPayload(undefined)).toBe(false);
+  });
+
+  it('unwrap된 { consultants }·배열·객체를 true로 본다', () => {
+    expect(hasApiGetPayload({ consultants: [{ id: 1 }] })).toBe(true);
+    expect(hasApiGetPayload([{ id: 1 }])).toBe(true);
+    expect(hasApiGetPayload({ valid: true })).toBe(true);
+  });
+
+  it('success === false 래퍼만 실패로 본다 (success 없음은 성공)', () => {
+    expect(hasApiGetPayload({ success: false, message: 'fail' })).toBe(false);
+    expect(hasApiGetPayload({ success: true, data: [] })).toBe(true);
+  });
+});
+
+describe('normalizeConsultantsPayload', () => {
+  it('{ consultants } / 배열 dual-shape을 정규화한다', () => {
+    const rows = [{ id: 1, isActive: true }];
+    expect(normalizeConsultantsPayload({ consultants: rows })).toEqual(rows);
+    expect(normalizeConsultantsPayload(rows)).toBe(rows);
+  });
+});
 
 describe('asArray — AdminDashboard 배열 정규화 패턴', () => {
   it('null·undefined·비객체는 빈 배열을 반환한다', () => {

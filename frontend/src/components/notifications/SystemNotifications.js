@@ -53,9 +53,14 @@ const SystemNotifications = () => {
     try {
       setLoading(true);
       const response = await apiGet(`/api/v1/system-notifications?page=${page}&size=20`);
-
-      if (response.success) {
-        setNotifications(response.data || []);
+      // apiGet unwrap → content/배열/data 직접 수용
+      if (response != null && response.success !== false) {
+        const list = Array.isArray(response)
+          ? response
+          : (Array.isArray(response.content)
+            ? response.content
+            : (Array.isArray(response.data) ? response.data : []));
+        setNotifications(list);
         setTotalPages(response.totalPages || 0);
         setCurrentPage(page);
       }
@@ -71,11 +76,10 @@ const SystemNotifications = () => {
     try {
       // 상세 조회 API 호출 (자동 읽음 처리)
       const response = await apiGet(`/api/v1/system-notifications/${notification.id}`);
-      
-      if (response.success) {
-        setSelectedNotification(response.data);
+      // apiGet unwrap → 상세 DTO 직접 사용
+      if (response != null && response.success !== false) {
+        setSelectedNotification(response.data != null ? response.data : response);
       } else {
-        // 실패 시 기존 데이터 사용
         setSelectedNotification(notification);
       }
     } catch (error) {

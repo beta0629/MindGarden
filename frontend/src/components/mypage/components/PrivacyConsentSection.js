@@ -47,10 +47,15 @@ const PrivacyConsentSection = ({ editDisabled = false }) => {
     try {
       setLoading(true);
       const result = await StandardizedApi.get(API_PRIVACY_CONSENT_STATUS);
-      if (result?.success && result.data) {
-        setConsentStatus(result.data);
-      } else if (result && typeof result === 'object' && 'privacyConsent' in result) {
-        setConsentStatus(result);
+      // unwrap → 동의 상태 DTO 직접 사용 (success 게이트보다 payload-first)
+      if (result != null && result.success !== false && typeof result === 'object') {
+        if (result.data != null && typeof result.data === 'object' && 'privacyConsent' in result.data) {
+          setConsentStatus(result.data);
+        } else if ('privacyConsent' in result) {
+          setConsentStatus(result);
+        } else if (result.data != null && typeof result.data === 'object') {
+          setConsentStatus(result.data);
+        }
       }
     } catch (error) {
       console.error('개인정보 동의 상태 로드 실패:', error);

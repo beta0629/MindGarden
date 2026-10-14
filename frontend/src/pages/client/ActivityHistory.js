@@ -76,9 +76,12 @@ const ActivityHistory = () => {
       }
 
       const result = await StandardizedApi.get(API_ACTIVITIES_HISTORY, params);
-
-      if (result && result.success) {
-        setActivities(Array.isArray(result.data) ? result.data : []);
+      // unwrap → 활동 배열 직접 수용
+      if (result != null && result.success !== false) {
+        const list = Array.isArray(result)
+          ? result
+          : (Array.isArray(result.data) ? result.data : (result.activities || result.content || []));
+        setActivities(Array.isArray(list) ? list : []);
       } else {
         console.error('활동 내역 로드 실패:', result?.message);
         setActivities([]);
@@ -92,9 +95,14 @@ const ActivityHistory = () => {
   const loadStatistics = useCallback(async() => {
     try {
       const result = await StandardizedApi.get(API_ACTIVITIES_STATISTICS, {});
-
-      if (result && result.success && result.data && typeof result.data === 'object') {
-        setStatistics(result.data);
+      // unwrap → 통계 객체 직접 사용
+      if (result != null && result.success !== false && typeof result === 'object') {
+        const stats = (result.data != null && typeof result.data === 'object' && !Array.isArray(result.data))
+          ? result.data
+          : result;
+        if (!Array.isArray(stats)) {
+          setStatistics(stats);
+        }
       }
     } catch (error) {
       console.error('통계 로드 실패:', error);

@@ -198,12 +198,40 @@ public class TenantPgConfiguration extends BaseEntity {
      */
     @Column(name = "settings_json", columnDefinition = "JSON")
     private String settingsJson;
+
+    /**
+     * ACTIVE 재승인용 ADMIN 스테이징 수정 스냅샷 (JSON).
+     * 암호화된 api/secret 및 편집 가능 필드 포함. testMode 는 포함·적용하지 않는다.
+     */
+    @Column(name = "pending_request_json", columnDefinition = "JSON")
+    private String pendingRequestJson;
+
+    /**
+     * pending 수정 요청자
+     */
+    @Column(name = "pending_requested_by", length = 100)
+    private String pendingRequestedBy;
+
+    /**
+     * pending 수정 요청 시각
+     */
+    @Column(name = "pending_requested_at")
+    private LocalDateTime pendingRequestedAt;
     
      /**
      * 비고
      */
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    /**
+     * 스테이징된 ADMIN 수정이 있는지 여부.
+     *
+     * @return pending_request_json non-blank 이면 true
+     */
+    public boolean hasPendingRequest() {
+        return pendingRequestJson != null && !pendingRequestJson.isBlank();
+    }
     
      /**
      * 테넌트 (참조)

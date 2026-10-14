@@ -601,11 +601,14 @@ class TenantPgConfigurationServiceImplTest {
     }
 
     @Test
-    @DisplayName("PG 설정 수정 — ACTIVE 유지 + approvalStatus PENDING (재승인)")
-    void updateConfiguration_activeKeepsActiveAndPendingApproval() {
+    @DisplayName("ADMIN PUT ACTIVE — live 필드 유지, pending 스테이징, approvalStatus APPROVED 유지")
+    void updateConfiguration_activeStagesPending_keepsLiveAndApproved() throws Exception {
         testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
         testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
         testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
         testConfiguration.setTestMode(true);
         testConfiguration.setSettingsJson(
                 "{\"portoneChannelKeyTest\":\"channel-key-test-xxxxx\",\"portoneWebhookSecret\":\"ENC(whsec)\"}");
@@ -613,9 +616,10 @@ class TenantPgConfigurationServiceImplTest {
         TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
                 .pgProvider(PgProvider.IAMPORT)
                 .pgName("포트원")
-                .apiKey("test-api-key")
-                .secretKey("test-secret-key")
-                .testMode(true)
+                .apiKey("new-api-key")
+                .secretKey("new-secret-key")
+                .storeId("pending-store")
+                .testMode(false)
                 .settingsJson("{\"portoneChannelKeyTest\":\"channel-key-test-yyyyy\"}")
                 .build();
 
@@ -636,7 +640,25 @@ class TenantPgConfigurationServiceImplTest {
                 service.updateConfiguration(testTenantId, testConfigId, request);
 
         assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
-        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.PENDING);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getHasPendingEdit()).isTrue();
+        assertThat(result.getStoreId()).isEqualTo("live-store");
+        assertThat(result.getTestMode()).isTrue();
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        TenantPgConfiguration saved = savedCaptor.getValue();
+        assertThat(saved.getApiKeyEncrypted()).isEqualTo("encrypted-live-api");
+        assertThat(saved.getSecretKeyEncrypted()).isEqualTo("encrypted-live-secret");
+        assertThat(saved.getStoreId()).isEqualTo("live-store");
+        assertThat(saved.getTestMode()).isTrue();
+        assertThat(saved.getPendingRequestJson()).isNotBlank();
+        assertThat(saved.getPendingRequestJson()).doesNotContain("testMode");
+        JsonNode pending = objectMapper.readTree(saved.getPendingRequestJson());
+        assertThat(pending.get("storeId").asText()).isEqualTo("pending-store");
+        assertThat(pending.get("apiKeyEncrypted").asText()).isEqualTo("encrypted-new-api-key");
+        assertThat(pending.has("testMode")).isFalse();
 
         ArgumentCaptor<String> notesCaptor = ArgumentCaptor.forClass(String.class);
         verify(historyService).saveHistory(
@@ -646,15 +668,26 @@ class TenantPgConfigurationServiceImplTest {
                 eq("ACTIVE"),
                 any(),
                 notesCaptor.capture());
-        assertThat(notesCaptor.getValue()).contains("재승인");
-        assertThat(notesCaptor.getValue()).contains("ACTIVE 유지");
+        assertThat(notesCaptor.getValue()).contains("스테이징");
+        assertThat(notesCaptor.getValue()).contains("ACTIVE live 유지");
     }
 
     @Test
-    @DisplayName("PG 설정 승인 — ACTIVE 재승인 시 status ACTIVE 유지")
-    void approveConfiguration_activeStaysActive() {
+    @DisplayName("승인 — ACTIVE+pending 적용 후 pending 클리어, ACTIVE+APPROVED")
+    void approveConfiguration_activeWithPending_appliesAndClears() throws Exception {
         testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
-        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setTestMode(true);
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedBy("admin-user");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
 
         PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
                 .approvedBy("ops-user")
@@ -672,20 +705,41 @@ class TenantPgConfigurationServiceImplTest {
 
         assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
         assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getHasPendingEdit()).isFalse();
+        assertThat(result.getStoreId()).isEqualTo("pending-store");
+        assertThat(result.getTestMode()).isTrue();
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getApiKeyEncrypted()).isEqualTo("encrypted-pending-api");
+        assertThat(savedCaptor.getValue().getPendingRequestJson()).isNull();
+        assertThat(savedCaptor.getValue().getPendingRequestedBy()).isNull();
+        assertThat(savedCaptor.getValue().getPendingRequestedAt()).isNull();
+        assertThat(savedCaptor.getValue().getTestMode()).isTrue();
+
         verify(historyService).saveHistory(
                 eq(testConfigId),
                 eq(TenantPgConfigurationHistory.ChangeType.APPROVED),
                 eq("ACTIVE"),
                 eq("ACTIVE"),
                 eq("ops-user"),
-                org.mockito.ArgumentMatchers.contains("ACTIVE 유지"));
+                org.mockito.ArgumentMatchers.contains("pending 적용"));
     }
 
     @Test
-    @DisplayName("PG 설정 거부 — ACTIVE 재승인 거부 시 status ACTIVE + approval REJECTED")
-    void rejectConfiguration_activeKeepsActiveAndRejected() {
+    @DisplayName("거부 — ACTIVE+pending 폐기, live 유지, ACTIVE+APPROVED")
+    void rejectConfiguration_activeWithPending_discardsKeepsLiveApproved() {
         testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
-        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setTestMode(true);
+        testConfiguration.setPendingRequestJson(
+                "{\"storeId\":\"pending-store\",\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\"}");
+        testConfiguration.setPendingRequestedBy("admin-user");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
 
         PgConfigurationRejectRequest request = PgConfigurationRejectRequest.builder()
                 .rejectedBy("ops-user")
@@ -701,14 +755,182 @@ class TenantPgConfigurationServiceImplTest {
         TenantPgConfigurationResponse result = service.rejectConfiguration(testConfigId, request);
 
         assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
-        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.REJECTED);
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getHasPendingEdit()).isFalse();
+        assertThat(result.getStoreId()).isEqualTo("live-store");
+        assertThat(result.getTestMode()).isTrue();
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getApiKeyEncrypted()).isEqualTo("encrypted-live-api");
+        assertThat(savedCaptor.getValue().getPendingRequestJson()).isNull();
+
         verify(historyService).saveHistory(
                 eq(testConfigId),
                 eq(TenantPgConfigurationHistory.ChangeType.REJECTED),
                 eq("ACTIVE"),
                 eq("ACTIVE"),
                 eq("ops-user"),
-                org.mockito.ArgumentMatchers.contains("ACTIVE 유지"));
+                org.mockito.ArgumentMatchers.contains("스테이징 수정 폐기"));
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — testMode=null 이면 기존 testMode 유지 (비-ACTIVE)")
+    void updateConfiguration_nullTestMode_keepsExisting_nonActive() {
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setTestMode(true);
+
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .apiKey("api")
+                .secretKey("secret")
+                .testMode(null)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.encrypt(any(String.class)))
+                .thenAnswer(invocation -> "encrypted-" + invocation.getArgument(0));
+        when(encryptionService.isEncrypted(any(String.class))).thenReturn(true);
+        when(encryptionService.ensureActiveKey(any(String.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        assertThat(result.getTestMode()).isTrue();
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getTestMode()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — testMode=false/true 여도 live testMode 변경 안 함 (ACTIVE)")
+    void updateConfiguration_adminPutNeverChangesTestMode_active() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setPgProvider(PgProvider.TOSS);
+        testConfiguration.setSettingsJson(null);
+
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .apiKey("api")
+                .secretKey("secret")
+                .testMode(false)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.encrypt(any(String.class)))
+                .thenAnswer(invocation -> "encrypted-" + invocation.getArgument(0));
+        when(encryptionService.isEncrypted(any(String.class))).thenReturn(true);
+        when(encryptionService.ensureActiveKey(any(String.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        assertThat(result.getTestMode()).isTrue();
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(result.getHasPendingEdit()).isTrue();
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getTestMode()).isTrue();
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — testMode=true 여도 비-ACTIVE live testMode 변경 안 함")
+    void updateConfiguration_adminPutNeverChangesTestMode_nonActive() {
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setTestMode(false);
+
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .apiKey("api")
+                .secretKey("secret")
+                .testMode(true)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.encrypt(any(String.class)))
+                .thenAnswer(invocation -> "encrypted-" + invocation.getArgument(0));
+        when(encryptionService.isEncrypted(any(String.class))).thenReturn(true);
+        when(encryptionService.ensureActiveKey(any(String.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        assertThat(result.getTestMode()).isFalse();
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getTestMode()).isFalse();
+    }
+
+    @Test
+    @DisplayName("getActiveByProvider — ACTIVE+APPROVED+pending 스테이징 시에도 반환")
+    void getActiveConfigurationByProvider_returnsWhenApprovedEvenWithPending() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setPendingRequestJson("{\"storeId\":\"pending\"}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        when(configurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                testTenantId, PgProvider.TOSS, PgConfigurationStatus.ACTIVE))
+                .thenReturn(Optional.of(testConfiguration));
+        when(historyRepository.findByConfigIdOrderByChangedAtDesc(testConfigId))
+                .thenReturn(new ArrayList<>());
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+
+        TenantPgConfigurationDetailResponse result =
+                service.getActiveConfigurationByProvider(testTenantId, PgProvider.TOSS);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getConfigId()).isEqualTo(testConfigId);
+        assertThat(result.getHasPendingEdit()).isTrue();
+        assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+    }
+
+    @Test
+    @DisplayName("getActiveByProvider — ACTIVE+REJECTED 는 fail-closed null")
+    void getActiveConfigurationByProvider_rejectedReturnsNull() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.REJECTED);
+
+        when(configurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                testTenantId, PgProvider.TOSS, PgConfigurationStatus.ACTIVE))
+                .thenReturn(Optional.of(testConfiguration));
+
+        TenantPgConfigurationDetailResponse result =
+                service.getActiveConfigurationByProvider(testTenantId, PgProvider.TOSS);
+
+        assertThat(result).isNull();
+        verify(accessControlService, never())
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), anyString());
     }
 
     @Test

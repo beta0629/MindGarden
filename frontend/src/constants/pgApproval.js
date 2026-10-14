@@ -26,8 +26,26 @@ export const PG_APPROVAL_COPY = Object.freeze({
   CONFIRM_REJECT_TITLE: '거부 확인',
   MERCHANT_EMPTY: '—',
   PAGE_TITLE: 'PG 승인',
-  REFRESH: '새로고침'
+  REFRESH: '새로고침',
+  REAPPROVAL_BADGE: '재승인 대기'
 });
+
+/**
+ * 재승인 배지 표시 여부.
+ * hasPendingEdit 우선, 없으면 ACTIVE+PENDING 레거시 조건.
+ *
+ * @param {{ hasPendingEdit?: boolean, status?: string, approvalStatus?: string }|null|undefined} item
+ * @returns {boolean}
+ */
+export function shouldShowReapprovalBadge(item) {
+  if (!item) {
+    return false;
+  }
+  if (item.hasPendingEdit === true) {
+    return true;
+  }
+  return item.status === 'ACTIVE' && item.approvalStatus === 'PENDING';
+}
 
 /**
  * 가맹 ID 마스킹: 앞 2~4 + **** + 뒤 2~4. 짧으면 ****.

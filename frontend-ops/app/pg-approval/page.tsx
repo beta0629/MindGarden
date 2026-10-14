@@ -11,9 +11,12 @@ import OpsQuietHeader from "@/components/shell/OpsQuietHeader";
 import {
   PG_APPROVAL_LABELS,
   PG_APPROVAL_MIN_REJECTION_REASON_LENGTH,
+  formatKeyChangedLabel,
+  formatPendingEditDisplay,
   maskMerchantId,
   resolveCenterDisplayName,
-  resolvePgDisplayName
+  resolvePgDisplayName,
+  shouldShowReapprovalBadge
 } from "@/constants/pgApproval";
 import {
   approvePgConfiguration,
@@ -22,13 +25,108 @@ import {
   resolveOpsActorId,
   testPgConnection
 } from "@/services/pgApprovalService";
-import type { PgConfigurationPendingItem } from "@/types/pgApproval";
+import type {
+  PgConfigurationPendingItem,
+  PgPendingEditDiff
+} from "@/types/pgApproval";
 import notificationManager from "@/utils/notification";
 
 import styles from "./pg-approval.module.css";
 
 type ModalMode = "approve" | "reject" | "detail" | null;
 type ConfirmMode = "approve" | "reject" | null;
+
+const PENDING_EDIT_DIFF_ROWS: ReadonlyArray<{
+  label: string;
+  currentKey: keyof NonNullable<PgPendingEditDiff["current"]>;
+  pendingKey: keyof NonNullable<PgPendingEditDiff["pending"]>;
+}> = [
+  {
+    label: PG_APPROVAL_LABELS.DIFF_PROVIDER,
+    currentKey: "provider",
+    pendingKey: "provider"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_STORE_ID,
+    currentKey: "storeId",
+    pendingKey: "storeId"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_MERCHANT_ID,
+    currentKey: "merchantId",
+    pendingKey: "merchantId"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_CHANNEL_KEY,
+    currentKey: "channelKeyMasked",
+    pendingKey: "channelKeyMasked"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_WEBHOOK_URL,
+    currentKey: "webhookUrl",
+    pendingKey: "webhookUrl"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_RETURN_URL,
+    currentKey: "returnUrl",
+    pendingKey: "returnUrl"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_CANCEL_URL,
+    currentKey: "cancelUrl",
+    pendingKey: "cancelUrl"
+  }
+];
+
+function PendingEditDiffSection({
+  diff
+}: {
+  diff?: PgPendingEditDiff | null;
+}) {
+  if (!diff) {
+    return null;
+  }
+  const current = diff.current ?? {};
+  const pending = diff.pending ?? {};
+  return (
+    <section
+      className={styles.pendingDiff}
+      data-testid="pg-approval-pending-edit-diff"
+      aria-label={PG_APPROVAL_LABELS.PENDING_EDIT_DIFF_TITLE}
+    >
+      <h4 className={styles.pendingDiffTitle}>
+        {PG_APPROVAL_LABELS.PENDING_EDIT_DIFF_TITLE}
+      </h4>
+      <div className={styles.pendingDiffColumns}>
+        <span className={styles.pendingDiffColHead}>
+          {PG_APPROVAL_LABELS.PENDING_EDIT_CURRENT}
+        </span>
+        <span className={styles.pendingDiffColHead}>
+          {PG_APPROVAL_LABELS.PENDING_EDIT_PENDING}
+        </span>
+      </div>
+      <dl className={styles.confirmSummaryList}>
+        {PENDING_EDIT_DIFF_ROWS.map((row) => (
+          <div key={row.label} className={styles.pendingDiffRow}>
+            <dt>{row.label}</dt>
+            <dd className={styles.pendingDiffPair}>
+              <span>{formatPendingEditDisplay(current[row.currentKey])}</span>
+              <span>{formatPendingEditDisplay(pending[row.pendingKey])}</span>
+            </dd>
+          </div>
+        ))}
+        <div className={styles.pendingDiffRow}>
+          <dt>{PG_APPROVAL_LABELS.DIFF_API_KEY_CHANGED}</dt>
+          <dd>{formatKeyChangedLabel(diff.apiKeyChanged)}</dd>
+        </div>
+        <div className={styles.pendingDiffRow}>
+          <dt>{PG_APPROVAL_LABELS.DIFF_SECRET_KEY_CHANGED}</dt>
+          <dd>{formatKeyChangedLabel(diff.secretKeyChanged)}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
 
 function ApprovalConfirmSummary({
   item,
@@ -59,6 +157,9 @@ function ApprovalConfirmSummary({
           </div>
         ) : null}
       </dl>
+      {item.hasPendingEdit ? (
+        <PendingEditDiffSection diff={item.pendingEditDiff} />
+      ) : null}
       <p className={styles.confirmHint}>
         {mode === "reject"
           ? PG_APPROVAL_LABELS.CONFIRM_REJECT_HINT
@@ -347,7 +448,7 @@ export default function PgApprovalPage() {
               <div className={styles.cardHeader}>
                 <h3>{item.pgName || item.pgProvider}</h3>
                 <span className={styles.badge}>
-                  {item.status === "ACTIVE" && item.approvalStatus === "PENDING"
+                  {shouldShowReapprovalBadge(item)
                     ? PG_APPROVAL_LABELS.REAPPROVAL_BADGE
                     : (item.approvalStatus || item.status || "PENDING")}
                 </span>
@@ -431,9 +532,16 @@ export default function PgApprovalPage() {
               </div>
               <div className={styles.confirmSummaryRow}>
                 <dt>{PG_APPROVAL_LABELS.STATUS}</dt>
-                <dd>{selected.approvalStatus || selected.status || "PENDING"}</dd>
+                <dd>
+                  {shouldShowReapprovalBadge(selected)
+                    ? PG_APPROVAL_LABELS.REAPPROVAL_BADGE
+                    : (selected.approvalStatus || selected.status || "PENDING")}
+                </dd>
               </div>
             </dl>
+            {selected.hasPendingEdit ? (
+              <PendingEditDiffSection diff={selected.pendingEditDiff} />
+            ) : null}
             <div className="ops-form-actions">
               <MGButton type="button" variant="secondary" onClick={closeModal}>
                 {PG_APPROVAL_LABELS.CLOSE}
@@ -469,6 +577,9 @@ export default function PgApprovalPage() {
                   <dd>{PG_APPROVAL_LABELS.RESULT_ACTIVE}</dd>
                 </div>
               </dl>
+              {selected.hasPendingEdit ? (
+                <PendingEditDiffSection diff={selected.pendingEditDiff} />
+              ) : null}
             </div>
             <label className={styles.switchRow}>
               <input
@@ -520,6 +631,9 @@ export default function PgApprovalPage() {
                   <dd>{maskMerchantId(selected.merchantId)}</dd>
                 </div>
               </dl>
+              {selected.hasPendingEdit ? (
+                <PendingEditDiffSection diff={selected.pendingEditDiff} />
+              ) : null}
             </div>
             <p className={styles.hint}>{PG_APPROVAL_LABELS.REJECTION_HINT}</p>
             <label className={styles.filterField}>

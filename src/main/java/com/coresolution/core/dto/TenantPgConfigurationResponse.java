@@ -171,5 +171,10 @@ public class TenantPgConfigurationResponse {
      */
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime pendingRequestedAt;
+
+    /**
+     * pending vs live 마스킹 차이. pending 없으면 null.
+     */
+    private TenantPgPendingEditDiff pendingEditDiff;
 }
 

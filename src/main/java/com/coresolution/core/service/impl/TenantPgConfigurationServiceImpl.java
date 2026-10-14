@@ -19,6 +19,7 @@ import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.SecretValueMasking;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -494,9 +495,12 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         if (shouldTestConnection) {
             ConnectionTestResponse testResult = hasPendingEdit
                     ? testConnectionWithPendingCredentials(configuration)
-                    : testConnectionBeforeApproval(configId);
-            if (!testResult.getSuccess()) {
-                log.warn("PG 연결 테스트 실패: configId={}, message={}", configId, testResult.getMessage());
+                    : performConnectionTest(configuration);
+            if (!Boolean.TRUE.equals(testResult.getSuccess())) {
+                String failureMessage = sanitizeConnectionTestFailureMessage(testResult.getMessage());
+                log.warn("PG 연결 테스트 실패로 승인 중단: configId={}, message={}", configId, failureMessage);
+                throw new IllegalStateException(
+                        "PG 연결 테스트 실패로 승인을 중단했습니다: " + failureMessage);
             }
         }
         
@@ -684,7 +688,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         TenantPgConfiguration configuration = configurationRepository
                 .findByConfigIdAndIsDeletedFalse(configId)
                 .orElseThrow(() -> new IllegalArgumentException("PG 설정을 찾을 수 없습니다: " + configId));
-        
+
+        if (configuration.hasPendingRequest()) {
+            return testConnectionWithPendingCredentials(configuration);
+        }
         return performConnectionTest(configuration);
     }
     
@@ -1071,6 +1078,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .updatedAt(configuration.getUpdatedAt())
                 .hasPendingEdit(configuration.hasPendingRequest())
                 .pendingRequestedAt(configuration.getPendingRequestedAt())
+                .pendingEditDiff(buildPendingEditDiff(configuration))
                 .build();
     }
 
@@ -1148,6 +1156,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         target.setUpdatedAt(source.getUpdatedAt());
         target.setHasPendingEdit(source.getHasPendingEdit());
         target.setPendingRequestedAt(source.getPendingRequestedAt());
+        target.setPendingEditDiff(source.getPendingEditDiff());
     }
     
      /**
@@ -1359,6 +1368,185 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         configuration.setPendingRequestJson(null);
         configuration.setPendingRequestedBy(null);
         configuration.setPendingRequestedAt(null);
+    }
+
+    /**
+     * 연결 테스트 실패 메시지를 승인 예외에 넣기 전에 정리한다.
+     * 시크릿·암호문 조각이 포함되지 않도록 길이만 제한한다.
+     *
+     * @param message 테스트 결과 메시지
+     * @return 안전한 실패 요지
+     */
+    private String sanitizeConnectionTestFailureMessage(String message) {
+        if (message == null || message.isBlank()) {
+            return "연결 테스트에 실패했습니다";
+        }
+        String trimmed = message.trim();
+        int maxLength = 200;
+        if (trimmed.length() > maxLength) {
+            return trimmed.substring(0, maxLength);
+        }
+        return trimmed;
+    }
+
+    /**
+     * pending_request_json 과 live 의 마스킹 차이를 구성한다.
+     * 파싱 실패 시 null 을 반환하며 시크릿 평문을 응답에 넣지 않는다.
+     *
+     * @param configuration live + pending 엔티티
+     * @return 마스킹 diff 또는 null
+     */
+    private TenantPgPendingEditDiff buildPendingEditDiff(TenantPgConfiguration configuration) {
+        if (configuration == null || !configuration.hasPendingRequest()) {
+            return null;
+        }
+        String pendingJson = configuration.getPendingRequestJson();
+        try {
+            JsonNode root = objectMapper.readTree(pendingJson.trim());
+            if (root == null || !root.isObject()) {
+                log.warn("pending_request_json 파싱 결과가 객체가 아님: configId={}",
+                        configuration.getConfigId());
+                return emptyPendingEditDiff();
+            }
+
+            boolean useTestChannelKey = Boolean.TRUE.equals(configuration.getTestMode());
+            TenantPgPendingEditValues current = TenantPgPendingEditValues.builder()
+                    .provider(configuration.getPgProvider() != null
+                            ? configuration.getPgProvider().name()
+                            : null)
+                    .storeId(maskForOpsDiff(configuration.getStoreId()))
+                    .merchantId(maskForOpsDiff(configuration.getMerchantId()))
+                    .channelKeyMasked(maskChannelKeyFromSettings(
+                            configuration.getSettingsJson(), useTestChannelKey))
+                    .webhookUrl(maskForOpsDiff(configuration.getWebhookUrl()))
+                    .returnUrl(maskForOpsDiff(configuration.getReturnUrl()))
+                    .cancelUrl(maskForOpsDiff(configuration.getCancelUrl()))
+                    .build();
+
+            String pendingProvider = root.hasNonNull("pgProvider")
+                    ? root.get("pgProvider").asText()
+                    : (configuration.getPgProvider() != null
+                            ? configuration.getPgProvider().name()
+                            : null);
+            String pendingSettingsJson = root.has("settingsJson")
+                    ? textOrNull(root.get("settingsJson"))
+                    : null;
+
+            TenantPgPendingEditValues pending = TenantPgPendingEditValues.builder()
+                    .provider(pendingProvider)
+                    .storeId(maskForOpsDiff(textOrNull(root.get("storeId"))))
+                    .merchantId(maskForOpsDiff(textOrNull(root.get("merchantId"))))
+                    .channelKeyMasked(maskChannelKeyFromSettings(pendingSettingsJson, useTestChannelKey))
+                    .webhookUrl(maskForOpsDiff(textOrNull(root.get("webhookUrl"))))
+                    .returnUrl(maskForOpsDiff(textOrNull(root.get("returnUrl"))))
+                    .cancelUrl(maskForOpsDiff(textOrNull(root.get("cancelUrl"))))
+                    .build();
+
+            String pendingApiEnc = root.hasNonNull("apiKeyEncrypted")
+                    ? root.get("apiKeyEncrypted").asText()
+                    : null;
+            String pendingSecretEnc = root.hasNonNull("secretKeyEncrypted")
+                    ? root.get("secretKeyEncrypted").asText()
+                    : null;
+
+            return TenantPgPendingEditDiff.builder()
+                    .current(current)
+                    .pending(pending)
+                    .apiKeyChanged(!encryptedValuesEqual(
+                            configuration.getApiKeyEncrypted(), pendingApiEnc))
+                    .secretKeyChanged(!encryptedValuesEqual(
+                            configuration.getSecretKeyEncrypted(), pendingSecretEnc))
+                    .build();
+        } catch (Exception e) {
+            log.warn("pendingEditDiff 구성 실패(시크릿 미노출 empty): configId={}, error={}",
+                    configuration.getConfigId(), e.getMessage());
+            return emptyPendingEditDiff();
+        }
+    }
+
+    /**
+     * 파싱 실패 시 시크릿 없는 빈 diff.
+     *
+     * @return empty diff
+     */
+    private TenantPgPendingEditDiff emptyPendingEditDiff() {
+        return TenantPgPendingEditDiff.builder()
+                .current(TenantPgPendingEditValues.builder().build())
+                .pending(TenantPgPendingEditValues.builder().build())
+                .apiKeyChanged(false)
+                .secretKeyChanged(false)
+                .build();
+    }
+
+    /**
+     * OPS diff 응답용 마스킹. 길면 끝 4자리만 노출.
+     *
+     * @param value 원본
+     * @return 마스킹 문자열 (null/blank → empty)
+     */
+    private String maskForOpsDiff(String value) {
+        if (value == null || value.isBlank()) {
+            return SecretValueMasking.EMPTY;
+        }
+        return SecretValueMasking.mask(value.trim());
+    }
+
+    /**
+     * settings_json 에서 채널 키를 추출해 마스킹한다.
+     *
+     * @param settingsJson settings_json
+     * @param useTestKey true 이면 테스트 채널 키 우선
+     * @return 마스킹된 채널 키
+     */
+    private String maskChannelKeyFromSettings(String settingsJson, boolean useTestKey) {
+        String raw = extractChannelKeyFromSettings(settingsJson, useTestKey);
+        return maskForOpsDiff(raw);
+    }
+
+    /**
+     * settings_json 에서 PortOne 채널 키를 추출한다.
+     *
+     * @param settingsJson settings_json
+     * @param useTestKey true 이면 TEST 키 우선, 없으면 LIVE 키
+     * @return 채널 키 평문 또는 null (응답에 직접 넣지 말 것)
+     */
+    private String extractChannelKeyFromSettings(String settingsJson, boolean useTestKey) {
+        if (settingsJson == null || settingsJson.isBlank()) {
+            return null;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(settingsJson.trim());
+            if (root == null || !root.isObject()) {
+                return null;
+            }
+            String primaryKey = useTestKey
+                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY;
+            String fallbackKey = useTestKey
+                    ? TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                    : TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST;
+            String primary = textOrNull(root.get(primaryKey));
+            if (primary != null && !primary.isBlank()) {
+                return primary;
+            }
+            return textOrNull(root.get(fallbackKey));
+        } catch (Exception e) {
+            log.warn("settings_json 채널 키 추출 실패: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 암호문 동등 비교 (둘 다 null/blank 이면 동일).
+     *
+     * @param liveEncrypted live 암호문
+     * @param pendingEncrypted pending 암호문
+     * @return 동일하면 true
+     */
+    private boolean encryptedValuesEqual(String liveEncrypted, String pendingEncrypted) {
+        String live = liveEncrypted == null ? "" : liveEncrypted.trim();
+        String pending = pendingEncrypted == null ? "" : pendingEncrypted.trim();
+        return live.equals(pending);
     }
 
     /**

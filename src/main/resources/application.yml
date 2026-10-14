@@ -976,6 +976,15 @@ security:
     require-digit: ${PASSWORD_REQUIRE_DIGIT:true}  # 숫자 필수
     require-special: ${PASSWORD_REQUIRE_SPECIAL:true}  # 특수문자 필수
 
+  # 임시 비밀번호 생성 (TemporaryPasswordGenerator). 문구·길이·문자군은 이 설정이 SSOT.
+  temp-password:
+    length: ${TEMP_PASSWORD_LENGTH:16}
+    max-attempts: ${TEMP_PASSWORD_MAX_ATTEMPTS:128}
+    lowercase: "${TEMP_PASSWORD_LOWERCASE:abcdefghijklmnopqrstuvwxyz}"
+    uppercase: "${TEMP_PASSWORD_UPPERCASE:ABCDEFGHIJKLMNOPQRSTUVWXYZ}"
+    digits: "${TEMP_PASSWORD_DIGITS:0123456789}"
+    specials: "${TEMP_PASSWORD_SPECIALS:@$!%*?&}"
+
   # 보안 감사 로그
   audit:
     enabled: ${SECURITY_AUDIT_ENABLED:true}  # 감사 로그 활성화

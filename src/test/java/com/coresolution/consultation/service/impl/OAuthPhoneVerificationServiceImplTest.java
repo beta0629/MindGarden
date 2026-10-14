@@ -74,6 +74,7 @@ class OAuthPhoneVerificationServiceImplTest {
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private com.coresolution.consultation.service.support.TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @InjectMocks
     private OAuthPhoneVerificationServiceImpl service;
@@ -83,6 +84,7 @@ class OAuthPhoneVerificationServiceImplTest {
         org.mockito.Mockito.lenient().when(userRepository.updateLastLoginAt(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(1);
 
         TenantContextHolder.setTenantId(TENANT_ID);
+        org.mockito.Mockito.lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateOAuthPhoneOtpChallengeToken(any(OAuthPhoneOtpChallengeClaims.class)))
             .thenReturn("oauth-otp-challenge-jwt");

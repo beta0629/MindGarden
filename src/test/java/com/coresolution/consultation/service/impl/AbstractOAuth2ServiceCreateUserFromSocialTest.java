@@ -20,7 +20,10 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.consultation.config.TemporaryPasswordProperties;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -82,6 +85,8 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
             passwordService,
             userService
         );
+        ReflectionTestUtils.setField(oauth2Service, "temporaryPasswordGenerator",
+                new TemporaryPasswordGenerator(new TemporaryPasswordProperties()));
     }
 
     @AfterEach

@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
 import com.coresolution.consultation.service.ApplePhoneVerificationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneHashUtils;
@@ -96,6 +97,7 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -465,7 +467,7 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
         String userId = APPLE_USER_ID_PREFIX + suffix.toLowerCase(Locale.ROOT);
         String name = StringUtils.hasText(claims.getName()) ? claims.getName() : "Apple 사용자";
         String email = StringUtils.hasText(claims.getEmail()) ? claims.getEmail() : (userId + "@apple.local");
-        String tempPassword = "APPLE_" + System.currentTimeMillis();
+        String tempPassword = temporaryPasswordGenerator.generate();
 
         User user = User.builder()
             .userId(userId)

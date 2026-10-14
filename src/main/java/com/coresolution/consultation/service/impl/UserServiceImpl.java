@@ -23,6 +23,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -70,6 +71,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserLifecycleService userLifecycleService;
+
+    @Autowired
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     // ==================== BaseService 구현 ====================
     
@@ -1226,10 +1230,10 @@ public class UserServiceImpl implements UserService {
     // ==================== 유틸리티 메서드 ====================
     
     /**
-     * 임시 비밀번호 생성
+     * 임시 비밀번호. {@link TemporaryPasswordGenerator} 가 길이·문자군·정책을 담당한다.
      */
     private String generateTempPassword() {
-        return "Temp" + System.currentTimeMillis() % 10000;
+        return temporaryPasswordGenerator.generate();
     }
     
     /**

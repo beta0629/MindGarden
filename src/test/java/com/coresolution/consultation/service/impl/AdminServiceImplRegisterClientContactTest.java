@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,12 +49,14 @@ import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.test.util.ReflectionTestUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -145,6 +148,8 @@ class AdminServiceImplRegisterClientContactTest {
     private UserService userService;
     @Mock
     private PartnerInstitutionRepository partnerInstitutionRepository;
+    @Mock
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @InjectMocks
     private AdminServiceImpl adminService;
@@ -152,6 +157,8 @@ class AdminServiceImplRegisterClientContactTest {
     @BeforeEach
     void setTenant() {
         TenantContextHolder.setTenantId(TENANT);
+        lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
+        ReflectionTestUtils.setField(adminService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
     }
 
     @AfterEach

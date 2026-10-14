@@ -157,6 +157,7 @@ import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,6 +165,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import org.hibernate.Hibernate;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -224,6 +226,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private static final java.util.regex.Pattern PARTIAL_REFUND_NOTE_SESSIONS_PATTERN =
             java.util.regex.Pattern.compile(AdminServiceUserFacingMessages.NOTES_PARTIAL_REFUND_SESSIONS_REGEX);
+
+    @Autowired
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -12857,13 +12862,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 임시 비밀번호 생성
-     * 표준화 2025-12-08: 내담자 등록 시 자동 생성된 임시 비밀번호
-     * 형식: CLIENT_{timestamp}_{random}
+     * 임시 비밀번호. {@link TemporaryPasswordGenerator} 가 길이·문자군·정책을 담당한다.
      *
      * @return 생성된 임시 비밀번호
      */
     private String generateTempPassword() {
-        return "CLIENT_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 10000);
+        return temporaryPasswordGenerator.generate();
     }
 }

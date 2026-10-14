@@ -11,6 +11,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.consultation.config.TemporaryPasswordProperties;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.core.security.PasswordPolicy;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
 
@@ -48,6 +51,10 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     private PasswordService passwordService;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
+
+    @Spy
+    private TemporaryPasswordGenerator temporaryPasswordGenerator =
+            new TemporaryPasswordGenerator(new TemporaryPasswordProperties());
 
     @InjectMocks
     private SocialAuthServiceImpl socialAuthService;

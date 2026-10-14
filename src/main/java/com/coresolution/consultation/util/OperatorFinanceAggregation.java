@@ -20,10 +20,10 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction.T
 /**
  * 운영자 머니 콕핏·기간 대시보드 집계 SSOT.
  *
- * <p>세금/결산용 {@link FinancialTransactionValidity}(COMPLETED only) 와 분리한다.
- * 운영자 화면은 미삭제이면서 상태가 {@link TransactionStatus#PENDING},
- * {@link TransactionStatus#APPROVED}, {@link TransactionStatus#COMPLETED} 인 거래를 합산한다.
- * {@link TransactionStatus#CANCELLED}/{@link TransactionStatus#REJECTED}/null/삭제 는 제외.</p>
+ * <p>미삭제이면서 {@link #COUNTABLE_STATUSES}({@link TransactionStatus#COMPLETED}) 인 거래만 합산한다.
+ * {@link TransactionStatus#PENDING}, {@link TransactionStatus#APPROVED},
+ * {@link TransactionStatus#CANCELLED}, {@link TransactionStatus#REJECTED}, null, 삭제 행은 제외한다.
+ * 세금/결산 {@link FinancialTransactionValidity#isValid} 와 같은 상태 집합이다.</p>
  *
  * <p>카드 가맹점 수수료를 지출 total 에 포함하면 {@link #CATEGORY_CARD_MERCHANT_FEE} 키로
  * expense breakdown 에도 동일 금액을 넣어 {@code totalExpense == sum(expenseByCategory)} 불변식을 지킨다.</p>
@@ -34,13 +34,10 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction.T
 public final class OperatorFinanceAggregation {
 
     /**
-     * 운영자 대시보드 집계에 포함하는 상태.
+     * 운영자 대시보드 집계에 포함하는 상태. {@link TransactionStatus#COMPLETED} 만.
      */
     public static final Set<TransactionStatus> COUNTABLE_STATUSES = Collections.unmodifiableSet(
-            EnumSet.of(
-                    TransactionStatus.PENDING,
-                    TransactionStatus.APPROVED,
-                    TransactionStatus.COMPLETED));
+            EnumSet.of(TransactionStatus.COMPLETED));
 
     /**
      * 지출 breakdown 에 넣는 카드 가맹점 수수료 카테고리 키.
@@ -55,7 +52,7 @@ public final class OperatorFinanceAggregation {
      * 운영자 머니 콕핏·기간 대시보드에 넣을 거래인지.
      *
      * @param transaction 거래 (null 이면 false)
-     * @return 미삭제이고 상태가 PENDING/APPROVED/COMPLETED 이면 true
+     * @return 미삭제이고 상태가 {@link #COUNTABLE_STATUSES} 이면 true
      */
     public static boolean isCountableForOperatorDashboard(FinancialTransaction transaction) {
         if (transaction == null || Boolean.TRUE.equals(transaction.getIsDeleted())) {
@@ -68,7 +65,7 @@ public final class OperatorFinanceAggregation {
      * 운영자 대시보드 집계에 넣을 상태인지.
      *
      * @param status 거래 상태 (null 이면 제외)
-     * @return PENDING/APPROVED/COMPLETED 이면 true
+     * @return {@link #COUNTABLE_STATUSES} 에 포함되면 true
      */
     public static boolean isCountableStatus(TransactionStatus status) {
         return status != null && COUNTABLE_STATUSES.contains(status);

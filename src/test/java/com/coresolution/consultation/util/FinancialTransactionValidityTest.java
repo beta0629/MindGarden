@@ -78,9 +78,11 @@ class FinancialTransactionValidityTest {
         assertThat(FinancialTransactionValidity.isValidStatusCode(" ")).isFalse();
         assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.PENDING, false))).isFalse();
         assertThat(FinancialTransactionValidity.isCompletedAndValid(tx(TransactionStatus.COMPLETED, false))).isTrue();
-        // 운영자 콕핏 판정은 PENDING 포함 — isValid 의미와 분리
+        // 운영자 콕핏 판정도 COUNTABLE_STATUSES(미삭제 COMPLETED)
         assertThat(FinancialTransactionValidity.isCountableForOperatorDashboard(
-                tx(TransactionStatus.PENDING, false))).isTrue();
+                tx(TransactionStatus.PENDING, false))).isFalse();
+        assertThat(FinancialTransactionValidity.isCountableForOperatorDashboard(
+                tx(TransactionStatus.COMPLETED, false))).isTrue();
         assertThat(FinancialTransactionValidity.isCountableForOperatorDashboard(
                 tx(TransactionStatus.CANCELLED, false))).isFalse();
     }

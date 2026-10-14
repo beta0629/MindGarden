@@ -29,10 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
  * 재무 리포트·대시보드·결산 합계의 유효 거래 조건 — H2 실제 리포지토리·서비스.
  *
  * <p>같은 날짜에 완료·대기·승인 수입, 취소·거부 수입, soft delete 수입, 완료·취소 지출을 둔다.
- * 일·연 리포트·결산·COMPLETED 재무 대시보드 SUM 은 {@code FinancialTransactionValidity}
- * (미삭제 COMPLETED) 를 쓴다. 월간 리포트의 수입·지출 콕핏(total·카테고리 breakdown)과
- * 운영자 기간 대시보드는 {@code OperatorFinanceAggregation} (PENDING/APPROVED/COMPLETED) 를 쓰고,
- * 월간 {@code taxExpense}·{@code monthlyTaxBreakdown} 만 Validity(COMPLETED) 다.</p>
+ * 일·월·연 리포트·결산·재무 대시보드·운영자 기간 대시보드는 미삭제 COMPLETED 만 합산한다.
+ * 운영자 콕핏은 {@code OperatorFinanceAggregation#COUNTABLE_STATUSES}(COMPLETED) 를 쓰고,
+ * 월간 {@code taxExpense}·{@code monthlyTaxBreakdown} 은 {@code FinancialTransactionValidity}
+ * (COMPLETED) 를 쓴다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -45,11 +45,8 @@ class ErpFinanceReportValidTransactionIntegrationTest {
 
     private static final LocalDate REPORT_DATE = LocalDate.of(2026, 3, 15);
     private static final BigDecimal COMPLETED_INCOME = BigDecimal.valueOf(100_000L);
-    /** PENDING 20_000 + APPROVED 15_000 + COMPLETED 100_000 (삭제·취소·거부 제외) */
-    private static final BigDecimal OPERATOR_INCOME = BigDecimal.valueOf(135_000L);
     private static final BigDecimal EXPECTED_EXPENSE = BigDecimal.valueOf(40_000L);
     private static final BigDecimal EXPECTED_NET = COMPLETED_INCOME.subtract(EXPECTED_EXPENSE);
-    private static final BigDecimal OPERATOR_NET = OPERATOR_INCOME.subtract(EXPECTED_EXPENSE);
 
     @Autowired private FinancialTransactionRepository financialTransactionRepository;
     @Autowired private ErpService erpService;
@@ -81,7 +78,7 @@ class ErpFinanceReportValidTransactionIntegrationTest {
     }
 
     @Test
-    @DisplayName("일간=COMPLETED 대시보드, 월간·운영자 대시보드=OperatorFinanceAggregation")
+    @DisplayName("일간·월간·운영자 대시보드=미삭제 COMPLETED")
     void dailyAndMonthlyReports_matchDashboardCompletedTotals() {
         FinancialDashboardResponse dashboard =
                 financialTransactionService.getFinancialDashboard(REPORT_DATE, REPORT_DATE);
@@ -96,12 +93,12 @@ class ErpFinanceReportValidTransactionIntegrationTest {
         assertThat(total(daily, "dailyExpenses")).isEqualByComparingTo(dashboard.getTotalExpense());
         assertThat((BigDecimal) daily.get("dailyNetIncome")).isEqualByComparingTo(dashboard.getNetProfit());
 
-        // 머니 콕핏 월간·기간 대시보드: PENDING/APPROVED 포함
-        assertThat(total(monthly, "monthlyIncome")).isEqualByComparingTo(OPERATOR_INCOME);
+        // 머니 콕핏 월간·기간 대시보드: COUNTABLE_STATUSES (미삭제 COMPLETED)
+        assertThat(total(monthly, "monthlyIncome")).isEqualByComparingTo(COMPLETED_INCOME);
         assertThat(total(monthly, "monthlyExpenses")).isEqualByComparingTo(EXPECTED_EXPENSE);
-        assertThat((BigDecimal) monthly.get("monthlyNetIncome")).isEqualByComparingTo(OPERATOR_NET);
-        assertThat(operatorDashboardNet()).isEqualByComparingTo(OPERATOR_NET);
-        assertThat(operatorDashboardRevenue()).isEqualByComparingTo(OPERATOR_INCOME);
+        assertThat((BigDecimal) monthly.get("monthlyNetIncome")).isEqualByComparingTo(EXPECTED_NET);
+        assertThat(operatorDashboardNet()).isEqualByComparingTo(EXPECTED_NET);
+        assertThat(operatorDashboardRevenue()).isEqualByComparingTo(COMPLETED_INCOME);
     }
 
     @Test
@@ -141,8 +138,8 @@ class ErpFinanceReportValidTransactionIntegrationTest {
     }
 
     @Test
-    @DisplayName("월간 taxExpense·monthlyTaxBreakdown=COMPLETED만, 지출 total/breakdown은 Operator(PENDING·APPROVED 포함)")
-    void monthlyTaxFields_completedOnly_whileOperatorExpenseKeepsPendingApproved() {
+    @DisplayName("월간 taxExpense·monthlyTaxBreakdown·지출 total/breakdown 모두 미삭제 COMPLETED만")
+    void monthlyTaxFields_completedOnly_operatorExpenseExcludesPendingApproved() {
         // setUp: COMPLETED OFFICE_SUPPLIES 40_000. TAX·세액 필드는 이 테스트에서만 추가.
         BigDecimal completedTaxExpense = BigDecimal.valueOf(10_000L);
         BigDecimal pendingTaxExpense = BigDecimal.valueOf(7_000L);
@@ -180,20 +177,20 @@ class ErpFinanceReportValidTransactionIntegrationTest {
         assertThat((BigDecimal) taxBreakdown.get("vatTotal")).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat((BigDecimal) taxBreakdown.get("withholdingTotal")).isEqualByComparingTo(BigDecimal.ZERO);
 
-        // 지출 콕핏: setUp 40_000 + TAX 20_000 + OFFICE 세액시드 amount 3_000 = 63_000
+        // 지출 콕핏: setUp 40_000 + COMPLETED TAX 10_000 + COMPLETED OFFICE amount 1_000 = 51_000
         BigDecimal operatorExpenseTotal = EXPECTED_EXPENSE
-                .add(completedTaxExpense).add(pendingTaxExpense).add(approvedTaxExpense)
-                .add(BigDecimal.valueOf(3_000L));
+                .add(completedTaxExpense)
+                .add(BigDecimal.valueOf(1_000L));
         assertThat(total(monthly, "monthlyExpenses"))
-                .as("월간 지출 total은 Operator(PENDING/APPROVED 포함) 유지")
+                .as("월간 지출 total은 미삭제 COMPLETED만")
                 .isEqualByComparingTo(operatorExpenseTotal);
 
         @SuppressWarnings("unchecked")
         Map<String, BigDecimal> expenseBreakdown =
                 (Map<String, BigDecimal>) monthlyExpenses.get("expenseCategoryBreakdown");
         assertThat(expenseBreakdown.get(FinancialTransactionConstants.CATEGORY_TAX))
-                .as("expenseCategoryBreakdown TAX는 Operator 합(COMPLETED+PENDING+APPROVED)")
-                .isEqualByComparingTo(completedTaxExpense.add(pendingTaxExpense).add(approvedTaxExpense));
+                .as("expenseCategoryBreakdown TAX는 COMPLETED만")
+                .isEqualByComparingTo(completedTaxExpense);
     }
 
     private BigDecimal operatorDashboardNet() {

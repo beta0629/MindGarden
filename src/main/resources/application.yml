@@ -984,6 +984,9 @@ security:
     uppercase: "${TEMP_PASSWORD_UPPERCASE:ABCDEFGHIJKLMNOPQRSTUVWXYZ}"
     digits: "${TEMP_PASSWORD_DIGITS:0123456789}"
     specials: "${TEMP_PASSWORD_SPECIALS:@$!%*?&}"
+    sms-template-key: ${TEMP_PASSWORD_SMS_TEMPLATE_KEY:CLIENT_TEMP_PASSWORD_SMS}
+    sms-template: "${TEMP_PASSWORD_SMS_TEMPLATE:[{centerName}] 로그인 아이디 {loginId} 임시 비밀번호 {tempPassword} 로그인 {loginUrl}}"
+    login-url: "${TEMP_PASSWORD_LOGIN_URL:}"
 
   # 보안 감사 로그
   audit:

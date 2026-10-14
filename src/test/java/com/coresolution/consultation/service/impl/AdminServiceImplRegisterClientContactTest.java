@@ -359,4 +359,38 @@ class AdminServiceImplRegisterClientContactTest {
         assertThat(saved.getInstitutionName()).isEqualTo("연계병원");
         assertThat(saved.getInstitutionPrepaid()).isFalse();
     }
+
+    @Test
+    @DisplayName("요청 비밀번호가 있어도 서버 임시 비밀번호와 isPasswordChanged=false 로 저장한다")
+    void suppliedPasswordIsIgnored() {
+        String uniqueEmail = "ignore-pw-" + java.util.UUID.randomUUID() + "@test.com";
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setEmail(uniqueEmail);
+        request.setPassword("ClientInput1!");
+
+        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-ignore-1");
+        when(passwordService.encodeSecret("Kp9@mxzw")).thenReturn("hashed-temp");
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
+                .thenReturn(Collections.emptyMap());
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.saveAndFlush(userCaptor.capture())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(505L);
+            return u;
+        });
+
+        adminService.registerClient(request);
+
+        User saved = userCaptor.getValue();
+        assertThat(saved.getIsPasswordChanged()).isFalse();
+        assertThat(saved.getPassword()).isEqualTo("hashed-temp");
+        verify(passwordService).encodeSecret("Kp9@mxzw");
+        verify(passwordService, never()).encodePassword(anyString());
+    }
 }

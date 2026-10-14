@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.CredentialSmsResult;
 import com.coresolution.consultation.dto.ProfileImageInfo;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Page;
@@ -421,6 +422,14 @@ public interface UserService extends BaseService<User, Long> {
      * 비밀번호 변경
      */
     void changePassword(Long userId, String newPassword);
+
+    /**
+     * 관리자가 임시 비밀번호를 발급한다. 요청 비밀번호는 쓰지 않고 {@code isPasswordChanged=false} 로 저장한 뒤 문자로 알린다.
+     *
+     * @param userId 대상 사용자 PK (현재 테넌트)
+     * @return 문자 발송 결과. 비밀번호는 포함하지 않는다
+     */
+    CredentialSmsResult resetPasswordByAdmin(Long userId);
     
     /**
      * 마지막 로그인 시간 업데이트

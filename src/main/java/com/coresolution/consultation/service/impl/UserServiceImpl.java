@@ -36,6 +36,7 @@ import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -77,6 +78,10 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
+    /**
+     * 지연 주입. 즉시 주입하면 SecurityConfig 생성 중 RestTemplate와 순환한다.
+     */
+    @Lazy
     @Autowired
     private ClientCredentialNotificationService clientCredentialNotificationService;
 

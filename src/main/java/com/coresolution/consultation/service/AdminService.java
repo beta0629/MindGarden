@@ -10,6 +10,7 @@ import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.dto.ConsultantClientMappingResponse;
 import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
@@ -357,6 +358,20 @@ public interface AdminService {
      * 매칭 강제 종료 (환불 처리)
      */
     void terminateMapping(Long id, String reason);
+
+    /**
+     * 매칭 상태-only 종료 (환불·회기·결제·ERP 변경 없음).
+     *
+     * <p>{@link com.coresolution.consultation.entity.ConsultantClientMapping#terminate(String, String)}
+     * 를 재사용한다. 이미 TERMINATED/CANCELLED면 멱등 성공을 반환한다
+     * (환불 terminate의 ALREADY_CLOSED 409와 구분).</p>
+     *
+     * @param id           매핑 ID
+     * @param reason       종료 사유 (blank 불가)
+     * @param terminatedBy 종료 처리자 (이메일·이름 등)
+     * @return 종료 결과 (멱등 여부·취소된 미래 일정 수 포함)
+     */
+    MappingStatusCloseResponse closeMappingStatusOnly(Long id, String reason, String terminatedBy);
 
     /**
      * desync-cleanup — 매핑 상태와 무관하게 미래 점유 일정만 CANCELLED 전이.

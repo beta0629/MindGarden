@@ -3172,7 +3172,20 @@
       "monthlyBillingAmountLabel": "월간 총 금액",
       "monthlyBillingChargeHint": "이 금액으로 기관 청구",
       "monthlyBillingChargeWithAmount": "이 금액({{amount}})으로 기관 청구",
-      "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다."
+      "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다.",
+      "statusClose": {
+        "cta": "종료 처리",
+        "modalTitle": "매칭 종료 처리",
+        "modalSubtitle": "환불·회기 차감 없이 상태만 종료합니다.",
+        "remainingSessionsLabel": "남은 회기",
+        "reasonLabel": "종료 사유",
+        "reasonPlaceholder": "종료 사유를 입력해 주세요.",
+        "reasonRequired": "종료 사유를 입력해 주세요.",
+        "confirm": "종료 처리",
+        "cancel": "취소",
+        "success": "매칭이 종료 처리되었습니다.",
+        "failed": "매칭 종료 처리에 실패했습니다."
+      }
     },
     "vehiclePlate": {
       "registerCta": "차량 등록",

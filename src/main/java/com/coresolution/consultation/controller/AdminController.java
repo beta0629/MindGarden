@@ -34,10 +34,16 @@ import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.CounselingEnabledUpdateRequest;
 import com.coresolution.consultation.dto.ConsultantTransferRequest;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.MappingStatusCloseRequest;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
+import com.coresolution.consultation.constant.AuditAction;
+import com.coresolution.consultation.entity.AuditLog;
+import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.ClientPackagePaymentHistoryService;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.entity.Client;
 // 표준화 2025-12-05: 역할 체크를 공통코드 기반 동적 조회로 변경 (COMMON_CODE_SYSTEM_STANDARD.md 준수)
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -193,6 +199,7 @@ public class AdminController extends BaseApiController {
     private final AdminService adminService;
     private final AdminBulkMappingPaymentService adminBulkMappingPaymentService;
     private final MappingTerminationService mappingTerminationService;
+    private final AuditLogService auditLogService;
     private final MappingUpdateService mappingUpdateService;
     private final ClientPackagePaymentHistoryService clientPackagePaymentHistoryService;
     private final ClientMappingListPayloadService clientMappingListPayloadService;
@@ -2682,6 +2689,88 @@ public class AdminController extends BaseApiController {
         String reason = (String) requestBody.get("reason");
         DeferredExternalCalls.run(() -> mappingTerminationService.terminate(id, reason));
         return success("매칭이 성공적으로 종료되었습니다");
+    }
+
+    /**
+     * 매칭 상태-only 종료 (환불·회기·결제·ERP 변경 없음).
+     *
+     * <p>전액 환불 {@code POST .../terminate} 와 분리. ADMIN + 동일 테넌트만.
+     * 이미 TERMINATED/CANCELLED면 멱등 성공.</p>
+     */
+    @PostMapping("/mappings/{id}/status-close")
+    public ResponseEntity<ApiResponse<MappingStatusCloseResponse>> closeMappingStatusOnly(
+            @PathVariable Long id,
+            @Valid @RequestBody MappingStatusCloseRequest request,
+            HttpSession session) {
+        User actor = resourceOwnerAccessGuard.requireMappingAdminActor(session, id);
+        String reason = request != null ? request.getReason() : null;
+        if (!StringUtils.hasText(reason)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_REASON_REQUIRED);
+        }
+        String terminatedBy = resolveStatusCloseActorLabel(actor);
+        log.info("🔧 매칭 상태-only 종료: ID={}, by={}", id, terminatedBy);
+        MappingStatusCloseResponse result = adminService.closeMappingStatusOnly(id, reason.trim(), terminatedBy);
+        if (result != null && !result.isAlreadyClosed()) {
+            recordMappingStatusCloseAudit(actor, id, reason.trim(), result);
+        }
+        return success(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_SUCCESS, result);
+    }
+
+    private static String resolveStatusCloseActorLabel(User actor) {
+        if (actor == null) {
+            return "ADMIN";
+        }
+        if (StringUtils.hasText(actor.getEmail())) {
+            return actor.getEmail().trim();
+        }
+        if (StringUtils.hasText(actor.getName())) {
+            return actor.getName().trim();
+        }
+        return actor.getId() != null ? String.valueOf(actor.getId()) : "ADMIN";
+    }
+
+    private void recordMappingStatusCloseAudit(
+            User actor, Long mappingId, String reason, MappingStatusCloseResponse result) {
+        try {
+            String tenantId = TenantContextHolder.getTenantId();
+            if (!StringUtils.hasText(tenantId) && actor != null) {
+                tenantId = actor.getTenantId();
+            }
+            if (!StringUtils.hasText(tenantId)) {
+                log.warn("상태 종료 audit 생략: tenantId 없음 mappingId={}", mappingId);
+                return;
+            }
+            String metadataJson = String.format(
+                    "{\"reason\":%s,\"cancelledScheduleCount\":%d,\"remainingSessions\":%s}",
+                    quoteJson(reason),
+                    result.getCancelledScheduleCount(),
+                    result.getRemainingSessions() != null ? result.getRemainingSessions() : "null");
+            AuditLog entry = AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(actor != null ? actor.getId() : null)
+                    .actorRole(actor != null && actor.getRole() != null ? actor.getRole().name() : UserRole.ADMIN.name())
+                    .targetUserId(null)
+                    .action(AuditAction.MAPPING_STATUS_CLOSE)
+                    .entityType("MAPPING")
+                    .entityId(mappingId)
+                    .metadataJson(metadataJson)
+                    .build();
+            auditLogService.record(entry);
+        } catch (RuntimeException ex) {
+            log.warn("상태 종료 audit 기록 실패: mappingId={}, error={}", mappingId, ex.getMessage());
+        }
+    }
+
+    private static String quoteJson(String value) {
+        if (value == null) {
+            return "null";
+        }
+        String escaped = value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
+        return "\"" + escaped + "\"";
     }
 
     /**

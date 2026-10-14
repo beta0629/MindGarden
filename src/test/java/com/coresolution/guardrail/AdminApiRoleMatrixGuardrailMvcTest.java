@@ -3,6 +3,7 @@ package com.coresolution.guardrail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -81,6 +82,7 @@ class AdminApiRoleMatrixGuardrailMvcTest {
         "/api/v1/admin/salary/calculations?startDate=2026-09-01&endDate=2026-09-30";
     private static final String SALARY_TAX = "/api/v1/admin/salary/tax/" + CALCULATION_A;
     private static final String MAPPING_TERMINATE = "/api/v1/admin/mappings/" + MAPPING_A + "/terminate";
+    private static final String MAPPING_STATUS_CLOSE = "/api/v1/admin/mappings/" + MAPPING_A + "/status-close";
     private static final String MAPPING_PAYMENT_CANCEL = "/api/v1/admin/mapping/payment/cancel";
 
     private AdminService adminService;
@@ -189,6 +191,26 @@ class AdminApiRoleMatrixGuardrailMvcTest {
         assertThat(result.getResponse().getStatus()).isNotIn(401, 403);
     }
 
+    @Test
+    @DisplayName("매칭 상태-only 종료 — 사무원·상담사·내담자·다른 테넌트 관리자 403·서비스 미호출, 미인증 401, 같은 테넌트 관리자만 통과")
+    void statusCloseMapping_sameTenantAdminOnly() throws Exception {
+        assertMappingTerminationAdminOnly(AdminApiRoleMatrixGuardrailMvcTest::statusClose);
+        verify(adminService, never()).closeMappingStatusOnly(anyLong(), any(), any());
+        when(adminService.closeMappingStatusOnly(eq(MAPPING_A), any(), any()))
+            .thenReturn(com.coresolution.consultation.dto.MappingStatusCloseResponse.builder()
+                .mappingId(MAPPING_A)
+                .status("TERMINATED")
+                .alreadyClosed(false)
+                .cancelledScheduleCount(0)
+                .remainingSessions(1)
+                .usedSessions(0)
+                .paymentStatus("APPROVED")
+                .build());
+        mockMvc.perform(statusClose(user(ADMIN_A, UserRole.ADMIN, TENANT_A), null)).andExpect(status().isOk());
+        verify(adminService).closeMappingStatusOnly(eq(MAPPING_A), eq("guardrail"), any());
+        verify(mappingTerminationService, never()).terminate(anyLong(), any());
+    }
+
     private void assertMappingTerminationAdminOnly(
             BiFunction<User, String, MockHttpServletRequestBuilder> request) throws Exception {
         for (User caller : List.of(user(STAFF_A, UserRole.STAFF, TENANT_A),
@@ -214,6 +236,10 @@ class AdminApiRoleMatrixGuardrailMvcTest {
             .content("{\"reason\":\"guardrail\"}"), caller, contextTenantId);
     }
 
+    private static MockHttpServletRequestBuilder statusClose(User caller, String contextTenantId) {
+        return withCaller(post(MAPPING_STATUS_CLOSE).contentType(MediaType.APPLICATION_JSON)
+            .content("{\"reason\":\"guardrail\"}"), caller, contextTenantId);
+    }
     private static MockHttpServletRequestBuilder bulkCancel(User caller, String contextTenantId) {
         return withCaller(post(MAPPING_PAYMENT_CANCEL).contentType(MediaType.APPLICATION_JSON)
             .content("{\"mappingIds\":[" + MAPPING_A + "]}"), caller, contextTenantId);

@@ -14,8 +14,10 @@ export type OpsPgConfigurationItem = PgConfigurationPendingItem & {
 };
 
 /**
- * 승인 대기·이력 조회용 — pending 목록에서 후보를 가져온다.
- * (ACTIVE+PENDING 재승인 건 포함)
+ * PG 설정 후보 목록 — 비삭제 전체(ACTIVE/APPROVED/PENDING 포함).
+ * PENDING-only 가 아니므로 testMode 인 ACTIVE+APPROVED 도 선택 가능.
+ *
+ * @param tenantId 센터 ID (선택)
  */
 export async function fetchOpsPgConfigCandidates(tenantId?: string): Promise<OpsPgConfigurationItem[]> {
   const params = new URLSearchParams();
@@ -24,8 +26,8 @@ export async function fetchOpsPgConfigCandidates(tenantId?: string): Promise<Ops
   }
   const query = params.toString();
   const path = query
-    ? `${OPS_API_PATHS.PG_CONFIGURATIONS.PENDING}?${query}`
-    : OPS_API_PATHS.PG_CONFIGURATIONS.PENDING;
+    ? `${OPS_API_PATHS.PG_CONFIGURATIONS.LIST}?${query}`
+    : OPS_API_PATHS.PG_CONFIGURATIONS.LIST;
   const response = await clientApiFetch<OpsPgConfigurationItem[]>(path);
   return Array.isArray(response) ? response : [];
 }
@@ -42,7 +44,7 @@ export async function fetchOpsPgConfigurationDetail(
 }
 
 /**
- * 웹훅 시크릿 교체 — ops alias 우선, 실패 시 tenant 경로 폴백.
+ * 웹훅 시크릿 교체 — 테넌트 경로를 1차로 호출하고, 실패 시 ops alias 폴백.
  */
 export async function patchOpsWebhookSecret(params: {
   tenantId: string;
@@ -53,19 +55,19 @@ export async function patchOpsWebhookSecret(params: {
   const body = JSON.stringify({ webhookSecret });
   try {
     return await clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.WEBHOOK_SECRET(configId),
+      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_WEBHOOK_SECRET(tenantId, configId),
       { method: "PATCH", body }
     );
-  } catch (opsErr) {
+  } catch {
     return clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_WEBHOOK_SECRET(tenantId, configId),
+      OPS_API_PATHS.PG_CONFIGURATIONS.WEBHOOK_SECRET(configId),
       { method: "PATCH", body }
     );
   }
 }
 
 /**
- * 테스트 모드 변경 — ops alias 우선.
+ * 테스트 모드 변경 — 테넌트 경로 1차, ops alias 폴백.
  */
 export async function patchOpsTestMode(params: {
   tenantId: string;
@@ -76,12 +78,12 @@ export async function patchOpsTestMode(params: {
   const body = JSON.stringify({ testMode });
   try {
     return await clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TEST_MODE(configId),
+      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_TEST_MODE(tenantId, configId),
       { method: "PATCH", body }
     );
   } catch {
     return clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_TEST_MODE(tenantId, configId),
+      OPS_API_PATHS.PG_CONFIGURATIONS.TEST_MODE(configId),
       { method: "PATCH", body }
     );
   }

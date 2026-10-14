@@ -111,6 +111,21 @@ const checks = [
     msg: 'webhook-secret page is not placeholder'
   },
   {
+    ok: (() => {
+      const svc = path.join(root, 'src/services/opsWebhookSecretService.ts');
+      const src = read(svc);
+      return src.includes('PG_CONFIGURATIONS.LIST')
+        && !src.includes('PG_CONFIGURATIONS.PENDING')
+        && src.indexOf('TENANT_WEBHOOK_SECRET') < src.indexOf('WEBHOOK_SECRET(configId)');
+    })(),
+    msg: 'webhook service uses LIST not PENDING; tenant PATCH primary'
+  },
+  {
+    ok: api.includes('LIST: "/ops/pg-configurations"')
+      || api.includes("LIST: '/ops/pg-configurations'"),
+    msg: 'API LIST path for ops pg-configurations'
+  },
+  {
     ok: nav.includes('WEBHOOK_SECRET') && (() => {
       const idx = nav.indexOf('id: OPS_NAV_ID.WEBHOOK_SECRET');
       const slice = nav.slice(idx, idx + 220);

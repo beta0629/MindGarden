@@ -46,18 +46,14 @@ export default function OpsWebhookSecretPage() {
   const [confirmMode, setConfirmMode] = useState<ConfirmMode>(null);
   const [pendingTestMode, setPendingTestMode] = useState<boolean | null>(null);
 
-  const loadBase = useCallback(async () => {
+  const loadTenants = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
-      const [tenantList, pending] = await Promise.all([
-        fetchOpsTenants(),
-        fetchOpsPgConfigCandidates()
-      ]);
+      const tenantList = await fetchOpsTenants();
       setTenants(Array.isArray(tenantList) ? tenantList : []);
-      setCandidates(Array.isArray(pending) ? pending : []);
     } catch (err) {
-      console.error("[OpsWebhookSecretPage] load failed:", err);
+      console.error("[OpsWebhookSecretPage] tenants load failed:", err);
       setError(
         err instanceof Error ? err.message : OPS_WEBHOOK_SECRET_LABELS.ERROR_LOAD
       );
@@ -66,16 +62,34 @@ export default function OpsWebhookSecretPage() {
     }
   }, []);
 
-  useEffect(() => {
-    loadBase();
-  }, [loadBase]);
-
-  const configsForTenant = useMemo(() => {
-    if (!selectedTenantId) {
-      return candidates;
+  const loadCandidates = useCallback(async (tenantId?: string) => {
+    try {
+      setError(null);
+      const list = await fetchOpsPgConfigCandidates(tenantId || undefined);
+      setCandidates(Array.isArray(list) ? list : []);
+    } catch (err) {
+      console.error("[OpsWebhookSecretPage] configs load failed:", err);
+      setError(
+        err instanceof Error ? err.message : OPS_WEBHOOK_SECRET_LABELS.ERROR_LOAD
+      );
+      setCandidates([]);
     }
-    return candidates.filter((item) => item.tenantId === selectedTenantId);
-  }, [candidates, selectedTenantId]);
+  }, []);
+
+  const loadBase = useCallback(async () => {
+    await loadTenants();
+    await loadCandidates(selectedTenantId || undefined);
+  }, [loadTenants, loadCandidates, selectedTenantId]);
+
+  useEffect(() => {
+    loadTenants();
+  }, [loadTenants]);
+
+  useEffect(() => {
+    loadCandidates(selectedTenantId || undefined);
+  }, [selectedTenantId, loadCandidates]);
+
+  const configsForTenant = useMemo(() => candidates, [candidates]);
 
   useEffect(() => {
     if (!selectedConfigId) {

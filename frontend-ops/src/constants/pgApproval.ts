@@ -56,10 +56,70 @@ export const PG_APPROVAL_LABELS = {
   CONFIRM_APPROVE_HINT: "승인하면 해당 PG 설정이 사용중으로 전환됩니다.",
   CONFIRM_REJECT_HINT: "거부하면 센터에 사유가 전달됩니다.",
   MERCHANT_EMPTY: "—",
-  REAPPROVAL_BADGE: "재승인 대기"
+  REAPPROVAL_BADGE: "재승인 대기",
+  PENDING_EDIT_DIFF_TITLE: "대기 수정 비교",
+  PENDING_EDIT_CURRENT: "현재(live)",
+  PENDING_EDIT_PENDING: "대기(pending)",
+  DIFF_PROVIDER: "PG 제공자",
+  DIFF_STORE_ID: "스토어 ID",
+  DIFF_MERCHANT_ID: "가맹 ID",
+  DIFF_CHANNEL_KEY: "채널 키",
+  DIFF_WEBHOOK_URL: "Webhook URL",
+  DIFF_RETURN_URL: "Return URL",
+  DIFF_CANCEL_URL: "Cancel URL",
+  DIFF_API_KEY_CHANGED: "API 키 변경",
+  DIFF_SECRET_KEY_CHANGED: "시크릿 키 변경",
+  DIFF_CHANGED_YES: "변경됨",
+  DIFF_CHANGED_NO: "변경 없음"
 } as const;
 
 export const PG_APPROVAL_MIN_REJECTION_REASON_LENGTH = 10;
+
+/**
+ * 재승인 배지 표시 여부.
+ * hasPendingEdit 우선, 없으면 ACTIVE+PENDING 레거시 조건.
+ *
+ * @param item 목록/상세 항목
+ * @returns 재승인 배지 표시 시 true
+ */
+export function shouldShowReapprovalBadge(item?: {
+  hasPendingEdit?: boolean | null;
+  status?: string | null;
+  approvalStatus?: string | null;
+} | null): boolean {
+  if (!item) {
+    return false;
+  }
+  if (item.hasPendingEdit === true) {
+    return true;
+  }
+  return item.status === "ACTIVE" && item.approvalStatus === "PENDING";
+}
+
+/**
+ * 마스킹 diff 셀 표시값 — 비어 있으면 MERCHANT_EMPTY.
+ *
+ * @param value 마스킹 문자열
+ * @returns 표시 문자열
+ */
+export function formatPendingEditDisplay(value?: string | null): string {
+  if (value == null || !String(value).trim()) {
+    return PG_APPROVAL_LABELS.MERCHANT_EMPTY;
+  }
+  return String(value).trim();
+}
+
+/**
+ * 키 변경 여부 라벨.
+ *
+ * @param changed 변경 여부
+ * @returns 표시 라벨
+ */
+export function formatKeyChangedLabel(changed?: boolean | null): string {
+  return changed === true
+    ? PG_APPROVAL_LABELS.DIFF_CHANGED_YES
+    : PG_APPROVAL_LABELS.DIFF_CHANGED_NO;
+}
 
 /**
  * 가맹 ID 마스킹: 앞 2~4 + **** + 뒤 2~4. 짧으면 ****.

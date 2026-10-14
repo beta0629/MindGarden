@@ -9,7 +9,8 @@ import {
   PG_APPROVAL_COPY,
   maskMerchantId,
   resolveCenterDisplayName,
-  resolvePgDisplayName
+  resolvePgDisplayName,
+  shouldShowReapprovalBadge
 } from '../pgApproval';
 
 describe('pgApproval helpers', () => {
@@ -24,6 +25,38 @@ describe('pgApproval helpers', () => {
       expect(PG_APPROVAL_COPY.SUBMIT_APPROVE).toBe('승인 확정으로 진행');
       expect(PG_APPROVAL_COPY.CONFIRM_APPROVE).toBe('승인 확정');
       expect(PG_APPROVAL_COPY.RESULT_ACTIVE).toBe('사용중으로 전환');
+      expect(PG_APPROVAL_COPY.REAPPROVAL_BADGE).toBe('재승인 대기');
+    });
+  });
+
+  describe('shouldShowReapprovalBadge', () => {
+    it('hasPendingEdit true + APPROVED 이면 재승인 배지', () => {
+      expect(
+        shouldShowReapprovalBadge({
+          hasPendingEdit: true,
+          status: 'ACTIVE',
+          approvalStatus: 'APPROVED'
+        })
+      ).toBe(true);
+    });
+
+    it('ACTIVE+PENDING 레거시도 true', () => {
+      expect(
+        shouldShowReapprovalBadge({
+          status: 'ACTIVE',
+          approvalStatus: 'PENDING'
+        })
+      ).toBe(true);
+    });
+
+    it('pending 없으면 false', () => {
+      expect(
+        shouldShowReapprovalBadge({
+          hasPendingEdit: false,
+          status: 'ACTIVE',
+          approvalStatus: 'APPROVED'
+        })
+      ).toBe(false);
     });
   });
 

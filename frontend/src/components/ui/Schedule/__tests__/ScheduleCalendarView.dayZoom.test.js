@@ -331,12 +331,15 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
     expect(captured.slotEventOverlap).toBe(false);
   });
 
-  test('공통 설정에서 nowIndicator가 켜지고 scrollTime이 HH:mm:ss다', () => {
+  test('공통 설정에서 nowIndicator·timeZone(Asia/Seoul)·scrollTime이 맞다', () => {
     render(<ScheduleCalendarView {...baseProps()} />);
     const captured = getLastFullCalendarProps();
     expect(captured.nowIndicator).toBe(true);
+    expect(captured.timeZone).toBe('Asia/Seoul');
     expect(typeof captured.scrollTime).toBe('string');
     expect(captured.scrollTime).toMatch(/^\d{2}:\d{2}:\d{2}$/);
+    expect(Array.isArray(captured.plugins)).toBe(true);
+    expect(captured.plugins.length).toBeGreaterThanOrEqual(4);
   });
 
   test('CSS: 슬롯·이벤트 min-height 가 토큰 변수로 정의된다', () => {

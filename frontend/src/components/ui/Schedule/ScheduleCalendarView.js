@@ -4,6 +4,7 @@ import FullCalendar from '@fullcalendar/react';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import luxonPlugin from '@fullcalendar/luxon3';
 import { Calendar as CalendarIcon, AlertCircle, Info } from 'lucide-react';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveScheduleStatusDisplayLabel } from '../../../utils/scheduleStatusLabel';
@@ -11,6 +12,12 @@ import {
   resolveCalendarScrollTime,
   resolveCalendarSlotTimeRange
 } from '../../../utils/scheduleCalendarSlotRange';
+import {
+  DEFAULT_ZONE,
+  formatDateKeyInZone,
+  parseScheduleDateKey,
+  toFloatingDateTimeInZone
+} from '../../../utils/zonedDateTime';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -77,6 +84,46 @@ const VIEW_FADE_MS = 150;
  * 15분 자연 높이(≈16px)를 넘지 않게 두어 연속 일정 겹침·글자 가림을 막는다.
  */
 const EVENT_MIN_HEIGHT_PX = 16;
+
+/** FullCalendar plugins — IANA timeZone(Asia/Seoul) 용 luxon3 포함 */
+const SCHEDULE_CALENDAR_PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlugin, luxonPlugin];
+
+/**
+ * 기기 local 자정이 아니라 운영 타임존(DEFAULT_ZONE) 캘린더일로 past 판정.
+ * @param {Date|string|null|undefined} dateLike
+ * @returns {boolean}
+ */
+const isPastCalendarDayInZone = (dateLike) => {
+    if (dateLike == null || dateLike === '') {
+        return false;
+    }
+    const eventKey = parseScheduleDateKey(dateLike, DEFAULT_ZONE);
+    if (!eventKey) {
+        return false;
+    }
+    return eventKey < formatDateKeyInZone(new Date(), DEFAULT_ZONE);
+};
+
+/**
+ * absolute ISO(Z/+09:00) → floating KST. 일반 일정 floating 문자열은 유지.
+ * @param {object} event
+ * @returns {object}
+ */
+const normalizeCalendarEventForZone = (event) => {
+    if (!event || typeof event !== 'object') {
+        return event;
+    }
+    const start = typeof event.start === 'string'
+        ? toFloatingDateTimeInZone(event.start, DEFAULT_ZONE)
+        : event.start;
+    const end = typeof event.end === 'string'
+        ? toFloatingDateTimeInZone(event.end, DEFAULT_ZONE)
+        : event.end;
+    if (start === event.start && end === event.end) {
+        return event;
+    }
+    return { ...event, start, end };
+};
 
 const prefersReducedMotion = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
@@ -154,6 +201,11 @@ const ScheduleCalendarView = ({
     const scrollTime = useMemo(
         () => resolveCalendarScrollTime(new Date(), slotTimeRange.slotMinTime),
         [slotTimeRange.slotMinTime]
+    );
+    /** absolute 휴가 ISO 등을 floating KST로 맞춰 LA/Seoul 기기 벽시계 표시 동일화 */
+    const calendarEvents = useMemo(
+        () => (Array.isArray(events) ? events.map(normalizeCalendarEventForZone) : events),
+        [events]
     );
 
     const updateCalendarSize = useCallback(() => {
@@ -405,7 +457,7 @@ const ScheduleCalendarView = ({
         info.el.querySelector(`.${KR_SUBSTITUTE_EVE_DAY_BADGE_CLASS}`)?.remove();
     }, []);
 
-    // 지난 일정 판별 함수
+    // 지난 일정 판별 — 기기 local 자정이 아니라 Asia/Seoul 캘린더일
     const eventClassNames = (arg) => {
         if (arg.event.display === 'background') {
             if (arg.event.extendedProps?.type === CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY) {
@@ -413,12 +465,7 @@ const ScheduleCalendarView = ({
             }
             return [];
         }
-        const eventDate = new Date(arg.event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventDate.setHours(0, 0, 0, 0);
-        
-        return eventDate < today ? ['fc-event-past'] : [];
+        return isPastCalendarDayInZone(arg.event.start) ? ['fc-event-past'] : [];
     };
 
     // 과거 또는 완료·취소 예약 여부 (디저블 스타일 적용 대상)
@@ -518,11 +565,7 @@ const ScheduleCalendarView = ({
         const isMonthView = eventInfo.view?.type === CALENDAR_VIEW_MONTH;
         const isPastOrCompleted = isEventPastOrCompleted(event);
         const pastClass = isPastOrCompleted ? ' mg-v2-ad-calendar-event--past' : '';
-        const eventStart = new Date(event.start);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        eventStart.setHours(0, 0, 0, 0);
-        const isPastDate = eventStart < today;
+        const isPastDate = isPastCalendarDayInZone(event.start);
         const isCancelled = extendedProps?.status === 'CANCELLED';
         const cancelledClass = isCancelled ? ' mg-v2-ad-calendar-event--cancelled' : '';
 
@@ -739,19 +782,20 @@ const ScheduleCalendarView = ({
         <div ref={calendarWrapperRef} className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
             <FullCalendar
                 ref={calendarRef}
-                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                plugins={SCHEDULE_CALENDAR_PLUGINS}
                 headerToolbar={headerToolbar}
                 customButtons={customButtons}
                 initialView={CALENDAR_VIEW_MONTH}
                 defaultView={CALENDAR_VIEW_MONTH}
                 locale="ko"
+                timeZone={DEFAULT_ZONE}
                 selectable={true}
                 selectMirror={true}
                 dayMaxEvents={8}
                 moreLinkClick="popover"
                 {...calendarTextOptions}
                 weekends={true}
-                events={events}
+                events={calendarEvents}
                 dayCellClassNames={dayCellClassNamesForKrHoliday}
                 dayCellDidMount={handleDayCellDidMount}
                 dayCellWillUnmount={handleDayCellWillUnmount}

@@ -10,6 +10,7 @@ import CustomSelect from '../../common/CustomSelect';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { useTranslation } from 'react-i18next';
 import { formatDateKeyInZone } from '../../../utils/zonedDateTime';
+import { selectActiveConsultants } from '../../../utils/selectActiveConsultants';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_ADMIN_MAPPINGS_TRANSFER = '/api/v1/admin/mappings/transfer';
@@ -78,9 +79,12 @@ const ConsultantTransferModal = ({
       const data = await response.json();
       
       if (data.success) {
-        // 현재 상담사 제외
-        const filteredConsultants = data.data.filter(
-          consultant => consultant.id !== currentMapping?.consultantId
+        const raw = Array.isArray(data.data)
+          ? data.data
+          : (data.data?.consultants || []);
+        // 활성만 + 현재 상담사 제외 (with-vacation은 비활성 포함)
+        const filteredConsultants = selectActiveConsultants(raw).filter(
+          (consultant) => consultant.id !== currentMapping?.consultantId
         );
         setConsultants(filteredConsultants);
       }

@@ -96,10 +96,15 @@ const DiscountPaymentConfirmationModal = ({
     
     try {
       setLoadingCodes(true);
-      const response = await apiGet(`/api/admin/discounts/available?mappingId=${selectedMappings[0].id}`);
-      
-      if (response.success) {
-        setAvailableDiscounts(response.data || []);
+      const response = await apiGet(
+        `/api/v1/admin/discounts/available?mappingId=${selectedMappings[0].id}`
+      );
+      // apiGet unwrap → 할인 목록 배열/객체 직접 수용
+      if (response != null && response.success !== false) {
+        const list = Array.isArray(response)
+          ? response
+          : (Array.isArray(response.data) ? response.data : []);
+        setAvailableDiscounts(list);
       }
     } catch (error) {
       console.error('할인 옵션 로드 실패:', error);
@@ -122,13 +127,13 @@ const DiscountPaymentConfirmationModal = ({
     
     try {
       setLoading(true);
-      const response = await apiPost(`/api/admin/discounts/apply`, {
+      const response = await apiPost(`/api/v1/admin/discounts/apply`, {
         mappingId: selectedMappings[0].id,
         discountCode: paymentData.discountCode
       });
-      
-      if (response.success) {
-        const discount = response.data;
+      // unwrap 후 할인 DTO를 직접 사용
+      if (response != null && response.success !== false) {
+        const discount = response.data != null ? response.data : response;
         setDiscountInfo({
           applied: true,
           originalAmount: discount.originalAmount,
@@ -146,7 +151,7 @@ const DiscountPaymentConfirmationModal = ({
         
         notificationManager.success(`할인이 적용되었습니다. (${discount.discountName})`);
       } else {
-        notificationManager.error(response.message || '할인 적용에 실패했습니다.');
+        notificationManager.error(response?.message || '할인 적용에 실패했습니다.');
       }
     } catch (error) {
       console.error('할인 적용 실패:', error);
@@ -214,8 +219,8 @@ const DiscountPaymentConfirmationModal = ({
           originalAmount: discountInfo.originalAmount
         });
         
-        if (!response.success) {
-          throw new Error(response.message || '결제 확인에 실패했습니다.');
+        if (response == null || response.success === false) {
+          throw new Error(response?.message || '결제 확인에 실패했습니다.');
         }
       }
       

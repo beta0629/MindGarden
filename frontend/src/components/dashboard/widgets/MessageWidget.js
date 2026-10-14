@@ -50,15 +50,18 @@ const MessageWidget = ({ widget, user }) => {
       };
 
       const response = await apiGet(url, params);
-
-      if (response && response.success) {
-        const messageList = response.data?.messages || response.messages || [];
-        setMessages(Array.isArray(messageList) ? messageList.slice(0, maxItems) : []);
-        setUnreadCount(messageList.filter(m => !m.isRead).length);
-      } else if (response) {
-        const messageList = response.data || response || [];
-        setMessages(Array.isArray(messageList) ? messageList.slice(0, maxItems) : []);
-        setUnreadCount(messageList.filter(m => !m.isRead).length);
+      // apiGet unwrap → messages 배열/래핑 객체 직접 수용
+      if (response != null && response.success !== false) {
+        const messageList = Array.isArray(response)
+          ? response
+          : (response.messages
+            || response.data?.messages
+            || (Array.isArray(response.data) ? response.data : [])
+            || response.content
+            || []);
+        const list = Array.isArray(messageList) ? messageList : [];
+        setMessages(list.slice(0, maxItems));
+        setUnreadCount(list.filter(m => !m.isRead).length);
       } else {
         setMessages([]);
         setUnreadCount(0);

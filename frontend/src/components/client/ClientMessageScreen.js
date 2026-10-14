@@ -109,12 +109,13 @@ const ClientMessageScreen = () => {
         replyData
       );
 
-      if (response.success) {
+      // post unwrap → null/success===false 만 실패
+      if (response != null && response.success !== false) {
         notificationManager.show('답장이 전송되었습니다.', 'success');
         handleCloseMessageModal();
         await reloadMessages({ silent: true });
       } else {
-        throw new Error(response.message || '답장 전송에 실패했습니다.');
+        throw new Error(response?.message || '답장 전송에 실패했습니다.');
       }
     } catch (error) {
       console.error('답장 전송 오류:', error);

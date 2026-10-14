@@ -37,9 +37,12 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
         
         setLoading(true);
         try {
-            const response = await apiGet(`/api/admin/amount-management/mappings/${mapping.id}/amount-info`);
-            if (response.success) {
-                setDetailInfo(response.data);
+            const response = await apiGet(
+              `/api/v1/admin/amount-management/mappings/${mapping.id}/amount-info`
+            );
+            // apiGet unwrap → 금액 정보 객체를 직접 사용
+            if (response != null && response.success !== false) {
+                setDetailInfo(response.data != null ? response.data : response);
             }
         } catch (error) {
             console.error('매칭 상세 정보 로드 실패:', error);

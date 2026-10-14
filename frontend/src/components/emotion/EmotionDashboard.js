@@ -61,8 +61,12 @@ const EmotionDashboard = ({ consultationRecordId, clientId }) => {
                     { emotionType: 'anxiety' }
                 );
 
-                if (trendData && trendData.success) {
-                    setEmotionTrend(trendData.trend || []);
+                // apiGet unwrap → trend 배열 직접 사용
+                if (trendData != null && trendData.success !== false) {
+                    const trend = Array.isArray(trendData)
+                        ? trendData
+                        : (trendData.trend || trendData.data?.trend || []);
+                    setEmotionTrend(Array.isArray(trend) ? trend : []);
                 }
             }
 

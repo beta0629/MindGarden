@@ -27,7 +27,11 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../
 import StandardizedApi from '../../../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../../../constants/apiEndpoints';
 import { USER_ROLES } from '../../../../../constants/roles';
-import { MAPPING_STATUS, PAYMENT_STATUS } from '../../../../../constants/mapping';
+import {
+  MAPPING_STATUS,
+  MAPPING_STATUS_CLOSE_HIDDEN_STATUSES,
+  PAYMENT_STATUS
+} from '../../../../../constants/mapping';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import {
   resolveClientCompletedConsultationCount,
@@ -51,6 +55,7 @@ import {
 import notificationManager from '../../../../../utils/notification';
 import { mapSessionSuccessionConsultantOptions } from '../../../../../utils/sessionSuccessionOptions';
 import VehiclePlateQuickRegisterModal from './VehiclePlateQuickRegisterModal';
+import MappingStatusCloseModal from './MappingStatusCloseModal';
 import SidePeekBillingScheduleAccordion from './SidePeekBillingScheduleAccordion';
 import SidePeekMonthlyBillingSummary from './SidePeekMonthlyBillingSummary';
 import SessionTransferHistorySection from '../../../session-transfer-history/SessionTransferHistorySection';
@@ -92,12 +97,29 @@ const canChangePendingPackage = (mapping, userRole) => {
   return true;
 };
 
+/**
+ * Side Peek 「종료 처리」 — ADMIN + 열린 상태만 (TERMINATED/CANCELLED/SESSIONS_EXHAUSTED 숨김).
+ * STAFF 비노출. 카드 CardActionGroup에는 두지 않음.
+ */
+const canCloseMappingStatus = (mapping, userRole) => {
+  const role = userRole != null ? String(userRole) : '';
+  if (role !== USER_ROLES.ADMIN || !mapping) {
+    return false;
+  }
+  const status = mapping.status != null ? String(mapping.status) : '';
+  if (!status) {
+    return false;
+  }
+  return !MAPPING_STATUS_CLOSE_HIDDEN_STATUSES.includes(status);
+};
+
 const MappingScheduleSidePeekContent = ({
   mapping,
   mappingStatusInfo,
   onVehiclePlateRegistered,
   onConsultantUpdated,
   onChangePendingPackage,
+  onMappingStatusClosed,
   userRole
 }) => {
   const { t } = useTranslation(['admin']);
@@ -108,9 +130,11 @@ const MappingScheduleSidePeekContent = ({
   const [selectedConsultantId, setSelectedConsultantId] = useState('');
   const [savingConsultant, setSavingConsultant] = useState(false);
   const [consultantsReloadSeq, setConsultantsReloadSeq] = useState(0);
+  const [statusCloseOpen, setStatusCloseOpen] = useState(false);
 
   const editable = canEditMappingConsultant(userRole);
   const showPendingPackageChange = canChangePendingPackage(mapping, userRole);
+  const showStatusClose = canCloseMappingStatus(mapping, userRole);
 
   const handleChangePendingPackage = useCallback(() => {
     if (!showPendingPackageChange || typeof onChangePendingPackage !== 'function') {
@@ -522,6 +546,25 @@ const MappingScheduleSidePeekContent = ({
       {mapping.id != null ? (
         <SessionTransferHistorySection mappingId={mapping.id} clientId={mapping.clientId} />
       ) : null}
+      {showStatusClose ? (
+        <div className="integrated-schedule-side-peek-stub__actions">
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            className={buildErpMgButtonClassName({
+              variant: 'outline',
+              size: 'sm',
+              loading: false
+            })}
+            onClick={() => setStatusCloseOpen(true)}
+            preventDoubleClick
+            data-testid="side-peek-status-close"
+          >
+            {t('admin:integratedSchedule.sidePeek.statusClose.cta')}
+          </MGButton>
+        </div>
+      ) : null}
       <p className="integrated-schedule-side-peek-stub__placeholder" role="note">
         {t('admin:integratedSchedule.sidePeek.placeholderNote')}
       </p>
@@ -534,6 +577,12 @@ const MappingScheduleSidePeekContent = ({
         consultantId={currentConsultantId}
         consultantName={mapping.consultantName}
         onRegistered={handleRegistered}
+      />
+      <MappingStatusCloseModal
+        isOpen={statusCloseOpen}
+        onClose={() => setStatusCloseOpen(false)}
+        mapping={mapping}
+        onClosed={onMappingStatusClosed}
       />
     </div>
   );
@@ -583,6 +632,7 @@ MappingScheduleSidePeekContent.propTypes = {
   onVehiclePlateRegistered: PropTypes.func,
   onConsultantUpdated: PropTypes.func,
   onChangePendingPackage: PropTypes.func,
+  onMappingStatusClosed: PropTypes.func,
   userRole: PropTypes.string
 };
 
@@ -592,8 +642,9 @@ MappingScheduleSidePeekContent.defaultProps = {
   onVehiclePlateRegistered: undefined,
   onConsultantUpdated: undefined,
   onChangePendingPackage: undefined,
+  onMappingStatusClosed: undefined,
   userRole: USER_ROLES.ADMIN
 };
 
 export default MappingScheduleSidePeekContent;
-export { canEditMappingConsultant, canChangePendingPackage };
+export { canEditMappingConsultant, canChangePendingPackage, canCloseMappingStatus };

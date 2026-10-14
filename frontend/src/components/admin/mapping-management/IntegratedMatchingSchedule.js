@@ -1238,6 +1238,21 @@ const IntegratedMatchingSchedule = () => {
     }
   }, [cancelTargetMapping, cancelPendingProcessing, loadMappings]);
 
+  const handleMappingStatusClosed = useCallback(({ mappingId, status }) => {
+    if (mappingId == null) {
+      return;
+    }
+    const idKey = String(mappingId);
+    const nextStatus = status || 'TERMINATED';
+    setMappings((prev) => prev.map((m) => (
+      String(m.id) === idKey ? { ...m, status: nextStatus } : m
+    )));
+    setPeekMapping((prev) => (
+      prev && String(prev.id) === idKey ? { ...prev, status: nextStatus } : prev
+    ));
+    softRefresh(loadMappings);
+  }, [loadMappings]);
+
   const handleRequestDesyncAction = useCallback((mapping, desyncMeta) => {
     if (!mapping?.id || !desyncMeta?.kind || desyncProcessing) {
       return;
@@ -1603,6 +1618,7 @@ const IntegratedMatchingSchedule = () => {
             onVehiclePlateRegistered={handleVehiclePlateRegistered}
             onConsultantUpdated={handleConsultantUpdated}
             onChangePendingPackage={handleRequestChangePendingPackage}
+            onMappingStatusClosed={handleMappingStatusClosed}
             userRole={calendarUserRole}
           />
         </SidePeekShell>

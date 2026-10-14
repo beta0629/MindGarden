@@ -2231,6 +2231,11 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
+    "confirmMultiplePackages": {
+      "title": "상품 다중 선택 확인",
+      "message": "상품 {{count}}개가 선택됐습니다. 이대로 등록할까요?",
+      "confirmLabel": "등록"
+    },
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",

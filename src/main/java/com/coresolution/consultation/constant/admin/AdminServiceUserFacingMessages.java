@@ -715,6 +715,16 @@ public final class AdminServiceUserFacingMessages {
     /** 가계약 패키지 변경 성공 메시지 (컨트롤러). */
     public static final String MSG_PENDING_PACKAGE_UPDATED = "패키지가 수정되었습니다.";
 
+    /**
+     * 매칭 생성 짧은 시간창(ConsultantClientMappingCreateDuplicateWindow 참고) 내 동일 상담사·내담자·
+     * 동일 패키지명 매칭 중복 생성 가드.
+     *
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    public static final String MSG_MAPPING_CREATE_DUPLICATE_WINDOW =
+            "짧은 시간 내 동일 상품으로 매칭이 이미 생성되었습니다. 잠시 후 다시 시도해 주세요.";
+
 
     /** 환불 설명 파싱·표시 기본값 */
     public static final String REFUND_REASON_FALLBACK_ETC = "기타";

@@ -59,6 +59,10 @@ import {
   resolvePreviousPackage
 } from '../../utils/resolvePreviousPackage';
 import { buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
+import { useConfirm } from '../../hooks/useConfirm';
+
+// 다중 상품(패키지) 선택 등록 전 확인 기준 — 2개 이상 선택 시에만 확인 모달 노출.
+const MULTI_PACKAGE_CONFIRM_THRESHOLD = 2;
 
 /**
  * 매칭 생성 모달 - 플로우형 UI (상담사 → 패키지 → 내담자 → 결제)
@@ -105,6 +109,7 @@ const PAYMENT_TIMING_OPTIONS = [
 const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   const { t } = useTranslation(['admin', 'common']);
   const navigate = useNavigate();
+  const [confirm, ConfirmModal] = useConfirm();
   const [step, setStep] = useState(1);
   const [selectedConsultant, setSelectedConsultant] = useState(null);
   const [selectedClient, setSelectedClient] = useState(null);
@@ -313,7 +318,9 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   }, [clientSearchTerm, clientFilterStatus, clientSortBy, clients, mappings]);
 
   const handlePackageSelection = useCallback((selectedValues) => {
-    const selectedPkgs = packageOptions.filter(p => selectedValues.includes(p.value));
+    // 요청 내 동일 상품 중복 제거 — value 기준 dedupe (같은 상품이 배열에 두 번 들어오지 않게).
+    const dedupedValues = Array.from(new Set(selectedValues || []));
+    const selectedPkgs = packageOptions.filter(p => dedupedValues.includes(p.value));
     const totalSessions = selectedPkgs.reduce((sum, p) => sum + (p.sessions || 0), 0);
     const packagePrice = selectedPkgs.reduce((sum, p) => sum + (p.price || 0), 0);
     const packageName = selectedPkgs.length > 0 ? buildCombinedPackageName(selectedPkgs.map(p => p.label)) : null;
@@ -468,6 +475,36 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         ? CLIENT_ENGAGEMENT_MESSAGES.INSTITUTION_CLIENT_ONLY_ASSIGNMENT
         : CLIENT_ENGAGEMENT_MESSAGES.SESSION_CLIENT_NOT_INSTITUTION);
       return;
+    }
+    // 기관연계 제외, 상품(패키지) 2개 이상 선택 시 등록 전 확인 모달 노출.
+    const selectedPackagesForConfirm = paymentInfo.selectedPackages || [];
+    if (!institutionClient && selectedPackagesForConfirm.length >= MULTI_PACKAGE_CONFIRM_THRESHOLD) {
+      const confirmed = await confirm({
+        title: t('admin:mappingCreation.confirmMultiplePackages.title'),
+        message: (
+          <div className="mg-v2-mapping-creation-modal__confirm-multi-package">
+            <p>
+              {t('admin:mappingCreation.confirmMultiplePackages.message', {
+                count: selectedPackagesForConfirm.length
+              })}
+            </p>
+            <ul className="mg-v2-mapping-creation-modal__confirm-multi-package-list">
+              {selectedPackagesForConfirm.map((pkg) => (
+                <li key={pkg.value}>
+                  {toDisplayString(pkg.label)}
+                  {' · '}
+                  {t('admin:mappingCreation.sessionUnit', { count: pkg.sessions || 0 })}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+        confirmLabel: t('admin:mappingCreation.confirmMultiplePackages.confirmLabel'),
+        cancelLabel: t('common:action.cancel')
+      });
+      if (!confirmed) {
+        return;
+      }
     }
     setLoading(true);
     try {
@@ -1220,19 +1257,22 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
   );
 
   return (
-    <UnifiedModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={t('admin:mappingCreation.title')}
-      size="large"
-      className="mg-v2-ad-b0kla"
-      backdropClick={false}
-      showCloseButton={true}
-      loading={loading}
-      actions={renderActions()}
-    >
-      {modalContent}
-    </UnifiedModal>
+    <>
+      <UnifiedModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={t('admin:mappingCreation.title')}
+        size="large"
+        className="mg-v2-ad-b0kla"
+        backdropClick={false}
+        showCloseButton={true}
+        loading={loading}
+        actions={renderActions()}
+      >
+        {modalContent}
+      </UnifiedModal>
+      <ConfirmModal />
+    </>
   );
 };
 

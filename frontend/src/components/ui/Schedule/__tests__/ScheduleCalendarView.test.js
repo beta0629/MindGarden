@@ -38,6 +38,17 @@ describe('월간 셀 날짜 색', () => {
     );
     expect(css).toMatch(/text-overflow:\s*ellipsis/);
     expect(calendarJs).toMatch(/nameSpan\.title = safeName/);
+    expect(css).toMatch(/fc-daygrid-day-top:has\(\.mg-v2-ad-calendar-day-holiday-badge\)\s*\{[^}]*align-items:\s*baseline/);
+  });
+
+  test('토요일 칸·머리글은 평일 토큰이고 숫자는 공휴일 보조색에서 빠진다', () => {
+    expect(css).not.toMatch(/--mg-calendar-weekend-sat-bg/);
+    expect(css).not.toMatch(/mg-v2-ad-calendar-day--weekend-sat/);
+    expect(css).toMatch(/fc-col-header-cell \.fc-col-header-cell-cushion\s*\{[^}]*color:\s*var\(--ad-b0kla-title-color\)/);
+    expect(css).toMatch(/kr-public-holiday:not\(\.fc-day-sat\) \.fc-daygrid-day-number/);
+    expect(calendarJs).not.toMatch(/getKrSubstituteHolidayEveHintForLocalDate/);
+    expect(calendarJs).not.toMatch(/substitute-eve-badge/);
+    expect(css).not.toMatch(/substitute-eve-badge/);
   });
 
   test('다른 달 숫자는 비활성색이 요일·공휴일보다 뒤에 선언된다', () => {

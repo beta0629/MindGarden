@@ -334,6 +334,37 @@ class TenantPgConfigurationServiceImplTest {
     }
     
     @Test
+    @DisplayName("운영 포털 목록 — tenantId 있으면 getConfigurations 경로")
+    void listConfigurationsForOps_withTenantId() {
+        when(configurationRepository.findByTenantIdAndIsDeletedFalse(testTenantId))
+                .thenReturn(List.of(testConfiguration));
+
+        List<TenantPgConfigurationResponse> result =
+                service.listConfigurationsForOps(testTenantId);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getConfigId()).isEqualTo(testConfigId);
+        verify(configurationRepository).findByTenantIdAndIsDeletedFalse(testTenantId);
+        verify(configurationRepository, never()).findByIsDeletedFalse();
+    }
+
+    @Test
+    @DisplayName("운영 포털 목록 — tenantId 없으면 전체 비삭제")
+    void listConfigurationsForOps_allNonDeleted() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        when(configurationRepository.findByIsDeletedFalse())
+                .thenReturn(List.of(testConfiguration));
+
+        List<TenantPgConfigurationResponse> result =
+                service.listConfigurationsForOps(null);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        verify(configurationRepository).findByIsDeletedFalse();
+    }
+
+    @Test
     @DisplayName("승인 대기 목록 조회 - 성공")
     void testGetPendingApprovals_Success() {
         // Given

@@ -31,6 +31,11 @@ public interface TenantPgConfigurationRepository extends JpaRepository<TenantPgC
      * tenant_id로 조회 (삭제되지 않은 것만)
      */
     List<TenantPgConfiguration> findByTenantIdAndIsDeletedFalse(String tenantId);
+
+    /**
+     * 삭제되지 않은 전체 PG 설정 (운영 포털 목록용).
+     */
+    List<TenantPgConfiguration> findByIsDeletedFalse();
     
     /**
      * tenant_id와 status로 조회

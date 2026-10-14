@@ -62,6 +62,36 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     private final OpsTenantConstants opsTenantConstants;
 
     /**
+     * PG 설정 목록 조회 (승인 대기뿐 아니라 ACTIVE/APPROVED 등 비삭제 전체).
+     *
+     * <p>웹훅 시크릿·테스트 모드 운영 화면에서 PENDING 이 아닌 ACTIVE+APPROVED(testMode)
+     * 설정을 선택하기 위해 사용한다.</p>
+     *
+     * @param tenantId 센터 ID (선택 — 없으면 전체 비삭제)
+     * @return PG 설정 목록
+     */
+    @Operation(
+            summary = "PG 설정 목록 조회",
+            description = "운영 포털용 비삭제 PG 설정 목록. tenantId 가 있으면 해당 센터만, 없으면 전체."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TenantPgConfigurationResponse>>> listConfigurations(
+            @Parameter(description = "센터 ID (필터)") @RequestParam(required = false) String tenantId) {
+        requireOpsAndHq();
+        log.debug("운영 포털 PG 설정 목록 조회 요청: tenantId={}", tenantId);
+
+        List<TenantPgConfigurationResponse> configurations =
+                pgConfigurationService.listConfigurationsForOps(tenantId);
+
+        return success(configurations);
+    }
+
+    /**
      * 승인 대기 중인 PG 설정 목록 조회.
      *
      * @param tenantId 센터(테넌트) ID 필터 (선택)

@@ -89,6 +89,21 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<TenantPgConfigurationResponse> listConfigurationsForOps(String tenantId) {
+        log.debug("운영 포털 PG 설정 목록 조회: tenantId={}", tenantId);
+        if (tenantId != null && !tenantId.isBlank()) {
+            return getConfigurations(tenantId.trim(), null, null);
+        }
+        return configurationRepository.findByIsDeletedFalse().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
     
     @Override
     @Transactional(readOnly = true)

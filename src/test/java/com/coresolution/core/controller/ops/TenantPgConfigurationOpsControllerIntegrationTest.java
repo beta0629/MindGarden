@@ -97,6 +97,53 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("PG 설정 목록 조회 - OPS+HQ 성공 (tenantId 필터, ACTIVE 포함)")
+    @WithMockUser(roles = {"OPS"})
+    void testListConfigurations_WithTenantId_Success() throws Exception {
+        TenantPgConfigurationResponse active = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .testMode(true)
+                .build();
+        when(pgConfigurationService.listConfigurationsForOps(eq("center-tenant-id")))
+                .thenReturn(List.of(active));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .param("tenantId", "center-tenant-id")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId))
+                .andExpect(jsonPath("$.data[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data[0].testMode").value(true));
+    }
+
+    @Test
+    @DisplayName("PG 설정 목록 조회 - OPS+HQ 성공 (tenantId 없음 = 전체)")
+    @WithMockUser(roles = {"OPS"})
+    void testListConfigurations_All_Success() throws Exception {
+        when(pgConfigurationService.listConfigurationsForOps(isNull()))
+                .thenReturn(List.of(testResponse));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId));
+    }
+
+    @Test
+    @DisplayName("PG 설정 목록 조회 - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testListConfigurations_AdminForbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("승인 대기 목록 조회 - OPS+HQ 성공")
     @WithMockUser(roles = {"OPS"})
     void testGetPendingApprovals_Success() throws Exception {

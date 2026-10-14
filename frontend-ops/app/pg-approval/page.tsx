@@ -347,7 +347,9 @@ export default function PgApprovalPage() {
               <div className={styles.cardHeader}>
                 <h3>{item.pgName || item.pgProvider}</h3>
                 <span className={styles.badge}>
-                  {item.approvalStatus || item.status || "PENDING"}
+                  {item.status === "ACTIVE" && item.approvalStatus === "PENDING"
+                    ? PG_APPROVAL_LABELS.REAPPROVAL_BADGE
+                    : (item.approvalStatus || item.status || "PENDING")}
                 </span>
               </div>
               <dl className={styles.meta}>

@@ -732,11 +732,13 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
 
     /**
-     * 요청 settings_json 에 웹훅 시크릿이 없으면 기존 암호화 값을 보존한다.
-     * 테넌트 수정 폼은 시크릿을 응답에서 받지 못하므로 공란 저장 시 기존 값을 유지해야 한다.
+     * settings_json 병합 시 기존(live) {@code portoneWebhookSecret} 을 우선 보존한다.
+     * <p>테넌트 수정 폼은 시크릿을 응답에서 받지 못하므로 공란 저장 시 기존 값을 유지해야 하며,
+     * pending 승인 시에도 OPS webhook-secret PATCH 로 갱신된 live 시크릿이 덮이지 않게 한다.
+     * 기존에 시크릿이 없을 때만 incoming 값을 그대로 사용한다(최초 설정).</p>
      *
-     * @param existingSettingsJson 저장되어 있던 settings_json
-     * @param incomingNormalized 요청을 normalize 한 settings_json
+     * @param existingSettingsJson 저장되어 있던(live) settings_json
+     * @param incomingNormalized 요청·pending 을 normalize 한 settings_json
      * @return 병합된 settings_json
      */
     private String mergeSettingsJsonPreservingWebhookSecret(
@@ -754,13 +756,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 return incomingNormalized;
             }
             ObjectNode incomingObj = (ObjectNode) incomingRoot;
-            JsonNode incomingSecret = incomingObj.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
-            boolean incomingHasSecret = incomingSecret != null
-                    && !incomingSecret.isNull()
-                    && !incomingSecret.asText("").isBlank();
-            if (incomingHasSecret) {
-                return incomingNormalized;
-            }
             if (existingSettingsJson == null || existingSettingsJson.isBlank()) {
                 return incomingNormalized;
             }
@@ -770,6 +765,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             }
             JsonNode existingSecret = existingRoot.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
             if (existingSecret != null && !existingSecret.isNull() && !existingSecret.asText("").isBlank()) {
+                // live / existing 시크릿이 있으면 항상 우선 (incoming·pending 값 무시)
                 incomingObj.set(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, existingSecret);
                 return objectMapper.writeValueAsString(incomingObj);
             }
@@ -1295,7 +1291,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
 
     /**
-     * pending_request_json 을 live 컬럼에 적용한다. testMode 는 적용하지 않는다.
+     * pending_request_json 을 live 컬럼에 적용한다.
+     * <p>testMode 는 pending 에서 절대 적용하지 않는다.
+     * 웹훅 시크릿({@code portoneWebhookSecret})은 항상 현재 live settings_json 값을 유지한다
+     * (스테이징 이후 OPS webhook-secret PATCH 로 교체된 시크릿이 승인 시 덮이지 않도록).</p>
      *
      * @param configuration 대상 엔티티
      */
@@ -1334,7 +1333,11 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 configuration.setCancelUrl(textOrNull(root.get("cancelUrl")));
             }
             if (root.has("settingsJson")) {
-                configuration.setSettingsJson(textOrNull(root.get("settingsJson")));
+                String pendingSettingsJson = textOrNull(root.get("settingsJson"));
+                configuration.setSettingsJson(
+                        mergeSettingsJsonPreservingWebhookSecret(
+                                configuration.getSettingsJson(),
+                                pendingSettingsJson));
             }
             if (root.has("notes")) {
                 configuration.setNotes(textOrNull(root.get("notes")));

@@ -97,4 +97,11 @@ describe('선생님 색 점 SSOT·회귀 가드', () => {
     expect(methodBody).not.toContain('findActiveConsultantsByTenantId');
     expect(methodBody).toContain('isActive');
   });
+
+  test('선택·KPI는 selectActiveConsultants FE 모듈로 분리 — UnifiedSchedule는 전체 유지', () => {
+    const util = read(FE_SRC, 'utils', 'selectActiveConsultants.js');
+    const unified = read(FE_SRC, 'components', 'schedule', 'UnifiedScheduleComponent.js');
+    expect(util).toMatch(/isActive\s*!==\s*false/);
+    expect(unified).not.toMatch(/selectActiveConsultants/);
+  });
 });

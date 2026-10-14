@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { apiPost } from '../../utils/ajax';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import notificationManager from '../../utils/notification';
 import SearchInput from '../dashboard-v2/atoms/SearchInput';
 import MGButton from '../common/MGButton';
@@ -391,7 +392,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
     try {
       const list = await getAllConsultantsWithStats();
       if (list?.length) {
-        setConsultants(list.map(item => {
+        const mapped = list.map((item) => {
           const c = item.consultant || {};
           return {
             id: c.id,
@@ -399,11 +400,13 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
             email: c.email,
             phone: c.phone,
             role: c.role,
+            isActive: c.isActive,
             profileImageUrl: c.profileImageUrl ?? null,
             currentClients: item.currentClients || 0,
             totalClients: item.totalClients || 0
           };
-        }));
+        });
+        setConsultants(selectActiveConsultants(mapped));
       } else setConsultants([]);
     } catch (e) {
       console.error('상담사 목록 로드 오류:', e);

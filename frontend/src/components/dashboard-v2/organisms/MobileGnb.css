@@ -4,7 +4,8 @@
  *
  * 3열 대칭 grid: 왼쪽(메뉴+로고) | 시계 | 오른쪽(알림+프로필).
  * absolute 중앙 배치는 자리를 안 잡아 시계·알림이 겹치므로 사용하지 않는다.
- * 양옆 1fr 대칭으로 시계를 헤더 중앙에 두고, 좁은 폭에서는 브랜드 글자를 숨겨 침범을 막는다.
+ * 양옆은 side-min 이상으로 대칭 확보해 알림·프로필이 잘리지 않게 하고,
+ * 좁은 폭에서는 브랜드 글자 숨김 + 시계 글자 축소로 겹침을 막는다.
  *
  * @author CoreSolution
  * @since 2025-02-22
@@ -13,16 +14,20 @@
 .mg-v2-mobile-gnb {
   position: relative;
   display: grid;
-  /* 좌·우 대칭 1fr — 시계(auto)가 헤더 중앙. 넘치는 브랜드는 왼쪽 overflow로 차단. */
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  /* 좌·우 대칭 side-min — 시계(auto)가 헤더 중앙. 넘치는 브랜드는 왼쪽 overflow로 차단. */
+  grid-template-columns:
+    minmax(var(--mg-v2-mobile-gnb-side-min), 1fr)
+    auto
+    minmax(var(--mg-v2-mobile-gnb-side-min), 1fr);
   align-items: center;
-  column-gap: var(--mg-v2-now-chip-gap-sides);
+  column-gap: var(--mg-v2-mobile-gnb-chip-gap-sides);
   height: var(--mg-layout-header-height-mobile, 56px);
-  padding: 0 var(--mg-v2-space-4);
+  padding: 0 var(--mg-v2-mobile-gnb-edge-pad);
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
   border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-layout-header-border, var(--mg-color-border-main));
   z-index: var(--mg-v2-z-header, var(--z-header, 1000));
   overflow: visible;
+  box-sizing: border-box;
 }
 
 .mg-v2-mobile-gnb__left {
@@ -91,7 +96,7 @@
   vertical-align: middle;
 }
 
-/* 시계는 줄바꿈·숨김·축소 금지. 양옆은 column-gap(--mg-v2-now-chip-gap-sides)으로 ≥24px */
+/* 시계는 줄바꿈·숨김 금지. 글자 축소는 CurrentTimeChip 모바일 토큰. */
 .mg-v2-mobile-gnb__center {
   display: flex;
   align-items: center;
@@ -110,12 +115,11 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: var(--mg-v2-space-1);
-  min-width: 0;
-  max-width: 100%;
-  overflow: hidden;
+  gap: var(--mg-v2-mobile-gnb-actions-gap);
+  /* min-width 0 및 클립 overflow 금지 — 알림·프로필 잘림 방지 */
   justify-self: end;
   z-index: 2;
+  overflow: visible;
 }
 
 .mg-v2-mobile-gnb__actions .mg-v2-notification-dropdown,
@@ -124,10 +128,14 @@
   flex-shrink: 0;
 }
 
+.mg-v2-mobile-gnb__actions .mg-v2-tenant-header-cluster {
+  gap: var(--mg-v2-mobile-gnb-profile-cluster-gap);
+}
+
 /*
  * ≤414: 브랜드 글자 숨김 (메뉴·로고 그래픽만).
  * 미디어 쿼리는 var() 미지원 — 기존 MobileGnb 414px 패턴 유지.
- * 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명. 시계 유지.
+ * 공간 부족 시 축소 순서: 프로필 이름 → 검색(본문) → 브랜드명 → 시계 글자. 시계 숨김 금지.
  */
 @media (max-width: 414px) {
   .mg-v2-mobile-gnb__brand-name,

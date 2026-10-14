@@ -912,6 +912,14 @@
   align-self: center;
 }
 
+/* 선생님 색 점 — 상태 __dot 와 분리. 축소·말줄임 금지. */
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-teacher-dot,
+.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__teacher-dot {
+  flex: none;
+  align-self: center;
+  margin-inline-end: 0;
+}
+
 /* 상태 색 한 곳. 점과 가장 좁은 단계의 시작 테두리가 같이 쓴다. */
 .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month {
   --mg-month-event-status-color: var(--mg-v2-color-neutral-600);
@@ -1097,6 +1105,12 @@
   }
 
   .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot {
+    display: none;
+  }
+
+  /* 숨김 순서: 배지→이름→시간→선생님점. 극소 폭은 상태 막대만. */
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-teacher-dot,
+  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__teacher-dot {
     display: none;
   }
 

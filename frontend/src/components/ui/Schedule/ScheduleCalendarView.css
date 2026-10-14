@@ -165,6 +165,28 @@
     white-space: nowrap;
 }
 
+/* 선생님 점: 축소·말줄임 금지. 숨김 시에만 measure(폭 예산용). */
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__teacher-dot {
+    flex: 0 0 auto;
+    margin-inline-end: 0;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__teacher-dot--measure {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time {
+    gap: var(--mg-v2-teacher-dot-gap);
+}
+
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-measured {
     white-space: nowrap;
 }

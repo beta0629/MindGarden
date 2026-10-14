@@ -604,7 +604,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
             if (!FinancialTransaction.TransactionType.INCOME.equals(tx.getTransactionType())) {
                 continue;
             }
-            // 취소 대상은 세금/결산 SSOT(COMPLETED only). 콕핏 PENDING 집계와 분리.
+            // 취소 대상은 세금/결산 SSOT(COMPLETED only). 콕핏도 COUNTABLE_STATUSES(미삭제 COMPLETED).
             if (!FinancialTransactionValidity.isValid(tx)) {
                 continue;
             }
@@ -1561,7 +1561,8 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
      * 재무 데이터 조회
      * 표준화 2025-12-06: branchCode 파라미터는 레거시 호환용으로 유지되지만 사용하지 않음
      * <p>
-     * 운영자 콕핏 SSOT: {@link OperatorFinanceAggregation} (PENDING/APPROVED/COMPLETED, 미삭제).
+     * 운영자 콕핏 SSOT: {@link OperatorFinanceAggregation}
+     * ({@link OperatorFinanceAggregation#COUNTABLE_STATUSES}, 미삭제 COMPLETED).
      * 수입 mix는 {@code incomeCategoryBreakdown}(INCOME only)를 사용한다.
      * {@code totalExpenses == sum(expenseCategoryBreakdown)} 불변식.
      * </p>

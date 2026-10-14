@@ -173,8 +173,8 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
     }
 
     @Test
-    @DisplayName("getBranchFinancialData: PENDING 지출 포함, CANCELLED 제외, total==sum(breakdown)")
-    void getBranchFinancialData_includesPendingExpenseAndAllCategories() {
+    @DisplayName("getBranchFinancialData: PENDING·APPROVED 제외, COMPLETED만 total==sum(breakdown)")
+    void getBranchFinancialData_excludesPendingAndApprovedFromTotals() {
         List<FinancialTransaction> rows = new ArrayList<>();
         rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "100000",
                 FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 2)));
@@ -182,18 +182,30 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
                 FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 3)));
         rows.add(expense(FinancialTransactionConstants.CATEGORY_TAX, "30000",
                 FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 4)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_TAX, "30000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 4)));
         rows.add(expense(FinancialTransactionConstants.CATEGORY_MEAL, "15000",
                 FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 5)));
         rows.add(expense(FinancialTransactionConstants.CATEGORY_EQUIPMENT, "40000",
                 FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 6)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_EQUIPMENT, "40000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 6)));
         rows.add(expense("OFFICE_SUPPLIES", "10000",
                 FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 7)));
         rows.add(expense("CUSTOM_MARKETING", "5000",
                 FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 8)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_UTILITY, "8000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 8)));
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "12000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 9)));
         rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "999000",
                 FinancialTransaction.TransactionStatus.CANCELLED, LocalDate.of(2026, 8, 9)));
         rows.add(income(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "500000",
                 FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 10)));
+        rows.add(income(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "250000",
+                FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 11)));
+        rows.add(income(FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "180000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 12)));
 
         when(financialTransactionRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
                 .thenReturn(rows);
@@ -201,23 +213,36 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
         Map<String, Object> result = service.getBranchFinancialData(null, START, END, null, null);
         @SuppressWarnings("unchecked")
         Map<String, Object> summary = (Map<String, Object>) result.get("summary");
-        assertThat(summary.get("totalRevenue")).isEqualTo(500_000L);
-        assertThat(summary.get("totalExpenses")).isEqualTo(400_000L);
+        assertThat(summary.get("totalRevenue")).isEqualTo(180_000L);
+        assertThat(summary.get("totalExpenses")).isEqualTo(320_000L);
 
         @SuppressWarnings("unchecked")
         Map<String, BigDecimal> expenseBreakdown =
                 (Map<String, BigDecimal>) result.get("expenseCategoryBreakdown");
         assertThat(expenseBreakdown.size()).isGreaterThanOrEqualTo(7);
+        assertThat(expenseBreakdown).containsKeys(
+                FinancialTransactionConstants.CATEGORY_SALARY,
+                FinancialTransactionConstants.CATEGORY_TAX,
+                FinancialTransactionConstants.CATEGORY_MEAL,
+                FinancialTransactionConstants.CATEGORY_EQUIPMENT,
+                "OFFICE_SUPPLIES",
+                "CUSTOM_MARKETING",
+                FinancialTransactionConstants.CATEGORY_UTILITY,
+                FinancialTransactionConstants.CATEGORY_RENT);
+        assertThat(expenseBreakdown.get(FinancialTransactionConstants.CATEGORY_RENT))
+                .isEqualByComparingTo(new BigDecimal("12000"));
+        assertThat(expenseBreakdown.get(FinancialTransactionConstants.CATEGORY_TAX))
+                .isEqualByComparingTo(new BigDecimal("30000"));
         BigDecimal expenseSum = expenseBreakdown.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        assertThat(expenseSum).isEqualByComparingTo(new BigDecimal("400000"));
+        assertThat(expenseSum).isEqualByComparingTo(new BigDecimal("320000"));
 
         @SuppressWarnings("unchecked")
         Map<String, BigDecimal> incomeBreakdown =
                 (Map<String, BigDecimal>) result.get("incomeCategoryBreakdown");
         BigDecimal incomeSum = incomeBreakdown.values().stream()
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        assertThat(incomeSum).isEqualByComparingTo(new BigDecimal("500000"));
+        assertThat(incomeSum).isEqualByComparingTo(new BigDecimal("180000"));
     }
 
     @Test
@@ -249,7 +274,7 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
     }
 
     @Test
-    @DisplayName("getTransactionsFilteredSummary: taxBreakdown은 저장 세액 합(세율 재계산 없음)")
+    @DisplayName("getTransactionsFilteredSummary: taxBreakdown은 COMPLETED 저장 세액만(세율 재계산 없음)")
     void getTransactionsFilteredSummary_includesStoredTaxBreakdown() {
         FinancialTransaction incomeWithTax = income(
                 FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "1100000",
@@ -262,8 +287,19 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
                 FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 8));
         expenseWithTax.setTaxAmount(new BigDecimal("50000"));
 
+        FinancialTransaction pendingIncome = income(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "700000",
+                FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 9));
+        pendingIncome.setTaxAmount(new BigDecimal("70000"));
+        pendingIncome.setWithholdingTaxAmount(new BigDecimal("11000"));
+
+        FinancialTransaction approvedExpense = expense(
+                FinancialTransactionConstants.CATEGORY_RENT, "90000",
+                FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 10));
+        approvedExpense.setTaxAmount(new BigDecimal("9000"));
+
         when(financialTransactionRepository.findAll(any(Specification.class)))
-                .thenReturn(List.of(incomeWithTax, expenseWithTax));
+                .thenReturn(List.of(incomeWithTax, expenseWithTax, pendingIncome, approvedExpense));
 
         Map<String, Object> summary = service.getTransactionsFilteredSummary(null, null, START, END);
 
@@ -275,7 +311,7 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
     }
 
     @Test
-    @DisplayName("getBranchFinancialData: top-level taxBreakdown은 posted 저장 세액 합")
+    @DisplayName("getBranchFinancialData: taxBreakdown은 COMPLETED 저장 세액만, PENDING·APPROVED 제외")
     void getBranchFinancialData_includesTopLevelTaxBreakdown() {
         FinancialTransaction incomeWithTax = income(
                 FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "1100000",
@@ -289,8 +325,19 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
         cancelled.setTaxAmount(new BigDecimal("20000"));
         cancelled.setWithholdingTaxAmount(new BigDecimal("6600"));
 
+        FinancialTransaction pending = income(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "400000",
+                FinancialTransaction.TransactionStatus.PENDING, LocalDate.of(2026, 8, 7));
+        pending.setTaxAmount(new BigDecimal("40000"));
+        pending.setWithholdingTaxAmount(new BigDecimal("8000"));
+
+        FinancialTransaction approvedExpense = expense(
+                FinancialTransactionConstants.CATEGORY_RENT, "120000",
+                FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 8));
+        approvedExpense.setTaxAmount(new BigDecimal("12000"));
+
         when(financialTransactionRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_ID)))
-                .thenReturn(List.of(incomeWithTax, cancelled));
+                .thenReturn(List.of(incomeWithTax, cancelled, pending, approvedExpense));
 
         Map<String, Object> result = service.getBranchFinancialData(null, START, END, null, null);
 

@@ -1818,10 +1818,10 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         List<FinancialTransaction> allTransactions = financialTransactionRepository
             .findByTenantIdAndTransactionDateBetweenAndIsDeletedFalse(tenantId, startDate, endDate);
 
-        // 머니 콕핏 차트 SSOT: PENDING/APPROVED/COMPLETED + 전 카테고리 (OperatorFinanceAggregation)
+        // 머니 콕핏 차트 SSOT: COUNTABLE_STATUSES(미삭제 COMPLETED) + 전 카테고리 (OperatorFinanceAggregation)
         OperatorFinanceAggregation.Result agg = OperatorFinanceAggregation.aggregate(allTransactions);
         List<FinancialTransaction> monthlyTransactions = agg.copyTransactions();
-        // 세금 계열 SSOT: FinancialTransactionValidity (미삭제 COMPLETED only). 지출 콕핏과 분리.
+        // 세금 계열 SSOT: FinancialTransactionValidity (미삭제 COMPLETED). 지출 콕핏과 같은 상태 집합.
         List<FinancialTransaction> validForTax = allTransactions.stream()
             .filter(FinancialTransactionValidity::isValid)
             .collect(Collectors.toList());
@@ -1853,7 +1853,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
 
         Map<String, Object> monthlyExpenses = new HashMap<>();
         // 레거시 6키 — IntegratedFinanceDashboard 하위호환 (참고용, total 산식에는 쓰지 않음)
-        // taxExpense 만 Validity(COMPLETED). 나머지 키는 Operator 집계 참고용 유지.
+        // taxExpense 는 Validity(COMPLETED). 나머지 키도 OperatorFinanceAggregation(COUNTABLE_STATUSES=COMPLETED).
         BigDecimal salaryExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_SALARY);
         BigDecimal rentExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_RENT);
         BigDecimal utilityExpense = agg.expenseOf(FinancialTransactionConstants.CATEGORY_UTILITY);
@@ -1871,7 +1871,7 @@ public class ErpServiceImpl extends BaseTenantAwareService implements ErpService
         monthlyExpenses.put("officeExpense", officeExpense);
         monthlyExpenses.put("taxExpense", taxExpense);
         monthlyExpenses.put("purchaseExpense", purchaseExpense);
-        // 콕핏: 전 카테고리 + 카드수수료 (PENDING 포함). total == sum(expenseCategoryBreakdown)
+        // 콕핏: 전 카테고리 + 카드수수료 (미삭제 COMPLETED). total == sum(expenseCategoryBreakdown)
         BigDecimal totalMonthlyExpenses = agg.getTotalExpense();
         monthlyExpenses.put("total", totalMonthlyExpenses);
         monthlyExpenses.put("expenseCategoryBreakdown", agg.copyExpenseByCategory());

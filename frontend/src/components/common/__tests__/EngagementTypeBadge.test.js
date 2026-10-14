@@ -31,6 +31,7 @@ describe('EngagementTypeBadge', () => {
     const segments = getEngagementTypeLabelSegments(MAPPING_ENGAGEMENT_TYPE.INSTITUTION_LINK);
 
     expect(badge).toHaveAttribute('aria-label', label);
+    expect(badge).toHaveAttribute('title', label);
     expect(badge.textContent).toBe(label);
 
     const segNodes = badge.querySelectorAll(`.${ENGAGEMENT_TYPE_BADGE_SEG_CLASS}`);

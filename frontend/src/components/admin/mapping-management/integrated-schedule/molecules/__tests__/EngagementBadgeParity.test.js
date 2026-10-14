@@ -96,14 +96,20 @@ describe('기관연계 글자 배지 — 세 곳 동일 렌더', () => {
     const { container } = render(
       <ScheduleEventMarks source={INSTITUTION_SOURCE} institutionTitle={INSTITUTION_LABEL} />
     );
+    expect(detail).toContain(`title="${INSTITUTION_LABEL}"`);
     expect(badgeHtml(container)).toBe(detail);
+    expect(container.querySelector('[data-testid="engagement-type-badge"]'))
+      .toHaveAttribute('title', INSTITUTION_LABEL);
     expect(countInstitutionBadges(container)).toBe(1);
   });
 
   test('사이드바 행은 일정 상세와 같은 배지 DOM 이고 「기관연계」 글자는 한 곳만', () => {
     const detail = renderDetailBadge();
     const { container } = render(<MatchingScheduleCompactRow mapping={INSTITUTION_MAPPING} />);
+    expect(detail).toContain(`title="${INSTITUTION_LABEL}"`);
     expect(badgeHtml(container)).toBe(detail);
+    expect(container.querySelector('[data-testid="engagement-type-badge"]'))
+      .toHaveAttribute('title', INSTITUTION_LABEL);
     expect(countInstitutionBadges(container)).toBe(1);
 
     const secondary = container.querySelector('.integrated-schedule__compact-row-secondary');

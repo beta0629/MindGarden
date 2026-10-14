@@ -72,7 +72,7 @@ function EngagementTypeBadge({
       data-testid={ENGAGEMENT_TYPE_BADGE_TEST_ID}
       data-engagement-type={resolved}
       aria-label={label}
-      title={title || undefined}
+      title={title || label}
     />
   );
 }

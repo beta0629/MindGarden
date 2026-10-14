@@ -141,6 +141,29 @@ public class SmsAuthService {
     }
 
     /**
+     * 본문에 비밀이 있는 알림. 테스트 모드 로그에 본문·비밀번호를 남기지 않는다.
+     *
+     * @param phoneNumber 수신 번호
+     * @param message     발송 본문
+     * @return 발송 성공. 테스트 모드에서는 발송 없이 true
+     */
+    public boolean sendConfidentialNotificationMessage(String phoneNumber, String message) {
+        LAST_ERROR_DETAIL.remove();
+        if (!isEffectiveSmsEnabled()) {
+            log.warn("⚠️ SMS가 비활성화되어 있습니다.");
+            LAST_ERROR_DETAIL.set("sms disabled (global or tenant)");
+            return false;
+        }
+        if (smsProperties.isTestMode()) {
+            log.info("SMS 테스트 모드 비밀 알림: phone={}, bodyLength={}",
+                    com.coresolution.consultation.util.PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
+            return true;
+        }
+        return sendViaConfiguredProvider(phoneNumber, message);
+    }
+
+    /**
      * 직전 {@link #sendNotificationMessage(String, String)} 호출에서 발생한 오류 상세를 한 번만 조회.
      *
      * <p>caller(예: 어드민 테스트 발송 도구)가 감사로그·응답 errorMessage에 풍부한 진단 정보를

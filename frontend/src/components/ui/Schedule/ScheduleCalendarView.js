@@ -59,6 +59,7 @@ import {
   getKrSubstituteHolidayEveHintForLocalDate
 } from '../../../utils/krPublicHolidays';
 import { getTeacherColor } from '../../../utils/getTeacherColor';
+import { useConsultantColorPalette } from '../../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
@@ -186,6 +187,7 @@ const ScheduleCalendarView = ({
     scheduleStatusOptions = []
 }) => {
     const { t } = useTranslation();
+    const { colorClassFor } = useConsultantColorPalette();
     const calendarRef = useRef(null);
     const calendarWrapperRef = useRef(null);
     /** 날짜 클릭으로 일간 확대하기 직전 뷰(month/week). 툴바「전체 보기」복귀용 */
@@ -656,7 +658,7 @@ const ScheduleCalendarView = ({
             </span>
         ) : null;
 
-        // 월간 뷰: 컴팩트 렌더링. 통합 스케줄은 상태 점 + 끝 표식.
+        // 월간 뷰: 컴팩트 렌더링. 통합 스케줄은 상담사 색 점 + 끝 표식.
         if (isMonthView) {
             const unresolvedSuffix = chipCopy.unresolvedText ? ` · ${chipCopy.unresolvedText}` : '';
             const fullTooltip = `${clientName}${sessionTitleSuffix} · ${consultantName} · ${statusLabel}${unresolvedSuffix}`;
@@ -664,9 +666,14 @@ const ScheduleCalendarView = ({
             const unresolvedMod = scheduleNotesUnresolvedCount > 0
                 ? ' mg-v2-ad-calendar-event--client-notes-unresolved'
                 : (clientWideNotesUnresolvedCount > 0 ? ' mg-v2-ad-calendar-event--client-notes-client-wide' : '');
-            const dotClass = statusModifier
-                ? `mg-v2-ad-calendar-event__dot mg-v2-ad-calendar-event__dot--${statusModifier}`
-                : 'mg-v2-ad-calendar-event__dot';
+            const consultantColorClass = integratedMonthEventLayout
+                ? colorClassFor(consultantId, consultants)
+                : '';
+            const dotClass = [
+                'mg-v2-ad-calendar-event__dot',
+                statusModifier ? `mg-v2-ad-calendar-event__dot--${statusModifier}` : '',
+                consultantColorClass
+            ].filter(Boolean).join(' ');
             const monthLabel = integratedMonthEventLayout ? chipCopy.ariaLabel : fullTooltip;
             return (
                 <div

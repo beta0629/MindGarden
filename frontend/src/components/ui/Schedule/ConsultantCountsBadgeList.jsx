@@ -19,6 +19,8 @@ import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import RemainingSessionsBadge from '../../common/RemainingSessionsBadge';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { CONSULTANT_COUNT_BASIS_SHOWN } from '../../schedule/utils/countVisibleConsultantScheduleEvents';
+import './consultantColorSwatch.css';
 
 /**
  * P1 (2026-06-06) — 카운트 축약 정책 폐지.
@@ -82,6 +84,12 @@ const resolveTitleLabel = (t, mode, consultantCountsMonth, hasCounts) => {
             defaultValue: '상담사 · 누적 완료'
         });
     }
+    if (mode === CONSULTANT_COUNT_BASIS_SHOWN && Number.isFinite(consultantCountsMonth)) {
+        return t('admin:integratedSchedule.legend.consultantMonthlyShown', {
+            month: consultantCountsMonth,
+            defaultValue: `상담사 · ${consultantCountsMonth}월`
+        });
+    }
     if (mode === 'monthly' && Number.isFinite(consultantCountsMonth)) {
         return t('admin:integratedSchedule.legend.consultantMonthlyCompleted', {
             month: consultantCountsMonth,
@@ -96,16 +104,18 @@ const resolveTitleLabel = (t, mode, consultantCountsMonth, hasCounts) => {
  *
  * @param {object} props
  * @param {Array<{id: number|string, name: string, isActive?: boolean}>} props.consultants  활성 상담사
- * @param {(consultantId: number|string) => string} props.getConsultantColor               칩 색 resolver
+ * @param {(consultantId: number|string) => string} props.getConsultantColor               칩 색 resolver (클래스 미전달 시)
+ * @param {(consultantId: number|string) => string} [props.consultantColorClassFor]        API 팔레트 클래스. 있으면 인라인 색 없음
  * @param {Map|Object|null|undefined} props.consultantCounts                                카운트 매핑
  * @param {number|null} [props.consultantCountsMonth=null]                                  monthly 라벨용 월
- * @param {'monthly'|'cumulative'} [props.mode='monthly']                                   라벨 분기
+ * @param {'monthly'|'cumulative'|'shown'} [props.mode='monthly']                           라벨 분기
  * @param {string} [props.titleClassName]                                                   라벨 클래스 override
  * @param {string} [props.itemsClassName]                                                   리스트 컨테이너 클래스 override
  */
 const ConsultantCountsBadgeList = ({
     consultants,
     getConsultantColor,
+    consultantColorClassFor = null,
     consultantCounts,
     consultantCountsMonth = null,
     mode = 'monthly',
@@ -145,10 +155,14 @@ const ConsultantCountsBadgeList = ({
                     const badgeClassName = `mg-v2-legend-count-badge${isZeroCount ? ' mg-v2-count-badge--zero' : ''}`;
                     const ariaKey = mode === 'cumulative'
                         ? 'admin:integratedSchedule.legend.consultantCumulativeCompletedAria'
-                        : 'admin:integratedSchedule.legend.consultantCompletedAria';
+                        : (mode === CONSULTANT_COUNT_BASIS_SHOWN
+                            ? 'admin:integratedSchedule.legend.consultantShownAria'
+                            : 'admin:integratedSchedule.legend.consultantCompletedAria');
                     const ariaDefault = mode === 'cumulative'
                         ? `${consultantName}, 누적 완료 ${numericCount}회`
-                        : `${consultantName}, 이번 달 완료 ${numericCount}회`;
+                        : (mode === CONSULTANT_COUNT_BASIS_SHOWN
+                            ? `${consultantName}, 이번 달 일정 ${numericCount}건`
+                            : `${consultantName}, 이번 달 완료 ${numericCount}회`);
                     const badgeAriaLabel = hasCount
                         ? t(ariaKey, {
                             name: consultantName,
@@ -158,14 +172,21 @@ const ConsultantCountsBadgeList = ({
                         : undefined;
                     /* P1: 99+ 폐지에 따라 별도 title 노출 불필요 — aria-label 이 정확한 카운트 포함. */
                     const badgeTitle = undefined;
+                    const colorClass = typeof consultantColorClassFor === 'function'
+                        ? consultantColorClassFor(consultant.id)
+                        : '';
                     return (
                         <div
                             key={`consultant-${consultant.id}-${index}`}
                             className="mg-v2-legend-item"
                         >
                             <span
-                                className="mg-v2-legend-color"
-                                style={{ '--legend-color': getConsultantColor(consultant.id) }}
+                                className={colorClass
+                                    ? `mg-v2-legend-color ${colorClass}`
+                                    : 'mg-v2-legend-color'}
+                                style={colorClass
+                                    ? undefined
+                                    : { '--legend-color': getConsultantColor(consultant.id) }}
                             />
                             <span className="mg-v2-legend-text">{consultantName}</span>
                             {hasCount && (
@@ -187,12 +208,13 @@ const ConsultantCountsBadgeList = ({
 ConsultantCountsBadgeList.propTypes = {
     consultants: PropTypes.array,
     getConsultantColor: PropTypes.func.isRequired,
+    consultantColorClassFor: PropTypes.func,
     consultantCounts: PropTypes.oneOfType([
         PropTypes.instanceOf(Map),
         PropTypes.object
     ]),
     consultantCountsMonth: PropTypes.number,
-    mode: PropTypes.oneOf(['monthly', 'cumulative']),
+    mode: PropTypes.oneOf(['monthly', 'cumulative', CONSULTANT_COUNT_BASIS_SHOWN]),
     titleClassName: PropTypes.string,
     itemsClassName: PropTypes.string
 };

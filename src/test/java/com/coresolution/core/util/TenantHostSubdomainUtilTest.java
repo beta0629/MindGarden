@@ -147,6 +147,40 @@ class TenantHostSubdomainUtilTest {
                 "clinic-a.core-solution.co.kr")).isEqualTo("clinic-a");
     }
 
+    @Test
+    @DisplayName("isNonProductionHost: -dev 접미·dev/staging parent 는 비운영")
+    void isNonProductionHost_detectsDevAliasAndNonProdParents() {
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "mindgarden-dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "https://mindgarden-dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "mindgarden.dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "https://mindgarden.dev.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "clinic.staging.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isNonProductionHost(
+                "dev.core-solution.co.kr")).isTrue();
+    }
+
+    @Test
+    @DisplayName("isProductionTenantHost: 운영 테넌트만 true")
+    void isProductionTenantHost_allowsOnlyProdTenantHosts() {
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "https://mindgarden.core-solution.co.kr")).isTrue();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden-dev.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "mindgarden.dev.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "app.core-solution.co.kr")).isFalse();
+        assertThat(TenantHostSubdomainUtil.isProductionTenantHost(
+                "core-solution.co.kr")).isFalse();
+    }
+
     private static MockHttpServletRequest regexOnlyRequest() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setServerName(NGINX_REGEX_SERVER_NAME);

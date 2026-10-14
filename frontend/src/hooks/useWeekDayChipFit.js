@@ -15,6 +15,7 @@ import {
   WEEK_DAY_CHIP_TIME_MODE,
   judgeWeekDayChipFit,
   measureTextWidth,
+  parseCssLengthToPx,
   resolveComputedFont,
   readChipPadTokens,
   readRowHeight
@@ -30,6 +31,7 @@ const INITIAL_FIT = Object.freeze({
   timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
   showBadge: false,
   showTime: true,
+  showTeacherDot: false,
   compactPad: false,
   heightStage: WEEK_DAY_CHIP_HEIGHT_STAGE.FULL,
   showStatus: true,
@@ -96,13 +98,15 @@ function resolveNameFont(chipEl, kind) {
  *   gap?: number,
  *   clientName?: string,
  *   counselorName?: string,
- *   nameGap?: number
+ *   nameGap?: number,
+ *   considerTeacherDot?: boolean
  * }} options
  * @returns {{
  *   stage: string,
  *   timeMode: 'long'|'short',
  *   showBadge: boolean,
  *   showTime: boolean,
+ *   showTeacherDot: boolean,
  *   compactPad: boolean,
  *   heightStage: string,
  *   showStatus: boolean,
@@ -123,7 +127,8 @@ export default function useWeekDayChipFit(options) {
     gap = DEFAULT_GAP_PX,
     clientName = '',
     counselorName = '',
-    nameGap = DEFAULT_NAME_GAP_PX
+    nameGap = DEFAULT_NAME_GAP_PX,
+    considerTeacherDot = false
   } = options || {};
 
   const [fit, setFit] = useState(INITIAL_FIT);
@@ -178,6 +183,30 @@ export default function useWeekDayChipFit(options) {
       const badgeWidth = considerBadge && badgeLabel
         ? measureTextWidth(badgeLabel, badgeFont) + DEFAULT_BADGE_PAD_X
         : 0;
+      let teacherDotWidth = 0;
+      if (considerTeacherDot) {
+        const existingDot = el.querySelector('.mg-v2-teacher-dot');
+        if (existingDot) {
+          const rectW = existingDot.getBoundingClientRect?.().width;
+          if (Number.isFinite(rectW) && rectW > 0) {
+            teacherDotWidth = rectW;
+          } else {
+            const dotCs = window.getComputedStyle(existingDot);
+            teacherDotWidth = parseCssLengthToPx(dotCs.width, existingDot)
+              || parseCssLengthToPx(dotCs.inlineSize, existingDot);
+          }
+        }
+        if (!(teacherDotWidth > 0) && cs) {
+          teacherDotWidth = parseCssLengthToPx(
+            cs.getPropertyValue('--mg-v2-teacher-dot-size'),
+            el
+          );
+        }
+        // 토큰 시트 미로드(jsdom) 시 design-v2 --mg-v2-teacher-dot-size 와 동일 폭
+        if (!(teacherDotWidth > 0)) {
+          teacherDotWidth = parseCssLengthToPx('8px', el) || 8;
+        }
+      }
 
       const clientText = clientName != null ? String(clientName) : '';
       const counselorText = counselorName != null ? String(counselorName) : '';
@@ -199,6 +228,7 @@ export default function useWeekDayChipFit(options) {
         shortTimeWidth,
         minTimeGlyphWidth,
         badgeWidth,
+        teacherDotWidth,
         gap,
         considerBadge: Boolean(considerBadge && badgeLabel),
         chipHeight,
@@ -236,7 +266,8 @@ export default function useWeekDayChipFit(options) {
     gap,
     clientName,
     counselorName,
-    nameGap
+    nameGap,
+    considerTeacherDot
   ]);
 
   return fit;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import notificationManager from '../../utils/notification';
 import { formatDateKeyInZone } from '../../utils/zonedDateTime';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import { useConfirm } from '../../hooks/useConfirm';
 import { useNavigate } from 'react-router-dom';
 import { RoleUtils, USER_ROLES } from '../../constants/roles';
@@ -338,8 +339,13 @@ const AdminDashboard = ({ user: propUser }) => {
 
             if (consultantsRes.ok) {
                 const consultantsData = await consultantsRes.json();
-                // ApiResponse 구조: { success: true, data: { count: ..., consultants: [...] } }
-                totalConsultants = consultantsData?.data?.count || consultantsData?.count || 0;
+                // with-vacation count는 비활성 포함 — KPI는 활성만
+                const raw = Array.isArray(consultantsData?.data)
+                    ? consultantsData.data
+                    : (consultantsData?.data?.consultants
+                        || consultantsData?.consultants
+                        || []);
+                totalConsultants = selectActiveConsultants(raw).length;
             }
 
             if (clientsRes.ok) {

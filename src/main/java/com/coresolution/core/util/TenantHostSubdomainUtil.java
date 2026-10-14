@@ -28,6 +28,18 @@ public final class TenantHostSubdomainUtil {
             ".core-solution.co.kr"
     };
 
+    /**
+     * 운영(apex) 테넌트 parent. {@link #TENANT_PARENT_DOMAIN_SUFFIXES} 마지막 항목과 동일.
+     * 이보다 긴 {@code .dev.} / {@code .staging.} parent 는 비운영이다.
+     */
+    private static final String PRODUCTION_TENANT_PARENT_SUFFIX = ".core-solution.co.kr";
+
+    /**
+     * 운영 parent 아래 개발 별칭 라벨 접미 (예: {@code {tenant}-dev.core-solution.co.kr}).
+     * 특정 테넌트 문자열 하드코딩 금지 — 접미 규칙만 사용.
+     */
+    private static final String NON_PRODUCTION_TENANT_LABEL_SUFFIX = "-dev";
+
     /** nginx regex server_name 에만 있는 문자. 호스트 이름에는 없다. */
     private static final String NGINX_REGEX_SERVER_NAME_MARKERS = "^\\$[]()+*?|{}";
 
@@ -241,5 +253,108 @@ public final class TenantHostSubdomainUtil {
             }
         }
         return false;
+    }
+
+    /**
+     * Origin 또는 Host 문자열에서 포트 없는 hostname 을 추출한다.
+     *
+     * @param originOrHost {@code https://tenant.example.com} 또는 Host 헤더 값
+     * @return 소문자 hostname 또는 null
+     */
+    public static String extractHostname(String originOrHost) {
+        if (originOrHost == null || originOrHost.isBlank()) {
+            return null;
+        }
+        String raw = originOrHost.trim();
+        String hostPart = raw;
+        int schemeIdx = raw.indexOf("://");
+        if (schemeIdx >= 0) {
+            hostPart = raw.substring(schemeIdx + 3);
+        }
+        int slash = hostPart.indexOf('/');
+        if (slash >= 0) {
+            hostPart = hostPart.substring(0, slash);
+        }
+        return normalizeHostWithoutPort(hostPart);
+    }
+
+    /**
+     * 비운영(개발·스테이징) 호스트 여부.
+     *
+     * <ul>
+     *   <li>비운영 parent({@code .dev.core-solution.co.kr}, {@code .staging.core-solution.co.kr})
+     *       및 그 apex({@code dev.core-solution.co.kr} 등)</li>
+     *   <li>운영 parent({@code .core-solution.co.kr}) 아래 라벨이 {@code -dev} 접미
+     *       (예: {@code {tenant}-dev.core-solution.co.kr})</li>
+     * </ul>
+     *
+     * <p>e-trinity 등 다른 도메인은 false — CORS exact/pattern 은 SecurityConfig 쪽 규칙을 따른다.</p>
+     *
+     * @param hostOrOrigin Host 또는 Origin
+     * @return 비운영이면 true
+     */
+    public static boolean isNonProductionHost(String hostOrOrigin) {
+        String host = extractHostname(hostOrOrigin);
+        if (host == null) {
+            return false;
+        }
+        for (String suffix : TENANT_PARENT_DOMAIN_SUFFIXES) {
+            if (PRODUCTION_TENANT_PARENT_SUFFIX.equals(suffix)) {
+                continue;
+            }
+            if (host.endsWith(suffix)) {
+                return true;
+            }
+            // apex: "dev.core-solution.co.kr" (leading dot 제거)
+            String apex = suffix.startsWith(".") ? suffix.substring(1) : suffix;
+            if (host.equals(apex)) {
+                return true;
+            }
+        }
+        if (host.endsWith(PRODUCTION_TENANT_PARENT_SUFFIX)) {
+            String label = host.substring(0, host.length() - PRODUCTION_TENANT_PARENT_SUFFIX.length());
+            if (!label.isEmpty()
+                    && !label.contains(".")
+                    && label.endsWith(NON_PRODUCTION_TENANT_LABEL_SUFFIX)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 운영 테넌트 호스트({@code {tenant}.core-solution.co.kr}) 여부.
+     * 비운영 parent·{@code -dev} 접미 라벨·예약 라벨·apex 는 false.
+     *
+     * @param hostOrOrigin Host 또는 Origin
+     * @return 운영 테넌트 호스트이면 true
+     */
+    public static boolean isProductionTenantHost(String hostOrOrigin) {
+        String host = extractHostname(hostOrOrigin);
+        if (host == null || isNonProductionHost(host)) {
+            return false;
+        }
+        if (!host.endsWith(PRODUCTION_TENANT_PARENT_SUFFIX)) {
+            return false;
+        }
+        String label = host.substring(0, host.length() - PRODUCTION_TENANT_PARENT_SUFFIX.length());
+        if (label.isEmpty() || label.contains(".")) {
+            return false;
+        }
+        if (NON_TENANT_SUBDOMAIN_LABELS.contains(label)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 운영 CORS 에서 허용할 Origin 인지 판정한다.
+     * 비운영 core-solution 호스트 Origin 은 거부한다.
+     *
+     * @param origin CORS Origin 헤더 값
+     * @return 비운영 Origin 이면 true (거부 대상)
+     */
+    public static boolean isNonProductionOrigin(String origin) {
+        return isNonProductionHost(origin);
     }
 }

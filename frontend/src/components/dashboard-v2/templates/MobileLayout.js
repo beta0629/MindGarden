@@ -7,6 +7,7 @@
  */
 
 import React, { useState } from 'react';
+import { SearchInput } from '../atoms';
 import { MobileGnb, MobileLnbDrawer } from '../organisms';
 import './MobileLayout.css';
 
@@ -18,6 +19,8 @@ const MobileLayout = ({
   logoUrl,
   logoHomePath,
   logoBrandingLoading = false,
+  searchValue = '',
+  onSearchChange,
   onBellClick,
   onProfileClick,
   onLogout,
@@ -54,6 +57,9 @@ const MobileLayout = ({
         onLogout={onLogout ? handleLogout : undefined}
       />
       <main className="mg-v2-mobile-layout__main" role="main">
+        <div className="mg-v2-mobile-layout__search">
+          <SearchInput value={searchValue} onChange={onSearchChange} />
+        </div>
         {children}
       </main>
       {showBottomTabBar && bottomTabContent && (

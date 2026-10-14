@@ -6,6 +6,7 @@ import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
@@ -336,7 +337,10 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             
             if (response && response.success) {
                 const consultantsList = response.data?.consultants || response.data || [];
-                setConsultants(Array.isArray(consultantsList) ? consultantsList : []);
+                // 매핑 선택용: 활성만
+                setConsultants(
+                    selectActiveConsultants(Array.isArray(consultantsList) ? consultantsList : [])
+                );
             } else {
                 console.warn('상담사 목록 응답 실패:', response);
                 setConsultants([]);

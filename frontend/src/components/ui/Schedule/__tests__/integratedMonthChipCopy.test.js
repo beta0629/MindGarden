@@ -56,6 +56,7 @@ describe('buildIntegratedMonthChipCopy', () => {
       translate,
       timeText: '오후 12시',
       clientName: '이서준',
+      consultantName: '김상담',
       sessionAriaLabel: '이 일정 6회기',
       statusLabel: '예약됨',
       isSameDayPending: false,
@@ -64,7 +65,7 @@ describe('buildIntegratedMonthChipCopy', () => {
       scheduleUnresolvedCount: 0,
       clientWideUnresolvedCount: 0
     });
-    expect(copy.ariaLabel).toBe('오후 12시 · 이서준 이 일정 6회기 · 예약됨 · 기관연계 · 문자 발송됨');
+    expect(copy.ariaLabel).toBe('오후 12시 · 이서준 이 일정 6회기 · 김상담 · 예약됨 · 기관연계 · 문자 발송됨');
   });
 
   test('당일 가예약과 문자 실패를 전체 라벨로 남긴다', () => {
@@ -72,12 +73,13 @@ describe('buildIntegratedMonthChipCopy', () => {
       translate,
       timeText: '오전 10:30',
       clientName: '정민호',
+      consultantName: '이상담',
       statusLabel: '가예약',
       isSameDayPending: true,
       institutionLabel: '기관연계',
       reminderSmsStatus: 'FAILED'
     });
-    expect(copy.ariaLabel).toBe('당일 결제 대기 · 오전 10:30 · 정민호 · 가예약 · 기관연계 · 문자 발송 실패');
+    expect(copy.ariaLabel).toBe('당일 결제 대기 · 오전 10:30 · 정민호 · 이상담 · 가예약 · 기관연계 · 문자 발송 실패');
     expect(copy.sameDayPrefix).toBe('당일');
   });
 

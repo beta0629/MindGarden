@@ -1,5 +1,5 @@
 /**
- * MobileGnb - GNB 56px: 햄버거 | 로고 | 알림/프로필
+ * MobileGnb - GNB 56px: 햄버거 | 로고 | CurrentTimeChip(가운데) | 알림/프로필
  * RESPONSIVE_LAYOUT_SPEC: 모바일 헤더 56px
  *
  * @author CoreSolution
@@ -9,7 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
-import { NavIcon } from '../atoms';
+import { CurrentTimeChip, NavIcon } from '../atoms';
 import { NotificationDropdown, ProfileDropdown } from '../molecules';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './MobileGnb.css';
@@ -40,38 +40,43 @@ const MobileGnb = ({
 
   return (
     <header className="mg-v2-mobile-gnb" role="banner">
-      <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
-      <NavLink to={resolvedLogoHome} className="mg-v2-mobile-gnb__logo">
-        {showLogoImage ? (
-          <>
-            <img
-              src={logoUrl}
-              alt={trimmedLogoLabel || logoLabel}
-              className="mg-v2-mobile-gnb__logo-img"
-              onError={(e) => {
-                e.currentTarget.onerror = null;
-                setLogoLoadFailed(true);
-              }}
-            />
-            {showBrandNameBesideGraphic ? (
-              <span className="mg-v2-mobile-gnb__brand-name">{trimmedLogoLabel}</span>
-            ) : null}
-          </>
-        ) : logoBrandingLoading ? (
-          <>
-            <span
-              className="mg-v2-mobile-gnb__logo-placeholder"
-              aria-busy="true"
-              aria-label="로고 로딩 중"
-            />
-            {showBrandNameBesideGraphic ? (
-              <span className="mg-v2-mobile-gnb__brand-name">{trimmedLogoLabel}</span>
-            ) : null}
-          </>
-        ) : showTextFallback && hasBrandName ? (
-          <span className="mg-v2-mobile-gnb__logo-text">{trimmedLogoLabel}</span>
-        ) : null}
-      </NavLink>
+      <div className="mg-v2-mobile-gnb__left">
+        <NavIcon icon="MENU" label="메뉴" onClick={onMenuClick} className="mg-v2-mobile-gnb__menu" />
+        <NavLink to={resolvedLogoHome} className="mg-v2-mobile-gnb__logo">
+          {showLogoImage ? (
+            <>
+              <img
+                src={logoUrl}
+                alt={trimmedLogoLabel || logoLabel}
+                className="mg-v2-mobile-gnb__logo-img"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  setLogoLoadFailed(true);
+                }}
+              />
+              {showBrandNameBesideGraphic ? (
+                <span className="mg-v2-mobile-gnb__brand-name">{trimmedLogoLabel}</span>
+              ) : null}
+            </>
+          ) : logoBrandingLoading ? (
+            <>
+              <span
+                className="mg-v2-mobile-gnb__logo-placeholder"
+                aria-busy="true"
+                aria-label="로고 로딩 중"
+              />
+              {showBrandNameBesideGraphic ? (
+                <span className="mg-v2-mobile-gnb__brand-name">{trimmedLogoLabel}</span>
+              ) : null}
+            </>
+          ) : showTextFallback && hasBrandName ? (
+            <span className="mg-v2-mobile-gnb__logo-text">{trimmedLogoLabel}</span>
+          ) : null}
+        </NavLink>
+      </div>
+      <div className="mg-v2-mobile-gnb__center">
+        <CurrentTimeChip />
+      </div>
       <div className="mg-v2-mobile-gnb__actions">
         <NotificationDropdown />
         <ProfileDropdown onLogout={onLogout} />

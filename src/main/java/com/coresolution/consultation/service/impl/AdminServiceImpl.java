@@ -35,6 +35,7 @@ import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.ClientVisibilityPolicy;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.admin.AdminMappingCreateDuplicateWindowConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.constant.userprofile.UserProfileServiceUserFacingMessages;
 import com.coresolution.consultation.dto.AdminListPageResult;
@@ -46,6 +47,7 @@ import com.coresolution.consultation.dto.ConsultantRegistrationRequest;
 import com.coresolution.consultation.dto.ConsultationsByDayOfWeekResponse;
 import com.coresolution.consultation.dto.NewClientMonthlyItemResponse;
 import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
+import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.WeeklyReservationDayItemResponse;
 import com.coresolution.consultation.dto.WeeklyReservationStatusItemResponse;
@@ -908,6 +910,30 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     public ConsultantClientMapping createMapping(ConsultantClientMappingCreateRequest dto) {
+        return createMappingInternal(dto, false);
+    }
+
+    @Override
+    public ConsultantClientMapping createMappingFromAdmin(ConsultantClientMappingCreateRequest dto) {
+        // 동시 관리자 요청을 내담자 단위로 직렬화: 트랜잭션의 첫 조회로 내담자 users 행을 FOR UPDATE 잠금.
+        String tenantId = getTenantId();
+        userRepository.lockClientRowForMappingCreate(tenantId, dto.getClientId());
+        return createMappingInternal(dto, true);
+    }
+
+    /**
+     * 매칭 생성 공통 처리.
+     *
+     * @param dto                  매칭 생성 요청
+     * @param applyDuplicateWindowGuard 짧은 시간창 중복 생성 가드 적용 여부.
+     *                             {@code true}이면 호출 전에 {@link #createMappingFromAdmin}에서
+     *                             내담자 행 잠금이 선행되어야 레이스 없이 직렬화된다.
+     * @return 생성된 매칭
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    private ConsultantClientMapping createMappingInternal(ConsultantClientMappingCreateRequest dto,
+            boolean applyDuplicateWindowGuard) {
         // 표준화 2025-12-05: tenantId 필터링 필수 (BaseTenantAwareService 상속으로 자동 처리)
         String tenantId = getTenantId();
         User consultant = userRepository.findByTenantIdAndId(tenantId, dto.getConsultantId())
@@ -1008,7 +1034,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 신규 매칭: 입금 확인 전까지 사용 가능 회기는 0 (입금 확인 시 confirmDeposit에서 채움)
         mapping.setRemainingSessions(0);
         mapping.setUsedSessions(0);
-        mapping.setPackageName(dto.getPackageName() != null ? dto.getPackageName()
+        // 요청 정규화: packageName trim. 비어 있으면 기존 DEFAULT_PACKAGE_NAME 처리 유지.
+        String normalizedPackageName = dto.getPackageName() != null ? dto.getPackageName().trim() : null;
+        if (normalizedPackageName != null && normalizedPackageName.isEmpty()) {
+            normalizedPackageName = null;
+        }
+        mapping.setPackageName(normalizedPackageName != null ? normalizedPackageName
                 : AdminServiceUserFacingMessages.DEFAULT_PACKAGE_NAME);
         mapping.setPackagePrice(dto.getPackagePrice() != null ? dto.getPackagePrice() : 0L);
         String tenantIdForPayment = getTenantId();
@@ -1033,6 +1064,23 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 내담자 등록 유형이 SSOT. 타기관이면 기관연계만, 일반이면 회기·가예약만.
         mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
                 tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
+
+        // 짧은 시간창 중복 생성 가드: 관리자 수동 배정 경로(createMappingFromAdmin)에만 적용한다.
+        // 결제 확정(PaymentServiceImpl) 등 기존 호출자는 이 가드로 부분 성공(결제는 성공, 매칭만 거부)이
+        // 발생하지 않도록 미적용 상태를 유지한다. 같은 tenant + 상담사 + 내담자 + 동일 packageName
+        // (trim 정규화) 매칭이 시간창(기본 30초) 안에 이미 있으면 신규 생성을 거부한다.
+        // 서로 다른 packageName 은 허용.
+        if (applyDuplicateWindowGuard) {
+            LocalDateTime duplicateWindowStart = LocalDateTime.now()
+                    .minusSeconds(AdminMappingCreateDuplicateWindowConstants.MAPPING_CREATE_DUPLICATE_WINDOW_SECONDS);
+            boolean duplicateWithinWindow = mappingRepository
+                    .existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
+                            tenantId, consultant.getId(), clientUser.getId(), mapping.getPackageName(),
+                            duplicateWindowStart);
+            if (duplicateWithinWindow) {
+                throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_DUPLICATE_WINDOW);
+            }
+        }
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
 
@@ -5479,12 +5527,21 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         return rows;
     }
     
-     /**
-     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링용)
+    /**
+     * 휴무 정보를 포함한 상담사 목록 조회 (관리자 스케줄링·선생님 색 팔레트용).
+     *
+     * <p>색 순번({@code getTeacherColor}) SSOT를 위해 <strong>비활성 상담사를 포함한다</strong>.
+     * 제외 기준은 {@code isDeleted = false} 만이다(삭제·소프트삭제 제외).
+     * Consultant/User에 퇴사 전용 상태 필드가 없으므로 퇴사는 {@code isDeleted}로만 배제한다.
+     * {@code isActive} 필드는 응답 Map에 유지되어 필터·칩·범례가 동일 배열로 색을 매기면서
+     * UI에서 활성만 표시할 수 있다.</p>
+     *
+     * @param date 휴무 조회 기준일 (yyyy-MM-dd)
+     * @return 상담사 Map 목록 (비활성 포함, isActive 유지)
      */
     @Override
     public List<Map<String, Object>> getAllConsultantsWithVacationInfo(String date) {
-        log.info("휴무 정보를 포함한 상담사 목록 조회: date={}", date);
+        log.info("휴무 정보를 포함한 상담사 목록 조회(비활성 포함·삭제 제외): date={}", date);
         
         // 표준화 2025-12-05: tenantId 필터링 필수
         String tenantId = getTenantIdOrNull();
@@ -5493,7 +5550,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             throw new IllegalStateException(AdminServiceUserFacingMessages.MSG_TENANT_ID_REQUIRED_IN_CONTEXT);
         }
         log.info("✅ tenantId 확인: {}", tenantId);
-        List<Consultant> consultants = consultantRepository.findActiveConsultantsByTenantId(tenantId);
+        // 색 팔레트: 비활성 포함 / 삭제(isDeleted=true)만 제외. findActive* 사용 금지(#1613).
+        List<Consultant> consultants = consultantRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         
         Map<String, Object> allVacations = consultantAvailabilityService.getAllConsultantsVacations(date);
 
@@ -8147,6 +8205,73 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping.getConsultant().getName(), mapping.getClient().getName());
     }
 
+    /**
+     * 매칭 상태-only 종료 — {@link ConsultantClientMapping#terminate(String, String)} 재사용.
+     * 환불·remaining/used·paymentStatus·ERP 변경 금지. 이미 종료면 멱등 성공.
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public MappingStatusCloseResponse closeMappingStatusOnly(Long id, String reason, String terminatedBy) {
+        if (!StringUtils.hasText(reason)) {
+            throw new IllegalArgumentException(AdminServiceUserFacingMessages.MSG_STATUS_CLOSE_REASON_REQUIRED);
+        }
+        String trimmedReason = reason.trim();
+        String actor = StringUtils.hasText(terminatedBy) ? terminatedBy.trim() : "ADMIN";
+
+        log.info("🔧 매칭 상태-only 종료 시작: ID={}, 사유={}, by={}", id, trimmedReason, actor);
+        String tenantId = getTenantId();
+
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndIdForUpdate(tenantId, id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        Hibernate.initialize(mapping.getConsultant());
+        Hibernate.initialize(mapping.getClient());
+
+        String terminatedStatus = getMappingStatusCode(MappingStatusConstants.TERMINATED);
+        String cancelledStatus = getMappingStatusCode(MappingStatusConstants.CANCELLED);
+        if (isClosedMappingStatus(mapping.getStatus(), terminatedStatus, cancelledStatus)) {
+            log.info("ℹ️ 매칭 상태-only 종료 멱등: ID={}, status={}", id, mapping.getStatus());
+            return MappingStatusCloseResponse.builder()
+                    .mappingId(id)
+                    .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                    .alreadyClosed(true)
+                    .cancelledScheduleCount(0)
+                    .remainingSessions(mapping.getRemainingSessions())
+                    .usedSessions(mapping.getUsedSessions())
+                    .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                    .build();
+        }
+
+        mapping.terminate(trimmedReason, actor);
+
+        String nowLabel = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        String statusCloseNote = String.format(
+                AdminServiceUserFacingMessages.NOTES_STATUS_CLOSE_LINE_FMT,
+                nowLabel,
+                trimmedReason,
+                actor);
+        String currentNotes = mapping.getNotes() != null ? mapping.getNotes() : "";
+        mapping.setNotes(currentNotes.isEmpty() ? statusCloseNote : currentNotes + "\n" + statusCloseNote);
+
+        mappingRepository.save(mapping);
+
+        int cancelledScheduleCount = cancelFutureSchedulesForExhaustedMappingFailClosed(
+                mapping, tenantId, AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE);
+
+        log.info("✅ 매칭 상태-only 종료 완료: ID={}, status={}, remaining={}, used={}, paymentStatus={}, 취소일정={}건",
+                id, mapping.getStatus(), mapping.getRemainingSessions(), mapping.getUsedSessions(),
+                mapping.getPaymentStatus(), cancelledScheduleCount);
+
+        return MappingStatusCloseResponse.builder()
+                .mappingId(id)
+                .status(mapping.getStatus() != null ? mapping.getStatus().name() : null)
+                .alreadyClosed(false)
+                .cancelledScheduleCount(cancelledScheduleCount)
+                .remainingSessions(mapping.getRemainingSessions())
+                .usedSessions(mapping.getUsedSessions())
+                .paymentStatus(mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null)
+                .build();
+    }
+
     @Override
     @Transactional(readOnly = true)
     public boolean requiresShopOrderRefund(Long mappingId) {
@@ -8421,6 +8546,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         if (AdminServiceUserFacingMessages.PENDING_PAYMENT_CANCEL_REASON_CODE.equals(reason)) {
             return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_PENDING_PAYMENT_CANCEL;
+        }
+        if (AdminServiceUserFacingMessages.STATUS_CLOSE_AUTO_CANCEL_REASON_CODE.equals(reason)) {
+            return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_STATUS_CLOSE_AUTO_CANCEL;
         }
         return AdminServiceUserFacingMessages.SCHEDULE_NOTES_PREFIX_REFUND_AUTO_CANCEL;
     }

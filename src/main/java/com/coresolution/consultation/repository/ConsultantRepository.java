@@ -57,8 +57,15 @@ public interface ConsultantRepository extends BaseRepository<Consultant, Long> {
     @Query("SELECT c FROM Consultant c WHERE c.isAvailable = true AND c.isDeleted = false")
     List<Consultant> findByIsAvailableTrueAndIsDeletedFalse();
     
-    // === 삭제되지 않은 상담사 조회 (테넌트 필터링) ===
-    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false")  
+    /**
+     * 테넌트별 미삭제 상담사 (비활성 포함).
+     * <p>선생님 색 팔레트·with-vacation SSOT용. {@code isActive} 무관, {@code isDeleted=false}만.
+     * 퇴사 전용 필드 없음 → 삭제(소프트삭제)만 제외.</p>
+     *
+     * @param tenantId 테넌트 UUID
+     * @return 미삭제 상담사 목록 (활성·비활성 모두)
+     */
+    @Query("SELECT c FROM Consultant c WHERE c.tenantId = :tenantId AND c.isDeleted = false")
     List<Consultant> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);
 
     /**

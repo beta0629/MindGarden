@@ -223,7 +223,7 @@ export function enforceNonEmptyChipVisible(fit = {}) {
 }
 
 /**
- * title 줄 이름 예산 — merge 시 시간(+배지) 예약 후 남은 폭, 그 외 content 폭 전체.
+ * title 줄 이름 예산 — merge 시 점·시간(+배지) 예약 후 남은 폭, 그 외 content 폭 전체.
  *
  * @param {{
  *   chipWidth?: number,
@@ -231,6 +231,7 @@ export function enforceNonEmptyChipVisible(fit = {}) {
  *   longTimeWidth?: number,
  *   shortTimeWidth?: number,
  *   badgeWidth?: number,
+ *   teacherDotWidth?: number,
  *   gap?: number
  * }} input
  * @param {{
@@ -238,6 +239,7 @@ export function enforceNonEmptyChipVisible(fit = {}) {
  *   mergeTimeTitle?: boolean,
  *   showTime?: boolean,
  *   showBadge?: boolean,
+ *   showTeacherDot?: boolean,
  *   timeMode?: string
  * }} fit
  * @returns {number}
@@ -262,16 +264,22 @@ export function resolveTitleNameBudget(input = {}, fit = {}) {
   const badgeW = Number.isFinite(Number(input.badgeWidth)) && Number(input.badgeWidth) > 0
     ? Number(input.badgeWidth)
     : 0;
+  const dotW = Number.isFinite(Number(input.teacherDotWidth)) && Number(input.teacherDotWidth) > 0
+    ? Number(input.teacherDotWidth)
+    : 0;
   const timeW = fit.timeMode === WEEK_DAY_CHIP_TIME_MODE.LONG ? longW : shortW;
 
   let used = 0;
+  if (fit.showTeacherDot && dotW > 0) {
+    used += dotW;
+  }
   if (fit.showTime) {
-    used += timeW;
+    used += (used > 0 ? gap : 0) + timeW;
   }
   if (fit.showBadge && badgeW > 0) {
-    used += (fit.showTime ? gap : 0) + badgeW;
+    used += (used > 0 ? gap : 0) + badgeW;
   }
-  if (fit.showTime) {
+  if (fit.showTime || (fit.showTeacherDot && dotW > 0)) {
     used += gap;
   }
   return Math.max(0, contentW - used);
@@ -342,11 +350,49 @@ export function judgeTitleNameVisibility(input = {}) {
 }
 
 /**
+ * 첫 줄 폭 필요량 — 점 → 시간 → 배지 (gap 삽입). 점·시간은 축소/말줄임 금지.
+ *
+ * @param {{
+ *   timeW: number,
+ *   withBadge: boolean,
+ *   withDot: boolean,
+ *   safeDot: number,
+ *   safeBadge: number,
+ *   gap: number,
+ *   considerBadge: boolean
+ * }} parts
+ * @returns {number}
+ */
+function weekDayChipRowNeed(parts) {
+  const {
+    timeW,
+    withBadge,
+    withDot,
+    safeDot,
+    safeBadge,
+    gap,
+    considerBadge
+  } = parts;
+  let need = 0;
+  if (withDot && safeDot > 0) {
+    need += safeDot;
+  }
+  if (timeW > 0) {
+    need += (need > 0 ? gap : 0) + timeW;
+  }
+  if (withBadge && considerBadge && safeBadge > 0) {
+    need += (need > 0 ? gap : 0) + safeBadge;
+  }
+  return need;
+}
+
+/**
  * @param {{
  *   chipWidth: number,
  *   longTimeWidth: number,
  *   shortTimeWidth: number,
  *   badgeWidth?: number,
+ *   teacherDotWidth?: number,
  *   gap?: number,
  *   considerBadge?: boolean,
  *   compactChipWidth?: number,
@@ -367,6 +413,7 @@ export function judgeTitleNameVisibility(input = {}) {
  *   timeMode: 'long'|'short',
  *   showBadge: boolean,
  *   showTime: boolean,
+ *   showTeacherDot: boolean,
  *   compactPad: boolean,
  *   heightStage: string,
  *   showStatus: boolean,
@@ -381,10 +428,13 @@ export function judgeWeekDayChipFit(input = {}) {
   const longTimeWidth = Number(input.longTimeWidth);
   const shortTimeWidth = Number(input.shortTimeWidth);
   const badgeWidth = Number(input.badgeWidth);
+  const teacherDotWidth = Number(input.teacherDotWidth);
   const gap = Number.isFinite(Number(input.gap)) ? Math.max(0, Number(input.gap)) : 0;
   const considerBadge = input.considerBadge !== false
     && Number.isFinite(badgeWidth)
     && badgeWidth > 0;
+  const considerTeacherDot = Number.isFinite(teacherDotWidth) && teacherDotWidth > 0;
+  const safeDot = considerTeacherDot ? teacherDotWidth : 0;
 
   const safeChip = Number.isFinite(chipWidth) && chipWidth > 0 ? chipWidth : 0;
   const compactRaw = Number(input.compactChipWidth);
@@ -401,75 +451,117 @@ export function judgeWeekDayChipFit(input = {}) {
   const safeMinGlyph = Number.isFinite(minGlyphRaw) && minGlyphRaw > 0 ? minGlyphRaw : 0;
 
   const fits = (need, width = safeChip) => width + 0.5 >= need;
+  const rowNeed = (timeW, withBadge, withDot = considerTeacherDot) => weekDayChipRowNeed({
+    timeW,
+    withBadge,
+    withDot,
+    safeDot,
+    safeBadge,
+    gap,
+    considerBadge
+  });
 
   let widthFit;
-  if (considerBadge && fits(safeLong + gap + safeBadge)) {
+  if (considerBadge && fits(rowNeed(safeLong, true))) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: true,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
       compactPad: false,
       markerOnly: false
     };
-  } else if (fits(safeLong)) {
+  } else if (fits(rowNeed(safeLong, false))) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.LONG,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.LONG,
       showBadge: false,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
       compactPad: false,
       markerOnly: false
     };
-  } else if (considerBadge && fits(safeShort + gap + safeBadge)) {
+  } else if (considerBadge && fits(rowNeed(safeShort, true))) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT_BADGE,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
       compactPad: false,
       markerOnly: false
     };
-  } else if (fits(safeShort)) {
+  } else if (fits(rowNeed(safeShort, false))) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.SHORT,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
       compactPad: false,
       markerOnly: false
     };
-  } else if (considerBadge && fits(safeShort + gap + safeBadge, safeCompact)) {
+  } else if (considerBadge && fits(rowNeed(safeShort, true), safeCompact)) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: true,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
       compactPad: true,
       markerOnly: false
     };
-  } else if (fits(safeShort, safeCompact)) {
+  } else if (fits(rowNeed(safeShort, false), safeCompact)) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.COMPACT_PAD,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: true,
+      showTeacherDot: considerTeacherDot,
+      compactPad: true,
+      markerOnly: false
+    };
+  } else if (
+    // 숨김 순서: 배지→이름→시간→점. 시간 숨긴 뒤에도 점이 들어가면 점 유지.
+    considerTeacherDot
+    && fits(safeDot, safeCompact)
+  ) {
+    widthFit = {
+      stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
+      timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
+      showBadge: false,
+      showTime: false,
+      showTeacherDot: true,
       compactPad: true,
       markerOnly: false
     };
   } else if (
     // outer>0(실측) + content에 1글자 불가 → MARKER (content=0이어도 outer>0이면 표식)
     // outer 미제공/0(jsdom 미측정) → MARKER 금지, HIDE_TIME(+이름 강제)
+    // 점 예산 사용 시: 점도 못 넣으면 막대만
     safeOuter > 0
-    && safeMinGlyph > 0
-    && !fits(safeMinGlyph, safeCompact)
+    && (
+      (considerTeacherDot && safeDot > 0 && !fits(safeDot, safeCompact))
+      || (
+        !considerTeacherDot
+        && safeMinGlyph > 0
+        && !fits(safeMinGlyph, safeCompact)
+      )
+      || (
+        considerTeacherDot
+        && safeMinGlyph > 0
+        && !fits(safeMinGlyph, safeCompact)
+        && !fits(safeDot, safeCompact)
+      )
+    )
   ) {
-    // shortTime 1글자(min glyph)도 compact content 에 못 넣음 → 표식만
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.MARKER,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
       showBadge: false,
       showTime: false,
+      showTeacherDot: false,
       compactPad: true,
       markerOnly: true
     };
@@ -477,8 +569,10 @@ export function judgeWeekDayChipFit(input = {}) {
     widthFit = {
       stage: WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME,
       timeMode: WEEK_DAY_CHIP_TIME_MODE.SHORT,
-      showBadge: considerBadge && fits(safeBadge, safeCompact),
+      // 점 예산 모드: 배지는 이미 앞 단계에서 탈락. 레거시: 배지 단독 가능 시 유지.
+      showBadge: !considerTeacherDot && considerBadge && fits(safeBadge, safeCompact),
       showTime: false,
+      showTeacherDot: false,
       compactPad: true,
       markerOnly: false
     };
@@ -495,6 +589,7 @@ export function judgeWeekDayChipFit(input = {}) {
       showTime: false,
       showTitle: false,
       showBadge: false,
+      showTeacherDot: false,
       showStatus: false,
       showCounselorName: false,
       mergeTimeTitle: false,
@@ -509,7 +604,8 @@ export function judgeWeekDayChipFit(input = {}) {
     showTitle: nonEmpty.showTitle,
     mergeTimeTitle: nonEmpty.mergeTimeTitle,
     heightStage: nonEmpty.heightStage,
-    markerOnly: false
+    markerOnly: false,
+    showTeacherDot: Boolean(combined.showTeacherDot)
   };
 
   const titleNameBudget = resolveTitleNameBudget(input, combined);
@@ -540,6 +636,7 @@ export function judgeWeekDayChipFit(input = {}) {
       showTime: false,
       showTitle: false,
       showBadge: false,
+      showTeacherDot: false,
       showStatus: false,
       showCounselorName: false,
       mergeTimeTitle: false,
@@ -554,6 +651,7 @@ export function judgeWeekDayChipFit(input = {}) {
     mergeTimeTitle: nonEmpty.mergeTimeTitle,
     heightStage: nonEmpty.heightStage,
     markerOnly: false,
+    showTeacherDot: Boolean(combined.showTeacherDot),
     showCounselorName: Boolean(
       combined.showCounselorName && nonEmpty.showTitle
     )
@@ -561,7 +659,8 @@ export function judgeWeekDayChipFit(input = {}) {
 }
 
 /**
- * title / aria-label — 시간·이름·상태·기관연계(해당 시). 배지·시간·상담사 숨김과 무관.
+ * title / aria-label — 「시간 · 내담자 · 상담사 · 상태 · 기관연계」.
+ * 배지·시간·상담사·점 숨김과 무관하게 라벨은 유지.
  *
  * @param {{
  *   timeText?: string,
@@ -577,7 +676,6 @@ export function buildWeekDayChipA11yLabel(parts = {}) {
   const time = formatNameWithSecondary(parts.timeText, '').trim();
   const client = formatNameWithSecondary(parts.clientName, '').trim();
   const counselor = formatNameWithSecondary(parts.counselorName, '').trim();
-  const name = [client, counselor].filter(Boolean).join(' ');
   const status = formatNameWithSecondary(parts.statusLabel, '').trim();
   let institution = '';
   if (parts.showInstitution) {
@@ -589,12 +687,9 @@ export function buildWeekDayChipA11yLabel(parts = {}) {
     institution = formatNameWithSecondary(parts.institutionLabel, '').trim();
   }
 
-  const nameStatus = [name, status].filter(Boolean).join(' - ');
-  const core = [time, nameStatus].filter(Boolean).join(' · ');
-  if (institution) {
-    return core ? `${core} · ${institution}` : institution;
-  }
-  return core;
+  return [time, client, counselor, status, institution]
+    .filter(Boolean)
+    .join(' · ');
 }
 
 /** canvas 미사용 시 문자당 추정 폭(px). jsdom/Jest·getContext 실패 fallback. */

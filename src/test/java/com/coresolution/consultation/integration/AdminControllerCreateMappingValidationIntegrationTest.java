@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * <ul>
  *   <li>consultantId / packageName / totalSessions / packagePrice 누락 시 400</li>
- *   <li>정상 페이로드는 200 + adminService.createMapping 호출</li>
+ *   <li>정상 페이로드는 200 + adminService.createMappingFromAdmin 호출</li>
  * </ul>
  *
  * @author MindGarden
@@ -117,7 +117,7 @@ class AdminControllerCreateMappingValidationIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never())
-                .createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
+                .createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
     }
 
     @Test
@@ -134,7 +134,7 @@ class AdminControllerCreateMappingValidationIntegrationTest {
                 .andExpect(status().isBadRequest());
 
         verify(adminService, never())
-                .createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
+                .createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
     }
 
     @Test
@@ -183,7 +183,7 @@ class AdminControllerCreateMappingValidationIntegrationTest {
         mapping.setPackagePrice(300000L);
         mapping.setTotalSessions(5);
 
-        when(adminService.createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class)))
+        when(adminService.createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class)))
                 .thenReturn(mapping);
 
         mockMvc.perform(post("/api/v1/admin/mappings")
@@ -194,7 +194,7 @@ class AdminControllerCreateMappingValidationIntegrationTest {
                 .andExpect(status().is2xxSuccessful());
 
         verify(adminService)
-                .createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
+                .createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
     }
 
     @Test
@@ -215,7 +215,7 @@ class AdminControllerCreateMappingValidationIntegrationTest {
         mapping.setPackagePrice(135000L); // 150000원 -> 10% 할인
         mapping.setTotalSessions(1);
 
-        when(adminService.createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class)))
+        when(adminService.createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class)))
                 .thenReturn(mapping);
 
         Map<String, Object> payload = validPayload();
@@ -232,6 +232,6 @@ class AdminControllerCreateMappingValidationIntegrationTest {
                 .andExpect(status().is2xxSuccessful());
 
         verify(adminService)
-                .createMapping(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
+                .createMappingFromAdmin(any(com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest.class));
     }
 }

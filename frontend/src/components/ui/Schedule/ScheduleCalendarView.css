@@ -165,6 +165,28 @@
     white-space: nowrap;
 }
 
+/* 선생님 점: 축소·말줄임 금지. 숨김 시에만 measure(폭 예산용). */
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__teacher-dot {
+    flex: 0 0 auto;
+    margin-inline-end: 0;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__teacher-dot--measure {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time {
+    gap: var(--mg-v2-teacher-dot-gap);
+}
+
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-measured {
     white-space: nowrap;
 }
@@ -708,4 +730,44 @@
 .mg-v2-schedule-calendar-view .fc-timegrid-col-events {
     position: relative;
     z-index: 3;
+}
+
+/* ---- 지금선 (nowIndicator) — 틸/일요일 빨강 금지. 기관연계 칩 색 변경 금지 ---- */
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-line {
+    border: 0;
+    border-top: var(--mg-v2-now-line-width) solid var(--mg-v2-now-line-color);
+    z-index: var(--mg-v2-z-now-line);
+    pointer-events: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: var(--mg-v2-now-line-dot-size);
+    height: var(--mg-v2-now-line-dot-size);
+    margin-top: calc(var(--mg-v2-now-line-dot-size) / -2);
+    border-radius: var(--mg-v2-radius-pill);
+    background: var(--mg-v2-now-line-color);
+    pointer-events: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-arrow,
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-container .fc-timegrid-now-indicator-arrow {
+    display: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-container {
+    pointer-events: none;
+    z-index: var(--mg-v2-z-now-line);
+}
+
+/* 오늘 열/칸 — 월·주·일 공통 배경 (공휴일·주말 토큰이 뒤 규칙이면 덮어씀) */
+.mg-v2-schedule-calendar-view .fc .fc-day-today {
+    background-color: var(--mg-v2-today-col-bg);
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-col.fc-day-today {
+    background-color: var(--mg-v2-today-col-bg);
 }

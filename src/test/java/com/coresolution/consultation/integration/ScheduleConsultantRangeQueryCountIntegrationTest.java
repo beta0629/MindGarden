@@ -26,12 +26,10 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.VacationRepository;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.integrationtest.support.RequestScopedStatementCounter;
 import com.coresolution.integrationtest.support.WithMockAdminSecurityContext;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManagerFactory;
-import org.hibernate.SessionFactory;
-import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -86,7 +84,6 @@ class ScheduleConsultantRangeQueryCountIntegrationTest {
     @Autowired private ScheduleRepository scheduleRepository;
     @Autowired private VacationRepository vacationRepository;
     @Autowired private ConsultantClientMappingRepository mappingRepository;
-    @Autowired private EntityManagerFactory entityManagerFactory;
 
     private String tenantId;
     private User consultant;
@@ -209,15 +206,10 @@ class ScheduleConsultantRangeQueryCountIntegrationTest {
     }
 
     private Measured measure(MockHttpServletRequestBuilder request, User caller) throws Exception {
-        Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
-        statistics.setStatisticsEnabled(true);
-        statistics.clear();
-        long started = System.nanoTime();
-        MvcResult result = perform(request, caller);
-        long millis = (System.nanoTime() - started) / 1_000_000L;
-        long statements = statistics.getPrepareStatementCount();
-        statistics.setStatisticsEnabled(false);
-        return new Measured(schedulesOf(result).size(), statements, millis);
+        // 전역 Statistics 대신 요청 스레드 StatementInspector — Async 등 타 스레드 SQL 오염 방지
+        RequestScopedStatementCounter.Measured<MvcResult> counted =
+                RequestScopedStatementCounter.measure(() -> perform(request, caller));
+        return new Measured(schedulesOf(counted.value()).size(), counted.statements(), counted.millis());
     }
 
     private MockHttpServletRequestBuilder consultantRange() {

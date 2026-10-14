@@ -45,6 +45,7 @@ const translateLabel = (translate, key, options) => {
  *   translate: Function,
  *   timeText?: string,
  *   clientName?: string,
+ *   consultantName?: string,
  *   sessionAriaLabel?: string,
  *   statusLabel?: string,
  *   isSameDayPending?: boolean,
@@ -92,6 +93,9 @@ export function buildIntegratedMonthChipCopy(input) {
   const sessionAria = input?.sessionAriaLabel ? String(input.sessionAriaLabel).trim() : '';
   const clientName = input?.clientName == null ? '' : String(input.clientName);
   const namePart = sessionAria ? `${clientName} ${sessionAria}` : clientName;
+  const consultantName = input?.consultantName == null
+    ? ''
+    : String(input.consultantName).trim();
 
   const ariaLabel = joinLabel([
     input?.isSameDayPending
@@ -99,6 +103,7 @@ export function buildIntegratedMonthChipCopy(input) {
       : '',
     input?.timeText,
     namePart,
+    consultantName,
     input?.statusLabel,
     input?.institutionLabel,
     reminderSmsAria,

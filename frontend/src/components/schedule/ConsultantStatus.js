@@ -6,6 +6,7 @@ import './ConsultantStatus.css';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { formatDateKeyInZone } from '../../utils/zonedDateTime';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 
 /**
  * 상담사 현황 컴포넌트
@@ -40,7 +41,11 @@ const ConsultantStatus = () => {
             const response = await apiGet(`/api/v1/admin/consultants/with-vacation?date=${today}`);
             
             if (response.success) {
-                const consultantData = response.data || [];
+                const raw = Array.isArray(response.data)
+                    ? response.data
+                    : (response.data?.consultants || []);
+                // 현황 UI: 활성만 (with-vacation API는 비활성 포함)
+                const consultantData = selectActiveConsultants(raw);
                 console.log('👥 상담사 현황 데이터 (휴가 정보 포함):', consultantData);
                 
                 // 상담사별 상태 계산 (실제 스케줄 데이터 기반)

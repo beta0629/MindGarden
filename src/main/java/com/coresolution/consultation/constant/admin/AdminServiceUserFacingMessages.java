@@ -603,6 +603,29 @@ public final class AdminServiceUserFacingMessages {
     public static final String DESYNC_CLEANUP_REASON_CODE = "DESYNC_CLEANUP";
 
     /**
+     * 관리자 상태-only 종료 — 미래 점유 일정 자동 취소 notes 접두.
+     * 환불/회기 차감 없음. {@link #NOTES_FORCE_TERMINATION_LINE_FMT} 와 구분.
+     */
+    public static final String SCHEDULE_NOTES_PREFIX_STATUS_CLOSE_AUTO_CANCEL =
+            "[STATUS_CLOSE_AUTO_CANCEL 상태 종료로 인한 자동 취소] ";
+
+    /** 관리자 상태-only 종료 시 스케줄 취소 audit 사유 코드. */
+    public static final String STATUS_CLOSE_AUTO_CANCEL_REASON_CODE = "STATUS_CLOSE_AUTO_CANCEL";
+
+    /**
+     * 관리자 상태-only 종료 매핑 notes 한 줄 (인자: 일시, 사유, 종료자).
+     * 환불 회기·금액 수치를 넣지 않는다.
+     */
+    public static final String NOTES_STATUS_CLOSE_LINE_FMT =
+            "[%s 상태 종료] %s (by %s)";
+
+    /** 상태-only 종료 사유 미입력. */
+    public static final String MSG_STATUS_CLOSE_REASON_REQUIRED = "종료 사유를 입력해 주세요.";
+
+    /** 상태-only 종료 성공 메시지. */
+    public static final String MSG_STATUS_CLOSE_SUCCESS = "매칭이 종료 처리되었습니다.";
+
+    /**
      * R4 — 결제 대기 매칭 관리자 취소 매핑 notes 한 줄 (인자: 일시, 사유, 취소된 가예약 수).
      */
     public static final String NOTES_PENDING_PAYMENT_CANCEL_LINE_FMT =
@@ -691,6 +714,16 @@ public final class AdminServiceUserFacingMessages {
 
     /** 가계약 패키지 변경 성공 메시지 (컨트롤러). */
     public static final String MSG_PENDING_PACKAGE_UPDATED = "패키지가 수정되었습니다.";
+
+    /**
+     * 매칭 생성 짧은 시간창(ConsultantClientMappingCreateDuplicateWindow 참고) 내 동일 상담사·내담자·
+     * 동일 패키지명 매칭 중복 생성 가드.
+     *
+     * @author MindGarden
+     * @since 2026-10-14
+     */
+    public static final String MSG_MAPPING_CREATE_DUPLICATE_WINDOW =
+            "짧은 시간 내 동일 상품으로 매칭이 이미 생성되었습니다. 잠시 후 다시 시도해 주세요.";
 
 
     /** 환불 설명 파싱·표시 기본값 */

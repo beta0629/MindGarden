@@ -9,6 +9,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { formatDateKeyInZone } from '../../utils/zonedDateTime';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import useMonthlyConsultantCounts from '../../hooks/useMonthlyConsultantCounts';
 import useCumulativeMissingConsultationLogs from '../../hooks/useCumulativeMissingConsultationLogs';
 import useCumulativeConsultantCounts from '../../hooks/useCumulativeConsultantCounts';
@@ -608,7 +609,11 @@ const AdminDashboardV2 = ({ user: propUser }) => {
 
       if (consultantsRes.ok) {
         const d = await consultantsRes.json();
-        totalConsultants = d?.data?.count || d?.count || 0;
+        // with-vacation count는 비활성 포함 — KPI는 활성만
+        const raw = Array.isArray(d?.data)
+          ? d.data
+          : (d?.data?.consultants || d?.consultants || []);
+        totalConsultants = selectActiveConsultants(raw).length;
       }
       // P0-a: with-mapping-info 응답으로 KPI count + 매칭 큐를 함께 채움 (중복 fetch 제거)
       setMatchingQueueLoading(true);

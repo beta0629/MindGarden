@@ -92,7 +92,8 @@
   overflow: visible;
 }
 
-@media (max-width: 767px) {
+/* 1024 이하: 프로필 이름 숨김(아바타만). 시계·아이콘 유지 */
+@media (max-width: 1024px) {
   .mg-v2-tenant-header-cluster__text {
     display: none;
   }

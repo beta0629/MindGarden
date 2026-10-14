@@ -12,6 +12,7 @@ import {
   CALENDAR_SLOT_TIME_RANGE,
   STATUS
 } from '../constants/schedule';
+import { DEFAULT_ZONE, formatDateTimeKeyInZone } from './zonedDateTime';
 
 const MINUTES_PER_HOUR = 60;
 const HOURS_PER_DAY = 24;
@@ -20,6 +21,8 @@ const TIME_PART_SEPARATOR = ':';
 const DATE_TIME_SEPARATOR = 'T';
 const TIME_PAD_LENGTH = 2;
 const SLOT_SECONDS_SUFFIX = ':00';
+/** 지금선 기준 초기 스크롤 — 현재 시각보다 이만큼 앞 */
+const SCROLL_TIME_LEAD_HOURS = 2;
 
 const pad = (value) => String(value).padStart(TIME_PAD_LENGTH, '0');
 
@@ -101,4 +104,28 @@ export const resolveCalendarSlotTimeRange = (events, base = {}) => {
     slotMinTime: minutesToSlotTime(minMinutes),
     slotMaxTime: minutesToSlotTime(maxMinutes)
   };
+};
+
+/**
+ * FullCalendar scrollTime — Asia/Seoul 현재시에서 leadHours 앞, slotMinTime 이상으로 클램프.
+ *
+ * @param {Date} [now]
+ * @param {string} [slotMinTime] 'HH:mm:ss' 또는 'HH:mm'
+ * @param {string} [timeZone]
+ * @param {number} [leadHours]
+ * @returns {string} 'HH:mm:ss'
+ */
+export const resolveCalendarScrollTime = (
+  now = new Date(),
+  slotMinTime = CALENDAR_SLOT_TIME_RANGE.MIN,
+  timeZone = DEFAULT_ZONE,
+  leadHours = SCROLL_TIME_LEAD_HOURS
+) => {
+  const dateTimeKey = formatDateTimeKeyInZone(now, timeZone);
+  const timePart = dateTimeKey.split(DATE_TIME_SEPARATOR)[1] || '00:00';
+  const currentMinutes = hmToMinutes(timePart);
+  const leadMinutes = Math.max(0, Number(leadHours) || 0) * MINUTES_PER_HOUR;
+  const minMinutes = hmToMinutes(slotMinTime);
+  const scrollMinutes = Math.max(minMinutes, currentMinutes - leadMinutes);
+  return minutesToSlotTime(scrollMinutes);
 };

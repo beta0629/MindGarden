@@ -23,6 +23,7 @@ const HEIGHT_FULL = {
   showTitle: true,
   mergeTimeTitle: false,
   showCounselorName: false,
+  showTeacherDot: false,
   markerOnly: false
 };
 
@@ -419,6 +420,7 @@ describe('marker(표식) 단계 — 12px급', () => {
     expect(fit.showTitle).toBe(false);
     expect(fit.showCounselorName).toBe(false);
     expect(fit.showBadge).toBe(false);
+    expect(fit.showTeacherDot).toBe(false);
     expect(fit.showStatus).toBe(false);
   });
 
@@ -599,7 +601,7 @@ describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
       timeText: '오전 10:00',
       clientName: '이내담',
       statusLabel: '예약됨'
-    })).toBe('오전 10:00 · 이내담 - 예약됨');
+    })).toBe('오전 10:00 · 이내담 · 예약됨');
   });
 
   test('상담사 이름 포함 — 칩에서 숨겨도 a11y 라벨 유지', () => {
@@ -608,7 +610,7 @@ describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
       clientName: '라마바',
       counselorName: '상담사A',
       statusLabel: '예약됨'
-    })).toBe('10:00 · 라마바 상담사A - 예약됨');
+    })).toBe('10:00 · 라마바 · 상담사A · 예약됨');
   });
 
   test('기관연계 포함 — 배지 숨김과 무관하게 showInstitution 시 라벨 유지', () => {
@@ -618,7 +620,7 @@ describe('buildWeekDayChipA11yLabel + formatNameWithSecondary', () => {
       statusLabel: '예약됨',
       showInstitution: true,
       institutionLabel: MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK
-    })).toBe(`10:00 · 이내담 - 예약됨 · ${MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK}`);
+    })).toBe(`10:00 · 이내담 · 예약됨 · ${MAPPING_ENGAGEMENT_TYPE_LABELS.INSTITUTION_LINK}`);
   });
 
   test('formatNameWithSecondary — undefined secondary 금지', () => {
@@ -727,5 +729,87 @@ describe('measureTextWidth (jsdom)', () => {
     expect(width).toBe('오전 10:00'.length * 7);
     expect(errorSpy).not.toHaveBeenCalled();
     errorSpy.mockRestore();
+  });
+});
+
+describe('선생님 점 폭 예산 — 숨김 순서 badge→name→time→dot', () => {
+  const longW = 56;
+  const shortW = 28;
+  const badgeW = 36;
+  const dotW = 8;
+  const gap = 4;
+
+  test('여유 폭: long+badge+dot', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 140,
+      longTimeWidth: longW,
+      shortTimeWidth: shortW,
+      badgeWidth: badgeW,
+      teacherDotWidth: dotW,
+      gap,
+      considerBadge: true
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.LONG_BADGE);
+    expect(fit.showBadge).toBe(true);
+    expect(fit.showTime).toBe(true);
+    expect(fit.showTeacherDot).toBe(true);
+  });
+
+  test('배지부터 숨김 — long+dot 유지', () => {
+    // long+badge+dot = 8+4+56+4+36 = 108, long+dot = 8+4+56 = 68
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 80,
+      longTimeWidth: longW,
+      shortTimeWidth: shortW,
+      badgeWidth: badgeW,
+      teacherDotWidth: dotW,
+      gap,
+      considerBadge: true
+    });
+    expect(fit.showBadge).toBe(false);
+    expect(fit.showTime).toBe(true);
+    expect(fit.showTeacherDot).toBe(true);
+  });
+
+  test('시간 숨김 후에도 점 유지', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 10,
+      compactChipWidth: 12,
+      outerChipWidth: 20,
+      longTimeWidth: longW,
+      shortTimeWidth: shortW,
+      minTimeGlyphWidth: 8,
+      badgeWidth: badgeW,
+      teacherDotWidth: dotW,
+      gap,
+      considerBadge: true,
+      clientNameWidth: 36,
+      minClientWidth: 12
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.HIDE_TIME);
+    expect(fit.showTime).toBe(false);
+    expect(fit.showBadge).toBe(false);
+    expect(fit.showTeacherDot).toBe(true);
+    expect(fit.markerOnly).toBe(false);
+  });
+
+  test('점도 못 넣으면 marker(막대만)', () => {
+    const fit = judgeWeekDayChipFit({
+      chipWidth: 2,
+      compactChipWidth: 4,
+      outerChipWidth: 10,
+      longTimeWidth: longW,
+      shortTimeWidth: shortW,
+      minTimeGlyphWidth: 8,
+      badgeWidth: badgeW,
+      teacherDotWidth: dotW,
+      gap,
+      considerBadge: true
+    });
+    expect(fit.stage).toBe(WEEK_DAY_CHIP_FIT_STAGE.MARKER);
+    expect(fit.markerOnly).toBe(true);
+    expect(fit.showTeacherDot).toBe(false);
+    expect(fit.showTime).toBe(false);
+    expect(fit.showBadge).toBe(false);
   });
 });

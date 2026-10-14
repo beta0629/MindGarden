@@ -1,4 +1,7 @@
-import { resolveCalendarSlotTimeRange } from '../scheduleCalendarSlotRange';
+import {
+  resolveCalendarScrollTime,
+  resolveCalendarSlotTimeRange
+} from '../scheduleCalendarSlotRange';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_SLOT_TIME_RANGE,
@@ -50,5 +53,19 @@ describe('resolveCalendarSlotTimeRange', () => {
       { start: '2026-10-07T00:00:00', end: '2026-10-07T23:00:00', display: 'background' }
     ]);
     expect(range).toEqual(resolveCalendarSlotTimeRange([]));
+  });
+});
+
+describe('resolveCalendarScrollTime', () => {
+  test('Asia/Seoul 현재시에서 2시간 앞을 scrollTime으로 쓴다', () => {
+    // 2026-10-14 11:30 KST
+    const now = new Date('2026-10-14T02:30:00.000Z');
+    expect(resolveCalendarScrollTime(now, '08:00:00', 'Asia/Seoul')).toBe('09:30:00');
+  });
+
+  test('slotMinTime보다 이르면 클램프한다', () => {
+    // 2026-10-14 08:30 KST → −2h = 06:30 → clamp 08:00
+    const now = new Date('2026-10-13T23:30:00.000Z');
+    expect(resolveCalendarScrollTime(now, '08:00:00', 'Asia/Seoul')).toBe('08:00:00');
   });
 });

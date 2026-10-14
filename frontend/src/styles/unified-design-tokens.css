@@ -3986,7 +3986,7 @@ body {
    ============================================ */
 .mg-modal-overlay {
   position: fixed !important;
-  top: 0 !important;
+  top: var(--mg-layout-header-height, 64px) !important;
   left: 0 !important;
   right: 0 !important;
   bottom: 0 !important;
@@ -3998,6 +3998,16 @@ body {
   animation: fadeIn 0.3s ease-out !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+@media (max-width: 767px) {
+  .mg-modal-overlay {
+    top: var(--mg-layout-header-height-mobile, 56px) !important;
+  }
+}
+
+.mg-modal-overlay:has(.mg-modal--fullscreen) {
+  top: 0 !important;
 }
 
 .mg-modal {

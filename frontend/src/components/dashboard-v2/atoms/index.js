@@ -12,3 +12,4 @@ export { default as ProfileAvatar } from './ProfileAvatar';
 export { default as HeaderMenuRow } from './HeaderMenuRow';
 export { default as KpiSparkline } from './KpiSparkline';
 export { default as KpiNumeral } from './KpiNumeral';
+export { default as CurrentTimeChip } from './CurrentTimeChip';

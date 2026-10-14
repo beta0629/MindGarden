@@ -530,7 +530,7 @@ const UnifiedScheduleComponent = ({
             console.log('👥 상담사 목록 API 응답:', response);
             console.log('👥 응답 타입:', typeof response, Array.isArray(response));
             
-            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 { consultants: [...], count: N } 형태
+            // apiGet unwrap → { consultants } / 배열 우선, 레거시 data 래핑은 후순위
             let consultantsList = [];
             
             if (response) {
@@ -543,14 +543,9 @@ const UnifiedScheduleComponent = ({
                 } else if (response.data && Array.isArray(response.data)) {
                     consultantsList = response.data;
                     console.log('👥 response.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                } else if (response.success && response.data) {
-                    if (response.data.consultants && Array.isArray(response.data.consultants)) {
-                        consultantsList = response.data.consultants;
-                        console.log('👥 response.success.data.consultants에서 추출:', consultantsList.length, '개');
-                    } else if (Array.isArray(response.data)) {
-                        consultantsList = response.data;
-                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                    }
+                } else if (response.data?.consultants && Array.isArray(response.data.consultants)) {
+                    consultantsList = response.data.consultants;
+                    console.log('👥 response.data.consultants에서 추출:', consultantsList.length, '개');
                 }
             }
             
@@ -819,15 +814,10 @@ const UnifiedScheduleComponent = ({
                     schedules = response.data;
                     console.log('📅 response.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 }
-                // response.success가 있고 response.data가 있는 경우 (원본 ApiResponse 구조)
-                else if (response.success && response.data) {
-                    if (response.data.schedules && Array.isArray(response.data.schedules)) {
-                        schedules = response.data.schedules;
-                        console.log('📅 response.success.data.schedules에서 추출:', schedules.length, '개');
-                    } else if (Array.isArray(response.data)) {
-                        schedules = response.data;
-                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                    }
+                // 배열 그 자체
+                else if (Array.isArray(response)) {
+                    schedules = response;
+                    console.log('📅 response (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 } else {
                     console.warn('⚠️ 응답 형식을 파악할 수 없습니다:', response);
                 }

@@ -33,7 +33,13 @@ import ErpPurchaseRequestWidget from './widgets/ErpPurchaseRequestWidget';
 import SystemNotificationSection from './SystemNotificationSection';
 import SystemNotificationWidget from './widgets/SystemNotificationWidget';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
-import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
+import {
+  hasApiGetPayload,
+  isApiGetNullFailure,
+  normalizeMappingsListPayload,
+  normalizeScheduleListPayload,
+  resolveApiObjectData
+} from '../../utils/apiResponseNormalize';
 import ClientPersonalizedMessages from './ClientPersonalizedMessages';
 import PersonalizedMessagesWidget from './widgets/PersonalizedMessagesWidget';
 import ClientPaymentSessionsSection from './ClientPaymentSessionsSection';
@@ -80,8 +86,9 @@ const CommonDashboard = ({ user: propUser }) => {
       console.log('📅 스케줄 응답:', scheduleResponse);
       
       let schedules = [];
-      if (scheduleResponse?.success && scheduleResponse?.data) {
-        schedules = scheduleResponse.data;
+      // apiGet unwrap → schedules 배열/래핑 객체 직접 수용
+      if (hasApiGetPayload(scheduleResponse)) {
+        schedules = normalizeScheduleListPayload(scheduleResponse);
         const today = new Date();
         const startOfWeek = new Date(today);
         startOfWeek.setDate(today.getDate() - today.getDay());
@@ -230,8 +237,9 @@ const CommonDashboard = ({ user: propUser }) => {
       
       console.log('📅 상담사 스케줄 응답:', scheduleResponse);
       
-      if (scheduleResponse?.success && scheduleResponse?.data) {
-        const schedules = scheduleResponse.data;
+      // apiGet unwrap → schedules 배열/래핑 객체 직접 수용
+      if (hasApiGetPayload(scheduleResponse)) {
+        const schedules = normalizeScheduleListPayload(scheduleResponse);
         const today = new Date();
         const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
         const startOfWeek = new Date(today);
@@ -382,13 +390,15 @@ const CommonDashboard = ({ user: propUser }) => {
         
         console.log('📊 상담사 통계 응답:', statsResponse);
         
-        if (statsResponse?.success && statsResponse?.data) {
+        const statsPayload = resolveApiObjectData(statsResponse)
+          || (hasApiGetPayload(statsResponse) ? statsResponse : null);
+        if (statsPayload) {
           setConsultationData(prev => ({
             ...prev,
-            rating: statsResponse.data.averageRating || 0
+            rating: statsPayload.averageRating || 0
           }));
           
-          console.log('✅ 상담사 통계 로드 완료:', statsResponse.data);
+          console.log('✅ 상담사 통계 로드 완료:', statsPayload);
         }
       } catch (statsError) {
         console.warn('⚠️ 상담사 통계 로드 실패, 기본값 사용:', statsError);
@@ -420,8 +430,9 @@ const CommonDashboard = ({ user: propUser }) => {
         
         console.log('📊 관리자 통계 응답:', statsResponse);
         
-        if (statsResponse?.success && statsResponse?.data) {
-          const stats = statsResponse.data;
+        const stats = resolveApiObjectData(statsResponse)
+          || (hasApiGetPayload(statsResponse) ? statsResponse : null);
+        if (stats) {
           const recentActivities = [];
           
           if (stats.totalUsers > 0) {

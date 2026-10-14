@@ -59,10 +59,12 @@ const PersonalizedMessageWidget = ({ widget, user }) => {
       };
       
       const response = await apiGet(url, params);
-      
-      if (response && response.data) {
-        const messageList = Array.isArray(response.data) ? response.data : [];
-        setMessages(messageList.slice(0, maxItems));
+      // apiGet unwrap → 메시지 배열/래핑 객체 직접 수용
+      if (response != null && response.success !== false) {
+        const messageList = Array.isArray(response)
+          ? response
+          : (Array.isArray(response.data) ? response.data : (response.messages || []));
+        setMessages(Array.isArray(messageList) ? messageList.slice(0, maxItems) : []);
       }
     } catch (err) {
       console.error('PersonalizedMessageWidget 데이터 로드 실패:', err);

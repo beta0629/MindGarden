@@ -41,8 +41,11 @@ const ResetPassword = () => {
         const response = await apiGet(
           `/api/v1/auth/password-reset/validate-token?token=${encodeURIComponent(token)}`
         );
-        
-        if (!response.success || !response.valid) {
+        // apiGet unwrap → { valid } 페이로드 직접 검사
+        const isValid = response != null
+          && response.success !== false
+          && (response.valid === true || response.data?.valid === true);
+        if (!isValid) {
           notificationManager.error('토큰이 만료되었거나 유효하지 않습니다.');
           navigate('/forgot-password');
         }

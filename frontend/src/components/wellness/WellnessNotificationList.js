@@ -47,8 +47,12 @@ const WellnessNotificationList = () => {
     try {
       const response = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
 
-      if (response && response.success) {
-        const wellnessNotifications = response.data.filter(
+      // StandardizedApi.get unwrap → 알림 배열 직접 수용
+      if (response != null && response.success !== false) {
+        const list = Array.isArray(response)
+          ? response
+          : (Array.isArray(response.data) ? response.data : (response.content || []));
+        const wellnessNotifications = (Array.isArray(list) ? list : []).filter(
           (notification) => notification.notificationType === 'WELLNESS'
         );
         setNotifications(wellnessNotifications);

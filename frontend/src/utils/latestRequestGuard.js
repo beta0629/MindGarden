@@ -45,7 +45,7 @@ export function createLatestRequestGuard() {
       const requestId = epoch + 1;
       epoch = requestId;
       const signal = nextController ? nextController.signal : undefined;
-      const isCurrent = () => requestId === epoch && !Boolean(signal?.aborted);
+      const isCurrent = () => requestId === epoch && !signal?.aborted;
       return {
         requestId,
         signal,

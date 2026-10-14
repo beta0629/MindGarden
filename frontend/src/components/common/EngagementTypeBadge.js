@@ -45,8 +45,8 @@ function renderEngagementLabel(label, segments) {
 
 function EngagementTypeBadge({
   type,
-  mapping,
-  source,
+  mapping = null,
+  source = null,
   size = 'sm',
   className = '',
   title
@@ -84,15 +84,6 @@ EngagementTypeBadge.propTypes = {
   size: PropTypes.oneOf(['sm', 'default', 'lg']),
   className: PropTypes.string,
   title: PropTypes.string
-};
-
-EngagementTypeBadge.defaultProps = {
-  type: undefined,
-  mapping: null,
-  source: null,
-  size: 'sm',
-  className: '',
-  title: undefined
 };
 
 export default EngagementTypeBadge;

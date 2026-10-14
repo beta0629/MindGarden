@@ -4,6 +4,8 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 
+jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), { virtual: true });
+
 jest.mock('./utils/portonePayment', () => ({
   requestPortOnePayment: jest.fn()
 }));

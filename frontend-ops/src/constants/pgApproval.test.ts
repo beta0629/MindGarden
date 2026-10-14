@@ -5,6 +5,8 @@ import {
   PG_APPROVAL_LABELS,
   formatKeyChangedLabel,
   formatPendingEditDisplay,
+  isConnectionTestForcedForPending,
+  resolveApproveTestConnection,
   shouldShowReapprovalBadge
 } from "./pgApproval.ts";
 
@@ -44,6 +46,20 @@ describe("pgApproval helpers", () => {
     });
   });
 
+  describe("isConnectionTestForcedForPending / resolveApproveTestConnection", () => {
+    it("pending 이면 연결 시험 강제·스위치 비활성 대상", () => {
+      assert.equal(isConnectionTestForcedForPending({ hasPendingEdit: true }), true);
+      assert.equal(isConnectionTestForcedForPending({ hasPendingEdit: false }), false);
+      assert.equal(isConnectionTestForcedForPending(null), false);
+    });
+
+    it("pending 이면 userChecked=false 여도 testConnection true", () => {
+      assert.equal(resolveApproveTestConnection(true, false), true);
+      assert.equal(resolveApproveTestConnection(false, false), false);
+      assert.equal(resolveApproveTestConnection(false, true), true);
+    });
+  });
+
   describe("pendingEditDiff labels", () => {
     it("diff 라벨 상수가 정의되어 있다", () => {
       assert.equal(PG_APPROVAL_LABELS.REAPPROVAL_BADGE, "재승인 대기");
@@ -51,6 +67,11 @@ describe("pgApproval helpers", () => {
       assert.equal(PG_APPROVAL_LABELS.PENDING_EDIT_CURRENT, "현재(live)");
       assert.equal(PG_APPROVAL_LABELS.PENDING_EDIT_PENDING, "대기(pending)");
       assert.equal(PG_APPROVAL_LABELS.DIFF_CHANNEL_KEY, "채널 키");
+      assert.equal(PG_APPROVAL_LABELS.DIFF_CHANNEL_KEY_TEST, "테스트 채널 키");
+      assert.equal(
+        PG_APPROVAL_LABELS.TEST_BEFORE_APPROVE_PENDING_HINT,
+        "대기 수정 시 연결 시험 필수"
+      );
       assert.equal(PG_APPROVAL_LABELS.DIFF_API_KEY_CHANGED, "API 키 변경");
       assert.equal(PG_APPROVAL_LABELS.DIFF_SECRET_KEY_CHANGED, "시크릿 키 변경");
     });

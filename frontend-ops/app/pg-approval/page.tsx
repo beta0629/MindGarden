@@ -13,7 +13,9 @@ import {
   PG_APPROVAL_MIN_REJECTION_REASON_LENGTH,
   formatKeyChangedLabel,
   formatPendingEditDisplay,
+  isConnectionTestForcedForPending,
   maskMerchantId,
+  resolveApproveTestConnection,
   resolveCenterDisplayName,
   resolvePgDisplayName,
   shouldShowReapprovalBadge
@@ -60,6 +62,11 @@ const PENDING_EDIT_DIFF_ROWS: ReadonlyArray<{
     label: PG_APPROVAL_LABELS.DIFF_CHANNEL_KEY,
     currentKey: "channelKeyMasked",
     pendingKey: "channelKeyMasked"
+  },
+  {
+    label: PG_APPROVAL_LABELS.DIFF_CHANNEL_KEY_TEST,
+    currentKey: "channelKeyTestMasked",
+    pendingKey: "channelKeyTestMasked"
   },
   {
     label: PG_APPROVAL_LABELS.DIFF_WEBHOOK_URL,
@@ -294,7 +301,10 @@ export default function PgApprovalPage() {
       await approvePgConfiguration(selected.configId, {
         approvedBy: resolveOpsActorId(),
         approvalNote: approvalNote.trim() || undefined,
-        testConnection: testBeforeApprove
+        testConnection: resolveApproveTestConnection(
+          selected.hasPendingEdit,
+          testBeforeApprove
+        )
       });
       notificationManager.success(PG_APPROVAL_LABELS.APPROVE_SUCCESS);
       closeModal();
@@ -584,10 +594,25 @@ export default function PgApprovalPage() {
             <label className={styles.switchRow}>
               <input
                 type="checkbox"
-                checked={testBeforeApprove}
-                onChange={(e) => setTestBeforeApprove(e.target.checked)}
+                checked={
+                  isConnectionTestForcedForPending(selected)
+                    ? true
+                    : testBeforeApprove
+                }
+                disabled={isConnectionTestForcedForPending(selected)}
+                onChange={(e) => {
+                  if (isConnectionTestForcedForPending(selected)) {
+                    return;
+                  }
+                  setTestBeforeApprove(e.target.checked);
+                }}
               />
               <span>{PG_APPROVAL_LABELS.TEST_BEFORE_APPROVE}</span>
+              {isConnectionTestForcedForPending(selected) ? (
+                <span className={styles.hint}>
+                  {PG_APPROVAL_LABELS.TEST_BEFORE_APPROVE_PENDING_HINT}
+                </span>
+              ) : null}
             </label>
             <label className={styles.filterField}>
               <span>{PG_APPROVAL_LABELS.APPROVAL_NOTE}</span>

@@ -12,7 +12,10 @@ export interface PgPendingEditValues {
   provider?: string | null;
   storeId?: string | null;
   merchantId?: string | null;
+  /** 라이브 채널 키 마스킹 (끝 4자리) */
   channelKeyMasked?: string | null;
+  /** 테스트 채널 키 마스킹 (끝 4자리) */
+  channelKeyTestMasked?: string | null;
   webhookUrl?: string | null;
   returnUrl?: string | null;
   cancelUrl?: string | null;

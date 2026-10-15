@@ -1392,3 +1392,6 @@ fa44beb98250756e508227cc5cb1cee2e7064cfd:env.local.example:generic-api-key:61
 fa44beb98250756e508227cc5cb1cee2e7064cfd:env.local.example:generic-api-key:68
 fa44beb98250756e508227cc5cb1cee2e7064cfd:frontend-trinity/env.local.example:generic-api-key:23
 fa844c322600954553b8acaac68edd696ed3f5a8:docs/OPERATION_DEPLOYMENT_GUIDE.md:curl-auth-header:194
+# 2026-10-15 오탐: Standard Webhooks TestScenario.validSigned 공개 테스트 벡터 (운영 시크릿 아님).
+a3972a64d47eceafa8f6e49d795227f630a9175b:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:23
+a3972a64d47eceafa8f6e49d795227f630a9175b:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:25

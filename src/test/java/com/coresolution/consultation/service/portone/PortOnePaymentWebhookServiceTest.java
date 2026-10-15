@@ -12,12 +12,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
@@ -51,8 +48,8 @@ import org.springframework.http.ResponseEntity;
 class PortOnePaymentWebhookServiceTest {
 
     private static final String STORE_ID = "store-unit-portone";
-    private static final String WEBHOOK_SECRET = "whsec_unit_test_secret";
-    private static final String TIMESTAMP = "1700000000";
+    private static final String WEBHOOK_SECRET = PortOneWebhookTestSignatures.secretForLabel("unit-test-webhook");
+    private static final String TIMESTAMP = PortOneWebhookTestSignatures.currentTimestamp();
     private static final String TENANT_ID = "tenant-unit-webhook";
     private static final String ORDER_PUBLIC_ID = "ord-public-unit-1";
     private static final String PAYMENT_ID = "pay-unit-1";
@@ -81,7 +78,8 @@ class PortOnePaymentWebhookServiceTest {
                 paymentRepository,
                 paymentService,
                 clientShopCheckoutService,
-                shopLatePaymentRefundService);
+                shopLatePaymentRefundService,
+                PortOneWebhookTestSignatures.properties());
     }
 
     @Test
@@ -119,7 +117,7 @@ class PortOnePaymentWebhookServiceTest {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
                 .thenReturn(Optional.of(payment));
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-unit-1", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -170,7 +168,7 @@ class PortOnePaymentWebhookServiceTest {
         when(clientShopCheckoutService.releaseOrderHoldOnPaymentFailure(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenThrow(new IllegalStateException("release failed for FAILED sync"));
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-unit-failed-1", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -217,7 +215,7 @@ class PortOnePaymentWebhookServiceTest {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
                 .thenReturn(Optional.of(payment));
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-unit-2", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -266,7 +264,7 @@ class PortOnePaymentWebhookServiceTest {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
                 .thenReturn(Optional.of(payment));
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-unit-3", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -317,7 +315,8 @@ class PortOnePaymentWebhookServiceTest {
         when(clientShopCheckoutService.reconcileOrderOnPaymentCancelOrRefund(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(true);
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(
+                WEBHOOK_SECRET, "whk-unit-cancelled", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -358,7 +357,8 @@ class PortOnePaymentWebhookServiceTest {
                 .thenReturn(List.of(configuration));
         when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(
+                WEBHOOK_SECRET, "whk-unit-partial", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -409,7 +409,8 @@ class PortOnePaymentWebhookServiceTest {
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
                 .thenReturn(Optional.of(payment));
 
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody);
+        String signature = PortOneWebhookTestSignatures.v1(
+                WEBHOOK_SECRET, "whk-unit-encrypted", TIMESTAMP, rawBody);
 
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
@@ -422,12 +423,5 @@ class PortOnePaymentWebhookServiceTest {
         assertEquals(PAYMENT_ID, response.getBody().get("paymentId"));
         verify(encryptionService).decrypt(encryptedSecret);
         verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
-    }
-
-    private static String v1Signature(String secret, String timestamp, String body) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] digest = mac.doFinal((timestamp + "." + body).getBytes(StandardCharsets.UTF_8));
-        return "v1," + Base64.getEncoder().encodeToString(digest);
     }
 }

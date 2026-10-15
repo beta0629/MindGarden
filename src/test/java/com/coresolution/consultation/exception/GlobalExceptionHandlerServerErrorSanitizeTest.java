@@ -10,6 +10,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.coresolution.consultation.constant.ServerErrorMessages;
+import com.coresolution.core.constants.TenantPgWebhookSecretMessages;
 import com.coresolution.core.dto.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -142,6 +143,21 @@ class GlobalExceptionHandlerServerErrorSanitizeTest {
         assertThat(response.getBody().getMessage()).isEqualTo("재무 현황을 불러오지 못했습니다.");
         assertThat(response.getBody().getTraceId()).isNotBlank();
         assertNoLeak(response.getBody());
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 형식 오류 → 400 · 평문 시크릿은 응답에 없다")
+    void webhookSecretFormat_is400WithoutSecret() {
+        String secret = "whsec_!!!!";
+        String message = TenantPgWebhookSecretMessages.INVALID_FORMAT;
+
+        ResponseEntity<ErrorResponse> response =
+                handler.handleIllegalArgument(new IllegalArgumentException(message), mockRequest());
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody().getMessage()).isEqualTo(message);
+        assertThat(response.getBody().getMessage()).doesNotContain(secret);
+        assertThat(response.getBody().getDetails()).isNull();
     }
 
     @Test

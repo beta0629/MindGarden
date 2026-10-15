@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -63,6 +64,7 @@ import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
@@ -1324,6 +1326,32 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return false;
         }
+        // PortOne 조회: UNKNOWN/IN_PROGRESS 는 보류, PAID 는 확정/불일치 취소, NOT_PAID·없음은 EXPIRED.
+        Optional<Payment> latestPayment = resolveLatestPayment(tenantId, orderPublicId);
+        if (latestPayment.isPresent() && StringUtils.hasText(latestPayment.get().getPaymentId())) {
+            Payment payment = latestPayment.get();
+            PortOnePaymentPaidState paidState =
+                    portOneV2PaymentVerifyService.resolvePaidState(tenantId, payment.getPaymentId());
+            if (paidState == PortOnePaymentPaidState.UNKNOWN
+                    || paidState == PortOnePaymentPaidState.IN_PROGRESS) {
+                log.info(
+                        "hold TTL 만료 보류(PortOne {}): tenantId={}, orderPublicId={}, paymentId={}",
+                        paidState,
+                        tenantId,
+                        orderPublicId,
+                        payment.getPaymentId());
+                return false;
+            }
+            if (paidState == PortOnePaymentPaidState.PAID) {
+                approveOpenPaymentLocally(payment);
+                log.info(
+                        "hold TTL 만료 대신 PortOne PAID 확정: tenantId={}, orderPublicId={}, paymentId={}",
+                        tenantId,
+                        orderPublicId,
+                        payment.getPaymentId());
+                return completeOrderOnPaymentApproved(tenantId, orderPublicId);
+            }
+        }
         releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());
         order.setStatus(ShopClientOrderStatus.EXPIRED);
         shopClientOrderRepository.save(order);
@@ -1338,8 +1366,26 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
+     * 사이클 방지를 위해 {@link PaymentService#approveShopOrderPayment} 를 쓰지 않고
+     * PENDING/PROCESSING 만 APPROVED 로 올린다.
+     *
+     * @param payment 로컬 결제 건
+     */
+    private void approveOpenPaymentLocally(Payment payment) {
+        if (payment.getStatus() != Payment.PaymentStatus.PENDING
+                && payment.getStatus() != Payment.PaymentStatus.PROCESSING) {
+            return;
+        }
+        payment.setStatus(Payment.PaymentStatus.APPROVED);
+        payment.setApprovedAt(LocalDateTime.now());
+        paymentRepository.save(payment);
+    }
+
+    /**
      * 이번에 EXPIRED 로 전이한 주문의 대기 결제 건(PENDING/PROCESSING)을 EXPIRED 로 닫는다.
-     * 늦게 온 PG 승인은 주문을 되살리지 않고 PG 자동 취소된다({@code ShopLatePaymentRefundService}).
+     * 만료 전에 PortOne {@code PAID} 는 확정/불일치 취소로 처리하므로, 여기까지 온 대기 건은
+     * {@code NOT_PAID} 등으로 확인된 경우다. 그 뒤 늦게 온 PG 승인은 주문을 되살리지 않고
+     * PG 자동 취소된다({@code ShopLatePaymentRefundService}).
      *
      * @param tenantId      테넌트 ID
      * @param orderPublicId 주문 공개 ID

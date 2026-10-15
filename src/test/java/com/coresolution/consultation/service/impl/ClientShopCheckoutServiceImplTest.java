@@ -79,6 +79,7 @@ import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
@@ -1264,6 +1265,7 @@ class ClientShopCheckoutServiceImplTest {
         order.setStatus(ShopClientOrderStatus.CREATED);
         when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
+        stubNoPaymentsForOrder();
 
         assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
         assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
@@ -1275,6 +1277,7 @@ class ClientShopCheckoutServiceImplTest {
                 eq(ShopCheckoutConstants.pointReleaseKey(ORDER_ID)));
         verify(shopClientOrderRepository).save(order);
         verify(shopNotificationHelper).notifyOrderHoldExpired(TENANT, order);
+        verify(portOneV2PaymentVerifyService, never()).resolvePaidState(any(), any());
     }
 
     @Test
@@ -2509,10 +2512,20 @@ class ClientShopCheckoutServiceImplTest {
                 .thenReturn(Optional.of(order));
         Payment pending = Payment.builder().paymentId("pay-open").orderId(ORDER_ID)
                 .status(Payment.PaymentStatus.PENDING).build();
+        pending.setId(11L);
         Payment failed = Payment.builder().paymentId("pay-failed").orderId(ORDER_ID)
                 .status(Payment.PaymentStatus.FAILED).build();
+        failed.setId(10L);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
         when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
                 .thenReturn(List.of(pending, failed));
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, "pay-open"))
+                .thenReturn(PortOnePaymentPaidState.NOT_PAID);
 
         assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
 
@@ -2522,6 +2535,110 @@ class ClientShopCheckoutServiceImplTest {
         ArgumentCaptor<Payment> savedPayments = ArgumentCaptor.forClass(Payment.class);
         verify(paymentRepository, times(1)).save(savedPayments.capture());
         assertEquals("pay-open", savedPayments.getValue().getPaymentId());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — PortOne NOT_PAID 이면 EXPIRED")
+    void expireOrderHold_portOneNotPaid_expires() {
+        ShopClientOrder order = pendingOrder(1_000L);
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.NOT_PAID);
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.EXPIRED, order.getStatus());
+        verify(shopNotificationHelper).notifyOrderHoldExpired(TENANT, order);
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — PortOne PAID·금액 일치면 주문 PAID 확정")
+    void expireOrderHold_portOnePaid_fulfillsOrder() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.PAID);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
+        stubDefaultPolicies();
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        assertEquals(Payment.PaymentStatus.APPROVED, pending.getStatus());
+        assertTrue(pending.getApprovedAt() != null);
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
+        verify(paymentService, never()).approveShopOrderPayment(any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — PortOne PAID·금액 불일치면 취소·환불 1회, 재호출 시 이중 환불 없음")
+    void expireOrderHold_portOnePaid_mismatch_cancelsOnce_noDoubleRefund() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(1L, Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.PAID);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, pending.getPaymentId()))
+                .thenReturn(false);
+        when(portOneV2PaymentCancelService.cancelPayment(
+                TENANT, pending.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON))
+                .thenReturn(true);
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        assertEquals(Payment.PaymentStatus.REFUNDED, pending.getStatus());
+        verify(portOneV2PaymentCancelService, times(1)).cancelPayment(
+                TENANT, pending.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        verify(paymentService, times(1)).refundPayment(
+                pending.getPaymentId(),
+                pending.getAmount(),
+                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+
+        verify(portOneV2PaymentCancelService, times(1)).cancelPayment(any(), any(), any());
+        verify(paymentService, times(1)).refundPayment(any(), any(), any());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"UNKNOWN", "IN_PROGRESS"})
+    @DisplayName("hold TTL 만료 — PortOne UNKNOWN/IN_PROGRESS 이면 상태 유지·false(재시도)")
+    void expireOrderHold_portOneTransient_doesNotExpire(String paidStateName) {
+        ShopClientOrder order = pendingOrder(500L);
+        ShopClientOrderStatus before = order.getStatus();
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.valueOf(paidStateName));
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(before, order.getStatus());
+        verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
     }
 
     private static ShopClientOrder reusableOrder(ShopClientOrderStatus status, long subtotal, String source) {
@@ -2929,6 +3046,40 @@ class ClientShopCheckoutServiceImplTest {
                 TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenReturn(Optional.of(payment));
         return payment;
+    }
+
+    private void stubNoPaymentsForOrder() {
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of());
+    }
+
+    private Payment stubLatestOpenPayment(long amountMinor, Payment.PaymentStatus status) {
+        Payment payment = Payment.builder()
+                .paymentId("pay-hold")
+                .orderId(ORDER_ID)
+                .amount(java.math.BigDecimal.valueOf(amountMinor))
+                .status(status)
+                .build();
+        payment.setId(42L);
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.REFUNDED))
+                .thenReturn(Optional.empty());
+        when(paymentRepository.findByTenantIdAndOrderIdAndIsDeletedFalse(TENANT, ORDER_ID))
+                .thenReturn(List.of(payment));
+        return payment;
+    }
+
+    private static Optional<Payment> paymentStatusOptional(Payment payment, Payment.PaymentStatus status) {
+        return payment.getStatus() == status ? Optional.of(payment) : Optional.empty();
     }
 
     private static ShopCatalogSku offerSku(long unitPriceMinor) {

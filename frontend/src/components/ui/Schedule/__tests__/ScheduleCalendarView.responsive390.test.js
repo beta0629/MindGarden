@@ -120,13 +120,18 @@ describe('월간 칩 좁은 단계', () => {
     expect(decls).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
-  test('상태 색은 칩 변수 한 곳에서 정하고 점이 그 변수를 쓴다', () => {
+  test('상태 색은 좁은 테두리용이고 앞 점은 상담사 색 변수를 쓴다', () => {
     ['booked', 'confirmed', 'completed', 'tentative', 'cancelled'].forEach((status) => {
       expect(IMS_CSS).toMatch(
         new RegExp(`mg-v2-ad-calendar-event--status-${status} \\{\\s*--mg-month-event-status-color:`)
       );
     });
-    expect(IMS_CSS).toMatch(/__dot \{[^}]*background-color: var\(--mg-month-event-status-color\);/);
+    expect(IMS_CSS).toMatch(
+      /__dot \{[\s\S]*?background-color: var\(--mg-consultant-color, var\(--mg-v2-color-neutral-500\)\);/
+    );
+    expect(IMS_CSS).toMatch(
+      /border-inline-start: var\(--mg-v2-border-width-thick\) solid var\(--mg-month-event-status-color\)/
+    );
     expect(IMS_CSS).not.toMatch(/__dot--booked \{/);
   });
 });

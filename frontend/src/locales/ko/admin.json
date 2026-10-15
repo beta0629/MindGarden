@@ -3125,6 +3125,8 @@
       "collapseAria": "안내 영역 접기",
       "consultantCompletedAria": "{{name}}, 이번 달 완료 {{count}}회",
       "consultantMonthlyCompleted": "상담사 · {{month}}월 완료",
+      "consultantShownAria": "{{name}}, 이번 달 일정 {{count}}건",
+      "consultantMonthlyShown": "상담사 · {{month}}월",
       "consultantCumulativeCompleted": "상담사 · 누적 완료",
       "consultantCumulativeCompletedAria": "{{name}}, 누적 완료 {{count}}회"
     },

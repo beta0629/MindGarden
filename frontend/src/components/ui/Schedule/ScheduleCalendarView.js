@@ -53,9 +53,7 @@ import {
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
-import TeacherColorDot from './TeacherColorDot';
 import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
-import { getTeacherColor } from '../../../utils/getTeacherColor';
 import { useConsultantColorPalette } from '../../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
@@ -547,13 +545,6 @@ const ScheduleCalendarView = ({
         const clientName = toDisplayString(extendedProps.clientName, clientNameFallback);
         const consultantName = toDisplayString(extendedProps.consultantName, '');
         const consultantId = extendedProps?.consultantId ?? event.consultantId ?? null;
-        const teacherColor = consultantId != null && String(consultantId).trim() !== ''
-            ? getTeacherColor({
-                consultantId,
-                consultants,
-                colorFromData: extendedProps
-            })
-            : null;
         const statusLabel = resolveScheduleStatusDisplayLabel(
             extendedProps?.status,
             { codes: scheduleStatusOptions, translate: t }
@@ -648,12 +639,6 @@ const ScheduleCalendarView = ({
                     {integratedMonthEventLayout && (
                         <span className={dotClass} aria-hidden="true" />
                     )}
-                    {integratedMonthEventLayout && teacherColor ? (
-                        <TeacherColorDot
-                            colorResult={teacherColor}
-                            className="mg-v2-ad-calendar-event__teacher-dot"
-                        />
-                    ) : null}
                     <span className="mg-v2-ad-calendar-event__time">
                         {integratedMonthEventLayout ? (
                             <>

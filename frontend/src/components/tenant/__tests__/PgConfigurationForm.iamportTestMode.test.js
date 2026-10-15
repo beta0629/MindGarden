@@ -48,6 +48,19 @@ describe('PgConfigurationForm IAMPORT testMode create defaults', () => {
     );
   });
 
+  test('live channel key is always rendered — no exclusive testMode hide branch', () => {
+    // Deadlock fix: must not gate #portoneChannelKey behind formData.testMode ? (only test) : (live)
+    expect(formJs).not.toMatch(
+      /formData\.testMode\s*\?\s*\(\s*<div[\s\S]*?id="portoneChannelKeyTest"[\s\S]*?\)\s*:\s*\(/
+    );
+    expect(formJs).not.toMatch(/운영 채널 키·시크릿은 테스트에선 사용 안 함/);
+    const liveKeyMatches = formJs.match(/id="portoneChannelKey"/g) || [];
+    expect(liveKeyMatches).toHaveLength(1);
+    const switchIdx = formJs.indexOf('id="testModeIamport"');
+    const liveKeyIdx = formJs.indexOf('id="portoneChannelKey"');
+    expect(liveKeyIdx).toBeGreaterThan(switchIdx);
+  });
+
   test('testModeIamport switch appears BEFORE channel key fields in source', () => {
     const switchIdx = formJs.indexOf('id="testModeIamport"');
     const liveKeyIdx = formJs.indexOf('id="portoneChannelKey"');

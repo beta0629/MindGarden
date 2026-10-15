@@ -88,6 +88,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -596,6 +598,9 @@ class ClientShopCheckoutServiceImplTest {
 
         ShopClientOrder order = pendingOrder(0L);
         order.setId(888L);
+        // 이미 PAID 인 주문의 이행 재시도는 결제 확정 게이트를 다시 타지 않는다.
+        // 확정 전 매핑 없음 거절은 completeOrder 게이트 테스트가 본다.
+        order.setStatus(ShopClientOrderStatus.PAID);
         ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
                 .clientOrder(order)
                 .lineNo(1)
@@ -605,7 +610,6 @@ class ClientShopCheckoutServiceImplTest {
                 .consultantClientMappingId(null)
                 .build();
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        stubDefaultPolicies();
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(888L))
                 .thenReturn(List.of(orderLine));
         when(eventRepository.findByTenantIdAndOrderPublicIdAndIsDeletedFalseOrderBySkuCodeAsc(TENANT, ORDER_ID))
@@ -2457,6 +2461,227 @@ class ClientShopCheckoutServiceImplTest {
                 .idempotencyKey(idemKey)
                 .pointsToRedeemMinor(0L)
                 .lines(lines)
+                .build();
+    }
+
+    @Test
+    @DisplayName("지정 상품 체크아웃 — 필수 약관 3종이 없으면 주문 저장 전 거부")
+    void checkout_clientOffer_missingConsents_rejectsBeforeSave() {
+        String idemKey = "idem-offer-no-consent";
+        ShopCatalogSku sku = offerSku(45_000L);
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
+                .thenReturn(Optional.of(sku));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.checkout(
+                TENANT, CLIENT_ID, buyNowRequest(idemKey, List.of(buyNowLine(sku.getSkuCode(), 1)))));
+
+        assertEquals(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS, ex.getMessage());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("지정 상품 체크아웃 — 약관 3종이 있으면 주문에 동의를 남긴다")
+    void checkout_clientOffer_withConsents_stampsOrder() {
+        String idemKey = "idem-offer-consent";
+        ShopCatalogSku sku = offerSku(45_000L);
+        when(shopClientOrderRepository.findByTenantClientAndCheckoutKey(TENANT, CLIENT_ID, idemKey))
+                .thenReturn(Optional.empty());
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
+                .thenReturn(Optional.of(sku));
+        stubPolicies(true, true, 0L, 0L);
+        when(clientPointWalletService.getBalance(TENANT, CLIENT_ID))
+                .thenReturn(ShopPointBalanceResponse.builder().availableMinor(0L).heldMinor(0L).build());
+        ArgumentCaptor<ShopClientOrder> orderCaptor = ArgumentCaptor.forClass(ShopClientOrder.class);
+        when(shopClientOrderRepository.save(orderCaptor.capture())).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderLineRepository.save(any(ShopClientOrderLine.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT), anyString()))
+                .thenAnswer(inv -> Optional.of(orderCaptor.getValue()));
+
+        service.checkout(TENANT, CLIENT_ID, consentedBuyNow(idemKey, sku.getSkuCode()));
+
+        ShopClientOrder saved = orderCaptor.getValue();
+        assertTrue(saved.isConsentPurchase());
+        assertTrue(saved.isConsentUsageRefund());
+        assertTrue(saved.isConsentThirdParty());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 지정 상품 동의 없으면 PG 생성 전 거부")
+    void preparePayment_clientOffer_missingConsents_rejects() {
+        ShopClientOrder order = offerOrder(false);
+        stubOfferLine(order);
+        stubVerifiedPayer();
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.preparePayment(
+                TENANT, CLIENT_ID, ORDER_ID, ShopPreparePaymentRequest.builder().build()));
+
+        assertEquals(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @ParameterizedTest(name = "preparePayment — {0} 이면 PG 생성 전 거부")
+    @ValueSource(strings = {"다른 내담자의 지정", "취소된 지정", "이미 결제된 지정"})
+    void preparePayment_clientOffer_notPayable_rejects(String mismatch) {
+        ShopClientOrder order = offerOrder(true);
+        ShopCatalogSku sku = stubOfferLine(order);
+        stubVerifiedPayer();
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.preparePayment(
+                TENANT, CLIENT_ID, ORDER_ID, ShopPreparePaymentRequest.builder().build()));
+
+        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage(), mismatch);
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 휴대폰 미인증은 지정 상품이어도 거부")
+    void preparePayment_clientOffer_unverifiedPhone_rejects() {
+        ShopClientOrder order = offerOrder(true);
+        stubOfferLine(order);
+        User user = User.builder().name("홍길동").phone("enc-01012345678").build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.preparePayment(
+                TENANT, CLIENT_ID, ORDER_ID, ShopPreparePaymentRequest.builder().build()));
+
+        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — 지정 상품 동의 없으면 PAID 전이 거부")
+    void completeOrder_clientOffer_missingConsents_rejects() {
+        ShopClientOrder order = offerOrder(false);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        stubOfferLine(order);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS, ex.getMessage());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+    }
+
+    @ParameterizedTest(name = "결제 확정 — {0} 이면 PAID 로 넘기지 않는다")
+    @ValueSource(strings = {"다른 내담자의 지정", "취소된 지정", "이미 결제된 지정"})
+    void completeOrder_clientOffer_notPayable_rejects(String mismatch) {
+        ShopClientOrder order = offerOrder(true);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        ShopCatalogSku sku = stubOfferLine(order);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
+                .thenReturn(Optional.empty());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage(), mismatch);
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(shopClientOrderRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — 지정 상품이고 휴대폰 미인증이면 PAID 전이 거부")
+    void completeOrder_unverifiedPhone_rejects() {
+        ShopClientOrder order = offerOrder(true);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        stubOfferLine(order);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        User user = User.builder().name("홍길동").phone("enc-01012345678").build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — 상담 라인 매핑이 더 이상 활성이 아니면 PAID 전이 거부")
+    void completeOrder_missingMapping_rejects() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(4242L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(consultationCartLine(10_000L).getSku())
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(null)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(4242L))
+                .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+    }
+
+    private static ShopCatalogSku offerSku(long unitPriceMinor) {
+        ShopCatalogSku sku = cartLine(unitPriceMinor).getSku();
+        sku.setSkuCode("OFFER_AB12CD34EF56");
+        sku.setCatalogVisible(false);
+        return sku;
+    }
+
+    private static ShopClientOrder offerOrder(boolean consented) {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(5151L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setConsentPurchase(consented);
+        order.setConsentUsageRefund(consented);
+        order.setConsentThirdParty(consented);
+        return order;
+    }
+
+    private ShopCatalogSku stubOfferLine(ShopClientOrder order) {
+        ShopCatalogSku sku = offerSku(10_000L);
+        ShopClientOrderLine line = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(sku)
+                .skuCodeSnapshot(sku.getSkuCode())
+                .quantity(1)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId()))
+                .thenReturn(List.of(line));
+        return sku;
+    }
+
+    private void stubVerifiedPayer() {
+        User user = User.builder().email("buyer@test.com").name("홍길동").phone("enc-01012345678").build();
+        user.setId(CLIENT_ID);
+        user.setTenantId(TENANT);
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
+        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(true);
+    }
+
+    private static ShopCheckoutRequest consentedBuyNow(String idemKey, String skuCode) {
+        return ShopCheckoutRequest.builder()
+                .idempotencyKey(idemKey)
+                .pointsToRedeemMinor(0L)
+                .lines(List.of(buyNowLine(skuCode, 1)))
+                .consentPurchase(true)
+                .consentUsageRefund(true)
+                .consentThirdParty(true)
                 .build();
     }
 

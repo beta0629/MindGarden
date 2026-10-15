@@ -568,4 +568,37 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     expect(expenseCaption()).not.toContain('임대');
     expect(expenseCaption()).not.toContain('급여');
   });
+
+  it('대시보드 조회가 실패하면 거래 목록의 COMPLETED 지출만 나간 돈에 쓴다', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('finance/dashboard')) {
+        throw new Error('dashboard unavailable');
+      }
+      if (path.includes('financial-transactions')) {
+        return {
+          ...mockTransactionsResponse,
+          data: ledgerPageRows
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(expenseCaption()).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+    });
+    expect(expenseCaption()).not.toContain('9,000,000');
+    expect(expenseCaption()).not.toContain('8,000,000');
+    expect(expenseCaption()).not.toContain('7,000,000');
+    expect(expenseCaption()).not.toContain('임대');
+    expect(expenseCaption()).not.toContain('급여');
+    const expenseCell = document.querySelector('.operator-ledger-summary__cell--expense');
+    expect(expenseCell.textContent).not.toContain('9,000,000');
+    expect(expenseCell.textContent).toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+  });
 });

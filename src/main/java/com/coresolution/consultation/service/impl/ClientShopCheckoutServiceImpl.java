@@ -818,8 +818,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
      */
     /**
-     * 지정 상품 라인이 있으면 필수 약관 3종이 주문에 남아 있는지, 그리고 그 SKU 가
+     * 지정 상품 라인이 있으면 휴대폰 인증, 필수 약관 3종, 그리고 그 SKU 가
      * 아직 이 내담자의 활성 지정(다른 내담자·취소·비활성·이미 결제 아님)인지 다시 확인한다.
+     * 지정 상품이 없는 주문은 여기서 반환한다. 카탈로그 결제 확정은 사용자 행을 다시 찾지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 결제 내담자 users.id
@@ -842,6 +843,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         if (offerSkuCodes.isEmpty()) {
             return;
         }
+        User payer = userRepository.findByTenantIdAndId(tenantId, clientUserId)
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+        requireVerifiedKoreanMobileForPayment(payer);
         if (!orderHasRequiredConsents(order)) {
             throw new IllegalArgumentException(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS);
         }
@@ -1025,9 +1029,6 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return true;
         }
-        User payer = userRepository.findByTenantIdAndId(tenantId, order.getClientId())
-                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
-        requireVerifiedKoreanMobileForPayment(payer);
         requireConsultationMappingsForPayment(tenantId, order.getClientId(), order);
         requireAssignedOfferPaymentGate(tenantId, order.getClientId(), order);
         markOrderPaidAndCommitPoints(tenantId, order);

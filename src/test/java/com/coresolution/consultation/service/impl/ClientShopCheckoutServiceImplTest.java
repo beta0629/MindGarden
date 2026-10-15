@@ -2589,10 +2589,11 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("결제 확정 — 휴대폰 미인증이면 PAID 전이 거부")
+    @DisplayName("결제 확정 — 지정 상품이고 휴대폰 미인증이면 PAID 전이 거부")
     void completeOrder_unverifiedPhone_rejects() {
-        ShopClientOrder order = pendingOrder(0L);
+        ShopClientOrder order = offerOrder(true);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        stubOfferLine(order);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         User user = User.builder().name("홍길동").phone("enc-01012345678").build();
         user.setId(CLIENT_ID);

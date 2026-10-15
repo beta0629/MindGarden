@@ -18,6 +18,7 @@ import {
   type OpsPgConfigurationItem
 } from "@/services/opsWebhookSecretService";
 import { fetchOpsTenants, type OpsTenantItem } from "@/services/tenantOpsService";
+import { isClientApiErrorNotified } from "@/utils/clientApiError";
 import notificationManager from "@/utils/notification";
 
 import styles from "./webhook-secret.module.css";
@@ -141,6 +142,7 @@ export default function OpsWebhookSecretPage() {
     }
     try {
       setSubmitting(true);
+      setError(null);
       const updated = await patchOpsWebhookSecret({
         tenantId: tenantIdForPatch,
         configId: detail.configId,
@@ -151,9 +153,14 @@ export default function OpsWebhookSecretPage() {
       setConfirmMode(null);
       notificationManager.success(OPS_WEBHOOK_SECRET_LABELS.SAVE_SUCCESS);
     } catch (err) {
-      notificationManager.error(
-        err instanceof Error ? err.message : OPS_WEBHOOK_SECRET_LABELS.ERROR_LOAD
-      );
+      const message =
+        err instanceof Error && err.message.trim().length > 0
+          ? err.message
+          : OPS_WEBHOOK_SECRET_LABELS.ERROR_SAVE;
+      setError(message);
+      if (!isClientApiErrorNotified(err)) {
+        notificationManager.error(message);
+      }
     } finally {
       setSubmitting(false);
     }

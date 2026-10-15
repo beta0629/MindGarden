@@ -253,6 +253,7 @@ public class TenantPgConfigurationController extends BaseApiController {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "시크릿 형식 오류"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "ADMIN/비OPS 거부")
     })
     @PatchMapping("/{configId}/webhook-secret")

@@ -88,6 +88,29 @@ class PortOneWebhookSignatureVerifierTest {
     }
 
     @Test
+    void isWhsecPrefixedBase64_acceptsPrefixedStandardBase64() {
+        assertTrue(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("  " + SPEC_SECRET + "  "));
+        assertTrue(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(
+                "whsec_dW5pdC10ZXN0LXdlYmhvb2stc2VjcmV0"));
+        assertTrue(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(
+                "whsec_AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI="));
+    }
+
+    @Test
+    void isWhsecPrefixedBase64_rejectsMissingPrefix() {
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(SPEC_SECRET_UNPREFIXED));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(" " + SPEC_SECRET_UNPREFIXED + " "));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(null));
+    }
+
+    @Test
+    void isWhsecPrefixedBase64_rejectsBase64DecodeFailure() {
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_"));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_unit_test_secret"));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_!!!!"));
+    }
+
+    @Test
     void isValid_rejectsMissingWebhookId() {
         assertFalse(PortOneWebhookSignatureVerifier.isValid(
                 SPEC_PAYLOAD,

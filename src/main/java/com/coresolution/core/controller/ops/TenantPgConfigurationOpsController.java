@@ -347,6 +347,7 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
                     content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "시크릿 형식 오류"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
     })

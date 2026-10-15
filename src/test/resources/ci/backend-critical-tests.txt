@@ -58,3 +58,7 @@
 **/ShopClientOfferPricingTest.java
 **/TenantHostSubdomainUtilTest.java
 **/TenantHostAliasesProdOffTest.java
+
+# 2026-10-15 포트원 웹훅 서명 (#1650) — Payment/Session 등 기존 패턴에 걸리지 않음
+**/PortOneWebhookSignatureVerifierTest.java
+**/TenantPgConfigurationServiceImplTest.java

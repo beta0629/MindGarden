@@ -134,6 +134,9 @@ const OUTFLOW_MERGED_ALIAS_KEYS = new Set([
   CARD_MERCHANT_FEE_CATEGORY_KEY
 ]);
 
+/** 장부 캡션에서 posted가 아닌 상태. null·공백 status는 posted로 본다. */
+const LEDGER_NON_POSTED_STATUSES = new Set(['CANCELLED', 'REJECTED']);
+
 /**
  * FINANCE_DASHBOARD 응답에서 summary·transactions·categoryBreakdown 추출
  * @param {unknown} raw
@@ -420,19 +423,44 @@ export function sumBreakdownValues(map) {
 }
 
 /**
+ * 장부 posted 행. 없으면 false.
+ * status가 null·undefined·공백이면 posted. CANCELLED·REJECTED(대소문자 무시)는 제외.
+ * @param {object|null|undefined} tx
+ * @returns {boolean}
+ */
+export function isPostedLedgerTransaction(tx) {
+  if (!tx) {
+    return false;
+  }
+  const rawStatus = tx.status;
+  if (rawStatus == null) {
+    return true;
+  }
+  const trimmed = String(rawStatus).trim();
+  if (trimmed === '') {
+    return true;
+  }
+  return !LEDGER_NON_POSTED_STATUSES.has(trimmed.toUpperCase());
+}
+
+/**
  * 나간 곳 mix — 서버 expenseCategoryBreakdown 을 SSOT로 쓴다.
  * 별칭(급여·임대·관리·환불 서브카테고리)만 표시용 병합하고, 나머지 카테고리는 키별 항목으로 전부 표시.
  * 지출 breakdown 의 상담료 계열은 수입 별칭으로 거르지 않고 `환불(상담료)` 항목으로 표시.
  * 카드 수수료는 breakdown 키 우선, 없으면 INCOME tx fee 합(레거시).
+ * options.periodRefundAmount 가 유한 숫자면 환불 버킷은 그 금액만 쓴다(0이면 환불 항목 없음).
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
+ * @param {{ periodRefundAmount?: number }} [options]
  * @returns {Array<{ id: string, label: string, amount: number }>}
  */
-export function buildOutflowMixItems(categoryBreakdown, transactions) {
+export function buildOutflowMixItems(categoryBreakdown, transactions, options = {}) {
   const breakdown = categoryBreakdown || {};
   const items = [];
   const txList = Array.isArray(transactions) ? transactions : [];
   const breakdownKeys = Object.keys(breakdown);
+  const periodRefundAmount = options?.periodRefundAmount;
+  const hasPeriodRefundAmount = Number.isFinite(periodRefundAmount);
 
   if (breakdownKeys.length > 0) {
     const salaryPresent = hasAnyBreakdownAlias(breakdown, SALARY_CATEGORY_ALIASES);
@@ -453,21 +481,31 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
       });
     }
 
-    const refundKeyPresent =
-      hasBreakdownKey(breakdown, 'CONSULTATION_REFUND')
-      || OFD_REFUND_SUBCATEGORIES.some((k) => hasBreakdownKey(breakdown, k));
-    if (refundKeyPresent) {
-      let refundAmount = toSafeNumber(breakdown.CONSULTATION_REFUND);
-      OFD_REFUND_SUBCATEGORIES.forEach((k) => {
-        if (k !== 'CONSULTATION_REFUND') {
-          refundAmount += toSafeNumber(breakdown[k]);
-        }
-      });
-      items.push({
-        id: 'refund',
-        label: OFD_MIX_CATEGORY.REFUND,
-        amount: refundAmount
-      });
+    if (hasPeriodRefundAmount) {
+      if (periodRefundAmount !== 0) {
+        items.push({
+          id: 'refund',
+          label: OFD_MIX_CATEGORY.REFUND,
+          amount: periodRefundAmount
+        });
+      }
+    } else {
+      const refundKeyPresent =
+        hasBreakdownKey(breakdown, 'CONSULTATION_REFUND')
+        || OFD_REFUND_SUBCATEGORIES.some((k) => hasBreakdownKey(breakdown, k));
+      if (refundKeyPresent) {
+        let refundAmount = toSafeNumber(breakdown.CONSULTATION_REFUND);
+        OFD_REFUND_SUBCATEGORIES.forEach((k) => {
+          if (k !== 'CONSULTATION_REFUND') {
+            refundAmount += toSafeNumber(breakdown[k]);
+          }
+        });
+        items.push({
+          id: 'refund',
+          label: OFD_MIX_CATEGORY.REFUND,
+          amount: refundAmount
+        });
+      }
     }
 
     if (hasBreakdownKey(breakdown, CARD_MERCHANT_FEE_CATEGORY_KEY)) {
@@ -519,17 +557,30 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
   if (observedCanonical.has('RENT') || observedCanonical.has('UTILITY')) {
     items.push({ id: 'rentUtility', label: OFD_MIX_CATEGORY.RENT_UTILITY, amount: 0 });
   }
-  const refundObservedInTx = txList.some((tx) => {
-    const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
-    const cat = String(tx?.category ?? '').toUpperCase();
-    return OFD_REFUND_SUBCATEGORIES.includes(sub) || OFD_REFUND_SUBCATEGORIES.includes(cat);
-  });
-  if (refundObservedInTx) {
-    items.push({
-      id: 'refund',
-      label: OFD_MIX_CATEGORY.REFUND,
-      amount: sumRefundFromTransactions(txList)
+  if (hasPeriodRefundAmount) {
+    if (periodRefundAmount !== 0) {
+      items.push({
+        id: 'refund',
+        label: OFD_MIX_CATEGORY.REFUND,
+        amount: periodRefundAmount
+      });
+    }
+  } else {
+    const refundObservedInTx = txList.some((tx) => {
+      if (!isPostedLedgerTransaction(tx)) {
+        return false;
+      }
+      const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
+      const cat = String(tx?.category ?? '').toUpperCase();
+      return OFD_REFUND_SUBCATEGORIES.includes(sub) || OFD_REFUND_SUBCATEGORIES.includes(cat);
     });
+    if (refundObservedInTx) {
+      items.push({
+        id: 'refund',
+        label: OFD_MIX_CATEGORY.REFUND,
+        amount: sumRefundFromTransactions(txList)
+      });
+    }
   }
   const cardFeeAmount = sumCardMerchantFeeFromTransactions(txList);
   if (cardFeeAmount > 0) {
@@ -712,6 +763,9 @@ export function sumRefundFromTransactions(transactions) {
     return 0;
   }
   return transactions.reduce((sum, tx) => {
+    if (!isPostedLedgerTransaction(tx)) {
+      return sum;
+    }
     const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
     const cat = String(tx?.category ?? '').toUpperCase();
     if (

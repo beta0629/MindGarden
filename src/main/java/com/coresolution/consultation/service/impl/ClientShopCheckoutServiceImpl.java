@@ -514,18 +514,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
 
     /**
      * 결제 준비 전, 지정 상품 주문의 상담 라인 매핑 재확인.
-     * 일반 {@code /client/shop} 주문은 이 게이트를 타지 않는다.
-     * 매핑이 비었거나 더 이상 활성이 아니면 PG 결제를 만들지 않는다.
+     * 일반 {@code /client/shop} 의 명시적 상담 카테고리 주문은 이 게이트를 타지 않는다.
+     * 카테고리가 비어 있는 SKU는 상담 상품으로 보고, 매핑이 없으면 PG 결제를 만들지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 내담자 ID
      * @param order 결제할 주문
-     * @throws IllegalArgumentException 지정 상품의 상담 라인에 쓸 활성 매핑이 없을 때
+     * @throws IllegalArgumentException 상담 라인에 쓸 활성 매핑이 없을 때
      */
     private void requireConsultationMappingsForPayment(String tenantId, Long clientUserId, ShopClientOrder order) {
         List<ShopClientOrderLine> lines = shopClientOrderLineRepository
                 .findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
-        if (!containsClientOfferLine(lines)) {
+        if (!containsClientOfferLine(lines) && !containsBlankCategoryLine(lines)) {
             return;
         }
         List<ShopClientOrderLine> consultationLines = lines.stream()
@@ -873,6 +873,19 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 throw new IllegalArgumentException(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE);
             }
         }
+    }
+
+    private static boolean containsBlankCategoryLine(List<ShopClientOrderLine> lines) {
+        if (lines == null) {
+            return false;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line != null && isConsultationSku(line.getSku())
+                    && !StringUtils.hasText(line.getSku().getCatalogCategory())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean containsClientOfferLine(List<ShopClientOrderLine> lines) {

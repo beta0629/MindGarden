@@ -11,6 +11,7 @@ import {
   buildMoneyTodoRuleComments,
   buildNtsChecklistComments,
   buildOutflowMixItems,
+  isPostedLedgerTransaction,
   buildPaydayChecklistComment,
   buildWithholdingStoredAmountComment,
   collectPrimaryPreConfirmQueries,
@@ -26,7 +27,8 @@ import {
   resolveSalaryPayDayFromCodes,
   sumBreakdownValues,
   sumPendingConsultationFees,
-  sumPendingSalaryNet
+  sumPendingSalaryNet,
+  sumRefundFromTransactions
 } from '../organisms/moneyCockpit/moneyCockpitData';
 import {
   OFD_HERO,
@@ -461,6 +463,67 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items.find((i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
       .toBe(91000);
     expect(items.reduce((s, i) => s + i.amount, 0)).toBe(241000);
+  });
+
+  test('sumRefundFromTransactions: CANCELLED·REJECTED 환불은 합에서 제외', () => {
+    expect(sumRefundFromTransactions([
+      { status: 'COMPLETED', subcategory: 'CONSULTATION_REFUND', amount: 100000 },
+      { status: 'CANCELLED', subcategory: 'CONSULTATION_REFUND', amount: 4135000 },
+      { status: 'REJECTED', subcategory: 'SESSION_REFUND', amount: 500000 }
+    ])).toBe(100000);
+  });
+
+  test('sumRefundFromTransactions: 공백·누락 status는 posted, null tx는 제외', () => {
+    expect(isPostedLedgerTransaction(null)).toBe(false);
+    expect(sumRefundFromTransactions([
+      null,
+      { status: '   ', subcategory: 'CONSULTATION_REFUND', amount: 30000 },
+      { subcategory: 'SESSION_REFUND', amount: 20000 },
+      { category: 'CONSULTATION_PARTIAL_REFUND', amount: 10000 }
+    ])).toBe(60000);
+  });
+
+  test('outflow: periodRefundAmount가 있으면 취소 tx와 무관하게 그 금액 하나만 환불 버킷', () => {
+    const cancelledRefund = {
+      status: 'CANCELLED',
+      transactionType: 'EXPENSE',
+      category: 'CONSULTATION_REFUND',
+      subcategory: 'CONSULTATION_REFUND',
+      amount: 4135000
+    };
+    const items = buildOutflowMixItems({}, [cancelledRefund], { periodRefundAmount: 100000 });
+    expect(items.filter((i) => i.id === 'refund')).toEqual([
+      { id: 'refund', label: '환불', amount: 100000 }
+    ]);
+  });
+
+  test('outflow: periodRefundAmount 0이면 취소 tx로도 환불 항목을 만들지 않는다', () => {
+    const cancelledRefund = {
+      status: 'CANCELLED',
+      transactionType: 'EXPENSE',
+      category: 'CONSULTATION_REFUND',
+      subcategory: 'CONSULTATION_REFUND',
+      amount: 4135000
+    };
+    const items = buildOutflowMixItems({}, [cancelledRefund], { periodRefundAmount: 0 });
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+  });
+
+  test('outflow: 2인자 호출은 breakdown CONSULTATION_REFUND 금액을 유지하고 취소 tx로 바꾸지 않는다', () => {
+    const fromBreakdown = buildOutflowMixItems({ CONSULTATION_REFUND: 50000 }, []);
+    expect(fromBreakdown.find((i) => i.id === 'refund')?.amount).toBe(50000);
+
+    const withCancelled = buildOutflowMixItems(
+      { CONSULTATION_REFUND: 50000 },
+      [{
+        status: 'CANCELLED',
+        transactionType: 'EXPENSE',
+        category: 'CONSULTATION_REFUND',
+        subcategory: 'CONSULTATION_REFUND',
+        amount: 4135000
+      }]
+    );
+    expect(withCancelled.find((i) => i.id === 'refund')?.amount).toBe(50000);
   });
 });
 

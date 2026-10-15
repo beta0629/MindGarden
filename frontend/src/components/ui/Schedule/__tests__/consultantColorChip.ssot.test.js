@@ -28,7 +28,7 @@ describe('통합 월간 상담사 색·건수 SSOT', () => {
     expect(css).toMatch(/border-inline-start:[^;]*var\(--mg-month-event-status-color\)/);
   });
 
-  test('통합 월간 범례 건수는 보이는 일정 집계를 쓴다', () => {
+  test('통합 월간 범례 건수는 표시 월 범위 집계를 쓰고 가시 그리드와 분리한다', () => {
     const unified = read(
       __dirname,
       '..',
@@ -37,7 +37,14 @@ describe('통합 월간 상담사 색·건수 SSOT', () => {
       'schedule',
       'UnifiedScheduleComponent.js'
     );
-    expect(unified).toMatch(/countVisibleConsultantScheduleEvents\(\s*filteredEvents/);
+    expect(unified).toMatch(/toDisplayedMonthDateRange/);
+    expect(unified).toMatch(/displayedMonthDateRange/);
+    expect(unified).toMatch(
+      /countVisibleConsultantScheduleEvents\(\s*filteredEvents,\s*consultants,\s*displayedMonthDateRange\s*\)/
+    );
+    expect(unified).not.toMatch(
+      /countVisibleConsultantScheduleEvents\(\s*filteredEvents,\s*consultants,\s*calendarDateRange\s*\)/
+    );
     expect(unified).toMatch(/CONSULTANT_COUNT_BASIS_SHOWN/);
   });
 });

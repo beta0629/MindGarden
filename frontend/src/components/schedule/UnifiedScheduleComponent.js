@@ -124,6 +124,27 @@ const toVisibleInclusiveDateRange = (info) => ({
   endDate: toInclusiveEndDateStr(info?.end)
 });
 
+/**
+ * FullCalendar datesSet info → 표시 중인 달(활성 월) inclusive 범위.
+ * ScheduleCalendarView 는 currentStart 를 info 최상위에 평탄화한다(view.currentStart 폴백).
+ * 범례 건수는 가시 그리드 spill(이전·다음 달 셀)이 아니라 이 범위를 쓴다.
+ *
+ * @param {{ currentStart?: Date, view?: { currentStart?: Date } }} info
+ * @returns {{ startDate: string, endDate: string }|null}
+ */
+const toDisplayedMonthDateRange = (info) => {
+  const currentStart = info?.currentStart ?? info?.view?.currentStart;
+  if (!currentStart || Number.isNaN(currentStart.getTime?.() ?? Number.NaN)) {
+    return null;
+  }
+  const year = currentStart.getFullYear();
+  const month = currentStart.getMonth();
+  return {
+    startDate: toLocalDateStr(new Date(year, month, 1)),
+    endDate: toLocalDateStr(new Date(year, month + 1, 0))
+  };
+};
+
 
 /**
  * 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약.
@@ -297,6 +318,10 @@ const UnifiedScheduleComponent = ({
      */
     const [calendarDateRange, setCalendarDateRange] = useState(null);
     const calendarDateRangeRef = useRef(calendarDateRange);
+    /**
+     * 활성 표시 월(1일~말일). 범례 건수 SSOT — 가시 그리드 spill 과 분리.
+     */
+    const [displayedMonthDateRange, setDisplayedMonthDateRange] = useState(null);
     /** 같은 범위 조회 키(역할+대상+범위+필터+갱신 트리거)는 진행 중 요청을 재사용 */
     const scheduleRangeFetchDeduperRef = useRef(null);
     if (scheduleRangeFetchDeduperRef.current === null) {
@@ -1432,12 +1457,23 @@ const UnifiedScheduleComponent = ({
      */
     const handleCalendarDatesSet = useCallback((info) => {
         const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
+        const displayedMonth = toDisplayedMonthDateRange(info);
 
         setCalendarDateRange((prev) => {
             if (isSameCalendarDateRange(prev, { startDate: newStart, endDate: newEnd })) {
                 return prev; // 참조 동일성 유지 → 같은 범위 datesSet 은 재조회 없음
             }
             return { startDate: newStart, endDate: newEnd };
+        });
+
+        setDisplayedMonthDateRange((prev) => {
+            if (!displayedMonth) {
+                return prev;
+            }
+            if (isSameCalendarDateRange(prev, displayedMonth)) {
+                return prev;
+            }
+            return displayedMonth;
         });
 
         // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
@@ -1507,15 +1543,15 @@ const UnifiedScheduleComponent = ({
     const { colorClassFor } = useConsultantColorPalette();
     const countShownEvents = integratedMonthEventLayout === true;
     const shownConsultantCounts = useMemo(() => {
-        if (!countShownEvents || !calendarDateRange) {
+        if (!countShownEvents || !displayedMonthDateRange) {
             return null;
         }
         return countVisibleConsultantScheduleEvents(
             filteredEvents,
             consultants,
-            calendarDateRange
+            displayedMonthDateRange
         );
-    }, [countShownEvents, filteredEvents, consultants, calendarDateRange]);
+    }, [countShownEvents, filteredEvents, consultants, displayedMonthDateRange]);
     const shownCountsReady = countShownEvents && shownConsultantCounts != null && !loading;
     const legendConsultantCounts = countShownEvents
         ? (shownCountsReady ? shownConsultantCounts : EMPTY_CONSULTANT_COUNTS)

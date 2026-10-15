@@ -19,7 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 class PortOneWebhookSignatureVerifierTest {
 
-    /** Standard Webhooks {@code TestScenario.validSigned()} secret. */
+    /**
+     * Public Standard Webhooks example vector
+     * ({@code TestScenario.validSigned()}), not an environment or production secret.
+     * https://github.com/standard-webhooks/standard-webhooks/blob/main/libraries/java/src/test/java/com/standardwebhooks/TestScenario.java
+     */
     private static final String SPEC_SECRET = "whsec_MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";
 
     private static final String SPEC_SECRET_UNPREFIXED = "MfKQ9r8GKYqrTwjUPD8ILPZIo2LaLaSw";

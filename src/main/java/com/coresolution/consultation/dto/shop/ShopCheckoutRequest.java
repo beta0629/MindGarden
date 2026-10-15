@@ -44,4 +44,19 @@ public class ShopCheckoutRequest {
     @Valid
     @Size(max = ShopCheckoutConstants.MAX_BUY_NOW_LINES)
     private List<ShopCartLineRequest> lines;
+
+    /**
+     * 내담자 전용 지정 상품 결제 필수 약관 — 구매 조건 확인.
+     * 지정 상품이 아닌 주문은 서버가 이 값을 요구하지 않는다.
+     */
+    @Builder.Default
+    private boolean consentPurchase = false;
+
+    /** 내담자 전용 지정 상품 결제 필수 약관 — 이용기간·환불 규칙. */
+    @Builder.Default
+    private boolean consentUsageRefund = false;
+
+    /** 내담자 전용 지정 상품 결제 필수 약관 — 개인정보 제3자 제공(결제대행). */
+    @Builder.Default
+    private boolean consentThirdParty = false;
 }

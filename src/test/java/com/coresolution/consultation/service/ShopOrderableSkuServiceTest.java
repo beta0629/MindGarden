@@ -13,6 +13,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -72,12 +74,12 @@ class ShopOrderableSkuServiceTest {
         assertTrue(service.findOrderableForClient(TENANT, OFFER_CODE, OTHER_CLIENT).isEmpty());
     }
 
-    @Test
-    @DisplayName("지정이 취소·없는 전용 SKU 는 거부")
-    void offerSku_unassigned_rejected() {
+    @ParameterizedTest(name = "{0} 이면 주문 불가")
+    @ValueSource(strings = {"취소된 지정", "이미 결제된 지정"})
+    void offerSku_inactiveAssignment_rejected(String mismatch) {
         sku(OFFER_CODE, false);
         when(clientOfferService.isActiveOfferForClient(TENANT, CLIENT, OFFER_CODE)).thenReturn(false);
-        assertTrue(service.findOrderableForClient(TENANT, OFFER_CODE, CLIENT).isEmpty());
+        assertTrue(service.findOrderableForClient(TENANT, OFFER_CODE, CLIENT).isEmpty(), mismatch);
     }
 
     @Test

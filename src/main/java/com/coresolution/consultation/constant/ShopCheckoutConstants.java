@@ -99,6 +99,18 @@ public final class ShopCheckoutConstants {
             "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
 
     /**
+     * 내담자 전용 지정 상품 결제 — 필수 약관 3종(구매·이용기간/환불·제3자 제공)이 모두 동의되지 않음.
+     */
+    public static final String MSG_REQUIRED_CONSENTS =
+            "필수 약관에 모두 동의한 뒤에만 결제할 수 있습니다.";
+
+    /**
+     * 지정 상품이 이 내담자의 활성 지정이 아님(다른 내담자·취소·비활성·이미 결제·만료).
+     */
+    public static final String MSG_ASSIGNED_OFFER_NOT_PAYABLE =
+            "지정된 상품이 이 내담자의 것이 아니거나 만료되어 결제할 수 없습니다.";
+
+    /**
      * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
      */
     public static final String MSG_PREPARE_INVALID_ORDER_STATUS =

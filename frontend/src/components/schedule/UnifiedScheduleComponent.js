@@ -59,6 +59,11 @@ import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolid
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { stampPaymentTimingOnScheduleEvents } from '../../constants/mappingEngagementType';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
+import {
+  CONSULTANT_COUNT_BASIS_SHOWN,
+  countVisibleConsultantScheduleEvents
+} from './utils/countVisibleConsultantScheduleEvents';
+import { useConsultantColorPalette } from '../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -74,6 +79,8 @@ import {
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // ScheduleController admin — AdminController /api/v1/admin/schedules 와 혼용 금지
 const API_SCHEDULES_ADMIN = API_SCHEDULE_CONTROLLER_ADMIN;
+
+const EMPTY_CONSULTANT_COUNTS = new Map();
 
 /**
  * FullCalendar end(exclusive) → inclusive endDate 변환.
@@ -1497,6 +1504,29 @@ const UnifiedScheduleComponent = ({
         [decoratedEvents, selectedClientIds]
     );
 
+    const { colorClassFor } = useConsultantColorPalette();
+    const countShownEvents = integratedMonthEventLayout === true;
+    const shownConsultantCounts = useMemo(() => {
+        if (!countShownEvents || !calendarDateRange) {
+            return null;
+        }
+        return countVisibleConsultantScheduleEvents(
+            filteredEvents,
+            consultants,
+            calendarDateRange
+        );
+    }, [countShownEvents, filteredEvents, consultants, calendarDateRange]);
+    const shownCountsReady = countShownEvents && shownConsultantCounts != null && !loading;
+    const legendConsultantCounts = countShownEvents
+        ? (shownCountsReady ? shownConsultantCounts : EMPTY_CONSULTANT_COUNTS)
+        : consultantCounts;
+    const legendConsultantCountsLoading = countShownEvents
+        ? !shownCountsReady
+        : consultantCountsLoading;
+    const legendConsultantCountsMode = countShownEvents
+        ? CONSULTANT_COUNT_BASIS_SHOWN
+        : 'monthly';
+
     useEffect(() => {
         if (typeof onScheduleEventsChange !== 'function') {
             return;
@@ -1530,13 +1560,17 @@ const UnifiedScheduleComponent = ({
 
             <ScheduleLegend
                 consultants={consultants}
-                events={events}
+                events={countShownEvents ? filteredEvents : events}
                 scheduleStatusOptions={scheduleStatusOptions}
                 getConsultantColor={getConsultantColor}
+                consultantColorClassFor={countShownEvents
+                    ? (consultantId) => colorClassFor(consultantId, consultants)
+                    : null}
                 calendarSkin={calendarSkin}
-                consultantCounts={consultantCounts}
+                consultantCounts={legendConsultantCounts}
                 consultantCountsMonth={consultantCountsMonth}
-                consultantCountsLoading={consultantCountsLoading}
+                consultantCountsLoading={legendConsultantCountsLoading}
+                consultantCountsMode={legendConsultantCountsMode}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
                 missingConsultationLogsLoading={missingConsultationLogsLoading}

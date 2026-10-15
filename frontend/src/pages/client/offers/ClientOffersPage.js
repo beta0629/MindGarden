@@ -10,7 +10,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Check, Info } from 'lucide-react';
+import { Check, ChevronRight, Info, Lock } from 'lucide-react';
 import ShopClientLayout from '../../../components/shop/templates/ShopClientLayout';
 import ShopClientSessionLoading from '../../../components/shop/templates/ShopClientSessionLoading';
 import MallSessionChip from '../../../components/shop/atoms/MallSessionChip';
@@ -22,6 +22,7 @@ import MallAgreements from '../../../components/shop/organisms/MallAgreements';
 import MallPhoneVerifyInline from '../../../components/shop/organisms/MallPhoneVerifyInline';
 import MallUsageBanner from '../../../components/shop/molecules/MallUsageBanner';
 import MGButton from '../../../components/common/MGButton';
+import UnifiedModal from '../../../components/common/modals/UnifiedModal';
 import SafeText from '../../../components/common/SafeText';
 import {
   CLIENT_MALL_AGREEMENT_ITEMS,
@@ -113,11 +114,13 @@ const ClientOffersPage = () => {
   const [paying, setPaying] = useState(false);
   const [message, setMessage] = useState('');
   const [payFailureReason, setPayFailureReason] = useState(() => readClientOffersPayFailureReason(location.state));
+  const [termsKey, setTermsKey] = useState('');
   const [selectedSkuCode, setSelectedSkuCode] = useState('');
   const [mappings, setMappings] = useState([]);
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [agreements, setAgreements] = useState(EMPTY_AGREEMENTS);
   const restoredRef = useRef(false);
+  const termsOpenerRef = useRef(null);
   const idempotencyStoreRef = useRef(null);
   if (idempotencyStoreRef.current == null) {
     idempotencyStoreRef.current = createShopCheckoutIdempotencyKeyStore();
@@ -221,6 +224,50 @@ const ClientOffersPage = () => {
     return '';
   })();
   const payDisabled = paying || Boolean(blockMessage);
+  const payBlocked = Boolean(blockMessage);
+
+  useEffect(() => {
+    if (!termsKey) {
+      return undefined;
+    }
+    const root = document.querySelector(`[data-testid="${T.PAGE}"]`);
+    const previousBody = document.body.style.overflow;
+    const previousHtml = document.documentElement.style.overflow;
+    const scrollY = window.scrollY;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    if (root) {
+      root.setAttribute('inert', '');
+    }
+    return () => {
+      document.body.style.overflow = previousBody === 'hidden' ? '' : previousBody;
+      document.documentElement.style.overflow = previousHtml === 'hidden' ? '' : previousHtml;
+      if (root) {
+        root.removeAttribute('inert');
+      }
+      if (scrollY) {
+        window.scrollTo(0, scrollY);
+      }
+    };
+  }, [termsKey]);
+
+  const openTerms = (key, opener) => {
+    if (paying) {
+      return;
+    }
+    termsOpenerRef.current = opener || null;
+    setTermsKey(key);
+  };
+
+  const closeTerms = () => {
+    const opener = termsOpenerRef.current;
+    setTermsKey('');
+    window.requestAnimationFrame(() => {
+      if (opener && typeof opener.focus === 'function') {
+        opener.focus();
+      }
+    });
+  };
 
   const handleCheckout = async() => {
     if (payDisabled) {
@@ -239,7 +286,11 @@ const ClientOffersPage = () => {
         pointsRedeemMinor: 0,
         mappingIdForCheckout: mappingId,
         createIdempotencyKey: () => store.keyFor(signature),
-        postShopCheckout: (key, points, mapping) => postShopCheckoutRequest(key, points, mapping, lines),
+        postShopCheckout: (key, points, mapping) => postShopCheckoutRequest(key, points, mapping, lines, {
+          purchase: Boolean(agreements[CLIENT_MALL_AGREEMENT_KEYS.PURCHASE]),
+          usageRefund: Boolean(agreements[CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND]),
+          thirdParty: Boolean(agreements[CLIENT_MALL_AGREEMENT_KEYS.THIRD_PARTY])
+        }),
         prepareShopPayment,
         runShopPortOnePaymentIfReady,
         cancelShopOrder,
@@ -396,13 +447,149 @@ const ClientOffersPage = () => {
   };
 
   const blockId = `${baseId}-block`;
+  const payReasonId = `${baseId}-pay-reason`;
+
+  const renderPayButton = (describedBy, extraClass) => (
+    <MGButton
+      variant="primary"
+      preventDoubleClick={false}
+      className={`client-mall-btn client-mall-btn--primary client-offers__pay-cta${extraClass ? ` ${extraClass}` : ''}`}
+      disabled={payBlocked}
+      aria-disabled={payDisabled}
+      aria-busy={paying ? true : undefined}
+      aria-describedby={describedBy}
+      onClick={handleCheckout}
+      data-testid={T.PAY}
+    >
+      {paying ? <span className="client-offers__pay-spinner" aria-hidden="true" /> : null}
+      {!paying && payBlocked ? <Lock className="client-offers__icon" aria-hidden="true" /> : null}
+      {paying ? t('bar.paying') : t('bar.pay')}
+    </MGButton>
+  );
+
+  const discountOf = selectedOffer ? describeOfferDiscount(selectedOffer) : null;
+  const discountValueText = !discountOf
+    ? ''
+    : discountOf.kind === 'rate'
+      ? t('card.discountRate', { value: discountOf.value })
+      : t('pay.discountValue', { v: formatMallNumber(discountOf.value) });
+  const offerMeta = !selectedOffer
+    ? ''
+    : selectedOffer.validityMonths != null
+      ? t('pay.meta', { n: selectedOffer.sessionCount ?? '', m: selectedOffer.validityMonths })
+      : t('pay.metaSessions', { n: selectedOffer.sessionCount ?? '' });
+  const reasonText = paying ? t('bar.windowHint') : blockMessage;
+
+  const paySummary = loadState === 'ready' && payable.length > 0 ? (
+    <section className="client-mall-box client-offers__pay" aria-labelledby={`${baseId}-pay-title`} data-testid="client-offers-pay-card">
+      <h2 className="client-mall-box__title" id={`${baseId}-pay-title`}>{t('bar.label')}</h2>
+      {selectedOffer ? (
+        <div className="client-offers__pay-item">
+          <span className="client-offers__pay-cap">{t('pay.selected')}</span>
+          <span className="client-offers__pay-name"><SafeText>{selectedOffer.title}</SafeText></span>
+          <span className="client-offers__pay-meta">{offerMeta}</span>
+        </div>
+      ) : null}
+      <dl className="client-offers__pay-rows">
+        {selectedOffer && discountOf ? (
+          <>
+            <div className="client-offers__pay-row">
+              <dt>{t('pay.orig')}</dt>
+              <dd><s>{`${formatMallNumber(selectedOffer.originalPriceMinor)}${t('card.won')}`}</s></dd>
+            </div>
+            <div className="client-offers__pay-row">
+              <dt>{t('pay.discount')}</dt>
+              <dd>{discountValueText}</dd>
+            </div>
+          </>
+        ) : null}
+        <div className="client-offers__pay-row client-offers__pay-row--total">
+          <dt>{t('bar.label')}</dt>
+          <dd className={selectedOffer ? undefined : 'client-offers__bar-amount--empty'}>
+            {selectedOffer ? (
+              <>
+                {formatMallNumber(selectedOffer.finalPriceMinor)}
+                <span className="client-offers__pay-unit">{t('card.won')}</span>
+              </>
+            ) : t('bar.emptyAmount')}
+          </dd>
+        </div>
+      </dl>
+      <p className="client-offers__pay-refund">
+        <Info className="client-offers__icon" aria-hidden="true" />
+        <span>
+          {CLIENT_REFUND_NOTICE}
+          {' '}
+          <button
+            type="button"
+            className="client-offers__pay-refund-link"
+            disabled={paying}
+            onClick={(event) => openTerms(CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND, event.currentTarget)}
+          >
+            {t('pay.refundLink')}
+          </button>
+        </span>
+      </p>
+      <div className="client-offers__pay-agree">
+        <h3 className="client-offers__pay-h">{t('pay.agreeTitle')}</h3>
+        <label className="client-offers__pay-agree-all">
+          <input
+            type="checkbox"
+            className="client-mall-check"
+            checked={allAgreed}
+            disabled={paying}
+            onChange={(event) => setAgreements(setAllAgreements(event.target.checked))}
+          />
+          <span>{t('agree.all')}</span>
+        </label>
+        <ul className="client-offers__pay-agree-list">
+          {CLIENT_MALL_AGREEMENT_ITEMS.map((item) => (
+            <li key={item.key} className="client-offers__pay-agree-row">
+              <label className="client-offers__pay-agree-label">
+                <input
+                  type="checkbox"
+                  className="client-mall-check"
+                  checked={Boolean(agreements[item.key])}
+                  disabled={paying}
+                  onChange={(event) => setAgreements((prev) => ({ ...prev, [item.key]: event.target.checked }))}
+                />
+                <span>{t(`agree.${item.key}`)}</span>
+              </label>
+              <span className="client-offers__pay-agree-tag">{t('agree.required')}</span>
+              <button
+                type="button"
+                className="client-offers__pay-agree-more"
+                aria-haspopup="dialog"
+                aria-label={t('pay.moreAria', { label: t(`agree.${item.key}`) })}
+                disabled={paying}
+                onClick={(event) => openTerms(item.key, event.currentTarget)}
+              >
+                <ChevronRight className="client-offers__icon" aria-hidden="true" />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="client-offers__pay-actions">
+        {renderPayButton(reasonText ? payReasonId : undefined)}
+        {reasonText ? (
+          <p className={`client-offers__pay-reason${paying ? ' client-offers__pay-reason--quiet' : ''}`} id={payReasonId} role="status">
+            {!paying ? <Info className="client-offers__icon" aria-hidden="true" /> : null}
+            <span>{reasonText}</span>
+          </p>
+        ) : null}
+      </div>
+    </section>
+  ) : null;
 
   return (
+    <>
     <ShopClientLayout
       title={t('pageTitle')}
       testId={T.PAGE}
       meta={<p className="client-mall-page__subtitle">{t('pageSubtitle')}</p>}
-      className="client-mall--checkout"
+      className="client-mall--checkout client-offers"
+      aside={paySummary}
     >
       <MallPaymentCancelNotice visible={payCancelNotice.visible} onClose={payCancelNotice.dismiss} />
       <MallPayFailedAlert reason={payFailureReason} />
@@ -451,13 +638,15 @@ const ClientOffersPage = () => {
                 ) : null}
               </section>
               {!noMapping ? (
-                <MallAgreements
-                  checked={agreements}
-                  onToggle={(key, value) => setAgreements((prev) => ({ ...prev, [key]: value }))}
-                  onToggleAll={(value) => setAgreements(setAllAgreements(value))}
-                  bodies={agreementBodies}
-                  disabled={paying}
-                />
+                <div className="client-offers__agreements-flow">
+                  <MallAgreements
+                    checked={agreements}
+                    onToggle={(key, value) => setAgreements((prev) => ({ ...prev, [key]: value }))}
+                    onToggleAll={(value) => setAgreements(setAllAgreements(value))}
+                    bodies={agreementBodies}
+                    disabled={paying}
+                  />
+                </div>
               ) : null}
             </>
           ) : null}
@@ -475,27 +664,44 @@ const ClientOffersPage = () => {
                   {selectedOffer ? `${formatMallNumber(selectedOffer.finalPriceMinor)}${t('card.won')}` : t('bar.emptyAmount')}
                 </span>
                 <span className="client-mall-bar__caption" id={blockId} role="status">
-                  {blockMessage || (selectedOffer
-                    ? t('bar.summary', { title: selectedOffer.title, n: selectedOffer.sessionCount ?? '' })
-                    : '')}
+                  {paying
+                    ? t('bar.windowHint')
+                    : (blockMessage || (selectedOffer
+                      ? t('bar.summary', { title: selectedOffer.title, n: selectedOffer.sessionCount ?? '' })
+                      : ''))}
                 </span>
               </div>
-              <MGButton
-                variant="primary"
-                preventDoubleClick={false}
-                className="client-mall-btn client-mall-btn--primary client-mall-bar__cta"
-                aria-disabled={payDisabled}
-                aria-describedby={blockMessage ? blockId : undefined}
-                onClick={handleCheckout}
-                data-testid={T.PAY}
-              >
-                {paying ? t('bar.paying') : t('bar.pay')}
-              </MGButton>
+              {renderPayButton((paying || blockMessage) ? blockId : undefined, 'client-mall-bar__cta')}
             </div>
           </div>
         </>
       ) : null}
     </ShopClientLayout>
+    <UnifiedModal
+      isOpen={Boolean(termsKey)}
+      onClose={closeTerms}
+      title={termsKey ? t(`agree.${termsKey}`) : ''}
+      size="medium"
+      variant="detail"
+      showCloseButton
+      closeButtonDataTestId="client-offers-terms-close"
+      className="client-offers-terms"
+      actions={(
+        <MGButton
+          variant="outline"
+          preventDoubleClick={false}
+          onClick={closeTerms}
+          data-testid="client-offers-terms-dismiss"
+        >
+          {t('pay.termsClose')}
+        </MGButton>
+      )}
+    >
+      <div className="client-offers-terms__body">
+        {termsKey ? agreementBodies[termsKey] : null}
+      </div>
+    </UnifiedModal>
+    </>
   );
 };
 

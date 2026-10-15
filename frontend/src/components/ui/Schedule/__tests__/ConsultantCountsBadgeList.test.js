@@ -257,4 +257,29 @@ describe('ConsultantCountsBadgeList', () => {
     const badge = container.querySelector('.mg-v2-legend-count-badge');
     expect(badge.getAttribute('aria-label')).toBe('김선희, 누적 완료 39회');
   });
+
+  test('C11: mode=shown + API 색 클래스 → 완료 라벨이 아니고 인라인 색이 없다', () => {
+    const consultants = buildConsultants({ id: 3, name: 'DevConsultant-000003' });
+    const consultantCounts = new Map([[3, 84]]);
+
+    const { container } = render(
+      <ConsultantCountsBadgeList
+        {...baseProps({
+          consultants,
+          consultantCounts,
+          mode: 'shown',
+          consultantCountsMonth: 10,
+          consultantColorClassFor: () => 'mg-v2-consultant-color mg-v2-consultant-color--1'
+        })}
+      />
+    );
+
+    expect(container.querySelector('.mg-v2-legend-title').textContent).toBe('상담사 · 10월');
+    const swatch = container.querySelector('.mg-v2-legend-color');
+    expect(swatch.className).toContain('mg-v2-consultant-color--1');
+    expect(swatch.getAttribute('style')).toBeNull();
+    expect(container.querySelector('.mg-v2-legend-count-badge').textContent).toBe('84');
+    expect(container.querySelector('.mg-v2-legend-count-badge').getAttribute('aria-label'))
+      .toBe('DevConsultant-000003, 이번 달 일정 84건');
+  });
 });

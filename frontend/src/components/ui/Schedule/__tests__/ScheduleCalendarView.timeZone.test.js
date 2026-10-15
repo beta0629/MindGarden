@@ -69,7 +69,9 @@ describe('ScheduleCalendarView timeZone Asia/Seoul', () => {
     expect(captured.timeZone).toBe(DEFAULT_ZONE);
     expect(captured.timeZone).toBe('Asia/Seoul');
     expect(captured.nowIndicator).toBe(true);
-    expect(captured.plugins.some((p) => p && p.id === 'luxon3')).toBe(true);
+    expect(captured.plugins.some((p) => p && (
+      p.id === 'luxon3' || p.name === '@fullcalendar/luxon3'
+    ))).toBe(true);
   });
 
   test('절대 ISO 휴가는 floating KST로 정규화되어 LA/Seoul 벽시계가 같다', () => {

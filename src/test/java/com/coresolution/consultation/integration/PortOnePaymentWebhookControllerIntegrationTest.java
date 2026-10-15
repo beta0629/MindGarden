@@ -7,12 +7,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +22,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.coresolution.consultation.service.portone.PortOneWebhookSignatureVerifier;
+import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.enums.PgConfigurationStatus;
@@ -44,8 +43,10 @@ import com.coresolution.core.repository.TenantPgConfigurationRepository;
 class PortOnePaymentWebhookControllerIntegrationTest {
 
     private static final String STORE_ID = "store-it-portone-v2";
-    private static final String WEBHOOK_SECRET = "whsec_integration_test_secret";
-    private static final String TIMESTAMP = "1700000000";
+    private static final String WEBHOOK_ID = "whk-test-1";
+    /** 테스트 식별 라벨. 운영 시크릿이 아니다. */
+    private static final String WEBHOOK_SECRET = PortOneWebhookTestSignatures.secretForLabel(
+            "integration-test-webhook");
 
     private static final String RAW_BODY = "{\"type\":\"Webhook.Unknown.Type\","
             + "\"data\":{\"storeId\":\"" + STORE_ID + "\"}}";
@@ -76,13 +77,30 @@ class PortOnePaymentWebhookControllerIntegrationTest {
 
     @Test
     void postPortOneV2Webhook_validSignature_returnsOk() throws Exception {
-        String signature = v1Signature(WEBHOOK_SECRET, TIMESTAMP, RAW_BODY);
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, WEBHOOK_ID, timestamp, RAW_BODY);
 
         mockMvc.perform(post("/api/v1/payments/webhooks/portone/v2")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("webhook-timestamp", TIMESTAMP)
+                        .header("webhook-timestamp", timestamp)
                         .header("webhook-signature", signature)
-                        .header("webhook-id", "whk-test-1")
+                        .header("webhook-id", WEBHOOK_ID)
+                        .content(RAW_BODY.getBytes(StandardCharsets.UTF_8)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ignored"));
+    }
+
+    @Test
+    void postPortOneV2Webhook_acceptsWhenAnyV1SignatureMatches() throws Exception {
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, WEBHOOK_ID, timestamp, RAW_BODY);
+        String header = "v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= " + signature;
+
+        mockMvc.perform(post("/api/v1/payments/webhooks/portone/v2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("webhook-timestamp", timestamp)
+                        .header("webhook-signature", header)
+                        .header("webhook-id", WEBHOOK_ID)
                         .content(RAW_BODY.getBytes(StandardCharsets.UTF_8)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ignored"));
@@ -92,7 +110,7 @@ class PortOnePaymentWebhookControllerIntegrationTest {
     void postPortOneV2Webhook_invalidSignature_returnsForbidden() throws Exception {
         mockMvc.perform(post("/api/v1/payments/webhooks/portone/v2")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("webhook-timestamp", TIMESTAMP)
+                        .header("webhook-timestamp", PortOneWebhookTestSignatures.currentTimestamp())
                         .header("webhook-signature", "v1,AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
                         .header("webhook-id", "whk-test-2")
                         .content(RAW_BODY.getBytes(StandardCharsets.UTF_8)))
@@ -100,11 +118,21 @@ class PortOnePaymentWebhookControllerIntegrationTest {
                 .andExpect(jsonPath("$.message").value("서명 검증 실패"));
     }
 
-    private static String v1Signature(String secret, String timestamp, String rawBody) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        String message = timestamp + "." + rawBody;
-        byte[] digest = mac.doFinal(message.getBytes(StandardCharsets.UTF_8));
-        return "v1," + Base64.getEncoder().encodeToString(digest);
+    @Test
+    void postPortOneV2Webhook_expiredTimestamp_returnsForbidden() throws Exception {
+        long expired = Instant.now().getEpochSecond()
+                - PortOneWebhookSignatureVerifier.DEFAULT_TOLERANCE_SECONDS
+                - 1L;
+        String timestamp = Long.toString(expired);
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, WEBHOOK_ID, timestamp, RAW_BODY);
+
+        mockMvc.perform(post("/api/v1/payments/webhooks/portone/v2")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("webhook-timestamp", timestamp)
+                        .header("webhook-signature", signature)
+                        .header("webhook-id", WEBHOOK_ID)
+                        .content(RAW_BODY.getBytes(StandardCharsets.UTF_8)))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("서명 검증 실패"));
     }
 }

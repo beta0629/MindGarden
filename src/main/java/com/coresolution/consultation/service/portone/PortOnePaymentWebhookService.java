@@ -1,11 +1,13 @@
 package com.coresolution.consultation.service.portone;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.config.PortOneWebhookProperties;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
@@ -68,6 +70,7 @@ public class PortOnePaymentWebhookService {
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
+    private final PortOneWebhookProperties portOneWebhookProperties;
 
     /**
      * 포트원 V2 웹훅을 처리한다. 서명 검증 실패 시 4xx, 일시적 오류 시 5xx.
@@ -75,7 +78,7 @@ public class PortOnePaymentWebhookService {
      * @param rawBody           원시 요청 바디
      * @param webhookTimestamp  webhook-timestamp 헤더
      * @param webhookSignature  webhook-signature 헤더
-     * @param webhookId         webhook-id 헤더 (로깅용, 선택)
+     * @param webhookId         webhook-id 헤더 (서명 대상, 필수)
      * @return HTTP 응답 엔티티
      */
     // 외부 트랜잭션 없이 실행 — 늦은 결제 PG 취소 동안 DB 커넥션을 잡지 않고, 승인·상태 변경은 각 서비스의 짧은 트랜잭션에서 반영
@@ -109,6 +112,11 @@ public class PortOnePaymentWebhookService {
         if (webhookSignature == null || webhookSignature.isBlank()) {
             log.warn("포트원 웹훅: webhook-signature 누락 webhookId={}", webhookId);
             body.put("message", "webhook-signature 필요");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+        }
+        if (webhookId == null || webhookId.isBlank()) {
+            log.warn("포트원 웹훅: webhook-id 누락");
+            body.put("message", "webhook-id 필요");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
         }
 
@@ -151,7 +159,14 @@ public class PortOnePaymentWebhookService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
         }
 
-        if (!PortOneWebhookSignatureVerifier.isValid(rawUtf8, webhookTimestamp, webhookSignature, secretOpt.get())) {
+        if (!PortOneWebhookSignatureVerifier.isValid(
+                rawUtf8,
+                webhookId,
+                webhookTimestamp,
+                webhookSignature,
+                secretOpt.get(),
+                Instant.now(),
+                portOneWebhookProperties.getToleranceSeconds())) {
             log.warn("포트원 웹훅: 서명 검증 실패 storeId={}, webhookId={}", storeId, webhookId);
             body.put("message", "서명 검증 실패");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);

@@ -47,6 +47,7 @@ import {
   parsePortoneSettingsJson
 } from '../../utils/portonePgSettingsJson';
 import { requestPortOnePayment } from '../../utils/portonePayment';
+import { isPgConfigDeletable } from './pgConfigurationListUtils';
 
 const PG_LIST_PATH = '/tenant/pg-configurations';
 const EMPTY = '—';
@@ -310,7 +311,12 @@ const PgConfigurationDetail = () => {
   const liveKeyMissing = isPortone && !toDisplayString(parsed.channelKey, '').trim();
   const webhookConfigured = isPortone && isPortoneWebhookSecretConfigured(config);
   const badge = resolvePgBadge(config);
-  const canEdit = config.approvalStatus === 'PENDING';
+  // 승인·운영·거부 후에도 수정 가능(저장 시 재승인). ACTIVE 는 삭제 불가.
+  const canDelete = isPgConfigDeletable(config);
+  const showReapprovalEditHint = config.status === 'ACTIVE'
+    || config.status === 'APPROVED'
+    || config.approvalStatus === 'APPROVED'
+    || config.approvalStatus === 'REJECTED';
   const canTest = config.status === 'APPROVED' || config.status === 'ACTIVE';
   const showSmoke = isPortone && Boolean(config.testMode)
     && (config.status === 'ACTIVE' || config.status === 'APPROVED' || config.approvalStatus === 'APPROVED');
@@ -425,7 +431,7 @@ const PgConfigurationDetail = () => {
                     id: 'delete',
                     label: ADMIN_SHOP_PG_COPY.MENU_DELETE,
                     variant: 'destructive',
-                    hidden: !canEdit,
+                    hidden: !canDelete,
                     onClick: () => setShowDeleteModal(true)
                   }
                 ]}
@@ -434,8 +440,8 @@ const PgConfigurationDetail = () => {
                 type="button"
                 variant="primary"
                 onClick={() => navigate(`${PG_LIST_PATH}/${configId}/edit`)}
-                disabled={!canEdit}
-                title={canEdit ? undefined : ADMIN_SHOP_PG_COPY.EDIT_LOCKED}
+                disabled={false}
+                title={showReapprovalEditHint ? ADMIN_SHOP_PG_COPY.EDIT_LOCKED : undefined}
                 preventDoubleClick={false}
                 data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PG_EDIT}
               >

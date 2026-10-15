@@ -160,5 +160,21 @@ public class TenantPgConfigurationResponse {
      */
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    /**
+     * ACTIVE 재승인용 스테이징 수정 존재 여부 ({@code pending_request_json} non-null).
+     */
+    private Boolean hasPendingEdit;
+
+    /**
+     * 스테이징 수정 요청 시각
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime pendingRequestedAt;
+
+    /**
+     * pending vs live 마스킹 차이. pending 없으면 null.
+     */
+    private TenantPgPendingEditDiff pendingEditDiff;
 }
 

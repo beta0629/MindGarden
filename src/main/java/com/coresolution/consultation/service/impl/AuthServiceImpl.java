@@ -157,12 +157,6 @@ public class AuthServiceImpl implements AuthService {
                 User user = userService.findByLoginPrincipal(email)
                     .orElseThrow(() -> new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + email));
                 
-                // 임시 비밀번호로 로그인 차단 (isPasswordChanged = false인 경우)
-                if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-                    log.warn("❌ 임시 비밀번호로 로그인 시도 차단: loginPrincipal={}, userId={}. 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.", EmailLogMasking.maskForLog(email), user.getId());
-                    return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
-                }
-                
                 // Phase 3: 사용자 권한 조회
                 List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
                 log.debug("사용자 권한 조회 완료: userId={}, permissions={}", user.getId(), permissions);
@@ -204,7 +198,7 @@ public class AuthServiceImpl implements AuthService {
                     .refreshToken(refreshToken)
                     .userResponse(userResponse)
                     .user(userDto) // 하위 호환성
-                    .requiresPasswordChange(false); // 임시 비밀번호는 로그인 차단되므로 false
+                    .requiresPasswordChange(requiresPasswordChange(user));
                 
                 if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
                     // 멀티 테넌트 사용자인 경우 테넌트 선택 필요
@@ -334,7 +328,14 @@ public class AuthServiceImpl implements AuthService {
             log.info("✅ JWT 토큰 갱신 성공: userId={}, tenantId={}, branchId={}", 
                 user.getId(), user.getTenantId(), user.getBranchId());
             
-            return AuthResponse.success("토큰 갱신 성공", newToken, newRefreshToken, userResponse);
+            return AuthResponse.builder()
+                .success(true)
+                .message("토큰 갱신 성공")
+                .token(newToken)
+                .refreshToken(newRefreshToken)
+                .userResponse(userResponse)
+                .requiresPasswordChange(requiresPasswordChange(user))
+                .build();
         } catch (Exception e) {
             return AuthResponse.failure("토큰 갱신 실패: " + e.getMessage());
         } finally {
@@ -342,6 +343,32 @@ public class AuthServiceImpl implements AuthService {
         }
     }
     
+    @Override
+    public AuthResponse issueTokensForUser(User user, HttpServletRequest request) {
+        List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+        String token = jwtService.generateToken(user, permissions);
+        String refreshToken = jwtService.generateRefreshToken(user);
+        try {
+            refreshTokenService.createRefreshToken(user, refreshToken, request);
+        } catch (Exception e) {
+            log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
+        }
+        return AuthResponse.builder()
+            .success(true)
+            .message("토큰 발급 성공")
+            .token(token)
+            .refreshToken(refreshToken)
+            .requiresPasswordChange(requiresPasswordChange(user))
+            .build();
+    }
+
+    /**
+     * {@code isPasswordChanged == false} 만 변경 필요. null 은 기존 사용자(기본 true)와 같이 통과.
+     */
+    private static boolean requiresPasswordChange(User user) {
+        return user != null && Boolean.FALSE.equals(user.getIsPasswordChanged());
+    }
+
     @Override
     public void logout(String token) {
         // JWT는 stateless이므로 서버에서 별도 처리할 것이 없음
@@ -1124,11 +1151,6 @@ public class AuthServiceImpl implements AuthService {
      */
     private AuthResponse finalizeAuthenticatedSession(User user, String sessionId, String clientIp,
             String userAgent) {
-        if (user.getIsPasswordChanged() != null && !user.getIsPasswordChanged()) {
-            log.warn("❌ 임시 비밀번호로 로그인 시도 차단: userId={}", user.getId());
-            return AuthResponse.failure("임시 비밀번호로는 로그인할 수 없습니다. 이메일로 발송된 비밀번호 변경 링크를 통해 비밀번호를 변경한 후 로그인해주세요.");
-        }
-
         validateCoreSolutionTenantAccess(user);
 
         // 테넌트 허용 시 checkDuplicateLogin 내부에서 스킵. env enabled=false 도 전역 비활성.
@@ -1178,7 +1200,7 @@ public class AuthServiceImpl implements AuthService {
             .refreshToken(null)
             .userResponse(userResponse)
             .user(userDto)
-            .requiresPasswordChange(false);
+            .requiresPasswordChange(requiresPasswordChange(user));
 
         if (accessibleTenants != null && !accessibleTenants.isEmpty()) {
             responseBuilder

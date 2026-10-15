@@ -235,7 +235,7 @@ export const OPS_NAV_TREE: readonly OpsNavEntry[] = [
           id: OPS_NAV_ID.WEBHOOK_SECRET,
           label: OPS_NAV_COPY.WEBHOOK_SECRET,
           href: OPS_NAV_PATH.WEBHOOK_SECRET,
-          placeholder: true
+          placeholder: false
         },
         {
           id: OPS_NAV_ID.INVOICES,

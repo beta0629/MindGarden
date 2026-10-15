@@ -80,6 +80,7 @@ class ApplePhoneVerificationServiceImplTest {
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private com.coresolution.consultation.service.support.TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @InjectMocks
     private ApplePhoneVerificationServiceImpl service;
@@ -89,6 +90,7 @@ class ApplePhoneVerificationServiceImplTest {
         org.mockito.Mockito.lenient().when(userRepository.updateLastLoginAt(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(1);
 
         TenantContextHolder.setTenantId(TENANT_ID);
+        org.mockito.Mockito.lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateApplePhoneOtpChallengeToken(any(ApplePhoneOtpChallengeClaims.class)))
             .thenReturn("otp-challenge-jwt");

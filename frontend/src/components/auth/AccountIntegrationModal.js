@@ -364,6 +364,7 @@ const AccountIntegrationModal = ({
                                     type="password"
                                     id="existingPassword"
                                     name="existingPassword"
+                                    autoComplete="current-password"
                                     value={formData.existingPassword}
                                     onChange={handleInputChange}
                                     placeholder="기존 계정의 비밀번호를 입력하세요"

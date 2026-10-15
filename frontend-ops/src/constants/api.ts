@@ -61,13 +61,25 @@ export const OPS_API_PATHS = {
 
   // PG 승인 (센터 PG 설정 운영 승인)
   PG_CONFIGURATIONS: {
+    /** 비삭제 전체 목록 (ACTIVE/APPROVED/PENDING 포함). tenantId 선택 필터 */
+    LIST: "/ops/pg-configurations",
     PENDING: "/ops/pg-configurations/pending",
     APPROVE: (configId: string) => `/ops/pg-configurations/${configId}/approve`,
     REJECT: (configId: string) => `/ops/pg-configurations/${configId}/reject`,
     TEST_CONNECTION: (configId: string) => `/ops/pg-configurations/${configId}/test-connection`,
     HISTORY: (configId: string) => `/ops/pg-configurations/${configId}/history`,
     ACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/activate`,
-    DEACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/deactivate`
+    DEACTIVATE: (configId: string) => `/ops/pg-configurations/${configId}/deactivate`,
+    WEBHOOK_SECRET: (configId: string) => `/ops/pg-configurations/${configId}/webhook-secret`,
+    TEST_MODE: (configId: string) => `/ops/pg-configurations/${configId}/test-mode`,
+    /**
+     * 테넌트 경로 PATCH (OPS JWT) — 웹훅 시크릿/테스트모드의 1차 호출 경로.
+     * ops alias 는 폴백.
+     */
+    TENANT_WEBHOOK_SECRET: (tenantId: string, configId: string) =>
+      `/tenants/${tenantId}/pg-configurations/${configId}/webhook-secret`,
+    TENANT_TEST_MODE: (tenantId: string, configId: string) =>
+      `/tenants/${tenantId}/pg-configurations/${configId}/test-mode`
   }
 } as const;
 

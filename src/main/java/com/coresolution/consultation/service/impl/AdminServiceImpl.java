@@ -112,6 +112,7 @@ import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.ClientCredentialNotificationService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
@@ -157,6 +158,8 @@ import org.springframework.http.MediaType;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,6 +167,7 @@ import org.springframework.util.StringUtils;
 import java.math.BigDecimal;
 import org.hibernate.Hibernate;
 import com.coresolution.consultation.service.ScheduleAutoCompleteService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -224,6 +228,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     private static final java.util.regex.Pattern PARTIAL_REFUND_NOTE_SESSIONS_PATTERN =
             java.util.regex.Pattern.compile(AdminServiceUserFacingMessages.NOTES_PARTIAL_REFUND_SESSIONS_REGEX);
+
+    @Autowired
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
+
+    /**
+     * 지연 주입. 즉시 주입하면 SecurityConfig 생성 중 RestTemplate와 순환한다.
+     */
+    @Lazy
+    @Autowired
+    private ClientCredentialNotificationService clientCredentialNotificationService;
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -307,17 +321,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 테넌트별 상담사 사용자 ID 자동 생성 완료: email={}, tenantId={}, userId={}", 
                 EmailLogMasking.maskForLog(email), tenantId, userId);
         
-        // 2. 비밀번호 처리: 사용자가 입력한 비밀번호가 있으면 사용, 없으면 임시 비밀번호 자동 생성
-        String password;
-        boolean isTempPassword = false;
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            password = request.getPassword().trim();
-            log.info("✅ 사용자 입력 비밀번호 사용: email={}", EmailLogMasking.maskForLog(email));
-        } else {
-            password = generateTempPassword();
-            isTempPassword = true;
-            log.info("✅ 상담사 임시 비밀번호 자동 생성 완료: email={}", EmailLogMasking.maskForLog(email));
-        }
+        // 요청 비밀번호는 쓰지 않는다. 서버가 임시 비밀번호를 만들고 변경 전 상태로 저장한다.
+        String password = generateTempPassword();
+        log.info("상담사 임시 비밀번호 생성: email={}", EmailLogMasking.maskForLog(email));
         
         // 3. 이름 자동 생성 (이메일 로컬 파트 또는 기본값 사용) (표준화 2025-12-08)
         String name = request.getName();
@@ -333,7 +339,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         // 기존 비활성화된 상담사 확인 (재활성화)
         Optional<User> existingConsultant = userRepository.findByTenantIdAndUserIdAndIsActive(tenantId, userId, false);
-        
+        userService.rejectIfPhoneAlreadyRegistered(request.getPhone(), tenantId,
+                existingConsultant.map(User::getId).orElse(null));
+
         if (existingConsultant.isPresent()) {
             // 기존 상담사 재활성화
             User consultant = existingConsultant.get();
@@ -350,11 +358,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             
             consultant.setEmail(encryptedEmail);
             // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
-            consultant.setPassword(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password));
+            consultant.setPassword(passwordService.encodeSecret(password));
             consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setIsActive(true); // 활성화
-            consultant.setIsPasswordChanged(!isTempPassword); // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
+            consultant.setIsPasswordChanged(false);
             consultant.setSpecialization(request.getSpecialization());
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             consultant.setRole(registrationRole);
@@ -405,22 +413,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
             }
             
-            // 임시 비밀번호인 경우 이메일로 비밀번호 변경 링크 발송
-            if (isTempPassword) {
-                try {
-                    log.info("📧 임시 비밀번호로 재활성화된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
-                    boolean emailSent = passwordResetService.sendPasswordResetEmail(email);
-                    if (emailSent) {
-                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", EmailLogMasking.maskForLog(email));
-                    } else {
-                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", EmailLogMasking.maskForLog(email));
-                    }
-                } catch (Exception e) {
-                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", EmailLogMasking.maskForLog(email), e);
-                    // 이메일 발송 실패해도 등록은 계속 진행
-                }
-            }
-            
+            scheduleTempPasswordSms(savedConsultant, request.getPhone(), userId, password, tenantId);
             return savedConsultant;
         } else {
             // 새로운 상담사 생성
@@ -438,12 +431,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             consultant.setUserId(userId); // 자동 생성된 userId 사용
             consultant.setEmail(encryptedEmail);
             // 사용자 입력 비밀번호는 정책 적용, 임시 자동 생성은 정책 미적용
-            consultant.setPassword(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password));
+            consultant.setPassword(passwordService.encodeSecret(password));
             consultant.setName(encryptedName); // 자동 생성된 이름 사용
             consultant.setPhone(encryptedPhone);
             consultant.setRole(registrationRole);
             consultant.setIsActive(true);
-            consultant.setIsPasswordChanged(!isTempPassword); // 임시 비밀번호인 경우 false, 사용자 입력 비밀번호인 경우 true
+            consultant.setIsPasswordChanged(false);
             consultant.setTenantId(tenantId); // 테넌트 ID 설정
             consultant.setProfessionalProviderTypeCode(professionalProviderTypeCode);
 
@@ -493,22 +486,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
             }
             
-            // 임시 비밀번호인 경우 이메일로 비밀번호 변경 링크 발송
-            if (isTempPassword) {
-                try {
-                    log.info("📧 임시 비밀번호로 등록된 상담사에게 비밀번호 변경 링크 이메일 발송: email={}", EmailLogMasking.maskForLog(email));
-                    boolean emailSent = passwordResetService.sendPasswordResetEmail(email);
-                    if (emailSent) {
-                        log.info("✅ 비밀번호 변경 링크 이메일 발송 완료: email={}", EmailLogMasking.maskForLog(email));
-                    } else {
-                        log.warn("⚠️ 비밀번호 변경 링크 이메일 발송 실패: email={}", EmailLogMasking.maskForLog(email));
-                    }
-                } catch (Exception e) {
-                    log.error("❌ 비밀번호 변경 링크 이메일 발송 중 오류: email={}", EmailLogMasking.maskForLog(email), e);
-                    // 이메일 발송 실패해도 등록은 계속 진행
-                }
-            }
-            
+            scheduleTempPasswordSms(savedConsultant, request.getPhone(), userId, password, tenantId);
             return savedConsultant;
         }
     }
@@ -560,20 +538,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         log.info("✅ 내담자 사용자 ID 자동 생성: hasEmail={}, tenantId={}, userId={}", hasEmail, tenantId, userId);
 
-        // 2. 비밀번호
-        String password;
-        boolean isTempPassword = false;
-        log.debug("registerClient password received: present={}, nonEmpty={}",
-                request.getPassword() != null,
-                request.getPassword() != null && !request.getPassword().trim().isEmpty());
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            password = request.getPassword().trim();
-            log.info("✅ 사용자 입력 비밀번호 사용: principalHint={}", hasEmail ? emailPlain : normalizedPhoneDigits);
-        } else {
-            password = generateTempPassword();
-            isTempPassword = true;
-            log.info("✅ 임시 비밀번호 자동 생성 완료");
-        }
+        // 요청 비밀번호는 무시한다. 서버가 항상 임시 비밀번호를 만든다.
+        String password = generateTempPassword();
+        log.info("내담자 임시 비밀번호 생성");
 
         // 3. 표시 이름
         String name = request.getName();
@@ -614,12 +581,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         User clientUser = User.builder()
                 .userId(userId)
                 .email(encryptedEmail)
-                .password(isTempPassword ? passwordService.encodeSecret(password) : passwordService.encodePassword(password))
+                .password(passwordService.encodeSecret(password))
                 .name(encryptedName)
                 .phone(encryptedPhone)
                 .role(UserRole.CLIENT)
                 .isActive(isActive)
-                .isPasswordChanged(!isTempPassword)
+                .isPasswordChanged(false)
                 .branchId(null)
                 .branchCode(null)
                 .build();
@@ -706,7 +673,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             log.info("🚗 내담자 등록: 차량번호 저장 (마스킹): {}", maskVehiclePlate(vehiclePlate));
         }
 
-        return clientRepository.saveAndFlush(client);
+        Client persisted = clientRepository.saveAndFlush(client);
+        scheduleTempPasswordSms(persisted, normalizedPhoneDigits, userId, password, tenantId, savedUser.getId());
+        return persisted;
     }
 
     /**
@@ -12855,13 +12824,42 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 임시 비밀번호 생성
-     * 표준화 2025-12-08: 내담자 등록 시 자동 생성된 임시 비밀번호
-     * 형식: CLIENT_{timestamp}_{random}
+     * 임시 비밀번호. {@link TemporaryPasswordGenerator} 가 길이·문자군·정책을 담당한다.
      *
      * @return 생성된 임시 비밀번호
      */
     private String generateTempPassword() {
-        return "CLIENT_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 10000);
+        return temporaryPasswordGenerator.generate();
+    }
+
+    private void scheduleTempPasswordSms(User saved, String phonePlain, String loginId, String tempPassword,
+            String tenantId) {
+        if (saved == null) {
+            return;
+        }
+        scheduleTempPasswordSms(result -> {
+            saved.setSmsSent(result.isSmsSent());
+            saved.setSmsSkipReason(result.getSkipReason());
+        }, phonePlain, loginId, tempPassword, tenantId, saved.getId());
+    }
+
+    private void scheduleTempPasswordSms(Client saved, String phonePlain, String loginId, String tempPassword,
+            String tenantId, Long userId) {
+        if (saved == null) {
+            return;
+        }
+        scheduleTempPasswordSms(result -> {
+            saved.setSmsSent(result.isSmsSent());
+            saved.setSmsSkipReason(result.getSkipReason());
+        }, phonePlain, loginId, tempPassword, tenantId, userId);
+    }
+
+    private void scheduleTempPasswordSms(java.util.function.Consumer<com.coresolution.consultation.dto.CredentialSmsResult> sink,
+            String phonePlain, String loginId, String tempPassword, String tenantId, Long userId) {
+        if (clientCredentialNotificationService == null) {
+            return;
+        }
+        clientCredentialNotificationService.deliverAfterCommit(
+                sink, phonePlain, loginId, tempPassword, tenantId, userId);
     }
 }

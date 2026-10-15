@@ -9,6 +9,16 @@
  * @see .cursor/skills/core-solution-frontend
  */
 
+const path = require('path');
+
+/**
+ * src 밖에서 import 를 허용하는 파일 — 로그인 비밀번호 정책 BE/FE 공용 픽스처 하나뿐.
+ * constants/passwordPolicyUi.js 가 길이·특수문자·일반 단어 목록을 여기서만 읽는다.
+ */
+const SHARED_OUTSIDE_SRC_FILES = [
+  path.resolve(__dirname, '../src/test/resources/password-policy/login-password-policy-parity.json')
+];
+
 module.exports = {
   webpack: {
     configure: (webpackConfig) => {
@@ -18,6 +28,10 @@ module.exports = {
       if (plugin && plugin.options) {
         plugin.options.ignoreOrder = true;
       }
+      const resolvePlugins = (webpackConfig.resolve && webpackConfig.resolve.plugins) || [];
+      resolvePlugins
+        .filter((p) => p.constructor.name === 'ModuleScopePlugin' && p.allowedFiles instanceof Set)
+        .forEach((p) => SHARED_OUTSIDE_SRC_FILES.forEach((file) => p.allowedFiles.add(file)));
       return webpackConfig;
     }
   },

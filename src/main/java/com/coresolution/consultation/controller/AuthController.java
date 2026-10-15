@@ -695,6 +695,7 @@ public class AuthController extends BaseApiController {
         if (StringUtils.hasText(authResponse.getMessage())) {
             data.put("message", authResponse.getMessage());
         }
+        data.put("requiresPasswordChange", authResponse.isRequiresPasswordChange());
         return success(data);
     }
     
@@ -856,6 +857,13 @@ public class AuthController extends BaseApiController {
                     log.warn("⚠️ 중복로그인 확인 후 세션 tenantId 보완 생략: 테넌트 식별 불가 userId={}", sessionUser.getId());
                 }
             }
+            if (sessionUser.getId() != null && sessionUser.getTenantId() != null) {
+                userRepository.findByTenantIdAndId(sessionUser.getTenantId(), sessionUser.getId())
+                    .ifPresent(dbUser -> sessionUser.setIsPasswordChanged(dbUser.getIsPasswordChanged()));
+            } else if (sessionUser.getId() != null) {
+                userService.findById(sessionUser.getId())
+                    .ifPresent(dbUser -> sessionUser.setIsPasswordChanged(dbUser.getIsPasswordChanged()));
+            }
             
             SessionUtils.setCurrentUser(session, sessionUser);
 
@@ -890,6 +898,7 @@ public class AuthController extends BaseApiController {
             Map<String, Object> data = new HashMap<>();
             data.put("user", authResponse.getUser());
             data.put("sessionId", sessionId);
+            data.put("requiresPasswordChange", Boolean.FALSE.equals(sessionUser.getIsPasswordChanged()));
             // 모바일(JWT) 호환: confirm-duplicate-login 응답에 토큰을 포함시켜야 Expo 앱이 인증 완료 분기에 진입한다.
             // 키 이름은 /login·/refresh 와 동일한 accessToken·refreshToken 으로 통일(웹은 추가 필드를 사용하지 않으므로 회귀 없음).
             if (StringUtils.hasText(issuedAccessToken)) {

@@ -12,6 +12,8 @@
  * @since 2025-11-29
  */
 
+import { formatPasswordPolicyError, validatePasswordPolicyInput } from './loginPasswordPolicy';
+
 /**
  * 이메일 주소 유효성 검증
 /**
@@ -95,68 +97,17 @@ export const validateName = (name, options = {}) => {
 };
 
 /**
- * 비밀번호 유효성 검증
-/**
+ * 비밀번호 유효성 검증 — 로그인 비밀번호 정책 단일 함수(loginPasswordPolicy)에 위임한다.
+ * 정책 기준은 서버 PasswordPolicy 와 같으며 화면별 옵션으로 바꾸지 않는다.
+ *
  * @param {string} password - 검증할 비밀번호
-/**
- * @param {Object} options - 검증 옵션
-/**
- * @param {number} options.minLength - 최소 길이 (기본: 8)
-/**
- * @param {boolean} options.requireUppercase - 대문자 필수 (기본: true)
-/**
- * @param {boolean} options.requireLowercase - 소문자 필수 (기본: true)
-/**
- * @param {boolean} options.requireNumber - 숫자 필수 (기본: true)
-/**
- * @param {boolean} options.requireSpecial - 특수문자 필수 (기본: true)
-/**
  * @returns {Object} { isValid: boolean, errors: string[] }
  */
-export const validatePassword = (password, options = {}) => {
-  const {
-    minLength = 8,
-    requireUppercase = true,
-    requireLowercase = true,
-    requireNumber = true,
-    requireSpecial = true
-  } = options;
-  
-  const errors = [];
-  
-  if (!password || typeof password !== 'string') {
-    errors.push('비밀번호를 입력해주세요.');
-    return { isValid: false, errors };
-  }
-  
-  // 길이 검증
-  if (password.length < minLength) {
-    errors.push(`비밀번호는 최소 ${minLength}자 이상이어야 합니다.`);
-  }
-  
-  // 대문자 검증
-  if (requireUppercase && !/[A-Z]/.test(password)) {
-    errors.push('대문자를 최소 1개 포함해야 합니다.');
-  }
-  
-  // 소문자 검증
-  if (requireLowercase && !/[a-z]/.test(password)) {
-    errors.push('소문자를 최소 1개 포함해야 합니다.');
-  }
-  
-  // 숫자 검증
-  if (requireNumber && !/[0-9]/.test(password)) {
-    errors.push('숫자를 최소 1개 포함해야 합니다.');
-  }
-  
-  // 특수문자 검증
-  if (requireSpecial && !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-    errors.push('특수문자를 최소 1개 포함해야 합니다.');
-  }
-  
+export const validatePassword = (password) => {
+  const { valid, errorCode } = validatePasswordPolicyInput(password);
   return {
-    isValid: errors.length === 0,
-    errors
+    isValid: valid,
+    errors: valid ? [] : [formatPasswordPolicyError(errorCode)]
   };
 };
 
@@ -363,7 +314,7 @@ export const validateForm = (formData, rules) => {
         break;
         
       case 'password':
-        const passwordValidation = validatePassword(value, rule);
+        const passwordValidation = validatePassword(value);
         if (!passwordValidation.isValid) {
           fieldErrors.push(...passwordValidation.errors);
           isValid = false;

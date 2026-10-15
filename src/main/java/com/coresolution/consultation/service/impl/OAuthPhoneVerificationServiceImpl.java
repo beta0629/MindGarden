@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuthPhoneVerificationService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneHashUtils;
@@ -104,6 +105,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final PasswordService passwordService;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -521,7 +523,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             : (providerName + " 사용자");
         String email = StringUtils.hasText(claims.getEmail()) ? claims.getEmail()
             : (userId + "@" + providerName.toLowerCase(Locale.ROOT) + ".local");
-        String tempPassword = providerName + "_" + System.currentTimeMillis();
+        String tempPassword = temporaryPasswordGenerator.generate();
 
         User.UserBuilder builder = User.builder()
             .userId(userId)

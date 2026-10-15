@@ -19,8 +19,9 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction.T
  * 네이티브 SQL 은 {@link #nativeValidCondition(String)} 로 만든다.
  * {@link #JPQL_COMPLETED_AND_VALID_CONDITION_F} 는 같은 문자열 별칭이다.</p>
  *
- * <p>운영자 머니 콕핏·기간 대시보드(PENDING/APPROVED 포함)는
- * {@link OperatorFinanceAggregation} 을 쓴다. 본 클래스 {@link #isValid} 의미는 변경하지 않는다.</p>
+ * <p>운영자 머니 콕핏·기간 대시보드는 {@link OperatorFinanceAggregation#COUNTABLE_STATUSES}
+ * (미삭제 COMPLETED) 를 쓴다. {@link #isCountableForOperatorDashboard} 는 그 모듈에 위임하며
+ * {@link #isValid} 와 상태 집합이 같다. 본 클래스 {@link #isValid} 의미는 변경하지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -108,7 +109,8 @@ public final class FinancialTransactionValidity {
     /**
      * 운영자 머니 콕핏 집계 대상인지.
      * {@link OperatorFinanceAggregation#isCountableForOperatorDashboard} 위임.
-     * 세금/결산 {@link #isValid} 와 다르다 (PENDING/APPROVED 포함).
+     * {@link OperatorFinanceAggregation#COUNTABLE_STATUSES} 는 미삭제 COMPLETED 만이라
+     * {@link #isValid} 와 상태 집합이 같다.
      *
      * @param transaction 거래
      * @return 운영자 대시보드 집계 포함이면 true

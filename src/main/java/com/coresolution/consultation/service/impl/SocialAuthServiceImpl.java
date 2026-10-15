@@ -1,6 +1,5 @@
 package com.coresolution.consultation.service.impl;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Optional;
@@ -23,6 +22,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
@@ -49,13 +49,6 @@ public class SocialAuthServiceImpl implements SocialAuthService {
      */
     private static final int MAX_PROVIDER_USERNAME_PLAINTEXT_LENGTH = 200;
 
-    /**
-     * SNS A안 내부 비밀번호 생성 시 사용하는 난수 문자 집합(정책 허용 문자만).
-     */
-    private static final String INTERNAL_SOCIAL_PASSWORD_ALPHABET =
-        "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
-            + PasswordPolicy.LOGIN_PASSWORD_ALLOWED_SPECIALS;
-
     private static final String MSG_SOCIAL_PROVIDER_REQUIRED_FOR_LINK =
         "소셜 연동을 완료하려면 제공자 정보가 필요합니다.";
     private static final String MSG_SOCIAL_PROVIDER_USER_ID_REQUIRED =
@@ -72,6 +65,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordService passwordService;
     private final PersonalDataEncryptionUtil encryptionUtil;
+    private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
     private String frontendBaseUrl;
@@ -145,7 +139,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         String trimmedPassword = request.getPassword() == null ? "" : request.getPassword().trim();
         final String passwordPlainForEncoding;
         if (!StringUtils.hasText(trimmedPassword)) {
-            passwordPlainForEncoding = generateInternalRandomLoginPassword();
+            passwordPlainForEncoding = temporaryPasswordGenerator.generate();
             log.info("소셜 회원가입: 비밀번호 미입력 — 내부용 강난수 생성 후 정책 검증·해시 저장");
         } else {
             if (trimmedPassword.length() < PasswordPolicy.LOGIN_PASSWORD_MIN_LENGTH) {
@@ -626,30 +620,6 @@ public class SocialAuthServiceImpl implements SocialAuthService {
             return "user_" + System.currentTimeMillis();
         }
         return derived;
-    }
-    
-    /**
-     * 로그인 저장 정책({@link PasswordPolicy})을 만족하는 난수 비밀번호를 생성한다.
-     * SNS A안 전용 — 평문은 응답·로그에 남기지 않는다.
-     *
-     * @return 정책 통과 평문
-     * @throws IllegalStateException 반복 생성 실패 시
-     */
-    private String generateInternalRandomLoginPassword() {
-        SecureRandom random = new SecureRandom();
-        for (int attempt = 0; attempt < 512; attempt++) {
-            int length = 14 + random.nextInt(9);
-            StringBuilder sb = new StringBuilder(length);
-            for (int i = 0; i < length; i++) {
-                int idx = random.nextInt(INTERNAL_SOCIAL_PASSWORD_ALPHABET.length());
-                sb.append(INTERNAL_SOCIAL_PASSWORD_ALPHABET.charAt(idx));
-            }
-            String candidate = sb.toString();
-            if (PasswordPolicy.firstLoginStorageViolationMessage(candidate) == null) {
-                return candidate;
-            }
-        }
-        throw new IllegalStateException("소셜 가입용 내부 비밀번호 생성에 실패했습니다.");
     }
     
     /**

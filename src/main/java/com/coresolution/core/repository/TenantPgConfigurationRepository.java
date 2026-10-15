@@ -31,6 +31,11 @@ public interface TenantPgConfigurationRepository extends JpaRepository<TenantPgC
      * tenant_id로 조회 (삭제되지 않은 것만)
      */
     List<TenantPgConfiguration> findByTenantIdAndIsDeletedFalse(String tenantId);
+
+    /**
+     * 삭제되지 않은 전체 PG 설정 (운영 포털 목록용).
+     */
+    List<TenantPgConfiguration> findByIsDeletedFalse();
     
     /**
      * tenant_id와 status로 조회
@@ -49,35 +54,38 @@ public interface TenantPgConfigurationRepository extends JpaRepository<TenantPgC
     );
     
     /**
-     * 승인 대기 중인 PG 설정 목록 조회
+     * 승인 대기 중인 PG 설정 목록 조회.
+     * 최초 승인(approvalStatus=PENDING) 또는 ACTIVE 재승인 스테이징(pending_request_json IS NOT NULL) 포함.
      */
     @Query("SELECT c FROM TenantPgConfiguration c " +
-           "WHERE c.approvalStatus = :approvalStatus " +
-           "AND c.isDeleted = false " +
-           "ORDER BY c.requestedAt ASC")
+           "WHERE c.isDeleted = false " +
+           "AND (c.approvalStatus = :approvalStatus OR c.pendingRequestJson IS NOT NULL) " +
+           "ORDER BY COALESCE(c.pendingRequestedAt, c.requestedAt) ASC")
     List<TenantPgConfiguration> findPendingApprovals(@Param("approvalStatus") ApprovalStatus approvalStatus);
     
     /**
-     * 승인 대기 중인 PG 설정 목록 조회 (tenant_id 필터링)
+     * 승인 대기 중인 PG 설정 목록 조회 (tenant_id 필터링).
+     * 최초 승인 또는 ACTIVE 재승인 스테이징 포함.
      */
     @Query("SELECT c FROM TenantPgConfiguration c " +
            "WHERE c.tenantId = :tenantId " +
-           "AND c.approvalStatus = :approvalStatus " +
            "AND c.isDeleted = false " +
-           "ORDER BY c.requestedAt ASC")
+           "AND (c.approvalStatus = :approvalStatus OR c.pendingRequestJson IS NOT NULL) " +
+           "ORDER BY COALESCE(c.pendingRequestedAt, c.requestedAt) ASC")
     List<TenantPgConfiguration> findPendingApprovalsByTenant(
         @Param("tenantId") String tenantId,
         @Param("approvalStatus") ApprovalStatus approvalStatus
     );
     
     /**
-     * 승인 대기 중인 PG 설정 목록 조회 (pg_provider 필터링)
+     * 승인 대기 중인 PG 설정 목록 조회 (pg_provider 필터링).
+     * 최초 승인 또는 ACTIVE 재승인 스테이징 포함.
      */
     @Query("SELECT c FROM TenantPgConfiguration c " +
            "WHERE c.pgProvider = :pgProvider " +
-           "AND c.approvalStatus = :approvalStatus " +
            "AND c.isDeleted = false " +
-           "ORDER BY c.requestedAt ASC")
+           "AND (c.approvalStatus = :approvalStatus OR c.pendingRequestJson IS NOT NULL) " +
+           "ORDER BY COALESCE(c.pendingRequestedAt, c.requestedAt) ASC")
     List<TenantPgConfiguration> findPendingApprovalsByProvider(
         @Param("pgProvider") PgProvider pgProvider,
         @Param("approvalStatus") ApprovalStatus approvalStatus

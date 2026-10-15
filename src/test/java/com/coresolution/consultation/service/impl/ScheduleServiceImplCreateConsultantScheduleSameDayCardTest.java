@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
+import com.coresolution.consultation.exception.ScheduleTimeConflictException;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -518,5 +519,36 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         assertThat(saved.getId()).isEqualTo(999L);
         verify(scheduleRepository, never()).countOccupyingConsultationSchedulesForConsultantClient(
                 anyString(), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    @DisplayName("가예약 생성: 상담사 시간이 겹치면 ScheduleTimeConflictException 이고 저장하지 않는다")
+    void tentativeCreate_overlappingConsultantSlot_throwsConflictAndDoesNotSave() {
+        when(mappingRepository.findByTenantIdAndStatus(eq(TENANT_ID), any()))
+                .thenReturn(Collections.emptyList());
+        Schedule existing = new Schedule();
+        existing.setId(18L);
+        existing.setStatus(ScheduleStatus.BOOKED);
+        existing.setStartTime(LocalTime.of(18, 0));
+        existing.setEndTime(LocalTime.of(18, 50));
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndDate(
+                eq(TENANT_ID), eq(CONSULTANT_ID), any(LocalDate.class)))
+                .thenReturn(List.of(existing));
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID,
+                CLIENT_ID,
+                LocalDate.of(2026, 7, 15),
+                LocalTime.of(18, 0),
+                LocalTime.of(18, 50),
+                "가예약",
+                "설명",
+                "INDIVIDUAL",
+                null,
+                true))
+                .isInstanceOf(ScheduleTimeConflictException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_TIME_SLOT_ALREADY_OCCUPIED);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
     }
 }

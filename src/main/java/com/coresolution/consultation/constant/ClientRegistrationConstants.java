@@ -22,6 +22,9 @@ public final class ClientRegistrationConstants {
 
     public static final String MSG_DUPLICATE_PHONE = "동일 테넌트에 이미 등록된 휴대폰 번호입니다.";
 
+    /** 상담사 등록 시 같은 테넌트 미삭제 사용자와 전화번호가 겹칠 때. */
+    public static final String MSG_PHONE_ALREADY_REGISTERED = "이미 등록된 전화번호입니다.";
+
     public static final String MSG_DUPLICATE_EMAIL = "동일 테넌트에 이미 등록된 이메일입니다.";
 
     public static final String MSG_INVALID_EMAIL_FORMAT = "올바른 이메일 형식이 아닙니다.";

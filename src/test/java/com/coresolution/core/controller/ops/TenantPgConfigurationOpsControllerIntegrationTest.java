@@ -30,6 +30,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -96,6 +97,53 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("PG 설정 목록 조회 - OPS+HQ 성공 (tenantId 필터, ACTIVE 포함)")
+    @WithMockUser(roles = {"OPS"})
+    void testListConfigurations_WithTenantId_Success() throws Exception {
+        TenantPgConfigurationResponse active = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .testMode(true)
+                .build();
+        when(pgConfigurationService.listConfigurationsForOps(eq("center-tenant-id")))
+                .thenReturn(List.of(active));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .param("tenantId", "center-tenant-id")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId))
+                .andExpect(jsonPath("$.data[0].status").value("ACTIVE"))
+                .andExpect(jsonPath("$.data[0].testMode").value(true));
+    }
+
+    @Test
+    @DisplayName("PG 설정 목록 조회 - OPS+HQ 성공 (tenantId 없음 = 전체)")
+    @WithMockUser(roles = {"OPS"})
+    void testListConfigurations_All_Success() throws Exception {
+        when(pgConfigurationService.listConfigurationsForOps(isNull()))
+                .thenReturn(List.of(testResponse));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].configId").value(testConfigId));
+    }
+
+    @Test
+    @DisplayName("PG 설정 목록 조회 - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testListConfigurations_AdminForbidden() throws Exception {
+        mockMvc.perform(get("/api/v1/ops/pg-configurations")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     @DisplayName("승인 대기 목록 조회 - OPS+HQ 성공")
     @WithMockUser(roles = {"OPS"})
     void testGetPendingApprovals_Success() throws Exception {
@@ -108,6 +156,51 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].configId").value(testConfigId));
+    }
+
+    @Test
+    @DisplayName("승인 대기 목록 — hasPendingEdit·pendingEditDiff 필드 포함")
+    @WithMockUser(roles = {"OPS"})
+    void testGetPendingApprovals_IncludesPendingEditDiff() throws Exception {
+        TenantPgPendingEditDiff diff = TenantPgPendingEditDiff.builder()
+                .current(TenantPgPendingEditValues.builder()
+                        .provider("TOSS")
+                        .storeId("****ive")
+                        .merchantId("****ant")
+                        .channelKeyMasked("****ABCD")
+                        .build())
+                .pending(TenantPgPendingEditValues.builder()
+                        .provider("TOSS")
+                        .storeId("****ing")
+                        .merchantId("****new")
+                        .channelKeyMasked("****WXYZ")
+                        .build())
+                .apiKeyChanged(true)
+                .secretKeyChanged(false)
+                .build();
+        TenantPgConfigurationResponse pendingItem = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .pgProvider(PgProvider.TOSS)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .hasPendingEdit(true)
+                .pendingRequestedAt(LocalDateTime.now())
+                .pendingEditDiff(diff)
+                .build();
+        when(pgConfigurationService.getPendingApprovals(null, null))
+                .thenReturn(List.of(pendingItem));
+
+        mockMvc.perform(get("/api/v1/ops/pg-configurations/pending")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].hasPendingEdit").value(true))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.apiKeyChanged").value(true))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.secretKeyChanged").value(false))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.current.channelKeyMasked")
+                        .value("****ABCD"))
+                .andExpect(jsonPath("$.data[0].pendingEditDiff.pending.channelKeyMasked")
+                        .value("****WXYZ"));
     }
 
     @Test
@@ -178,6 +271,26 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.configId").value(testConfigId))
                 .andExpect(jsonPath("$.data.approvalStatus").value("APPROVED"));
+    }
+
+    @Test
+    @DisplayName("PG 설정 승인 — 연결테스트 실패 시 4xx, 서비스 예외 전파")
+    @WithMockUser(roles = {"OPS"})
+    void testApproveConfiguration_ConnectionTestFailed_ReturnsBadRequest() throws Exception {
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(true)
+                .build();
+
+        when(pgConfigurationService.approveConfiguration(eq(testConfigId), any(PgConfigurationApproveRequest.class)))
+                .thenThrow(new IllegalStateException(
+                        "PG 연결 테스트 실패로 승인을 중단했습니다: API Key 유효하지 않음"));
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/approve", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -332,6 +445,29 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("PG 연결 테스트 (운영 포털) — testConnectionBeforeApproval 호출(pending 경로 포함)")
+    @WithMockUser(roles = {"OPS"})
+    void testTestConnection_InvokesBeforeApprovalService() throws Exception {
+        ConnectionTestResponse connectionResponse = ConnectionTestResponse.builder()
+                .success(true)
+                .result("SUCCESS")
+                .message("pending 자격 증명 테스트 성공")
+                .testedAt(LocalDateTime.now())
+                .build();
+
+        when(pgConfigurationService.testConnectionBeforeApproval(testConfigId))
+                .thenReturn(connectionResponse);
+
+        mockMvc.perform(post("/api/v1/ops/pg-configurations/{configId}/test-connection", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.message").value("pending 자격 증명 테스트 성공"));
+
+        org.mockito.Mockito.verify(pgConfigurationService)
+                .testConnectionBeforeApproval(testConfigId);
+    }
+
+    @Test
     @DisplayName("PG 연결 테스트 (운영 포털) - 센터 ADMIN 403")
     @WithMockUser(roles = {"ADMIN"})
     void testTestConnection_AdminForbidden() throws Exception {
@@ -359,6 +495,88 @@ class TenantPgConfigurationOpsControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.success").value(false))
                 .andExpect(jsonPath("$.data.result").value("FAILED"));
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH (운영 포털) - OPS+HQ 성공, 평문 미응답")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchWebhookSecret_Success() throws Exception {
+        TenantPgConfigurationDetailResponse detail = new TenantPgConfigurationDetailResponse();
+        detail.setConfigId(testConfigId);
+        detail.setTenantId("center-tenant-id");
+        detail.setPortoneWebhookSecretConfigured(false);
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .portoneWebhookSecretConfigured(true)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .build();
+
+        when(pgConfigurationService.getConfigurationDetail(isNull(), eq(testConfigId)))
+                .thenReturn(detail);
+        when(pgConfigurationService.patchWebhookSecret(
+                eq("center-tenant-id"), eq(testConfigId), eq("whsec_ops")))
+                .thenReturn(patched);
+
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_ops")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/webhook-secret", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.portoneWebhookSecretConfigured").value(true))
+                .andExpect(content().string(
+                        org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("whsec_ops"))));
+    }
+
+    @Test
+    @DisplayName("테스트 모드 PATCH (운영 포털) - OPS+HQ 성공")
+    @WithMockUser(roles = {"OPS"})
+    void testPatchTestMode_Success() throws Exception {
+        TenantPgConfigurationDetailResponse detail = new TenantPgConfigurationDetailResponse();
+        detail.setConfigId(testConfigId);
+        detail.setTenantId("center-tenant-id");
+
+        TenantPgConfigurationResponse patched = TenantPgConfigurationResponse.builder()
+                .configId(testConfigId)
+                .tenantId("center-tenant-id")
+                .testMode(false)
+                .status(PgConfigurationStatus.ACTIVE)
+                .approvalStatus(ApprovalStatus.APPROVED)
+                .build();
+
+        when(pgConfigurationService.getConfigurationDetail(isNull(), eq(testConfigId)))
+                .thenReturn(detail);
+        when(pgConfigurationService.patchTestMode(eq("center-tenant-id"), eq(testConfigId), eq(false)))
+                .thenReturn(patched);
+
+        PgConfigurationTestModePatchRequest request = PgConfigurationTestModePatchRequest.builder()
+                .testMode(false)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/test-mode", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.testMode").value(false));
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH (운영 포털) - 센터 ADMIN 403")
+    @WithMockUser(roles = {"ADMIN"})
+    void testPatchWebhookSecret_AdminForbidden() throws Exception {
+        PgConfigurationWebhookSecretPatchRequest request = PgConfigurationWebhookSecretPatchRequest.builder()
+                .webhookSecret("whsec_ops")
+                .build();
+
+        mockMvc.perform(patch("/api/v1/ops/pg-configurations/{configId}/webhook-secret", testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
     }
 
     @Test

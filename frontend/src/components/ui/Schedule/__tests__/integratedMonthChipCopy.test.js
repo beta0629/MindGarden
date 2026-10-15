@@ -169,6 +169,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(marksCss).not.toContain('(width < 224px)');
     expect(marksCss).not.toMatch(/color:\s*transparent/);
     expect(marksCss).toContain('var(--mg-v2-space-0-5)');
+    expect(marksJs).toMatch(/title=\{institutionTitle/);
+    expect(marksJs).not.toMatch(/mg-schedule-event-marks__institution"[^>]*title=/);
     expect(marksCss).not.toMatch(/transform\s*:/);
     expect(marksCss).not.toMatch(/scale\s*\(/);
   });
@@ -180,6 +182,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(imsCss).toContain('@container mg-month-event (width < 146px)');
     expect(imsCss).toContain('@container mg-month-event (width < 109px)');
     expect(imsCss).toContain('opacity: 1');
+    expect(imsCss).toContain('.fc-event.fc-event-past');
+    expect(imsCss).toContain('var(--mg-v2-month-chip-padding-inline-end)');
     expect(imsCss).not.toMatch(/content:\s*"당일"/);
     expect(imsCss).not.toMatch(/grayscale/);
   });
@@ -200,5 +204,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(scheduleJson.calendar.legend.institution).toContain('기관연계');
     expect(scheduleJson.calendar.legend.unresolved).toBe('미해소');
     expect(scheduleJson.calendar.legend.hint).toContain('마우스');
+    expect(scheduleJson.calendar.toolbar.month).toBe('월');
+    expect(scheduleJson.calendar.toolbar.week).toBe('주');
+    expect(scheduleJson.calendar.toolbar.day).toBe('일');
   });
 });

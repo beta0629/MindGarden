@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   FM_PAGE_TITLE,
@@ -656,5 +656,96 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     const expenseCell = document.querySelector('.operator-ledger-summary__cell--expense');
     expect(expenseCell.textContent).not.toContain('9,000,000');
     expect(expenseCell.textContent).toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+  });
+
+  it('개발 화면과 같은 수입 상담료 페이지는 나간 돈 아래에 환불(상담료)를 보이지 않는다', async() => {
+    const incomeRows = Array.from({ length: 19 }, (_, index) => {
+      const n = index + 1;
+      return {
+        id: 300 + n,
+        transactionDate: '2026-10-02',
+        transactionType: FINANCE_TX_TYPE.INCOME,
+        category: '상담료',
+        description: `상담료 입금 ${n}`,
+        amount: n === 19 ? 535000 : 200000,
+        status: FINANCE_COUNTABLE_TX_STATUS
+      };
+    });
+    const rows = [
+      ...incomeRows,
+      {
+        id: 320,
+        transactionDate: '2026-10-03',
+        transactionType: FINANCE_TX_TYPE.EXPENSE,
+        category: 'RENT',
+        description: '임대료',
+        amount: 800000,
+        status: FINANCE_TX_STATUS.PENDING
+      }
+    ];
+
+    let releaseDashboard = () => {};
+    const dashboardReady = new Promise((resolve) => {
+      releaseDashboard = resolve;
+    });
+
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('finance/dashboard')) {
+        await dashboardReady;
+        return {
+          financialData: {
+            incomeCategoryBreakdown: { 상담료: 4135000 },
+            categoryBreakdown: { 상담료: 4135000 },
+            expenseCategoryBreakdown: {}
+          }
+        };
+      }
+      if (path.includes('financial-transactions')) {
+        return {
+          success: true,
+          data: rows,
+          currentPage: 0,
+          totalPages: 1,
+          totalCount: 20,
+          size: 20,
+          summary: {
+            totalIncome: 4135000,
+            totalExpense: 0,
+            totalCardMerchantFee: 0,
+            remaining: 4135000,
+            refundAmount: 0
+          }
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-expense')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('상담료 입금 1')).toBeInTheDocument();
+    });
+
+    await act(async() => {
+      releaseDashboard();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const expenseArticle = screen.getByTestId('ledger-summary-expense')
+      .closest('article.operator-ledger-summary__cell--expense');
+    expect(expenseArticle).toBeTruthy();
+    expect(expenseArticle.textContent).toContain(FM_SUMMARY.EXPENSE_LABEL);
+    expect(expenseArticle.textContent).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(expenseArticle.textContent).not.toContain('4,135,000');
   });
 });

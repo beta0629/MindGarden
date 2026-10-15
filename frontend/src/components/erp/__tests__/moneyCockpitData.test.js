@@ -634,6 +634,51 @@ describe('장부 나간 돈 — 수입 상담료·미완료 지출 회귀', () =
     expect(caption).not.toContain('8,000,000');
     expect(caption).not.toContain('7,000,000');
   });
+
+  test('수입 상담료 키는 outflow items에 들어가지 않는다', () => {
+    const incomeRows = Array.from({ length: 19 }, (_, index) => {
+      const n = index + 1;
+      return {
+        id: 300 + n,
+        transactionDate: '2026-10-02',
+        transactionType: FINANCE_TX_TYPE.INCOME,
+        category: '상담료',
+        description: `상담료 입금 ${n}`,
+        amount: n === 19 ? 535000 : 200000,
+        status: FINANCE_COUNTABLE_TX_STATUS
+      };
+    });
+    const rows = [
+      ...incomeRows,
+      {
+        id: 320,
+        transactionDate: '2026-10-03',
+        transactionType: FINANCE_TX_TYPE.EXPENSE,
+        category: 'RENT',
+        description: '임대료',
+        amount: 800000,
+        status: FINANCE_TX_STATUS.PENDING
+      }
+    ];
+    const dashboardRaw = {
+      financialData: {
+        incomeCategoryBreakdown: { 상담료: 4135000 },
+        categoryBreakdown: { 상담료: 4135000 },
+        expenseCategoryBreakdown: {}
+      }
+    };
+
+    const mixes = [
+      buildLedgerOutflowMixFromDashboard(dashboardRaw, rows, { periodRefundAmount: 0 }),
+      buildLedgerOutflowMixFromDashboard(null, rows, { periodRefundAmount: 0 })
+    ];
+
+    mixes.forEach((items) => {
+      expect(Array.isArray(items)).toBe(true);
+      expect(items.some((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)).toBe(false);
+      expect(items.some((item) => item.amount === 4135000)).toBe(false);
+    });
+  });
 });
 
 describe('moneyCockpitData salary checklist helpers', () => {

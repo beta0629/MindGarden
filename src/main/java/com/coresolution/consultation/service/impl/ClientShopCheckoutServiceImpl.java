@@ -63,6 +63,8 @@ import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
@@ -109,6 +111,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
     private final ClientShopCatalogService clientShopCatalogService;
     private final ShopOrderableSkuService shopOrderableSkuService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
     private final PlatformTransactionManager transactionManager;
 
@@ -498,19 +501,24 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 결제 요청 전 상담 라인 매핑 재확인. 매핑이 비었거나 더 이상 활성이 아니면 PG 결제를 만들지 않는다.
+     * 결제 준비 전, 지정 상품 주문의 상담 라인 매핑 재확인.
+     * 일반 {@code /client/shop} 주문은 이 게이트를 타지 않는다.
+     * 매핑이 비었거나 더 이상 활성이 아니면 PG 결제를 만들지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 내담자 ID
      * @param order 결제할 주문
-     * @throws IllegalArgumentException 상담 라인에 쓸 활성 매핑이 없을 때
+     * @throws IllegalArgumentException 지정 상품의 상담 라인에 쓸 활성 매핑이 없을 때
      */
     private void requireConsultationMappingsForPayment(String tenantId, Long clientUserId, ShopClientOrder order) {
-        List<ShopClientOrderLine> consultationLines =
-                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId())
-                        .stream()
-                        .filter(line -> isConsultationSku(line.getSku()))
-                        .toList();
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
+        if (!containsClientOfferLine(lines)) {
+            return;
+        }
+        List<ShopClientOrderLine> consultationLines = lines.stream()
+                .filter(line -> isConsultationSku(line.getSku()))
+                .toList();
         if (consultationLines.isEmpty()) {
             return;
         }
@@ -818,13 +826,13 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
      */
     /**
-     * 지정 상품 라인이 있으면 휴대폰 인증, 필수 약관 3종, 그리고 그 SKU 가
+     * 결제 준비에서만, 지정 상품 라인이 있으면 휴대폰 인증, 필수 약관 3종, 그리고 그 SKU 가
      * 아직 이 내담자의 활성 지정(다른 내담자·취소·비활성·이미 결제 아님)인지 다시 확인한다.
-     * 지정 상품이 없는 주문은 여기서 반환한다. 카탈로그 결제 확정은 사용자 행을 다시 찾지 않는다.
+     * 일반 {@code /client/shop} 주문은 여기서 반환한다. 결제 확정에서는 호출하지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 결제 내담자 users.id
-     * @param order 결제 준비 또는 확정 대상 주문
+     * @param order 결제 준비 대상 주문
      * @throws IllegalArgumentException 동의 누락 또는 지정 상품이 더 이상 유효하지 않을 때
      */
     private void requireAssignedOfferPaymentGate(String tenantId, Long clientUserId, ShopClientOrder order) {
@@ -854,6 +862,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 throw new IllegalArgumentException(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE);
             }
         }
+    }
+
+    private static boolean containsClientOfferLine(List<ShopClientOrderLine> lines) {
+        if (lines == null) {
+            return false;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line != null && ShopClientOfferSkuPolicy.isClientOfferSku(line.getSku())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean containsClientOfferSku(List<PricedCartLine> pricedLines) {
@@ -1029,11 +1049,64 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return true;
         }
-        requireConsultationMappingsForPayment(tenantId, order.getClientId(), order);
-        requireAssignedOfferPaymentGate(tenantId, order.getClientId(), order);
+        if (!approvedPaymentMatchesOrder(tenantId, order)) {
+            return true;
+        }
         markOrderPaidAndCommitPoints(tenantId, order);
         log.info("쇼핑 주문 PAID 반영: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
         return true;
+    }
+
+    /**
+     * 승인된 결제 건이 있으면 금액과 주문 번호만 맞는지 본다.
+     * 승인 건이 없으면(포인트 전액 등) 기존 확정으로 넘어간다.
+     * 불일치면 PortOne 전액 취소와 단일 환불로 금액을 되돌리고 주문을 취소한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 확정 대상 주문
+     * @return 금액·주문이 맞아 PAID 로 가도 되면 true
+     */
+    private boolean approvedPaymentMatchesOrder(String tenantId, ShopClientOrder order) {
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, order.getPublicId(), Payment.PaymentStatus.APPROVED);
+        if (approved.isEmpty()) {
+            return true;
+        }
+        Payment payment = approved.get();
+        boolean orderMatch = order.getPublicId() != null && order.getPublicId().equals(payment.getOrderId());
+        if (orderMatch && ShopPaymentApprovalPolicy.amountMatchesOrder(payment, order)) {
+            return true;
+        }
+        cancelMismatchedApprovedPayment(tenantId, order, payment);
+        return false;
+    }
+
+    /**
+     * 승인 금액·주문 불일치 안전망. 공유 PortOne 클라이언트로 전액 취소한 뒤에만
+     * 단일 환불 경로로 결제 건을 환불하고 주문을 취소한다.
+     * 로그에는 내담자 ID 만 남긴다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 취소할 주문
+     * @param payment 금액 또는 주문이 어긋난 승인 결제
+     */
+    private void cancelMismatchedApprovedPayment(String tenantId, ShopClientOrder order, Payment payment) {
+        Long clientId = order.getClientId();
+        boolean cancelled = portOneV2PaymentCancelService.cancelPayment(
+                tenantId, payment.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        if (!cancelled) {
+            log.error("결제 확정 불일치 자동 취소 실패 clientId={}", clientId);
+            throw new IllegalStateException(ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        }
+        releasePointsHoldIfAny(tenantId, clientId, order.getPublicId(), order.getPointsRedeemMinor());
+        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        shopClientOrderRepository.save(order);
+        paymentService.refundPayment(
+                payment.getPaymentId(),
+                payment.getAmount(),
+                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        log.warn("결제 확정 금액·주문 불일치로 전액 취소 clientId={}", clientId);
     }
 
     @Override

@@ -111,6 +111,13 @@ public final class ShopCheckoutConstants {
             "지정된 상품이 이 내담자의 것이 아니거나 만료되어 결제할 수 없습니다.";
 
     /**
+     * 결제 확정에서 승인 금액이 주문 현금 결제액과 다르거나 결제 건의 주문이 다를 때
+     * PortOne 전액 취소·단일 환불에 넣는 사유. 개인정보·시크릿을 넣지 않는다.
+     */
+    public static final String PAYMENT_MISMATCH_CANCEL_REASON =
+            "결제 금액 또는 주문이 일치하지 않아 결제를 취소했습니다.";
+
+    /**
      * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
      */
     public static final String MSG_PREPARE_INVALID_ORDER_STATUS =

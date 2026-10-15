@@ -79,6 +79,7 @@ import com.coresolution.consultation.service.PointTenantPolicyService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.TenantPgConfigurationService;
@@ -159,6 +160,9 @@ class ClientShopCheckoutServiceImplTest {
 
     @Mock
     private ShopOrderableSkuService shopOrderableSkuService;
+
+    @Mock
+    private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @Mock
     private PlatformTransactionManager transactionManager;
@@ -774,8 +778,8 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("preparePayment — 상담 라인 매핑 없음(기존 주문)이면 PG 결제 생성 전 거부")
-    void preparePayment_consultationLineWithoutMapping_rejectsBeforePayment() {
+    @DisplayName("preparePayment — 일반 몰 상담 라인은 매핑 게이트를 타지 않고 결제를 만든다")
+    void preparePayment_shopConsultationWithoutMapping_createsPayment() {
         ShopClientOrder order = pendingOrder(0L);
         order.setId(777L);
         order.setStatus(ShopClientOrderStatus.CREATED);
@@ -790,11 +794,39 @@ class ClientShopCheckoutServiceImplTest {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(777L))
                 .thenReturn(List.of(orderLine));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                eq(TENANT), eq(ORDER_ID), any()))
+                .thenReturn(Optional.empty());
+        stubVerifiedPayer();
+        when(tenantPgConfigurationService.getActiveConfigurationByProvider(eq(TENANT), any()))
+                .thenReturn(null);
+        when(paymentService.createPayment(any())).thenReturn(
+                com.coresolution.consultation.dto.PaymentResponse.builder()
+                        .paymentId("pay-shop")
+                        .amount(java.math.BigDecimal.valueOf(10_000L))
+                        .status("PENDING")
+                        .build());
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest());
+
+        assertEquals("pay-shop", response.getPaymentId());
+        verify(clientShopConsultantMappingService, never()).listActiveMappings(any(), any());
+        verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 지정 상품 상담 라인은 매핑이 없으면 PG 생성 전 거부")
+    void preparePayment_clientOfferConsultationWithoutMapping_rejects() {
+        ShopClientOrder order = offerOrder(true);
+        ShopCatalogSku sku = stubOfferLine(order);
+        sku.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
         when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
 
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class,
                 () -> service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest()));
+
         assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
         verify(paymentService, never()).createPayment(any());
     }
@@ -2556,82 +2588,105 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("결제 확정 — 지정 상품 동의 없으면 PAID 전이 거부")
-    void completeOrder_clientOffer_missingConsents_rejects() {
+    @DisplayName("결제 확정 — 동의·지정·휴대폰 게이트는 다시 보지 않고 금액이 맞으면 PAID")
+    void completeOrder_clientOffer_missingConsent_stillPaidWhenAmountMatches() {
         ShopClientOrder order = offerOrder(false);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
-        stubOfferLine(order);
+        order.setCashDueMinor(10_000L);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        stubApprovedPayment(10_000L, ORDER_ID);
+        stubDefaultPolicies();
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
 
-        assertEquals(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS, ex.getMessage());
-        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
     }
 
-    @ParameterizedTest(name = "결제 확정 — {0} 이면 PAID 로 넘기지 않는다")
-    @ValueSource(strings = {"다른 내담자의 지정", "취소된 지정", "이미 결제된 지정"})
-    void completeOrder_clientOffer_notPayable_rejects(String mismatch) {
-        ShopClientOrder order = offerOrder(true);
+    @Test
+    @DisplayName("결제 확정 — 일반 몰 주문은 매핑이 없어도 PAID 이고 취소 API 를 부르지 않는다")
+    void completeOrder_shopOrder_withoutMapping_setsPaid() {
+        ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
-        ShopCatalogSku sku = stubOfferLine(order);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
-                .thenReturn(Optional.empty());
+        stubApprovedPayment(order.getCashDueMinor(), ORDER_ID);
+        stubDefaultPolicies();
 
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
 
-        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage(), mismatch);
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(clientShopConsultantMappingService, never()).listActiveMappings(any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — 승인 금액이 주문과 다르면 PG 전액 취소·단일 환불 후 주문을 취소한다")
+    void completeOrder_amountMismatch_cancelsPaymentAndOrder() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        Payment payment = stubApprovedPayment(1L, ORDER_ID);
+        when(portOneV2PaymentCancelService.cancelPayment(
+                TENANT, payment.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON))
+                .thenReturn(true);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        verify(portOneV2PaymentCancelService).cancelPayment(
+                TENANT, payment.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        verify(paymentService).refundPayment(
+                payment.getPaymentId(),
+                payment.getAmount(),
+                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — 결제 건의 주문이 다르면 PG 전액 취소 후 주문을 취소한다")
+    void completeOrder_orderMismatch_cancelsPaymentAndOrder() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        Payment payment = stubApprovedPayment(order.getCashDueMinor(), "other-order");
+        when(portOneV2PaymentCancelService.cancelPayment(any(), any(), any())).thenReturn(true);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        verify(paymentService).refundPayment(eq(payment.getPaymentId()), eq(payment.getAmount()), any());
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+    }
+
+    @Test
+    @DisplayName("결제 확정 — PG 취소가 실패하면 주문을 PAID 도 취소도 하지 않는다")
+    void completeOrder_amountMismatch_cancelFails_leavesOrderOpen() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        stubApprovedPayment(1L, ORDER_ID);
+        when(portOneV2PaymentCancelService.cancelPayment(any(), any(), any())).thenReturn(false);
+
+        assertThrows(IllegalStateException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
         assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
         verify(shopClientOrderRepository, never()).save(any());
     }
 
-    @Test
-    @DisplayName("결제 확정 — 지정 상품이고 휴대폰 미인증이면 PAID 전이 거부")
-    void completeOrder_unverifiedPhone_rejects() {
-        ShopClientOrder order = offerOrder(true);
-        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
-        stubOfferLine(order);
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        User user = User.builder().name("홍길동").phone("enc-01012345678").build();
-        user.setId(CLIENT_ID);
-        user.setTenantId(TENANT);
-        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(user));
-        when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)).thenReturn(false);
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
-
-        assertEquals(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED, ex.getMessage());
-        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
-    }
-
-    @Test
-    @DisplayName("결제 확정 — 상담 라인 매핑이 더 이상 활성이 아니면 PAID 전이 거부")
-    void completeOrder_missingMapping_rejects() {
-        ShopClientOrder order = pendingOrder(0L);
-        order.setId(4242L);
-        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
-        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
-                .clientOrder(order)
-                .lineNo(1)
-                .sku(consultationCartLine(10_000L).getSku())
-                .skuCodeSnapshot("SKU-1")
-                .quantity(1)
-                .consultantClientMappingId(null)
+    private Payment stubApprovedPayment(long amountMinor, String paymentOrderId) {
+        Payment payment = Payment.builder()
+                .paymentId("pay-approved")
+                .orderId(paymentOrderId)
+                .amount(java.math.BigDecimal.valueOf(amountMinor))
+                .status(Payment.PaymentStatus.APPROVED)
                 .build();
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(4242L))
-                .thenReturn(List.of(orderLine));
-        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
-
-        IllegalArgumentException ex = assertThrows(
-                IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
-
-        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
-        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenReturn(Optional.of(payment));
+        return payment;
     }
 
     private static ShopCatalogSku offerSku(long unitPriceMinor) {

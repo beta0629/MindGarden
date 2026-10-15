@@ -94,6 +94,7 @@ describe('ClientOffersPage', () => {
     pays.forEach((pay) => {
       expect(pay.disabled).toBe(true);
       expect(pay.getAttribute('aria-disabled')).toBe('true');
+      expect(pay.getAttribute('aria-describedby')).toBeTruthy();
       expect(pay.className).toContain('client-offers__pay-cta');
       fireEvent.click(pay);
     });
@@ -178,11 +179,18 @@ describe('ClientOffersPage', () => {
     expect(screen.getAllByRole('button', { name: /내용 보기/ })).toHaveLength(3);
 
     const offersCss = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.css'), 'utf8');
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
     const mallCss = fs.readFileSync(path.join(__dirname, '../../../../styles/shop/ClientMall.css'), 'utf8');
     expect(offersCss).toMatch(/\.client-offers__pay\s*\{[^}]*position:\s*sticky/);
-    expect(offersCss).toMatch(/--mg-offer-bar-reserve:\s*7\.5rem/);
-    expect(offersCss).toMatch(/--mg-offer-pay-disabled-bg:\s*var\(--cs-slate-100\)/);
+    expect(tokensCss).toMatch(/--mg-offer-bar-reserve:\s*7\.5rem/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-aside-w:\s*22\.5rem/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-bg:\s*var\(--cs-slate-100\)/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-fg:\s*var\(--cs-slate-700\)/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-border:\s*var\(--cs-slate-400\)/);
+    expect(tokensCss).toMatch(/--mg-offer-terms-body-max:\s*24rem/);
+    expect(offersCss).toMatch(/@media \(min-width: 56\.26rem\)[\s\S]*var\(--mg-offer-pay-aside-w\)/);
     expect(offersCss).toMatch(/border-style:\s*dashed/);
+    expect(offersCss).toMatch(/\[aria-disabled="true"\]:not\(\[aria-busy="true"\]\)/);
     expect(offersCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
     const paybarAt = offersCss.indexOf('.client-offers__paybar.client-mall-bar');
     const paybarBlock = offersCss.slice(paybarAt, offersCss.indexOf('}', paybarAt));

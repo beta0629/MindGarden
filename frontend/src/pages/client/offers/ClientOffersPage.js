@@ -461,6 +461,7 @@ const ClientOffersPage = () => {
       onClick={handleCheckout}
       data-testid={T.PAY}
     >
+      {paying ? <span className="client-offers__pay-spinner" aria-hidden="true" /> : null}
       {!paying && payBlocked ? <Lock className="client-offers__icon" aria-hidden="true" /> : null}
       {paying ? t('bar.paying') : t('bar.pay')}
     </MGButton>
@@ -480,8 +481,8 @@ const ClientOffersPage = () => {
   const reasonText = paying ? t('bar.windowHint') : blockMessage;
 
   const paySummary = loadState === 'ready' && payable.length > 0 ? (
-    <section className="client-mall-box client-offers__pay" aria-label={t('bar.label')} data-testid="client-offers-pay-card">
-      <h2 className="client-offers__pay-h">{t('bar.label')}</h2>
+    <section className="client-mall-box client-offers__pay" aria-labelledby={`${baseId}-pay-title`} data-testid="client-offers-pay-card">
+      <h2 className="client-mall-box__title" id={`${baseId}-pay-title`}>{t('bar.label')}</h2>
       {selectedOffer ? (
         <div className="client-offers__pay-item">
           <span className="client-offers__pay-cap">{t('pay.selected')}</span>
@@ -505,24 +506,30 @@ const ClientOffersPage = () => {
         <div className="client-offers__pay-row client-offers__pay-row--total">
           <dt>{t('bar.label')}</dt>
           <dd className={selectedOffer ? undefined : 'client-offers__bar-amount--empty'}>
-            {selectedOffer
-              ? `${formatMallNumber(selectedOffer.finalPriceMinor)}${t('card.won')}`
-              : t('bar.emptyAmount')}
+            {selectedOffer ? (
+              <>
+                {formatMallNumber(selectedOffer.finalPriceMinor)}
+                <span className="client-offers__pay-unit">{t('card.won')}</span>
+              </>
+            ) : t('bar.emptyAmount')}
           </dd>
         </div>
       </dl>
-      <div className="client-offers__pay-refund">
+      <p className="client-offers__pay-refund">
         <Info className="client-offers__icon" aria-hidden="true" />
-        <p>{CLIENT_REFUND_NOTICE}</p>
-        <button
-          type="button"
-          className="client-offers__pay-refund-link"
-          disabled={paying}
-          onClick={(event) => openTerms(CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND, event.currentTarget)}
-        >
-          {t('pay.refundLink')}
-        </button>
-      </div>
+        <span>
+          {CLIENT_REFUND_NOTICE}
+          {' '}
+          <button
+            type="button"
+            className="client-offers__pay-refund-link"
+            disabled={paying}
+            onClick={(event) => openTerms(CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND, event.currentTarget)}
+          >
+            {t('pay.refundLink')}
+          </button>
+        </span>
+      </p>
       <div className="client-offers__pay-agree">
         <h3 className="client-offers__pay-h">{t('pay.agreeTitle')}</h3>
         <label className="client-offers__pay-agree-all">
@@ -545,11 +552,10 @@ const ClientOffersPage = () => {
                   checked={Boolean(agreements[item.key])}
                   disabled={paying}
                   onChange={(event) => setAgreements((prev) => ({ ...prev, [item.key]: event.target.checked }))}
-                  aria-label={t(`agree.${item.key}`)}
                 />
-                <span className="client-offers__pay-agree-tag">{t('agree.required')}</span>
                 <span>{t(`agree.${item.key}`)}</span>
               </label>
+              <span className="client-offers__pay-agree-tag">{t('agree.required')}</span>
               <button
                 type="button"
                 className="client-offers__pay-agree-more"
@@ -568,7 +574,8 @@ const ClientOffersPage = () => {
         {renderPayButton(reasonText ? payReasonId : undefined)}
         {reasonText ? (
           <p className={`client-offers__pay-reason${paying ? ' client-offers__pay-reason--quiet' : ''}`} id={payReasonId} role="status">
-            {reasonText}
+            {!paying ? <Info className="client-offers__icon" aria-hidden="true" /> : null}
+            <span>{reasonText}</span>
           </p>
         ) : null}
       </div>
@@ -657,12 +664,14 @@ const ClientOffersPage = () => {
                   {selectedOffer ? `${formatMallNumber(selectedOffer.finalPriceMinor)}${t('card.won')}` : t('bar.emptyAmount')}
                 </span>
                 <span className="client-mall-bar__caption" id={blockId} role="status">
-                  {blockMessage || (selectedOffer
-                    ? t('bar.summary', { title: selectedOffer.title, n: selectedOffer.sessionCount ?? '' })
-                    : '')}
+                  {paying
+                    ? t('bar.windowHint')
+                    : (blockMessage || (selectedOffer
+                      ? t('bar.summary', { title: selectedOffer.title, n: selectedOffer.sessionCount ?? '' })
+                      : ''))}
                 </span>
               </div>
-              {renderPayButton(blockMessage ? blockId : undefined, 'client-mall-bar__cta')}
+              {renderPayButton((paying || blockMessage) ? blockId : undefined, 'client-mall-bar__cta')}
             </div>
           </div>
         </>

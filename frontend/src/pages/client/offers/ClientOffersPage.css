@@ -18,19 +18,15 @@
 .client-offers__bar-amount--empty { color: var(--client-web-mute); font-weight: var(--mg-v2-font-weight-regular); }
 .client-offers__state { display: flex; flex-direction: column; align-items: center; gap: var(--mg-v2-space-3); min-block-size: var(--mg-state-min-height); justify-content: center; text-align: center; }
 
-/* 이 화면 전용 토큰. 색·간격은 기존 토큰만 가리킨다. 모달은 body 로 포탈되므로 :root 에 둔다. */
-:root {
-  --mg-offer-pay-sticky-top: var(--client-mall-sticky-top, 5.5rem);
-  --mg-offer-pay-disabled-bg: var(--cs-slate-100);
-  --mg-offer-pay-disabled-fg: var(--cs-slate-700);
-  --mg-offer-pay-disabled-border: var(--cs-slate-400);
-  --mg-offer-bar-reserve: 7.5rem;
-  --mg-offer-terms-body-max: 24rem;
-  --mg-offer-pay-aside-w: 22.5rem;
+/* PC(>900px): 셸 열을 시안 aside 폭으로. ≤900px 는 아래 미디어에서 1열로 되돌린다. */
+@media (min-width: 56.26rem) {
+  .client-mall.client-offers .client-web-page-shell__grid {
+    grid-template-columns: minmax(0, 1fr) var(--mg-offer-pay-aside-w);
+  }
 }
 
 /* PC: 오른쪽 sticky 결제 요약. 셸 aside 가 이미 sticky 이고, 카드도 같은 기준으로 붙인다. */
-.client-offers__pay {
+.client-mall-box.client-offers__pay {
   position: sticky;
   inset-block-start: var(--mg-offer-pay-sticky-top);
   display: flex;
@@ -40,7 +36,7 @@
   max-inline-size: var(--mg-offer-pay-aside-w);
 }
 .client-offers__pay-h { margin: 0; font-size: var(--mg-v2-font-size-body-md); font-weight: var(--mg-v2-font-weight-bold); }
-.client-offers__pay-item { display: flex; flex-direction: column; gap: var(--mg-v2-space-1); padding: var(--mg-v2-space-3); border: var(--mg-v2-border-width-thin) solid var(--client-web-line); border-radius: var(--mg-v2-radius-md); background: var(--cs-slate-50); }
+.client-offers__pay-item { display: flex; flex-direction: column; gap: var(--mg-v2-space-0-5); padding: var(--mg-v2-space-3); border: var(--mg-v2-border-width-thin) solid var(--client-web-line); border-radius: var(--mg-v2-radius-md); background: var(--cs-slate-50); }
 .client-offers__pay-cap { color: var(--cs-slate-600); font-size: var(--mg-v2-font-size-caption); }
 .client-offers__pay-name { font-weight: var(--mg-v2-font-weight-bold); }
 .client-offers__pay-meta { color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); }
@@ -51,24 +47,26 @@
 .client-offers__pay-row--total { padding-block-start: var(--mg-v2-space-3); border-block-start: var(--mg-v2-border-width-thin) solid var(--client-web-line); }
 .client-offers__pay-row--total dt { color: var(--client-web-ink); font-weight: var(--mg-v2-font-weight-semibold); }
 .client-offers__pay-row--total dd { font-size: var(--mg-v2-font-size-h2); font-weight: var(--mg-v2-font-weight-bold); }
-.client-offers__pay-refund { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--mg-v2-space-2); color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); }
-.client-offers__pay-refund p { margin: 0; flex: 1 1 auto; }
-.client-offers__pay-refund-link { border: 0; padding: 0; background: transparent; color: var(--client-web-ink); font-size: var(--mg-v2-font-size-caption); font-weight: var(--mg-v2-font-weight-semibold); text-decoration: underline; cursor: pointer; }
+.client-offers__pay-unit { font-size: var(--mg-v2-font-size-body-md); font-weight: var(--mg-v2-font-weight-semibold); margin-inline-start: var(--mg-v2-space-0-5); }
+.client-offers__pay-refund { display: flex; align-items: flex-start; gap: var(--mg-v2-space-2); margin: 0; color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); }
+.client-offers__pay-refund-link { display: inline; padding: 0; border: 0; background: transparent; color: var(--client-web-ink); font-size: inherit; font-weight: var(--mg-v2-font-weight-semibold); text-decoration: underline; cursor: pointer; }
 .client-offers__pay-agree { display: flex; flex-direction: column; gap: var(--mg-v2-space-2); padding-block-start: var(--mg-v2-space-3); border-block-start: var(--mg-v2-border-width-thin) solid var(--client-web-line); }
 .client-offers__pay-agree-all,
 .client-offers__pay-agree-label { display: flex; align-items: center; gap: var(--mg-v2-space-2); min-block-size: var(--mg-v2-touch-target-min); }
 .client-offers__pay-agree-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: var(--mg-v2-space-2); }
 .client-offers__pay-agree-row { display: flex; align-items: center; gap: var(--mg-v2-space-2); }
 .client-offers__pay-agree-label { flex: 1 1 auto; min-inline-size: 0; }
-.client-offers__pay-agree-tag { color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); font-weight: var(--mg-v2-font-weight-semibold); }
-.client-offers__pay-agree-more { flex: none; display: inline-flex; align-items: center; justify-content: center; inline-size: var(--mg-v2-touch-target-min); block-size: var(--mg-v2-touch-target-min); border: 0; border-radius: var(--mg-v2-radius-md); background: transparent; color: var(--client-web-slate); cursor: pointer; }
+.client-offers__pay-agree-tag { flex: none; color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); font-weight: var(--mg-v2-font-weight-semibold); }
+.client-offers__pay-agree-more { flex: none; display: inline-flex; align-items: center; justify-content: center; inline-size: var(--mg-v2-touch-target-min); block-size: var(--mg-v2-touch-target-min); margin-inline-start: calc(-1 * var(--mg-v2-space-2)); border: 0; border-radius: var(--mg-v2-radius-md); background: transparent; color: var(--client-web-slate); cursor: pointer; }
 .client-offers__pay-agree-more:focus-visible { outline: none; box-shadow: var(--mg-v2-shadow-focus); }
 .client-offers__pay-actions { display: flex; flex-direction: column; gap: var(--mg-v2-space-2); }
 .client-offers__pay-actions .client-offers__pay-cta { inline-size: 100%; }
 .client-offers__pay-reason { display: flex; align-items: center; gap: var(--mg-v2-space-1); margin: 0; color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); font-weight: var(--mg-v2-font-weight-semibold); }
 .client-offers__pay-reason--quiet { font-weight: var(--mg-v2-font-weight-regular); }
 
-/* 비활성 결제 버튼: 투명도가 아니라 중립 채움·점선·진한 글자. 공통 .mg-button--disabled 가 !important 라 여기서만 덮는다. */
+/* 비활성: 중립 채움·점선·진한 글자. 공통 disabled 가 !important 라 여기서만 덮는다.
+   pointer-events 를 되살려 금지 커서가 보이게 하고, 클릭은 disabled 속성이 막는다. */
+button.client-offers__pay-cta.mg-button[aria-disabled="true"]:not([aria-busy="true"]),
 button.client-offers__pay-cta.mg-button.mg-button--disabled,
 button.client-offers__pay-cta.mg-button:disabled {
   background: var(--mg-offer-pay-disabled-bg) !important;
@@ -79,6 +77,23 @@ button.client-offers__pay-cta.mg-button:disabled {
   border-width: var(--mg-v2-border-width-thin) !important;
   opacity: 1 !important;
   cursor: not-allowed !important;
+  pointer-events: auto !important;
+}
+.client-offers__pay-spinner {
+  inline-size: var(--mg-icon-size-sm);
+  block-size: var(--mg-icon-size-sm);
+  flex: none;
+  box-sizing: border-box;
+  border-radius: var(--mg-v2-radius-pill);
+  border: var(--mg-v2-border-width-thick) solid currentColor;
+  border-top-color: transparent;
+  animation: client-offers-pay-spin 0.75s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .client-offers__pay-spinner { animation: none; }
+}
+@keyframes client-offers-pay-spin {
+  to { transform: rotate(1turn); }
 }
 button.client-offers__pay-cta.mg-button[aria-busy="true"] {
   background: var(--client-web-teal) !important;

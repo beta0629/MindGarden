@@ -26,11 +26,21 @@ jest.mock('react-i18next', () => {
     })
   };
 });
-jest.mock('../../../../components/shop/templates/ShopClientLayout', () => ({ title, children }) => (
-  <main><h1>{title}</h1>{children}</main>
+jest.mock('../../../../components/shop/templates/ShopClientLayout', () => ({ title, children, aside, className, testId }) => (
+  <main className={className} data-testid={testId}>
+    <h1>{title}</h1>
+    <div data-testid="shop-main">{children}</div>
+    {aside ? <aside data-testid="shop-aside">{aside}</aside> : null}
+  </main>
 ));
 jest.mock('../../../../components/shop/templates/ShopClientSessionLoading', () => () => <div>loading</div>);
-jest.mock('../../../../contexts/SessionContext', () => ({ useSession: () => ({ checkSession: jest.fn() }) }));
+jest.mock('../../../../contexts/SessionContext', () => {
+  const React = require('react');
+  return {
+    SessionContext: React.createContext(null),
+    useSession: () => ({ checkSession: jest.fn() })
+  };
+});
 jest.mock('../../../../hooks/useClientShopAuth', () => ({ useClientShopAuth: jest.fn() }));
 jest.mock('../../../../hooks/useShopPaymentCancelNotice', () => () => ({ visible: false, dismiss: () => {} }));
 jest.mock('../../../../services/shopClientOfferService', () => ({ listMyClientOffers: jest.fn() }));
@@ -80,10 +90,14 @@ describe('ClientOffersPage', () => {
   test('약관은 기본 미체크라 결제가 비활성이고 이유가 연결된다', async() => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    const pay = await screen.findByTestId('client-offers-pay');
-    expect(pay.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('전체 동의 후 결제할 수 있어요')).toBeTruthy();
-    fireEvent.click(pay);
+    const pays = await screen.findAllByTestId('client-offers-pay');
+    pays.forEach((pay) => {
+      expect(pay.disabled).toBe(true);
+      expect(pay.getAttribute('aria-disabled')).toBe('true');
+      expect(pay.className).toContain('client-offers__pay-cta');
+      fireEvent.click(pay);
+    });
+    expect(screen.getAllByText('전체 동의 후 결제할 수 있어요').length).toBeGreaterThan(0);
     expect(runShopCheckoutWithPortOneGuard).not.toHaveBeenCalled();
   });
 
@@ -91,7 +105,7 @@ describe('ClientOffersPage', () => {
     listMyClientOffers.mockResolvedValue([OFFER(1), OFFER(2)]);
     renderPage();
     await screen.findByText('결제할 수 있는 상품 2개');
-    expect(screen.getByText('결제할 상품을 골라 주세요')).toBeTruthy();
+    expect(screen.getAllByText('결제할 상품을 골라 주세요').length).toBeGreaterThan(0);
     const selects = screen.getAllByRole('button', { name: '선택하기' });
     expect(selects).toHaveLength(2);
     fireEvent.click(selects[1]);
@@ -105,7 +119,7 @@ describe('ClientOffersPage', () => {
     ]);
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    expect(await screen.findByText('담당 상담사를 고른 뒤 결제할 수 있어요')).toBeTruthy();
+    expect((await screen.findAllByText('담당 상담사를 고른 뒤 결제할 수 있어요')).length).toBeGreaterThan(0);
     expect(screen.getByLabelText('담당 상담사').value).toBe('');
   });
 
@@ -113,10 +127,12 @@ describe('ClientOffersPage', () => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     runShopCheckoutWithPortOneGuard.mockResolvedValue({ status: 'FAILED', message: '실패' });
     renderPage();
-    fireEvent.click(await screen.findByLabelText(/전체 동의/));
-    const pay = screen.getByTestId('client-offers-pay');
-    await waitFor(() => expect(pay.getAttribute('aria-disabled')).toBe('false'));
-    fireEvent.click(pay);
+    const agreeAll = await screen.findAllByLabelText(/전체 동의/);
+    fireEvent.click(agreeAll[0]);
+    const pays = screen.getAllByTestId('client-offers-pay');
+    await waitFor(() => expect(pays[0].getAttribute('aria-disabled')).toBe('false'));
+    expect(pays[0].disabled).toBe(false);
+    fireEvent.click(pays[0]);
     await waitFor(() => expect(runShopCheckoutWithPortOneGuard).toHaveBeenCalled());
     expect(runShopCheckoutWithPortOneGuard.mock.calls[0][0].mappingIdForCheckout).toBe('1');
   });
@@ -146,55 +162,54 @@ describe('ClientOffersPage', () => {
     expect(await screen.findByText('다시 시도')).toBeTruthy();
   });
 
-  test('결제하기는 하나이고 데스크톱·좁은 화면 모두 보이며 차단 조건은 한 곳이다', async() => {
+  test('PC는 aside 요약 카드, 390은 하단 고정 바와 7.5rem 여백', async() => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    const pay = await screen.findByRole('button', { name: '결제하기' });
+    const card = await screen.findByTestId('client-offers-pay-card');
     const bar = screen.getByTestId('client-offers-bar');
-    expect(screen.getAllByTestId('client-offers-pay')).toHaveLength(1);
-    expect(pay.closest('[data-testid="client-offers-bar"]')).toBe(bar);
+    const aside = screen.getByTestId('shop-aside');
+    expect(aside.contains(card)).toBe(true);
+    expect(card.classList.contains('client-offers__pay')).toBe(true);
     expect(bar.classList.contains('client-mall-bar')).toBe(true);
     expect(bar.classList.contains('client-offers__paybar')).toBe(true);
-    expect(pay.hidden).toBe(false);
-    expect(bar.hidden).toBe(false);
-    expect(pay.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('전체 동의 후 결제할 수 있어요')).toBeTruthy();
+    expect(screen.getAllByTestId('client-offers-pay')).toHaveLength(2);
+    expect(card.querySelector('[data-testid="client-offers-pay"]')).toBeTruthy();
+    expect(bar.querySelector('[data-testid="client-offers-pay"]')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /내용 보기/ })).toHaveLength(3);
 
-    const pageSrc = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.js'), 'utf8');
     const offersCss = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.css'), 'utf8');
     const mallCss = fs.readFileSync(path.join(__dirname, '../../../../styles/shop/ClientMall.css'), 'utf8');
-
-    expect(pageSrc.match(/const blockMessage =/g)).toHaveLength(1);
-    expect(pageSrc.match(/const payDisabled = paying \|\| Boolean\(blockMessage\);/g)).toHaveLength(1);
-    expect(pageSrc.match(/data-testid=\{T\.PAY\}/g)).toHaveLength(1);
-    expect(pageSrc).toMatch(/if \(!selectedOffer\) \{\s*return t\('bar\.blockNoProduct'\);/);
-    expect(pageSrc).toMatch(/if \(noMapping\) \{\s*return t\('bar\.blockNoAssign'\);/);
-    expect(pageSrc).toMatch(/if \(needsConsultant\) \{\s*return t\('bar\.blockConsultant'\);/);
-    expect(pageSrc).toMatch(/if \(!phoneVerified && !allAgreed\) \{\s*return t\('bar\.blockBoth'\);/);
-    expect(pageSrc).toMatch(/if \(!phoneVerified\) \{\s*return t\('bar\.blockPhone'\);/);
-    expect(pageSrc).toMatch(/if \(!allAgreed\) \{\s*return t\('bar\.blockAgreement'\);/);
-
-    const ruleAt = offersCss.indexOf('.client-offers__paybar.client-mall-bar');
-    const mediaAt = offersCss.indexOf('@media');
-    expect(ruleAt).toBeGreaterThan(-1);
-    expect(mediaAt).toBeGreaterThan(ruleAt);
-    const paybarBlock = offersCss.slice(ruleAt, offersCss.indexOf('}', ruleAt));
-    expect(paybarBlock).toMatch(/display:\s*block/);
-    expect(paybarBlock).not.toMatch(/display:\s*none/);
+    expect(offersCss).toMatch(/\.client-offers__pay\s*\{[^}]*position:\s*sticky/);
+    expect(offersCss).toMatch(/--mg-offer-bar-reserve:\s*7\.5rem/);
+    expect(offersCss).toMatch(/--mg-offer-pay-disabled-bg:\s*var\(--cs-slate-100\)/);
+    expect(offersCss).toMatch(/border-style:\s*dashed/);
+    expect(offersCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    const paybarAt = offersCss.indexOf('.client-offers__paybar.client-mall-bar');
+    const paybarBlock = offersCss.slice(paybarAt, offersCss.indexOf('}', paybarAt));
+    expect(paybarBlock).not.toMatch(/display\s*:/);
     expect(paybarBlock).not.toMatch(/position\s*:/);
-    expect(offersCss).not.toMatch(/\.client-offers__paybar[^{]*\{[^}]*display:\s*none/);
+    const narrowOffers = offersCss.slice(offersCss.indexOf('@media (max-width: 56.25rem)'));
+    expect(narrowOffers).toMatch(/client-web-page-shell__aside\s*\{\s*display:\s*none/);
+    expect(narrowOffers).toMatch(/client-mall-bar-spacer\s*\{[^}]*var\(--mg-offer-bar-reserve\)/);
+    expect(narrowOffers).toMatch(/\.client-offers__agreements-flow\s*\{\s*display:\s*block/);
+    expect(offersCss).toMatch(/\.client-offers__agreements-flow\s*\{\s*display:\s*none/);
+    const narrowMall = mallCss.slice(mallCss.indexOf('@media (max-width: 56.25rem)'));
+    expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*display:\s*block/);
+    expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*position:\s*fixed/);
+  });
 
-    expect(mallCss).toMatch(/\.client-mall-bar,\s*\.client-mall-bar-spacer\s*\{\s*display:\s*none;\s*\}/);
-    const narrowAt = mallCss.indexOf('@media (max-width: 56.25rem)');
-    expect(narrowAt).toBeGreaterThan(-1);
-    const narrowCss = mallCss.slice(narrowAt);
-    expect(narrowCss).toMatch(/\.client-mall-bar\s*\{[^}]*display:\s*block/);
-    expect(narrowCss).toMatch(/\.client-mall-bar\s*\{[^}]*position:\s*fixed/);
-
-    const offersOverrideVisible = /display:\s*block/.test(paybarBlock) && ruleAt < mediaAt;
-    const genericBarVisible = (narrow) => narrow && /\.client-mall-bar\s*\{[^}]*display:\s*block/.test(narrowCss);
-    expect(offersOverrideVisible || genericBarVisible(false)).toBe(true);
-    expect(offersOverrideVisible || genericBarVisible(true)).toBe(true);
-    expect(genericBarVisible(false)).toBe(false);
+  test('약관 모달이 열려 있으면 뒤 화면은 스크롤되지 않는다', async() => {
+    listMyClientOffers.mockResolvedValue([OFFER(1)]);
+    renderPage();
+    const more = await screen.findAllByRole('button', { name: /내용 보기/ });
+    fireEvent.click(more[0]);
+    const page = screen.getByTestId('client-offers');
+    expect(page.getAttribute('inert')).toBe('');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('client-offers-terms-dismiss'));
+    await waitFor(() => expect(page.hasAttribute('inert')).toBe(false));
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 });

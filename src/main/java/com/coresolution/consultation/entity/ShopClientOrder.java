@@ -74,6 +74,21 @@ public class ShopClientOrder extends BaseEntity {
     @Builder.Default
     private String checkoutSource = ShopCheckoutConstants.CHECKOUT_SOURCE_CART;
 
+    /** 지정 상품 결제 필수 약관 — 구매 조건. 지정 상품 주문이 아니면 false. */
+    @Column(name = "consent_purchase", nullable = false)
+    @Builder.Default
+    private boolean consentPurchase = false;
+
+    /** 지정 상품 결제 필수 약관 — 이용기간·환불. 지정 상품 주문이 아니면 false. */
+    @Column(name = "consent_usage_refund", nullable = false)
+    @Builder.Default
+    private boolean consentUsageRefund = false;
+
+    /** 지정 상품 결제 필수 약관 — 제3자 제공. 지정 상품 주문이 아니면 false. */
+    @Column(name = "consent_third_party", nullable = false)
+    @Builder.Default
+    private boolean consentThirdParty = false;
+
     /**
      * 어드민 전액 환불 PG 취소 진행 임대 만료 시각. 이 시각 전에는 다른 환불 요청이 PG 취소를 부르지 않는다.
      * null 이면 진행 중인 환불 없음.

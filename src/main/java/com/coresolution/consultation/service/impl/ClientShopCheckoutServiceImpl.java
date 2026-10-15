@@ -41,6 +41,7 @@ import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
 import com.coresolution.consultation.entity.ShopOrderFulfillmentEvent;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.util.ShopClientOfferSkuPolicy;
 import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopCartLineRepository;
@@ -144,9 +145,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             throw new IllegalArgumentException("주문 금액이 유효하지 않습니다.");
         }
 
+        boolean offerCheckout = containsClientOfferSku(pricedLines);
+        if (offerCheckout && !hasRequiredConsents(request)) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS);
+        }
+
         Optional<ShopClientOrder> reusable = findReusableOpenOrder(
                 tenantId, clientUserId, buyNow, cartLines, subtotal, request);
         if (reusable.isPresent()) {
+            if (offerCheckout) {
+                stampRequiredConsents(reusable.get());
+                shopClientOrderRepository.save(reusable.get());
+            }
             log.info(
                     "체크아웃 재결제 — 같은 내용의 미결제 주문 재사용: tenantId={}, orderPublicId={}",
                     tenantId,
@@ -229,6 +239,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 .checkoutSource(buyNow
                         ? ShopCheckoutConstants.CHECKOUT_SOURCE_BUY_NOW
                         : ShopCheckoutConstants.CHECKOUT_SOURCE_CART)
+                .consentPurchase(offerCheckout)
+                .consentUsageRefund(offerCheckout)
+                .consentThirdParty(offerCheckout)
                 .build();
         order.setTenantId(tenantId);
         order = shopClientOrderRepository.save(order);
@@ -638,6 +651,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         User user = userRepository.findByTenantIdAndId(tenantId, clientUserId)
                 .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
         requireVerifiedKoreanMobileForPayment(user);
+        requireAssignedOfferPaymentGate(tenantId, clientUserId, order);
 
         String customerEmail = resolvePaymentCustomerEmail(tenantId, user);
         String customerName = resolvePaymentCustomerName(user);
@@ -803,6 +817,74 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @param user 테넌트 스코프 조회된 사용자
      * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
      */
+    /**
+     * 지정 상품 라인이 있으면 필수 약관 3종이 주문에 남아 있는지, 그리고 그 SKU 가
+     * 아직 이 내담자의 활성 지정(다른 내담자·취소·비활성·이미 결제 아님)인지 다시 확인한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientUserId 결제 내담자 users.id
+     * @param order 결제 준비 또는 확정 대상 주문
+     * @throws IllegalArgumentException 동의 누락 또는 지정 상품이 더 이상 유효하지 않을 때
+     */
+    private void requireAssignedOfferPaymentGate(String tenantId, Long clientUserId, ShopClientOrder order) {
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
+        if (lines == null || lines.isEmpty()) {
+            return;
+        }
+        List<String> offerSkuCodes = new ArrayList<>();
+        for (ShopClientOrderLine line : lines) {
+            if (line == null || !ShopClientOfferSkuPolicy.isClientOfferSku(line.getSku())) {
+                continue;
+            }
+            offerSkuCodes.add(line.getSku().getSkuCode());
+        }
+        if (offerSkuCodes.isEmpty()) {
+            return;
+        }
+        if (!orderHasRequiredConsents(order)) {
+            throw new IllegalArgumentException(ShopCheckoutConstants.MSG_REQUIRED_CONSENTS);
+        }
+        for (String skuCode : offerSkuCodes) {
+            if (shopOrderableSkuService.findOrderableForClient(tenantId, skuCode, clientUserId).isEmpty()) {
+                throw new IllegalArgumentException(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE);
+            }
+        }
+    }
+
+    private static boolean containsClientOfferSku(List<PricedCartLine> pricedLines) {
+        if (pricedLines == null) {
+            return false;
+        }
+        for (PricedCartLine priced : pricedLines) {
+            if (priced != null && priced.line() != null
+                    && ShopClientOfferSkuPolicy.isClientOfferSku(priced.line().sku())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean hasRequiredConsents(ShopCheckoutRequest request) {
+        return request != null
+                && request.isConsentPurchase()
+                && request.isConsentUsageRefund()
+                && request.isConsentThirdParty();
+    }
+
+    private static boolean orderHasRequiredConsents(ShopClientOrder order) {
+        return order != null
+                && order.isConsentPurchase()
+                && order.isConsentUsageRefund()
+                && order.isConsentThirdParty();
+    }
+
+    private static void stampRequiredConsents(ShopClientOrder order) {
+        order.setConsentPurchase(true);
+        order.setConsentUsageRefund(true);
+        order.setConsentThirdParty(true);
+    }
+
     private void requireVerifiedKoreanMobileForPayment(User user) {
         if (!clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(user)) {
             throw new IllegalArgumentException(ShopCheckoutConstants.MSG_PHONE_VERIFICATION_REQUIRED);
@@ -943,6 +1025,11 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return true;
         }
+        User payer = userRepository.findByTenantIdAndId(tenantId, order.getClientId())
+                .orElseThrow(() -> new IllegalStateException("사용자를 찾을 수 없습니다."));
+        requireVerifiedKoreanMobileForPayment(payer);
+        requireConsultationMappingsForPayment(tenantId, order.getClientId(), order);
+        requireAssignedOfferPaymentGate(tenantId, order.getClientId(), order);
         markOrderPaidAndCommitPoints(tenantId, order);
         log.info("쇼핑 주문 PAID 반영: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
         return true;

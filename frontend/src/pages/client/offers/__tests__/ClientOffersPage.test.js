@@ -237,6 +237,41 @@ describe('ClientOffersPage', () => {
     expect(columns).toBe(3);
   });
 
+  test('선택됨 버튼 호버는 토큰 색으로 대비 4.5 이상이다', () => {
+    const offersCss = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.css'), 'utf8');
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
+    const paletteCss = fs.readFileSync(path.join(__dirname, '../../../../styles/unified-design-tokens.css'), 'utf8');
+    expect(offersCss).toMatch(/client-offers__select\.mg-button--outline:hover[\s\S]*var\(--mg-offer-select-hover-bg\)/);
+    expect(offersCss).toMatch(/client-offers__select\.mg-button--outline:hover[\s\S]*color:\s*var\(--mg-offer-select-hover-fg\)/);
+    expect(offersCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    const token = (name, css) => {
+      const match = css.match(new RegExp(`${name}:\\s*var\\((--[\\w-]+)\\)`));
+      expect(match).toBeTruthy();
+      return match[1];
+    };
+    const hexOf = (name) => {
+      const match = paletteCss.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`));
+      expect(match).toBeTruthy();
+      return match[1];
+    };
+    const channel = (hex, index) => {
+      const value = parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16) / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (hex) => {
+      const [r, g, b] = [0, 1, 2].map((index) => channel(hex, index));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const contrast = (fg, bg) => {
+      const lighter = Math.max(luminance(fg), luminance(bg));
+      const darker = Math.min(luminance(fg), luminance(bg));
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    const fg = hexOf(token('--mg-offer-select-hover-fg', tokensCss));
+    const bg = hexOf(token('--mg-offer-select-hover-bg', tokensCss));
+    expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
   test('약관 모달이 열려 있으면 뒤 화면은 스크롤되지 않는다', async() => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();

@@ -792,8 +792,8 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("preparePayment — 일반 몰 상담 라인은 매핑 게이트를 타지 않고 결제를 만든다")
-    void preparePayment_shopConsultationWithoutMapping_createsPayment() {
+    @DisplayName("preparePayment — 상담 라인 매핑 없음(기존 주문)이면 PG 결제 생성 전 거부")
+    void preparePayment_consultationLineWithoutMapping_rejectsBeforePayment() {
         ShopClientOrder order = pendingOrder(0L);
         order.setId(777L);
         order.setStatus(ShopClientOrderStatus.CREATED);
@@ -808,6 +808,68 @@ class ClientShopCheckoutServiceImplTest {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(777L))
                 .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest()));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+        verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 카테고리가 빈 상담 라인은 매핑 없으면 PG 결제 생성 전 거부")
+    void preparePayment_emptyCategoryLineWithoutMapping_rejectsBeforePayment() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(779L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        ShopCatalogSku sku = cartLine(10_000L).getSku();
+        sku.setCatalogCategory("");
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(sku)
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(null)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(779L))
+                .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID)).thenReturn(List.of());
+
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest()));
+        assertEquals(ShopCheckoutConstants.MSG_CONSULTANT_MAPPING_REQUIRED_FOR_PURCHASE, ex.getMessage());
+        verify(paymentService, never()).createPayment(any());
+        verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("preparePayment — 일반 몰 상담 라인은 매핑이 있으면 지정 상품 게이트 없이 결제를 만든다")
+    void preparePayment_shopConsultationWithMapping_skipsOfferGates() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setId(780L);
+        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setConsentPurchase(false);
+        order.setConsentUsageRefund(false);
+        order.setConsentThirdParty(false);
+        ShopClientOrderLine orderLine = ShopClientOrderLine.builder()
+                .clientOrder(order)
+                .lineNo(1)
+                .sku(consultationCartLine(10_000L).getSku())
+                .skuCodeSnapshot("SKU-1")
+                .quantity(1)
+                .consultantClientMappingId(7L)
+                .build();
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        when(shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(780L))
+                .thenReturn(List.of(orderLine));
+        when(clientShopConsultantMappingService.listActiveMappings(TENANT, CLIENT_ID))
+                .thenReturn(List.of(eligibleMapping(
+                        7L, ConsultantClientMapping.MappingStatus.ACTIVE, null, "상품")));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 eq(TENANT), eq(ORDER_ID), any()))
                 .thenReturn(Optional.empty());
@@ -825,7 +887,6 @@ class ClientShopCheckoutServiceImplTest {
         var response = service.preparePayment(TENANT, CLIENT_ID, ORDER_ID, new ShopPreparePaymentRequest());
 
         assertEquals("pay-shop", response.getPaymentId());
-        verify(clientShopConsultantMappingService, never()).listActiveMappings(any(), any());
         verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
     }
 

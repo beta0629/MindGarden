@@ -6,16 +6,23 @@
  */
 
 import {
+  buildCategoryBreakdownFromTransactions,
   buildIncomeMixItems,
   buildLateSessionTodoComments,
+  buildLedgerIncomeCaptionFromDashboard,
+  buildLedgerOutflowMixFromDashboard,
   buildMoneyTodoRuleComments,
   buildNtsChecklistComments,
   buildOutflowMixItems,
   isPostedLedgerTransaction,
   buildPaydayChecklistComment,
+  buildTopExpenseCaption,
   buildWithholdingStoredAmountComment,
   collectPrimaryPreConfirmQueries,
   computeSeriesMonthlyAverages,
+  FINANCE_COUNTABLE_TX_STATUS,
+  FINANCE_TX_STATUS,
+  FINANCE_TX_TYPE,
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
@@ -524,6 +531,153 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       }]
     );
     expect(withCancelled.find((i) => i.id === 'refund')?.amount).toBe(50000);
+  });
+});
+
+describe('장부 나간 돈 — 수입 상담료·미완료 지출 회귀', () => {
+  const incomeConsultation = {
+    transactionType: FINANCE_TX_TYPE.INCOME,
+    category: '상담료',
+    amount: 9000000,
+    status: FINANCE_COUNTABLE_TX_STATUS
+  };
+  const pendingRent = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: 'RENT',
+    amount: 8000000,
+    status: FINANCE_TX_STATUS.PENDING
+  };
+  const approvedSalary = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: 'SALARY',
+    amount: 7000000,
+    status: FINANCE_TX_STATUS.APPROVED
+  };
+  const completedConsultationRefund = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: '상담료',
+    amount: 91000,
+    status: FINANCE_COUNTABLE_TX_STATUS
+  };
+  const pageRows = [
+    incomeConsultation,
+    pendingRent,
+    approvedSalary,
+    completedConsultationRefund
+  ];
+
+  test('income 상담료 행은 나간 돈 caption·breakdown에 없다', () => {
+    const items = buildLedgerOutflowMixFromDashboard(null, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    const refund = items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(refund?.amount).toBe(91000);
+    expect(refund?.amount).not.toBe(incomeConsultation.amount);
+    expect(caption).not.toContain('9,000,000');
+    expect(caption).not.toContain('상담료 9,000,000');
+  });
+
+  test('PENDING·APPROVED 지출 행은 제외한다', () => {
+    const breakdown = buildCategoryBreakdownFromTransactions(pageRows, FINANCE_TX_TYPE.EXPENSE);
+    expect(breakdown.RENT).toBeUndefined();
+    expect(breakdown.SALARY).toBeUndefined();
+    expect(breakdown['상담료']).toBe(91000);
+    const items = buildLedgerOutflowMixFromDashboard(null, pageRows);
+    expect(items.find((item) => item.id === 'rentUtility')).toBeUndefined();
+    expect(items.find((item) => item.id === 'salary')).toBeUndefined();
+    const caption = buildTopExpenseCaption(items);
+    expect(caption).not.toContain('임대');
+    expect(caption).not.toContain('급여');
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+  });
+
+  test('COMPLETED 지출 상담료 환불은 환불(상담료)로 남긴다', () => {
+    const items = buildLedgerOutflowMixFromDashboard(null, [
+      incomeConsultation,
+      completedConsultationRefund
+    ]);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+  });
+
+  test('서버 expenseCategoryBreakdown 이 페이지 수입 상담료보다 우선한다', () => {
+    const raw = {
+      financialData: {
+        incomeCategoryBreakdown: { 상담료: 9000000 },
+        expenseCategoryBreakdown: { RENT: 1540000 }
+      }
+    };
+    const items = buildLedgerOutflowMixFromDashboard(raw, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.some((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)).toBe(false);
+    expect(caption).toContain('1,540,000');
+    expect(caption).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(buildLedgerIncomeCaptionFromDashboard(raw, pageRows)).toContain('9,000,000');
+  });
+
+  test('서버 지출 breakdown의 COMPLETED 상담료는 환불(상담료)이고 수입 금액은 섞이지 않는다', () => {
+    const raw = {
+      data: {
+        financialData: {
+          incomeCategoryBreakdown: { 상담료: 9000000 },
+          expenseCategoryBreakdown: { 상담료: 91000 }
+        }
+      }
+    };
+    const items = buildLedgerOutflowMixFromDashboard(raw, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+    expect(caption).not.toContain('9,000,000');
+    expect(caption).not.toContain('8,000,000');
+    expect(caption).not.toContain('7,000,000');
+  });
+
+  test('수입 상담료 키는 outflow items에 들어가지 않는다', () => {
+    const incomeRows = Array.from({ length: 19 }, (_, index) => {
+      const n = index + 1;
+      return {
+        id: 300 + n,
+        transactionDate: '2026-10-02',
+        transactionType: FINANCE_TX_TYPE.INCOME,
+        category: '상담료',
+        description: `상담료 입금 ${n}`,
+        amount: n === 19 ? 535000 : 200000,
+        status: FINANCE_COUNTABLE_TX_STATUS
+      };
+    });
+    const rows = [
+      ...incomeRows,
+      {
+        id: 320,
+        transactionDate: '2026-10-03',
+        transactionType: FINANCE_TX_TYPE.EXPENSE,
+        category: 'RENT',
+        description: '임대료',
+        amount: 800000,
+        status: FINANCE_TX_STATUS.PENDING
+      }
+    ];
+    const dashboardRaw = {
+      financialData: {
+        incomeCategoryBreakdown: { 상담료: 4135000 },
+        categoryBreakdown: { 상담료: 4135000 },
+        expenseCategoryBreakdown: {}
+      }
+    };
+
+    const mixes = [
+      buildLedgerOutflowMixFromDashboard(dashboardRaw, rows, { periodRefundAmount: 0 }),
+      buildLedgerOutflowMixFromDashboard(null, rows, { periodRefundAmount: 0 })
+    ];
+
+    mixes.forEach((items) => {
+      expect(Array.isArray(items)).toBe(true);
+      expect(items.some((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)).toBe(false);
+      expect(items.some((item) => item.amount === 4135000)).toBe(false);
+    });
   });
 });
 

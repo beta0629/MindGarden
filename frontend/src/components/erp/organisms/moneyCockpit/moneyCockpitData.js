@@ -105,6 +105,36 @@ const MEAL_CATEGORY_ALIASES = new Set(['MEAL', '식대']);
 /** BE OperatorFinanceAggregation.CATEGORY_CARD_MERCHANT_FEE */
 const CARD_MERCHANT_FEE_CATEGORY_KEY = 'CARD_MERCHANT_FEE';
 
+/**
+ * BE FinancialTransaction.TransactionType.
+ * 장부 mix 폴백은 이 코드로만 수입·지출을 가른다.
+ */
+export const FINANCE_TX_TYPE = Object.freeze({
+  INCOME: 'INCOME',
+  EXPENSE: 'EXPENSE'
+});
+
+/**
+ * BE FinancialTransaction.TransactionStatus.
+ * 운영 재무 숫자는 COMPLETED 만 집계한다 (OperatorFinanceAggregation.COUNTABLE_STATUSES).
+ */
+export const FINANCE_TX_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+});
+
+/** @type {string} */
+export const FINANCE_COUNTABLE_TX_STATUS = FINANCE_TX_STATUS.COMPLETED;
+
+/** FINANCE_DASHBOARD 카테고리 맵 필드 (레거시 categoryBreakdown 과 구분) */
+const FINANCE_DASHBOARD_BREAKDOWN_FIELD = Object.freeze({
+  INCOME: 'incomeCategoryBreakdown',
+  EXPENSE: 'expenseCategoryBreakdown'
+});
+
 /** 수입 mix에서 제외할 지출 전용 키 (레거시 혼합 breakdown 방어) */
 const EXPENSE_ONLY_CATEGORY_KEYS = new Set([
   'SALARY',
@@ -729,6 +759,162 @@ export function buildTopExpenseCaption(expenseMixItems) {
     toSafeNumber(item.amount) > toSafeNumber(best.amount) ? item : best
   ), expenseMixItems[0]);
   return `${top.label} ${formatWonDisplay(top.amount)}`;
+}
+
+/**
+ * FINANCE_DASHBOARD 본문에서 financialData 노드를 찾는다.
+ * StandardizedApi 언랩({ financialData })과 래퍼({ data: { financialData } }) 모두 허용.
+ * @param {unknown} raw
+ * @returns {{ data: unknown, financialData: unknown }}
+ */
+function locateFinanceDashboardNodes(raw) {
+  const data = raw?.data ?? raw;
+  const financialData = data?.financialData ?? data;
+  return { data, financialData };
+}
+
+/**
+ * @param {unknown} node
+ * @param {string} fieldName
+ * @returns {unknown|undefined} 필드가 없으면 undefined
+ */
+function readOwnMapField(node, fieldName) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) {
+    return undefined;
+  }
+  if (!Object.prototype.hasOwnProperty.call(node, fieldName)) {
+    return undefined;
+  }
+  return node[fieldName];
+}
+
+/**
+ * 대시보드 응답에 breakdown 필드가 있으면 정규화 맵, 없으면 null.
+ * 레거시 categoryBreakdown(수입)으로 대체하지 않는다. 빈 객체는 서버가 준 확정 값이다.
+ * @param {unknown} raw
+ * @param {string} fieldName
+ * @returns {Record<string, number>|null}
+ */
+function readExplicitFinanceDashboardBreakdown(raw, fieldName) {
+  if (raw == null || typeof raw !== 'object') {
+    return null;
+  }
+  const { data, financialData } = locateFinanceDashboardNodes(raw);
+  const fromFinancial = readOwnMapField(financialData, fieldName);
+  if (fromFinancial !== undefined) {
+    return normalizeBreakdownMap(fromFinancial);
+  }
+  if (data !== financialData) {
+    const fromData = readOwnMapField(data, fieldName);
+    if (fromData !== undefined) {
+      return normalizeBreakdownMap(fromData);
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {object} tx
+ * @returns {string}
+ */
+function readFinanceTransactionType(tx) {
+  return String(tx?.transactionType ?? tx?.type ?? '').toUpperCase();
+}
+
+/**
+ * @param {object} tx
+ * @param {string} transactionType FINANCE_TX_TYPE 값
+ * @returns {boolean}
+ */
+function isCountableFinanceTransaction(tx, transactionType) {
+  const type = readFinanceTransactionType(tx);
+  const status = String(tx?.status ?? '').toUpperCase();
+  return type === transactionType && status === FINANCE_COUNTABLE_TX_STATUS;
+}
+
+/**
+ * @param {Array<object>|unknown} transactions
+ * @param {string} transactionType
+ * @returns {Array<object>}
+ */
+function filterCountableTransactions(transactions, transactionType) {
+  if (!Array.isArray(transactions)) {
+    return [];
+  }
+  return transactions.filter((tx) => isCountableFinanceTransaction(tx, transactionType));
+}
+
+/**
+ * 장부 거래에서 카테고리 합계. COMPLETED 이면서 transactionType 이 일치하는 행만.
+ * @param {Array<object>|unknown} transactions
+ * @param {string} transactionType FINANCE_TX_TYPE.INCOME | FINANCE_TX_TYPE.EXPENSE
+ * @returns {Record<string, number>}
+ */
+export function buildCategoryBreakdownFromTransactions(transactions, transactionType) {
+  const breakdown = {};
+  const wanted = String(transactionType || '').toUpperCase();
+  if (wanted !== FINANCE_TX_TYPE.INCOME && wanted !== FINANCE_TX_TYPE.EXPENSE) {
+    return breakdown;
+  }
+  filterCountableTransactions(transactions, wanted).forEach((tx) => {
+    const key = String(tx?.category ?? '').trim();
+    if (!key) {
+      return;
+    }
+    breakdown[key] = (breakdown[key] || 0) + toSafeNumber(tx?.amount);
+  });
+  return breakdown;
+}
+
+/**
+ * 장부 「나간 돈」 mix.
+ * expenseCategoryBreakdown 필드가 있으면 그 맵만 쓴다 (ErpDashboard 와 동일 SSOT, 빈 맵 유지).
+ * 필드가 없으면 COMPLETED EXPENSE 행만 합산한다. 수입 상담료는 환불로 넣지 않는다.
+ * options.periodRefundAmount 가 유한 숫자면 서버·폴백 모두 환불 버킷에 그 금액만 쓴다.
+ * @param {unknown} dashboardRaw FINANCE_DASHBOARD 응답. 조회 실패 시 null.
+ * @param {Array<object>} transactions 장부 페이지 행 (폴백)
+ * @param {{ periodRefundAmount?: number }} [options]
+ * @returns {Array<{ id: string, label: string, amount: number }>}
+ */
+export function buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions, options = {}) {
+  const periodRefundAmount = options?.periodRefundAmount;
+  const hasPeriodRefundAmount = Number.isFinite(periodRefundAmount);
+  const serverBreakdown = readExplicitFinanceDashboardBreakdown(
+    dashboardRaw,
+    FINANCE_DASHBOARD_BREAKDOWN_FIELD.EXPENSE
+  );
+  if (serverBreakdown != null) {
+    return hasPeriodRefundAmount
+      ? buildOutflowMixItems(serverBreakdown, [], { periodRefundAmount })
+      : buildOutflowMixItems(serverBreakdown, []);
+  }
+  const countable = filterCountableTransactions(transactions, FINANCE_TX_TYPE.EXPENSE);
+  const breakdown = buildCategoryBreakdownFromTransactions(countable, FINANCE_TX_TYPE.EXPENSE);
+  return hasPeriodRefundAmount
+    ? buildOutflowMixItems(breakdown, countable, { periodRefundAmount })
+    : buildOutflowMixItems(breakdown, countable);
+}
+
+/**
+ * 장부 「들어온 돈」 top caption.
+ * incomeCategoryBreakdown 이 있으면 그 맵, 없으면 COMPLETED INCOME 행만.
+ * @param {unknown} dashboardRaw
+ * @param {Array<object>} transactions
+ * @returns {string}
+ */
+export function buildLedgerIncomeCaptionFromDashboard(dashboardRaw, transactions) {
+  const serverBreakdown = readExplicitFinanceDashboardBreakdown(
+    dashboardRaw,
+    FINANCE_DASHBOARD_BREAKDOWN_FIELD.INCOME
+  );
+  if (serverBreakdown != null) {
+    return buildTopIncomeCaption(serverBreakdown, []);
+  }
+  const countable = filterCountableTransactions(transactions, FINANCE_TX_TYPE.INCOME);
+  return buildTopIncomeCaption(
+    buildCategoryBreakdownFromTransactions(countable, FINANCE_TX_TYPE.INCOME),
+    countable
+  );
 }
 
 /**
@@ -1498,6 +1684,5 @@ export function computeSeriesMonthlyAverages(series, now = new Date()) {
  * @returns {boolean}
  */
 export function isIncomeTransaction(tx) {
-  const type = String(tx?.type ?? tx?.transactionType ?? '').toUpperCase();
-  return type === 'INCOME';
+  return readFinanceTransactionType(tx) === FINANCE_TX_TYPE.INCOME;
 }

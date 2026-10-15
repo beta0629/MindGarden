@@ -50,6 +50,18 @@
     "blockConsultant": "담당 상담사를 고른 뒤 결제할 수 있어요",
     "summary": "{{title}} · {{n}}회기"
   },
+  "pay": {
+    "selected": "선택한 상품",
+    "meta": "{{n}}회기 · 결제일부터 {{m}}개월",
+    "metaSessions": "{{n}}회기",
+    "orig": "정가",
+    "discount": "할인",
+    "discountValue": "−{{v}}원",
+    "refundLink": "환불 규칙 보기",
+    "agreeTitle": "약관 동의",
+    "moreAria": "{{label}} 내용 보기",
+    "termsClose": "닫기"
+  },
   "states": {
     "sessionLoading": "불러오는 중…",
     "emptyTitle": "지금 결제할 수 있는 상품이 없어요",

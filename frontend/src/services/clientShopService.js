@@ -191,17 +191,25 @@ const failureMessage = (res, fallback) => {
  * @param {number} pointsToRedeemMinor
  * @param {number|null|undefined} consultantClientMappingId
  * @param {Array<{ skuCode: string, quantity: number }>|null|undefined} [lines] 바로 구매 — 장바구니 대신 이 줄만 결제
+ * @param {{ purchase?: boolean, usageRefund?: boolean, thirdParty?: boolean }|null|undefined} [consents]
+ *        지정 상품 결제 필수 약관 3종. 없으면 본문에 넣지 않는다.
  */
 export const postShopCheckout = async(
   idempotencyKey,
   pointsToRedeemMinor,
   consultantClientMappingId,
-  lines
+  lines,
+  consents
 ) => {
   const body = {
     idempotencyKey,
     pointsToRedeemMinor
   };
+  if (consents && typeof consents === 'object') {
+    body.consentPurchase = Boolean(consents.purchase);
+    body.consentUsageRefund = Boolean(consents.usageRefund);
+    body.consentThirdParty = Boolean(consents.thirdParty);
+  }
   if (consultantClientMappingId != null && consultantClientMappingId !== '') {
     body.consultantClientMappingId = Number(consultantClientMappingId);
   }

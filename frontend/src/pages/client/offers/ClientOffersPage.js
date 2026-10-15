@@ -462,7 +462,12 @@ const ClientOffersPage = () => {
             </>
           ) : null}
           <div className="client-mall-bar-spacer" aria-hidden="true" />
-          <div className="client-mall-bar" role="region" aria-label={t('bar.label')} data-testid="client-offers-bar">
+          <div
+            className="client-mall-bar client-offers__paybar"
+            role="region"
+            aria-label={t('bar.label')}
+            data-testid="client-offers-bar"
+          >
             <div className="client-mall-bar__inner">
               <div className="client-mall-bar__sum">
                 <span className="client-mall-bar__label">{t('bar.label')}</span>

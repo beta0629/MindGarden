@@ -39,6 +39,9 @@
   --mg-offer-pay-disabled-bg: var(--cs-slate-100);
   --mg-offer-pay-disabled-fg: var(--cs-slate-700);
   --mg-offer-pay-disabled-border: var(--cs-slate-400);
+  --mg-offer-select-hover-bg: var(--cs-slate-100);
+  --mg-offer-select-hover-fg: var(--cs-slate-900);
+  --mg-offer-select-hover-border: var(--cs-slate-900);
   --mg-offer-bar-reserve: 7.5rem;
   --mg-offer-terms-body-max: 24rem;
 }

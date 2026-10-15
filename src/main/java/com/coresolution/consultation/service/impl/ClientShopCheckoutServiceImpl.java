@@ -64,11 +64,14 @@ import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.TenantPgConfigurationService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -112,6 +115,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ClientShopCatalogService clientShopCatalogService;
     private final ShopOrderableSkuService shopOrderableSkuService;
     private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final ObjectProvider<SchedulerFailureNotifier> schedulerFailureNotifierProvider;
     /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
     private final PlatformTransactionManager transactionManager;
 
@@ -1036,6 +1041,10 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             fulfillPaidOrderAfterPaymentCommit(tenantId, order);
             return true;
         }
+        if (order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED) {
+            retryMismatchedPaymentCancel(tenantId, order);
+            return true;
+        }
         if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
             // 취소·만료 주문은 되살리지 않는다 — 늦은 결제는 ShopLatePaymentRefundService 가 PG 자동 취소
             throw new ShopOrderClosedForPaymentException(orderPublicId, order.getStatus());
@@ -1083,30 +1092,114 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 승인 금액·주문 불일치 안전망. 공유 PortOne 클라이언트로 전액 취소한 뒤에만
-     * 단일 환불 경로로 결제 건을 환불하고 주문을 취소한다.
-     * 로그에는 내담자 ID 만 남긴다.
+     * {@code CANCEL_FAILED} 재진입. 이미 취소된 결제는 성공으로 보고 환불은 한 번만 한다.
+     * 한도를 넘기면 취소 API 를 다시 부르지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 수동 확인 상태의 주문
+     */
+    private void retryMismatchedPaymentCancel(String tenantId, ShopClientOrder order) {
+        Payment payment = resolveLatestPayment(tenantId, order.getPublicId()).orElse(null);
+        if (payment == null) {
+            return;
+        }
+        cancelMismatchedApprovedPayment(tenantId, order, payment);
+    }
+
+    /**
+     * 승인 금액·주문 불일치 안전망.
+     * PortOne 상태를 먼저 보고, 이미 취소됐으면 취소 API 를 다시 부르지 않는다.
+     * 환불은 결제 건이 아직 환불 전이 아닐 때 한 번만 호출한다.
+     * 취소 API 가 실패하면 주문을 {@code CANCEL_FAILED} 로 두고 관리자에게 한 번 알린다.
+     * 재시도는 한도까지만 하고, 한도를 넘기면 취소 API 를 다시 부르지 않는다.
+     * 로그·알림에는 내담자 ID 와 주문 번호만 남긴다.
      *
      * @param tenantId 테넌트 ID
      * @param order 취소할 주문
-     * @param payment 금액 또는 주문이 어긋난 승인 결제
+     * @param payment 금액 또는 주문이 어긋난 결제
      */
     private void cancelMismatchedApprovedPayment(String tenantId, ShopClientOrder order, Payment payment) {
         Long clientId = order.getClientId();
+        String orderPublicId = order.getPublicId();
+        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED
+                || portOneAlreadyCancelled(tenantId, payment)) {
+            finishMismatchCancel(tenantId, order, payment);
+            return;
+        }
+        int maxAttempts = portOneV2PaymentVerifyService.transientStatusMaxAttempts();
+        int attempts = mismatchCancelAttempts(payment);
+        if (attempts >= maxAttempts) {
+            markCancelFailed(tenantId, order, clientId, orderPublicId);
+            return;
+        }
         boolean cancelled = portOneV2PaymentCancelService.cancelPayment(
                 tenantId, payment.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
         if (!cancelled) {
-            log.error("결제 확정 불일치 자동 취소 실패 clientId={}", clientId);
-            throw new IllegalStateException(ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+            int next = attempts + 1;
+            payment.setFailureReason(ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX + next);
+            paymentRepository.save(payment);
+            log.error(
+                    "결제 확정 불일치 자동 취소 실패 clientId={} orderPublicId={}",
+                    clientId,
+                    orderPublicId);
+            markCancelFailed(tenantId, order, clientId, orderPublicId);
+            return;
         }
-        releasePointsHoldIfAny(tenantId, clientId, order.getPublicId(), order.getPointsRedeemMinor());
+        finishMismatchCancel(tenantId, order, payment);
+    }
+
+    private boolean portOneAlreadyCancelled(String tenantId, Payment payment) {
+        if (payment.getPaymentId() == null) {
+            return false;
+        }
+        return portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
+    }
+
+    private void finishMismatchCancel(String tenantId, ShopClientOrder order, Payment payment) {
+        if (payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
+            paymentService.refundPayment(
+                    payment.getPaymentId(),
+                    payment.getAmount(),
+                    ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+            payment.setStatus(Payment.PaymentStatus.REFUNDED);
+        }
+        releasePointsHoldIfAny(tenantId, order.getClientId(), order.getPublicId(), order.getPointsRedeemMinor());
         order.setStatus(ShopClientOrderStatus.CANCELLED);
         shopClientOrderRepository.save(order);
-        paymentService.refundPayment(
-                payment.getPaymentId(),
-                payment.getAmount(),
-                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
-        log.warn("결제 확정 금액·주문 불일치로 전액 취소 clientId={}", clientId);
+        log.warn(
+                "결제 확정 금액·주문 불일치로 전액 취소 clientId={} orderPublicId={}",
+                order.getClientId(),
+                order.getPublicId());
+    }
+
+    private void markCancelFailed(String tenantId, ShopClientOrder order, Long clientId, String orderPublicId) {
+        if (order.getStatus() != ShopClientOrderStatus.CANCEL_FAILED) {
+            order.setStatus(ShopClientOrderStatus.CANCEL_FAILED);
+            shopClientOrderRepository.save(order);
+            shopNotificationHelper.notifyCancelFailedNeedsManualCheck(tenantId, clientId, orderPublicId);
+            SchedulerFailureNotifier notifier = schedulerFailureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(
+                        ShopCheckoutConstants.ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH,
+                        ShopCheckoutConstants.ADMIN_ALERT_STEP_CANCEL_FAILED,
+                        tenantId,
+                        new IllegalStateException("clientId=" + clientId + " orderPublicId=" + orderPublicId));
+            }
+        }
+        log.error("결제 취소 수동 확인 clientId={} orderPublicId={}", clientId, orderPublicId);
+    }
+
+    private static int mismatchCancelAttempts(Payment payment) {
+        String reason = payment.getFailureReason();
+        String prefix = ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX;
+        if (reason == null || !reason.startsWith(prefix)) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(reason.substring(prefix.length()));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     @Override
@@ -1120,6 +1213,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED
                 || order.getStatus() == ShopClientOrderStatus.EXPIRED
                 || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             return true;
@@ -1221,6 +1315,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED
                 || order.getStatus() == ShopClientOrderStatus.EXPIRED
                 || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             return false;

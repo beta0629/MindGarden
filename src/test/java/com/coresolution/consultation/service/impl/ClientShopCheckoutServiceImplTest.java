@@ -80,8 +80,10 @@ import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.TenantPgConfigurationService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
@@ -95,6 +97,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -165,6 +168,15 @@ class ClientShopCheckoutServiceImplTest {
     private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
 
     @Mock
+    private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+
+    @Mock
+    private ObjectProvider<SchedulerFailureNotifier> schedulerFailureNotifierProvider;
+
+    @Mock
+    private SchedulerFailureNotifier schedulerFailureNotifier;
+
+    @Mock
     private PlatformTransactionManager transactionManager;
 
     @InjectMocks
@@ -179,6 +191,8 @@ class ClientShopCheckoutServiceImplTest {
         lenient().when(userRepository.findByTenantIdAndId(TENANT, CLIENT_ID)).thenReturn(Optional.of(verifiedClient));
         lenient().when(clientProfilePhoneVerificationService.isPhoneVerifiedForPayment(verifiedClient))
                 .thenReturn(true);
+        lenient().when(portOneV2PaymentVerifyService.transientStatusMaxAttempts())
+                .thenReturn(PortOneV2PaymentVerifyService.TRANSIENT_STATUS_MAX_ATTEMPTS);
     }
 
     @AfterEach
@@ -2588,7 +2602,7 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("결제 확정 — 동의·지정·휴대폰 게이트는 다시 보지 않고 금액이 맞으면 PAID")
+    @DisplayName("gates not run after approval")
     void completeOrder_clientOffer_missingConsent_stillPaidWhenAmountMatches() {
         ShopClientOrder order = offerOrder(false);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
@@ -2600,6 +2614,10 @@ class ClientShopCheckoutServiceImplTest {
         assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
 
         assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(clientShopConsultantMappingService, never()).listActiveMappings(any(), any());
+        verify(shopOrderableSkuService, never()).findOrderableForClient(any(), any(), any());
+        verify(clientProfilePhoneVerificationService, never()).isPhoneVerifiedForPayment(any());
+        verify(userRepository, never()).findByTenantIdAndId(any(), any());
         verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
         verify(paymentService, never()).refundPayment(any(), any(), any());
     }
@@ -2622,7 +2640,7 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("결제 확정 — 승인 금액이 주문과 다르면 PG 전액 취소·단일 환불 후 주문을 취소한다")
+    @DisplayName("full cancel on amount mismatch")
     void completeOrder_amountMismatch_cancelsPaymentAndOrder() {
         ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
@@ -2661,19 +2679,97 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("결제 확정 — PG 취소가 실패하면 주문을 PAID 도 취소도 하지 않는다")
-    void completeOrder_amountMismatch_cancelFails_leavesOrderOpen() {
+    @DisplayName("CANCEL_FAILED when cancel fails")
+    void completeOrder_amountMismatch_cancelFails_setsCancelFailed() {
         ShopClientOrder order = pendingOrder(0L);
         order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
-        stubApprovedPayment(1L, ORDER_ID);
+        Payment payment = stubApprovedPayment(1L, ORDER_ID);
+        when(portOneV2PaymentVerifyService.transientStatusMaxAttempts()).thenReturn(1);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, payment.getPaymentId()))
+                .thenReturn(false);
         when(portOneV2PaymentCancelService.cancelPayment(any(), any(), any())).thenReturn(false);
+        when(schedulerFailureNotifierProvider.getIfAvailable()).thenReturn(schedulerFailureNotifier);
 
-        assertThrows(IllegalStateException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
 
-        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        assertEquals(ShopClientOrderStatus.CANCEL_FAILED, order.getStatus());
         verify(paymentService, never()).refundPayment(any(), any(), any());
-        verify(shopClientOrderRepository, never()).save(any());
+        verify(shopOrderFulfillmentService, never()).fulfillPaidOrder(any(), any());
+        verify(shopNotificationHelper).notifyCancelFailedNeedsManualCheck(TENANT, CLIENT_ID, ORDER_ID);
+        ArgumentCaptor<IllegalStateException> alert = ArgumentCaptor.forClass(IllegalStateException.class);
+        verify(schedulerFailureNotifier).notifyFailure(
+                eq(ShopCheckoutConstants.ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH),
+                eq(ShopCheckoutConstants.ADMIN_ALERT_STEP_CANCEL_FAILED),
+                eq(TENANT),
+                alert.capture());
+        String alertText = alert.getValue().getMessage();
+        assertTrue(alertText.contains("clientId=" + CLIENT_ID));
+        assertTrue(alertText.contains("orderPublicId=" + ORDER_ID));
+        assertFalse(alertText.contains(payment.getPaymentId()));
+        assertFalse(alertText.toLowerCase().contains("card"));
+    }
+
+    @Test
+    @DisplayName("retry is idempotent (already cancelled, no double refund)")
+    void completeOrder_retryAlreadyCancelled_refundsOnce() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.CANCEL_FAILED);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        Payment payment = stubApprovedPayment(1L, ORDER_ID);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, payment.getPaymentId()))
+                .thenReturn(true);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, times(1)).refundPayment(
+                payment.getPaymentId(),
+                payment.getAmount(),
+                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+
+        order.setStatus(ShopClientOrderStatus.CANCEL_FAILED);
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+        verify(paymentService, times(1)).refundPayment(
+                payment.getPaymentId(),
+                payment.getAmount(),
+                ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+    }
+
+    @Test
+    @DisplayName("retry limit")
+    void completeOrder_cancelRetry_stopsAtConfiguredLimit() {
+        ShopClientOrder order = pendingOrder(0L);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
+        Payment payment = stubApprovedPayment(1L, ORDER_ID);
+        when(portOneV2PaymentVerifyService.transientStatusMaxAttempts()).thenReturn(2);
+        when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, payment.getPaymentId()))
+                .thenReturn(false);
+        when(portOneV2PaymentCancelService.cancelPayment(any(), any(), any())).thenReturn(false);
+        when(schedulerFailureNotifierProvider.getIfAvailable()).thenReturn(schedulerFailureNotifier);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.CANCEL_FAILED, order.getStatus());
+        verify(portOneV2PaymentCancelService, times(1)).cancelPayment(any(), any(), any());
+        verify(shopNotificationHelper, times(1))
+                .notifyCancelFailedNeedsManualCheck(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.CANCEL_FAILED, order.getStatus());
+        verify(portOneV2PaymentCancelService, times(2)).cancelPayment(any(), any(), any());
+        verify(shopNotificationHelper, times(1))
+                .notifyCancelFailedNeedsManualCheck(TENANT, CLIENT_ID, ORDER_ID);
+
+        assertTrue(service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
+        assertEquals(ShopClientOrderStatus.CANCEL_FAILED, order.getStatus());
+        verify(portOneV2PaymentCancelService, times(2)).cancelPayment(any(), any(), any());
+        verify(paymentService, never()).refundPayment(any(), any(), any());
+        verify(schedulerFailureNotifier, times(1)).notifyFailure(any(), any(), any(), any());
     }
 
     private Payment stubApprovedPayment(long amountMinor, String paymentOrderId) {

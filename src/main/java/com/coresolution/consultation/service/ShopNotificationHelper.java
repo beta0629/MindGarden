@@ -27,6 +27,16 @@ public interface ShopNotificationHelper {
     void notifyPaymentFailed(String tenantId, ShopClientOrder order);
 
     /**
+     * PG 전액 취소가 재시도 한도까지 실패했을 때 관리자 확인 알림.
+     * 본문에는 내담자 ID 와 주문 번호만 넣는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param clientId 내담자 users.id
+     * @param orderPublicId 주문 공개 ID
+     */
+    void notifyCancelFailedNeedsManualCheck(String tenantId, Long clientId, String orderPublicId);
+
+    /**
      * 결제 적립 포인트 지급 시 내담자 알림.
      *
      * @param tenantId 테넌트 ID

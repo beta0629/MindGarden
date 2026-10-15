@@ -38,7 +38,9 @@ jest.mock('@fullcalendar/react', () => {
 jest.mock('@fullcalendar/daygrid', () => ({ __esModule: true, default: { id: 'daygrid' } }));
 jest.mock('@fullcalendar/timegrid', () => ({ __esModule: true, default: { id: 'timegrid' } }));
 jest.mock('@fullcalendar/interaction', () => ({ __esModule: true, default: { id: 'interaction' } }));
-jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }));
+jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), {
+  virtual: true
+});
 
 import ScheduleCalendarView from '../ScheduleCalendarView';
 

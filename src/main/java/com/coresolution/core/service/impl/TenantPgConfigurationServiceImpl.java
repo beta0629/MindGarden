@@ -9,6 +9,8 @@ import com.coresolution.core.domain.enums.PgConfigurationStatus;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.*;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
+import com.coresolution.core.constants.TenantPgWebhookSecretMessages;
+import com.coresolution.consultation.service.portone.PortOneWebhookSignatureVerifier;
 import com.coresolution.core.repository.TenantPgConfigurationHistoryRepository;
 import com.coresolution.core.repository.TenantPgConfigurationRepository;
 import com.coresolution.core.repository.TenantRepository;
@@ -380,6 +382,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         if (webhookSecret == null || webhookSecret.trim().isEmpty()) {
             throw new IllegalArgumentException("webhookSecret 는 필수입니다");
         }
+        String trimmedSecret = webhookSecret.trim();
+        if (!PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(trimmedSecret)) {
+            throw new IllegalArgumentException(TenantPgWebhookSecretMessages.INVALID_FORMAT);
+        }
 
         TenantPgConfiguration configuration = configurationRepository
                 .findByConfigIdAndIsDeletedFalse(configId)
@@ -388,7 +394,6 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         accessControlService.validateConfigurationAccess(configuration, tenantId);
 
         String statusName = configuration.getStatus() != null ? configuration.getStatus().name() : null;
-        String trimmedSecret = webhookSecret.trim();
 
         ObjectNode settingsNode;
         String existingJson = configuration.getSettingsJson();

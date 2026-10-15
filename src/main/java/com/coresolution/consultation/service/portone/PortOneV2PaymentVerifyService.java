@@ -58,8 +58,8 @@ public class PortOneV2PaymentVerifyService {
     /** FAILED 상태 문자열 — 승인 실패·사용자 취소 (포트원 V2 Payment.status). */
     static final String STATUS_FAILED = "FAILED";
 
-    /** status≠PAID 일시적 지연 대비 최대 조회 횟수 (fail-closed). */
-    static final int TRANSIENT_STATUS_MAX_ATTEMPTS = 3;
+    /** status≠PAID 일시적 지연 대비 최대 조회 횟수 (fail-closed). 금액 불일치 취소 재시도도 이 상한을 쓴다. */
+    public static final int TRANSIENT_STATUS_MAX_ATTEMPTS = 3;
 
     /** 첫 재조회 대기(ms). */
     static final long TRANSIENT_STATUS_BASE_DELAY_MS = 300L;
@@ -85,6 +85,15 @@ public class PortOneV2PaymentVerifyService {
 
     /** 단위 테스트에서 지연을 0으로 줄이기 위한 필드 (기본값 = 운영 상수). */
     private int transientStatusMaxAttempts = TRANSIENT_STATUS_MAX_ATTEMPTS;
+
+    /**
+     * 결제 조회·취소 재시도 상한. 금액 불일치 자동 취소도 이 값을 쓴다.
+     *
+     * @return 1 이상인 최대 시도 횟수
+     */
+    public int transientStatusMaxAttempts() {
+        return Math.max(1, transientStatusMaxAttempts);
+    }
     private long transientStatusBaseDelayMs = TRANSIENT_STATUS_BASE_DELAY_MS;
     private long transientStatusDelayStepMs = TRANSIENT_STATUS_DELAY_STEP_MS;
 

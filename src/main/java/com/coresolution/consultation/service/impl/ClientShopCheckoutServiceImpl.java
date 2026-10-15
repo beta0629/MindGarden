@@ -63,10 +63,15 @@ import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
+import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
 import com.coresolution.core.dto.TenantPgConfigurationDetailResponse;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import com.coresolution.core.service.TenantPgConfigurationService;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -109,6 +114,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopCatalogPackageOfferResolver shopCatalogPackageOfferResolver;
     private final ClientShopCatalogService clientShopCatalogService;
     private final ShopOrderableSkuService shopOrderableSkuService;
+    private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final ObjectProvider<SchedulerFailureNotifier> schedulerFailureNotifierProvider;
     /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
     private final PlatformTransactionManager transactionManager;
 
@@ -469,8 +477,15 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return best != null ? best.getId() : null;
     }
 
+    /**
+     * 카테고리가 비어 있는 SKU도 상담 상품으로 본다(카탈로그 노출 규칙과 동일, 매핑 가드 우회 방지).
+     */
     private static boolean isConsultationSku(ShopCatalogSku sku) {
-        return sku != null && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory());
+        if (sku == null) {
+            return false;
+        }
+        String category = sku.getCatalogCategory();
+        return !StringUtils.hasText(category) || ShopCatalogCategory.CONSULTATION.equals(category);
     }
 
     private static boolean isBoundConsultationSku(ShopCatalogSku sku) {
@@ -498,7 +513,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 결제 요청 전 상담 라인 매핑 재확인. 매핑이 비었거나 더 이상 활성이 아니면 PG 결제를 만들지 않는다.
+     * 결제 준비 전, 지정 상품 주문의 상담 라인 매핑 재확인.
+     * 일반 {@code /client/shop} 의 명시적 상담 카테고리 주문은 이 게이트를 타지 않는다.
+     * 카테고리가 비어 있는 SKU는 상담 상품으로 보고, 매핑이 없으면 PG 결제를 만들지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 내담자 ID
@@ -506,11 +523,14 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @throws IllegalArgumentException 상담 라인에 쓸 활성 매핑이 없을 때
      */
     private void requireConsultationMappingsForPayment(String tenantId, Long clientUserId, ShopClientOrder order) {
-        List<ShopClientOrderLine> consultationLines =
-                shopClientOrderLineRepository.findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId())
-                        .stream()
-                        .filter(line -> isConsultationSku(line.getSku()))
-                        .toList();
+        List<ShopClientOrderLine> lines = shopClientOrderLineRepository
+                .findByClientOrder_IdAndIsDeletedFalseOrderByLineNoAsc(order.getId());
+        if (!containsClientOfferLine(lines) && !containsBlankCategoryLine(lines)) {
+            return;
+        }
+        List<ShopClientOrderLine> consultationLines = lines.stream()
+                .filter(line -> isConsultationSku(line.getSku()))
+                .toList();
         if (consultationLines.isEmpty()) {
             return;
         }
@@ -551,8 +571,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         }
         List<String> cartConsultationTitles = cartLines.stream()
                 .map(CheckoutLine::sku)
-                .filter(sku -> sku != null
-                        && ShopCatalogCategory.CONSULTATION.equals(sku.getCatalogCategory()))
+                .filter(ClientShopCheckoutServiceImpl::isConsultationSku)
                 .map(sku -> resolveOffer(tenantId, sku).title())
                 .filter(StringUtils::hasText)
                 .map(String::trim)
@@ -818,13 +837,13 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @throws IllegalArgumentException 미인증·번호 없음·형식 오류
      */
     /**
-     * 지정 상품 라인이 있으면 휴대폰 인증, 필수 약관 3종, 그리고 그 SKU 가
+     * 결제 준비에서만, 지정 상품 라인이 있으면 휴대폰 인증, 필수 약관 3종, 그리고 그 SKU 가
      * 아직 이 내담자의 활성 지정(다른 내담자·취소·비활성·이미 결제 아님)인지 다시 확인한다.
-     * 지정 상품이 없는 주문은 여기서 반환한다. 카탈로그 결제 확정은 사용자 행을 다시 찾지 않는다.
+     * 일반 {@code /client/shop} 주문은 여기서 반환한다. 결제 확정에서는 호출하지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param clientUserId 결제 내담자 users.id
-     * @param order 결제 준비 또는 확정 대상 주문
+     * @param order 결제 준비 대상 주문
      * @throws IllegalArgumentException 동의 누락 또는 지정 상품이 더 이상 유효하지 않을 때
      */
     private void requireAssignedOfferPaymentGate(String tenantId, Long clientUserId, ShopClientOrder order) {
@@ -854,6 +873,31 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 throw new IllegalArgumentException(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE);
             }
         }
+    }
+
+    private static boolean containsBlankCategoryLine(List<ShopClientOrderLine> lines) {
+        if (lines == null) {
+            return false;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line != null && isConsultationSku(line.getSku())
+                    && !StringUtils.hasText(line.getSku().getCatalogCategory())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean containsClientOfferLine(List<ShopClientOrderLine> lines) {
+        if (lines == null) {
+            return false;
+        }
+        for (ShopClientOrderLine line : lines) {
+            if (line != null && ShopClientOfferSkuPolicy.isClientOfferSku(line.getSku())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean containsClientOfferSku(List<PricedCartLine> pricedLines) {
@@ -1016,6 +1060,10 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             fulfillPaidOrderAfterPaymentCommit(tenantId, order);
             return true;
         }
+        if (order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED) {
+            retryMismatchedPaymentCancel(tenantId, order);
+            return true;
+        }
         if (ShopLatePaymentConstants.isClosedOrder(order.getStatus())) {
             // 취소·만료 주문은 되살리지 않는다 — 늦은 결제는 ShopLatePaymentRefundService 가 PG 자동 취소
             throw new ShopOrderClosedForPaymentException(orderPublicId, order.getStatus());
@@ -1029,11 +1077,148 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return true;
         }
-        requireConsultationMappingsForPayment(tenantId, order.getClientId(), order);
-        requireAssignedOfferPaymentGate(tenantId, order.getClientId(), order);
+        if (!approvedPaymentMatchesOrder(tenantId, order)) {
+            return true;
+        }
         markOrderPaidAndCommitPoints(tenantId, order);
         log.info("쇼핑 주문 PAID 반영: tenantId={}, orderPublicId={}", tenantId, orderPublicId);
         return true;
+    }
+
+    /**
+     * 승인된 결제 건이 있으면 금액과 주문 번호만 맞는지 본다.
+     * 승인 건이 없으면(포인트 전액 등) 기존 확정으로 넘어간다.
+     * 불일치면 PortOne 전액 취소와 단일 환불로 금액을 되돌리고 주문을 취소한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 확정 대상 주문
+     * @return 금액·주문이 맞아 PAID 로 가도 되면 true
+     */
+    private boolean approvedPaymentMatchesOrder(String tenantId, ShopClientOrder order) {
+        Optional<Payment> approved = paymentRepository
+                .findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                        tenantId, order.getPublicId(), Payment.PaymentStatus.APPROVED);
+        if (approved.isEmpty()) {
+            return true;
+        }
+        Payment payment = approved.get();
+        boolean orderMatch = order.getPublicId() != null && order.getPublicId().equals(payment.getOrderId());
+        if (orderMatch && ShopPaymentApprovalPolicy.amountMatchesOrder(payment, order)) {
+            return true;
+        }
+        cancelMismatchedApprovedPayment(tenantId, order, payment);
+        return false;
+    }
+
+    /**
+     * {@code CANCEL_FAILED} 재진입. 이미 취소된 결제는 성공으로 보고 환불은 한 번만 한다.
+     * 한도를 넘기면 취소 API 를 다시 부르지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 수동 확인 상태의 주문
+     */
+    private void retryMismatchedPaymentCancel(String tenantId, ShopClientOrder order) {
+        Payment payment = resolveLatestPayment(tenantId, order.getPublicId()).orElse(null);
+        if (payment == null) {
+            return;
+        }
+        cancelMismatchedApprovedPayment(tenantId, order, payment);
+    }
+
+    /**
+     * 승인 금액·주문 불일치 안전망.
+     * PortOne 상태를 먼저 보고, 이미 취소됐으면 취소 API 를 다시 부르지 않는다.
+     * 환불은 결제 건이 아직 환불 전이 아닐 때 한 번만 호출한다.
+     * 취소 API 가 실패하면 주문을 {@code CANCEL_FAILED} 로 두고 관리자에게 한 번 알린다.
+     * 재시도는 한도까지만 하고, 한도를 넘기면 취소 API 를 다시 부르지 않는다.
+     * 로그·알림에는 내담자 ID 와 주문 번호만 남긴다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param order 취소할 주문
+     * @param payment 금액 또는 주문이 어긋난 결제
+     */
+    private void cancelMismatchedApprovedPayment(String tenantId, ShopClientOrder order, Payment payment) {
+        Long clientId = order.getClientId();
+        String orderPublicId = order.getPublicId();
+        if (payment.getStatus() == Payment.PaymentStatus.REFUNDED
+                || portOneAlreadyCancelled(tenantId, payment)) {
+            finishMismatchCancel(tenantId, order, payment);
+            return;
+        }
+        int maxAttempts = portOneV2PaymentVerifyService.transientStatusMaxAttempts();
+        int attempts = mismatchCancelAttempts(payment);
+        if (attempts >= maxAttempts) {
+            markCancelFailed(tenantId, order, clientId, orderPublicId);
+            return;
+        }
+        boolean cancelled = portOneV2PaymentCancelService.cancelPayment(
+                tenantId, payment.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        if (!cancelled) {
+            int next = attempts + 1;
+            payment.setFailureReason(ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX + next);
+            paymentRepository.save(payment);
+            log.error(
+                    "결제 확정 불일치 자동 취소 실패 clientId={} orderPublicId={}",
+                    clientId,
+                    orderPublicId);
+            markCancelFailed(tenantId, order, clientId, orderPublicId);
+            return;
+        }
+        finishMismatchCancel(tenantId, order, payment);
+    }
+
+    private boolean portOneAlreadyCancelled(String tenantId, Payment payment) {
+        if (payment.getPaymentId() == null) {
+            return false;
+        }
+        return portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
+    }
+
+    private void finishMismatchCancel(String tenantId, ShopClientOrder order, Payment payment) {
+        if (payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
+            paymentService.refundPayment(
+                    payment.getPaymentId(),
+                    payment.getAmount(),
+                    ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+            payment.setStatus(Payment.PaymentStatus.REFUNDED);
+        }
+        releasePointsHoldIfAny(tenantId, order.getClientId(), order.getPublicId(), order.getPointsRedeemMinor());
+        order.setStatus(ShopClientOrderStatus.CANCELLED);
+        shopClientOrderRepository.save(order);
+        log.warn(
+                "결제 확정 금액·주문 불일치로 전액 취소 clientId={} orderPublicId={}",
+                order.getClientId(),
+                order.getPublicId());
+    }
+
+    private void markCancelFailed(String tenantId, ShopClientOrder order, Long clientId, String orderPublicId) {
+        if (order.getStatus() != ShopClientOrderStatus.CANCEL_FAILED) {
+            order.setStatus(ShopClientOrderStatus.CANCEL_FAILED);
+            shopClientOrderRepository.save(order);
+            shopNotificationHelper.notifyCancelFailedNeedsManualCheck(tenantId, clientId, orderPublicId);
+            SchedulerFailureNotifier notifier = schedulerFailureNotifierProvider.getIfAvailable();
+            if (notifier != null) {
+                notifier.notifyFailure(
+                        ShopCheckoutConstants.ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH,
+                        ShopCheckoutConstants.ADMIN_ALERT_STEP_CANCEL_FAILED,
+                        tenantId,
+                        new IllegalStateException("clientId=" + clientId + " orderPublicId=" + orderPublicId));
+            }
+        }
+        log.error("결제 취소 수동 확인 clientId={} orderPublicId={}", clientId, orderPublicId);
+    }
+
+    private static int mismatchCancelAttempts(Payment payment) {
+        String reason = payment.getFailureReason();
+        String prefix = ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX;
+        if (reason == null || !reason.startsWith(prefix)) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(reason.substring(prefix.length()));
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     @Override
@@ -1047,6 +1232,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED
                 || order.getStatus() == ShopClientOrderStatus.EXPIRED
                 || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             return true;
@@ -1148,6 +1334,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         ShopClientOrder order = orderOpt.get();
         if (order.getStatus() == ShopClientOrderStatus.PAID
                 || order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED
                 || order.getStatus() == ShopClientOrderStatus.EXPIRED
                 || order.getStatus() == ShopClientOrderStatus.REFUNDED) {
             return false;

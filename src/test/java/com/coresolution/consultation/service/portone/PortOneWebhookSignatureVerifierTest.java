@@ -1,6 +1,8 @@
 package com.coresolution.consultation.service.portone;
 
 import java.time.Instant;
+import java.util.Base64;
+import java.util.Random;
 import com.coresolution.consultation.config.PortOneWebhookProperties;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -85,6 +87,29 @@ class PortOneWebhookSignatureVerifierTest {
     void isValid_rejectsWrongOrNonBase64Secret() {
         assertFalse(verify(SPEC_SIGNATURE, "whsec_AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgI=", SPEC_INSTANT));
         assertFalse(verify(SPEC_SIGNATURE, "whsec_unit_test_secret", SPEC_INSTANT));
+    }
+
+    @Test
+    void isWhsecPrefixedBase64_acceptsPrefixedStandardBase64() {
+        assertTrue(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("  " + SPEC_SECRET + "  "));
+        byte[] material = new byte[16];
+        new Random(94L).nextBytes(material);
+        String generated = "whsec_" + Base64.getEncoder().encodeToString(material);
+        assertTrue(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(generated));
+    }
+
+    @Test
+    void isWhsecPrefixedBase64_rejectsMissingPrefix() {
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(SPEC_SECRET_UNPREFIXED));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(" " + SPEC_SECRET_UNPREFIXED + " "));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(null));
+    }
+
+    @Test
+    void isWhsecPrefixedBase64_rejectsBase64DecodeFailure() {
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_"));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_unit_test_secret"));
+        assertFalse(PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64("whsec_!!!!"));
     }
 
     @Test

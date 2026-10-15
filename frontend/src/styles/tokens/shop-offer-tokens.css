@@ -33,6 +33,8 @@
 
   /* G-3. /client/offers PC 결제 요약. 값은 시안 tokens.css G-3. 모달은 body 포탈이라 :root 에 둔다. */
   --mg-offer-pay-aside-w: 22.5rem;
+  --mg-offer-pay-stage-max: 75rem;
+  --mg-offer-card-min: 13.5rem;
   --mg-offer-pay-sticky-top: var(--client-mall-sticky-top, 5.5rem);
   --mg-offer-pay-disabled-bg: var(--cs-slate-100);
   --mg-offer-pay-disabled-fg: var(--cs-slate-700);

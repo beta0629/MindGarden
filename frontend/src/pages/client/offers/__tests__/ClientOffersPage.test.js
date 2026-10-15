@@ -184,6 +184,11 @@ describe('ClientOffersPage', () => {
     expect(offersCss).toMatch(/\.client-offers__pay\s*\{[^}]*position:\s*sticky/);
     expect(tokensCss).toMatch(/--mg-offer-bar-reserve:\s*7\.5rem/);
     expect(tokensCss).toMatch(/--mg-offer-pay-aside-w:\s*22\.5rem/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-stage-max:\s*75rem/);
+    expect(tokensCss).toMatch(/--mg-offer-card-min:\s*13\.5rem/);
+    expect(offersCss).toMatch(/repeat\(auto-fill,\s*minmax\(min\(100%,\s*var\(--mg-offer-card-min\)\),\s*1fr\)\)/);
+    expect(offersCss).not.toMatch(/repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
+    expect(offersCss).toMatch(/max-inline-size:\s*var\(--mg-offer-pay-stage-max\)/);
     expect(tokensCss).toMatch(/--mg-offer-pay-disabled-bg:\s*var\(--cs-slate-100\)/);
     expect(tokensCss).toMatch(/--mg-offer-pay-disabled-fg:\s*var\(--cs-slate-700\)/);
     expect(tokensCss).toMatch(/--mg-offer-pay-disabled-border:\s*var\(--cs-slate-400\)/);
@@ -204,6 +209,32 @@ describe('ClientOffersPage', () => {
     const narrowMall = mallCss.slice(mallCss.indexOf('@media (max-width: 56.25rem)'));
     expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*display:\s*block/);
     expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*position:\s*fixed/);
+  });
+
+  test.each([1280, 1400, 1920])('PC %ipx 에서 상품 6개도 카드 최소 폭을 지킨다', (viewportPx) => {
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
+    const shellCss = fs.readFileSync(path.join(__dirname, '../../../../components/client/ClientWebPageShell.css'), 'utf8');
+    const spaceCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/design-v2-tokens.css'), 'utf8');
+    const rem = (name, css) => {
+      const match = css.match(new RegExp(`${name}:\\s*([0-9.]+)rem`));
+      expect(match).toBeTruthy();
+      return Number(match[1]) * 16;
+    };
+    const stageMax = rem('--mg-offer-pay-stage-max', tokensCss);
+    const aside = rem('--mg-offer-pay-aside-w', tokensCss);
+    const cardMin = rem('--mg-offer-card-min', tokensCss);
+    const padMatch = shellCss.match(/--client-web-pad-x:\s*var\([^,]+,\s*([0-9.]+)rem\)/);
+    expect(padMatch).toBeTruthy();
+    const padX = Number(padMatch[1]) * 16;
+    const shellGap = rem('--mg-v2-space-6', spaceCss);
+    const cardGap = rem('--mg-v2-space-4', spaceCss);
+    const stage = Math.min(viewportPx, stageMax);
+    const main = stage - padX * 2 - aside - shellGap;
+    const columns = Math.floor((main + cardGap) / (cardMin + cardGap));
+    const cardWidth = (main - cardGap * (columns - 1)) / columns;
+    expect(columns).toBeGreaterThanOrEqual(2);
+    expect(cardWidth).toBeGreaterThanOrEqual(cardMin);
+    expect(columns).toBe(3);
   });
 
   test('약관 모달이 열려 있으면 뒤 화면은 스크롤되지 않는다', async() => {

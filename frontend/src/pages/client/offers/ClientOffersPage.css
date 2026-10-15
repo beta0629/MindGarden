@@ -1,5 +1,5 @@
 /* 내담자 「/client/offers」 — 시안 B. 기존 몰(ClientMall.css) 클래스 위에 지정 상품 전용 규칙만 더한다. 값은 var() 만 */
-.client-offers__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mg-mall-offer-card-gap); }
+.client-offers__grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--mg-offer-card-min)), 1fr)); gap: var(--mg-mall-offer-card-gap); }
 .client-offers__cell { display: flex; min-inline-size: 0; }
 .client-offers__cell > .client-mall-card { flex: 1 1 auto; }
 .client-offers__card[aria-checked="true"] { background: var(--cs-slate-50); border-color: var(--client-web-ink); }
@@ -20,6 +20,9 @@
 
 /* PC(>900px): 셸 열을 시안 aside 폭으로. ≤900px 는 아래 미디어에서 1열로 되돌린다. */
 @media (min-width: 56.26rem) {
+  .client-mall.client-offers .client-web-page-shell__stage {
+    max-inline-size: var(--mg-offer-pay-stage-max);
+  }
   .client-mall.client-offers .client-web-page-shell__grid {
     grid-template-columns: minmax(0, 1fr) var(--mg-offer-pay-aside-w);
   }

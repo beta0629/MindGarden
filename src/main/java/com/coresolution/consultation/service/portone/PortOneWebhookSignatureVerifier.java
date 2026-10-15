@@ -172,6 +172,33 @@ public final class PortOneWebhookSignatureVerifier {
         return false;
     }
 
+    /**
+     * 저장용 웹훅 시크릿이 {@code whsec_} 뒤에 비어 있지 않은 표준 Base64 인지 확인한다.
+     * 접두사 없는 Base64 는 서명 검증에서는 받지만, 운영 화면 저장에서는 거부한다.
+     * 디코드에 실패해도 입력 원문은 예외·로그에 남기지 않는다.
+     *
+     * @param webhookSecret 평문 시크릿 (앞뒤 공백은 무시)
+     * @return 접두사와 Base64 가 모두 맞으면 true
+     */
+    public static boolean isWhsecPrefixedBase64(String webhookSecret) {
+        if (webhookSecret == null) {
+            return false;
+        }
+        String trimmed = webhookSecret.trim();
+        if (!trimmed.startsWith(SECRET_PREFIX) || trimmed.length() == SECRET_PREFIX.length()) {
+            return false;
+        }
+        String material = trimmed.substring(SECRET_PREFIX.length());
+        try {
+            byte[] decoded = Base64.getDecoder().decode(material);
+            boolean valid = decoded.length > 0;
+            Arrays.fill(decoded, (byte) 0);
+            return valid;
+        } catch (IllegalArgumentException ex) {
+            return false;
+        }
+    }
+
     private static byte[] hmacSha256(byte[] key, String message) {
         try {
             Mac mac = Mac.getInstance(HMAC_SHA256);

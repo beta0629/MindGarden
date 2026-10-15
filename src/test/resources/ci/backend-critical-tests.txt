@@ -62,3 +62,6 @@
 # 2026-10-15 포트원 웹훅 서명 (#1650) — Payment/Session 등 기존 패턴에 걸리지 않음
 **/PortOneWebhookSignatureVerifierTest.java
 **/TenantPgConfigurationServiceImplTest.java
+
+# 2026-10-15 5xx 응답 원문 삭제 — 기존 Payment/Session/Erp 패턴에 걸리지 않음
+**/GlobalExceptionHandlerServerErrorSanitizeTest.java

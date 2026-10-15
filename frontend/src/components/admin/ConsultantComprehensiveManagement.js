@@ -48,7 +48,7 @@ import { isValidKoreanMobileDigits, normalizeKoreanMobileDigits } from '../../ut
 import { isValidVehiclePlateOptional } from '../../utils/validationUtils';
 import { toDisplayString } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
-import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
+import { tempPasswordSmsNotice } from '../../utils/tempPasswordSmsNotice';
 import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { CONSULTANT_COMP_SPECIALTY, CONSULTANT_COMP_PASSWORD_RESET } from '../../constants/consultantComprehensiveStrings';
@@ -56,8 +56,6 @@ import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../constants/notificationChannelPreference';
-import usePasswordPolicyField from '../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput from '../common/PasswordPolicyInput';
 import {
     TENANT_CONSULTANT_GRADE_CODES_PATH,
     extractTenantCommonCodeGroupList,
@@ -156,8 +154,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
     const [isCheckingConsultantPhone, setIsCheckingConsultantPhone] = useState(false);
     const consultantEditPhoneBaselineRef = useRef('');
     const [vehiclePlateError, setVehiclePlateError] = useState('');
-    const consultantPasswordField = usePasswordPolicyField({ allowEmpty: true });
-    const { clearError: clearConsultantPasswordError } = consultantPasswordField;
     const [modalSubmitLoading, setModalSubmitLoading] = useState(false);
     const [deleteConfirmLoading, setDeleteConfirmLoading] = useState(false);
     const { viewMode, setViewMode } = useViewModePreference({
@@ -841,7 +837,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             setFormData({
                 name: '',
                 email: '',
-                password: generateMgLoginPassword(),
                 phone: '',
                 professionalTypeCode: DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
                 status: 'ACTIVE',
@@ -860,9 +855,8 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             });
         }
         setVehiclePlateError('');
-        clearConsultantPasswordError();
         setShowModal(true);
-    }, [loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes, clearConsultantPasswordError]);
+    }, [loadSpecialtyCodes, loadProfessionalTypeCodes, loadConsultantGradeCodes]);
 
     const handleCloseModal = useCallback(() => {
         setShowModal(false);
@@ -871,7 +865,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         setConsultantPhoneCheckStatus(null);
         consultantEditPhoneBaselineRef.current = '';
         setVehiclePlateError('');
-        clearConsultantPasswordError();
         setFormData({
             name: '',
             email: '',
@@ -892,7 +885,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             workHistory: '',
             ...CONSULTANT_FORM_NOTIFICATION_CHANNEL_DEFAULTS
         });
-    }, [clearConsultantPasswordError]);
+    }, []);
 
     useEffect(() => {
         if (!showModal || !selectedConsultant?.id) {
@@ -960,10 +953,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     setVehiclePlateError('');
                 }
             }
-            if (name === 'password') {
-                clearConsultantPasswordError();
-            }
-        }, [clearConsultantPasswordError]);
+        }, []);
     
     const handleEmailDuplicateCheck = useCallback(async() => {
         const email = formData.email?.trim();
@@ -1156,6 +1146,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 userId: userId,
                 profileImageUrl: data.profileImageUrl || undefined
             };
+            delete requestData.password;
             
             // specialization 필드 처리: specialty 배열을 문자열로 변환
             if (Array.isArray(data.specialty) && data.specialty.length > 0) {
@@ -1174,8 +1165,9 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                 logger.debug('✅ 상담사 등록 성공:', response);
                 await loadConsultants();
                 window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
+                const smsNotice = tempPasswordSmsNotice(t, response);
                 window.dispatchEvent(new CustomEvent('showNotification', {
-                    detail: { message: t('admin:consultantMgmt.msg.createSuccess'), type: 'success' }
+                    detail: { message: smsNotice || t('admin:consultantMgmt.msg.createSuccess'), type: 'success' }
                 }));
                 return { success: true };
             } else {
@@ -1308,19 +1300,20 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         }
     }, [loadConsultants]);
 
-    const handlePasswordResetConfirm = useCallback(async(newPassword) => {
+    const handlePasswordResetConfirm = useCallback(async() => {
         if (!passwordResetConsultant) return;
 
         try {
             logger.debug('🔑 상담사 비밀번호 초기화 시작:', passwordResetConsultant.id);
 
             const endpoint = `/api/v1/admin/user-management/${passwordResetConsultant.id}/reset-password`;
-            const response = await StandardizedApi.put(endpoint, { newPassword });
+            const response = await StandardizedApi.put(endpoint, {});
 
-            logger.debug('✅ 비밀번호 초기화 응답:', response);
+            logger.debug('✅ 비밀번호 초기화 응답:', { smsSent: response?.smsSent });
 
             if (response && (response.success !== false)) {
-                showSuccess(t('admin:consultantMgmt.msg.passwordResetSuccess'));
+                const smsNotice = tempPasswordSmsNotice(t, response);
+                showSuccess(smsNotice || t('admin:consultantMgmt.msg.passwordResetSuccess'));
                 setShowPasswordResetModal(false);
                 setPasswordResetConsultant(null);
             } else {
@@ -1330,7 +1323,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
             console.error('❌ 비밀번호 초기화 실패:', error);
             throw error;
         }
-    }, [passwordResetConsultant]);
+    }, [passwordResetConsultant, t]);
 
     const handleModalSubmit = useCallback(async(e) => {
         e.preventDefault();
@@ -1362,11 +1355,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                     }));
                     return;
                 }
-                const committedPassword = consultantPasswordField.validateCommitted(formData.password);
-                if (!committedPassword.valid) {
-                    return;
-                }
-                result = await createConsultant({ ...formData, password: committedPassword.value });
+                result = await createConsultant(formData);
             } else if (modalType === 'edit') {
                 const phoneNorm = normalizeKoreanMobileDigits(String(formData.phone ?? '').trim());
                 const baseline = consultantEditPhoneBaselineRef.current || '';
@@ -1399,7 +1388,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         } finally {
             setModalSubmitLoading(false);
         }
-    }, [modalType, formData, selectedConsultant, emailCheckStatus, consultantPhoneCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal, consultantPasswordField]);
+    }, [modalType, formData, selectedConsultant, emailCheckStatus, consultantPhoneCheckStatus, createConsultant, updateConsultant, deleteConsultant, handleCloseModal]);
 
     const stats = getOverallStats();
     const consultantFilterOptions = useMemo(() => {
@@ -2109,16 +2098,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                         )}
                     </div>
                     {modalType === 'create' && (
-                        <div className="mg-v2-form-group">
-                            <label htmlFor="consultant-password" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_81973897')}</label>
-                            <PasswordPolicyInput
-                                field={consultantPasswordField}
-                                id="consultant-password"
-                                name="password"
-                                value={formData.password || ''}
-                                onChange={handleFormChange}
-                            />
-                        </div>
+                        <p className="mg-v2-form-help">{t('auth:tempPasswordSms.resetHelp')}</p>
                     )}
                     <div className="mg-v2-form-group">
                         <label id="consultant-specialty-label" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_6a1abaf0')}</label>
@@ -2297,7 +2277,6 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
         const isCreateSubmitDisabled = modalType === 'create' && (
             (emailTrimmed !== '' && emailCheckStatus !== 'available')
             || (phoneNeedCheck && consultantPhoneCheckStatus !== 'available')
-            || consultantPasswordField.pending
         );
         return (
             <>

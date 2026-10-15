@@ -252,7 +252,8 @@ export default function OpsWebhookSecretPage() {
                   {[item.pgName || item.pgProvider, item.configId.slice(0, 8)]
                     .filter(Boolean)
                     .join(" · ")}
-                  {item.status === "ACTIVE" && item.approvalStatus === "PENDING"
+                  {item.hasPendingEdit === true
+                    || (item.status === "ACTIVE" && item.approvalStatus === "PENDING")
                     ? ` (${OPS_WEBHOOK_SECRET_LABELS.REAPPROVAL_BADGE})`
                     : ""}
                 </option>
@@ -280,7 +281,8 @@ export default function OpsWebhookSecretPage() {
                 <dt>{OPS_WEBHOOK_SECRET_LABELS.APPROVAL}</dt>
                 <dd>
                   {detail.approvalStatus || "—"}
-                  {detail.status === "ACTIVE" && detail.approvalStatus === "PENDING"
+                  {detail.hasPendingEdit === true
+                    || (detail.status === "ACTIVE" && detail.approvalStatus === "PENDING")
                     ? ` · ${OPS_WEBHOOK_SECRET_LABELS.REAPPROVAL_BADGE}`
                     : ""}
                 </dd>

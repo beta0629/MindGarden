@@ -413,6 +413,79 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
         assertThat(ledgerSummary.get("totalExpense")).isEqualTo(ofdSummary.get("totalExpenses"));
     }
 
+    @Test
+    @DisplayName("getTransactionsFilteredSummary: refundAmount는 기간 posted EXPENSE 환불만, CANCELLED·REJECTED 제외")
+    void getTransactionsFilteredSummary_refundAmountExcludesCancelledAndSumsPeriod() {
+        List<FinancialTransaction> rows = new ArrayList<>();
+
+        FinancialTransaction consultationRefund = expense(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "100000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 5));
+        consultationRefund.setSubcategory("CONSULTATION_REFUND");
+        rows.add(consultationRefund);
+
+        for (int i = 0; i < 21; i++) {
+            FinancialTransaction partial = expense(
+                    FinancialTransactionConstants.CATEGORY_OTHER, "1000",
+                    FinancialTransaction.TransactionStatus.COMPLETED,
+                    LocalDate.of(2026, 8, 1).plusDays(i % 28));
+            partial.setSubcategory("PARTIAL_SESSION_REFUND");
+            if (i == 0) {
+                partial.setStatus(null);
+            }
+            rows.add(partial);
+        }
+
+        rows.add(expense("CONSULTATION_PARTIAL_REFUND", "7000",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 10)));
+
+        FinancialTransaction approved = expense(
+                "CONSULTATION_PARTIAL_REFUND", "9000",
+                FinancialTransaction.TransactionStatus.APPROVED, LocalDate.of(2026, 8, 11));
+        approved.setSubcategory("SESSION_REFUND");
+        rows.add(approved);
+
+        FinancialTransaction cancelled = expense(
+                FinancialTransactionConstants.CATEGORY_CONSULTATION_FEE, "4135000",
+                FinancialTransaction.TransactionStatus.CANCELLED, LocalDate.of(2026, 8, 12));
+        cancelled.setSubcategory("CONSULTATION_REFUND");
+        rows.add(cancelled);
+
+        FinancialTransaction rejected = expense(
+                FinancialTransactionConstants.CATEGORY_OTHER, "500000",
+                FinancialTransaction.TransactionStatus.REJECTED, LocalDate.of(2026, 8, 13));
+        rejected.setSubcategory("SESSION_REFUND");
+        rows.add(rejected);
+
+        rows.add(expense(FinancialTransactionConstants.CATEGORY_RENT, "90896",
+                FinancialTransaction.TransactionStatus.COMPLETED, LocalDate.of(2026, 8, 14)));
+
+        when(financialTransactionRepository.findAll(any(Specification.class))).thenReturn(rows);
+
+        Map<String, Object> summary = service.getTransactionsFilteredSummary(null, null, START, END);
+
+        long expectedRefund = 100_000L + 20L * 1_000L + 7_000L;
+        assertThat(summary.get("refundAmount")).isEqualTo(expectedRefund);
+        assertThat(summary.get("refundAmount")).isNotEqualTo(4_135_000L);
+        assertThat(summary.get("totalExpense")).isEqualTo(expectedRefund + 90_896L);
+        assertThat(summary.get("totalIncome")).isEqualTo(0L);
+        assertThat(summary.get("totalCardMerchantFee")).isEqualTo(0L);
+        assertThat(summary.get("remaining")).isEqualTo(-(expectedRefund + 90_896L));
+    }
+
+    @Test
+    @DisplayName("getTransactionsFilteredSummary: tenant 없으면 refundAmount 0")
+    void getTransactionsFilteredSummary_emptySummaryIncludesRefundAmount() {
+        TenantContextHolder.clear();
+
+        Map<String, Object> summary = service.getTransactionsFilteredSummary(null, null, START, END);
+
+        assertThat(summary.get("refundAmount")).isEqualTo(0L);
+        assertThat(summary.get("totalIncome")).isEqualTo(0L);
+        assertThat(summary.get("totalExpense")).isEqualTo(0L);
+        assertThat(summary.get("remaining")).isEqualTo(0L);
+    }
+
     private static FinancialTransaction income(String category, String amount,
             FinancialTransaction.TransactionStatus status, LocalDate date) {
         return FinancialTransaction.builder()

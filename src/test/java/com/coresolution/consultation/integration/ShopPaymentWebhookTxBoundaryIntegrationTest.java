@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,8 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
@@ -41,6 +38,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.portone.PortOnePaymentWebhookService;
+import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
@@ -87,8 +85,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class ShopPaymentWebhookTxBoundaryIntegrationTest {
 
     private static final String STORE_ID = "store-it-tx-boundary";
-    private static final String WEBHOOK_SECRET = "whsec_it_tx_boundary";
-    private static final String TIMESTAMP = "1700000000";
+    private static final String WEBHOOK_SECRET = PortOneWebhookTestSignatures.secretForLabel("it-tx-boundary");
     private static final String WEBHOOK_URL = "/api/v1/payments/webhooks/portone/v2";
     private static final String EVENT_PAID = "Transaction.Paid";
     private static final String EVENT_CANCELLED = "Transaction.Cancelled";
@@ -157,11 +154,14 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
         String body = webhookBody(EVENT_PAID, paymentId);
 
+        String webhookId = "whk-first-receipt";
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
         mockMvc.perform(post(WEBHOOK_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("webhook-timestamp", TIMESTAMP)
-                        .header("webhook-signature", sign(body))
-                        .header("webhook-id", "whk-first-receipt")
+                        .header("webhook-timestamp", timestamp)
+                        .header("webhook-signature",
+                                PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, webhookId, timestamp, body))
+                        .header("webhook-id", webhookId)
                         .content(body.getBytes(StandardCharsets.UTF_8)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"))
@@ -411,7 +411,12 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     }
 
     private ResponseEntity<Map<String, Object>> sendWebhook(String body, String webhookId) throws Exception {
-        return webhookService.handleWebhook(body.getBytes(StandardCharsets.UTF_8), TIMESTAMP, sign(body), webhookId);
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
+        return webhookService.handleWebhook(
+                body.getBytes(StandardCharsets.UTF_8),
+                timestamp,
+                PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, webhookId, timestamp, body),
+                webhookId);
     }
 
     private static List<ResponseEntity<Map<String, Object>>> runConcurrently(
@@ -438,10 +443,4 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
                 + "\",\"paymentId\":\"" + paymentId + "\"}}";
     }
 
-    private static String sign(String body) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(WEBHOOK_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] digest = mac.doFinal((TIMESTAMP + "." + body).getBytes(StandardCharsets.UTF_8));
-        return "v1," + Base64.getEncoder().encodeToString(digest);
-    }
 }

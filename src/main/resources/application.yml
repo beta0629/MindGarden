@@ -221,6 +221,11 @@ mindgarden:
       easypay:
         host-test: ${KICC_EASYPAY_HOST_TEST:testpgapi.easypay.co.kr}
         host-prod: ${KICC_EASYPAY_HOST_PROD:pgapi.easypay.co.kr}
+    # 포트원 V2 웹훅 서명. 시크릿은 테넌트 settings_json. 여기에는 허용 오차만 둔다.
+    portone:
+      webhook:
+        # Standard Webhooks 5분. 코드 기본값 PortOneWebhookSignatureVerifier.DEFAULT_TOLERANCE_SECONDS 와 같다.
+        tolerance-seconds: ${PORTONE_WEBHOOK_TOLERANCE_SECONDS:300}
   # 매핑 회기 차감 누락 보정 배치 (P1 #93 안전망)
   # 즉시 비활성화: MINDGARDEN_BATCH_SESSION_RECOVERY_ENABLED=false
   batch:
@@ -984,6 +989,9 @@ security:
     uppercase: "${TEMP_PASSWORD_UPPERCASE:ABCDEFGHIJKLMNOPQRSTUVWXYZ}"
     digits: "${TEMP_PASSWORD_DIGITS:0123456789}"
     specials: "${TEMP_PASSWORD_SPECIALS:@$!%*?&}"
+    sms-template-key: ${TEMP_PASSWORD_SMS_TEMPLATE_KEY:CLIENT_TEMP_PASSWORD_SMS}
+    sms-template: "${TEMP_PASSWORD_SMS_TEMPLATE:[{centerName}] 로그인 아이디 {loginId} 임시 비밀번호 {tempPassword} 로그인 {loginUrl}}"
+    login-url: "${TEMP_PASSWORD_LOGIN_URL:}"
 
   # 보안 감사 로그
   audit:

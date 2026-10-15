@@ -448,4 +448,60 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     expect(nonGetFetch).toEqual([]);
     fetchSpy.mockRestore();
   });
+
+  it('expense caption uses period refundAmount, not cancelled page refunds', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('financial-transactions')) {
+        return {
+          success: true,
+          data: [
+            {
+              id: 201,
+              transactionDate: '2026-08-12',
+              transactionType: 'EXPENSE',
+              category: 'CONSULTATION',
+              subcategory: 'CONSULTATION_REFUND',
+              description: '과거 상담료 환불',
+              amount: 4135000,
+              status: 'CANCELLED'
+            }
+          ],
+          summary: {
+            totalIncome: 200000,
+            totalExpense: 90896,
+            totalCardMerchantFee: 0,
+            remaining: 109104,
+            refundAmount: 100000
+          }
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/erp/financial']}>
+        <Routes>
+          <Route path="/erp/financial" element={<FinancialManagement />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-expense').textContent).toContain('90,896원');
+    });
+
+    await waitFor(() => {
+      const expenseCell = screen.getByTestId('ledger-summary-expense').closest('article');
+      const caption = expenseCell.querySelector('.operator-ledger-summary__caption');
+      expect(caption).toBeTruthy();
+      expect(caption.textContent).toContain('100,000');
+      expect(caption.textContent).not.toContain('4,135,000');
+    });
+
+    expect(screen.getByText('과거 상담료 환불')).toBeInTheDocument();
+  });
 });

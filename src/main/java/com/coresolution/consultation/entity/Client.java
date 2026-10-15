@@ -17,6 +17,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Transient;
 
 /**
@@ -189,6 +190,16 @@ public class Client extends AuditableTenantBase {
     /** users.profile_image_url — 프로필 카드 아바타 SSOT (비영속, User에서 복사). */
     @Transient
     private String profileImageUrl;
+
+    /** 등록 응답 전용. 저장하지 않는다. */
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean smsSent;
+
+    /** 미발송 사유 코드. 본문을 담지 않는다. */
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String smsSkipReason;
     
     // 비즈니스 메서드
     // BaseEntity에서 상속받은 softDelete(), restore() 메서드 사용

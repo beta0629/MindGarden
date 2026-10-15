@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import com.coresolution.consultation.dto.AdminManagedUserBasicUpdateRequest;
 import com.coresolution.consultation.dto.AdminPasswordResetRequest;
+import com.coresolution.consultation.dto.CredentialSmsResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -417,46 +418,28 @@ public class AdminUserController {
             return denied;
         }
         try {
-            String newPassword = (requestBody != null && requestBody.getNewPassword() != null && !requestBody.getNewPassword().isEmpty())
-                    ? requestBody.getNewPassword()
-                    : newPasswordParam;
-            if (newPassword == null || newPassword.trim().isEmpty()) {
-                Map<String, Object> err = new HashMap<>();
-                err.put("success", false);
-                err.put("message", "새 비밀번호는 필수입니다. (request body의 newPassword 또는 쿼리 파라미터 newPassword)");
-                return ResponseEntity.badRequest().body(err);
+            if ((requestBody != null && requestBody.getNewPassword() != null)
+                    || (newPasswordParam != null && !newPasswordParam.isBlank())) {
+                log.info("관리자 초기화 요청의 비밀번호는 무시하고 서버가 임시 비밀번호를 만듭니다: userId={}", userId);
             }
-            newPassword = newPassword.trim();
-            log.info("🔑 관리자 권한으로 사용자 비밀번호 초기화: userId={}, newPasswordLength={}", userId, newPassword.length());
-            
-            // 비밀번호 정책 검증
-            Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);
-            if (!Boolean.TRUE.equals(validationResult.get("isValid"))) {
-                @SuppressWarnings("unchecked")
-                Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
-                String detail = firstPasswordErrorMessage(errMap);
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("success", false);
-                errorResponse.put("message", detail != null ? detail : "비밀번호가 정책을 만족하지 않습니다.");
-                errorResponse.put("errors", validationResult.get("errors"));
-                return ResponseEntity.badRequest().body(errorResponse);
-            }
-            
-            // 사용자 조회
-            User user = userService.findActiveByIdOrThrow(userId);
-            
-            // 비밀번호 변경 (기존 비밀번호 불필요)
-            userService.changePassword(userId, newPassword);
-            
-            log.info("✅ 관리자 권한으로 사용자 비밀번호 초기화 완료: userId={}", userId);
-            
+            log.info("관리자 임시 비밀번호 초기화: userId={}", userId);
+            CredentialSmsResult sms = userService.resetPasswordByAdmin(userId);
+
             Map<String, Object> successResponse = new HashMap<>();
             successResponse.put("success", true);
             successResponse.put("message", "비밀번호가 성공적으로 초기화되었습니다.");
             successResponse.put("userId", userId);
-            
+            successResponse.put("smsSent", sms.isSmsSent());
+            if (sms.getSkipReason() != null) {
+                successResponse.put("smsSkipReason", sms.getSkipReason());
+            }
             return ResponseEntity.ok(successResponse);
-
+        } catch (org.springframework.security.access.AccessDeniedException denied) {
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("errorCode", "TENANT_MISMATCH");
+            errorResponse.put("message", "TENANT_MISMATCH");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body(errorResponse);
         } catch (PasswordService.InvalidPasswordException e) {
             log.warn("비밀번호 초기화 정책 거절: userId={}, message={}", userId, e.getMessage());
             Map<String, Object> errorResponse = new HashMap<>();
@@ -570,13 +553,6 @@ public class AdminUserController {
     }
 
     // ==================== Private Helper Methods ====================
-
-    private static String firstPasswordErrorMessage(Map<String, String> errors) {
-        if (errors == null || errors.isEmpty()) {
-            return null;
-        }
-        return errors.values().iterator().next();
-    }
 
     /**
      * 사용자 주소 정보 조회

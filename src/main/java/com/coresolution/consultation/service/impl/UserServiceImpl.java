@@ -22,6 +22,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserLifecycleService;
+import com.coresolution.consultation.dto.CredentialSmsResult;
+import com.coresolution.consultation.service.ClientCredentialNotificationService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
@@ -34,6 +36,7 @@ import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -74,6 +77,13 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
+
+    /**
+     * 지연 주입. 즉시 주입하면 SecurityConfig 생성 중 RestTemplate와 순환한다.
+     */
+    @Lazy
+    @Autowired
+    private ClientCredentialNotificationService clientCredentialNotificationService;
 
     // ==================== BaseService 구현 ====================
     
@@ -1006,6 +1016,38 @@ public class UserServiceImpl implements UserService {
 
         log.info("비밀번호 변경 완료: email={}, userId={}",
             EmailLogMasking.maskForLog(user.getEmail()), userId);
+    }
+
+    @Override
+    public CredentialSmsResult resetPasswordByAdmin(Long userId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        java.util.Optional<User> scoped = userRepository.findByTenantIdAndId(tenantId, userId);
+        if (scoped.isEmpty()) {
+            userRepository.findById(userId)
+                .filter(other -> other.getTenantId() != null && !other.getTenantId().equals(tenantId))
+                .ifPresent(other -> {
+                    throw new org.springframework.security.access.AccessDeniedException("TENANT_MISMATCH");
+                });
+            throw new RuntimeException("활성 사용자를 찾을 수 없습니다: " + userId);
+        }
+        User user = decryptUserPersonalData(scoped.get());
+        String tempPassword = generateTempPassword();
+        int updated = userRepository.updatePasswordRequiringCredentialChange(
+            user.getId(), tenantId, passwordService.encodeSecret(tempPassword), LocalDateTime.now());
+        if (updated != 1) {
+            throw new RuntimeException("비밀번호 초기화 대상을 갱신하지 못했습니다: " + userId);
+        }
+        CredentialSmsResult result = new CredentialSmsResult();
+        if (clientCredentialNotificationService == null) {
+            result.setSmsSent(false);
+            result.setSkipReason(ClientCredentialNotificationService.REASON_SEND_FAILED);
+            return result;
+        }
+        clientCredentialNotificationService.deliverAfterCommit(sent -> {
+            result.setSmsSent(sent.isSmsSent());
+            result.setSkipReason(sent.getSkipReason());
+        }, user.getPhone(), user.getUserId(), tempPassword, tenantId, user.getId());
+        return result;
     }
     
     @Override

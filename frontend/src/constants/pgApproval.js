@@ -26,8 +26,51 @@ export const PG_APPROVAL_COPY = Object.freeze({
   CONFIRM_REJECT_TITLE: '거부 확인',
   MERCHANT_EMPTY: '—',
   PAGE_TITLE: 'PG 승인',
-  REFRESH: '새로고침'
+  REFRESH: '새로고침',
+  REAPPROVAL_BADGE: '재승인 대기',
+  TEST_BEFORE_APPROVE: '승인 전 연결 시험',
+  TEST_BEFORE_APPROVE_PENDING_HINT: '대기 수정 시 연결 시험 필수',
+  DIFF_CHANNEL_KEY: '채널 키',
+  DIFF_CHANNEL_KEY_TEST: '테스트 채널 키'
 });
+
+/**
+ * 재승인 배지 표시 여부.
+ * hasPendingEdit 우선, 없으면 ACTIVE+PENDING 레거시 조건.
+ *
+ * @param {{ hasPendingEdit?: boolean, status?: string, approvalStatus?: string }|null|undefined} item
+ * @returns {boolean}
+ */
+export function shouldShowReapprovalBadge(item) {
+  if (!item) {
+    return false;
+  }
+  if (item.hasPendingEdit === true) {
+    return true;
+  }
+  return item.status === 'ACTIVE' && item.approvalStatus === 'PENDING';
+}
+
+/**
+ * pending 수정이 있으면 승인 전 연결 시험을 강제·스위치 비활성.
+ *
+ * @param {{ hasPendingEdit?: boolean }|null|undefined} item
+ * @returns {boolean}
+ */
+export function isConnectionTestForcedForPending(item) {
+  return item?.hasPendingEdit === true;
+}
+
+/**
+ * 승인 요청용 testConnection 값 — pending 이면 항상 true.
+ *
+ * @param {boolean|null|undefined} hasPendingEdit
+ * @param {boolean} userChecked
+ * @returns {boolean}
+ */
+export function resolveApproveTestConnection(hasPendingEdit, userChecked) {
+  return hasPendingEdit === true ? true : !!userChecked;
+}
 
 /**
  * 가맹 ID 마스킹: 앞 2~4 + **** + 뒤 2~4. 짧으면 ****.

@@ -1594,6 +1594,18 @@ public interface UserRepository extends BaseRepository<User, Long> {
         @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
 
     /**
+     * 관리자 임시 비밀번호 발급. {@code isPasswordChanged=false} 로 두어 다음 로그인에서 변경을 요구한다.
+     *
+     * @return 갱신된 행 수
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE User u SET u.password = :password, u.updatedAt = :updatedAt, u.isPasswordChanged = false, "
+        + "u.passwordResetToken = null, u.passwordResetExpiresAt = null "
+        + "WHERE u.id = :id AND u.tenantId = :tenantId")
+    int updatePasswordRequiringCredentialChange(@Param("id") Long id, @Param("tenantId") String tenantId,
+        @Param("password") String password, @Param("updatedAt") LocalDateTime updatedAt);
+
+    /**
      * 로그인 핫패스용 last_login_at 갱신 (낙관적 락 미사용).
      *
      * <p>엔티티 load+{@+{@({@code @Version}) 는 동일 사용자 동시 로그인(더블 제출·멀티탭·FE 재시도) 시

@@ -1663,7 +1663,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
      * {@link OperatorFinanceAggregation} 과 동일 산식(수수료 포함).
      *
      * @param posted 운영자 집계 대상 거래
-     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining / taxBreakdown
+     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining / refundAmount / taxBreakdown
      */
     private Map<String, Object> buildOperatorLedgerSummaryMap(List<FinancialTransaction> posted) {
         OperatorFinanceAggregation.Result agg = OperatorFinanceAggregation.aggregate(posted);
@@ -1672,9 +1672,36 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", agg.getTotalExpense().longValue());
         summary.put("totalCardMerchantFee", agg.getTotalCardMerchantFee().longValue());
         summary.put("remaining", agg.getNetProfit().longValue());
+        summary.put("refundAmount", sumPostedExpenseRefund(posted).longValue());
         summary.put("taxBreakdown", toOperatorTaxBreakdownLongs(
                 ErpMonthlyTaxBreakdownHelper.buildBreakdown(agg.copyTransactions())));
         return summary;
+    }
+
+    /**
+     * posted EXPENSE 중 환불 subcategory 또는 category 금액 합.
+     * null amount 는 0. CANCELLED·REJECTED 는 호출 전 posted 필터에서 제외된다.
+     *
+     * @param posted 운영자 집계 대상 거래
+     * @return 환불 합계
+     */
+    private static BigDecimal sumPostedExpenseRefund(List<FinancialTransaction> posted) {
+        BigDecimal sum = BigDecimal.ZERO;
+        if (posted == null) {
+            return sum;
+        }
+        for (FinancialTransaction tx : posted) {
+            if (tx == null || !FinancialTransaction.TransactionType.EXPENSE.equals(tx.getTransactionType())) {
+                continue;
+            }
+            boolean refund = FinancialTransactionConstants.isRefundSubcategory(tx.getSubcategory())
+                    || FinancialTransactionConstants.isRefundSubcategory(tx.getCategory());
+            if (!refund) {
+                continue;
+            }
+            sum = sum.add(tx.getAmount() != null ? tx.getAmount() : BigDecimal.ZERO);
+        }
+        return sum;
     }
 
     private static Map<String, Object> emptyOperatorLedgerSummary() {
@@ -1683,6 +1710,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", 0L);
         summary.put("totalCardMerchantFee", 0L);
         summary.put("remaining", 0L);
+        summary.put("refundAmount", 0L);
         summary.put("taxBreakdown", emptyOperatorTaxBreakdown());
         return summary;
     }

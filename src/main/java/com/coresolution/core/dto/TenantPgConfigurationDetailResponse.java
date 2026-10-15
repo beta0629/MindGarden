@@ -166,6 +166,23 @@ public class TenantPgConfigurationDetailResponse extends TenantPgConfigurationRe
             base.setUpdatedAt(updatedAt);
             return this;
         }
+
+        public TenantPgConfigurationDetailResponseBuilder hasPendingEdit(Boolean hasPendingEdit) {
+            base.setHasPendingEdit(hasPendingEdit);
+            return this;
+        }
+
+        public TenantPgConfigurationDetailResponseBuilder pendingRequestedAt(
+                java.time.LocalDateTime pendingRequestedAt) {
+            base.setPendingRequestedAt(pendingRequestedAt);
+            return this;
+        }
+
+        public TenantPgConfigurationDetailResponseBuilder pendingEditDiff(
+                TenantPgPendingEditDiff pendingEditDiff) {
+            base.setPendingEditDiff(pendingEditDiff);
+            return this;
+        }
         
         public TenantPgConfigurationDetailResponseBuilder history(List<TenantPgConfigurationHistoryResponse> history) {
             this.history = history;
@@ -200,6 +217,9 @@ public class TenantPgConfigurationDetailResponse extends TenantPgConfigurationRe
             response.setNotes(base.getNotes());
             response.setCreatedAt(base.getCreatedAt());
             response.setUpdatedAt(base.getUpdatedAt());
+            response.setHasPendingEdit(base.getHasPendingEdit());
+            response.setPendingRequestedAt(base.getPendingRequestedAt());
+            response.setPendingEditDiff(base.getPendingEditDiff());
             response.setHistory(history);
             return response;
         }

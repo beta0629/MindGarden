@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.coresolution.consultation.constant.LifecycleState;
@@ -25,6 +26,7 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -304,6 +306,16 @@ public class User extends BaseEntity implements Serializable {
     @Column(name = "is_password_changed", nullable = false)
     @Builder.Default
     private Boolean isPasswordChanged = true; // 기본값은 true (기존 사용자는 이미 비밀번호 변경 완료)
+
+    /** 등록·초기화 응답 전용. 저장하지 않는다. */
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Boolean smsSent;
+
+    /** 미발송 사유 코드. 저장하지 않으며 본문을 담지 않는다. */
+    @Transient
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String smsSkipReason;
     
     /**
      * 프로필 이미지 URL — base64 dataURI 금지, 절대/상대 URL 만 저장.

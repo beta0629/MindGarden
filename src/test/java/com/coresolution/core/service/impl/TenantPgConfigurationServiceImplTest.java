@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -672,6 +673,24 @@ class TenantPgConfigurationServiceImplTest {
         assertThat(notesCaptor.getValue()).contains("ACTIVE live 유지");
     }
 
+    /**
+     * pending 승인 시 강제 연결 시험 stub (성공).
+     */
+    private PgConnectionTestService stubSuccessfulConnectionTest() {
+        PgConnectionTestService testService = mock(PgConnectionTestService.class);
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
+        when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
+        when(testService.supports(any(PgProvider.class))).thenReturn(true);
+        when(testService.testConnection(any(TenantPgConfiguration.class)))
+                .thenReturn(ConnectionTestResponse.builder()
+                        .success(true)
+                        .result("SUCCESS")
+                        .message("연결 성공")
+                        .testedAt(LocalDateTime.now())
+                        .build());
+        return testService;
+    }
+
     @Test
     @DisplayName("승인 — ACTIVE+pending 적용 후 pending 클리어, ACTIVE+APPROVED")
     void approveConfiguration_activeWithPending_appliesAndClears() throws Exception {
@@ -700,6 +719,7 @@ class TenantPgConfigurationServiceImplTest {
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+        stubSuccessfulConnectionTest();
 
         TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
 
@@ -711,12 +731,15 @@ class TenantPgConfigurationServiceImplTest {
 
         ArgumentCaptor<TenantPgConfiguration> savedCaptor =
                 ArgumentCaptor.forClass(TenantPgConfiguration.class);
-        verify(configurationRepository).save(savedCaptor.capture());
-        assertThat(savedCaptor.getValue().getApiKeyEncrypted()).isEqualTo("encrypted-pending-api");
-        assertThat(savedCaptor.getValue().getPendingRequestJson()).isNull();
-        assertThat(savedCaptor.getValue().getPendingRequestedBy()).isNull();
-        assertThat(savedCaptor.getValue().getPendingRequestedAt()).isNull();
-        assertThat(savedCaptor.getValue().getTestMode()).isTrue();
+        // 연결시험 중 save 가 선행될 수 있으므로 최종 승인 save 를 검증한다.
+        verify(configurationRepository, atLeastOnce()).save(savedCaptor.capture());
+        TenantPgConfiguration finalSaved =
+                savedCaptor.getAllValues().get(savedCaptor.getAllValues().size() - 1);
+        assertThat(finalSaved.getApiKeyEncrypted()).isEqualTo("encrypted-pending-api");
+        assertThat(finalSaved.getPendingRequestJson()).isNull();
+        assertThat(finalSaved.getPendingRequestedBy()).isNull();
+        assertThat(finalSaved.getPendingRequestedAt()).isNull();
+        assertThat(finalSaved.getTestMode()).isTrue();
 
         verify(historyService).saveHistory(
                 eq(testConfigId),
@@ -764,6 +787,7 @@ class TenantPgConfigurationServiceImplTest {
         when(configurationRepository.save(any(TenantPgConfiguration.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+        stubSuccessfulConnectionTest();
 
         TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
 
@@ -774,8 +798,9 @@ class TenantPgConfigurationServiceImplTest {
 
         ArgumentCaptor<TenantPgConfiguration> savedCaptor =
                 ArgumentCaptor.forClass(TenantPgConfiguration.class);
-        verify(configurationRepository).save(savedCaptor.capture());
-        TenantPgConfiguration saved = savedCaptor.getValue();
+        verify(configurationRepository, atLeastOnce()).save(savedCaptor.capture());
+        TenantPgConfiguration saved =
+                savedCaptor.getAllValues().get(savedCaptor.getAllValues().size() - 1);
         assertThat(saved.getPendingRequestJson()).isNull();
         assertThat(saved.getPendingRequestedBy()).isNull();
         assertThat(saved.getPendingRequestedAt()).isNull();
@@ -1061,6 +1086,394 @@ class TenantPgConfigurationServiceImplTest {
                 .hasMessageContaining("webhookSecret");
 
         verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("승인 — pending 연결테스트 실패 시 예외, live/pending 미변경")
+    void approveConfiguration_pendingConnectionTestFails_blocksAndKeepsState() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedBy("admin-user");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConnectionTestService testService = mock(PgConnectionTestService.class);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
+        when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
+        when(testService.supports(PgProvider.TOSS)).thenReturn(true);
+        when(testService.testConnection(any(TenantPgConfiguration.class)))
+                .thenReturn(ConnectionTestResponse.builder()
+                        .success(false)
+                        .result("FAILED")
+                        .message("API Key 유효하지 않음")
+                        .testedAt(LocalDateTime.now())
+                        .build());
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(true)
+                .build();
+
+        assertThatThrownBy(() -> service.approveConfiguration(testConfigId, request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("연결 테스트 실패")
+                .hasMessageContaining("API Key 유효하지 않음");
+
+        assertThat(testConfiguration.getStoreId()).isEqualTo("live-store");
+        assertThat(testConfiguration.getApiKeyEncrypted()).isEqualTo("encrypted-live-api");
+        assertThat(testConfiguration.getPendingRequestJson()).isNotBlank();
+        assertThat(testConfiguration.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
+        assertThat(testConfiguration.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
+        verify(historyService, never()).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.APPROVED),
+                any(),
+                any(),
+                any(),
+                any());
+    }
+
+    @Test
+    @DisplayName("승인 — pending 연결테스트 성공 시 pending 적용")
+    void approveConfiguration_pendingConnectionTestSucceeds_appliesPending() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedBy("admin-user");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConnectionTestService testService = mock(PgConnectionTestService.class);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
+        when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
+        when(testService.supports(PgProvider.TOSS)).thenReturn(true);
+        when(testService.testConnection(any(TenantPgConfiguration.class)))
+                .thenReturn(ConnectionTestResponse.builder()
+                        .success(true)
+                        .result("SUCCESS")
+                        .message("연결 성공")
+                        .testedAt(LocalDateTime.now())
+                        .build());
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(true)
+                .build();
+
+        TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
+
+        assertThat(result.getHasPendingEdit()).isFalse();
+        assertThat(result.getStoreId()).isEqualTo("pending-store");
+        assertThat(result.getPendingEditDiff()).isNull();
+        assertThat(testConfiguration.getApiKeyEncrypted()).isEqualTo("encrypted-pending-api");
+        assertThat(testConfiguration.getPendingRequestJson()).isNull();
+    }
+
+    @Test
+    @DisplayName("toResponse — pendingEditDiff live+test 채널키 끝4, URL query 마스킹, 시크릿 미포함")
+    void toResponse_pendingEditDiff_masksSecretsAndExposesChangeFlags() throws Exception {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(true);
+        testConfiguration.setStoreId("live-store-abcdef");
+        testConfiguration.setMerchantId("live-merchant-xyz");
+        testConfiguration.setWebhookUrl("https://live.example.com/webhook/path?token=live-secret-tok");
+        testConfiguration.setReturnUrl("https://live.example.com/return");
+        testConfiguration.setCancelUrl("https://live.example.com/cancel#frag-live");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setSettingsJson(
+                "{\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                        + "\":\"channel-key-live-LIVE\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                        + "\":\"channel-key-test-ABCD\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET
+                        + "\":\"enc:live-webhook-secret-PLAIN\"}");
+        String pendingSettings =
+                "{\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                        + "\":\"channel-key-pend-LIVE\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                        + "\":\"channel-key-pend-WXYZ\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET
+                        + "\":\"enc:pending-webhook-secret-PLAIN\"}";
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-live-secret\","
+                        + "\"storeId\":\"pending-store-ghijkl\","
+                        + "\"merchantId\":\"pending-merchant-uvw\","
+                        + "\"webhookUrl\":\"https://pending.example.com/webhook?sig=pending-query\","
+                        + "\"returnUrl\":\"https://pending.example.com/return\","
+                        + "\"cancelUrl\":\"https://pending.example.com/cancel\","
+                        + "\"settingsJson\":"
+                        + objectMapper.writeValueAsString(pendingSettings)
+                        + ",\"notes\":null}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        when(configurationRepository.findByTenantIdAndIsDeletedFalse(testTenantId))
+                .thenReturn(List.of(testConfiguration));
+
+        List<TenantPgConfigurationResponse> result =
+                service.getConfigurations(testTenantId, null, null);
+
+        assertThat(result).hasSize(1);
+        TenantPgConfigurationResponse response = result.get(0);
+        assertThat(response.getHasPendingEdit()).isTrue();
+        assertThat(response.getPendingEditDiff()).isNotNull();
+        assertThat(response.getPendingEditDiff().getApiKeyChanged()).isTrue();
+        assertThat(response.getPendingEditDiff().getSecretKeyChanged()).isFalse();
+
+        assertThat(response.getSettingsJson()).doesNotContain("enc:live-webhook-secret-PLAIN");
+        assertThat(response.getSettingsJson()).doesNotContain(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+
+        String diffJson = objectMapper.writeValueAsString(response.getPendingEditDiff());
+        assertThat(diffJson).doesNotContain("channel-key-live-LIVE");
+        assertThat(diffJson).doesNotContain("channel-key-test-ABCD");
+        assertThat(diffJson).doesNotContain("channel-key-pend-LIVE");
+        assertThat(diffJson).doesNotContain("channel-key-pend-WXYZ");
+        assertThat(diffJson).doesNotContain("encrypted-pending-api");
+        assertThat(diffJson).doesNotContain("encrypted-live-api");
+        assertThat(diffJson).doesNotContain("enc:pending-webhook-secret-PLAIN");
+        assertThat(diffJson).doesNotContain("enc:live-webhook-secret-PLAIN");
+        assertThat(diffJson).doesNotContain("live-secret-tok");
+        assertThat(diffJson).doesNotContain("pending-query");
+        assertThat(diffJson).doesNotContain("frag-live");
+
+        assertThat(response.getPendingEditDiff().getCurrent().getChannelKeyMasked())
+                .endsWith("LIVE")
+                .startsWith("*");
+        assertThat(response.getPendingEditDiff().getCurrent().getChannelKeyTestMasked())
+                .endsWith("ABCD")
+                .startsWith("*");
+        assertThat(response.getPendingEditDiff().getPending().getChannelKeyMasked())
+                .endsWith("LIVE")
+                .startsWith("*");
+        assertThat(response.getPendingEditDiff().getPending().getChannelKeyTestMasked())
+                .endsWith("WXYZ")
+                .startsWith("*");
+        assertThat(response.getPendingEditDiff().getCurrent().getWebhookUrl())
+                .isEqualTo("https://live.example.com/webhook/path?****");
+        assertThat(response.getPendingEditDiff().getPending().getWebhookUrl())
+                .isEqualTo("https://pending.example.com/webhook?****");
+        assertThat(response.getPendingEditDiff().getCurrent().getCancelUrl())
+                .isEqualTo("https://live.example.com/cancel#****");
+        assertThat(response.getPendingEditDiff().getPending().getStoreId())
+                .endsWith("ijkl");
+        assertThat(response.getPendingEditDiff().getPending().getStoreId())
+                .doesNotContain("pending-store-ghijkl");
+    }
+
+    @Test
+    @DisplayName("toResponse — pendingEditDiff testMode=false 여도 live+test 채널키 둘 다 채움")
+    void toResponse_pendingEditDiff_bothChannelKeysIndependentOfTestMode() throws Exception {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setTestMode(false);
+        testConfiguration.setSettingsJson(
+                "{\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                        + "\":\"live-channel-key-AAAA\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                        + "\":\"test-channel-key-BBBB\"}");
+        String pendingSettings =
+                "{\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY
+                        + "\":\"live-channel-pend-CCCC\","
+                        + "\"" + TenantPgSettingsJsonKeys.PORTONE_CHANNEL_KEY_TEST
+                        + "\":\"test-channel-pend-DDDD\"}";
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-live-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-live-secret\","
+                        + "\"storeId\":\"live-store\","
+                        + "\"settingsJson\":"
+                        + objectMapper.writeValueAsString(pendingSettings)
+                        + ",\"notes\":null}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        when(configurationRepository.findByTenantIdAndIsDeletedFalse(testTenantId))
+                .thenReturn(List.of(testConfiguration));
+
+        TenantPgConfigurationResponse response =
+                service.getConfigurations(testTenantId, null, null).get(0);
+
+        assertThat(response.getPendingEditDiff().getCurrent().getChannelKeyMasked())
+                .endsWith("AAAA");
+        assertThat(response.getPendingEditDiff().getCurrent().getChannelKeyTestMasked())
+                .endsWith("BBBB");
+        assertThat(response.getPendingEditDiff().getPending().getChannelKeyMasked())
+                .endsWith("CCCC");
+        assertThat(response.getPendingEditDiff().getPending().getChannelKeyTestMasked())
+                .endsWith("DDDD");
+        String diffJson = objectMapper.writeValueAsString(response.getPendingEditDiff());
+        assertThat(diffJson).doesNotContain("live-channel-key-AAAA");
+        assertThat(diffJson).doesNotContain("test-channel-key-BBBB");
+    }
+
+    @Test
+    @DisplayName("승인 — pending + testConnection=false 여도 연결시험 강제, 실패 시 차단")
+    void approveConfiguration_pendingIgnoresTestConnectionFalse_blocksOnFailure() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConnectionTestService testService = mock(PgConnectionTestService.class);
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
+        when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
+        when(testService.supports(PgProvider.TOSS)).thenReturn(true);
+        when(testService.testConnection(any(TenantPgConfiguration.class)))
+                .thenReturn(ConnectionTestResponse.builder()
+                        .success(false)
+                        .result("FAILED")
+                        .message("강제 시험 실패")
+                        .testedAt(LocalDateTime.now())
+                        .build());
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(false)
+                .build();
+
+        assertThatThrownBy(() -> service.approveConfiguration(testConfigId, request))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("연결 테스트 실패")
+                .hasMessageContaining("강제 시험 실패");
+
+        assertThat(testConfiguration.getStoreId()).isEqualTo("live-store");
+        assertThat(testConfiguration.getPendingRequestJson()).isNotBlank();
+        verify(testService).testConnection(any(TenantPgConfiguration.class));
+        verify(historyService, never()).saveHistory(
+                eq(testConfigId),
+                eq(TenantPgConfigurationHistory.ChangeType.APPROVED),
+                any(),
+                any(),
+                any(),
+                any());
+    }
+
+    @Test
+    @DisplayName("승인 — pending + testConnection=false 여도 연결시험 강제, 성공 시 적용")
+    void approveConfiguration_pendingIgnoresTestConnectionFalse_appliesOnSuccess() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConnectionTestService testService = stubSuccessfulConnectionTest();
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        PgConfigurationApproveRequest request = PgConfigurationApproveRequest.builder()
+                .approvedBy("ops-user")
+                .approvalNote("재승인")
+                .testConnection(false)
+                .build();
+
+        TenantPgConfigurationResponse result = service.approveConfiguration(testConfigId, request);
+
+        assertThat(result.getHasPendingEdit()).isFalse();
+        assertThat(result.getStoreId()).isEqualTo("pending-store");
+        assertThat(testConfiguration.getPendingRequestJson()).isNull();
+        verify(testService).testConnection(any(TenantPgConfiguration.class));
+    }
+
+    @Test
+    @DisplayName("testConnectionBeforeApproval — pending 있으면 pending 자격 증명으로 테스트")
+    void testConnectionBeforeApproval_withPending_usesPendingCredentials() {
+        testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);
+        testConfiguration.setApprovalStatus(ApprovalStatus.APPROVED);
+        testConfiguration.setStoreId("live-store");
+        testConfiguration.setApiKeyEncrypted("encrypted-live-api");
+        testConfiguration.setSecretKeyEncrypted("encrypted-live-secret");
+        testConfiguration.setPendingRequestJson(
+                "{\"pgProvider\":\"TOSS\",\"pgName\":\"토스\","
+                        + "\"apiKeyEncrypted\":\"encrypted-pending-api\","
+                        + "\"secretKeyEncrypted\":\"encrypted-pending-secret\","
+                        + "\"storeId\":\"pending-store\",\"settingsJson\":null,\"notes\":null}");
+        testConfiguration.setPendingRequestedAt(LocalDateTime.now());
+
+        PgConnectionTestService testService = mock(PgConnectionTestService.class);
+        java.util.concurrent.atomic.AtomicReference<String> storeIdAtTest =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.atomic.AtomicReference<String> apiKeyAtTest =
+                new java.util.concurrent.atomic.AtomicReference<>();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.decrypt(any(String.class))).thenReturn("decrypted-api", "decrypted-secret");
+        when(connectionTestServices.stream()).thenReturn(java.util.stream.Stream.of(testService));
+        when(testService.supports(PgProvider.TOSS)).thenReturn(true);
+        when(testService.testConnection(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> {
+                    TenantPgConfiguration cfg = invocation.getArgument(0);
+                    storeIdAtTest.set(cfg.getStoreId());
+                    apiKeyAtTest.set(cfg.getApiKeyEncrypted());
+                    return ConnectionTestResponse.builder()
+                            .success(true)
+                            .result("SUCCESS")
+                            .message("연결 성공")
+                            .testedAt(LocalDateTime.now())
+                            .build();
+                });
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        ConnectionTestResponse result = service.testConnectionBeforeApproval(testConfigId);
+
+        assertThat(result.getSuccess()).isTrue();
+        assertThat(storeIdAtTest.get()).isEqualTo("pending-store");
+        assertThat(apiKeyAtTest.get()).isEqualTo("encrypted-pending-api");
+        // restore 후 live 유지
+        assertThat(testConfiguration.getStoreId()).isEqualTo("live-store");
+        assertThat(testConfiguration.getApiKeyEncrypted()).isEqualTo("encrypted-live-api");
+        assertThat(testConfiguration.getPendingRequestJson()).isNotBlank();
     }
 }
 

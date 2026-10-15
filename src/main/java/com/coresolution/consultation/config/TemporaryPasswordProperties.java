@@ -32,4 +32,16 @@ public class TemporaryPasswordProperties {
 
     /** 특수문자 문자군. {@code PasswordPolicy.LOGIN_PASSWORD_ALLOWED_SPECIALS} 부분집합. */
     private String specials = "@$!%*?&";
+
+    /** SMS 템플릿 키. 로그·감사에만 쓰고 본문은 남기지 않는다. */
+    private String smsTemplateKey = "CLIENT_TEMP_PASSWORD_SMS";
+
+    /**
+     * 발송 본문. 자리표시자 {centerName} {loginId} {tempPassword} {loginUrl}.
+     * 비어 있으면 발송하지 않는다.
+     */
+    private String smsTemplate = "";
+
+    /** {loginUrl} 에 넣을 로그인 주소. */
+    private String loginUrl = "";
 }

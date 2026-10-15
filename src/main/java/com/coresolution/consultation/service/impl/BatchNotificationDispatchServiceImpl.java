@@ -14,6 +14,7 @@ import java.util.Optional;
 import com.coresolution.consultation.config.BatchNotificationProperties;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.SmsDispatchFlagKeys;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.NotificationBatchSendLog;
@@ -479,6 +480,10 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     /**
      * Schedule 기반 3종 템플릿 (D-2 / IMMEDIATE_SINGLE / IMMEDIATE_LATE) 공통 발송 흐름.
      *
+     * <p>종목 {@code dispatch_enabled} 가 OFF 이면 스케줄 조회·멱등 로그·채널 호출 없이
+     * {@link DispatchOutcome.Status#SKIPPED_VALIDATION} 을 반환한다.
+     * 플래그가 ON 인데 시드 본문이 비어 있으면 기존대로 {@code FAILED} + {@code TEMPLATE_NOT_MAPPED} 를 남긴다.
+     *
      * @param scheduleId           {@code schedules.id}
      * @param templateCode         5종 중 1
      * @param includeRemainingSessions {@code true} — D-2 만 잔여 회기 변수 포함
@@ -489,6 +494,15 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         String tenantId = resolveTenantId();
         if (tenantId == null) {
             return validationFailure("TENANT_CONTEXT_MISSING", "tenant context missing");
+        }
+        if (!smsTemplateService.isAutoDispatchEnabledFor(templateCode, tenantId)) {
+            String reason = smsTemplateService.isGlobalAutoDispatchEnabled()
+                ? "template_off"
+                : "global_off";
+            log.info("[SMS_GATE] templateKey={} tenant={} skip reason={}",
+                templateCode, tenantId, reason);
+            return new DispatchOutcome(DispatchOutcome.Status.SKIPPED_VALIDATION,
+                null, false, SmsDispatchFlagKeys.EXTRA_KEY_DISPATCH_ENABLED, reason, null);
         }
 
         Schedule schedule = scheduleRepository
@@ -914,7 +928,9 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 ? alimtalkResult.errorMessage()
                 : "alimtalk mapping not found";
             String skipNote = NotificationDispatchHelper.truncate(
-                "SMS_TEMPLATE 시드 비활성/미발견 → SMS 폴백 skip | alimtalk=" + alimtalkErrMsg);
+                "SMS_TEMPLATE 시드 비활성/미발견 → "
+                    + BatchNotificationTemplateCodes.SMS_FALLBACK_SKIP_NOTE_MARKER
+                    + " | alimtalk=" + alimtalkErrMsg);
             sendLogger.updateResult(logEntry.getId(), false,
                 BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
                 false,

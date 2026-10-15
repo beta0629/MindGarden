@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.ImmediateReservationSmsPendingStatus;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
@@ -21,6 +22,7 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
+import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
@@ -98,6 +100,7 @@ public class ReservationReminderScheduler {
     private final SchedulerExecutionLogService logService;
     private final SchedulerAlertService alertService;
     private final SystemConfigService systemConfigService;
+    private final SmsTemplateService smsTemplateService;
     private final Clock clock;
 
     /**
@@ -112,7 +115,8 @@ public class ReservationReminderScheduler {
      * @param properties                                 배치 설정
      * @param logService                                 실행 로그
      * @param alertService                               알림
-     * @param systemConfigService                        플래그
+     * @param systemConfigService                        스케줄러 플래그
+     * @param smsTemplateService                         종목별 자동 발송 플래그
      */
     @Autowired
     public ReservationReminderScheduler(
@@ -125,7 +129,8 @@ public class ReservationReminderScheduler {
             BatchNotificationProperties properties,
             SchedulerExecutionLogService logService,
             SchedulerAlertService alertService,
-            SystemConfigService systemConfigService) {
+            SystemConfigService systemConfigService,
+            SmsTemplateService smsTemplateService) {
         this(
                 tenantService,
                 scheduleRepository,
@@ -137,13 +142,15 @@ public class ReservationReminderScheduler {
                 logService,
                 alertService,
                 systemConfigService,
+                smsTemplateService,
                 Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL));
     }
 
     /**
      * 테스트용 시계 주입 생성자.
      *
-     * @param clock 당일 pending 윈도우 판정용
+     * @param smsTemplateService 종목별 자동 발송 플래그
+     * @param clock              당일 pending 윈도우 판정용
      */
     ReservationReminderScheduler(
             TenantService tenantService,
@@ -156,6 +163,7 @@ public class ReservationReminderScheduler {
             SchedulerExecutionLogService logService,
             SchedulerAlertService alertService,
             SystemConfigService systemConfigService,
+            SmsTemplateService smsTemplateService,
             Clock clock) {
         this.tenantService = tenantService;
         this.scheduleRepository = scheduleRepository;
@@ -167,6 +175,7 @@ public class ReservationReminderScheduler {
         this.logService = logService;
         this.alertService = alertService;
         this.systemConfigService = systemConfigService;
+        this.smsTemplateService = smsTemplateService;
         this.clock = clock;
     }
 
@@ -332,6 +341,9 @@ public class ReservationReminderScheduler {
     /**
      * D-2 / D-1 / D-0 SMS 공통 순회. status IN BOOKED/CONFIRMED/TENTATIVE_PENDING_PAYMENT.
      *
+     * <p>종목 {@code dispatch_enabled} 가 OFF 이면 스케줄 조회 없이 {@code (0,0,0)} 을 반환한다.
+     * 실패 카운트는 올리지 않는다. D-1·D-0 은 같은 LATE 종목 코드를 본다.
+     *
      * @param tenantId   테넌트 ID
      * @param targetDate 대상 일자
      * @param kind       D-2 / D-1 / D-0
@@ -339,6 +351,14 @@ public class ReservationReminderScheduler {
      */
     private TenantSummary processTenantSmsBatch(String tenantId, LocalDate targetDate,
             ReminderSmsKind kind) {
+        if (!smsTemplateService.isAutoDispatchEnabledFor(kind.templateCode(), tenantId)) {
+            String reason = smsTemplateService.isGlobalAutoDispatchEnabled()
+                ? "template_off"
+                : "global_off";
+            log.info("[SMS_GATE] templateKey={} tenant={} skip reason={} batch={}",
+                kind.templateCode(), tenantId, reason, kind.logTag());
+            return new TenantSummary(0, 0, 0);
+        }
         // TENTATIVE_PENDING_PAYMENT: 현장결제 가예약도 09:00 D-2/D-1/D-0 SMS 에 포함.
         // D-1 푸시(processTenantD1Push)는 BOOKED/CONFIRMED 만 유지(정책: TENTATIVE 는 SMS만).
         List<Schedule> schedules = scheduleRepository.findByTenantIdAndDateAndStatusIn(
@@ -374,9 +394,7 @@ public class ReservationReminderScheduler {
                     skipped++;
                     continue;
                 }
-                DispatchOutcome outcome = kind == ReminderSmsKind.D2
-                    ? dispatchService.dispatchReservationReminderD2(schedule.getId())
-                    : dispatchService.dispatchReservationImmediateLate(schedule.getId());
+                DispatchOutcome outcome = kind.dispatch(dispatchService, schedule.getId());
                 switch (outcome.status()) {
                     case ALIMTALK_SENT:
                     case SMS_FALLBACK_SENT:
@@ -405,20 +423,46 @@ public class ReservationReminderScheduler {
 
     /**
      * 09:00 SMS 배치 종류 (D-2 / D-1 / D-0).
+     *
+     * <p>D-1·D-0 은 같은 {@link BatchNotificationTemplateCodes#RESERVATION_IMMEDIATE_LATE}
+     * 종목을 쓴다. 발송 여부 판정은 {@link #templateCode()} 한 곳이다.
      */
     private enum ReminderSmsKind {
-        D2("ReservationReminderD2"),
-        D1("ReservationReminderD1"),
-        D0("ReservationReminderD0");
+        D2("ReservationReminderD2",
+            BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
+            BatchNotificationDispatchService::dispatchReservationReminderD2),
+        D1("ReservationReminderD1",
+            BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE,
+            BatchNotificationDispatchService::dispatchReservationImmediateLate),
+        D0("ReservationReminderD0",
+            BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE,
+            BatchNotificationDispatchService::dispatchReservationImmediateLate);
 
         private final String logTag;
+        private final String templateCode;
+        private final ScheduleSmsDispatch scheduleSmsDispatch;
 
-        ReminderSmsKind(String logTag) {
+        ReminderSmsKind(String logTag, String templateCode, ScheduleSmsDispatch scheduleSmsDispatch) {
             this.logTag = logTag;
+            this.templateCode = templateCode;
+            this.scheduleSmsDispatch = scheduleSmsDispatch;
         }
 
         String logTag() {
             return logTag;
+        }
+
+        String templateCode() {
+            return templateCode;
+        }
+
+        DispatchOutcome dispatch(BatchNotificationDispatchService service, Long scheduleId) {
+            return scheduleSmsDispatch.dispatch(service, scheduleId);
+        }
+
+        @FunctionalInterface
+        private interface ScheduleSmsDispatch {
+            DispatchOutcome dispatch(BatchNotificationDispatchService service, Long scheduleId);
         }
     }
 

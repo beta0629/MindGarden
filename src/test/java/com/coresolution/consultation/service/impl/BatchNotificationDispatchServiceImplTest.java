@@ -671,6 +671,30 @@ class BatchNotificationDispatchServiceImplTest {
             .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED);
     }
 
+    @Test
+    @DisplayName("종목 dispatch_enabled OFF — D2·SINGLE·LATE 모두 SKIPPED_VALIDATION, 로그·채널 호출 없음")
+    void dispatch_whenAutoDispatchDisabled_skipsValidationWithoutLogForScheduleTemplates() {
+        when(smsTemplateService.isAutoDispatchEnabledFor(anyString(), anyString()))
+            .thenReturn(false);
+
+        DispatchOutcome d2 = service.dispatchReservationReminderD2(SCHEDULE_ID);
+        DispatchOutcome single = service.dispatchReservationImmediateSingle(SCHEDULE_ID);
+        DispatchOutcome late = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(d2.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        assertThat(single.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        assertThat(late.status()).isEqualTo(DispatchOutcome.Status.SKIPPED_VALIDATION);
+        verify(scheduleRepository, never()).findByTenantIdAndId(anyString(), anyLong());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString());
+        verify(sendLogger, never()).logAttempt(anyString(), anyString(), anyString(),
+            anyLong(), anyLong(), anyString(), anyString());
+        verify(sendLogger, never()).updateResult(anyLong(), anyBoolean(), anyString(),
+            anyBoolean(), any(), any(), any(), any());
+        verify(dispatchHelper, never()).dispatchSms(anyString(), anyString());
+        verify(dispatchHelper, never()).dispatchAlimtalk(anyString(), anyString(), anyMap());
+    }
+
     // ============================================================
     // V20260602_001 — Phase 2 P0 SMS 긴급 차단 회귀 테스트
     //

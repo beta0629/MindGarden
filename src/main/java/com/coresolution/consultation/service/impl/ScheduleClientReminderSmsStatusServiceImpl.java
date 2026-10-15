@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.ImmediateReservationSmsPendingRe
 import com.coresolution.consultation.repository.NotificationBatchSendLogRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ScheduleClientReminderSmsStatusService;
+import com.coresolution.consultation.service.SmsTemplateService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -52,6 +53,7 @@ public class ScheduleClientReminderSmsStatusServiceImpl
     private final ImmediateReservationSmsPendingRepository pendingRepository;
     private final NotificationBatchSendLogRepository sendLogRepository;
     private final ScheduleRepository scheduleRepository;
+    private final SmsTemplateService smsTemplateService;
 
     @Override
     public Map<Long, ClientReminderSmsStatusDto> resolveByScheduleIds(
@@ -91,16 +93,34 @@ public class ScheduleClientReminderSmsStatusServiceImpl
             logsBySchedule.computeIfAbsent(l.getTargetId(), k -> new ArrayList<>()).add(l);
         }
 
+        Set<String> disabledTemplateCodes = disabledScheduleSmsCodes(tenantId);
         Map<Long, ClientReminderSmsStatusDto> result = new HashMap<>();
         for (Long scheduleId : ids) {
             ClientReminderSmsStatusDto dto = resolveOne(
                     pendingsBySchedule.getOrDefault(scheduleId, List.of()),
-                    logsBySchedule.getOrDefault(scheduleId, List.of()));
+                    logsBySchedule.getOrDefault(scheduleId, List.of()),
+                    disabledTemplateCodes);
             if (dto != null) {
                 result.put(scheduleId, dto);
             }
         }
         return result;
+    }
+
+    /**
+     * 예약 일정 SMS 3종 중 현재 자동 발송이 꺼진 템플릿 코드.
+     *
+     * @param tenantId 테넌트 ID
+     * @return OFF 인 코드. 없으면 빈 집합
+     */
+    private Set<String> disabledScheduleSmsCodes(String tenantId) {
+        Set<String> disabled = new HashSet<>();
+        for (String templateCode : BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES) {
+            if (!smsTemplateService.isAutoDispatchEnabledFor(templateCode, tenantId)) {
+                disabled.add(templateCode);
+            }
+        }
+        return disabled;
     }
 
     @Override
@@ -146,14 +166,37 @@ public class ScheduleClientReminderSmsStatusServiceImpl
     }
 
     /**
-     * pending ∪ send_log 병합.
-     * 우선순위: 활성 PENDING → 최신 확정 이벤트(FAILED/SENT). SKIPPED·해당없음 → null.
+     * pending ∪ send_log 병합. 제외 종목 없음(기존 호출·테스트).
+     *
+     * @param pendings pending 행
+     * @param logs     발송 로그
+     * @return 배지. 표시할 이벤트가 없으면 {@code null}
      */
     static ClientReminderSmsStatusDto resolveOne(
             List<ImmediateReservationSmsPending> pendings,
             List<NotificationBatchSendLog> logs) {
+        return resolveOne(pendings, logs, Set.of());
+    }
+
+    /**
+     * pending ∪ send_log 병합.
+     * 우선순위: 활성 PENDING → 최신 확정 이벤트(FAILED/SENT). SKIPPED·해당없음 → null.
+     * {@code disabledTemplateCodes} 에 있는 템플릿의 로그·pending 은 SENT/FAILED/PENDING 모두 제외한다.
+     * 에러 메시지 문구로는 걸러내지 않는다.
+     *
+     * @param pendings               pending 행
+     * @param logs                   발송 로그
+     * @param disabledTemplateCodes  현재 자동 발송 OFF 인 템플릿 코드. null 이면 빈 집합
+     * @return 배지. 표시할 이벤트가 없으면 {@code null}
+     */
+    static ClientReminderSmsStatusDto resolveOne(
+            List<ImmediateReservationSmsPending> pendings,
+            List<NotificationBatchSendLog> logs,
+            Set<String> disabledTemplateCodes) {
+        Set<String> disabled = disabledTemplateCodes == null ? Set.of() : disabledTemplateCodes;
         ImmediateReservationSmsPending earliestPending = pendings.stream()
                 .filter(p -> ImmediateReservationSmsPendingStatus.PENDING.equals(p.getStatus()))
+                .filter(p -> !isDisabledTemplate(p.getTemplateCode(), disabled))
                 .min(Comparator.comparing(
                         ImmediateReservationSmsPending::getFireAt,
                         Comparator.nullsLast(Comparator.naturalOrder())))
@@ -169,6 +212,7 @@ public class ScheduleClientReminderSmsStatusServiceImpl
 
         NotificationBatchSendLog channelPending = logs.stream()
                 .filter(l -> ClientReminderSmsDisplayStatus.CHANNEL_PENDING.equals(l.getChannelUsed()))
+                .filter(l -> !isDisabledTemplate(l.getTemplateCode(), disabled))
                 .max(Comparator.comparing(
                         NotificationBatchSendLog::getSentAt,
                         Comparator.nullsLast(Comparator.naturalOrder())))
@@ -184,6 +228,9 @@ public class ScheduleClientReminderSmsStatusServiceImpl
 
         List<ResolvedEvent> events = new ArrayList<>();
         for (NotificationBatchSendLog logRow : logs) {
+            if (isDisabledTemplate(logRow.getTemplateCode(), disabled)) {
+                continue;
+            }
             if (ClientReminderSmsDisplayStatus.CHANNEL_PENDING.equals(logRow.getChannelUsed())) {
                 continue;
             }
@@ -196,6 +243,9 @@ public class ScheduleClientReminderSmsStatusServiceImpl
                     logRow.getSentAt()));
         }
         for (ImmediateReservationSmsPending p : pendings) {
+            if (isDisabledTemplate(p.getTemplateCode(), disabled)) {
+                continue;
+            }
             if (!ImmediateReservationSmsPendingStatus.SENT.equals(p.getStatus())) {
                 continue;
             }
@@ -220,6 +270,17 @@ public class ScheduleClientReminderSmsStatusServiceImpl
                 .sentAt(latest.sentAt)
                 .failureReason(latest.failureReason)
                 .build();
+    }
+
+    /**
+     * 현재 자동 발송이 꺼진 종목인지.
+     *
+     * @param templateCode 로그·pending 의 템플릿 코드
+     * @param disabled     OFF 코드 집합
+     * @return 집합에 있으면 {@code true}
+     */
+    private static boolean isDisabledTemplate(String templateCode, Set<String> disabled) {
+        return templateCode != null && disabled.contains(templateCode);
     }
 
     private static final class ResolvedEvent {

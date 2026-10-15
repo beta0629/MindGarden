@@ -60,11 +60,10 @@ import {
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
 import { buildLedgerFilterCategoryOptions } from '../../utils/financialTransactionCategoryPicker';
 import {
-  buildTopIncomeCaption,
   buildTopExpenseCaption,
   buildRemainingVsPreviousCaption,
-  buildOutflowMixItems,
-  isPostedLedgerTransaction,
+  buildLedgerIncomeCaptionFromDashboard,
+  buildLedgerOutflowMixFromDashboard,
   parseMonthlyReportTotals
 } from './organisms/moneyCockpit/moneyCockpitData';
 import { getPreviousComparableRange, getRolling12MonthKeys } from './organisms/moneyCockpit/moneyCockpitPeriod';
@@ -152,26 +151,6 @@ const financialTransactionMatchesSearchText = (transaction, searchLower) => {
     transaction.remarks
   ];
   return vals.some((v) => v != null && String(v).toLowerCase().includes(searchLower));
-};
-
-/**
- * 장부 거래 목록에서 카테고리별 합계 맵 생성 (caption mix helpers용)
- * @param {Array<object>} transactions
- * @returns {Record<string, number>}
- */
-const buildCategoryBreakdownFromTransactions = (transactions) => {
-  const breakdown = {};
-  if (!Array.isArray(transactions)) {
-    return breakdown;
-  }
-  transactions.forEach((tx) => {
-    const key = String(tx?.category ?? '').trim();
-    if (!key) {
-      return;
-    }
-    breakdown[key] = (breakdown[key] || 0) + (parseFloat(tx.amount) || 0);
-  });
-  return breakdown;
 };
 
 /**
@@ -601,14 +580,30 @@ const FinancialManagement = () => {
    * (MoneyHeroBand SSOT helpers; previous remaining via ledger transactions API)
    */
   useEffect(() => {
+    if (sessionLoading || !isLoggedIn) {
+      return undefined;
+    }
     let cancelled = false;
     const run = async() => {
-      const postedRows = transactions.filter(isPostedLedgerTransaction);
-      const breakdown = buildCategoryBreakdownFromTransactions(postedRows);
-      const incomeCaption = buildTopIncomeCaption(breakdown, postedRows);
+      const { startDate, endDate } = getDateRangeForFilter();
+      let dashboardRaw = null;
+      if (startDate && endDate) {
+        try {
+          dashboardRaw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, {
+            startDate,
+            endDate
+          });
+        } catch {
+          dashboardRaw = null;
+        }
+      }
+      if (cancelled) {
+        return;
+      }
+      const incomeCaption = buildLedgerIncomeCaptionFromDashboard(dashboardRaw, transactions);
       const expenseMix = Number.isFinite(periodRefundAmount)
-        ? buildOutflowMixItems(breakdown, postedRows, { periodRefundAmount })
-        : buildOutflowMixItems(breakdown, postedRows);
+        ? buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions, { periodRefundAmount })
+        : buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions);
       const expenseCaption = buildTopExpenseCaption(expenseMix);
 
       let remainingCaption = '';
@@ -653,7 +648,15 @@ const FinancialManagement = () => {
     return () => {
       cancelled = true;
     };
-  }, [transactions, summary.remaining, period, periodRefundAmount]);
+  }, [
+    transactions,
+    summary.remaining,
+    period,
+    periodRefundAmount,
+    sessionLoading,
+    isLoggedIn,
+    getDateRangeForFilter
+  ]);
 
   /**
    * 롤링 12개월 차트 — ErpDashboard `loadRolling12Chart` 미러 (표시/연동만 · calc SSOT 변경 없음)

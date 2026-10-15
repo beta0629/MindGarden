@@ -111,6 +111,25 @@ public final class ShopCheckoutConstants {
             "지정된 상품이 이 내담자의 것이 아니거나 만료되어 결제할 수 없습니다.";
 
     /**
+     * 결제 확정에서 승인 금액이 주문 현금 결제액과 다르거나 결제 건의 주문이 다를 때
+     * PortOne 전액 취소·단일 환불에 넣는 사유. 개인정보·시크릿을 넣지 않는다.
+     */
+    public static final String PAYMENT_MISMATCH_CANCEL_REASON =
+            "결제 금액 또는 주문이 일치하지 않아 결제를 취소했습니다.";
+
+    /**
+     * 금액·주문 불일치 자동 취소 시도 횟수. 결제 건 {@code failure_reason} 에만 남긴다.
+     * 카드·결제 식별자는 넣지 않는다.
+     */
+    public static final String PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX = "PAYMENT_MISMATCH_CANCEL_ATTEMPT:";
+
+    /** 관리자 알림 단계 — PG 취소 실패, 수동 확인 */
+    public static final String ADMIN_ALERT_STEP_CANCEL_FAILED = "CANCEL_FAILED";
+
+    /** 관리자 알림 출처 */
+    public static final String ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH = "ShopPaymentMismatch";
+
+    /**
      * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
      */
     public static final String MSG_PREPARE_INVALID_ORDER_STATUS =

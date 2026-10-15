@@ -53,14 +53,13 @@ import {
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
-import TeacherColorDot from './TeacherColorDot';
 import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
-import { getTeacherColor } from '../../../utils/getTeacherColor';
 import { useConsultantColorPalette } from '../../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import './ScheduleCalendarView.css';
 
 const KR_PUBLIC_HOLIDAY_DAY_BADGE_CLASS = 'mg-v2-ad-calendar-day-holiday-badge';
+const WEEKEND_SAT_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sat';
 const WEEKEND_SUN_DAY_CELL_CLASS = 'mg-v2-ad-calendar-day--weekend-sun';
 
 /** FullCalendar 뷰 타입 — 월/주 날짜 클릭 시 일간 확대용 */
@@ -363,8 +362,8 @@ const ScheduleCalendarView = ({
 
     /**
      * 로컬 날짜가 KR 공휴일 표에 있으면 셀에 표식.
-     * 토요일은 평일과 같은 칸·머리글·숫자 색. 일요일·토요일 아닌 공휴일 숫자는 보조색.
-     * 다른 달 숫자는 비활성색이 우선한다. 셀 배경에 붉은색·토요일 파랑을 칠하지 않는다.
+     * 통합 월간은 토요일·일요일 클래스를 더한다. 색은 CSS 토큰만 쓴다.
+     * 토요일 공휴일도 공휴일 클래스다. 다른 달 숫자는 비활성색이 우선한다.
      */
     const dayCellClassNamesForKrHoliday = useCallback((arg) => {
       const list = [];
@@ -372,8 +371,14 @@ const ScheduleCalendarView = ({
       if (holidayName) {
         list.push('mg-v2-ad-calendar-day--kr-public-holiday');
       }
-      if (calendarSkin === 'integrated' && arg.view?.type === CALENDAR_VIEW_MONTH && arg.date.getDay() === 0) {
-        list.push(WEEKEND_SUN_DAY_CELL_CLASS);
+      if (calendarSkin === 'integrated' && arg.view?.type === CALENDAR_VIEW_MONTH) {
+        const weekday = arg.date.getDay();
+        if (weekday === 6) {
+          list.push(WEEKEND_SAT_DAY_CELL_CLASS);
+        }
+        if (weekday === 0) {
+          list.push(WEEKEND_SUN_DAY_CELL_CLASS);
+        }
       }
       return list;
     }, [calendarSkin]);
@@ -540,13 +545,6 @@ const ScheduleCalendarView = ({
         const clientName = toDisplayString(extendedProps.clientName, clientNameFallback);
         const consultantName = toDisplayString(extendedProps.consultantName, '');
         const consultantId = extendedProps?.consultantId ?? event.consultantId ?? null;
-        const teacherColor = consultantId != null && String(consultantId).trim() !== ''
-            ? getTeacherColor({
-                consultantId,
-                consultants,
-                colorFromData: extendedProps
-            })
-            : null;
         const statusLabel = resolveScheduleStatusDisplayLabel(
             extendedProps?.status,
             { codes: scheduleStatusOptions, translate: t }
@@ -641,12 +639,6 @@ const ScheduleCalendarView = ({
                     {integratedMonthEventLayout && (
                         <span className={dotClass} aria-hidden="true" />
                     )}
-                    {integratedMonthEventLayout && teacherColor ? (
-                        <TeacherColorDot
-                            colorResult={teacherColor}
-                            className="mg-v2-ad-calendar-event__teacher-dot"
-                        />
-                    ) : null}
                     <span className="mg-v2-ad-calendar-event__time">
                         {integratedMonthEventLayout ? (
                             <>

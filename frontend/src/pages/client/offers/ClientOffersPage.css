@@ -17,6 +17,46 @@
 .client-offers__bar-amount { font-size: var(--mg-v2-font-size-h2); font-weight: var(--mg-v2-font-weight-bold); font-variant-numeric: tabular-nums; line-height: var(--mg-v2-font-line-height-heading); white-space: nowrap; }
 .client-offers__bar-amount--empty { color: var(--client-web-mute); font-weight: var(--mg-v2-font-weight-regular); }
 .client-offers__state { display: flex; flex-direction: column; align-items: center; gap: var(--mg-v2-space-3); min-block-size: var(--mg-state-min-height); justify-content: center; text-align: center; }
+/* 지정 상품 화면에는 몰 aside 결제 버튼이 없다. 공유 .client-mall-bar 는 기본 display:none 이라
+   데스크톱에서 결제하기가 사라진다. 이 클래스에만 바를 항상 보이게 하고 position 은 비워 두어
+   좁은 화면의 fixed 하단 바(ClientMall.css)는 그대로 둔다. */
+.client-offers__paybar.client-mall-bar {
+  display: block;
+  background: var(--client-mall-surface);
+  border-top: var(--mg-v2-border-width-thin) solid var(--client-mall-line);
+}
+.client-offers__paybar .client-mall-bar__inner {
+  box-sizing: border-box;
+  min-block-size: var(--client-mall-bar-h);
+  max-inline-size: var(--client-web-stage-max);
+  margin: 0 auto;
+  padding-block: 0;
+  padding-inline: var(--client-web-pad-x);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-3);
+}
+.client-offers__paybar .client-mall-bar__sum {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+.client-offers__paybar .client-mall-bar__label,
+.client-offers__paybar .client-mall-bar__caption {
+  color: var(--client-mall-mute);
+  font-size: var(--mg-v2-font-size-caption);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.client-offers__paybar .client-mall-bar__cta {
+  flex: 0 0 var(--client-mall-bar-cta-w);
+  inline-size: var(--client-mall-bar-cta-w);
+  max-inline-size: var(--client-mall-bar-cta-w);
+  white-space: nowrap;
+}
 @media (max-width: 768px) {
   .client-offers__grid { grid-template-columns: minmax(0, 1fr); }
   .client-offers__select { min-block-size: var(--mg-v2-touch-target-min); }

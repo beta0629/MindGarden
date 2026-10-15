@@ -12,6 +12,8 @@ import {
   buildNtsChecklistComments,
   buildOutflowMixItems,
   buildPaydayChecklistComment,
+  isPostedLedgerTransaction,
+  sumRefundFromTransactions,
   buildWithholdingStoredAmountComment,
   collectPrimaryPreConfirmQueries,
   computeSeriesMonthlyAverages,
@@ -370,6 +372,74 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       []
     );
     expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
+
+  test('sumRefundFromTransactions: posted만 합산하고 CANCELLED·REJECTED는 제외', () => {
+    expect(sumRefundFromTransactions([
+      { subcategory: 'CONSULTATION_REFUND', amount: 100000, status: 'COMPLETED' },
+      { subcategory: 'CONSULTATION_REFUND', amount: 4135000, status: 'cancelled' },
+      { category: 'SESSION_REFUND', amount: 500000, status: 'REJECTED' }
+    ])).toBe(100000);
+  });
+
+  test('sumRefundFromTransactions: status 공백·누락 환불은 포함', () => {
+    expect(isPostedLedgerTransaction({ subcategory: 'CONSULTATION_REFUND', amount: 1 })).toBe(true);
+    expect(isPostedLedgerTransaction({ status: '  ', amount: 1 })).toBe(true);
+    expect(isPostedLedgerTransaction(null)).toBe(false);
+    expect(sumRefundFromTransactions([
+      { subcategory: 'CONSULTATION_REFUND', amount: 30000, status: '' },
+      { subcategory: 'CONSULTATION_REFUND', amount: 20000, status: '   ' },
+      { subcategory: 'CONSULTATION_PARTIAL_REFUND', amount: 10000 }
+    ])).toBe(60000);
+  });
+
+  test('outflow: periodRefundAmount는 취소 페이지 환불보다 우선', () => {
+    const items = buildOutflowMixItems({}, [
+      {
+        transactionType: 'EXPENSE',
+        subcategory: 'CONSULTATION_REFUND',
+        amount: 4135000,
+        status: 'CANCELLED'
+      }
+    ], { periodRefundAmount: 100000 });
+    expect(items.find((i) => i.id === 'refund')).toEqual({
+      id: 'refund',
+      label: '환불',
+      amount: 100000
+    });
+    expect(items.filter((i) => i.id === 'refund')).toHaveLength(1);
+  });
+
+  test('outflow: periodRefundAmount 0이면 취소 환불로 항목을 만들지 않는다', () => {
+    const items = buildOutflowMixItems({}, [
+      {
+        transactionType: 'EXPENSE',
+        subcategory: 'CONSULTATION_REFUND',
+        amount: 4135000,
+        status: 'CANCELLED'
+      }
+    ], { periodRefundAmount: 0 });
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+  });
+
+  test('outflow: 2-arg 호출은 breakdown 환불 키를 유지하고 미기표 tx는 관측으로 치지 않는다', () => {
+    const fromBreakdown = buildOutflowMixItems({ CONSULTATION_REFUND: 50000 }, []);
+    expect(fromBreakdown.find((i) => i.id === 'refund')).toEqual({
+      id: 'refund',
+      label: '환불',
+      amount: 50000
+    });
+
+    const cancelledOnly = buildOutflowMixItems(
+      { CONSULTATION_REFUND: 50000 },
+      [{
+        transactionType: 'EXPENSE',
+        subcategory: 'CONSULTATION_REFUND',
+        amount: 4135000,
+        status: 'CANCELLED'
+      }]
+    );
+    expect(cancelledOnly.find((i) => i.id === 'refund')?.amount).toBe(50000);
   });
 });
 

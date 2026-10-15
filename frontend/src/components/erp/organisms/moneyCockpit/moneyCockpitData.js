@@ -101,6 +101,9 @@ const RENT_UTILITY_CATEGORY_ALIASES = new Set([
 const TAX_CATEGORY_ALIASES = new Set(['TAX', '세금']);
 const MEAL_CATEGORY_ALIASES = new Set(['MEAL', '식대']);
 
+/** 운영자 장부에서 posted가 아닌 상태. null·공백 status는 posted. */
+const LEDGER_NON_POSTED_STATUSES = new Set(['CANCELLED', 'REJECTED']);
+
 const OUTFLOW_KNOWN_KEYS = new Set([
   'SALARY',
   '급여',
@@ -379,15 +382,44 @@ function readTxCategoryKey(tx) {
 }
 
 /**
+ * 운영자 장부 posted 거래 여부.
+ * status가 null·undefined·공백이면 posted. CANCELLED·REJECTED(대소문자 무시)는 제외.
+ *
+ * @param {object|null|undefined} tx 재무 거래
+ * @returns {boolean} posted이면 true
+ */
+export function isPostedLedgerTransaction(tx) {
+  if (!tx) {
+    return false;
+  }
+  const rawStatus = tx.status;
+  if (rawStatus == null) {
+    return true;
+  }
+  const status = String(rawStatus).trim();
+  if (!status) {
+    return true;
+  }
+  return !LEDGER_NON_POSTED_STATUSES.has(status.toUpperCase());
+}
+
+/**
  * 나간 곳 mix — payload 키 또는 지출 tx에서 관측된 카테고리만. 0원이어도 표시.
+ * options.periodRefundAmount가 유한 숫자(0 포함)이면 환불 버킷은 그 기간 합계만 사용한다.
+ * 0이면 환불 항목을 만들지 않는다.
+ *
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
+ * @param {{ periodRefundAmount?: number|null }} [options]
  * @returns {Array<{ id: string, label: string, amount: number }>}
  */
-export function buildOutflowMixItems(categoryBreakdown, transactions) {
+export function buildOutflowMixItems(categoryBreakdown, transactions, options = {}) {
   const breakdown = categoryBreakdown || {};
   const items = [];
   const txList = Array.isArray(transactions) ? transactions : [];
+  const safeOptions = options && typeof options === 'object' ? options : {};
+  const periodRefundAmount = safeOptions.periodRefundAmount;
+  const hasPeriodRefundAmount = Number.isFinite(periodRefundAmount);
 
   const observedExpenseCats = new Set();
   txList.forEach((tx) => {
@@ -427,6 +459,9 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
     hasBreakdownKey(breakdown, 'CONSULTATION_REFUND')
     || OFD_REFUND_SUBCATEGORIES.some((k) => hasBreakdownKey(breakdown, k));
   const refundObservedInTx = txList.some((tx) => {
+    if (!isPostedLedgerTransaction(tx)) {
+      return false;
+    }
     const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
     const cat = String(tx?.category ?? '').toUpperCase();
     return (
@@ -434,7 +469,15 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
       || OFD_REFUND_SUBCATEGORIES.includes(cat)
     );
   });
-  if (refundKeyPresent || refundObservedInTx) {
+  if (hasPeriodRefundAmount) {
+    if (periodRefundAmount !== 0) {
+      items.push({
+        id: 'refund',
+        label: OFD_MIX_CATEGORY.REFUND,
+        amount: periodRefundAmount
+      });
+    }
+  } else if (refundKeyPresent || refundObservedInTx) {
     const refundFromTx = sumRefundFromTransactions(txList);
     const refundFromBreakdown = toSafeNumber(breakdown.CONSULTATION_REFUND);
     const amount = refundObservedInTx ? refundFromTx : refundFromBreakdown;
@@ -601,14 +644,19 @@ export function buildRemainingVsPreviousCaption(currentRemaining, previousRemain
 }
 
 /**
- * @param {Array<object>} transactions
- * @returns {number}
+ * posted 환불 거래 금액 합. CANCELLED·REJECTED는 제외하고, status 공백·누락은 포함한다.
+ *
+ * @param {Array<object>} transactions 재무 거래
+ * @returns {number} 환불 금액 합
  */
 export function sumRefundFromTransactions(transactions) {
   if (!Array.isArray(transactions) || transactions.length === 0) {
     return 0;
   }
   return transactions.reduce((sum, tx) => {
+    if (!isPostedLedgerTransaction(tx)) {
+      return sum;
+    }
     const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
     const cat = String(tx?.category ?? '').toUpperCase();
     if (

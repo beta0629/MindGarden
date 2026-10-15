@@ -89,7 +89,8 @@ public interface FinancialTransactionService {
      * @param category        카테고리, null/ALL이면 전체
      * @param startDate       시작일(포함), null이면 하한 없음
      * @param endDate         종료일(포함), null이면 상한 없음
-     * @return {@code totalIncome}, {@code totalExpense}, {@code totalCardMerchantFee}, {@code remaining}
+     * @return {@code totalIncome}, {@code totalExpense}, {@code totalCardMerchantFee}, {@code remaining},
+     *         {@code refundAmount} (posted EXPENSE 중 환불 서브카테고리 합. category 또는 subcategory)
      * @author CoreSolution
      * @since 2026-08-29
      */

@@ -64,6 +64,7 @@ import {
   buildTopExpenseCaption,
   buildRemainingVsPreviousCaption,
   buildOutflowMixItems,
+  isPostedLedgerTransaction,
   parseMonthlyReportTotals
 } from './organisms/moneyCockpit/moneyCockpitData';
 import { getPreviousComparableRange, getRolling12MonthKeys } from './organisms/moneyCockpit/moneyCockpitPeriod';
@@ -174,6 +175,27 @@ const buildCategoryBreakdownFromTransactions = (transactions) => {
 };
 
 /**
+ * 서버 summary.refundAmount. 필드가 없거나 비숫자면 null(페이지 posted 합 폴백). 0은 기간 합계.
+ *
+ * @param {object|null|undefined} serverSummary
+ * @returns {number|null}
+ */
+const readPeriodRefundAmount = (serverSummary) => {
+  if (!serverSummary || typeof serverSummary !== 'object') {
+    return null;
+  }
+  if (!Object.prototype.hasOwnProperty.call(serverSummary, 'refundAmount')) {
+    return null;
+  }
+  const raw = serverSummary.refundAmount;
+  if (raw == null || (typeof raw === 'string' && raw.trim() === '')) {
+    return null;
+  }
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+/**
  * ERP 운영자 장부 페이지
  */
 const FinancialManagement = () => {
@@ -227,6 +249,8 @@ const FinancialManagement = () => {
     totalExpense: 0,
     remaining: 0
   });
+  /** 기간 전체 posted 환불 합. null이면 응답에 필드가 없어 페이지 posted 합으로 폴백. */
+  const [periodRefundAmount, setPeriodRefundAmount] = useState(null);
   const [summaryCaptions, setSummaryCaptions] = useState({
     income: '',
     expense: '',
@@ -266,6 +290,8 @@ const FinancialManagement = () => {
 
   /**
    * 서버 summary(기간 전체 posted 합) 우선. 없으면 현재 페이지 행으로 폴백.
+   * refundAmount가 유한 숫자(0 포함)이면 기간 환불 합으로 보관한다.
+   *
    * @param {Array<object>} transactionData
    * @param {object|null|undefined} serverSummary
    */
@@ -277,8 +303,10 @@ const FinancialManagement = () => {
         ? (Number(serverSummary.remaining) || 0)
         : (totalIncome - totalExpense);
       setSummary({ totalIncome, totalExpense, remaining });
+      setPeriodRefundAmount(readPeriodRefundAmount(serverSummary));
       return;
     }
+    setPeriodRefundAmount(null);
     const active = (transactionData || []).filter((tx) => {
       const status = String(tx.status || '').toUpperCase();
       return status !== 'REJECTED' && status !== 'CANCELLED';
@@ -579,9 +607,13 @@ const FinancialManagement = () => {
   useEffect(() => {
     let cancelled = false;
     const run = async() => {
-      const breakdown = buildCategoryBreakdownFromTransactions(transactions);
-      const incomeCaption = buildTopIncomeCaption(breakdown, transactions);
-      const expenseMix = buildOutflowMixItems(breakdown, transactions);
+      const postedRows = (Array.isArray(transactions) ? transactions : [])
+        .filter((tx) => isPostedLedgerTransaction(tx));
+      const breakdown = buildCategoryBreakdownFromTransactions(postedRows);
+      const incomeCaption = buildTopIncomeCaption(breakdown, postedRows);
+      const expenseMix = Number.isFinite(periodRefundAmount)
+        ? buildOutflowMixItems(breakdown, postedRows, { periodRefundAmount })
+        : buildOutflowMixItems(breakdown, postedRows);
       const expenseCaption = buildTopExpenseCaption(expenseMix);
 
       let remainingCaption = '';
@@ -626,7 +658,7 @@ const FinancialManagement = () => {
     return () => {
       cancelled = true;
     };
-  }, [transactions, summary.remaining, period]);
+  }, [transactions, summary.remaining, period, periodRefundAmount]);
 
   /**
    * 롤링 12개월 차트 — ErpDashboard `loadRolling12Chart` 미러 (표시/연동만 · calc SSOT 변경 없음)

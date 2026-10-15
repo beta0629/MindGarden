@@ -453,6 +453,18 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         return transactions.map(this::convertToResponse);
     }
 
+    /**
+     * 장부 KPI용 기간 전체 posted 합계.
+     * {@code refundAmount}는 posted EXPENSE 중 환불 서브카테고리(category 또는 subcategory) 금액 합이다.
+     *
+     * @param transactionType 거래 유형, null이면 전체
+     * @param category        카테고리, null이면 전체
+     * @param startDate       시작일(포함), null이면 하한 없음
+     * @param endDate         종료일(포함), null이면 상한 없음
+     * @return totalIncome, totalExpense, totalCardMerchantFee, remaining, refundAmount
+     * @author CoreSolution
+     * @since 2026-10-15
+     */
     @Override
     @Transactional(readOnly = true)
     public Map<String, Object> getTransactionsFilteredSummary(String transactionType, String category,
@@ -1593,9 +1605,10 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
 
     /**
      * posted 거래 목록으로 장부 KPI 맵을 만든다.
+     * {@code refundAmount}는 EXPENSE이면서 category 또는 subcategory가 환불 코드인 금액 합이다.
      *
      * @param posted CANCELLED/REJECTED 제외된 거래
-     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining
+     * @return totalIncome / totalExpense(수수료 포함) / totalCardMerchantFee / remaining / refundAmount
      */
     private Map<String, Object> buildOperatorLedgerSummaryMap(List<FinancialTransaction> posted) {
         BigDecimal totalIncome = posted.stream()
@@ -1611,6 +1624,12 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
                 .map(t -> t.getCardMerchantFeeAmount() != null
                         ? t.getCardMerchantFeeAmount() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal refundAmount = posted.stream()
+                .filter(t -> FinancialTransaction.TransactionType.EXPENSE.equals(t.getTransactionType()))
+                .filter(t -> FinancialTransactionConstants.isRefundSubcategory(t.getSubcategory())
+                        || FinancialTransactionConstants.isRefundSubcategory(t.getCategory()))
+                .map(t -> t.getAmount() != null ? t.getAmount() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal totalExpense = expenseBase.add(totalCardMerchantFee);
         BigDecimal remaining = totalIncome.subtract(totalExpense);
         Map<String, Object> summary = new HashMap<>();
@@ -1618,6 +1637,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", totalExpense.longValue());
         summary.put("totalCardMerchantFee", totalCardMerchantFee.longValue());
         summary.put("remaining", remaining.longValue());
+        summary.put("refundAmount", refundAmount.longValue());
         return summary;
     }
 
@@ -1627,6 +1647,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         summary.put("totalExpense", 0L);
         summary.put("totalCardMerchantFee", 0L);
         summary.put("remaining", 0L);
+        summary.put("refundAmount", 0L);
         return summary;
     }
     

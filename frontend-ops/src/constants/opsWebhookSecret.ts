@@ -34,6 +34,7 @@ export const OPS_WEBHOOK_SECRET_LABELS = {
   EMPTY_TENANTS: "센터 목록이 없습니다.",
   EMPTY_CONFIGS: "선택한 센터의 PG 설정이 없습니다.",
   ERROR_LOAD: "목록을 불러오지 못했습니다.",
+  ERROR_SAVE: "웹훅 시크릿을 저장하지 못했습니다.",
   SAVE_SUCCESS: "웹훅 시크릿이 저장되었습니다.",
   TEST_MODE_SUCCESS: "테스트 모드가 변경되었습니다.",
   CANCEL: "취소",

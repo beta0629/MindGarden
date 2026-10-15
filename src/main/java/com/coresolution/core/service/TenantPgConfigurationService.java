@@ -67,9 +67,10 @@ public interface TenantPgConfigurationService {
      *
      * @param tenantId 테넌트 ID
      * @param configId PG 설정 ID
-     * @param webhookSecret 웹훅 시크릿 평문 (공백 불가)
+     * @param webhookSecret 웹훅 시크릿 평문 ({@code whsec_} + 표준 Base64, 공백 불가)
      * @return 갱신된 PG 설정 (시크릿 마스킹)
-     * @throws IllegalArgumentException 설정 없음 또는 시크릿 공백
+     * @throws IllegalArgumentException 설정 없음, 시크릿 공백, 또는 {@code whsec_}+Base64 형식이 아님.
+     *         예외 메시지에는 시크릿 평문을 넣지 않는다.
      */
     TenantPgConfigurationResponse patchWebhookSecret(String tenantId, String configId, String webhookSecret);
     

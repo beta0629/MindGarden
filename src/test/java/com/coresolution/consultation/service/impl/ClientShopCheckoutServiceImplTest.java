@@ -88,6 +88,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -2519,9 +2521,9 @@ class ClientShopCheckoutServiceImplTest {
         verify(paymentService, never()).createPayment(any());
     }
 
-    @Test
-    @DisplayName("preparePayment — 지정 상품이 이 내담자 활성 지정이 아니면 거부")
-    void preparePayment_clientOffer_notOrderable_rejects() {
+    @ParameterizedTest(name = "preparePayment — {0} 이면 PG 생성 전 거부")
+    @ValueSource(strings = {"다른 내담자의 지정", "취소된 지정", "이미 결제된 지정"})
+    void preparePayment_clientOffer_notPayable_rejects(String mismatch) {
         ShopClientOrder order = offerOrder(true);
         ShopCatalogSku sku = stubOfferLine(order);
         stubVerifiedPayer();
@@ -2531,7 +2533,7 @@ class ClientShopCheckoutServiceImplTest {
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.preparePayment(
                 TENANT, CLIENT_ID, ORDER_ID, ShopPreparePaymentRequest.builder().build()));
 
-        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage());
+        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage(), mismatch);
         verify(paymentService, never()).createPayment(any());
     }
 
@@ -2568,11 +2570,11 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
     }
 
-    @Test
-    @DisplayName("결제 확정 — 지정 상품이 만료·다른 내담자·비활성이면 PAID 전이 거부")
-    void completeOrder_clientOffer_notOrderable_rejects() {
+    @ParameterizedTest(name = "결제 확정 — {0} 이면 PAID 로 넘기지 않는다")
+    @ValueSource(strings = {"다른 내담자의 지정", "취소된 지정", "이미 결제된 지정"})
+    void completeOrder_clientOffer_notPayable_rejects(String mismatch) {
         ShopClientOrder order = offerOrder(true);
-        order.setStatus(ShopClientOrderStatus.CREATED);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         ShopCatalogSku sku = stubOfferLine(order);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID)).thenReturn(Optional.of(order));
         when(shopOrderableSkuService.findOrderableForClient(TENANT, sku.getSkuCode(), CLIENT_ID))
@@ -2581,8 +2583,9 @@ class ClientShopCheckoutServiceImplTest {
         IllegalArgumentException ex = assertThrows(
                 IllegalArgumentException.class, () -> service.completeOrderOnPaymentApproved(TENANT, ORDER_ID));
 
-        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage());
-        assertEquals(ShopClientOrderStatus.CREATED, order.getStatus());
+        assertEquals(ShopCheckoutConstants.MSG_ASSIGNED_OFFER_NOT_PAYABLE, ex.getMessage(), mismatch);
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(shopClientOrderRepository, never()).save(any());
     }
 
     @Test

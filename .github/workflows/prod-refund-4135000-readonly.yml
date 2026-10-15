@@ -1,0 +1,210 @@
+# 운영 환불 4,135,000 표시 조사 — 읽기 전용 1회.
+# Q1–Q7 원문(uploads/prod-refund-4135000.md)은 이 실행 환경에 없어 포함하지 않는다.
+# 이 파일은 Q8과 6개 테이블 컬럼 목록(information_schema)만 SELECT 한다.
+#
+# 패턴: closed PR #1632 (path-filtered pull_request, workflow_dispatch 404 회피)
+#       + closed PR #1518 (운영 DB, environment: production, 머지 금지).
+# SET SESSION TRANSACTION READ ONLY 는 mysql --init-command 로만 연다.
+# INSERT/UPDATE/DELETE/DDL 없음. 머지하지 않는다. 실행 후 PR을 닫는다.
+
+name: 운영 읽기 전용 환불 4135000 Q8
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/prod-refund-4135000-readonly.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-refund-4135000-readonly
+  cancel-in-progress: false
+
+jobs:
+  prod-read:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only schema and Q8
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME MYSQL_PWD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::empty secret ${name}"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          echo "KST now: $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')"
+
+          WORK=$(mktemp -d)
+          trap 'rm -rf "$WORK"' EXIT
+
+          guard_select_only() {
+            local f="$1"
+            if grep -qiE '(^|[^a-z_])(insert|update|delete|drop|alter|truncate|create|replace|grant|call)[[:space:]]' "$f"; then
+              echo "::error::SELECT-only guard rejected ${f}"
+              exit 1
+            fi
+            if grep -qiE 'into[[:space:]]+(outfile|dumpfile)|load_file[[:space:]]*\(|for[[:space:]]+update|lock[[:space:]]+tables|select[[:space:]]+\*' "$f"; then
+              echo "::error::SELECT-only guard rejected ${f}"
+              exit 1
+            fi
+          }
+
+          cat > "$WORK/schema.sql" <<'SQL'
+          SELECT @@SESSION.transaction_read_only AS transaction_read_only;
+          SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE
+          FROM information_schema.COLUMNS
+          WHERE TABLE_SCHEMA = DATABASE()
+            AND TABLE_NAME IN (
+              'payments',
+              'financial_transactions',
+              'shop_client_orders',
+              'shop_client_order_lines',
+              'consultant_client_mappings',
+              'shop_order_fulfillment_events'
+            )
+          ORDER BY TABLE_NAME, ORDINAL_POSITION;
+          SQL
+
+          cat > "$WORK/q8.sql" <<'SQL'
+          SELECT @@SESSION.transaction_read_only AS transaction_read_only;
+          SELECT SUM(amount) AS sangdam_sum,
+                 SUM(transaction_type = 'INCOME') AS income_rows,
+                 SUM(transaction_type = 'EXPENSE') AS expense_rows
+          FROM (
+            SELECT amount, category, transaction_type
+            FROM financial_transactions
+            WHERE tenant_id = 'tenant-incheon-counseling-001'
+              AND is_deleted = 0
+              AND transaction_date BETWEEN '2026-10-01' AND '2026-10-31'
+            ORDER BY transaction_date DESC, id DESC
+            LIMIT 20
+          ) p
+          WHERE category = '상담료';
+          SELECT transaction_type, status, COUNT(*) AS row_count, SUM(amount) AS amount_sum
+          FROM financial_transactions
+          WHERE tenant_id = 'tenant-incheon-counseling-001'
+            AND is_deleted = 0
+            AND category = '상담료'
+            AND transaction_date BETWEEN '2026-10-01' AND '2026-10-31'
+          GROUP BY transaction_type, status;
+          SELECT id, transaction_date, transaction_type, status, category, amount
+          FROM financial_transactions
+          WHERE tenant_id = 'tenant-incheon-counseling-001'
+            AND is_deleted = 0
+            AND transaction_date BETWEEN '2026-10-01' AND '2026-10-31'
+          ORDER BY transaction_date DESC, id DESC
+          LIMIT 20;
+          SELECT id, transaction_date, transaction_type, status, category, amount
+          FROM financial_transactions
+          WHERE tenant_id = 'tenant-incheon-counseling-001'
+            AND is_deleted = 0
+            AND transaction_date BETWEEN '2026-10-01' AND '2026-10-31'
+          ORDER BY id ASC
+          LIMIT 20;
+          SELECT SUM(amount) AS sangdam_sum,
+                 SUM(transaction_type = 'INCOME') AS income_rows,
+                 SUM(transaction_type = 'EXPENSE') AS expense_rows
+          FROM (
+            SELECT amount, category, transaction_type
+            FROM financial_transactions
+            WHERE tenant_id = 'tenant-incheon-counseling-001'
+              AND is_deleted = 0
+              AND transaction_date BETWEEN '2026-10-01' AND '2026-10-31'
+            ORDER BY id ASC
+            LIMIT 20
+          ) p
+          WHERE category = '상담료';
+          SQL
+
+          guard_select_only "$WORK/schema.sql"
+          guard_select_only "$WORK/q8.sql"
+
+          mysql_ro() {
+            mysql --connect-timeout=20 \
+              --default-character-set=utf8mb4 \
+              --init-command="SET SESSION TRANSACTION READ ONLY" \
+              -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+              --batch --raw
+          }
+
+          echo "===== SCHEMA ====="
+          mysql_ro < "$WORK/schema.sql" | tee "$WORK/schema.out"
+          echo "===== END SCHEMA ====="
+
+          python3 - "$WORK/schema.out" <<'PY'
+          import sys
+          text = open(sys.argv[1], encoding="utf-8", errors="replace").read().splitlines()
+          # first statement result: transaction_read_only header + value, then column listing
+          if not text or text[0].split("\t")[0] != "transaction_read_only":
+              sys.stderr.write("missing transaction_read_only header\n")
+              sys.exit(1)
+          if len(text) < 2 or text[1].strip() != "1":
+              sys.stderr.write("session is not READ ONLY\n")
+              sys.exit(1)
+          header_idx = None
+          for i, ln in enumerate(text):
+              if ln.startswith("TABLE_NAME\t"):
+                  header_idx = i
+                  break
+          if header_idx is None:
+              sys.stderr.write("missing column listing\n")
+              sys.exit(1)
+          header = text[header_idx].split("\t")
+          rows = []
+          for ln in text[header_idx + 1:]:
+              if not ln.strip():
+                  continue
+              cells = ln.split("\t")
+              if len(cells) < len(header):
+                  cells += [""] * (len(header) - len(cells))
+              rows.append(dict(zip(header, cells)))
+          by_table = {}
+          for r in rows:
+              by_table.setdefault(r["TABLE_NAME"], set()).add(r["COLUMN_NAME"])
+          need_tables = [
+              "payments",
+              "financial_transactions",
+              "shop_client_orders",
+              "shop_client_order_lines",
+              "consultant_client_mappings",
+              "shop_order_fulfillment_events",
+          ]
+          missing_tables = [t for t in need_tables if t not in by_table]
+          if missing_tables:
+              sys.stderr.write("missing tables: " + ", ".join(missing_tables) + "\n")
+              sys.exit(1)
+          need_cols = {
+              "id", "tenant_id", "is_deleted", "amount", "category",
+              "transaction_type", "transaction_date", "status",
+          }
+          ft = by_table["financial_transactions"]
+          missing_cols = sorted(need_cols - ft)
+          if missing_cols:
+              sys.stderr.write("financial_transactions missing columns: " + ", ".join(missing_cols) + "\n")
+              sys.exit(1)
+          print("Q8 columns present; session transaction_read_only=1")
+          PY
+
+          echo "===== Q8 ====="
+          mysql_ro < "$WORK/q8.sql"
+          echo "===== END Q8 ====="

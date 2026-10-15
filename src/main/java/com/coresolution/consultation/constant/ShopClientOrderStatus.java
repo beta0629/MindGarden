@@ -11,6 +11,8 @@ public enum ShopClientOrderStatus {
     PENDING_PAYMENT,
     PAID,
     CANCELLED,
+    /** PG 전액 취소가 한도까지 실패해 수동 확인이 필요함 */
+    CANCEL_FAILED,
     EXPIRED,
     /** 전액 환불(이행 전 MVP) */
     REFUNDED

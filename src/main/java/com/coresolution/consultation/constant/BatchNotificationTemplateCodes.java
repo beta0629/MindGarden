@@ -176,6 +176,17 @@ public final class BatchNotificationTemplateCodes {
     /** 멱등성 로그 error_code — 알림톡 매핑이 없어 SMS 폴백만 시도. */
     public static final String ERROR_CODE_TEMPLATE_NOT_MAPPED = "TEMPLATE_NOT_MAPPED";
 
+    /**
+     * 멱등 로그 error_message 표식 — SMS 본문이 비어 폴백을 의도적으로 건너뛴 경우
+     * 문장 조립에 사용한다.
+     * 운영 로그 {@code SMS_TEMPLATE 시드 비활성/미발견 → SMS 폴백 skip | alimtalk=}
+     * 의 표식과 같다.
+     *
+     * <p>사이드바 배지 판정은 이 표식을 보지 않는다. 현재 종목
+     * {@code dispatch_enabled} 가 OFF 인 템플릿 코드만 집계에서 제외한다.
+     */
+    public static final String SMS_FALLBACK_SKIP_NOTE_MARKER = "SMS 폴백 skip";
+
     /** 멱등성 로그 error_code — SMS 폴백까지 모두 실패. */
     public static final String ERROR_CODE_SEND_FAILED = "SEND_FAILED";
 

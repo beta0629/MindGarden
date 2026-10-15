@@ -402,7 +402,7 @@ class ReservationReminderRescheduleResendIntegrationTest {
             mappingRepository, pendingRepository, dispatchService,
             mock(MobilePushDispatchService.class), properties,
             mock(SchedulerExecutionLogService.class), mock(SchedulerAlertService.class),
-            systemConfigService);
+            systemConfigService, smsTemplateService);
     }
 
     private long lateSendsFor(String tenant, LocalDate slotDate) {

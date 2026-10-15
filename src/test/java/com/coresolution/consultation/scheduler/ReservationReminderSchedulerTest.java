@@ -5,6 +5,7 @@ import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import com.coresolution.consultation.config.BatchNotificationProperties;
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.NotificationSchedulerFlagKeys;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -18,6 +19,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -34,6 +36,7 @@ import org.mockito.quality.Strictness;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -87,6 +90,8 @@ class ReservationReminderSchedulerTest {
     private SchedulerAlertService alertService;
     @Mock
     private SystemConfigService systemConfigService;
+    @Mock
+    private SmsTemplateService smsTemplateService;
 
     private BatchNotificationProperties properties;
     private ReservationReminderScheduler scheduler;
@@ -98,7 +103,8 @@ class ReservationReminderSchedulerTest {
         scheduler = new ReservationReminderScheduler(tenantService, scheduleRepository,
             mappingRepository, immediateReservationSmsPendingRepository, dispatchService,
             mobilePushDispatchService, properties,
-            logService, alertService, systemConfigService);
+            logService, alertService, systemConfigService, smsTemplateService);
+        when(smsTemplateService.isAutoDispatchEnabledFor(anyString(), anyString())).thenReturn(true);
         // 기본: DB 플래그 ON (기존 테스트 시나리오 그대로 동작).
         when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.RESERVATION_REMINDER_ENABLED), anyBoolean()))
@@ -562,6 +568,78 @@ class ReservationReminderSchedulerTest {
 
         verify(dispatchService, never()).dispatchReservationReminderD2(any());
         verify(dispatchService, never()).dispatchReservationImmediateLate(any());
+    }
+
+    @Test
+    @DisplayName("D2 종목 OFF · LATE ON — D-2 dispatch 없음, D-1 대상은 ImmediateLate, failed 미증가")
+    void runDailyReminder_d2DispatchDisabled_skipsD2AndDispatchesD1Late() {
+        when(smsTemplateService.isAutoDispatchEnabledFor(
+                eq(BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2), anyString()))
+            .thenReturn(false);
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        Schedule d1 = buildSchedule(401L, TENANT_A, 5001L, 6001L, 1);
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(buildSchedule(101L, TENANT_A, 5001L, 6001L, 2)));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(d1));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationImmediateLate(401L)).thenReturn(success(901L));
+
+        scheduler.runDailyReminder();
+
+        verify(scheduleRepository, never()).findByTenantIdAndDateAndStatusIn(
+            eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList());
+        verify(dispatchService, never()).dispatchReservationReminderD2(any());
+        verify(dispatchService).dispatchReservationImmediateLate(401L);
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD2"), eq("SUCCESS"),
+            eq("dispatched=0, skipped=0, failed=0"));
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD1"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+    }
+
+    @Test
+    @DisplayName("LATE 종목 OFF · D2 ON — D-1·D-0 ImmediateLate 미호출, D-2 는 호출, failed 미증가")
+    void runDailyReminder_lateDispatchDisabled_skipsD1AndD0AndDispatchesD2() {
+        when(smsTemplateService.isAutoDispatchEnabledFor(
+                eq(BatchNotificationTemplateCodes.RESERVATION_IMMEDIATE_LATE), anyString()))
+            .thenReturn(false);
+        when(tenantService.getAllActiveTenantIds()).thenReturn(List.of(TENANT_A));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now().plusDays(2)), anyList()))
+            .thenReturn(List.of(buildSchedule(101L, TENANT_A, 5001L, 6001L, 2)));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now().plusDays(1)), anyList()))
+            .thenReturn(List.of(buildSchedule(401L, TENANT_A, 5001L, 6001L, 1)));
+        when(scheduleRepository.findByTenantIdAndDateAndStatusIn(
+                eq(TENANT_A), eq(LocalDate.now()), anyList()))
+            .thenReturn(List.of(buildSchedule(301L, TENANT_A, 5001L, 6001L, 0)));
+        givenEligibleMapping(TENANT_A, 5001L, 6001L, 10, 7);
+        when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
+
+        scheduler.runDailyReminder();
+
+        verify(dispatchService).dispatchReservationReminderD2(101L);
+        verify(dispatchService, never()).dispatchReservationImmediateLate(any());
+        verify(scheduleRepository, never()).findByTenantIdAndDateAndStatusIn(
+            eq(TENANT_A), eq(LocalDate.now()), anyList());
+        verify(scheduleRepository, never()).findByTenantIdAndDateAndStatusIn(
+            eq(TENANT_A),
+            eq(LocalDate.now().plusDays(1)),
+            eq(List.of(ScheduleStatus.BOOKED, ScheduleStatus.CONFIRMED,
+                ScheduleStatus.TENTATIVE_PENDING_PAYMENT)));
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD2"), eq("SUCCESS"),
+            eq("dispatched=1, skipped=0, failed=0"));
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD1"), eq("SUCCESS"),
+            eq("dispatched=0, skipped=0, failed=0"));
+        verify(logService).saveExecutionLog(any(), eq(TENANT_A),
+            eq("ReservationReminderD0"), eq("SUCCESS"),
+            eq("dispatched=0, skipped=0, failed=0"));
     }
 
     // ---------------------------------------------------------------- fixtures

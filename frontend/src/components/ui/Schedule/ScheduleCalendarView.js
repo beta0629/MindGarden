@@ -18,6 +18,7 @@ import {
   parseScheduleDateKey,
   toFloatingDateTimeInZone
 } from '../../../utils/zonedDateTime';
+import { getNow as getServerNow } from '../../../utils/serverClock';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -84,10 +85,12 @@ const SCHEDULE_CALENDAR_PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlu
 
 /**
  * 기기 local 자정이 아니라 운영 타임존(DEFAULT_ZONE) 캘린더일로 past 판정.
+ * 기준시는 서버 clock(getServerNow). 표시 zone 은 Asia/Seoul 유지.
  * @param {Date|string|null|undefined} dateLike
+ * @param {Date} [nowDate] 기준 시각 (기본 getServerNow())
  * @returns {boolean}
  */
-const isPastCalendarDayInZone = (dateLike) => {
+const isPastCalendarDayInZone = (dateLike, nowDate = getServerNow()) => {
     if (dateLike == null || dateLike === '') {
         return false;
     }
@@ -95,7 +98,7 @@ const isPastCalendarDayInZone = (dateLike) => {
     if (!eventKey) {
         return false;
     }
-    return eventKey < formatDateKeyInZone(new Date(), DEFAULT_ZONE);
+    return eventKey < formatDateKeyInZone(nowDate, DEFAULT_ZONE);
 };
 
 /**
@@ -192,9 +195,9 @@ const ScheduleCalendarView = ({
     useCalendarDragEscapeCancel();
     /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
     const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
-    /** 초기 스크롤: Asia/Seoul 현재시 − 2h (slotMin 클램프). 마운트 시점 기준 */
+    /** 초기 스크롤: 서버 now(Asia/Seoul 표시) − 2h (slotMin 클램프). 마운트 시점 기준 */
     const scrollTime = useMemo(
-        () => resolveCalendarScrollTime(new Date(), slotTimeRange.slotMinTime),
+        () => resolveCalendarScrollTime(getServerNow(), slotTimeRange.slotMinTime),
         [slotTimeRange.slotMinTime]
     );
     /** absolute 휴가 ISO 등을 floating KST로 맞춰 LA/Seoul 기기 벽시계 표시 동일화 */
@@ -741,6 +744,7 @@ const ScheduleCalendarView = ({
                 defaultView={CALENDAR_VIEW_MONTH}
                 locale="ko"
                 timeZone={DEFAULT_ZONE}
+                now={getServerNow}
                 selectable={true}
                 selectMirror={true}
                 dayMaxEvents={8}

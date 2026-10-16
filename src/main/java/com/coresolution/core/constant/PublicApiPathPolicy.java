@@ -52,6 +52,7 @@ public final class PublicApiPathPolicy {
             "/api/v1/admin/css-themes",
             "/api/v1/health",
             "/api/health",
+            "/api/v1/time",
             "/api/v1/test",
             "/api/v1/payments/webhooks",
             "/api/v1/shop/catalog",

@@ -78,7 +78,13 @@ public class Payment extends BaseEntity {
      */
     @Column(name = "verify_unknown_exhausted_at")
     private LocalDateTime verifyUnknownExhaustedAt;
-    
+
+    /**
+     * PortOne 검증 재시도 소진 후 장주기 폴링 시각.
+     */
+    @Column(name = "verify_unknown_exhausted_last_polled_at")
+    private LocalDateTime verifyUnknownExhaustedLastPolledAt;
+
     /**
      * 결제 상태
      */

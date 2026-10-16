@@ -145,6 +145,24 @@ public final class ShopCheckoutConstants {
      */
     public static final long DEFAULT_VERIFY_UNKNOWN_MAX_AGE_MS = 0L;
 
+    /**
+     * PortOne 검증 UNKNOWN/IN_PROGRESS 재시도 소진 후 장주기 폴링 간격 기본값(ms).
+     * ({@code shop.portone.verify-unknown-exhausted-poll-interval-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_EXHAUSTED_POLL_INTERVAL_MS = 3_600_000L;
+
+    /**
+     * PortOne 검증 추적 컬럼 저장 시 낙관적 락 충돌 최대 재시도 횟수.
+     * ({@code shop.portone.verify-unknown-lock-max-retries}).
+     */
+    public static final int DEFAULT_VERIFY_UNKNOWN_LOCK_MAX_RETRIES = 3;
+
+    /**
+     * PortOne 검증 추적 낙관적 락 재시도 대기 기본값(ms).
+     * ({@code shop.portone.verify-unknown-lock-retry-delay-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_LOCK_RETRY_DELAY_MS = 20L;
+
     /** 관리자 알림 출처 — PortOne 검증 UNKNOWN 재시도 소진 */
     public static final String ADMIN_ALERT_SOURCE_VERIFY_UNKNOWN = "ShopPortOneVerifyUnknown";
 

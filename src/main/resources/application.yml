@@ -481,11 +481,16 @@ shop:
   # 어드민 전액 환불 PG 취소 임대 시간 — PortOne 조회·취소·증거 확인 호출 시간 합보다 길게 둔다
   admin-refund:
     pg-lease-ms: ${SHOP_ADMIN_REFUND_PG_LEASE_MS:120000}
-  # PortOne 검증 UNKNOWN/READY 재시도 상한 — 소진 시 자동 취소 없이 관리자 알림·재시도 중단
+  # PortOne 검증 UNKNOWN/READY(IN_PROGRESS) 재시도 상한 — 소진 시 자동 취소 없이 관리자 알림
   portone:
     verify-unknown-max-attempts: ${SHOP_PORTONE_VERIFY_UNKNOWN_MAX_ATTEMPTS:10}
     # 0 이면 연령 한도 비활성. 양수면 first_seen 이후 경과(ms)로도 소진 판정
     verify-unknown-max-age-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_MAX_AGE_MS:0}
+    # 소진 후 장주기 PortOne 폴링 간격(ms). PAID+MATCH 이면 정상 이행, 자동 EXPIRED 없음
+    verify-unknown-exhausted-poll-interval-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_EXHAUSTED_POLL_INTERVAL_MS:3600000}
+    # 추적 컬럼 저장 낙관적 락 충돌 재시도
+    verify-unknown-lock-max-retries: ${SHOP_PORTONE_VERIFY_UNKNOWN_LOCK_MAX_RETRIES:3}
+    verify-unknown-lock-retry-delay-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_LOCK_RETRY_DELAY_MS:20}
 
 # 서버 설정
 server:

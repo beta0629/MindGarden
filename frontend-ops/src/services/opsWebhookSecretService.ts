@@ -1,6 +1,7 @@
 import { clientApiFetch } from "@/services/clientApi";
 import { OPS_API_PATHS } from "@/constants/api";
 import type { PgConfigurationPendingItem } from "@/types/pgApproval";
+import { withOpsTenantPathFallback } from "@/utils/opsTenantPathFallback";
 
 /**
  * Ops 웹훅 시크릿·테스트 모드 서비스
@@ -44,7 +45,7 @@ export async function fetchOpsPgConfigurationDetail(
 }
 
 /**
- * 웹훅 시크릿 교체 — 테넌트 경로를 1차로 호출하고, 실패 시 ops alias 폴백.
+ * 웹훅 시크릿 교체 — 테넌트 경로 1차, HTTP 404 일 때만 ops alias 폴백.
  */
 export async function patchOpsWebhookSecret(params: {
   tenantId: string;
@@ -53,21 +54,22 @@ export async function patchOpsWebhookSecret(params: {
 }): Promise<OpsPgConfigurationItem> {
   const { tenantId, configId, webhookSecret } = params;
   const body = JSON.stringify({ webhookSecret });
-  try {
-    return await clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_WEBHOOK_SECRET(tenantId, configId),
-      { method: "PATCH", body }
-    );
-  } catch {
-    return clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.WEBHOOK_SECRET(configId),
-      { method: "PATCH", body }
-    );
-  }
+  return withOpsTenantPathFallback(
+    () =>
+      clientApiFetch<OpsPgConfigurationItem>(
+        OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_WEBHOOK_SECRET(tenantId, configId),
+        { method: "PATCH", body }
+      ),
+    () =>
+      clientApiFetch<OpsPgConfigurationItem>(
+        OPS_API_PATHS.PG_CONFIGURATIONS.WEBHOOK_SECRET(configId),
+        { method: "PATCH", body }
+      )
+  );
 }
 
 /**
- * 테스트 모드 변경 — 테넌트 경로 1차, ops alias 폴백.
+ * 테스트 모드 변경 — 테넌트 경로 1차, HTTP 404 일 때만 ops alias 폴백.
  */
 export async function patchOpsTestMode(params: {
   tenantId: string;
@@ -76,15 +78,16 @@ export async function patchOpsTestMode(params: {
 }): Promise<OpsPgConfigurationItem> {
   const { tenantId, configId, testMode } = params;
   const body = JSON.stringify({ testMode });
-  try {
-    return await clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_TEST_MODE(tenantId, configId),
-      { method: "PATCH", body }
-    );
-  } catch {
-    return clientApiFetch<OpsPgConfigurationItem>(
-      OPS_API_PATHS.PG_CONFIGURATIONS.TEST_MODE(configId),
-      { method: "PATCH", body }
-    );
-  }
+  return withOpsTenantPathFallback(
+    () =>
+      clientApiFetch<OpsPgConfigurationItem>(
+        OPS_API_PATHS.PG_CONFIGURATIONS.TENANT_TEST_MODE(tenantId, configId),
+        { method: "PATCH", body }
+      ),
+    () =>
+      clientApiFetch<OpsPgConfigurationItem>(
+        OPS_API_PATHS.PG_CONFIGURATIONS.TEST_MODE(configId),
+        { method: "PATCH", body }
+      )
+  );
 }

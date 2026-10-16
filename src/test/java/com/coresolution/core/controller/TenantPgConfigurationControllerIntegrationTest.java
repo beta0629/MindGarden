@@ -183,14 +183,18 @@ class TenantPgConfigurationControllerIntegrationTest {
     }
     
     @Test
-    @DisplayName("PG 설정 생성 - 필수 필드 누락")
+    @DisplayName("PG 설정 생성 - 필수 필드 누락(서비스 검증, DTO @NotBlank 없음)")
     @WithMockUser(roles = {"ADMIN"})
     void testCreateConfiguration_MissingRequiredFields() throws Exception {
-        // Given
+        // Given — apiKey/secretKey 는 update 를 위해 DTO optional.
+        // create 는 서비스 validateConfigurationRequest 에서 거부한다.
         TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
                 .pgProvider(PgProvider.TOSS)
                 // apiKey, secretKey 누락
                 .build();
+
+        when(pgConfigurationService.createConfiguration(eq(testTenantId), any(), any()))
+                .thenThrow(new IllegalArgumentException("API Key는 필수입니다"));
         
         // When & Then
         mockMvc.perform(post("/api/v1/tenants/{tenantId}/pg-configurations", testTenantId)
@@ -198,6 +202,30 @@ class TenantPgConfigurationControllerIntegrationTest {
                         .header("X-Tenant-Id", testTenantId)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PG 설정 수정 - apiKey/secretKey 생략 시 Bean Validation 통과(서비스까지 위임)")
+    @WithMockUser(roles = {"ADMIN"})
+    void testUpdateConfiguration_BlankSecrets_PassesBeanValidation() throws Exception {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스페이먼츠 수정")
+                .testMode(false)
+                .build();
+
+        when(pgConfigurationService.updateConfiguration(eq(testTenantId), eq(testConfigId), any()))
+                .thenReturn(testResponse);
+
+        mockMvc.perform(put("/api/v1/tenants/{tenantId}/pg-configurations/{configId}",
+                        testTenantId, testConfigId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Tenant-Id", testTenantId)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.configId").value(testConfigId));
+
+        verify(pgConfigurationService).updateConfiguration(eq(testTenantId), eq(testConfigId), any());
     }
     
     @Test

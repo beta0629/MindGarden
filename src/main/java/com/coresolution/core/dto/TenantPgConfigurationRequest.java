@@ -1,7 +1,6 @@
 package com.coresolution.core.dto;
 
 import com.coresolution.core.domain.enums.PgProvider;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -37,15 +36,17 @@ public class TenantPgConfigurationRequest {
     /**
      * API Key (평문 - 서비스에서 암호화하여 저장).
      * KICC 이지페이: 상점 연동용 키(KICC 콘솔·가이드에 따름, Phase 2 API별 사용).
+     * <p>생성(create) 시 필수 — 서비스 {@code validateConfigurationRequest} 에서 검증.
+     * 수정(update) 시 null/blank 이면 기존 암호문을 유지한다(빈 문자열로 덮어쓰지 않음).</p>
      */
-    @NotBlank(message = "API Key는 필수입니다")
     private String apiKey;
     
     /**
      * Secret Key (평문 - 서비스에서 암호화하여 저장).
      * KICC 이지페이: 상점 검증키(HMAC-SHA256 메시지 인증값, 승인·취소 등).
+     * <p>생성(create) 시 필수 — 서비스에서 검증.
+     * 수정(update) 시 null/blank 이면 기존 암호문을 유지한다.</p>
      */
-    @NotBlank(message = "Secret Key는 필수입니다")
     private String secretKey;
     
     /**

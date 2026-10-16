@@ -507,9 +507,9 @@ else
 fi
 
 # --- mysql-deploy-client: option-file quoting (# ; ' " \ space $) ---
-# 실패 시 원본 비밀번호를 dump 하지 않음.
+# 실패 시 원본 비밀번호를 dump 하지 않음 (길이만).
 _mysql_quote_expect() {
-  # stdin: raw value → stdout: expected password="..." line body (quoted)
+  # raw value → expected password="..." line body (quoted)
   local value escaped
   value="$1"
   escaped="${value//\\/\\\\}"
@@ -574,20 +574,114 @@ do
   fi
 done
 
-# my_print_defaults round-trip (optional if binary missing on CI)
+# umask 022 환경에서도 prepare 후 cnf 는 mode 600
+cat > "$HELPER_FIXTURE/assert-umask-mode.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+umask 022
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='x' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+cnf="\$MYSQL_DEPLOY_CNF"
+[ -n "\$cnf" ] && [ -f "\$cnf" ] || exit 2
+perms=\$(stat -c '%a' "\$cnf" 2>/dev/null || stat -f '%Lp' "\$cnf")
+[ "\$perms" = "600" ] || { echo "perms=\$perms want=600 (ambient umask 022)"; exit 3; }
+mysql_deploy_cleanup
+[ ! -f "\$cnf" ] || exit 4
+echo umask-mode-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-umask-mode.sh"
+check "mysql-deploy-client: cnf mode 600 under umask 022" 0 \
+  bash "$HELPER_FIXTURE/assert-umask-mode.sh"
+
+# EXIT trap: prepare 후 강제 실패 시 cnf 삭제
+cat > "$HELPER_FIXTURE/assert-trap-cleanup.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='x' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+cnf="\$MYSQL_DEPLOY_CNF"
+[ -f "\$cnf" ] || exit 2
+# 경로를 부모에 남기고 강제 실패 → EXIT trap 이 정리해야 함
+printf '%s' "\$cnf" > "$HELPER_FIXTURE/last-cnf-path"
+exit 42
+EOF
+chmod +x "$HELPER_FIXTURE/assert-trap-cleanup.sh"
+set +e
+bash "$HELPER_FIXTURE/assert-trap-cleanup.sh" >/dev/null 2>&1
+_trap_code=$?
+set -e
+_trap_cnf="$(cat "$HELPER_FIXTURE/last-cnf-path" 2>/dev/null || true)"
+if [ "$_trap_code" = "42" ] && [ -n "$_trap_cnf" ] && [ ! -f "$_trap_cnf" ]; then
+  echo "ok - mysql-deploy-client: EXIT trap removes cnf after failure"
+else
+  echo "not ok - mysql-deploy-client: EXIT trap cleanup (code=$_trap_code cnf_exists=$([ -f "${_trap_cnf:-}" ] && echo yes || echo no))"
+  fail=1
+fi
+
+# my_print_defaults: unquoted breakage matrix + quoted round-trip
 if command -v my_print_defaults >/dev/null 2>&1; then
-  # regression: unquoted # truncates
-  _trunc_cnf="$(mktemp)"
-  chmod 600 "$_trunc_cnf"
-  printf '[client]\nsocket=abc#def\n' >"$_trunc_cnf"
-  _trunc_out="$(my_print_defaults --defaults-extra-file="$_trunc_cnf" client 2>/dev/null || true)"
-  rm -f "$_trunc_cnf"
-  if printf '%s\n' "$_trunc_out" | grep -qx -- '--socket=abc'; then
-    echo "ok - my_print_defaults: unquoted socket=abc#def truncates to abc"
-  else
-    echo "not ok - my_print_defaults truncation regression"
-    fail=1
-  fi
+  # 미인용 breakage matrix — 비밀번호 값 출력 금지 (label + BREAK/OK + lengths)
+  unquoted_parse_socket() {
+    local raw="$1"
+    local cnf out parsed
+    cnf="$(mktemp)"
+    chmod 600 "$cnf"
+    {
+      echo '[client]'
+      # 의도적으로 미인용 — 특수문자 breakage 증거
+      printf 'socket=%s\n' "$raw"
+    } >"$cnf"
+    out="$(my_print_defaults --defaults-extra-file="$cnf" client 2>/dev/null || true)"
+    rm -f "$cnf"
+    parsed="$(printf '%s\n' "$out" | sed -n 's/^--socket=//p' | head -1)"
+    printf '%s' "$parsed"
+  }
+
+  echo "--- unquoted cnf breakage matrix (my_print_defaults) ---"
+  for ch_label in \
+    'hash:#' \
+    'semi:;' \
+    "squote:'" \
+    'dquote:"' \
+    'backslash:\' \
+    'space: ' \
+    'dollar:$'
+  do
+    case_name="${ch_label%%:*}"
+    ch_val="${ch_label#*:}"
+    raw="PRE${ch_val}SUF"
+    parsed="$(unquoted_parse_socket "$raw")"
+    if [ "$parsed" = "$raw" ]; then
+      echo "ok - unquoted matrix $case_name: OK (parsed_len=${#parsed})"
+      case "$case_name" in
+        hash)
+          echo "not ok - unquoted matrix hash: expected BREAK (truncation at #)"
+          fail=1
+          ;;
+      esac
+    else
+      echo "ok - unquoted matrix $case_name: BREAK (want_len=${#raw} got_len=${#parsed})"
+      case "$case_name" in
+        hash)
+          if [ "$parsed" = "PRE" ]; then
+            echo "ok - unquoted matrix hash: truncates at # (got PRE)"
+          else
+            echo "not ok - unquoted matrix hash: expected truncate to PRE (got_len=${#parsed})"
+            fail=1
+          fi
+          ;;
+        *)
+          # MySQL 8 option parser: ; " ' \ $ space 는 미인용에서도 생존하는 것이 관측됨
+          echo "not ok - unquoted matrix $case_name: expected OK on MySQL 8 (got BREAK)"
+          fail=1
+          ;;
+      esac
+    fi
+  done
 
   roundtrip_socket_value() {
     local raw="$1"
@@ -604,9 +698,9 @@ if command -v my_print_defaults >/dev/null 2>&1; then
     rm -f "$cnf"
     parsed="$(printf '%s\n' "$out" | sed -n 's/^--socket=//p' | head -1)"
     if [ "$parsed" = "$raw" ]; then
-      echo "ok - my_print_defaults round-trip ($label)"
+      echo "ok - my_print_defaults quoted round-trip ($label)"
     else
-      echo "not ok - my_print_defaults round-trip ($label) parsed_len=${#parsed} want_len=${#raw}"
+      echo "not ok - my_print_defaults quoted round-trip ($label) parsed_len=${#parsed} want_len=${#raw}"
       fail=1
     fi
   }

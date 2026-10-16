@@ -74,6 +74,7 @@ public class PortOnePaymentWebhookService {
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     private final PortOneWebhookProperties portOneWebhookProperties;
 
     /**
@@ -311,18 +312,33 @@ public class PortOnePaymentWebhookService {
         PortOneShopPaidMatch match =
                 portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(tenantId, paymentId, order);
         if (match.isMatch()) {
+            match.getActualPaidAmount().ifPresent(
+                    paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(paymentRow, paid));
             return Optional.empty();
         }
         if (match.isUnknown()) {
+            PortOneVerifyUnknownRetryOutcome outcome =
+                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(tenantId, paymentId);
+            body.put("paymentId", paymentId);
+            if (outcome == PortOneVerifyUnknownRetryOutcome.EXHAUSTED) {
+                log.error(
+                        "포트원 웹훅: 쇼핑 PortOne 검증 UNKNOWN 재시도 소진 — 비재시도 200 paymentId={}, orderPublicId={}, webhookId={}",
+                        paymentId,
+                        orderPublicId,
+                        webhookId);
+                body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN_EXHAUSTED);
+                return Optional.of(ResponseEntity.ok(body));
+            }
             log.warn(
                     "포트원 웹훅: 쇼핑 주문 PortOne 검증 UNKNOWN — 승인·취소 생략(재시도) paymentId={}, orderPublicId={}, webhookId={}",
                     paymentId,
                     orderPublicId,
                     webhookId);
             body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN);
-            body.put("paymentId", paymentId);
             return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
         }
+        match.getActualPaidAmount().ifPresent(
+                paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(paymentRow, paid));
         log.warn(
                 "포트원 웹훅: 쇼핑 주문 PortOne 금액·주문 불일치 — 승인 생략·전액 취소 paymentId={}, orderPublicId={}, webhookId={}",
                 paymentId,

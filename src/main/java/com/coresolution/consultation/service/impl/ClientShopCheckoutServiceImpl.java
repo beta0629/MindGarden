@@ -68,6 +68,7 @@ import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
 import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.enums.PgProvider;
@@ -119,6 +120,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private final ShopOrderableSkuService shopOrderableSkuService;
     private final PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     private final ObjectProvider<SchedulerFailureNotifier> schedulerFailureNotifierProvider;
     /** afterCommit 이행을 부모 트랜잭션과 분리된 REQUIRES_NEW 로 실행 */
     private final PlatformTransactionManager transactionManager;
@@ -1161,12 +1163,21 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     private void finishMismatchCancel(
             String tenantId, ShopClientOrder order, Payment payment, BigDecimal actualPaidAmount) {
         if (payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
-            BigDecimal refundAmount = resolveMismatchRefundAmount(payment, actualPaidAmount);
-            if (actualPaidAmount != null
-                    && payment.getAmount() != null
-                    && actualPaidAmount.compareTo(payment.getAmount()) != 0) {
-                payment.setAmount(actualPaidAmount);
+            // 원 청구액 보존 — amount 동기화 전에 requested_amount 가 비어 있으면 채운다
+            if (payment.getRequestedAmount() == null && payment.getAmount() != null) {
+                payment.setRequestedAmount(payment.getAmount());
             }
+            if (actualPaidAmount != null) {
+                payment.setPortonePaidAmount(actualPaidAmount);
+            }
+            BigDecimal refundAmount = resolveMismatchRefundAmount(payment, actualPaidAmount);
+            // 쇼핑 부분환불 가드(refundAmount == payment.amount) 통과용 — requested_amount 는 유지
+            if (refundAmount != null
+                    && payment.getAmount() != null
+                    && refundAmount.compareTo(payment.getAmount()) != 0) {
+                payment.setAmount(refundAmount);
+            }
+            paymentRepository.save(payment);
             paymentService.refundPayment(
                     payment.getPaymentId(),
                     refundAmount,
@@ -1183,11 +1194,14 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     }
 
     /**
-     * 불일치 환불액: PortOne {@code amount.paid} 우선, 없으면 로컬 prepared amount.
+     * 불일치 환불액: PortOne {@code amount.paid} 인자 → {@code portone_paid_amount} → 로컬 amount.
      */
     private static BigDecimal resolveMismatchRefundAmount(Payment payment, BigDecimal actualPaidAmount) {
         if (actualPaidAmount != null) {
             return actualPaidAmount;
+        }
+        if (payment.getPortonePaidAmount() != null) {
+            return payment.getPortonePaidAmount();
         }
         return payment.getAmount();
     }
@@ -1353,10 +1367,23 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         Optional<Payment> latestPayment = resolveLatestPayment(tenantId, orderPublicId);
         if (latestPayment.isPresent() && StringUtils.hasText(latestPayment.get().getPaymentId())) {
             Payment payment = latestPayment.get();
+            // UNKNOWN 재시도 소진 — PortOne 추가 조회 없이 보류(미결제 EXPIRED 처리 금지)
+            if (portOneVerifyUnknownRetryTracker.isExhausted(payment)) {
+                log.info(
+                        "hold TTL 만료 보류(PortOne UNKNOWN 재시도 소진): tenantId={}, orderPublicId={}, paymentId={}",
+                        tenantId,
+                        orderPublicId,
+                        payment.getPaymentId());
+                return false;
+            }
             PortOnePaymentPaidState paidState =
                     portOneV2PaymentVerifyService.resolvePaidState(tenantId, payment.getPaymentId());
             if (paidState == PortOnePaymentPaidState.UNKNOWN
                     || paidState == PortOnePaymentPaidState.IN_PROGRESS) {
+                if (paidState == PortOnePaymentPaidState.UNKNOWN) {
+                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
+                            tenantId, payment.getPaymentId());
+                }
                 log.info(
                         "hold TTL 만료 보류(PortOne {}): tenantId={}, orderPublicId={}, paymentId={}",
                         paidState,
@@ -1369,6 +1396,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 PortOneShopPaidMatch match = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         tenantId, payment.getPaymentId(), order);
                 if (match.isUnknown()) {
+                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
+                            tenantId, payment.getPaymentId());
                     log.info(
                             "hold TTL 만료 보류(PortOne 검증 UNKNOWN): tenantId={}, orderPublicId={}, paymentId={}",
                             tenantId,
@@ -1385,6 +1414,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     return cancelMismatchedApprovedPaymentForOrder(
                             tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
                 }
+                match.getActualPaidAmount().ifPresent(payment::setPortonePaidAmount);
                 approveOpenPaymentLocally(payment);
                 log.info(
                         "hold TTL 만료 대신 PortOne PAID 확정: tenantId={}, orderPublicId={}, paymentId={}",

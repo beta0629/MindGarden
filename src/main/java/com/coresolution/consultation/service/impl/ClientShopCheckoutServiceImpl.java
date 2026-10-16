@@ -1363,14 +1363,15 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     order.getStatus());
             return false;
         }
-        // PortOne 조회: UNKNOWN/IN_PROGRESS 는 보류, PAID 는 확정/불일치 취소, NOT_PAID·없음은 EXPIRED.
+        // PortOne 조회: UNKNOWN/IN_PROGRESS 는 보류(+재시도 상한), PAID 는 확정/불일치 취소,
+        // NOT_PAID·없음은 EXPIRED. 소진 후에는 장주기 폴링만 하고 자동 EXPIRED 금지.
         Optional<Payment> latestPayment = resolveLatestPayment(tenantId, orderPublicId);
         if (latestPayment.isPresent() && StringUtils.hasText(latestPayment.get().getPaymentId())) {
             Payment payment = latestPayment.get();
-            // UNKNOWN 재시도 소진 — PortOne 추가 조회 없이 보류(미결제 EXPIRED 처리 금지)
-            if (portOneVerifyUnknownRetryTracker.isExhausted(payment)) {
+            boolean exhausted = portOneVerifyUnknownRetryTracker.isExhausted(payment);
+            if (exhausted && !portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(payment)) {
                 log.info(
-                        "hold TTL 만료 보류(PortOne UNKNOWN 재시도 소진): tenantId={}, orderPublicId={}, paymentId={}",
+                        "hold TTL 만료 보류(PortOne 재시도 소진·폴링 간격 미도달): tenantId={}, orderPublicId={}, paymentId={}",
                         tenantId,
                         orderPublicId,
                         payment.getPaymentId());
@@ -1378,26 +1379,32 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             }
             PortOnePaymentPaidState paidState =
                     portOneV2PaymentVerifyService.resolvePaidState(tenantId, payment.getPaymentId());
+            if (exhausted) {
+                portOneVerifyUnknownRetryTracker.markExhaustedPolled(tenantId, payment.getPaymentId());
+            }
             if (paidState == PortOnePaymentPaidState.UNKNOWN
                     || paidState == PortOnePaymentPaidState.IN_PROGRESS) {
-                if (paidState == PortOnePaymentPaidState.UNKNOWN) {
+                if (!exhausted) {
                     portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
                             tenantId, payment.getPaymentId());
                 }
                 log.info(
-                        "hold TTL 만료 보류(PortOne {}): tenantId={}, orderPublicId={}, paymentId={}",
+                        "hold TTL 만료 보류(PortOne {}): tenantId={}, orderPublicId={}, paymentId={}, exhausted={}",
                         paidState,
                         tenantId,
                         orderPublicId,
-                        payment.getPaymentId());
+                        payment.getPaymentId(),
+                        exhausted);
                 return false;
             }
             if (paidState == PortOnePaymentPaidState.PAID) {
                 PortOneShopPaidMatch match = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         tenantId, payment.getPaymentId(), order);
                 if (match.isUnknown()) {
-                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
-                            tenantId, payment.getPaymentId());
+                    if (!exhausted) {
+                        portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
+                                tenantId, payment.getPaymentId());
+                    }
                     log.info(
                             "hold TTL 만료 보류(PortOne 검증 UNKNOWN): tenantId={}, orderPublicId={}, paymentId={}",
                             tenantId,
@@ -1414,6 +1421,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     return cancelMismatchedApprovedPaymentForOrder(
                             tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
                 }
+                // 메인 TX 에 병합 — REQUIRES_NEW 감사 저장으로 @Version 을 올리지 않음
                 match.getActualPaidAmount().ifPresent(payment::setPortonePaidAmount);
                 approveOpenPaymentLocally(payment);
                 log.info(
@@ -1422,6 +1430,15 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                         orderPublicId,
                         payment.getPaymentId());
                 return completeOrderOnPaymentApproved(tenantId, orderPublicId);
+            }
+            if (exhausted) {
+                log.info(
+                        "hold TTL 만료 보류(PortOne 재시도 소진·미결제 유지): tenantId={}, orderPublicId={}, paymentId={}, paidState={}",
+                        tenantId,
+                        orderPublicId,
+                        payment.getPaymentId(),
+                        paidState);
+                return false;
             }
         }
         releasePointsHoldIfAny(tenantId, order.getClientId(), orderPublicId, order.getPointsRedeemMinor());

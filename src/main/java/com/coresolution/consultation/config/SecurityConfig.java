@@ -492,7 +492,8 @@ public class SecurityConfig {
                 "http://ops.dev.e-trinity.co.kr",
                 "http://localhost:3000",
                 "http://localhost:3001",
-                "http://localhost:4300"  // Ops Portal 프론트엔드
+                "http://localhost:4300",  // Ops Portal 프론트엔드
+                "https://ops-dev.core-solution.co.kr"
             ));
             // Cloudflare 프록시 별칭: tenant.host-aliases / TENANT_HOST_ALIASES (yml 기본값 포함)
             // — CORS_ALLOWED_ORIGINS 가 비어 있어도 별칭 호스트를 exact origin 으로 합류.

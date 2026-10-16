@@ -419,6 +419,18 @@ jobs:
               echo "::error::jar backup empty — abort"
               exit 1
             fi
+            ORIG_SIZE=$(stat -c '%s' app.jar)
+            BAK_SIZE=$(stat -c '%s' "$BACKUP_FILE")
+            if [ "$ORIG_SIZE" != "$BAK_SIZE" ]; then
+              echo "::error::jar backup size mismatch — abort (no stop yet)"
+              exit 1
+            fi
+            ORIG_SHA=$(sha256sum app.jar | awk '{print $1}')
+            BAK_SHA=$(sha256sum "$BACKUP_FILE" | awk '{print $1}')
+            if [ "$ORIG_SHA" != "$BAK_SHA" ]; then
+              echo "::error::jar backup sha256 mismatch — abort (no stop yet)"
+              exit 1
+            fi
             echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           

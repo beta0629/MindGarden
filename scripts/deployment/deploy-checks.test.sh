@@ -1197,6 +1197,19 @@ PY
     echo "not ok - verify-dev-running-build.sh missing one-line running_commit/expected/match log"
     fail=1
   fi
+  # git.commit 필수 — jar sha256 폴백 경로 제거
+  if grep -qiE 'fallback to running jar|resolve_running_jar|jar sha fallback' "$VERIFY_SH_REPO"; then
+    echo "not ok - verify-dev-running-build.sh must not have jar sha fallback / resolve_running_jar"
+    fail=1
+  else
+    echo "ok - verify-dev-running-build.sh has no jar sha fallback / resolve_running_jar"
+  fi
+  if grep -qE 'git\.commit empty|git\.commit required' "$VERIFY_SH_REPO"; then
+    echo "ok - verify-dev-running-build.sh has git.commit empty/required error path"
+  else
+    echo "not ok - verify-dev-running-build.sh missing git.commit empty/required error string"
+    fail=1
+  fi
   # YAML 가드는 deploy-production.yml 포함 전체 workflows
   if [ -f "$DIR/../verification/check-workflows-yaml.sh" ] \
     || [ -f "$(dirname "$DIR")/verification/check-workflows-yaml.sh" ]; then
@@ -1268,6 +1281,83 @@ PY
     echo "ok - deploy-backend-dev.yml jar backup cp fails hard before stop"
   else
     echo "not ok - deploy-backend-dev.yml missing jar backup cp fail-hard pattern"
+    fail=1
+  fi
+  # backup integrity (size or sha256) after cp, before stop
+  if grep -q 'jar backup size mismatch' "$DEV_WF" \
+    || grep -q 'jar backup sha256 mismatch' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml jar backup size/sha256 integrity check"
+  else
+    echo "not ok - deploy-backend-dev.yml missing jar backup size/sha256 mismatch abort"
+    fail=1
+  fi
+fi
+
+# --- guardrails.yml: push YAML 가드 (heavy jobs skip on push) ---
+GUARDRAILS_WF="$(cd "$(dirname "$DIR")/.." && pwd)/.github/workflows/guardrails.yml"
+if [ ! -f "$GUARDRAILS_WF" ]; then
+  echo "not ok - guardrails.yml 없음"
+  fail=1
+else
+  if python3 - "$GUARDRAILS_WF" <<'PY'
+import sys
+import yaml
+
+data = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+on = data.get("on") or data.get(True) or {}
+push = on.get("push") or {}
+branches = push.get("branches") or []
+need = {"release/dev", "release/prod"}
+have = set(branches)
+if not need.issubset(have):
+    print("MISSING_PUSH_BRANCHES", sorted(have))
+    raise SystemExit(1)
+print("OK")
+PY
+  then
+    echo "ok - guardrails.yml on.push.branches includes release/dev and release/prod"
+  else
+    echo "not ok - guardrails.yml on.push.branches missing release/dev and/or release/prod"
+    fail=1
+  fi
+  if grep -q 'check-workflows-yaml' "$GUARDRAILS_WF"; then
+    echo "ok - guardrails.yml still has check-workflows-yaml"
+  else
+    echo "not ok - guardrails.yml missing check-workflows-yaml"
+    fail=1
+  fi
+  # push 시 heavy jobs skip: event_name 가드 (prod-deploy-workflows 제외)
+  GUARD_PUSH_IF_OK="$(python3 - "$GUARDRAILS_WF" <<'PY'
+import sys
+import yaml
+
+data = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+jobs = data.get("jobs") or {}
+event_guard = "github.event_name"
+yaml_job = "guardrail-prod-deploy-workflows"
+missing = []
+for name, job in jobs.items():
+    if name == yaml_job:
+        # YAML parse job must run on push (no restrictive event_name-only skip)
+        cond = str(job.get("if") or "")
+        if "event_name" in cond and "push" not in cond and "pull_request" in cond:
+            # restrictive PR/dispatch-only would skip push — fail
+            if "push" not in cond:
+                missing.append(f"{name}:unexpectedly_skips_push")
+        continue
+    cond = str(job.get("if") or "")
+    if event_guard not in cond:
+        missing.append(name)
+if missing:
+    print("MISSING:" + ",".join(missing))
+    raise SystemExit(1)
+print("OK")
+PY
+)"
+  if [ "$GUARD_PUSH_IF_OK" = "OK" ]; then
+    echo "ok - guardrails.yml non-YAML jobs have event_name guard (prod-deploy-workflows runs on push)"
+  else
+    echo "not ok - guardrails.yml job event_name guards ($GUARD_PUSH_IF_OK)"
     fail=1
   fi
 fi

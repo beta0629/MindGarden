@@ -22,6 +22,8 @@ name: 🛡️ Guardrails (PR)
 on:
   pull_request:
     branches: [ 'release/dev', 'release/prod' ]
+  push:
+    branches: [ 'release/dev', 'release/prod' ]
   workflow_dispatch:
 
 permissions:
@@ -39,6 +41,7 @@ env:
 jobs:
   guardrail-be:
     name: Guardrail BE (admin guard · procedure · yml secret)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -67,6 +70,7 @@ jobs:
 
   guardrail-be-critical-tests:
     name: Guardrail BE tests (payment · session · ERP · schedule)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -94,6 +98,7 @@ jobs:
 
   guardrail-secrets:
     name: Guardrail secrets (gitleaks PR diff)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -125,6 +130,7 @@ jobs:
 
   guardrail-fe-admin-list-paging:
     name: Guardrail FE (admin list paging)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -144,6 +150,7 @@ jobs:
 
   guardrail-fe-consultant-status-chip-paging:
     name: Guardrail FE (consultant status chip paging)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -160,6 +167,7 @@ jobs:
 
   guardrail-fe-display-string-logic:
     name: Guardrail FE (display string as logic input)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -179,6 +187,7 @@ jobs:
 
   guardrail-fe-login-redirect-bypass:
     name: Guardrail FE (login redirect bypassing shared 401 handling)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -198,6 +207,7 @@ jobs:
 
   guardrail-fe-password-policy-common:
     name: Guardrail FE (password policy shared module)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -217,6 +227,7 @@ jobs:
 
   guardrail-recipient-limit-literals:
     name: Guardrail recipient limit literals (single server limit)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -236,6 +247,7 @@ jobs:
 
   guardrail-fe-engagement-badge-chip-layout:
     name: Guardrail FE (engagement badge chip layout)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -372,7 +384,7 @@ jobs:
 
   prod-gate-be-build:
     name: Prod gate · BE build
-    if: github.base_ref == 'release/prod'
+    if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && github.base_ref == 'release/prod'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -391,6 +403,7 @@ jobs:
 
   guardrail-fe-build-ci:
     name: Guardrail FE (build:ci)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:
@@ -415,7 +428,7 @@ jobs:
 
   prod-gate-fe-build:
     name: Prod gate · FE build
-    if: github.base_ref == 'release/prod'
+    if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && github.base_ref == 'release/prod'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     defaults:

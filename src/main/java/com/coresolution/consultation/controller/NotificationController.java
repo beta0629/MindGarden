@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.entity.Notification;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.NotificationLifecycleService;
@@ -41,6 +43,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/notifications")
 @RequiredArgsConstructor
 public class NotificationController extends BaseApiController {
+
+    private static final ObjectMapper METADATA_MAPPER = new ObjectMapper();
 
     private final NotificationLifecycleService notificationLifecycleService;
 
@@ -209,7 +213,23 @@ public class NotificationController extends BaseApiController {
         data.put("isRead", Notification.STATUS_READ.equals(notification.getStatus()));
         data.put("createdAt", notification.getCreatedAt());
         data.put("publishedAt", notification.getCreatedAt());
-        data.put("metadata", notification.getMetadataJson());
+        data.put("metadata", parseMetadata(notification.getMetadataJson()));
         return data;
+    }
+
+    /**
+     * metadata_json 을 객체로 내려 프론트가 kind·mappingId 를 그대로 읽게 한다.
+     * 파싱할 수 없으면 null.
+     */
+    private Object parseMetadata(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        try {
+            return METADATA_MAPPER.readValue(raw, new TypeReference<Map<String, Object>>() { });
+        } catch (Exception ex) {
+            log.debug("알림 metadata 파싱 실패: {}", ex.getMessage());
+            return null;
+        }
     }
 }

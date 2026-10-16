@@ -139,6 +139,24 @@ public interface MobilePushDispatchService {
             String consultantBody);
 
     /**
+     * 매칭 정산 푸시 + 알림 인박스 metadata.
+     *
+     * @param inboxMetadataJson kind·mappingId·productName·amount. 없으면 null
+     */
+    void dispatchMappingSettlement(
+            String tenantId,
+            Long mappingId,
+            Long clientUserId,
+            Long consultantUserId,
+            boolean includeConsultant,
+            String canonicalType,
+            String dedupeBucket,
+            String title,
+            String clientBody,
+            String consultantBody,
+            String inboxMetadataJson);
+
+    /**
      * 쇼핑몰 주문 PAID 확정 푸시(내담자).
      *
      * @param tenantId 테넌트 ID

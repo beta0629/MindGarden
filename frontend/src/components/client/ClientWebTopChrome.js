@@ -12,7 +12,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import SafeText from '../common/SafeText';
 import { NotificationBadge } from '../dashboard-v2/atoms';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
@@ -88,17 +88,23 @@ function renderDefaultNav(activeNavId) {
  * @returns {import('react').ReactNode}
  */
 function ClientWebChromeAlerts() {
+  const { pathname } = useLocation();
   const { unreadMessageCount, unreadSystemCount } = useNotification();
   const systemCount = unreadSystemCount || 0;
   const messageCount = unreadMessageCount || 0;
+  const notificationsCurrent = pathname === CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS;
 
   return (
     <>
       <Link
-        className="client-web-topchrome__icon-link"
+        className={[
+          'client-web-topchrome__icon-link',
+          notificationsCurrent ? 'client-web-topchrome__icon-link--current' : ''
+        ].filter(Boolean).join(' ')}
         to={NOTIFICATIONS_BELL_HREF}
         data-testid={CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID}
         aria-label={CLIENT_WEB_NOTIFICATIONS_ARIA}
+        aria-current={notificationsCurrent ? 'page' : undefined}
       >
         <BellIcon size={ICON_SIZES.MD} aria-hidden />
         <NotificationBadge count={systemCount} />

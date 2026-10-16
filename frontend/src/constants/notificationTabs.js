@@ -29,3 +29,17 @@ export const PERSONAL_NOTIFICATION_TEST_IDS = Object.freeze({
   ITEM: 'personal-notifications-item',
   TAB: 'notifications-tab-personal'
 });
+
+export const NOTIFICATION_PAGE_TEST_IDS = Object.freeze({
+  TAB_SYSTEM: 'notifications-tab-system',
+  TAB_MESSAGES: 'notifications-tab-messages',
+  UNAVAILABLE: 'notification-target-unavailable',
+  ERROR: 'notifications-error',
+  LOGIN: 'notifications-login-required',
+  SKELETON: 'notifications-skeleton'
+});
+
+/** 로딩 스켈레톤 카드 수 (시안 03·04) */
+export const NOTIFICATION_SKELETON_COUNT = 3;
+
+export const NOTIFICATION_PREVIEW_MAX_CHARS = 100;

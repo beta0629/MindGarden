@@ -394,7 +394,10 @@ function assembleRow(input) {
     refund: refundCtx.refund,
     separateRefundRow: refundCtx.separateRow,
     paidContribution,
-    refundContribution
+    refundContribution,
+    mappingId: input.mappingId != null && String(input.mappingId).trim() !== ''
+      ? String(input.mappingId).trim()
+      : null
   };
 }
 
@@ -441,7 +444,8 @@ export function buildMappingPaymentRow(mapping, original = null) {
     paymentMethod: safe.paymentMethod,
     paymentSource: safe.paymentSource,
     dateIso: mappingDateIso(safe),
-    linkKey: paymentReferenceOf(safe)
+    linkKey: paymentReferenceOf(safe),
+    mappingId: safe.id
   });
 }
 
@@ -681,6 +685,40 @@ export function normalizeStatusFilter(value) {
 export function normalizePage(value) {
   const n = Number.parseInt(value, 10);
   return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+/**
+ * 알림에서 연 매핑 결제 행.
+ *
+ * @param {Array<object>} rows
+ * @param {unknown} mappingId
+ * @returns {object|null}
+ */
+export function findClientPaymentRowByMappingId(rows, mappingId) {
+  const id = mappingId != null ? String(mappingId).trim() : '';
+  if (!id) {
+    return null;
+  }
+  const list = Array.isArray(rows) ? rows : [];
+  return list.find((row) => row && row.mappingId != null && String(row.mappingId) === id) || null;
+}
+
+/**
+ * 행이 속한 1-base 페이지. 없으면 1.
+ *
+ * @param {Array<object>} rows
+ * @param {string} rowKey
+ * @param {number} size
+ * @returns {number}
+ */
+export function clientPaymentPageForKey(rows, rowKey, size) {
+  const list = Array.isArray(rows) ? rows : [];
+  const index = list.findIndex((row) => row && row.key === rowKey);
+  if (index < 0) {
+    return 1;
+  }
+  const perPage = size > 0 ? size : 1;
+  return Math.floor(index / perPage) + 1;
 }
 
 /**

@@ -315,12 +315,49 @@
     "unified": {
       "pageTitle": "알림",
       "regionLabel": "통합 알림",
-      "subtitle": "시스템 공지와 메시지를 확인하세요.",
+      "subtitle": "공지와 메시지, 내 알림을 한곳에서 확인해요.",
       "loginRequired": "로그인이 필요합니다.",
       "tabSystem": "시스템 공지",
       "tabMessages": "일반 메시지",
       "tabPersonal": "내 알림",
       "loading": "알림을 불러오는 중...",
+      "new_tabListLabel": "알림 종류",
+      "new_loading": "알림을 불러오고 있어요",
+      "new_unread": "안 읽음",
+      "new_unreadSr": "읽지 않은 알림",
+      "new_personalEmptyTitle": "받은 알림이 없어요",
+      "new_personalEmptyDesc": "매칭이 승인되거나 결제·입금이 확인되면 여기에 알려 드려요.",
+      "new_systemEmptyTitle": "시스템 공지가 없어요",
+      "new_messagesEmptyTitle": "받은 메시지가 없어요",
+      "new_errorTitle": "알림을 불러오지 못했어요",
+      "new_errorDesc": "잠시 후 다시 시도해 주세요.",
+      "new_retry": "다시 시도",
+      "new_targetUnavailableTitle": "연결된 화면을 열 수 없어요",
+      "new_targetUnavailableDesc": "화면이 바뀌었거나 지금은 이용할 수 없어요. 알림 내용은 아래에서 확인해 주세요.",
+      "personal": {
+        "type": {
+          "matching": {
+            "title": "매칭 승인",
+            "summary": "상담 매칭이 승인됐어요.",
+            "go": "회기 관리 보기"
+          },
+          "payment": {
+            "title": "결제 확인",
+            "summary": "결제가 확인됐어요.",
+            "go": "결제 내역 보기"
+          },
+          "deposit": {
+            "title": "입금 확인",
+            "summary": "입금이 확인됐어요.",
+            "go": "결제 내역 보기"
+          }
+        },
+        "field": {
+          "product": "상품",
+          "amount": "금액",
+          "amountValue": "{{amount}}원"
+        }
+      },
       "systemEmpty": "시스템 공지가 없습니다",
       "messagesEmpty": "메시지가 없습니다",
       "personalEmpty": "받은 알림이 없습니다",

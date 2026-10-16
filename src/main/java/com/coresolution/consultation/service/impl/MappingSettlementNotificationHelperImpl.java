@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.MappingSettlementNotificationCopy;
+import com.coresolution.consultation.constant.PersonalNotificationMetadata;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -232,6 +233,7 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
         Long mappingId = mapping.getId();
         String packageName = resolvePackageName(mapping);
         String amountLabel = resolveAmountLabel(mapping);
+        String inboxMetadata = buildInboxMetadata(mapping, scenario);
         switch (scenario) {
             case PAYMENT_CONFIRMED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,
@@ -243,7 +245,8 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     "mapping-payment-confirmed",
                     MappingSettlementNotificationCopy.PUSH_TITLE_PAYMENT,
                     MobilePushMessageFormatter.buildMappingPaymentConfirmedPushBody(packageName, amountLabel),
-                    null);
+                    null,
+                    inboxMetadata);
             case DEPOSIT_CONFIRMED -> mobilePushDispatchService.dispatchMappingSettlement(
                     tenantId,
                     mappingId,
@@ -254,7 +257,8 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     "mapping-deposit-confirmed",
                     MappingSettlementNotificationCopy.PUSH_TITLE_DEPOSIT,
                     MobilePushMessageFormatter.buildMappingDepositConfirmedPushBody(packageName, amountLabel),
-                    null);
+                    null,
+                    inboxMetadata);
             // 시나리오 #1 — MAPPING_APPROVED 푸시는 내담자 단독(2026-05-23 라운드 정책 정정).
             // 상담사 인앱 메시지는 sendInAppMessages 에서 별도 발화하므로 푸시는 client only 로 한정.
             // BODY_PUSH_APPROVED_CONSULTANT 는 dedupe·로깅 보존을 위해 인자로 전달하되 includeConsultant=false 로 무시된다.
@@ -268,10 +272,26 @@ public class MappingSettlementNotificationHelperImpl implements MappingSettlemen
                     "mapping-approved",
                     MappingSettlementNotificationCopy.PUSH_TITLE_APPROVED,
                     MappingSettlementNotificationCopy.BODY_PUSH_APPROVED_CLIENT,
-                    MappingSettlementNotificationCopy.BODY_PUSH_APPROVED_CONSULTANT);
+                    MappingSettlementNotificationCopy.BODY_PUSH_APPROVED_CONSULTANT,
+                    inboxMetadata);
             default -> {
             }
         }
+    }
+
+    private static String buildInboxMetadata(ConsultantClientMapping mapping, MappingSettlementScenario scenario) {
+        String kind = switch (scenario) {
+            case PAYMENT_CONFIRMED -> PersonalNotificationMetadata.KIND_PAYMENT_CONFIRMED;
+            case DEPOSIT_CONFIRMED -> PersonalNotificationMetadata.KIND_DEPOSIT_CONFIRMED;
+            case MAPPING_APPROVED -> PersonalNotificationMetadata.KIND_MAPPING_APPROVED;
+            default -> null;
+        };
+        long amount = resolvePaymentAmountLong(mapping);
+        return PersonalNotificationMetadata.toJson(
+                kind,
+                mapping.getId(),
+                resolvePackageName(mapping),
+                amount > 0 ? amount : null);
     }
 
     private static String resolvePackageName(ConsultantClientMapping mapping) {

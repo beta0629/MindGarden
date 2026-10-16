@@ -44,6 +44,20 @@ public interface NotificationLifecycleService {
             String body);
 
     /**
+     * 알림 1행 작성. {@code metadataJson} 은 {@code notifications.metadata_json}.
+     *
+     * @param metadataJson kind·mappingId·productName·amount JSON. 없으면 null
+     */
+    Notification send(
+            String tenantId,
+            Long recipientUserId,
+            Long senderUserId,
+            NotificationType type,
+            String title,
+            String body,
+            String metadataJson);
+
+    /**
      * 알림을 READ 상태로 전이.
      */
     Notification markRead(Long notificationId);

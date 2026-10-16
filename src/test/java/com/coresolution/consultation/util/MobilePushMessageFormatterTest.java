@@ -95,6 +95,18 @@ class MobilePushMessageFormatterTest {
                 .doesNotContain("상담사:");
     }
 
+    @Test
+    @DisplayName("매칭 결제·입금 푸시 본문은 상품 라벨이고 패키지 라벨이 없다")
+    void mappingSettlementPushBodyUsesProductLabel() {
+        String payment = MobilePushMessageFormatter.buildMappingPaymentConfirmedPushBody("10회 패키지", "1000");
+        String deposit = MobilePushMessageFormatter.buildMappingDepositConfirmedPushBody("10회 패키지", "1000");
+        String fallback = MobilePushMessageFormatter.buildMappingPaymentConfirmedPushBody(" ", null);
+
+        assertThat(payment).contains("상품: 10회 패키지").doesNotContain("패키지:");
+        assertThat(deposit).contains("상품: 10회 패키지").doesNotContain("패키지:");
+        assertThat(fallback).contains("상담 상품").doesNotContain("상담 패키지").doesNotContain("패키지:");
+    }
+
     private static Schedule sampleSchedule() {
         Schedule schedule = new Schedule();
         schedule.setDate(LocalDate.of(2026, 5, 20));

@@ -57,6 +57,21 @@ class NotificationLifecycleServiceImplRecipientIsolationTest {
         assertThat(result.getRecipientUserId()).isEqualTo(USER_A);
         assertThat(result.getTenantId()).isEqualTo(TENANT_A);
         assertThat(result.getStatus()).isEqualTo(Notification.STATUS_SENT);
+        assertThat(result.getMetadataJson()).isNull();
+    }
+
+    @Test
+    @DisplayName("send: metadataJson 이 notifications row 에 저장된다")
+    void send_persistsMetadataJson() {
+        when(notificationRepository.save(org.mockito.ArgumentMatchers.any(Notification.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        String metadata = "{\"kind\":\"DEPOSIT_CONFIRMED\",\"mappingId\":12,\"productName\":\"상담 상품\",\"amount\":1000}";
+        Notification result = notificationLifecycleService.send(
+                TENANT_A, USER_A, null, NotificationType.PAYMENT, "입금 확인", "상품: 상담 상품", metadata);
+
+        assertThat(result.getMetadataJson()).isEqualTo(metadata);
+        assertThat(result.getMetadataJson()).doesNotContain("패키지:");
     }
 
     @Test

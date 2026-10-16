@@ -2,8 +2,10 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
@@ -135,6 +137,25 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
             systemNotificationReadRepository.findByNotificationIdAndUserId(notificationId, userId);
         
         return readStatus.isPresent() && readStatus.get().getIsRead();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Set<Long> findReadNotificationIds(Long userId) {
+        if (userId == null) {
+            return Set.of();
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isBlank()) {
+            log.warn("공지 읽음 일괄 조회 스킵 - tenantId 없음 userId={}", userId);
+            return Set.of();
+        }
+        List<Long> ids = systemNotificationReadRepository.findReadNotificationIdsByTenantIdAndUserId(
+                tenantId.trim(), userId);
+        if (ids == null || ids.isEmpty()) {
+            return Set.of();
+        }
+        return new HashSet<>(ids);
     }
 
     @Override

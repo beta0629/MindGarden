@@ -25,6 +25,14 @@ export const PERSONAL_NOTIFICATION_ROUTE_TYPE = Object.freeze({
   WELLNESS: 'WELLNESS'
 });
 
+/** kind 없는 참고 경로의 「…보기」 문구. 카드에는 이 안내 하나만 둔다. */
+export const PERSONAL_NOTIFICATION_ROUTE_GO_KEY = Object.freeze({
+  [PERSONAL_NOTIFICATION_ROUTE_TYPE.SHOP_ORDER]: 'common:notification.unified.personal.route.order.go',
+  [PERSONAL_NOTIFICATION_ROUTE_TYPE.SCHEDULE]: 'common:notification.unified.personal.route.schedule.go',
+  [PERSONAL_NOTIFICATION_ROUTE_TYPE.MESSAGE]: 'common:notification.unified.personal.route.message.go',
+  [PERSONAL_NOTIFICATION_ROUTE_TYPE.WELLNESS]: 'common:notification.unified.personal.route.wellness.go'
+});
+
 export const PERSONAL_NOTIFICATION_PRESENTATION = Object.freeze({
   [PERSONAL_NOTIFICATION_KIND.MAPPING_APPROVED]: Object.freeze({
     tone: 'matching',

@@ -352,6 +352,12 @@
             "go": "결제 내역 보기"
           }
         },
+        "route": {
+          "order": { "go": "주문 보기" },
+          "schedule": { "go": "일정 보기" },
+          "message": { "go": "메시지 보기" },
+          "wellness": { "go": "웰니스 보기" }
+        },
         "field": {
           "product": "상품",
           "amount": "금액",

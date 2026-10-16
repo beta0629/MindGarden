@@ -107,6 +107,23 @@ class MobilePushMessageFormatterTest {
         assertThat(fallback).contains("상담 상품").doesNotContain("상담 패키지").doesNotContain("패키지:");
     }
 
+    @Test
+    @DisplayName("결제 폴백과 주문 완료 푸시는 상품 문구이고 패키지 문구가 없다")
+    void paymentFallbackAndFulfillmentUseProductWording() {
+        String fallback = MobilePushMessageFormatter.buildPaymentCompletedBody(null, " ");
+        String failed = MobilePushMessageFormatter.buildPaymentFailedBody(null, " ", null);
+        String client = MobilePushMessageFormatter.buildShopFulfillmentCompletedBody("ORD-1", false);
+        String consultant = MobilePushMessageFormatter.buildShopFulfillmentCompletedBody("ORD-1", true);
+
+        assertThat(fallback).isEqualTo("상담 상품 결제가 완료되었습니다.");
+        assertThat(failed).isEqualTo("상담 상품 결제에 실패했습니다.");
+        assertThat(client).isEqualTo("주문번호 ORD-1\n상담 상품 주문 처리가 완료되었습니다.");
+        assertThat(consultant).isEqualTo("주문번호 ORD-1\n내담자 상담 상품 주문이 처리되었습니다.");
+        assertThat(fallback).doesNotContain("패키지");
+        assertThat(client).doesNotContain("패키지");
+        assertThat(consultant).doesNotContain("패키지");
+    }
+
     private static Schedule sampleSchedule() {
         Schedule schedule = new Schedule();
         schedule.setDate(LocalDate.of(2026, 5, 20));

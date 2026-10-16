@@ -24,7 +24,7 @@ public final class MobilePushMessageFormatter {
 
     public static final String FALLBACK_CONSULTANT_NAME = "상담사";
     public static final String FALLBACK_CLIENT_NAME = "내담자";
-    public static final String FALLBACK_PACKAGE_LABEL = "상담 패키지";
+    public static final String FALLBACK_PACKAGE_LABEL = "상담 상품";
 
     private static final String BOOKING_CONFIRMED_BODY_FMT =
             "예약이 확정되었습니다.\n일시: %s\n상담사: %s";
@@ -47,8 +47,8 @@ public final class MobilePushMessageFormatter {
     private static final String POINT_EARNED_BODY_FMT = "주문번호 %s\n%sP가 적립되었습니다.";
     private static final String SHOP_HOLD_EXPIRED_BODY_FMT = "주문번호 %s\n결제 대기 시간이 지나 주문이 만료되었습니다.";
     private static final String SHOP_REFUNDED_BODY_FMT = "주문번호 %s\n%s원 환불이 완료되었습니다.";
-    private static final String SHOP_FULFILLMENT_CLIENT_BODY_FMT = "주문번호 %s\n상담 패키지 주문 처리가 완료되었습니다.";
-    private static final String SHOP_FULFILLMENT_CONSULTANT_BODY_FMT = "주문번호 %s\n내담자 상담 패키지 주문이 처리되었습니다.";
+    private static final String SHOP_FULFILLMENT_CLIENT_BODY_FMT = "주문번호 %s\n상담 상품 주문 처리가 완료되었습니다.";
+    private static final String SHOP_FULFILLMENT_CONSULTANT_BODY_FMT = "주문번호 %s\n내담자 상담 상품 주문이 처리되었습니다.";
     private static final String BOOKING_REMINDER_SLOT_PREFIX = "\n\n일시: ";
     private static final String BOOKING_REMINDER_D1_CLIENT_COUNTERPART_FMT = "\n상담사: %s";
     private static final String BOOKING_REMINDER_D1_CONSULTANT_COUNTERPART_FMT = "\n내담자: %s";

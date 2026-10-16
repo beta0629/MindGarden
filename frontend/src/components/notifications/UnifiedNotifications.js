@@ -59,6 +59,27 @@ const resolveInitialTab = (search) => {
 };
 
 /**
+ * 내 알림 모달은 날짜만. 공지·메시지는 보낸 이 · 날짜.
+ *
+ * @param {{ type: string, data: object }} selectedItem
+ * @param {(value: string) => string} formatDate
+ * @param {(key: string) => string} t
+ * @returns {string}
+ */
+const modalSubtitle = (selectedItem, formatDate, t) => {
+  const when = formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt);
+  if (selectedItem.type === NOTIFICATION_TABS.PERSONAL) {
+    return when;
+  }
+  const who = selectedItem.data.senderType === 'SYSTEM'
+    ? t('common:notification.unified.senderSystem')
+    : (selectedItem.data.authorName
+      || selectedItem.data.senderName
+      || t('common:notification.unified.adminLabel'));
+  return when ? `${who} · ${when}` : who;
+};
+
+/**
  * 시스템 공지와 일반 메시지, 내 알림을 한 화면에서 본다.
  * 내담자만 ClientWebPageShell. 상담사·관리자는 AdminCommonLayout.
  */
@@ -482,6 +503,7 @@ const UnifiedNotifications = () => {
               className="unified-notifications__tab"
               aria-selected={selected}
               tabIndex={selected ? 0 : -1}
+              data-gnb-chrome-free="true"
               data-testid={item.testId}
               ref={(node) => { tabRefs.current[item.id] = node; }}
               onClick={() => handleTabChange(item.id)}
@@ -513,9 +535,7 @@ const UnifiedNotifications = () => {
           title={personalPresentation
             ? t(personalPresentation.titleKey)
             : toDisplayString(selectedItem.data.title, '')}
-          subtitle={`${selectedItem.data.senderType === 'SYSTEM'
-            ? t('common:notification.unified.senderSystem')
-            : (selectedItem.data.authorName || selectedItem.data.senderName || t('common:notification.unified.adminLabel'))} · ${formatDate(selectedItem.data.publishedAt || selectedItem.data.createdAt)}`}
+          subtitle={modalSubtitle(selectedItem, formatDate, t)}
           size="medium"
           data-testid={selectedItem.unavailable ? NOTIFICATION_PAGE_TEST_IDS.UNAVAILABLE : undefined}
           actions={(
@@ -607,6 +627,7 @@ const UnifiedNotifications = () => {
   if (clientShell) {
     return (
       <ClientWebPageShell
+        className="unified-notifications-shell"
         title={pageTitle}
         titleId={UNIFIED_NOTIFICATIONS_TITLE_ID}
         meta={(

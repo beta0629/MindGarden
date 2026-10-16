@@ -12,6 +12,15 @@
   font-size: var(--mg-v2-font-size-body-md);
 }
 
+/* 셸 stage gap·페이지 헤드 하단 여백을 빼서, 부제와 탭 사이는 시안 .tabs margin 만 남긴다 */
+.unified-notifications-shell .client-web-page-shell__stage {
+  gap: 0;
+}
+
+.unified-notifications-shell .client-web-page-shell__page-head {
+  margin-bottom: 0;
+}
+
 .unified-notifications .mg-tab-chip-row.unified-notifications__tabs {
   margin: var(--mg-v2-space-6) 0 var(--mg-v2-space-5);
   padding: 0;
@@ -34,7 +43,7 @@
   cursor: pointer;
 }
 
-.unified-notifications .unified-notifications__tab[aria-selected="true"] {
+.unified-notifications .mg-tab-chip-row.unified-notifications__tabs > .unified-notifications__tab[aria-selected="true"] {
   background: var(--mg-v2-tab-selected-bg);
   border-color: var(--mg-v2-tab-selected-border);
   color: var(--mg-v2-tab-selected-text);

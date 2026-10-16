@@ -77,9 +77,10 @@ jest.mock('../../layout/AdminCommonLayout', () => ({
 
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,
-  default: ({ isOpen, title, children, 'data-testid': testId }) => (isOpen ? (
+  default: ({ isOpen, title, subtitle, children, 'data-testid': testId }) => (isOpen ? (
     <div role="dialog" data-testid={testId}>
       <h2>{title}</h2>
+      {subtitle ? <p>{subtitle}</p> : null}
       {children}
     </div>
   ) : null)
@@ -162,6 +163,9 @@ describe('UnifiedNotifications 내 알림', () => {
     expect(payment).toHaveTextContent('상품');
     expect(payment).toHaveTextContent('1,000원');
     expect(payment.className).toContain('notif-card--unread');
+    expect(payment).toHaveAttribute('data-gnb-chrome-free', 'true');
+    expect(screen.getByRole('tab', { name: '내 알림' })).toHaveAttribute('data-gnb-chrome-free', 'true');
+    expect(screen.getByRole('tab', { name: '내 알림' })).toHaveAttribute('aria-selected', 'true');
 
     fireEvent.click(payment);
     await waitFor(() => {
@@ -189,10 +193,58 @@ describe('UnifiedNotifications 내 알림', () => {
     ]));
     renderPage('/notifications?tab=personal');
     fireEvent.click(await screen.findByRole('button', { name: /안내/ }));
-    expect(await screen.findByTestId(NOTIFICATION_PAGE_TEST_IDS.UNAVAILABLE))
-      .toHaveTextContent('연결된 화면을 열 수 없어요');
+    const dialog = await screen.findByTestId(NOTIFICATION_PAGE_TEST_IDS.UNAVAILABLE);
+    expect(dialog).toHaveTextContent('연결된 화면을 열 수 없어요');
+    expect(dialog).toHaveTextContent('2026');
+    expect(dialog).not.toHaveTextContent('관리자');
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/notifications?tab=personal');
     expect(mockNotificationState.markSystemNotificationAsRead).toHaveBeenCalledWith(50);
+  });
+
+  test('일정·메시지·웰니스·주문 알림은 보기 안내를 보여 준다', async() => {
+    StandardizedApi.get.mockResolvedValue(personalPayload([
+      {
+        id: 61,
+        isRead: true,
+        notificationType: 'SCHEDULE',
+        title: '일정 알림',
+        content: '본문',
+        createdAt: '2026-09-30T05:58:00'
+      },
+      {
+        id: 62,
+        isRead: true,
+        notificationType: 'MESSAGE',
+        title: '메시지 알림',
+        content: '본문',
+        createdAt: '2026-09-30T05:58:00'
+      },
+      {
+        id: 63,
+        isRead: true,
+        notificationType: 'WELLNESS',
+        title: '웰니스 알림',
+        content: '본문',
+        createdAt: '2026-09-30T05:58:00'
+      },
+      {
+        id: 64,
+        isRead: true,
+        notificationType: 'SHOP_ORDER',
+        title: '주문 알림',
+        content: '본문',
+        createdAt: '2026-09-30T05:58:00'
+      }
+    ]));
+    renderPage('/notifications?tab=personal');
+    expect(await screen.findByRole('button', { name: /일정 알림/ })).toHaveTextContent('일정 보기');
+    expect(screen.getByRole('button', { name: /메시지 알림/ })).toHaveTextContent('메시지 보기');
+    expect(screen.getByRole('button', { name: /웰니스 알림/ })).toHaveTextContent('웰니스 보기');
+    expect(screen.getByRole('button', { name: /주문 알림/ })).toHaveTextContent('주문 보기');
+    fireEvent.click(screen.getByRole('button', { name: /일정 알림/ }));
+    await waitFor(() => {
+      expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_DASHBOARD_ROUTES.SCHEDULE);
+    });
   });
 
   test('GNB 딥링크는 공지 모달을 연 뒤 /notifications 로 바꾼다', async() => {

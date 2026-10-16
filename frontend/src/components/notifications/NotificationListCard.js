@@ -54,6 +54,7 @@ const NotificationListCard = ({
         type="button"
         className={`notif-card ${readClass}`}
         onClick={onClick}
+        data-gnb-chrome-free="true"
         data-testid={testId}
       >
         <span className={`notif-card__icon${toneClass}`} aria-hidden="true">

@@ -23,6 +23,7 @@ import {
 } from '../../constants/notificationTabs';
 import {
   PERSONAL_NOTIFICATION_PRESENTATION,
+  PERSONAL_NOTIFICATION_ROUTE_GO_KEY,
   resolvePersonalNotificationDestination
 } from '../../constants/personalNotificationRoutes';
 import NotificationListCard, { NotificationLoadingList, toNotificationPreview } from './NotificationListCard';
@@ -39,6 +40,21 @@ const TONE_ICONS = {
  * @param {number|null} amount
  * @returns {string}
  */
+/**
+ * 이동이 있는 카드의 「…보기」 키. kind 문구가 있으면 그걸, 없으면 참고 경로 문구.
+ *
+ * @param {object} notification
+ * @param {{ goKey?: string }|undefined} presentation
+ * @returns {string}
+ */
+const resolvePersonalGoKey = (notification, presentation) => {
+  if (presentation && presentation.goKey) {
+    return presentation.goKey;
+  }
+  const type = String((notification && notification.notificationType) || '').toUpperCase();
+  return PERSONAL_NOTIFICATION_ROUTE_GO_KEY[type] || '';
+};
+
 const formatAmount = (amount) => {
   if (amount == null || !Number.isFinite(amount)) {
     return '';
@@ -102,12 +118,14 @@ const PersonalNotificationsTab = ({
       });
     }
     const when = notification.publishedAt || notification.createdAt;
+    const goKey = destination.path ? resolvePersonalGoKey(notification, presentation) : '';
     return {
       notification,
       destination,
       presentation,
       fields,
-      when
+      when,
+      goLabel: goKey ? t(goKey) : ''
     };
   }), [items, options, t]);
 
@@ -152,7 +170,7 @@ const PersonalNotificationsTab = ({
   return (
     <div>
       <ul className="notif-list" data-testid={PERSONAL_NOTIFICATION_TEST_IDS.LIST}>
-        {cards.map(({ notification, destination, presentation, fields, when }) => (
+        {cards.map(({ notification, destination, presentation, fields, when, goLabel }) => (
           <NotificationListCard
             key={notification.id}
             testId={PERSONAL_NOTIFICATION_TEST_IDS.ITEM}
@@ -170,7 +188,7 @@ const PersonalNotificationsTab = ({
             icon={(presentation && TONE_ICONS[presentation.tone]) || BellIcon}
             iconTone={presentation ? presentation.tone : ''}
             fields={fields}
-            goLabel={destination.path && presentation ? t(presentation.goKey) : ''}
+            goLabel={goLabel}
             showChevron={!destination.path}
             onClick={() => handleSelect(notification)}
           />

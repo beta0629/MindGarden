@@ -8,6 +8,16 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+
+jest.mock('@fullcalendar/luxon3', () => {
+  const { createPlugin } = require('@fullcalendar/core');
+  const plugin = createPlugin({ name: '@fullcalendar/luxon3' });
+  plugin.id = 'luxon3';
+  return { __esModule: true, default: plugin };
+}, {
+  virtual: true
+});
+
 import ScheduleCalendarView from '../ScheduleCalendarView';
 
 class ResizeObserverStub {

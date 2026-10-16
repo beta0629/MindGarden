@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# 개발 서버 기동 후 검증: PID 변경 + actuator git.commit 또는 실행 중 JAR sha256.
+# 개발 서버 기동 후 검증: PID 변경 + actuator git.commit 필수 일치.
+# jar sha256 폴백 없음 — git.commit 없으면 실패.
 #
 # 사용:
 #   verify-dev-running-build.sh \
@@ -10,9 +11,11 @@
 #     --app-jar /var/www/mindgarden-dev/app.jar \
 #     --info-url http://127.0.0.1:8080/actuator/info
 #
+# --deploy-jar-sha 는 CLI/워크플로 호환용으로 필수이나 성공 판정에 사용하지 않음.
+#
 # 종료 코드:
-#   0  — post-start verify OK
-#   1  — PID unchanged / git mismatch / jar mismatch / 인자·도구 누락
+#   0  — post-start verify OK (git.commit match)
+#   1  — PID unchanged / git.commit empty·mismatch / 인자·도구 누락
 #
 # 로그에는 SHA/commit 접두 12자만 출력. 시크릿 없음.
 set -euo pipefail
@@ -34,8 +37,8 @@ Usage: verify-dev-running-build.sh \
   [--app-jar /var/www/mindgarden-dev/app.jar] \
   [--info-url http://127.0.0.1:8080/actuator/info]
 
-Verify post-start: MainPID changed, then git.commit.id matches GITHUB_SHA
-(or, if git commit missing, running -jar sha256 matches --deploy-jar-sha).
+Verify post-start: MainPID changed, then git.commit.id matches GITHUB_SHA.
+git.commit is required — no jar sha256 fallback.
 EOF
 }
 
@@ -95,40 +98,6 @@ commit = (
 )
 print(commit or "")
 PY
-}
-
-resolve_running_jar() {
-  local pid="$1"
-  local cmdline_file="/proc/${pid}/cmdline"
-  local cwd_link="/proc/${pid}/cwd"
-  if [ ! -r "$cmdline_file" ]; then
-    echo ""
-    return 0
-  fi
-  local -a args=()
-  # null-separated cmdline → bash array
-  while IFS= read -r -d '' arg; do
-    args+=("$arg")
-  done <"$cmdline_file" || true
-  local i jar=""
-  for ((i = 0; i < ${#args[@]}; i++)); do
-    if [ "${args[$i]}" = "-jar" ] && [ $((i + 1)) -lt ${#args[@]} ]; then
-      jar="${args[$((i + 1))]}"
-      break
-    fi
-  done
-  if [ -z "$jar" ]; then
-    echo ""
-    return 0
-  fi
-  if [[ "$jar" != /* ]]; then
-    local cwd
-    cwd="$(readlink -f "$cwd_link" 2>/dev/null || true)"
-    if [ -n "$cwd" ]; then
-      jar="${cwd}/${jar}"
-    fi
-  fi
-  printf '%s' "$jar"
 }
 
 while [ $# -gt 0 ]; do
@@ -202,36 +171,18 @@ if [ -n "$GIT_COMMIT" ] && [ -n "${GITHUB_SHA:-}" ] && sha_matches "$GIT_COMMIT"
 fi
 echo "running_commit=${GIT_COMMIT:-} expected=${GITHUB_SHA:-} match=${COMMIT_MATCH}"
 
-if [ -n "$GIT_COMMIT" ]; then
-  if [ -z "${GITHUB_SHA:-}" ]; then
-    echo "::error::git.commit present but --github-sha empty (git_prefix=$(prefix12 "$GIT_COMMIT"))"
-    exit 1
-  fi
-  if [ "$COMMIT_MATCH" != "true" ]; then
-    echo "::error::git.commit mismatch git_prefix=$(prefix12 "$GIT_COMMIT") github_prefix=$(prefix12 "$GITHUB_SHA")"
-    exit 1
-  fi
-  echo "✅ post-start verify OK (git.commit) PRE=${PRE_PID} POST=${POST_PID} git_prefix=$(prefix12 "$GIT_COMMIT") github_prefix=$(prefix12 "$GITHUB_SHA")"
-  exit 0
+if [ -z "$GIT_COMMIT" ]; then
+  echo "::error::git.commit empty — git.commit required (no jar fallback)"
+  exit 1
 fi
-
-echo "ℹ️ git.commit empty — fallback to running jar sha256 (app-jar ref=$(prefix12 "$APP_JAR"))"
-if [ "${POST_PID}" = "0" ] || [ ! -d "/proc/${POST_PID}" ]; then
-  echo "::error::POST_PID missing/invalid for jar fallback (POST=${POST_PID})"
+if [ -z "${GITHUB_SHA:-}" ]; then
+  echo "::error::--github-sha empty (git_prefix=$(prefix12 "$GIT_COMMIT"))"
+  exit 1
+fi
+if [ "$COMMIT_MATCH" != "true" ]; then
+  echo "::error::git.commit mismatch git_prefix=$(prefix12 "$GIT_COMMIT") github_prefix=$(prefix12 "$GITHUB_SHA")"
   exit 1
 fi
 
-RUN_JAR="$(resolve_running_jar "$POST_PID")"
-if [ -z "$RUN_JAR" ] || [ ! -f "$RUN_JAR" ]; then
-  echo "::error::running jar not found via /proc/${POST_PID}/cmdline (-jar)"
-  exit 1
-fi
-
-RUN_JAR_SHA="$(sha256sum "$RUN_JAR" | awk '{print $1}')"
-if [ "$RUN_JAR_SHA" != "$DEPLOY_JAR_SHA" ]; then
-  echo "::error::running jar sha mismatch run_prefix=$(prefix12 "$RUN_JAR_SHA") deploy_prefix=$(prefix12 "$DEPLOY_JAR_SHA") path=$RUN_JAR"
-  exit 1
-fi
-
-echo "✅ post-start verify OK (jar sha fallback) PRE=${PRE_PID} POST=${POST_PID} jar_prefix=$(prefix12 "$DEPLOY_JAR_SHA") path=$RUN_JAR"
+echo "✅ post-start verify OK (git.commit) PRE=${PRE_PID} POST=${POST_PID} git_prefix=$(prefix12 "$GIT_COMMIT") github_prefix=$(prefix12 "$GITHUB_SHA")"
 exit 0

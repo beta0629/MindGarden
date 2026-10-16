@@ -135,6 +135,23 @@ public final class ShopCheckoutConstants {
     public static final String ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH = "ShopPaymentMismatch";
 
     /**
+     * PortOne 검증 UNKNOWN 재시도 상한 기본값 ({@code shop.portone.verify-unknown-max-attempts}).
+     */
+    public static final int DEFAULT_VERIFY_UNKNOWN_MAX_ATTEMPTS = 10;
+
+    /**
+     * PortOne 검증 UNKNOWN 최대 경과 기본값(ms). {@code 0} = 연령 한도 비활성
+     * ({@code shop.portone.verify-unknown-max-age-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_MAX_AGE_MS = 0L;
+
+    /** 관리자 알림 출처 — PortOne 검증 UNKNOWN 재시도 소진 */
+    public static final String ADMIN_ALERT_SOURCE_VERIFY_UNKNOWN = "ShopPortOneVerifyUnknown";
+
+    /** 관리자 알림 단계 — UNKNOWN 재시도 소진, 수동 확인(자동 취소 없음) */
+    public static final String ADMIN_ALERT_STEP_VERIFY_UNKNOWN_EXHAUSTED = "VERIFY_UNKNOWN_EXHAUSTED";
+
+    /**
      * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
      */
     public static final String MSG_PREPARE_INVALID_ORDER_STATUS =

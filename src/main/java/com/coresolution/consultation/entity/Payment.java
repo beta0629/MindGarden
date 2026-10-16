@@ -46,6 +46,38 @@ public class Payment extends BaseEntity {
      */
     @Column(name = "amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
+
+    /**
+     * 클라이언트/prepare 청구액(cashDue). 불일치 취소 시 {@code amount} 가 PortOne paid 로
+     * 동기화돼도 ERP·감사 용도로 원 청구액을 유지한다.
+     */
+    @Column(name = "requested_amount", precision = 19, scale = 2)
+    private BigDecimal requestedAmount;
+
+    /**
+     * PortOne {@code amount.paid} 실결제액 (MATCH/MISMATCH 검증 시 기록).
+     */
+    @Column(name = "portone_paid_amount", precision = 19, scale = 2)
+    private BigDecimal portonePaidAmount;
+
+    /**
+     * PortOne 검증 UNKNOWN 누적 시도 횟수.
+     */
+    @Builder.Default
+    @Column(name = "verify_unknown_attempt_count", nullable = false)
+    private Integer verifyUnknownAttemptCount = 0;
+
+    /**
+     * PortOne 검증 UNKNOWN 최초 관측 시각.
+     */
+    @Column(name = "verify_unknown_first_seen_at")
+    private LocalDateTime verifyUnknownFirstSeenAt;
+
+    /**
+     * PortOne 검증 UNKNOWN 재시도 소진 시각 (관리자 알림 1회 멱등 마커).
+     */
+    @Column(name = "verify_unknown_exhausted_at")
+    private LocalDateTime verifyUnknownExhaustedAt;
     
     /**
      * 결제 상태

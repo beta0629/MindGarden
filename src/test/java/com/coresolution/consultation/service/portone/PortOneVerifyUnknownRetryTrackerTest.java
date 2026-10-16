@@ -1,0 +1,116 @@
+package com.coresolution.consultation.service.portone;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.time.LocalDateTime;
+import java.util.Optional;
+import com.coresolution.consultation.config.ShopPortOneProperties;
+import com.coresolution.consultation.constant.ShopCheckoutConstants;
+import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.core.monitoring.SchedulerFailureNotifier;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.ObjectProvider;
+
+/**
+ * {@link PortOneVerifyUnknownRetryTracker} 상한·알림 멱등 단위 검증.
+ *
+ * @author MindGarden
+ * @since 2026-10-16
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("PortOneVerifyUnknownRetryTracker")
+class PortOneVerifyUnknownRetryTrackerTest {
+
+    private static final String TENANT = "tenant-unknown-retry";
+    private static final String PAYMENT_ID = "pay-unknown-1";
+
+    @Mock
+    private PaymentRepository paymentRepository;
+    @Mock
+    private ObjectProvider<SchedulerFailureNotifier> notifierProvider;
+    @Mock
+    private SchedulerFailureNotifier notifier;
+
+    private ShopPortOneProperties properties;
+    private PortOneVerifyUnknownRetryTracker tracker;
+
+    @BeforeEach
+    void setUp() {
+        properties = new ShopPortOneProperties();
+        properties.setVerifyUnknownMaxAttempts(3);
+        properties.setVerifyUnknownMaxAgeMs(0L);
+        tracker = new PortOneVerifyUnknownRetryTracker(paymentRepository, properties, notifierProvider);
+        lenient().when(notifierProvider.getIfAvailable()).thenReturn(notifier);
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));
+    }
+
+    @Test
+    @DisplayName("상한 미만이면 RETRYABLE·카운트 증가·알림 없음")
+    void recordUnknown_underCap_retryable() {
+        Payment payment = paymentWithAttempts(1);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        PortOneVerifyUnknownRetryOutcome outcome = tracker.recordUnknownAndDecide(TENANT, PAYMENT_ID);
+
+        assertEquals(PortOneVerifyUnknownRetryOutcome.RETRYABLE, outcome);
+        assertEquals(2, payment.getVerifyUnknownAttemptCount());
+        assertNotNull(payment.getVerifyUnknownFirstSeenAt());
+        assertNull(payment.getVerifyUnknownExhaustedAt());
+        verify(notifier, never()).notifyFailure(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("상한 도달 시 EXHAUSTED·알림 1회·exhausted_at 기록")
+    void recordUnknown_reachesCap_exhaustedOnce() {
+        Payment payment = paymentWithAttempts(2);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+
+        PortOneVerifyUnknownRetryOutcome first = tracker.recordUnknownAndDecide(TENANT, PAYMENT_ID);
+        assertEquals(PortOneVerifyUnknownRetryOutcome.EXHAUSTED, first);
+        assertNotNull(payment.getVerifyUnknownExhaustedAt());
+        assertEquals(3, payment.getVerifyUnknownAttemptCount());
+
+        ArgumentCaptor<String> source = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> step = ArgumentCaptor.forClass(String.class);
+        verify(notifier, times(1)).notifyFailure(source.capture(), step.capture(), eq(TENANT), any());
+        assertEquals(ShopCheckoutConstants.ADMIN_ALERT_SOURCE_VERIFY_UNKNOWN, source.getValue());
+        assertEquals(ShopCheckoutConstants.ADMIN_ALERT_STEP_VERIFY_UNKNOWN_EXHAUSTED, step.getValue());
+
+        PortOneVerifyUnknownRetryOutcome second = tracker.recordUnknownAndDecide(TENANT, PAYMENT_ID);
+        assertEquals(PortOneVerifyUnknownRetryOutcome.EXHAUSTED, second);
+        verify(notifier, times(1)).notifyFailure(any(), any(), any(), any());
+        assertTrue(tracker.isExhausted(payment));
+    }
+
+    private static Payment paymentWithAttempts(int attempts) {
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId("ord-1")
+                .amount(java.math.BigDecimal.valueOf(1000L))
+                .status(Payment.PaymentStatus.PENDING)
+                .verifyUnknownAttemptCount(attempts)
+                .verifyUnknownFirstSeenAt(attempts > 0 ? LocalDateTime.now().minusMinutes(1) : null)
+                .build();
+        payment.setTenantId(TENANT);
+        return payment;
+    }
+}

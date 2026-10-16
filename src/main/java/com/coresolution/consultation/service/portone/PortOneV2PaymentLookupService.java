@@ -211,24 +211,7 @@ public class PortOneV2PaymentLookupService {
     }
 
     private static boolean customDataMatchesOrder(JsonNode customData, String orderPublicId) {
-        if (customData.isObject()) {
-            String fromField = text(customData, "orderPublicId");
-            if (orderPublicId.equals(fromField)) {
-                return true;
-            }
-            return customData.toString().contains(orderPublicId);
-        }
-        if (customData.isTextual()) {
-            String raw = customData.asText();
-            if (raw == null || raw.isBlank()) {
-                return false;
-            }
-            if (orderPublicId.equals(raw.trim())) {
-                return true;
-            }
-            return raw.contains(orderPublicId);
-        }
-        return customData.toString().contains(orderPublicId);
+        return PortOnePaymentPayloadSupport.customDataMatchesOrder(customData, orderPublicId);
     }
 
     private static Optional<String> paymentIdOf(JsonNode paymentNode) {
@@ -340,25 +323,7 @@ public class PortOneV2PaymentLookupService {
     }
 
     private static BigDecimal extractTotalAmount(JsonNode paymentNode) {
-        JsonNode amountNode = paymentNode.get("amount");
-        if (amountNode == null || amountNode.isNull()) {
-            return null;
-        }
-        if (amountNode.isNumber()) {
-            return amountNode.decimalValue();
-        }
-        JsonNode total = amountNode.get("total");
-        if (total != null && total.isNumber()) {
-            return total.decimalValue();
-        }
-        if (total != null && total.isTextual()) {
-            try {
-                return new BigDecimal(total.asText());
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        return null;
+        return PortOnePaymentPayloadSupport.extractTotalAmount(paymentNode);
     }
 
     private static String text(JsonNode node, String field) {

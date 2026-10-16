@@ -1343,6 +1343,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 return false;
             }
             if (paidState == PortOnePaymentPaidState.PAID) {
+                Optional<String> verified = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        tenantId, payment.getPaymentId(), order);
+                if (verified.isEmpty()) {
+                    log.warn(
+                            "hold TTL 만료 — PortOne PAID 금액·주문 불일치 취소: tenantId={}, orderPublicId={}, paymentId={}",
+                            tenantId,
+                            orderPublicId,
+                            payment.getPaymentId());
+                    return cancelMismatchedApprovedPaymentForOrder(tenantId, orderPublicId);
+                }
                 approveOpenPaymentLocally(payment);
                 log.info(
                         "hold TTL 만료 대신 PortOne PAID 확정: tenantId={}, orderPublicId={}, paymentId={}",
@@ -1362,6 +1372,38 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         } catch (Exception ex) {
             log.warn("쇼핑 주문 만료 알림 실패: orderPublicId={}", orderPublicId, ex);
         }
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public boolean cancelMismatchedApprovedPaymentForOrder(String tenantId, String orderPublicId) {
+        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(orderPublicId)) {
+            return false;
+        }
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.lockByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            orderOpt = shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        }
+        if (orderOpt.isEmpty()) {
+            return false;
+        }
+        ShopClientOrder order = orderOpt.get();
+        if (order.getStatus() == ShopClientOrderStatus.CANCELLED
+                || order.getStatus() == ShopClientOrderStatus.REFUNDED
+                || order.getStatus() == ShopClientOrderStatus.CANCEL_FAILED) {
+            return true;
+        }
+        Payment payment = resolveLatestPayment(tenantId, order.getPublicId()).orElse(null);
+        if (payment == null || !StringUtils.hasText(payment.getPaymentId())) {
+            return false;
+        }
+        approveOpenPaymentLocally(payment);
+        cancelMismatchedApprovedPayment(tenantId, order, payment);
         return true;
     }
 

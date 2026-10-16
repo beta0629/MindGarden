@@ -111,6 +111,11 @@ public final class ShopCheckoutConstants {
             "지정된 상품이 이 내담자의 것이 아니거나 만료되어 결제할 수 없습니다.";
 
     /**
+     * 쇼핑 PG 결제 통화 (PortOne prepare·검증 SSOT). {@code amount.currency} 와 동일해야 한다.
+     */
+    public static final String CURRENCY_KRW = "KRW";
+
+    /**
      * 결제 확정에서 승인 금액이 주문 현금 결제액과 다르거나 결제 건의 주문이 다를 때
      * PortOne 전액 취소·단일 환불에 넣는 사유. 개인정보·시크릿을 넣지 않는다.
      */

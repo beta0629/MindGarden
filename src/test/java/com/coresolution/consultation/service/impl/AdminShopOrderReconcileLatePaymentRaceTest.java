@@ -146,8 +146,8 @@ class AdminShopOrderReconcileLatePaymentRaceTest {
     private void stubVerifiedPendingOrder(ShopClientOrder order, Payment pending) {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenAnswer(inv -> Optional.of(order));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
                 .thenReturn(Optional.of(VERIFY_BODY));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenAnswer(inv -> Optional.of(pending));

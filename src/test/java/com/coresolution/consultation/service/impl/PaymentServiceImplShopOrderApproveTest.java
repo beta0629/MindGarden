@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -473,12 +474,13 @@ class PaymentServiceImplShopOrderApproveTest {
     @DisplayName("verifyPayment — 닫힌 주문 늦은 결제면 가드가 PG 자동 취소, 승인·결제 행 수정 없이 false")
     void verifyPayment_closedOrderLatePayment_refundsViaGuard_noApprove() {
         Payment payment = buildShopProcessingPayment();
+        ShopClientOrder order = shopOrderWithCashDue(15_000L);
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(Optional.of(payment));
         when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
-                .thenReturn(Optional.of(new ShopClientOrder()));
+                .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, new BigDecimal("15000")))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
                 .thenReturn(Optional.of("{\"status\":\"PAID\"}"));
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(ShopLatePaymentOutcome.REFUNDED);
@@ -488,6 +490,81 @@ class PaymentServiceImplShopOrderApproveTest {
         assertThat(payment.getStatus()).isEqualTo(Payment.PaymentStatus.PROCESSING);
         assertThat(payment.getExternalResponse()).isNull();
         verify(paymentRepository, never()).save(any(Payment.class));
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPayment — 쇼핑 underpay 이면 클라이언트 amount 무시·전액 취소·false")
+    void verifyPayment_shopUnderpay_ignoresClientAmount_cancels() {
+        Payment payment = buildShopProcessingPayment();
+        ShopClientOrder order = shopOrderWithCashDue(1_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
+                .thenReturn(Optional.empty());
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        // 클라이언트가 주문액과 다른 금액을 보내도 PortOne SSOT 만 본다
+        assertThat(service.verifyPayment(PAYMENT_PUBLIC_ID, new BigDecimal("100"))).isFalse();
+
+        verify(portOneV2PaymentVerifyService).verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order);
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(clientShopCheckoutService).cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPayment — 쇼핑 금액 일치면 approve 경로 성공")
+    void verifyPayment_shopAmountMatch_fulfills() {
+        Payment payment = buildShopProcessingPayment();
+        ShopClientOrder order = shopOrderWithCashDue(15_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
+                .thenReturn(Optional.of(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}"));
+        when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(ShopLatePaymentOutcome.NOT_APPLICABLE);
+        when(clientShopCheckoutService.completeOrderOnPaymentApproved(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        assertThat(service.verifyPayment(PAYMENT_PUBLIC_ID, new BigDecimal("1"))).isTrue();
+
+        verify(clientShopCheckoutService).completeOrderOnPaymentApproved(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("verifyPayment — underpay 취소 후 재검증 시 이중 환불 없음(cancel 진입만 멱등)")
+    void verifyPayment_shopUnderpay_repeat_noDoubleRefundViaCancelEntry() {
+        Payment payment = buildShopProcessingPayment();
+        ShopClientOrder order = shopOrderWithCashDue(1_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_PUBLIC_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(eq(TENANT_ID), eq(ORDER_PUBLIC_ID)))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.isIamportPayment(payment)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
+                .thenReturn(Optional.empty());
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        assertThat(service.verifyPayment(PAYMENT_PUBLIC_ID, new BigDecimal("1000"))).isFalse();
+        assertThat(service.verifyPayment(PAYMENT_PUBLIC_ID, new BigDecimal("1000"))).isFalse();
+
+        verify(clientShopCheckoutService, times(2))
+                .cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
         verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
     }
 
@@ -542,5 +619,14 @@ class PaymentServiceImplShopOrderApproveTest {
         Payment payment = buildShopProcessingPayment();
         payment.setStatus(Payment.PaymentStatus.APPROVED);
         return payment;
+    }
+
+    private static ShopClientOrder shopOrderWithCashDue(long cashDueMinor) {
+        ShopClientOrder order = new ShopClientOrder();
+        order.setPublicId(ORDER_PUBLIC_ID);
+        order.setCashDueMinor(cashDueMinor);
+        order.setStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        order.setTenantId(TENANT_ID);
+        return order;
     }
 }

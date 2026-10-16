@@ -166,6 +166,106 @@ class PortOneV2PaymentVerifyServiceTest {
         verify(restTemplate, never()).exchange(any(), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
 
+    @Test
+    @DisplayName("쇼핑 검증 — PAID+total/paid/통화/주문/paymentId 일치 시 body")
+    void verifyPaidMatchesShopOrder_fullMatch_returnsBody() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        String body = "{"
+                + "\"id\":\"pay-1\","
+                + "\"status\":\"PAID\","
+                + "\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"},"
+                + "\"customData\":{\"orderPublicId\":\"ord-1\"}"
+                + "}";
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(body, HttpStatus.OK));
+
+        Optional<String> result = service.verifyPaidMatchesShopOrder(
+                "t1", "pay-1", 1000L, "ord-1", "KRW");
+        assertTrue(result.isPresent());
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — underpay(total/paid=100 vs 1000) 즉시 empty")
+    void verifyPaidMatchesShopOrder_underpay_emptyWithoutRetry() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":100,\"paid\":100,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — overpay 즉시 empty")
+    void verifyPaidMatchesShopOrder_overpay_empty() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1100,\"paid\":1100,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — paid 누락 fail-closed")
+    void verifyPaidMatchesShopOrder_missingPaid_empty() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — 통화 불일치 empty")
+    void verifyPaidMatchesShopOrder_wrongCurrency_empty() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"USD\"}}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — 주문 참조 불일치 empty")
+    void verifyPaidMatchesShopOrder_wrongOrderId_empty() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"},"
+                                + "\"merchantOrderReference\":\"ord-other\"}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — paymentId 불일치 empty")
+    void verifyPaidMatchesShopOrder_wrongPaymentId_empty() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-other\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertTrue(service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").isEmpty());
+    }
+
     private void stubActiveApprovedConfig() {
         TenantPgConfiguration config = TenantPgConfiguration.builder()
                 .configId("cfg-1")

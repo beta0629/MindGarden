@@ -115,10 +115,8 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                     tenantId, order, cardApprovalNumber.trim(), orderPublicId);
         }
 
-        BigDecimal expectedAmount = BigDecimal.valueOf(cashDueMinor);
-
-        Optional<String> verifiedBody = portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                tenantId, trimmedPaymentId, expectedAmount);
+        Optional<String> verifiedBody = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                tenantId, trimmedPaymentId, order);
         if (verifiedBody.isEmpty()) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
         }
@@ -260,8 +258,8 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         }
         if (payment.getStatus() != Payment.PaymentStatus.REFUND_REQUIRED
                 && payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
-            Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                    tenantId, targetPaymentId, BigDecimal.valueOf(order.getCashDueMinor()));
+            Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                    tenantId, targetPaymentId, order);
             if (paid.isEmpty()) {
                 throw new IllegalArgumentException(closedOrderMessage);
             }
@@ -485,8 +483,8 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                 paymentService.approveShopOrderPayment(payment.getPaymentId());
             } catch (ShopDuplicatePaymentException duplicate) {
                 // 주문은 이미 다른 결제로 PAID — PortOne PAID 확인 시에만 이중 결제 자동 취소
-                Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        tenantId, payment.getPaymentId(), BigDecimal.valueOf(order.getCashDueMinor()));
+                Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        tenantId, payment.getPaymentId(), order);
                 if (paid.isEmpty()) {
                     throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
                 }

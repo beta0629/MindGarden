@@ -881,13 +881,36 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
 
         if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
             // PortOne 조회는 트랜잭션 밖 — 결과만 들고 짧은 트랜잭션에서 주문 잠금·재확인·상태 변경
-            Optional<String> verifiedBody = portOneV2PaymentVerifyService
-                    .verifyPaidAmountBody(tenantId, paymentId, amount);
-            if (verifiedBody.isEmpty()) {
-                log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
-                return false;
-            }
             boolean shopOrder = isShopOrderPayment(payment);
+            Optional<String> verifiedBody;
+            if (shopOrder) {
+                // 쇼핑: 클라이언트 amount 무시 — PortOne REST vs order.cashDueMinor SSOT
+                ShopClientOrder shopOrderEntity = shopClientOrderRepository
+                        .findByTenantIdAndPublicId(tenantId, payment.getOrderId())
+                        .orElse(null);
+                if (shopOrderEntity == null) {
+                    log.warn("포트원 REST 검증 실패: 쇼핑 주문 없음 paymentId={}", paymentId);
+                    return false;
+                }
+                verifiedBody = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        tenantId, paymentId, shopOrderEntity);
+                if (verifiedBody.isEmpty()) {
+                    log.warn(
+                            "포트원 REST 검증 실패(쇼핑 금액·주문 불일치): paymentId={}, orderPublicId={}, cashDue={}",
+                            paymentId,
+                            shopOrderEntity.getPublicId(),
+                            shopOrderEntity.getCashDueMinor());
+                    clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                            tenantId, shopOrderEntity.getPublicId());
+                    return false;
+                }
+            } else {
+                verifiedBody = portOneV2PaymentVerifyService.verifyPaidAmountBody(tenantId, paymentId, amount);
+                if (verifiedBody.isEmpty()) {
+                    log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
+                    return false;
+                }
+            }
             if (shopOrder && isLatePaymentHandled(tenantId, paymentId)) {
                 return false;
             }

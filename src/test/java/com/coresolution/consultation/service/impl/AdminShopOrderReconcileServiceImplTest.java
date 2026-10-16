@@ -82,8 +82,8 @@ class AdminShopOrderReconcileServiceImplTest {
         Payment late = pendingIamportPayment(PORTONE_PAYMENT_ID);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
                 .thenReturn(Optional.of(VERIFY_BODY));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenReturn(Optional.of(late));
@@ -121,7 +121,7 @@ class AdminShopOrderReconcileServiceImplTest {
         assertEquals(ShopClientOrderStatus.CANCELLED, response.getOrderStatus());
         assertEquals(Payment.PaymentStatus.REFUNDED, response.getPaymentStatus());
         assertFalse(response.isRecovered());
-        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidMatchesShopOrder(any(), any(), any(ShopClientOrder.class));
         verify(paymentService, never()).approveShopOrderPayment(any());
         verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
     }
@@ -136,8 +136,8 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(order));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenReturn(Optional.of(cancelled));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
                 .thenReturn(Optional.empty());
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
@@ -180,8 +180,8 @@ class AdminShopOrderReconcileServiceImplTest {
         String verifyBody = "{\"status\":\"PAID\",\"amount\":{\"total\":1000}}";
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, stuckOrderId))
                 .thenReturn(Optional.of(order));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(stuckPaymentId), eq(BigDecimal.valueOf(stuckCashDue))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(stuckPaymentId), any(ShopClientOrder.class)))
                 .thenReturn(Optional.of(verifyBody));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, stuckPaymentId))
                 .thenReturn(Optional.of(pending))
@@ -221,8 +221,8 @@ class AdminShopOrderReconcileServiceImplTest {
                         eq(BigDecimal.valueOf(CASH_DUE)),
                         eq(ORDER_ID)))
                 .thenReturn(Optional.of(PORTONE_PAYMENT_ID));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
                 .thenReturn(Optional.of(VERIFY_BODY));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenReturn(Optional.empty())
@@ -253,8 +253,8 @@ class AdminShopOrderReconcileServiceImplTest {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
                 .thenReturn(Optional.empty());
 
         IllegalStateException ex = assertThrows(
@@ -307,7 +307,7 @@ class AdminShopOrderReconcileServiceImplTest {
                 () -> service.reconcilePayment(TENANT, ORDER_ID, null, CARD_APPROVAL));
 
         assertEquals(ShopOrderReconcileConstants.MSG_APPROVAL_LOOKUP_FAILED, ex.getMessage());
-        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidMatchesShopOrder(any(), any(), any(ShopClientOrder.class));
     }
 
     @Test
@@ -326,7 +326,7 @@ class AdminShopOrderReconcileServiceImplTest {
 
         assertEquals(ShopClientOrderStatus.PAID, response.getOrderStatus());
         assertFalse(response.isRecovered());
-        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidMatchesShopOrder(any(), any(), any(ShopClientOrder.class));
         verify(paymentService, never()).approveShopOrderPayment(any());
         verify(paymentService, never()).updatePaymentStatus(any(), any());
     }

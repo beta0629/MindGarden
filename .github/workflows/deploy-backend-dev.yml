@@ -42,6 +42,16 @@ on:
       - 'src/main/resources/db/migration/**'
       - 'pom.xml'
       - 'deployment/mindgarden.prod-env.example'
+      # 배포 헬퍼: Flyway health·DB env·mysql-deploy-client·public-health·clock-skew·Solapi sync 등
+      - 'scripts/deployment/**'
+      # 표준 프로시저 SCP/실행 소스 (deploy-standardized-procedures.sh)
+      - 'scripts/automation/deployment/**'
+      # 디스크/DB 정리 유틸 SCP 소스 (auto-disk-cleanup · cleanup-db-connections)
+      - 'scripts/development/utilities/**'
+      # systemd unit SCP (mindgarden-dev.service)
+      - 'config/systemd/**'
+      # 프로시저 배포 번들 (create_deployment_files.sh / procedures_standardized)
+      - 'database/schema/**'
       - '.github/workflows/deploy-backend-dev.yml'
       - '.github/actions/assert-env-key-nonempty/**'
   workflow_dispatch:

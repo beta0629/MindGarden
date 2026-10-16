@@ -846,4 +846,74 @@ else
   fi
 fi
 
+# --- on.push.paths 회귀 가드: 배포 헬퍼·SCP 소스가 paths 에 포함되어야 자동 배포 트리거됨 ---
+# paths: 블록을 workflow_dispatch: 직전까지 추출한 뒤 필수 glob 존재 여부만 검사한다.
+REPO_ROOT="$(cd "$DIR/../.." && pwd)"
+PROD_WF="$REPO_ROOT/.github/workflows/deploy-production.yml"
+
+# 워크플로 YAML 의 on.push.paths 리스트 항목(따옴표 안 경로)만 한 줄씩 출력
+extract_push_paths() {
+  local wf="$1"
+  awk '
+    /^[[:space:]]*paths:[[:space:]]*$/ { in_paths=1; next }
+    in_paths && /^[[:space:]]*workflow_dispatch:[[:space:]]*$/ { exit }
+    in_paths && /^[^[:space:]#]/ { exit }
+    in_paths && /^[[:space:]]*-[[:space:]]*'\''([^'\'']+)'\''/ {
+      line=$0
+      sub(/^[[:space:]]*-[[:space:]]*'\''/, "", line)
+      sub(/'\''[[:space:]]*$/, "", line)
+      print line
+    }
+  ' "$wf"
+}
+
+assert_path_glob() {
+  local label="$1" paths_blob="$2" glob="$3"
+  if printf '%s\n' "$paths_blob" | grep -qxF "$glob"; then
+    echo "ok - $label paths has $glob"
+  else
+    echo "not ok - $label paths missing $glob"
+    fail=1
+  fi
+}
+
+# systemd: directory glob 또는 단일 unit 파일 중 하나면 통과
+assert_systemd_path() {
+  local label="$1" paths_blob="$2"
+  if printf '%s\n' "$paths_blob" | grep -qxF 'config/systemd/**' \
+    || printf '%s\n' "$paths_blob" | grep -qxF 'config/systemd/mindgarden-dev.service'; then
+    echo "ok - $label paths has config/systemd/** (or mindgarden-dev.service)"
+  else
+    echo "not ok - $label paths missing config/systemd/** (or mindgarden-dev.service)"
+    fail=1
+  fi
+}
+
+if [ ! -f "$DEV_WF" ]; then
+  echo "not ok - deploy-backend-dev.yml 없음 (paths 가드)"
+  fail=1
+else
+  DEV_PATHS="$(extract_push_paths "$DEV_WF")"
+  assert_path_glob "deploy-backend-dev" "$DEV_PATHS" "scripts/deployment/**"
+  assert_path_glob "deploy-backend-dev" "$DEV_PATHS" "scripts/automation/deployment/**"
+  assert_path_glob "deploy-backend-dev" "$DEV_PATHS" ".github/workflows/deploy-backend-dev.yml"
+  assert_path_glob "deploy-backend-dev" "$DEV_PATHS" "scripts/development/utilities/**"
+  assert_systemd_path "deploy-backend-dev" "$DEV_PATHS"
+  assert_path_glob "deploy-backend-dev" "$DEV_PATHS" "database/schema/**"
+fi
+
+if [ ! -f "$PROD_WF" ]; then
+  echo "not ok - deploy-production.yml 없음 (paths 가드)"
+  fail=1
+else
+  PROD_PATHS="$(extract_push_paths "$PROD_WF")"
+  assert_path_glob "deploy-production" "$PROD_PATHS" "scripts/deployment/**"
+  assert_path_glob "deploy-production" "$PROD_PATHS" "scripts/automation/deployment/**"
+  assert_path_glob "deploy-production" "$PROD_PATHS" ".github/workflows/deploy-production.yml"
+  assert_path_glob "deploy-production" "$PROD_PATHS" "config/nginx/**"
+  assert_path_glob "deploy-production" "$PROD_PATHS" "database/schema/**"
+  assert_path_glob "deploy-production" "$PROD_PATHS" "src/main/resources/sql/**"
+  assert_path_glob "deploy-production" "$PROD_PATHS" ".github/actions/sync-prod-env-key/**"
+fi
+
 exit "$fail"

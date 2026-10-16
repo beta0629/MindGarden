@@ -78,6 +78,13 @@ on:
       - 'sql/**'
       - 'database/schema/**'
       - 'config/nginx/**'
+      # 메뉴 SQL SCP 소스 (update_all_role_menus.sql)
+      - 'src/main/resources/sql/**'
+      # NOTE: scripts/deployment·automation 만 바뀌어도 release/prod push 시 운영 자동 배포가 트리거된다 (의도적).
+      # 배포 헬퍼: prod-readiness·Flyway health·load-deploy-db-env·preflight·mysql-deploy-client·public-health·clock-skew·no-overwrite 등
+      - 'scripts/deployment/**'
+      # 표준 프로시저 SCP/실행 소스 (deploy-standardized-procedures.sh)
+      - 'scripts/automation/deployment/**'
       - '.github/workflows/deploy-production.yml'
       # composite action: 본 워크플로가 호출하는 sync-prod-env-key 변경도 push 자동 트리거 대상에 포함
       # (PR #385 핫픽스 시 자동 트리거 안 됐던 보조 발견 정정 — 수동 workflow_dispatch 로 우회)

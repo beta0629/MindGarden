@@ -501,7 +501,8 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/mindgarden-dev.service"
+        target: "/tmp/"
+        strip_components: 2
         overwrite: true
         
     # ============================================================================
@@ -722,6 +723,7 @@ jobs:
           # systemd 서비스 파일 설정
           echo "📝 systemd 서비스 파일 설정 중..."
           if [ -f /tmp/mindgarden-dev.service ]; then
+            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
             sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service

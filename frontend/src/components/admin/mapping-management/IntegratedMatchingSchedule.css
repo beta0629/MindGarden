@@ -1101,7 +1101,8 @@
 
 /*
  * 단계 G < 64px (모바일 390 월 그리드): 시간 줄 전폭, 이름 줄 끝에 표식.
- * 점 대신 시작 테두리로 상태 색을 남긴다. 칩 기본 padding-inline(0,3,0)보다 높은 선택자.
+ * 상담사 색 __dot 는 유지하고, 상태 색은 시작 테두리(border-inline-start)로 남긴다.
+ * 칩 기본 padding-inline(0,3,0)보다 높은 선택자.
  */
 @container mg-month-event (width < 64px) {
   .integrated-schedule__calendar-wrapper--integrated .fc-daygrid-event-harness .mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
@@ -1109,11 +1110,7 @@
     border-inline-start: var(--mg-v2-border-width-thick) solid var(--mg-month-event-status-color);
   }
 
-  .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__dot {
-    display: none;
-  }
-
-  /* 숨김 순서: 배지→이름→시간→선생님점. 극소 폭은 상태 막대만. */
+  /* 숨김 순서: 배지→이름→시간→선생님점. 상담사 __dot 는 390에서도 유지. */
   .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-teacher-dot,
   .integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__teacher-dot {
     display: none;

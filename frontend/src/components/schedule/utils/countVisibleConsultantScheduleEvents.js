@@ -1,7 +1,8 @@
 /**
  * 통합 스케줄 월간 범례 건수.
- * 칩이 그리는 일정과 같은 목록(가시 그리드 + 같은 필터가 이미 적용된 events)을 센다.
- * 월별 COMPLETED API 와 섞지 않는다. 공휴일(background)·휴무 칩은 상담 칩이 아니므로 제외.
+ * 칩과 같은 필터가 적용된 events 를 세되, 호출측이 넘긴 range(표시 월 1일~말일) 안만 센다.
+ * 가시 그리드 spill(이전·다음 달 셀)은 range 로 제외한다. 월별 COMPLETED API 와 섞지 않는다.
+ * 공휴일(background)·휴무 칩은 상담 칩이 아니므로 제외.
  *
  * @author CoreSolution
  * @since 2026-10-14
@@ -85,7 +86,7 @@ function sameConsultantId(left, right) {
  *
  * @param {Array<object>|null|undefined} events 칩과 같은 필터를 거친 목록
  * @param {Array<object>|null|undefined} consultants
- * @param {{ startDate?: string, endDate?: string }|null} [range] 가시 그리드. 없으면 목록 전체
+ * @param {{ startDate?: string, endDate?: string }|null} [range] 표시 월(또는 호출측 범위). 없으면 목록 전체
  * @returns {Map<number|string, number>}
  */
 export function countVisibleConsultantScheduleEvents(events, consultants, range = null) {

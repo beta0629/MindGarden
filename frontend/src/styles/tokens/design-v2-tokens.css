@@ -90,7 +90,7 @@
      saturday 는 money-expense 와 같은 값이어도 의미가 달라 별도 값이다.
      ---------------------------------------------------------- */
   --mg-calendar-saturday-fg: #1D4ED8;
-  --mg-calendar-holiday-fg: #C2410C;
+  --mg-calendar-holiday-fg: var(--mg-error-500);
   --mg-calendar-holiday-caption-fg: #B5452B;
   --mg-calendar-today-bg: var(--mg-v2-color-primary-main);
   --mg-calendar-today-fg: var(--mg-v2-color-text-inverse);
@@ -719,7 +719,7 @@
   --mg-v2-color-money-expense: #1D4ED8;
 
   --mg-calendar-saturday-fg: #1D4ED8;
-  --mg-calendar-holiday-fg: #C2410C;
+  --mg-calendar-holiday-fg: var(--mg-error-500);
   --mg-calendar-holiday-caption-fg: #B5452B;
 
   --mg-v2-color-surface-bg: #FAF9F7;

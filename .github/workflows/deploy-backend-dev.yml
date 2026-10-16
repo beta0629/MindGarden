@@ -400,11 +400,7 @@ jobs:
             echo "⚠️ 연결 정리 스크립트를 찾을 수 없습니다. 수동 정리 필요"
           fi
           
-          # 서비스 중지
-          sudo systemctl stop mindgarden-dev.service || true
-          
-          # 서비스 중지 후 추가 대기 (연결 정리 시간 확보)
-          sleep 5
+          # stop은 🔄 개발 서버 서비스 재시작 에서만 (업로드 실패 시 BE 유지).
           
           # 백업 생성
           if [ -f app.jar ]; then
@@ -491,6 +487,20 @@ jobs:
         export DEV_DB_NAME="${{ secrets.DEV_DB_NAME }}"
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
+
+    - name: 🧹 systemd SCP 대상 디렉터리 준비
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          # stale path from old target=/tmp/mindgarden-dev.service (may be a directory)
+          if [ -d /tmp/mindgarden-dev.service ]; then sudo rm -rf /tmp/mindgarden-dev.service; fi
+          sudo mkdir -p /tmp/mindgarden-dev-systemd
+          sudo chmod 1777 /tmp/mindgarden-dev-systemd || true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -501,10 +511,77 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/"
+        target: "/tmp/mindgarden-dev-systemd/"
         strip_components: 2
         overwrite: true
-        
+
+    # V20260831_004 repair·Flyway 헬스·clients.phone 검증이 mysql-deploy-client.sh 를 쓰므로
+    # 서비스 재시작 SSH(수리 포함) 전에 업로드한다. 다른 SCP 와 함께 stop 이전에 배치.
+    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
+
+    - name: 🛟 업로드 실패 시 백업 JAR로 서비스 복구
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          set -euo pipefail
+          cd /var/www/mindgarden-dev
+          UNIT=mindgarden-dev.service
+          HEALTH_URL=http://127.0.0.1:8080/actuator/health
+          # 활성+헬스 UP 이면 JAR 복원 생략 (업로드 실패여도 서비스가 살아 있음)
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null \
+            && curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "skip jar rollback — service active and health UP"
+            exit 0
+          fi
+          LATEST=""
+          if ls backups/app.jar.backup.* >/dev/null 2>&1; then
+            LATEST=$(ls -t backups/app.jar.backup.* | head -1) || LATEST=""
+          fi
+          if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+            cp -f "$LATEST" app.jar
+            echo "restored app.jar from backup (path omitted length=${#LATEST})"
+          else
+            echo "::warning::no backup jar — restart existing app.jar if present"
+          fi
+          echo "restart after jar restore"
+          if sudo systemctl restart "$UNIT"; then
+            sleep 5
+          else
+            echo "::error::rollback restart failed"
+          fi
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "✅ rollback start OK"
+          else
+            echo "::error::rollback start failed"
+          fi
+          if curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "✅ rollback health OK (actuator/health)"
+          else
+            echo "::warning::rollback health check failed (start status already reported)"
+            if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+              echo "unit active but health failed"
+            else
+              echo "unit inactive after rollback"
+            fi
+          fi
+
     # ============================================================================
     # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (개발)
     # 배경: PR #362/#363 (Phase 1) 머지 후 운영 배포 run 27519148353 에서 GREEN 슬롯 BE
@@ -649,21 +726,6 @@ jobs:
             echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart"
           fi
 
-    # V20260831_004 repair·Flyway 헬스·clients.phone 검증이 mysql-deploy-client.sh 를 쓰므로
-    # 서비스 재시작 SSH(수리 포함) 전에 업로드한다. 후속 헬스/phone step 은 이 업로드를 재사용.
-    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.DEV_SERVER_HOST }}
-        username: ${{ secrets.DEV_SERVER_USER }}
-        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
-        port: 22
-        timeout: 60s
-        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh"
-        target: "/var/www/mindgarden-dev/"
-        strip_components: 2
-        overwrite: true
-
     - name: 🔄 개발 서버 서비스 재시작
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
@@ -683,13 +745,10 @@ jobs:
         script: |
           cd /var/www/mindgarden-dev
           
-          # JAR 파일명 변경
+          # 실행 중 app.jar 을 덮지 않도록 스테이징만 (stop 이후에 app.jar 로 교체)
           if [ -f consultation-management-system-1.0.0.jar ]; then
-            mv consultation-management-system-1.0.0.jar app.jar
+            mv -f consultation-management-system-1.0.0.jar app.jar.new
           fi
-          
-          # 권한 설정
-          chmod +x app.jar
           
           # 시작 스크립트 생성
           # 환경변수 export 패턴: set -a / source / set +a (개별 export 목록 미사용 → 신규 ENV 누락 회귀 방지)
@@ -722,9 +781,9 @@ jobs:
           
           # systemd 서비스 파일 설정
           echo "📝 systemd 서비스 파일 설정 중..."
-          if [ -f /tmp/mindgarden-dev.service ]; then
-            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
-            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+          if [ -f /tmp/mindgarden-dev-systemd/mindgarden-dev.service ]; then
+            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev-systemd/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
+            sudo cp /tmp/mindgarden-dev-systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ systemd 서비스 파일 설정 완료"
@@ -843,6 +902,12 @@ jobs:
             sleep 5
           else
             echo "ℹ️ 서비스가 이미 중지되어 있음"
+          fi
+          
+          # stop 이후 스테이징 JAR 을 실제 app.jar 로 교체 (서비스 기동 전)
+          if [ -f app.jar.new ]; then
+            mv -f app.jar.new app.jar
+            chmod +x app.jar
           fi
           
           # 포트 확인 (systemd가 프로세스를 종료했으므로 포트는 비어있어야 함)
@@ -1606,6 +1671,60 @@ jobs:
           echo "❌ mysql CLI가 없고 Flyway 성공·최신 스키마 로그도 확인되지 않았습니다."
           echo "   조치: mysql 클라이언트 설치 또는 수동으로 SHOW FULL COLUMNS FROM clients LIKE 'phone'; 실행."
           exit 1
+
+    # stop 이후(재시작·헬스·env 주입 등) 어느 step 이든 실패하면 조건부 백업 JAR 복구 + restart + 헬스
+    - name: 🛟 stop 이후 실패 시 백업 JAR 롤백·기동·헬스
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        script: |
+          set -euo pipefail
+          cd /var/www/mindgarden-dev
+          UNIT=mindgarden-dev.service
+          HEALTH_URL=http://127.0.0.1:8080/actuator/health
+          # 활성+헬스 UP 이면 JAR 복원 생략 (이미 정상 기동 중)
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null \
+            && curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "skip jar rollback — service active and health UP"
+            exit 0
+          fi
+          LATEST=""
+          if ls backups/app.jar.backup.* >/dev/null 2>&1; then
+            LATEST=$(ls -t backups/app.jar.backup.* | head -1) || LATEST=""
+          fi
+          if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+            cp -f "$LATEST" app.jar
+            echo "restored app.jar from backup (path omitted length=${#LATEST})"
+          else
+            echo "::warning::no backup jar — restart existing app.jar if present"
+          fi
+          echo "restart after jar restore"
+          if sudo systemctl restart "$UNIT"; then
+            sleep 5
+          else
+            echo "::error::rollback restart failed"
+          fi
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "✅ rollback start OK"
+          else
+            echo "::error::rollback start failed"
+          fi
+          if curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "✅ rollback health OK (actuator/health)"
+          else
+            echo "::warning::rollback health check failed (start status already reported)"
+            if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+              echo "unit active but health failed"
+            else
+              echo "unit inactive after rollback"
+            fi
+          fi
 
   # AI 모니터링 Phase 1 — 개발 BE 배포 실패 시 Discord webhook 알람
   # Secret 미등록 시 알람 skip

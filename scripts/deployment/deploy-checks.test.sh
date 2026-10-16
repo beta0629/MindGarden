@@ -972,21 +972,21 @@ else
   fi
 fi
 
-# --- deploy-backend-dev.yml: systemd SCP /tmp strip_components + 레포 unit 적용 로그 ---
+# --- deploy-backend-dev.yml: systemd SCP 전용 tmp 디렉터리 + 레포 unit 적용 + 업로드 전 stop 제거 + failure 롤백 ---
 if [ ! -f "$DEV_WF" ]; then
   echo "not ok - deploy-backend-dev.yml 없음 (systemd SCP 가드)"
   fail=1
 else
-  # systemd 업로드 step 근처: target /tmp/ + strip_components: 2
+  # systemd 업로드 step 근처: target /tmp/mindgarden-dev-systemd/ + strip_components: 2
   SYSTEMD_SCP_BLOCK="$(awk '
     /name:.*systemd 서비스 파일 업로드/ { capturing=1 }
     capturing { print }
     capturing && /overwrite:/ { exit }
   ' "$DEV_WF")"
-  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -qE 'target:[[:space:]]*"/tmp/?"'; then
-    echo "ok - deploy-backend-dev.yml systemd SCP target is /tmp/"
+  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -qE 'target:[[:space:]]*"/tmp/mindgarden-dev-systemd/"?'; then
+    echo "ok - deploy-backend-dev.yml systemd SCP target is /tmp/mindgarden-dev-systemd/"
   else
-    echo "not ok - deploy-backend-dev.yml systemd SCP target must be \"/tmp/\" (or /tmp)"
+    echo "not ok - deploy-backend-dev.yml systemd SCP target must be \"/tmp/mindgarden-dev-systemd/\""
     fail=1
   fi
   if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -q 'strip_components:[[:space:]]*2'; then
@@ -1001,10 +1001,176 @@ else
     echo "not ok - deploy-backend-dev.yml missing 레포 unit 적용"
     fail=1
   fi
-  if grep -q '/tmp/mindgarden-dev.service' "$DEV_WF"; then
-    echo "ok - deploy-backend-dev.yml still references /tmp/mindgarden-dev.service"
+  if grep -q '/tmp/mindgarden-dev-systemd/mindgarden-dev.service' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml install path is /tmp/mindgarden-dev-systemd/mindgarden-dev.service"
   else
-    echo "not ok - deploy-backend-dev.yml missing /tmp/mindgarden-dev.service install path"
+    echo "not ok - deploy-backend-dev.yml missing /tmp/mindgarden-dev-systemd/mindgarden-dev.service install path"
+    fail=1
+  fi
+
+  # 업로드 전 disk/backup step(백업 완료) 에는 systemctl stop 이 없어야 함
+  BACKUP_PREP_BLOCK="$(awk '
+    /name:.*개발 서버 배포 준비/ { capturing=1 }
+    capturing { print }
+    capturing && /백업 완료/ { found=1 }
+    capturing && found && /^[[:space:]]*-[[:space:]]*name:/ { exit }
+  ' "$DEV_WF")"
+  if printf '%s\n' "$BACKUP_PREP_BLOCK" | grep -q '백업 완료'; then
+    if printf '%s\n' "$BACKUP_PREP_BLOCK" | grep -q 'systemctl stop'; then
+      echo "not ok - deploy-backend-dev.yml backup/disk prep must not systemctl stop before uploads"
+      fail=1
+    else
+      echo "ok - deploy-backend-dev.yml backup/disk prep has no systemctl stop"
+    fi
+  else
+    echo "not ok - deploy-backend-dev.yml backup/disk prep block (백업 완료) not found"
+    fail=1
+  fi
+
+  # failure() 롤백: 백업 JAR 복구 + actuator/health 가 같은 if: failure() 블록에 존재
+  # (step 은 "- name:" 로 시작, 다음 "- name:" 또는 job 키 전까지를 한 블록으로 본다)
+  FAILURE_WITH_HEALTH="$(python3 - "$DEV_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding='utf-8').read().splitlines()
+i = 0
+while i < len(lines):
+    if 'if: failure()' in lines[i]:
+        block = [lines[i]]
+        j = i + 1
+        while j < len(lines):
+            if re.match(r'^    - name:', lines[j]) or re.match(r'^  [A-Za-z0-9_-]+:', lines[j]):
+                break
+            block.append(lines[j])
+            j += 1
+        text = '\n'.join(block)
+        if 'app.jar.backup' in text and ('actuator/health' in text or 'rollback health' in text):
+            print('FOUND')
+            raise SystemExit(0)
+        i = j
+    else:
+        i += 1
+print('MISSING')
+PY
+)"
+  if [ "$FAILURE_WITH_HEALTH" = "FOUND" ]; then
+    echo "ok - deploy-backend-dev.yml has failure() block with app.jar.backup AND actuator/health"
+  else
+    echo "not ok - deploy-backend-dev.yml missing failure() block with both app.jar.backup and actuator/health"
+    fail=1
+  fi
+
+  # 모든 appleboy/scp-action 이 첫 systemctl stop mindgarden-dev 보다 앞에 있어야 함
+  STOP_LINE="$(grep -n 'systemctl stop mindgarden-dev' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  SCP_AFTER_STOP=0
+  while IFS= read -r scp_ln; do
+    if [ -n "$STOP_LINE" ] && [ "$scp_ln" -ge "$STOP_LINE" ]; then
+      echo "not ok - scp-action at line $scp_ln is after systemctl stop (line $STOP_LINE)"
+      SCP_AFTER_STOP=1
+      fail=1
+    fi
+  done < <(grep -n 'appleboy/scp-action' "$DEV_WF" | cut -d: -f1)
+  if [ "$SCP_AFTER_STOP" = "0" ] && [ -n "$STOP_LINE" ]; then
+    SCP_COUNT="$(grep -c 'appleboy/scp-action' "$DEV_WF" || true)"
+    echo "ok - all $SCP_COUNT scp-action step(s) appear before systemctl stop mindgarden-dev (line $STOP_LINE)"
+  elif [ -z "$STOP_LINE" ]; then
+    echo "not ok - systemctl stop mindgarden-dev not found in deploy-backend-dev.yml"
+    fail=1
+  fi
+
+  # Flyway SCP 가 HQ env 주입보다 앞에 있어야 함 (업로드 묶음)
+  FLYWAY_SCP_LINE="$(grep -n 'name:.*Flyway 스키마 헬스 스크립트 업로드' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  HQ_ENV_LINE="$(grep -n 'name:.*MINDGARDEN_HQ_TENANT_ID env' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${FLYWAY_SCP_LINE:-}" ] && [ -n "${HQ_ENV_LINE:-}" ] && [ "$FLYWAY_SCP_LINE" -lt "$HQ_ENV_LINE" ]; then
+    echo "ok - Flyway SCP before HQ env injection (scp=$FLYWAY_SCP_LINE hq=$HQ_ENV_LINE)"
+  else
+    echo "not ok - Flyway SCP must precede HQ env injection (scp=${FLYWAY_SCP_LINE:-?} hq=${HQ_ENV_LINE:-?})"
+    fail=1
+  fi
+
+  # restart: stop 전 app.jar.new 스테이징, stop 후 app.jar 교체 (실행 중 jar 덮어쓰기 금지)
+  if grep -q 'app.jar.new' "$DEV_WF" \
+    && grep -qE 'mv[[:space:]]+(-f[[:space:]]+)?consultation-management-system-1\.0\.0\.jar[[:space:]]+app\.jar\.new' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml stages uploaded jar as app.jar.new"
+  else
+    echo "not ok - deploy-backend-dev.yml must stage consultation-management-system-1.0.0.jar → app.jar.new"
+    fail=1
+  fi
+  # stop 근처(이후)에 app.jar.new → app.jar 적용이 있어야 함
+  JAR_APPLY_NEAR_STOP="$(python3 - "$DEV_WF" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding='utf-8').read()
+# restart SSH script 안에서 stop 이후 app.jar.new 적용 패턴
+m = re.search(
+    r'systemctl stop mindgarden-dev\.service.*?if \[ -f app\.jar\.new \]; then\s*mv -f app\.jar\.new app\.jar',
+    text,
+    re.S,
+)
+print('FOUND' if m else 'MISSING')
+PY
+)"
+  if [ "$JAR_APPLY_NEAR_STOP" = "FOUND" ]; then
+    echo "ok - deploy-backend-dev.yml applies app.jar.new → app.jar after systemctl stop"
+  else
+    echo "not ok - deploy-backend-dev.yml must mv app.jar.new → app.jar after systemctl stop"
+    fail=1
+  fi
+
+  # failure 롤백: healthy skip / restore 시 restart
+  if grep -q 'skip jar rollback' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml failure rollback skips when healthy (skip jar rollback)"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 'skip jar rollback' log for healthy skip"
+    fail=1
+  fi
+  if grep -q 'restart after jar restore' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml failure rollback uses restart after jar restore"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 'restart after jar restore' log"
+    fail=1
+  fi
+fi
+
+# --- deploy-production.yml: failure() 트래픽 슬롯 기동 가드 (upstream 전환 없음) ---
+if [ ! -f "$PROD_WF" ]; then
+  echo "not ok - deploy-production.yml 없음 (traffic slot failure 가드)"
+  fail=1
+else
+  PROD_TRAFFIC_GUARD="$(python3 - "$PROD_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding='utf-8').read().splitlines()
+i = 0
+while i < len(lines):
+    if 'if: failure()' in lines[i]:
+        block = [lines[i]]
+        j = i + 1
+        while j < len(lines):
+            if re.match(r'^    - name:', lines[j]) or re.match(r'^  [A-Za-z0-9_-]+:', lines[j]):
+                break
+            block.append(lines[j])
+            j += 1
+        text = '\n'.join(block)
+        if 'active-backend' in text and 'mindgarden-core-' in text and 'systemctl start' in text:
+            print('FOUND')
+            raise SystemExit(0)
+        i = j
+    else:
+        i += 1
+print('MISSING')
+PY
+)"
+  if [ "$PROD_TRAFFIC_GUARD" = "FOUND" ]; then
+    echo "ok - deploy-production.yml has failure() traffic slot start guard (active-backend + mindgarden-core-)"
+  else
+    echo "not ok - deploy-production.yml missing failure() with active-backend / mindgarden-core- start recovery"
+    fail=1
+  fi
+  # 가드 step 이 notify-discord 보다 앞에(배포 job 말미)
+  GUARD_LINE="$(grep -n 'failure 시 트래픽 슬롯 unit 기동 가드' "$PROD_WF" | head -1 | cut -d: -f1 || true)"
+  NOTIFY_LINE="$(grep -n 'notify-discord-on-failure:' "$PROD_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${GUARD_LINE:-}" ] && [ -n "${NOTIFY_LINE:-}" ] && [ "$GUARD_LINE" -lt "$NOTIFY_LINE" ]; then
+    echo "ok - deploy-production.yml traffic slot guard before notify-discord (guard=$GUARD_LINE notify=$NOTIFY_LINE)"
+  else
+    echo "not ok - deploy-production.yml traffic slot guard must precede notify-discord (guard=${GUARD_LINE:-?} notify=${NOTIFY_LINE:-?})"
     fail=1
   fi
 fi

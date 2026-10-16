@@ -110,4 +110,36 @@ params=$(q -e "SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC
 [ "$params" = "11" ] || fail "GetIntegratedSalaryStatistics 가 저장소 정의가 아닙니다 (params=$params)."
 grep -q 'summary total=' "$WORK/sync.out" || fail "프로시저별 결과 표가 없습니다."
 echo "repo procedures=$(printf '%s\n' "$expected" | wc -l | tr -d ' ') (Flyway 원본 $(printf '%s\n' "$flyway_owned" | wc -l | tr -d ' ') 포함) dev procedures=$(printf '%s\n' "$actual" | wc -l | tr -d ' ')"
+grep -q 'DEV_APP_SERVICE·DEV_APP_RESTART_CMD 미설정' "$WORK/sync.out" || fail "재기동 설정이 없을 때 WARN 이 없습니다."
+
+echo "=== 복원 뒤 재기동·Flyway 최신 버전 확인 ==="
+expected_version=$(cat "$BUNDLE/scripts/database/sync/flyway-expected-version")
+[ "$expected_version" = "$(bash "$ROOT/scripts/database/sync/flyway-latest-version.sh" "$ROOT/src/main/resources/db/migration")" ] \
+    || fail "번들 기대 버전이 저장소 최신 마이그레이션과 다릅니다: $expected_version"
+printf '{"status":"UP"}' >"$WORK/health.json"
+cat >>"$BUNDLE/scripts/database/sync/prod-to-dev-daily.env" <<EOF
+DEV_APP_RESTART_CMD=true
+DEV_APP_HEALTH_URL=file://$WORK/health.json
+DEV_APP_HEALTH_TIMEOUT_SEC=5
+DEV_APP_HEALTH_INTERVAL_SEC=1
+EOF
+# (a) 재기동 뒤에도 히스토리에 최신 버전이 없으면 실패로 끝난다
+set +e
+bash "$SYNC" >"$WORK/sync-missing.out" 2>&1
+missing_rc=$?
+set -e
+[ "$missing_rc" -ne 0 ] || fail "Flyway 최신 버전이 없는데 exit 0"
+grep -q "Flyway 최신 버전 ${expected_version}" "$WORK/sync-missing.out" || fail "누락 메시지 없음"
+# (b) 히스토리에 최신 버전이 성공으로 있으면 통과 (Flyway 대신 후처리 SQL 로 행을 만든다)
+cat >"$WORK/fake-flyway.sql" <<EOF
+CREATE TABLE flyway_schema_history (version VARCHAR(50), success TINYINT(1));
+INSERT INTO flyway_schema_history VALUES ('${expected_version}', 1);
+EOF
+echo "POST_SYNC_SQL_FILE=$WORK/fake-flyway.sql" >>"$BUNDLE/scripts/database/sync/prod-to-dev-daily.env"
+if ! bash "$SYNC" >"$WORK/sync-ok.out" 2>&1; then
+    cat "$WORK/sync-ok.out" >&2
+    fail "Flyway 최신 버전이 있는데 실패"
+fi
+grep -q "Flyway 최신 버전 ${expected_version} 적용 확인" "$WORK/sync-ok.out" || fail "적용 확인 로그 없음"
+
 echo "PASS prod-to-dev-daily.mysql"

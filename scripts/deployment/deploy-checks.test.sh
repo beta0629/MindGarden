@@ -1027,11 +1027,108 @@ else
     fail=1
   fi
 
-  # failure() 롤백: 백업 JAR 복구 step 존재
-  if grep -q 'if: failure()' "$DEV_WF" && grep -q 'app.jar.backup' "$DEV_WF"; then
-    echo "ok - deploy-backend-dev.yml has failure() backup jar restore"
+  # failure() 롤백: 백업 JAR 복구 + actuator/health 가 같은 if: failure() 블록에 존재
+  # (step 은 "- name:" 로 시작, 다음 "- name:" 또는 job 키 전까지를 한 블록으로 본다)
+  FAILURE_WITH_HEALTH="$(python3 - "$DEV_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding='utf-8').read().splitlines()
+i = 0
+while i < len(lines):
+    if 'if: failure()' in lines[i]:
+        block = [lines[i]]
+        j = i + 1
+        while j < len(lines):
+            if re.match(r'^    - name:', lines[j]) or re.match(r'^  [A-Za-z0-9_-]+:', lines[j]):
+                break
+            block.append(lines[j])
+            j += 1
+        text = '\n'.join(block)
+        if 'app.jar.backup' in text and ('actuator/health' in text or 'rollback health' in text):
+            print('FOUND')
+            raise SystemExit(0)
+        i = j
+    else:
+        i += 1
+print('MISSING')
+PY
+)"
+  if [ "$FAILURE_WITH_HEALTH" = "FOUND" ]; then
+    echo "ok - deploy-backend-dev.yml has failure() block with app.jar.backup AND actuator/health"
   else
-    echo "not ok - deploy-backend-dev.yml missing failure() + app.jar.backup restore"
+    echo "not ok - deploy-backend-dev.yml missing failure() block with both app.jar.backup and actuator/health"
+    fail=1
+  fi
+
+  # 모든 appleboy/scp-action 이 첫 systemctl stop mindgarden-dev 보다 앞에 있어야 함
+  STOP_LINE="$(grep -n 'systemctl stop mindgarden-dev' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  SCP_AFTER_STOP=0
+  while IFS= read -r scp_ln; do
+    if [ -n "$STOP_LINE" ] && [ "$scp_ln" -ge "$STOP_LINE" ]; then
+      echo "not ok - scp-action at line $scp_ln is after systemctl stop (line $STOP_LINE)"
+      SCP_AFTER_STOP=1
+      fail=1
+    fi
+  done < <(grep -n 'appleboy/scp-action' "$DEV_WF" | cut -d: -f1)
+  if [ "$SCP_AFTER_STOP" = "0" ] && [ -n "$STOP_LINE" ]; then
+    SCP_COUNT="$(grep -c 'appleboy/scp-action' "$DEV_WF" || true)"
+    echo "ok - all $SCP_COUNT scp-action step(s) appear before systemctl stop mindgarden-dev (line $STOP_LINE)"
+  elif [ -z "$STOP_LINE" ]; then
+    echo "not ok - systemctl stop mindgarden-dev not found in deploy-backend-dev.yml"
+    fail=1
+  fi
+
+  # Flyway SCP 가 HQ env 주입보다 앞에 있어야 함 (업로드 묶음)
+  FLYWAY_SCP_LINE="$(grep -n 'name:.*Flyway 스키마 헬스 스크립트 업로드' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  HQ_ENV_LINE="$(grep -n 'name:.*MINDGARDEN_HQ_TENANT_ID env' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${FLYWAY_SCP_LINE:-}" ] && [ -n "${HQ_ENV_LINE:-}" ] && [ "$FLYWAY_SCP_LINE" -lt "$HQ_ENV_LINE" ]; then
+    echo "ok - Flyway SCP before HQ env injection (scp=$FLYWAY_SCP_LINE hq=$HQ_ENV_LINE)"
+  else
+    echo "not ok - Flyway SCP must precede HQ env injection (scp=${FLYWAY_SCP_LINE:-?} hq=${HQ_ENV_LINE:-?})"
+    fail=1
+  fi
+fi
+
+# --- deploy-production.yml: failure() 트래픽 슬롯 기동 가드 (upstream 전환 없음) ---
+if [ ! -f "$PROD_WF" ]; then
+  echo "not ok - deploy-production.yml 없음 (traffic slot failure 가드)"
+  fail=1
+else
+  PROD_TRAFFIC_GUARD="$(python3 - "$PROD_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding='utf-8').read().splitlines()
+i = 0
+while i < len(lines):
+    if 'if: failure()' in lines[i]:
+        block = [lines[i]]
+        j = i + 1
+        while j < len(lines):
+            if re.match(r'^    - name:', lines[j]) or re.match(r'^  [A-Za-z0-9_-]+:', lines[j]):
+                break
+            block.append(lines[j])
+            j += 1
+        text = '\n'.join(block)
+        if 'active-backend' in text and 'mindgarden-core-' in text and 'systemctl start' in text:
+            print('FOUND')
+            raise SystemExit(0)
+        i = j
+    else:
+        i += 1
+print('MISSING')
+PY
+)"
+  if [ "$PROD_TRAFFIC_GUARD" = "FOUND" ]; then
+    echo "ok - deploy-production.yml has failure() traffic slot start guard (active-backend + mindgarden-core-)"
+  else
+    echo "not ok - deploy-production.yml missing failure() with active-backend / mindgarden-core- start recovery"
+    fail=1
+  fi
+  # 가드 step 이 notify-discord 보다 앞에(배포 job 말미)
+  GUARD_LINE="$(grep -n 'failure 시 트래픽 슬롯 unit 기동 가드' "$PROD_WF" | head -1 | cut -d: -f1 || true)"
+  NOTIFY_LINE="$(grep -n 'notify-discord-on-failure:' "$PROD_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${GUARD_LINE:-}" ] && [ -n "${NOTIFY_LINE:-}" ] && [ "$GUARD_LINE" -lt "$NOTIFY_LINE" ]; then
+    echo "ok - deploy-production.yml traffic slot guard before notify-discord (guard=$GUARD_LINE notify=$NOTIFY_LINE)"
+  else
+    echo "not ok - deploy-production.yml traffic slot guard must precede notify-discord (guard=${GUARD_LINE:-?} notify=${NOTIFY_LINE:-?})"
     fail=1
   fi
 fi

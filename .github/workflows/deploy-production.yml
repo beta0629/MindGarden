@@ -1653,6 +1653,56 @@ jobs:
           
           echo "✅ 메모리 정리 완료!"
 
+    # Safety: if deploy fails after stop/restart, ensure ACTIVE traffic unit is up.
+    # Does NOT switch upstream — only prevents "traffic slot left down" edge cases.
+    - name: 🛟 failure 시 트래픽 슬롯 unit 기동 가드
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        script: |
+          set -euo pipefail
+          MG_BACKEND_BIND_HOST="${MG_BACKEND_BIND_HOST:-127.0.0.1}"
+          MG_BLUE_PORT="${MG_BLUE_PORT:-8080}"
+          MG_GREEN_PORT="${MG_GREEN_PORT:-8081}"
+          MG_ACTIVE_BACKEND_FILE="${MG_ACTIVE_BACKEND_FILE:-/etc/mindgarden/active-backend}"
+          ACTIVE=$(sudo cat "$MG_ACTIVE_BACKEND_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}' || true)
+          case "$ACTIVE" in
+            blue|green) ;;
+            *)
+              echo "::warning::active-backend unreadable ('${ACTIVE:-}') — skip traffic slot start guard"
+              exit 0
+              ;;
+          esac
+          UNIT="mindgarden-core-${ACTIVE}.service"
+          if [ "$ACTIVE" = "green" ]; then
+            ACTIVE_PORT="$MG_GREEN_PORT"
+          else
+            ACTIVE_PORT="$MG_BLUE_PORT"
+          fi
+          echo "traffic slot guard: ACTIVE=${ACTIVE} UNIT=${UNIT} PORT=${ACTIVE_PORT} (no upstream switch)"
+          if ! sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "traffic unit inactive — starting $UNIT"
+            sudo systemctl start "$UNIT" || true
+            sleep 5
+          fi
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "✅ traffic unit active ($UNIT)"
+          else
+            echo "::error::traffic unit still inactive ($UNIT)"
+          fi
+          if curl -f -s --connect-timeout 3 --max-time 8 "http://${MG_BACKEND_BIND_HOST}:${ACTIVE_PORT}/actuator/health" > /dev/null 2>&1; then
+            echo "✅ traffic slot health OK (actuator/health)"
+          else
+            echo "::warning::traffic slot health failed (start status already reported)"
+            sudo systemctl is-active "$UNIT" || true
+          fi
+
   # AI 모니터링 Phase 1 — 운영 배포 실패 시 Discord webhook 알람
   # Secret 미등록 시 알람 skip
   # 참고: docs/project-management/2026-06-11/AI_MONITORING_ROADMAP.md §6 Phase 1

@@ -3414,7 +3414,10 @@ public class OnboardingServiceImpl implements OnboardingService {
             entity.setMailOrderReportNumber(stringOrNull(ml.get("mailOrderReportNumber")));
             entity.setRefundPolicyText(stringOrNull(ml.get("refundPolicyText")));
             entity.setProductPriceGuideText(stringOrNull(ml.get("productPriceGuideText")));
-            log.info("온보딩 checklist merchantLegal 적용: hasBiz={}", biz != null);
+            applyOpeningDateFromMerchantLegal(entity, ml);
+            applyBusinessVerificationFromMerchantLegal(entity, ml);
+            log.info("온보딩 checklist merchantLegal 적용: hasBiz={}, verificationStatus={}",
+                    biz != null, entity.getBusinessVerificationStatus());
         } catch (IllegalArgumentException e) {
             throw e;
         } catch (Exception e) {
@@ -3428,6 +3431,54 @@ public class OnboardingServiceImpl implements OnboardingService {
         }
         String s = String.valueOf(value).trim();
         return s.isEmpty() ? null : s;
+    }
+
+    /**
+     * checklist merchantLegal.openingDate → opening_date. 신규 신청에만 채운다.
+     *
+     * @param entity 온보딩 요청
+     * @param ml     merchantLegal 맵
+     */
+    private static void applyOpeningDateFromMerchantLegal(OnboardingRequest entity, Map<String, Object> ml) {
+        String opening = stringOrNull(ml.get("openingDate"));
+        if (opening == null) {
+            return;
+        }
+        try {
+            entity.setOpeningDate(java.time.LocalDate.parse(opening.trim()));
+        } catch (Exception ex) {
+            // 형식 오류는 enrich 단계에서 이미 거절. 여기선 컬럼만 비운다.
+            entity.setOpeningDate(null);
+        }
+    }
+
+    /**
+     * checklist merchantLegal.businessVerification → 검증 컬럼.
+     *
+     * @param entity 온보딩 요청
+     * @param ml     merchantLegal 맵
+     */
+    @SuppressWarnings("unchecked")
+    private static void applyBusinessVerificationFromMerchantLegal(OnboardingRequest entity,
+            Map<String, Object> ml) {
+        Object raw = ml.get("businessVerification");
+        if (!(raw instanceof Map)) {
+            return;
+        }
+        Map<String, Object> verification = (Map<String, Object>) raw;
+        entity.setBusinessVerificationStatus(stringOrNull(verification.get("verificationStatus")));
+        entity.setBusinessVerificationResultCode(stringOrNull(verification.get("resultCode")));
+        String checkedAt = stringOrNull(verification.get("checkedAt"));
+        if (checkedAt == null) {
+            entity.setBusinessVerifiedAt(null);
+            return;
+        }
+        try {
+            entity.setBusinessVerifiedAt(java.time.LocalDateTime.ofInstant(
+                    java.time.Instant.parse(checkedAt), java.time.ZoneOffset.UTC));
+        } catch (Exception ex) {
+            entity.setBusinessVerifiedAt(null);
+        }
     }
 }
 

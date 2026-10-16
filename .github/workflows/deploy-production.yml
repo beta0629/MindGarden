@@ -167,6 +167,11 @@ jobs:
       # OPS_ADMIN_PASSWORD: OpsAuthController 기본값 제거(#1331) 후 prod.env 미설정 시 Ops 로그인 거부.
       # 미등록 시 ::notice 후 skip — 기존 prod.env 값 유지.
       OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD }}
+      # 공공데이터(국세청 사업자·도로명주소). NTS_BIZ 우선, DATA_GO_KR 하위호환.
+      # 미등록 시 skip — 조회는 미확인, 신청 게이트는 미확인 허용.
+      NTS_BIZ_API_SERVICE_KEY: ${{ secrets.NTS_BIZ_API_SERVICE_KEY }}
+      DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
+      JUSO_CONFM_KEY: ${{ secrets.JUSO_CONFM_KEY }}
 
     steps:
     - name: 🛡️ 운영 배포 ref 가드 (dispatch만, release/prod만 허용)
@@ -883,6 +888,23 @@ jobs:
     # ============================================================================
     # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
     # ============================================================================
+
+    # 공공데이터(국세청 사업자·도로명주소) → /etc/mindgarden/prod.env
+    # NTS_BIZ_API_SERVICE_KEY 우선, DATA_GO_KR_SERVICE_KEY 하위호환, JUSO_CONFM_KEY 주소검색.
+    # 전부 비면 skip. 값 echo 금지.
+    - name: 🔑 공공데이터 키 prod.env 주입
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: '공공데이터(국세청·도로명)'
+        keys: 'NTS_BIZ_API_SERVICE_KEY DATA_GO_KR_SERVICE_KEY JUSO_CONFM_KEY'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'all_missing'
+        noop_compare: 'true'
+        # prod.env 는 DB 키 없음 — DB FAIL-FAST 비활성
+        db_fail_fast: 'false'
 
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.
     # 운영 담당: /etc/mindgarden/prod.env 에 SESSION_COOKIE_DOMAIN=core-solution.co.kr (RFC 6265, 선행 점 없음) — deployment/mindgarden.prod-env.example 과 동일.

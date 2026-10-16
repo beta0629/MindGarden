@@ -1856,6 +1856,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                             + "mail_order_report_number = COALESCE(?, mail_order_report_number), "
                             + "refund_policy_text = COALESCE(?, refund_policy_text), "
                             + "product_price_guide_text = COALESCE(?, product_price_guide_text), "
+                            + "business_verification_status = COALESCE(?, business_verification_status), "
+                            + "business_verified_at = COALESCE(?, business_verified_at), "
+                            + "business_verification_result_code = COALESCE(?, business_verification_result_code), "
+                            + "opening_date = COALESCE(?, opening_date), "
                             + "updated_at = NOW() "
                             + "WHERE tenant_id = ?",
                     blankToNull(legal.businessRegistrationNumber),
@@ -1865,6 +1869,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                     blankToNull(legal.mailOrderReportNumber),
                     blankToNull(legal.refundPolicyText),
                     blankToNull(legal.productPriceGuideText),
+                    blankToNull(legal.businessVerificationStatus),
+                    legal.businessVerifiedAt,
+                    blankToNull(legal.businessVerificationResultCode),
+                    legal.openingDate,
                     tenantId);
             log.info("온보딩 사업자·약관 → tenants 복사 완료: tenantId={}, requestId={}", tenantId, requestId);
         } catch (Exception e) {
@@ -1884,7 +1892,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                         r.getBusinessAddress(),
                         r.getMailOrderReportNumber(),
                         r.getRefundPolicyText(),
-                        r.getProductPriceGuideText()))
+                        r.getProductPriceGuideText(),
+                        r.getBusinessVerificationStatus(),
+                        r.getBusinessVerifiedAt(),
+                        r.getBusinessVerificationResultCode(),
+                        r.getOpeningDate()))
                 .orElseGet(MerchantLegalSnapshot::empty);
     }
 
@@ -1904,6 +1916,10 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
         private final String mailOrderReportNumber;
         private final String refundPolicyText;
         private final String productPriceGuideText;
+        private final String businessVerificationStatus;
+        private final java.time.LocalDateTime businessVerifiedAt;
+        private final String businessVerificationResultCode;
+        private final java.time.LocalDate openingDate;
 
         private MerchantLegalSnapshot(
                 String businessRegistrationNumber,
@@ -1912,7 +1928,11 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
                 String businessAddress,
                 String mailOrderReportNumber,
                 String refundPolicyText,
-                String productPriceGuideText) {
+                String productPriceGuideText,
+                String businessVerificationStatus,
+                java.time.LocalDateTime businessVerifiedAt,
+                String businessVerificationResultCode,
+                java.time.LocalDate openingDate) {
             this.businessRegistrationNumber = businessRegistrationNumber;
             this.representativeName = representativeName;
             this.businessLandline = businessLandline;
@@ -1920,10 +1940,14 @@ public class OnboardingApprovalServiceImpl implements OnboardingApprovalService 
             this.mailOrderReportNumber = mailOrderReportNumber;
             this.refundPolicyText = refundPolicyText;
             this.productPriceGuideText = productPriceGuideText;
+            this.businessVerificationStatus = businessVerificationStatus;
+            this.businessVerifiedAt = businessVerifiedAt;
+            this.businessVerificationResultCode = businessVerificationResultCode;
+            this.openingDate = openingDate;
         }
 
         private static MerchantLegalSnapshot empty() {
-            return new MerchantLegalSnapshot(null, null, null, null, null, null, null);
+            return new MerchantLegalSnapshot(null, null, null, null, null, null, null, null, null, null, null);
         }
     }
 }

@@ -124,6 +124,22 @@ public class OnboardingRequest {
 
     @Column(name = "product_price_guide_text", columnDefinition = "TEXT")
     private String productPriceGuideText;
+
+    /** 국세청 진위·상태 종합 코드 (MATCH/MISMATCH/UNCONFIRMED/…) */
+    @Column(name = "business_verification_status", length = 32)
+    private String businessVerificationStatus;
+
+    /** 국세청 사업자 확인 시각 */
+    @Column(name = "business_verified_at")
+    private java.time.LocalDateTime businessVerifiedAt;
+
+    /** 국세청 b_stt_cd·valid 등 결과 코드 */
+    @Column(name = "business_verification_result_code", length = 64)
+    private String businessVerificationResultCode;
+
+    /** 사업자 개업일자(신규 신청만) */
+    @Column(name = "opening_date")
+    private java.time.LocalDate openingDate;
     
     @Column(name = "initialization_status_json", columnDefinition = "TEXT")
     private String initializationStatusJson; // 초기화 작업 단계별 상태 (JSON)

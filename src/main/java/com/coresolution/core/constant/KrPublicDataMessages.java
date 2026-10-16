@@ -119,6 +119,34 @@ public final class KrPublicDataMessages {
         return text("business.unregistered");
     }
 
+    /**
+     * @return 진위 불일치로 온보딩 등록 차단 안내
+     */
+    public static String gateMismatch() {
+        return text("gate.mismatch");
+    }
+
+    /**
+     * @return 폐업으로 온보딩 등록 차단 안내
+     */
+    public static String gateClosed() {
+        return text("gate.closed");
+    }
+
+    /**
+     * @return 미등록으로 온보딩 등록 차단 안내
+     */
+    public static String gateUnregistered() {
+        return text("gate.unregistered");
+    }
+
+    /**
+     * @return 휴업 경고(등록 허용) 안내
+     */
+    public static String warningSuspended() {
+        return text("warning.suspended");
+    }
+
     private static String text(String key) {
         String value = PROPS.getProperty(key);
         if (value == null || value.isBlank()) {

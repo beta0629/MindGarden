@@ -1,7 +1,9 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,6 +11,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
@@ -30,8 +33,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.PointTenantPolicyKeys;
@@ -2721,6 +2726,7 @@ class ClientShopCheckoutServiceImplTest {
         assertEquals(before, order.getStatus());
         verify(portOneV2PaymentVerifyService, never()).resolvePaidState(any(), any());
         verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolled(any(), any());
+        verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolledOn(any());
         verify(portOneVerifyUnknownRetryTracker, never()).recordUnknownAndDecide(any(), any());
         verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
     }
@@ -2736,12 +2742,19 @@ class ClientShopCheckoutServiceImplTest {
         Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
         when(portOneVerifyUnknownRetryTracker.isExhausted(pending)).thenReturn(true);
         when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(pending)).thenReturn(true);
+        doAnswer(inv -> {
+            Payment p = inv.getArgument(0);
+            p.setVerifyUnknownExhaustedLastPolledAt(LocalDateTime.now());
+            return null;
+        }).when(portOneVerifyUnknownRetryTracker).markExhaustedPolledOn(any(Payment.class));
         when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
                 .thenReturn(PortOnePaymentPaidState.PAID);
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order))
                 .thenReturn(PortOneShopPaidMatch.match(
                         "{\"status\":\"PAID\",\"id\":\"pay-hold\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}",
                         java.math.BigDecimal.valueOf(10_000L)));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, pending.getPaymentId()))
+                .thenReturn(Optional.of(pending));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
@@ -2750,9 +2763,86 @@ class ClientShopCheckoutServiceImplTest {
         assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
 
         assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
-        verify(portOneVerifyUnknownRetryTracker).markExhaustedPolled(TENANT, pending.getPaymentId());
+        verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolled(any(), any());
+        verify(portOneVerifyUnknownRetryTracker, times(2)).markExhaustedPolledOn(pending);
         verify(portOneVerifyUnknownRetryTracker, never()).recordUnknownAndDecide(any(), any());
         verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 소진 후 PAID+MATCH: REQUIRES_NEW version bump 재현 후에도 재조회로 이행·예외 없음")
+    void expireOrderHold_exhausted_paidMatch_refetchSurvivesRequiresNewVersionBump() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment stale = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        stale.setVersion(1L);
+        stale.setVerifyUnknownExhaustedAt(LocalDateTime.now().minusHours(2));
+        AtomicLong dbVersion = new AtomicLong(1L);
+
+        when(portOneVerifyUnknownRetryTracker.isExhausted(stale)).thenReturn(true);
+        when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(stale)).thenReturn(true);
+        // markExhaustedPolled(REQUIRES_NEW) 가 DB version 만 올린 상황을 1회 재현 — stale 엔티티 version 은 그대로.
+        AtomicBoolean simulatedRequiresNewBump = new AtomicBoolean(false);
+        doAnswer(inv -> {
+            Payment p = inv.getArgument(0);
+            p.setVerifyUnknownExhaustedLastPolledAt(LocalDateTime.now());
+            if (simulatedRequiresNewBump.compareAndSet(false, true)) {
+                dbVersion.incrementAndGet();
+            }
+            return null;
+        }).when(portOneVerifyUnknownRetryTracker).markExhaustedPolledOn(any(Payment.class));
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, stale.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.PAID);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, stale.getPaymentId(), order))
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"id\":\"pay-hold\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(10_000L)));
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, stale.getPaymentId()))
+                .thenAnswer(inv -> {
+                    Payment fresh = Payment.builder()
+                            .paymentId(stale.getPaymentId())
+                            .orderId(stale.getOrderId())
+                            .amount(stale.getAmount())
+                            .status(stale.getStatus())
+                            .build();
+                    fresh.setId(stale.getId());
+                    fresh.setTenantId(TENANT);
+                    fresh.setVersion(dbVersion.get());
+                    fresh.setVerifyUnknownExhaustedAt(stale.getVerifyUnknownExhaustedAt());
+                    return Optional.of(fresh);
+                });
+        when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> {
+            Payment p = inv.getArgument(0);
+            long entityVersion = p.getVersion() == null ? 0L : p.getVersion();
+            if (entityVersion != dbVersion.get()) {
+                throw new ObjectOptimisticLockingFailureException(Payment.class, p.getId());
+            }
+            dbVersion.incrementAndGet();
+            p.setVersion(dbVersion.get());
+            if (p.getStatus() == Payment.PaymentStatus.APPROVED) {
+                stale.setStatus(Payment.PaymentStatus.APPROVED);
+                stale.setApprovedAt(p.getApprovedAt());
+                stale.setVersion(p.getVersion());
+                stale.setVerifyUnknownExhaustedLastPolledAt(p.getVerifyUnknownExhaustedLastPolledAt());
+                stale.setPortonePaidAmount(p.getPortonePaidAmount());
+            }
+            return p;
+        });
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenAnswer(inv -> paymentStatusOptional(stale, Payment.PaymentStatus.APPROVED));
+        stubDefaultPolicies();
+
+        assertDoesNotThrow(() -> assertTrue(service.expireOrderHold(TENANT, ORDER_ID)));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        assertEquals(Payment.PaymentStatus.APPROVED, stale.getStatus());
+        assertNotNull(stale.getVerifyUnknownExhaustedLastPolledAt());
+        verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolled(any(), any());
+        verify(portOneVerifyUnknownRetryTracker, atLeastOnce()).markExhaustedPolledOn(any(Payment.class));
     }
 
     @Test
@@ -2765,13 +2855,20 @@ class ClientShopCheckoutServiceImplTest {
         Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
         when(portOneVerifyUnknownRetryTracker.isExhausted(pending)).thenReturn(true);
         when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(pending)).thenReturn(true);
+        doAnswer(inv -> {
+            Payment p = inv.getArgument(0);
+            p.setVerifyUnknownExhaustedLastPolledAt(LocalDateTime.now());
+            return null;
+        }).when(portOneVerifyUnknownRetryTracker).markExhaustedPolledOn(any(Payment.class));
         when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
                 .thenReturn(PortOnePaymentPaidState.NOT_PAID);
 
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
 
         assertEquals(before, order.getStatus());
-        verify(portOneVerifyUnknownRetryTracker).markExhaustedPolled(TENANT, pending.getPaymentId());
+        verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolled(any(), any());
+        verify(portOneVerifyUnknownRetryTracker).markExhaustedPolledOn(pending);
+        verify(paymentRepository).save(pending);
         verify(shopClientOrderRepository, never()).save(order);
         verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
     }

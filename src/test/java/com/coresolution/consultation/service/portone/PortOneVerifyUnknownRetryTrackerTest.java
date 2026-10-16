@@ -185,6 +185,21 @@ class PortOneVerifyUnknownRetryTrackerTest {
         verify(paymentRepository, times(1)).save(payment);
     }
 
+    @Test
+    @DisplayName("markExhaustedPolledOn — 필드만 set·save/REQUIRES_NEW 없음")
+    void markExhaustedPolledOn_setsFieldWithoutSave() {
+        Payment payment = paymentWithAttempts(3);
+        payment.setVerifyUnknownExhaustedAt(LocalDateTime.now().minusHours(1));
+        payment.setVersion(2L);
+
+        tracker.markExhaustedPolledOn(payment);
+
+        assertNotNull(payment.getVerifyUnknownExhaustedLastPolledAt());
+        assertEquals(2L, payment.getVersion());
+        verify(paymentRepository, never()).save(any());
+        verify(paymentRepository, never()).findByTenantIdAndPaymentIdAndIsDeletedFalse(any(), any());
+    }
+
     private static Payment paymentWithAttempts(int attempts) {
         Payment payment = Payment.builder()
                 .paymentId(PAYMENT_ID)

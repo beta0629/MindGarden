@@ -1474,6 +1474,52 @@ jobs:
         PUBLIC_BASE_URL: ${{ vars.DEV_PUBLIC_BASE_URL }}
       run: bash scripts/deployment/public-health-check.sh "$PUBLIC_BASE_URL"
 
+    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/check-flyway-schema-health.sh"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
+
+    - name: 🔍 Flyway 스키마 헬스 (dev.env DB_*)
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          if [ ! -f /etc/mindgarden/dev.env ]; then
+            echo "⚠️ /etc/mindgarden/dev.env 없음 — Flyway 헬스 skip (비치명)"
+            exit 0
+          fi
+          set -a
+          # shellcheck source=/dev/null
+          source /etc/mindgarden/dev.env
+          set +a
+          # systemd/dev.env 가 DEV_DB_* 만 있을 때 DB_* 로 정규화
+          export DB_HOST="${DB_HOST:-${DEV_DB_HOST:-}}"
+          export DB_PORT="${DB_PORT:-${DEV_DB_PORT:-3306}}"
+          export DB_USERNAME="${DB_USERNAME:-${DEV_DB_USER:-${DEV_DB_USERNAME:-}}}"
+          export DB_PASSWORD="${DB_PASSWORD:-${DEV_DB_PASSWORD:-}}"
+          export DB_NAME="${DB_NAME:-${DEV_DB_NAME:-}}"
+          FLYWAY_HEALTH_SH=/var/www/mindgarden-dev/check-flyway-schema-health.sh
+          if [ ! -f "$FLYWAY_HEALTH_SH" ]; then
+            echo "⚠️ $FLYWAY_HEALTH_SH 없음 — Flyway 헬스 skip (비치명)"
+            exit 0
+          fi
+          bash "$FLYWAY_HEALTH_SH" || {
+            echo "::error::Flyway 스키마 헬스 실패 (success=0 등 치명 조건)"
+            exit 1
+          }
+
     - name: 🔍 dev DB clients.phone 컬럼 폭 검증 (Flyway 미적용 조기 감지)
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:

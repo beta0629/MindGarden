@@ -34,6 +34,7 @@ import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.lang.reflect.Method;
@@ -86,6 +87,7 @@ class PaymentServiceImplLatePaymentFollowupTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
     @Mock private PlatformTransactionManager transactionManager;
 
@@ -109,6 +111,7 @@ class PaymentServiceImplLatePaymentFollowupTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
                 transactionManager);

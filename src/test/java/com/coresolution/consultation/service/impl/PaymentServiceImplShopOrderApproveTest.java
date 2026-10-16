@@ -33,6 +33,8 @@ import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryOutcome;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.math.BigDecimal;
@@ -83,6 +85,7 @@ class PaymentServiceImplShopOrderApproveTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
     @Mock private PlatformTransactionManager transactionManager;
 
@@ -104,9 +107,12 @@ class PaymentServiceImplShopOrderApproveTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
                 transactionManager);
+        lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
         TenantContextHolder.setTenantId(TENANT_ID);
         lenient().when(commonCodeService.getCodeValue(anyString(), anyString())).thenReturn(null);
         lenient().when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));

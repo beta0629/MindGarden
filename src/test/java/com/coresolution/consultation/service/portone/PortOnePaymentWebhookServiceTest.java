@@ -4,9 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -74,6 +76,9 @@ class PortOnePaymentWebhookServiceTest {
     @Mock
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
+    @Mock
+    private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
+
     private PortOnePaymentWebhookService service;
 
     @BeforeEach
@@ -88,7 +93,10 @@ class PortOnePaymentWebhookServiceTest {
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
                 portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 PortOneWebhookTestSignatures.properties());
+        lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
     }
 
     @Test
@@ -482,8 +490,38 @@ class PortOnePaymentWebhookServiceTest {
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals(PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN, response.getBody().get("status"));
+        verify(portOneVerifyUnknownRetryTracker).recordUnknownAndDecide(TENANT_ID, PAYMENT_ID);
         verify(paymentService, never()).approveShopOrderPayment(any());
         verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("쇼핑 주문 Transaction.Paid — UNKNOWN 재시도 소진이면 200 verify_unknown_exhausted·취소 없음")
+    void handleWebhook_shopPaid_verifyUnknownExhausted_returns200() throws Exception {
+        String rawBody = paidWebhookBodyWithPaymentId();
+        stubActiveWebhookConfig("cfg-unknown-exhausted");
+        Payment payment = pendingShopPayment();
+        ShopClientOrder order = shopOrder(10_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
+                .thenReturn(PortOneShopPaidMatch.unknown());
+        when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(TENANT_ID, PAYMENT_ID))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.EXHAUSTED);
+
+        String signature = PortOneWebhookTestSignatures.v1(
+                WEBHOOK_SECRET, "whk-unknown-exhausted", TIMESTAMP, rawBody);
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-unknown-exhausted");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(
+                PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN_EXHAUSTED,
+                response.getBody().get("status"));
+        verify(paymentService, never()).approveShopOrderPayment(any());
         verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any(), any());
     }
 

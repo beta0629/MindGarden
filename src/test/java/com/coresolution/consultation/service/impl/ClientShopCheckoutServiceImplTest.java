@@ -83,6 +83,8 @@ import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryOutcome;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.consultation.service.shop.ShopConsultationFulfillmentHook;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.monitoring.SchedulerFailureNotifier;
@@ -173,6 +175,9 @@ class ClientShopCheckoutServiceImplTest {
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
     @Mock
+    private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
+
+    @Mock
     private ObjectProvider<SchedulerFailureNotifier> schedulerFailureNotifierProvider;
 
     @Mock
@@ -195,6 +200,9 @@ class ClientShopCheckoutServiceImplTest {
                 .thenReturn(true);
         lenient().when(portOneV2PaymentVerifyService.transientStatusMaxAttempts())
                 .thenReturn(PortOneV2PaymentVerifyService.TRANSIENT_STATUS_MAX_ATTEMPTS);
+        lenient().when(portOneVerifyUnknownRetryTracker.isExhausted(any())).thenReturn(false);
+        lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
     }
 
     @AfterEach
@@ -2618,6 +2626,8 @@ class ClientShopCheckoutServiceImplTest {
                 actualPaid,
                 ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
         assertEquals(0, actualPaid.compareTo(pending.getAmount()));
+        assertEquals(0, java.math.BigDecimal.valueOf(order.getCashDueMinor()).compareTo(pending.getRequestedAmount()));
+        assertEquals(0, actualPaid.compareTo(pending.getPortonePaidAmount()));
         verify(paymentService, never()).approveShopOrderPayment(any());
 
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));

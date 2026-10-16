@@ -1086,6 +1086,48 @@ PY
     echo "not ok - Flyway SCP must precede HQ env injection (scp=${FLYWAY_SCP_LINE:-?} hq=${HQ_ENV_LINE:-?})"
     fail=1
   fi
+
+  # restart: stop 전 app.jar.new 스테이징, stop 후 app.jar 교체 (실행 중 jar 덮어쓰기 금지)
+  if grep -q 'app.jar.new' "$DEV_WF" \
+    && grep -qE 'mv[[:space:]]+(-f[[:space:]]+)?consultation-management-system-1\.0\.0\.jar[[:space:]]+app\.jar\.new' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml stages uploaded jar as app.jar.new"
+  else
+    echo "not ok - deploy-backend-dev.yml must stage consultation-management-system-1.0.0.jar → app.jar.new"
+    fail=1
+  fi
+  # stop 근처(이후)에 app.jar.new → app.jar 적용이 있어야 함
+  JAR_APPLY_NEAR_STOP="$(python3 - "$DEV_WF" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding='utf-8').read()
+# restart SSH script 안에서 stop 이후 app.jar.new 적용 패턴
+m = re.search(
+    r'systemctl stop mindgarden-dev\.service.*?if \[ -f app\.jar\.new \]; then\s*mv -f app\.jar\.new app\.jar',
+    text,
+    re.S,
+)
+print('FOUND' if m else 'MISSING')
+PY
+)"
+  if [ "$JAR_APPLY_NEAR_STOP" = "FOUND" ]; then
+    echo "ok - deploy-backend-dev.yml applies app.jar.new → app.jar after systemctl stop"
+  else
+    echo "not ok - deploy-backend-dev.yml must mv app.jar.new → app.jar after systemctl stop"
+    fail=1
+  fi
+
+  # failure 롤백: healthy skip / restore 시 restart
+  if grep -q 'skip jar rollback' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml failure rollback skips when healthy (skip jar rollback)"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 'skip jar rollback' log for healthy skip"
+    fail=1
+  fi
+  if grep -q 'restart after jar restore' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml failure rollback uses restart after jar restore"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 'restart after jar restore' log"
+    fail=1
+  fi
 fi
 
 # --- deploy-production.yml: failure() 트래픽 슬롯 기동 가드 (upstream 전환 없음) ---

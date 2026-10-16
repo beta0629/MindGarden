@@ -1671,7 +1671,10 @@ jobs:
           MG_BLUE_PORT="${MG_BLUE_PORT:-8080}"
           MG_GREEN_PORT="${MG_GREEN_PORT:-8081}"
           MG_ACTIVE_BACKEND_FILE="${MG_ACTIVE_BACKEND_FILE:-/etc/mindgarden/active-backend}"
-          ACTIVE=$(sudo cat "$MG_ACTIVE_BACKEND_FILE" 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}' || true)
+          ACTIVE=""
+          if sudo test -f "$MG_ACTIVE_BACKEND_FILE" 2>/dev/null; then
+            ACTIVE=$(sudo cat "$MG_ACTIVE_BACKEND_FILE" | tr -d '\r\n' | awk '{print tolower($0)}') || ACTIVE=""
+          fi
           case "$ACTIVE" in
             blue|green) ;;
             *)
@@ -1688,8 +1691,11 @@ jobs:
           echo "traffic slot guard: ACTIVE=${ACTIVE} UNIT=${UNIT} PORT=${ACTIVE_PORT} (no upstream switch)"
           if ! sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
             echo "traffic unit inactive — starting $UNIT"
-            sudo systemctl start "$UNIT" || true
-            sleep 5
+            if sudo systemctl start "$UNIT"; then
+              sleep 5
+            else
+              echo "::error::traffic unit start failed ($UNIT)"
+            fi
           fi
           if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
             echo "✅ traffic unit active ($UNIT)"
@@ -1700,7 +1706,11 @@ jobs:
             echo "✅ traffic slot health OK (actuator/health)"
           else
             echo "::warning::traffic slot health failed (start status already reported)"
-            sudo systemctl is-active "$UNIT" || true
+            if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+              echo "unit active but health failed"
+            else
+              echo "unit inactive and health failed"
+            fi
           fi
 
   # AI 모니터링 Phase 1 — 운영 배포 실패 시 Discord webhook 알람

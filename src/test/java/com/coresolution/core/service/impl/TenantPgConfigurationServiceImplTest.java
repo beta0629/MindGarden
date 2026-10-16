@@ -995,6 +995,224 @@ class TenantPgConfigurationServiceImplTest {
     }
 
     @Test
+    @DisplayName("ADMIN PUT — apiKey/secretKey null/blank 이면 기존 암호문 유지(빈 문자열 미암호화)")
+    void updateConfiguration_blankSecrets_keepsExistingEncrypted() {
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setApiKeyEncrypted("encrypted-api-key");
+        testConfiguration.setSecretKeyEncrypted("encrypted-secret-key");
+
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .pgName("토스 수정")
+                .apiKey(null)
+                .secretKey("  ")
+                .testMode(false)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        assertThat(result.getApiSecretConfigured()).isTrue();
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getApiKeyEncrypted()).isEqualTo("encrypted-api-key");
+        assertThat(savedCaptor.getValue().getSecretKeyEncrypted()).isEqualTo("encrypted-secret-key");
+        verify(encryptionService, never()).encrypt(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — 시크릿 공란이어도 settingsJson 웹훅 시크릿 최초 저장 가능")
+    void updateConfiguration_blankSecrets_canSetWebhookSecretInSettingsJson() throws Exception {
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setApiKeyEncrypted("encrypted-api-key");
+        testConfiguration.setSecretKeyEncrypted("encrypted-secret-key");
+        testConfiguration.setSettingsJson("{\"portoneChannelKey\":\"live-ck\"}");
+        testConfiguration.setTestMode(true);
+
+        String webhookPlain = VALID_WEBHOOK_SECRET;
+        String incomingSettings = "{\"portoneChannelKey\":\"live-ck\","
+                + "\"portoneWebhookSecret\":\"" + webhookPlain + "\"}";
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.IAMPORT)
+                .storeId("store-1")
+                .apiKey(null)
+                .secretKey(null)
+                .testMode(true)
+                .settingsJson(incomingSettings)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.isEncrypted(eq(webhookPlain))).thenReturn(false);
+        when(encryptionService.isEncrypted(eq("ENC(webhook-first)"))).thenReturn(true);
+        when(encryptionService.encrypt(eq(webhookPlain))).thenReturn("ENC(webhook-first)");
+        when(encryptionService.ensureActiveKey(eq("ENC(webhook-first)")))
+                .thenReturn("ENC(webhook-first)");
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationResponse result =
+                service.updateConfiguration(testTenantId, testConfigId, request);
+
+        ArgumentCaptor<TenantPgConfiguration> savedCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getApiKeyEncrypted()).isEqualTo("encrypted-api-key");
+        assertThat(savedCaptor.getValue().getSecretKeyEncrypted()).isEqualTo("encrypted-secret-key");
+        JsonNode savedJson = objectMapper.readTree(savedCaptor.getValue().getSettingsJson());
+        assertThat(savedJson.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
+                .isEqualTo("ENC(webhook-first)");
+        assertThat(result.getPortoneWebhookSecretConfigured()).isTrue();
+        assertThat(result.getApiSecretConfigured()).isTrue();
+        assertThat(result.getSettingsJson()).doesNotContain(webhookPlain);
+        verify(encryptionService).encrypt(webhookPlain);
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — settingsJson 웹훅 시크릿 형식 오류 시 INVALID_FORMAT, 평문 미포함, 저장 없음")
+    void updateConfiguration_invalidWebhookSecretInSettingsJson_throwsWithoutEchoingSecret() {
+        String raw = "not-a-whsec-secret";
+        assertThat(TenantPgWebhookSecretMessages.INVALID_FORMAT).doesNotContain(raw);
+
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setApiKeyEncrypted("encrypted-api-key");
+        testConfiguration.setSecretKeyEncrypted("encrypted-secret-key");
+        testConfiguration.setSettingsJson("{\"portoneChannelKey\":\"live-ck\"}");
+
+        String incomingSettings = "{\"portoneChannelKey\":\"live-ck\","
+                + "\"portoneWebhookSecret\":\"" + raw + "\"}";
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.IAMPORT)
+                .storeId("store-1")
+                .apiKey(null)
+                .secretKey(null)
+                .testMode(true)
+                .settingsJson(incomingSettings)
+                .build();
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.isEncrypted(anyString())).thenReturn(false);
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+
+        assertThatThrownBy(() -> service.updateConfiguration(testTenantId, testConfigId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(TenantPgWebhookSecretMessages.INVALID_FORMAT)
+                .hasNoCause()
+                .satisfies(error -> assertThat(error.toString()).doesNotContain(raw));
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+        verify(encryptionService, never()).encrypt(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN PUT — settingsJson 웹훅 시크릿 공란/미포함 시 기존 암호문 유지")
+    void updateConfiguration_blankOrAbsentWebhookSecret_keepsExistingEncrypted() throws Exception {
+        String existingEncrypted = "ENC(webhook-existing)";
+        testConfiguration.setStatus(PgConfigurationStatus.PENDING);
+        testConfiguration.setApprovalStatus(ApprovalStatus.PENDING);
+        testConfiguration.setPgProvider(PgProvider.IAMPORT);
+        testConfiguration.setApiKeyEncrypted("encrypted-api-key");
+        testConfiguration.setSecretKeyEncrypted("encrypted-secret-key");
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKey\":\"live-ck\","
+                        + "\"portoneWebhookSecret\":\"" + existingEncrypted + "\"}");
+        testConfiguration.setTestMode(true);
+
+        when(configurationRepository.findByConfigIdAndIsDeletedFalse(testConfigId))
+                .thenReturn(Optional.of(testConfiguration));
+        when(encryptionService.isEncrypted(eq(existingEncrypted))).thenReturn(true);
+        when(configurationRepository.save(any(TenantPgConfiguration.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(accessControlService)
+                .validateConfigurationAccess(any(TenantPgConfiguration.class), eq(testTenantId));
+        doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
+
+        TenantPgConfigurationRequest absentSecretRequest = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.IAMPORT)
+                .storeId("store-1")
+                .apiKey(null)
+                .secretKey(null)
+                .testMode(true)
+                .settingsJson("{\"portoneChannelKey\":\"live-ck-updated\"}")
+                .build();
+
+        TenantPgConfigurationResponse absentResult =
+                service.updateConfiguration(testTenantId, testConfigId, absentSecretRequest);
+
+        ArgumentCaptor<TenantPgConfiguration> absentCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository).save(absentCaptor.capture());
+        JsonNode absentSaved = objectMapper.readTree(absentCaptor.getValue().getSettingsJson());
+        assertThat(absentSaved.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
+                .isEqualTo(existingEncrypted);
+        assertThat(absentSaved.get("portoneChannelKey").asText()).isEqualTo("live-ck-updated");
+        assertThat(absentResult.getPortoneWebhookSecretConfigured()).isTrue();
+        verify(encryptionService, never()).encrypt(any());
+
+        testConfiguration.setSettingsJson(
+                "{\"portoneChannelKey\":\"live-ck\","
+                        + "\"portoneWebhookSecret\":\"" + existingEncrypted + "\"}");
+        TenantPgConfigurationRequest blankSecretRequest = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.IAMPORT)
+                .storeId("store-1")
+                .apiKey(null)
+                .secretKey(null)
+                .testMode(true)
+                .settingsJson("{\"portoneChannelKey\":\"live-ck-blank\","
+                        + "\"portoneWebhookSecret\":\"\"}")
+                .build();
+
+        TenantPgConfigurationResponse blankResult =
+                service.updateConfiguration(testTenantId, testConfigId, blankSecretRequest);
+
+        ArgumentCaptor<TenantPgConfiguration> blankCaptor =
+                ArgumentCaptor.forClass(TenantPgConfiguration.class);
+        verify(configurationRepository, org.mockito.Mockito.times(2)).save(blankCaptor.capture());
+        JsonNode blankSaved = objectMapper.readTree(blankCaptor.getValue().getSettingsJson());
+        assertThat(blankSaved.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
+                .isEqualTo(existingEncrypted);
+        assertThat(blankSaved.get("portoneChannelKey").asText()).isEqualTo("live-ck-blank");
+        assertThat(blankResult.getPortoneWebhookSecretConfigured()).isTrue();
+        verify(encryptionService, never()).encrypt(any());
+    }
+
+    @Test
+    @DisplayName("PG 설정 생성 - secretKey blank 거부")
+    void testCreateConfiguration_BlankSecretKeyRejected() {
+        TenantPgConfigurationRequest request = TenantPgConfigurationRequest.builder()
+                .pgProvider(PgProvider.TOSS)
+                .apiKey("test-api-key")
+                .secretKey("   ")
+                .build();
+
+        assertThatThrownBy(() -> service.createConfiguration(testTenantId, request, "test-user"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Secret Key는 필수입니다");
+
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+        verify(encryptionService, never()).encrypt(any());
+    }
+
+    @Test
     @DisplayName("getActiveByProvider — ACTIVE+APPROVED+pending 스테이징 시에도 반환")
     void getActiveConfigurationByProvider_returnsWhenApprovedEvenWithPending() {
         testConfiguration.setStatus(PgConfigurationStatus.ACTIVE);

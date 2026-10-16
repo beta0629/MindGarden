@@ -1380,13 +1380,17 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             PortOnePaymentPaidState paidState =
                     portOneV2PaymentVerifyService.resolvePaidState(tenantId, payment.getPaymentId());
             if (exhausted) {
-                portOneVerifyUnknownRetryTracker.markExhaustedPolled(tenantId, payment.getPaymentId());
+                // 메인 TX managed 엔티티에만 기록 — REQUIRES_NEW markExhaustedPolled 는 @Version 을
+                // 올려 이후 approveOpenPaymentLocally(stale) 낙관적 락을 유발하므로 쓰지 않는다.
+                portOneVerifyUnknownRetryTracker.markExhaustedPolledOn(payment);
             }
             if (paidState == PortOnePaymentPaidState.UNKNOWN
                     || paidState == PortOnePaymentPaidState.IN_PROGRESS) {
                 if (!exhausted) {
                     portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
                             tenantId, payment.getPaymentId());
+                } else {
+                    paymentRepository.save(payment);
                 }
                 log.info(
                         "hold TTL 만료 보류(PortOne {}): tenantId={}, orderPublicId={}, paymentId={}, exhausted={}",
@@ -1404,6 +1408,8 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     if (!exhausted) {
                         portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(
                                 tenantId, payment.getPaymentId());
+                    } else {
+                        paymentRepository.save(payment);
                     }
                     log.info(
                             "hold TTL 만료 보류(PortOne 검증 UNKNOWN): tenantId={}, orderPublicId={}, paymentId={}",
@@ -1413,6 +1419,9 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     return false;
                 }
                 if (match.isMismatch()) {
+                    if (exhausted) {
+                        paymentRepository.save(payment);
+                    }
                     log.warn(
                             "hold TTL 만료 — PortOne PAID 금액·주문 불일치 취소: tenantId={}, orderPublicId={}, paymentId={}",
                             tenantId,
@@ -1421,9 +1430,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                     return cancelMismatchedApprovedPaymentForOrder(
                             tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
                 }
+                // 승인 전 재조회 방어 — 별도 TX 가 version 을 올렸어도 최신 행으로 승인한다.
+                Payment toApprove = paymentRepository
+                        .findByTenantIdAndPaymentIdAndIsDeletedFalse(tenantId, payment.getPaymentId())
+                        .orElse(payment);
+                if (exhausted) {
+                    portOneVerifyUnknownRetryTracker.markExhaustedPolledOn(toApprove);
+                }
                 // 메인 TX 에 병합 — REQUIRES_NEW 감사 저장으로 @Version 을 올리지 않음
-                match.getActualPaidAmount().ifPresent(payment::setPortonePaidAmount);
-                approveOpenPaymentLocally(payment);
+                match.getActualPaidAmount().ifPresent(toApprove::setPortonePaidAmount);
+                approveOpenPaymentLocally(toApprove);
                 log.info(
                         "hold TTL 만료 대신 PortOne PAID 확정: tenantId={}, orderPublicId={}, paymentId={}",
                         tenantId,
@@ -1432,6 +1448,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 return completeOrderOnPaymentApproved(tenantId, orderPublicId);
             }
             if (exhausted) {
+                paymentRepository.save(payment);
                 log.info(
                         "hold TTL 만료 보류(PortOne 재시도 소진·미결제 유지): tenantId={}, orderPublicId={}, paymentId={}, paidState={}",
                         tenantId,

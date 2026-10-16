@@ -90,7 +90,23 @@ public class PortOneVerifyUnknownRetryTracker {
     }
 
     /**
-     * 소진 후 PortOne 폴링을 수행했음을 기록한다.
+     * 메인 TX 의 managed {@link Payment} 에 소진 후 폴링 시각만 기록한다.
+     * {@code REQUIRES_NEW} 저장을 하지 않아 호출측 {@code @Version} 과 어긋나지 않는다.
+     * 영속화는 호출측이 같은 TX 에서 {@code save}·승인 등으로 수행한다.
+     *
+     * @param payment 메인 TX managed 결제 행
+     */
+    public void markExhaustedPolledOn(Payment payment) {
+        if (payment == null) {
+            return;
+        }
+        payment.setVerifyUnknownExhaustedLastPolledAt(LocalDateTime.now());
+    }
+
+    /**
+     * 소진 후 PortOne 폴링을 수행했음을 별도 TX({@code REQUIRES_NEW})로 기록한다.
+     * 메인 플로우에서 이어서 같은 Payment 를 {@code save} 할 경로(승인·취소 등)에서는
+     * 쓰지 말고 {@link #markExhaustedPolledOn(Payment)} 를 쓴다(낙관적 락 충돌 방지).
      * 메인 플로우 예외로 전파하지 않는다.
      *
      * @param tenantId  테넌트 ID

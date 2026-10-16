@@ -1,0 +1,153 @@
+# 개발 서버 IP 차단 진단 — 읽기 전용
+#
+# 목적: 특정 클라이언트 IP 가 개발 HTTPS 에만 타임아웃될 때
+#       fail2ban / iptables / nftables / ufw / crowdsec / nginx deny·limit /
+#       nginx 로그·로컬 헬스 를 읽기만 해서 차단 여부를 가린다.
+#
+# 안전 장치:
+#   - workflow_dispatch 전용. push/pull_request 트리거 없음.
+#   - 개발 서버(DEV_SERVER_* secret)만 SSH. 운영 secrets/호스트 사용 금지.
+#   - 읽기 전용만. 재시작·reload·unban·iptables/nft/ufw 변경·파일 수정 금지.
+#   - secret·env 파일 내용 echo 금지. 진단 IP(input)만 로그에 출력.
+name: '진단: 개발 서버 IP 차단(읽기전용)'
+
+on:
+  workflow_dispatch:
+    inputs:
+      suspect_ip:
+        description: '의심 클라이언트 IP (기본: 인시던트 봇 IP)'
+        required: false
+        default: '140.248.50.66'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnose-dev-ip-block
+  cancel-in-progress: false
+
+jobs:
+  diagnose-ip-block:
+    name: 개발 서버 IP 차단 진단 (읽기 전용)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 입력 IP 형식 검증
+        env:
+          SUSPECT_IP: ${{ inputs.suspect_ip }}
+        run: |
+          set -euo pipefail
+          IP_RE='^([0-9]{1,3}\.){3}[0-9]{1,3}$'
+          if [[ ! "${SUSPECT_IP}" =~ ${IP_RE} ]]; then
+            echo "::error::suspect_ip 형식 오류 (IPv4 필요): ${SUSPECT_IP}"
+            exit 1
+          fi
+          echo "suspect_ip=${SUSPECT_IP}"
+
+      - name: 개발 서버 SSH 읽기 전용 진단
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 120s
+          script: |
+            set +e
+            DIAG_IP='${{ inputs.suspect_ip }}'
+            echo "=========================================="
+            echo "진단: 개발 서버 IP 차단 (읽기 전용)"
+            echo "=========================================="
+            echo "DIAG_IP=${DIAG_IP}"
+            echo ""
+
+            # --- fail2ban ---
+            echo "=== fail2ban ==="
+            if command -v fail2ban-client >/dev/null 2>&1; then
+              echo "--- fail2ban-client status ---"
+              sudo fail2ban-client status 2>/dev/null || echo "(status 실패 또는 권한 없음)"
+              JAILS=$(sudo fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p' | tr ',' ' ')
+              for jail in ${JAILS}; do
+                jail=$(echo "${jail}" | tr -d '[:space:]')
+                [ -z "${jail}" ] && continue
+                echo "--- jail: ${jail} ---"
+                sudo fail2ban-client status "${jail}" 2>/dev/null || true
+                sudo fail2ban-client get "${jail}" banip 2>/dev/null || true
+                sudo fail2ban-client status "${jail}" 2>/dev/null | grep -E "${DIAG_IP}|140\.248" || true
+              done
+              echo "--- jail.local ignoreip (해당 줄만) ---"
+              sudo grep -n ignoreip /etc/fail2ban/jail*.local 2>/dev/null || echo "(ignoreip 줄 없음 또는 jail.local 없음)"
+            else
+              echo "fail2ban-client 없음"
+            fi
+            echo ""
+
+            # --- iptables ---
+            echo "=== iptables (DROP/REJECT / DIAG_IP / 140.248 필터) ==="
+            sudo iptables -L -n -v 2>/dev/null | grep -E '140\.248|DIAG|DROP|REJECT' || echo "(매칭 규칙 없음 또는 iptables 불가)"
+            echo "--- iptables -S (필터, 최대 100줄) ---"
+            sudo iptables -S 2>/dev/null | grep -E '140\.248|DROP|REJECT' | head -100 || echo "(매칭 -S 규칙 없음)"
+            echo ""
+
+            # --- nftables ---
+            echo "=== nftables (drop/reject / 140.248 필터) ==="
+            if command -v nft >/dev/null 2>&1; then
+              sudo nft list ruleset 2>/dev/null | grep -E '140\.248|drop|reject' | head -100 || echo "(매칭 nft 규칙 없음)"
+            else
+              echo "nft 없음"
+            fi
+            echo ""
+
+            # --- ufw ---
+            echo "=== ufw status numbered ==="
+            sudo ufw status numbered 2>/dev/null || echo "(ufw 없음 또는 불가)"
+            echo ""
+
+            # --- crowdsec ---
+            echo "=== crowdsec (cscli decisions) ==="
+            if command -v cscli >/dev/null 2>&1; then
+              sudo cscli decisions list 2>/dev/null | grep -E "${DIAG_IP}|140\.248" || echo "(DIAG_IP/140.248 decision 없음)"
+              sudo cscli decisions list -i "${DIAG_IP}" 2>/dev/null || true
+            else
+              echo "cscli 없음"
+            fi
+            echo ""
+
+            # --- nginx 설정 deny/allow/limit ---
+            echo "=== nginx -T (deny/allow/limit_req/limit_conn/geo) ==="
+            sudo nginx -T 2>/dev/null | grep -nE 'deny |allow |limit_req|limit_conn|geo ' | head -80 || echo "(매칭 지시어 없음 또는 nginx -T 불가)"
+            echo ""
+
+            # --- nginx 로그 ---
+            echo "=== nginx access/error 로그 (DIAG_IP) ==="
+            sudo grep -h -- "${DIAG_IP}" /var/log/nginx/* 2>/dev/null | tail -50 || echo "(nginx 로그에서 DIAG_IP 없음)"
+            echo "--- error.log 최근 중 DIAG_IP ---"
+            for errf in /var/log/nginx/error.log /var/log/nginx/*error*.log; do
+              if sudo test -f "${errf}" 2>/dev/null; then
+                echo "[${errf}]"
+                sudo tail -n 200 "${errf}" 2>/dev/null | grep -F -- "${DIAG_IP}" || true
+              fi
+            done
+            echo ""
+
+            # --- 로컬 헬스 (본문만, 자격증명 없음) ---
+            echo "=== 로컬 actuator/health ==="
+            curl -sf -m 5 http://127.0.0.1/actuator/health 2>/dev/null \
+              || curl -sf -m 5 http://127.0.0.1:8080/actuator/health 2>/dev/null \
+              || echo "(로컬 헬스 실패 또는 타임아웃)"
+            echo ""
+
+            # --- 수립된 80/443 연결 샘플 ---
+            echo "=== ss established :80/:443 (head 20) ==="
+            if command -v ss >/dev/null 2>&1; then
+              ss -tn state established '( sport = :443 or sport = :80 )' 2>/dev/null | head -20 || true
+            else
+              echo "ss 없음"
+            fi
+            echo ""
+
+            echo "=========================================="
+            echo "진단 완료 (읽기 전용 — 변경 없음)"
+            echo "=========================================="

@@ -84,13 +84,14 @@ jest.mock('../../common/modals/UnifiedModal', () => ({
     children,
     actions,
     closeChromeFree,
+    closeContent,
     'data-testid': testId
   }) => (isOpen ? (
     <div role="dialog" data-testid={testId}>
       <h2>{title}</h2>
       {subtitle ? <p>{subtitle}</p> : null}
       {closeChromeFree ? (
-        <button type="button" aria-label="닫기" data-gnb-chrome-free="true">×</button>
+        <button type="button" aria-label="닫기" data-gnb-chrome-free="true">{closeContent}</button>
       ) : null}
       {children}
       {actions}
@@ -210,7 +211,9 @@ describe('UnifiedNotifications 내 알림', () => {
     expect(dialog).toHaveTextContent('2026');
     expect(dialog).not.toHaveTextContent('관리자');
     expect(dialog).not.toHaveTextContent('결제가 확인됐어요.');
-    expect(screen.getByRole('button', { name: '닫기' })).toHaveAttribute('data-gnb-chrome-free', 'true');
+    const closeButton = screen.getByRole('button', { name: '닫기' });
+    expect(closeButton).toHaveAttribute('data-gnb-chrome-free', 'true');
+    expect(closeButton.querySelector('svg')).not.toBeNull();
     expect(screen.getByRole('button', { name: '확인' })).toHaveAttribute('data-gnb-chrome-free', 'true');
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/notifications?tab=personal');
     expect(mockNotificationState.markSystemNotificationAsRead).toHaveBeenCalledWith(50);

@@ -43,6 +43,7 @@ const TAB_ORDER = [
   NOTIFICATION_TABS.PERSONAL
 ];
 
+const CloseIcon = ICONS.X;
 const VolumeIcon = ICONS.VOLUME;
 const MessageIcon = ICONS.MESSAGE_CIRCLE;
 const BellIcon = ICONS.BELL;
@@ -533,6 +534,7 @@ const UnifiedNotifications = () => {
           onClose={closeModal}
           className="unified-notifications-modal"
           closeChromeFree
+          closeContent={<CloseIcon size={ICON_SIZES.XL} aria-hidden />}
           title={personalPresentation
             ? t(personalPresentation.titleKey)
             : toDisplayString(selectedItem.data.title, '')}

@@ -409,8 +409,9 @@ describe('ClientPaymentHistory — 알림 mappingId 강조', () => {
       /box-shadow:\s*inset 0 0 0 var\(--mg-v2-border-width-thin\) var\(--mg-v2-highlight-border\);/
     );
     expect(css).toMatch(
-      /\.client-payment-table__row--from-notification > td:first-child \{\s*padding-left:\s*var\(--client-pay-cell-pad-x\);/
+      /\.client-payment-table__row--from-notification:focus,\s*\.client-payment-table__row--from-notification:focus-visible \{\s*outline:\s*none;/
     );
+    expect(css).not.toMatch(/client-payment-table__row--from-notification > td:first-child/);
     expect(css).not.toMatch(/client-payment-table__row--from-notification[\s\S]{0,180}2px solid/);
     await waitFor(() => {
       expect(row).toHaveFocus();

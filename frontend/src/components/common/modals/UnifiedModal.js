@@ -58,6 +58,7 @@ const UnifiedModal = ({
   closeOnEscape = true,
   closeButtonDataTestId,
   closeChromeFree = false,
+  closeContent = '×',
   ...props 
 }) => {
   const titleId = useId();
@@ -174,7 +175,7 @@ const UnifiedModal = ({
                 {...(closeButtonDataTestId ? { 'data-testid': closeButtonDataTestId } : {})}
                 {...(closeChromeFree ? { 'data-gnb-chrome-free': 'true' } : {})}
               >
-                ×
+                {closeContent}
               </MGButton>
             )}
           </div>

@@ -350,6 +350,8 @@
   min-height: var(--mg-v2-touch-target-min) !important;
   max-width: var(--mg-v2-touch-target-min) !important;
   max-height: var(--mg-v2-touch-target-min) !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
   padding: 0 !important;
   border-width: 0 !important;
   border-style: none !important;
@@ -371,6 +373,20 @@
   box-shadow: none !important;
   transform: none !important;
   border-width: 0 !important;
+}
+
+.unified-notifications-modal.mg-modal button.mg-modal__close.mg-button.mg-v2-button.mg-button--outline[data-gnb-chrome-free="true"] > span.mg-button__content,
+.unified-notifications-modal.mg-modal button.mg-modal__close.mg-button.mg-v2-button.mg-button--outline[data-gnb-chrome-free="true"] > span.mg-button__content > span.mg-button__text {
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+  width: auto !important;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button svg {
+  width: var(--mg-v2-space-5);
+  height: var(--mg-v2-space-5);
+  flex: 0 0 auto;
 }
 
 .unified-notifications-modal.mg-modal .mg-modal__close.mg-button:focus-visible {

@@ -21,6 +21,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.math.BigDecimal;
@@ -84,7 +85,7 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
-                .thenReturn(Optional.of(VERIFY_BODY));
+                .thenReturn(PortOneShopPaidMatch.match(VERIFY_BODY, BigDecimal.valueOf(CASH_DUE)));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenReturn(Optional.of(late));
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT, PORTONE_PAYMENT_ID))
@@ -127,8 +128,8 @@ class AdminShopOrderReconcileServiceImplTest {
     }
 
     @Test
-    @DisplayName("CANCELLED 주문 + PortOne 미승인 → 기존처럼 취소 주문 거부, 자동 환불 호출 없음")
-    void reconcilePayment_cancelledOrder_notPaid_throwsOrderCancelled() {
+    @DisplayName("CANCELLED 주문 + PortOne 검증 UNKNOWN → 재시도 메시지, 자동 환불 호출 없음")
+    void reconcilePayment_cancelledOrder_verifyUnknown_throwsRetryMessage() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.CANCELLED);
         Payment cancelled = pendingIamportPayment(PORTONE_PAYMENT_ID);
         cancelled.setStatus(Payment.PaymentStatus.CANCELLED);
@@ -138,12 +139,12 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(cancelled));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
-                .thenReturn(Optional.empty());
+                .thenReturn(PortOneShopPaidMatch.unknown());
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
                 () -> service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null));
 
-        assertEquals(ShopOrderReconcileConstants.MSG_ORDER_CANCELLED, ex.getMessage());
+        assertEquals(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_UNKNOWN, ex.getMessage());
         verify(shopLatePaymentRefundService, never()).refundIfOrderClosed(any(), any());
     }
 
@@ -182,7 +183,7 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT), eq(stuckPaymentId), any(ShopClientOrder.class)))
-                .thenReturn(Optional.of(verifyBody));
+                .thenReturn(PortOneShopPaidMatch.match(verifyBody, BigDecimal.valueOf(stuckCashDue)));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, stuckPaymentId))
                 .thenReturn(Optional.of(pending))
                 .thenReturn(Optional.of(pending));
@@ -223,7 +224,7 @@ class AdminShopOrderReconcileServiceImplTest {
                 .thenReturn(Optional.of(PORTONE_PAYMENT_ID));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
-                .thenReturn(Optional.of(VERIFY_BODY));
+                .thenReturn(PortOneShopPaidMatch.match(VERIFY_BODY, BigDecimal.valueOf(CASH_DUE)));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenReturn(Optional.empty())
                 .thenReturn(Optional.of(pending));
@@ -248,14 +249,14 @@ class AdminShopOrderReconcileServiceImplTest {
     }
 
     @Test
-    @DisplayName("금액 불일치·검증 empty — 주문 상태 유지·IllegalStateException")
-    void reconcilePayment_verifyEmpty_doesNotMarkPaid() {
+    @DisplayName("금액 불일치(MISMATCH) — 주문 상태 유지·IllegalStateException")
+    void reconcilePayment_verifyMismatch_doesNotMarkPaid() {
         ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
-                .thenReturn(Optional.empty());
+                .thenReturn(PortOneShopPaidMatch.mismatch(null, BigDecimal.valueOf(100)));
 
         IllegalStateException ex = assertThrows(
                 IllegalStateException.class,
@@ -265,6 +266,28 @@ class AdminShopOrderReconcileServiceImplTest {
         assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
         verify(paymentService, never()).approveShopOrderPayment(any());
         verify(paymentService, never()).updatePaymentStatus(any(), any());
+        verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
+    }
+
+    @Test
+    @DisplayName("검증 UNKNOWN — 재시도 메시지·주문 상태 유지·취소 없음")
+    void reconcilePayment_verifyUnknown_doesNotMarkPaidOrCancel() {
+        ShopClientOrder order = orderWithStatus(ShopClientOrderStatus.PENDING_PAYMENT);
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
+                .thenReturn(PortOneShopPaidMatch.unknown());
+
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> service.reconcilePayment(TENANT, ORDER_ID, PORTONE_PAYMENT_ID, null));
+
+        assertEquals(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_UNKNOWN, ex.getMessage());
+        assertEquals(ShopClientOrderStatus.PENDING_PAYMENT, order.getStatus());
+        verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any(), any());
         verify(clientShopCheckoutService, never()).completeOrderOnPaymentApproved(any(), any());
     }
 

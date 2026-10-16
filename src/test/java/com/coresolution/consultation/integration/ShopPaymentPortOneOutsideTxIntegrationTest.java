@@ -35,6 +35,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOnePaymentWebhookService;
 import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
@@ -155,8 +156,9 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(anyString(), anyString(), any()))
                 .thenAnswer(inv -> {
                     recordBoundary("verifyPaidMatchesShopOrder");
-                    return Optional.of(
-                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
         when(portOneV2PaymentVerifyService.verifyPaidAmountBody(anyString(), anyString(), any())).thenAnswer(inv -> {
             recordBoundary("verifyPaidAmountBody");

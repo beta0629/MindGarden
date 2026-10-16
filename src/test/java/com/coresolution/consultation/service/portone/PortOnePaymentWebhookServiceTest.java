@@ -446,8 +446,9 @@ class PortOnePaymentWebhookServiceTest {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
-                .thenReturn(Optional.empty());
-        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(PortOneShopPaidMatch.mismatch(null, java.math.BigDecimal.valueOf(100)));
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                        eq(TENANT_ID), eq(ORDER_PUBLIC_ID), eq(java.math.BigDecimal.valueOf(100))))
                 .thenReturn(true);
 
         String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-underpay", TIMESTAMP, rawBody);
@@ -455,9 +456,35 @@ class PortOnePaymentWebhookServiceTest {
                 rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-underpay");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        assertEquals("mismatch_cancelled", response.getBody().get("status"));
+        assertEquals(PortOneV2WebhookConstants.STATUS_MISMATCH_CANCELLED, response.getBody().get("status"));
         verify(paymentService, never()).approveShopOrderPayment(any());
-        verify(clientShopCheckoutService).cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(clientShopCheckoutService).cancelMismatchedApprovedPaymentForOrder(
+                TENANT_ID, ORDER_PUBLIC_ID, java.math.BigDecimal.valueOf(100));
+    }
+
+    @Test
+    @DisplayName("쇼핑 주문 Transaction.Paid — PortOne 검증 UNKNOWN 이면 5xx·취소·approve 없음")
+    void handleWebhook_shopPaid_verifyUnknown_returns5xxNoCancel() throws Exception {
+        String rawBody = paidWebhookBodyWithPaymentId();
+        stubActiveWebhookConfig("cfg-unknown");
+        Payment payment = pendingShopPayment();
+        ShopClientOrder order = shopOrder(10_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
+                .thenReturn(PortOneShopPaidMatch.unknown());
+
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-unknown", TIMESTAMP, rawBody);
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-unknown");
+
+        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN, response.getBody().get("status"));
+        verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any(), any());
     }
 
     @Test
@@ -472,8 +499,9 @@ class PortOnePaymentWebhookServiceTest {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
-                .thenReturn(Optional.of(
-                        "{\"status\":\"PAID\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}"));
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(10_000L)));
 
         String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-match", TIMESTAMP, rawBody);
         ResponseEntity<Map<String, Object>> response = service.handleWebhook(
@@ -483,6 +511,7 @@ class PortOnePaymentWebhookServiceTest {
         assertEquals("ok", response.getBody().get("status"));
         verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
         verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any(), any());
     }
 
     @Test
@@ -497,8 +526,9 @@ class PortOnePaymentWebhookServiceTest {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
                 .thenReturn(Optional.of(order));
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
-                .thenReturn(Optional.empty());
-        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(PortOneShopPaidMatch.mismatch(null, java.math.BigDecimal.valueOf(100)));
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                        eq(TENANT_ID), eq(ORDER_PUBLIC_ID), eq(java.math.BigDecimal.valueOf(100))))
                 .thenReturn(true);
 
         String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-idem-1", TIMESTAMP, rawBody);
@@ -510,7 +540,8 @@ class PortOnePaymentWebhookServiceTest {
                 rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature2, "whk-idem-2").getStatusCode());
 
         verify(clientShopCheckoutService, times(2))
-                .cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
+                .cancelMismatchedApprovedPaymentForOrder(
+                        TENANT_ID, ORDER_PUBLIC_ID, java.math.BigDecimal.valueOf(100));
         verify(paymentService, never()).approveShopOrderPayment(any());
     }
 

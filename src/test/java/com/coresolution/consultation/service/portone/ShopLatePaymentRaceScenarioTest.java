@@ -127,7 +127,9 @@ class ShopLatePaymentRaceScenarioTest {
                 PortOneWebhookTestSignatures.properties());
         lenient().when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         eq(TENANT_ID), eq(PAYMENT_ID), any(ShopClientOrder.class)))
-                .thenReturn(Optional.of("{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}"));
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(15_000L)));
         cancelService = new ClientShopPaymentCancelServiceImpl(
                 shopClientOrderRepository,
                 shopClientOrderLineRepository,

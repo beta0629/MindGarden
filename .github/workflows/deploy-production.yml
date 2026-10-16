@@ -894,7 +894,7 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 60s
-        source: "scripts/deployment/prod-readiness-cutover-gate.sh"
+        source: "scripts/deployment/prod-readiness-cutover-gate.sh,scripts/deployment/check-flyway-schema-health.sh"
         target: "/var/www/mindgarden/"
         strip_components: 2
         overwrite: true
@@ -1480,26 +1480,21 @@ jobs:
           else
             echo "⚠️ 최근 25분 journal에 Flyway 키워드 없음 — SPRING_FLYWAY_ENABLED=false 이거나 로그 레벨·기동 전 구간일 수 있음"
           fi
-          if command -v mysql >/dev/null 2>&1; then
-            for kv in $(systemctl show "$ACTIVE_UNIT" -p Environment --value | tr ' ' '\n' | grep '^DB_'); do
-              export "$kv" 2>/dev/null || true
-            done
-            DBN="${DB_NAME:-core_solution}"
-            DBU="${DB_USERNAME:-mindgarden}"
-            DBP="${DB_PASSWORD:-}"
-            DBH="${DB_HOST:-$MG_LOCAL_DB_HOST}"
-            if [ -n "$DBP" ]; then
-              echo "🔍 flyway_schema_history 최신 5건 ($ACTIVE_UNIT Environment 의 DB_* 사용)..."
-              if mysql -h "$DBH" -u "$DBU" -p"$DBP" "$DBN" -e "SHOW TABLES LIKE 'flyway_schema_history';" 2>/dev/null | grep -q flyway_schema_history; then
-                mysql -h "$DBH" -u "$DBU" -p"$DBP" "$DBN" -e \
-                  "SELECT installed_rank, version, description, success, installed_on FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null \
-                  || echo "⚠️ flyway_schema_history 조회 실패"
-              else
-                echo "⚠️ flyway_schema_history 테이블 없음 — Flyway 미사용 DB이거나 최초 기동 전"
-              fi
-            else
-              echo "ℹ️ systemd에서 DB_PASSWORD 파싱 실패 — journalctl Flyway 로그만 참고"
-            fi
+          for kv in $(systemctl show "$ACTIVE_UNIT" -p Environment --value | tr ' ' '\n' | grep '^DB_'); do
+            export "$kv" 2>/dev/null || true
+          done
+          if [ -z "${DB_HOST:-}" ] && [ -n "${MG_LOCAL_DB_HOST:-}" ]; then
+            export DB_HOST="$MG_LOCAL_DB_HOST"
+          fi
+          FLYWAY_HEALTH_SH=/var/www/mindgarden/check-flyway-schema-health.sh
+          if [ -x "$FLYWAY_HEALTH_SH" ] || [ -f "$FLYWAY_HEALTH_SH" ]; then
+            echo "🔍 Flyway 스키마 헬스 ($ACTIVE_UNIT Environment 의 DB_* → check-flyway-schema-health.sh)..."
+            bash "$FLYWAY_HEALTH_SH" || {
+              echo "::error::Flyway 스키마 헬스 실패 (success=0 등 치명 조건)"
+              exit 1
+            }
+          else
+            echo "⚠️ $FLYWAY_HEALTH_SH 없음 — journalctl Flyway 로그만 참고 (스크립트 업로드 step 확인)"
           fi
           
           echo "🔍 HTTP 헬스체크 (트래픽 슬롯 포트 ${ACTIVE_PORT})..."

@@ -1228,6 +1228,8 @@ jobs:
               exit 1
             fi
             export MG_DEPLOY_ENV_FILE="${PROD_ENV_FILE:-/etc/mindgarden/prod.env}"
+            # prod.env 없으면 load-deploy-db-env 가 즉시 실패 → 트래픽 전환 전 중단
+            export MG_DEPLOY_ENV_FILE_REQUIRED=1
             export MG_DEPLOY_SYSTEMD_UNITS="${INACTIVE_UNIT} ${ACTIVE_UNIT_FOR_ENV}"
             export MG_DEPLOY_DB_PASSWORD_FALLBACK="${PRODUCTION_DB_PASSWORD:-}"
             unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME

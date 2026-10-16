@@ -306,7 +306,13 @@ check "load-deploy-db-env: env 파일에서 DB_* 로드" 0 \
   MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
   bash "$HELPER_FIXTURE/assert-from-file.sh"
 echo "$LAST_OUT" | grep -q "file-secret-never-echo" && { echo "not ok - helper 로그에 비밀번호 노출"; fail=1; }
-echo "$LAST_OUT" | grep -q "DB_PASSWORD=set" || { echo "not ok - helper 키 존재 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_status pw=set" || { echo "not ok - helper 키 존재 로그 없음"; fail=1; }
+# cred_source 소스 줄에 password 문자열(대소문자 무관) 금지
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
+echo "$LAST_OUT" | grep -q "cred_source pw=test_env" || { echo "not ok - cred_source pw=test_env 없음"; fail=1; }
 
 cat > "$HELPER_FIXTURE/required-missing.sh" <<EOF
 #!/usr/bin/env bash
@@ -383,8 +389,12 @@ check "load-deploy-db-env: 비밀번호 폴백 MG_DEPLOY_DB_PASSWORD_FALLBACK" 0
   MG_DEPLOY_DB_PASSWORD_FALLBACK=fallback-secret \
   bash "$HELPER_FIXTURE/assert-fallback.sh"
 echo "$LAST_OUT" | grep -q "fallback-secret" && { echo "not ok - fallback 비밀번호 노출"; fail=1; }
-echo "$LAST_OUT" | grep -q "password=fallback:MG_DEPLOY_DB_PASSWORD_FALLBACK" || { echo "not ok - fallback 소스 로그 없음"; fail=1; }
-echo "$LAST_OUT" | grep -q "host=default" || { echo "not ok - default host 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source pw=fallback_mg_deploy" || { echo "not ok - fallback 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source host=default" || { echo "not ok - default host 소스 로그 없음"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - fallback cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
 
 # PRODUCTION_DB_PASSWORD 만 있는 시나리오 (헬퍼 단위 — health SSH envs 누락 재발 방지)
 cat > "$HELPER_FIXTURE/assert-prod-fallback.sh" <<EOF
@@ -402,7 +412,11 @@ check "load-deploy-db-env: PRODUCTION_DB_PASSWORD 폴백 (env 파일 비어 있�
   PRODUCTION_DB_PASSWORD=prod-secret-never-echo \
   bash "$HELPER_FIXTURE/assert-prod-fallback.sh"
 echo "$LAST_OUT" | grep -q "prod-secret-never-echo" && { echo "not ok - PRODUCTION_DB_PASSWORD 값 노출"; fail=1; }
-echo "$LAST_OUT" | grep -q "password=fallback:PRODUCTION_DB_PASSWORD" || { echo "not ok - PRODUCTION_DB_PASSWORD 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source pw=fallback_production" || { echo "not ok - PRODUCTION_DB_PASSWORD 소스 로그 없음"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - PRODUCTION fallback cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
 
 # PRODUCTION_DB_PASSWORD 도 없으면 비밀번호 empty (health 1045 원인 재현)
 cat > "$HELPER_FIXTURE/assert-no-password.sh" <<EOF
@@ -418,8 +432,12 @@ check "load-deploy-db-env: PRODUCTION_DB_PASSWORD 없으면 DB_PASSWORD empty" 0
   -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
   MG_DEPLOY_ENV_FILE="$HELPER_FIXTURE/empty.env" \
   bash "$HELPER_FIXTURE/assert-no-password.sh"
-echo "$LAST_OUT" | grep -q "DB_PASSWORD=(empty)" || { echo "not ok - empty 비밀번호 로그 없음"; fail=1; }
-echo "$LAST_OUT" | grep -q "password=unset" || { echo "not ok - password=unset 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_status pw=(empty)" || { echo "not ok - empty 비밀번호 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source pw=unset" || { echo "not ok - cred_source pw=unset 소스 로그 없음"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - empty pw cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
 
 check "load-deploy-db-env: env 파일 소스 태그(basename)" 0 \
   env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
@@ -428,16 +446,41 @@ check "load-deploy-db-env: env 파일 소스 태그(basename)" 0 \
   MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
   bash "$HELPER_FIXTURE/assert-from-file.sh"
 _ENV_BASENAME="$(basename "$HELPER_ENV_FILE")"
-echo "$LAST_OUT" | grep -q "password=${_ENV_BASENAME}" || { echo "not ok - env 파일 소스 태그 없음 (want password=${_ENV_BASENAME})"; fail=1; }
-echo "$LAST_OUT" | grep -q "host=${_ENV_BASENAME}" || { echo "not ok - host 소스 태그 없음"; fail=1; }
+_ENV_TAG_NORM="${_ENV_BASENAME//./_}"
+echo "$LAST_OUT" | grep -q "cred_source pw=${_ENV_TAG_NORM}" || { echo "not ok - env 파일 소스 태그 없음 (want cred_source pw=${_ENV_TAG_NORM})"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source host=${_ENV_TAG_NORM}" || { echo "not ok - host 소스 태그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "resolved host=" || { echo "not ok - resolved host 로그 없음"; fail=1; }
 echo "$LAST_OUT" | grep -q "file-secret-never-echo" && { echo "not ok - 소스 로그에 비밀번호 값"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - basename cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
+
+# dev.env 파일명 정규화 (dev.env → dev_env)
+HELPER_DEV_ENV_NAMED="$HELPER_FIXTURE/dev.env"
+cp "$HELPER_ENV_FILE" "$HELPER_DEV_ENV_NAMED"
+check "load-deploy-db-env: cred_source pw=dev_env (basename 정규화)" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS \
+  MG_DEPLOY_ENV_FILE="$HELPER_DEV_ENV_NAMED" \
+  bash "$HELPER_FIXTURE/assert-from-file.sh"
+echo "$LAST_OUT" | grep -q "cred_source pw=dev_env" || { echo "not ok - cred_source pw=dev_env 없음"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - dev.env cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
 
 check "load-deploy-db-env: pre-set 소스 태그" 0 \
   env DB_HOST=keep-host DB_USERNAME=keep-user DB_PASSWORD=keep-pass DB_NAME=keep-db DB_PORT=3399 \
   MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
   bash "$HELPER_FIXTURE/assert-preserve.sh"
-echo "$LAST_OUT" | grep -q "password=pre-set" || { echo "not ok - pre-set 소스 로그 없음"; fail=1; }
-echo "$LAST_OUT" | grep -q "host=pre-set" || { echo "not ok - host pre-set 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source pw=pre_set" || { echo "not ok - pre-set 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source host=pre_set" || { echo "not ok - host pre-set 소스 로그 없음"; fail=1; }
+if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
+  echo "not ok - pre-set cred_source 줄에 password 문자열 포함"
+  fail=1
+fi
 
 # --- preflight-deploy-db.sh ---
 write_mock_mysql select1_ok
@@ -914,6 +957,56 @@ else
   assert_path_glob "deploy-production" "$PROD_PATHS" "database/schema/**"
   assert_path_glob "deploy-production" "$PROD_PATHS" "src/main/resources/sql/**"
   assert_path_glob "deploy-production" "$PROD_PATHS" ".github/actions/sync-prod-env-key/**"
+
+  # DB preflight 구간: PREFLIGHT_DB= … bash "$PREFLIGHT_DB" 사이에 REQUIRED=1 필수
+  PREFLIGHT_REGION="$(awk '
+    /PREFLIGHT_DB=/ { capturing=1 }
+    capturing { print }
+    capturing && /bash "\$PREFLIGHT_DB"/ { exit }
+  ' "$PROD_WF")"
+  if printf '%s\n' "$PREFLIGHT_REGION" | grep -q 'MG_DEPLOY_ENV_FILE_REQUIRED=1'; then
+    echo "ok - deploy-production.yml preflight region has MG_DEPLOY_ENV_FILE_REQUIRED=1"
+  else
+    echo "not ok - deploy-production.yml preflight region missing MG_DEPLOY_ENV_FILE_REQUIRED=1"
+    fail=1
+  fi
+fi
+
+# --- deploy-backend-dev.yml: systemd SCP /tmp strip_components + 레포 unit 적용 로그 ---
+if [ ! -f "$DEV_WF" ]; then
+  echo "not ok - deploy-backend-dev.yml 없음 (systemd SCP 가드)"
+  fail=1
+else
+  # systemd 업로드 step 근처: target /tmp/ + strip_components: 2
+  SYSTEMD_SCP_BLOCK="$(awk '
+    /name:.*systemd 서비스 파일 업로드/ { capturing=1 }
+    capturing { print }
+    capturing && /overwrite:/ { exit }
+  ' "$DEV_WF")"
+  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -qE 'target:[[:space:]]*"/tmp/?"'; then
+    echo "ok - deploy-backend-dev.yml systemd SCP target is /tmp/"
+  else
+    echo "not ok - deploy-backend-dev.yml systemd SCP target must be \"/tmp/\" (or /tmp)"
+    fail=1
+  fi
+  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -q 'strip_components:[[:space:]]*2'; then
+    echo "ok - deploy-backend-dev.yml systemd SCP has strip_components: 2"
+  else
+    echo "not ok - deploy-backend-dev.yml systemd SCP missing strip_components: 2"
+    fail=1
+  fi
+  if grep -q '레포 unit 적용' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml contains 레포 unit 적용"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 레포 unit 적용"
+    fail=1
+  fi
+  if grep -q '/tmp/mindgarden-dev.service' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml still references /tmp/mindgarden-dev.service"
+  else
+    echo "not ok - deploy-backend-dev.yml missing /tmp/mindgarden-dev.service install path"
+    fail=1
+  fi
 fi
 
 exit "$fail"

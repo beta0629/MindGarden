@@ -12,8 +12,16 @@
 #      host=MG_LOCAL_DB_HOST/127.0.0.1, user=mindgarden, name=core_solution, port=3306
 #
 # export: DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
-# 비밀번호·값 echo 금지. 키 존재(set/empty) + 소스 태그만 로그.
-#   소스: <env_basename> | systemd:<unit> | fallback:<VAR> | pre-set | default
+# 비밀번호·값 echo 금지. 키 존재(set/empty) + 중립 소스 태그만 로그.
+#   cred_source host|port|user|db|pw=<tag>
+#   태그 정규화 (로그용, 값 아님):
+#     prod.env → prod_env, pre-set → pre_set,
+#     fallback:MG_DEPLOY_DB_PASSWORD_FALLBACK → fallback_mg_deploy,
+#     fallback:PRODUCTION_DB_PASSWORD → fallback_production,
+#     fallback:DEV_DB_PASSWORD → fallback_dev,
+#     default → default, 빈 값 → unset
+#   로그 줄에 password 문자열(대소문자 무관) 금지 — GitHub Actions 마스킹·누출 방지.
+#   cred_status pw=set|(empty)
 #
 # MG_DEPLOY_ENV_FILE_REQUIRED=1 이고 env 파일이 없으면 exit 1.
 #
@@ -29,9 +37,56 @@ _MG_SRC_DB_USERNAME=""
 _MG_SRC_DB_PASSWORD=""
 _MG_SRC_DB_NAME=""
 
+# 내부 소스 태그를 로그용 중립 태그로 정규화 (값·password 단어 미포함)
+_mg_normalize_cred_source_tag() {
+  local tag="${1:-}"
+  if [ -z "$tag" ]; then
+    printf '%s' "unset"
+    return 0
+  fi
+  case "$tag" in
+    pre-set)
+      printf '%s' "pre_set"
+      ;;
+    fallback:MG_DEPLOY_DB_PASSWORD_FALLBACK)
+      printf '%s' "fallback_mg_deploy"
+      ;;
+    fallback:PRODUCTION_DB_PASSWORD)
+      printf '%s' "fallback_production"
+      ;;
+    fallback:DEV_DB_PASSWORD)
+      printf '%s' "fallback_dev"
+      ;;
+    default)
+      printf '%s' "default"
+      ;;
+    *)
+      # env basename: prod.env → prod_env / systemd:unit 은 . → _
+      printf '%s' "${tag//./_}"
+      ;;
+  esac
+}
+
+_mg_log_cred_source() {
+  local field="$1"
+  local raw_tag="${2:-}"
+  local normalized
+  normalized="$(_mg_normalize_cred_source_tag "$raw_tag")"
+  echo "   cred_source ${field}=${normalized}"
+}
+
 _mg_log_key_status() {
   local key="$1"
   local val="${!key-}"
+  # DB_PASSWORD 는 로그에 password 문자열을 쓰지 않음 (중립 라벨 pw)
+  if [ "$key" = "DB_PASSWORD" ]; then
+    if [ -n "$val" ]; then
+      echo "   cred_status pw=set"
+    else
+      echo "   cred_status pw=(empty)"
+    fi
+    return 0
+  fi
   if [ -n "$val" ]; then
     echo "   ${key}=set"
   else
@@ -190,5 +245,9 @@ fi
 export DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
 
 echo "   resolved host=${DB_HOST} port=${DB_PORT} user=${DB_USERNAME} db=${DB_NAME}"
-echo "   source host=${_MG_SRC_DB_HOST:-unknown} port=${_MG_SRC_DB_PORT:-unknown} user=${_MG_SRC_DB_USERNAME:-unknown} db=${_MG_SRC_DB_NAME:-unknown} password=${_MG_SRC_DB_PASSWORD:-unset}"
+_mg_log_cred_source host "${_MG_SRC_DB_HOST}"
+_mg_log_cred_source port "${_MG_SRC_DB_PORT}"
+_mg_log_cred_source user "${_MG_SRC_DB_USERNAME}"
+_mg_log_cred_source db "${_MG_SRC_DB_NAME}"
+_mg_log_cred_source pw "${_MG_SRC_DB_PASSWORD}"
 _mg_log_key_status DB_PASSWORD

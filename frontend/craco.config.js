@@ -46,7 +46,11 @@ module.exports = {
         '^@portone/browser-sdk/v2$':
           '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs',
         // axios 1.x ESM entry breaks Jest (import outside module)
-        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
+        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
+        // luxon3는 package.json에 있으나 일부 스냅샷 node_modules에 없음.
+        // 없는 패키지 대신 core createPlugin 스텁으로 해석해 관련 테스트가 기동되게 한다.
+        '^@fullcalendar/luxon3$':
+          '<rootDir>/src/components/ui/Schedule/__tests__/fullcalendarLuxon3.jestStub.js'
       };
       return jestConfig;
     }

@@ -8,10 +8,12 @@
 #   2) 비어 있는 DB_* 만 systemd unit Environment 로 채움
 #      — MG_DEPLOY_SYSTEMD_UNITS (공백 구분)
 #   3) 비밀번호 폴백: MG_DEPLOY_DB_PASSWORD_FALLBACK → PRODUCTION_DB_PASSWORD → DEV_DB_PASSWORD
-#   4) 기본값: host=MG_LOCAL_DB_HOST/127.0.0.1, user=mindgarden, name=core_solution, port=3306
+#   4) 기본값 (운영 SSOT 정합 — prod.env/systemd 비어 있을 때만):
+#      host=MG_LOCAL_DB_HOST/127.0.0.1, user=mindgarden, name=core_solution, port=3306
 #
 # export: DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
-# 비밀번호·값 echo 금지. 키 존재(set/empty)만 로그.
+# 비밀번호·값 echo 금지. 키 존재(set/empty) + 소스 태그만 로그.
+#   소스: <env_basename> | systemd:<unit> | fallback:<VAR> | pre-set | default
 #
 # MG_DEPLOY_ENV_FILE_REQUIRED=1 이고 env 파일이 없으면 exit 1.
 #
@@ -19,6 +21,13 @@
 set -euo pipefail
 
 _MG_DEPLOY_ENV_FILE="${MG_DEPLOY_ENV_FILE:-/etc/mindgarden/prod.env}"
+_MG_DEPLOY_ENV_BASENAME="$(basename "$_MG_DEPLOY_ENV_FILE")"
+
+_MG_SRC_DB_HOST=""
+_MG_SRC_DB_PORT=""
+_MG_SRC_DB_USERNAME=""
+_MG_SRC_DB_PASSWORD=""
+_MG_SRC_DB_NAME=""
 
 _mg_log_key_status() {
   local key="$1"
@@ -56,13 +65,30 @@ _mg_read_env_file_key() {
   printf '%s' "$val"
 }
 
+_mg_set_src() {
+  local target="$1"
+  local tag="$2"
+  case "$target" in
+    DB_HOST) _MG_SRC_DB_HOST="$tag" ;;
+    DB_PORT) _MG_SRC_DB_PORT="$tag" ;;
+    DB_USERNAME) _MG_SRC_DB_USERNAME="$tag" ;;
+    DB_PASSWORD) _MG_SRC_DB_PASSWORD="$tag" ;;
+    DB_NAME) _MG_SRC_DB_NAME="$tag" ;;
+    *) ;;
+  esac
+}
+
 _mg_fill_if_empty() {
-  # $1=TARGET_VAR $2=value — target 이 비어 있고 value 가 non-empty 일 때만 설정
+  # $1=TARGET_VAR $2=value $3=source_tag — target 이 비어 있고 value 가 non-empty 일 때만 설정
   local target="$1"
   local value="${2:-}"
+  local tag="${3:-}"
   local current="${!target-}"
   if [ -z "$current" ] && [ -n "$value" ]; then
     printf -v "$target" '%s' "$value"
+    if [ -n "$tag" ]; then
+      _mg_set_src "$target" "$tag"
+    fi
   fi
 }
 
@@ -78,10 +104,18 @@ _mg_fill_from_env_file() {
     val="$(_mg_read_env_file_key "$key" "$_MG_DEPLOY_ENV_FILE")"
     if [ -n "$val" ]; then
       printf -v "$target" '%s' "$val"
+      _mg_set_src "$target" "$_MG_DEPLOY_ENV_BASENAME"
       return 0
     fi
   done
 }
+
+# 이미 non-empty 인 DB_* 는 pre-set
+[ -n "${DB_HOST:-}" ] && _MG_SRC_DB_HOST="pre-set"
+[ -n "${DB_PORT:-}" ] && _MG_SRC_DB_PORT="pre-set"
+[ -n "${DB_USERNAME:-}" ] && _MG_SRC_DB_USERNAME="pre-set"
+[ -n "${DB_PASSWORD:-}" ] && _MG_SRC_DB_PASSWORD="pre-set"
+[ -n "${DB_NAME:-}" ] && _MG_SRC_DB_NAME="pre-set"
 
 echo "🔧 load-deploy-db-env: env_file=${_MG_DEPLOY_ENV_FILE}"
 
@@ -112,7 +146,7 @@ if [ -n "${MG_DEPLOY_SYSTEMD_UNITS:-}" ]; then
       _mg_v="${kv#*=}"
       case "$_mg_k" in
         DB_HOST|DB_PORT|DB_USERNAME|DB_PASSWORD|DB_NAME)
-          _mg_fill_if_empty "$_mg_k" "$_mg_v"
+          _mg_fill_if_empty "$_mg_k" "$_mg_v" "systemd:${_mg_unit}"
           ;;
         *)
           ;;
@@ -125,20 +159,36 @@ fi
 if [ -z "${DB_PASSWORD:-}" ]; then
   if [ -n "${MG_DEPLOY_DB_PASSWORD_FALLBACK:-}" ]; then
     DB_PASSWORD="$MG_DEPLOY_DB_PASSWORD_FALLBACK"
+    _MG_SRC_DB_PASSWORD="fallback:MG_DEPLOY_DB_PASSWORD_FALLBACK"
   elif [ -n "${PRODUCTION_DB_PASSWORD:-}" ]; then
     DB_PASSWORD="$PRODUCTION_DB_PASSWORD"
+    _MG_SRC_DB_PASSWORD="fallback:PRODUCTION_DB_PASSWORD"
   elif [ -n "${DEV_DB_PASSWORD:-}" ]; then
     DB_PASSWORD="$DEV_DB_PASSWORD"
+    _MG_SRC_DB_PASSWORD="fallback:DEV_DB_PASSWORD"
   fi
 fi
 
-# 4) 기본값
-DB_HOST="${DB_HOST:-${MG_LOCAL_DB_HOST:-127.0.0.1}}"
-DB_PORT="${DB_PORT:-3306}"
-DB_USERNAME="${DB_USERNAME:-mindgarden}"
-DB_NAME="${DB_NAME:-core_solution}"
+# 4) 기본값 (운영 SSOT: local MySQL · user=mindgarden · db=core_solution)
+if [ -z "${DB_HOST:-}" ]; then
+  DB_HOST="${MG_LOCAL_DB_HOST:-127.0.0.1}"
+  _MG_SRC_DB_HOST="default"
+fi
+if [ -z "${DB_PORT:-}" ]; then
+  DB_PORT="3306"
+  _MG_SRC_DB_PORT="default"
+fi
+if [ -z "${DB_USERNAME:-}" ]; then
+  DB_USERNAME="mindgarden"
+  _MG_SRC_DB_USERNAME="default"
+fi
+if [ -z "${DB_NAME:-}" ]; then
+  DB_NAME="core_solution"
+  _MG_SRC_DB_NAME="default"
+fi
 
 export DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
 
 echo "   resolved host=${DB_HOST} port=${DB_PORT} user=${DB_USERNAME} db=${DB_NAME}"
+echo "   source host=${_MG_SRC_DB_HOST:-unknown} port=${_MG_SRC_DB_PORT:-unknown} user=${_MG_SRC_DB_USERNAME:-unknown} db=${_MG_SRC_DB_NAME:-unknown} password=${_MG_SRC_DB_PASSWORD:-unset}"
 _mg_log_key_status DB_PASSWORD

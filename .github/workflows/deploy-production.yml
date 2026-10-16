@@ -894,7 +894,7 @@ jobs:
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
         port: 22
         timeout: 60s
-        source: "scripts/deployment/prod-readiness-cutover-gate.sh,scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh"
+        source: "scripts/deployment/prod-readiness-cutover-gate.sh,scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/preflight-deploy-db.sh,scripts/deployment/mysql-deploy-client.sh"
         target: "/var/www/mindgarden/"
         strip_components: 2
         overwrite: true
@@ -1070,6 +1070,14 @@ jobs:
             export MG_DEPLOY_DB_PASSWORD_FALLBACK="${PRODUCTION_DB_PASSWORD:-}"
             # shellcheck disable=SC1090
             . "$LOAD_DB_ENV"
+            MYSQL_CLIENT_SH=/var/www/mindgarden/mysql-deploy-client.sh
+            if [ ! -f "$MYSQL_CLIENT_SH" ]; then
+              echo "::error::V20260829_003 repair: mysql-deploy-client.sh 없음 ($MYSQL_CLIENT_SH). SCP step 확인"
+              rm -f "$FLYWAY_003_ERR_FILE"
+              exit 1
+            fi
+            # shellcheck disable=SC1090
+            . "$MYSQL_CLIENT_SH"
             FLYWAY_DB_HOST="$DB_HOST"
             FLYWAY_DB_USER="$DB_USERNAME"
             FLYWAY_DB_PASS="$DB_PASSWORD"
@@ -1080,17 +1088,20 @@ jobs:
               rm -f "$FLYWAY_003_ERR_FILE"
               exit 1
             fi
+            # --defaults-extra-file (0600). MYSQL_PWD+sudo -E 금지 (env_reset 시 1045)
+            mysql_deploy_prepare "$FLYWAY_DB_USER" "$FLYWAY_DB_PASS" "$FLYWAY_DB_HOST" "${DB_PORT:-3306}" "$FLYWAY_DB_NAME"
             flyway003_mysql() {
-              # $1 = SQL, stdout = result, stderr → FLYWAY_003_ERR_FILE (MYSQL_PWD, -p CLI 금지)
-              MYSQL_PWD="$FLYWAY_DB_PASS" mysql -h "$FLYWAY_DB_HOST" -u "$FLYWAY_DB_USER" "$FLYWAY_DB_NAME" -N -e "$1" 2>"$FLYWAY_003_ERR_FILE"
+              # $1 = SQL, stdout = result, stderr → FLYWAY_003_ERR_FILE (-p / MYSQL_PWD CLI 금지)
+              mysql_deploy_query "$1" 2>"$FLYWAY_003_ERR_FILE"
             }
             flyway003_mysql_root() {
               # mapping-proc 패턴: PRODUCTION_DB_PASSWORD 우선, 없으면 FLYWAY_DB_PASS
+              # sudo mysql --defaults-extra-file (sudo -E 불필요)
               _root_pass="${PRODUCTION_DB_PASSWORD:-}"
               if [ -z "$_root_pass" ]; then
                 _root_pass="$FLYWAY_DB_PASS"
               fi
-              MYSQL_PWD="$_root_pass" sudo -E mysql -h "$FLYWAY_DB_HOST" -u root "$FLYWAY_DB_NAME" -N -e "$1" 2>"$FLYWAY_003_ERR_FILE"
+              mysql_deploy_query_sudo "$1" "$_root_pass" 2>"$FLYWAY_003_ERR_FILE"
             }
             flyway003_print_err() {
               if [ -s "$FLYWAY_003_ERR_FILE" ]; then
@@ -1202,6 +1213,22 @@ jobs:
             fi
 
             # /actuator/health 는 프로세스 생존만 본다.
+            # 전환 전 DB preflight: load-deploy-db-env → DB_PASSWORD 존재 → SELECT 1.
+            # 실패 시 upstream/active-backend 전환 전에 exit 1 (post-switch 실패 금지).
+            PREFLIGHT_DB=/var/www/mindgarden/preflight-deploy-db.sh
+            if [ ! -f "$PREFLIGHT_DB" ]; then
+              echo "::error::DB preflight 스크립트 없음: $PREFLIGHT_DB — 트래픽 전환 전 중단"
+              exit 1
+            fi
+            export MG_DEPLOY_ENV_FILE="${PROD_ENV_FILE:-/etc/mindgarden/prod.env}"
+            export MG_DEPLOY_SYSTEMD_UNITS="${INACTIVE_UNIT} ${ACTIVE_UNIT_FOR_ENV}"
+            export MG_DEPLOY_DB_PASSWORD_FALLBACK="${PRODUCTION_DB_PASSWORD:-}"
+            unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
+            if ! bash "$PREFLIGHT_DB"; then
+              echo "::error::DB preflight 실패 (DB_PASSWORD/SELECT 1) — upstream 전환 안 함"
+              exit 1
+            fi
+
             # 전환 전에는 minimum-idle 연결을 동시에 연 SELECT 1 이 빠르게 끝나야 한다.
             # 한 번 연결하고 isValid 만 통과한 상태로는 upstream 을 바꾸지 않는다.
             # 느리거나 실패하면 파일을 쓰지 않고, 이 슬롯을 추가로 재시작하지 않는다.
@@ -1387,10 +1414,16 @@ jobs:
 
     - name: 🏥 헬스체크
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      env:
+        # appleboy envs: 로 전달 — 미전달 시 SSH 세션의 PRODUCTION_DB_PASSWORD 가 비어
+        # load-deploy-db-env 폴백이 실패하고 green systemd 잘못된 비밀번호로 1045 재발.
+        PRODUCTION_DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}
         key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        # repair(블루그린) step 과 동일 — PRODUCTION_DB_PASSWORD 를 SSH 세션으로 export
+        envs: PRODUCTION_DB_PASSWORD
         script: |
           echo "🏥 헬스체크 시작..."
           

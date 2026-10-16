@@ -753,7 +753,8 @@ jobs:
             echo "::warning::DEV_DB_USER / DEV_DB_PASSWORD / DEV_DB_NAME 비어 있음 — V20260831_004 flyway success=0 repair 스킵 (배포는 계속)"
           else
             FLYWAY_004_DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
-            FLYWAY_004_DELETED=$(mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -N -e "
+            # -p CLI 금지 — MYSQL_PWD (스크립트 업로드 전이라 defaults-extra-file 헬퍼 미사용)
+            FLYWAY_004_DELETED=$(MYSQL_PWD="$DEV_DB_PASSWORD" mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" "$DEV_DB_NAME" -N -e "
               DELETE FROM flyway_schema_history
               WHERE success = 0
                 AND (
@@ -769,7 +770,7 @@ jobs:
             else
               echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
             fi
-            mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -e \
+            MYSQL_PWD="$DEV_DB_PASSWORD" mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" "$DEV_DB_NAME" -e \
               "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" 2>/dev/null \
               || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
           fi
@@ -1482,7 +1483,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 60s
-        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh"
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh"
         target: "/var/www/mindgarden-dev/"
         strip_components: 2
         overwrite: true
@@ -1539,7 +1540,8 @@ jobs:
           set +a
           DB_PORT="${DB_PORT:-3306}"
           if command -v mysql >/dev/null 2>&1; then
-            COL_TYPE=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -Nsr -e "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" 2>/dev/null || true)
+            # -p CLI 금지 — MYSQL_PWD (비밀번호 argv 노출·프로세스 목록 유출 방지)
+            COL_TYPE=$(MYSQL_PWD="$DB_PASSWORD" mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" "$DB_NAME" -Nsr -e "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" 2>/dev/null || true)
             if [ -z "$COL_TYPE" ]; then
               echo "❌ clients.phone 컬럼 타입 조회 실패 (빈 결과). DB 연결·DB_NAME·권한을 확인하세요."
               exit 1

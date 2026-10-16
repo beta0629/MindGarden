@@ -550,7 +550,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 60s
-        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh"
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh,scripts/deployment/verify-dev-running-build.sh"
         target: "/var/www/mindgarden-dev/"
         strip_components: 2
         overwrite: true
@@ -1006,40 +1006,18 @@ jobs:
           if [ "$SERVICE_STARTED" = true ] && sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨 (actuator/health 확인됨)"
             POST_PID=$(sudo systemctl show -p MainPID --value mindgarden-dev.service)
-            if [ "${PRE_PID:-0}" != "0" ] && [ -n "$PRE_PID" ] && [ "$POST_PID" = "$PRE_PID" ]; then
-              echo "::error::PID unchanged after restart (PRE=$PRE_PID POST=$POST_PID)"
+            VERIFY_SH=/var/www/mindgarden-dev/verify-dev-running-build.sh
+            if [ ! -f "$VERIFY_SH" ]; then
+              echo "::error::verify script missing"
               exit 1
             fi
-            RUN_JAR_SHA=$(sha256sum /var/www/mindgarden-dev/app.jar | awk '{print $1}')
-            INFO_JSON=$(curl -fsS --max-time 8 http://127.0.0.1:8080/actuator/info 2>/dev/null || echo '{}')
-            GIT_COMMIT=$(printf '%s' "$INFO_JSON" | python3 -c 'import sys,json
-try:
- d=json.load(sys.stdin)
-except Exception:
- d={}
-def dig(o,*ks):
-  for k in ks:
-    if not isinstance(o,dict): return ""
-    o=o.get(k)
-  return o if isinstance(o,str) else ""
-c=dig(d,"git","commit","id") or dig(d,"git","commit","id","full") or ""
-print(c or "")' 2>/dev/null || true)
-            SHA_OK=0
-            [ -n "$DEPLOY_JAR_SHA" ] && [ "$RUN_JAR_SHA" = "$DEPLOY_JAR_SHA" ] && SHA_OK=1
-            GIT_OK=0
-            if [ -n "${GITHUB_SHA:-}" ] && [ -n "$GIT_COMMIT" ]; then
-              case "$GIT_COMMIT" in
-                "$GITHUB_SHA"*|"${GITHUB_SHA:0:7}"*) GIT_OK=1 ;;
-              esac
-              case "$GITHUB_SHA" in
-                "$GIT_COMMIT"*) GIT_OK=1 ;;
-              esac
-            fi
-            if [ "$SHA_OK" != "1" ] && [ "$GIT_OK" != "1" ]; then
-              echo "::error::deploy jar/git verify FAIL sha_ok=$SHA_OK git_ok=$GIT_OK deploy_sha_len=${#DEPLOY_JAR_SHA} run_sha_len=${#RUN_JAR_SHA} git_commit_len=${#GIT_COMMIT} github_sha_len=${#GITHUB_SHA}"
-              exit 1
-            fi
-            echo "✅ post-start verify OK (pid changed / jar sha or git.commit matches) PRE=${PRE_PID} POST=${POST_PID} jar_prefix=${DEPLOY_JAR_SHA:0:12} git_prefix=${GIT_COMMIT:0:12}"
+            bash "$VERIFY_SH" \
+              --pre-pid "$PRE_PID" \
+              --deploy-jar-sha "$DEPLOY_JAR_SHA" \
+              --github-sha "${GITHUB_SHA:-}" \
+              --unit mindgarden-dev.service \
+              --app-jar /var/www/mindgarden-dev/app.jar \
+              --info-url http://127.0.0.1:8080/actuator/info
           else
             echo "❌ 서비스 시작 실패 - 롤백 후 로그 확인..."
             LATEST_BACKUP=$(ls -t /var/www/mindgarden-dev/backups/app.jar.backup.* 2>/dev/null | head -1)

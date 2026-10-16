@@ -330,6 +330,37 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Parse all workflow YAML (mandatory)
+        run: |
+          python3 -m pip install --quiet pyyaml
+          bash scripts/verification/check-workflows-yaml.sh
+
+      - name: Install actionlint (best-effort) and re-run with lint
+        run: |
+          set +e
+          if command -v actionlint >/dev/null 2>&1; then
+            echo "actionlint already on PATH"
+          else
+            echo "Downloading actionlint (rhysd official script)..."
+            bash <(curl -sSfL https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) \
+              || {
+                echo "::warning::actionlint download/install failed — YAML parse already required above"
+                exit 0
+              }
+            if [ -x ./actionlint ]; then
+              sudo mv ./actionlint /usr/local/bin/actionlint 2>/dev/null \
+                || sudo install -m 755 ./actionlint /usr/local/bin/actionlint 2>/dev/null \
+                || { mkdir -p "$HOME/.local/bin"; mv ./actionlint "$HOME/.local/bin/actionlint"; echo "$HOME/.local/bin" >> "$GITHUB_PATH"; export PATH="$HOME/.local/bin:$PATH"; }
+            fi
+          fi
+          if command -v actionlint >/dev/null 2>&1; then
+            # shellcheck off; ignore unknown self-hosted labels (deploy)
+            actionlint -color -shellcheck= -ignore 'label ".+" is unknown'
+            exit $?
+          fi
+          echo "::warning::actionlint not available after install attempt — continuing (YAML parse OK)"
+          exit 0
+
       - name: Checker self-test
         run: node scripts/verification/check-prod-deploy-workflows.test.js
 

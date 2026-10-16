@@ -1143,14 +1143,53 @@ PY
     fail=1
   fi
 
-  # 기동 후 PID/jar 검증
-  if grep -qE 'MainPID|PRE_PID' "$DEV_WF" \
-    && { grep -q 'post-start verify' "$DEV_WF" || grep -q 'PID unchanged' "$DEV_WF"; }; then
-    echo "ok - deploy-backend-dev.yml has post-start PID/jar verify (MainPID/PRE_PID + post-start verify|PID unchanged)"
+  # 기동 후 PID/jar 검증 — 외부 스크립트 호출 (inline python3 -c try: 금지)
+  VERIFY_SH_REPO="$DIR/verify-dev-running-build.sh"
+  if [ -f "$VERIFY_SH_REPO" ] && [ -x "$VERIFY_SH_REPO" ]; then
+    echo "ok - verify-dev-running-build.sh exists and is executable"
   else
-    echo "not ok - deploy-backend-dev.yml missing post-start PID/jar verify strings"
+    echo "not ok - verify-dev-running-build.sh missing or not executable in git"
     fail=1
   fi
+  if grep -qE 'MainPID|PRE_PID' "$DEV_WF" \
+    && grep -q 'verify-dev-running-build\.sh' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml calls verify-dev-running-build.sh (MainPID/PRE_PID + script)"
+  else
+    echo "not ok - deploy-backend-dev.yml missing verify-dev-running-build.sh call or PRE_PID"
+    fail=1
+  fi
+  if grep -q 'verify-dev-running-build\.sh' "$DEV_WF" \
+    && grep -qE 'source:.*verify-dev-running-build\.sh' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml Flyway SCP source includes verify-dev-running-build.sh"
+  else
+    echo "not ok - deploy-backend-dev.yml SCP source missing verify-dev-running-build.sh"
+    fail=1
+  fi
+  # bare try: at column 0 inside a python3 -c block breaks YAML under script: |
+  if python3 - "$DEV_WF" <<'PY'
+import re, sys
+text = open(sys.argv[1], encoding="utf-8").read()
+# flag: python3 -c '...' spanning lines with a line that is exactly "try:" at col 0
+if re.search(r"python3\s+-c\s+'[^']*\ntry:", text) or re.search(r'^try:\s*$', text, re.M):
+    # only fail if try: at column 0 appears near a python3 -c in the restart/verify area
+    if "python3 -c" in text and re.search(r'^try:\s*$', text, re.M):
+        sys.exit(1)
+sys.exit(0)
+PY
+  then
+    echo "ok - deploy-backend-dev.yml has no column-0 try: inside python3 -c (YAML-safe)"
+  else
+    echo "not ok - deploy-backend-dev.yml still has bare try: at column 0 (breaks script: | YAML)"
+    fail=1
+  fi
+  if bash -n "$VERIFY_SH_REPO" 2>/dev/null; then
+    echo "ok - verify-dev-running-build.sh bash -n syntax OK"
+  else
+    echo "not ok - verify-dev-running-build.sh bash -n failed"
+    fail=1
+  fi
+  check "verify-dev-running-build.sh --help exits 0" 0 bash "$VERIFY_SH_REPO" --help
+  check "verify-dev-running-build.sh missing args exits non-zero" 1 bash "$VERIFY_SH_REPO"
 
   # 재시작 step envs 에 GITHUB_SHA (주석의 "envs:" 제외 — YAML key 줄만)
   RESTART_ENVS_OK="$(python3 - "$DEV_WF" <<'PY'

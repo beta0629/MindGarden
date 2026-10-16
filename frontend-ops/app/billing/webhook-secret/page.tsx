@@ -217,6 +217,9 @@ export default function OpsWebhookSecretPage() {
         aria-busy={loading}
       >
         <p className={styles.hint}>{OPS_WEBHOOK_SECRET_LABELS.PAGE_SUBTITLE}</p>
+        <p className={styles.hint} data-testid="ops-webhook-secret-path-role-guidance">
+          {OPS_WEBHOOK_SECRET_LABELS.PATH_ROLE_GUIDANCE}
+        </p>
 
         {error ? <p className={styles.error} role="alert">{error}</p> : null}
         {loading ? <p className={styles.hint}>{OPS_WEBHOOK_SECRET_LABELS.LOADING}</p> : null}

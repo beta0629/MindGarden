@@ -506,4 +506,42 @@ else
   fail=1
 fi
 
+# --- deploy-backend-dev.yml: mysql-deploy-client 통일 (MYSQL_PWD 회귀 가드) ---
+# 시크릿·비밀번호 값은 출력하지 않음. 워크플로 텍스트만 검사.
+DEV_WF="$(cd "$DIR/../.." && pwd)/.github/workflows/deploy-backend-dev.yml"
+if [ ! -f "$DEV_WF" ]; then
+  echo "not ok - deploy-backend-dev.yml 없음"
+  fail=1
+else
+  if grep -q 'MYSQL_PWD=' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml still has MYSQL_PWD="
+    fail=1
+  else
+    echo "ok - deploy-backend-dev.yml has no MYSQL_PWD="
+  fi
+  if grep -qE 'mysql[[:space:]]+-p([^a-zA-Z]|$)' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml still has mysql -p"
+    fail=1
+  else
+    echo "ok - deploy-backend-dev.yml has no mysql -p"
+  fi
+  for needle in mysql-deploy-client.sh mysql_deploy_prepare mysql_deploy_query; do
+    if grep -q "$needle" "$DEV_WF"; then
+      echo "ok - deploy-backend-dev.yml contains $needle"
+    else
+      echo "not ok - deploy-backend-dev.yml missing $needle"
+      fail=1
+    fi
+  done
+  # Flyway SCP(source 에 mysql-deploy-client.sh) 가 V20260831_004 repair 문자열보다 앞에 와야 함
+  scp_line="$(grep -n 'source:.*"scripts/deployment/.*mysql-deploy-client\.sh' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  repair_line="$(grep -n '\[V20260831_004\] flyway_schema_history success=0 원샷 repair' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${scp_line:-}" ] && [ -n "${repair_line:-}" ] && [ "$scp_line" -lt "$repair_line" ]; then
+    echo "ok - Flyway SCP (mysql-deploy-client) before V20260831_004 repair"
+  else
+    echo "not ok - Flyway SCP must precede V20260831_004 repair (scp=${scp_line:-?} repair=${repair_line:-?})"
+    fail=1
+  fi
+fi
+
 exit "$fail"

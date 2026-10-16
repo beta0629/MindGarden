@@ -532,6 +532,7 @@ const UnifiedNotifications = () => {
           isOpen
           onClose={closeModal}
           className="unified-notifications-modal"
+          closeChromeFree
           title={personalPresentation
             ? t(personalPresentation.titleKey)
             : toDisplayString(selectedItem.data.title, '')}
@@ -539,8 +540,12 @@ const UnifiedNotifications = () => {
           size="medium"
           data-testid={selectedItem.unavailable ? NOTIFICATION_PAGE_TEST_IDS.UNAVAILABLE : undefined}
           actions={(
-            <ActionBar align="end" gap="md">
-              <ActionBarButton variant="primary" onClick={closeModal}>
+            <ActionBar align="end" gap="md" className="unified-notifications-modal__actions">
+              <ActionBarButton
+                variant="primary"
+                onClick={closeModal}
+                data-gnb-chrome-free="true"
+              >
                 {t('common.actions.confirm')}
               </ActionBarButton>
             </ActionBar>
@@ -581,9 +586,6 @@ const UnifiedNotifications = () => {
                   ) : null}
                 </dl>
               ) : null}
-              <SafeText tag="div" className="unified-notifications__modal-body">
-                {selectedItem.data.content}
-              </SafeText>
             </>
           ) : (
             <>

@@ -310,6 +310,101 @@
   overflow-wrap: anywhere;
 }
 
+/* 알림 모달만. 공유 .mg-modal 레이아웃은 다른 화면 그대로 둔다. */
+.unified-notifications-modal.mg-modal {
+  --mg-actionbar-primary-bg: var(--mg-v2-color-primary-main);
+  --mg-actionbar-primary-text: var(--mg-v2-color-text-inverse);
+  --mg-actionbar-primary-hover-bg: var(--mg-v2-color-primary-hover);
+  --mg-actionbar-primary-press-bg: var(--mg-v2-color-primary-active);
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__header {
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 0;
+  background: transparent;
+  backdrop-filter: none;
+  padding: var(--mg-v2-space-5) var(--mg-v2-space-5) 0;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__header-content {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__title,
+.unified-notifications-modal.mg-modal .mg-modal__subtitle {
+  margin: 0;
+  text-align: left;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__subtitle {
+  margin-top: var(--mg-v2-space-1);
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button.mg-v2-button.mg-button--outline {
+  width: var(--mg-v2-touch-target-min) !important;
+  height: var(--mg-v2-touch-target-min) !important;
+  min-width: var(--mg-v2-touch-target-min) !important;
+  min-height: var(--mg-v2-touch-target-min) !important;
+  max-width: var(--mg-v2-touch-target-min) !important;
+  max-height: var(--mg-v2-touch-target-min) !important;
+  padding: 0 !important;
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  border-radius: var(--mg-v2-radius-md);
+  background: transparent !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  color: var(--mg-v2-color-text-secondary) !important;
+  transform: none !important;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button.mg-v2-button.mg-button--outline:hover,
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button.mg-v2-button.mg-button--outline:focus,
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button.mg-v2-button.mg-button--outline:focus-visible {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--mg-v2-color-text-secondary) !important;
+  box-shadow: none !important;
+  transform: none !important;
+  border-width: 0 !important;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__close.mg-button:focus-visible {
+  outline: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
+  outline-offset: var(--mg-v2-border-width-thin);
+}
+
+.unified-notifications-modal.mg-modal.mg-modal--medium .mg-modal__body,
+.unified-notifications-modal.mg-modal .mg-modal__body {
+  flex: 0 0 auto;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  background: transparent;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__actions {
+  border-top: 0;
+  background: transparent;
+  justify-content: stretch;
+  padding: 0 var(--mg-v2-space-5) var(--mg-v2-space-5);
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__actions .unified-notifications-modal__actions {
+  width: 100%;
+  justify-content: stretch;
+  padding: 0;
+}
+
+.unified-notifications-modal.mg-modal .mg-modal__actions .mg-action-btn {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 @media (max-width: 767px) {
   .unified-notifications .mg-tab-chip-row.unified-notifications__tabs {
     flex-wrap: nowrap;
@@ -338,9 +433,3 @@
   }
 }
 
-@media (max-width: 767px) {
-  .unified-notifications-modal .mg-modal__actions .mg-button,
-  .unified-notifications-modal .mg-modal__actions button {
-    width: 100%;
-  }
-}

@@ -8,6 +8,8 @@
  * @since 2026-09-30
  */
 
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
@@ -399,6 +401,17 @@ describe('ClientPaymentHistory — 알림 mappingId 강조', () => {
     const row = (await screen.findByText('기본 10회기')).closest('tr');
     expect(row).toHaveClass('client-payment-table__row--from-notification');
     expect(row).toHaveTextContent('알림에서 연 결제 건');
+    const css = fs.readFileSync(path.join(__dirname, '../ClientPaymentHistory.css'), 'utf8');
+    expect(css).toMatch(
+      /\.client-payment-table__row--from-notification td \{\s*background:\s*var\(--mg-v2-highlight-bg\);/
+    );
+    expect(css).toMatch(
+      /box-shadow:\s*inset 0 0 0 var\(--mg-v2-border-width-thin\) var\(--mg-v2-highlight-border\);/
+    );
+    expect(css).toMatch(
+      /\.client-payment-table__row--from-notification > td:first-child \{\s*padding-left:\s*var\(--client-pay-cell-pad-x\);/
+    );
+    expect(css).not.toMatch(/client-payment-table__row--from-notification[\s\S]{0,180}2px solid/);
     await waitFor(() => {
       expect(row).toHaveFocus();
     });

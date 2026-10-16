@@ -34,6 +34,7 @@ const ActionBarButton = React.forwardRef((
         'aria-label': ariaLabel,
         'aria-disabled': ariaDisabledProp,
         'data-testid': dataTestId,
+        'data-gnb-chrome-free': chromeFree,
     },
     ref
 ) => {
@@ -58,6 +59,7 @@ const ActionBarButton = React.forwardRef((
             aria-busy={loading || undefined}
             aria-label={ariaLabel}
             data-testid={dataTestId}
+            {...(chromeFree ? { 'data-gnb-chrome-free': 'true' } : {})}
             title={title}
             onClick={isDisabled ? undefined : onClick}
         >
@@ -81,6 +83,7 @@ ActionBarButton.propTypes = {
     'aria-label': PropTypes.string,
     'aria-disabled': PropTypes.bool,
     'data-testid': PropTypes.string,
+    'data-gnb-chrome-free': PropTypes.string,
 };
 
 export default ActionBarButton;

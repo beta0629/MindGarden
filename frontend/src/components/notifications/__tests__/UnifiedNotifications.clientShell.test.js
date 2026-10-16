@@ -77,11 +77,23 @@ jest.mock('../../layout/AdminCommonLayout', () => ({
 
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,
-  default: ({ isOpen, title, subtitle, children, 'data-testid': testId }) => (isOpen ? (
+  default: ({
+    isOpen,
+    title,
+    subtitle,
+    children,
+    actions,
+    closeChromeFree,
+    'data-testid': testId
+  }) => (isOpen ? (
     <div role="dialog" data-testid={testId}>
       <h2>{title}</h2>
       {subtitle ? <p>{subtitle}</p> : null}
+      {closeChromeFree ? (
+        <button type="button" aria-label="닫기" data-gnb-chrome-free="true">×</button>
+      ) : null}
       {children}
+      {actions}
     </div>
   ) : null)
 }));
@@ -187,7 +199,7 @@ describe('UnifiedNotifications 내 알림', () => {
         id: 50,
         isRead: false,
         title: '안내',
-        content: '연결된 화면이 없습니다',
+        content: '결제가 확인됐어요.',
         createdAt: '2026-09-30T05:58:00'
       }
     ]));
@@ -197,6 +209,9 @@ describe('UnifiedNotifications 내 알림', () => {
     expect(dialog).toHaveTextContent('연결된 화면을 열 수 없어요');
     expect(dialog).toHaveTextContent('2026');
     expect(dialog).not.toHaveTextContent('관리자');
+    expect(dialog).not.toHaveTextContent('결제가 확인됐어요.');
+    expect(screen.getByRole('button', { name: '닫기' })).toHaveAttribute('data-gnb-chrome-free', 'true');
+    expect(screen.getByRole('button', { name: '확인' })).toHaveAttribute('data-gnb-chrome-free', 'true');
     expect(screen.getByTestId('location-probe')).toHaveTextContent('/notifications?tab=personal');
     expect(mockNotificationState.markSystemNotificationAsRead).toHaveBeenCalledWith(50);
   });

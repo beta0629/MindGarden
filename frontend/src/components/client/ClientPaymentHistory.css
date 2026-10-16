@@ -250,6 +250,20 @@
   box-shadow: inset 0 0 0 var(--mg-v2-border-width-thin) var(--mg-v2-highlight-border);
 }
 
+.client-payment-table__row--from-notification > td:first-child {
+  padding-left: var(--client-pay-cell-pad-x);
+}
+
+.client-payment-table__row--from-notification > td:last-child {
+  padding-right: var(--client-pay-cell-pad-x);
+}
+
+.client-payment-table__row--from-notification:focus,
+.client-payment-table__row--from-notification:focus-visible {
+  outline: var(--mg-v2-border-width-thin) solid var(--mg-v2-highlight-border);
+  outline-offset: calc(var(--mg-v2-border-width-thin) * -1);
+}
+
 .client-payment-table__row--link:hover td {
   background: var(--client-pay-hover);
 }
@@ -402,6 +416,18 @@
 .client-payment-cards__item--from-notification {
   background: var(--mg-v2-highlight-bg);
   box-shadow: inset 0 0 0 var(--mg-v2-border-width-thin) var(--mg-v2-highlight-border);
+}
+
+.client-payment-cards__item--from-notification .client-payment-cards__link,
+.client-payment-cards__item--from-notification .client-payment-cards__static {
+  padding-left: var(--client-pay-cell-pad-x);
+  padding-right: var(--client-pay-cell-pad-x);
+}
+
+.client-payment-cards__item--from-notification:focus,
+.client-payment-cards__item--from-notification:focus-visible {
+  outline: var(--mg-v2-border-width-thin) solid var(--mg-v2-highlight-border);
+  outline-offset: calc(var(--mg-v2-border-width-thin) * -1);
 }
 
 .client-payment-cards__link,

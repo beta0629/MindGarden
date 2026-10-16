@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import {
   FM_PAGE_TITLE,
@@ -16,6 +16,12 @@ import {
   FM_LEDGER_VIEW_OPTIONS,
   FM_VIEW_TABS
 } from '../../../constants/financialManagementStrings';
+import { OFD_OUTFLOW_CONSULTATION_REFUND_LABEL } from '../../../constants/operatorFinanceDashboardStrings';
+import {
+  FINANCE_COUNTABLE_TX_STATUS,
+  FINANCE_TX_STATUS,
+  FINANCE_TX_TYPE
+} from '../organisms/moneyCockpit/moneyCockpitData';
 import { formatKrw } from '../../../utils/erpFinancialAmountStack';
 
 jest.mock('../../layout/AdminCommonLayout', () => ({
@@ -447,5 +453,299 @@ describe('FinancialManagement Operator Ledger Phase 2', () => {
     const nonGetFetch = fetchSpy.mock.calls.filter(([, init]) => init?.method && init.method.toUpperCase() !== 'GET');
     expect(nonGetFetch).toEqual([]);
     fetchSpy.mockRestore();
+  });
+
+  it('expense caption uses period refundAmount, not cancelled page refunds', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('financial-transactions')) {
+        return {
+          success: true,
+          data: [
+            {
+              id: 201,
+              transactionDate: '2026-08-12',
+              transactionType: 'EXPENSE',
+              category: 'CONSULTATION',
+              subcategory: 'CONSULTATION_REFUND',
+              description: '과거 상담료 환불',
+              amount: 4135000,
+              status: 'CANCELLED'
+            }
+          ],
+          summary: {
+            totalIncome: 200000,
+            totalExpense: 90896,
+            totalCardMerchantFee: 0,
+            remaining: 109104,
+            refundAmount: 100000
+          }
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/erp/financial']}>
+        <Routes>
+          <Route path="/erp/financial" element={<FinancialManagement />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-expense').textContent).toContain('90,896원');
+    });
+
+    await waitFor(() => {
+      const expenseCell = screen.getByTestId('ledger-summary-expense').closest('article');
+      const caption = expenseCell.querySelector('.operator-ledger-summary__caption');
+      expect(caption).toBeTruthy();
+      expect(caption.textContent).toContain('100,000');
+      expect(caption.textContent).not.toContain('4,135,000');
+    });
+
+    expect(screen.getByText('과거 상담료 환불')).toBeInTheDocument();
+  });
+
+  const ledgerPageRows = [
+    {
+      id: 201,
+      transactionDate: '2026-10-02',
+      transactionType: FINANCE_TX_TYPE.INCOME,
+      category: '상담료',
+      description: '상담료 입금',
+      amount: 9000000,
+      status: FINANCE_COUNTABLE_TX_STATUS
+    },
+    {
+      id: 202,
+      transactionDate: '2026-10-03',
+      transactionType: FINANCE_TX_TYPE.EXPENSE,
+      category: 'RENT',
+      description: '임대료',
+      amount: 8000000,
+      status: FINANCE_TX_STATUS.PENDING
+    },
+    {
+      id: 203,
+      transactionDate: '2026-10-04',
+      transactionType: FINANCE_TX_TYPE.EXPENSE,
+      category: 'SALARY',
+      description: '급여',
+      amount: 7000000,
+      status: FINANCE_TX_STATUS.APPROVED
+    },
+    {
+      id: 204,
+      transactionDate: '2026-10-05',
+      transactionType: FINANCE_TX_TYPE.EXPENSE,
+      category: '상담료',
+      description: '상담료 환불',
+      amount: 91000,
+      status: FINANCE_COUNTABLE_TX_STATUS
+    }
+  ];
+
+  const renderLedger = () => render(
+    <MemoryRouter initialEntries={['/erp/financial']}>
+      <Routes>
+        <Route path="/erp/financial" element={<FinancialManagement />} />
+      </Routes>
+    </MemoryRouter>
+  );
+
+  const expenseCaption = () => {
+    const cell = document.querySelector('.operator-ledger-summary__cell--expense');
+    return cell?.querySelector('.operator-ledger-summary__caption')?.textContent || '';
+  };
+
+  it('서버 expenseCategoryBreakdown 을 쓰면 페이지 수입 상담료가 나간 돈 caption에 없다', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('finance/dashboard')) {
+        return {
+          financialData: {
+            incomeCategoryBreakdown: { 상담료: 9000000 },
+            expenseCategoryBreakdown: { RENT: 1540000 }
+          }
+        };
+      }
+      if (path.includes('financial-transactions')) {
+        return {
+          ...mockTransactionsResponse,
+          data: ledgerPageRows
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(expenseCaption()).toContain('1,540,000');
+    });
+    expect(expenseCaption()).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(expenseCaption()).not.toContain('9,000,000');
+    const expenseCell = document.querySelector('.operator-ledger-summary__cell--expense');
+    expect(expenseCell).toHaveTextContent(FM_SUMMARY.EXPENSE_LABEL);
+    expect(expenseCell.textContent).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+  });
+
+  it('대시보드 breakdown 이 없으면 COMPLETED 지출 상담료만 환불(상담료)로 표시한다', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('financial-transactions')) {
+        return {
+          ...mockTransactionsResponse,
+          data: ledgerPageRows
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(expenseCaption()).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+    });
+    expect(expenseCaption()).not.toContain('9,000,000');
+    expect(expenseCaption()).not.toContain('8,000,000');
+    expect(expenseCaption()).not.toContain('7,000,000');
+    expect(expenseCaption()).not.toContain('임대');
+    expect(expenseCaption()).not.toContain('급여');
+  });
+
+  it('대시보드 조회가 실패하면 거래 목록의 COMPLETED 지출만 나간 돈에 쓴다', async() => {
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('finance/dashboard')) {
+        throw new Error('dashboard unavailable');
+      }
+      if (path.includes('financial-transactions')) {
+        return {
+          ...mockTransactionsResponse,
+          data: ledgerPageRows
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(expenseCaption()).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+    });
+    expect(expenseCaption()).not.toContain('9,000,000');
+    expect(expenseCaption()).not.toContain('8,000,000');
+    expect(expenseCaption()).not.toContain('7,000,000');
+    expect(expenseCaption()).not.toContain('임대');
+    expect(expenseCaption()).not.toContain('급여');
+    const expenseCell = document.querySelector('.operator-ledger-summary__cell--expense');
+    expect(expenseCell.textContent).not.toContain('9,000,000');
+    expect(expenseCell.textContent).toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+  });
+
+  it('개발 화면과 같은 수입 상담료 페이지는 나간 돈 아래에 환불(상담료)를 보이지 않는다', async() => {
+    const incomeRows = Array.from({ length: 19 }, (_, index) => {
+      const n = index + 1;
+      return {
+        id: 300 + n,
+        transactionDate: '2026-10-02',
+        transactionType: FINANCE_TX_TYPE.INCOME,
+        category: '상담료',
+        description: `상담료 입금 ${n}`,
+        amount: n === 19 ? 535000 : 200000,
+        status: FINANCE_COUNTABLE_TX_STATUS
+      };
+    });
+    const rows = [
+      ...incomeRows,
+      {
+        id: 320,
+        transactionDate: '2026-10-03',
+        transactionType: FINANCE_TX_TYPE.EXPENSE,
+        category: 'RENT',
+        description: '임대료',
+        amount: 800000,
+        status: FINANCE_TX_STATUS.PENDING
+      }
+    ];
+
+    let releaseDashboard = () => {};
+    const dashboardReady = new Promise((resolve) => {
+      releaseDashboard = resolve;
+    });
+
+    StandardizedApi.get.mockImplementation(async(endpoint) => {
+      const path = String(endpoint);
+      if (path.includes('finance/dashboard')) {
+        await dashboardReady;
+        return {
+          financialData: {
+            incomeCategoryBreakdown: { 상담료: 4135000 },
+            categoryBreakdown: { 상담료: 4135000 },
+            expenseCategoryBreakdown: {}
+          }
+        };
+      }
+      if (path.includes('financial-transactions')) {
+        return {
+          success: true,
+          data: rows,
+          currentPage: 0,
+          totalPages: 1,
+          totalCount: 20,
+          size: 20,
+          summary: {
+            totalIncome: 4135000,
+            totalExpense: 0,
+            totalCardMerchantFee: 0,
+            remaining: 4135000,
+            refundAmount: 0
+          }
+        };
+      }
+      if (path.includes('recurring-expenses')) {
+        return { success: true, data: { expenses: [] } };
+      }
+      return { success: true, data: {} };
+    });
+
+    renderLedger();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('ledger-summary-expense')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('상담료 입금 1')).toBeInTheDocument();
+    });
+
+    await act(async() => {
+      releaseDashboard();
+      await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    const expenseArticle = screen.getByTestId('ledger-summary-expense')
+      .closest('article.operator-ledger-summary__cell--expense');
+    expect(expenseArticle).toBeTruthy();
+    expect(expenseArticle.textContent).toContain(FM_SUMMARY.EXPENSE_LABEL);
+    expect(expenseArticle.textContent).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(expenseArticle.textContent).not.toContain('4,135,000');
   });
 });

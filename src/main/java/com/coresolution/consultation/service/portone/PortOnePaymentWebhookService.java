@@ -1,17 +1,21 @@
 package com.coresolution.consultation.service.portone;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.config.PortOneWebhookProperties;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
@@ -65,9 +69,12 @@ public class PortOnePaymentWebhookService {
     private final PersonalDataEncryptionService encryptionService;
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PaymentRepository paymentRepository;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneWebhookProperties portOneWebhookProperties;
 
     /**
      * 포트원 V2 웹훅을 처리한다. 서명 검증 실패 시 4xx, 일시적 오류 시 5xx.
@@ -75,7 +82,7 @@ public class PortOnePaymentWebhookService {
      * @param rawBody           원시 요청 바디
      * @param webhookTimestamp  webhook-timestamp 헤더
      * @param webhookSignature  webhook-signature 헤더
-     * @param webhookId         webhook-id 헤더 (로깅용, 선택)
+     * @param webhookId         webhook-id 헤더 (서명 대상, 필수)
      * @return HTTP 응답 엔티티
      */
     // 외부 트랜잭션 없이 실행 — 늦은 결제 PG 취소 동안 DB 커넥션을 잡지 않고, 승인·상태 변경은 각 서비스의 짧은 트랜잭션에서 반영
@@ -109,6 +116,11 @@ public class PortOnePaymentWebhookService {
         if (webhookSignature == null || webhookSignature.isBlank()) {
             log.warn("포트원 웹훅: webhook-signature 누락 webhookId={}", webhookId);
             body.put("message", "webhook-signature 필요");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+        }
+        if (webhookId == null || webhookId.isBlank()) {
+            log.warn("포트원 웹훅: webhook-id 누락");
+            body.put("message", "webhook-id 필요");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
         }
 
@@ -151,7 +163,14 @@ public class PortOnePaymentWebhookService {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
         }
 
-        if (!PortOneWebhookSignatureVerifier.isValid(rawUtf8, webhookTimestamp, webhookSignature, secretOpt.get())) {
+        if (!PortOneWebhookSignatureVerifier.isValid(
+                rawUtf8,
+                webhookId,
+                webhookTimestamp,
+                webhookSignature,
+                secretOpt.get(),
+                Instant.now(),
+                portOneWebhookProperties.getToleranceSeconds())) {
             log.warn("포트원 웹훅: 서명 검증 실패 storeId={}, webhookId={}", storeId, webhookId);
             body.put("message", "서명 검증 실패");
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
@@ -218,6 +237,12 @@ public class PortOnePaymentWebhookService {
             }
             // 쇼핑 주문 PAID: ERP/매핑 UnexpectedRollback 경로 회피 — shop-safe approve
             if (targetStatus == Payment.PaymentStatus.APPROVED) {
+                Optional<ResponseEntity<Map<String, Object>>> mismatchResponse =
+                        handleShopOrderAmountMismatchBeforeApprove(
+                                tenantId, paymentId, paymentRow, webhookId, body);
+                if (mismatchResponse.isPresent()) {
+                    return mismatchResponse.get();
+                }
                 try {
                     paymentService.approveShopOrderPayment(paymentId);
                 } catch (IllegalArgumentException nonShop) {
@@ -261,6 +286,60 @@ public class PortOnePaymentWebhookService {
                 TenantContextHolder.clear();
             }
         }
+    }
+
+    /**
+     * 쇼핑 주문 APPROVED 반영 전 PortOne REST 금액·통화·주문 정합.
+     * {@code MISMATCH} 면 승인하지 않고 공통 전액 취소. {@code UNKNOWN} 이면 승인·취소 없이 5xx(재시도).
+     */
+    private Optional<ResponseEntity<Map<String, Object>>> handleShopOrderAmountMismatchBeforeApprove(
+            String tenantId,
+            String paymentId,
+            Payment paymentRow,
+            String webhookId,
+            Map<String, Object> body) {
+        String orderPublicId = paymentRow.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        ShopClientOrder order = orderOpt.get();
+        PortOneShopPaidMatch match =
+                portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(tenantId, paymentId, order);
+        if (match.isMatch()) {
+            return Optional.empty();
+        }
+        if (match.isUnknown()) {
+            log.warn(
+                    "포트원 웹훅: 쇼핑 주문 PortOne 검증 UNKNOWN — 승인·취소 생략(재시도) paymentId={}, orderPublicId={}, webhookId={}",
+                    paymentId,
+                    orderPublicId,
+                    webhookId);
+            body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN);
+            body.put("paymentId", paymentId);
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
+        }
+        log.warn(
+                "포트원 웹훅: 쇼핑 주문 PortOne 금액·주문 불일치 — 승인 생략·전액 취소 paymentId={}, orderPublicId={}, webhookId={}",
+                paymentId,
+                orderPublicId,
+                webhookId);
+        boolean handled = clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
+        body.put(
+                "status",
+                handled
+                        ? PortOneV2WebhookConstants.STATUS_MISMATCH_CANCELLED
+                        : PortOneV2WebhookConstants.STATUS_MISMATCH_CANCEL_FAILED);
+        body.put("paymentId", paymentId);
+        if (!handled) {
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
+        }
+        return Optional.of(ResponseEntity.ok(body));
     }
 
     /**

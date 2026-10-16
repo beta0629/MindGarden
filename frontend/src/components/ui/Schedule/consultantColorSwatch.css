@@ -1,0 +1,12 @@
+/**
+ * 상담사 색 스와치 — API 팔레트 슬롯이 --mg-consultant-color 를 채운다.
+ * 값(hex)은 두지 않는다.
+ */
+
+.mg-v2-consultant-color--fallback {
+  --mg-consultant-color: var(--mg-v2-color-neutral-500);
+}
+
+.mg-v2-legend-color.mg-v2-consultant-color {
+  background-color: var(--mg-consultant-color, var(--mg-v2-color-neutral-500));
+}

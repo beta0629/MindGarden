@@ -11,7 +11,7 @@ const REPO_ROOT = path.resolve(FE_SRC, '..', '..');
 const read = (...parts) => fs.readFileSync(path.resolve(...parts), 'utf8');
 
 describe('선생님 색 점 SSOT·회귀 가드', () => {
-  test('WeekDayScheduleEventChip·ScheduleCalendarView·ConsultantFilterSelect 가 getTeacherColor 사용', () => {
+  test('주·일 칩과 상담사 필터만 getTeacherColor 를 쓰고 통합 월간은 쓰지 않는다', () => {
     const weekChip = read(ROOT, 'WeekDayScheduleEventChip.js');
     const calendar = read(ROOT, 'ScheduleCalendarView.js');
     const filter = read(
@@ -25,8 +25,9 @@ describe('선생님 색 점 SSOT·회귀 가드', () => {
     );
     expect(weekChip).toMatch(/getTeacherColor/);
     expect(weekChip).toMatch(/TeacherColorDot/);
-    expect(calendar).toMatch(/getTeacherColor/);
-    expect(calendar).toMatch(/TeacherColorDot/);
+    expect(calendar).not.toMatch(/getTeacherColor/);
+    expect(calendar).not.toMatch(/TeacherColorDot/);
+    expect(calendar).not.toMatch(/__teacher-dot/);
     expect(filter).toMatch(/getTeacherColor/);
     expect(filter).toMatch(/TeacherColorDot/);
     expect(weekChip).not.toMatch(/getConsultantColor/);
@@ -34,14 +35,14 @@ describe('선생님 색 점 SSOT·회귀 가드', () => {
     expect(filter).not.toMatch(/getConsultantColor/);
   });
 
-  test('선생님 점은 mg-v2-teacher-dot — 상태 __dot 와 혼동 금지', () => {
+  test('선생님 점은 mg-v2-teacher-dot — 통합 월간 __dot 와 혼동 금지', () => {
     const calendar = read(ROOT, 'ScheduleCalendarView.js');
     const dotCss = read(ROOT, 'TeacherColorDot.css');
     expect(dotCss).toContain('mg-v2-teacher-dot');
     expect(dotCss).toContain('var(--mg-v2-teacher-dot-size)');
     expect(dotCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
     expect(calendar).toMatch(/mg-v2-ad-calendar-event__dot--/);
-    expect(calendar).toMatch(/TeacherColorDot/);
+    expect(calendar).not.toMatch(/TeacherColorDot/);
   });
 
   test('기관연계 배지 레이아웃 파일·검사 스크립트 미변경', () => {

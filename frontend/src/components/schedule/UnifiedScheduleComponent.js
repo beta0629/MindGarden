@@ -59,6 +59,11 @@ import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolid
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { stampPaymentTimingOnScheduleEvents } from '../../constants/mappingEngagementType';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
+import {
+  CONSULTANT_COUNT_BASIS_SHOWN,
+  countVisibleConsultantScheduleEvents
+} from './utils/countVisibleConsultantScheduleEvents';
+import { useConsultantColorPalette } from '../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -74,6 +79,8 @@ import {
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // ScheduleController admin — AdminController /api/v1/admin/schedules 와 혼용 금지
 const API_SCHEDULES_ADMIN = API_SCHEDULE_CONTROLLER_ADMIN;
+
+const EMPTY_CONSULTANT_COUNTS = new Map();
 
 /**
  * FullCalendar end(exclusive) → inclusive endDate 변환.
@@ -116,6 +123,27 @@ const toVisibleInclusiveDateRange = (info) => ({
   startDate: toLocalDateStr(info?.start),
   endDate: toInclusiveEndDateStr(info?.end)
 });
+
+/**
+ * FullCalendar datesSet info → 표시 중인 달(활성 월) inclusive 범위.
+ * ScheduleCalendarView 는 currentStart 를 info 최상위에 평탄화한다(view.currentStart 폴백).
+ * 범례 건수는 가시 그리드 spill(이전·다음 달 셀)이 아니라 이 범위를 쓴다.
+ *
+ * @param {{ currentStart?: Date, view?: { currentStart?: Date } }} info
+ * @returns {{ startDate: string, endDate: string }|null}
+ */
+const toDisplayedMonthDateRange = (info) => {
+  const currentStart = info?.currentStart ?? info?.view?.currentStart;
+  if (!currentStart || Number.isNaN(currentStart.getTime?.() ?? Number.NaN)) {
+    return null;
+  }
+  const year = currentStart.getFullYear();
+  const month = currentStart.getMonth();
+  return {
+    startDate: toLocalDateStr(new Date(year, month, 1)),
+    endDate: toLocalDateStr(new Date(year, month + 1, 0))
+  };
+};
 
 
 /**
@@ -290,6 +318,10 @@ const UnifiedScheduleComponent = ({
      */
     const [calendarDateRange, setCalendarDateRange] = useState(null);
     const calendarDateRangeRef = useRef(calendarDateRange);
+    /**
+     * 활성 표시 월(1일~말일). 범례 건수 SSOT — 가시 그리드 spill 과 분리.
+     */
+    const [displayedMonthDateRange, setDisplayedMonthDateRange] = useState(null);
     /** 같은 범위 조회 키(역할+대상+범위+필터+갱신 트리거)는 진행 중 요청을 재사용 */
     const scheduleRangeFetchDeduperRef = useRef(null);
     if (scheduleRangeFetchDeduperRef.current === null) {
@@ -1425,12 +1457,23 @@ const UnifiedScheduleComponent = ({
      */
     const handleCalendarDatesSet = useCallback((info) => {
         const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
+        const displayedMonth = toDisplayedMonthDateRange(info);
 
         setCalendarDateRange((prev) => {
             if (isSameCalendarDateRange(prev, { startDate: newStart, endDate: newEnd })) {
                 return prev; // 참조 동일성 유지 → 같은 범위 datesSet 은 재조회 없음
             }
             return { startDate: newStart, endDate: newEnd };
+        });
+
+        setDisplayedMonthDateRange((prev) => {
+            if (!displayedMonth) {
+                return prev;
+            }
+            if (isSameCalendarDateRange(prev, displayedMonth)) {
+                return prev;
+            }
+            return displayedMonth;
         });
 
         // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
@@ -1497,6 +1540,29 @@ const UnifiedScheduleComponent = ({
         [decoratedEvents, selectedClientIds]
     );
 
+    const { colorClassFor } = useConsultantColorPalette();
+    const countShownEvents = integratedMonthEventLayout === true;
+    const shownConsultantCounts = useMemo(() => {
+        if (!countShownEvents || !displayedMonthDateRange) {
+            return null;
+        }
+        return countVisibleConsultantScheduleEvents(
+            filteredEvents,
+            consultants,
+            displayedMonthDateRange
+        );
+    }, [countShownEvents, filteredEvents, consultants, displayedMonthDateRange]);
+    const shownCountsReady = countShownEvents && shownConsultantCounts != null && !loading;
+    const legendConsultantCounts = countShownEvents
+        ? (shownCountsReady ? shownConsultantCounts : EMPTY_CONSULTANT_COUNTS)
+        : consultantCounts;
+    const legendConsultantCountsLoading = countShownEvents
+        ? !shownCountsReady
+        : consultantCountsLoading;
+    const legendConsultantCountsMode = countShownEvents
+        ? CONSULTANT_COUNT_BASIS_SHOWN
+        : 'monthly';
+
     useEffect(() => {
         if (typeof onScheduleEventsChange !== 'function') {
             return;
@@ -1530,13 +1596,17 @@ const UnifiedScheduleComponent = ({
 
             <ScheduleLegend
                 consultants={consultants}
-                events={events}
+                events={countShownEvents ? filteredEvents : events}
                 scheduleStatusOptions={scheduleStatusOptions}
                 getConsultantColor={getConsultantColor}
+                consultantColorClassFor={countShownEvents
+                    ? (consultantId) => colorClassFor(consultantId, consultants)
+                    : null}
                 calendarSkin={calendarSkin}
-                consultantCounts={consultantCounts}
+                consultantCounts={legendConsultantCounts}
                 consultantCountsMonth={consultantCountsMonth}
-                consultantCountsLoading={consultantCountsLoading}
+                consultantCountsLoading={legendConsultantCountsLoading}
+                consultantCountsMode={legendConsultantCountsMode}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
                 missingConsultationLogsLoading={missingConsultationLogsLoading}

@@ -467,9 +467,8 @@
 
 /*
  * 통합 스킨: 월간 셀.
- * 일요일·공휴일 셀 배경은 칠하지 않는다. 붉은색은 위험 표식만.
- * 날짜 숫자는 보조색, 공휴일 이름은 캡션으로 숫자 옆.
- * 다른 달 숫자는 비활성색이며 요일·공휴일보다 우선한다.
+ * 셀 바탕은 칠하지 않는다. 토요일은 파랑, 일요일·공휴일은 코랄 글자만.
+ * 토요일 공휴일도 공휴일 색. 다른 달 숫자는 비활성색이 우선한다.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
     /* 배경 이벤트 레이어는 비가시(셀 td 배경이 SSOT, 데이터·포커스는 유지) */
@@ -548,7 +547,8 @@
 }
 
 /*
- * 월간 dayGrid: 토요일 칸·머리글은 평일과 같다. 일요일·토요일 아닌 공휴일만 숫자 보조색.
+ * 월간 dayGrid: 머리글·날짜 숫자만 요일·공휴일 색.
+ * 우선순위(낮음→높음): 지난 평일 → 토요일 → 일요일·공휴일(토요일 공휴일 포함) → 다른 달 → 오늘 숫자.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell .fc-col-header-cell-cushion {
@@ -556,19 +556,71 @@
     color: var(--ad-b0kla-title-color);
 }
 
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sat,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion {
+    color: var(--mg-calendar-saturday-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sun,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion {
+    color: var(--mg-calendar-holiday-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-past .fc-daygrid-day-number {
+    color: var(--mg-calendar-past-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-sat .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat .fc-daygrid-day-number {
+    color: var(--mg-calendar-saturday-fg);
+    font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-sun .fc-daygrid-day-number,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number,
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:not(.fc-day-sat) .fc-daygrid-day-number {
-    color: var(--mg-v2-color-text-secondary);
-    font-weight: var(--mg-v2-font-weight-regular);
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+    color: var(--mg-calendar-holiday-fg);
+    font-weight: var(--mg-v2-font-weight-semibold);
 }
 
 /*
- * 다른 달 숫자는 요일·공휴일보다 우선해 비활성색.
+ * 다른 달 숫자·공휴일 이름은 요일·공휴일보다 우선해 비활성색.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.fc-day-sat .fc-daygrid-day-number,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number,
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-v2-color-text-disabled);
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other .mg-v2-ad-calendar-day-holiday-badge__name {
+    color: var(--mg-calendar-other-month-fg);
+    font-weight: var(--mg-v2-font-weight-regular);
+}
+
+/* 오늘: 숫자 알약. 셀 바탕은 칠하지 않는다. 요일·공휴일 색보다 우선. */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today {
+    background-color: transparent;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    color: var(--mg-calendar-today-fg);
+    background-color: var(--mg-calendar-today-bg);
+    border-radius: var(--mg-v2-radius-pill);
+    padding-inline: var(--mg-v2-space-2);
+    font-weight: var(--mg-v2-font-weight-bold);
+}
+
+/*
+ * 선택: 중립 채움 + 1px 중립 테두리.
+ * inset box-shadow 는 셀 프레임(바탕 층)에 두어 칩을 가리지 않는다.
+ */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--selected,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-past.mg-v2-ad-calendar-day--selected,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today.mg-v2-ad-calendar-day--selected {
+    background-color: var(--mg-calendar-selected-bg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--selected .fc-daygrid-day-frame {
+    background-color: var(--mg-calendar-selected-bg);
+    box-shadow: inset 0 0 0 var(--mg-calendar-selected-border-width) var(--mg-calendar-selected-border);
 }
 
 /*
@@ -618,10 +670,10 @@
     margin: 0;
     padding: 0;
     background-color: transparent;
-    color: var(--mg-v2-color-text-secondary);
+    color: var(--mg-calendar-holiday-caption-fg);
     border: none;
     font-size: var(--mg-v2-font-size-caption);
-    font-weight: var(--mg-v2-font-weight-regular);
+    font-weight: var(--mg-v2-font-weight-medium);
     line-height: var(--mg-v2-font-line-height-caption);
     pointer-events: auto;
 }
@@ -633,18 +685,12 @@
     text-overflow: ellipsis;
     text-align: end;
     font-size: var(--mg-v2-font-size-caption);
-    font-weight: var(--mg-v2-font-weight-regular);
-    color: var(--mg-v2-color-text-secondary);
+    font-weight: var(--mg-v2-font-weight-medium);
+    color: var(--mg-calendar-holiday-caption-fg);
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__eve-hint {
-    font-size: var(--cs-text-2xs, 0.625rem);
-    font-weight: var(--cs-font-medium, 500);
-    line-height: 1.2;
-    color: var(--mg-color-text-secondary, var(--mg-error-400));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
 }
 
 /* 월간 공휴일명: day-top 일반 흐름(절대배치 금지 — 이벤트·bg z-index에 가려짐). 비통합 스킨은 primary 유지 */
@@ -703,6 +749,16 @@
         padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
         font-size: var(--mg-v2-font-size-caption);
         white-space: nowrap;
+    }
+
+    /* 390(< 768px): 공휴일 이름은 숫자 아래 줄. 오늘 알약 안쪽 여백을 줄인다. */
+    [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) .mg-v2-ad-calendar-day-holiday-badge {
+        order: 2;
+        flex-basis: 100%;
+    }
+
+    [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+        padding-inline: var(--mg-v2-space-1);
     }
 }
 

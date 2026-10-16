@@ -15,10 +15,13 @@ import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
+import com.coresolution.core.constants.TenantPgWebhookSecretMessages;
 import com.coresolution.core.domain.TenantPgConfiguration;
 import com.coresolution.core.domain.TenantPgConfigurationHistory;
 import com.coresolution.core.domain.enums.ApprovalStatus;
@@ -65,6 +68,18 @@ import org.springframework.security.access.AccessDeniedException;
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("TenantPgConfigurationService 테스트")
 class TenantPgConfigurationServiceImplTest {
+
+    /**
+     * 테스트가 실행될 때 만든 {@code whsec_} + 표준 Base64.
+     * 소스에 고엔트로피 리터럴을 두지 않는다.
+     */
+    private static final String VALID_WEBHOOK_SECRET;
+
+    static {
+        byte[] material = new byte[16];
+        new Random(71L).nextBytes(material);
+        VALID_WEBHOOK_SECRET = "whsec_" + Base64.getEncoder().encodeToString(material);
+    }
     
     @Mock
     private TenantPgConfigurationRepository configurationRepository;
@@ -1040,19 +1055,19 @@ class TenantPgConfigurationServiceImplTest {
         doNothing().when(historyService).saveHistory(any(), any(), any(), any(), any(), any());
 
         when(encryptionService.isEncrypted(anyString())).thenReturn(false);
-        when(encryptionService.encrypt(eq("whsec_new_secret")))
-                .thenReturn("ENC(whsec_new_secret)");
-        when(encryptionService.ensureActiveKey(eq("ENC(whsec_new_secret)")))
-                .thenReturn("ENC(whsec_new_secret)");
+        when(encryptionService.encrypt(eq(VALID_WEBHOOK_SECRET)))
+                .thenReturn("ENC(webhook)");
+        when(encryptionService.ensureActiveKey(eq("ENC(webhook)")))
+                .thenReturn("ENC(webhook)");
 
         TenantPgConfigurationResponse result =
-                service.patchWebhookSecret(testTenantId, testConfigId, "whsec_new_secret");
+                service.patchWebhookSecret(testTenantId, testConfigId, "  " + VALID_WEBHOOK_SECRET + "  ");
 
         assertThat(result.getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
         assertThat(result.getApprovalStatus()).isEqualTo(ApprovalStatus.APPROVED);
         assertThat(result.getPortoneWebhookSecretConfigured()).isTrue();
         assertThat(result.getSettingsJson()).doesNotContain(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
-        assertThat(result.getSettingsJson()).doesNotContain("whsec_new_secret");
+        assertThat(result.getSettingsJson()).doesNotContain(VALID_WEBHOOK_SECRET);
         assertThat(result.getSettingsJson()).contains("channel-key-live-xxxxx");
 
         ArgumentCaptor<TenantPgConfiguration> savedCaptor =
@@ -1060,7 +1075,7 @@ class TenantPgConfigurationServiceImplTest {
         verify(configurationRepository).save(savedCaptor.capture());
         JsonNode savedJson = objectMapper.readTree(savedCaptor.getValue().getSettingsJson());
         assertThat(savedJson.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET).asText())
-                .isEqualTo("ENC(whsec_new_secret)");
+                .isEqualTo("ENC(webhook)");
         assertThat(savedJson.get("portoneChannelKey").asText()).isEqualTo("channel-key-live-xxxxx");
         assertThat(savedJson.get("keepMe").asBoolean()).isTrue();
         assertThat(savedCaptor.getValue().getStatus()).isEqualTo(PgConfigurationStatus.ACTIVE);
@@ -1075,7 +1090,32 @@ class TenantPgConfigurationServiceImplTest {
                 any(),
                 notesCaptor.capture());
         assertThat(notesCaptor.getValue()).contains("웹훅 시크릿 갱신");
-        assertThat(notesCaptor.getValue()).doesNotContain("whsec_new_secret");
+        assertThat(notesCaptor.getValue()).doesNotContain(VALID_WEBHOOK_SECRET);
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH — whsec_ 접두사 없으면 400 문구, 평문 미포함, 저장 없음")
+    void patchWebhookSecret_missingPrefix_throwsWithoutEchoingSecret() {
+        String raw = VALID_WEBHOOK_SECRET.substring("whsec_".length());
+        assertRejectedWebhookSecret(raw);
+    }
+
+    @Test
+    @DisplayName("웹훅 시크릿 PATCH — Base64 디코드 실패면 400 문구, 평문 미포함, 저장 없음")
+    void patchWebhookSecret_invalidBase64_throwsWithoutEchoingSecret() {
+        assertRejectedWebhookSecret("whsec_!!!!");
+        assertRejectedWebhookSecret("whsec_unit_test_secret");
+    }
+
+    private void assertRejectedWebhookSecret(String raw) {
+        assertThat(TenantPgWebhookSecretMessages.INVALID_FORMAT).doesNotContain(raw);
+        assertThatThrownBy(() -> service.patchWebhookSecret(testTenantId, testConfigId, raw))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(TenantPgWebhookSecretMessages.INVALID_FORMAT)
+                .hasNoCause()
+                .satisfies(error -> assertThat(error.toString()).doesNotContain(raw));
+        verify(configurationRepository, never()).save(any(TenantPgConfiguration.class));
+        verify(configurationRepository, never()).findByConfigIdAndIsDeletedFalse(anyString());
     }
 
     @Test

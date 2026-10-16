@@ -85,6 +85,22 @@
   --mg-v2-color-money-expense: #1D4ED8;
 
   /* ----------------------------------------------------------
+     1-3c. COLOR — Calendar day marks
+     토요일·일요일·공휴일 머리글과 날짜 숫자. 셀 바탕은 칠하지 않는다.
+     saturday 는 money-expense 와 같은 값이어도 의미가 달라 별도 값이다.
+     ---------------------------------------------------------- */
+  --mg-calendar-saturday-fg: #1D4ED8;
+  --mg-calendar-holiday-fg: var(--mg-error-500);
+  --mg-calendar-holiday-caption-fg: #B5452B;
+  --mg-calendar-today-bg: var(--mg-v2-color-primary-main);
+  --mg-calendar-today-fg: var(--mg-v2-color-text-inverse);
+  --mg-calendar-selected-bg: var(--mg-v2-color-neutral-100);
+  --mg-calendar-selected-border: var(--mg-v2-color-border-strong);
+  --mg-calendar-selected-border-width: var(--mg-v2-border-width-thin);
+  --mg-calendar-past-fg: var(--mg-v2-color-text-primary);
+  --mg-calendar-other-month-fg: var(--mg-v2-color-text-disabled);
+
+  /* ----------------------------------------------------------
      1-4. COLOR — Surface & Background
      ---------------------------------------------------------- */
   --mg-v2-color-surface-bg: #FAF9F7;
@@ -474,6 +490,10 @@
     --mg-v2-color-money-income: #F87171;
     --mg-v2-color-money-expense: #60A5FA;
 
+    --mg-calendar-saturday-fg: #93B4F7;
+    --mg-calendar-holiday-fg: #F4A08C;
+    --mg-calendar-holiday-caption-fg: #F2A28E;
+
     --mg-v2-color-surface-bg: #0F172A;
     --mg-v2-color-surface-card: #1E293B;
     --mg-v2-color-surface-raised: #334155;
@@ -581,6 +601,10 @@
 
   --mg-v2-color-money-income: #F87171;
   --mg-v2-color-money-expense: #60A5FA;
+
+  --mg-calendar-saturday-fg: #93B4F7;
+  --mg-calendar-holiday-fg: #F4A08C;
+  --mg-calendar-holiday-caption-fg: #F2A28E;
 
   --mg-v2-color-surface-bg: #0F172A;
   --mg-v2-color-surface-card: #1E293B;
@@ -694,6 +718,10 @@
   --mg-v2-color-money-income: var(--color-red-700, #B91C1C);
   --mg-v2-color-money-expense: #1D4ED8;
 
+  --mg-calendar-saturday-fg: #1D4ED8;
+  --mg-calendar-holiday-fg: var(--mg-error-500);
+  --mg-calendar-holiday-caption-fg: #B5452B;
+
   --mg-v2-color-surface-bg: #FAF9F7;
   --mg-v2-color-surface-card: #FFFFFF;
   --mg-v2-color-surface-raised: #FFFFFF;
@@ -783,6 +811,10 @@
     --mg-v2-color-state-focus-ring: Highlight;
     --mg-v2-color-state-disabled-bg: Canvas;
     --mg-v2-color-state-disabled-text: GrayText;
+
+    --mg-calendar-saturday-fg: CanvasText;
+    --mg-calendar-holiday-fg: CanvasText;
+    --mg-calendar-holiday-caption-fg: CanvasText;
   }
 }
 

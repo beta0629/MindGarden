@@ -38,7 +38,13 @@ public final class ShopOrderReconcileConstants {
     public static final String MSG_CASH_DUE_REQUIRED = "현금 결제 금액이 없는 주문은 결제 정합을 할 수 없습니다.";
 
     public static final String MSG_PORTONE_VERIFY_FAILED =
-            "포트원 결제 검증 실패(미승인·금액 불일치·조회 실패)";
+            "포트원 결제 검증 실패(금액·통화·주문 불일치)";
+
+    /**
+     * PortOne 조회 실패·일시 미승인 등 — 재시도 가능. 불일치 취소와 구분한다.
+     */
+    public static final String MSG_PORTONE_VERIFY_UNKNOWN =
+            "포트원 결제 검증을 완료할 수 없습니다. 잠시 후 다시 시도해 주세요.";
 
     public static final String MSG_PAYMENT_ORDER_MISMATCH =
             "해당 결제 ID가 다른 주문에 연결되어 있습니다.";

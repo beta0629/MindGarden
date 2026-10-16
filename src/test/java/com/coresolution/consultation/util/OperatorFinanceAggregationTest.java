@@ -169,6 +169,17 @@ class OperatorFinanceAggregationTest {
     }
 
     @Test
+    @DisplayName("상점 주문 CANCEL_FAILED 와 무관하게 재무 집계는 COMPLETED 만 센다")
+    void countableStatuses_stayCompletedOnly() {
+        assertThat(OperatorFinanceAggregation.COUNTABLE_STATUSES)
+                .containsExactly(TransactionStatus.COMPLETED);
+        for (TransactionStatus status : TransactionStatus.values()) {
+            assertThat(OperatorFinanceAggregation.isCountableStatus(status))
+                    .isEqualTo(status == TransactionStatus.COMPLETED);
+        }
+    }
+
+    @Test
     @DisplayName("빈·null 입력은 0 집계")
     void emptyInput_returnsZeros() {
         OperatorFinanceAggregation.Result empty = OperatorFinanceAggregation.aggregate(List.of());

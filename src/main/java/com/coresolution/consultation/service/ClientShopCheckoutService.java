@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import com.coresolution.consultation.dto.shop.ShopCheckoutRequest;
 import com.coresolution.consultation.dto.shop.ShopCheckoutResponse;
@@ -125,4 +126,30 @@ public interface ClientShopCheckoutService {
      * @return 이번 호출에서 {@code EXPIRED}로 전이했으면 {@code true}, 주문 없음·이미 종료 상태면 {@code false}
      */
     boolean expireOrderHold(String tenantId, String orderPublicId);
+
+    /**
+     * PortOne 승인 금액·주문 불일치 시 전액 취소 공통 진입점 (만료·웹훅·redirect verify).
+     * <p>
+     * 로컬 결제가 PENDING/PROCESSING 이면 APPROVED 로 올린 뒤 기존 불일치 취소 경로를 탄다.
+     * 주문이 이미 {@code CANCELLED}/{@code REFUNDED}/{@code CANCEL_FAILED} 이면 이중 환불 없이 true.
+     * 환불 금액은 로컬 {@code payment.amount} 를 쓴다.
+     * </p>
+     *
+     * @param tenantId       테넌트 ID
+     * @param orderPublicId  주문 공개 ID
+     * @return 취소를 처리했거나 이미 취소 계열이면 {@code true}, 주문·결제 없으면 {@code false}
+     */
+    boolean cancelMismatchedApprovedPaymentForOrder(String tenantId, String orderPublicId);
+
+    /**
+     * {@link #cancelMismatchedApprovedPaymentForOrder(String, String)} 와 동일하되,
+     * PortOne {@code amount.paid} 가 알려져 있으면 그 금액으로 환불한다.
+     *
+     * @param tenantId          테넌트 ID
+     * @param orderPublicId     주문 공개 ID
+     * @param actualPaidAmount  PortOne 실결제액 (null 이면 로컬 payment.amount)
+     * @return 취소를 처리했거나 이미 취소 계열이면 {@code true}, 주문·결제 없으면 {@code false}
+     */
+    boolean cancelMismatchedApprovedPaymentForOrder(
+            String tenantId, String orderPublicId, BigDecimal actualPaidAmount);
 }

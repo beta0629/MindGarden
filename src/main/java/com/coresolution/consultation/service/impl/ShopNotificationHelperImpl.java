@@ -86,6 +86,14 @@ public class ShopNotificationHelperImpl implements ShopNotificationHelper {
     }
 
     @Override
+    public void notifyCancelFailedNeedsManualCheck(String tenantId, Long clientId, String orderPublicId) {
+        log.error(
+                "PG 전액 취소 실패 — 수동 확인 clientId={} orderPublicId={}",
+                clientId,
+                orderPublicId);
+    }
+
+    @Override
     public void notifyPointEarned(String tenantId, ShopClientOrder order, long earnAmountMinor) {
         if (!validateOrder(tenantId, order) || earnAmountMinor <= 0L) {
             return;

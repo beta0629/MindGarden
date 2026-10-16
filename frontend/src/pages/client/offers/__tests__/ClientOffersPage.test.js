@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'fs';
+import path from 'path';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import ClientOffersPage from '../ClientOffersPage';
@@ -24,11 +26,21 @@ jest.mock('react-i18next', () => {
     })
   };
 });
-jest.mock('../../../../components/shop/templates/ShopClientLayout', () => ({ title, children }) => (
-  <main><h1>{title}</h1>{children}</main>
+jest.mock('../../../../components/shop/templates/ShopClientLayout', () => ({ title, children, aside, className, testId }) => (
+  <main className={className} data-testid={testId}>
+    <h1>{title}</h1>
+    <div data-testid="shop-main">{children}</div>
+    {aside ? <aside data-testid="shop-aside">{aside}</aside> : null}
+  </main>
 ));
 jest.mock('../../../../components/shop/templates/ShopClientSessionLoading', () => () => <div>loading</div>);
-jest.mock('../../../../contexts/SessionContext', () => ({ useSession: () => ({ checkSession: jest.fn() }) }));
+jest.mock('../../../../contexts/SessionContext', () => {
+  const React = require('react');
+  return {
+    SessionContext: React.createContext(null),
+    useSession: () => ({ checkSession: jest.fn() })
+  };
+});
 jest.mock('../../../../hooks/useClientShopAuth', () => ({ useClientShopAuth: jest.fn() }));
 jest.mock('../../../../hooks/useShopPaymentCancelNotice', () => () => ({ visible: false, dismiss: () => {} }));
 jest.mock('../../../../services/shopClientOfferService', () => ({ listMyClientOffers: jest.fn() }));
@@ -78,10 +90,15 @@ describe('ClientOffersPage', () => {
   test('약관은 기본 미체크라 결제가 비활성이고 이유가 연결된다', async() => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    const pay = await screen.findByTestId('client-offers-pay');
-    expect(pay.getAttribute('aria-disabled')).toBe('true');
-    expect(screen.getByText('전체 동의 후 결제할 수 있어요')).toBeTruthy();
-    fireEvent.click(pay);
+    const pays = await screen.findAllByTestId('client-offers-pay');
+    pays.forEach((pay) => {
+      expect(pay.disabled).toBe(true);
+      expect(pay.getAttribute('aria-disabled')).toBe('true');
+      expect(pay.getAttribute('aria-describedby')).toBeTruthy();
+      expect(pay.className).toContain('client-offers__pay-cta');
+      fireEvent.click(pay);
+    });
+    expect(screen.getAllByText('전체 동의 후 결제할 수 있어요').length).toBeGreaterThan(0);
     expect(runShopCheckoutWithPortOneGuard).not.toHaveBeenCalled();
   });
 
@@ -89,7 +106,7 @@ describe('ClientOffersPage', () => {
     listMyClientOffers.mockResolvedValue([OFFER(1), OFFER(2)]);
     renderPage();
     await screen.findByText('결제할 수 있는 상품 2개');
-    expect(screen.getByText('결제할 상품을 골라 주세요')).toBeTruthy();
+    expect(screen.getAllByText('결제할 상품을 골라 주세요').length).toBeGreaterThan(0);
     const selects = screen.getAllByRole('button', { name: '선택하기' });
     expect(selects).toHaveLength(2);
     fireEvent.click(selects[1]);
@@ -103,7 +120,7 @@ describe('ClientOffersPage', () => {
     ]);
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     renderPage();
-    expect(await screen.findByText('담당 상담사를 고른 뒤 결제할 수 있어요')).toBeTruthy();
+    expect((await screen.findAllByText('담당 상담사를 고른 뒤 결제할 수 있어요')).length).toBeGreaterThan(0);
     expect(screen.getByLabelText('담당 상담사').value).toBe('');
   });
 
@@ -111,10 +128,12 @@ describe('ClientOffersPage', () => {
     listMyClientOffers.mockResolvedValue([OFFER(1)]);
     runShopCheckoutWithPortOneGuard.mockResolvedValue({ status: 'FAILED', message: '실패' });
     renderPage();
-    fireEvent.click(await screen.findByLabelText(/전체 동의/));
-    const pay = screen.getByTestId('client-offers-pay');
-    await waitFor(() => expect(pay.getAttribute('aria-disabled')).toBe('false'));
-    fireEvent.click(pay);
+    const agreeAll = await screen.findAllByLabelText(/전체 동의/);
+    fireEvent.click(agreeAll[0]);
+    const pays = screen.getAllByTestId('client-offers-pay');
+    await waitFor(() => expect(pays[0].getAttribute('aria-disabled')).toBe('false'));
+    expect(pays[0].disabled).toBe(false);
+    fireEvent.click(pays[0]);
     await waitFor(() => expect(runShopCheckoutWithPortOneGuard).toHaveBeenCalled());
     expect(runShopCheckoutWithPortOneGuard.mock.calls[0][0].mappingIdForCheckout).toBe('1');
   });
@@ -142,5 +161,129 @@ describe('ClientOffersPage', () => {
     listMyClientOffers.mockRejectedValue(new Error('x'));
     renderPage();
     expect(await screen.findByText('다시 시도')).toBeTruthy();
+  });
+
+  test('PC는 aside 요약 카드, 390은 하단 고정 바와 7.5rem 여백', async() => {
+    listMyClientOffers.mockResolvedValue([OFFER(1)]);
+    renderPage();
+    const card = await screen.findByTestId('client-offers-pay-card');
+    const bar = screen.getByTestId('client-offers-bar');
+    const aside = screen.getByTestId('shop-aside');
+    expect(aside.contains(card)).toBe(true);
+    expect(card.classList.contains('client-offers__pay')).toBe(true);
+    expect(bar.classList.contains('client-mall-bar')).toBe(true);
+    expect(bar.classList.contains('client-offers__paybar')).toBe(true);
+    expect(screen.getAllByTestId('client-offers-pay')).toHaveLength(2);
+    expect(card.querySelector('[data-testid="client-offers-pay"]')).toBeTruthy();
+    expect(bar.querySelector('[data-testid="client-offers-pay"]')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /내용 보기/ })).toHaveLength(3);
+
+    const offersCss = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.css'), 'utf8');
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
+    const mallCss = fs.readFileSync(path.join(__dirname, '../../../../styles/shop/ClientMall.css'), 'utf8');
+    expect(offersCss).toMatch(/\.client-offers__pay\s*\{[^}]*position:\s*sticky/);
+    expect(tokensCss).toMatch(/--mg-offer-bar-reserve:\s*7\.5rem/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-aside-w:\s*22\.5rem/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-stage-max:\s*75rem/);
+    expect(tokensCss).toMatch(/--mg-offer-card-min:\s*13\.5rem/);
+    expect(offersCss).toMatch(/repeat\(auto-fill,\s*minmax\(min\(100%,\s*var\(--mg-offer-card-min\)\),\s*1fr\)\)/);
+    expect(offersCss).not.toMatch(/repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
+    expect(offersCss).toMatch(/max-inline-size:\s*var\(--mg-offer-pay-stage-max\)/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-bg:\s*var\(--cs-slate-100\)/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-fg:\s*var\(--cs-slate-700\)/);
+    expect(tokensCss).toMatch(/--mg-offer-pay-disabled-border:\s*var\(--cs-slate-400\)/);
+    expect(tokensCss).toMatch(/--mg-offer-terms-body-max:\s*24rem/);
+    expect(offersCss).toMatch(/@media \(min-width: 56\.26rem\)[\s\S]*var\(--mg-offer-pay-aside-w\)/);
+    expect(offersCss).toMatch(/border-style:\s*dashed/);
+    expect(offersCss).toMatch(/\[aria-disabled="true"\]:not\(\[aria-busy="true"\]\)/);
+    expect(offersCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    const paybarAt = offersCss.indexOf('.client-offers__paybar.client-mall-bar');
+    const paybarBlock = offersCss.slice(paybarAt, offersCss.indexOf('}', paybarAt));
+    expect(paybarBlock).not.toMatch(/display\s*:/);
+    expect(paybarBlock).not.toMatch(/position\s*:/);
+    const narrowOffers = offersCss.slice(offersCss.indexOf('@media (max-width: 56.25rem)'));
+    expect(narrowOffers).toMatch(/client-web-page-shell__aside\s*\{\s*display:\s*none/);
+    expect(narrowOffers).toMatch(/client-mall-bar-spacer\s*\{[^}]*var\(--mg-offer-bar-reserve\)/);
+    expect(narrowOffers).toMatch(/\.client-offers__agreements-flow\s*\{\s*display:\s*block/);
+    expect(offersCss).toMatch(/\.client-offers__agreements-flow\s*\{\s*display:\s*none/);
+    const narrowMall = mallCss.slice(mallCss.indexOf('@media (max-width: 56.25rem)'));
+    expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*display:\s*block/);
+    expect(narrowMall).toMatch(/\.client-mall-bar\s*\{[^}]*position:\s*fixed/);
+  });
+
+  test.each([1280, 1400, 1920])('PC %ipx 에서 상품 6개도 카드 최소 폭을 지킨다', (viewportPx) => {
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
+    const shellCss = fs.readFileSync(path.join(__dirname, '../../../../components/client/ClientWebPageShell.css'), 'utf8');
+    const spaceCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/design-v2-tokens.css'), 'utf8');
+    const rem = (name, css) => {
+      const match = css.match(new RegExp(`${name}:\\s*([0-9.]+)rem`));
+      expect(match).toBeTruthy();
+      return Number(match[1]) * 16;
+    };
+    const stageMax = rem('--mg-offer-pay-stage-max', tokensCss);
+    const aside = rem('--mg-offer-pay-aside-w', tokensCss);
+    const cardMin = rem('--mg-offer-card-min', tokensCss);
+    const padMatch = shellCss.match(/--client-web-pad-x:\s*var\([^,]+,\s*([0-9.]+)rem\)/);
+    expect(padMatch).toBeTruthy();
+    const padX = Number(padMatch[1]) * 16;
+    const shellGap = rem('--mg-v2-space-6', spaceCss);
+    const cardGap = rem('--mg-v2-space-4', spaceCss);
+    const stage = Math.min(viewportPx, stageMax);
+    const main = stage - padX * 2 - aside - shellGap;
+    const columns = Math.floor((main + cardGap) / (cardMin + cardGap));
+    const cardWidth = (main - cardGap * (columns - 1)) / columns;
+    expect(columns).toBeGreaterThanOrEqual(2);
+    expect(cardWidth).toBeGreaterThanOrEqual(cardMin);
+    expect(columns).toBe(3);
+  });
+
+  test('선택됨 버튼 호버는 토큰 색으로 대비 4.5 이상이다', () => {
+    const offersCss = fs.readFileSync(path.join(__dirname, '../ClientOffersPage.css'), 'utf8');
+    const tokensCss = fs.readFileSync(path.join(__dirname, '../../../../styles/tokens/shop-offer-tokens.css'), 'utf8');
+    const paletteCss = fs.readFileSync(path.join(__dirname, '../../../../styles/unified-design-tokens.css'), 'utf8');
+    expect(offersCss).toMatch(/client-offers__select\.mg-button--outline:hover[\s\S]*var\(--mg-offer-select-hover-bg\)/);
+    expect(offersCss).toMatch(/client-offers__select\.mg-button--outline:hover[\s\S]*color:\s*var\(--mg-offer-select-hover-fg\)/);
+    expect(offersCss).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    const token = (name, css) => {
+      const match = css.match(new RegExp(`${name}:\\s*var\\((--[\\w-]+)\\)`));
+      expect(match).toBeTruthy();
+      return match[1];
+    };
+    const hexOf = (name) => {
+      const match = paletteCss.match(new RegExp(`${name}:\\s*(#[0-9A-Fa-f]{6})`));
+      expect(match).toBeTruthy();
+      return match[1];
+    };
+    const channel = (hex, index) => {
+      const value = parseInt(hex.slice(1 + index * 2, 3 + index * 2), 16) / 255;
+      return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+    };
+    const luminance = (hex) => {
+      const [r, g, b] = [0, 1, 2].map((index) => channel(hex, index));
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    };
+    const contrast = (fg, bg) => {
+      const lighter = Math.max(luminance(fg), luminance(bg));
+      const darker = Math.min(luminance(fg), luminance(bg));
+      return (lighter + 0.05) / (darker + 0.05);
+    };
+    const fg = hexOf(token('--mg-offer-select-hover-fg', tokensCss));
+    const bg = hexOf(token('--mg-offer-select-hover-bg', tokensCss));
+    expect(contrast(fg, bg)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  test('약관 모달이 열려 있으면 뒤 화면은 스크롤되지 않는다', async() => {
+    listMyClientOffers.mockResolvedValue([OFFER(1)]);
+    renderPage();
+    const more = await screen.findAllByRole('button', { name: /내용 보기/ });
+    fireEvent.click(more[0]);
+    const page = screen.getByTestId('client-offers');
+    expect(page.getAttribute('inert')).toBe('');
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(screen.getByRole('dialog')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('client-offers-terms-dismiss'));
+    await waitFor(() => expect(page.hasAttribute('inert')).toBe(false));
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 });

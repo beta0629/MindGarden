@@ -484,7 +484,7 @@ mysql_deploy_prepare
 [ -f "\$MYSQL_DEPLOY_CNF" ] || exit 2
 perms=\$(stat -c '%a' "\$MYSQL_DEPLOY_CNF" 2>/dev/null || stat -f '%Lp' "\$MYSQL_DEPLOY_CNF")
 [ "\$perms" = "600" ] || { echo "perms=\$perms"; exit 2; }
-grep -q '^password=' "\$MYSQL_DEPLOY_CNF" || exit 2
+grep -qE '^password="client-secret"\$' "\$MYSQL_DEPLOY_CNF" || exit 2
 # 비밀번호가 프로세스 argv 에 -p 로 안 감 — mock 이 거부함
 mysql_deploy_query "SELECT 1;" >/dev/null
 mysql_deploy_cleanup
@@ -505,6 +505,308 @@ else
   echo "not ok - mysql mock -p reject (exit $out_code)"
   fail=1
 fi
+
+# --- mysql-deploy-client: option-file quoting (# ; ' " \ space $) ---
+# 실패 시 원본 비밀번호를 dump 하지 않음 (길이만).
+_mysql_quote_expect() {
+  # raw value → expected password="..." line body (quoted)
+  local value escaped
+  value="$1"
+  escaped="${value//\\/\\\\}"
+  escaped="${escaped//\"/\\\"}"
+  printf '"%s"' "$escaped"
+}
+
+assert_cnf_password_quoted() {
+  local label="$1"
+  local pass="$2"
+  local expected_q line got
+  expected_q="$(_mysql_quote_expect "$pass")"
+  (
+    set -euo pipefail
+    export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_NAME=db
+    export DB_PASSWORD="$pass"
+    export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+    # shellcheck disable=SC1090
+    . "$MYSQL_CLIENT"
+    mysql_deploy_prepare
+    line="$(grep '^password=' "$MYSQL_DEPLOY_CNF" || true)"
+    got="${line#password=}"
+    if [ "$got" != "$expected_q" ]; then
+      echo "cnf password= form mismatch for case: $label (got_len=${#got} want_len=${#expected_q})" >&2
+      mysql_deploy_cleanup
+      exit 3
+    fi
+    grep -qE '^user="u"$' "$MYSQL_DEPLOY_CNF" || { echo "user not quoted ($label)" >&2; exit 3; }
+    grep -qE '^host="127.0.0.1"$' "$MYSQL_DEPLOY_CNF" || { echo "host not quoted ($label)" >&2; exit 3; }
+    grep -qE '^database="db"$' "$MYSQL_DEPLOY_CNF" || { echo "database not quoted ($label)" >&2; exit 3; }
+    grep -qE '^port=3306$' "$MYSQL_DEPLOY_CNF" || { echo "port should stay numeric ($label)" >&2; exit 3; }
+    mysql_deploy_cleanup
+  )
+}
+
+# combined specials: # ; ' " \ space $
+SPECIAL_COMBINED=$'p#a;b\'c"d\\e f$g'
+if assert_cnf_password_quoted "combined-specials" "$SPECIAL_COMBINED"; then
+  echo "ok - mysql-deploy-client: cnf quotes password with #; ' \" \\ space \$"
+else
+  echo "not ok - mysql-deploy-client: cnf quote format (combined)"
+  fail=1
+fi
+
+for ch_label in \
+  'hash:#' \
+  'semi:;' \
+  "squote:'" \
+  'dquote:"' \
+  'backslash:\' \
+  'space: ' \
+  'dollar:$'
+do
+  case_name="${ch_label%%:*}"
+  ch_val="${ch_label#*:}"
+  pass_one="pre${ch_val}post"
+  if assert_cnf_password_quoted "$case_name" "$pass_one"; then
+    echo "ok - mysql-deploy-client: cnf quote case $case_name"
+  else
+    echo "not ok - mysql-deploy-client: cnf quote case $case_name"
+    fail=1
+  fi
+done
+
+# umask 022 환경에서도 prepare 후 cnf 는 mode 600
+cat > "$HELPER_FIXTURE/assert-umask-mode.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+umask 022
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='x' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+cnf="\$MYSQL_DEPLOY_CNF"
+[ -n "\$cnf" ] && [ -f "\$cnf" ] || exit 2
+perms=\$(stat -c '%a' "\$cnf" 2>/dev/null || stat -f '%Lp' "\$cnf")
+[ "\$perms" = "600" ] || { echo "perms=\$perms want=600 (ambient umask 022)"; exit 3; }
+mysql_deploy_cleanup
+[ ! -f "\$cnf" ] || exit 4
+echo umask-mode-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-umask-mode.sh"
+check "mysql-deploy-client: cnf mode 600 under umask 022" 0 \
+  bash "$HELPER_FIXTURE/assert-umask-mode.sh"
+
+# EXIT trap: prepare 후 강제 실패 시 cnf 삭제
+cat > "$HELPER_FIXTURE/assert-trap-cleanup.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='x' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+cnf="\$MYSQL_DEPLOY_CNF"
+[ -f "\$cnf" ] || exit 2
+# 경로를 부모에 남기고 강제 실패 → EXIT trap 이 정리해야 함
+printf '%s' "\$cnf" > "$HELPER_FIXTURE/last-cnf-path"
+exit 42
+EOF
+chmod +x "$HELPER_FIXTURE/assert-trap-cleanup.sh"
+set +e
+bash "$HELPER_FIXTURE/assert-trap-cleanup.sh" >/dev/null 2>&1
+_trap_code=$?
+set -e
+_trap_cnf="$(cat "$HELPER_FIXTURE/last-cnf-path" 2>/dev/null || true)"
+if [ "$_trap_code" = "42" ] && [ -n "$_trap_cnf" ] && [ ! -f "$_trap_cnf" ]; then
+  echo "ok - mysql-deploy-client: EXIT trap removes cnf after failure"
+else
+  echo "not ok - mysql-deploy-client: EXIT trap cleanup (code=$_trap_code cnf_exists=$([ -f "${_trap_cnf:-}" ] && echo yes || echo no))"
+  fail=1
+fi
+
+# my_print_defaults: unquoted breakage matrix + quoted round-trip
+if command -v my_print_defaults >/dev/null 2>&1; then
+  # 미인용 breakage matrix — 비밀번호 값 출력 금지 (label + BREAK/OK + lengths)
+  unquoted_parse_socket() {
+    local raw="$1"
+    local cnf out parsed
+    cnf="$(mktemp)"
+    chmod 600 "$cnf"
+    {
+      echo '[client]'
+      # 의도적으로 미인용 — 특수문자 breakage 증거
+      printf 'socket=%s\n' "$raw"
+    } >"$cnf"
+    out="$(my_print_defaults --defaults-extra-file="$cnf" client 2>/dev/null || true)"
+    rm -f "$cnf"
+    parsed="$(printf '%s\n' "$out" | sed -n 's/^--socket=//p' | head -1)"
+    printf '%s' "$parsed"
+  }
+
+  echo "--- unquoted cnf breakage matrix (my_print_defaults) ---"
+  for ch_label in \
+    'hash:#' \
+    'semi:;' \
+    "squote:'" \
+    'dquote:"' \
+    'backslash:\' \
+    'space: ' \
+    'dollar:$'
+  do
+    case_name="${ch_label%%:*}"
+    ch_val="${ch_label#*:}"
+    raw="PRE${ch_val}SUF"
+    parsed="$(unquoted_parse_socket "$raw")"
+    if [ "$parsed" = "$raw" ]; then
+      echo "ok - unquoted matrix $case_name: OK (parsed_len=${#parsed})"
+      case "$case_name" in
+        hash)
+          echo "not ok - unquoted matrix hash: expected BREAK (truncation at #)"
+          fail=1
+          ;;
+      esac
+    else
+      echo "ok - unquoted matrix $case_name: BREAK (want_len=${#raw} got_len=${#parsed})"
+      case "$case_name" in
+        hash)
+          if [ "$parsed" = "PRE" ]; then
+            echo "ok - unquoted matrix hash: truncates at # (got PRE)"
+          else
+            echo "not ok - unquoted matrix hash: expected truncate to PRE (got_len=${#parsed})"
+            fail=1
+          fi
+          ;;
+        *)
+          # MySQL 8 option parser: ; " ' \ $ space 는 미인용에서도 생존하는 것이 관측됨
+          echo "not ok - unquoted matrix $case_name: expected OK on MySQL 8 (got BREAK)"
+          fail=1
+          ;;
+      esac
+    fi
+  done
+
+  roundtrip_socket_value() {
+    local raw="$1"
+    local label="$2"
+    local q cnf out parsed
+    q="$(_mysql_quote_expect "$raw")"
+    cnf="$(mktemp)"
+    chmod 600 "$cnf"
+    {
+      echo '[client]'
+      printf 'socket=%s\n' "$q"
+    } >"$cnf"
+    out="$(my_print_defaults --defaults-extra-file="$cnf" client 2>/dev/null || true)"
+    rm -f "$cnf"
+    parsed="$(printf '%s\n' "$out" | sed -n 's/^--socket=//p' | head -1)"
+    if [ "$parsed" = "$raw" ]; then
+      echo "ok - my_print_defaults quoted round-trip ($label)"
+    else
+      echo "not ok - my_print_defaults quoted round-trip ($label) parsed_len=${#parsed} want_len=${#raw}"
+      fail=1
+    fi
+  }
+
+  roundtrip_socket_value "$SPECIAL_COMBINED" "combined-specials"
+  for ch_label in \
+    'hash:#' \
+    'semi:;' \
+    "squote:'" \
+    'dquote:"' \
+    'backslash:\' \
+    'space: ' \
+    'dollar:$'
+  do
+    case_name="${ch_label%%:*}"
+    ch_val="${ch_label#*:}"
+    roundtrip_socket_value "pre${ch_val}post" "$case_name"
+  done
+else
+  echo "ok - my_print_defaults skip (not installed)"
+fi
+
+# --- mysql-deploy-client: error classification (1045 vs option-file parse) ---
+write_mock_mysql_err() {
+  local mode="$1"
+  cat > "$MOCK_DIR/mysql" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+for a in "\$@"; do
+  case "\$a" in
+    -p*|--password=*)
+      echo "FAIL: password must not be passed as CLI arg" >&2
+      exit 98
+      ;;
+  esac
+done
+case "${mode}" in
+  err_1045)
+    echo "ERROR 1045 (28000): Access denied for user 'u'@'localhost' (using password: YES)" >&2
+    echo "password=SHOULD_NOT_LEAK" >&2
+    exit 1
+    ;;
+  err_cnf)
+    echo "error: Found option without preceding group in config file: /tmp/x.cnf at line 1." >&2
+    echo "password=SHOULD_NOT_LEAK" >&2
+    exit 1
+    ;;
+  *)
+    echo "unexpected mock mode" >&2
+    exit 2
+    ;;
+esac
+EOF
+  chmod +x "$MOCK_DIR/mysql"
+}
+
+write_mock_mysql_err err_1045
+cat > "$HELPER_FIXTURE/assert-err-1045.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='sec#ret' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+set +e
+out="\$(mysql_deploy_query "SELECT 1;" 2>&1)"
+code=\$?
+set -e
+[ "\$code" -eq 1 ] || exit 2
+printf '%s\n' "\$out" | grep -q 'MySQL 1045 access denied' || exit 3
+printf '%s\n' "\$out" | grep -q 'option-file/cnf parse error' && exit 4
+printf '%s\n' "\$out" | grep -qi 'password=SHOULD_NOT_LEAK' && exit 5
+printf '%s\n' "\$out" | grep -q 'sec#ret' && exit 6
+echo err-1045-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-err-1045.sh"
+check "mysql-deploy-client: classifies ERROR 1045" 0 \
+  bash "$HELPER_FIXTURE/assert-err-1045.sh"
+echo "$LAST_OUT" | grep -q 'sec#ret' && { echo "not ok - 1045 path leaked password"; fail=1; }
+
+write_mock_mysql_err err_cnf
+cat > "$HELPER_FIXTURE/assert-err-cnf.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='sec#ret' DB_NAME=db
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+set +e
+out="\$(mysql_deploy_query "SELECT 1;" 2>&1)"
+code=\$?
+set -e
+[ "\$code" -eq 1 ] || exit 2
+printf '%s\n' "\$out" | grep -q 'option-file/cnf parse error' || exit 3
+printf '%s\n' "\$out" | grep -q 'MySQL 1045 access denied' && exit 4
+printf '%s\n' "\$out" | grep -qi 'password=SHOULD_NOT_LEAK' && exit 5
+printf '%s\n' "\$out" | grep -q 'sec#ret' && exit 6
+echo err-cnf-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-err-cnf.sh"
+check "mysql-deploy-client: classifies option-file parse error" 0 \
+  bash "$HELPER_FIXTURE/assert-err-cnf.sh"
+echo "$LAST_OUT" | grep -q 'sec#ret' && { echo "not ok - cnf-parse path leaked password"; fail=1; }
+
+# restore select1 mock for any later tests
+write_mock_mysql select1_ok
 
 # --- deploy-backend-dev.yml: mysql-deploy-client 통일 (MYSQL_PWD 회귀 가드) ---
 # 시크릿·비밀번호 값은 출력하지 않음. 워크플로 텍스트만 검사.

@@ -37,6 +37,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOnePaymentWebhookService;
 import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
@@ -144,8 +145,9 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(anyString(), anyString(), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
-                    return Optional.of(
-                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
     }
 
@@ -315,8 +317,9 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(eq(tenantId), eq(paymentId), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
-                    return Optional.of(
-                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
 
         TenantContextHolder.setTenantId(tenantId);
@@ -340,8 +343,9 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
                     if (cancelledByUser.compareAndSet(false, true)) {
                         commitUserCancel(paymentId);
                     }
-                    return Optional.of(
-                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
 
         TenantContextHolder.setTenantId(tenantId);

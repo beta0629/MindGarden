@@ -32,6 +32,7 @@ import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -237,7 +238,7 @@ class PaymentServiceImplLatePaymentFollowupTest {
     @DisplayName("verify: PortOne 조회가 DB 트랜잭션 시작보다 먼저(트랜잭션 밖) 실행")
     void verify_portOneLookupOutsideTransaction() {
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
-                .thenReturn(Optional.of("{\"status\":\"PAID\"}"));
+                .thenReturn(PortOneShopPaidMatch.match("{\"status\":\"PAID\"}", BigDecimal.valueOf(CASH_DUE)));
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(ShopLatePaymentOutcome.NOT_APPLICABLE);
 
@@ -258,7 +259,8 @@ class PaymentServiceImplLatePaymentFollowupTest {
         when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
                 .thenAnswer(inv -> {
                     order.setStatus(ShopClientOrderStatus.CANCELLED);
-                    return Optional.of("{\"status\":\"PAID\"}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\"}", BigDecimal.valueOf(CASH_DUE));
                 });
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(ShopLatePaymentOutcome.NOT_APPLICABLE)

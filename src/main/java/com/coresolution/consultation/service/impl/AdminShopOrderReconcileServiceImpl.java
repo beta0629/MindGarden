@@ -18,6 +18,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopOrderPaymentState;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.util.OutsideTransactionScope;
@@ -115,14 +116,17 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
                     tenantId, order, cardApprovalNumber.trim(), orderPublicId);
         }
 
-        Optional<String> verifiedBody = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+        PortOneShopPaidMatch match = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                 tenantId, trimmedPaymentId, order);
-        if (verifiedBody.isEmpty()) {
+        if (match.isUnknown()) {
+            throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_UNKNOWN);
+        }
+        if (match.isMismatch()) {
             throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
         }
 
         Payment payment = ensurePaymentRow(tenantId, order, trimmedPaymentId);
-        payment.setExternalResponse(verifiedBody.get());
+        payment.setExternalResponse(match.getBody().orElse(null));
         paymentRepository.save(payment);
 
         // PortOne 조회는 위에서 트랜잭션 밖에서 끝냄 — 승인은 주문 잠금·재확인을 하는 짧은 트랜잭션(approveShopOrderPayment)
@@ -258,9 +262,12 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
         }
         if (payment.getStatus() != Payment.PaymentStatus.REFUND_REQUIRED
                 && payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
-            Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+            PortOneShopPaidMatch paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                     tenantId, targetPaymentId, order);
-            if (paid.isEmpty()) {
+            if (paid.isUnknown()) {
+                throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_UNKNOWN);
+            }
+            if (paid.isMismatch()) {
                 throw new IllegalArgumentException(closedOrderMessage);
             }
         }
@@ -482,10 +489,13 @@ public class AdminShopOrderReconcileServiceImpl implements AdminShopOrderReconci
             try {
                 paymentService.approveShopOrderPayment(payment.getPaymentId());
             } catch (ShopDuplicatePaymentException duplicate) {
-                // 주문은 이미 다른 결제로 PAID — PortOne PAID 확인 시에만 이중 결제 자동 취소
-                Optional<String> paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                // 주문은 이미 다른 결제로 PAID — PortOne MATCH 확인 시에만 이중 결제 자동 취소
+                PortOneShopPaidMatch paid = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         tenantId, payment.getPaymentId(), order);
-                if (paid.isEmpty()) {
+                if (paid.isUnknown()) {
+                    throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_UNKNOWN);
+                }
+                if (paid.isMismatch()) {
                     throw new IllegalStateException(ShopOrderReconcileConstants.MSG_PORTONE_VERIFY_FAILED);
                 }
                 return reconcileAutoRefundPayment(tenantId, order.getPublicId(), payment.getPaymentId(),

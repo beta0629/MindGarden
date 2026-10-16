@@ -124,7 +124,7 @@ describe('월간 셀 날짜 색', () => {
 
   test('달력 요일 토큰은 라이트·다크·강제 색을 갖고 컴포넌트 CSS 에 색 리터럴이 없다', () => {
     expect(tokens).toMatch(/--mg-calendar-saturday-fg:\s*#1D4ED8/);
-    expect(tokens).toMatch(/--mg-calendar-holiday-fg:\s*#C2410C/);
+    expect(tokens).toMatch(/--mg-calendar-holiday-fg:\s*var\(--mg-error-500\)/);
     expect(tokens).toMatch(/--mg-calendar-holiday-caption-fg:\s*#B5452B/);
     expect(tokens).toMatch(/--mg-calendar-saturday-fg:\s*#93B4F7/);
     expect(tokens).toMatch(/--mg-calendar-holiday-fg:\s*#F4A08C/);

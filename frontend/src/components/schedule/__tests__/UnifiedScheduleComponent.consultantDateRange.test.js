@@ -57,9 +57,18 @@ const CONSULTANT_ID = 7;
 const CONSULTANT_URL = `/api/v1/schedules/consultant/${CONSULTANT_ID}`;
 
 /** FullCalendar dayGridMonth datesSet: start = 그리드 첫날, end = 그리드 마지막 다음날(exclusive) */
-const OCTOBER_GRID = { start: new Date(2026, 8, 27), end: new Date(2026, 10, 8) };
+const OCTOBER_GRID = {
+  start: new Date(2026, 8, 27),
+  end: new Date(2026, 10, 8),
+  currentStart: new Date(2026, 9, 1)
+};
 const OCTOBER_RANGE = { startDate: '2026-09-27', endDate: '2026-11-07' };
-const NOVEMBER_GRID = { start: new Date(2026, 10, 1), end: new Date(2026, 11, 13) };
+const OCTOBER_DISPLAYED_MONTH = { startDate: '2026-10-01', endDate: '2026-10-31' };
+const NOVEMBER_GRID = {
+  start: new Date(2026, 10, 1),
+  end: new Date(2026, 11, 13),
+  currentStart: new Date(2026, 10, 1)
+};
 const NOVEMBER_RANGE = { startDate: '2026-11-01', endDate: '2026-12-12' };
 
 const scheduleRow = (id, date, status = 'CONFIRMED') => ({

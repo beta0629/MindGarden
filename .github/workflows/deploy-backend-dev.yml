@@ -400,11 +400,7 @@ jobs:
             echo "⚠️ 연결 정리 스크립트를 찾을 수 없습니다. 수동 정리 필요"
           fi
           
-          # 서비스 중지
-          sudo systemctl stop mindgarden-dev.service || true
-          
-          # 서비스 중지 후 추가 대기 (연결 정리 시간 확보)
-          sleep 5
+          # stop은 🔄 개발 서버 서비스 재시작 에서만 (업로드 실패 시 BE 유지).
           
           # 백업 생성
           if [ -f app.jar ]; then
@@ -491,6 +487,20 @@ jobs:
         export DEV_DB_NAME="${{ secrets.DEV_DB_NAME }}"
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
+
+    - name: 🧹 systemd SCP 대상 디렉터리 준비
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          # stale path from old target=/tmp/mindgarden-dev.service (may be a directory)
+          if [ -d /tmp/mindgarden-dev.service ]; then sudo rm -rf /tmp/mindgarden-dev.service; fi
+          sudo mkdir -p /tmp/mindgarden-dev-systemd
+          sudo chmod 1777 /tmp/mindgarden-dev-systemd || true
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -501,9 +511,32 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/"
+        target: "/tmp/mindgarden-dev-systemd/"
         strip_components: 2
         overwrite: true
+
+    - name: 🛟 업로드 실패 시 백업 JAR로 서비스 복구
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          set -euo pipefail
+          cd /var/www/mindgarden-dev
+          LATEST=$(ls -t backups/app.jar.backup.* 2>/dev/null | head -1 || true)
+          if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+            cp -f "$LATEST" app.jar
+            echo "restored app.jar from backup (path omitted length=${#LATEST})"
+          else
+            echo "::warning::no backup jar — start existing app.jar if present"
+          fi
+          sudo systemctl start mindgarden-dev.service || true
+          sleep 5
+          sudo systemctl is-active --quiet mindgarden-dev.service && echo "✅ rollback start OK" || echo "::error::rollback start failed"
         
     # ============================================================================
     # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (개발)
@@ -722,9 +755,9 @@ jobs:
           
           # systemd 서비스 파일 설정
           echo "📝 systemd 서비스 파일 설정 중..."
-          if [ -f /tmp/mindgarden-dev.service ]; then
-            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
-            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+          if [ -f /tmp/mindgarden-dev-systemd/mindgarden-dev.service ]; then
+            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev-systemd/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
+            sudo cp /tmp/mindgarden-dev-systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ systemd 서비스 파일 설정 완료"

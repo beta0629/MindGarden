@@ -972,21 +972,21 @@ else
   fi
 fi
 
-# --- deploy-backend-dev.yml: systemd SCP /tmp strip_components + 레포 unit 적용 로그 ---
+# --- deploy-backend-dev.yml: systemd SCP 전용 tmp 디렉터리 + 레포 unit 적용 + 업로드 전 stop 제거 + failure 롤백 ---
 if [ ! -f "$DEV_WF" ]; then
   echo "not ok - deploy-backend-dev.yml 없음 (systemd SCP 가드)"
   fail=1
 else
-  # systemd 업로드 step 근처: target /tmp/ + strip_components: 2
+  # systemd 업로드 step 근처: target /tmp/mindgarden-dev-systemd/ + strip_components: 2
   SYSTEMD_SCP_BLOCK="$(awk '
     /name:.*systemd 서비스 파일 업로드/ { capturing=1 }
     capturing { print }
     capturing && /overwrite:/ { exit }
   ' "$DEV_WF")"
-  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -qE 'target:[[:space:]]*"/tmp/?"'; then
-    echo "ok - deploy-backend-dev.yml systemd SCP target is /tmp/"
+  if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -qE 'target:[[:space:]]*"/tmp/mindgarden-dev-systemd/"?'; then
+    echo "ok - deploy-backend-dev.yml systemd SCP target is /tmp/mindgarden-dev-systemd/"
   else
-    echo "not ok - deploy-backend-dev.yml systemd SCP target must be \"/tmp/\" (or /tmp)"
+    echo "not ok - deploy-backend-dev.yml systemd SCP target must be \"/tmp/mindgarden-dev-systemd/\""
     fail=1
   fi
   if printf '%s\n' "$SYSTEMD_SCP_BLOCK" | grep -q 'strip_components:[[:space:]]*2'; then
@@ -1001,10 +1001,37 @@ else
     echo "not ok - deploy-backend-dev.yml missing 레포 unit 적용"
     fail=1
   fi
-  if grep -q '/tmp/mindgarden-dev.service' "$DEV_WF"; then
-    echo "ok - deploy-backend-dev.yml still references /tmp/mindgarden-dev.service"
+  if grep -q '/tmp/mindgarden-dev-systemd/mindgarden-dev.service' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml install path is /tmp/mindgarden-dev-systemd/mindgarden-dev.service"
   else
-    echo "not ok - deploy-backend-dev.yml missing /tmp/mindgarden-dev.service install path"
+    echo "not ok - deploy-backend-dev.yml missing /tmp/mindgarden-dev-systemd/mindgarden-dev.service install path"
+    fail=1
+  fi
+
+  # 업로드 전 disk/backup step(백업 완료) 에는 systemctl stop 이 없어야 함
+  BACKUP_PREP_BLOCK="$(awk '
+    /name:.*개발 서버 배포 준비/ { capturing=1 }
+    capturing { print }
+    capturing && /백업 완료/ { found=1 }
+    capturing && found && /^[[:space:]]*-[[:space:]]*name:/ { exit }
+  ' "$DEV_WF")"
+  if printf '%s\n' "$BACKUP_PREP_BLOCK" | grep -q '백업 완료'; then
+    if printf '%s\n' "$BACKUP_PREP_BLOCK" | grep -q 'systemctl stop'; then
+      echo "not ok - deploy-backend-dev.yml backup/disk prep must not systemctl stop before uploads"
+      fail=1
+    else
+      echo "ok - deploy-backend-dev.yml backup/disk prep has no systemctl stop"
+    fi
+  else
+    echo "not ok - deploy-backend-dev.yml backup/disk prep block (백업 완료) not found"
+    fail=1
+  fi
+
+  # failure() 롤백: 백업 JAR 복구 step 존재
+  if grep -q 'if: failure()' "$DEV_WF" && grep -q 'app.jar.backup' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml has failure() backup jar restore"
+  else
+    echo "not ok - deploy-backend-dev.yml missing failure() + app.jar.backup restore"
     fail=1
   fi
 fi

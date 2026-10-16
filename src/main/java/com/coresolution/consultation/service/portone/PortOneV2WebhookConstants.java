@@ -30,6 +30,11 @@ public final class PortOneV2WebhookConstants {
     /** 웹훅 응답 status — PortOne 검증 UNKNOWN(조회 실패 등, 재시도) */
     public static final String STATUS_VERIFY_UNKNOWN = "verify_unknown";
 
+    /**
+     * 웹훅 응답 status — UNKNOWN 재시도 소진(비재시도, PortOne 재전송 중단용 200).
+     */
+    public static final String STATUS_VERIFY_UNKNOWN_EXHAUSTED = "verify_unknown_exhausted";
+
     private PortOneV2WebhookConstants() {
     }
 }

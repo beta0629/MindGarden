@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # public-health-check.sh / check-server-clock-skew.sh / check-flyway-schema-health.sh /
-# load-deploy-db-env.sh 자가 테스트
-# (네트워크: 127.0.0.1 임시 HTTP 서버만 · Flyway 는 mock mysql).
+# load-deploy-db-env.sh / preflight-deploy-db.sh / mysql-deploy-client.sh 자가 테스트
+# (네트워크: 127.0.0.1 임시 HTTP 서버만 · Flyway·preflight 는 mock mysql).
 set -euo pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -9,6 +9,8 @@ HEALTH="$DIR/public-health-check.sh"
 SKEW="$DIR/check-server-clock-skew.sh"
 FLYWAY="$DIR/check-flyway-schema-health.sh"
 LOAD_DB="$DIR/load-deploy-db-env.sh"
+PREFLIGHT="$DIR/preflight-deploy-db.sh"
+MYSQL_CLIENT="$DIR/mysql-deploy-client.sh"
 fail=0
 
 check() {
@@ -81,13 +83,28 @@ write_mock_mysql() {
   cat > "$MOCK_DIR/mysql" <<EOF
 #!/usr/bin/env bash
 # mock mysql — mode=${mode}
-# -p / --password= CLI 인자 거부 (MYSQL_PWD 만 허용)
+# -p / --password= CLI 인자 거부 (--defaults-extra-file 또는 MYSQL_PWD 만 허용)
 set -euo pipefail
+has_defaults_file=0
 for a in "\$@"; do
   case "\$a" in
     -p*|--password=*)
       echo "FAIL: password must not be passed as CLI arg: \$a" >&2
       exit 98
+      ;;
+    --defaults-extra-file=*)
+      has_defaults_file=1
+      cnf="\${a#--defaults-extra-file=}"
+      if [ ! -f "\$cnf" ]; then
+        echo "FAIL: defaults-extra-file missing: \$cnf" >&2
+        exit 97
+      fi
+      # 비밀번호 값이 stdout/stderr 에 나오면 안 됨 — 파일 존재·0600 만 확인
+      perms=\$(stat -c '%a' "\$cnf" 2>/dev/null || stat -f '%Lp' "\$cnf" 2>/dev/null || echo "")
+      if [ -n "\$perms" ] && [ "\$perms" != "600" ]; then
+        echo "FAIL: defaults-extra-file perms=\$perms (want 600)" >&2
+        exit 96
+      fi
       ;;
   esac
 done
@@ -101,6 +118,12 @@ case "${mode}" in
   connect_fail)
     echo "ERROR 2003 (HY000): Can't connect to MySQL server on '127.0.0.1:3306' (111)" >&2
     exit 1
+    ;;
+  select1_ok)
+    case "\$sql" in
+      *"SELECT 1"*) echo "1"; exit 0 ;;
+      *) echo "unexpected sql: \$sql" >&2; exit 2 ;;
+    esac
     ;;
   no_table)
     case "\$sql" in
@@ -204,7 +227,7 @@ echo "$LAST_OUT" | grep -q "필수 Flyway version 확인: 20261016.002" || { ech
 echo "$LAST_OUT" | grep -q "verify_unknown_exhausted_last_polled_at" || { echo "not ok - 컬럼 검사 없음"; fail=1; }
 echo "$LAST_OUT" | grep -q "secret-should-never-echo" && { echo "not ok - healthy 경로 비밀번호 노출"; fail=1; }
 echo "$LAST_OUT" | grep -qE -- '-p[^[:space:]*]|--password=' && { echo "not ok - healthy 경로 -p CLI 흔적"; fail=1; }
-echo "$LAST_OUT" | grep -q "MYSQL_PWD" || { echo "not ok - MYSQL_PWD 사용 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "defaults-extra-file" || { echo "not ok - defaults-extra-file 사용 로그 없음"; fail=1; }
 
 write_mock_mysql underscore_script
 check "Flyway script underscore(V20261016_001) 폴백 매치" 0 "${FLYWAY_ENV[@]}" bash "$FLYWAY"
@@ -237,13 +260,20 @@ check "Flyway mysql 바이너리 없으면 치명(exit 1)" 1 \
 echo "$LAST_OUT" | grep -q "mysql 클라이언트 없음" || { echo "not ok - mysql 없음 메시지 없음"; fail=1; }
 
 write_mock_mysql healthy
-check "Flyway 잘못된 version 형식은 skip 후 정상 진행" 0 \
+check "Flyway malformed version 은 치명(exit 1)" 1 \
   env DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=mindgarden DB_PASSWORD=secret \
   DB_NAME=core_solution FLYWAY_HEALTH_MYSQL_BIN="$MOCK_DIR/mysql" \
   FLYWAY_HEALTH_REQUIRED_VERSIONS="20261016.001,bad;drop,20261016.002" \
   bash "$FLYWAY"
-echo "$LAST_OUT" | grep -q "형식 거부(skip): bad;drop" || { echo "not ok - 잘못된 version skip 메시지 없음"; fail=1; }
-echo "$LAST_OUT" | grep -q "필수 Flyway version 확인: 20261016.001" || { echo "not ok - skip 후 정상 version 미확인"; fail=1; }
+echo "$LAST_OUT" | grep -q "형식 거부(malformed): bad;drop" || { echo "not ok - malformed version 메시지 없음"; fail=1; }
+
+write_mock_mysql healthy
+check "Flyway bare column(table. 접두사 없음) 은 치명(exit 1)" 1 \
+  env DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=mindgarden DB_PASSWORD=secret \
+  DB_NAME=core_solution FLYWAY_HEALTH_MYSQL_BIN="$MOCK_DIR/mysql" \
+  FLYWAY_HEALTH_REQUIRED_COLUMN="verify_unknown_exhausted_last_polled_at" \
+  bash "$FLYWAY"
+echo "$LAST_OUT" | grep -q "bare column" || { echo "not ok - bare column 메시지 없음"; fail=1; }
 
 # --- load-deploy-db-env.sh 단위 테스트 ---
 HELPER_ENV_FILE="$HELPER_FIXTURE/test.env"
@@ -353,5 +383,165 @@ check "load-deploy-db-env: 비밀번호 폴백 MG_DEPLOY_DB_PASSWORD_FALLBACK" 0
   MG_DEPLOY_DB_PASSWORD_FALLBACK=fallback-secret \
   bash "$HELPER_FIXTURE/assert-fallback.sh"
 echo "$LAST_OUT" | grep -q "fallback-secret" && { echo "not ok - fallback 비밀번호 노출"; fail=1; }
+echo "$LAST_OUT" | grep -q "password=fallback:MG_DEPLOY_DB_PASSWORD_FALLBACK" || { echo "not ok - fallback 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "host=default" || { echo "not ok - default host 소스 로그 없음"; fail=1; }
+
+# PRODUCTION_DB_PASSWORD 만 있는 시나리오 (헬퍼 단위 — health SSH envs 누락 재발 방지)
+cat > "$HELPER_FIXTURE/assert-prod-fallback.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+. "$LOAD_DB"
+[ "\$DB_PASSWORD" = "prod-secret-never-echo" ] || exit 2
+echo prod-fallback-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-prod-fallback.sh"
+check "load-deploy-db-env: PRODUCTION_DB_PASSWORD 폴백 (env 파일 비어 있음)" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK -u MG_LOCAL_DB_HOST \
+  MG_DEPLOY_ENV_FILE="$HELPER_FIXTURE/empty.env" \
+  PRODUCTION_DB_PASSWORD=prod-secret-never-echo \
+  bash "$HELPER_FIXTURE/assert-prod-fallback.sh"
+echo "$LAST_OUT" | grep -q "prod-secret-never-echo" && { echo "not ok - PRODUCTION_DB_PASSWORD 값 노출"; fail=1; }
+echo "$LAST_OUT" | grep -q "password=fallback:PRODUCTION_DB_PASSWORD" || { echo "not ok - PRODUCTION_DB_PASSWORD 소스 로그 없음"; fail=1; }
+
+# PRODUCTION_DB_PASSWORD 도 없으면 비밀번호 empty (health 1045 원인 재현)
+cat > "$HELPER_FIXTURE/assert-no-password.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+. "$LOAD_DB"
+[ -z "\${DB_PASSWORD:-}" ] || exit 2
+echo no-password-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-no-password.sh"
+check "load-deploy-db-env: PRODUCTION_DB_PASSWORD 없으면 DB_PASSWORD empty" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  MG_DEPLOY_ENV_FILE="$HELPER_FIXTURE/empty.env" \
+  bash "$HELPER_FIXTURE/assert-no-password.sh"
+echo "$LAST_OUT" | grep -q "DB_PASSWORD=(empty)" || { echo "not ok - empty 비밀번호 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "password=unset" || { echo "not ok - password=unset 소스 로그 없음"; fail=1; }
+
+check "load-deploy-db-env: env 파일 소스 태그(basename)" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS \
+  MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
+  bash "$HELPER_FIXTURE/assert-from-file.sh"
+_ENV_BASENAME="$(basename "$HELPER_ENV_FILE")"
+echo "$LAST_OUT" | grep -q "password=${_ENV_BASENAME}" || { echo "not ok - env 파일 소스 태그 없음 (want password=${_ENV_BASENAME})"; fail=1; }
+echo "$LAST_OUT" | grep -q "host=${_ENV_BASENAME}" || { echo "not ok - host 소스 태그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "file-secret-never-echo" && { echo "not ok - 소스 로그에 비밀번호 값"; fail=1; }
+
+check "load-deploy-db-env: pre-set 소스 태그" 0 \
+  env DB_HOST=keep-host DB_USERNAME=keep-user DB_PASSWORD=keep-pass DB_NAME=keep-db DB_PORT=3399 \
+  MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
+  bash "$HELPER_FIXTURE/assert-preserve.sh"
+echo "$LAST_OUT" | grep -q "password=pre-set" || { echo "not ok - pre-set 소스 로그 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "host=pre-set" || { echo "not ok - host pre-set 소스 로그 없음"; fail=1; }
+
+# --- preflight-deploy-db.sh ---
+write_mock_mysql select1_ok
+check "preflight: SELECT 1 성공" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD \
+  MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
+  FLYWAY_HEALTH_MYSQL_BIN="$MOCK_DIR/mysql" \
+  MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql" \
+  bash "$PREFLIGHT"
+echo "$LAST_OUT" | grep -q "SELECT 1 OK" || { echo "not ok - preflight 성공 메시지 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "file-secret-never-echo" && { echo "not ok - preflight 비밀번호 노출"; fail=1; }
+
+write_mock_mysql connect_fail
+check "preflight: SELECT 1 실패는 exit 1" 1 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD \
+  MG_DEPLOY_ENV_FILE="$HELPER_ENV_FILE" \
+  FLYWAY_HEALTH_MYSQL_BIN="$MOCK_DIR/mysql" \
+  MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql" \
+  bash "$PREFLIGHT"
+echo "$LAST_OUT" | grep -q "SELECT 1 실패\|트래픽 전환 전 중단" || { echo "not ok - preflight 실패 메시지 없음"; fail=1; }
+
+check "preflight: DB_PASSWORD 없으면 exit 1" 1 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_PASSWORD -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  MG_DEPLOY_ENV_FILE="$HELPER_FIXTURE/empty.env" \
+  FLYWAY_HEALTH_MYSQL_BIN="$MOCK_DIR/mysql" \
+  MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql" \
+  bash "$PREFLIGHT"
+echo "$LAST_OUT" | grep -q "DB_PASSWORD 없음" || { echo "not ok - preflight empty password 메시지 없음"; fail=1; }
+
+# --- mysql-deploy-client: -p 거부 + defaults-extra-file ---
+write_mock_mysql select1_ok
+cat > "$HELPER_FIXTURE/assert-mysql-client.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=mindgarden DB_PASSWORD=client-secret DB_NAME=core_solution
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+mysql_deploy_prepare
+# cnf 경로·권한
+[ -n "\$MYSQL_DEPLOY_CNF" ] || exit 2
+[ -f "\$MYSQL_DEPLOY_CNF" ] || exit 2
+perms=\$(stat -c '%a' "\$MYSQL_DEPLOY_CNF" 2>/dev/null || stat -f '%Lp' "\$MYSQL_DEPLOY_CNF")
+[ "\$perms" = "600" ] || { echo "perms=\$perms"; exit 2; }
+grep -q '^password=' "\$MYSQL_DEPLOY_CNF" || exit 2
+# 비밀번호가 프로세스 argv 에 -p 로 안 감 — mock 이 거부함
+mysql_deploy_query "SELECT 1;" >/dev/null
+mysql_deploy_cleanup
+[ ! -f "\${MYSQL_DEPLOY_CNF:-/nonexistent}" ] || exit 2
+echo mysql-client-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-mysql-client.sh"
+check "mysql-deploy-client: defaults-extra-file 0600 + SELECT 1" 0 \
+  bash "$HELPER_FIXTURE/assert-mysql-client.sh"
+
+# mock 이 -p 받으면 fail (회귀 가드)
+write_mock_mysql select1_ok
+out_code=0
+"$MOCK_DIR/mysql" -h127.0.0.1 -uroot -psecret -e 'SELECT 1;' >/dev/null 2>&1 || out_code=$?
+if [ "$out_code" = "98" ]; then
+  echo "ok - mysql mock rejects -p"
+else
+  echo "not ok - mysql mock -p reject (exit $out_code)"
+  fail=1
+fi
+
+# --- deploy-backend-dev.yml: mysql-deploy-client 통일 (MYSQL_PWD 회귀 가드) ---
+# 시크릿·비밀번호 값은 출력하지 않음. 워크플로 텍스트만 검사.
+DEV_WF="$(cd "$DIR/../.." && pwd)/.github/workflows/deploy-backend-dev.yml"
+if [ ! -f "$DEV_WF" ]; then
+  echo "not ok - deploy-backend-dev.yml 없음"
+  fail=1
+else
+  if grep -q 'MYSQL_PWD=' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml still has MYSQL_PWD="
+    fail=1
+  else
+    echo "ok - deploy-backend-dev.yml has no MYSQL_PWD="
+  fi
+  if grep -qE 'mysql[[:space:]]+-p([^a-zA-Z]|$)' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml still has mysql -p"
+    fail=1
+  else
+    echo "ok - deploy-backend-dev.yml has no mysql -p"
+  fi
+  for needle in mysql-deploy-client.sh mysql_deploy_prepare mysql_deploy_query; do
+    if grep -q "$needle" "$DEV_WF"; then
+      echo "ok - deploy-backend-dev.yml contains $needle"
+    else
+      echo "not ok - deploy-backend-dev.yml missing $needle"
+      fail=1
+    fi
+  done
+  # Flyway SCP(source 에 mysql-deploy-client.sh) 가 V20260831_004 repair 문자열보다 앞에 와야 함
+  scp_line="$(grep -n 'source:.*"scripts/deployment/.*mysql-deploy-client\.sh' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  repair_line="$(grep -n '\[V20260831_004\] flyway_schema_history success=0 원샷 repair' "$DEV_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${scp_line:-}" ] && [ -n "${repair_line:-}" ] && [ "$scp_line" -lt "$repair_line" ]; then
+    echo "ok - Flyway SCP (mysql-deploy-client) before V20260831_004 repair"
+  else
+    echo "not ok - Flyway SCP must precede V20260831_004 repair (scp=${scp_line:-?} repair=${repair_line:-?})"
+    fail=1
+  fi
+fi
 
 exit "$fail"

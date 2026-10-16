@@ -638,6 +638,21 @@ jobs:
             echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart"
           fi
 
+    # V20260831_004 repair·Flyway 헬스·clients.phone 검증이 mysql-deploy-client.sh 를 쓰므로
+    # 서비스 재시작 SSH(수리 포함) 전에 업로드한다. 후속 헬스/phone step 은 이 업로드를 재사용.
+    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
+
     - name: 🔄 개발 서버 서비스 재시작
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
@@ -746,32 +761,45 @@ jobs:
           # [핫픽스 2026-08-31] V20260831_004 Flyway success=0 원샷 repair
           # 배경: Actions run 33396063349 / PR #728 — temp 테이블 DEFAULT CHARSET=utf8mb4 만 지정
           # → MySQL 8 기본 utf8mb4_0900_ai_ci 와 앱 테이블 utf8mb4_unicode_ci JOIN '=' Error 1267.
-          # deploy-production.yml V20260829_003 원샷 repair 패턴과 동일.
+          # deploy-production.yml V20260829_003 원샷 repair 패턴과 동일 (mysql-deploy-client).
           # success=1 은 절대 삭제하지 않음. leftover temp 테이블도 DROP (실패 무시).
           echo "🔧 [V20260831_004] flyway_schema_history success=0 원샷 repair (서비스 재시작 전)"
           if [ -z "${DEV_DB_USER:-}" ] || [ -z "${DEV_DB_PASSWORD:-}" ] || [ -z "${DEV_DB_NAME:-}" ]; then
             echo "::warning::DEV_DB_USER / DEV_DB_PASSWORD / DEV_DB_NAME 비어 있음 — V20260831_004 flyway success=0 repair 스킵 (배포는 계속)"
           else
-            FLYWAY_004_DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
-            FLYWAY_004_DELETED=$(mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -N -e "
-              DELETE FROM flyway_schema_history
-              WHERE success = 0
-                AND (
-                  version IN ('20260831.004', '20260831_004')
-                  OR script LIKE '%V20260831_004%'
-                );
-              SELECT ROW_COUNT();
-            " 2>/dev/null || echo "ERR")
-            if [ "$FLYWAY_004_DELETED" = "ERR" ] || [ -z "$FLYWAY_004_DELETED" ]; then
-              echo "::warning::V20260831_004 flyway success=0 repair mysql 호출 실패 — 배포는 계속"
-            elif [ "$FLYWAY_004_DELETED" = "0" ]; then
-              echo "::notice::V20260831_004 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+            MYSQL_CLIENT_SH=/var/www/mindgarden-dev/mysql-deploy-client.sh
+            if [ ! -f "$MYSQL_CLIENT_SH" ]; then
+              echo "::warning::V20260831_004 repair: mysql-deploy-client.sh 없음 ($MYSQL_CLIENT_SH) — repair 스킵 (배포는 계속)"
             else
-              echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
+              # shellcheck disable=SC1090
+              . "$MYSQL_CLIENT_SH"
+              export DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
+              export DB_PORT="${DB_PORT:-3306}"
+              export DB_USERNAME="$DEV_DB_USER"
+              export DB_PASSWORD="$DEV_DB_PASSWORD"
+              export DB_NAME="$DEV_DB_NAME"
+              # --defaults-extra-file (0600). MYSQL_PWD / -p CLI 금지
+              mysql_deploy_prepare "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_PORT" "$DB_NAME"
+              FLYWAY_004_DELETED=$(mysql_deploy_query "
+                DELETE FROM flyway_schema_history
+                WHERE success = 0
+                  AND (
+                    version IN ('20260831.004', '20260831_004')
+                    OR script LIKE '%V20260831_004%'
+                  );
+                SELECT ROW_COUNT();
+              " 2>/dev/null || echo "ERR")
+              if [ "$FLYWAY_004_DELETED" = "ERR" ] || [ -z "$FLYWAY_004_DELETED" ]; then
+                echo "::warning::V20260831_004 flyway success=0 repair mysql 호출 실패 — 배포는 계속"
+              elif [ "$FLYWAY_004_DELETED" = "0" ]; then
+                echo "::notice::V20260831_004 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+              else
+                echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
+              fi
+              mysql_deploy_query "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" >/dev/null 2>&1 \
+                || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
+              mysql_deploy_cleanup
             fi
-            mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -e \
-              "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" 2>/dev/null \
-              || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
           fi
 
           # 서비스 재시작
@@ -1474,19 +1502,7 @@ jobs:
         PUBLIC_BASE_URL: ${{ vars.DEV_PUBLIC_BASE_URL }}
       run: bash scripts/deployment/public-health-check.sh "$PUBLIC_BASE_URL"
 
-    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.DEV_SERVER_HOST }}
-        username: ${{ secrets.DEV_SERVER_USER }}
-        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
-        port: 22
-        timeout: 60s
-        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh"
-        target: "/var/www/mindgarden-dev/"
-        strip_components: 2
-        overwrite: true
-
+    # Flyway 헬스·clients.phone: 재시작 전 SCP(📤 Flyway 스키마 헬스 스크립트 업로드) 재사용
     - name: 🔍 Flyway 스키마 헬스 (dev.env DB_*)
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       env:
@@ -1539,7 +1555,17 @@ jobs:
           set +a
           DB_PORT="${DB_PORT:-3306}"
           if command -v mysql >/dev/null 2>&1; then
-            COL_TYPE=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -Nsr -e "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" 2>/dev/null || true)
+            MYSQL_CLIENT_SH=/var/www/mindgarden-dev/mysql-deploy-client.sh
+            if [ ! -f "$MYSQL_CLIENT_SH" ]; then
+              echo "❌ mysql-deploy-client.sh 없음 ($MYSQL_CLIENT_SH) — clients.phone 검증 중단"
+              exit 1
+            fi
+            # shellcheck disable=SC1090
+            . "$MYSQL_CLIENT_SH"
+            # --defaults-extra-file (0600). MYSQL_PWD / -p CLI 금지
+            mysql_deploy_prepare "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_PORT" "$DB_NAME"
+            COL_TYPE=$(mysql_deploy_query "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" -s -r 2>/dev/null || true)
+            mysql_deploy_cleanup
             if [ -z "$COL_TYPE" ]; then
               echo "❌ clients.phone 컬럼 타입 조회 실패 (빈 결과). DB 연결·DB_NAME·권한을 확인하세요."
               exit 1

@@ -1190,6 +1190,25 @@ PY
   fi
   check "verify-dev-running-build.sh --help exits 0" 0 bash "$VERIFY_SH_REPO" --help
   check "verify-dev-running-build.sh missing args exits non-zero" 1 bash "$VERIFY_SH_REPO"
+  if grep -qE 'running_commit=\$\{GIT_COMMIT:-\} expected=\$\{GITHUB_SHA:-\} match=\$\{COMMIT_MATCH\}' "$VERIFY_SH_REPO" \
+    || grep -q 'running_commit=${GIT_COMMIT:-} expected=${GITHUB_SHA:-} match=${COMMIT_MATCH}' "$VERIFY_SH_REPO"; then
+    echo "ok - verify-dev-running-build.sh logs running_commit=… expected=… match=…"
+  else
+    echo "not ok - verify-dev-running-build.sh missing one-line running_commit/expected/match log"
+    fail=1
+  fi
+  # YAML 가드는 deploy-production.yml 포함 전체 workflows
+  if [ -f "$DIR/../verification/check-workflows-yaml.sh" ] \
+    || [ -f "$(dirname "$DIR")/verification/check-workflows-yaml.sh" ]; then
+    YAML_CHECK="$(cd "$(dirname "$DIR")/.." && bash scripts/verification/check-workflows-yaml.sh 2>&1)" || true
+    if printf '%s\n' "$YAML_CHECK" | grep -q 'ok - deploy-production.yml' \
+      && printf '%s\n' "$YAML_CHECK" | grep -qE 'all [0-9]+ workflow YAML file\(s\) parsed'; then
+      echo "ok - check-workflows-yaml.sh covers deploy-production.yml (all workflows)"
+    else
+      echo "not ok - check-workflows-yaml.sh must parse deploy-production.yml among all workflows"
+      fail=1
+    fi
+  fi
 
   # 재시작 step envs 에 GITHUB_SHA (주석의 "envs:" 제외 — YAML key 줄만)
   RESTART_ENVS_OK="$(python3 - "$DEV_WF" <<'PY'

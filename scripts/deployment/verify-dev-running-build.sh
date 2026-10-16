@@ -195,12 +195,19 @@ fi
 INFO_JSON="$(curl -fsS --max-time 8 "$INFO_URL" 2>/dev/null || echo '{}')"
 GIT_COMMIT="$(extract_git_commit "$INFO_JSON")"
 
+# Always log both values on one line (full SHAs — not secrets).
+COMMIT_MATCH=false
+if [ -n "$GIT_COMMIT" ] && [ -n "${GITHUB_SHA:-}" ] && sha_matches "$GIT_COMMIT" "$GITHUB_SHA"; then
+  COMMIT_MATCH=true
+fi
+echo "running_commit=${GIT_COMMIT:-} expected=${GITHUB_SHA:-} match=${COMMIT_MATCH}"
+
 if [ -n "$GIT_COMMIT" ]; then
   if [ -z "${GITHUB_SHA:-}" ]; then
     echo "::error::git.commit present but --github-sha empty (git_prefix=$(prefix12 "$GIT_COMMIT"))"
     exit 1
   fi
-  if ! sha_matches "$GIT_COMMIT" "$GITHUB_SHA"; then
+  if [ "$COMMIT_MATCH" != "true" ]; then
     echo "::error::git.commit mismatch git_prefix=$(prefix12 "$GIT_COMMIT") github_prefix=$(prefix12 "$GITHUB_SHA")"
     exit 1
   fi

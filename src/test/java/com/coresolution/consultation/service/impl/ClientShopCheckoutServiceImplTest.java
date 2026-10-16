@@ -201,6 +201,7 @@ class ClientShopCheckoutServiceImplTest {
         lenient().when(portOneV2PaymentVerifyService.transientStatusMaxAttempts())
                 .thenReturn(PortOneV2PaymentVerifyService.TRANSIENT_STATUS_MAX_ATTEMPTS);
         lenient().when(portOneVerifyUnknownRetryTracker.isExhausted(any())).thenReturn(false);
+        lenient().when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(any())).thenReturn(true);
         lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
                 .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
     }
@@ -2660,7 +2661,7 @@ class ClientShopCheckoutServiceImplTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"UNKNOWN", "IN_PROGRESS"})
-    @DisplayName("hold TTL 만료 — PortOne UNKNOWN/IN_PROGRESS 이면 상태 유지·false(재시도)")
+    @DisplayName("hold TTL 만료 — PortOne UNKNOWN/IN_PROGRESS 이면 상태 유지·false·재시도 카운트")
     void expireOrderHold_portOneTransient_doesNotExpire(String paidStateName) {
         ShopClientOrder order = pendingOrder(500L);
         ShopClientOrderStatus before = order.getStatus();
@@ -2673,11 +2674,170 @@ class ClientShopCheckoutServiceImplTest {
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
 
         assertEquals(before, order.getStatus());
+        verify(portOneVerifyUnknownRetryTracker, times(1))
+                .recordUnknownAndDecide(TENANT, pending.getPaymentId());
         verify(clientPointWalletService, never()).releaseHold(any(), any(), any(), anyLong(), any());
         verify(shopClientOrderRepository, never()).save(order);
         verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
         verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
         verify(paymentService, never()).refundPayment(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — IN_PROGRESS 상한 도달 시 EXHAUSTED·알림은 Tracker에 위임·자동 취소 없음")
+    void expireOrderHold_inProgress_exhausted_noAutoCancel() {
+        ShopClientOrder order = pendingOrder(500L);
+        ShopClientOrderStatus before = order.getStatus();
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.IN_PROGRESS);
+        when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.EXHAUSTED);
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(before, order.getStatus());
+        verify(portOneVerifyUnknownRetryTracker, times(1))
+                .recordUnknownAndDecide(TENANT, pending.getPaymentId());
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+        verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 소진 후 폴링 간격 미도달이면 PortOne 미호출·상태 유지")
+    void expireOrderHold_exhausted_intervalNotReached_skipsPortOne() {
+        ShopClientOrder order = pendingOrder(500L);
+        ShopClientOrderStatus before = order.getStatus();
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneVerifyUnknownRetryTracker.isExhausted(pending)).thenReturn(true);
+        when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(pending)).thenReturn(false);
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(before, order.getStatus());
+        verify(portOneV2PaymentVerifyService, never()).resolvePaidState(any(), any());
+        verify(portOneVerifyUnknownRetryTracker, never()).markExhaustedPolled(any(), any());
+        verify(portOneVerifyUnknownRetryTracker, never()).recordUnknownAndDecide(any(), any());
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 소진 후 장주기 폴링에서 PAID+MATCH 이면 정상 이행")
+    void expireOrderHold_exhausted_longPoll_paidMatch_fulfills() {
+        ShopClientOrder order = pendingOrder(0L);
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneVerifyUnknownRetryTracker.isExhausted(pending)).thenReturn(true);
+        when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(pending)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.PAID);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order))
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"id\":\"pay-hold\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(10_000L)));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
+        stubDefaultPolicies();
+
+        assertTrue(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+        verify(portOneVerifyUnknownRetryTracker).markExhaustedPolled(TENANT, pending.getPaymentId());
+        verify(portOneVerifyUnknownRetryTracker, never()).recordUnknownAndDecide(any(), any());
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 소진 후 폴링 NOT_PAID 여도 자동 EXPIRED 없음")
+    void expireOrderHold_exhausted_longPoll_notPaid_doesNotExpire() {
+        ShopClientOrder order = pendingOrder(500L);
+        ShopClientOrderStatus before = order.getStatus();
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneVerifyUnknownRetryTracker.isExhausted(pending)).thenReturn(true);
+        when(portOneVerifyUnknownRetryTracker.shouldPollAfterExhausted(pending)).thenReturn(true);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.NOT_PAID);
+
+        assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
+
+        assertEquals(before, order.getStatus());
+        verify(portOneVerifyUnknownRetryTracker).markExhaustedPolled(TENANT, pending.getPaymentId());
+        verify(shopClientOrderRepository, never()).save(order);
+        verify(shopNotificationHelper, never()).notifyOrderHoldExpired(any(), any());
+    }
+
+    @Test
+    @DisplayName("hold TTL 만료 — 동시 중복 PAID 이행 시 주문 잠금으로 한 번만 확정")
+    void expireOrderHold_concurrentPaid_appliedOnce() throws Exception {
+        ShopClientOrder order = pendingOrder(0L);
+        ReentrantLock orderLock = new ReentrantLock();
+        when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID)).thenAnswer(inv -> {
+            orderLock.lock();
+            try {
+                return Optional.of(order);
+            } finally {
+                orderLock.unlock();
+            }
+        });
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
+                .thenReturn(Optional.of(order));
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
+        when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
+                .thenReturn(PortOnePaymentPaidState.PAID);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order))
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"id\":\"pay-hold\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(10_000L)));
+        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
+                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
+                .thenAnswer(inv -> {
+                    if (order.getStatus() == ShopClientOrderStatus.PAID
+                            || pending.getStatus() == Payment.PaymentStatus.APPROVED) {
+                        return Optional.of(pending);
+                    }
+                    return Optional.empty();
+                });
+        when(shopClientOrderRepository.save(any(ShopClientOrder.class))).thenAnswer(inv -> {
+            ShopClientOrder saved = inv.getArgument(0);
+            if (saved.getStatus() == ShopClientOrderStatus.PAID
+                    && order.getStatus() == ShopClientOrderStatus.PAID
+                    && saved != order) {
+                return order;
+            }
+            return saved;
+        });
+        stubDefaultPolicies();
+
+        CountDownLatch start = new CountDownLatch(1);
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<Boolean> first = pool.submit(() -> {
+                start.await(5, TimeUnit.SECONDS);
+                return service.expireOrderHold(TENANT, ORDER_ID);
+            });
+            Future<Boolean> second = pool.submit(() -> {
+                start.await(5, TimeUnit.SECONDS);
+                return service.expireOrderHold(TENANT, ORDER_ID);
+            });
+            start.countDown();
+            boolean a = first.get(10, TimeUnit.SECONDS);
+            boolean b = second.get(10, TimeUnit.SECONDS);
+            assertTrue(a || b);
+            assertEquals(ShopClientOrderStatus.PAID, order.getStatus());
+            assertEquals(Payment.PaymentStatus.APPROVED, pending.getStatus());
+        } finally {
+            pool.shutdownNow();
+        }
     }
 
     private static ShopClientOrder reusableOrder(ShopClientOrderStatus status, long subtotal, String source) {

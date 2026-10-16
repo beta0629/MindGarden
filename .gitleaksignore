@@ -1395,3 +1395,5 @@ fa844c322600954553b8acaac68edd696ed3f5a8:docs/OPERATION_DEPLOYMENT_GUIDE.md:curl
 # 2026-10-15 오탐: Standard Webhooks TestScenario.validSigned 공개 테스트 벡터 (운영 시크릿 아님).
 a3972a64d47eceafa8f6e49d795227f630a9175b:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:23
 a3972a64d47eceafa8f6e49d795227f630a9175b:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:25
+cedc21b1e8dc2de4d1b4cf53be005c44e7535152:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:27
+cedc21b1e8dc2de4d1b4cf53be005c44e7535152:src/test/java/com/coresolution/consultation/service/portone/PortOneWebhookSignatureVerifierTest.java:generic-api-key:29

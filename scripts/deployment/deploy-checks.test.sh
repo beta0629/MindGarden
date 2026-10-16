@@ -1128,6 +1128,90 @@ PY
     echo "not ok - deploy-backend-dev.yml missing 'restart after jar restore' log"
     fail=1
   fi
+
+  # stop 은 || true 없이 실패 시 exit 1
+  if grep -qE 'systemctl stop mindgarden-dev\.service[[:space:]]*\|\|[[:space:]]*true' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml must not use 'systemctl stop mindgarden-dev.service || true'"
+    fail=1
+  else
+    echo "ok - deploy-backend-dev.yml has no 'systemctl stop mindgarden-dev.service || true'"
+  fi
+  if grep -q 'systemctl stop failed' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml has explicit systemctl stop failure handling"
+  else
+    echo "not ok - deploy-backend-dev.yml missing 'systemctl stop failed' error path"
+    fail=1
+  fi
+
+  # 기동 후 PID/jar 검증
+  if grep -qE 'MainPID|PRE_PID' "$DEV_WF" \
+    && { grep -q 'post-start verify' "$DEV_WF" || grep -q 'PID unchanged' "$DEV_WF"; }; then
+    echo "ok - deploy-backend-dev.yml has post-start PID/jar verify (MainPID/PRE_PID + post-start verify|PID unchanged)"
+  else
+    echo "not ok - deploy-backend-dev.yml missing post-start PID/jar verify strings"
+    fail=1
+  fi
+
+  # 재시작 step envs 에 GITHUB_SHA (주석의 "envs:" 제외 — YAML key 줄만)
+  RESTART_ENVS_OK="$(python3 - "$DEV_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding='utf-8').read().splitlines()
+in_restart = False
+envs_val = None
+has_step_env = False
+for line in lines:
+    if re.search(r'name:.*개발 서버 서비스 재시작', line):
+        in_restart = True
+        continue
+    if in_restart and re.match(r'^\s*-\s*name:', line):
+        break
+    if in_restart and re.match(r'^\s*GITHUB_SHA:\s*\$\{\{\s*github\.sha\s*\}\}', line):
+        has_step_env = True
+    if in_restart and re.match(r'^\s*envs:\s*', line):
+        envs_val = line.split(':', 1)[1].strip()
+if envs_val is None:
+    print('MISSING_ENVS')
+elif 'GITHUB_SHA' not in envs_val:
+    print('MISSING_GITHUB_SHA_IN_ENVS')
+elif not has_step_env:
+    print('MISSING_STEP_ENV')
+else:
+    print('OK')
+PY
+)"
+  if [ "$RESTART_ENVS_OK" = "OK" ]; then
+    echo "ok - deploy-backend-dev.yml restart step passes GITHUB_SHA via env+envs"
+  else
+    echo "not ok - deploy-backend-dev.yml restart GITHUB_SHA wiring ($RESTART_ENVS_OK)"
+    fail=1
+  fi
+
+  # systemd prep: chmod 700, not 1777
+  SYSTEMD_PREP_BLOCK="$(awk '
+    /name:.*systemd SCP 대상 디렉터리 준비/ { capturing=1 }
+    capturing { print }
+    capturing && /^[[:space:]]*-[[:space:]]*name:/ && !/systemd SCP 대상/ { exit }
+  ' "$DEV_WF")"
+  if printf '%s\n' "$SYSTEMD_PREP_BLOCK" | grep -q 'chmod 700' \
+    && ! printf '%s\n' "$SYSTEMD_PREP_BLOCK" | grep -qE 'chmod[[:space:]]+1777'; then
+    echo "ok - deploy-backend-dev.yml systemd prep uses chmod 700 (not 1777)"
+  else
+    echo "not ok - deploy-backend-dev.yml systemd prep must chmod 700 and not chmod 1777"
+    fail=1
+  fi
+  if grep -qE 'chmod[[:space:]]+1777.*/tmp/mindgarden-dev-systemd|mindgarden-dev-systemd.*chmod[[:space:]]+1777' "$DEV_WF"; then
+    echo "not ok - deploy-backend-dev.yml still has chmod 1777 for mindgarden-dev-systemd"
+    fail=1
+  fi
+
+  # backup cp fail-hard before stop
+  if grep -q 'jar backup cp failed' "$DEV_WF" \
+    || grep -qE '![[:space:]]*cp[[:space:]]+app\.jar' "$DEV_WF"; then
+    echo "ok - deploy-backend-dev.yml jar backup cp fails hard before stop"
+  else
+    echo "not ok - deploy-backend-dev.yml missing jar backup cp fail-hard pattern"
+    fail=1
+  fi
 fi
 
 # --- deploy-production.yml: failure() 트래픽 슬롯 기동 가드 (upstream 전환 없음) ---

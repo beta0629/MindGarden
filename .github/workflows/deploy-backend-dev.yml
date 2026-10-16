@@ -411,7 +411,14 @@ jobs:
             while [ -f "$BACKUP_FILE" ]; do
               BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19)"
             done
-            cp app.jar "$BACKUP_FILE"
+            if ! cp app.jar "$BACKUP_FILE"; then
+              echo "::error::jar backup cp failed — abort (no stop yet)"
+              exit 1
+            fi
+            if [ ! -s "$BACKUP_FILE" ]; then
+              echo "::error::jar backup empty — abort"
+              exit 1
+            fi
             echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
@@ -498,9 +505,27 @@ jobs:
         timeout: 120s
         script: |
           # stale path from old target=/tmp/mindgarden-dev.service (may be a directory)
+          # mode 700 deploy-user owned — not world-writable 1777 (only this workflow uses this staging dir)
+          DIR=/tmp/mindgarden-dev-systemd
+          DEPLOY_USER=$(id -un)
           if [ -d /tmp/mindgarden-dev.service ]; then sudo rm -rf /tmp/mindgarden-dev.service; fi
-          sudo mkdir -p /tmp/mindgarden-dev-systemd
-          sudo chmod 1777 /tmp/mindgarden-dev-systemd || true
+          if [ -e "$DIR" ] && [ ! -d "$DIR" ]; then sudo rm -rf "$DIR"; fi
+          if [ -d "$DIR" ]; then
+            OWNER=$(stat -c '%U' "$DIR" 2>/dev/null || echo "")
+            MODE=$(stat -c '%a' "$DIR" 2>/dev/null || echo "")
+            if [ "$OWNER" != "$DEPLOY_USER" ] || [ "$MODE" != "700" ]; then
+              echo "recreate $DIR (owner=$OWNER mode=$MODE → $DEPLOY_USER:700)"
+              sudo rm -rf "$DIR"
+            fi
+          fi
+          mkdir -p "$DIR"
+          chmod 700 "$DIR"
+          OWNER=$(stat -c '%U' "$DIR")
+          MODE=$(stat -c '%a' "$DIR")
+          if [ "$OWNER" != "$DEPLOY_USER" ] || [ "$MODE" != "700" ]; then
+            echo "::error::$DIR not owned mode 700 by $DEPLOY_USER (owner=$OWNER mode=$MODE)"
+            exit 1
+          fi
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -727,6 +752,8 @@ jobs:
           fi
 
     - name: 🔄 개발 서버 서비스 재시작
+      env:
+        GITHUB_SHA: ${{ github.sha }}
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -741,7 +768,8 @@ jobs:
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
         # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
         # DEV_DB_* — V20260831_004 Flyway success=0 원샷 repair (재시작 직전)
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,DEV_DB_HOST,DEV_DB_USER,DEV_DB_PASSWORD,DEV_DB_NAME
+        # GITHUB_SHA — 기동 후 actuator/info git.commit 대조
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,DEV_DB_HOST,DEV_DB_USER,DEV_DB_PASSWORD,DEV_DB_NAME,GITHUB_SHA
         script: |
           cd /var/www/mindgarden-dev
           
@@ -887,9 +915,15 @@ jobs:
           fi
           
           # 서비스 중지 (systemd가 자동으로 프로세스 종료 처리)
-          echo "🛑 서비스 중지 중..."
+          # PRE_PID: stop 전 MainPID (기동 후 PID 변경 검증용). 빈 값 → 0
+          PRE_PID=$(sudo systemctl show -p MainPID --value mindgarden-dev.service 2>/dev/null || echo 0)
+          if [ -z "$PRE_PID" ]; then PRE_PID=0; fi
+          echo "🛑 서비스 중지 중... (PRE_PID=${PRE_PID})"
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
-            sudo systemctl stop mindgarden-dev.service || true
+            if ! sudo systemctl stop mindgarden-dev.service; then
+              echo "::error::systemctl stop failed"
+              exit 1
+            fi
             # 서비스가 완전히 중지될 때까지 대기 (최대 30초)
             for i in {1..30}; do
               if ! sudo systemctl is-active --quiet mindgarden-dev.service; then
@@ -909,6 +943,12 @@ jobs:
             mv -f app.jar.new app.jar
             chmod +x app.jar
           fi
+          if [ ! -f app.jar ]; then
+            echo "::error::app.jar missing after staging"
+            exit 1
+          fi
+          DEPLOY_JAR_SHA=$(sha256sum app.jar | awk '{print $1}')
+          echo "📦 deploy jar sha256 prefix=${DEPLOY_JAR_SHA:0:12}"
           
           # 포트 확인 (systemd가 프로세스를 종료했으므로 포트는 비어있어야 함)
           echo "🔍 포트 8080 확인..."
@@ -965,6 +1005,41 @@ jobs:
           
           if [ "$SERVICE_STARTED" = true ] && sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨 (actuator/health 확인됨)"
+            POST_PID=$(sudo systemctl show -p MainPID --value mindgarden-dev.service)
+            if [ "${PRE_PID:-0}" != "0" ] && [ -n "$PRE_PID" ] && [ "$POST_PID" = "$PRE_PID" ]; then
+              echo "::error::PID unchanged after restart (PRE=$PRE_PID POST=$POST_PID)"
+              exit 1
+            fi
+            RUN_JAR_SHA=$(sha256sum /var/www/mindgarden-dev/app.jar | awk '{print $1}')
+            INFO_JSON=$(curl -fsS --max-time 8 http://127.0.0.1:8080/actuator/info 2>/dev/null || echo '{}')
+            GIT_COMMIT=$(printf '%s' "$INFO_JSON" | python3 -c 'import sys,json
+try:
+ d=json.load(sys.stdin)
+except Exception:
+ d={}
+def dig(o,*ks):
+  for k in ks:
+    if not isinstance(o,dict): return ""
+    o=o.get(k)
+  return o if isinstance(o,str) else ""
+c=dig(d,"git","commit","id") or dig(d,"git","commit","id","full") or ""
+print(c or "")' 2>/dev/null || true)
+            SHA_OK=0
+            [ -n "$DEPLOY_JAR_SHA" ] && [ "$RUN_JAR_SHA" = "$DEPLOY_JAR_SHA" ] && SHA_OK=1
+            GIT_OK=0
+            if [ -n "${GITHUB_SHA:-}" ] && [ -n "$GIT_COMMIT" ]; then
+              case "$GIT_COMMIT" in
+                "$GITHUB_SHA"*|"${GITHUB_SHA:0:7}"*) GIT_OK=1 ;;
+              esac
+              case "$GITHUB_SHA" in
+                "$GIT_COMMIT"*) GIT_OK=1 ;;
+              esac
+            fi
+            if [ "$SHA_OK" != "1" ] && [ "$GIT_OK" != "1" ]; then
+              echo "::error::deploy jar/git verify FAIL sha_ok=$SHA_OK git_ok=$GIT_OK deploy_sha_len=${#DEPLOY_JAR_SHA} run_sha_len=${#RUN_JAR_SHA} git_commit_len=${#GIT_COMMIT} github_sha_len=${#GITHUB_SHA}"
+              exit 1
+            fi
+            echo "✅ post-start verify OK (pid changed / jar sha or git.commit matches) PRE=${PRE_PID} POST=${POST_PID} jar_prefix=${DEPLOY_JAR_SHA:0:12} git_prefix=${GIT_COMMIT:0:12}"
           else
             echo "❌ 서비스 시작 실패 - 롤백 후 로그 확인..."
             LATEST_BACKUP=$(ls -t /var/www/mindgarden-dev/backups/app.jar.backup.* 2>/dev/null | head -1)

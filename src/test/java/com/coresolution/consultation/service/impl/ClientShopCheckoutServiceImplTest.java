@@ -2556,7 +2556,7 @@ class ClientShopCheckoutServiceImplTest {
     }
 
     @Test
-    @DisplayName("hold TTL 만료 — PortOne PAID·금액 일치면 주문 PAID 확정")
+    @DisplayName("hold TTL 만료 — PortOne PAID·공유 검증 일치면 주문 PAID 확정")
     void expireOrderHold_portOnePaid_fulfillsOrder() {
         ShopClientOrder order = pendingOrder(0L);
         when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
@@ -2566,6 +2566,9 @@ class ClientShopCheckoutServiceImplTest {
         Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
         when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
                 .thenReturn(PortOnePaymentPaidState.PAID);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order))
+                .thenReturn(Optional.of(
+                        "{\"status\":\"PAID\",\"id\":\"pay-hold\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}"));
         when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
                 TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
                 .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
@@ -2580,22 +2583,20 @@ class ClientShopCheckoutServiceImplTest {
         verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
         verify(paymentService, never()).refundPayment(any(), any(), any());
         verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(portOneV2PaymentVerifyService).verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order);
     }
 
     @Test
-    @DisplayName("hold TTL 만료 — PortOne PAID·금액 불일치면 취소·환불 1회, 재호출 시 이중 환불 없음")
+    @DisplayName("hold TTL 만료 — PortOne PAID underpay(공유 검증 empty)면 전액 취소·미확정, 재호출 시 이중 환불 없음")
     void expireOrderHold_portOnePaid_mismatch_cancelsOnce_noDoubleRefund() {
         ShopClientOrder order = pendingOrder(0L);
         when(shopClientOrderRepository.lockByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenReturn(Optional.of(order));
-        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
-                .thenReturn(Optional.of(order));
-        Payment pending = stubLatestOpenPayment(1L, Payment.PaymentStatus.PENDING);
+        Payment pending = stubLatestOpenPayment(order.getCashDueMinor(), Payment.PaymentStatus.PENDING);
         when(portOneV2PaymentVerifyService.resolvePaidState(TENANT, pending.getPaymentId()))
                 .thenReturn(PortOnePaymentPaidState.PAID);
-        when(paymentRepository.findFirstByTenantIdAndOrderIdAndStatusAndIsDeletedFalseOrderByIdDesc(
-                TENANT, ORDER_ID, Payment.PaymentStatus.APPROVED))
-                .thenAnswer(inv -> paymentStatusOptional(pending, Payment.PaymentStatus.APPROVED));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT, pending.getPaymentId(), order))
+                .thenReturn(Optional.empty());
         when(portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(TENANT, pending.getPaymentId()))
                 .thenReturn(false);
         when(portOneV2PaymentCancelService.cancelPayment(
@@ -2606,12 +2607,14 @@ class ClientShopCheckoutServiceImplTest {
 
         assertEquals(ShopClientOrderStatus.CANCELLED, order.getStatus());
         assertEquals(Payment.PaymentStatus.REFUNDED, pending.getStatus());
+        assertTrue(order.getStatus() != ShopClientOrderStatus.PAID);
         verify(portOneV2PaymentCancelService, times(1)).cancelPayment(
                 TENANT, pending.getPaymentId(), ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
         verify(paymentService, times(1)).refundPayment(
                 pending.getPaymentId(),
                 pending.getAmount(),
                 ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
+        verify(paymentService, never()).approveShopOrderPayment(any());
 
         assertFalse(service.expireOrderHold(TENANT, ORDER_ID));
 

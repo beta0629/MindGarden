@@ -127,10 +127,15 @@ class ShopLatePaymentFollowupRaceTest {
                 encryptionService,
                 tenantPgConfigurationRepository,
                 paymentRepository,
+                shopClientOrderRepository,
                 paymentService,
                 clientShopCheckoutService,
                 guard,
+                portOneV2PaymentVerifyService,
                 PortOneWebhookTestSignatures.properties());
+        lenient().when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT_ID), eq(PAYMENT_ID), any(ShopClientOrder.class)))
+                .thenReturn(Optional.of("{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}"));
         cancelService = new ClientShopPaymentCancelServiceImpl(
                 shopClientOrderRepository,
                 shopClientOrderLineRepository,

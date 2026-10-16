@@ -141,6 +141,12 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
             portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
             return true;
         });
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(anyString(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
+                    return Optional.of(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
+                });
     }
 
     @AfterEach
@@ -304,10 +310,11 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     @DisplayName("7. reconcile 은 승인 후 커밋된 최신 상태(PAID/APPROVED)를 반환, PortOne 검증은 트랜잭션 밖")
     void reconcilePayment_returnsLatestStateAfterApproval() {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(eq(tenantId), eq(paymentId), any()))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(eq(tenantId), eq(paymentId), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
-                    return Optional.of("{}");
+                    return Optional.of(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
                 });
 
         TenantContextHolder.setTenantId(tenantId);
@@ -325,13 +332,14 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     void h5_reconcile_userCancelCommittedAfterVerify_autoRefunded() {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
         AtomicBoolean cancelledByUser = new AtomicBoolean(false);
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(eq(tenantId), eq(paymentId), any()))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(eq(tenantId), eq(paymentId), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
                     if (cancelledByUser.compareAndSet(false, true)) {
                         commitUserCancel(paymentId);
                     }
-                    return Optional.of("{}");
+                    return Optional.of(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}");
                 });
 
         TenantContextHolder.setTenantId(tenantId);

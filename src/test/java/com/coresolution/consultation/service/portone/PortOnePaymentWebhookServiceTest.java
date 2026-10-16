@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,7 +17,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
@@ -61,11 +64,15 @@ class PortOnePaymentWebhookServiceTest {
     @Mock
     private PaymentRepository paymentRepository;
     @Mock
+    private ShopClientOrderRepository shopClientOrderRepository;
+    @Mock
     private PaymentService paymentService;
     @Mock
     private ClientShopCheckoutService clientShopCheckoutService;
     @Mock
     private ShopLatePaymentRefundService shopLatePaymentRefundService;
+    @Mock
+    private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
 
     private PortOnePaymentWebhookService service;
 
@@ -76,9 +83,11 @@ class PortOnePaymentWebhookServiceTest {
                 encryptionService,
                 tenantPgConfigurationRepository,
                 paymentRepository,
+                shopClientOrderRepository,
                 paymentService,
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
+                portOneV2PaymentVerifyService,
                 PortOneWebhookTestSignatures.properties());
     }
 
@@ -423,5 +432,128 @@ class PortOnePaymentWebhookServiceTest {
         assertEquals(PAYMENT_ID, response.getBody().get("paymentId"));
         verify(encryptionService).decrypt(encryptedSecret);
         verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
+    }
+
+    @Test
+    @DisplayName("쇼핑 주문 Transaction.Paid — PortOne underpay 이면 전액 취소·approve 없음")
+    void handleWebhook_shopPaid_underpay_cancelsWithoutApprove() throws Exception {
+        String rawBody = paidWebhookBodyWithPaymentId();
+        stubActiveWebhookConfig("cfg-underpay");
+        Payment payment = pendingShopPayment();
+        ShopClientOrder order = shopOrder(10_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
+                .thenReturn(Optional.empty());
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-underpay", TIMESTAMP, rawBody);
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-underpay");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("mismatch_cancelled", response.getBody().get("status"));
+        verify(paymentService, never()).approveShopOrderPayment(any());
+        verify(clientShopCheckoutService).cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
+    }
+
+    @Test
+    @DisplayName("쇼핑 주문 Transaction.Paid — PortOne 금액 일치면 approve")
+    void handleWebhook_shopPaid_amountMatch_approves() throws Exception {
+        String rawBody = paidWebhookBodyWithPaymentId();
+        stubActiveWebhookConfig("cfg-match");
+        Payment payment = pendingShopPayment();
+        ShopClientOrder order = shopOrder(10_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
+                .thenReturn(Optional.of(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":10000,\"paid\":10000,\"currency\":\"KRW\"}}"));
+
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-match", TIMESTAMP, rawBody);
+        ResponseEntity<Map<String, Object>> response = service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-match");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals("ok", response.getBody().get("status"));
+        verify(paymentService).approveShopOrderPayment(PAYMENT_ID);
+        verify(clientShopCheckoutService, never()).cancelMismatchedApprovedPaymentForOrder(any(), any());
+    }
+
+    @Test
+    @DisplayName("쇼핑 주문 underpay 취소 후 동일 Paid 재전송 — 이중 환불 없이 멱등")
+    void handleWebhook_shopPaid_underpay_idempotentNoDoubleCancel() throws Exception {
+        String rawBody = paidWebhookBodyWithPaymentId();
+        stubActiveWebhookConfig("cfg-idem");
+        Payment payment = pendingShopPayment();
+        ShopClientOrder order = shopOrder(10_000L);
+        when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT_ID, PAYMENT_ID))
+                .thenReturn(Optional.of(payment));
+        when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(Optional.of(order));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_ID, order))
+                .thenReturn(Optional.empty());
+        when(clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID))
+                .thenReturn(true);
+
+        String signature = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-idem-1", TIMESTAMP, rawBody);
+        assertEquals(HttpStatus.OK, service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature, "whk-idem-1").getStatusCode());
+
+        String signature2 = PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, "whk-idem-2", TIMESTAMP, rawBody);
+        assertEquals(HttpStatus.OK, service.handleWebhook(
+                rawBody.getBytes(StandardCharsets.UTF_8), TIMESTAMP, signature2, "whk-idem-2").getStatusCode());
+
+        verify(clientShopCheckoutService, times(2))
+                .cancelMismatchedApprovedPaymentForOrder(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(paymentService, never()).approveShopOrderPayment(any());
+    }
+
+    private String paidWebhookBodyWithPaymentId() {
+        return "{"
+                + "\"type\":\"Transaction.Paid\","
+                + "\"data\":{"
+                + "\"storeId\":\"" + STORE_ID + "\","
+                + "\"paymentId\":\"" + PAYMENT_ID + "\","
+                + "\"customData\":{\"orderPublicId\":\"" + ORDER_PUBLIC_ID + "\"}"
+                + "}}";
+    }
+
+    private void stubActiveWebhookConfig(String configId) {
+        TenantPgConfiguration configuration = new TenantPgConfiguration();
+        configuration.setConfigId(configId);
+        configuration.setTenantId(TENANT_ID);
+        configuration.setPgProvider(PgProvider.IAMPORT);
+        configuration.setStoreId(STORE_ID);
+        configuration.setStatus(PgConfigurationStatus.ACTIVE);
+        configuration.setSettingsJson("{\"" + TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET + "\":\""
+                + WEBHOOK_SECRET + "\"}");
+        when(tenantPgConfigurationRepository.findAllByStoreIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq(STORE_ID), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(List.of(configuration));
+        when(encryptionService.isEncrypted(WEBHOOK_SECRET)).thenReturn(false);
+    }
+
+    private Payment pendingShopPayment() {
+        Payment payment = Payment.builder()
+                .paymentId(PAYMENT_ID)
+                .orderId(ORDER_PUBLIC_ID)
+                .status(Payment.PaymentStatus.PENDING)
+                .build();
+        payment.setTenantId(TENANT_ID);
+        return payment;
+    }
+
+    private static ShopClientOrder shopOrder(long cashDueMinor) {
+        ShopClientOrder order = new ShopClientOrder();
+        order.setPublicId(ORDER_PUBLIC_ID);
+        order.setCashDueMinor(cashDueMinor);
+        order.setTenantId(TENANT_ID);
+        return order;
     }
 }

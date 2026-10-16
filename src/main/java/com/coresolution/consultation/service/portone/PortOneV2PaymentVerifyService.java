@@ -32,7 +32,8 @@ import org.springframework.web.util.UriComponentsBuilder;
  * 포트원 V2 REST 결제 조회·검증.
  * <p>
  * {@code GET https://api.portone.io/payments/{paymentId}} + {@code Authorization: PortOne {apiSecret}}.
- * status≠PAID 는 짧은 재조회 후 fail-closed empty. 금액 불일치는 재시도 없이 즉시 empty.
+ * 비쇼핑 {@link #verifyPaidAmountBody} 는 status≠PAID 재조회 후 fail-closed empty, 금액 불일치는 즉시 empty.
+ * 쇼핑 {@link #verifyPaidMatchesShopOrder} 는 {@link PortOneShopPaidMatch} 삼상(MATCH/MISMATCH/UNKNOWN)을 반환한다.
  * </p>
  *
  * @author CoreSolution
@@ -185,18 +186,21 @@ public class PortOneV2PaymentVerifyService {
      * <p>
      * REST 로 결제를 조회한 뒤 status=PAID, {@code amount.total}·{@code amount.paid} 가
      * {@code order.cashDueMinor} 와 일치, 통화={@link ShopCheckoutConstants#CURRENCY_KRW},
-     * 응답 {@code id}=paymentId, 주문 참조(있을 때만)={@code order.publicId} 를 모두 통과해야 한다.
-     * 금액·통화·주문·paymentId 불일치는 재시도 없이 empty.
+     * 응답 {@code id}=paymentId, 주문 참조(있을 때만)={@code order.publicId} 를 모두 통과해야
+     * {@link PortOneShopPaidMatchResult#MATCH} 이다.
+     * PAID 인데 금액·통화·주문·paymentId 불일치면 {@link PortOneShopPaidMatchResult#MISMATCH}
+     * (재시도 없음). 조회 실패·일시 미승인 등은 {@link PortOneShopPaidMatchResult#UNKNOWN}.
      * </p>
      *
      * @param tenantId  테넌트 ID
      * @param paymentId 포트원 결제 ID
      * @param order     쇼핑 주문 (cashDueMinor·publicId)
-     * @return 검증 성공 시 REST JSON, 실패 시 empty
+     * @return 삼상 검증 결과
      */
-    public Optional<String> verifyPaidMatchesShopOrder(String tenantId, String paymentId, ShopClientOrder order) {
+    public PortOneShopPaidMatch verifyPaidMatchesShopOrder(
+            String tenantId, String paymentId, ShopClientOrder order) {
         if (order == null) {
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
         return verifyPaidMatchesShopOrder(
                 tenantId,
@@ -214,32 +218,32 @@ public class PortOneV2PaymentVerifyService {
      * @param expectedCashDueMinor  기대 현금 청구액(원)
      * @param expectedOrderPublicId 기대 주문 공개 ID
      * @param expectedCurrency      기대 통화 (보통 KRW)
-     * @return 검증 성공 시 REST JSON, 실패 시 empty
+     * @return 삼상 검증 결과
      */
-    public Optional<String> verifyPaidMatchesShopOrder(
+    public PortOneShopPaidMatch verifyPaidMatchesShopOrder(
             String tenantId,
             String paymentId,
             long expectedCashDueMinor,
             String expectedOrderPublicId,
             String expectedCurrency) {
         if (tenantId == null || tenantId.isBlank() || paymentId == null || paymentId.isBlank()) {
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
         if (expectedOrderPublicId == null || expectedOrderPublicId.isBlank()) {
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
         if (expectedCurrency == null || expectedCurrency.isBlank()) {
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
         if (expectedCashDueMinor <= 0L) {
             log.warn("포트원 쇼핑 검증: cashDueMinor 비정상 paymentId={}, cashDue={}",
                     paymentId, expectedCashDueMinor);
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
 
         Optional<TenantPgAuth> auth = resolveApprovedIamportAuth(tenantId);
         if (auth.isEmpty()) {
-            return Optional.empty();
+            return PortOneShopPaidMatch.unknown();
         }
 
         BigDecimal expectedAmount = BigDecimal.valueOf(expectedCashDueMinor);
@@ -251,7 +255,7 @@ public class PortOneV2PaymentVerifyService {
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             Optional<String> bodyOpt = fetchPaymentBody(expectedPaymentId, auth.get().apiSecret());
             if (bodyOpt.isEmpty()) {
-                return Optional.empty();
+                return PortOneShopPaidMatch.unknown();
             }
 
             JsonNode paymentNode;
@@ -259,7 +263,7 @@ public class PortOneV2PaymentVerifyService {
                 paymentNode = objectMapper.readTree(bodyOpt.get());
             } catch (Exception e) {
                 log.warn("포트원 쇼핑 검증: JSON 파싱 실패 paymentId={}: {}", expectedPaymentId, e.getMessage());
-                return Optional.empty();
+                return PortOneShopPaidMatch.unknown();
             }
 
             String status = text(paymentNode, "status");
@@ -270,22 +274,25 @@ public class PortOneV2PaymentVerifyService {
                     awaitTransientStatusRetry(attempt);
                     continue;
                 }
-                return Optional.empty();
+                return PortOneShopPaidMatch.unknown();
             }
 
-            // 금액·통화·주문·paymentId 불일치는 재시도 없음 (fail-closed)
+            String body = bodyOpt.get();
+            BigDecimal paidAmount = PortOnePaymentPayloadSupport.extractPaidAmount(paymentNode);
+            BigDecimal totalAmount = PortOnePaymentPayloadSupport.extractTotalAmount(paymentNode);
+
+            // 금액·통화·주문·paymentId 불일치는 재시도 없음 → MISMATCH
             String actualPaymentId = PortOnePaymentPayloadSupport.extractPaymentId(paymentNode);
             if (actualPaymentId == null || !expectedPaymentId.equals(actualPaymentId)) {
                 log.warn("포트원 쇼핑 검증: paymentId 불일치 expected={}, actual={}",
                         expectedPaymentId, actualPaymentId);
-                return Optional.empty();
+                return PortOneShopPaidMatch.mismatch(body, paidAmount);
             }
 
-            BigDecimal totalAmount = PortOnePaymentPayloadSupport.extractTotalAmount(paymentNode);
-            BigDecimal paidAmount = PortOnePaymentPayloadSupport.extractPaidAmount(paymentNode);
             if (totalAmount == null || paidAmount == null) {
+                // PAID 인데 amount 파싱 불가 — 확정 불일치가 아니라 검증 불가
                 log.warn("포트원 쇼핑 검증: amount.total/paid 누락 paymentId={}", expectedPaymentId);
-                return Optional.empty();
+                return PortOneShopPaidMatch.unknown();
             }
             if (totalAmount.compareTo(expectedAmount) != 0 || paidAmount.compareTo(expectedAmount) != 0) {
                 log.warn(
@@ -294,26 +301,26 @@ public class PortOneV2PaymentVerifyService {
                         expectedAmount,
                         totalAmount,
                         paidAmount);
-                return Optional.empty();
+                return PortOneShopPaidMatch.mismatch(body, paidAmount);
             }
 
             String currency = PortOnePaymentPayloadSupport.extractCurrency(paymentNode);
             if (currency == null || !expectedCcy.equalsIgnoreCase(currency)) {
                 log.warn("포트원 쇼핑 검증: 통화 불일치 paymentId={}, expected={}, actual={}",
                         expectedPaymentId, expectedCcy, currency);
-                return Optional.empty();
+                return PortOneShopPaidMatch.mismatch(body, paidAmount);
             }
 
             if (!PortOnePaymentPayloadSupport.orderReferencesMatch(
                     paymentNode, expectedOrder, objectMapper)) {
                 log.warn("포트원 쇼핑 검증: 주문 참조 불일치 paymentId={}, expectedOrder={}",
                         expectedPaymentId, expectedOrder);
-                return Optional.empty();
+                return PortOneShopPaidMatch.mismatch(body, paidAmount);
             }
 
-            return bodyOpt;
+            return PortOneShopPaidMatch.match(body, paidAmount);
         }
-        return Optional.empty();
+        return PortOneShopPaidMatch.unknown();
     }
 
     /**

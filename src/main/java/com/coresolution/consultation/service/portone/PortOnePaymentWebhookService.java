@@ -290,7 +290,7 @@ public class PortOnePaymentWebhookService {
 
     /**
      * 쇼핑 주문 APPROVED 반영 전 PortOne REST 금액·통화·주문 정합.
-     * 불일치면 승인하지 않고 공통 전액 취소 경로로 돌린다 (fulfill 금지).
+     * {@code MISMATCH} 면 승인하지 않고 공통 전액 취소. {@code UNKNOWN} 이면 승인·취소 없이 5xx(재시도).
      */
     private Optional<ResponseEntity<Map<String, Object>>> handleShopOrderAmountMismatchBeforeApprove(
             String tenantId,
@@ -308,18 +308,33 @@ public class PortOnePaymentWebhookService {
             return Optional.empty();
         }
         ShopClientOrder order = orderOpt.get();
-        Optional<String> verified =
+        PortOneShopPaidMatch match =
                 portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(tenantId, paymentId, order);
-        if (verified.isPresent()) {
+        if (match.isMatch()) {
             return Optional.empty();
+        }
+        if (match.isUnknown()) {
+            log.warn(
+                    "포트원 웹훅: 쇼핑 주문 PortOne 검증 UNKNOWN — 승인·취소 생략(재시도) paymentId={}, orderPublicId={}, webhookId={}",
+                    paymentId,
+                    orderPublicId,
+                    webhookId);
+            body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN);
+            body.put("paymentId", paymentId);
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
         }
         log.warn(
                 "포트원 웹훅: 쇼핑 주문 PortOne 금액·주문 불일치 — 승인 생략·전액 취소 paymentId={}, orderPublicId={}, webhookId={}",
                 paymentId,
                 orderPublicId,
                 webhookId);
-        boolean handled = clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(tenantId, orderPublicId);
-        body.put("status", handled ? "mismatch_cancelled" : "mismatch_cancel_failed");
+        boolean handled = clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
+        body.put(
+                "status",
+                handled
+                        ? PortOneV2WebhookConstants.STATUS_MISMATCH_CANCELLED
+                        : PortOneV2WebhookConstants.STATUS_MISMATCH_CANCEL_FAILED);
         body.put("paymentId", paymentId);
         if (!handled) {
             return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));

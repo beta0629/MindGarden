@@ -65,6 +65,7 @@ import com.coresolution.consultation.service.ShopOrderFulfillmentService;
 import com.coresolution.consultation.service.ShopOrderableSkuService;
 import com.coresolution.consultation.service.portone.PortOneChannelKeyResolver;
 import com.coresolution.consultation.service.portone.PortOnePaymentPaidState;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
@@ -1116,11 +1117,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
      * @param payment 금액 또는 주문이 어긋난 결제
      */
     private void cancelMismatchedApprovedPayment(String tenantId, ShopClientOrder order, Payment payment) {
+        cancelMismatchedApprovedPayment(tenantId, order, payment, null);
+    }
+
+    private void cancelMismatchedApprovedPayment(
+            String tenantId, ShopClientOrder order, Payment payment, BigDecimal actualPaidAmount) {
         Long clientId = order.getClientId();
         String orderPublicId = order.getPublicId();
         if (payment.getStatus() == Payment.PaymentStatus.REFUNDED
                 || portOneAlreadyCancelled(tenantId, payment)) {
-            finishMismatchCancel(tenantId, order, payment);
+            finishMismatchCancel(tenantId, order, payment, actualPaidAmount);
             return;
         }
         int maxAttempts = portOneV2PaymentVerifyService.transientStatusMaxAttempts();
@@ -1142,7 +1148,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             markCancelFailed(tenantId, order, clientId, orderPublicId);
             return;
         }
-        finishMismatchCancel(tenantId, order, payment);
+        finishMismatchCancel(tenantId, order, payment, actualPaidAmount);
     }
 
     private boolean portOneAlreadyCancelled(String tenantId, Payment payment) {
@@ -1152,11 +1158,18 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
         return portOneV2PaymentVerifyService.isCancelledOrPartialCancelled(tenantId, payment.getPaymentId());
     }
 
-    private void finishMismatchCancel(String tenantId, ShopClientOrder order, Payment payment) {
+    private void finishMismatchCancel(
+            String tenantId, ShopClientOrder order, Payment payment, BigDecimal actualPaidAmount) {
         if (payment.getStatus() != Payment.PaymentStatus.REFUNDED) {
+            BigDecimal refundAmount = resolveMismatchRefundAmount(payment, actualPaidAmount);
+            if (actualPaidAmount != null
+                    && payment.getAmount() != null
+                    && actualPaidAmount.compareTo(payment.getAmount()) != 0) {
+                payment.setAmount(actualPaidAmount);
+            }
             paymentService.refundPayment(
                     payment.getPaymentId(),
-                    payment.getAmount(),
+                    refundAmount,
                     ShopCheckoutConstants.PAYMENT_MISMATCH_CANCEL_REASON);
             payment.setStatus(Payment.PaymentStatus.REFUNDED);
         }
@@ -1167,6 +1180,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 "결제 확정 금액·주문 불일치로 전액 취소 clientId={} orderPublicId={}",
                 order.getClientId(),
                 order.getPublicId());
+    }
+
+    /**
+     * 불일치 환불액: PortOne {@code amount.paid} 우선, 없으면 로컬 prepared amount.
+     */
+    private static BigDecimal resolveMismatchRefundAmount(Payment payment, BigDecimal actualPaidAmount) {
+        if (actualPaidAmount != null) {
+            return actualPaidAmount;
+        }
+        return payment.getAmount();
     }
 
     private void markCancelFailed(String tenantId, ShopClientOrder order, Long clientId, String orderPublicId) {
@@ -1343,15 +1366,24 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
                 return false;
             }
             if (paidState == PortOnePaymentPaidState.PAID) {
-                Optional<String> verified = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                PortOneShopPaidMatch match = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
                         tenantId, payment.getPaymentId(), order);
-                if (verified.isEmpty()) {
+                if (match.isUnknown()) {
+                    log.info(
+                            "hold TTL 만료 보류(PortOne 검증 UNKNOWN): tenantId={}, orderPublicId={}, paymentId={}",
+                            tenantId,
+                            orderPublicId,
+                            payment.getPaymentId());
+                    return false;
+                }
+                if (match.isMismatch()) {
                     log.warn(
                             "hold TTL 만료 — PortOne PAID 금액·주문 불일치 취소: tenantId={}, orderPublicId={}, paymentId={}",
                             tenantId,
                             orderPublicId,
                             payment.getPaymentId());
-                    return cancelMismatchedApprovedPaymentForOrder(tenantId, orderPublicId);
+                    return cancelMismatchedApprovedPaymentForOrder(
+                            tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
                 }
                 approveOpenPaymentLocally(payment);
                 log.info(
@@ -1381,6 +1413,16 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
     @Override
     @Transactional
     public boolean cancelMismatchedApprovedPaymentForOrder(String tenantId, String orderPublicId) {
+        return cancelMismatchedApprovedPaymentForOrder(tenantId, orderPublicId, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional
+    public boolean cancelMismatchedApprovedPaymentForOrder(
+            String tenantId, String orderPublicId, BigDecimal actualPaidAmount) {
         if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(orderPublicId)) {
             return false;
         }
@@ -1403,7 +1445,7 @@ public class ClientShopCheckoutServiceImpl implements ClientShopCheckoutService 
             return false;
         }
         approveOpenPaymentLocally(payment);
-        cancelMismatchedApprovedPayment(tenantId, order, payment);
+        cancelMismatchedApprovedPayment(tenantId, order, payment, actualPaidAmount);
         return true;
     }
 

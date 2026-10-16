@@ -21,6 +21,15 @@ public final class PortOneV2WebhookConstants {
     public static final String EVENT_TRANSACTION_PAY_PENDING = "Transaction.PayPending";
     public static final String EVENT_TRANSACTION_READY = "Transaction.Ready";
 
+    /** 웹훅 응답 status — 쇼핑 금액·주문 불일치로 전액 취소됨 */
+    public static final String STATUS_MISMATCH_CANCELLED = "mismatch_cancelled";
+
+    /** 웹훅 응답 status — 불일치 취소 실패(재시도) */
+    public static final String STATUS_MISMATCH_CANCEL_FAILED = "mismatch_cancel_failed";
+
+    /** 웹훅 응답 status — PortOne 검증 UNKNOWN(조회 실패 등, 재시도) */
+    public static final String STATUS_VERIFY_UNKNOWN = "verify_unknown";
+
     private PortOneV2WebhookConstants() {
     }
 }

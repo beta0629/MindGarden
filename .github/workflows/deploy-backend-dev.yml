@@ -1671,6 +1671,8 @@ jobs:
           export MG_DEPLOY_ENV_FILE_REQUIRED=1
           export MG_DEPLOY_SYSTEMD_UNITS=mindgarden-dev.service
           export MG_DEPLOY_DB_PASSWORD_FALLBACK="${DEV_DB_PASSWORD:-}"
+          # sticky remote/session DB_* must not override env file (run 38975330813 pre_set→1045)
+          unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
           # shellcheck disable=SC1090
           . "$LOAD_DB_ENV"
           bash "$FLYWAY_HEALTH_SH" || {

@@ -11,6 +11,10 @@
 #   4) 기본값 (운영 SSOT 정합 — prod.env/systemd 비어 있을 때만):
 #      host=MG_LOCAL_DB_HOST/127.0.0.1, user=mindgarden, name=core_solution, port=3306
 #
+# MG_DEPLOY_CLEAR_PRESET=1 (선택): pre-set 캡처 전에 DB_HOST/PORT/USERNAME/PASSWORD/NAME 을 unset.
+#   호출측이 워크플로 unset 을 잊어도 강제 재해석. 미설정(기본) 시 기존 동작 유지 —
+#   이미 export 된 non-empty DB_* 는 덮어쓰지 않음.
+#
 # export: DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
 # 비밀번호·값 echo 금지. 키 존재(set/empty) + 중립 소스 태그만 로그.
 #   cred_source host|port|user|db|pw=<tag>
@@ -164,6 +168,11 @@ _mg_fill_from_env_file() {
     fi
   done
 }
+
+# 선택: sticky 세션 DB_* 를 비우고 env 파일부터 다시 해석
+if [ "${MG_DEPLOY_CLEAR_PRESET:-0}" = "1" ]; then
+  unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
+fi
 
 # 이미 non-empty 인 DB_* 는 pre-set
 [ -n "${DB_HOST:-}" ] && _MG_SRC_DB_HOST="pre-set"

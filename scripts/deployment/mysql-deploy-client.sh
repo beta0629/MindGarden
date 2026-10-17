@@ -4,7 +4,8 @@
 # 인증: --defaults-extra-file (0600 mktemp) 만 사용.
 #   - CLI -p / --password= 금지
 #   - MYSQL_PWD + sudo -E 의존 금지 (sudoers env_reset 시 MYSQL_PWD 유실 → 1045)
-#   - root 호출도 동일 cnf 로 `sudo mysql --defaults-extra-file=...` (sudo -E 불필요)
+#   - root(mysql_deploy_query_sudo): 먼저 passwordless peer/socket
+#     (`sudo mysql -N -e …`, host/port 없음; DB 있으면 -D). 실패 시 cnf+password 폴백.
 #   - option-file 값: # ; 공백 등 보존을 위해 큰따옴표 + \ " escape
 #     근거(my_print_defaults): 미인용 `#` 는 주석으로 절단됨(password=p#x → p).
 #     `;` `"` `'` `\` `$` 공백은 미인용에서도 대개 생존하나 defense-in-depth 로 전부 quoting.
@@ -141,8 +142,8 @@ mysql_deploy_query() {
   return "$code"
 }
 
-# root 는 별도 cnf(user=root). sudo 가 파일을 읽으므로 0600 소유자≠root 여도 OK.
-# sudo -E / MYSQL_PWD 불필요.
+# root: 1) passwordless peer/socket (host/port 없음) 2) 실패 시 cnf(user=root)+password.
+# sudo -E / MYSQL_PWD 불필요. cnf 는 0600 — sudo 가 읽으므로 소유자≠root 여도 OK.
 # 임시 cnf/errfile 은 성공·실패 경로에서 즉시 rm, 그리고 MYSQL_DEPLOY_TEMP_FILES+EXIT 로도 정리.
 mysql_deploy_query_sudo() {
   local sql="$1"
@@ -150,8 +151,35 @@ mysql_deploy_query_sudo() {
   local host="${DB_HOST:-${MG_LOCAL_DB_HOST:-127.0.0.1}}"
   local port="${DB_PORT:-3306}"
   local database="${DB_NAME:-}"
-  local cnf errfile code old_umask
+  local cnf errfile sock_errfile code old_umask
 
+  # 1) passwordless peer/socket — host/port 를 넘기지 않아 로컬 소켓 사용
+  old_umask="$(umask)"
+  umask 077
+  sock_errfile="$(mktemp)"
+  umask "$old_umask"
+  chmod 600 "$sock_errfile"
+  _mysql_deploy_register_temp_cleanup "$sock_errfile"
+
+  set +e
+  if [ -n "$database" ]; then
+    sudo "$MYSQL_DEPLOY_MYSQL_BIN" -D "$database" -N -e "$sql" 2>"$sock_errfile"
+  else
+    sudo "$MYSQL_DEPLOY_MYSQL_BIN" -N -e "$sql" 2>"$sock_errfile"
+  fi
+  code=$?
+  set -e
+
+  if [ "$code" -eq 0 ]; then
+    if [ -s "$sock_errfile" ]; then
+      grep -v -i '^[[:space:]]*password=' "$sock_errfile" >&2 || true
+    fi
+    rm -f "$sock_errfile"
+    return 0
+  fi
+  rm -f "$sock_errfile"
+
+  # 2) cnf + password 폴백 (앱 시크릿 ≠ MySQL root 일 수 있음 — 소켓이 우선인 이유)
   old_umask="$(umask)"
   umask 077
   cnf="$(mktemp)"
@@ -173,7 +201,7 @@ mysql_deploy_query_sudo() {
   } >"$cnf"
 
   set +e
-  sudo mysql --defaults-extra-file="$cnf" -N -e "$sql" 2>"$errfile"
+  sudo "$MYSQL_DEPLOY_MYSQL_BIN" --defaults-extra-file="$cnf" -N -e "$sql" 2>"$errfile"
   code=$?
   set -e
   if [ "$code" -ne 0 ]; then

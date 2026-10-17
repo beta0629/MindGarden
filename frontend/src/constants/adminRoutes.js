@@ -88,6 +88,7 @@ export const ADMIN_ROUTES = {
     COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
     ERP_FINANCIAL: '/admin/erp/financial',
+    ERP_INTEGRATED_FINANCE: '/erp/integrated-finance',
     /** @deprecated CLN-02 — App.js redirects to DASHBOARD; navigate 시 DASHBOARD 사용 */
     DASHBOARDS: '/admin/dashboards',
     CACHE_MONITORING: '/admin/cache-monitoring',

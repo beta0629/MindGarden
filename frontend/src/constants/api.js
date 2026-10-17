@@ -483,6 +483,7 @@ export const ERP_API = {
   RECURRING_EXPENSE_RECORD_MONTH: (id) => `/api/v1/erp/recurring-expenses/${id}/record-month`,
   CARD_MERCHANT_FEE_SETTINGS: '/api/v1/erp/card-merchant-fee-settings',
   COMMON_CODES_FINANCIAL: '/api/v1/erp/common-codes/financial',
+  FINANCE_QUICK_EXPENSE: '/api/v1/erp/finance/quick-expense',
 
   /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
   BUDGETS: '/api/v1/erp/budgets',

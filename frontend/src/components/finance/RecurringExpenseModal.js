@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import BadgeSelect from '../common/BadgeSelect';
 import { apiGet, apiPost, apiPut, apiDelete } from '../../utils/ajax';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import { useConfirm } from '../../hooks/useConfirm';
 import SafeText from '../common/SafeText';
@@ -16,7 +18,6 @@ import { useTranslation } from 'react-i18next';
 const API_ERP_RECURRING_EXPENSES = '/api/v1/erp/recurring-expenses';
 const API_ERP_RECURRING_EXPENSE_BY_ID = (id) => `/api/v1/erp/recurring-expenses/${id}`;
 const API_ERP_RECURRING_STATUS = '/api/v1/erp/recurring-expenses/status';
-const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
 
 
 /**
@@ -114,11 +115,10 @@ const RecurringExpenseModal = ({ isOpen, onClose }) => {
      */
     const loadCategories = async() => {
         try {
-            const response = await apiGet(API_ERP_COMMON_CODES_FINANCIAL);
-            if (response && response.success !== false) {
-                setCategories(response.data?.expenseCategories || []);
-            } else if (response && Array.isArray(response?.expenseCategories)) {
-                setCategories(response.expenseCategories);
+            const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+            const categories = (envelope?.data ?? envelope)?.expenseCategories;
+            if (Array.isArray(categories)) {
+                setCategories(categories);
             }
         } catch (error) {
             console.error('카테고리 목록 로드 실패:', error);

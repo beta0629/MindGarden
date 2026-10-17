@@ -1050,26 +1050,37 @@ public class UserServiceImpl implements UserService {
         return result;
     }
     
+    /**
+     * 이메일로 임시 비밀번호를 발급하고 문자로만 안내한다.
+     * 임시 비밀번호 평문은 이메일·로그·응답에 넣지 않는다.
+     *
+     * @param email 사용자 이메일
+     * @throws RuntimeException 사용자를 찾지 못하거나 비밀번호를 갱신하지 못한 경우
+     */
     @Override
     public void resetPassword(String email) {
-        User user = findByEmail(email)
+        User found = findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("이메일로 사용자를 찾을 수 없습니다: " + email));
-        
-        // 임시 비밀번호 생성 및 설정
+        User user = decryptUserPersonalData(found);
+
         String tempPassword = generateTempPassword();
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        userRepository.updatePassword(user.getId(), tenantId, passwordService.encodeSecret(tempPassword),
-            LocalDateTime.now());
-        
-        // 이메일로 임시 비밀번호 발송
-        try {
-            // EmailUtil을 사용하여 이메일 발송
-            // 임시 비밀번호는 시스템 알림으로 발송
-            String message = String.format("임시 비밀번호가 발급되었습니다. 임시 비밀번호: %s\n로그인 후 반드시 비밀번호를 변경해주세요.", tempPassword);
-            com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, user.getEmail(), user.getName(), message);
-        } catch (Exception e) {
-            log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", EmailLogMasking.maskForLog(user.getEmail()), e.getMessage());
+        int updated = userRepository.updatePasswordRequiringCredentialChange(
+            user.getId(), tenantId, passwordService.encodeSecret(tempPassword), LocalDateTime.now());
+        if (updated != 1) {
+            throw new RuntimeException("비밀번호 초기화 대상을 갱신하지 못했습니다: " + user.getId());
         }
+        if (clientCredentialNotificationService == null) {
+            log.warn("임시 비밀번호 문자 발송 실패: email={}, userId={}, reason={}",
+                EmailLogMasking.maskForLog(user.getEmail()), user.getId(),
+                ClientCredentialNotificationService.REASON_SEND_FAILED);
+            return;
+        }
+        clientCredentialNotificationService.deliverAfterCommit(sent -> log.info(
+                "임시 비밀번호 문자 처리: email={}, userId={}, smsSent={}, reason={}",
+                EmailLogMasking.maskForLog(user.getEmail()), user.getId(), sent.isSmsSent(),
+                sent.getSkipReason()),
+            user.getPhone(), user.getUserId(), tempPassword, tenantId, user.getId());
     }
     
     @Override

@@ -25,6 +25,11 @@ import {
   resolvePortoneChannelKey
 } from '../../utils/portonePgSettingsJson';
 import {
+  areProviderSecretsRequiredOnSave,
+  isIamportApiSecretRequired
+} from '../../utils/pgConfigurationSecretPolicy';
+import { PG_CONFIGURATION_SECRET_COPY } from '../../constants/pgConfigurationSecretPolicy';
+import {
   KICC_DOCS_AI_GUIDE_URL,
   KICC_DOCS_LLM_INDEX_URL,
   KICC_DOCS_ONLINE_PAYMENT_BASE,
@@ -214,12 +219,7 @@ const PgConfigurationForm = ({
       {PG_TEST_MODE_REAPPROVAL_NOTICE}
     </small>
   ) : null;
-  const isActiveLikeStatus = Boolean(
-    initialData
-      && (initialData.status === 'ACTIVE'
-        || initialData.status === 'APPROVED'
-        || initialData.approvalStatus === 'APPROVED')
-  );
+  const apiSecretConfigured = initialData?.apiSecretConfigured;
 
   useEffect(() => {
     if (typeof onLoadingChange === 'function') {
@@ -350,29 +350,38 @@ const PgConfigurationForm = ({
       newErrors.pgProvider = t('common:tenant.PgConfigurationForm.t_d5d2a5e5');
     }
 
+    const secretsRequired = areProviderSecretsRequiredOnSave({
+      mode,
+      apiSecretConfigured
+    });
+
     if (isKicc) {
       if (!formData.merchantId || !String(formData.merchantId).trim()) {
         newErrors.merchantId = t('common:tenant.PgConfigurationForm.t_a5c3076a');
       }
-      if (!formData.apiKey || !String(formData.apiKey).trim()) {
-        newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
-      }
-      if (!formData.secretKey || !String(formData.secretKey).trim()) {
-        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_d43a548a');
+      if (secretsRequired) {
+        if (!formData.apiKey || !String(formData.apiKey).trim()) {
+          newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
+        }
+        if (!formData.secretKey || !String(formData.secretKey).trim()) {
+          newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_d43a548a');
+        }
       }
     } else if (isIamportPortoneV2) {
       if (!formData.storeId || !String(formData.storeId).trim()) {
         newErrors.storeId = t('common:tenant.PgConfigurationForm.t_6a5134ed');
       }
       const secretTrim = formData.secretKey ? String(formData.secretKey).trim() : '';
-      // testMode ON: API 시크릿 선택. OFF(리얼): 필수 — 단 ACTIVE 수정에서 공란은 「변경 없음」→ PATCH 경로.
-      if (!secretTrim) {
-        if (!formData.testMode) {
-          const allowBlankSecret = mode === 'edit' && isActiveLikeStatus;
-          if (!allowBlankSecret) {
-            newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
-          }
-        }
+      // testMode ON: 선택. OFF: create 필수 / edit+저장본 있으면 공란=변경 없음(PENDING 포함).
+      if (
+        !secretTrim
+        && isIamportApiSecretRequired({
+          mode,
+          testMode: !!formData.testMode,
+          apiSecretConfigured
+        })
+      ) {
+        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
       }
       const resolvedKey = resolvePortoneChannelKey(
         { channelKey: portoneChannelKey, channelKeyTest: portoneChannelKeyTest },
@@ -385,7 +394,7 @@ const PgConfigurationForm = ({
           newErrors.portoneChannelKey = '운영(라이브) 채널 키를 입력하세요.';
         }
       }
-    } else {
+    } else if (secretsRequired) {
       if (!formData.apiKey) {
         newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
       }
@@ -1046,7 +1055,11 @@ const PgConfigurationForm = ({
                       type={showSecretKey ? 'text' : 'password'}
                       value={formData.secretKey}
                       onChange={(e) => handleChange('secretKey', e.target.value)}
-                      placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : t('common:tenant.PgConfigurationForm.t_ba8eeaae')}
+                      placeholder={
+                        mode === 'edit'
+                          ? PG_CONFIGURATION_SECRET_COPY.EDIT_SECRET_PLACEHOLDER
+                          : t('common:tenant.PgConfigurationForm.t_ba8eeaae')
+                      }
                       className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
                       autoComplete="new-password"
                       aria-required={!formData.testMode ? 'true' : 'false'}
@@ -1080,9 +1093,9 @@ const PgConfigurationForm = ({
                   <small id="secretKey-help" className="help-text">
                     <InfoIcon size={14} aria-hidden="true" />
                     {formData.testMode
-                      ? '운영 시크릿 · 테스트 모드에선 선택(끄기 전 미리 입력 가능)'
+                      ? PG_CONFIGURATION_SECRET_COPY.TEST_MODE_SECRET_HINT
                       : (mode === 'edit'
-                        ? '운영 시크릿 · 수정 시에만 새 값 입력'
+                        ? PG_CONFIGURATION_SECRET_COPY.EDIT_SECRET_HINT
                         : t('common:tenant.PgConfigurationForm.t_9aec1615'))}
                   </small>
                 </div>

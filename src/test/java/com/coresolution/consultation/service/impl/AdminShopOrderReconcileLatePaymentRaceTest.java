@@ -20,6 +20,7 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentLookupService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import java.lang.reflect.Method;
@@ -146,9 +147,9 @@ class AdminShopOrderReconcileLatePaymentRaceTest {
     private void stubVerifiedPendingOrder(ShopClientOrder order, Payment pending) {
         when(shopClientOrderRepository.findByTenantIdAndPublicId(TENANT, ORDER_ID))
                 .thenAnswer(inv -> Optional.of(order));
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(
-                        eq(TENANT), eq(PORTONE_PAYMENT_ID), eq(BigDecimal.valueOf(CASH_DUE))))
-                .thenReturn(Optional.of(VERIFY_BODY));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT), eq(PORTONE_PAYMENT_ID), any(ShopClientOrder.class)))
+                .thenReturn(PortOneShopPaidMatch.match(VERIFY_BODY, java.math.BigDecimal.valueOf(CASH_DUE)));
         when(paymentRepository.findByTenantIdAndPaymentIdAndIsDeletedFalse(TENANT, PORTONE_PAYMENT_ID))
                 .thenAnswer(inv -> Optional.of(pending));
         when(paymentRepository.save(any(Payment.class))).thenAnswer(inv -> inv.getArgument(0));

@@ -35,6 +35,7 @@ import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOnePaymentWebhookService;
 import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
@@ -152,6 +153,13 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
             return true;
         });
         when(portOneV2PaymentVerifyService.isIamportPayment(any())).thenReturn(true);
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(anyString(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    recordBoundary("verifyPaidMatchesShopOrder");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
+                });
         when(portOneV2PaymentVerifyService.verifyPaidAmountBody(anyString(), anyString(), any())).thenAnswer(inv -> {
             recordBoundary("verifyPaidAmountBody");
             return Optional.of("{}");
@@ -196,7 +204,7 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
         assertThat(loadPayment(paymentId).getStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
         assertThat(loadOrder().getStatus()).isEqualTo(ShopClientOrderStatus.PAID);
         verify(portOneV2PaymentCancelService, never()).cancelPayment(any(), any(), any());
-        assertPortOneCallsOutsideTransaction("verifyPaidAmountBody");
+        assertPortOneCallsOutsideTransaction("verifyPaidMatchesShopOrder");
     }
 
     @Test
@@ -212,7 +220,7 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
         assertThat(loadPayment(paymentId).getStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED);
         assertThat(loadOrder().getStatus()).isEqualTo(ShopClientOrderStatus.CANCELLED);
         verify(portOneV2PaymentCancelService, times(1)).cancelPayment(eq(tenantId), eq(paymentId), any());
-        assertPortOneCallsOutsideTransaction("verifyPaidAmountBody", "cancelPayment");
+        assertPortOneCallsOutsideTransaction("verifyPaidMatchesShopOrder", "cancelPayment");
     }
 
     @Test
@@ -232,7 +240,7 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
 
         assertThat(response.getOrderStatus()).isEqualTo(ShopClientOrderStatus.PAID);
         assertThat(response.getPaymentStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
-        assertPortOneCallsOutsideTransaction("findPaidPaymentIdByCardApprovalNumber", "verifyPaidAmountBody");
+        assertPortOneCallsOutsideTransaction("findPaidPaymentIdByCardApprovalNumber", "verifyPaidMatchesShopOrder");
     }
 
     @Test
@@ -358,7 +366,7 @@ class ShopPaymentPortOneOutsideTxIntegrationTest {
         assertThat(response.getOrderStatus()).isEqualTo(ShopClientOrderStatus.CREATED);
         assertThat(response.getPaymentStatus()).isEqualTo(Payment.PaymentStatus.REFUNDED);
         assertH9bRefundedOnce(paymentId, ShopClientOrderStatus.CREATED, CASH_DUE);
-        assertPortOneCallsOutsideTransaction("verifyPaidAmountBody", "cancelPayment");
+        assertPortOneCallsOutsideTransaction("verifyPaidMatchesShopOrder", "cancelPayment");
     }
 
     @Test

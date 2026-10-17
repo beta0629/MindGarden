@@ -42,6 +42,16 @@ on:
       - 'src/main/resources/db/migration/**'
       - 'pom.xml'
       - 'deployment/mindgarden.prod-env.example'
+      # 배포 헬퍼: Flyway health·DB env·mysql-deploy-client·public-health·clock-skew·Solapi sync 등
+      - 'scripts/deployment/**'
+      # 표준 프로시저 SCP/실행 소스 (deploy-standardized-procedures.sh)
+      - 'scripts/automation/deployment/**'
+      # 디스크/DB 정리 유틸 SCP 소스 (auto-disk-cleanup · cleanup-db-connections)
+      - 'scripts/development/utilities/**'
+      # systemd unit SCP (mindgarden-dev.service)
+      - 'config/systemd/**'
+      # 프로시저 배포 번들 (create_deployment_files.sh / procedures_standardized)
+      - 'database/schema/**'
       - '.github/workflows/deploy-backend-dev.yml'
       - '.github/actions/assert-env-key-nonempty/**'
   workflow_dispatch:
@@ -390,11 +400,7 @@ jobs:
             echo "⚠️ 연결 정리 스크립트를 찾을 수 없습니다. 수동 정리 필요"
           fi
           
-          # 서비스 중지
-          sudo systemctl stop mindgarden-dev.service || true
-          
-          # 서비스 중지 후 추가 대기 (연결 정리 시간 확보)
-          sleep 5
+          # stop은 🔄 개발 서버 서비스 재시작 에서만 (업로드 실패 시 BE 유지).
           
           # 백업 생성
           if [ -f app.jar ]; then
@@ -405,7 +411,26 @@ jobs:
             while [ -f "$BACKUP_FILE" ]; do
               BACKUP_FILE="$BACKUP_DIR/app.jar.backup.$(date +%Y%m%d_%H%M%S.%N | cut -b1-19)"
             done
-            cp app.jar "$BACKUP_FILE"
+            if ! cp app.jar "$BACKUP_FILE"; then
+              echo "::error::jar backup cp failed — abort (no stop yet)"
+              exit 1
+            fi
+            if [ ! -s "$BACKUP_FILE" ]; then
+              echo "::error::jar backup empty — abort"
+              exit 1
+            fi
+            ORIG_SIZE=$(stat -c '%s' app.jar)
+            BAK_SIZE=$(stat -c '%s' "$BACKUP_FILE")
+            if [ "$ORIG_SIZE" != "$BAK_SIZE" ]; then
+              echo "::error::jar backup size mismatch — abort (no stop yet)"
+              exit 1
+            fi
+            ORIG_SHA=$(sha256sum app.jar | awk '{print $1}')
+            BAK_SHA=$(sha256sum "$BACKUP_FILE" | awk '{print $1}')
+            if [ "$ORIG_SHA" != "$BAK_SHA" ]; then
+              echo "::error::jar backup sha256 mismatch — abort (no stop yet)"
+              exit 1
+            fi
             echo "✅ 백업 완료: $BACKUP_FILE"
           fi
           
@@ -481,6 +506,38 @@ jobs:
         export DEV_DB_NAME="${{ secrets.DEV_DB_NAME }}"
         chmod +x scripts/automation/deployment/deploy-standardized-procedures.sh
         bash scripts/automation/deployment/deploy-standardized-procedures.sh dev
+
+    - name: 🧹 systemd SCP 대상 디렉터리 준비
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          # stale path from old target=/tmp/mindgarden-dev.service (may be a directory)
+          # mode 700 deploy-user owned — not world-writable 1777 (only this workflow uses this staging dir)
+          DIR=/tmp/mindgarden-dev-systemd
+          DEPLOY_USER=$(id -un)
+          if [ -d /tmp/mindgarden-dev.service ]; then sudo rm -rf /tmp/mindgarden-dev.service; fi
+          if [ -e "$DIR" ] && [ ! -d "$DIR" ]; then sudo rm -rf "$DIR"; fi
+          if [ -d "$DIR" ]; then
+            OWNER=$(stat -c '%U' "$DIR" 2>/dev/null || echo "")
+            MODE=$(stat -c '%a' "$DIR" 2>/dev/null || echo "")
+            if [ "$OWNER" != "$DEPLOY_USER" ] || [ "$MODE" != "700" ]; then
+              echo "recreate $DIR (owner=$OWNER mode=$MODE → $DEPLOY_USER:700)"
+              sudo rm -rf "$DIR"
+            fi
+          fi
+          mkdir -p "$DIR"
+          chmod 700 "$DIR"
+          OWNER=$(stat -c '%U' "$DIR")
+          MODE=$(stat -c '%a' "$DIR")
+          if [ "$OWNER" != "$DEPLOY_USER" ] || [ "$MODE" != "700" ]; then
+            echo "::error::$DIR not owned mode 700 by $DEPLOY_USER (owner=$OWNER mode=$MODE)"
+            exit 1
+          fi
         
     - name: 📤 systemd 서비스 파일 업로드 (개발 서버)
       uses: appleboy/scp-action@v0.1.7
@@ -491,9 +548,77 @@ jobs:
         port: 22
         timeout: 120s
         source: "config/systemd/mindgarden-dev.service"
-        target: "/tmp/mindgarden-dev.service"
+        target: "/tmp/mindgarden-dev-systemd/"
+        strip_components: 2
         overwrite: true
-        
+
+    # V20260831_004 repair·Flyway 헬스·clients.phone 검증이 mysql-deploy-client.sh 를 쓰므로
+    # 서비스 재시작 SSH(수리 포함) 전에 업로드한다. 다른 SCP 와 함께 stop 이전에 배치.
+    - name: 📤 Flyway 스키마 헬스 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh,scripts/deployment/verify-dev-running-build.sh"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
+
+    - name: 🛟 업로드 실패 시 백업 JAR로 서비스 복구
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        script: |
+          set -euo pipefail
+          cd /var/www/mindgarden-dev
+          UNIT=mindgarden-dev.service
+          HEALTH_URL=http://127.0.0.1:8080/actuator/health
+          # 활성+헬스 UP 이면 JAR 복원 생략 (업로드 실패여도 서비스가 살아 있음)
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null \
+            && curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "skip jar rollback — service active and health UP"
+            exit 0
+          fi
+          LATEST=""
+          if ls backups/app.jar.backup.* >/dev/null 2>&1; then
+            LATEST=$(ls -t backups/app.jar.backup.* | head -1) || LATEST=""
+          fi
+          if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+            cp -f "$LATEST" app.jar
+            echo "restored app.jar from backup (path omitted length=${#LATEST})"
+          else
+            echo "::warning::no backup jar — restart existing app.jar if present"
+          fi
+          echo "restart after jar restore"
+          if sudo systemctl restart "$UNIT"; then
+            sleep 5
+          else
+            echo "::error::rollback restart failed"
+          fi
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "✅ rollback start OK"
+          else
+            echo "::error::rollback start failed"
+          fi
+          if curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "✅ rollback health OK (actuator/health)"
+          else
+            echo "::warning::rollback health check failed (start status already reported)"
+            if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+              echo "unit active but health failed"
+            else
+              echo "unit inactive after rollback"
+            fi
+          fi
+
     # ============================================================================
     # [ops-portal-migration Phase 1 fix 2026-06-15] MINDGARDEN_HQ_TENANT_ID env 자동 주입 + 검증 (개발)
     # 배경: PR #362/#363 (Phase 1) 머지 후 운영 배포 run 27519148353 에서 GREEN 슬롯 BE
@@ -639,6 +764,8 @@ jobs:
           fi
 
     - name: 🔄 개발 서버 서비스 재시작
+      env:
+        GITHUB_SHA: ${{ github.sha }}
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
         host: ${{ secrets.DEV_SERVER_HOST }}
@@ -653,17 +780,15 @@ jobs:
         # GOOGLE_* 3종은 P0 hotfix 2026-06-11 추가 — 후속 자동 주입 step 이 같은 패턴으로 사용.
         # *_REGISTERED_URLS 4종은 OAuth 4종 표준화 (옵션 B′) 추가 — 후속 자동 주입 step 이 동일 패턴으로 사용.
         # DEV_DB_* — V20260831_004 Flyway success=0 원샷 repair (재시작 직전)
-        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,DEV_DB_HOST,DEV_DB_USER,DEV_DB_PASSWORD,DEV_DB_NAME
+        # GITHUB_SHA — 기동 후 actuator/info git.commit 대조
+        envs: APPLE_CLIENT_ID,APPLE_TEAM_ID,APPLE_KEY_ID,APPLE_PRIVATE_KEY,APPLE_REDIRECT_URI,APPLE_ALLOWED_AUDIENCES,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,GOOGLE_REDIRECT_URI,KAKAO_REGISTERED_URLS,NAVER_REGISTERED_URLS,GOOGLE_REGISTERED_URLS,APPLE_REGISTERED_URLS,DEV_DB_HOST,DEV_DB_USER,DEV_DB_PASSWORD,DEV_DB_NAME,GITHUB_SHA
         script: |
           cd /var/www/mindgarden-dev
           
-          # JAR 파일명 변경
+          # 실행 중 app.jar 을 덮지 않도록 스테이징만 (stop 이후에 app.jar 로 교체)
           if [ -f consultation-management-system-1.0.0.jar ]; then
-            mv consultation-management-system-1.0.0.jar app.jar
+            mv -f consultation-management-system-1.0.0.jar app.jar.new
           fi
-          
-          # 권한 설정
-          chmod +x app.jar
           
           # 시작 스크립트 생성
           # 환경변수 export 패턴: set -a / source / set +a (개별 export 목록 미사용 → 신규 ENV 누락 회귀 방지)
@@ -696,8 +821,9 @@ jobs:
           
           # systemd 서비스 파일 설정
           echo "📝 systemd 서비스 파일 설정 중..."
-          if [ -f /tmp/mindgarden-dev.service ]; then
-            sudo cp /tmp/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
+          if [ -f /tmp/mindgarden-dev-systemd/mindgarden-dev.service ]; then
+            echo "✅ 레포 unit 적용: /tmp/mindgarden-dev-systemd/mindgarden-dev.service → /etc/systemd/system/mindgarden-dev.service"
+            sudo cp /tmp/mindgarden-dev-systemd/mindgarden-dev.service /etc/systemd/system/mindgarden-dev.service
             sudo systemctl daemon-reload
             sudo systemctl enable mindgarden-dev.service
             echo "✅ systemd 서비스 파일 설정 완료"
@@ -746,32 +872,45 @@ jobs:
           # [핫픽스 2026-08-31] V20260831_004 Flyway success=0 원샷 repair
           # 배경: Actions run 33396063349 / PR #728 — temp 테이블 DEFAULT CHARSET=utf8mb4 만 지정
           # → MySQL 8 기본 utf8mb4_0900_ai_ci 와 앱 테이블 utf8mb4_unicode_ci JOIN '=' Error 1267.
-          # deploy-production.yml V20260829_003 원샷 repair 패턴과 동일.
+          # deploy-production.yml V20260829_003 원샷 repair 패턴과 동일 (mysql-deploy-client).
           # success=1 은 절대 삭제하지 않음. leftover temp 테이블도 DROP (실패 무시).
           echo "🔧 [V20260831_004] flyway_schema_history success=0 원샷 repair (서비스 재시작 전)"
           if [ -z "${DEV_DB_USER:-}" ] || [ -z "${DEV_DB_PASSWORD:-}" ] || [ -z "${DEV_DB_NAME:-}" ]; then
             echo "::warning::DEV_DB_USER / DEV_DB_PASSWORD / DEV_DB_NAME 비어 있음 — V20260831_004 flyway success=0 repair 스킵 (배포는 계속)"
           else
-            FLYWAY_004_DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
-            FLYWAY_004_DELETED=$(mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -N -e "
-              DELETE FROM flyway_schema_history
-              WHERE success = 0
-                AND (
-                  version IN ('20260831.004', '20260831_004')
-                  OR script LIKE '%V20260831_004%'
-                );
-              SELECT ROW_COUNT();
-            " 2>/dev/null || echo "ERR")
-            if [ "$FLYWAY_004_DELETED" = "ERR" ] || [ -z "$FLYWAY_004_DELETED" ]; then
-              echo "::warning::V20260831_004 flyway success=0 repair mysql 호출 실패 — 배포는 계속"
-            elif [ "$FLYWAY_004_DELETED" = "0" ]; then
-              echo "::notice::V20260831_004 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+            MYSQL_CLIENT_SH=/var/www/mindgarden-dev/mysql-deploy-client.sh
+            if [ ! -f "$MYSQL_CLIENT_SH" ]; then
+              echo "::warning::V20260831_004 repair: mysql-deploy-client.sh 없음 ($MYSQL_CLIENT_SH) — repair 스킵 (배포는 계속)"
             else
-              echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
+              # shellcheck disable=SC1090
+              . "$MYSQL_CLIENT_SH"
+              export DB_HOST="${DEV_DB_HOST:-127.0.0.1}"
+              export DB_PORT="${DB_PORT:-3306}"
+              export DB_USERNAME="$DEV_DB_USER"
+              export DB_PASSWORD="$DEV_DB_PASSWORD"
+              export DB_NAME="$DEV_DB_NAME"
+              # --defaults-extra-file (0600). MYSQL_PWD / -p CLI 금지
+              mysql_deploy_prepare "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_PORT" "$DB_NAME"
+              FLYWAY_004_DELETED=$(mysql_deploy_query "
+                DELETE FROM flyway_schema_history
+                WHERE success = 0
+                  AND (
+                    version IN ('20260831.004', '20260831_004')
+                    OR script LIKE '%V20260831_004%'
+                  );
+                SELECT ROW_COUNT();
+              " 2>/dev/null || echo "ERR")
+              if [ "$FLYWAY_004_DELETED" = "ERR" ] || [ -z "$FLYWAY_004_DELETED" ]; then
+                echo "::warning::V20260831_004 flyway success=0 repair mysql 호출 실패 — 배포는 계속"
+              elif [ "$FLYWAY_004_DELETED" = "0" ]; then
+                echo "::notice::V20260831_004 success=0 행 없음 (이미 정리됨 또는 미기록) — continue"
+              else
+                echo "✅ V20260831_004 flyway success=0 행 삭제: ${FLYWAY_004_DELETED}건"
+              fi
+              mysql_deploy_query "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" >/dev/null 2>&1 \
+                || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
+              mysql_deploy_cleanup
             fi
-            mysql -h "$FLYWAY_004_DB_HOST" -u "$DEV_DB_USER" -p"$DEV_DB_PASSWORD" "$DEV_DB_NAME" -e \
-              "DROP TABLE IF EXISTS _tmp_cc_display_name_merge_20260831;" 2>/dev/null \
-              || echo "::notice::leftover temp table DROP 스킵/실패 (무시) — _tmp_cc_display_name_merge_20260831"
           fi
 
           # 서비스 재시작
@@ -788,9 +927,15 @@ jobs:
           fi
           
           # 서비스 중지 (systemd가 자동으로 프로세스 종료 처리)
-          echo "🛑 서비스 중지 중..."
+          # PRE_PID: stop 전 MainPID (기동 후 PID 변경 검증용). 빈 값 → 0
+          PRE_PID=$(sudo systemctl show -p MainPID --value mindgarden-dev.service 2>/dev/null || echo 0)
+          if [ -z "$PRE_PID" ]; then PRE_PID=0; fi
+          echo "🛑 서비스 중지 중... (PRE_PID=${PRE_PID})"
           if sudo systemctl is-active --quiet mindgarden-dev.service; then
-            sudo systemctl stop mindgarden-dev.service || true
+            if ! sudo systemctl stop mindgarden-dev.service; then
+              echo "::error::systemctl stop failed"
+              exit 1
+            fi
             # 서비스가 완전히 중지될 때까지 대기 (최대 30초)
             for i in {1..30}; do
               if ! sudo systemctl is-active --quiet mindgarden-dev.service; then
@@ -804,6 +949,18 @@ jobs:
           else
             echo "ℹ️ 서비스가 이미 중지되어 있음"
           fi
+          
+          # stop 이후 스테이징 JAR 을 실제 app.jar 로 교체 (서비스 기동 전)
+          if [ -f app.jar.new ]; then
+            mv -f app.jar.new app.jar
+            chmod +x app.jar
+          fi
+          if [ ! -f app.jar ]; then
+            echo "::error::app.jar missing after staging"
+            exit 1
+          fi
+          DEPLOY_JAR_SHA=$(sha256sum app.jar | awk '{print $1}')
+          echo "📦 deploy jar sha256 prefix=${DEPLOY_JAR_SHA:0:12}"
           
           # 포트 확인 (systemd가 프로세스를 종료했으므로 포트는 비어있어야 함)
           echo "🔍 포트 8080 확인..."
@@ -860,6 +1017,19 @@ jobs:
           
           if [ "$SERVICE_STARTED" = true ] && sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨 (actuator/health 확인됨)"
+            POST_PID=$(sudo systemctl show -p MainPID --value mindgarden-dev.service)
+            VERIFY_SH=/var/www/mindgarden-dev/verify-dev-running-build.sh
+            if [ ! -f "$VERIFY_SH" ]; then
+              echo "::error::verify script missing"
+              exit 1
+            fi
+            bash "$VERIFY_SH" \
+              --pre-pid "$PRE_PID" \
+              --deploy-jar-sha "$DEPLOY_JAR_SHA" \
+              --github-sha "${GITHUB_SHA:-}" \
+              --unit mindgarden-dev.service \
+              --app-jar /var/www/mindgarden-dev/app.jar \
+              --info-url http://127.0.0.1:8080/actuator/info
           else
             echo "❌ 서비스 시작 실패 - 롤백 후 로그 확인..."
             LATEST_BACKUP=$(ls -t /var/www/mindgarden-dev/backups/app.jar.backup.* 2>/dev/null | head -1)
@@ -1474,6 +1644,42 @@ jobs:
         PUBLIC_BASE_URL: ${{ vars.DEV_PUBLIC_BASE_URL }}
       run: bash scripts/deployment/public-health-check.sh "$PUBLIC_BASE_URL"
 
+    # Flyway 헬스·clients.phone: 재시작 전 SCP(📤 Flyway 스키마 헬스 스크립트 업로드) 재사용
+    - name: 🔍 Flyway 스키마 헬스 (dev.env DB_*)
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      env:
+        DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        envs: DEV_DB_PASSWORD
+        script: |
+          LOAD_DB_ENV=/var/www/mindgarden-dev/load-deploy-db-env.sh
+          FLYWAY_HEALTH_SH=/var/www/mindgarden-dev/check-flyway-schema-health.sh
+          if [ ! -f "$LOAD_DB_ENV" ]; then
+            echo "::error::load-deploy-db-env.sh 없음 ($LOAD_DB_ENV) — Flyway 헬스 중단"
+            exit 1
+          fi
+          if [ ! -f "$FLYWAY_HEALTH_SH" ]; then
+            echo "::error::$FLYWAY_HEALTH_SH 없음 — Flyway 헬스 중단"
+            exit 1
+          fi
+          export MG_DEPLOY_ENV_FILE=/etc/mindgarden/dev.env
+          export MG_DEPLOY_ENV_FILE_REQUIRED=1
+          export MG_DEPLOY_SYSTEMD_UNITS=mindgarden-dev.service
+          export MG_DEPLOY_DB_PASSWORD_FALLBACK="${DEV_DB_PASSWORD:-}"
+          # sticky remote/session DB_* must not override env file (run 38975330813 pre_set→1045)
+          unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
+          # shellcheck disable=SC1090
+          . "$LOAD_DB_ENV"
+          bash "$FLYWAY_HEALTH_SH" || {
+            echo "::error::Flyway 스키마 헬스 실패 (연결/스키마/success=0 등 치명 조건)"
+            exit 1
+          }
+
     - name: 🔍 dev DB clients.phone 컬럼 폭 검증 (Flyway 미적용 조기 감지)
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
       with:
@@ -1493,7 +1699,17 @@ jobs:
           set +a
           DB_PORT="${DB_PORT:-3306}"
           if command -v mysql >/dev/null 2>&1; then
-            COL_TYPE=$(mysql -h"$DB_HOST" -P"$DB_PORT" -u"$DB_USERNAME" -p"$DB_PASSWORD" "$DB_NAME" -Nsr -e "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" 2>/dev/null || true)
+            MYSQL_CLIENT_SH=/var/www/mindgarden-dev/mysql-deploy-client.sh
+            if [ ! -f "$MYSQL_CLIENT_SH" ]; then
+              echo "❌ mysql-deploy-client.sh 없음 ($MYSQL_CLIENT_SH) — clients.phone 검증 중단"
+              exit 1
+            fi
+            # shellcheck disable=SC1090
+            . "$MYSQL_CLIENT_SH"
+            # --defaults-extra-file (0600). MYSQL_PWD / -p CLI 금지
+            mysql_deploy_prepare "$DB_USERNAME" "$DB_PASSWORD" "$DB_HOST" "$DB_PORT" "$DB_NAME"
+            COL_TYPE=$(mysql_deploy_query "SELECT COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'phone';" -s -r 2>/dev/null || true)
+            mysql_deploy_cleanup
             if [ -z "$COL_TYPE" ]; then
               echo "❌ clients.phone 컬럼 타입 조회 실패 (빈 결과). DB 연결·DB_NAME·권한을 확인하세요."
               exit 1
@@ -1522,6 +1738,60 @@ jobs:
           echo "❌ mysql CLI가 없고 Flyway 성공·최신 스키마 로그도 확인되지 않았습니다."
           echo "   조치: mysql 클라이언트 설치 또는 수동으로 SHOW FULL COLUMNS FROM clients LIKE 'phone'; 실행."
           exit 1
+
+    # stop 이후(재시작·헬스·env 주입 등) 어느 step 이든 실패하면 조건부 백업 JAR 복구 + restart + 헬스
+    - name: 🛟 stop 이후 실패 시 백업 JAR 롤백·기동·헬스
+      if: failure()
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        script: |
+          set -euo pipefail
+          cd /var/www/mindgarden-dev
+          UNIT=mindgarden-dev.service
+          HEALTH_URL=http://127.0.0.1:8080/actuator/health
+          # 활성+헬스 UP 이면 JAR 복원 생략 (이미 정상 기동 중)
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null \
+            && curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "skip jar rollback — service active and health UP"
+            exit 0
+          fi
+          LATEST=""
+          if ls backups/app.jar.backup.* >/dev/null 2>&1; then
+            LATEST=$(ls -t backups/app.jar.backup.* | head -1) || LATEST=""
+          fi
+          if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+            cp -f "$LATEST" app.jar
+            echo "restored app.jar from backup (path omitted length=${#LATEST})"
+          else
+            echo "::warning::no backup jar — restart existing app.jar if present"
+          fi
+          echo "restart after jar restore"
+          if sudo systemctl restart "$UNIT"; then
+            sleep 5
+          else
+            echo "::error::rollback restart failed"
+          fi
+          if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+            echo "✅ rollback start OK"
+          else
+            echo "::error::rollback start failed"
+          fi
+          if curl -f -s --connect-timeout 3 --max-time 8 "$HEALTH_URL" > /dev/null 2>&1; then
+            echo "✅ rollback health OK (actuator/health)"
+          else
+            echo "::warning::rollback health check failed (start status already reported)"
+            if sudo systemctl is-active --quiet "$UNIT" 2>/dev/null; then
+              echo "unit active but health failed"
+            else
+              echo "unit inactive after rollback"
+            fi
+          fi
 
   # AI 모니터링 Phase 1 — 개발 BE 배포 실패 시 Discord webhook 알람
   # Secret 미등록 시 알람 skip

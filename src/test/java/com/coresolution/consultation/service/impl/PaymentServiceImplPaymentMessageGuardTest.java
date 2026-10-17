@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.math.BigDecimal;
@@ -80,6 +81,7 @@ class PaymentServiceImplPaymentMessageGuardTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
     @Mock private PlatformTransactionManager transactionManager;
 
@@ -101,6 +103,7 @@ class PaymentServiceImplPaymentMessageGuardTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
                 transactionManager);

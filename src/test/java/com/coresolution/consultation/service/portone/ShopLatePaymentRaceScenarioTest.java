@@ -89,6 +89,8 @@ class ShopLatePaymentRaceScenarioTest {
     @Mock
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
     @Mock
+    private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
+    @Mock
     private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     @Mock
     private ShopNotificationHelper shopNotificationHelper;
@@ -119,10 +121,20 @@ class ShopLatePaymentRaceScenarioTest {
                 encryptionService,
                 tenantPgConfigurationRepository,
                 paymentRepository,
+                shopClientOrderRepository,
                 paymentService,
                 clientShopCheckoutService,
                 guard,
+                portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 PortOneWebhookTestSignatures.properties());
+        lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
+        lenient().when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT_ID), eq(PAYMENT_ID), any(ShopClientOrder.class)))
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(15_000L)));
         cancelService = new ClientShopPaymentCancelServiceImpl(
                 shopClientOrderRepository,
                 shopClientOrderLineRepository,

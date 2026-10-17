@@ -22,14 +22,8 @@ OR_TRUE .github/workflows/deploy-procedures-production-mysql.yml :: unset PROD_S
 OR_TRUE .github/workflows/deploy-procedures-production-mysql.yml :: unset PROD_SSH_JUMP_USER 2>/dev/null || true
 OR_TRUE .github/workflows/deploy-production.yml :: curl -sS "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 400 || true
 OR_TRUE .github/workflows/deploy-production.yml :: curl -sS -m 5 -D - "http://${MG_BACKEND_BIND_HOST}:${INACTIVE_PORT}/actuator/health" | head -c 500 || true
-OR_TRUE .github/workflows/deploy-production.yml :: export "$kv" 2>/dev/null || true
-OR_TRUE .github/workflows/deploy-production.yml :: export "$kv" 2>/dev/null || true
 OR_TRUE .github/workflows/deploy-production.yml :: find "$HOME" -maxdepth 1 -name '.mindgarden-env-sync-changed.*' -mtime +1 -delete 2>/dev/null || true
 OR_TRUE .github/workflows/deploy-production.yml :: grep -E "^(sql/|database/schema/).*\.sql$" /tmp/changed_files.txt > /tmp/changed_sql_files.txt || true
-OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_HOST:-}" ]; then export "$kv" 2>/dev/null || true; fi
-OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_NAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
-OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_PASSWORD:-}" ]; then export "$kv" 2>/dev/null || true; fi
-OR_TRUE .github/workflows/deploy-production.yml :: if [ -z "${DB_USERNAME:-}" ]; then export "$kv" 2>/dev/null || true; fi
 OR_TRUE .github/workflows/deploy-production.yml :: ls -lh "${NEW_IDLE_HOME}/app.jar" || true
 OR_TRUE .github/workflows/deploy-production.yml :: ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true
 OR_TRUE .github/workflows/deploy-production.yml :: ls -t "${extra[@]}" 2>/dev/null | tail -n +6 | xargs -r rm -f || true

@@ -11,9 +11,11 @@ import com.coresolution.consultation.config.PortOneWebhookProperties;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
+import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.exception.ShopOrderClosedForPaymentException;
 import com.coresolution.consultation.exception.ShopPaymentNotApprovableException;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.PersonalDataEncryptionService;
@@ -67,9 +69,12 @@ public class PortOnePaymentWebhookService {
     private final PersonalDataEncryptionService encryptionService;
     private final TenantPgConfigurationRepository tenantPgConfigurationRepository;
     private final PaymentRepository paymentRepository;
+    private final ShopClientOrderRepository shopClientOrderRepository;
     private final PaymentService paymentService;
     private final ClientShopCheckoutService clientShopCheckoutService;
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
+    private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     private final PortOneWebhookProperties portOneWebhookProperties;
 
     /**
@@ -233,6 +238,12 @@ public class PortOnePaymentWebhookService {
             }
             // 쇼핑 주문 PAID: ERP/매핑 UnexpectedRollback 경로 회피 — shop-safe approve
             if (targetStatus == Payment.PaymentStatus.APPROVED) {
+                Optional<ResponseEntity<Map<String, Object>>> mismatchResponse =
+                        handleShopOrderAmountMismatchBeforeApprove(
+                                tenantId, paymentId, paymentRow, webhookId, body);
+                if (mismatchResponse.isPresent()) {
+                    return mismatchResponse.get();
+                }
                 try {
                     paymentService.approveShopOrderPayment(paymentId);
                 } catch (IllegalArgumentException nonShop) {
@@ -276,6 +287,75 @@ public class PortOnePaymentWebhookService {
                 TenantContextHolder.clear();
             }
         }
+    }
+
+    /**
+     * 쇼핑 주문 APPROVED 반영 전 PortOne REST 금액·통화·주문 정합.
+     * {@code MISMATCH} 면 승인하지 않고 공통 전액 취소. {@code UNKNOWN} 이면 승인·취소 없이 5xx(재시도).
+     */
+    private Optional<ResponseEntity<Map<String, Object>>> handleShopOrderAmountMismatchBeforeApprove(
+            String tenantId,
+            String paymentId,
+            Payment paymentRow,
+            String webhookId,
+            Map<String, Object> body) {
+        String orderPublicId = paymentRow.getOrderId();
+        if (orderPublicId == null || orderPublicId.isBlank()) {
+            return Optional.empty();
+        }
+        Optional<ShopClientOrder> orderOpt =
+                shopClientOrderRepository.findByTenantIdAndPublicId(tenantId, orderPublicId);
+        if (orderOpt.isEmpty()) {
+            return Optional.empty();
+        }
+        ShopClientOrder order = orderOpt.get();
+        PortOneShopPaidMatch match =
+                portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(tenantId, paymentId, order);
+        if (match.isMatch()) {
+            match.getActualPaidAmount().ifPresent(
+                    paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(paymentRow, paid));
+            return Optional.empty();
+        }
+        if (match.isUnknown()) {
+            PortOneVerifyUnknownRetryOutcome outcome =
+                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(tenantId, paymentId);
+            body.put("paymentId", paymentId);
+            if (outcome == PortOneVerifyUnknownRetryOutcome.EXHAUSTED) {
+                log.error(
+                        "포트원 웹훅: 쇼핑 PortOne 검증 UNKNOWN 재시도 소진 — 비재시도 200 paymentId={}, orderPublicId={}, webhookId={}",
+                        paymentId,
+                        orderPublicId,
+                        webhookId);
+                body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN_EXHAUSTED);
+                return Optional.of(ResponseEntity.ok(body));
+            }
+            log.warn(
+                    "포트원 웹훅: 쇼핑 주문 PortOne 검증 UNKNOWN — 승인·취소 생략(재시도) paymentId={}, orderPublicId={}, webhookId={}",
+                    paymentId,
+                    orderPublicId,
+                    webhookId);
+            body.put("status", PortOneV2WebhookConstants.STATUS_VERIFY_UNKNOWN);
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
+        }
+        match.getActualPaidAmount().ifPresent(
+                paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(paymentRow, paid));
+        log.warn(
+                "포트원 웹훅: 쇼핑 주문 PortOne 금액·주문 불일치 — 승인 생략·전액 취소 paymentId={}, orderPublicId={}, webhookId={}",
+                paymentId,
+                orderPublicId,
+                webhookId);
+        boolean handled = clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                tenantId, orderPublicId, match.getActualPaidAmount().orElse(null));
+        body.put(
+                "status",
+                handled
+                        ? PortOneV2WebhookConstants.STATUS_MISMATCH_CANCELLED
+                        : PortOneV2WebhookConstants.STATUS_MISMATCH_CANCEL_FAILED);
+        body.put("paymentId", paymentId);
+        if (!handled) {
+            return Optional.of(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body));
+        }
+        return Optional.of(ResponseEntity.ok(body));
     }
 
     /**

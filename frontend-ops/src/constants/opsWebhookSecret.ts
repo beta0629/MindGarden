@@ -9,6 +9,14 @@ export const OPS_WEBHOOK_SECRET_LABELS = {
   PAGE_TITLE: "웹훅 비밀값",
   PAGE_SUBTITLE:
     "센터 PG 설정의 포트원 웹훅 시크릿을 교체하고 테스트 모드를 전환합니다. 평문 시크릿은 화면에 다시 표시되지 않습니다.",
+  /**
+   * 경로·역할 안내 — 테넌트 PATCH 는 OPS 전용(ADMIN 403),
+   * ops portal alias 는 OPS+HQ. 화면은 테넌트 경로를 1차 호출하고 HTTP 404 일 때만 alias 폴백.
+   */
+  PATH_ROLE_GUIDANCE:
+    "테넌트 경로 PATCH /tenants/{tenantId}/pg-configurations/{configId}/webhook-secret·test-mode 는 OPS 역할이 필요합니다(ADMIN 은 403). "
+    + "Ops 포털 경로 PATCH /ops/pg-configurations/{configId}/webhook-secret·test-mode 는 OPS+HQ 가 필요합니다. "
+    + "이 화면은 테넌트 경로를 먼저 호출하고, 경로가 없을 때(HTTP 404)만 Ops 포털 경로로 폴백합니다.",
   SELECT_TENANT: "센터 선택",
   SELECT_CONFIG: "PG 설정 선택",
   OPTION_ALL: "전체",

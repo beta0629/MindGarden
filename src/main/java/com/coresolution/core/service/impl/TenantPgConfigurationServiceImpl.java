@@ -218,22 +218,17 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         String oldStatus = configuration.getStatus().name();
         boolean isActiveServing = configuration.getStatus() == PgConfigurationStatus.ACTIVE;
         String updatedBy = getCurrentUserId();
+
+        // null/blank 평문 → 기존 암호문 유지 (빈 문자열 암호화·덮어쓰기 금지)
+        String newEncryptedApiKey = resolveEncryptedSecretKeepingExisting(
+                request.getApiKey(), configuration.getApiKeyEncrypted(), "API Key");
+        String newEncryptedSecretKey = resolveEncryptedSecretKeepingExisting(
+                request.getSecretKey(), configuration.getSecretKeyEncrypted(), "Secret Key");
         
-        String newEncryptedApiKey = encryptionService.encrypt(request.getApiKey());
-        String newEncryptedSecretKey = encryptionService.encrypt(request.getSecretKey());
-        
-        if (!encryptionService.isEncrypted(newEncryptedApiKey)) {
-            throw new IllegalStateException("API Key 암호화에 실패했습니다");
-        }
-        if (!encryptionService.isEncrypted(newEncryptedSecretKey)) {
-            throw new IllegalStateException("Secret Key 암호화에 실패했습니다");
-        }
-        
-        newEncryptedApiKey = encryptionService.ensureActiveKey(newEncryptedApiKey);
-        newEncryptedSecretKey = encryptionService.ensureActiveKey(newEncryptedSecretKey);
-        
-        boolean apiKeyChanged = !newEncryptedApiKey.equals(configuration.getApiKeyEncrypted());
-        boolean secretKeyChanged = !newEncryptedSecretKey.equals(configuration.getSecretKeyEncrypted());
+        boolean apiKeyChanged = !encryptedValuesEqual(
+                newEncryptedApiKey, configuration.getApiKeyEncrypted());
+        boolean secretKeyChanged = !encryptedValuesEqual(
+                newEncryptedSecretKey, configuration.getSecretKeyEncrypted());
 
         // ADMIN PUT 은 testMode 를 절대 변경하지 않는다 (OPS patchTestMode 전용).
         boolean liveTestMode = Boolean.TRUE.equals(configuration.getTestMode());
@@ -383,9 +378,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             throw new IllegalArgumentException("webhookSecret 는 필수입니다");
         }
         String trimmedSecret = webhookSecret.trim();
-        if (!PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(trimmedSecret)) {
-            throw new IllegalArgumentException(TenantPgWebhookSecretMessages.INVALID_FORMAT);
-        }
+        requireValidPlainWebhookSecretIfPresent(trimmedSecret);
 
         TenantPgConfiguration configuration = configurationRepository
                 .findByConfigIdAndIsDeletedFalse(configId)
@@ -751,11 +744,14 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
      * settings_json 병합 시 기존(live) {@code portoneWebhookSecret} 을 우선 보존한다.
      * <p>테넌트 수정 폼은 시크릿을 응답에서 받지 못하므로 공란 저장 시 기존 값을 유지해야 하며,
      * pending 승인 시에도 OPS webhook-secret PATCH 로 갱신된 live 시크릿이 덮이지 않게 한다.
-     * 기존에 시크릿이 없을 때만 incoming 값을 그대로 사용한다(최초 설정).</p>
+     * 기존에 시크릿이 없을 때만 incoming 값을 그대로 사용한다(최초 설정).
+     * 최초 설정 분기에서는 incoming 평문 시크릿을
+     * {@link #requireValidPlainWebhookSecretIfPresent(String)} 로 검증한다.</p>
      *
      * @param existingSettingsJson 저장되어 있던(live) settings_json
      * @param incomingNormalized 요청·pending 을 normalize 한 settings_json
      * @return 병합된 settings_json
+     * @throws IllegalArgumentException incoming 평문 웹훅 시크릿 형식이 잘못된 경우
      */
     private String mergeSettingsJsonPreservingWebhookSecret(
             String existingSettingsJson,
@@ -773,10 +769,12 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             }
             ObjectNode incomingObj = (ObjectNode) incomingRoot;
             if (existingSettingsJson == null || existingSettingsJson.isBlank()) {
+                requireValidIncomingPlainWebhookSecretIfPresent(incomingObj);
                 return incomingNormalized;
             }
             JsonNode existingRoot = objectMapper.readTree(existingSettingsJson.trim());
             if (!existingRoot.isObject()) {
+                requireValidIncomingPlainWebhookSecretIfPresent(incomingObj);
                 return incomingNormalized;
             }
             JsonNode existingSecret = existingRoot.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
@@ -785,7 +783,10 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 incomingObj.set(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, existingSecret);
                 return objectMapper.writeValueAsString(incomingObj);
             }
+            requireValidIncomingPlainWebhookSecretIfPresent(incomingObj);
             return incomingNormalized;
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("settings_json 웹훅 시크릿 병합 실패, incoming 유지: {}", e.getMessage());
             return incomingNormalized;
@@ -793,11 +794,49 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
     }
 
     /**
+     * 기존 시크릿이 없어 incoming 을 유지하는 병합 분기에서,
+     * incoming ObjectNode 의 평문 {@code portoneWebhookSecret} 을 공통 validator 로 검사한다.
+     * 키 없음·공백·이미 암호문은 {@link #requireValidPlainWebhookSecretIfPresent(String)} 가 통과시킨다.
+     *
+     * @param incomingObj 병합 대상 incoming settings object
+     */
+    private void requireValidIncomingPlainWebhookSecretIfPresent(ObjectNode incomingObj) {
+        if (incomingObj == null) {
+            return;
+        }
+        JsonNode incomingSecret = incomingObj.get(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET);
+        if (incomingSecret != null && incomingSecret.isTextual()) {
+            requireValidPlainWebhookSecretIfPresent(incomingSecret.asText());
+        }
+    }
+
+    /**
+     * 평문 웹훅 시크릿이 non-empty 이면 {@code whsec_}+Base64 형식을 강제한다.
+     * 공백·미존재·이미 암호문은 그대로 통과한다 (빈 값은 기존 저장 유지 경로용).
+     *
+     * @param raw settings_json 또는 PATCH 의 시크릿 원문
+     * @throws IllegalArgumentException 형식이 아니면 {@link TenantPgWebhookSecretMessages#INVALID_FORMAT}
+     */
+    private void requireValidPlainWebhookSecretIfPresent(String raw) {
+        if (raw == null || raw.trim().isEmpty()) {
+            return;
+        }
+        if (encryptionService.isEncrypted(raw)) {
+            return;
+        }
+        if (!PortOneWebhookSignatureVerifier.isWhsecPrefixedBase64(raw)) {
+            throw new IllegalArgumentException(TenantPgWebhookSecretMessages.INVALID_FORMAT);
+        }
+    }
+
+    /**
      * MySQL JSON 컬럼은 빈 문자열을 허용하지 않으므로 공백·빈 값은 null로 저장한다.
      * 포트원 웹훅 시크릿 등 민감 값은 평문이면 {@code secret_key_encrypted} 와 동일 방식으로 암호화한다.
+     * 평문 시크릿은 {@link #requireValidPlainWebhookSecretIfPresent(String)} 로 형식을 검증한다.
      *
      * @param settingsJson 원본 설정 JSON 문자열
      * @return 정규화된 JSON 문자열 또는 null
+     * @throws IllegalArgumentException 평문 웹훅 시크릿 형식이 잘못된 경우
      */
     private String normalizeSettingsJson(String settingsJson) {
         if (settingsJson == null) {
@@ -817,12 +856,15 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
             if (webhookSecretNode != null && webhookSecretNode.isTextual()) {
                 String raw = webhookSecretNode.asText();
                 if (!raw.isEmpty() && !encryptionService.isEncrypted(raw)) {
+                    requireValidPlainWebhookSecretIfPresent(raw);
                     String encrypted = encryptionService.encrypt(raw);
                     encrypted = encryptionService.ensureActiveKey(encrypted);
                     obj.put(TenantPgSettingsJsonKeys.PORTONE_WEBHOOK_SECRET, encrypted);
                 }
             }
             return objectMapper.writeValueAsString(obj);
+        } catch (IllegalArgumentException e) {
+            throw e;
         } catch (Exception e) {
             log.warn("settings_json 정규화 실패, trim 값만 저장: {}", e.getMessage());
             return trimmed;
@@ -1082,6 +1124,8 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .connectionTestDetails(configuration.getConnectionTestDetails())
                 .settingsJson(masked.settingsJson())
                 .portoneWebhookSecretConfigured(masked.configured())
+                .apiSecretConfigured(isEncryptedSecretConfigured(configuration.getApiKeyEncrypted())
+                        && isEncryptedSecretConfigured(configuration.getSecretKeyEncrypted()))
                 .notes(configuration.getNotes())
                 .createdAt(configuration.getCreatedAt())
                 .updatedAt(configuration.getUpdatedAt())
@@ -1089,6 +1133,39 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
                 .pendingRequestedAt(configuration.getPendingRequestedAt())
                 .pendingEditDiff(buildPendingEditDiff(configuration))
                 .build();
+    }
+
+    /**
+     * 요청 평문이 null/blank 이면 기존 암호문을 그대로 쓰고,
+     * 값이 있으면 암호화·검증 후 활성 키로 정규화한다.
+     *
+     * @param plaintext 요청 평문 (null/blank → 유지)
+     * @param existingEncrypted 저장 중인 암호문
+     * @param fieldLabel 오류 메시지용 필드명
+     * @return 유지할 또는 새로 암호화한 값
+     */
+    private String resolveEncryptedSecretKeepingExisting(
+            String plaintext,
+            String existingEncrypted,
+            String fieldLabel) {
+        if (plaintext == null || plaintext.isBlank()) {
+            return existingEncrypted;
+        }
+        String encrypted = encryptionService.encrypt(plaintext);
+        if (!encryptionService.isEncrypted(encrypted)) {
+            throw new IllegalStateException(fieldLabel + " 암호화에 실패했습니다");
+        }
+        return encryptionService.ensureActiveKey(encrypted);
+    }
+
+    /**
+     * 암호문이 non-blank 로 저장되어 있는지 여부 (값 노출 없음).
+     *
+     * @param encrypted 암호문
+     * @return 설정됨이면 true
+     */
+    private boolean isEncryptedSecretConfigured(String encrypted) {
+        return encrypted != null && !encrypted.isBlank();
     }
 
     /**
@@ -1160,6 +1237,7 @@ public class TenantPgConfigurationServiceImpl implements TenantPgConfigurationSe
         target.setConnectionTestDetails(source.getConnectionTestDetails());
         target.setSettingsJson(source.getSettingsJson());
         target.setPortoneWebhookSecretConfigured(source.getPortoneWebhookSecretConfigured());
+        target.setApiSecretConfigured(source.getApiSecretConfigured());
         target.setNotes(source.getNotes());
         target.setCreatedAt(source.getCreatedAt());
         target.setUpdatedAt(source.getUpdatedAt());

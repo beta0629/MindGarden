@@ -474,6 +474,7 @@ export const ERP_API = {
   /** 재무 거래 (수입/지출 직접 등록·조회·수정·삭제 — ErpController) */
   FINANCE_TRANSACTIONS: '/api/v1/erp/finance/transactions',
   FINANCE_TRANSACTION_BY_ID: (id) => `/api/v1/erp/finance/transactions/${id}`,
+  FINANCE_TRANSACTION_COMPLETE: (id) => `/api/v1/erp/finance/transactions/${id}/complete`,
 
   /** 매월 나가는 돈 (반복 지출 — ErpController) */
   RECURRING_EXPENSES: '/api/v1/erp/recurring-expenses',

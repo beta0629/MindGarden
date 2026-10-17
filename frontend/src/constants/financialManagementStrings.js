@@ -190,7 +190,9 @@ export const FM_ERRORS = {
 
 export const FM_TOAST = {
   DELETE_SUCCESS: '거래가 성공적으로 삭제되었습니다.',
-  DELETE_GENERIC: '거래 삭제 중 오류가 발생했습니다.'
+  DELETE_GENERIC: '거래 삭제 중 오류가 발생했습니다.',
+  COMPLETE_SUCCESS: '지출을 완료 처리했습니다.',
+  COMPLETE_GENERIC: '지출 완료 처리 중 오류가 발생했습니다.'
 };
 
 export const fmToastDeleteFailed = (message) => `거래 삭제에 실패했습니다: ${message}`;
@@ -220,7 +222,8 @@ export const FM_ROW_ACTIONS = {
   VIEW: '상세',
   EDIT: '수정',
   DELETE: '삭제',
-  MORE: '더보기'
+  MORE: '더보기',
+  COMPLETE: '완료 처리'
 };
 
 export const FM_FILTER = {

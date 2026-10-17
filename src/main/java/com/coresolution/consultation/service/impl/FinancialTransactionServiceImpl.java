@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.Arrays;
 import java.util.stream.Collectors;
 import jakarta.persistence.criteria.Predicate;
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
+import com.coresolution.consultation.constant.RecordedExpenseCompletionMessages;
 import com.coresolution.consultation.constant.PaymentMethodSsotConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.FinancialDashboardResponse;
@@ -728,6 +730,64 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
         
         log.info("❌ 회계 거래 거부 완료: ID={}", savedTransaction.getId());
         return convertToResponse(savedTransaction);
+    }
+
+    @Override
+    public FinancialTransactionResponse createCompletedQuickExpense(
+            FinancialTransactionRequest request, User currentUser) {
+        if (request == null
+                || !FinancialTransaction.TransactionType.EXPENSE.name().equals(request.getTransactionType())) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_NOT_EXPENSE);
+        }
+        if (isRefundCategoryOrSubcategory(request.getCategory(), request.getSubcategory())) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_REFUND);
+        }
+        FinancialTransactionResponse created = createTransaction(request, currentUser);
+        if (created == null || created.getId() == null) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_NOT_FOUND);
+        }
+        return completeRecordedExpense(created.getId(), currentUser);
+    }
+
+    @Override
+    public FinancialTransactionResponse completeRecordedExpense(Long id, User currentUser) {
+        if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.ADMIN_REQUIRED);
+        }
+        String tenantId = resolveTenantIdForMutation(currentUser);
+        FinancialTransaction transaction = financialTransactionRepository
+                .findByTenantIdAndId(tenantId, id)
+                .orElseThrow(() -> new IllegalStateException(RecordedExpenseCompletionMessages.REASON_NOT_FOUND));
+        if (!FinancialTransaction.TransactionType.EXPENSE.equals(transaction.getTransactionType())) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_NOT_EXPENSE);
+        }
+        if (isRefundCategoryOrSubcategory(transaction.getCategory(), transaction.getSubcategory())) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_REFUND);
+        }
+        FinancialTransaction.TransactionStatus status = transaction.getStatus();
+        if (status != FinancialTransaction.TransactionStatus.PENDING
+                && status != FinancialTransaction.TransactionStatus.APPROVED) {
+            throw new IllegalStateException(RecordedExpenseCompletionMessages.REASON_STATUS);
+        }
+        guardPeriodClosed(tenantId, transaction.getTransactionDate());
+        transaction.complete();
+        transaction.setApprover(currentUser);
+        transaction.setApprovedAt(LocalDateTime.now());
+        FinancialTransaction saved = financialTransactionRepository.save(transaction);
+        log.info("지출 완료 처리: ID={}, tenantId={}", saved.getId(), tenantId);
+        return convertToResponse(saved);
+    }
+
+    /**
+     * 환불 카테고리·서브카테고리면 true. 결제·환불 전표는 이 완료 경로에 넣지 않는다.
+     *
+     * @param category 카테고리
+     * @param subcategory 서브카테고리
+     * @return 환불이면 true
+     */
+    private static boolean isRefundCategoryOrSubcategory(String category, String subcategory) {
+        return FinancialTransactionConstants.isRefundSubcategory(category)
+                || FinancialTransactionConstants.isRefundSubcategory(subcategory);
     }
     
     @Override

@@ -8,6 +8,17 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+
+// 실 FullCalendar 를 쓰지만 @fullcalendar/luxon3 는 CI node_modules 에 없을 수 있다.
+// 빈 createPlugin 스텁이면 addDefs 가 깨지지 않고 슬롯 렌더는 기존 플러그인으로 동작한다.
+jest.mock('@fullcalendar/luxon3', () => {
+  const { createPlugin } = require('@fullcalendar/core');
+  return {
+    __esModule: true,
+    default: createPlugin({ name: '@fullcalendar/luxon3' })
+  };
+}, { virtual: true });
+
 import ScheduleCalendarView from '../ScheduleCalendarView';
 
 class ResizeObserverStub {

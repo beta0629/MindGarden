@@ -828,6 +828,23 @@ const FinancialManagement = () => {
     }
   };
 
+  const completeRecordedExpense = async(tx) => {
+    if (!tx?.id) {
+      return;
+    }
+    try {
+      const result = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTION_COMPLETE(tx.id), {});
+      if (result?.success === false) {
+        notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+        return;
+      }
+      notificationManager.success(FM_TOAST.COMPLETE_SUCCESS);
+      refreshLedgerViews();
+    } catch (err) {
+      notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+    }
+  };
+
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -928,6 +945,7 @@ const FinancialManagement = () => {
                         }}
                         onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                         onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                        onComplete={completeRecordedExpense}
                       />
                     )}
                   </div>
@@ -1004,6 +1022,7 @@ const FinancialManagement = () => {
                     }}
                     onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                     onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                    onComplete={completeRecordedExpense}
                   />
                 </div>
               )}

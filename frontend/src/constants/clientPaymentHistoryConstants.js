@@ -23,7 +23,8 @@ export const CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX = 768;
 export const CLIENT_PAYMENT_QUERY_KEYS = Object.freeze({
   PERIOD: 'period',
   STATUS: 'status',
-  PAGE: 'page'
+  PAGE: 'page',
+  MAPPING_ID: 'mappingId'
 });
 
 export const CLIENT_PAYMENT_PERIOD = Object.freeze({
@@ -183,7 +184,8 @@ export const CLIENT_PAYMENT_COPY = Object.freeze({
   ERROR_BODY: '잠시 후 다시 시도해 주세요.',
   RETRY: '다시 시도',
   PARTIAL_ERROR: '온라인 결제 내역 일부를 불러오지 못했어요.',
-  LOADING_LABEL: '결제 내역을 불러오는 중'
+  LOADING_LABEL: '결제 내역을 불러오는 중',
+  HIGHLIGHT_SR: '알림에서 연 결제 건'
 });
 
 /** skeleton 행 수 (§7) */

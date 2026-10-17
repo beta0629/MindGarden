@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,8 @@ import com.coresolution.consultation.repository.SystemNotificationReadRepository
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.core.context.TenantContextHolder;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -136,5 +139,31 @@ class SystemNotificationServiceImplTenantScopeTest {
 
         assertThat(created.getTenantId()).isEqualTo(TENANT_001);
         assertThat(created.getTenantId()).isNotEqualTo(TENANT_002);
+    }
+
+    @Test
+    @DisplayName("findReadNotificationIds: 현재 테넌트 읽음 ID를 한 번만 조회")
+    void findReadNotificationIds_usesTenantBatchQueryOnce() {
+        when(systemNotificationReadRepository.findReadNotificationIdsByTenantIdAndUserId(TENANT_002, 7L))
+                .thenReturn(List.of(11L, 12L));
+
+        Set<Long> ids = systemNotificationService.findReadNotificationIds(7L);
+
+        assertThat(ids).containsExactlyInAnyOrder(11L, 12L);
+        verify(systemNotificationReadRepository, times(1))
+                .findReadNotificationIdsByTenantIdAndUserId(TENANT_002, 7L);
+        verify(systemNotificationReadRepository, never()).findByNotificationIdAndUserId(any(), any());
+        verify(systemNotificationReadRepository, never())
+                .findReadNotificationIdsByTenantIdAndUserId(eq(TENANT_001), any());
+    }
+
+    @Test
+    @DisplayName("findReadNotificationIds: tenantId 없으면 빈 집합이고 조회하지 않는다")
+    void findReadNotificationIds_withoutTenantReturnsEmpty() {
+        TenantContextHolder.clear();
+
+        assertThat(systemNotificationService.findReadNotificationIds(7L)).isEmpty();
+        verify(systemNotificationReadRepository, never())
+                .findReadNotificationIdsByTenantIdAndUserId(any(), any());
     }
 }

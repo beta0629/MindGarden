@@ -8,6 +8,8 @@
  * @since 2026-09-30
  */
 
+import fs from 'fs';
+import path from 'path';
 import React from 'react';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
@@ -388,5 +390,95 @@ describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
     expect(fetchShopOrders).toHaveBeenNthCalledWith(1, 0, 50);
     expect(fetchShopOrders).toHaveBeenNthCalledWith(2, 1, 50);
     expect(rowsByProduct()).toHaveLength(1);
+  });
+});
+
+describe('ClientPaymentHistory — 알림 mappingId 강조', () => {
+  test('mappingId 행을 중립 강조하고 포커스한다', async() => {
+    mockApi();
+    fetchShopOrders.mockResolvedValue([]);
+    renderScreen('/client/payment-history?mappingId=929');
+    const row = (await screen.findByText('기본 10회기')).closest('tr');
+    expect(row).toHaveClass('client-payment-table__row--from-notification');
+    expect(row).toHaveTextContent('알림에서 연 결제 건');
+    const css = fs.readFileSync(path.join(__dirname, '../ClientPaymentHistory.css'), 'utf8');
+    expect(css).toMatch(
+      /\.client-payment-table__row--from-notification td \{\s*background:\s*var\(--mg-v2-highlight-bg\);/
+    );
+    expect(css).toMatch(
+      /box-shadow:\s*inset 0 0 0 var\(--mg-v2-border-width-thin\) var\(--mg-v2-highlight-border\);/
+    );
+    expect(css).toMatch(
+      /\.client-payment-table__row--from-notification:focus,\s*\.client-payment-table__row--from-notification:focus-visible \{\s*outline:\s*none;/
+    );
+    expect(css).not.toMatch(/client-payment-table__row--from-notification > td:first-child/);
+    expect(css).not.toMatch(/client-payment-table__row--from-notification[\s\S]{0,180}2px solid/);
+    await waitFor(() => {
+      expect(row).toHaveFocus();
+    });
+  });
+
+  test('기간 밖 건은 필터를 넓히고 mappingId 는 유지한다', async() => {
+    mockApi({
+      mappings: [{
+        id: 800,
+        packageName: '예전 상품',
+        paymentAmount: 10000,
+        paymentStatus: 'APPROVED',
+        paymentMethod: 'CARD',
+        paymentSource: 'MANUAL',
+        totalSessions: 1,
+        paymentDate: '2024-01-15T10:00:00'
+      }]
+    });
+    fetchShopOrders.mockResolvedValue([]);
+    renderScreen('/client/payment-history?mappingId=800&period=1m');
+    await waitFor(() => {
+      const search = screen.getByTestId('location-search').textContent;
+      expect(search).toContain('mappingId=800');
+      expect(search).not.toContain('period=');
+    });
+    expect(screen.getByText('예전 상품').closest('tr'))
+      .toHaveClass('client-payment-table__row--from-notification');
+  });
+
+  test('다른 행을 누르면 강조가 사라지고, 없는 id 는 강조하지 않는다', async() => {
+    mockApi();
+    fetchShopOrders.mockResolvedValue([]);
+    const view = renderScreen('/client/payment-history?mappingId=929');
+    await screen.findByText('기본 10회기');
+    fireEvent.click(screen.getByText('기본 10회기').closest('tr'));
+    expect(screen.getByTestId('location-search').textContent).toContain('mappingId=929');
+    fireEvent.click(screen.getByText('검사').closest('tr'));
+    await waitFor(() => {
+      expect(screen.getByTestId('location-search').textContent).not.toContain('mappingId');
+    });
+    view.unmount();
+
+    renderScreen('/client/payment-history?mappingId=40404');
+    await waitForRows();
+    expect(document.querySelector('.client-payment-table__row--from-notification')).toBeNull();
+    expect(screen.getByTestId('location-search').textContent).toContain('mappingId=40404');
+  });
+
+  test('목록 뒤쪽 건은 해당 페이지로 옮긴다', async() => {
+    const mappings = Array.from({ length: 12 }, (_, index) => ({
+      id: 1000 + index,
+      packageName: `상품 ${index}`,
+      paymentAmount: 1000,
+      paymentStatus: 'APPROVED',
+      paymentMethod: 'CARD',
+      paymentSource: 'MANUAL',
+      totalSessions: 1,
+      paymentDate: `2026-01-${String(index + 1).padStart(2, '0')}T10:00:00`
+    }));
+    mockApi({ mappings });
+    fetchShopOrders.mockResolvedValue([]);
+    renderScreen('/client/payment-history?mappingId=1000');
+    await waitFor(() => {
+      expect(screen.getByTestId('location-search').textContent).toContain('page=2');
+    });
+    expect(screen.getByText('상품 0').closest('tr'))
+      .toHaveClass('client-payment-table__row--from-notification');
   });
 });

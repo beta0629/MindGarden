@@ -556,11 +556,9 @@ function AppContent() {
               <Route
                 path={CLIENT_OFFER_ROUTES.OFFERS}
                 element={(
-                  <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                      <ClientOffersPage />
-                    </ClientTenantComponentGate>
-                  </ProtectedRoute>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ClientOffersPage />
+                  </ClientTenantComponentGate>
                 )}
               />
               <Route

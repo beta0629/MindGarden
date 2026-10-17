@@ -11,11 +11,13 @@ import '../../styles/main.css';
 import './SimpleLayout.css';
 import { useTranslation } from 'react-i18next';
 import { useInitialOnlyBlockingLoading } from '../../hooks/useInitialOnlyBlockingLoading';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../constants/notificationTabs';
+import { isClientNotificationUser } from '../../constants/personalNotificationRoutes';
 
-// 역할별 알림 페이지 경로 상수
+// 역할별 알림 페이지 경로 상수. 내담자만 내 알림 탭.
 const NOTIFICATION_ROUTES = {
   CONSULTANT: '/notifications',
-  CLIENT: '/notifications',
+  CLIENT: CLIENT_NOTIFICATIONS_ENTRY_PATH,
   ADMIN: '/admin/messages',
   BRANCH_ADMIN: '/admin/messages',
   BRANCH_SUPER_ADMIN: '/admin/messages',
@@ -47,7 +49,12 @@ const SimpleLayout = ({
   // 알림 아이콘 클릭 핸들러
   const handleNotificationClick = () => {
     if (!user?.role) return;
-    
+
+    if (isClientNotificationUser(user)) {
+      navigate(CLIENT_NOTIFICATIONS_ENTRY_PATH);
+      return;
+    }
+
     const route = NOTIFICATION_ROUTES[user.role];
     if (route) {
       navigate(route);

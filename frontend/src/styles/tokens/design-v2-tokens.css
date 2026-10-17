@@ -854,4 +854,25 @@
   --mg-mlist-col-qty: 7.5rem;
   --mg-mlist-col-sub: 8rem;
   --mg-msum-max: 34rem;
+
+  /* 내담자 알림 탭·카드·결제 강조 (시안 tokens.css 2부, var 참조만) */
+  --mg-v2-tab-bg: var(--mg-v2-color-surface-card);
+  --mg-v2-tab-border: var(--mg-v2-color-border-default);
+  --mg-v2-tab-text: var(--mg-v2-color-text-secondary);
+  --mg-v2-tab-selected-bg: var(--mg-v2-color-neutral-100);
+  --mg-v2-tab-selected-border: var(--mg-v2-color-border-strong);
+  --mg-v2-tab-selected-text: var(--mg-v2-color-text-primary);
+  --mg-v2-notif-matching-bg: var(--mg-v2-color-primary-subtle);
+  --mg-v2-notif-matching-fg: var(--mg-v2-color-primary-main);
+  --mg-v2-notif-payment-bg: var(--mg-v2-color-semantic-info-light);
+  --mg-v2-notif-payment-fg: var(--mg-v2-color-semantic-info-dark);
+  --mg-v2-notif-deposit-bg: var(--mg-v2-color-semantic-success-light);
+  --mg-v2-notif-deposit-fg: var(--mg-v2-color-semantic-success-dark);
+  --mg-v2-notif-default-bg: var(--mg-v2-color-surface-stone);
+  --mg-v2-notif-default-fg: var(--mg-v2-color-text-secondary);
+  --mg-v2-notif-unread-dot: var(--mg-v2-color-primary-main);
+  --mg-v2-notif-unread-text: var(--mg-v2-color-text-secondary);
+  --mg-v2-highlight-bg: var(--mg-v2-color-neutral-100);
+  --mg-v2-highlight-border: var(--mg-v2-color-border-strong);
+  --mg-v2-notif-skeleton: var(--mg-v2-color-border-subtle);
 }

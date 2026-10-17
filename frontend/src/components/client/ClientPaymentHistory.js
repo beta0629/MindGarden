@@ -19,7 +19,9 @@ import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import {
   buildClientPaymentCaption,
   buildClientPaymentRows,
+  clientPaymentPageForKey,
   filterClientPaymentRows,
+  findClientPaymentRowByMappingId,
   formatClientPaymentSummary,
   isUsableProductName,
   normalizePage,
@@ -191,7 +193,14 @@ const SkeletonCards = () => (
   </>
 );
 
-const PaymentTable = ({ rows, caption, isLoading }) => (
+const PaymentTable = ({
+  rows,
+  caption,
+  isLoading,
+  highlightMappingId,
+  highlightRef,
+  onRowActivate
+}) => (
   <table className="client-payment-table" data-testid={CLIENT_PAYMENT_TEST_IDS.TABLE}>
     <caption className="sr-only">{caption}</caption>
     <colgroup>
@@ -211,18 +220,29 @@ const PaymentTable = ({ rows, caption, isLoading }) => (
       </tr>
     </thead>
     <tbody>
-      {isLoading ? <SkeletonRows /> : rows.map((row) => (
+      {isLoading ? <SkeletonRows /> : rows.map((row) => {
+        const highlighted = highlightMappingId
+          && row.mappingId != null
+          && String(row.mappingId) === String(highlightMappingId);
+        return (
         <tr
           key={row.key}
           className={[
             'client-payment-table__row',
             row.kind === CLIENT_PAYMENT_ROW_KIND.SHOP_ORDER && !row.productIsFallback
               ? 'client-payment-table__row--link'
-              : ''
+              : '',
+            highlighted ? 'client-payment-table__row--from-notification' : ''
           ].filter(Boolean).join(' ')}
           data-testid={CLIENT_PAYMENT_TEST_IDS.ROW}
+          tabIndex={highlighted ? -1 : undefined}
+          ref={highlighted ? highlightRef : undefined}
+          onClick={() => onRowActivate(row)}
         >
           <td className="client-payment-table__cell--date">
+            {highlighted ? (
+              <span className="sr-only">{CLIENT_PAYMENT_COPY.HIGHLIGHT_SR}</span>
+            ) : null}
             <SafeText>{row.dateText}</SafeText>
           </td>
           <td className="client-payment-table__cell--product">
@@ -262,7 +282,8 @@ const PaymentTable = ({ rows, caption, isLoading }) => (
             <StatusBadge badge={row.badge} label={row.badgeLabel} />
           </td>
         </tr>
-      ))}
+        );
+      })}
     </tbody>
   </table>
 );
@@ -305,10 +326,33 @@ const CardBody = ({ row }) => (
   </>
 );
 
-const PaymentCards = ({ rows, isLoading }) => (
+const PaymentCards = ({
+  rows,
+  isLoading,
+  highlightMappingId,
+  highlightRef,
+  onRowActivate
+}) => (
   <ul className="client-payment-cards" data-testid={CLIENT_PAYMENT_TEST_IDS.CARDS}>
-    {isLoading ? <SkeletonCards /> : rows.map((row) => (
-      <li key={row.key} className="client-payment-cards__item" data-testid={CLIENT_PAYMENT_TEST_IDS.ROW}>
+    {isLoading ? <SkeletonCards /> : rows.map((row) => {
+      const highlighted = highlightMappingId
+        && row.mappingId != null
+        && String(row.mappingId) === String(highlightMappingId);
+      return (
+      <li
+        key={row.key}
+        className={[
+          'client-payment-cards__item',
+          highlighted ? 'client-payment-cards__item--from-notification' : ''
+        ].filter(Boolean).join(' ')}
+        data-testid={CLIENT_PAYMENT_TEST_IDS.ROW}
+        tabIndex={highlighted ? -1 : undefined}
+        ref={highlighted ? highlightRef : undefined}
+        onClick={() => onRowActivate(row)}
+      >
+        {highlighted ? (
+          <span className="sr-only">{CLIENT_PAYMENT_COPY.HIGHLIGHT_SR}</span>
+        ) : null}
         {row.kind === CLIENT_PAYMENT_ROW_KIND.SHOP_ORDER && !row.productIsFallback ? (
           <Link to={buildShopOrderDetailPath(row.orderPublicId)} className="client-payment-cards__link">
             <CardBody row={row} />
@@ -319,7 +363,8 @@ const PaymentCards = ({ rows, isLoading }) => (
           </div>
         )}
       </li>
-    ))}
+      );
+    })}
   </ul>
 );
 
@@ -336,6 +381,8 @@ const ClientPaymentHistory = () => {
   const period = normalizePeriod(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.PERIOD));
   const status = normalizeStatusFilter(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.STATUS));
   const requestedPage = normalizePage(searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.PAGE));
+  const highlightId = (searchParams.get(CLIENT_PAYMENT_QUERY_KEYS.MAPPING_ID) || '').trim();
+  const highlightRef = useRef(null);
 
   const { ready, userId } = useClientSessionReady();
 
@@ -424,22 +471,101 @@ const ClientPaymentHistory = () => {
     setSearchParams(next);
   }, [searchParams, setSearchParams]);
 
+  const clearHighlightChange = {
+    [CLIENT_PAYMENT_QUERY_KEYS.MAPPING_ID]: null
+  };
   const handlePeriod = (id) => updateQuery({
     [CLIENT_PAYMENT_QUERY_KEYS.PERIOD]: id === CLIENT_PAYMENT_PERIOD.ALL ? null : id,
-    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null
+    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null,
+    ...clearHighlightChange
   });
   const handleStatus = (id) => updateQuery({
     [CLIENT_PAYMENT_QUERY_KEYS.STATUS]: id === CLIENT_PAYMENT_STATUS_FILTER.ALL ? null : id,
-    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null
+    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null,
+    ...clearHighlightChange
   });
   const handleReset = () => updateQuery({
     [CLIENT_PAYMENT_QUERY_KEYS.PERIOD]: null,
     [CLIENT_PAYMENT_QUERY_KEYS.STATUS]: null,
-    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null
+    [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null,
+    ...clearHighlightChange
   });
   const handlePage = (nextPage) => updateQuery({
     [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: nextPage > 1 ? String(nextPage) : null
   });
+
+  const highlightRow = useMemo(
+    () => findClientPaymentRowByMappingId(allRows, highlightId),
+    [allRows, highlightId]
+  );
+
+  useEffect(() => {
+    if (!highlightId || isLoading || error || !sources || !highlightRow) {
+      return;
+    }
+    const visible = filteredRows.some((row) => row.key === highlightRow.key);
+    if (!visible) {
+      if (period !== CLIENT_PAYMENT_PERIOD.ALL || status !== CLIENT_PAYMENT_STATUS_FILTER.ALL) {
+        updateQuery({
+          [CLIENT_PAYMENT_QUERY_KEYS.PERIOD]: null,
+          [CLIENT_PAYMENT_QUERY_KEYS.STATUS]: null,
+          [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: null
+        });
+      }
+      return;
+    }
+    const targetPage = clientPaymentPageForKey(
+      filteredRows,
+      highlightRow.key,
+      CLIENT_PAYMENT_HISTORY_PAGE_SIZE
+    );
+    if (targetPage !== page) {
+      updateQuery({
+        [CLIENT_PAYMENT_QUERY_KEYS.PAGE]: targetPage > 1 ? String(targetPage) : null
+      });
+    }
+  }, [
+    highlightId,
+    highlightRow,
+    filteredRows,
+    period,
+    status,
+    page,
+    isLoading,
+    error,
+    sources,
+    updateQuery
+  ]);
+
+  const highlightOnPage = pageRows.some(
+    (row) => highlightId && row.mappingId != null && String(row.mappingId) === highlightId
+  );
+
+  useEffect(() => {
+    if (!highlightId || isLoading || !highlightOnPage) {
+      return;
+    }
+    const node = highlightRef.current;
+    if (!node) {
+      return;
+    }
+    if (typeof node.scrollIntoView === 'function') {
+      node.scrollIntoView({ block: 'center' });
+    }
+    if (typeof node.focus === 'function') {
+      node.focus();
+    }
+  }, [highlightId, page, isLoading, isMobile, highlightOnPage]);
+
+  const handleRowActivate = (row) => {
+    if (!highlightId) {
+      return;
+    }
+    if (row && row.mappingId != null && String(row.mappingId) === highlightId) {
+      return;
+    }
+    updateQuery({ [CLIENT_PAYMENT_QUERY_KEYS.MAPPING_ID]: null });
+  };
 
   const isEmptyAll = !isLoading && !error && allRows.length === 0;
   const showFilterBar = !error && !isEmptyAll;
@@ -517,9 +643,26 @@ const ClientPaymentHistory = () => {
       </div>
     );
   } else if (isMobile) {
-    listContent = <PaymentCards rows={pageRows} isLoading={isLoading} />;
+    listContent = (
+      <PaymentCards
+        rows={pageRows}
+        isLoading={isLoading}
+        highlightMappingId={highlightId}
+        highlightRef={highlightRef}
+        onRowActivate={handleRowActivate}
+      />
+    );
   } else {
-    listContent = <PaymentTable rows={pageRows} caption={caption} isLoading={isLoading} />;
+    listContent = (
+      <PaymentTable
+        rows={pageRows}
+        caption={caption}
+        isLoading={isLoading}
+        highlightMappingId={highlightId}
+        highlightRef={highlightRef}
+        onRowActivate={handleRowActivate}
+      />
+    );
   }
 
   const mainSlot = (

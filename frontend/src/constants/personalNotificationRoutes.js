@@ -1,6 +1,6 @@
 /**
  * 내 알림 유형 → 내담자 경로.
- * 경로는 CLIENT_DASHBOARD_ROUTES / CLIENT_SHOP_ROUTES 만 참조한다.
+ * 경로는 CLIENT_DASHBOARD_ROUTES / CLIENT_SHOP_ROUTES / 알림 진입 상수만 참조한다.
  * kind 가 없으면 제목·본문을 비교하지 않고, notificationType 참고 경로만 연다.
  *
  * @author CoreSolution
@@ -10,6 +10,7 @@
 import { CLIENT_DASHBOARD_ROUTES } from './clientDashboardRoutes';
 import { CLIENT_PAYMENT_QUERY_KEYS } from './clientPaymentHistoryConstants';
 import { CLIENT_SHOP_ROUTES } from './clientShopConstants';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from './notificationTabs';
 import { LEGACY_USER_ROLES, USER_ROLES } from './roles';
 
 export const PERSONAL_NOTIFICATION_KIND = Object.freeze({
@@ -78,6 +79,18 @@ export const usesClientNotificationShell = (user, isLoggedIn) => {
   }
   return isClientNotificationUser(user);
 };
+
+/**
+ * 알림 목록으로 들어가는 주소. 내담자만 내 알림 탭, 상담사·관리자는 쿼리 없는 목록.
+ *
+ * @param {object|null|undefined} user
+ * @returns {string}
+ */
+export const resolveNotificationsListPath = (user) => (
+  isClientNotificationUser(user)
+    ? CLIENT_NOTIFICATIONS_ENTRY_PATH
+    : CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+);
 
 /**
  * @param {unknown} metadata 객체 또는 JSON 문자열

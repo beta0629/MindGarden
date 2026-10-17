@@ -13,6 +13,7 @@ import {
   buildClientDashboardQuickMenuItemTestId
 } from '../clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../clientShopConstants';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../notificationTabs';
 
 describe('clientDashboardRoutes web-native SSOT', () => {
   test('routes align with web LNB (CLIENT_MENU_ITEMS)', () => {
@@ -34,7 +35,8 @@ describe('clientDashboardRoutes web-native SSOT', () => {
     expect(map['/client/payments']).toBe(CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY);
     expect(map['/client/orders']).toBe(CLIENT_SHOP_ROUTES.ORDERS);
     expect(map['/client/profile']).toBe(CLIENT_DASHBOARD_ROUTES.SETTINGS);
-    expect(map['/client/notifications']).toBe(CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS);
+    expect(map['/client/notifications']).toBe(CLIENT_NOTIFICATIONS_ENTRY_PATH);
+    expect(CLIENT_NOTIFICATIONS_ENTRY_PATH).toBe('/notifications?tab=personal');
     expect(map['/shop']).toBe(CLIENT_SHOP_ROUTES.CATALOG);
     expect(map['/client/messages']).toBeUndefined();
   });

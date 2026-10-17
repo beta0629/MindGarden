@@ -29,6 +29,7 @@ import {
 import {
   PERSONAL_NOTIFICATION_PRESENTATION,
   isClientNotificationUser,
+  resolveNotificationsListPath,
   resolvePersonalNotificationDestination,
   usesClientNotificationShell
 } from '../../constants/personalNotificationRoutes';
@@ -336,7 +337,10 @@ const UnifiedNotifications = () => {
         }
       } finally {
         if (!cancelled) {
-          navigate('/notifications', { replace: true, state: {} });
+          if (isClientNotificationUser(user)) {
+            setActiveTab(NOTIFICATION_TABS.PERSONAL);
+          }
+          navigate(resolveNotificationsListPath(user), { replace: true, state: {} });
         }
       }
     })();
@@ -346,6 +350,7 @@ const UnifiedNotifications = () => {
     };
   }, [
     isLoggedIn,
+    user,
     location.state?.openSystemNotificationId,
     location.state?.openConsultationMessageId,
     navigate

@@ -7,7 +7,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { USER_ROLES } from '../../../constants/roles';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
-import { NOTIFICATION_PAGE_TEST_IDS } from '../../../constants/notificationTabs';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH, NOTIFICATION_PAGE_TEST_IDS } from '../../../constants/notificationTabs';
 import UnifiedNotifications from '../UnifiedNotifications';
 import { apiGet } from '../../../utils/ajax';
 import StandardizedApi from '../../../utils/standardizedApi';
@@ -265,7 +265,7 @@ describe('UnifiedNotifications 내 알림', () => {
     });
   });
 
-  test('GNB 딥링크는 공지 모달을 연 뒤 /notifications 로 바꾼다', async() => {
+  test('GNB 딥링크는 공지 모달을 연 뒤 내담자 내 알림 주소로 바꾼다', async() => {
     apiGet.mockImplementation((url) => {
       if (String(url).includes('/api/v1/system-notifications/9')) {
         return Promise.resolve({
@@ -289,8 +289,39 @@ describe('UnifiedNotifications 내 알림', () => {
     );
     expect(await screen.findByRole('dialog')).toHaveTextContent('점검 안내');
     await waitFor(() => {
+      expect(screen.getByTestId('location-probe')).toHaveTextContent(CLIENT_NOTIFICATIONS_ENTRY_PATH);
+    });
+    expect(screen.getByRole('tab', { name: '내 알림' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  test('상담사 GNB 딥링크는 쿼리 없는 /notifications 와 시스템 공지 탭을 유지한다', async() => {
+    mockSessionState.user = { id: 3, role: 'CONSULTANT', name: '김상담' };
+    apiGet.mockImplementation((url) => {
+      if (String(url).includes('/api/v1/system-notifications/9')) {
+        return Promise.resolve({
+          id: 9,
+          title: '점검 안내',
+          content: '본문',
+          publishedAt: '2026-10-01T09:00:00'
+        });
+      }
+      return Promise.resolve({ notifications: [] });
+    });
+    render(
+      <MemoryRouter initialEntries={[{
+        pathname: '/consultant/dashboard',
+        state: { openSystemNotificationId: 9 }
+      }]}
+      >
+        <UnifiedNotifications />
+        <LocationProbe />
+      </MemoryRouter>
+    );
+    expect(await screen.findByRole('dialog')).toHaveTextContent('점검 안내');
+    await waitFor(() => {
       expect(screen.getByTestId('location-probe')).toHaveTextContent('/notifications');
     });
+    expect(screen.getByTestId('location-probe')).not.toHaveTextContent('tab=personal');
     expect(screen.getByRole('tab', { name: '시스템 공지' })).toHaveAttribute('aria-selected', 'true');
   });
 });

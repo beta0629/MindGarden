@@ -16,7 +16,7 @@ import { Link, useLocation } from 'react-router-dom';
 import SafeText from '../common/SafeText';
 import { NotificationBadge } from '../dashboard-v2/atoms';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
-import { NOTIFICATION_TABS, buildNotificationsTabPath } from '../../constants/notificationTabs';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../constants/notificationTabs';
 import {
   CLIENT_WEB_LOGIN,
   CLIENT_WEB_LOGOUT,
@@ -38,10 +38,7 @@ import './ClientWebTopChrome.css';
 
 const BellIcon = ICONS.BELL;
 /** 종 개수는 개인 알림 미읽음 — 같은 목록(내 알림 탭)으로 연다 */
-const NOTIFICATIONS_BELL_HREF = buildNotificationsTabPath(
-  CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS,
-  NOTIFICATION_TABS.PERSONAL
-);
+const NOTIFICATIONS_BELL_HREF = CLIENT_NOTIFICATIONS_ENTRY_PATH;
 const MessageCircleIcon = ICONS.MESSAGE_CIRCLE;
 const CartIcon = ICONS.SHOPPING_CART;
 

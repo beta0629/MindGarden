@@ -4,10 +4,12 @@
 
 import { CLIENT_DASHBOARD_ROUTES } from '../clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../clientShopConstants';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../notificationTabs';
 import { USER_ROLES, LEGACY_USER_ROLES } from '../roles';
 import {
   isClientNotificationUser,
   parsePersonalNotificationMetadata,
+  resolveNotificationsListPath,
   resolvePersonalNotificationDestination,
   usesClientNotificationShell
 } from '../personalNotificationRoutes';
@@ -88,5 +90,14 @@ describe('personalNotificationRoutes', () => {
     expect(usesClientNotificationShell({ role: LEGACY_USER_ROLES.ROLE_CLIENT }, true)).toBe(true);
     expect(isClientNotificationUser({ role: 'CONSULTANT' })).toBe(false);
     expect(usesClientNotificationShell({ role: 'ADMIN' }, true)).toBe(false);
+  });
+
+  test('알림 목록 주소는 내담자만 내 알림 탭', () => {
+    expect(resolveNotificationsListPath({ role: USER_ROLES.CLIENT })).toBe(CLIENT_NOTIFICATIONS_ENTRY_PATH);
+    expect(resolveNotificationsListPath({ role: LEGACY_USER_ROLES.ROLE_CLIENT }))
+      .toBe(CLIENT_NOTIFICATIONS_ENTRY_PATH);
+    expect(resolveNotificationsListPath({ role: 'CONSULTANT' })).toBe(CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS);
+    expect(resolveNotificationsListPath({ role: 'ADMIN' })).toBe('/notifications');
+    expect(resolveNotificationsListPath(null)).toBe('/notifications');
   });
 });

@@ -1,0 +1,68 @@
+# 운영 읽기 전용 1회: 결제 진행 중 주문·결제 건수.
+# READ ONLY 트랜잭션에서 SELECT 만 한다. UPDATE/INSERT/DELETE/DDL 없음.
+# 이 파일만 바꾸는 release/prod pull_request 에서만 돈다. 머지하지 않는다. 실행 후 닫는다.
+name: 운영 읽기 전용 결제 진행 중 주문
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [release/prod]
+    paths:
+      - '.github/workflows/prod-readonly-inprogress-orders.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  prod-read:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only in-progress order counts
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME MYSQL_PWD; do
+            if [ -z "${!name:-}" ]; then echo "::error::empty secret ${name}"; exit 1; fi
+            echo "::add-mask::${!name}"
+          done
+          echo "KST now: $(TZ=Asia/Seoul date '+%Y-%m-%d %H:%M:%S')"
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --table <<'SQL'
+          SET SESSION TRANSACTION READ ONLY;
+          START TRANSACTION READ ONLY;
+          SELECT 'shop_open_by_status' AS section, status, COUNT(*) AS n,
+                 MIN(updated_at) AS oldest_updated_at, MAX(updated_at) AS newest_updated_at
+            FROM shop_client_orders
+           WHERE is_deleted = 0 AND status IN ('CREATED', 'PENDING_PAYMENT')
+           GROUP BY status;
+          SELECT 'shop_open_recent_30m' AS section, COUNT(*) AS n
+            FROM shop_client_orders
+           WHERE is_deleted = 0 AND status IN ('CREATED', 'PENDING_PAYMENT')
+             AND updated_at >= (UTC_TIMESTAMP() - INTERVAL 30 MINUTE);
+          SELECT 'payments_inflight_by_status' AS section, status, COUNT(*) AS n,
+                 MIN(updated_at) AS oldest_updated_at, MAX(updated_at) AS newest_updated_at
+            FROM payments
+           WHERE is_deleted = 0 AND status IN ('PENDING', 'PROCESSING')
+           GROUP BY status;
+          SELECT 'payments_processing' AS section, COUNT(*) AS n
+            FROM payments
+           WHERE is_deleted = 0 AND status = 'PROCESSING';
+          SELECT 'payments_inflight_recent_30m' AS section, COUNT(*) AS n
+            FROM payments
+           WHERE is_deleted = 0 AND status IN ('PENDING', 'PROCESSING')
+             AND updated_at >= (UTC_TIMESTAMP() - INTERVAL 30 MINUTE);
+          ROLLBACK;
+          SQL

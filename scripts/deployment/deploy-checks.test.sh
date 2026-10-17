@@ -482,6 +482,101 @@ if echo "$LAST_OUT" | grep -i 'cred_source' | grep -qi 'password'; then
   fail=1
 fi
 
+# --- sticky pre_set vs CLEAR_PRESET / unset (fake secrets only; never echo passwords) ---
+HELPER_STICKY_ENV="$HELPER_FIXTURE/sticky-special.env"
+# env 파일 값에 # " 포함 (ops 특수문자). 주변 따옴표 없음 → 그대로 로드.
+cat > "$HELPER_STICKY_ENV" <<'EOF'
+DB_HOST=10.0.0.5
+DB_PORT=3307
+DB_USERNAME=from_file
+DB_PASSWORD=good#Val"ue
+DB_NAME=from_file_db
+EOF
+
+cat > "$HELPER_FIXTURE/assert-sticky-stale.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+. "$LOAD_DB"
+[ "\$DB_PASSWORD" = 'stale#Wrong' ] || exit 2
+echo sticky-stale-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-sticky-stale.sh"
+check "load-deploy-db-env: sticky wrong DB_PASSWORD 유지 (CLEAR 없음 → pre_set)" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS -u MG_DEPLOY_CLEAR_PRESET \
+  DB_PASSWORD='stale#Wrong' \
+  MG_DEPLOY_ENV_FILE="$HELPER_STICKY_ENV" \
+  bash "$HELPER_FIXTURE/assert-sticky-stale.sh"
+echo "$LAST_OUT" | grep -q "cred_source pw=pre_set" || { echo "not ok - sticky stale 는 pre_set 이어야 함"; fail=1; }
+echo "$LAST_OUT" | grep -qE 'stale#Wrong|good#Val' && { echo "not ok - sticky stale 테스트 비밀번호 노출"; fail=1; }
+
+cat > "$HELPER_FIXTURE/assert-sticky-cleared.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+. "$LOAD_DB"
+[ "\$DB_PASSWORD" = 'good#Val"ue' ] || exit 2
+echo sticky-cleared-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-sticky-cleared.sh"
+check "load-deploy-db-env: MG_DEPLOY_CLEAR_PRESET=1 이면 sticky 무시·env 파일 로드" 0 \
+  env -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS \
+  DB_PASSWORD='stale#Wrong' DB_HOST=stale-host DB_USERNAME=stale-user \
+  DB_NAME=stale-db DB_PORT=3999 \
+  MG_DEPLOY_CLEAR_PRESET=1 \
+  MG_DEPLOY_ENV_FILE="$HELPER_STICKY_ENV" \
+  bash "$HELPER_FIXTURE/assert-sticky-cleared.sh"
+echo "$LAST_OUT" | grep -q "cred_source pw=sticky-special_env" \
+  || { echo "not ok - CLEAR_PRESET 후 env 소스 태그(sticky-special_env) 없음"; fail=1; }
+echo "$LAST_OUT" | grep -q "cred_source pw=pre_set" && { echo "not ok - CLEAR_PRESET 후 pre_set 이면 안 됨"; fail=1; }
+echo "$LAST_OUT" | grep -qE 'stale#Wrong|good#Val' && { echo "not ok - CLEAR_PRESET 테스트 비밀번호 노출"; fail=1; }
+
+cat > "$HELPER_FIXTURE/assert-sticky-unset.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
+. "$LOAD_DB"
+[ "\$DB_PASSWORD" = 'good#Val"ue' ] || exit 2
+echo sticky-unset-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-sticky-unset.sh"
+check "load-deploy-db-env: unset DB_* 후 sticky 무시·env 파일 로드" 0 \
+  env -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS -u MG_DEPLOY_CLEAR_PRESET \
+  DB_PASSWORD='stale#Wrong' DB_HOST=stale-host \
+  MG_DEPLOY_ENV_FILE="$HELPER_STICKY_ENV" \
+  bash "$HELPER_FIXTURE/assert-sticky-unset.sh"
+echo "$LAST_OUT" | grep -q "cred_source pw=pre_set" && { echo "not ok - unset 후 pre_set 이면 안 됨"; fail=1; }
+echo "$LAST_OUT" | grep -qE 'stale#Wrong|good#Val' && { echo "not ok - unset sticky 테스트 비밀번호 노출"; fail=1; }
+
+# env-file 주변 따옴표 strip + CLEAR_PRESET (fake: p#a s$s)
+HELPER_QUOTE_ENV="$HELPER_FIXTURE/quote-strip.env"
+cat > "$HELPER_QUOTE_ENV" <<'EOF'
+DB_HOST=10.0.0.5
+DB_PORT=3307
+DB_USERNAME=from_file
+DB_PASSWORD="p#a s$s"
+DB_NAME=from_file_db
+EOF
+cat > "$HELPER_FIXTURE/assert-quote-strip.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+. "$LOAD_DB"
+[ "\$DB_PASSWORD" = 'p#a s\$s' ] || exit 2
+echo quote-strip-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-quote-strip.sh"
+check "load-deploy-db-env: CLEAR_PRESET + quoted env-file DB_PASSWORD round-trip" 0 \
+  env -u DB_HOST -u DB_PORT -u DB_USERNAME -u DB_NAME \
+  -u PRODUCTION_DB_PASSWORD -u DEV_DB_PASSWORD -u MG_DEPLOY_DB_PASSWORD_FALLBACK \
+  -u MG_DEPLOY_SYSTEMD_UNITS \
+  DB_PASSWORD='stale#Wrong' \
+  MG_DEPLOY_CLEAR_PRESET=1 \
+  MG_DEPLOY_ENV_FILE="$HELPER_QUOTE_ENV" \
+  bash "$HELPER_FIXTURE/assert-quote-strip.sh"
+echo "$LAST_OUT" | grep -qE 'p#a s|stale#Wrong' && { echo "not ok - quote-strip 테스트 비밀번호 노출"; fail=1; }
+
 # --- preflight-deploy-db.sh ---
 write_mock_mysql select1_ok
 check "preflight: SELECT 1 성공" 0 \
@@ -604,7 +699,9 @@ for ch_label in \
   'dquote:"' \
   'backslash:\' \
   'space: ' \
-  'dollar:$'
+  'dollar:$' \
+  'percent:%' \
+  'equals:='
 do
   case_name="${ch_label%%:*}"
   ch_val="${ch_label#*:}"
@@ -692,7 +789,9 @@ if command -v my_print_defaults >/dev/null 2>&1; then
     'dquote:"' \
     'backslash:\' \
     'space: ' \
-    'dollar:$'
+    'dollar:$' \
+    'percent:%' \
+    'equals:='
   do
     case_name="${ch_label%%:*}"
     ch_val="${ch_label#*:}"
@@ -718,7 +817,7 @@ if command -v my_print_defaults >/dev/null 2>&1; then
           fi
           ;;
         *)
-          # MySQL 8 option parser: ; " ' \ $ space 는 미인용에서도 생존하는 것이 관측됨
+          # MySQL 8 option parser: ; " ' \ $ space % = 는 미인용에서도 생존하는 것이 관측됨
           echo "not ok - unquoted matrix $case_name: expected OK on MySQL 8 (got BREAK)"
           fail=1
           ;;
@@ -756,7 +855,9 @@ if command -v my_print_defaults >/dev/null 2>&1; then
     'dquote:"' \
     'backslash:\' \
     'space: ' \
-    'dollar:$'
+    'dollar:$' \
+    'percent:%' \
+    'equals:='
   do
     case_name="${ch_label%%:*}"
     ch_val="${ch_label#*:}"
@@ -849,6 +950,132 @@ check "mysql-deploy-client: classifies option-file parse error" 0 \
 echo "$LAST_OUT" | grep -q 'sec#ret' && { echo "not ok - cnf-parse path leaked password"; fail=1; }
 
 # restore select1 mock for any later tests
+write_mock_mysql select1_ok
+
+# --- mysql_deploy_query_sudo: socket-first then cnf fallback (fake passwords only) ---
+SUDO_MARKER="$HELPER_FIXTURE/sudo-marker"
+mkdir -p "$SUDO_MARKER"
+
+write_mock_sudo() {
+  cat > "$MOCK_DIR/sudo" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+# PATH 앞단에 mock mysql 이 오도록 한 뒤 인자 그대로 실행 (sudoers 흉내)
+export PATH="$MOCK_DIR:\$PATH"
+exec "\$@"
+EOF
+  chmod +x "$MOCK_DIR/sudo"
+}
+
+# Case D1: passwordless socket 성공 → cnf 미사용
+cat > "$MOCK_DIR/mysql" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+marker="$SUDO_MARKER/invokes"
+for a in "\$@"; do
+  case "\$a" in
+    -p*|--password=*)
+      echo "FAIL: password must not be passed as CLI arg" >&2
+      exit 98
+      ;;
+    --defaults-extra-file=*)
+      echo cnf >> "\$marker"
+      echo "FAIL: socket-first should not reach cnf" >&2
+      exit 95
+      ;;
+  esac
+done
+echo socket >> "\$marker"
+echo 1
+exit 0
+EOF
+chmod +x "$MOCK_DIR/mysql"
+write_mock_sudo
+: > "$SUDO_MARKER/invokes"
+cat > "$HELPER_FIXTURE/assert-sudo-socket-ok.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export PATH="$MOCK_DIR:\$PATH"
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='fake#RootPass' DB_NAME=core_solution
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+out="\$(mysql_deploy_query_sudo 'SELECT 1;')"
+[ "\$out" = "1" ] || exit 2
+echo sudo-socket-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-sudo-socket-ok.sh"
+check "mysql_deploy_query_sudo: passwordless socket succeeds (no cnf)" 0 \
+  bash "$HELPER_FIXTURE/assert-sudo-socket-ok.sh"
+if grep -q '^socket$' "$SUDO_MARKER/invokes" && ! grep -q '^cnf$' "$SUDO_MARKER/invokes"; then
+  echo "ok - sudo socket-first: socket invoke only"
+else
+  echo "not ok - sudo socket-first: expected socket-only invokes (got $(tr '\n' ' ' < "$SUDO_MARKER/invokes"))"
+  fail=1
+fi
+echo "$LAST_OUT" | grep -q 'fake#RootPass' && { echo "not ok - socket-ok path leaked password"; fail=1; }
+
+# Case D2: passwordless 실패 → cnf 폴백 성공
+cat > "$MOCK_DIR/mysql" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+marker="$SUDO_MARKER/invokes2"
+has_cnf=0
+for a in "\$@"; do
+  case "\$a" in
+    -p*|--password=*)
+      echo "FAIL: password must not be passed as CLI arg" >&2
+      exit 98
+      ;;
+    --defaults-extra-file=*)
+      has_cnf=1
+      cnf="\${a#--defaults-extra-file=}"
+      if [ ! -f "\$cnf" ]; then
+        echo "FAIL: defaults-extra-file missing" >&2
+        exit 97
+      fi
+      perms=\$(stat -c '%a' "\$cnf" 2>/dev/null || stat -f '%Lp' "\$cnf" 2>/dev/null || echo "")
+      if [ -n "\$perms" ] && [ "\$perms" != "600" ]; then
+        echo "FAIL: cnf perms=\$perms" >&2
+        exit 96
+      fi
+      ;;
+  esac
+done
+if [ "\$has_cnf" = "1" ]; then
+  echo cnf >> "\$marker"
+  echo 1
+  exit 0
+fi
+echo socket_fail >> "\$marker"
+echo "ERROR 1045 (28000): Access denied for user 'root'@'localhost' (using password: NO)" >&2
+exit 1
+EOF
+chmod +x "$MOCK_DIR/mysql"
+write_mock_sudo
+: > "$SUDO_MARKER/invokes2"
+cat > "$HELPER_FIXTURE/assert-sudo-cnf-fallback.sh" <<EOF
+#!/usr/bin/env bash
+set -euo pipefail
+export PATH="$MOCK_DIR:\$PATH"
+export DB_HOST=127.0.0.1 DB_PORT=3306 DB_USERNAME=u DB_PASSWORD='fake#CnfPass' DB_NAME=core_solution
+export MYSQL_DEPLOY_MYSQL_BIN="$MOCK_DIR/mysql"
+. "$MYSQL_CLIENT"
+out="\$(mysql_deploy_query_sudo 'SELECT 1;')"
+[ "\$out" = "1" ] || exit 2
+echo sudo-cnf-fallback-ok
+EOF
+chmod +x "$HELPER_FIXTURE/assert-sudo-cnf-fallback.sh"
+check "mysql_deploy_query_sudo: socket fail then cnf password fallback" 0 \
+  bash "$HELPER_FIXTURE/assert-sudo-cnf-fallback.sh"
+if grep -q '^socket_fail$' "$SUDO_MARKER/invokes2" && grep -q '^cnf$' "$SUDO_MARKER/invokes2"; then
+  echo "ok - sudo socket-first: socket_fail then cnf"
+else
+  echo "not ok - sudo socket-first fallback (got $(tr '\n' ' ' < "$SUDO_MARKER/invokes2"))"
+  fail=1
+fi
+echo "$LAST_OUT" | grep -q 'fake#CnfPass' && { echo "not ok - cnf-fallback path leaked password"; fail=1; }
+
+# restore select1 mock
 write_mock_mysql select1_ok
 
 # --- deploy-backend-dev.yml: mysql-deploy-client 통일 (MYSQL_PWD 회귀 가드) ---
@@ -968,6 +1195,52 @@ else
     echo "ok - deploy-production.yml preflight region has MG_DEPLOY_ENV_FILE_REQUIRED=1"
   else
     echo "not ok - deploy-production.yml preflight region missing MG_DEPLOY_ENV_FILE_REQUIRED=1"
+    fail=1
+  fi
+
+  # sticky DB_* unset 가 load-deploy-db-env source 직전 (V20260829_003 repair + Flyway health)
+  assert_unset_before_load() {
+    local label="$1" region="$2"
+    local unset_line load_line
+    unset_line="$(printf '%s\n' "$region" | grep -n 'unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME' | head -1 | cut -d: -f1 || true)"
+    load_line="$(printf '%s\n' "$region" | grep -n '\. "\$LOAD_DB_ENV"' | head -1 | cut -d: -f1 || true)"
+    if [ -n "${unset_line:-}" ] && [ -n "${load_line:-}" ] && [ "$unset_line" -lt "$load_line" ]; then
+      echo "ok - $label has unset DB_* before . \"\$LOAD_DB_ENV\""
+    else
+      echo "not ok - $label missing unset DB_* before load-deploy-db-env (unset=${unset_line:-?} load=${load_line:-?})"
+      fail=1
+    fi
+  }
+
+  REPAIR_REGION="$(awk '
+    /\[V20260829_003\] flyway_schema_history success=0 원샷 repair/ { capturing=1 }
+    capturing { print }
+    capturing && /\. "\$LOAD_DB_ENV"/ { exit }
+  ' "$PROD_WF")"
+  assert_unset_before_load "deploy-production.yml V20260829_003 repair" "$REPAIR_REGION"
+
+  # Flyway health step: LOAD_DB_ENV= … . "$LOAD_DB_ENV"
+  FLYWAY_HEALTH_REGION="$(awk '
+    /LOAD_DB_ENV=\/var\/www\/mindgarden\/load-deploy-db-env\.sh/ { capturing=1 }
+    capturing { print }
+    capturing && /\. "\$LOAD_DB_ENV"/ { exit }
+  ' "$PROD_WF")"
+  assert_unset_before_load "deploy-production.yml Flyway health" "$FLYWAY_HEALTH_REGION"
+fi
+
+# deploy-backend-dev.yml Flyway health: unset before load
+if [ -f "$DEV_WF" ]; then
+  DEV_FLYWAY_HEALTH_REGION="$(awk '
+    /LOAD_DB_ENV=\/var\/www\/mindgarden-dev\/load-deploy-db-env\.sh/ { capturing=1 }
+    capturing { print }
+    capturing && /\. "\$LOAD_DB_ENV"/ { exit }
+  ' "$DEV_WF")"
+  unset_line="$(printf '%s\n' "$DEV_FLYWAY_HEALTH_REGION" | grep -n 'unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME' | head -1 | cut -d: -f1 || true)"
+  load_line="$(printf '%s\n' "$DEV_FLYWAY_HEALTH_REGION" | grep -n '\. "\$LOAD_DB_ENV"' | head -1 | cut -d: -f1 || true)"
+  if [ -n "${unset_line:-}" ] && [ -n "${load_line:-}" ] && [ "$unset_line" -lt "$load_line" ]; then
+    echo "ok - deploy-backend-dev.yml Flyway health has unset DB_* before . \"\$LOAD_DB_ENV\""
+  else
+    echo "not ok - deploy-backend-dev.yml Flyway health missing unset before load (unset=${unset_line:-?} load=${load_line:-?})"
     fail=1
   fi
 fi

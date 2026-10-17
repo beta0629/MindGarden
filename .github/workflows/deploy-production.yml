@@ -1075,6 +1075,8 @@ jobs:
             export MG_DEPLOY_ENV_FILE="${PROD_ENV_FILE:-/etc/mindgarden/prod.env}"
             export MG_DEPLOY_SYSTEMD_UNITS="${INACTIVE_UNIT} ${ACTIVE_UNIT_FOR_ENV}"
             export MG_DEPLOY_DB_PASSWORD_FALLBACK="${PRODUCTION_DB_PASSWORD:-}"
+            # sticky remote/session DB_* must not override prod.env (run 38975330813 pre_set→1045)
+            unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
             # shellcheck disable=SC1090
             . "$LOAD_DB_ENV"
             MYSQL_CLIENT_SH=/var/www/mindgarden/mysql-deploy-client.sh
@@ -1502,6 +1504,8 @@ jobs:
           export MG_DEPLOY_ENV_FILE_REQUIRED=1
           export MG_DEPLOY_SYSTEMD_UNITS="${INACTIVE_UNIT_FOR_HEALTH} ${ACTIVE_UNIT}"
           export MG_DEPLOY_DB_PASSWORD_FALLBACK="${PRODUCTION_DB_PASSWORD:-}"
+          # sticky remote/session DB_* must not override prod.env (run 38975330813 pre_set→1045)
+          unset DB_HOST DB_PORT DB_USERNAME DB_PASSWORD DB_NAME
           # shellcheck disable=SC1090
           . "$LOAD_DB_ENV"
           echo "🔍 Flyway 스키마 헬스 (load-deploy-db-env → check-flyway-schema-health.sh)..."

@@ -66,6 +66,15 @@ jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'lux
   virtual: true
 });
 
+// 라우트 스모크는 통합 스케줄 페이지의 네트워크/캘린더 부트에 묶이지 않게 한다.
+// (query 보존 테스트가 실제 페이지 마운트 시 5s 타임아웃)
+jest.mock('./components/admin/IntegratedMatchingScheduleManagement', () => ({
+  __esModule: true,
+  default: function MockIntegratedMatchingScheduleManagement() {
+    return null;
+  }
+}));
+
 import App from './App';
 
 describe('App', () => {

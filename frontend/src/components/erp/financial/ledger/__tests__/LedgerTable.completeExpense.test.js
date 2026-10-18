@@ -126,4 +126,30 @@ describe('LedgerTable 카테고리 표시', () => {
 
     expect(screen.getByText('CUSTOM_CAT')).toBeInTheDocument();
   });
+
+  test('빈·null 카테고리는 - 를 표시한다', () => {
+    const { rerender } = render(<LedgerTable transactions={[{
+      id: 14,
+      transactionDate: '2026-10-03',
+      transactionType: 'EXPENSE',
+      category: '',
+      description: '카테고리 없음',
+      amount: 1000,
+      status: 'COMPLETED'
+    }]} />);
+
+    expect(screen.getByText('-')).toBeInTheDocument();
+
+    rerender(<LedgerTable transactions={[{
+      id: 15,
+      transactionDate: '2026-10-03',
+      transactionType: 'EXPENSE',
+      category: null,
+      description: '카테고리 null',
+      amount: 1000,
+      status: 'COMPLETED'
+    }]} />);
+
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
 });

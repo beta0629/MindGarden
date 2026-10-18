@@ -92,6 +92,16 @@ describe('financialTransactionCategoryPicker', () => {
     expect(resolveCategoryCodeDisplayLabel(undefined, [])).toBe('-');
   });
 
+  it('resolveCategoryCodeDisplayLabel — 패딩된 codeValue/codeLabel 도 매칭', () => {
+    const rows = [
+      { codeValue: '  RENT  ', codeLabel: '  임대료  ' },
+      { value: '  MEAL  ', label: '  식대  ' }
+    ];
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('임대료');
+    expect(resolveCategoryCodeDisplayLabel('  MEAL  ', rows)).toBe('식대');
+    expect(resolveCategoryCodeDisplayLabel('MEAL', rows)).toBe('식대');
+  });
+
   it('buildFixedCategoryOptions — API SSOT 전체 부모 (고정 6칩/demote 없음)', () => {
     const options = buildFixedCategoryOptions('EXPENSE', mockExpenseCategories);
     expect(options.map((o) => o.value)).toEqual([

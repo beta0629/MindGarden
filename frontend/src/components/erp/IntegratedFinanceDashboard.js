@@ -53,7 +53,6 @@ import './ErpCommon.css';
 import './IntegratedFinanceDashboard.css';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import {
-  EXPENSE_CATEGORY_LABELS,
   IFS_ACCESSIBILITY,
   IFS_ACTIVE_LABEL,
   IFS_BALANCE_SHEET_STATUS,
@@ -73,10 +72,10 @@ import {
   IFS_REPORT,
   IFS_SETTLEMENT_ROW_STATUS,
   IFS_TABLE_CELL,
-  INCOME_CATEGORY_LABELS,
   INTEGRATED_FINANCE_PAGE,
   INTEGRATED_FINANCE_TAB_ITEMS
 } from '../../constants/integratedFinanceDashboardStrings';
+import { resolveCategoryCodeDisplayLabel } from '../../utils/financialTransactionCategoryPicker';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -125,9 +124,6 @@ const formatCurrency = (amount) => {
 const formatNumber = (num) => {
   return new Intl.NumberFormat('ko-KR').format(num);
 };
-
-const getExpenseCategoryLabel = (code) => EXPENSE_CATEGORY_LABELS[code] || code;
-const getIncomeCategoryLabel = (code) => INCOME_CATEGORY_LABELS[code] || code;
 
 /** StandardizedApi/ajax가 { success, data } 래퍼를 벗긴 뒤에도 실패 본문 전체가 올 수 있음 → axios response.data.success === false 와 동등 */
 const isApiEnvelopeFailure = (result) => {
@@ -228,6 +224,10 @@ const IntegratedFinanceDashboard = ({
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dashboardData, setDashboardData] = useState(null);
+  const [financialCategoryRows, setFinancialCategoryRows] = useState({
+    income: [],
+    expense: []
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const initialTab =
@@ -400,6 +400,18 @@ const IntegratedFinanceDashboard = ({
 
       setDashboardData(result);
       console.log('✅ ERP 대시보드 데이터 로드 완료:', result);
+
+      try {
+        const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+        const body = envelope?.data ?? envelope ?? {};
+        setFinancialCategoryRows({
+          income: body.incomeCategories || [],
+          expense: body.expenseCategories || []
+        });
+      } catch (categoryErr) {
+        console.warn('재무 공통코드 로드 생략:', categoryErr);
+        setFinancialCategoryRows({ income: [], expense: [] });
+      }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
 
@@ -581,7 +593,9 @@ const IntegratedFinanceDashboard = ({
               />
             </div>
           )}
-          {activeTab === 'overview' && !embedded && <OverviewTab data={dashboardData} />}
+          {activeTab === 'overview' && !embedded && (
+            <OverviewTab data={dashboardData} categoryRows={financialCategoryRows} />
+          )}
           {activeTab === 'journal-entries' && <JournalEntriesTab />}
           {activeTab === 'ledgers' && <LedgersTab />}
           {activeTab === 'balance-sheet' && <BalanceSheetTab />}
@@ -642,9 +656,11 @@ const IntegratedFinanceDashboard = ({
 };
 
 // 개요 탭 컴포넌트
-const OverviewTab = ({ data }) => {
+const OverviewTab = ({ data, categoryRows }) => {
   const { t } = useTranslation(['erp']);
   const navigate = useNavigate();
+  const incomeCategoryRows = categoryRows?.income || [];
+  const expenseCategoryRows = categoryRows?.expense || [];
 
   if (!data) {
     return (
@@ -665,14 +681,14 @@ const OverviewTab = ({ data }) => {
   const getIncomeDescription = () => {
     const categories = Object.keys(incomeByCategory);
     if (categories.length === 0) return t('erp:finance.overview.incomeDescFallback');
-    const labels = categories.map(getIncomeCategoryLabel);
+    const labels = categories.map((code) => resolveCategoryCodeDisplayLabel(code, incomeCategoryRows));
     return [...new Set(labels)].join(', ');
   };
 
   const getExpenseDescription = () => {
     const categories = Object.keys(expenseByCategory);
     if (categories.length === 0) return t('erp:finance.overview.expenseDescFallback');
-    const labels = categories.map(getExpenseCategoryLabel);
+    const labels = categories.map((code) => resolveCategoryCodeDisplayLabel(code, expenseCategoryRows));
     return [...new Set(labels)].join(', ');
   };
 

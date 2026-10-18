@@ -568,9 +568,7 @@ const LedgerCalendar = ({
                       >
                         {desc}
                       </button>
-                      {categoryLabel && categoryLabel !== '-' ? (
-                        <span className="ledger-calendar__detail-secondary">{categoryLabel}</span>
-                      ) : null}
+                      <span className="ledger-calendar__detail-secondary">{categoryLabel}</span>
                       {isIncome && fee > 0 ? (
                         <span className="ledger-calendar__detail-secondary">
                           {FINANCIAL_CARD_MERCHANT_FEE_LABEL}

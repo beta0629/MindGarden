@@ -45,6 +45,21 @@ import {
 } from '../../../constants/operatorFinanceDashboardStrings';
 import { SALARY_LATE_NOTES_LABELS, SALARY_TYPE } from '../../../constants/salaryConstants';
 
+/** 표시 라벨용 공통코드 목 — 고정 OFD/EXPENSE 맵 대체 */
+const MOCK_FINANCE_CATEGORY_ROWS = [
+  { codeValue: 'TAX', codeLabel: '세금' },
+  { codeValue: 'MEAL', codeLabel: '식대' },
+  { codeValue: 'EQUIPMENT', codeLabel: '장비' },
+  { codeValue: 'OFFICE_SUPPLIES', codeLabel: '사무용품' },
+  { codeValue: 'RENT', codeLabel: '임대' },
+  { codeValue: 'UTILITY', codeLabel: '관리' },
+  { codeValue: 'SALARY', codeLabel: '급여' },
+  { codeValue: 'CONSULTATION', codeLabel: '상담료' },
+  { codeValue: 'OTHER', codeLabel: '기타' },
+  { codeValue: 'PACKAGE', codeLabel: '패키지' },
+  { codeValue: 'CUSTOM_ADS', codeLabel: '광고' }
+];
+
 describe('moneyCockpitData format helpers', () => {
   test('formatWonAmount(1000000) → 1,000,000', () => {
     expect(formatWonAmount(1000000)).toBe('1,000,000');
@@ -266,7 +281,7 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(sum).toBe(52500);
   });
 
-  test('outflow: TAX·MEAL·동적 카테고리 모두 표시 (6키 하드코딩 없음)', () => {
+  test('outflow: TAX·MEAL·동적 카테고리 모두 표시 (공통코드 라벨 · 합산 키 불변)', () => {
     const breakdown = {
       SALARY: 10000,
       RENT: 20000,
@@ -277,7 +292,9 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       OFFICE_SUPPLIES: 7000,
       CUSTOM_ADS: 8000
     };
-    const items = buildOutflowMixItems(breakdown, []);
+    const items = buildOutflowMixItems(breakdown, [], {
+      categoryRows: MOCK_FINANCE_CATEGORY_ROWS
+    });
     expect(items.find((i) => i.id === 'salary')?.amount).toBe(10000);
     expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(25000);
     expect(items.some((i) => i.label === '세금' && i.amount === 3000)).toBe(true);
@@ -286,6 +303,12 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     expect(items.length).toBeGreaterThanOrEqual(7);
     const sum = items.reduce((s, i) => s + i.amount, 0);
     expect(sum).toBe(Object.values(breakdown).reduce((a, b) => a + b, 0));
+  });
+
+  test('outflow: 공통코드 없으면 TAX/MEAL 은 bare code 라벨 (고정 맵 없음)', () => {
+    const items = buildOutflowMixItems({ TAX: 1000, MEAL: 2000 }, []);
+    expect(items.some((i) => i.label === 'TAX' && i.amount === 1000)).toBe(true);
+    expect(items.some((i) => i.label === 'MEAL' && i.amount === 2000)).toBe(true);
   });
 
   test('income/outflow: sum(items) === sum(breakdown) 불변식', () => {

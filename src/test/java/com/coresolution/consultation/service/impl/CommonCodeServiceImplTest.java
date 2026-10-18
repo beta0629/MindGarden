@@ -18,6 +18,7 @@ import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
 import com.coresolution.consultation.dto.CommonCodeCreateRequest;
 import com.coresolution.consultation.dto.CommonCodeDto;
 import com.coresolution.consultation.dto.CommonCodeResponse;
+import com.coresolution.consultation.dto.CommonCodeUpdateRequest;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -185,7 +186,7 @@ class CommonCodeServiceImplTest {
     }
 
     @Test
-    @DisplayName("createCommonCode: 패딩된 codeGroup/value/label 을 trim 하여 저장")
+    @DisplayName("createCommonCode: codeGroup/value 만 trim, codeLabel 은 원문 보존")
     void createCommonCode_trimsPaddedFields() {
         CommonCodeDto dto = CommonCodeDto.builder()
             .codeGroup("  EXPENSE_CATEGORY  ")
@@ -203,14 +204,15 @@ class CommonCodeServiceImplTest {
 
         assertEquals("EXPENSE_CATEGORY", saved.getCodeGroup());
         assertEquals("RENT", saved.getCodeValue());
-        assertEquals("임대료", saved.getCodeLabel());
+        assertEquals("  임대료  ", saved.getCodeLabel());
         ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
         verify(commonCodeRepository).save(captor.capture());
         assertEquals("RENT", captor.getValue().getCodeValue());
+        assertEquals("  임대료  ", captor.getValue().getCodeLabel());
     }
 
     @Test
-    @DisplayName("create(표준): 패딩된 필드를 trim 하여 저장·응답")
+    @DisplayName("create(표준): codeGroup/value 만 trim, codeLabel 은 원문 보존")
     void create_standardized_trimsPaddedFields() {
         TenantContextHolder.setTenantId(TENANT);
         when(permissionService.canCreateCode(any(), eq(TENANT))).thenReturn(true);
@@ -234,20 +236,25 @@ class CommonCodeServiceImplTest {
 
         assertEquals("EXPENSE_CATEGORY", response.getCodeGroup());
         assertEquals("MEAL", response.getCodeValue());
-        assertEquals("식대", response.getCodeLabel());
+        assertEquals("  식대  ", response.getCodeLabel());
         ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
         verify(commonCodeRepository).save(captor.capture());
         assertEquals("MEAL", captor.getValue().getCodeValue());
-        assertEquals("식대", captor.getValue().getCodeLabel());
+        assertEquals("  식대  ", captor.getValue().getCodeLabel());
     }
 
     @Test
-    @DisplayName("fromEntity: 응답 DTO 의 codeGroup/value/label 도 trim")
+    @DisplayName("fromEntity: codeGroup/value/parent 만 trim, codeLabel 은 원문")
     void fromEntity_trimsOnRead() {
         CommonCode row = baseCodeBuilder()
             .codeGroup("  G  ")
             .codeValue("  V  ")
-            .codeLabel("  L  ")
+            .codeLabel("  L  \n\n")
+            .parentCodeGroup("  PG  ")
+            .parentCodeValue("  PV  ")
+            .koreanName("  K  \n")
+            .codeDescription("desc\n\n\n")
+            .extraData("{\"body\":\"x\\n\\n\\n\"}")
             .build();
         row.setId(1L);
 
@@ -255,17 +262,22 @@ class CommonCodeServiceImplTest {
 
         assertEquals("G", response.getCodeGroup());
         assertEquals("V", response.getCodeValue());
-        assertEquals("L", response.getCodeLabel());
+        assertEquals("  L  \n\n", response.getCodeLabel());
+        assertEquals("PG", response.getParentCodeGroup());
+        assertEquals("PV", response.getParentCodeValue());
+        assertEquals("  K  \n", response.getKoreanName());
+        assertEquals("desc\n\n\n", response.getCodeDescription());
+        assertEquals("{\"body\":\"x\\n\\n\\n\"}", response.getExtraData());
     }
 
     @Test
-    @DisplayName("getActiveCodesByGroup: Map 응답의 codeValue/codeLabel/parentCodeValue 도 trim")
+    @DisplayName("getActiveCodesByGroup: value/parent 만 trim, codeLabel 공백·개행 보존")
     void getActiveCodesByGroup_trimsMapFields() {
         TenantContextHolder.clear();
         CommonCode row = baseCodeBuilder()
             .codeGroup("  INCOME_CATEGORY  ")
             .codeValue("  CONSULTATION  ")
-            .codeLabel("  상담료  ")
+            .codeLabel("  상담료  \n\n")
             .parentCodeGroup("  PARENT_G  ")
             .parentCodeValue("  PARENT_V  ")
             .build();
@@ -278,10 +290,90 @@ class CommonCodeServiceImplTest {
         assertEquals(1, maps.size());
         Map<String, Object> codeMap = maps.get(0);
         assertEquals("CONSULTATION", codeMap.get("codeValue"));
-        assertEquals("상담료", codeMap.get("codeLabel"));
+        assertEquals("  상담료  \n\n", codeMap.get("codeLabel"));
         assertEquals("PARENT_G", codeMap.get("parentCodeGroup"));
         assertEquals("PARENT_V", codeMap.get("parentCodeValue"));
         assertEquals(7L, codeMap.get("id"));
+    }
+
+    @Test
+    @DisplayName("SMS_TEMPLATE create/update/read: codeLabel·본문 개행 보존, codeValue ' COFFE' → COFFE")
+    void smsTemplate_preservesLabelAndBody_trimsCodeValue() {
+        TenantContextHolder.setTenantId(TENANT);
+        String labelWithNewlines = "커피 안내\n\n\n";
+        String descriptionWithNewlines = "본문 설명\n\n\n";
+        String extraWithNewlines = "{\"text\":\"안녕하세요\\n\\n\\n\"}";
+        String koreanWithNewlines = "한글명\n\n\n";
+
+        when(permissionService.canCreateCode(any(), eq(TENANT))).thenReturn(true);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT, "SMS_TEMPLATE", "COFFE"))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode c = inv.getArgument(0);
+            if (c.getId() == null) {
+                c.setId(55L);
+            }
+            return c;
+        });
+
+        CommonCodeCreateRequest createRequest = CommonCodeCreateRequest.builder()
+            .codeGroup("  SMS_TEMPLATE  ")
+            .codeValue(" COFFE")
+            .codeLabel(labelWithNewlines)
+            .koreanName(koreanWithNewlines)
+            .codeDescription(descriptionWithNewlines)
+            .extraData(extraWithNewlines)
+            .tenantId(TENANT)
+            .build();
+
+        CommonCodeResponse created = commonCodeService.create(createRequest, null);
+
+        assertEquals("SMS_TEMPLATE", created.getCodeGroup());
+        assertEquals("COFFE", created.getCodeValue());
+        assertEquals(labelWithNewlines, created.getCodeLabel());
+        assertEquals(koreanWithNewlines, created.getKoreanName());
+        assertEquals(descriptionWithNewlines, created.getCodeDescription());
+        assertEquals(extraWithNewlines, created.getExtraData());
+
+        ArgumentCaptor<CommonCode> createCaptor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(createCaptor.capture());
+        CommonCode persisted = createCaptor.getValue();
+        assertEquals("COFFE", persisted.getCodeValue());
+        assertEquals(labelWithNewlines, persisted.getCodeLabel());
+        assertEquals(descriptionWithNewlines, persisted.getCodeDescription());
+        assertEquals(extraWithNewlines, persisted.getExtraData());
+
+        CommonCode existing = CommonCode.builder()
+            .codeGroup("SMS_TEMPLATE")
+            .codeValue("COFFE")
+            .codeLabel("old")
+            .koreanName("old")
+            .codeDescription("old")
+            .extraData("{}")
+            .build();
+        existing.setId(55L);
+        existing.setTenantId(TENANT);
+        when(commonCodeRepository.findByTenantIdAndId(TENANT, 55L)).thenReturn(Optional.of(existing));
+        when(permissionService.canUpdateCode(any(), any(CommonCode.class))).thenReturn(true);
+
+        String updatedLabel = "수정 라벨\n\n\n";
+        String updatedDescription = "수정 본문\n\n\n";
+        String updatedExtra = "{\"body\":\"SMS 본문\\n\\n\\n\"}";
+        CommonCodeUpdateRequest updateRequest = CommonCodeUpdateRequest.builder()
+            .codeLabel(updatedLabel)
+            .codeDescription(updatedDescription)
+            .extraData(updatedExtra)
+            .koreanName(koreanWithNewlines)
+            .build();
+
+        CommonCodeResponse updated = commonCodeService.update(55L, updateRequest, null);
+
+        assertEquals(updatedLabel, updated.getCodeLabel());
+        assertEquals(updatedDescription, updated.getCodeDescription());
+        assertEquals(updatedExtra, updated.getExtraData());
+        assertEquals(koreanWithNewlines, updated.getKoreanName());
+        assertEquals("COFFE", updated.getCodeValue());
+        assertEquals("SMS_TEMPLATE", updated.getCodeGroup());
     }
 
     private static CommonCode.CommonCodeBuilder baseCodeBuilder() {

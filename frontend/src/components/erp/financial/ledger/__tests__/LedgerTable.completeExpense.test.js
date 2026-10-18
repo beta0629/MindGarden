@@ -95,6 +95,24 @@ describe('LedgerTable 카테고리 표시', () => {
     expect(screen.getByText('임대료')).toBeInTheDocument();
   });
 
+  test('공통코드 codeLabel이 고정 i18n/맵 라벨보다 우선한다', () => {
+    render(<LedgerTable
+      transactions={[{
+        id: 13,
+        transactionDate: '2026-10-03',
+        transactionType: 'EXPENSE',
+        category: 'RENT',
+        description: '사무실 임대',
+        amount: 120000,
+        status: 'COMPLETED'
+      }]}
+      categoryOptions={[{ codeValue: 'RENT', codeLabel: 'API임대료라벨' }]}
+    />);
+
+    expect(screen.getByText('API임대료라벨')).toBeInTheDocument();
+    expect(screen.queryByText('임대료')).not.toBeInTheDocument();
+  });
+
   test('옵션이 없거나 미매칭이면 bare code를 표시한다', () => {
     render(<LedgerTable transactions={[{
       id: 12,

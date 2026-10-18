@@ -62,6 +62,14 @@ describe('financialTransactionCategoryPicker', () => {
     expect(resolveCategoryCodeDisplayLabel('MARKETING', mockExpenseCategories)).toBe('마케팅');
   });
 
+  it('resolveCategoryCodeDisplayLabel — 공통코드 codeLabel이 고정 i18n/맵 라벨보다 우선', () => {
+    // 예전 erp:finance.management.categoryDisplay.RENT = '임대료' 등 고정 맵이 있어도
+    // 공통코드 행 codeLabel(API)만 사용한다.
+    const rows = [{ codeValue: 'RENT', codeLabel: 'API임대료라벨' }];
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('API임대료라벨');
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).not.toBe('임대료');
+  });
+
   it('resolveCategoryCodeDisplayLabel — 행 label 공백이면 codeValue', () => {
     const rows = [{ codeValue: 'EXP_CAT_001', codeLabel: '' }];
     expect(resolveCategoryCodeDisplayLabel('EXP_CAT_001', rows)).toBe('EXP_CAT_001');

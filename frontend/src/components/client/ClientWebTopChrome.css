@@ -160,15 +160,25 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
+  min-width: var(--mg-v2-touch-target-min);
+  min-height: var(--mg-v2-touch-target-min);
   text-decoration: none;
   color: var(--client-web-chrome-slate);
   padding: var(--mg-v2-space-1, 0.25rem);
+  border: var(--mg-v2-border-width-thin) solid transparent;
   border-radius: var(--client-web-chrome-radius);
   line-height: 1;
 }
 
 .client-web-topchrome__icon-link:hover {
   color: var(--client-web-chrome-ink);
+}
+
+.client-web-topchrome__icon-link--current {
+  background: var(--mg-v2-tab-selected-bg);
+  border-color: var(--mg-v2-tab-selected-border);
+  color: var(--mg-v2-tab-selected-text);
 }
 
 .client-web-topchrome__icon-link .mg-v2-notification-badge {

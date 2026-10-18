@@ -5,7 +5,8 @@ import UnifiedLoading from '../common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
 import './QuickExpenseForm.css';
-import csrfTokenManager from '../../utils/csrfTokenManager';
+import StandardizedApi from '../../utils/standardizedApi';
+import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
@@ -19,10 +20,6 @@ import {
   QEF_ERRORS,
   QEF_VAT_EXEMPT_CATEGORY_CODE
 } from '../../constants/quickExpenseFormStrings';
-
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
-const API_ERP_FINANCE_QUICK_EXPENSE = '/api/v1/erp/finance/quick-expense';
 
 /**
  * 나간 돈 기록 (UnifiedModal + 공통코드 칩 → 금액 → 등록)
@@ -47,16 +44,18 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
   const loadExpenseCodes = async() => {
     try {
       setLoadingCodes(true);
-      const response = await csrfTokenManager.get(API_ERP_COMMON_CODES_FINANCIAL);
-      const body = await response.json().catch(() => ({}));
-
-      if (response.ok && body.success) {
-        setExpenseCategories(body.data.expenseCategories || []);
-        setExpenseSubcategories(body.data.expenseSubcategories || []);
-      } else if (!response.ok) {
+      const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+      const body = envelope?.data ?? envelope ?? {};
+      const categories = body.expenseCategories;
+      const subcategories = body.expenseSubcategories;
+      if (!envelope || body.success === false
+          || (!Array.isArray(categories) && !Array.isArray(subcategories))) {
         setError(body.message || QEF_ERRORS.CODES_LOAD_FAILED);
         notificationManager.error(QEF_ERRORS.CODES_LOAD_FAILED);
+        return;
       }
+      setExpenseCategories(Array.isArray(categories) ? categories : []);
+      setExpenseSubcategories(Array.isArray(subcategories) ? subcategories : []);
     } catch (err) {
       console.error('지출 공통 코드 로드 실패:', err);
       setError(QEF_ERRORS.CODES_LOAD_FAILED);
@@ -117,28 +116,25 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         description: `${category.codeLabel} 지출`,
         transactionDate: formatLocalDateYmd(new Date())
       });
-      const response = await csrfTokenManager.fetchWithCsrf(
-        `${API_ERP_FINANCE_QUICK_EXPENSE}?${params.toString()}`,
-        { method: 'POST' }
+      const taxInfo = await StandardizedApi.post(
+        `${ERP_API.FINANCE_QUICK_EXPENSE}?${params.toString()}`,
+        {}
       );
-      const responseData = await response.json().catch(() => ({}));
-
-      if (response.ok && responseData.success) {
-        const taxInfo = responseData?.data ?? {};
-        const isVatApplicable = categoryCode !== QEF_VAT_EXEMPT_CATEGORY_CODE;
-        let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
-        if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
-          const totalAmount = taxInfo.amount ?? amount;
-          successMessage += ` (총 ${Number(totalAmount).toLocaleString()}원)`;
-        }
-        notificationManager.show(successMessage, 'success', 3000);
-        onSuccess?.(responseData.data);
-        onClose?.();
-      } else {
-        const msg = responseData.message || QEF_ERRORS.SUBMIT_FAILED;
+      if (!taxInfo || taxInfo.success === false) {
+        const msg = taxInfo?.message || QEF_ERRORS.SUBMIT_FAILED;
         setError(msg);
         notificationManager.show(msg, 'error', 4000);
+        return;
       }
+      const isVatApplicable = categoryCode !== QEF_VAT_EXEMPT_CATEGORY_CODE;
+      let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
+      if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
+        const totalAmount = taxInfo.amount ?? amount;
+        successMessage += ` (총 ${Number(totalAmount).toLocaleString()}원)`;
+      }
+      notificationManager.show(successMessage, 'success', 3000);
+      onSuccess?.(taxInfo);
+      onClose?.();
     } catch (err) {
       const msg = err?.message || QEF_ERRORS.SUBMIT_ERROR;
       setError(msg);

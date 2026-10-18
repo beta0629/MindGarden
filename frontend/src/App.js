@@ -22,6 +22,7 @@ import ConsultationRecordScreen from './components/consultant/ConsultationRecord
 import ConsultationRecordView from './components/consultant/ConsultationRecordView';
 import PurchaseManagement from './components/erp/PurchaseManagement';
 import FinancialManagement from './components/erp/FinancialManagement';
+import IntegratedFinanceDashboard from './components/erp/IntegratedFinanceDashboard';
 import BudgetManagement from './components/erp/BudgetManagement';
 import ConsultantMessageScreen from './components/consultant/ConsultantMessageScreen';
 import ConsultantDashboardRenewal from './components/consultant/ConsultantDashboardRenewal';
@@ -556,11 +557,9 @@ function AppContent() {
               <Route
                 path={CLIENT_OFFER_ROUTES.OFFERS}
                 element={(
-                  <ProtectedRoute requiredRoles={[USER_ROLES.CLIENT]}>
-                    <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
-                      <ClientOffersPage />
-                    </ClientTenantComponentGate>
-                  </ProtectedRoute>
+                  <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+                    <ClientOffersPage />
+                  </ClientTenantComponentGate>
                 )}
               />
               <Route
@@ -1028,6 +1027,7 @@ function AppContent() {
                 </ProtectedRoute>
               }
             />
+            <Route path={ADMIN_ROUTES.ERP_INTEGRATED_FINANCE} element={<ProtectedRoute requiredRoles={[USER_ROLES.ADMIN]}><IntegratedFinanceDashboard /></ProtectedRoute>} />
             <Route
               path="/erp/budget"
               element={

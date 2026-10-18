@@ -37,6 +37,30 @@ public class MobilePushInboxPersister {
             String canonicalType,
             String title,
             String body) {
+        doPersist(tenantId, userId, canonicalType, title, body, null);
+    }
+
+    /**
+     * @param metadataJson 개인 알림 metadata. 비어 있으면 metadata 없는 send 와 같다
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void persistForRecipient(
+            String tenantId,
+            Long userId,
+            String canonicalType,
+            String title,
+            String body,
+            String metadataJson) {
+        doPersist(tenantId, userId, canonicalType, title, body, metadataJson);
+    }
+
+    private void doPersist(
+            String tenantId,
+            Long userId,
+            String canonicalType,
+            String title,
+            String body,
+            String metadataJson) {
         if (tenantId == null || tenantId.isBlank()) {
             log.debug("알림 인박스 persist skip: tenantId 없음 type={} userId={}", canonicalType, userId);
             return;
@@ -51,13 +75,13 @@ public class MobilePushInboxPersister {
             return;
         }
         try {
-            notificationLifecycleService.send(
-                    tenantId,
-                    userId,
-                    null,
-                    resolveNotificationType(canonicalType),
-                    title,
-                    body != null ? body : "");
+            String safeBody = body != null ? body : "";
+            NotificationType type = resolveNotificationType(canonicalType);
+            if (metadataJson == null || metadataJson.isBlank()) {
+                notificationLifecycleService.send(tenantId, userId, null, type, title, safeBody);
+            } else {
+                notificationLifecycleService.send(tenantId, userId, null, type, title, safeBody, metadataJson);
+            }
             log.debug("알림 인박스 persist 완료: tenantId={} userId={} type={}",
                     tenantId, userId, canonicalType);
         } catch (Exception e) {

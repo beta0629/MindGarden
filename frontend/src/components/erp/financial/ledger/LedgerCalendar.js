@@ -13,7 +13,7 @@ import { EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import { formatKrw, FINANCIAL_CARD_MERCHANT_FEE_LABEL, FINANCIAL_CARD_NET_DEPOSIT_LABEL } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
-import { formatLocalDateYmd, localizePaymentMethodParens } from '../../../../utils/erpFinanceDisplay';
+import { formatLocalDateYmd, localizePaymentMethodParens, canCompleteRecordedExpense } from '../../../../utils/erpFinanceDisplay';
 import { splitKrwFigureAndUnit } from './LedgerCalendar.helpers';
 import {
   FM_FILTER,
@@ -226,6 +226,7 @@ LedgerCalendarAmount.propTypes = {
  * @param {(tx: object) => void} [props.onView]
  * @param {(tx: object) => void} [props.onEdit]
  * @param {(tx: object) => void} [props.onDelete]
+ * @param {(tx: object) => void} [props.onComplete]
  */
 const LedgerCalendar = ({
   monthYm,
@@ -237,7 +238,8 @@ const LedgerCalendar = ({
   onAddOnDate,
   onView,
   onEdit,
-  onDelete
+  onDelete,
+  onComplete
 }) => {
   const resolvedYm = resolveMonthYm(monthYm);
   const { startDate, endDate, year, month } = useMemo(
@@ -619,6 +621,11 @@ const LedgerCalendar = ({
                             label: FM_ROW_ACTIONS.EDIT,
                             onClick: () => onEdit?.(tx)
                           },
+                          ...(canCompleteRecordedExpense(tx) ? [{
+                            id: 'complete',
+                            label: FM_ROW_ACTIONS.COMPLETE,
+                            onClick: () => onComplete?.(tx)
+                          }] : []),
                           {
                             id: 'delete',
                             label: FM_ROW_ACTIONS.DELETE,
@@ -649,7 +656,8 @@ LedgerCalendar.propTypes = {
   onAddOnDate: PropTypes.func,
   onView: PropTypes.func,
   onEdit: PropTypes.func,
-  onDelete: PropTypes.func
+  onDelete: PropTypes.func,
+  onComplete: PropTypes.func
 };
 
 export default LedgerCalendar;

@@ -12,6 +12,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import ActionBarButton from '../../common/ActionBarButton';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../../constants/notificationTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -230,7 +231,7 @@ const ClientMessageWidget = ({ widget, user }) => {
 
   // 전체 메시지 보기
   const handleViewAllMessages = () => {
-    navigate('/notifications');
+    navigate(CLIENT_NOTIFICATIONS_ENTRY_PATH);
   };
 
   // 날짜 포맷팅

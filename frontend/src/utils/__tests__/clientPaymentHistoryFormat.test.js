@@ -9,7 +9,10 @@
 import {
   buildClientPaymentCaption,
   buildClientPaymentRows,
+  buildMappingPaymentRow,
+  clientPaymentPageForKey,
   filterClientPaymentRows,
+  findClientPaymentRowByMappingId,
   formatClientPaymentSummary,
   formatPaymentDate,
   formatSessions,
@@ -393,5 +396,24 @@ describe('summary · paging · query helpers', () => {
 
   test('caption', () => {
     expect(buildClientPaymentCaption('3m', 'refunded', 2)).toBe('결제 내역 · 3개월 · 환불 · 2건');
+  });
+});
+
+describe('clientPaymentHistoryFormat — 알림 mappingId', () => {
+  test('매핑 행에 mappingId 를 남기고 해당 페이지를 계산한다', () => {
+    const rows = Array.from({ length: 12 }, (_, index) => buildMappingPaymentRow({
+      id: 1000 + index,
+      packageName: `상품 ${index}`,
+      paymentAmount: 1000,
+      paymentStatus: 'APPROVED',
+      paymentMethod: 'CARD',
+      paymentDate: `2026-01-${String(index + 1).padStart(2, '0')}T10:00:00`
+    }));
+    const sorted = [...rows].sort((a, b) => (b.time || 0) - (a.time || 0));
+    const target = findClientPaymentRowByMappingId(sorted, '1000');
+
+    expect(target.mappingId).toBe('1000');
+    expect(findClientPaymentRowByMappingId(sorted, '404')).toBeNull();
+    expect(clientPaymentPageForKey(sorted, target.key, 10)).toBe(2);
   });
 });

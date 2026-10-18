@@ -20,6 +20,8 @@ import { formatKrw } from '../../utils/erpFinancialAmountStack';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { IFS_HEADER_ACTIONS } from '../../constants/integratedFinanceDashboardStrings';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
@@ -828,6 +830,23 @@ const FinancialManagement = () => {
     }
   };
 
+  const completeRecordedExpense = async(tx) => {
+    if (!tx?.id) {
+      return;
+    }
+    try {
+      const result = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTION_COMPLETE(tx.id), {});
+      if (result?.success === false) {
+        notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+        return;
+      }
+      notificationManager.success(FM_TOAST.COMPLETE_SUCCESS);
+      refreshLedgerViews();
+    } catch (err) {
+      notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+    }
+  };
+
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -866,6 +885,23 @@ const FinancialManagement = () => {
               onPeriodChange={handlePeriodChange}
               onRecordClick={openMoneyRecordDefault}
             />
+            <nav className="operator-ledger-quick-expense" aria-label={IFS_HEADER_ACTIONS.QUICK_EXPENSE}>
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => navigate(ADMIN_ROUTES.ERP_INTEGRATED_FINANCE)}
+                preventDoubleClick={false}
+              >
+                {IFS_HEADER_ACTIONS.QUICK_EXPENSE}
+              </MGButton>
+            </nav>
 
             <LedgerSummaryStrip
               loading={loading && !silentListRefreshing}
@@ -928,6 +964,7 @@ const FinancialManagement = () => {
                         }}
                         onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                         onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                        onComplete={completeRecordedExpense}
                       />
                     )}
                   </div>
@@ -1004,6 +1041,7 @@ const FinancialManagement = () => {
                     }}
                     onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                     onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                    onComplete={completeRecordedExpense}
                   />
                 </div>
               )}

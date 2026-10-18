@@ -224,6 +224,7 @@ const FinancialManagement = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
+  const [financialCategoryRows, setFinancialCategoryRows] = useState([]);
   const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
@@ -428,12 +429,16 @@ const FinancialManagement = () => {
           return;
         }
         const body = envelope?.data ?? envelope ?? {};
+        const incomeRows = body.incomeCategories || [];
+        const expenseRows = body.expenseCategories || [];
+        setFinancialCategoryRows([...incomeRows, ...expenseRows]);
         setLedgerCategoryOptions(buildLedgerFilterCategoryOptions(
-          body.incomeCategories || [],
-          body.expenseCategories || []
+          incomeRows,
+          expenseRows
         ));
       } catch (err) {
         if (!cancelled) {
+          setFinancialCategoryRows([]);
           setLedgerCategoryOptions([]);
         }
       }
@@ -604,10 +609,20 @@ const FinancialManagement = () => {
       if (cancelled) {
         return;
       }
-      const incomeCaption = buildLedgerIncomeCaptionFromDashboard(dashboardRaw, transactions);
-      const expenseMix = Number.isFinite(periodRefundAmount)
-        ? buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions, { periodRefundAmount })
-        : buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions);
+      const incomeCaption = buildLedgerIncomeCaptionFromDashboard(
+        dashboardRaw,
+        transactions,
+        financialCategoryRows
+      );
+      const mixOptions = {
+        categoryRows: financialCategoryRows,
+        ...(Number.isFinite(periodRefundAmount) ? { periodRefundAmount } : {})
+      };
+      const expenseMix = buildLedgerOutflowMixFromDashboard(
+        dashboardRaw,
+        transactions,
+        mixOptions
+      );
       const expenseCaption = buildTopExpenseCaption(expenseMix);
 
       let remainingCaption = '';
@@ -657,6 +672,7 @@ const FinancialManagement = () => {
     summary.remaining,
     period,
     periodRefundAmount,
+    financialCategoryRows,
     sessionLoading,
     isLoggedIn,
     getDateRangeForFilter

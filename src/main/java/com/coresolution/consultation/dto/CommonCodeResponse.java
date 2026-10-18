@@ -41,7 +41,8 @@ public class CommonCodeResponse {
     
     /**
      * CommonCode 엔티티를 Response DTO로 변환.
-     * codeGroup/codeValue/codeLabel 은 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeGroup/codeValue/parentCodeGroup/parentCodeValue 만 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeLabel/koreanName/codeDescription/extraData 등 라벨·본문은 원문 그대로.
      *
      * @param code 엔티티
      * @return 응답 DTO 또는 null
@@ -56,13 +57,13 @@ public class CommonCodeResponse {
                 .tenantId(code.getTenantId())
                 .codeGroup(CommonCodeFieldNormalizer.normalizeCodeGroup(code.getCodeGroup()))
                 .codeValue(CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()))
-                .codeLabel(CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel()))
+                .codeLabel(code.getCodeLabel())
                 .koreanName(code.getKoreanName())
                 .codeDescription(code.getCodeDescription())
                 .sortOrder(code.getSortOrder())
                 .isActive(code.getIsActive())
-                .parentCodeGroup(code.getParentCodeGroup())
-                .parentCodeValue(code.getParentCodeValue())
+                .parentCodeGroup(CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()))
+                .parentCodeValue(CommonCodeFieldNormalizer.normalizeCodeValue(code.getParentCodeValue()))
                 .extraData(code.getExtraData())
                 .icon(code.getIcon())
                 .colorCode(code.getColorCode())

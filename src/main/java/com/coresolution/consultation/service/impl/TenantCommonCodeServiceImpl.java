@@ -92,7 +92,7 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
     @Transactional
     public CommonCodeResponse createTenantCode(String tenantId, CommonCodeCreateRequest request) {
         String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(request.getCodeGroup());
-        String codeLabel = CommonCodeFieldNormalizer.normalizeCodeLabel(request.getCodeLabel());
+        String codeLabel = request.getCodeLabel();
         log.info("테넌트 공통코드 생성: tenantId={}, codeGroup={}, codeValue={}",
             tenantId, codeGroup, request.getCodeValue());
 
@@ -207,16 +207,16 @@ public class TenantCommonCodeServiceImpl implements TenantCommonCodeService {
         CommonCode code = requireTenantCodeRowForMutation(tenantId, codeId);
 
         String nextLabel = request.getCodeLabel() != null
-                ? CommonCodeFieldNormalizer.normalizeCodeLabel(request.getCodeLabel())
+                ? request.getCodeLabel()
                 : code.getCodeLabel();
         String nextKorean = request.getKoreanName() != null ? request.getKoreanName() : code.getKoreanName();
         if (request.getCodeLabel() != null || request.getKoreanName() != null) {
             assertDisplayNameUnique(tenantId, code.getCodeGroup(), nextKorean, nextLabel, code.getId());
         }
 
-        // 수정
+        // 수정 (codeLabel·본문은 trim 하지 않음; codeGroup/codeValue 는 생성 시만 정규화)
         if (request.getCodeLabel() != null) {
-            code.setCodeLabel(CommonCodeFieldNormalizer.normalizeCodeLabel(request.getCodeLabel()));
+            code.setCodeLabel(request.getCodeLabel());
         }
         if (request.getKoreanName() != null) {
             code.setKoreanName(request.getKoreanName());

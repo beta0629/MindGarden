@@ -84,14 +84,15 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     /**
      * 활성 공통코드 엔티티 목록을 ERP·통계 등에서 쓰는 Map 스키마로 변환한다.
-     * codeValue/codeLabel/parentCodeValue 는 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeValue/parentCodeGroup/parentCodeValue 는 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeLabel/codeDescription 등 라벨·본문은 원문 그대로.
      */
     private List<Map<String, Object>> toActiveCodeMapList(List<CommonCode> codes) {
         return codes.stream().map(code -> {
             Map<String, Object> codeMap = new HashMap<>();
             codeMap.put("id", code.getId());
             codeMap.put("codeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()));
-            codeMap.put("codeLabel", CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel()));
+            codeMap.put("codeLabel", code.getCodeLabel());
             codeMap.put("codeDescription", code.getCodeDescription());
             codeMap.put("sortOrder", code.getSortOrder());
             codeMap.put("parentCodeGroup", CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()));
@@ -163,7 +164,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     public CommonCode createCommonCode(CommonCodeDto dto) {
         String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
         String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
-        String codeLabel = CommonCodeFieldNormalizer.normalizeCodeLabel(dto.getCodeLabel());
+        String codeLabel = dto.getCodeLabel();
         log.info("🔧 공통코드 생성 (캐시 무효화): {} - {}", codeGroup, codeValue);
         
         // 중복 체크
@@ -204,7 +205,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         CommonCode existingCode = getCommonCodeById(id);
         String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
         String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
-        String codeLabel = CommonCodeFieldNormalizer.normalizeCodeLabel(dto.getCodeLabel());
+        String codeLabel = dto.getCodeLabel();
         
         // 코드 그룹과 값이 변경되는 경우 중복 체크
         if (!existingCode.getCodeGroup().equals(codeGroup) || 
@@ -291,7 +292,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
                 .map(dto -> {
                     String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
                     String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
-                    String codeLabel = CommonCodeFieldNormalizer.normalizeCodeLabel(dto.getCodeLabel());
+                    String codeLabel = dto.getCodeLabel();
                     // 한글명 필수 검증 (한국 사용 필수)
                     String koreanName = dto.getKoreanName();
                     if (koreanName == null || koreanName.trim().isEmpty()) {
@@ -712,7 +713,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Transactional
     public CommonCodeResponse create(CommonCodeCreateRequest request, String createdBy) {
         String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(request.getCodeGroup());
-        String codeLabel = CommonCodeFieldNormalizer.normalizeCodeLabel(request.getCodeLabel());
+        String codeLabel = request.getCodeLabel();
         log.info("🔧 공통코드 생성 (표준화): {} - {}", codeGroup, request.getCodeValue());
         
         String tenantId = request.getTenantId() != null ? request.getTenantId() : TenantContextHolder.getTenantId();
@@ -827,9 +828,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             existingCode.setKoreanName(request.getKoreanName());
         }
         
-        // 다른 필드 업데이트
+        // 다른 필드 업데이트 (codeLabel·본문은 trim 하지 않음)
         if (request.getCodeLabel() != null) {
-            existingCode.setCodeLabel(CommonCodeFieldNormalizer.normalizeCodeLabel(request.getCodeLabel()));
+            existingCode.setCodeLabel(request.getCodeLabel());
         }
         if (request.getCodeDescription() != null) {
             existingCode.setCodeDescription(request.getCodeDescription());

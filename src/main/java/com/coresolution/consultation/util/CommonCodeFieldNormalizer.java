@@ -1,8 +1,11 @@
 package com.coresolution.consultation.util;
 
 /**
- * 공통코드 codeGroup / codeValue / codeLabel 공백 정규화.
- * <p>null-safe trim. trim 후 빈 문자열이면 null (기존 parent trimToNull 관례와 동일).</p>
+ * 공통코드 식별·부모 코드 필드 공백 정규화.
+ * <p>대상: {@code codeGroup}, {@code codeValue}, {@code parentCodeGroup}, {@code parentCodeValue}.
+ * null-safe trim. trim 후 빈 문자열이면 null (기존 parent trimToNull 관례와 동일).</p>
+ * <p>{@code codeLabel}, {@code codeDescription}, {@code koreanName}, {@code extraData} 등
+ * 라벨·본문 필드는 trim 하지 않는다 (SMS_TEMPLATE 본문 줄바꿈 등 보존).</p>
  *
  * @author CoreSolution
  * @since 2026-10-18
@@ -40,13 +43,5 @@ public final class CommonCodeFieldNormalizer {
      */
     public static String normalizeCodeValue(String codeValue) {
         return trimToNull(codeValue);
-    }
-
-    /**
-     * @param codeLabel 코드 라벨
-     * @return 정규화된 codeLabel
-     */
-    public static String normalizeCodeLabel(String codeLabel) {
-        return trimToNull(codeLabel);
     }
 }

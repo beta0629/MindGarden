@@ -763,14 +763,14 @@ public class SalaryManagementController extends BaseApiController {
 
     /**
      * 활성 공통코드 Map 형태(id, codeValue, codeLabel, codeDescription, sortOrder, parent*) — 급여 설정 응답과 동일 스키마.
-     * codeValue/codeLabel/parent* 는 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeValue/parent* 는 응답 시 공백 trim (레거시 DB 패딩 방어). codeLabel 은 원문 그대로.
      */
     private List<Map<String, Object>> mapCommonCodesToActiveMaps(List<CommonCode> codes) {
         return codes.stream().map(code -> {
             Map<String, Object> codeMap = new HashMap<>();
             codeMap.put("id", code.getId());
             codeMap.put("codeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()));
-            codeMap.put("codeLabel", CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel()));
+            codeMap.put("codeLabel", code.getCodeLabel());
             codeMap.put("codeDescription", code.getCodeDescription());
             codeMap.put("sortOrder", code.getSortOrder());
             codeMap.put("parentCodeGroup", CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()));
@@ -783,7 +783,7 @@ public class SalaryManagementController extends BaseApiController {
         return codes.stream()
             .map(code -> {
                 String value = CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue());
-                String label = CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel());
+                String label = code.getCodeLabel();
                 return Map.<String, Object>of(
                     "value", value != null ? value : "",
                     "label", label != null ? label : "");

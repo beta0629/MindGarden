@@ -224,7 +224,7 @@ describe('MonthlyRecurringExpensesPanel', () => {
     expect(screen.getByTestId('badge-option-RENT')).toHaveTextContent('임대료');
   });
 
-  it('rule meta uses resolveCommonCodeDisplayLabel from matching category row', async() => {
+  it('rule meta uses resolveCategoryCodeDisplayLabel from matching category row', async() => {
     render(<MonthlyRecurringExpensesPanel />);
 
     await waitFor(() => {

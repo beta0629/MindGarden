@@ -35,6 +35,35 @@ export const resolveCommonCodeDisplayLabel = (row) => {
 };
 
 /**
+ * 카테고리 코드 → 표시 라벨. 고정 맵 없이 공통코드 행/{value,label} 옵션에서만 해석한다.
+ * <p>빈 코드 → '-'. 매칭 행 있으면 resolveCommonCodeDisplayLabel(또는 option.label).
+ * 미매칭(bare code) → 코드 문자열 그대로.</p>
+ *
+ * @param {string|null|undefined} code
+ * @param {Array<object>|null|undefined} rowsOrOptions 공통코드 행 또는 {value,label} 옵션
+ * @returns {string}
+ */
+export const resolveCategoryCodeDisplayLabel = (code, rowsOrOptions) => {
+  const codeStr = String(code ?? '').trim();
+  if (!codeStr) {
+    return '-';
+  }
+  const list = Array.isArray(rowsOrOptions) ? rowsOrOptions : [];
+  const row = list.find((r) => {
+    const v = String(r?.codeValue ?? r?.value ?? r?.code ?? '').trim();
+    return v === codeStr;
+  });
+  if (row) {
+    if (row.codeLabel != null || row.codeValue != null) {
+      return resolveCommonCodeDisplayLabel(row) || codeStr;
+    }
+    const optLabel = String(row?.label ?? '').trim();
+    return optLabel || codeStr;
+  }
+  return codeStr;
+};
+
+/**
  * @param {object|null|undefined} row
  * @returns {number}
  */

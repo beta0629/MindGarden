@@ -17,7 +17,10 @@ import { formatKrw } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import { ERP_API } from '../../../../constants/api';
 import { FM_RECURRING } from '../../../../constants/financialManagementStrings';
-import { resolveCommonCodeDisplayLabel } from '../../../../utils/financialTransactionCategoryPicker';
+import {
+  resolveCategoryCodeDisplayLabel,
+  resolveCommonCodeDisplayLabel
+} from '../../../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 const AMOUNT_MODE_FIXED = 'fixed';
@@ -334,13 +337,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   }, [listSummary, loading, missingEntries.length, rules]);
 
   const renderRuleMeta = (rule) => {
-    const categoryCode = String(rule.category ?? '').trim();
-    const categoryRow = categories.find((cat) => (
-      String(cat?.codeValue ?? cat?.value ?? cat?.code ?? '').trim() === categoryCode
-    ));
-    const categoryLabel = categoryRow
-      ? resolveCommonCodeDisplayLabel(categoryRow)
-      : categoryCode;
+    const categoryLabel = resolveCategoryCodeDisplayLabel(rule.category, categories);
     const parts = [
       categoryLabel,
       `매월 ${rule.recurrenceDay}${FM_RECURRING.DAY_SUFFIX}`,

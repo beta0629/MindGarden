@@ -2,7 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd, localizePaymentMethodParens } from '../../utils/erpFinanceDisplay';
-import { getCategoryDisplayLabel } from '../../constants/financialManagementStrings';
+import { ERP_API } from '../../constants/api';
+import {
+  buildLedgerFilterCategoryOptions,
+  resolveCategoryCodeDisplayLabel
+} from '../../utils/financialTransactionCategoryPicker';
 import { ErpSafeNumber, ErpSafeText, ERP_NUMBER_FORMAT, ErpFilterToolbar, useErpSilentRefresh } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import MGButton from '../common/MGButton';
@@ -35,6 +39,7 @@ const FinancialCalendarView = () => {
   const { silentListRefreshing, runSilentListRefresh } = useErpSilentRefresh();
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayDetail, setDayDetail] = useState(null);
+  const [categoryOptions, setCategoryOptions] = useState([]);
 
   const loadCalendarData = useCallback(async(options = {}) => {
     const silent = options.silent === true;
@@ -98,6 +103,31 @@ const FinancialCalendarView = () => {
   useEffect(() => {
     loadCalendarData();
   }, [loadCalendarData]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadCategoryOptions = async() => {
+      try {
+        const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+        if (cancelled) {
+          return;
+        }
+        const body = envelope?.data ?? envelope ?? {};
+        setCategoryOptions(buildLedgerFilterCategoryOptions(
+          body.incomeCategories || [],
+          body.expenseCategories || []
+        ));
+      } catch (_err) {
+        if (!cancelled) {
+          setCategoryOptions([]);
+        }
+      }
+    };
+    loadCategoryOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const getDaysInMonth = (date) => {
     const year = date.getFullYear();
@@ -390,7 +420,12 @@ const FinancialCalendarView = () => {
                       </div>
                       <div className="mg-financial-calendar-detail-item-category">
                         <ErpSafeText
-                          value={transaction.category ? t(`erp:finance.management.categoryDisplay.${transaction.category}`, getCategoryDisplayLabel(transaction.category)) : '-'}
+                          value={transaction.category
+                            ? t(
+                              `erp:finance.management.categoryDisplay.${transaction.category}`,
+                              resolveCategoryCodeDisplayLabel(transaction.category, categoryOptions)
+                            )
+                            : '-'}
                           fallback="—"
                         />{' '}
                         - <ErpSafeText value={transaction.subcategory} fallback="" />

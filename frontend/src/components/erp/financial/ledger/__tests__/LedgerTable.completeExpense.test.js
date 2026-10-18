@@ -76,3 +76,36 @@ describe('LedgerTable 완료 처리 메뉴', () => {
     expect(screen.queryByRole('menuitem', { name: FM_ROW_ACTIONS.COMPLETE })).not.toBeInTheDocument();
   });
 });
+
+describe('LedgerTable 카테고리 표시', () => {
+  test('categoryOptions가 있으면 label을 표시한다', () => {
+    render(<LedgerTable
+      transactions={[{
+        id: 11,
+        transactionDate: '2026-10-03',
+        transactionType: 'EXPENSE',
+        category: 'RENT',
+        description: '사무실 임대',
+        amount: 120000,
+        status: 'COMPLETED'
+      }]}
+      categoryOptions={[{ value: 'RENT', label: '임대료' }]}
+    />);
+
+    expect(screen.getByText('임대료')).toBeInTheDocument();
+  });
+
+  test('옵션이 없거나 미매칭이면 bare code를 표시한다', () => {
+    render(<LedgerTable transactions={[{
+      id: 12,
+      transactionDate: '2026-10-03',
+      transactionType: 'EXPENSE',
+      category: 'CUSTOM_CAT',
+      description: '기타 지출',
+      amount: 5000,
+      status: 'COMPLETED'
+    }]} />);
+
+    expect(screen.getByText('CUSTOM_CAT')).toBeInTheDocument();
+  });
+});

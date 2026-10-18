@@ -45,8 +45,7 @@ import {
   FM_DETAIL_MODAL,
   FM_TX_TYPE,
   FM_PAGINATION,
-  FM_RETRY,
-  getCategoryDisplayLabel
+  FM_RETRY
 } from '../../constants/financialManagementStrings';
 import {
   LedgerQuietHeader,
@@ -60,7 +59,10 @@ import {
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
-import { buildLedgerFilterCategoryOptions } from '../../utils/financialTransactionCategoryPicker';
+import {
+  buildLedgerFilterCategoryOptions,
+  resolveCategoryCodeDisplayLabel
+} from '../../utils/financialTransactionCategoryPicker';
 import {
   buildTopExpenseCaption,
   buildRemainingVsPreviousCaption,
@@ -957,6 +959,7 @@ const FinancialManagement = () => {
                         transactions={transactions}
                         loading={loading}
                         hasSearch={hasSearch}
+                        categoryOptions={ledgerCategoryOptions}
                         onRecordClick={openMoneyRecordDefault}
                         onView={(tx) => {
                           setSelectedTransaction(tx);
@@ -1033,6 +1036,7 @@ const FinancialManagement = () => {
                     category={filters.category}
                     searchText={filters.searchText}
                     refreshKey={calendarRefreshKey}
+                    categoryOptions={ledgerCategoryOptions}
                     onMonthChange={handleCalendarMonthChange}
                     onAddOnDate={handleCalendarAddOnDate}
                     onView={(tx) => {
@@ -1111,7 +1115,10 @@ const FinancialManagement = () => {
             <div>
               <strong>{FM_DETAIL_MODAL.LABEL_CATEGORY}</strong>{' '}
               <ErpSafeText fallback="-">
-                {getCategoryDisplayLabel(selectedTransaction.category)}
+                {resolveCategoryCodeDisplayLabel(
+                  selectedTransaction.category,
+                  ledgerCategoryOptions
+                )}
               </ErpSafeText>
             </div>
             <div>

@@ -19,9 +19,9 @@ import {
   FM_FILTER,
   FM_LEDGER_CALENDAR,
   FM_SUMMARY,
-  FM_ROW_ACTIONS,
-  getCategoryDisplayLabel
+  FM_ROW_ACTIONS
 } from '../../../../constants/financialManagementStrings';
+import { resolveCategoryCodeDisplayLabel } from '../../../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 import './LedgerCalendar.css';
 
@@ -221,6 +221,7 @@ LedgerCalendarAmount.propTypes = {
  * @param {string} [props.category]
  * @param {string} [props.searchText]
  * @param {number|string} [props.refreshKey]
+ * @param {Array<object>} [props.categoryOptions] 공통코드 행 또는 {value,label} 필터 옵션
  * @param {(nextMonthYm: string) => void} [props.onMonthChange]
  * @param {(ymd: string) => void} [props.onAddOnDate]
  * @param {(tx: object) => void} [props.onView]
@@ -234,6 +235,7 @@ const LedgerCalendar = ({
   category = 'ALL',
   searchText = '',
   refreshKey = 0,
+  categoryOptions = [],
   onMonthChange,
   onAddOnDate,
   onView,
@@ -551,7 +553,7 @@ const LedgerCalendar = ({
                 const desc = localizePaymentMethodParens(
                   toDisplayString(tx.description, FM_SUMMARY.DASH)
                 );
-                const categoryLabel = getCategoryDisplayLabel(tx.category);
+                const categoryLabel = resolveCategoryCodeDisplayLabel(tx.category, categoryOptions);
                 const rowKey = tx.id != null ? String(tx.id) : `${desc}-${tx.transactionDate}`;
                 return (
                   <li key={rowKey} className="ledger-calendar__detail-row">
@@ -652,6 +654,7 @@ LedgerCalendar.propTypes = {
   category: PropTypes.string,
   searchText: PropTypes.string,
   refreshKey: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  categoryOptions: PropTypes.array,
   onMonthChange: PropTypes.func,
   onAddOnDate: PropTypes.func,
   onView: PropTypes.func,

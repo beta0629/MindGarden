@@ -8,6 +8,7 @@ import {
   buildSubcategoryPickerOptions,
   isOtherGroupCategory,
   parseSubcategoryPickerValue,
+  resolveCategoryCodeDisplayLabel,
   resolveCommonCodeDisplayLabel,
   resolvePrimaryCategoryHighlight,
   resolveSubcategoryPickerValue
@@ -55,6 +56,32 @@ describe('financialTransactionCategoryPicker', () => {
       .toBe('COFFE');
     expect(resolveCommonCodeDisplayLabel({ codeValue: 'X', codeLabel: '   ' }))
       .toBe('X');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 행 codeLabel 있으면 라벨', () => {
+    expect(resolveCategoryCodeDisplayLabel('MARKETING', mockExpenseCategories)).toBe('마케팅');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 행 label 공백이면 codeValue', () => {
+    const rows = [{ codeValue: 'EXP_CAT_001', codeLabel: '' }];
+    expect(resolveCategoryCodeDisplayLabel('EXP_CAT_001', rows)).toBe('EXP_CAT_001');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — {value,label} 옵션이면 label', () => {
+    const options = [{ value: 'RENT', label: '임대료' }];
+    expect(resolveCategoryCodeDisplayLabel('RENT', options)).toBe('임대료');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 미매칭 bare code는 코드 문자열', () => {
+    expect(resolveCategoryCodeDisplayLabel('UNKNOWN_CAT', mockExpenseCategories)).toBe('UNKNOWN_CAT');
+    expect(resolveCategoryCodeDisplayLabel('RENT', [])).toBe('RENT');
+    expect(resolveCategoryCodeDisplayLabel('RENT', null)).toBe('RENT');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 빈 코드는 -', () => {
+    expect(resolveCategoryCodeDisplayLabel('', mockExpenseCategories)).toBe('-');
+    expect(resolveCategoryCodeDisplayLabel(null, mockExpenseCategories)).toBe('-');
+    expect(resolveCategoryCodeDisplayLabel(undefined, [])).toBe('-');
   });
 
   it('buildFixedCategoryOptions — API SSOT 전체 부모 (고정 6칩/demote 없음)', () => {

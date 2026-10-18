@@ -40,6 +40,7 @@ import {
   buildFixedCategoryOptions,
   buildSubcategoryPickerOptions,
   parseSubcategoryPickerValue,
+  resolveCommonCodeDisplayLabel,
   resolvePrimaryCategoryHighlight,
   resolveSubcategoryPickerValue
 } from '../../utils/financialTransactionCategoryPicker';
@@ -442,7 +443,7 @@ const FinancialTransactionForm = ({
   const legacyCategoryOptions = useMemo(() => (
     currentCategories.map((category) => ({
       value: category.codeValue,
-      label: category.codeLabel
+      label: resolveCommonCodeDisplayLabel(category)
     }))
   ), [currentCategories]);
 
@@ -453,7 +454,7 @@ const FinancialTransactionForm = ({
   const legacySubcategoryOptions = useMemo(() => (
     legacyFilteredSubcategories.map((subcategory) => ({
       value: subcategory.codeValue,
-      label: subcategory.codeLabel
+      label: resolveCommonCodeDisplayLabel(subcategory)
     }))
   ), [legacyFilteredSubcategories]);
 

@@ -25,9 +25,9 @@ import {
   FM_SUMMARY,
   FM_TX_LIST_SECTION,
   FM_ROW_ACTIONS,
-  FM_RECORD_CTA,
-  getCategoryDisplayLabel
+  FM_RECORD_CTA
 } from '../../../../constants/financialManagementStrings';
+import { resolveCategoryCodeDisplayLabel } from '../../../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
@@ -35,6 +35,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {Array<object>} props.transactions
  * @param {boolean} [props.loading]
  * @param {boolean} [props.hasSearch]
+ * @param {Array<object>} [props.categoryOptions] 공통코드 행 또는 {value,label} 필터 옵션
  * @param {() => void} [props.onRecordClick]
  * @param {(tx: object) => void} [props.onEdit]
  * @param {(tx: object) => void} [props.onDelete]
@@ -45,6 +46,7 @@ const LedgerTable = ({
   transactions = [],
   loading = false,
   hasSearch = false,
+  categoryOptions = [],
   onRecordClick,
   onEdit,
   onDelete,
@@ -88,7 +90,7 @@ const LedgerTable = ({
     const desc = localizePaymentMethodParens(
       toDisplayString(tx.description, FM_SUMMARY.DASH)
     );
-    const categoryLabel = getCategoryDisplayLabel(tx.category);
+    const categoryLabel = resolveCategoryCodeDisplayLabel(tx.category, categoryOptions);
     const ownIds = resolveLedgerShopIdentifiers(tx);
     const parentIds = parentTx ? resolveLedgerShopIdentifiers(parentTx) : null;
     const orderPublicId = ownIds.orderPublicId || (parentIds ? parentIds.orderPublicId : null) || (fallbackIds ? fallbackIds.orderPublicId : null);
@@ -298,6 +300,7 @@ LedgerTable.propTypes = {
   transactions: PropTypes.array,
   loading: PropTypes.bool,
   hasSearch: PropTypes.bool,
+  categoryOptions: PropTypes.array,
   onRecordClick: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,

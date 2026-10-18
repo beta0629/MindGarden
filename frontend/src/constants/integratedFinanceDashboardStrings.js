@@ -251,35 +251,3 @@ export const IFS_OVERVIEW = {
   NET_PROFIT_TREND_HINT: '수입 − 지출 · 손익 현황 탭에서 항목별 비용 확인'
 };
 
-/** 지출 카테고리 코드 → 한글 라벨 (개요 탭 지출 카드 표시용, FinancialCommonCodeInitializer와 동기화) */
-export const EXPENSE_CATEGORY_LABELS = {
-  SALARY: '급여',
-  RENT: '임대료',
-  UTILITY: '관리비',
-  OFFICE_SUPPLIES: '사무용품',
-  TAX: '세금',
-  MARKETING: '마케팅',
-  EQUIPMENT: '장비',
-  SOFTWARE: '소프트웨어',
-  CONSULTING: '컨설팅',
-  OTHER: '기타',
-  CONSULTATION: '상담료',
-  CONSULTATION_REFUND: '상담료환불',
-  CONSULTATION_PARTIAL_REFUND: '상담 부분환불',
-  OFFICE_RENT: '사무실임대료',
-  STATIONERY: '문구류',
-  ONLINE_ADS: '온라인광고',
-  INCOME_TAX: '소득세',
-  VAT: '부가가치세',
-  CORPORATE_TAX: '법인세',
-  기타: '기타'
-};
-
-/** 수입 카테고리 코드 → 한글 라벨 */
-export const INCOME_CATEGORY_LABELS = {
-  CONSULTATION: '상담료',
-  상담료: '상담료',
-  PACKAGE: '패키지',
-  OTHER: '기타수입',
-  기타: '기타수입'
-};

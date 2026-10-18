@@ -134,10 +134,39 @@ const ErpDashboard = ({ user: propUser }) => {
   const [pendingSalary, setPendingSalary] = useState(null);
   const [refundAmount, setRefundAmount] = useState(null);
   const [todoRuleComments, setTodoRuleComments] = useState([]);
+  const [financialCategoryRows, setFinancialCategoryRows] = useState([]);
 
   const beginPeriodFinanceRequest = useLatestRequest();
   const beginSecondaryTodosRequest = useLatestRequest();
   const rolling12LoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (sessionLoading || !isLoggedIn) {
+      return undefined;
+    }
+    let cancelled = false;
+    const loadFinancialCategories = async() => {
+      try {
+        const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+        if (cancelled) {
+          return;
+        }
+        const body = envelope?.data ?? envelope ?? {};
+        setFinancialCategoryRows([
+          ...(body.incomeCategories || []),
+          ...(body.expenseCategories || [])
+        ]);
+      } catch {
+        if (!cancelled) {
+          setFinancialCategoryRows([]);
+        }
+      }
+    };
+    loadFinancialCategories();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionLoading, isLoggedIn]);
 
   const loadPeriodFinance = useCallback(async(periodKey) => {
     const { signal, isStale } = beginPeriodFinanceRequest();
@@ -168,8 +197,16 @@ const ErpDashboard = ({ user: propUser }) => {
       });
       setLedgerTx(sortedTx);
 
-      const incomeMix = buildIncomeMixItems(parsed.incomeCategoryBreakdown, parsed.transactions);
-      const expenseMix = buildOutflowMixItems(parsed.expenseCategoryBreakdown, parsed.transactions);
+      const incomeMix = buildIncomeMixItems(
+        parsed.incomeCategoryBreakdown,
+        parsed.transactions,
+        financialCategoryRows
+      );
+      const expenseMix = buildOutflowMixItems(
+        parsed.expenseCategoryBreakdown,
+        parsed.transactions,
+        { categoryRows: financialCategoryRows }
+      );
       setIncomeMixItems(incomeMix);
       setExpenseMixItems(expenseMix);
 
@@ -178,7 +215,8 @@ const ErpDashboard = ({ user: propUser }) => {
 
       const incomeCaption = buildTopIncomeCaption(
         parsed.incomeCategoryBreakdown,
-        parsed.transactions
+        parsed.transactions,
+        financialCategoryRows
       );
       const expenseCaption = buildTopExpenseCaption(expenseMix);
 
@@ -238,7 +276,7 @@ const ErpDashboard = ({ user: propUser }) => {
         setHeroLoading(false);
       }
     }
-  }, [beginPeriodFinanceRequest]);
+  }, [beginPeriodFinanceRequest, financialCategoryRows]);
 
   /**
    * 롤링 12개월 차트 — moneyCockpitPeriod / 기간 칩과 무관.

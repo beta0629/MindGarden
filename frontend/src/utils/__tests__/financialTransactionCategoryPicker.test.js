@@ -58,6 +58,15 @@ describe('financialTransactionCategoryPicker', () => {
       .toBe('X');
   });
 
+  // FE display trim ≠ BE persist: 피커는 표시용으로만 trim 한다.
+  // 서버는 codeLabel/본문 개행·공백을 저장·조회 시 그대로 보존한다.
+  it('resolveCommonCodeDisplayLabel — FE 표시 trim만 수행(BE persist와 무관)', () => {
+    expect(resolveCommonCodeDisplayLabel({
+      codeValue: 'COFFE',
+      codeLabel: '  커피 안내  \n\n'
+    })).toBe('커피 안내');
+  });
+
   it('resolveCategoryCodeDisplayLabel — 행 codeLabel 있으면 라벨', () => {
     expect(resolveCategoryCodeDisplayLabel('MARKETING', mockExpenseCategories)).toBe('마케팅');
   });
@@ -90,6 +99,16 @@ describe('financialTransactionCategoryPicker', () => {
     expect(resolveCategoryCodeDisplayLabel('', mockExpenseCategories)).toBe('-');
     expect(resolveCategoryCodeDisplayLabel(null, mockExpenseCategories)).toBe('-');
     expect(resolveCategoryCodeDisplayLabel(undefined, [])).toBe('-');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 패딩된 codeValue/codeLabel 도 매칭', () => {
+    const rows = [
+      { codeValue: '  RENT  ', codeLabel: '  임대료  ' },
+      { value: '  MEAL  ', label: '  식대  ' }
+    ];
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('임대료');
+    expect(resolveCategoryCodeDisplayLabel('  MEAL  ', rows)).toBe('식대');
+    expect(resolveCategoryCodeDisplayLabel('MEAL', rows)).toBe('식대');
   });
 
   it('buildFixedCategoryOptions — API SSOT 전체 부모 (고정 6칩/demote 없음)', () => {

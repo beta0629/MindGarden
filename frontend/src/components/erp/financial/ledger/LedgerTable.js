@@ -148,9 +148,7 @@ const LedgerTable = ({
                 {FM_TX_TABLE_LABELS.REFUND_ORPHAN_LABEL}
               </span>
             ) : null}
-            {categoryLabel && categoryLabel !== '-' ? (
-              <span className="operator-ledger-table__desc-secondary">{categoryLabel}</span>
-            ) : null}
+            <span className="operator-ledger-table__desc-secondary">{categoryLabel}</span>
             {orderPublicId ? (
               <span className="operator-ledger-table__desc-secondary">
                 {FM_TX_TABLE_LABELS.ORDER_ID}

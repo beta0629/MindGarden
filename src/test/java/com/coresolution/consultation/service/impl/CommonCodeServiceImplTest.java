@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
@@ -255,6 +256,32 @@ class CommonCodeServiceImplTest {
         assertEquals("G", response.getCodeGroup());
         assertEquals("V", response.getCodeValue());
         assertEquals("L", response.getCodeLabel());
+    }
+
+    @Test
+    @DisplayName("getActiveCodesByGroup: Map 응답의 codeValue/codeLabel/parentCodeValue 도 trim")
+    void getActiveCodesByGroup_trimsMapFields() {
+        TenantContextHolder.clear();
+        CommonCode row = baseCodeBuilder()
+            .codeGroup("  INCOME_CATEGORY  ")
+            .codeValue("  CONSULTATION  ")
+            .codeLabel("  상담료  ")
+            .parentCodeGroup("  PARENT_G  ")
+            .parentCodeValue("  PARENT_V  ")
+            .build();
+        row.setId(7L);
+        when(commonCodeRepository.findCoreCodesByGroup("INCOME_CATEGORY"))
+            .thenReturn(List.of(row));
+
+        List<Map<String, Object>> maps = commonCodeService.getActiveCodesByGroup("INCOME_CATEGORY");
+
+        assertEquals(1, maps.size());
+        Map<String, Object> codeMap = maps.get(0);
+        assertEquals("CONSULTATION", codeMap.get("codeValue"));
+        assertEquals("상담료", codeMap.get("codeLabel"));
+        assertEquals("PARENT_G", codeMap.get("parentCodeGroup"));
+        assertEquals("PARENT_V", codeMap.get("parentCodeValue"));
+        assertEquals(7L, codeMap.get("id"));
     }
 
     private static CommonCode.CommonCodeBuilder baseCodeBuilder() {

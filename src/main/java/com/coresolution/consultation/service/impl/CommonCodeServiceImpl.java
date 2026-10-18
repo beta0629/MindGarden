@@ -84,17 +84,18 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     /**
      * 활성 공통코드 엔티티 목록을 ERP·통계 등에서 쓰는 Map 스키마로 변환한다.
+     * codeValue/codeLabel/parentCodeValue 는 응답 시 공백 trim (레거시 DB 패딩 방어).
      */
     private List<Map<String, Object>> toActiveCodeMapList(List<CommonCode> codes) {
         return codes.stream().map(code -> {
             Map<String, Object> codeMap = new HashMap<>();
             codeMap.put("id", code.getId());
-            codeMap.put("codeValue", code.getCodeValue());
-            codeMap.put("codeLabel", code.getCodeLabel());
+            codeMap.put("codeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()));
+            codeMap.put("codeLabel", CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel()));
             codeMap.put("codeDescription", code.getCodeDescription());
             codeMap.put("sortOrder", code.getSortOrder());
-            codeMap.put("parentCodeGroup", code.getParentCodeGroup());
-            codeMap.put("parentCodeValue", code.getParentCodeValue());
+            codeMap.put("parentCodeGroup", CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()));
+            codeMap.put("parentCodeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getParentCodeValue()));
             return codeMap;
         }).collect(Collectors.toList());
     }

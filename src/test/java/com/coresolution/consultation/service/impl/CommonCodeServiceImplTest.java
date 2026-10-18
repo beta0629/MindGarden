@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -13,6 +14,9 @@ import java.util.List;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.ExpenseCommonCodeSsotConstants;
+import com.coresolution.consultation.dto.CommonCodeCreateRequest;
+import com.coresolution.consultation.dto.CommonCodeDto;
+import com.coresolution.consultation.dto.CommonCodeResponse;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.repository.CodeGroupMetadataRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -23,6 +27,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -176,6 +181,80 @@ class CommonCodeServiceImplTest {
         assertThrows(IllegalArgumentException.class,
             () -> commonCodeService.deactivateCommonCodes("", List.of("V")));
         verify(commonCodeRepository, never()).findByTenantIdAndCodeValue(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("createCommonCode: 패딩된 codeGroup/value/label 을 trim 하여 저장")
+    void createCommonCode_trimsPaddedFields() {
+        CommonCodeDto dto = CommonCodeDto.builder()
+            .codeGroup("  EXPENSE_CATEGORY  ")
+            .codeValue("  RENT  ")
+            .codeLabel("  임대료  ")
+            .koreanName("임대료")
+            .sortOrder(1)
+            .isActive(true)
+            .build();
+        when(commonCodeRepository.findByCodeGroupAndCodeValue("EXPENSE_CATEGORY", "RENT"))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        CommonCode saved = commonCodeService.createCommonCode(dto);
+
+        assertEquals("EXPENSE_CATEGORY", saved.getCodeGroup());
+        assertEquals("RENT", saved.getCodeValue());
+        assertEquals("임대료", saved.getCodeLabel());
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        assertEquals("RENT", captor.getValue().getCodeValue());
+    }
+
+    @Test
+    @DisplayName("create(표준): 패딩된 필드를 trim 하여 저장·응답")
+    void create_standardized_trimsPaddedFields() {
+        TenantContextHolder.setTenantId(TENANT);
+        when(permissionService.canCreateCode(any(), eq(TENANT))).thenReturn(true);
+        when(commonCodeRepository.findTenantCodeByGroupAndValue(TENANT, "EXPENSE_CATEGORY", "MEAL"))
+            .thenReturn(Optional.empty());
+        when(commonCodeRepository.save(any(CommonCode.class))).thenAnswer(inv -> {
+            CommonCode c = inv.getArgument(0);
+            c.setId(42L);
+            return c;
+        });
+
+        CommonCodeCreateRequest request = CommonCodeCreateRequest.builder()
+            .codeGroup("  EXPENSE_CATEGORY ")
+            .codeValue("  MEAL  ")
+            .codeLabel("  식대  ")
+            .koreanName("식대")
+            .tenantId(TENANT)
+            .build();
+
+        CommonCodeResponse response = commonCodeService.create(request, null);
+
+        assertEquals("EXPENSE_CATEGORY", response.getCodeGroup());
+        assertEquals("MEAL", response.getCodeValue());
+        assertEquals("식대", response.getCodeLabel());
+        ArgumentCaptor<CommonCode> captor = ArgumentCaptor.forClass(CommonCode.class);
+        verify(commonCodeRepository).save(captor.capture());
+        assertEquals("MEAL", captor.getValue().getCodeValue());
+        assertEquals("식대", captor.getValue().getCodeLabel());
+    }
+
+    @Test
+    @DisplayName("fromEntity: 응답 DTO 의 codeGroup/value/label 도 trim")
+    void fromEntity_trimsOnRead() {
+        CommonCode row = baseCodeBuilder()
+            .codeGroup("  G  ")
+            .codeValue("  V  ")
+            .codeLabel("  L  ")
+            .build();
+        row.setId(1L);
+
+        CommonCodeResponse response = CommonCodeResponse.fromEntity(row);
+
+        assertEquals("G", response.getCodeGroup());
+        assertEquals("V", response.getCodeValue());
+        assertEquals("L", response.getCodeLabel());
     }
 
     private static CommonCode.CommonCodeBuilder baseCodeBuilder() {

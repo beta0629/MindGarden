@@ -1,6 +1,7 @@
 package com.coresolution.consultation.dto;
 
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.util.CommonCodeFieldNormalizer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,7 +40,11 @@ public class CommonCodeResponse {
     private LocalDateTime updatedAt;
     
     /**
-     * CommonCode 엔티티를 Response DTO로 변환
+     * CommonCode 엔티티를 Response DTO로 변환.
+     * codeGroup/codeValue/codeLabel 은 응답 시 공백 trim (레거시 DB 패딩 방어).
+     *
+     * @param code 엔티티
+     * @return 응답 DTO 또는 null
      */
     public static CommonCodeResponse fromEntity(CommonCode code) {
         if (code == null) {
@@ -49,9 +54,9 @@ public class CommonCodeResponse {
         return CommonCodeResponse.builder()
                 .id(code.getId())
                 .tenantId(code.getTenantId())
-                .codeGroup(code.getCodeGroup())
-                .codeValue(code.getCodeValue())
-                .codeLabel(code.getCodeLabel())
+                .codeGroup(CommonCodeFieldNormalizer.normalizeCodeGroup(code.getCodeGroup()))
+                .codeValue(CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()))
+                .codeLabel(CommonCodeFieldNormalizer.normalizeCodeLabel(code.getCodeLabel()))
                 .koreanName(code.getKoreanName())
                 .codeDescription(code.getCodeDescription())
                 .sortOrder(code.getSortOrder())

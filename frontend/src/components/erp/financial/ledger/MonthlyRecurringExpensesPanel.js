@@ -16,10 +16,11 @@ import notificationManager from '../../../../utils/notification';
 import { formatKrw } from '../../../../utils/erpFinancialAmountStack';
 import { toDisplayString } from '../../../../utils/safeDisplay';
 import { ERP_API } from '../../../../constants/api';
+import { FM_RECURRING } from '../../../../constants/financialManagementStrings';
 import {
-  FM_RECURRING,
-  getCategoryDisplayLabel
-} from '../../../../constants/financialManagementStrings';
+  resolveCategoryCodeDisplayLabel,
+  resolveCommonCodeDisplayLabel
+} from '../../../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 const AMOUNT_MODE_FIXED = 'fixed';
@@ -97,7 +98,7 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   const categoryOptions = useMemo(
     () => categories.map((cat) => ({
       value: cat.codeValue || cat.value || cat.code,
-      label: cat.codeName || cat.label || getCategoryDisplayLabel(cat.codeValue)
+      label: resolveCommonCodeDisplayLabel(cat)
     })),
     [categories]
   );
@@ -336,8 +337,9 @@ const MonthlyRecurringExpensesPanel = ({ onRulesChanged, panelRef }) => {
   }, [listSummary, loading, missingEntries.length, rules]);
 
   const renderRuleMeta = (rule) => {
+    const categoryLabel = resolveCategoryCodeDisplayLabel(rule.category, categories);
     const parts = [
-      getCategoryDisplayLabel(rule.category),
+      categoryLabel,
       `매월 ${rule.recurrenceDay}${FM_RECURRING.DAY_SUFFIX}`,
       `${String(rule.startDate || '').slice(0, 7)}~`
     ];

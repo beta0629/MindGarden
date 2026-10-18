@@ -63,7 +63,7 @@ describe('financialTransactionCategoryPicker', () => {
   });
 
   it('resolveCategoryCodeDisplayLabel — 공통코드 codeLabel이 고정 i18n/맵 라벨보다 우선', () => {
-    // 예전 erp:finance.management.categoryDisplay.RENT = '임대료' 등 고정 맵이 있어도
+    // 예전 고정 한글 맵(예: RENT → '임대료')이 있어도
     // 공통코드 행 codeLabel(API)만 사용한다.
     const rows = [{ codeValue: 'RENT', codeLabel: 'API임대료라벨' }];
     expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('API임대료라벨');

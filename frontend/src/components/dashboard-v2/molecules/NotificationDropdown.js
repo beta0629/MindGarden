@@ -25,6 +25,7 @@ import GnbDropdownPortal from './GnbDropdownPortal';
 import './NotificationDropdown.css';
 import { useTranslation } from 'react-i18next';
 import { ICON_SIZES } from '../../../constants/icons';
+import { resolveNotificationsListPath } from '../../../constants/personalNotificationRoutes';
 
 const API_PERSONAL_NOTIFICATIONS = '/api/v1/notifications';
 
@@ -441,7 +442,7 @@ const NotificationDropdown = () => {
 
         <div className="mg-v2-notification-footer mg-v2-dropdown-panel__footer">
           <Link
-            to="/notifications"
+            to={resolveNotificationsListPath(user)}
             className="mg-v2-dropdown-panel__footer-link"
             onClick={() => setIsOpen(false)}
           >

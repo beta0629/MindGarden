@@ -44,6 +44,34 @@ class MobilePushInboxPersisterTest {
     }
 
     @Test
+    @DisplayName("metadata 가 있으면 7-arg send 로 저장")
+    void persistsMetadataJson() {
+        String metadata = "{\"kind\":\"PAYMENT_CONFIRMED\",\"mappingId\":900}";
+
+        mobilePushInboxPersister.persistForRecipient(
+                TENANT_ID, 77L, MobilePushCanonicalTypes.PAYMENT_COMPLETED,
+                "결제 확인", "상품: 10회", metadata);
+
+        verify(notificationLifecycleService).send(
+                eq(TENANT_ID), eq(77L), isNull(), eq(NotificationType.PAYMENT),
+                eq("결제 확인"), eq("상품: 10회"), eq(metadata));
+    }
+
+    @Test
+    @DisplayName("빈 metadata 는 6-arg send")
+    void blankMetadataUsesSendWithoutMetadata() {
+        mobilePushInboxPersister.persistForRecipient(
+                TENANT_ID, 77L, MobilePushCanonicalTypes.PAYMENT_COMPLETED,
+                "결제 확인", "본문", "  ");
+
+        verify(notificationLifecycleService).send(
+                eq(TENANT_ID), eq(77L), isNull(), eq(NotificationType.PAYMENT),
+                eq("결제 확인"), eq("본문"));
+        verify(notificationLifecycleService, never()).send(
+                anyString(), anyLong(), any(), any(), anyString(), anyString(), anyString());
+    }
+
+    @Test
     @DisplayName("tenantId 빈 값 → send 호출 0")
     void blankTenantIdSkipsSave() {
         mobilePushInboxPersister.persistForRecipient(

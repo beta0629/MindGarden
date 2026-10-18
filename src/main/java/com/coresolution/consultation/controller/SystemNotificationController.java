@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.User;
@@ -100,6 +101,7 @@ public class SystemNotificationController extends BaseApiController {
         // 표준화 원칙: 페이지 크기 최대 20개로 제한
         Pageable pageable = PaginationUtils.createPageable(page, size);
         Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
+        Set<Long> readIds = systemNotificationService.findReadNotificationIds(userId);
         
         // 응답 데이터 변환
         List<Map<String, Object>> notificationList = new ArrayList<>();
@@ -118,10 +120,7 @@ public class SystemNotificationController extends BaseApiController {
             data.put("expiresAt", notification.getExpiresAt());
             data.put("viewCount", notification.getViewCount());
             data.put("createdAt", notification.getCreatedAt());
-            
-            // 읽음 여부 확인
-            boolean isRead = systemNotificationService.isNotificationRead(notification.getId(), userId);
-            data.put("isRead", isRead);
+            data.put("isRead", notification.getId() != null && readIds.contains(notification.getId()));
             
             notificationList.add(data);
         }
@@ -161,6 +160,7 @@ public class SystemNotificationController extends BaseApiController {
         // 게시 중인 공지만 조회 (페이징 없이 전체)
         Pageable pageable = PageRequest.of(0, 100); // 최대 100개
         Page<SystemNotification> notifications = systemNotificationService.getNotificationsForUser(userId, userRole, pageable);
+        Set<Long> readIds = systemNotificationService.findReadNotificationIds(userId);
         
         // 응답 데이터 변환
         List<Map<String, Object>> notificationList = new ArrayList<>();
@@ -198,10 +198,7 @@ public class SystemNotificationController extends BaseApiController {
                     data.put("publishedAt", notification.getPublishedAt());
                     data.put("expiresAt", notification.getExpiresAt());
                     data.put("createdAt", notification.getCreatedAt());
-                    
-                    // 읽음 여부 확인
-                    boolean isRead = systemNotificationService.isNotificationRead(notification.getId(), userId);
-                    data.put("isRead", isRead);
+                    data.put("isRead", notification.getId() != null && readIds.contains(notification.getId()));
                     
                     notificationList.add(data);
                 }

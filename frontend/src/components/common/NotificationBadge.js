@@ -5,6 +5,7 @@ import { Megaphone } from 'lucide-react';
 import { ICONS } from '../../constants/icons';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../constants/notificationTabs';
 import { CONSULTANT_DASHBOARD_ROUTES } from '../../constants/consultantDashboardRoutes';
 import { useNotification } from '../../contexts/NotificationContext';
 import { useSession } from '../../contexts/SessionContext';
@@ -32,7 +33,7 @@ const NOTIFICATION_DEEP_LINKS_BY_ROLE = Object.freeze({
   }),
   CLIENT: Object.freeze({
     message: CLIENT_DASHBOARD_ROUTES.MESSAGES,
-    system: CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
+    system: CLIENT_NOTIFICATIONS_ENTRY_PATH
   })
 });
 

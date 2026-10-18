@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.coresolution.consultation.constant.RecordedExpenseCompletionMessages;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.dto.RecurringExpenseRecordMonthRequest;
 import com.coresolution.consultation.dto.FinancialTransactionRequest;
@@ -1846,8 +1847,15 @@ public class ErpController extends BaseApiController {
                                                                        // 않음
                         .build();
 
-        FinancialTransactionResponse response =
-                financialTransactionService.createTransaction(request, currentUser);
+        FinancialTransactionResponse response;
+        try {
+            response = financialTransactionService.createCompletedQuickExpense(request, currentUser);
+        } catch (IllegalStateException ex) {
+            log.warn("빠른 지출 완료 저장 거부: category={}, reason={}", category, ex.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", RecordedExpenseCompletionMessages.NOT_COMPLETABLE));
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
@@ -1856,6 +1864,47 @@ public class ErpController extends BaseApiController {
 
         return ResponseEntity.ok(result);
 
+    }
+
+    /**
+     * 대기·승인 지출을 완료로 바꾼다. 수입·환불 거래는 거부한다.
+     *
+     * @param id 거래 ID
+     * @param session HTTP 세션
+     * @return 완료된 거래
+     */
+    @PostMapping("/finance/transactions/{id}/complete")
+    public ResponseEntity<Map<String, Object>> completeRecordedExpense(@PathVariable Long id,
+            HttpSession session) {
+        User currentUser = SessionUtils.getCurrentUser(session);
+        if (currentUser == null || currentUser.getRole() == null || !currentUser.getRole().isAdmin()) {
+            log.warn("지출 완료 처리 권한 없음: id={}", id);
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("success", false, "message", RecordedExpenseCompletionMessages.ADMIN_REQUIRED));
+        }
+        String tenantId = TenantContextHolder.getTenantId();
+        if (tenantId == null || tenantId.isEmpty()) {
+            return ResponseEntity.status(400).body(
+                    Map.of("success", false, "message", RecordedExpenseCompletionMessages.TENANT_REQUIRED));
+        }
+        try {
+            resourceOwnerAccessGuard.requireFinancialTransactionAccess(session, id);
+            FinancialTransactionResponse response =
+                    financialTransactionService.completeRecordedExpense(id, currentUser);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", RecordedExpenseCompletionMessages.COMPLETED);
+            result.put("data", response);
+            return ResponseEntity.ok(result);
+        } catch (IllegalStateException ex) {
+            log.warn("지출 완료 처리 거부: id={}, reason={}", id, ex.getMessage());
+            HttpStatus status = RecordedExpenseCompletionMessages.REASON_NOT_FOUND.equals(ex.getMessage())
+                    ? HttpStatus.NOT_FOUND
+                    : HttpStatus.BAD_REQUEST;
+            return ResponseEntity.status(status).body(Map.of(
+                    "success", false,
+                    "message", RecordedExpenseCompletionMessages.NOT_COMPLETABLE));
+        }
     }
 
     /**

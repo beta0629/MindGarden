@@ -106,6 +106,12 @@
   max-height: var(--operator-ledger-control-height);
 }
 
+.operator-ledger-quick-expense {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
 /* Chart stage — MoneyFlowStage compose slot (Critic block 3) */
 .operator-ledger-chart-stage {
   display: flex;

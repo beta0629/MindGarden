@@ -22,17 +22,17 @@ public final class MappingSettlementNotificationCopy {
     public static final String MESSAGE_TYPE_PAYMENT = "PAYMENT_COMPLETION";
 
     public static final String BODY_PAYMENT_CONFIRMED_FMT =
-            "매칭 결제가 확인되었습니다.\n패키지: %s\n금액: %s원";
+            "매칭 결제가 확인되었습니다.\n상품: %s\n금액: %s원";
     public static final String BODY_DEPOSIT_CONFIRMED_FMT =
-            "입금이 확인되었습니다.\n패키지: %s\n금액: %s원";
+            "입금이 확인되었습니다.\n상품: %s\n금액: %s원";
     public static final String BODY_MAPPING_APPROVED_FMT =
-            "상담 매칭이 승인되었습니다.\n패키지: %s";
+            "상담 매칭이 승인되었습니다.\n상품: %s";
 
     public static final String BODY_PUSH_PAYMENT = "매칭 결제가 확인되었습니다.";
     public static final String BODY_PUSH_DEPOSIT = "입금이 확인되었습니다.";
     public static final String BODY_PUSH_APPROVED_CLIENT = "상담 매칭이 승인되었습니다.";
     public static final String BODY_PUSH_APPROVED_CONSULTANT = "새 상담 매칭이 승인되었습니다.";
 
-    public static final String FALLBACK_PACKAGE_NAME = "상담 패키지";
+    public static final String FALLBACK_PACKAGE_NAME = "상담 상품";
     public static final String FALLBACK_AMOUNT = "미정";
 }

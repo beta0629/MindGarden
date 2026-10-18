@@ -668,6 +668,34 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             String title,
             String clientBody,
             String consultantBody) {
+        dispatchMappingSettlement(
+                tenantId,
+                mappingId,
+                clientUserId,
+                consultantUserId,
+                includeConsultant,
+                canonicalType,
+                dedupeBucket,
+                title,
+                clientBody,
+                consultantBody,
+                null);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchMappingSettlement(
+            String tenantId,
+            Long mappingId,
+            Long clientUserId,
+            Long consultantUserId,
+            boolean includeConsultant,
+            String canonicalType,
+            String dedupeBucket,
+            String title,
+            String clientBody,
+            String consultantBody,
+            String inboxMetadataJson) {
         if (mappingId == null || clientUserId == null) {
             return;
         }
@@ -686,7 +714,9 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         sanitizeDataStrings(data);
         String entityId = String.valueOf(mappingId);
         String bucket = dedupeBucket != null && !dedupeBucket.isBlank() ? dedupeBucket : "default";
-        dispatchFanout(tid, List.of(clientUserId), canonicalType, safeTitle, safeClientBody, data, entityId, bucket);
+        dispatchFanout(
+                tid, List.of(clientUserId), canonicalType, safeTitle, safeClientBody, data, entityId, bucket,
+                inboxMetadataJson);
         if (includeConsultant && consultantUserId != null) {
             String safeConsultantBody = consultantBody != null && !consultantBody.isBlank()
                     ? consultantBody
@@ -699,7 +729,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                     safeConsultantBody,
                     data,
                     entityId,
-                    bucket + "|consultant");
+                    bucket + "|consultant",
+                    inboxMetadataJson);
         }
     }
 
@@ -762,6 +793,13 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
 
     private void dispatchFanout(String tenantId, List<Long> rawUserIds, String canonicalType, String title,
             String body, Map<String, String> data, String dedupeEntityId, String dedupeTimeBucket) {
+        dispatchFanout(
+                tenantId, rawUserIds, canonicalType, title, body, data, dedupeEntityId, dedupeTimeBucket, null);
+    }
+
+    private void dispatchFanout(String tenantId, List<Long> rawUserIds, String canonicalType, String title,
+            String body, Map<String, String> data, String dedupeEntityId, String dedupeTimeBucket,
+            String inboxMetadataJson) {
         if (tenantId == null || tenantId.isBlank()) {
             log.warn("푸시 발송 생략: tenantId 없음 type={}", canonicalType);
             return;
@@ -811,7 +849,7 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         String safeBody = truncate(body, MobilePushDispatchConstants.BODY_MAX_LENGTH);
         // 알림 센터 인박스 적재: 활성 토큰을 가진 수신자만 대상. Expo POST 결과와 무관하게
         // 시도 기준으로 행을 남겨 OS 푸시-알림센터 갭을 해소한다. persist 실패는 swallow.
-        persistInboxRowsForFanout(tenantId, tokens, canonicalType, safeTitle, safeBody);
+        persistInboxRowsForFanout(tenantId, tokens, canonicalType, safeTitle, safeBody, inboxMetadataJson);
         sendExpoInBatches(tenantId, tokens, safeTitle, safeBody, data, canonicalType);
     }
 
@@ -831,7 +869,8 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
             List<MobilePushToken> tokens,
             String canonicalType,
             String safeTitle,
-            String safeBody) {
+            String safeBody,
+            String inboxMetadataJson) {
         Set<Long> persistedUserIds = new LinkedHashSet<>();
         for (MobilePushToken t : tokens) {
             Long uid = t.getUserId();
@@ -839,7 +878,12 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                 continue;
             }
             try {
-                mobilePushInboxPersister.persistForRecipient(tenantId, uid, canonicalType, safeTitle, safeBody);
+                if (inboxMetadataJson == null || inboxMetadataJson.isBlank()) {
+                    mobilePushInboxPersister.persistForRecipient(tenantId, uid, canonicalType, safeTitle, safeBody);
+                } else {
+                    mobilePushInboxPersister.persistForRecipient(
+                            tenantId, uid, canonicalType, safeTitle, safeBody, inboxMetadataJson);
+                }
             } catch (Exception ex) {
                 // persister 가 자체 swallow 하지만 이중 안전망: 인박스 적재 실패가
                 // 다른 사용자 persist 또는 Expo POST 진행을 막지 않도록 호출 단위로 격리.

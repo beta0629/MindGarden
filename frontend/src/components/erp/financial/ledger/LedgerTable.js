@@ -17,6 +17,7 @@ import {
   localizePaymentMethodParens,
   resolveLedgerShopIdentifiers,
   isLedgerRefundOrRevenueCancelRow,
+  canCompleteRecordedExpense,
   groupTransactionsForLedger
 } from '../../../../utils/erpFinanceDisplay';
 import {
@@ -37,6 +38,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {() => void} [props.onRecordClick]
  * @param {(tx: object) => void} [props.onEdit]
  * @param {(tx: object) => void} [props.onDelete]
+ * @param {(tx: object) => void} [props.onComplete]
  * @param {(tx: object) => void} [props.onView]
  */
 const LedgerTable = ({
@@ -46,6 +48,7 @@ const LedgerTable = ({
   onRecordClick,
   onEdit,
   onDelete,
+  onComplete,
   onView
 }) => {
   if (!loading && (!transactions || transactions.length === 0)) {
@@ -219,19 +222,7 @@ const LedgerTable = ({
             <EntityRowActions
               layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
               ariaLabel={FM_ROW_ACTIONS.MORE}
-              items={[
-                {
-                  id: 'edit',
-                  label: FM_ROW_ACTIONS.EDIT,
-                  onClick: () => onEdit?.(tx)
-                },
-                {
-                  id: 'delete',
-                  label: FM_ROW_ACTIONS.DELETE,
-                  onClick: () => onDelete?.(tx),
-                  variant: 'destructive'
-                }
-              ]}
+              items={buildLedgerRowMenuItems(tx, { onEdit, onDelete, onComplete })}
             />
           </div>
         </td>
@@ -310,7 +301,39 @@ LedgerTable.propTypes = {
   onRecordClick: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  onComplete: PropTypes.func,
   onView: PropTypes.func
 };
+
+/**
+ * 장부 행 더보기 메뉴. 대기·승인 지출에만 완료 처리를 넣는다.
+ *
+ * @param {object} tx
+ * @param {{ onEdit?: Function, onDelete?: Function, onComplete?: Function }} actions
+ * @returns {Array<object>}
+ */
+function buildLedgerRowMenuItems(tx, actions) {
+  const items = [
+    {
+      id: 'edit',
+      label: FM_ROW_ACTIONS.EDIT,
+      onClick: () => actions.onEdit?.(tx)
+    }
+  ];
+  if (canCompleteRecordedExpense(tx)) {
+    items.push({
+      id: 'complete',
+      label: FM_ROW_ACTIONS.COMPLETE,
+      onClick: () => actions.onComplete?.(tx)
+    });
+  }
+  items.push({
+    id: 'delete',
+    label: FM_ROW_ACTIONS.DELETE,
+    onClick: () => actions.onDelete?.(tx),
+    variant: 'destructive'
+  });
+  return items;
+}
 
 export default LedgerTable;

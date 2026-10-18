@@ -57,6 +57,8 @@ const UnifiedModal = ({
   loading = false,
   closeOnEscape = true,
   closeButtonDataTestId,
+  closeChromeFree = false,
+  closeContent = '×',
   ...props 
 }) => {
   const titleId = useId();
@@ -171,8 +173,9 @@ const UnifiedModal = ({
                 preventDoubleClick={false}
                 loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                 {...(closeButtonDataTestId ? { 'data-testid': closeButtonDataTestId } : {})}
+                {...(closeChromeFree ? { 'data-gnb-chrome-free': 'true' } : {})}
               >
-                ×
+                {closeContent}
               </MGButton>
             )}
           </div>

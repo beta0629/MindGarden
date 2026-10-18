@@ -21,10 +21,18 @@ import {
 const codeValueOf = (row) => String(row?.codeValue ?? '').trim();
 
 /**
+ * 공통코드 행 표시 라벨 — codeLabel 우선, 없으면 codeValue/value/code.
+ *
  * @param {object|null|undefined} row
  * @returns {string}
  */
-const codeLabelOf = (row) => String(row?.codeLabel ?? '').trim();
+export const resolveCommonCodeDisplayLabel = (row) => {
+  const label = String(row?.codeLabel ?? '').trim();
+  if (label) {
+    return label;
+  }
+  return String(row?.codeValue ?? row?.value ?? row?.code ?? '').trim();
+};
 
 /**
  * @param {object|null|undefined} row
@@ -48,7 +56,7 @@ const activeSortedRows = (rows) => (
       if (byOrder !== 0) {
         return byOrder;
       }
-      return codeLabelOf(a).localeCompare(codeLabelOf(b), 'ko');
+      return resolveCommonCodeDisplayLabel(a).localeCompare(resolveCommonCodeDisplayLabel(b), 'ko');
     })
 );
 
@@ -87,7 +95,7 @@ export const resolvePrimaryCategoryHighlight = (transactionType, category) => {
 export const buildFixedCategoryOptions = (_transactionType, apiCategories) => (
   activeSortedRows(apiCategories).map((row) => ({
     value: codeValueOf(row),
-    label: codeLabelOf(row) || codeValueOf(row)
+    label: resolveCommonCodeDisplayLabel(row)
   }))
 );
 
@@ -111,7 +119,7 @@ const buildNativeSubcategoryOptions = (category, apiSubcategories) => {
     seen.add(codeValue);
     options.push({
       value: `${FM_TX_SUB_PICK_PREFIX}${codeValue}`,
-      label: codeLabelOf(row) || codeValue
+      label: resolveCommonCodeDisplayLabel(row)
     });
   });
 
@@ -222,7 +230,7 @@ export const buildLedgerFilterCategoryOptions = (incomeCategories, expenseCatego
     seen.add(value);
     options.push({
       value,
-      label: codeLabelOf(row) || value
+      label: resolveCommonCodeDisplayLabel(row)
     });
   });
 

@@ -26,7 +26,21 @@ jest.mock('../../../../common/modals/UnifiedModal', () => ({
 
 jest.mock('../../../../common/BadgeSelect', () => ({
   __esModule: true,
-  default: () => <select data-testid="badge-select" />
+  default: ({ options = [], value, onChange }) => (
+    <div data-testid="badge-select">
+      {options.map((opt) => (
+        <button
+          key={opt.value}
+          type="button"
+          data-testid={`badge-option-${opt.value}`}
+          data-selected={value === opt.value ? 'true' : 'false'}
+          onClick={() => onChange?.(opt.value)}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
 }));
 
 jest.mock('../../../../../utils/standardizedApi', () => ({
@@ -87,6 +101,14 @@ const mockRulesWithInactive = [
   }
 ];
 
+const mockExpenseCategories = [
+  { codeValue: 'RENT', codeLabel: '임대료' },
+  { codeValue: 'MARKETING', codeLabel: '마케팅' },
+  { codeValue: 'EXP_CAT_001', codeLabel: '기타비용001' },
+  { codeValue: 'COFFE', codeLabel: '' },
+  { codeValue: 'CARD', codeLabel: '카드대금' }
+];
+
 describe('MonthlyRecurringExpensesPanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -103,7 +125,13 @@ describe('MonthlyRecurringExpensesPanel', () => {
           }
         });
       }
-      return Promise.resolve({ success: true, data: { expenseCategories: [] } });
+      if (String(endpoint).includes('common-codes') || String(endpoint).includes('financial')) {
+        return Promise.resolve({
+          success: true,
+          data: { expenseCategories: mockExpenseCategories }
+        });
+      }
+      return Promise.resolve({ success: true, data: { expenseCategories: mockExpenseCategories } });
     });
     StandardizedApi.post.mockResolvedValue({ success: true });
   });
@@ -174,5 +202,42 @@ describe('MonthlyRecurringExpensesPanel', () => {
     fireEvent.click(toggle);
     expect(toggle).toHaveAttribute('aria-expanded', 'true');
     expect(toggle).toHaveAttribute('aria-label', FM_RECURRING.TOGGLE_COLLAPSE);
+  });
+
+  it('BadgeSelect chips show codeLabel when present, codeValue when label blank', async() => {
+    render(<MonthlyRecurringExpensesPanel />);
+
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: FM_RECURRING.TOGGLE_EXPAND }));
+    fireEvent.click(screen.getByText(FM_RECURRING.ADD));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('badge-select')).toBeInTheDocument();
+    });
+
+    expect(screen.getByTestId('badge-option-MARKETING')).toHaveTextContent('마케팅');
+    expect(screen.getByTestId('badge-option-EXP_CAT_001')).toHaveTextContent('기타비용001');
+    expect(screen.getByTestId('badge-option-COFFE')).toHaveTextContent('COFFE');
+    expect(screen.getByTestId('badge-option-RENT')).toHaveTextContent('임대료');
+  });
+
+  it('rule meta uses resolveCommonCodeDisplayLabel from matching category row', async() => {
+    render(<MonthlyRecurringExpensesPanel />);
+
+    await waitFor(() => {
+      expect(StandardizedApi.get).toHaveBeenCalled();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: FM_RECURRING.TOGGLE_EXPAND }));
+
+    await waitFor(() => {
+      expect(screen.getByText('월 임대료')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/임대료 · 매월 1일/)).toBeInTheDocument();
+    expect(screen.getByText(/카드대금 · 매월 15일/)).toBeInTheDocument();
   });
 });

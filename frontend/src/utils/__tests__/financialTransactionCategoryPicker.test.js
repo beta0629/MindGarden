@@ -8,6 +8,7 @@ import {
   buildSubcategoryPickerOptions,
   isOtherGroupCategory,
   parseSubcategoryPickerValue,
+  resolveCommonCodeDisplayLabel,
   resolvePrimaryCategoryHighlight,
   resolveSubcategoryPickerValue
 } from '../financialTransactionCategoryPicker';
@@ -42,6 +43,20 @@ const mockIncomeCategories = [
 ];
 
 describe('financialTransactionCategoryPicker', () => {
+  it('resolveCommonCodeDisplayLabel — codeLabel 있으면 라벨', () => {
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'MARKETING', codeLabel: '마케팅' }))
+      .toBe('마케팅');
+  });
+
+  it('resolveCommonCodeDisplayLabel — codeLabel 없거나 공백이면 codeValue', () => {
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'EXP_CAT_001', codeLabel: '' }))
+      .toBe('EXP_CAT_001');
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'COFFE' }))
+      .toBe('COFFE');
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'X', codeLabel: '   ' }))
+      .toBe('X');
+  });
+
   it('buildFixedCategoryOptions — API SSOT 전체 부모 (고정 6칩/demote 없음)', () => {
     const options = buildFixedCategoryOptions('EXPENSE', mockExpenseCategories);
     expect(options.map((o) => o.value)).toEqual([
@@ -55,8 +70,18 @@ describe('financialTransactionCategoryPicker', () => {
       'OTHER'
     ]);
     expect(options.find((o) => o.value === 'OTHER')?.label).toBe('기타잡비');
+    expect(options.find((o) => o.value === 'MARKETING')?.label).toBe('마케팅');
     expect(options.some((o) => o.value === 'MARKETING')).toBe(true);
     expect(options.some((o) => o.value === 'OFFICE_SUPPLIES')).toBe(true);
+  });
+
+  it('buildFixedCategoryOptions — codeLabel 없으면 codeValue를 label로 사용', () => {
+    const options = buildFixedCategoryOptions('EXPENSE', [
+      { codeValue: 'EXP_CAT_001', sortOrder: 1 },
+      { codeValue: 'MARKETING', codeLabel: '마케팅', sortOrder: 2 }
+    ]);
+    expect(options.find((o) => o.value === 'EXP_CAT_001')?.label).toBe('EXP_CAT_001');
+    expect(options.find((o) => o.value === 'MARKETING')?.label).toBe('마케팅');
   });
 
   it('buildFixedCategoryOptions — 수입 API SSOT 전체', () => {

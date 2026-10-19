@@ -237,7 +237,8 @@ describe('OAuthPhoneVerificationModal — OTP 자동 verify / 단일/다중 매�
         accessToken: 'access-1',
         refreshToken: 'refresh-1',
         matchedAccount: { userId: 7, tenantId: 'T1', role: 'CLIENT' },
-        provider: 'NAVER'
+        provider: 'NAVER',
+        requiresPasswordChange: false
       })
     );
     expect(apiModule.verifyOAuthPhoneOtp).toHaveBeenCalledWith({

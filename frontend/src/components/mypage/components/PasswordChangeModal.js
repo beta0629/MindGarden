@@ -9,6 +9,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
+import { persistReissuedSessionTokens } from '../../../utils/persistReissuedSessionTokens';
 import { useTranslation } from 'react-i18next';
 
 const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
@@ -134,6 +135,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         confirmPassword: committed.confirmValue
       });
       if (result && result.success) {
+        await persistReissuedSessionTokens(result);
         notificationManager.show(t('common:mypage.PasswordChangeModal.t_3c574e69'), 'info');
         onSuccess?.();
         onClose();

@@ -23,6 +23,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.CommonCodePermissionService;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.CommonCodeFieldNormalizer;
 import com.coresolution.consultation.util.CommonCodeSubcategoryParents;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
@@ -83,17 +84,19 @@ public class CommonCodeServiceImpl implements CommonCodeService {
 
     /**
      * 활성 공통코드 엔티티 목록을 ERP·통계 등에서 쓰는 Map 스키마로 변환한다.
+     * codeValue/parentCodeGroup/parentCodeValue 는 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeLabel/codeDescription 등 라벨·본문은 원문 그대로.
      */
     private List<Map<String, Object>> toActiveCodeMapList(List<CommonCode> codes) {
         return codes.stream().map(code -> {
             Map<String, Object> codeMap = new HashMap<>();
             codeMap.put("id", code.getId());
-            codeMap.put("codeValue", code.getCodeValue());
+            codeMap.put("codeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()));
             codeMap.put("codeLabel", code.getCodeLabel());
             codeMap.put("codeDescription", code.getCodeDescription());
             codeMap.put("sortOrder", code.getSortOrder());
-            codeMap.put("parentCodeGroup", code.getParentCodeGroup());
-            codeMap.put("parentCodeValue", code.getParentCodeValue());
+            codeMap.put("parentCodeGroup", CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()));
+            codeMap.put("parentCodeValue", CommonCodeFieldNormalizer.normalizeCodeValue(code.getParentCodeValue()));
             return codeMap;
         }).collect(Collectors.toList());
     }
@@ -159,25 +162,28 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @CacheEvict(value = {"tenantCodes", "coreCodes"}, allEntries = true)
     public CommonCode createCommonCode(CommonCodeDto dto) {
-        log.info("🔧 공통코드 생성 (캐시 무효화): {} - {}", dto.getCodeGroup(), dto.getCodeValue());
+        String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
+        String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
+        String codeLabel = dto.getCodeLabel();
+        log.info("🔧 공통코드 생성 (캐시 무효화): {} - {}", codeGroup, codeValue);
         
         // 중복 체크
-        if (commonCodeRepository.findByCodeGroupAndCodeValue(dto.getCodeGroup(), dto.getCodeValue()).isPresent()) {
-            throw new RuntimeException("이미 존재하는 코드입니다: " + dto.getCodeGroup() + " - " + dto.getCodeValue());
+        if (commonCodeRepository.findByCodeGroupAndCodeValue(codeGroup, codeValue).isPresent()) {
+            throw new RuntimeException("이미 존재하는 코드입니다: " + codeGroup + " - " + codeValue);
         }
 
         // 한글명 필수 검증 (한국 사용 필수)
         String koreanName = dto.getKoreanName();
         if (koreanName == null || koreanName.trim().isEmpty()) {
             // 한글명이 없으면 codeLabel을 한글명으로 사용
-            koreanName = dto.getCodeLabel() != null ? dto.getCodeLabel() : dto.getCodeValue();
-            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", dto.getCodeValue(), koreanName);
+            koreanName = codeLabel != null ? codeLabel : codeValue;
+            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", codeValue, koreanName);
         }
 
         CommonCode commonCode = CommonCode.builder()
-                .codeGroup(dto.getCodeGroup())
-                .codeValue(dto.getCodeValue())
-                .codeLabel(dto.getCodeLabel())
+                .codeGroup(codeGroup)
+                .codeValue(codeValue)
+                .codeLabel(codeLabel)
                 .codeDescription(dto.getCodeDescription())
                 .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
                 .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
@@ -197,18 +203,21 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         log.info("🔧 공통코드 수정: {}", id);
         
         CommonCode existingCode = getCommonCodeById(id);
+        String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
+        String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
+        String codeLabel = dto.getCodeLabel();
         
         // 코드 그룹과 값이 변경되는 경우 중복 체크
-        if (!existingCode.getCodeGroup().equals(dto.getCodeGroup()) || 
-            !existingCode.getCodeValue().equals(dto.getCodeValue())) {
-            if (commonCodeRepository.findByCodeGroupAndCodeValue(dto.getCodeGroup(), dto.getCodeValue()).isPresent()) {
-                throw new RuntimeException("이미 존재하는 코드입니다: " + dto.getCodeGroup() + " - " + dto.getCodeValue());
+        if (!existingCode.getCodeGroup().equals(codeGroup) || 
+            !existingCode.getCodeValue().equals(codeValue)) {
+            if (commonCodeRepository.findByCodeGroupAndCodeValue(codeGroup, codeValue).isPresent()) {
+                throw new RuntimeException("이미 존재하는 코드입니다: " + codeGroup + " - " + codeValue);
             }
         }
 
-        existingCode.setCodeGroup(dto.getCodeGroup());
-        existingCode.setCodeValue(dto.getCodeValue());
-        existingCode.setCodeLabel(dto.getCodeLabel());
+        existingCode.setCodeGroup(codeGroup);
+        existingCode.setCodeValue(codeValue);
+        existingCode.setCodeLabel(codeLabel);
         existingCode.setCodeDescription(dto.getCodeDescription());
         existingCode.setSortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : existingCode.getSortOrder());
         existingCode.setIsActive(dto.getIsActive() != null ? dto.getIsActive() : existingCode.getIsActive());
@@ -222,11 +231,11 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         String koreanName = dto.getKoreanName();
         if (koreanName == null || koreanName.trim().isEmpty()) {
             // 한글명이 없으면 codeLabel을 한글명으로 사용
-            koreanName = dto.getCodeLabel() != null ? dto.getCodeLabel() : existingCode.getKoreanName();
+            koreanName = codeLabel != null ? codeLabel : existingCode.getKoreanName();
             if (koreanName == null || koreanName.trim().isEmpty()) {
-                koreanName = dto.getCodeValue();
+                koreanName = codeValue;
             }
-            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", dto.getCodeValue(), koreanName);
+            log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", codeValue, koreanName);
         }
         existingCode.setKoreanName(koreanName);
 
@@ -281,18 +290,21 @@ public class CommonCodeServiceImpl implements CommonCodeService {
         
         List<CommonCode> commonCodes = dtos.stream()
                 .map(dto -> {
+                    String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(dto.getCodeGroup());
+                    String codeValue = CommonCodeFieldNormalizer.normalizeCodeValue(dto.getCodeValue());
+                    String codeLabel = dto.getCodeLabel();
                     // 한글명 필수 검증 (한국 사용 필수)
                     String koreanName = dto.getKoreanName();
                     if (koreanName == null || koreanName.trim().isEmpty()) {
                         // 한글명이 없으면 codeLabel을 한글명으로 사용
-                        koreanName = dto.getCodeLabel() != null ? dto.getCodeLabel() : dto.getCodeValue();
-                        log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", dto.getCodeValue(), koreanName);
+                        koreanName = codeLabel != null ? codeLabel : codeValue;
+                        log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", codeValue, koreanName);
                     }
                     
                     return CommonCode.builder()
-                            .codeGroup(dto.getCodeGroup())
-                            .codeValue(dto.getCodeValue())
-                            .codeLabel(dto.getCodeLabel())
+                            .codeGroup(codeGroup)
+                            .codeValue(codeValue)
+                            .codeLabel(codeLabel)
                             .codeDescription(dto.getCodeDescription())
                             .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
                             .isActive(dto.getIsActive() != null ? dto.getIsActive() : true)
@@ -700,7 +712,9 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     @Override
     @Transactional
     public CommonCodeResponse create(CommonCodeCreateRequest request, String createdBy) {
-        log.info("🔧 공통코드 생성 (표준화): {} - {}", request.getCodeGroup(), request.getCodeValue());
+        String codeGroup = CommonCodeFieldNormalizer.normalizeCodeGroup(request.getCodeGroup());
+        String codeLabel = request.getCodeLabel();
+        log.info("🔧 공통코드 생성 (표준화): {} - {}", codeGroup, request.getCodeValue());
         
         String tenantId = request.getTenantId() != null ? request.getTenantId() : TenantContextHolder.getTenantId();
         
@@ -722,42 +736,42 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             throw new SecurityException(message);
         }
 
-        if (request.getCodeValue() == null || request.getCodeValue().trim().isEmpty()) {
+        String normalizedCodeValue = CommonCodeFieldNormalizer.normalizeCodeValue(request.getCodeValue());
+        if (normalizedCodeValue == null) {
             throw new IllegalArgumentException("코드 값은 필수입니다.");
         }
-        String normalizedCodeValue = request.getCodeValue().trim();
         
         // 중복 체크 (tenant_id 포함)
         Optional<CommonCode> existing = tenantId != null && !tenantId.isEmpty()
-            ? commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, request.getCodeGroup(), normalizedCodeValue)
-            : commonCodeRepository.findCoreCodeByGroupAndValue(request.getCodeGroup(), normalizedCodeValue);
+            ? commonCodeRepository.findTenantCodeByGroupAndValue(tenantId, codeGroup, normalizedCodeValue)
+            : commonCodeRepository.findCoreCodeByGroupAndValue(codeGroup, normalizedCodeValue);
         
         if (existing.isPresent()) {
-            throw new RuntimeException("이미 존재하는 코드입니다: " + request.getCodeGroup() + " - " + normalizedCodeValue);
+            throw new RuntimeException("이미 존재하는 코드입니다: " + codeGroup + " - " + normalizedCodeValue);
         }
         
         // 한글명 필수 검증
         String koreanName = request.getKoreanName();
         if (koreanName == null || koreanName.trim().isEmpty()) {
-            koreanName = request.getCodeLabel() != null ? request.getCodeLabel() : normalizedCodeValue;
+            koreanName = codeLabel != null ? codeLabel : normalizedCodeValue;
             log.warn("⚠️ 한글명이 없어 codeLabel을 한글명으로 사용: {} = {}", normalizedCodeValue, koreanName);
         }
 
         String parentGroup = request.getParentCodeGroup();
         String parentValue = request.getParentCodeValue();
-        if (CommonCodeSubcategoryParents.isSubcategoryGroup(request.getCodeGroup())) {
-            parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(request.getCodeGroup());
+        if (CommonCodeSubcategoryParents.isSubcategoryGroup(codeGroup)) {
+            parentGroup = CommonCodeSubcategoryParents.expectedParentGroup(codeGroup);
             CommonCodeSubcategoryParents.requireValidParent(
-                request.getCodeGroup(),
+                codeGroup,
                 parentGroup,
                 parentValue,
                 (pg, pv) -> parentCategoryExists(tenantId, pg, pv));
         }
         
         CommonCode commonCode = CommonCode.builder()
-                .codeGroup(request.getCodeGroup())
+                .codeGroup(codeGroup)
                 .codeValue(normalizedCodeValue)
-                .codeLabel(request.getCodeLabel())
+                .codeLabel(codeLabel)
                 .codeDescription(request.getCodeDescription())
                 .sortOrder(request.getSortOrder() != null ? request.getSortOrder() : 0)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
@@ -814,7 +828,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
             existingCode.setKoreanName(request.getKoreanName());
         }
         
-        // 다른 필드 업데이트
+        // 다른 필드 업데이트 (codeLabel·본문은 trim 하지 않음)
         if (request.getCodeLabel() != null) {
             existingCode.setCodeLabel(request.getCodeLabel());
         }
@@ -967,11 +981,7 @@ public class CommonCodeServiceImpl implements CommonCodeService {
     }
 
     private static String trimToNull(String value) {
-        if (value == null) {
-            return null;
-        }
-        String trimmed = value.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+        return CommonCodeFieldNormalizer.trimToNull(value);
     }
 
     /**

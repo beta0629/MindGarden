@@ -10,6 +10,7 @@ import { ERP_API } from '../../constants/api';
 import { ErpSafeText } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
+import { resolveCommonCodeDisplayLabel } from '../../utils/financialTransactionCategoryPicker';
 import {
   QEF_MODAL_TITLE,
   QEF_MODAL_SUBTITLE,
@@ -84,8 +85,8 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
           subcategoryCode: sub.codeValue,
           category,
           subcategory: sub,
-          displayName: category.codeLabel || category.codeValue,
-          subDisplayName: sub.codeLabel || sub.codeValue
+          displayName: resolveCommonCodeDisplayLabel(category),
+          subDisplayName: resolveCommonCodeDisplayLabel(sub)
         };
       })
       .filter(Boolean);
@@ -113,7 +114,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         category: categoryCode,
         subcategory: subcategoryCode,
         amount: String(amount),
-        description: `${category.codeLabel} 지출`,
+        description: `${resolveCommonCodeDisplayLabel(category)} 지출`,
         transactionDate: formatLocalDateYmd(new Date())
       });
       const taxInfo = await StandardizedApi.post(
@@ -127,7 +128,7 @@ const QuickExpenseForm = ({ onClose, onSuccess }) => {
         return;
       }
       const isVatApplicable = categoryCode !== QEF_VAT_EXEMPT_CATEGORY_CODE;
-      let successMessage = `${category.codeLabel} 지출이 등록되었습니다.`;
+      let successMessage = `${resolveCommonCodeDisplayLabel(category)} 지출이 등록되었습니다.`;
       if (isVatApplicable && (taxInfo.taxAmount != null || taxInfo.amount != null)) {
         const totalAmount = taxInfo.amount ?? amount;
         successMessage += ` (총 ${Number(totalAmount).toLocaleString()}원)`;

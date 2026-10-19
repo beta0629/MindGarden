@@ -692,6 +692,7 @@ class SalaryManagementControllerIntegrationTest {
 
         @Test
         @DisplayName("I-ME-01: 미인증 → 401")
+        @WithMockConsultantSecurityContext
         void withoutSession_returns401() throws Exception {
             mockMvc.perform(get("/api/v1/consultants/me/salary-calculations"))
                     .andExpect(status().isUnauthorized());

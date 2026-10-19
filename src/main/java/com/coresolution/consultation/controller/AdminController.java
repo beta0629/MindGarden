@@ -3834,7 +3834,7 @@ public class AdminController extends BaseApiController {
                 }
             }
 
-            org.springframework.data.domain.Pageable pageable = PaginationUtils.createPageable(page, size);
+            org.springframework.data.domain.Pageable pageable = resolveAdminListPageable(page, size);
             org.springframework.data.domain.Page<com.coresolution.consultation.dto.FinancialTransactionResponse> transactions =
                     financialTransactionService.getTransactionsFiltered(
                             transactionType, category, parsedStart, parsedEnd, pageable);

@@ -15,7 +15,7 @@ import { useTranslation } from 'react-i18next';
 const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    currentPassword: tempPassword || '',
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
@@ -64,7 +64,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   useEffect(() => {
     if (!isOpen) return;
     setFormData({
-      currentPassword: tempPassword || '',
+      currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     });
@@ -194,8 +194,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               value={formData.currentPassword}
               onChange={handleInputChange}
               placeholder="현재 비밀번호"
-              disabled={isLoading || !!tempPassword}
-              readOnly={!!tempPassword}
+              disabled={isLoading}
               autoComplete="current-password"
             />
             <MGButton
@@ -210,7 +209,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
               })}
               loadingText={ERP_MG_BUTTON_LOADING_TEXT}
               onClick={() => togglePasswordVisibility('current')}
-              disabled={isLoading || !!tempPassword}
+              disabled={isLoading}
               aria-label="비밀번호 표시 전환"
               preventDoubleClick={false}
             >

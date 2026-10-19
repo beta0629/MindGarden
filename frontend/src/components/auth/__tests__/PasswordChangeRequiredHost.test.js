@@ -14,13 +14,16 @@ import notificationManager from '../../../utils/notification';
 
 jest.mock('../../mypage/components/PasswordChangeModal', () => {
   const ReactActual = require('react');
-  function MockPasswordChangeModal({ isOpen, onSuccess, onClose }) {
+  function MockPasswordChangeModal({ isOpen, onSuccess, onClose, tempPassword }) {
     if (!isOpen) {
       return null;
     }
     return ReactActual.createElement(
       'div',
-      { role: 'dialog' },
+      {
+        role: 'dialog',
+        'data-temp-password-passed': tempPassword ? 'yes' : 'no'
+      },
       ReactActual.createElement(
         'button',
         { type: 'button', onClick: onClose },
@@ -73,6 +76,7 @@ describe('PasswordChangeRequiredHost', () => {
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
 
     expect(notificationManager.show).toHaveBeenCalledWith(CHANGE_REQUIRED_MESSAGE, 'warning');
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-temp-password-passed', 'no');
   });
 
   test('성공 뒤 onClose 는 경고를 보여 주지 않는다', () => {

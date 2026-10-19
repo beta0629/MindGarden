@@ -79,6 +79,7 @@ import {
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 import { mergeGuestShopCartIntoServer } from '../../services/clientShopService';
+import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
 
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
 const EMPTY_MERCHANT_LEGAL = {
@@ -1264,6 +1265,11 @@ const UnifiedLogin = () => {
             markJustLoggedIn();
             await checkSession(true, { background: true });
             setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
+            if (data.requiresPasswordChange === true) {
+              setTempPassword(formData.password || '');
+              setShowPasswordChangeModal(true);
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userObj }, navigate);
           }}
@@ -1293,7 +1299,13 @@ const UnifiedLogin = () => {
             setOAuthPhoneVerificationPayload(null);
           }}
           socialUser={oauthPhoneVerificationPayload}
-          onVerifiedSingle={async({ accessToken, refreshToken, matchedAccount, provider: matchedProvider }) => {
+          onVerifiedSingle={async({
+            accessToken,
+            refreshToken,
+            matchedAccount,
+            provider: matchedProvider,
+            requiresPasswordChange
+          }) => {
             const userInfo = {
               id: matchedAccount?.userId,
               tenantId: matchedAccount?.tenantId,
@@ -1308,6 +1320,10 @@ const UnifiedLogin = () => {
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
             await checkSession(true, { background: true });
+            if (requiresPasswordChange === true) {
+              dispatchPasswordChangeRequired();
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

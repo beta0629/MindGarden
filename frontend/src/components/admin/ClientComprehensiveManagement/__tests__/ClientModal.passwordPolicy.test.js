@@ -1,6 +1,6 @@
 /**
- * 내담자 등록 모달 — 공통 비밀번호 정책(usePasswordPolicyField) 적용.
- * 정책 실패면 저장(onSave → 등록 API)을 부르지 않고, 빈 값은 임시 비밀번호 등록으로 통과한다.
+ * 내담자 등록 모달 — 비밀번호는 서버가 만들고 문자로만 알린다.
+ * 화면은 비밀번호를 받지 않고, 이름·이메일이 있으면 저장을 호출한다.
  */
 import React, { useState } from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -17,12 +17,9 @@ jest.mock('../../../../utils/standardizedApi', () => ({
   }
 }));
 
-const NO_UPPERCASE = 'noupper1!x';
-
 const baseForm = {
   name: '',
   email: '',
-  password: '',
   phone: '',
   status: 'ACTIVE',
   grade: 'BRONZE',
@@ -57,39 +54,24 @@ function fill(name, value) {
   return el;
 }
 
-describe('ClientModal 비밀번호 정책', () => {
+describe('ClientModal 임시 비밀번호 문자', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test('대문자 없는 비밀번호는 저장하지 않고 정책 안내를 표시한다', async() => {
+  test('비밀번호 입력란 없이 등록하고 문자 안내를 보여 준다', async() => {
     const onSave = jest.fn();
     render(<Harness onSave={onSave} />);
     fill('name', '홍길동');
     fill('email', 'fake.client@example.com');
-    const pwd = fill('password', NO_UPPERCASE);
 
-    fireEvent.click(screen.getByRole('button', { name: '등록' }));
-
-    const alert = await screen.findByText(/대문자를 포함해야/);
-    expect(alert).toHaveAttribute('role', 'alert');
-    expect(alert).toHaveTextContent('특수문자');
-    expect(pwd).toHaveAttribute('aria-invalid', 'true');
-    expect(onSave).not.toHaveBeenCalled();
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-  });
-
-  test('빈 비밀번호는 임시 비밀번호 등록으로 통과한다', async() => {
-    const onSave = jest.fn();
-    render(<Harness onSave={onSave} />);
-    fill('name', '홍길동');
-    fill('email', 'fake.client@example.com');
-    fill('password', '');
+    expect(document.querySelector('input[name="password"]')).toBeNull();
+    expect(screen.getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '등록' }));
 
     await waitFor(() => expect(onSave).toHaveBeenCalled());
-    expect(onSave.mock.calls[0][0].password).toBe('');
-    expect(screen.queryByText(/대문자를 포함해야/)).not.toBeInTheDocument();
+    expect(onSave.mock.calls[0][0].password).toBeUndefined();
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
   });
 });

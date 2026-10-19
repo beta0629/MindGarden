@@ -26,8 +26,6 @@ import ContentKpiRow from '../../dashboard-v2/content/ContentKpiRow';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../../constants/notificationChannelPreference';
-import usePasswordPolicyField from '../../../hooks/usePasswordPolicyField';
-import PasswordPolicyInput from '../../common/PasswordPolicyInput';
 import {
   CLIENT_ENGAGEMENT_TYPE,
   CLIENT_ENGAGEMENT_TYPE_OPTIONS,
@@ -97,7 +95,6 @@ const ClientModal = ({
     const [isCheckingPhone, setIsCheckingPhone] = useState(false);
     const [vehiclePlateError, setVehiclePlateError] = useState('');
     const [errors, setErrors] = useState({});
-    const clientPasswordField = usePasswordPolicyField({ allowEmpty: true });
     const [clientSummary, setClientSummary] = useState(null);
     const [summaryLoading, setSummaryLoading] = useState(false);
     const clientRef = useRef(client);
@@ -286,9 +283,6 @@ const ClientModal = ({
                 setVehiclePlateError('');
             }
         }
-        if (name === 'password') {
-            clientPasswordField.clearError();
-        }
 
         // 이메일 입력 시 중복 확인 상태 초기화
         if (name === 'email') {
@@ -362,11 +356,9 @@ const ClientModal = ({
             }
         }
         setErrors(newErrors);
-        const committedPassword = type === 'create' ? clientPasswordField.validateCommitted(formData.password) : null;
-        const passwordOk = !committedPassword || committedPassword.valid;
         return {
-            ok: Object.keys(newErrors).length === 0 && passwordOk,
-            form: committedPassword ? { ...formData, password: committedPassword.value } : formData
+            ok: Object.keys(newErrors).length === 0,
+            form: formData
         };
     };
 
@@ -628,7 +620,6 @@ const ClientModal = ({
         const safeFormData = {
             name: formData.name || '',
             email: formData.email || '',
-            password: formData.password || '',
             phone: formData.phone || '',
             status: formData.status || 'ACTIVE',
             grade: formData.grade || 'BRONZE',
@@ -682,7 +673,7 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                         <p className="mg-v2-info-text">
-                            {t('admin:clientModal.form.passwordHint')}
+                            {t('auth:tempPasswordSms.resetHelp')}
                         </p>
                     </div>
                 )}
@@ -987,18 +978,6 @@ const ClientModal = ({
                         <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
                     )}
                 </div>
-                {type === 'create' && (
-                    <div className="mg-v2-form-group">
-                        <label htmlFor="password" className="mg-v2-form-label">{t('admin:clientModal.form.passwordLabel')}</label>
-                        <PasswordPolicyInput
-                            field={clientPasswordField}
-                            id="password"
-                            name="password"
-                            value={safeFormData.password}
-                            onChange={handleInputChange}
-                        />
-                    </div>
-                )}
                 <div className="mg-v2-form-group">
                     <label htmlFor="status" className="mg-v2-form-label">{t('admin:labels.status')}</label>
                     <BadgeSelect
@@ -1321,7 +1300,6 @@ const ClientModal = ({
                         }}
                         preventDoubleClick={true}
                         clickDelay={1000}
-                        disabled={type === 'create' && clientPasswordField.pending}
                     >
                         {getSubmitText()}
                     </MGButton>

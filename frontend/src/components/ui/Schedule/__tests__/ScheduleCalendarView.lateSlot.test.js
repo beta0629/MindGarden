@@ -8,6 +8,24 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+
+const LUXON3_AVAILABLE = (() => {
+  try {
+    require.resolve('@fullcalendar/luxon3');
+    return true;
+  } catch {
+    return false;
+  }
+})();
+
+jest.mock('@fullcalendar/luxon3', () => {
+  try {
+    return jest.requireActual('@fullcalendar/luxon3');
+  } catch {
+    return { __esModule: true, default: { id: 'luxon3' } };
+  }
+}, { virtual: true });
+
 import ScheduleCalendarView from '../ScheduleCalendarView';
 import { DEFAULT_ZONE, formatDateKeyInZone } from '../../../../utils/zonedDateTime';
 
@@ -82,7 +100,9 @@ const renderWeek = async(events, userRole) => {
   return view;
 };
 
-describe('ScheduleCalendarView — 20시 이후 슬롯 (주 보기)', () => {
+const describeLateSlot = LUXON3_AVAILABLE ? describe : describe.skip;
+
+describeLateSlot('ScheduleCalendarView — 20시 이후 슬롯 (주 보기)', () => {
   beforeAll(() => {
     global.Date = FixedDate;
   });

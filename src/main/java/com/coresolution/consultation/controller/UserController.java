@@ -517,12 +517,12 @@ public class UserController extends BaseApiController {
     }
     
     /**
-     * 사용자 비밀번호 재설정
+     * 사용자 비밀번호 재설정. 임시 비밀번호는 문자로만 안내한다.
      */
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@RequestParam String email) {
         userService.resetPassword(email);
-        return success("비밀번호 재설정 이메일이 발송되었습니다.");
+        return success("임시 비밀번호 안내를 문자로 처리했습니다.");
     }
     
     /**

@@ -123,8 +123,13 @@ describe('PasswordChangeModal', () => {
   });
 
   it('입력 직후 즉시 제출하면 POST 본문에 입력한 새 비밀번호가 들어간다', async() => {
-    renderOpen({ tempPassword: 'Tmpfake7!Q' });
+    renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');
+    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
+    expect(currentInput).toHaveValue('');
+    fireEvent.change(currentInput, {
+      target: { name: 'currentPassword', value: 'x'.repeat(3) }
+    });
     fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
       target: { name: 'newPassword', value: 'Newfake8@Z' }
     });
@@ -141,17 +146,28 @@ describe('PasswordChangeModal', () => {
   });
 
   it('새 비밀번호가 빈 값이면 제출해도 POST 하지 않는다', async() => {
-    renderOpen({ tempPassword: 'Tmpfake7!Q' });
+    renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByLabelText('현재 비밀번호')).toHaveValue('');
     fireEvent.submit(dialog.querySelector('form'));
 
     expect(await within(dialog).findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
     expect(StandardizedApi.post).not.toHaveBeenCalled();
   });
 
-  it('임시 비밀번호로 현재 비밀번호가 미리 채워져도 정책 안내는 항상 보인다', () => {
-    renderOpen({ tempPassword: 'Tmpfake7!Q' });
-    const hint = screen.getByRole('dialog').querySelector('#mypage-pw-new-policy-hint');
+  it('변경 요구로 열려도 현재 비밀번호 칸은 비어 있고 autocomplete 은 유지된다', () => {
+    renderOpen({ tempPassword: true });
+    const dialog = screen.getByRole('dialog');
+    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
+    const newInput = within(dialog).getByLabelText('새 비밀번호');
+
+    expect(currentInput).toHaveValue('');
+    expect(currentInput).toBeEnabled();
+    expect(currentInput).toHaveAttribute('autoComplete', 'current-password');
+    expect(newInput).toHaveAttribute('autoComplete', 'new-password');
+    expect(within(dialog).getByText('임시 비밀번호로 로그인하셨습니다.')).toBeInTheDocument();
+
+    const hint = dialog.querySelector('#mypage-pw-new-policy-hint');
     expect(hint).toBeTruthy();
     expect(hint.textContent).toContain(getPasswordPolicyHint());
   });

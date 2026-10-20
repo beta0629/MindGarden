@@ -10,9 +10,11 @@
  * @author CoreSolution
  * @since 2026-10-06
  */
+import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultationLogAutosaveConstants';
 import i18n from '../i18n';
 import { extractServerErrorMessageFromError } from './ajax';
 import { formatNowInSessionZone } from './scheduleSessionStart';
+import { startOfDayInZone } from './zonedDateTime';
 import {
   buildScheduleDatetimeUpdateBody,
   getScheduleCalendarDragLockedMessage,
@@ -46,22 +48,15 @@ const PAST_TIME_I18N_BY_CODE = {
 const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getTime());
 
 /**
- * 로컬 달력일 00:00. 카드 «일정 등록»처럼 시각이 없는 기본 날짜에 쓴다.
+ * 운영 타임존 달력일 00:00. 카드 «일정 등록»처럼 시각이 없는 기본 날짜에 쓴다.
  * 날짜만 있는 값(자정)은 당일 허용·전날 거부 판정과 짝을 이룬다.
+ * 브라우저가 그 타임존이면 로컬 자정과 같은 순간이다.
  *
  * @param {Date} [from]
  * @returns {Date}
  */
-export const startOfLocalCalendarDay = (from = new Date()) => {
-  const day = from instanceof Date ? new Date(from.getTime()) : new Date();
-  if (Number.isNaN(day.getTime())) {
-    const fallback = new Date();
-    fallback.setHours(0, 0, 0, 0);
-    return fallback;
-  }
-  day.setHours(0, 0, 0, 0);
-  return day;
-};
+export const startOfLocalCalendarDay = (from = new Date()) =>
+  startOfDayInZone(from, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
 
 /**
  * 'YYYY-MM-DD' + 'HH:mm' 대상이 현재(운영 타임존)보다 이전인지.

@@ -5,7 +5,7 @@
  * @since 2026-09-30
  */
 
-import { buildScheduleDatetimeUpdateBody, resolveMovedScheduleEnd } from '../scheduleRescheduleUtils';
+import { buildScheduleDatetimeUpdateBody, combineDateAndTimeHm, resolveMovedScheduleEnd } from '../scheduleRescheduleUtils';
 
 const localDate = (y, m, d, hh, mm) => new Date(y, m - 1, d, hh, mm, 0, 0);
 
@@ -20,10 +20,10 @@ describe('resolveMovedScheduleEnd', () => {
   });
 
   test('종료가 없으면(event.end=null) 기존 50분 길이를 유지해 계산 → PUT 본문 endTime 도 이동', () => {
-    const newStart = localDate(2026, 10, 6, 8, 30);
+    const newStart = combineDateAndTimeHm('2026-10-06', '08:30');
     const end = resolveMovedScheduleEnd(newStart, null, originalStart, originalEnd);
 
-    expect(end).toEqual(localDate(2026, 10, 6, 9, 20));
+    expect(end).toEqual(combineDateAndTimeHm('2026-10-06', '09:20'));
     expect(buildScheduleDatetimeUpdateBody(newStart, end)).toEqual({
       date: '2026-10-06',
       startTime: '08:30',

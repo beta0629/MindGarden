@@ -12,10 +12,12 @@ import {
   isSameDayCardPending,
   normalizedRemainingSessions
 } from '../components/admin/mapping-management/constants/integratedScheduleSidebarFilterConstants';
+import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultationLogAutosaveConstants';
 import {
   getScheduleCreateInPastMessage,
   isScheduleMoveTargetInPast
 } from './scheduleMoveGuard';
+import { formatDateKeyInZone, isMidnightInZone } from './zonedDateTime';
 
 export const EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE = '배정 정보가 올바르지 않습니다.';
 
@@ -251,16 +253,10 @@ export function assertDropDateNotPast(dropDate, now = new Date()) {
   if (Number.isNaN(drop.getTime())) {
     return { ok: true };
   }
-  const dateOnly = drop.getHours() === 0
-    && drop.getMinutes() === 0
-    && drop.getSeconds() === 0
-    && drop.getMilliseconds() === 0;
-  if (dateOnly) {
-    const today = new Date(now.getTime());
-    today.setHours(0, 0, 0, 0);
-    const dropDay = new Date(drop.getTime());
-    dropDay.setHours(0, 0, 0, 0);
-    if (dropDay.getTime() < today.getTime()) {
+  if (isMidnightInZone(drop, CONSULTATION_LOG_SESSION_START_TIME_ZONE)) {
+    const dropDay = formatDateKeyInZone(drop, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
+    const today = formatDateKeyInZone(now, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
+    if (dropDay < today) {
       return {
         ok: false,
         kind: 'past_date',

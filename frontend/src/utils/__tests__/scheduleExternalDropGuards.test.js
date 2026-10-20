@@ -554,15 +554,15 @@ describe('scheduleExternalDropGuards', () => {
 
     it('rejects a timed slot earlier than now on the same day', () => {
       const now = new Date('2026-10-06T05:00:00Z');
-      const pastSlot = new Date(2026, 9, 6, 11, 0, 0, 0);
+      const pastSlot = new Date('2026-10-06T02:00:00.000Z');
       const r = assertDropDateNotPast(pastSlot, now);
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('past_date');
     });
 
     it('allows today at midnight (card «일정 등록» 기본 날짜)', () => {
-      const now = new Date(2026, 9, 6, 14, 0, 0, 0);
-      const todayMidnight = new Date(2026, 9, 6, 0, 0, 0, 0);
+      const now = new Date('2026-10-06T05:00:00Z');
+      const todayMidnight = new Date('2026-10-05T15:00:00.000Z');
       expect(assertDropDateNotPast(todayMidnight, now)).toEqual({ ok: true });
     });
   });

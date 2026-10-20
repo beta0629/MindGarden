@@ -76,6 +76,8 @@ jobs:
         src/utils/__tests__/weekDayChipFit.test.js
         src/utils/__tests__/safeDisplay.formatNameWithSecondary.test.js
         src/utils/__tests__/scheduleMoveGuard.test.js
+        src/utils/__tests__/scheduleSeoulWallClock.cases.test.js
+        src/utils/__tests__/scheduleSeoulWallClock.test.js
         src/utils/__tests__/scheduleExternalDropGuards.test.js
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.moveTargetPast.test.js
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.dayZoom.test.js

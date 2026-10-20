@@ -26,6 +26,9 @@ import {
   SCHEDULE_DRAG_LOCKED_COMPLETED_MESSAGE
 } from '../scheduleRescheduleUtils';
 import koSchedule from '../../locales/ko/schedule.json';
+import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../../constants/consultationLogAutosaveConstants';
+import { dateFromWallClockInZone } from '../zonedDateTime';
+import { buildScheduleDatetimeUpdateBody } from '../scheduleRescheduleUtils';
 
 jest.mock('../../i18n', () => ({
   __esModule: true,
@@ -35,6 +38,11 @@ jest.mock('../../i18n', () => ({
 const NOW = new Date('2026-10-06T05:00:00Z');
 
 const localDate = (y, mo, d, h, mi) => new Date(y, mo - 1, d, h, mi, 0, 0);
+
+const wallDate = (y, mo, d, h, mi) => dateFromWallClockInZone(
+  { year: y, month: mo, day: d, hour: h, minute: mi },
+  CONSULTATION_LOG_SESSION_START_TIME_ZONE
+);
 
 describe('scheduleMoveGuard', () => {
   describe('isScheduleMoveTargetKeyInPast (KST)', () => {
@@ -62,8 +70,8 @@ describe('scheduleMoveGuard', () => {
   });
 
   test('isScheduleMoveTargetInPast — PUT 본문과 같은 벽시계 값으로 판정, 잘못된 값은 false', () => {
-    expect(isScheduleMoveTargetInPast(localDate(2026, 10, 6, 11, 0), NOW)).toBe(true);
-    expect(isScheduleMoveTargetInPast(localDate(2026, 10, 8, 11, 0), NOW)).toBe(false);
+    expect(isScheduleMoveTargetInPast(wallDate(2026, 10, 6, 11, 0), NOW)).toBe(true);
+    expect(isScheduleMoveTargetInPast(wallDate(2026, 10, 8, 11, 0), NOW)).toBe(false);
     expect(isScheduleMoveTargetInPast(null, NOW)).toBe(false);
     expect(isScheduleMoveTargetInPast('not-a-date', NOW)).toBe(false);
   });
@@ -95,11 +103,11 @@ describe('scheduleMoveGuard', () => {
     expect(isScheduleMoveSourceLocked({ status: 'CANCELLED' }, NOW)).toBe(true);
     expect(isScheduleMoveSourceLocked({
       status: 'BOOKED',
-      start: localDate(2026, 10, 6, 11, 0)
+      start: wallDate(2026, 10, 6, 11, 0)
     }, NOW)).toBe(true);
     expect(isScheduleMoveSourceLocked({
       status: 'BOOKED',
-      start: localDate(2026, 10, 8, 11, 0)
+      start: wallDate(2026, 10, 8, 11, 0)
     }, NOW)).toBe(false);
     expect(getScheduleMoveSourceLockedMessage({ status: 'COMPLETED' }, NOW))
       .toBe(SCHEDULE_DRAG_LOCKED_COMPLETED_MESSAGE);
@@ -107,11 +115,11 @@ describe('scheduleMoveGuard', () => {
       .toBe(SCHEDULE_DRAG_LOCKED_CANCELLED_MESSAGE);
     expect(getScheduleMoveSourceLockedMessage({
       status: 'BOOKED',
-      start: localDate(2026, 10, 6, 11, 0)
+      start: wallDate(2026, 10, 6, 11, 0)
     }, NOW)).toBe('t:schedule:constants.scheduleMove.fromPast');
     expect(getScheduleMoveSourceLockedMessage({
       status: 'BOOKED',
-      start: localDate(2026, 10, 8, 11, 0)
+      start: wallDate(2026, 10, 8, 11, 0)
     }, NOW)).toBeNull();
   });
 
@@ -124,15 +132,14 @@ describe('scheduleMoveGuard', () => {
     expect(koSchedule.constants.scheduleMove.createInPast).toEqual(expect.any(String));
   });
 
-  test('startOfLocalCalendarDay — 시각을 00:00:00.000 으로 맞춘다', () => {
-    const day = startOfLocalCalendarDay(localDate(2026, 10, 6, 14, 30));
-    expect(day.getFullYear()).toBe(2026);
-    expect(day.getMonth()).toBe(9);
-    expect(day.getDate()).toBe(6);
-    expect(day.getHours()).toBe(0);
-    expect(day.getMinutes()).toBe(0);
-    expect(day.getSeconds()).toBe(0);
-    expect(day.getMilliseconds()).toBe(0);
+  test('startOfLocalCalendarDay — 운영 타임존 달력일 00:00', () => {
+    const day = startOfLocalCalendarDay(wallDate(2026, 10, 6, 14, 30));
+    expect(day.toISOString()).toBe('2026-10-05T15:00:00.000Z');
+    expect(buildScheduleDatetimeUpdateBody(day, day)).toEqual({
+      date: '2026-10-06',
+      startTime: '00:00',
+      endTime: '00:00'
+    });
   });
 
   test('appendScheduleMoveLockTooltip — 사유가 있으면 title 뒤에 붙임', () => {

@@ -33,9 +33,12 @@ import com.coresolution.consultation.service.InstitutionLinkConsultationLogWrite
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleService;
+import com.coresolution.consultation.util.ReservationSmsBusinessHours;
+import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.core.dto.ApiResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -278,6 +281,46 @@ class ScheduleControllerPastTimeGateTest {
             .isInstanceOf(SchedulePastTimeException.class);
         verify(scheduleService, never()).createConsultantSchedule(
             any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean());
+    }
+
+    @Test
+    @DisplayName("⑤ consultant PUT — startTime만 오늘 지난 시각이면 도착 과거로 거부")
+    void consultantPut_arrivalPastStartTimeOnly_rejected() {
+        LocalDate today = LocalDate.of(2026, 10, 6);
+        existing.setDate(today);
+        existing.setStartTime(LocalTime.of(16, 0));
+        existing.setEndTime(LocalTime.of(16, 50));
+        Clock clock = Clock.fixed(
+                LocalDateTime.of(2026, 10, 6, 14, 0).atZone(ReservationSmsBusinessHours.ZONE_SEOUL).toInstant(),
+                ReservationSmsBusinessHours.ZONE_SEOUL);
+        LocalDateTime now = ScheduleSessionStartGate.now(clock, ReservationSmsBusinessHours.ZONE_SEOUL.getId());
+        when(scheduleService.updateSchedule(eq(SCHEDULE_ID), any(Schedule.class))).thenAnswer(invocation -> {
+            Schedule patch = invocation.getArgument(1);
+            LocalDate intendedDate = patch.getDate() != null ? patch.getDate() : existing.getDate();
+            LocalTime intendedStart = patch.getStartTime() != null
+                    ? patch.getStartTime() : existing.getStartTime();
+            LocalTime intendedEnd = patch.getEndTime() != null ? patch.getEndTime() : existing.getEndTime();
+            ScheduleSlotGuard.Denial denial = ScheduleSlotGuard.resolveMoveDenial(
+                    ScheduleSlotGuard.toDateTime(existing.getDate(), existing.getStartTime()),
+                    ScheduleSlotGuard.resolveMoveTarget(
+                            existing.getDate(), existing.getStartTime(),
+                            intendedDate, intendedStart, intendedEnd),
+                    now);
+            if (denial != null) {
+                throw new SchedulePastTimeException(SCHEDULE_ID, denial);
+            }
+            return existing;
+        });
+        Map<String, Object> body = new HashMap<>();
+        body.put("startTime", "11:00");
+
+        assertThatThrownBy(() ->
+                controller.updateConsultantSchedule(OWNER_USER_ID, SCHEDULE_ID, body, session))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_TO_PAST)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
+        verify(scheduleService, never()).requireMoveTimesNotInPast(any(), any(), any());
     }
 
     @Test

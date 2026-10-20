@@ -33,13 +33,13 @@ public final class ScheduleSlotGuard {
     public enum Denial {
         /** 원래 시작 시각이 이미 지난 일정의 이동 */
         MOVE_FROM_PAST("SCHEDULE_MOVE_FROM_PAST",
-                "이미 시작 시각이 지난 일정은 옮길 수 없습니다. 완료·취소 등 상태 변경으로 처리해 주세요."),
+                ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_FROM_PAST),
         /** 현재 시각 이전으로의 이동 */
         MOVE_TO_PAST("SCHEDULE_MOVE_TO_PAST",
-                "현재 시각 이전으로는 일정을 옮길 수 없습니다. 지금 이후의 시간을 선택해 주세요."),
+                ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_TO_PAST),
         /** 현재 시각 이전 시작으로 일정·가예약 생성 */
         CREATE_IN_PAST("SCHEDULE_CREATE_IN_PAST",
-                "현재 시각 이전에는 일정을 등록할 수 없습니다. 지금 이후의 시간을 선택해 주세요.");
+                ScheduleServiceUserFacingMessages.MSG_SCHEDULE_CREATE_IN_PAST);
 
         private final String errorCode;
         private final String message;

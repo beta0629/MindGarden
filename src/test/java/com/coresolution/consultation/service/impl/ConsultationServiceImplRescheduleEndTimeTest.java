@@ -1,15 +1,19 @@
 package com.coresolution.consultation.service.impl;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.Consultation;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.exception.SchedulePastTimeException;
+import com.coresolution.consultation.util.ReservationSmsBusinessHours;
+import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -35,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -177,5 +182,63 @@ class ConsultationServiceImplRescheduleEndTimeTest {
         verify(consultationRepository, never()).save(any(Consultation.class));
         verify(scheduleRepository, never()).save(any(Schedule.class));
         assertThat(consultation.getStartTime()).isEqualTo(OLD_START);
+    }
+
+    @Test
+    @DisplayName("⑥ 재예약 도착이 서울 기준 과거(오늘 11:00) → MOVE_TO_PAST, 저장 없음")
+    void reschedule_arrivalPast_rejectedWithSeoulClock() {
+        LocalDateTime now = seoulNow(2026, 10, 6, 14, 0);
+        consultation.setConsultationDate(LocalDate.of(2026, 10, 8));
+        consultation.setStartTime(LocalTime.of(11, 0));
+        wireMoveGate(now);
+        LocalDateTime target = LocalDateTime.of(2026, 10, 6, 11, 0);
+
+        assertThatThrownBy(() -> service.rescheduleConsultation(CONSULTATION_ID, target))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_TO_PAST)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
+        verify(consultationRepository, never()).save(any(Consultation.class));
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+        assertThat(consultation.getConsultationDate()).isEqualTo(LocalDate.of(2026, 10, 8));
+    }
+
+    @Test
+    @DisplayName("⑥ 재예약 출발이 서울 기준 과거(오늘 11:00) → 미래여도 MOVE_FROM_PAST, 저장 없음")
+    void reschedule_departurePast_rejectedWithSeoulClock() {
+        LocalDateTime now = seoulNow(2026, 10, 6, 14, 0);
+        consultation.setConsultationDate(LocalDate.of(2026, 10, 6));
+        consultation.setStartTime(LocalTime.of(11, 0));
+        wireMoveGate(now);
+        LocalDateTime target = LocalDateTime.of(2026, 10, 8, 11, 0);
+
+        assertThatThrownBy(() -> service.rescheduleConsultation(CONSULTATION_ID, target))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_FROM_PAST)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
+        verify(consultationRepository, never()).save(any(Consultation.class));
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+        assertThat(consultation.getStartTime()).isEqualTo(LocalTime.of(11, 0));
+    }
+
+    private static LocalDateTime seoulNow(int year, int month, int day, int hour, int minute) {
+        Clock clock = Clock.fixed(
+                LocalDateTime.of(year, month, day, hour, minute)
+                        .atZone(ReservationSmsBusinessHours.ZONE_SEOUL)
+                        .toInstant(),
+                ReservationSmsBusinessHours.ZONE_SEOUL);
+        return ScheduleSessionStartGate.now(clock, ReservationSmsBusinessHours.ZONE_SEOUL.getId());
+    }
+
+    private void wireMoveGate(LocalDateTime now) {
+        doAnswer(invocation -> {
+            ScheduleSlotGuard.Denial denial = ScheduleSlotGuard.resolveMoveDenial(
+                    invocation.getArgument(1), invocation.getArgument(2), now);
+            if (denial != null) {
+                throw new SchedulePastTimeException(invocation.getArgument(0), denial);
+            }
+            return null;
+        }).when(scheduleService).requireMoveTimesNotInPast(any(), any(), any());
     }
 }

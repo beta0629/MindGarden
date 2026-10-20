@@ -107,6 +107,35 @@ class ScheduleServiceImplPastTimeGateTest {
     }
 
     @Test
+    @DisplayName("① 미래 → 어제 이동 → SCHEDULE_MOVE_TO_PAST, 저장 없음")
+    void futureToYesterday_rejected() {
+        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
+
+        assertThatThrownBy(() -> scheduleService.updateSchedule(
+                SCHEDULE_ID, slot(TODAY.minusDays(1), ELEVEN, ELEVEN_FIFTY)))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_TO_PAST)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("② 미래(오늘 16:00) → 오늘 지난 시각, startTime만 → SCHEDULE_MOVE_TO_PAST, 저장 없음")
+    void futureToTodayPastStartTimeOnly_rejected() {
+        stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, LocalTime.of(16, 0), LocalTime.of(16, 50)));
+        Schedule startOnly = new Schedule();
+        startOnly.setStartTime(ELEVEN);
+
+        assertThatThrownBy(() -> scheduleService.updateSchedule(SCHEDULE_ID, startOnly))
+                .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_TO_PAST)
+                .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
+                .isEqualTo(ScheduleSlotGuard.Denial.MOVE_TO_PAST.getErrorCode());
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("미래 → 과거(10/6 11:00) 이동 → SCHEDULE_MOVE_TO_PAST, 저장 없음")
     void futureToPast_rejected() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
@@ -120,7 +149,7 @@ class ScheduleServiceImplPastTimeGateTest {
     }
 
     @Test
-    @DisplayName("미래 → 미래 이동 → 저장")
+    @DisplayName("③ 미래 → 미래 이동 → 저장")
     void futureToFuture_allowed() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY));
 
@@ -131,13 +160,14 @@ class ScheduleServiceImplPastTimeGateTest {
     }
 
     @Test
-    @DisplayName("지난 일정(10/6 11:00)을 미래로 이동 → SCHEDULE_MOVE_FROM_PAST, 저장 없음")
+    @DisplayName("④ 과거(오늘 11:00) → 미래 이동 → SCHEDULE_MOVE_FROM_PAST, 저장 없음")
     void pastScheduleMovedToFuture_rejected() {
         stubFind(schedule(ScheduleStatus.CONFIRMED, TODAY, ELEVEN, ELEVEN_FIFTY));
 
         assertThatThrownBy(() ->
                 scheduleService.updateSchedule(SCHEDULE_ID, slot(TODAY.plusDays(1), ELEVEN, ELEVEN_FIFTY)))
                 .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_FROM_PAST)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
                 .isEqualTo(ScheduleSlotGuard.Denial.MOVE_FROM_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());
@@ -314,7 +344,7 @@ class ScheduleServiceImplPastTimeGateTest {
     }
 
     @Test
-    @DisplayName("createSchedule 과거 시작 → CREATE_IN_PAST, 저장 없음")
+    @DisplayName("⑦ 오늘 지난 시각(11:00) 생성 → CREATE_IN_PAST, 저장 없음")
     void createSchedule_pastStart_rejected() {
         Schedule incoming = new Schedule();
         incoming.setDate(TODAY);
@@ -323,6 +353,7 @@ class ScheduleServiceImplPastTimeGateTest {
 
         assertThatThrownBy(() -> scheduleService.createSchedule(incoming))
                 .isInstanceOf(SchedulePastTimeException.class)
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_CREATE_IN_PAST)
                 .extracting(e -> ((SchedulePastTimeException) e).getErrorCode())
                 .isEqualTo(ScheduleSlotGuard.Denial.CREATE_IN_PAST.getErrorCode());
         verify(scheduleRepository, never()).save(any());

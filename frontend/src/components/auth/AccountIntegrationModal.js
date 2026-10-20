@@ -8,11 +8,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { useTranslation } from 'react-i18next';
-
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ACCOUNT_INTEGRATION_SEND_VERIFICATION_CODE = '/api/v1/account-integration/send-verification-code';
-const API_ACCOUNT_INTEGRATION_VERIFY_CODE = '/api/v1/account-integration/verify-code';
-const API_ACCOUNT_INTEGRATION_INTEGRATE = '/api/v1/account-integration/integrate';
+import { ACCOUNT_INTEGRATION_API } from '../../constants/api';
 
 
 /**
@@ -70,27 +66,27 @@ const AccountIntegrationModal = ({
 
     const handleSendVerificationCode = async() => {
         if (!formData.existingEmail) {
-            notificationManager.showToast('이메일을 입력해주세요.', 'error');
+            notificationManager.showToast(t('auth:AccountIntegrationModal.emailRequired'), 'error');
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await apiPost(API_ACCOUNT_INTEGRATION_SEND_VERIFICATION_CODE, null, {
+            const response = await apiPost(ACCOUNT_INTEGRATION_API.SEND_VERIFICATION_CODE, null, {
                 email: formData.existingEmail
             });
 
             if (response.success) {
                 setCodeSent(true);
                 setCountdown(600); // 10분
-                notificationManager.showToast('인증 코드가 발송되었습니다.', 'success');
+                notificationManager.showToast(t('auth:AccountIntegrationModal.codeSent'), 'success');
                 setStep(2);
             } else {
-                notificationManager.showToast(response.message || '인증 코드 발송에 실패했습니다.', 'error');
+                notificationManager.showToast(response.message || t('auth:AccountIntegrationModal.sendFailed'), 'error');
             }
         } catch (error) {
             console.error('인증 코드 발송 실패:', error);
-            notificationManager.showToast('인증 코드 발송 중 오류가 발생했습니다.', 'error');
+            notificationManager.showToast(t('auth:AccountIntegrationModal.sendError'), 'error');
         } finally {
             setIsLoading(false);
         }
@@ -98,26 +94,30 @@ const AccountIntegrationModal = ({
 
     const handleVerifyCode = async() => {
         if (!formData.verificationCode) {
-            notificationManager.showToast('인증 코드를 입력해주세요.', 'error');
+            notificationManager.showToast(t('auth:AccountIntegrationModal.codeRequired'), 'error');
             return;
         }
 
         setIsLoading(true);
         try {
-            const response = await apiPost(API_ACCOUNT_INTEGRATION_VERIFY_CODE, null, {
+            const response = await apiPost(ACCOUNT_INTEGRATION_API.VERIFY_CODE, null, {
                 email: formData.existingEmail,
                 code: formData.verificationCode
             });
 
             if (response.success) {
-                notificationManager.showToast('인증 코드가 확인되었습니다.', 'success');
+                notificationManager.showToast(t('auth:AccountIntegrationModal.codeVerified'), 'success');
                 setStep(3);
             } else {
-                notificationManager.showToast(response.message || '인증 코드가 올바르지 않습니다.', 'error');
+                notificationManager.showToast(response.message || t('auth:AccountIntegrationModal.codeInvalid'), 'error');
             }
         } catch (error) {
             console.error('인증 코드 검증 실패:', error);
-            notificationManager.showToast('인증 코드 검증 중 오류가 발생했습니다.', 'error');
+            const locked = error?.status === 429 || error?.response?.status === 429;
+            notificationManager.showToast(
+                t(locked ? 'auth:AccountIntegrationModal.codeLocked' : 'auth:AccountIntegrationModal.verifyError'),
+                'error'
+            );
         } finally {
             setIsLoading(false);
         }
@@ -125,7 +125,7 @@ const AccountIntegrationModal = ({
 
     const handleIntegrateAccounts = async() => {
         if (!formData.existingPassword) {
-            notificationManager.showToast('기존 계정 비밀번호를 입력해주세요.', 'error');
+            notificationManager.showToast(t('auth:AccountIntegrationModal.passwordRequired'), 'error');
             return;
         }
 
@@ -143,10 +143,10 @@ const AccountIntegrationModal = ({
                 finalNickname: formData.finalNickname
             };
 
-            const response = await apiPost(API_ACCOUNT_INTEGRATION_INTEGRATE, requestData);
+            const response = await apiPost(ACCOUNT_INTEGRATION_API.INTEGRATE, requestData);
 
             if (response.success) {
-                notificationManager.showToast('계정 통합이 완료되었습니다!', 'success');
+                notificationManager.showToast(t('auth:AccountIntegrationModal.integrateDone'), 'success');
                 setStep(4);
                 
                 // 통합 성공 후 콜백 호출
@@ -154,11 +154,11 @@ const AccountIntegrationModal = ({
                     onIntegrationSuccess(response);
                 }
             } else {
-                notificationManager.showToast(response.message || '계정 통합에 실패했습니다.', 'error');
+                notificationManager.showToast(response.message || t('auth:AccountIntegrationModal.integrateFailed'), 'error');
             }
         } catch (error) {
             console.error('계정 통합 실패:', error);
-            notificationManager.showToast('계정 통합 중 오류가 발생했습니다.', 'error');
+            notificationManager.showToast(t('auth:AccountIntegrationModal.integrateError'), 'error');
         } finally {
             setIsLoading(false);
         }
@@ -364,6 +364,7 @@ const AccountIntegrationModal = ({
                                     type="password"
                                     id="existingPassword"
                                     name="existingPassword"
+                                    autoComplete="current-password"
                                     value={formData.existingPassword}
                                     onChange={handleInputChange}
                                     placeholder="기존 계정의 비밀번호를 입력하세요"

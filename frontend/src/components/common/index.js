@@ -16,6 +16,8 @@ export { default as Switch } from './Switch';
 export { default as SettingSwitchRow } from './molecules/SettingSwitchRow';
 export { default as SmallCardGrid } from './SmallCardGrid';
 export { default as ListTableView } from './ListTableView';
+export { default as Timeline } from './timeline/Timeline';
+export { default as SessionCard } from './timeline/SessionCard';
 export { default as EntityRowActions, ENTITY_ROW_ACTIONS_LAYOUT } from './molecules/EntityRowActions';
 export {
   default as TableActionCell,

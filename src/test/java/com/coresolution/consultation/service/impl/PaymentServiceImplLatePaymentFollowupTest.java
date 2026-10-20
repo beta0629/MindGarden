@@ -32,7 +32,9 @@ import com.coresolution.consultation.service.ShopLatePaymentOutcome;
 import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.lang.reflect.Method;
@@ -85,6 +87,7 @@ class PaymentServiceImplLatePaymentFollowupTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientShopCheckoutService clientShopCheckoutService;
     @Mock private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     @Mock private ShopLatePaymentRefundService shopLatePaymentRefundService;
     @Mock private PlatformTransactionManager transactionManager;
 
@@ -108,6 +111,7 @@ class PaymentServiceImplLatePaymentFollowupTest {
                 notificationService,
                 userRepository,
                 portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
                 clientShopCheckoutService,
                 shopLatePaymentRefundService,
                 transactionManager);
@@ -236,28 +240,30 @@ class PaymentServiceImplLatePaymentFollowupTest {
     @Test
     @DisplayName("verify: PortOne 조회가 DB 트랜잭션 시작보다 먼저(트랜잭션 밖) 실행")
     void verify_portOneLookupOutsideTransaction() {
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, payment.getAmount()))
-                .thenReturn(Optional.of("{\"status\":\"PAID\"}"));
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
+                .thenReturn(PortOneShopPaidMatch.match("{\"status\":\"PAID\"}", BigDecimal.valueOf(CASH_DUE)));
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(ShopLatePaymentOutcome.NOT_APPLICABLE);
 
         boolean verified = service.verifyPayment(PAYMENT_PUBLIC_ID, payment.getAmount());
 
         assertThat(verified).isTrue();
-        InOrder ordered = inOrder(portOneV2PaymentVerifyService, transactionManager, shopClientOrderRepository);
+        InOrder ordered = inOrder(portOneV2PaymentVerifyService, transactionManager);
         ordered.verify(portOneV2PaymentVerifyService)
-                .verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, payment.getAmount());
+                .verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order);
         ordered.verify(transactionManager).getTransaction(any());
-        ordered.verify(shopClientOrderRepository).lockByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(shopClientOrderRepository).lockByTenantIdAndPublicId(TENANT_ID, ORDER_PUBLIC_ID);
+        verify(portOneV2PaymentVerifyService, never()).verifyPaidAmountBody(any(), any(), any());
     }
 
     @Test
     @DisplayName("verify H5: 조회 뒤 사용자 취소가 먼저 커밋 → 잠금 재확인에서 닫힘 → 늦은 PAID 자동 환불, 500 아님")
     void verify_orderClosedDuringApproval_lateRefundNot500() {
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(TENANT_ID, PAYMENT_PUBLIC_ID, payment.getAmount()))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(TENANT_ID, PAYMENT_PUBLIC_ID, order))
                 .thenAnswer(inv -> {
                     order.setStatus(ShopClientOrderStatus.CANCELLED);
-                    return Optional.of("{\"status\":\"PAID\"}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\"}", BigDecimal.valueOf(CASH_DUE));
                 });
         when(shopLatePaymentRefundService.refundIfOrderClosed(TENANT_ID, PAYMENT_PUBLIC_ID))
                 .thenReturn(ShopLatePaymentOutcome.NOT_APPLICABLE)

@@ -9,8 +9,8 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import { FaUserTie, FaPlus, FaTrash, FaEye } from 'react-icons/fa';
 import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import SafeText from '../common/SafeText';
-import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import StandardizedApi from '../../utils/standardizedApi';
+import { tempPasswordSmsNotice } from '../../utils/tempPasswordSmsNotice';
 import {
     DEFAULT_PROFESSIONAL_TYPE_CODE_VALUE,
     FALLBACK_PROFESSIONAL_TYPE_OPTION_LABEL,
@@ -26,7 +26,6 @@ import { useTranslation } from 'react-i18next';
 const ERR_USER_ID_REQUIRED = '사용자 ID를 입력해주세요.';
 const ERR_EMAIL_REQUIRED = '이메일을 입력해주세요.';
 const ERR_EMAIL_INVALID = '이메일 형식이 올바르지 않습니다.';
-const ERR_PASSWORD_REQUIRED = '비밀번호를 입력해주세요.';
 const ERR_NAME_REQUIRED = '이름을 입력해주세요.';
 const ERR_PHONE_REQUIRED = '전화번호를 입력해주세요.';
 const ERR_PHONE_INVALID = '전화번호 형식이 올바르지 않습니다.';
@@ -154,7 +153,6 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         setForm({
             userId: '',
             email: '',
-            password: generateMgLoginPassword(),
             name: '',
             phone: '',
             specialization: '',
@@ -186,9 +184,6 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
         } else if (!validateEmail(email)) {
             newErrors.email = ERR_EMAIL_INVALID;
         }
-        if (!(form.password || '').trim()) {
-            newErrors.password = ERR_PASSWORD_REQUIRED;
-        }
         if (!(form.name || '').trim()) {
             newErrors.name = ERR_NAME_REQUIRED;
         }
@@ -219,7 +214,6 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
             const payload = {
                 userId: (form.userId || '').trim(),
                 email: (form.email || '').trim(),
-                password: form.password,
                 name: (form.name || '').trim(),
                 phone: (form.phone || '').trim(),
                 specialization: (form.specialization || '').trim(),
@@ -228,13 +222,13 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
 
             const user = await StandardizedApi.post(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST, payload);
             if (user && (user.id != null || user.email)) {
-                showToast('상담사가 성공적으로 등록되었습니다.');
+                const smsNotice = tempPasswordSmsNotice(t, user);
+                showToast(smsNotice || '상담사가 성공적으로 등록되었습니다.');
                 setShowModal(false);
                 setFormErrors({});
                 setForm({
                     userId: '',
                     email: '',
-                    password: generateMgLoginPassword(),
                     name: '',
                     phone: '',
                     specialization: '',
@@ -404,21 +398,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                 <span className="mg-v2-form-error" role="alert">{formErrors.email}</span>
                             ) : null}
                         </Form.Group>
-                        <Form.Group className="mb-3">
-                            <Form.Label>
-                                비밀번호
-                                <span className="mg-v2-form-label-required">*</span>
-                            </Form.Label>
-                            <Form.Control
-                                type="password"
-                                value={form.password}
-                                onChange={(e) => updateFormField('password', e.target.value)}
-                                isInvalid={!!formErrors.password}
-                            />
-                            {formErrors.password ? (
-                                <span className="mg-v2-form-error" role="alert">{formErrors.password}</span>
-                            ) : null}
-                        </Form.Group>
+                        <p className="mg-v2-form-help mb-3">{t('auth:tempPasswordSms.resetHelp')}</p>
                         <Form.Group className="mb-3">
                             <Form.Label>
                                 {t('common.labels.name')}

@@ -57,6 +57,7 @@ class PlSqlFinancialServiceImplConsolidatedTenantIsolationTest {
                     amount DECIMAL(15,2) NOT NULL,
                     transaction_date DATE NOT NULL,
                     branch_code VARCHAR(20),
+                    status VARCHAR(20),
                     is_deleted BOOLEAN NOT NULL DEFAULT FALSE
                 )
                 """);
@@ -173,8 +174,8 @@ class PlSqlFinancialServiceImplConsolidatedTenantIsolationTest {
         jdbcTemplate.update("""
                 INSERT INTO financial_transactions
                     (id, tenant_id, transaction_type, category, amount, transaction_date,
-                     branch_code, is_deleted)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                     branch_code, status, is_deleted)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'COMPLETED', ?)
                 """, id, tenantId, type, category, amount, date, branchCode, deleted);
     }
 

@@ -64,6 +64,11 @@ import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolid
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { stampPaymentTimingOnScheduleEvents } from '../../constants/mappingEngagementType';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
+import {
+  CONSULTANT_COUNT_BASIS_SHOWN,
+  countVisibleConsultantScheduleEvents
+} from './utils/countVisibleConsultantScheduleEvents';
+import { useConsultantColorPalette } from '../../hooks/useConsultantColorPalette';
 import { USER_ROLES, mapLegacyRole } from '../../constants/roles';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import './ScheduleB0KlA.css';
@@ -71,10 +76,16 @@ import { useTranslation } from 'react-i18next';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
 import { getVacationMinSelectableDate } from '../../constants/consultantAvailabilityConstants';
 import { formatDateKeyInZone } from '../../utils/zonedDateTime';
+import {
+  buildScheduleRangeFetchKey,
+  createInFlightRequestDeduper
+} from '../../utils/scheduleRangeFetchDedupe';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 // ScheduleController admin — AdminController /api/v1/admin/schedules 와 혼용 금지
 const API_SCHEDULES_ADMIN = API_SCHEDULE_CONTROLLER_ADMIN;
+
+const EMPTY_CONSULTANT_COUNTS = new Map();
 
 /**
  * FullCalendar end(exclusive) → inclusive endDate 변환.
@@ -118,6 +129,27 @@ const toVisibleInclusiveDateRange = (info) => ({
   endDate: toInclusiveEndDateStr(info?.end)
 });
 
+/**
+ * FullCalendar datesSet info → 표시 중인 달(활성 월) inclusive 범위.
+ * ScheduleCalendarView 는 currentStart 를 info 최상위에 평탄화한다(view.currentStart 폴백).
+ * 범례 건수는 가시 그리드 spill(이전·다음 달 셀)이 아니라 이 범위를 쓴다.
+ *
+ * @param {{ currentStart?: Date, view?: { currentStart?: Date } }} info
+ * @returns {{ startDate: string, endDate: string }|null}
+ */
+const toDisplayedMonthDateRange = (info) => {
+  const currentStart = info?.currentStart ?? info?.view?.currentStart;
+  if (!currentStart || Number.isNaN(currentStart.getTime?.() ?? Number.NaN)) {
+    return null;
+  }
+  const year = currentStart.getFullYear();
+  const month = currentStart.getMonth();
+  return {
+    startDate: toLocalDateStr(new Date(year, month, 1)),
+    endDate: toLocalDateStr(new Date(year, month + 1, 0))
+  };
+};
+
 
 /**
  * 캘린더 관리자 권한(통합 스케줄 STAFF 동기화): 로드·필터·날짜 액션·재예약.
@@ -127,6 +159,26 @@ const isAdminLikeScheduleUserRole = (role) => {
   const normalized = mapLegacyRole(role);
   return normalized === USER_ROLES.ADMIN || normalized === USER_ROLES.STAFF;
 };
+
+/**
+ * integrated 캘린더에서 가시 범위(startDate/endDate)로만 조회하는 역할인지.
+ * 관리자형(/schedules/admin)과 상담사 본인(/schedules/consultant/{id}) 경로가 대상이다.
+ *
+ * @param {string} role
+ * @param {string|undefined} skin calendarSkin
+ * @returns {boolean}
+ */
+const usesCalendarRangeScheduleFetch = (role, skin) => skin === 'integrated'
+  && (isAdminLikeScheduleUserRole(role) || role === USER_ROLES.CONSULTANT);
+
+/**
+ * @param {{ startDate: string, endDate: string }|null} a
+ * @param {{ startDate: string, endDate: string }|null} b
+ * @returns {boolean}
+ */
+const isSameCalendarDateRange = (a, b) => Boolean(a && b)
+  && a.startDate === b.startDate
+  && a.endDate === b.endDate;
 
 /**
  * 스케줄 관리 컨테이너 컴포넌트
@@ -236,6 +288,7 @@ const UnifiedScheduleComponent = ({
   /**
    * 스케줄 이벤트만(휴일·공휴일 제외) 로드·갱신 시 부모에 전달.
    * 통합 스케줄 특이사항 알림 등 페이지 전용 후크에서 사용.
+   * 두 번째 인자: 상담사 범위 조회일 때 events 의 가시 범위 { startDate, endDate }(inclusive), 아니면 null.
    */
   onScheduleEventsChange = null,
   /**
@@ -265,26 +318,24 @@ const UnifiedScheduleComponent = ({
     
     // ========== 상태 관리 ==========
     /**
-     * FullCalendar 가시 범위(inclusive startDate/endDate).
-     * admin API 호출 시 항상 query param 으로 전달해 DB 레벨 필터링을 활성화한다.
-     * 초기 값은 현재 월 기준으로 주입하고, 이후 datesSet 콜백으로 정확히 동기화한다.
+     * FullCalendar 가시 범위(inclusive startDate/endDate). datesSet 이 보고하기 전에는 null —
+     * 범위 조회 역할은 이 값이 생긴 뒤에만 조회한다(추정 월 범위 선요청 없음).
      */
-    const getInitialCalendarDateRange = () => {
-        const now = new Date();
-        const start = new Date(now.getFullYear(), now.getMonth(), 1);
-        const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        return {
-            startDate: toLocalDateStr(start),
-            endDate: toLocalDateStr(end)
-        };
-    };
-
-    const [calendarDateRange, setCalendarDateRange] = useState(getInitialCalendarDateRange);
+    const [calendarDateRange, setCalendarDateRange] = useState(null);
     const calendarDateRangeRef = useRef(calendarDateRange);
-    /** FullCalendar datesSet 1회 이상 캡처 여부 — mount/datesSet 이중 fetch 가드 */
-    const hasCapturedCalendarDatesSetRef = useRef(false);
-    /** in-flight dedupe key — mount + calendarDateRange 동일 조건 이중 fetch 방지 */
-    const loadSchedulesInFlightKeyRef = useRef(null);
+    /**
+     * 활성 표시 월(1일~말일). 범례 건수 SSOT — 가시 그리드 spill 과 분리.
+     */
+    const [displayedMonthDateRange, setDisplayedMonthDateRange] = useState(null);
+    /** 같은 범위 조회 키(역할+대상+범위+필터+갱신 트리거)는 진행 중 요청을 재사용 */
+    const scheduleRangeFetchDeduperRef = useRef(null);
+    if (scheduleRangeFetchDeduperRef.current === null) {
+        scheduleRangeFetchDeduperRef.current = createInFlightRequestDeduper();
+    }
+    /** 가장 최근에 보낸 범위 조회 키 — 늦게 도착한 이전 키 응답은 화면에 반영하지 않는다(관리자·상담사 공통) */
+    const latestScheduleFetchKeyRef = useRef(null);
+    /** 상담사 범위 조회로 받은 events 의 가시 범위. null = 범위 미적용(전량·관리자 경로) */
+    const loadedEventsRangeRef = useRef(null);
     const [events, setEvents] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedInfo, setSelectedInfo] = useState(null);
@@ -516,7 +567,7 @@ const UnifiedScheduleComponent = ({
             console.log('👥 상담사 목록 API 응답:', response);
             console.log('👥 응답 타입:', typeof response, Array.isArray(response));
             
-            // apiGet은 이미 ApiResponse의 data를 추출하므로, response는 { consultants: [...], count: N } 형태
+            // apiGet unwrap → { consultants } / 배열 우선, 레거시 data 래핑은 후순위
             let consultantsList = [];
             
             if (response) {
@@ -529,14 +580,9 @@ const UnifiedScheduleComponent = ({
                 } else if (response.data && Array.isArray(response.data)) {
                     consultantsList = response.data;
                     console.log('👥 response.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                } else if (response.success && response.data) {
-                    if (response.data.consultants && Array.isArray(response.data.consultants)) {
-                        consultantsList = response.data.consultants;
-                        console.log('👥 response.success.data.consultants에서 추출:', consultantsList.length, '개');
-                    } else if (Array.isArray(response.data)) {
-                        consultantsList = response.data;
-                        console.log('👥 response.success.data (배열)에서 추출:', consultantsList.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                    }
+                } else if (response.data?.consultants && Array.isArray(response.data.consultants)) {
+                    consultantsList = response.data.consultants;
+                    console.log('👥 response.data.consultants에서 추출:', consultantsList.length, '개');
                 }
             }
             
@@ -563,6 +609,11 @@ const UnifiedScheduleComponent = ({
             }
             return;
         }
+        const currentRange = calendarDateRangeRef.current;
+        if (usesCalendarRangeScheduleFetch(userRole, calendarSkin) && !currentRange) {
+            return;
+        }
+        const fetchDeduper = scheduleRangeFetchDeduperRef.current;
 
         if (!silent) {
             setLoading(true);
@@ -570,14 +621,35 @@ const UnifiedScheduleComponent = ({
         try {
             console.log('📅 스케줄 로드 시작:', { userId, userRole, selectedConsultantId });
             
-            const currentRange = calendarDateRangeRef.current;
             let response;
+            /** 상담사 범위 조회로 요청한 가시 범위 (loadedEventsRangeRef 로 전달) */
+            let requestedRange = null;
+            /** 응답 도착 전에 가시 범위·조건이 바뀌었으면 늦은 응답으로 덮어쓰지 않는다 (관리자·상담사 공통) */
+            let staleCheckRange = null;
+            let scheduleFetchKey = null;
 
-            // 상담사는 자신의 스케줄만 조회
+            // 상담사는 자신의 스케줄만 조회 — integrated 는 어드민과 같이 가시 범위만 조회
             if (userRole === USER_ROLES.CONSULTANT) {
                 const url = `/api/v1/schedules/consultant/${userId}`;
-                console.log('🔍 상담사 자신의 스케줄만 조회:', userId);
-                response = await apiGet(url);
+                const consultantParams = {};
+                if (calendarSkin === 'integrated' && currentRange) {
+                    requestedRange = { startDate: currentRange.startDate, endDate: currentRange.endDate };
+                    staleCheckRange = requestedRange;
+                    consultantParams.startDate = requestedRange.startDate;
+                    consultantParams.endDate = requestedRange.endDate;
+                }
+                console.log('🔍 상담사 자신의 스케줄만 조회:', userId, consultantParams);
+                const consultantFetchKey = buildScheduleRangeFetchKey({
+                    role: USER_ROLES.CONSULTANT,
+                    targetId: userId,
+                    startDate: consultantParams.startDate,
+                    endDate: consultantParams.endDate,
+                    extra: [refetchTrigger || 0]
+                });
+                scheduleFetchKey = consultantFetchKey;
+                latestScheduleFetchKeyRef.current = consultantFetchKey;
+                response = await fetchDeduper.run(
+                    consultantFetchKey, () => StandardizedApi.get(url, consultantParams));
             }
             // 관리자·스텝 — ScheduleController /api/v1/schedules/admin (page/size drain)
             else if (isAdminLikeScheduleUserRole(userRole)) {
@@ -591,6 +663,7 @@ const UnifiedScheduleComponent = ({
                 }
                 // P0: 가시 범위(startDate/endDate)를 항상 전달 → DB 레벨 필터링
                 if (calendarSkin === 'integrated' && currentRange) {
+                    staleCheckRange = { startDate: currentRange.startDate, endDate: currentRange.endDate };
                     listParams.startDate = currentRange.startDate;
                     listParams.endDate = currentRange.endDate;
                     console.log('📅 날짜 범위 전달:', currentRange);
@@ -606,23 +679,18 @@ const UnifiedScheduleComponent = ({
                 listParams.page = 0;
                 listParams.size = ADMIN_LIST_DRAIN_PAGE_SIZE;
 
-                // 동일 조건 in-flight 중복 fetch 스킵 (mount + datesSet 레이스)
-                if (loadSchedulesInFlightKeyRef.current === invalidationKey) {
-                    console.log('⏭️ loadSchedules in-flight dedupe:', invalidationKey);
-                    if (!silent) {
-                        setLoading(false);
-                    }
-                    return;
-                }
-                loadSchedulesInFlightKeyRef.current = invalidationKey;
-                try {
-                    console.log('📅 ScheduleController admin drain:', API_SCHEDULES_ADMIN, listParams);
-                    response = await adminScheduleControllerListGetAll(listParams);
-                } finally {
-                    if (loadSchedulesInFlightKeyRef.current === invalidationKey) {
-                        loadSchedulesInFlightKeyRef.current = null;
-                    }
-                }
+                const adminFetchKey = buildScheduleRangeFetchKey({
+                    role: USER_ROLES.ADMIN,
+                    targetId: selectedConsultantId,
+                    startDate: cacheKeyStartDate,
+                    endDate: cacheKeyEndDate,
+                    extra: [clientIdFilter, refetchTrigger || 0]
+                });
+                console.log('📅 ScheduleController admin drain:', API_SCHEDULES_ADMIN, listParams);
+                scheduleFetchKey = adminFetchKey;
+                latestScheduleFetchKeyRef.current = adminFetchKey;
+                response = await fetchDeduper.run(
+                    adminFetchKey, () => adminScheduleControllerListGetAll(listParams));
             }
             // 기타 사용자 (내담자 등)
             else {
@@ -782,15 +850,10 @@ const UnifiedScheduleComponent = ({
                     schedules = response.data;
                     console.log('📅 response.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 }
-                // response.success가 있고 response.data가 있는 경우 (원본 ApiResponse 구조)
-                else if (response.success && response.data) {
-                    if (response.data.schedules && Array.isArray(response.data.schedules)) {
-                        schedules = response.data.schedules;
-                        console.log('📅 response.success.data.schedules에서 추출:', schedules.length, '개');
-                    } else if (Array.isArray(response.data)) {
-                        schedules = response.data;
-                        console.log('📅 response.success.data (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
-                    }
+                // 배열 그 자체
+                else if (Array.isArray(response)) {
+                    schedules = response;
+                    console.log('📅 response (배열)에서 추출:', schedules.length, t('schedule:UnifiedScheduleComponent.t_11600c9a'));
                 } else {
                     console.warn('⚠️ 응답 형식을 파악할 수 없습니다:', response);
                 }
@@ -924,11 +987,21 @@ const UnifiedScheduleComponent = ({
             // 성능 개선: 불필요한 API 호출 제거
             const vacationEvents = [];
 
+            const isSupersededFetch = scheduleFetchKey !== null
+                && latestScheduleFetchKeyRef.current !== scheduleFetchKey;
+            const isOutOfVisibleRange = staleCheckRange !== null
+                && !isSameCalendarDateRange(staleCheckRange, calendarDateRangeRef.current);
+            if (isSupersededFetch || isOutOfVisibleRange) {
+                console.log('⏭️ 이전 범위·조건 응답 무시:', staleCheckRange, scheduleFetchKey);
+                return;
+            }
+
             const allEvents = [
                 ...scheduleEvents,
                 ...vacationEvents,
                 ...KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS
             ];
+            loadedEventsRangeRef.current = requestedRange;
             setEvents(allEvents);
             console.log('📅 모든 이벤트 데이터 로드 완료:', allEvents);
         } catch (error) {
@@ -967,14 +1040,9 @@ const UnifiedScheduleComponent = ({
             const promises = [];
             const isAdmin = isAdminLikeScheduleUserRole(userRole);
 
-            // 스케줄 로드 (필수)
-            // 관리자·스텝은 userId 없이도 로드 가능
-            // integrated admin 최초 마운트: datesSet 대기 (mount+datesSet 이중 호출 제거)
-            // datesSet 이후 selectedConsultantId 변경 등은 여기서 로드
-            const skipInitialIntegratedAdmin = isAdmin
-                && calendarSkin === 'integrated'
-                && !hasCapturedCalendarDatesSetRef.current;
-            if ((isAdmin || userId) && !skipInitialIntegratedAdmin) {
+            // 스케줄 로드 (필수) — 관리자·스텝은 userId 없이도 로드 가능.
+            // integrated 범위 조회 역할은 가시 범위 effect 가 단독으로 조회한다.
+            if ((isAdmin || userId) && !usesCalendarRangeScheduleFetch(userRole, calendarSkin)) {
                 promises.push(loadSchedules());
             }
 
@@ -1396,46 +1464,42 @@ const UnifiedScheduleComponent = ({
      */
     const handleCalendarDatesSet = useCallback((info) => {
         const { startDate: newStart, endDate: newEnd } = toVisibleInclusiveDateRange(info);
+        const displayedMonth = toDisplayedMonthDateRange(info);
 
-        const isFirstCapture = !hasCapturedCalendarDatesSetRef.current;
-        hasCapturedCalendarDatesSetRef.current = true;
-
-        let rangeUnchanged = false;
         setCalendarDateRange((prev) => {
-            if (prev && prev.startDate === newStart && prev.endDate === newEnd) {
-                rangeUnchanged = true;
-                return prev; // 참조 동일성 유지 → 불필요한 리렌더 방지
+            if (isSameCalendarDateRange(prev, { startDate: newStart, endDate: newEnd })) {
+                return prev; // 참조 동일성 유지 → 같은 범위 datesSet 은 재조회 없음
             }
             return { startDate: newStart, endDate: newEnd };
         });
 
+        setDisplayedMonthDateRange((prev) => {
+            if (!displayedMonth) {
+                return prev;
+            }
+            if (isSameCalendarDateRange(prev, displayedMonth)) {
+                return prev;
+            }
+            return displayedMonth;
+        });
+
         // 부모 콜백 전달 (통합 스케줄 월별 통계 API 트리거 등, currentStart 기반)
         onMonthChange?.(info);
-
-        // 첫 datesSet 에서 초기 월 범위와 동일하면 calendarDateRange effect 가 스킵됨 → 여기서 1회 로드
-        if (isFirstCapture && rangeUnchanged
-            && isAdminLikeScheduleUserRole(userRole)
-            && calendarSkin === 'integrated') {
-            calendarDateRangeRef.current = { startDate: newStart, endDate: newEnd };
-            loadSchedules({ silent: silentScheduleRefetch });
-        }
-    }, [onMonthChange, userRole, calendarSkin, loadSchedules, silentScheduleRefetch]);
+    }, [onMonthChange]);
 
     useEffect(() => {
         calendarDateRangeRef.current = calendarDateRange;
     }, [calendarDateRange]);
 
-    // calendarDateRange 변경 시(월 이동/뷰 전환) silent refetch
+    // 범위 조회 역할의 유일한 조회 지점: 가시 범위 확정·이동, 대상·필터 변경(loadSchedules 갱신) 시 1회.
+    // 같은 flush 의 refetchTrigger effect 와 겹쳐도 같은 키라 진행 중 요청을 재사용한다.
     useEffect(() => {
-        if (!hasCapturedCalendarDatesSetRef.current) {
+        if (!calendarDateRange || !usesCalendarRangeScheduleFetch(userRole, calendarSkin)) {
             return;
         }
-        if (!calendarDateRange) return;
-        if (!isAdminLikeScheduleUserRole(userRole)) return;
-        if (calendarSkin !== 'integrated') return;
         loadSchedules({ silent: silentScheduleRefetch });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [calendarDateRange]);
+    }, [calendarDateRange, loadSchedules]);
 
     /**
      * Calendar Refresh button.
@@ -1483,6 +1547,29 @@ const UnifiedScheduleComponent = ({
         [decoratedEvents, selectedClientIds]
     );
 
+    const { colorClassFor } = useConsultantColorPalette();
+    const countShownEvents = integratedMonthEventLayout === true;
+    const shownConsultantCounts = useMemo(() => {
+        if (!countShownEvents || !displayedMonthDateRange) {
+            return null;
+        }
+        return countVisibleConsultantScheduleEvents(
+            filteredEvents,
+            consultants,
+            displayedMonthDateRange
+        );
+    }, [countShownEvents, filteredEvents, consultants, displayedMonthDateRange]);
+    const shownCountsReady = countShownEvents && shownConsultantCounts != null && !loading;
+    const legendConsultantCounts = countShownEvents
+        ? (shownCountsReady ? shownConsultantCounts : EMPTY_CONSULTANT_COUNTS)
+        : consultantCounts;
+    const legendConsultantCountsLoading = countShownEvents
+        ? !shownCountsReady
+        : consultantCountsLoading;
+    const legendConsultantCountsMode = countShownEvents
+        ? CONSULTANT_COUNT_BASIS_SHOWN
+        : 'monthly';
+
     useEffect(() => {
         if (typeof onScheduleEventsChange !== 'function') {
             return;
@@ -1493,7 +1580,7 @@ const UnifiedScheduleComponent = ({
             const s = String(id).trim();
             return /^\d+$/.test(s);
         });
-        onScheduleEventsChange(scheduleOnly);
+        onScheduleEventsChange(scheduleOnly, loadedEventsRangeRef.current);
     }, [events, onScheduleEventsChange]);
 
     // ========== 렌더링 (Presentational 컴포넌트 사용) ==========
@@ -1516,13 +1603,17 @@ const UnifiedScheduleComponent = ({
 
             <ScheduleLegend
                 consultants={consultants}
-                events={events}
+                events={countShownEvents ? filteredEvents : events}
                 scheduleStatusOptions={scheduleStatusOptions}
                 getConsultantColor={getConsultantColor}
+                consultantColorClassFor={countShownEvents
+                    ? (consultantId) => colorClassFor(consultantId, consultants)
+                    : null}
                 calendarSkin={calendarSkin}
-                consultantCounts={consultantCounts}
+                consultantCounts={legendConsultantCounts}
                 consultantCountsMonth={consultantCountsMonth}
-                consultantCountsLoading={consultantCountsLoading}
+                consultantCountsLoading={legendConsultantCountsLoading}
+                consultantCountsMode={legendConsultantCountsMode}
                 sameDayPendingLegendContent={sameDayPendingLegendContent}
                 missingConsultationLogs={missingConsultationLogs}
                 missingConsultationLogsLoading={missingConsultationLogsLoading}
@@ -1537,6 +1628,7 @@ const UnifiedScheduleComponent = ({
             <ScheduleCalendarView
                 events={filteredEvents}
                 userRole={userRole}
+                consultants={consultants}
                 scheduleStatusOptions={scheduleStatusOptions}
                 onDateClick={handleDateClick}
                 onEventClick={handleEventClick}

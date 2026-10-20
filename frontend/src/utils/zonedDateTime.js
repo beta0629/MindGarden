@@ -70,6 +70,46 @@ const ISO_LOCAL = /^(\d{4}-\d{2}-\d{2})[T ](\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?)$/;
 const DATE_ONLY = /^(\d{4}-\d{2}-\d{2})/;
 const CLOCK = /^(\d{1,2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/;
 
+/**
+ * 오프셋이 있는 ISO 문자열을 운영 타임존 floating `YYYY-MM-DDTHH:mm[:ss]` 로 변환.
+ * 이미 floating·날짜만이면 그대로 반환. FullCalendar IANA timeZone 과 벽시계를 맞출 때 사용.
+ *
+ * @param {*} value
+ * @param {string} [timeZone]
+ * @returns {*}
+ */
+export const toFloatingDateTimeInZone = (value, timeZone = DEFAULT_ZONE) => {
+  if (value == null || value === '') {
+    return value;
+  }
+  if (value instanceof Date) {
+    if (!isValidDate(value)) {
+      return value;
+    }
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(value);
+    const get = (type) => parts.find((p) => p.type === type)?.value ?? '00';
+    return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}:${get('second')}`;
+  }
+  const text = String(value).trim();
+  if (!ISO_WITH_OFFSET.test(text)) {
+    return value;
+  }
+  const d = new Date(text);
+  if (!isValidDate(d)) {
+    return value;
+  }
+  return toFloatingDateTimeInZone(d, timeZone);
+};
+
 const toHm = (hour, minute) => {
   if (!Number.isInteger(hour) || !Number.isInteger(minute)) {
     return null;

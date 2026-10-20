@@ -6,6 +6,7 @@ import { apiGet, apiDelete } from '../../utils/ajax';
 import StandardizedApi from '../../utils/standardizedApi';
 import { normalizeVehiclePlateInput, validateEmail, validatePhone } from '../../utils/validationUtils';
 import { getAllClientsWithStats } from '../../utils/consultantHelper';
+import { selectActiveConsultants } from '../../utils/selectActiveConsultants';
 import { showError, showSuccess, showWarning } from '../../utils/notification';
 import { VALIDATION_MESSAGES } from '../../constants/messages';
 import {
@@ -42,8 +43,8 @@ import './mapping-management/organisms/MappingSearchSection.css';
 import './mapping-management/organisms/MappingListBlock.css';
 import './mapping-management/MappingManagementPage.css';
 import './ClientManagementPage.css';
-import { generateMgLoginPassword } from '../../utils/generateMgLoginPassword';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
+import { tempPasswordSmsNotice } from '../../utils/tempPasswordSmsNotice';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
 import { adminMappingsListGet } from '../../api/adminListFetch';
 import { useTranslation } from 'react-i18next';
@@ -333,10 +334,14 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         try {
             const response = await apiGet(API_ENDPOINTS.ADMIN.CONSULTANTS.LIST);
             logger.debug('📊 상담사 목록 응답:', response);
-            
-            if (response && response.success) {
-                const consultantsList = response.data?.consultants || response.data || [];
-                setConsultants(Array.isArray(consultantsList) ? consultantsList : []);
+            // apiGet unwrap → { consultants } / 배열 직접 수용
+            if (response != null && response.success !== false) {
+                const consultantsList = Array.isArray(response)
+                    ? response
+                    : (response.consultants || response.data?.consultants || response.data || []);
+                setConsultants(
+                    selectActiveConsultants(Array.isArray(consultantsList) ? consultantsList : [])
+                );
             } else {
                 console.warn('상담사 목록 응답 실패:', response);
                 setConsultants([]);
@@ -381,9 +386,12 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             if (Array.isArray(response)) {
                 logger.debug('✅ 상담 이력 배열로 처리:', response.length, '건');
                 setConsultations(response);
-            } else if (response && response.success) {
-                logger.debug('✅ 상담 이력 성공 응답:', response.data?.length || 0, '건');
-                setConsultations(response.data || []);
+            } else if (response != null && response.success !== false) {
+                const list = Array.isArray(response.data)
+                    ? response.data
+                    : (Array.isArray(response.consultations) ? response.consultations : []);
+                logger.debug('✅ 상담 이력 페이로드:', list.length, '건');
+                setConsultations(list);
             } else {
                 console.warn('⚠️ 상담 이력 응답 실패:', response);
                 setConsultations([]);
@@ -532,7 +540,6 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         setFormData({
             name: '',
             email: '',
-            password: generateMgLoginPassword(),
             phone: '',
             status: 'ACTIVE',
             grade: 'BRONZE',
@@ -611,19 +618,20 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
         setShowPasswordResetModal(true);
     }, []);
 
-    const handlePasswordResetConfirm = useCallback(async(newPassword) => {
+    const handlePasswordResetConfirm = useCallback(async() => {
         if (!passwordResetClient) return;
 
         try {
             logger.debug('🔑 내담자 비밀번호 초기화 시작:', passwordResetClient.id);
             
             const endpoint = `/api/v1/admin/user-management/${passwordResetClient.id}/reset-password`;
-            const response = await StandardizedApi.put(endpoint, { newPassword });
+            const response = await StandardizedApi.put(endpoint, {});
             
-            logger.debug('✅ 비밀번호 초기화 응답:', response);
+            logger.debug('✅ 비밀번호 초기화 응답:', { smsSent: response?.smsSent });
             
             if (response && (response.success !== false)) {
-                showSuccess(t('admin:client.success.passwordReset'));
+                const smsNotice = tempPasswordSmsNotice(t, response);
+                showSuccess(smsNotice || t('admin:client.success.passwordReset'));
                 setShowPasswordResetModal(false);
                 setPasswordResetClient(null);
             } else {
@@ -633,7 +641,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
             console.error('❌ 비밀번호 초기화 실패:', error);
             throw error;
         }
-    }, [passwordResetClient]);
+    }, [passwordResetClient, t]);
 
     const handleCloseModal = useCallback(() => {
         setShowModal(false);
@@ -1095,9 +1103,6 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                         emergencyContact: (dataToUse.emergencyContact ?? '').trim(),
                                         emergencyPhone: (dataToUse.emergencyPhone ?? '').trim()
                                     };
-                                    if (modalType === 'create') {
-                                        payload.password = dataToUse.password ?? '';
-                                    }
                                     if (dataToUse.profileImageUrl && dataToUse.profileImageUrl.trim() !== '') {
                                         payload.profileImageUrl = dataToUse.profileImageUrl;
                                     }
@@ -1138,8 +1143,8 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
                                         if (!response) {
                                             throw new Error(i18n.t('error:admin.ClientComprehensiveManagement.t_740a4e2f'));
                                         }
-                                        const msg = '내담자가 성공적으로 등록되었습니다.';
-                                        showSuccess(msg);
+                                        const smsNotice = tempPasswordSmsNotice(t, response);
+                                        showSuccess(smsNotice || '내담자가 성공적으로 등록되었습니다.');
                                         await loadClients();
                                         globalThis.window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                                         handleCloseModal();

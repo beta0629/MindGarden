@@ -3,6 +3,7 @@ package com.coresolution.consultation.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.CredentialSmsResult;
 import com.coresolution.consultation.dto.ProfileImageInfo;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Page;
@@ -365,6 +366,18 @@ public interface UserService extends BaseService<User, Long> {
      * @throws IllegalStateException tenantId 가 없을 때
      */
     boolean existsPhoneDuplicate(String normalizedDigits, String tenantIdOrNull, Long excludeUserIdOrNull);
+
+    /**
+     * 상담사 등록 등에서 같은 테넌트의 미삭제 사용자와 전화번호가 겹치면 거절한다.
+     * 빈 번호는 검사하지 않는다. 비교 전 {@link com.coresolution.consultation.util.LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 로 숫자만 남긴다.
+     *
+     * @param rawPhone            입력 전화번호(하이픈 허용). null·공백이면 통과
+     * @param tenantId            테넌트 ID
+     * @param excludeUserIdOrNull 재활성화 등 본인 제외 PK. 없으면 null
+     * @throws IllegalArgumentException 같은 테넌트에 이미 등록된 번호일 때
+     * @throws IllegalStateException    tenantId 가 없을 때
+     */
+    void rejectIfPhoneAlreadyRegistered(String rawPhone, String tenantId, Long excludeUserIdOrNull);
     
     // ==================== 특수 조회 메서드 ====================
     
@@ -409,6 +422,14 @@ public interface UserService extends BaseService<User, Long> {
      * 비밀번호 변경
      */
     void changePassword(Long userId, String newPassword);
+
+    /**
+     * 관리자가 임시 비밀번호를 발급한다. 요청 비밀번호는 쓰지 않고 {@code isPasswordChanged=false} 로 저장한 뒤 문자로 알린다.
+     *
+     * @param userId 대상 사용자 PK (현재 테넌트)
+     * @return 문자 발송 결과. 비밀번호는 포함하지 않는다
+     */
+    CredentialSmsResult resetPasswordByAdmin(Long userId);
     
     /**
      * 마지막 로그인 시간 업데이트

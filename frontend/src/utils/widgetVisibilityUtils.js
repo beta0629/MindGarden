@@ -654,11 +654,14 @@ export const validateWidgetAccess = (widgetType, businessType, userRole) => {
  */
 export const fetchAllowedWidgetsByBusinessType = async(businessType) => {
   try {
-    const response = await apiGet(`/api/admin/business-types/${businessType}/widgets`);
-    if (response && response.success) {
-      const widgets = response.data || [];
+    const response = await apiGet(`/api/v1/admin/business-types/${businessType}/widgets`);
+    // apiGet unwrap → 위젯 타입 배열 직접 수용
+    if (response != null && response.success !== false) {
+      const widgets = Array.isArray(response)
+        ? response
+        : (Array.isArray(response.data) ? response.data : (response.widgets || []));
       cacheBusinessTypeWidgets(businessType, widgets);
-      return widgets;
+      return Array.isArray(widgets) ? widgets : [];
     }
   } catch (error) {
     console.warn(`업종별 위젯 API 조회 실패: ${businessType}`, error);
@@ -677,11 +680,13 @@ export const fetchAllowedWidgetsByBusinessType = async(businessType) => {
  */
 export const fetchRolePermissions = async(userRole) => {
   try {
-    const response = await apiGet(`/api/admin/roles/${userRole}/permissions`);
-    if (response && response.success) {
-      const permissions = response.data || [];
+    const response = await apiGet(`/api/v1/admin/roles/${userRole}/permissions`);
+    if (response != null && response.success !== false) {
+      const permissions = Array.isArray(response)
+        ? response
+        : (Array.isArray(response.data) ? response.data : (response.permissions || []));
       cacheRolePermissions(userRole, permissions);
-      return permissions;
+      return Array.isArray(permissions) ? permissions : [];
     }
   } catch (error) {
     console.warn(`역할 권한 API 조회 실패: ${userRole}`, error);
@@ -699,11 +704,13 @@ export const fetchRolePermissions = async(userRole) => {
  */
 export const fetchWidgetMetadata = async(widgetType) => {
   try {
-    const response = await apiGet(`/api/admin/widgets/${widgetType}/metadata`);
-    if (response && response.success) {
-      const metadata = response.data || {};
+    const response = await apiGet(`/api/v1/admin/widgets/${widgetType}/metadata`);
+    if (response != null && response.success !== false) {
+      const metadata = (response.data != null && typeof response.data === 'object')
+        ? response.data
+        : response;
       cacheWidgetMetadata(widgetType, metadata);
-      return metadata;
+      return metadata && typeof metadata === 'object' ? metadata : {};
     }
   } catch (error) {
     console.warn(`위젯 메타데이터 API 조회 실패: ${widgetType}`, error);

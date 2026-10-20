@@ -80,6 +80,18 @@ public interface AuthService {
      * @since 2026-06-13
      */
     AuthResponse refreshToken(String refreshToken, HttpServletRequest request);
+
+    /**
+     * 이미 인증된 사용자에게 Access/Refresh 를 다시 발급한다.
+     *
+     * <p>비밀번호 변경 직후 호출한다. {@code user.isPasswordChanged} 가 true 이면
+     * 제한 클레임 없는 토큰이 나간다.</p>
+     *
+     * @param user    토큰 주체 (변경 완료 플래그가 반영된 인스턴스)
+     * @param request refresh_token_store 메타데이터용. null 허용
+     * @return 토큰이 채워진 성공 응답
+     */
+    AuthResponse issueTokensForUser(User user, HttpServletRequest request);
     
     /**
      * 로그아웃

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Arrays;
+import com.coresolution.consultation.constant.ClientProfileContextFields;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.ScheduleStatus;
@@ -93,8 +95,8 @@ class ClientStatsServiceImplTest {
             anyString(), anyLong(), anyLong())).thenReturn(false);
         lenient().when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
             anyString(), anyLong(), anyLong())).thenReturn(false);
-        lenient().when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-            anyString(), anyLong(), anyLong())).thenReturn(Optional.empty());
+        lenient().when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            anyString(), anyLong(), anyLong())).thenReturn(Collections.emptyList());
         lenient().when(userRepository.saveAndFlush(any(User.class)))
             .thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -448,8 +450,8 @@ class ClientStatsServiceImplTest {
         mapping.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
         mapping.setConsultant(consultant);
 
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.of(mapping));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(List.of(mapping));
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
         when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
             .thenReturn(Optional.empty());
@@ -480,8 +482,8 @@ class ClientStatsServiceImplTest {
         consultant.setId(CONSULTANT_USER_ID);
         consultant.setTenantId(TENANT);
 
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Collections.emptyList());
         when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
             TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(true);
         when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
@@ -513,8 +515,8 @@ class ClientStatsServiceImplTest {
         consultant.setId(CONSULTANT_USER_ID);
         consultant.setTenantId(TENANT);
 
-        when(mappingRepository.findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
-            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Optional.empty());
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Collections.emptyList());
         when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
             TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(false);
         when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
@@ -522,6 +524,152 @@ class ClientStatsServiceImplTest {
 
         assertThrows(AccessDeniedException.class,
             () -> clientStatsService.updateClientContextNotes(TENANT, CLIENT_USER_ID, consultant, "x"));
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: ACTIVE 복수 매핑 시 NonUnique 없이 최신 ACTIVE 선택")
+    void getClientContextProfile_multipleActiveMappings_selectsLatestWithoutNonUnique() {
+        User clientUser = buildClientUserForContext();
+        User consultant = buildConsultantCaller();
+
+        ConsultantClientMapping olderActive = buildMapping(
+            10L, ConsultantClientMapping.MappingStatus.ACTIVE,
+            LocalDateTime.of(2026, 4, 1, 9, 0), LocalDateTime.of(2026, 4, 1, 9, 0));
+        ConsultantClientMapping newerActive = buildMapping(
+            11L, ConsultantClientMapping.MappingStatus.ACTIVE,
+            LocalDateTime.of(2026, 4, 10, 9, 0), LocalDateTime.of(2026, 4, 10, 9, 0));
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID))
+            .thenReturn(List.of(olderActive, newerActive));
+        stubClientStatsLookups(clientUser);
+
+        Map<String, Object> profile = clientStatsService.getClientContextProfile(
+            TENANT, CLIENT_USER_ID, consultant);
+
+        assertEquals(ClientProfileContextFields.TIER_FULL,
+            profile.get(ClientProfileContextFields.VISIBILITY_TIER));
+        assertEquals(ClientProfileContextFields.REASON_MAPPING_ACTIVE,
+            profile.get(ClientProfileContextFields.ACCESS_REASON));
+        verify(mappingRepository).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID);
+        verify(mappingRepository, never()).findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+            anyString(), anyLong(), anyLong());
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: ACTIVE+SESSIONS_EXHAUSTED 복수 시 ACTIVE 우선(최신 선택 기준)")
+    void getClientContextProfile_activeAndExhausted_prefersActive() {
+        User clientUser = buildClientUserForContext();
+        User consultant = buildConsultantCaller();
+
+        ConsultantClientMapping olderActive = buildMapping(
+            10L, ConsultantClientMapping.MappingStatus.ACTIVE,
+            LocalDateTime.of(2026, 4, 1, 9, 0), LocalDateTime.of(2026, 4, 1, 9, 0));
+        ConsultantClientMapping newerExhausted = buildMapping(
+            20L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
+            LocalDateTime.of(2026, 5, 1, 9, 0), LocalDateTime.of(2026, 5, 1, 9, 0));
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID))
+            .thenReturn(List.of(olderActive, newerExhausted));
+        stubClientStatsLookups(clientUser);
+
+        Map<String, Object> profile = clientStatsService.getClientContextProfile(
+            TENANT, CLIENT_USER_ID, consultant);
+
+        assertEquals(ClientProfileContextFields.TIER_FULL,
+            profile.get(ClientProfileContextFields.VISIBILITY_TIER));
+        assertEquals(ClientProfileContextFields.REASON_MAPPING_ACTIVE,
+            profile.get(ClientProfileContextFields.ACCESS_REASON));
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: SESSIONS_EXHAUSTED 복수 시 최신 회기소진 매핑 근거 반환")
+    void getClientContextProfile_multipleExhausted_selectsLatestExhausted() {
+        User clientUser = buildClientUserForContext();
+        User consultant = buildConsultantCaller();
+
+        ConsultantClientMapping olderExhausted = buildMapping(
+            30L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
+            LocalDateTime.of(2026, 3, 1, 9, 0), LocalDateTime.of(2026, 3, 1, 9, 0));
+        ConsultantClientMapping newerExhausted = buildMapping(
+            31L, ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED,
+            LocalDateTime.of(2026, 6, 1, 9, 0), LocalDateTime.of(2026, 6, 1, 9, 0));
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID))
+            .thenReturn(List.of(olderExhausted, newerExhausted));
+        stubClientStatsLookups(clientUser);
+
+        Map<String, Object> profile = clientStatsService.getClientContextProfile(
+            TENANT, CLIENT_USER_ID, consultant);
+
+        assertEquals(ClientProfileContextFields.TIER_FULL,
+            profile.get(ClientProfileContextFields.VISIBILITY_TIER));
+        assertEquals(ClientProfileContextFields.REASON_SESSIONS_EXHAUSTED,
+            profile.get(ClientProfileContextFields.ACCESS_REASON));
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: 테넌트 격리 — 매핑 조회에 호출자 tenantId만 사용")
+    void getClientContextProfile_tenantIsolation_queriesWithCallerTenantOnly() {
+        User clientUser = buildClientUserForContext();
+        User consultant = buildConsultantCaller();
+        String otherTenant = "TENANT-OTHER999";
+
+        ConsultantClientMapping mapping = buildMapping(
+            11L, ConsultantClientMapping.MappingStatus.ACTIVE,
+            LocalDateTime.of(2026, 4, 10, 9, 0), LocalDateTime.of(2026, 4, 10, 9, 0));
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            eq(TENANT), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID)))
+            .thenReturn(List.of(mapping));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            eq(otherTenant), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID)))
+            .thenReturn(Collections.emptyList());
+        stubClientStatsLookups(clientUser);
+
+        Map<String, Object> profile = clientStatsService.getClientContextProfile(
+            TENANT, CLIENT_USER_ID, consultant);
+        assertEquals(ClientProfileContextFields.REASON_MAPPING_ACTIVE,
+            profile.get(ClientProfileContextFields.ACCESS_REASON));
+
+        assertThrows(AccessDeniedException.class,
+            () -> clientStatsService.getClientContextProfile(otherTenant, CLIENT_USER_ID, consultant));
+
+        verify(mappingRepository).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID);
+        verify(mappingRepository).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            otherTenant, CONSULTANT_USER_ID, CLIENT_USER_ID);
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: 상담사 매칭·일정·상담기록 없으면 AccessDenied")
+    void getClientContextProfile_consultant_noLink_throwsAccessDenied() {
+        User consultant = buildConsultantCaller();
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(Collections.emptyList());
+        when(scheduleRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(false);
+        when(consultationRecordRepository.existsByTenantIdAndConsultantIdAndClientIdAndIsDeletedFalse(
+            TENANT, CONSULTANT_USER_ID, CLIENT_USER_ID)).thenReturn(false);
+
+        assertThrows(AccessDeniedException.class,
+            () -> clientStatsService.getClientContextProfile(TENANT, CLIENT_USER_ID, consultant));
+    }
+
+    @Test
+    @DisplayName("getClientContextProfile: 내담자 역할은 타인 프로필 조회 불가(AccessDenied)")
+    void getClientContextProfile_clientRole_throwsAccessDenied() {
+        User clientCaller = buildClientUserForContext();
+        clientCaller.setId(999L);
+
+        assertThrows(AccessDeniedException.class,
+            () -> clientStatsService.getClientContextProfile(TENANT, CLIENT_USER_ID, clientCaller));
+        verify(mappingRepository, never()).findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+            anyString(), anyLong(), anyLong());
     }
 
     @Test
@@ -562,5 +710,40 @@ class ClientStatsServiceImplTest {
         user.setTenantId(TENANT);
         user.setIsActive(true);
         return user;
+    }
+
+    private User buildConsultantCaller() {
+        User consultant = User.builder()
+            .userId("co1")
+            .email("co@test.com")
+            .password("pw")
+            .name("상담사")
+            .role(UserRole.CONSULTANT)
+            .build();
+        consultant.setId(CONSULTANT_USER_ID);
+        consultant.setTenantId(TENANT);
+        return consultant;
+    }
+
+    private ConsultantClientMapping buildMapping(
+            Long id,
+            ConsultantClientMapping.MappingStatus status,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt) {
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(id);
+        mapping.setStatus(status);
+        mapping.setCreatedAt(createdAt);
+        mapping.setUpdatedAt(updatedAt);
+        return mapping;
+    }
+
+    private void stubClientStatsLookups(User clientUser) {
+        when(userRepository.findByTenantIdAndId(TENANT, CLIENT_USER_ID)).thenReturn(Optional.of(clientUser));
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TENANT, CLIENT_USER_ID))
+            .thenReturn(Optional.empty());
+        when(mappingRepository.findByClientIdAndStatusNot(eq(TENANT), eq(CLIENT_USER_ID), any()))
+            .thenReturn(Collections.emptyList());
+        when(scheduleRepository.countByClientId(TENANT, CLIENT_USER_ID)).thenReturn(0L);
     }
 }

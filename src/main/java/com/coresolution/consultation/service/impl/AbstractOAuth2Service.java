@@ -23,6 +23,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -32,6 +33,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import lombok.RequiredArgsConstructor;
@@ -74,6 +76,9 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected final PersonalDataEncryptionUtil encryptionUtil;
     protected final PasswordService passwordService;
     protected final UserService userService;
+
+    @Autowired
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
 
     @Override
@@ -765,7 +770,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
      * @return 임시 비밀번호
      */
     private String generateTemporaryPassword() {
-        return "SOCIAL_" + System.currentTimeMillis() + "_" + (int)(Math.random() * 1000);
+        return temporaryPasswordGenerator.generate();
     }
     
     @Override

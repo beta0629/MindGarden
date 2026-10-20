@@ -308,6 +308,7 @@ const RescheduleScheduleModal = ({
               excludeScheduleId={schedulePayload.id}
               calendarEvents={events}
               onCodeOptionsLoaded={handleCodeOptionsLoaded}
+              onOccupancyLoadFailed={() => setSelectedTimeSlot(null)}
             />
           </div>
         </div>

@@ -19,6 +19,7 @@ on:
       - "frontend/**"
       - ".github/workflows/deploy-frontend-prod.yml"
       - "scripts/deployment/frontend-prod-set-gate.sh"
+      - "src/test/resources/password-policy/login-password-policy-parity.json"
   workflow_dispatch:
     inputs:
       deploy_ref:

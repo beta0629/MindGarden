@@ -42,7 +42,9 @@ import {
 } from '../../utils/portonePgSettingsJson';
 import {
   PG_APPROVAL_COPY,
+  isConnectionTestForcedForPending,
   maskMerchantId,
+  resolveApproveTestConnection,
   resolveCenterDisplayName,
   resolvePgDisplayName
 } from '../../constants/pgApproval';
@@ -328,7 +330,12 @@ const PgApprovalManagement = () => {
     try {
       setSubmitting(true);
 
-      if (approvalForm.testConnection) {
+      const testConnection = resolveApproveTestConnection(
+        selectedConfig.hasPendingEdit,
+        approvalForm.testConnection
+      );
+
+      if (testConnection) {
         try {
           setTestingConnection(selectedConfig.configId);
           const connectionTestResult = await testPgConnectionForOps(selectedConfig.configId);
@@ -356,7 +363,7 @@ const PgApprovalManagement = () => {
 
       const request = {
         approvedBy: user?.userId || user?.name || user?.id || 'system',
-        testConnection: approvalForm.testConnection,
+        testConnection,
         approvalNote: approvalForm.notes || null
       };
 
@@ -671,6 +678,10 @@ const PgApprovalManagement = () => {
                       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
                       onClick={() => {
                         setSelectedConfig(config);
+                        setApprovalForm({
+                          testConnection: isConnectionTestForcedForPending(config),
+                          notes: ''
+                        });
                         setShowApprovalModal(true);
                       }}
                     >
@@ -783,9 +794,23 @@ const PgApprovalManagement = () => {
                 <SettingSwitchRow
                   id="pg-approval-test-connection"
                   label={t('common:ops.PgApprovalManagement.t_dc9d5407')}
-                  hint={t('common:ops.PgApprovalManagement.t_ec39cccf')}
-                  checked={!!approvalForm.testConnection}
-                  onCheckedChange={(next) => setApprovalForm((prev) => ({ ...prev, testConnection: next }))}
+                  hint={
+                    isConnectionTestForcedForPending(selectedConfig)
+                      ? PG_APPROVAL_COPY.TEST_BEFORE_APPROVE_PENDING_HINT
+                      : t('common:ops.PgApprovalManagement.t_ec39cccf')
+                  }
+                  checked={
+                    isConnectionTestForcedForPending(selectedConfig)
+                      ? true
+                      : !!approvalForm.testConnection
+                  }
+                  disabled={isConnectionTestForcedForPending(selectedConfig)}
+                  onCheckedChange={(next) => {
+                    if (isConnectionTestForcedForPending(selectedConfig)) {
+                      return;
+                    }
+                    setApprovalForm((prev) => ({ ...prev, testConnection: next }));
+                  }}
                   ariaLabel={t('common:ops.PgApprovalManagement.t_dc9d5407')}
                 />
 
@@ -809,7 +834,8 @@ const PgApprovalManagement = () => {
                   </div>
                 )}
 
-                {approvalForm.testConnection && !testResult && (
+                {(isConnectionTestForcedForPending(selectedConfig)
+                  || approvalForm.testConnection) && !testResult && (
                   <MGButton
                     variant="secondary"
                     size="small"

@@ -134,6 +134,7 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(result.alreadyOpen()).isZero();
         verify(scheduleService).useSessionForSpecificMapping(
                 eq(TENANT_A), eq(MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), eq(completed));
+        verify(scheduleService).reorderOccupyingSessionSequences(eq(mapping), eq(completed));
         verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
         verify(alertRepository).resolveUnresolvedByTenantIdAndScheduleId(
                 eq(TENANT_A), eq(107L), any(LocalDateTime.class));
@@ -372,6 +373,7 @@ class SessionDeductionRecoveryBatchTest {
         assertThat(result.alerted()).isZero();
         verify(alertRepository, never()).save(any(SessionRecoveryAlert.class));
         verify(scheduleService).assignProvisionalSessionSequenceWithoutDeduction(schedule);
+        verify(scheduleService).reorderOccupyingSessionSequences(null, schedule);
         verify(scheduleService, never()).useSessionForSpecificMapping(
                 anyString(), anyLong(), anyLong(), anyLong(), any(Schedule.class));
     }

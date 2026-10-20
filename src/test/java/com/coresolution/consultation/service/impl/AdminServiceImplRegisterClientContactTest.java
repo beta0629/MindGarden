@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -48,12 +49,14 @@ import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.test.util.ReflectionTestUtils;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -145,6 +148,8 @@ class AdminServiceImplRegisterClientContactTest {
     private UserService userService;
     @Mock
     private PartnerInstitutionRepository partnerInstitutionRepository;
+    @Mock
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @InjectMocks
     private AdminServiceImpl adminService;
@@ -152,6 +157,8 @@ class AdminServiceImplRegisterClientContactTest {
     @BeforeEach
     void setTenant() {
         TenantContextHolder.setTenantId(TENANT);
+        lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
+        ReflectionTestUtils.setField(adminService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
     }
 
     @AfterEach
@@ -351,5 +358,39 @@ class AdminServiceImplRegisterClientContactTest {
         assertThat(saved.getPartnerInstitutionId()).isEqualTo(91L);
         assertThat(saved.getInstitutionName()).isEqualTo("연계병원");
         assertThat(saved.getInstitutionPrepaid()).isFalse();
+    }
+
+    @Test
+    @DisplayName("요청 비밀번호가 있어도 서버 임시 비밀번호와 isPasswordChanged=false 로 저장한다")
+    void suppliedPasswordIsIgnored() {
+        String uniqueEmail = "ignore-pw-" + java.util.UUID.randomUUID() + "@test.com";
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setEmail(uniqueEmail);
+        request.setPassword("ClientInput1!");
+
+        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-ignore-1");
+        when(passwordService.encodeSecret("Kp9@mxzw")).thenReturn("hashed-temp");
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
+                .thenReturn(Collections.emptyMap());
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.saveAndFlush(userCaptor.capture())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(505L);
+            return u;
+        });
+
+        adminService.registerClient(request);
+
+        User saved = userCaptor.getValue();
+        assertThat(saved.getIsPasswordChanged()).isFalse();
+        assertThat(saved.getPassword()).isEqualTo("hashed-temp");
+        verify(passwordService).encodeSecret("Kp9@mxzw");
+        verify(passwordService, never()).encodePassword(anyString());
     }
 }

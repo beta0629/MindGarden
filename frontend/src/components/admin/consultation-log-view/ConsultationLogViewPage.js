@@ -1,15 +1,18 @@
 /**
- * 상담일지 조회 본문 - ContentArea + ContentHeader + 필터 + 목록
- * 역할별: 관리자 전체/상담사 본인만. 필터 변경 시 목록 재호출.
- * Clinic-OS chrome: consultation-log-view--clinic-os (B0KlA 제거).
+ * 상담일지 조회.
+ * 관리자 표면은 조회 버튼·서버 페이지·읽기 전용 상세.
+ * 상담사 표면은 즉시 필터·칩·카드 목록을 유지한다.
  *
  * @author Core Solution
  * @since 2025-03-02
- * @updated 2026-09-08 — admin consultation-records 전 페이지 수집(early-month truncation 수정)
+ * @updated 2026-10-10 — 403 폴백 제거, 표 서버 페이지네이션
  */
 
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ADMIN_LIST_DRAIN_PAGE_SIZE, buildAdminListParams } from '../../../api/adminListFetch';
+import PropTypes from 'prop-types';
+import { useTranslation } from 'react-i18next';
+import { FileText } from 'lucide-react';
+import { buildAdminListParams } from '../../../api/adminListFetch';
 import { useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
@@ -20,157 +23,90 @@ import {
   CONSULTATION_LOG_BODY_ACCESS_STRINGS,
   canAccessConsultationLogBody
 } from '../../../utils/consultationLogBodyAccess';
-import UnifiedLoading from '../../common/UnifiedLoading';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import ContentArea from '../../dashboard-v2/content/ContentArea';
 import ContentHeader from '../../dashboard-v2/content/ContentHeader';
 import ConsultationLogFilterSection from './ConsultationLogFilterSection';
-import { toDateStr } from '../../../utils/dateUtils';
-import ConsultationLogListBlock from './ConsultationLogListBlock';
 import ConsultationLogCalendarBlock from './ConsultationLogCalendarBlock';
 import ConsultationLogTableBlock from './ConsultationLogTableBlock';
+import ConsultationLogTimelineBlock from './ConsultationLogTimelineBlock';
+import ConsultationLogDetailPanel from './ConsultationLogDetailPanel';
+import ConsultationLogResultsState from './ConsultationLogResultsState';
 import ConsultationLogModal from '../../consultant/ConsultationLogModal';
 import { getAllConsultantsWithStats, getAllClientsWithStats } from '../../../utils/consultantHelper';
-import SavedViewControls from '../ClientComprehensiveManagement/molecules/SavedViewControls';
+import SaveViewModal from '../ClientComprehensiveManagement/molecules/SaveViewModal';
 import { useSavedViewPreference } from '../../../hooks/useSavedViewPreference';
 import {
   CONSULTATION_LOG_VIEW_DEFAULT_VIEW_MODE,
   CONSULTATION_LOG_VIEW_SAVED_VIEW_PAGE_ID,
   CONSULTATION_LOG_VIEW_SAVED_VIEW_PERSIST_DEBOUNCE_MS,
-  CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL,
   buildConsultationLogViewDefaultSavedView
 } from '../../../constants/consultationLogSavedViewConstants';
+import EmptyState from '../../common/EmptyState';
+import ConsultantSuitePage from '../../consultant/suite/ConsultantSuitePage';
+import ConsultantFilterChips from '../../consultant/suite/ConsultantFilterChips';
+import ConsultantSuiteButton from '../../consultant/suite/ConsultantSuiteButton';
+import ConsultantRecordCard from '../../consultant/suite/ConsultantRecordCard';
+import {
+  CONSULTANT_SUITE_BUTTON_VARIANT,
+  CONSULTANT_SUITE_CLASS,
+  CONSULTANT_SUITE_NS,
+  CONSULTANT_SUITE_PAGE_SIZE,
+  CONSULTANT_SUITE_TEST_ID,
+  CONSULTATION_LOG_VIEW_SURFACE
+} from '../../../constants/consultantSuite';
+import {
+  clampUiPage,
+  fetchConsultantSuitePagedList,
+  toServerPageIndex
+} from '../../../utils/consultantSuiteListApi';
+import MGPagination from '../../common/MGPagination';
+import {
+  API_ADMIN_CONSULTATION_RECORDS,
+  CONSULTATION_LOG_STATUS_ALL,
+  consultationLogListPageSize,
+  buildConsultationLogQueryParams,
+  computeDefaultDateRange,
+  fetchAllAdminConsultationRecords,
+  fetchConsultationRecordPages,
+  fetchConsultationRecordsPage,
+  formatDisplayDate,
+  intersectDateRanges,
+  monthBounds,
+  resolveContentText,
+  resolvePersonName,
+  resolveSummaryText,
+  shiftIsoDate,
+  visibleSessionNumber
+} from './consultationLogQuery';
+import { consultationLogGroupModeFromFilters, CONSULTATION_LOG_GROUP_MODE } from './consultationLogGrouping';
+import { CONSULTATION_LOG_TIMELINE_SORT } from './consultationLogTimeline';
+import '../../../i18n';
 import '../ConsultationLogViewPage.css';
 
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ADMIN_CONSULTATION_RECORDS = '/api/v1/admin/consultation-records';
+export {
+  computeDefaultDateRange,
+  normalizeAdminConsultationRecordsPage,
+  fetchAllAdminConsultationRecords,
+  fetchConsultationRecordPages,
+  ADMIN_CONSULTATION_RECORDS_PAGE_SIZE,
+  ADMIN_CONSULTATION_RECORDS_MAX_PAGES
+} from './consultationLogQuery';
 
-
+const NS = 'adminConsultationLogs';
 const PAGE_TITLE = '상담일지 조회';
 const PAGE_SUBTITLE = '상담일지를 검색하고 목록에서 클릭해 수정할 수 있습니다.';
-const CONTENT_AREA_ARIA_LABEL = '상담일지 조회 콘텐츠';
 const VIEW_MODE_LIST = 'list';
 const VIEW_MODE_CALENDAR = 'calendar';
 const VIEW_MODE_TABLE = 'table';
-const TAB_LABELS = {
-  [VIEW_MODE_CALENDAR]: '캘린더',
-  [VIEW_MODE_LIST]: '목록',
-  [VIEW_MODE_TABLE]: '테이블'
-};
-// 공통 목록 모듈 size 상한(ADMIN_LIST_DRAIN_PAGE_SIZE) 과 동일.
-// 단일 페이지만 요청하면 DESC 정렬 때문에 월 초 데이터가 잘릴 수 있음 → 기간 안에서 페이지 수집.
-// 참고: docs/project-management/2026-05-29/CONSULTATION_LOG_VIEW_APRIL_MISSING_DEBUG.md
-export const ADMIN_CONSULTATION_RECORDS_PAGE_SIZE = ADMIN_LIST_DRAIN_PAGE_SIZE;
-/** 기간 스코프 수집 안전 상한 (기간 없는 전체 모드는 없다). */
-export const ADMIN_CONSULTATION_RECORDS_MAX_PAGES = 10;
-// 진입 시 기본 표시 기간 = "지난 달 1일 ~ 이번 달 말일".
-// 사용자가 startDate/endDate 를 비워도 기본 기간으로 보완한다 — 기간 없는 전체 조회 금지.
-const DEFAULT_RANGE_MONTHS_BEFORE = 1;
-
-/**
- * 기본 기간 (지난 달 1일 ~ 이번 달 말일) 을 ISO yyyy-MM-dd 문자열로 계산.
- *
- * @param {Date} [now] 기준 일시 (테스트에서 주입 가능, 기본값: 현재 시각)
- * @returns {{ startDate: string, endDate: string }}
- */
-export const computeDefaultDateRange = (now = new Date()) => {
-  const year = now.getFullYear();
-  const month = now.getMonth();
-  const start = new Date(year, month - DEFAULT_RANGE_MONTHS_BEFORE, 1);
-  const end = new Date(year, month + 1, 0);
-  const fmt = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  return { startDate: fmt(start), endDate: fmt(end) };
-};
-
-/**
- * 어드민 상담일지 페이지 응답을 { data, totalCount, totalPages } 로 정규화.
- * envelope `{ success, data, totalCount, totalPages }` 와 배열-only 응답 모두 허용.
- *
- * @param {*} response StandardizedApi.get 응답 (unwrapApiEnvelope:false 권장)
- * @param {number} [pageSize=ADMIN_CONSULTATION_RECORDS_PAGE_SIZE]
- * @returns {{ data: Array, totalCount: number, totalPages: number }}
- */
-export const normalizeAdminConsultationRecordsPage = (
-  response,
-  pageSize = ADMIN_CONSULTATION_RECORDS_PAGE_SIZE
-) => {
-  if (Array.isArray(response)) {
-    return {
-      data: response,
-      totalCount: response.length,
-      totalPages: 1
-    };
-  }
-  if (!response || typeof response !== 'object') {
-    return { data: [], totalCount: 0, totalPages: 1 };
-  }
-  const data = Array.isArray(response.data) ? response.data : [];
-  const parsedTotalCount = Number(response.totalCount);
-  const totalCount = Number.isFinite(parsedTotalCount) ? parsedTotalCount : data.length;
-  const parsedTotalPages = Number(response.totalPages);
-  let totalPages;
-  if (Number.isFinite(parsedTotalPages) && parsedTotalPages > 0) {
-    totalPages = parsedTotalPages;
-  } else if (totalCount > 0 && pageSize > 0) {
-    totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  } else {
-    totalPages = 1;
-  }
-  return { data, totalCount, totalPages };
-};
-
-/**
- * 어드민 상담일지 목록을 page/size 로 전 페이지 수집.
- * DESC 정렬 + 단일 페이지 캡으로 월 초 데이터가 누락되는 회귀를 방지한다.
- *
- * @param {Function} apiGet StandardizedApi.get 호환 (endpoint, params, options) => Promise
- * @param {Object} [baseParams] page/size 를 제외한 필터 (startDate, endDate, consultantId, clientId 등)
- * @param {Object} [options]
- * @param {string} [options.endpoint]
- * @param {number} [options.pageSize]
- * @param {number} [options.maxPages]
- * @returns {Promise<Array>}
- */
-export const fetchAllAdminConsultationRecords = async(
-  apiGet,
-  baseParams = {},
-  options = {}
-) => {
-  const endpoint = options.endpoint ?? API_ADMIN_CONSULTATION_RECORDS;
-  const pageSize = options.pageSize ?? ADMIN_CONSULTATION_RECORDS_PAGE_SIZE;
-  const maxPages = options.maxPages ?? ADMIN_CONSULTATION_RECORDS_MAX_PAGES;
-  const accumulated = [];
-  let page = 0;
-
-  while (page < maxPages) {
-    const params = buildAdminListParams({
-      ...(baseParams || {}),
-      page,
-      size: pageSize
-    });
-    const response = await apiGet(endpoint, params, { unwrapApiEnvelope: false });
-    const normalized = normalizeAdminConsultationRecordsPage(response, pageSize);
-    accumulated.push(...normalized.data);
-
-    if (page + 1 >= normalized.totalPages) {
-      break;
-    }
-    if (accumulated.length >= normalized.totalCount) {
-      break;
-    }
-    if (normalized.data.length === 0) {
-      break;
-    }
-    page += 1;
-  }
-
-  return accumulated;
-};
+const VIEW_MODES = [VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE];
+const CONSULTANT_EMPTY_ICON_SIZE = 40;
+const DETAIL_TITLE_ID = 'consultation-log-detail-title';
+const DETAIL_PANEL_ID = 'consultation-log-detail-panel';
 
 /**
  * URL `?date=yyyy-mm-dd` 등 deep link 쿼리에서 시작·종료 일자를 추출.
- * 단일 날짜만 있을 때는 startDate=endDate=해당일.
  *
  * @param {URLSearchParams|null|undefined} searchParams
  * @returns {{ startDate: string, endDate: string }|null}
@@ -228,8 +164,7 @@ export const hasConsultationLogDeepLinkQuery = (queryFilter) => Boolean(
 );
 
 /**
- * Deep link `scheduleId` 와 목록 레코드를 매칭해 모달용 record id 를 반환.
- * 백엔드 레코드는 일정 ID를 `consultationId`(또는 `scheduleId`)로 담는다.
+ * Deep link `scheduleId` 와 목록 레코드를 매칭해 record id 를 반환.
  *
  * @param {Array<object>|null|undefined} records
  * @param {number|null|undefined} scheduleId
@@ -254,16 +189,41 @@ export const findRecordIdByScheduleDeepLink = (records, scheduleId) => {
   return matched?.id != null ? matched.id : null;
 };
 
-const ConsultationLogViewPage = () => {
+const emptyFilters = (range, query) => ({
+  consultantId: query?.consultantId ?? null,
+  clientId: query?.clientId ?? null,
+  startDate: query?.startDate ?? range.startDate,
+  endDate: query?.endDate ?? range.endDate,
+  status: CONSULTATION_LOG_STATUS_ALL,
+  keyword: ''
+});
+
+const readStoredFilters = (storedFilters, fallback) => {
+  if (!storedFilters || typeof storedFilters !== 'object') {
+    return fallback;
+  }
+  const next = { ...fallback };
+  ['consultantId', 'clientId', 'startDate', 'endDate', 'status', 'keyword'].forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(storedFilters, key)) {
+      next[key] = storedFilters[key];
+    }
+  });
+  return next;
+};
+
+const consultantRecordsEndpoint = (consultantId) => (
+  `/api/v1/admin/consultant-records/${consultantId}/consultation-records`
+);
+
+const ConsultationLogViewPage = ({ surface }) => {
+  const { t } = useTranslation(NS);
+  const { t: tSuite } = useTranslation(CONSULTANT_SUITE_NS);
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
   const canOpenConsultationLog = canAccessConsultationLogBody(user);
+  const isConsultantSurface = surface === CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT;
   const [searchParams] = useSearchParams();
 
-  /**
-   * Deep link 쿼리(`?date=...&clientId=...&consultantId=...&scheduleId=...`)를
-   * 페이지 초기 필터로 1회 적용. 이후 사용자가 필터를 변경하면 그대로 유지.
-   */
   const initialQueryFilter = useMemo(() => {
     const range = computeRangeFromQuery(searchParams);
     return {
@@ -273,7 +233,7 @@ const ConsultationLogViewPage = () => {
       consultantId: parseNumericQueryParam(searchParams, 'consultantId'),
       scheduleId: parseNumericQueryParam(searchParams, 'scheduleId')
     };
-  // 초기 마운트 시 1회만 계산 (deep link 의도). 이후 검색 변화 시 사용자 필터 우선.
+  // 초기 마운트 시 1회만 계산 (deep link 의도).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -285,24 +245,41 @@ const ConsultationLogViewPage = () => {
     ),
     [defaultDateRange]
   );
+  const initialFilters = useMemo(
+    () => emptyFilters(defaultDateRange, initialQueryFilter),
+    [defaultDateRange, initialQueryFilter]
+  );
 
   const [consultants, setConsultants] = useState([]);
   const [clients, setClients] = useState([]);
   const [records, setRecords] = useState([]);
+  const [groupSummary, setGroupSummary] = useState(null);
+  const [timelineBoundary, setTimelineBoundary] = useState(null);
+  const [timelineSort, setTimelineSort] = useState(CONSULTATION_LOG_TIMELINE_SORT.RECENT);
+  const [totalElements, setTotalElements] = useState(0);
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [consultantId, setConsultantId] = useState(initialQueryFilter.consultantId);
-  const [clientId, setClientId] = useState(initialQueryFilter.clientId);
-  const [startDate, setStartDate] = useState(
-    () => initialQueryFilter.startDate ?? computeDefaultDateRange().startDate
-  );
-  const [endDate, setEndDate] = useState(
-    () => initialQueryFilter.endDate ?? computeDefaultDateRange().endDate
-  );
+  const [loadError, setLoadError] = useState(false);
+  const [calendarTruncated, setCalendarTruncated] = useState(false);
+  const [consultantId, setConsultantId] = useState(initialFilters.consultantId);
+  const [clientId, setClientId] = useState(initialFilters.clientId);
+  const [startDate, setStartDate] = useState(initialFilters.startDate);
+  const [endDate, setEndDate] = useState(initialFilters.endDate);
+  const [status, setStatus] = useState(initialFilters.status);
+  const [keyword, setKeyword] = useState(initialFilters.keyword);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
+  const [queryVersion, setQueryVersion] = useState(0);
+  const [calendarRange, setCalendarRange] = useState(null);
   const [modalRecordId, setModalRecordId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [saveViewModalOpen, setSaveViewModalOpen] = useState(false);
   const [viewMode, setViewMode] = useState(VIEW_MODE_LIST);
-  /** Deep link scheduleId 모달 자동 오픈 1회 가드 */
+  const [selectedLogId, setSelectedLogId] = useState(null);
+  const [detailRecord, setDetailRecord] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const deepLinkAutoOpenedRef = useRef(false);
+  const clientsRef = useRef(clients);
+  clientsRef.current = clients;
 
   const {
     savedView,
@@ -325,7 +302,6 @@ const ConsultationLogViewPage = () => {
     sort: consultationLogDefaultSavedView.sort,
     density: consultationLogDefaultSavedView.density
   });
-  /** mount 시 saved view(또는 deep-link) 적용 전에는 list fetch 스킵 */
   const [filtersHydrated, setFiltersHydrated] = useState(false);
   const loadRecordsRequestIdRef = useRef(0);
   const loadRecordsAbortRef = useRef(null);
@@ -333,6 +309,10 @@ const ConsultationLogViewPage = () => {
     () => hasConsultationLogDeepLinkQuery(initialQueryFilter),
     [initialQueryFilter]
   );
+
+  const toAdminViewMode = useCallback((mode) => (
+    mode === VIEW_MODE_CALENDAR ? VIEW_MODE_CALENDAR : VIEW_MODE_LIST
+  ), []);
 
   const loadConsultants = useCallback(async() => {
     if (!isAdmin) return;
@@ -349,12 +329,6 @@ const ConsultationLogViewPage = () => {
     }
   }, [isAdmin]);
 
-  /**
-   * 내담자 목록(필터·이름 매핑용).
-   *
-   * <p>관리자만 테넌트 전체 목록(`/admin/clients/with-stats`)을 쓴다. 상담사는 그 경로가
-   * 403 이므로 본인 담당 내담자만 돌려주는 상담사 스코프 API 를 쓴다(#1398 본인 id 강제).</p>
-   */
   const loadClients = useCallback(async() => {
     try {
       if (!isAdmin) {
@@ -381,7 +355,6 @@ const ConsultationLogViewPage = () => {
     }
   }, [isAdmin, user?.id]);
 
-  /** 상담사 본인 목록 응답을 목록 뷰 형식으로 정규화 */
   const normalizeConsultantRecords = useCallback((list, consultantDisplayName) => {
     const arr = Array.isArray(list) ? list : [];
     return arr.map((r) => ({
@@ -390,22 +363,23 @@ const ConsultationLogViewPage = () => {
       consultationDate: r.consultationDate,
       sessionNumber: r.sessionNumber,
       clientName: r.clientName,
-      consultantName: consultantDisplayName ?? '본인',
+      consultantName: String(r.consultantName || '').trim()
+        ? r.consultantName
+        : consultantDisplayName,
       isSessionCompleted: r.isSessionCompleted,
       createdAt: r.createdAt,
       updatedAt: r.updatedAt,
       clientId: r.clientId,
       consultantId: r.consultantId,
       consultationId: r.consultationId,
-      scheduleId: r.scheduleId
+      scheduleId: r.scheduleId,
+      summaryPreview: r.summaryPreview,
+      summary: r.summary,
+      mainIssues: r.mainIssues
     }));
   }, []);
 
-  const loadRecords = useCallback(async() => {
-    if (!user?.id) {
-      setLoading(false);
-      return;
-    }
+  const beginRequest = useCallback(() => {
     if (loadRecordsAbortRef.current) {
       loadRecordsAbortRef.current.abort();
     }
@@ -417,48 +391,77 @@ const ConsultationLogViewPage = () => {
       requestId !== loadRecordsRequestIdRef.current
       || Boolean(abortController?.signal?.aborted)
     );
-
     setLoading(true);
+    return { isStale };
+  }, []);
+
+  const loadConsultantRecords = useCallback(async() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    const { isStale } = beginRequest();
     try {
       if (isAdmin) {
-        try {
-          const params = {};
-          if (consultantId != null) params.consultantId = consultantId;
-          if (clientId != null) params.clientId = clientId;
-          // P0 핫픽스 2026-05-29: 기간 필터를 백엔드로 전달.
-          // (이전: 클라이언트 사이드 필터만 사용 → MAX_PAGE_SIZE=20 캡으로 4월 데이터 미노출)
-          const fallbackRange = computeDefaultDateRange();
-          params.startDate = startDate || fallbackRange.startDate;
-          params.endDate = endDate || fallbackRange.endDate;
-          // 기간 스코프 안에서 page/size 수집. 단일 page0 만 받으면 DESC 정렬로 월 초 누락.
-          const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, params);
-          if (isStale()) return;
-          setRecords(Array.isArray(list) ? list : []);
-        } catch (adminErr) {
-          if (isStale() || abortController?.signal?.aborted) return;
-          if (adminErr?.status === 403 || (adminErr?.message && adminErr.message.includes('관리자 권한'))) {
-            const consultantResponse = await StandardizedApi.get(
-              `/api/v1/admin/consultant-records/${user.id}/consultation-records`
-            );
-            if (isStale()) return;
-            const list = Array.isArray(consultantResponse) ? consultantResponse : (consultantResponse?.data ?? []);
-            setRecords(normalizeConsultantRecords(list, user?.name));
-          } else {
-            throw adminErr;
-          }
-        }
-      } else {
-        const response = await StandardizedApi.get(
-          `/api/v1/admin/consultant-records/${user.id}/consultation-records`
-        );
+        const params = {};
+        if (consultantId != null) params.consultantId = consultantId;
+        if (clientId != null) params.clientId = clientId;
+        const fallbackRange = computeDefaultDateRange();
+        params.startDate = startDate || fallbackRange.startDate;
+        params.endDate = endDate || fallbackRange.endDate;
+        const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, params);
         if (isStale()) return;
-        const list = Array.isArray(response) ? response : (response?.data ?? []);
-        setRecords(normalizeConsultantRecords(list, user?.name));
+        setRecords(Array.isArray(list) ? list : []);
+        setTotalElements(Array.isArray(list) ? list.length : 0);
+        setLoadError(false);
+      } else {
+        const endpoint = consultantRecordsEndpoint(user.id);
+        const fallbackRange = computeDefaultDateRange();
+        const baseParams = {
+          startDate: startDate || fallbackRange.startDate,
+          endDate: endDate || fallbackRange.endDate
+        };
+        if (clientId != null) {
+          baseParams.clientId = clientId;
+        }
+        if (viewMode === VIEW_MODE_CALENDAR) {
+          const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, baseParams, {
+            endpoint
+          });
+          if (isStale()) return;
+          const normalized = normalizeConsultantRecords(list, user?.name);
+          setRecords(normalized);
+          setTotalElements(normalized.length);
+          setLoadError(false);
+        } else {
+          const result = await fetchConsultantSuitePagedList(endpoint, baseParams, {
+            page: toServerPageIndex(page),
+            size: CONSULTANT_SUITE_PAGE_SIZE,
+            itemKeys: ['data', 'content', 'items', 'records']
+          });
+          if (isStale()) return;
+          const nextTotal = result.totalElements != null
+            ? result.totalElements
+            : (result.items || []).length;
+          const nextTotalPages = result.totalPages != null && result.totalPages > 0
+            ? result.totalPages
+            : Math.max(1, Math.ceil(nextTotal / CONSULTANT_SUITE_PAGE_SIZE));
+          const clamped = clampUiPage(page, nextTotalPages);
+          if (clamped !== page) {
+            setPage(clamped);
+            return;
+          }
+          const normalized = normalizeConsultantRecords(result.items || [], user?.name);
+          setRecords(normalized);
+          setTotalElements(nextTotal);
+          setLoadError(false);
+        }
       }
     } catch (e) {
-      if (isStale() || abortController?.signal?.aborted) return;
+      if (isStale()) return;
       console.error('상담일지 목록 로드 실패:', e);
       setRecords([]);
+      setTotalElements(0);
       const message = e?.status === 403
         ? '관리자 권한이 필요합니다. 권한을 확인해주세요.'
         : '상담일지 목록을 불러오는데 실패했습니다.';
@@ -468,7 +471,134 @@ const ConsultationLogViewPage = () => {
         setLoading(false);
       }
     }
-  }, [user?.id, user?.name, isAdmin, consultantId, clientId, startDate, endDate, normalizeConsultantRecords]);
+  }, [
+    user?.id,
+    user?.name,
+    isAdmin,
+    consultantId,
+    clientId,
+    startDate,
+    endDate,
+    normalizeConsultantRecords,
+    viewMode,
+    page,
+    beginRequest
+  ]);
+
+  const loadAdminRecords = useCallback(async() => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    const { isStale } = beginRequest();
+    setLoadError(false);
+    try {
+      const endpoint = isAdmin
+        ? API_ADMIN_CONSULTATION_RECORDS
+        : consultantRecordsEndpoint(user.id);
+      const fallbackRange = computeDefaultDateRange();
+      const listMode = consultationLogGroupModeFromFilters(
+        appliedFilters.clientId,
+        appliedFilters.consultantId
+      );
+      const query = buildConsultationLogQueryParams({
+        ...appliedFilters,
+        startDate: appliedFilters.startDate || fallbackRange.startDate,
+        endDate: appliedFilters.endDate || fallbackRange.endDate,
+        clients: clientsRef.current,
+        timelineSort: listMode === CONSULTATION_LOG_GROUP_MODE.CLIENT
+          || listMode === CONSULTATION_LOG_GROUP_MODE.BOTH
+          ? timelineSort
+          : null
+      });
+      const adminMode = viewMode === VIEW_MODE_CALENDAR ? VIEW_MODE_CALENDAR : VIEW_MODE_LIST;
+      if (adminMode === VIEW_MODE_CALENDAR) {
+        const visibleEnd = calendarRange?.endDate
+          ? (shiftIsoDate(calendarRange.endDate, -1) || calendarRange.endDate)
+          : null;
+        const seed = calendarRange
+          ? { startDate: calendarRange.startDate, endDate: visibleEnd }
+          : monthBounds(query.startDate);
+        const range = seed
+          ? intersectDateRanges(query.startDate, query.endDate, seed.startDate, seed.endDate)
+          : null;
+        if (!range) {
+          if (isStale()) return;
+          setRecords([]);
+          setGroupSummary(null);
+          setTimelineBoundary(null);
+          setTotalElements(0);
+          setCalendarTruncated(false);
+          return;
+        }
+        const result = await fetchConsultationRecordPages(StandardizedApi.get, endpoint, {
+          ...query,
+          startDate: range.startDate,
+          endDate: range.endDate
+        });
+        if (isStale()) return;
+        const rows = isAdmin
+          ? result.records
+          : normalizeConsultantRecords(result.records, user?.name);
+        setRecords(rows);
+        setGroupSummary(null);
+        setTimelineBoundary(null);
+        setTotalElements(result.totalCount);
+        setCalendarTruncated(result.truncated);
+      } else {
+        const result = await fetchConsultationRecordsPage(
+          StandardizedApi.get,
+          endpoint,
+          buildAdminListParams({
+            ...query,
+            page: toServerPageIndex(page),
+            size: consultationLogListPageSize(appliedFilters.clientId, appliedFilters.consultantId)
+          })
+        );
+        if (isStale()) return;
+        const clamped = clampUiPage(page, result.totalPages);
+        if (clamped !== page) {
+          setPage(clamped);
+          return;
+        }
+        const rows = isAdmin
+          ? result.data
+          : normalizeConsultantRecords(result.data, user?.name);
+        setRecords(rows);
+        setGroupSummary(result.groupSummary || null);
+        setTimelineBoundary(result.timelineBoundary || null);
+        setTotalElements(result.totalCount);
+        setCalendarTruncated(false);
+      }
+    } catch (e) {
+      if (isStale()) return;
+      console.error('상담일지 목록 로드 실패:', e);
+      setRecords([]);
+      setGroupSummary(null);
+      setTimelineBoundary(null);
+      setTotalElements(0);
+      setCalendarTruncated(false);
+      setLoadError(true);
+    } finally {
+      if (!isStale()) {
+        setLoading(false);
+      }
+    }
+  }, [
+    user?.id,
+    user?.name,
+    isAdmin,
+    appliedFilters,
+    viewMode,
+    page,
+    queryVersion,
+    timelineSort,
+    calendarRange,
+    normalizeConsultantRecords,
+    beginRequest
+  ]);
+
+  const loadRecords = isConsultantSurface ? loadConsultantRecords : loadAdminRecords;
 
   useEffect(() => {
     loadConsultants();
@@ -487,6 +617,136 @@ const ConsultationLogViewPage = () => {
     };
   }, [filtersHydrated, loadRecords]);
 
+  const resetPageAnd = useCallback((updater) => {
+    setPage(1);
+    updater();
+  }, []);
+
+  const handleConsultantFilterChange = useCallback((value) => {
+    if (isConsultantSurface) {
+      resetPageAnd(() => setConsultantId(value));
+      return;
+    }
+    setConsultantId(value);
+  }, [isConsultantSurface, resetPageAnd]);
+
+  const handleClientFilterChange = useCallback((value) => {
+    if (isConsultantSurface) {
+      resetPageAnd(() => setClientId(value));
+      return;
+    }
+    setClientId(value);
+  }, [isConsultantSurface, resetPageAnd]);
+
+  const handleStartDateChange = useCallback((value) => {
+    if (isConsultantSurface) {
+      resetPageAnd(() => setStartDate(value));
+      return;
+    }
+    setStartDate(value);
+  }, [isConsultantSurface, resetPageAnd]);
+
+  const handleEndDateChange = useCallback((value) => {
+    if (isConsultantSurface) {
+      resetPageAnd(() => setEndDate(value));
+      return;
+    }
+    setEndDate(value);
+  }, [isConsultantSurface, resetPageAnd]);
+
+  const handleStatusChange = useCallback((value) => {
+    setStatus(value || CONSULTATION_LOG_STATUS_ALL);
+  }, []);
+
+  const handleKeywordChange = useCallback((value) => {
+    setKeyword(value);
+  }, []);
+
+  const currentFormFilters = useCallback((withFallback) => {
+    const fallbackRange = computeDefaultDateRange();
+    return {
+      consultantId,
+      clientId,
+      startDate: withFallback ? (startDate || fallbackRange.startDate) : startDate,
+      endDate: withFallback ? (endDate || fallbackRange.endDate) : endDate,
+      status: status || CONSULTATION_LOG_STATUS_ALL,
+      keyword: keyword || ''
+    };
+  }, [consultantId, clientId, startDate, endDate, status, keyword]);
+
+  const applyFormFilters = useCallback((next) => {
+    setConsultantId(next.consultantId ?? null);
+    setClientId(next.clientId ?? null);
+    setStartDate(next.startDate || '');
+    setEndDate(next.endDate || '');
+    setStatus(next.status || CONSULTATION_LOG_STATUS_ALL);
+    setKeyword(next.keyword || '');
+    setAppliedFilters({
+      consultantId: next.consultantId ?? null,
+      clientId: next.clientId ?? null,
+      startDate: next.startDate || '',
+      endDate: next.endDate || '',
+      status: next.status || CONSULTATION_LOG_STATUS_ALL,
+      keyword: next.keyword || ''
+    });
+  }, []);
+
+  const handleSearch = useCallback(() => {
+    const next = currentFormFilters(true);
+    const clientChanged = String(next.clientId ?? '') !== String(appliedFilters.clientId ?? '');
+    if (clientChanged) {
+      setTimelineSort(CONSULTATION_LOG_TIMELINE_SORT.RECENT);
+    }
+    setStartDate(next.startDate);
+    setEndDate(next.endDate);
+    setPage(1);
+    setAppliedFilters(next);
+    setQueryVersion((value) => value + 1);
+    setSelectedLogId(null);
+  }, [appliedFilters.clientId, currentFormFilters]);
+
+  const handleResetFilters = useCallback(() => {
+    const fallbackRange = computeDefaultDateRange();
+    const next = emptyFilters(fallbackRange, {});
+    setTimelineSort(CONSULTATION_LOG_TIMELINE_SORT.RECENT);
+    setPage(1);
+    applyFormFilters(next);
+    setQueryVersion((value) => value + 1);
+    setSelectedLogId(null);
+  }, [applyFormFilters]);
+
+  const handleTimelineSortChange = useCallback((nextSort) => {
+    if (nextSort !== CONSULTATION_LOG_TIMELINE_SORT.RECENT
+      && nextSort !== CONSULTATION_LOG_TIMELINE_SORT.SESSION) {
+      return;
+    }
+    if (nextSort === timelineSort) {
+      return;
+    }
+    setTimelineSort(nextSort);
+    setPage(1);
+  }, [timelineSort]);
+
+  const handleViewModeChange = useCallback((mode) => {
+    const nextMode = isConsultantSurface ? mode : toAdminViewMode(mode);
+    resetPageAnd(() => setViewMode(nextMode));
+    if (!isConsultantSurface) {
+      setSelectedLogId(null);
+    }
+  }, [isConsultantSurface, resetPageAnd, toAdminViewMode]);
+
+  const handleCalendarRange = useCallback((range) => {
+    if (!range?.startDate || !range?.endDate) {
+      return;
+    }
+    setCalendarRange((prev) => {
+      if (prev && prev.startDate === range.startDate && prev.endDate === range.endDate) {
+        return prev;
+      }
+      return { startDate: range.startDate, endDate: range.endDate };
+    });
+  }, []);
+
   const clientNameMap = {};
   const consultantNameMap = {};
   (clients || []).forEach((c) => {
@@ -500,17 +760,8 @@ const ConsultationLogViewPage = () => {
     if (!Number.isNaN(id)) consultantNameMap[id] = name;
   });
 
-  let filteredRecords = records;
-  if (startDate || endDate) {
-    filteredRecords = records.filter((r) => {
-      const sd = r.sessionDate ?? r.consultationDate;
-      const d = toDateStr(sd);
-      if (!d) return false;
-      if (startDate && d < startDate) return false;
-      if (endDate && d > endDate) return false;
-      return true;
-    });
-  }
+  const filteredRecords = records;
+  const unknownName = t('people.unknownName');
 
   const handleOpenModal = (recordId) => {
     if (!canOpenConsultationLog) {
@@ -521,10 +772,27 @@ const ConsultationLogViewPage = () => {
     setModalOpen(true);
   };
 
-  /**
-   * Deep link `?scheduleId=` 매칭 시 ConsultationLogModal 1회 자동 오픈.
-   * (스케줄 상세 → navigate fallback / 북마크 UX)
-   */
+  const handleOpenRow = (recordId) => {
+    if (!canOpenConsultationLog) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
+    setSelectedLogId((current) => (current === recordId ? null : recordId));
+  };
+
+  const handleCloseDetail = useCallback(() => {
+    setSelectedLogId(null);
+  }, []);
+
+  const handleEditDetail = () => {
+    if (!canOpenConsultationLog || selectedLogId == null) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
+    setModalRecordId(selectedLogId);
+    setModalOpen(true);
+  };
+
   useEffect(() => {
     if (deepLinkAutoOpenedRef.current || loading || !canOpenConsultationLog) {
       return;
@@ -538,8 +806,42 @@ const ConsultationLogViewPage = () => {
       return;
     }
     deepLinkAutoOpenedRef.current = true;
-    handleOpenModal(recordId);
-  }, [loading, records, initialQueryFilter.scheduleId, canOpenConsultationLog]);
+    if (isConsultantSurface) {
+      handleOpenModal(recordId);
+      return;
+    }
+    setSelectedLogId(recordId);
+  }, [loading, records, initialQueryFilter.scheduleId, canOpenConsultationLog, isConsultantSurface]);
+
+  useEffect(() => {
+    if (isConsultantSurface || selectedLogId == null || !canOpenConsultationLog || !user?.id) {
+      setDetailRecord(null);
+      setDetailLoading(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setDetailLoading(true);
+    const endpoint = isAdmin
+      ? `${API_ADMIN_CONSULTATION_RECORDS}/${selectedLogId}`
+      : `${consultantRecordsEndpoint(user.id)}/${selectedLogId}`;
+    StandardizedApi.get(endpoint)
+      .then((response) => {
+        if (cancelled) return;
+        const payload = response?.success === true && response.data && typeof response.data === 'object'
+          ? response.data
+          : response;
+        setDetailRecord(payload && typeof payload === 'object' ? payload : null);
+      })
+      .catch(() => {
+        if (!cancelled) setDetailRecord(null);
+      })
+      .finally(() => {
+        if (!cancelled) setDetailLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isConsultantSurface, selectedLogId, canOpenConsultationLog, isAdmin, user?.id]);
 
   const handleModalClose = () => {
     setModalOpen(false);
@@ -547,33 +849,36 @@ const ConsultationLogViewPage = () => {
   };
 
   const handleModalSave = () => {
-    loadRecords();
+    setQueryVersion((value) => value + 1);
+    if (isConsultantSurface) {
+      loadConsultantRecords();
+    }
     setModalOpen(false);
     setModalRecordId(null);
   };
 
   const applySavedViewPayload = useCallback((payload) => {
+    setPage(1);
     if (payload?.viewMode) {
-      setViewMode(payload.viewMode);
+      setViewMode(isConsultantSurface ? payload.viewMode : toAdminViewMode(payload.viewMode));
     }
-    const storedFilters = payload?.filters ?? {};
-    if (Object.prototype.hasOwnProperty.call(storedFilters, 'consultantId')) {
-      setConsultantId(storedFilters.consultantId);
-    }
-    if (Object.prototype.hasOwnProperty.call(storedFilters, 'clientId')) {
-      setClientId(storedFilters.clientId);
-    }
-    if (Object.prototype.hasOwnProperty.call(storedFilters, 'startDate')) {
-      setStartDate(storedFilters.startDate);
-    }
-    if (Object.prototype.hasOwnProperty.call(storedFilters, 'endDate')) {
-      setEndDate(storedFilters.endDate);
+    const next = readStoredFilters(payload?.filters, emptyFilters(defaultDateRange, {}));
+    applyFormFilters(next);
+    if (!isConsultantSurface) {
+      setQueryVersion((value) => value + 1);
+      setSelectedLogId(null);
     }
     savedViewMetaRef.current = {
       sort: payload?.sort ?? consultationLogDefaultSavedView.sort,
       density: payload?.density ?? consultationLogDefaultSavedView.density
     };
-  }, [consultationLogDefaultSavedView]);
+  }, [
+    consultationLogDefaultSavedView,
+    isConsultantSurface,
+    toAdminViewMode,
+    defaultDateRange,
+    applyFormFilters
+  ]);
 
   const handleSelectSavedView = useCallback((viewId) => {
     const payload = loadNamedView(viewId);
@@ -587,12 +892,12 @@ const ConsultationLogViewPage = () => {
 
   const handleSaveNamedView = useCallback((label) => {
     saveNamedView(label, {
-      viewMode,
-      filters: { consultantId, clientId, startDate, endDate },
+      viewMode: isConsultantSurface ? viewMode : toAdminViewMode(viewMode),
+      filters: currentFormFilters(false),
       sort: savedViewMetaRef.current.sort,
       density: savedViewMetaRef.current.density
     });
-  }, [saveNamedView, viewMode, consultantId, clientId, startDate, endDate]);
+  }, [saveNamedView, viewMode, currentFormFilters, isConsultantSurface, toAdminViewMode]);
 
   const handleDeleteSavedView = useCallback((viewId) => {
     const fallbackPayload = deleteNamedView(viewId);
@@ -612,28 +917,25 @@ const ConsultationLogViewPage = () => {
     };
     if (!hasDeepLinkQuery) {
       if (savedView?.viewMode) {
-        setViewMode(savedView.viewMode);
+        setViewMode(isConsultantSurface ? savedView.viewMode : toAdminViewMode(savedView.viewMode));
       }
       const storedFilters = savedView?.filters;
       if (storedFilters && Object.keys(storedFilters).length > 0) {
-        if (Object.prototype.hasOwnProperty.call(storedFilters, 'consultantId')) {
-          setConsultantId(storedFilters.consultantId);
-        }
-        if (Object.prototype.hasOwnProperty.call(storedFilters, 'clientId')) {
-          setClientId(storedFilters.clientId);
-        }
-        if (Object.prototype.hasOwnProperty.call(storedFilters, 'startDate')) {
-          setStartDate(storedFilters.startDate);
-        }
-        if (Object.prototype.hasOwnProperty.call(storedFilters, 'endDate')) {
-          setEndDate(storedFilters.endDate);
-        }
+        const next = readStoredFilters(storedFilters, initialFilters);
+        applyFormFilters(next);
       }
     }
-    // deep link 세션은 auto-persist로 일반 진입을 오염시키지 않음
     savedViewPersistReadyRef.current = !hasDeepLinkQuery;
     setFiltersHydrated(true);
-  }, [savedView, hasDeepLinkQuery, consultationLogDefaultSavedView]);
+  }, [
+    savedView,
+    hasDeepLinkQuery,
+    consultationLogDefaultSavedView,
+    isConsultantSurface,
+    toAdminViewMode,
+    initialFilters,
+    applyFormFilters
+  ]);
 
   useEffect(() => {
     if (!savedViewPersistReadyRef.current || hasDeepLinkQuery) {
@@ -647,8 +949,15 @@ const ConsultationLogViewPage = () => {
     savedViewPersistTimerRef.current = setTimeout(() => {
       savedViewPersistTimerRef.current = null;
       setSavedView({
-        viewMode,
-        filters: { consultantId, clientId, startDate, endDate },
+        viewMode: isConsultantSurface ? viewMode : toAdminViewMode(viewMode),
+        filters: {
+          consultantId,
+          clientId,
+          startDate,
+          endDate,
+          status,
+          keyword
+        },
         sort: savedViewMetaRef.current.sort,
         density: savedViewMetaRef.current.density
       });
@@ -660,123 +969,474 @@ const ConsultationLogViewPage = () => {
         savedViewPersistTimerRef.current = null;
       }
     };
-  }, [viewMode, consultantId, clientId, startDate, endDate, setSavedView, hasDeepLinkQuery]);
+  }, [
+    viewMode,
+    consultantId,
+    clientId,
+    startDate,
+    endDate,
+    status,
+    keyword,
+    setSavedView,
+    hasDeepLinkQuery,
+    isConsultantSurface,
+    toAdminViewMode
+  ]);
 
   const pageClassName = 'mg-v2-consultation-log-view consultation-log-view--clinic-os';
   const showListLoading = loading && records.length === 0;
+  const adminViewMode = toAdminViewMode(viewMode);
+  const selectedRecord = filteredRecords.find((record) => record.id === selectedLogId) || null;
+  const detailSource = detailRecord || selectedRecord;
 
-  return (
+  const filterSection = (
+    <ConsultationLogFilterSection
+      layout={isConsultantSurface ? 'legacy' : 'query'}
+      isAdmin={isAdmin}
+      consultantId={consultantId}
+      consultants={consultants}
+      onConsultantChange={handleConsultantFilterChange}
+      clientId={clientId}
+      clients={clients}
+      onClientChange={handleClientFilterChange}
+      startDate={startDate}
+      endDate={endDate}
+      onStartDateChange={handleStartDateChange}
+      onEndDateChange={handleEndDateChange}
+      status={status}
+      onStatusChange={handleStatusChange}
+      keyword={keyword}
+      onKeywordChange={handleKeywordChange}
+      onSearch={handleSearch}
+      onReset={handleResetFilters}
+      savedViews={views}
+      activeViewId={activeViewId}
+      onSelectSavedView={handleSelectSavedView}
+      onSaveCurrentView={() => setSaveViewModalOpen(true)}
+      onDeleteSavedView={handleDeleteSavedView}
+    />
+  );
+
+  const adminViewToggle = (
+    <div className="mg-v2-consultation-log-view-toggle" role="group" aria-label={t('view.label')}>
+      <MGButton
+        type="button"
+        variant="outline"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'sm',
+          loading: false,
+          className: 'mg-v2-consultation-log-view-toggle__button'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => handleViewModeChange(VIEW_MODE_LIST)}
+        aria-pressed={adminViewMode === VIEW_MODE_LIST}
+        preventDoubleClick={false}
+      >
+        {t('view.list')}
+      </MGButton>
+      <MGButton
+        type="button"
+        variant="outline"
+        size="small"
+        className={buildErpMgButtonClassName({
+          variant: 'outline',
+          size: 'sm',
+          loading: false,
+          className: 'mg-v2-consultation-log-view-toggle__button'
+        })}
+        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+        onClick={() => handleViewModeChange(VIEW_MODE_CALENDAR)}
+        aria-pressed={adminViewMode === VIEW_MODE_CALENDAR}
+        preventDoubleClick={false}
+      >
+        {t('view.calendar')}
+      </MGButton>
+    </div>
+  );
+
+  const consultantViewChips = (
+    <ConsultantFilterChips
+      items={VIEW_MODES.map((mode) => ({ key: mode, label: tSuite(`logs.view.${mode}`) }))}
+      activeKey={viewMode}
+      onChange={handleViewModeChange}
+      ariaLabel={tSuite('logs.viewToggleAria')}
+      testIdPrefix="consultant-logs-view"
+    />
+  );
+
+  const renderConsultantPager = (totalPages) => {
+    if (!(totalElements > CONSULTANT_SUITE_PAGE_SIZE || totalPages > 1)) {
+      return null;
+    }
+    return (
+      <nav className={CONSULTANT_SUITE_CLASS.PAGINATION} aria-label={tSuite('records.listAria')}>
+        <MGPagination
+          currentPage={clampUiPage(page, totalPages)}
+          totalPages={totalPages}
+          totalItems={totalElements}
+          itemsPerPage={CONSULTANT_SUITE_PAGE_SIZE}
+          onPageChange={setPage}
+          showInfo
+          showItemsPerPage={false}
+          variant="compact"
+        />
+      </nav>
+    );
+  };
+
+  const renderListView = () => {
+    const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
+    return (
+      <>
+        {filteredRecords.length === 0 ? (
+          <section className={CONSULTANT_SUITE_CLASS.PANEL}>
+            <EmptyState
+              className={CONSULTANT_SUITE_CLASS.EMPTY}
+              icon={<FileText size={CONSULTANT_EMPTY_ICON_SIZE} aria-hidden />}
+              title={tSuite('logs.emptyTitle')}
+              description={tSuite('logs.emptyDescription')}
+            />
+          </section>
+        ) : (
+          <section className={CONSULTANT_SUITE_CLASS.CARD_GRID} aria-label={tSuite('records.listAria')}>
+            {filteredRecords.map((record) => (
+              <ConsultantRecordCard
+                key={record.id}
+                record={{
+                  ...record,
+                  clientName: record.clientName
+                    ?? (record.clientId != null ? clientNameMap[Number(record.clientId)] : undefined)
+                }}
+                onOpen={handleOpenModal}
+              />
+            ))}
+          </section>
+        )}
+        {renderConsultantPager(totalPages)}
+      </>
+    );
+  };
+
+  const renderConsultantTableWithPager = () => {
+    const totalPages = Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE));
+    return (
+      <>
+        <ConsultationLogTableBlock
+          records={filteredRecords}
+          clientNameMap={clientNameMap}
+          consultantNameMap={consultantNameMap}
+          onOpenRow={handleOpenModal}
+        />
+        {renderConsultantPager(totalPages)}
+      </>
+    );
+  };
+
+  const consultantResults = showListLoading ? (
+    <ConsultationLogResultsState
+      phase="loading"
+      loadingTitle={t('states.loadingTitle')}
+      loadingDesc={t('states.loadingDesc')}
+      emptyTitle={t('states.emptyTitle')}
+      emptyDesc={t('states.emptyDesc')}
+      emptyActionLabel={t('states.emptyAction')}
+      errorTitle={t('states.errorTitle')}
+      errorDesc={t('states.errorDesc')}
+      errorActionLabel={t('states.errorAction')}
+    />
+  ) : (
     <>
-      <ContentArea ariaLabel={CONTENT_AREA_ARIA_LABEL} className={pageClassName}>
-        <ContentHeader
+      {viewMode === VIEW_MODE_CALENDAR && (
+        <ConsultationLogCalendarBlock
+          records={filteredRecords}
+          clientNameMap={clientNameMap}
+          consultantNameMap={consultantNameMap}
+          onOpenModal={handleOpenModal}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      )}
+      {viewMode === VIEW_MODE_LIST && renderListView()}
+      {viewMode === VIEW_MODE_TABLE && renderConsultantTableWithPager()}
+    </>
+  );
+
+  const adminPhase = loading
+    ? 'loading'
+    : loadError
+      ? 'error'
+      : adminViewMode === VIEW_MODE_LIST && totalElements === 0
+        ? 'empty'
+        : null;
+
+  const adminListPageSize = consultationLogListPageSize(
+    appliedFilters.clientId,
+    appliedFilters.consultantId
+  );
+  const adminTotalPages = Math.max(
+    1,
+    Math.ceil((totalElements || 0) / adminListPageSize)
+  );
+
+  const detailLabels = {
+    title: t('detail.title'),
+    close: t('detail.close'),
+    back: t('detail.back'),
+    date: t('detail.date'),
+    session: t('detail.session'),
+    client: t('detail.client'),
+    consultant: t('detail.consultant'),
+    status: t('detail.status'),
+    writtenAt: t('detail.writtenAt'),
+    summary: t('detail.summary'),
+    content: t('detail.content'),
+    edit: t('detail.edit'),
+    done: t('status.done'),
+    pending: t('status.pending'),
+    loading: t('states.loadingTitle')
+  };
+
+  const sessionCount = visibleSessionNumber(detailSource?.sessionNumber);
+  const detailClientName = resolvePersonName(
+    detailSource?.clientName,
+    detailSource?.clientId,
+    clientNameMap,
+    unknownName
+  );
+  const detailConsultantName = resolvePersonName(
+    detailSource?.consultantName,
+    detailSource?.consultantId,
+    consultantNameMap,
+    unknownName
+  );
+
+  const timelinePreceding = timelineBoundary && (
+    timelineBoundary.precedingConsultantId != null || timelineBoundary.precedingClientId != null
+  ) ? {
+      consultantId: timelineBoundary.precedingConsultantId ?? null,
+      consultantName: timelineBoundary.precedingConsultantName || '',
+      consultantNameMissing: timelineBoundary.precedingConsultantId != null
+        && !String(timelineBoundary.precedingConsultantName || '').trim(),
+      clientId: timelineBoundary.precedingClientId ?? null
+    } : null;
+
+  const adminResults = (
+    <div
+      className={`mg-v2-consultation-log-results${
+        selectedLogId != null && canOpenConsultationLog ? ' mg-v2-consultation-log-results--with-panel' : ''
+      }`}
+    >
+      <div className="mg-v2-consultation-log-results__main">
+        {adminPhase ? (
+          <ConsultationLogResultsState
+            phase={adminPhase}
+            loadingTitle={t('states.loadingTitle')}
+            loadingDesc={t('states.loadingDesc')}
+            emptyTitle={t('states.emptyTitle')}
+            emptyDesc={t('states.emptyDesc')}
+            emptyActionLabel={t('states.emptyAction')}
+            errorTitle={t('states.errorTitle')}
+            errorDesc={t('states.errorDesc')}
+            errorActionLabel={t('states.errorAction')}
+            onReset={handleResetFilters}
+            onRetry={() => setQueryVersion((value) => value + 1)}
+          />
+        ) : null}
+        {!adminPhase && adminViewMode === VIEW_MODE_LIST ? (
+          <>
+            {consultationLogGroupModeFromFilters(appliedFilters.clientId, appliedFilters.consultantId)
+              === CONSULTATION_LOG_GROUP_MODE.NONE ? (
+                <ConsultationLogTableBlock
+                  records={filteredRecords}
+                  clientNameMap={clientNameMap}
+                  consultantNameMap={consultantNameMap}
+                  selectedLogId={selectedLogId}
+                  onOpenRow={handleOpenRow}
+                  grouping={{
+                    clientId: appliedFilters.clientId,
+                    consultantId: appliedFilters.consultantId,
+                    periodFrom: appliedFilters.startDate,
+                    periodTo: appliedFilters.endDate,
+                    summary: groupSummary
+                  }}
+                />
+              ) : (
+                <ConsultationLogTimelineBlock
+                  records={filteredRecords}
+                  clientNameMap={clientNameMap}
+                  consultantNameMap={consultantNameMap}
+                  selectedLogId={selectedLogId}
+                  onOpenRow={handleOpenRow}
+                  sort={timelineSort}
+                  onSortChange={handleTimelineSortChange}
+                  preceding={timelinePreceding}
+                  detailPanelId={DETAIL_PANEL_ID}
+                  grouping={{
+                    clientId: appliedFilters.clientId,
+                    consultantId: appliedFilters.consultantId,
+                    periodFrom: appliedFilters.startDate,
+                    periodTo: appliedFilters.endDate,
+                    summary: groupSummary
+                  }}
+                />
+              )}
+            <nav className="mg-v2-consultation-log-pagination" aria-label={t('pagination.label')}>
+              <MGPagination
+                currentPage={clampUiPage(page, adminTotalPages)}
+                totalPages={adminTotalPages}
+                totalItems={totalElements}
+                itemsPerPage={adminListPageSize}
+                onPageChange={setPage}
+                showInfo
+                showItemsPerPage={false}
+                variant="compact"
+                summaryLabel={t('table.summaryTotal', { n: totalElements })}
+                prevLabel={t('pagination.prev')}
+                nextLabel={t('pagination.next')}
+                activePageTone="neutral"
+                pageAriaLabel={(pageNumber, isCurrent) => (
+                  isCurrent
+                    ? t('pagination.current', { n: pageNumber })
+                    : t('pagination.page', { n: pageNumber })
+                )}
+              />
+            </nav>
+          </>
+        ) : null}
+        {!adminPhase && adminViewMode === VIEW_MODE_CALENDAR ? (
+          <>
+            {calendarTruncated ? (
+              <p className="mg-v2-consultation-log-calendar-note" role="status">
+                {t('calendar.truncated')}
+              </p>
+            ) : null}
+            <ConsultationLogCalendarBlock
+              records={filteredRecords}
+              clientNameMap={clientNameMap}
+              consultantNameMap={consultantNameMap}
+              onOpenModal={handleOpenRow}
+              startDate={appliedFilters.startDate}
+              endDate={appliedFilters.endDate}
+              onVisibleRangeChange={handleCalendarRange}
+            />
+          </>
+        ) : null}
+      </div>
+      {selectedLogId != null && canOpenConsultationLog ? (
+        <ConsultationLogDetailPanel
+          titleId={DETAIL_TITLE_ID}
+          labels={detailLabels}
+          dateText={formatDisplayDate(detailSource?.sessionDate ?? detailSource?.consultationDate)}
+          sessionText={sessionCount == null ? '' : t('table.sessionN', { n: sessionCount })}
+          clientName={detailClientName}
+          consultantName={detailConsultantName}
+          done={detailSource?.isSessionCompleted === true}
+          writtenAt={formatDisplayDate(detailSource?.createdAt || detailSource?.updatedAt)}
+          summary={resolveSummaryText(detailSource)}
+          content={resolveContentText(detailRecord)}
+          loading={detailLoading}
+          onClose={handleCloseDetail}
+          onEdit={handleEditDetail}
+          returnFocusId={`consultation-log-row-${selectedLogId}`}
+          panelId={DETAIL_PANEL_ID}
+        />
+      ) : null}
+    </div>
+  );
+
+  const logModal = (
+    <ConsultationLogModal
+      isOpen={modalOpen && canOpenConsultationLog}
+      onClose={handleModalClose}
+      onSave={handleModalSave}
+      recordId={modalRecordId}
+      isAdmin={isAdmin}
+      editOnly={!isConsultantSurface}
+    />
+  );
+
+  if (isConsultantSurface) {
+    const consultantHeaderActions = (
+      <>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={handleResetSavedView}
+        >
+          {tSuite('logs.resetView')}
+        </ConsultantSuiteButton>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={() => setSaveViewModalOpen(true)}
+        >
+          {tSuite('logs.saveView')}
+        </ConsultantSuiteButton>
+        <ConsultantSuiteButton
+          variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
+          onClick={loadRecords}
+        >
+          {tSuite('logs.search')}
+        </ConsultantSuiteButton>
+      </>
+    );
+    return (
+      <>
+        <ConsultantSuitePage
           title={PAGE_TITLE}
           subtitle={PAGE_SUBTITLE}
           titleId="consultation-log-view-page-title"
-        />
-
-        <section
-          className="mg-v2-session-saved-view-row"
-          aria-label={CONSULTATION_LOG_VIEW_SAVED_VIEW_ROW_ARIA_LABEL}
+          ariaLabel={t('page.regionLabel')}
+          className={`${pageClassName} consultant-logs`}
+          testId={CONSULTANT_SUITE_TEST_ID.LOGS_PAGE}
+          actions={consultantHeaderActions}
         >
-          <SavedViewControls
-            views={views}
-            activeViewId={activeViewId}
-            onSelectView={handleSelectSavedView}
-            onSaveView={handleSaveNamedView}
-            onResetToDefault={handleResetSavedView}
-            onDeleteView={handleDeleteSavedView}
+          {consultantViewChips}
+          {filterSection}
+          {consultantResults}
+        </ConsultantSuitePage>
+        {saveViewModalOpen ? (
+          <SaveViewModal
+            isOpen={saveViewModalOpen}
+            onClose={() => setSaveViewModalOpen(false)}
+            onSave={handleSaveNamedView}
           />
-        </section>
+        ) : null}
+        {logModal}
+      </>
+    );
+  }
 
-        <ConsultationLogFilterSection
-          isAdmin={isAdmin}
-          consultantId={consultantId}
-          consultants={consultants}
-          onConsultantChange={setConsultantId}
-          clientId={clientId}
-          clients={clients}
-          onClientChange={setClientId}
-          startDate={startDate}
-          endDate={endDate}
-          onStartDateChange={setStartDate}
-          onEndDateChange={setEndDate}
+  return (
+    <>
+      <ContentArea ariaLabel={t('page.regionLabel')} className={pageClassName}>
+        <ContentHeader
+          title={t('page.title')}
+          subtitle=""
+          titleId="consultation-log-view-page-title"
+          actions={adminViewToggle}
         />
-
-        <nav className="mg-v2-consultation-log-view-tabs" aria-label="뷰 전환">
-          {[VIEW_MODE_CALENDAR, VIEW_MODE_LIST, VIEW_MODE_TABLE].map((mode) => {
-            const isActive = viewMode === mode;
-            const tabVariant = isActive ? 'primary' : 'outline';
-            return (
-              <MGButton
-                key={mode}
-                type="button"
-                variant={tabVariant}
-                size="small"
-                className={buildErpMgButtonClassName({
-                  variant: tabVariant === 'primary' ? 'primary' : 'outline',
-                  size: 'sm',
-                  loading: false,
-                  className: `mg-v2-consultation-log-view-tabs__tab ${isActive ? 'mg-v2-consultation-log-view-tabs__tab--active' : ''}`
-                })}
-                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-                onClick={() => setViewMode(mode)}
-                aria-pressed={isActive}
-                aria-current={isActive ? 'true' : undefined}
-                preventDoubleClick={false}
-              >
-                {TAB_LABELS[mode]}
-              </MGButton>
-            );
-          })}
-        </nav>
-
-        {showListLoading ? (
-          <div aria-busy="true" aria-live="polite">
-            <UnifiedLoading type="inline" text="데이터를 불러오는 중..." variant="pulse" />
-          </div>
-        ) : (
-          <>
-            {viewMode === VIEW_MODE_CALENDAR && (
-              <ConsultationLogCalendarBlock
-                records={filteredRecords}
-                clientNameMap={clientNameMap}
-                consultantNameMap={consultantNameMap}
-                onOpenModal={handleOpenModal}
-                startDate={startDate}
-                endDate={endDate}
-              />
-            )}
-            {viewMode === VIEW_MODE_LIST && (
-              <ConsultationLogListBlock
-                records={filteredRecords}
-                clientNameMap={clientNameMap}
-                consultantNameMap={consultantNameMap}
-                onCardClick={handleOpenModal}
-                showAdminWriteBadge={isAdmin}
-              />
-            )}
-            {viewMode === VIEW_MODE_TABLE && (
-              <ConsultationLogTableBlock
-                records={filteredRecords}
-                clientNameMap={clientNameMap}
-                consultantNameMap={consultantNameMap}
-                onRowClick={handleOpenModal}
-                showAdminWriteBadge={isAdmin}
-              />
-            )}
-          </>
-        )}
+        {filterSection}
+        {adminResults}
       </ContentArea>
-
-      <ConsultationLogModal
-        isOpen={modalOpen && canOpenConsultationLog}
-        onClose={handleModalClose}
-        onSave={handleModalSave}
-        recordId={modalRecordId}
-        isAdmin={isAdmin}
-      />
+      {saveViewModalOpen ? (
+        <SaveViewModal
+          isOpen={saveViewModalOpen}
+          onClose={() => setSaveViewModalOpen(false)}
+          onSave={handleSaveNamedView}
+        />
+      ) : null}
+      {logModal}
     </>
   );
+};
+
+ConsultationLogViewPage.propTypes = {
+  surface: PropTypes.oneOf(Object.values(CONSULTATION_LOG_VIEW_SURFACE))
+};
+
+ConsultationLogViewPage.defaultProps = {
+  surface: CONSULTATION_LOG_VIEW_SURFACE.ADMIN
 };
 
 export default ConsultationLogViewPage;

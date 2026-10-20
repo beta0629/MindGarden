@@ -95,7 +95,19 @@ public enum AuditAction {
 
     /** 어드민 온라인 주문 soft-delete (허용 상태만). */
     SHOP_ORDER_SOFT_DELETE(
-            "SHOP_ORDER_SOFT_DELETE", "enums.AuditAction.SHOP_ORDER_SOFT_DELETE");
+            "SHOP_ORDER_SOFT_DELETE", "enums.AuditAction.SHOP_ORDER_SOFT_DELETE"),
+
+    /**
+     * 관리자 매칭 상태-only 종료 — TERMINATED 전이만 (환불·회기·결제·ERP 변경 없음).
+     */
+    MAPPING_STATUS_CLOSE(
+            "MAPPING_STATUS_CLOSE", "enums.AuditAction.MAPPING_STATUS_CLOSE"),
+
+    /**
+     * 임시 비밀번호 SMS 발송 결과. metadata 에 본문·비밀번호를 넣지 않는다.
+     */
+    TEMP_PASSWORD_SMS(
+            "TEMP_PASSWORD_SMS", "enums.AuditAction.TEMP_PASSWORD_SMS");
 
     private final String code;
     private final String messageKey;

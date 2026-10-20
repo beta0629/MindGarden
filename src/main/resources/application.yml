@@ -221,6 +221,11 @@ mindgarden:
       easypay:
         host-test: ${KICC_EASYPAY_HOST_TEST:testpgapi.easypay.co.kr}
         host-prod: ${KICC_EASYPAY_HOST_PROD:pgapi.easypay.co.kr}
+    # 포트원 V2 웹훅 서명. 시크릿은 테넌트 settings_json. 여기에는 허용 오차만 둔다.
+    portone:
+      webhook:
+        # Standard Webhooks 5분. 코드 기본값 PortOneWebhookSignatureVerifier.DEFAULT_TOLERANCE_SECONDS 와 같다.
+        tolerance-seconds: ${PORTONE_WEBHOOK_TOLERANCE_SECONDS:300}
   # 매핑 회기 차감 누락 보정 배치 (P1 #93 안전망)
   # 즉시 비활성화: MINDGARDEN_BATCH_SESSION_RECOVERY_ENABLED=false
   batch:
@@ -254,6 +259,11 @@ mindgarden:
     account-integration:
       email-verification-cooldown-seconds: 60
       email-verification-daily-limit: 10
+      verify-max-attempts-per-email: 5
+      verify-lock-minutes: 10
+      verify-max-failures-per-ip: 20
+      send-max-requests-per-ip: 10
+      ip-window-minutes: 10
     rate-limit:
       integration-path-prefix: /api/v1/accounts/integration/
       integration-requests-per-minute: 20
@@ -471,6 +481,16 @@ shop:
   # 어드민 전액 환불 PG 취소 임대 시간 — PortOne 조회·취소·증거 확인 호출 시간 합보다 길게 둔다
   admin-refund:
     pg-lease-ms: ${SHOP_ADMIN_REFUND_PG_LEASE_MS:120000}
+  # PortOne 검증 UNKNOWN/READY(IN_PROGRESS) 재시도 상한 — 소진 시 자동 취소 없이 관리자 알림
+  portone:
+    verify-unknown-max-attempts: ${SHOP_PORTONE_VERIFY_UNKNOWN_MAX_ATTEMPTS:10}
+    # 0 이면 연령 한도 비활성. 양수면 first_seen 이후 경과(ms)로도 소진 판정
+    verify-unknown-max-age-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_MAX_AGE_MS:0}
+    # 소진 후 장주기 PortOne 폴링 간격(ms). PAID+MATCH 이면 정상 이행, 자동 EXPIRED 없음
+    verify-unknown-exhausted-poll-interval-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_EXHAUSTED_POLL_INTERVAL_MS:3600000}
+    # 추적 컬럼 저장 낙관적 락 충돌 재시도
+    verify-unknown-lock-max-retries: ${SHOP_PORTONE_VERIFY_UNKNOWN_LOCK_MAX_RETRIES:3}
+    verify-unknown-lock-retry-delay-ms: ${SHOP_PORTONE_VERIFY_UNKNOWN_LOCK_RETRY_DELAY_MS:20}
 
 # 서버 설정
 server:
@@ -970,6 +990,18 @@ security:
     require-lowercase: ${PASSWORD_REQUIRE_LOWERCASE:true}  # 소문자 필수
     require-digit: ${PASSWORD_REQUIRE_DIGIT:true}  # 숫자 필수
     require-special: ${PASSWORD_REQUIRE_SPECIAL:true}  # 특수문자 필수
+
+  # 임시 비밀번호 생성 (TemporaryPasswordGenerator). 문구·길이·문자군은 이 설정이 SSOT.
+  temp-password:
+    length: ${TEMP_PASSWORD_LENGTH:16}
+    max-attempts: ${TEMP_PASSWORD_MAX_ATTEMPTS:128}
+    lowercase: "${TEMP_PASSWORD_LOWERCASE:abcdefghijklmnopqrstuvwxyz}"
+    uppercase: "${TEMP_PASSWORD_UPPERCASE:ABCDEFGHIJKLMNOPQRSTUVWXYZ}"
+    digits: "${TEMP_PASSWORD_DIGITS:0123456789}"
+    specials: "${TEMP_PASSWORD_SPECIALS:@$!%*?&}"
+    sms-template-key: ${TEMP_PASSWORD_SMS_TEMPLATE_KEY:CLIENT_TEMP_PASSWORD_SMS}
+    sms-template: "${TEMP_PASSWORD_SMS_TEMPLATE:[{centerName}] 로그인 아이디 {loginId} 임시 비밀번호 {tempPassword} 로그인 {loginUrl}}"
+    login-url: "${TEMP_PASSWORD_LOGIN_URL:}"
 
   # 보안 감사 로그
   audit:

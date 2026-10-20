@@ -7,12 +7,12 @@
  */
 import PropTypes from 'prop-types';
 import { Calendar, RefreshCw } from 'lucide-react';
-import { toDisplayString } from '../../../utils/safeDisplay';
 import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
 import { useTranslation } from 'react-i18next';
 import ClientFilterMultiSelect from '../../admin/mapping-management/integrated-schedule/molecules/ClientFilterMultiSelect';
+import ConsultantFilterSelect from '../../admin/mapping-management/integrated-schedule/molecules/ConsultantFilterSelect';
 
 const ScheduleHeader = ({
   userRole,
@@ -64,23 +64,16 @@ const ScheduleHeader = ({
       )}
       <div className="mg-v2-schedule-header__actions">
         {isAdminRole && (
-          <select
+          <ConsultantFilterSelect
+            className="mg-v2-schedule-header__select mg-v2-schedule-header__consultant-select"
+            consultants={consultants}
             value={selectedConsultantId}
             onChange={onConsultantChange}
-            className="mg-v2-schedule-header__select"
-            aria-label="상담사 필터"
-          >
-            <option value="">전체 상담사</option>
-            {loadingConsultants ? (
-              <option disabled>상담사 목록을 불러오는 중...</option>
-            ) : (
-              consultants.map(consultant => (
-                <option key={consultant.id} value={consultant.id}>
-                  {toDisplayString(consultant.name, '—')}
-                </option>
-              ))
-            )}
-          </select>
+            loading={loadingConsultants}
+            allLabel="전체 상담사"
+            loadingLabel="상담사 목록을 불러오는 중..."
+            ariaLabel="상담사 필터"
+          />
         )}
         {showClientFilter && isAdminLikeRole && (
           <ClientFilterMultiSelect

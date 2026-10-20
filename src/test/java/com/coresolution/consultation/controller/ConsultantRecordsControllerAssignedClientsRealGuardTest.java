@@ -59,7 +59,7 @@ class ConsultantRecordsControllerAssignedClientsRealGuardTest {
         session = mock(HttpSession.class);
         ClientPathAccessGuard guard = new ClientPathAccessGuard(mappingRepository, userRepository);
         controller = new ConsultantRecordsController(
-            null, null, null, null, null, null, null, guard, mappingRepository);
+            null, null, null, null, null, null, guard, mappingRepository);
         TenantContextHolder.clear();
     }
 

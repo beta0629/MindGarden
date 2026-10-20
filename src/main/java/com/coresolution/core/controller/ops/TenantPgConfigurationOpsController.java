@@ -62,6 +62,36 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
     private final OpsTenantConstants opsTenantConstants;
 
     /**
+     * PG 설정 목록 조회 (승인 대기뿐 아니라 ACTIVE/APPROVED 등 비삭제 전체).
+     *
+     * <p>웹훅 시크릿·테스트 모드 운영 화면에서 PENDING 이 아닌 ACTIVE+APPROVED(testMode)
+     * 설정을 선택하기 위해 사용한다.</p>
+     *
+     * @param tenantId 센터 ID (선택 — 없으면 전체 비삭제)
+     * @return PG 설정 목록
+     */
+    @Operation(
+            summary = "PG 설정 목록 조회",
+            description = "운영 포털용 비삭제 PG 설정 목록. tenantId 가 있으면 해당 센터만, 없으면 전체."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)")
+    })
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TenantPgConfigurationResponse>>> listConfigurations(
+            @Parameter(description = "센터 ID (필터)") @RequestParam(required = false) String tenantId) {
+        requireOpsAndHq();
+        log.debug("운영 포털 PG 설정 목록 조회 요청: tenantId={}", tenantId);
+
+        List<TenantPgConfigurationResponse> configurations =
+                pgConfigurationService.listConfigurationsForOps(tenantId);
+
+        return success(configurations);
+    }
+
+    /**
      * 승인 대기 중인 PG 설정 목록 조회.
      *
      * @param tenantId 센터(테넌트) ID 필터 (선택)
@@ -298,6 +328,86 @@ public class TenantPgConfigurationOpsController extends BaseApiController {
                 decryptionService.decryptKeysForOps(configId, requestedBy);
 
         return success(response);
+    }
+
+    /**
+     * PG 웹훅 시크릿 교체 (운영 포털 alias).
+     *
+     * <p>configId 로 설정을 조회한 뒤 해당 tenantId 로 서비스에 위임한다.
+     * 평문 시크릿은 로그·응답에 남기지 않는다.</p>
+     *
+     * @param configId PG 설정 ID
+     * @param request 시크릿 요청
+     * @return 마스킹된 PG 설정 응답
+     */
+    @Operation(
+            summary = "PG 웹훅 시크릿 변경",
+            description = "운영 포털에서 포트원 웹훅 시크릿을 교체합니다. 평문은 응답에 포함되지 않습니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "시크릿 형식 오류"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PatchMapping("/{configId}/webhook-secret")
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchWebhookSecret(
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
+            @Valid @RequestBody PgConfigurationWebhookSecretPatchRequest request) {
+        requireOpsAndHq();
+
+        TenantPgConfigurationDetailResponse detail =
+                pgConfigurationService.getConfigurationDetail(null, configId);
+        if (detail == null) {
+            throw new EntityNotFoundException("PG 설정을 찾을 수 없습니다: " + configId);
+        }
+
+        int secretLength = request.getWebhookSecret() != null ? request.getWebhookSecret().trim().length() : 0;
+        log.info("PG 웹훅 시크릿 변경 (운영 포털): configId={}, tenantId={}, secretLength={}",
+                configId, detail.getTenantId(), secretLength);
+
+        TenantPgConfigurationResponse response = pgConfigurationService.patchWebhookSecret(
+                detail.getTenantId(), configId, request.getWebhookSecret());
+        return updated("PG 웹훅 시크릿이 변경되었습니다.", response);
+    }
+
+    /**
+     * PG 테스트 모드 변경 (운영 포털 alias).
+     *
+     * @param configId PG 설정 ID
+     * @param request testMode 요청
+     * @return 변경된 PG 설정
+     */
+    @Operation(
+            summary = "PG 테스트 모드 변경",
+            description = "운영 포털에서 PG 테스트 모드를 변경합니다. 실결제 OFF 시 라이브 키·웹훅 시크릿이 필요합니다."
+    )
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "라이브 키/웹훅 시크릿 미설정"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음 (OPS + HQ 필요)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "PG 설정을 찾을 수 없음")
+    })
+    @PatchMapping("/{configId}/test-mode")
+    public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchTestMode(
+            @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
+            @Valid @RequestBody PgConfigurationTestModePatchRequest request) {
+        requireOpsAndHq();
+
+        TenantPgConfigurationDetailResponse detail =
+                pgConfigurationService.getConfigurationDetail(null, configId);
+        if (detail == null) {
+            throw new EntityNotFoundException("PG 설정을 찾을 수 없습니다: " + configId);
+        }
+
+        log.info("PG 테스트 모드 변경 (운영 포털): configId={}, tenantId={}, testMode={}",
+                configId, detail.getTenantId(), request.getTestMode());
+
+        TenantPgConfigurationResponse response = pgConfigurationService.patchTestMode(
+                detail.getTenantId(), configId, request.getTestMode());
+        return updated("PG 테스트 모드가 변경되었습니다.", response);
     }
 
     /**

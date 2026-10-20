@@ -37,7 +37,8 @@ class ConsultationRecordListItemResponseTest {
         "incompletionReason", "followUpActions", "riskAssessment", "progressScore", "goalAchievement",
         "nextSessionDate", "homeworkDueDate", "followUpDueDate", "completionTime");
 
-    private static final String BODY_TEXT = "본문 유출 감지 문구";
+    private static final String BODY_TEXT =
+        "본문유출감지문구는목록응답의서술필드에그대로실리면안되고요약미리보기는첫줄여든자까지만남고나머지는목록에포함되지않아야한다추가문장으로길이를여든자보다길게만든다끝";
 
     @Test
     @DisplayName("DTO 필드 목록에 서술형 본문 필드가 없다")
@@ -75,7 +76,28 @@ class ConsultationRecordListItemResponseTest {
         for (String field : BODY_FIELDS) {
             assertThat(json).doesNotContain("\"" + field + "\"");
         }
+        assertThat(json).contains("\"summaryPreview\":\"본문유출감지문구는목록응답의서술필드에그대로실리면안되고요약미리보기는첫줄여든자까지만남고나머지는목록에포");
         // 메타는 그대로 쓸 수 있어야 한다 (목록 화면 회귀 방지).
         assertThat(json).contains("\"sessionNumber\":3").contains("\"consultantId\":22");
+    }
+
+    @Test
+    @DisplayName("내담자·상담사 표시명은 목록 메타로 실리고 본문 문구는 그대로 빠진다")
+    void serializedJson_includesPersonNamesWithoutBody() throws Exception {
+        ConsultationRecord entity = new ConsultationRecord();
+        entity.setId(2L);
+        entity.setClientId(20L);
+        entity.setConsultantId(22L);
+        entity.setSessionDate(LocalDate.of(2026, 10, 2));
+        entity.setMainIssues(BODY_TEXT);
+
+        String json = new ObjectMapper().registerModule(new JavaTimeModule())
+            .writeValueAsString(ConsultationRecordListItemResponse.fromEntity(entity, "김내담", "이상담"));
+
+        assertThat(json).contains("\"clientName\":\"김내담\"").contains("\"consultantName\":\"이상담\"");
+        assertThat(json).doesNotContain(BODY_TEXT);
+        for (String field : BODY_FIELDS) {
+            assertThat(json).doesNotContain("\"" + field + "\"");
+        }
     }
 }

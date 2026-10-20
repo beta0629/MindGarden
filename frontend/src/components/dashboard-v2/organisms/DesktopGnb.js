@@ -1,5 +1,5 @@
 /**
- * DesktopGnb - GNB 64px: 로고 | 검색 | 우측 아이콘 그룹
+ * DesktopGnb - GNB 64px: 로고 | CurrentTimeChip(가운데) | 우측 아이콘·프로필
  * RESPONSIVE_LAYOUT_SPEC: 데스크톱 헤더 64px
  *
  * @author CoreSolution
@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { NavLink } from 'react-router-dom';
+import { CurrentTimeChip } from '../atoms';
 import { GnbRight } from '../molecules';
 import { DEFAULT_GNB_LOGO_LABEL } from '../../../utils/tenantDisplayName';
 import './DesktopGnb.css';
@@ -21,8 +22,6 @@ const DesktopGnb = ({
   logoUrl,
   logoHomePath = DEFAULT_LOGO_HOME_PATH,
   logoBrandingLoading = false,
-  searchValue = '',
-  onSearchChange,
   onLogout,
   onModalAction,
   navigateQuickActionsFromLnb
@@ -74,9 +73,10 @@ const DesktopGnb = ({
         ) : null}
       </NavLink>
       <div className="mg-v2-desktop-gnb__center">
+        <CurrentTimeChip />
+      </div>
+      <div className="mg-v2-desktop-gnb__right">
         <GnbRight
-          searchValue={searchValue}
-          onSearchChange={onSearchChange}
           onLogout={onLogout}
           onModalAction={onModalAction}
           navigateQuickActionsFromLnb={navigateQuickActionsFromLnb}
@@ -91,8 +91,6 @@ DesktopGnb.propTypes = {
   logoUrl: PropTypes.string,
   logoHomePath: PropTypes.string,
   logoBrandingLoading: PropTypes.bool,
-  searchValue: PropTypes.string,
-  onSearchChange: PropTypes.func,
   onLogout: PropTypes.func,
   onModalAction: PropTypes.func,
   navigateQuickActionsFromLnb: PropTypes.array

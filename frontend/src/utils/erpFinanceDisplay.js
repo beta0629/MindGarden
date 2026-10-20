@@ -438,6 +438,30 @@ export function groupTransactionsForLedger(txs) {
   return groups;
 }
 
+const COMPLETABLE_RECORDED_EXPENSE_STATUSES = new Set(['PENDING', 'APPROVED']);
+
+/**
+ * 장부에서 완료 처리할 수 있는 기록 지출인지.
+ * 수입·환불·이미 완료된 건은 제외한다.
+ *
+ * @param {object|null|undefined} tx
+ * @returns {boolean}
+ */
+export const canCompleteRecordedExpense = (tx) => {
+  if (!tx || typeof tx !== 'object') {
+    return false;
+  }
+  const type = String(tx.transactionType || '').toUpperCase();
+  if (type !== 'EXPENSE') {
+    return false;
+  }
+  if (isLedgerRefundOrRevenueCancelRow(tx)) {
+    return false;
+  }
+  const status = String(tx.status || '').trim().toUpperCase();
+  return COMPLETABLE_RECORDED_EXPENSE_STATUSES.has(status);
+};
+
 /**
  * 환불·매출취소 행 여부 (장부 파란 구분용).
  *

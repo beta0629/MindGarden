@@ -107,16 +107,21 @@ const ConsultationCompletionStats = () => {
             setLoading(true);
             setError(null);
             
-            const url = period 
-                ? `/api/admin/statistics/consultation-completion?period=${period}`
+            const url = period
+                ? `${API_ADMIN_STATISTICS_CONSULTATION_COMPLETION}?period=${period}`
                 : API_ADMIN_STATISTICS_CONSULTATION_COMPLETION;
             
             const response = await apiGet(url);
             console.log('📊 상담 완료 통계 API 응답:', response);
-            
-            if (response && response.success) {
-                console.log('📊 통계 데이터:', response.data);
-                setStatistics(response.data || []);
+            // apiGet unwrap → { statistics: [...] } 또는 배열
+            if (response != null && response.success !== false) {
+                const list = Array.isArray(response)
+                    ? response
+                    : (Array.isArray(response.statistics)
+                        ? response.statistics
+                        : (Array.isArray(response.data) ? response.data : []));
+                console.log('📊 통계 데이터:', list);
+                setStatistics(list);
             } else {
                 console.error('❌ API 응답 실패:', response);
                 setError(t('admin:ConsultationCompletionStats.t_fce1bb26'));

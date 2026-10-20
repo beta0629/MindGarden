@@ -275,19 +275,6 @@
         "income": "수입",
         "expense": "지출"
       },
-      "categoryDisplay": {
-        "CONSULTATION": "상담료",
-        "CONSULTATION_FEE": "상담료",
-        "SALARY": "급여",
-        "RENT": "임대료",
-        "UTILITY": "관리비",
-        "MANAGEMENT_FEE": "관리비",
-        "OFFICE_SUPPLIES": "사무용품",
-        "TAX": "세금",
-        "PURCHASE": "구매",
-        "PAYMENT": "결제",
-        "OTHER": "기타"
-      },
       "errors": {
         "dataLoad": "데이터를 불러오는 중 오류가 발생했습니다.",
         "txList": "재무 거래 목록을 불러올 수 없습니다.",

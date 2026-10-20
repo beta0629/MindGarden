@@ -1,0 +1,76 @@
+# Read-only smoke: Cloudflare-proxied DEV alias host
+# No secrets required beyond public HTTPS. Does not restart services.
+name: 🔎 Verify mindgarden-dev alias
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-alias:
+    name: Curl alias health + login
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Actuator health
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/actuator/health"
+          echo "GET $URL"
+          CODE=$(curl -sS -o /tmp/mg-alias-health.json -w '%{http_code}' --max-time 30 "$URL" || true)
+          echo "HTTP $CODE"
+          head -c 500 /tmp/mg-alias-health.json || true
+          echo
+          if [ "$CODE" != "200" ]; then
+            echo "❌ expected HTTP 200 from actuator/health, got $CODE"
+            exit 1
+          fi
+          echo "✅ actuator/health 200"
+
+      - name: Login / SPA shell
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/login"
+          echo "GET $URL"
+          CODE=$(curl -sS -o /tmp/mg-alias-login.html -w '%{http_code}' --max-time 30 -L "$URL" || true)
+          echo "HTTP $CODE"
+          head -c 300 /tmp/mg-alias-login.html || true
+          echo
+          if [ "$CODE" != "200" ]; then
+            echo "❌ expected HTTP 200 from /login, got $CODE"
+            exit 1
+          fi
+          # Soft signal only — HTML may be SPA shell without tenant string
+          if grep -qi 'mindgarden\|root\|<!DOCTYPE html' /tmp/mg-alias-login.html; then
+            echo "✅ login response looks like HTML shell"
+          else
+            echo "⚠️ login body unexpected; HTTP 200 still OK"
+          fi
+
+      - name: Tenant resolution via /api/v1/tenants/current
+        run: |
+          set -euo pipefail
+          URL="https://mindgarden-dev.core-solution.co.kr/api/v1/tenants/current"
+          BODY=/tmp/mg-alias-tenants-current.json
+          echo "GET $URL"
+          CODE=$(curl -sS -o "$BODY" -w '%{http_code}' --max-time 30 \
+            -H 'Accept: application/json' "$URL" || true)
+          echo "HTTP $CODE"
+          # Truncate body for logs — no cookies/Authorization were sent
+          head -c 800 "$BODY" || true
+          echo
+
+          if grep -q 'TENANT_ID_REQUIRED' "$BODY"; then
+            echo "❌ TENANT_ID_REQUIRED — alias host not mapped to mindgarden tenant"
+            exit 1
+          fi
+
+          if grep -q 'redirectToLogin' "$BODY" \
+            || grep -q '인증이 필요합니다' "$BODY" \
+            || [ "$CODE" = "401" ] \
+            || [ "$CODE" = "403" ]; then
+            echo "✅ tenant resolved on alias (auth required / unauthenticated) — HTTP $CODE"
+            exit 0
+          fi
+
+          echo "❌ unexpected tenants/current response — neither TENANT_ID_REQUIRED nor auth-required signal"
+          exit 1

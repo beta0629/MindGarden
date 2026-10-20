@@ -317,7 +317,7 @@ export const KR_PUBLIC_HOLIDAY_LEGEND_DISCLAIMER =
 
 /** 통합 스케줄(`data-calendar-skin="integrated"`) 월간 달력: 주말 틴트·공휴일 색 우선순위 안내 */
 export const SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE =
-  '월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).';
+  '월간: 토요일 숫자는 파란색, 일요일·공휴일 숫자는 빨간색. 공휴일 이름은 숫자와 같은 줄. 다른 달 숫자는 비활성색.';
 
 /**
  * GET /api/v1/schedules/admin 등 ScheduleResponse·FullCalendar extendedProps 공통 필드명.
@@ -779,6 +779,15 @@ export const BUSINESS_HOURS_DISPLAY = {
   START: '10:00',  // 기본값, 실제로는 서버에서 로딩
   END: '21:00',    // 기본값, 실제로는 서버에서 로딩
   LUNCH: '12:00 - 13:00'  // 기본값, 실제로는 서버에서 로딩
+};
+
+/**
+ * 주·일 캘린더 시간축 기본 범위(HH:mm). 끝은 업무 종료(20시대 마지막 슬롯 포함).
+ * 범위 밖 일정이 있으면 resolveCalendarSlotTimeRange 가 그 일정이 보이도록 정시 단위로 넓힌다.
+ */
+export const CALENDAR_SLOT_TIME_RANGE = {
+  MIN: '08:00',
+  MAX: BUSINESS_HOURS.END
 };
 
 export const TIME_SLOT_INTERVAL = 30; // 30분 간격

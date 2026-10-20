@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import com.coresolution.consultation.constant.ClientRegistrationConstants;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.UserRole;
@@ -21,7 +22,10 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserLifecycleService;
+import com.coresolution.consultation.dto.CredentialSmsResult;
+import com.coresolution.consultation.service.ClientCredentialNotificationService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -32,6 +36,7 @@ import com.coresolution.core.security.PasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -69,6 +74,16 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private UserLifecycleService userLifecycleService;
+
+    @Autowired
+    private TemporaryPasswordGenerator temporaryPasswordGenerator;
+
+    /**
+     * 지연 주입. 즉시 주입하면 SecurityConfig 생성 중 RestTemplate와 순환한다.
+     */
+    @Lazy
+    @Autowired
+    private ClientCredentialNotificationService clientCredentialNotificationService;
 
     // ==================== BaseService 구현 ====================
     
@@ -539,6 +554,17 @@ public class UserServiceImpl implements UserService {
         return existsPhoneDuplicateInternal(normalizedDigits, tenantIdOrNull, excludeUserIdOrNull, false);
     }
 
+    @Override
+    public void rejectIfPhoneAlreadyRegistered(String rawPhone, String tenantId, Long excludeUserIdOrNull) {
+        if (!StringUtils.hasText(rawPhone)) {
+            return;
+        }
+        String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(rawPhone);
+        if (existsPhoneDuplicate(normalized, tenantId, excludeUserIdOrNull)) {
+            throw new IllegalArgumentException(ClientRegistrationConstants.MSG_PHONE_ALREADY_REGISTERED);
+        }
+    }
+
     /**
      * 휴대폰 중복 단일 구현. 테넌트 스코프 시 {@code includeDeleted}에 따라 활성만 또는 삭제 포함 전체를 스캔한다.
      */
@@ -991,27 +1017,70 @@ public class UserServiceImpl implements UserService {
         log.info("비밀번호 변경 완료: email={}, userId={}",
             EmailLogMasking.maskForLog(user.getEmail()), userId);
     }
+
+    @Override
+    public CredentialSmsResult resetPasswordByAdmin(Long userId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        java.util.Optional<User> scoped = userRepository.findByTenantIdAndId(tenantId, userId);
+        if (scoped.isEmpty()) {
+            userRepository.findById(userId)
+                .filter(other -> other.getTenantId() != null && !other.getTenantId().equals(tenantId))
+                .ifPresent(other -> {
+                    throw new org.springframework.security.access.AccessDeniedException("TENANT_MISMATCH");
+                });
+            throw new RuntimeException("활성 사용자를 찾을 수 없습니다: " + userId);
+        }
+        User user = decryptUserPersonalData(scoped.get());
+        String tempPassword = generateTempPassword();
+        int updated = userRepository.updatePasswordRequiringCredentialChange(
+            user.getId(), tenantId, passwordService.encodeSecret(tempPassword), LocalDateTime.now());
+        if (updated != 1) {
+            throw new RuntimeException("비밀번호 초기화 대상을 갱신하지 못했습니다: " + userId);
+        }
+        CredentialSmsResult result = new CredentialSmsResult();
+        if (clientCredentialNotificationService == null) {
+            result.setSmsSent(false);
+            result.setSkipReason(ClientCredentialNotificationService.REASON_SEND_FAILED);
+            return result;
+        }
+        clientCredentialNotificationService.deliverAfterCommit(sent -> {
+            result.setSmsSent(sent.isSmsSent());
+            result.setSkipReason(sent.getSkipReason());
+        }, user.getPhone(), user.getUserId(), tempPassword, tenantId, user.getId());
+        return result;
+    }
     
+    /**
+     * 이메일로 임시 비밀번호를 발급하고 문자로만 안내한다.
+     * 임시 비밀번호 평문은 이메일·로그·응답에 넣지 않는다.
+     *
+     * @param email 사용자 이메일
+     * @throws RuntimeException 사용자를 찾지 못하거나 비밀번호를 갱신하지 못한 경우
+     */
     @Override
     public void resetPassword(String email) {
-        User user = findByEmail(email)
+        User found = findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("이메일로 사용자를 찾을 수 없습니다: " + email));
-        
-        // 임시 비밀번호 생성 및 설정
+        User user = decryptUserPersonalData(found);
+
         String tempPassword = generateTempPassword();
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        userRepository.updatePassword(user.getId(), tenantId, passwordService.encodeSecret(tempPassword),
-            LocalDateTime.now());
-        
-        // 이메일로 임시 비밀번호 발송
-        try {
-            // EmailUtil을 사용하여 이메일 발송
-            // 임시 비밀번호는 시스템 알림으로 발송
-            String message = String.format("임시 비밀번호가 발급되었습니다. 임시 비밀번호: %s\n로그인 후 반드시 비밀번호를 변경해주세요.", tempPassword);
-            com.coresolution.core.util.EmailUtil.sendSystemNotificationEmail(emailService, user.getEmail(), user.getName(), message);
-        } catch (Exception e) {
-            log.error("임시 비밀번호 이메일 발송 실패: {}, error: {}", EmailLogMasking.maskForLog(user.getEmail()), e.getMessage());
+        int updated = userRepository.updatePasswordRequiringCredentialChange(
+            user.getId(), tenantId, passwordService.encodeSecret(tempPassword), LocalDateTime.now());
+        if (updated != 1) {
+            throw new RuntimeException("비밀번호 초기화 대상을 갱신하지 못했습니다: " + user.getId());
         }
+        if (clientCredentialNotificationService == null) {
+            log.warn("임시 비밀번호 문자 발송 실패: email={}, userId={}, reason={}",
+                EmailLogMasking.maskForLog(user.getEmail()), user.getId(),
+                ClientCredentialNotificationService.REASON_SEND_FAILED);
+            return;
+        }
+        clientCredentialNotificationService.deliverAfterCommit(sent -> log.info(
+                "임시 비밀번호 문자 처리: email={}, userId={}, smsSent={}, reason={}",
+                EmailLogMasking.maskForLog(user.getEmail()), user.getId(), sent.isSmsSent(),
+                sent.getSkipReason()),
+            user.getPhone(), user.getUserId(), tempPassword, tenantId, user.getId());
     }
     
     @Override
@@ -1214,10 +1283,10 @@ public class UserServiceImpl implements UserService {
     // ==================== 유틸리티 메서드 ====================
     
     /**
-     * 임시 비밀번호 생성
+     * 임시 비밀번호. {@link TemporaryPasswordGenerator} 가 길이·문자군·정책을 담당한다.
      */
     private String generateTempPassword() {
-        return "Temp" + System.currentTimeMillis() % 10000;
+        return temporaryPasswordGenerator.generate();
     }
     
     /**

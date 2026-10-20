@@ -26,14 +26,14 @@ export const ERP_LNB_PATH_PREFIXES = Object.freeze([
  *          docs/project-management/2026-05-28/ADMIN_LNB_IA_DESIGN_HANDOFF.md (53f2d5a6e)
  *          V20260905_001__lnb_center_admin_cleanup_p0_p1.sql (P0 hide / P1 placement)
  *
- * 1차 (단독 + 그룹):
+ * 1차 (단독 + 그룹, 11개 — 디러티는 1차 단독 없음, 배정·결제·환불 하위만):
  *   1. 대시보드          (단독, sort=10)
  *   2. 통합 스케줄        (단독, sort=15) — DUP-1 fix
  *   3. 사용자 관리        (단독, sort=17) — ADM_USER_MANAGEMENT 숏컷 (ADM_USERS_LIST 와 동일 path)
- *   4. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
- *   5. 배정·결제·환불     (그룹, sort=25) — Q9 권고 (배정/결제 강등)
- *   6. 사용자/권한        (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
- *   7. 디러티 배정 정리    (단독, 폴백 전용 보조)
+ *   4. 상담·기록          (그룹)
+ *   5. 알림·메시지        (단독/그룹, sort=20) — DUP-2 fix (path=/admin/notifications)
+ *   6. 배정·결제·환불     (그룹, sort=25) — Q9 권고 (배정/결제 강등, 디러티 하위)
+ *   7. 계정·권한          (그룹, sort=30) — ADM_USERS 유지 (숏컷과 병존)
  *   8. 콘텐츠·커뮤니티     (그룹, sort=35) — DUP-3 신설
  *   9. 쇼핑·리워드        (그룹, sort=40)
  *  10. 운영·재무 (ERP)    (그룹, sort=45)
@@ -103,12 +103,6 @@ const DEFAULT_MENU_ITEMS = [
     ]
   },
   {
-    to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
-    icon: 'TRASH',
-    label: '디러티 배정 정리',
-    end: true
-  },
-  {
     to: ADMIN_ROUTES.COMMUNITY_MODERATION,
     icon: 'LAYERS',
     label: '콘텐츠·커뮤니티',
@@ -130,7 +124,8 @@ const DEFAULT_MENU_ITEMS = [
     children: [
       { to: ADMIN_ROUTES.SHOP_ORDERS, icon: 'RECEIPT', label: '온라인 주문', end: true },
       { to: ADMIN_ROUTES.SHOP_PRODUCTS, icon: 'PACKAGE', label: '상품', end: false },
-      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true }
+      { to: ADMIN_ROUTES.SHOP_POINT_POLICIES, icon: 'GIFT', label: '리워드 정책', end: true },
+      { to: ADMIN_ROUTES.SHOP_CLIENT_OFFERS, icon: 'USERS', label: '내담자별 결제 상품', end: true }
     ]
   },
   {

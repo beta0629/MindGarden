@@ -5,6 +5,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -24,14 +27,23 @@ public final class ScheduleMappingContextResolver {
     }
 
     /**
-     * @param scheduleMappingForDisplay 일정 시점 매칭 (totalSessions·응답 mappingId)
+     * @param scheduleMappingForDisplay 일정 시점 매칭 (totalSessions·응답 mappingId·paymentTiming)
      * @param currentActiveMapping      현재 ACTIVE/SESSIONS_EXHAUSTED (remainingSessions)
+     * @param paymentTiming             일정 시점 매칭 paymentTiming
+     * @param engagementType            내담자 engagementType (없으면 paymentTiming 에서 파생)
      */
     @Value
     public static class ScheduleMappingResponseContext {
         Long mappingId;
         Integer totalSessions;
         Integer remainingSessions;
+        String paymentTiming;
+        String engagementType;
+
+        /** 매핑 컨텍스트 없음 — 필드 전부 null */
+        public static ScheduleMappingResponseContext empty() {
+            return new ScheduleMappingResponseContext(null, null, null, null, null);
+        }
     }
 
     public static ScheduleMappingResponseContext resolveForScheduleResponse(
@@ -39,6 +51,25 @@ public final class ScheduleMappingContextResolver {
             String tenantId,
             ConsultantClientMappingRepository mappingRepository,
             Map<String, ConsultantClientMapping> activeOrExhaustedLookup) {
+        return resolveForScheduleResponse(schedule, tenantId, mappingRepository, activeOrExhaustedLookup, null);
+    }
+
+    /**
+     * 일정 응답용 매칭 컨텍스트. {@code client} 가 있으면 engagementType 을 내담자에서 읽는다.
+     *
+     * @param schedule 일정
+     * @param tenantId 테넌트
+     * @param mappingRepository 매핑 저장소
+     * @param activeOrExhaustedLookup ACTIVE/소진 룩업
+     * @param client 내담자 엔티티(배치 로드 결과, null 허용)
+     * @return 매칭 컨텍스트
+     */
+    public static ScheduleMappingResponseContext resolveForScheduleResponse(
+            Schedule schedule,
+            String tenantId,
+            ConsultantClientMappingRepository mappingRepository,
+            Map<String, ConsultantClientMapping> activeOrExhaustedLookup,
+            Client client) {
         if (schedule == null || mappingRepository == null) {
             return emptyContext();
         }
@@ -57,8 +88,34 @@ public final class ScheduleMappingContextResolver {
         }
         Integer totalSessions = scheduleMapping != null ? scheduleMapping.getTotalSessions() : null;
         Integer remainingSessions = currentMapping != null ? currentMapping.getRemainingSessions() : null;
+        String paymentTiming = scheduleMapping != null ? scheduleMapping.getPaymentTiming() : null;
+        if (paymentTiming == null && currentMapping != null) {
+            paymentTiming = currentMapping.getPaymentTiming();
+        }
+        String engagementType = resolveEngagementType(client, paymentTiming);
 
-        return new ScheduleMappingResponseContext(mappingId, totalSessions, remainingSessions);
+        return new ScheduleMappingResponseContext(
+                mappingId, totalSessions, remainingSessions, paymentTiming, engagementType);
+    }
+
+    /**
+     * 내담자 engagementType 우선, 없으면 paymentTiming 파생(기관연계·바우처).
+     *
+     * @param client 내담자(null 허용)
+     * @param paymentTiming 매핑 paymentTiming
+     * @return engagementType 또는 null
+     */
+    public static String resolveEngagementType(Client client, String paymentTiming) {
+        if (client != null && client.getEngagementType() != null && !client.getEngagementType().isBlank()) {
+            return client.getEngagementType().trim().toUpperCase();
+        }
+        if (PaymentTimingConstants.isInstitutionLink(paymentTiming)) {
+            return ClientEngagementTypeConstants.INSTITUTION_LINK;
+        }
+        if (PaymentTimingConstants.isVoucher(paymentTiming)) {
+            return PaymentTimingConstants.VOUCHER;
+        }
+        return null;
     }
 
     /**
@@ -251,6 +308,6 @@ public final class ScheduleMappingContextResolver {
     }
 
     private static ScheduleMappingResponseContext emptyContext() {
-        return new ScheduleMappingResponseContext(null, null, null);
+        return ScheduleMappingResponseContext.empty();
     }
 }

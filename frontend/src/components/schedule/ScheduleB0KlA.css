@@ -528,7 +528,7 @@
   gap: var(--mg-spacing-xs, 0.25rem);
   width: 100%;
   min-height: 40px;
-  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-schedule-legend-inline-pad);
   font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: 600;
@@ -583,7 +583,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 1rem;
-  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-spacing-md, 1rem) var(--mg-spacing-md, 1rem);
+  padding: var(--mg-spacing-sm, 0.5rem) var(--mg-schedule-legend-inline-pad) var(--mg-spacing-md, 1rem);
   border-top: 1px solid var(--ad-b0kla-border, var(--mg-color-border-main));
 }
 
@@ -1880,18 +1880,19 @@
 }
 
 /* ===== Calendar Event Block (B0KlA) ===== */
+/* 주/일: FC 하네스(height:100%)에 맞춤. 배지 블록 height:auto·min-height 4rem 로 슬롯 초과 금지. */
 .mg-v2-ad-calendar-event {
   background-color: var(--mg-gray-50);
   border: 1px solid var(--mg-gray-300);
   border-radius: 6px;
-  padding: var(--mg-v2-space-2, 0.5rem) var(--mg-v2-space-3, 0.75rem);
+  padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1, 0.25rem);
+  gap: var(--mg-v2-space-0-5, 0.125rem);
   box-shadow: var(--cs-shadow-xs);
-  overflow: visible;
-  min-height: var(--mg-v2-space-16, 4rem);
-  height: auto;
+  overflow: hidden;
+  min-height: 0;
+  height: 100%;
   box-sizing: border-box;
 }
 
@@ -1918,12 +1919,24 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--mg-text-primary);
+  /* 내담자 우선: 폭 0 금지, counselor 보다 작은 flex-shrink */
+  flex: 1 1 auto;
+  min-width: 1ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event__title .counselor-name {
   font-size: 11px;
   color: var(--mg-secondary-600);
-  margin-left: 4px;
+  margin-left: var(--mg-spacing-xs);
+  /* 상담사 먼저 축소·말줄임 — intrinsic min-width 로 내담자를 0으로 밀지 않음 */
+  flex: 0 3 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event__status {

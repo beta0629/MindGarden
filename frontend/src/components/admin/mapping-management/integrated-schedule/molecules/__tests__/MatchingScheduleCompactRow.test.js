@@ -168,8 +168,11 @@ describe('MatchingScheduleCompactRow', () => {
         }}
       />
     );
-    expect(screen.getByTestId('engagement-type-badge')).toHaveTextContent('기관연계');
-    expect(screen.getAllByText('기관연계').length).toBeGreaterThanOrEqual(2);
+    const badge = screen.getByTestId('engagement-type-badge');
+    expect(badge).toHaveTextContent('기관연계');
+    expect(badge.getAttribute('aria-label')).toBe('기관연계');
+    // 라벨이 __seg 로 나뉘어도 배지 슬롯은 하나
+    expect(screen.getAllByTestId('engagement-type-badge')).toHaveLength(1);
     expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
 });

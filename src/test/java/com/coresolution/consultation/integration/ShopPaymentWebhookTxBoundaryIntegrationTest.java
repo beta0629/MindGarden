@@ -16,7 +16,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,8 +28,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.dto.shop.admin.ShopOrderReconcilePaymentResponse;
@@ -40,7 +37,9 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.AdminShopOrderReconcileService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOnePaymentWebhookService;
+import com.coresolution.consultation.service.portone.PortOneWebhookTestSignatures;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.core.constants.TenantPgSettingsJsonKeys;
@@ -87,8 +86,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 class ShopPaymentWebhookTxBoundaryIntegrationTest {
 
     private static final String STORE_ID = "store-it-tx-boundary";
-    private static final String WEBHOOK_SECRET = "whsec_it_tx_boundary";
-    private static final String TIMESTAMP = "1700000000";
+    private static final String WEBHOOK_SECRET = PortOneWebhookTestSignatures.secretForLabel("it-tx-boundary");
     private static final String WEBHOOK_URL = "/api/v1/payments/webhooks/portone/v2";
     private static final String EVENT_PAID = "Transaction.Paid";
     private static final String EVENT_CANCELLED = "Transaction.Cancelled";
@@ -144,6 +142,13 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
             portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
             return true;
         });
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(anyString(), anyString(), any()))
+                .thenAnswer(inv -> {
+                    portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
+                });
     }
 
     @AfterEach
@@ -157,11 +162,14 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
         String body = webhookBody(EVENT_PAID, paymentId);
 
+        String webhookId = "whk-first-receipt";
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
         mockMvc.perform(post(WEBHOOK_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .header("webhook-timestamp", TIMESTAMP)
-                        .header("webhook-signature", sign(body))
-                        .header("webhook-id", "whk-first-receipt")
+                        .header("webhook-timestamp", timestamp)
+                        .header("webhook-signature",
+                                PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, webhookId, timestamp, body))
+                        .header("webhook-id", webhookId)
                         .content(body.getBytes(StandardCharsets.UTF_8)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ok"))
@@ -267,7 +275,8 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         assertThat(loadPayment(first).getStatus()).isEqualTo(Payment.PaymentStatus.APPROVED);
         assertThat(loadOrder().getStatus()).isEqualTo(ShopClientOrderStatus.PAID);
         verify(portOneV2PaymentCancelService, times(1)).cancelPayment(any(), eq(second), any());
-        assertThat(portOneCallInTransaction).containsExactly(Boolean.FALSE);
+        // verify + cancel 모두 기록될 수 있음 — 전부 TX 밖이면 통과(취소 횟수는 위 times(1))
+        assertThat(portOneCallInTransaction).isNotEmpty().containsOnly(Boolean.FALSE);
     }
 
     @Test
@@ -284,7 +293,8 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
         assertThat(loadOrder().getStatus()).isEqualTo(ShopClientOrderStatus.EXPIRED);
         verify(portOneV2PaymentCancelService, times(1)).cancelPayment(eq(tenantId), eq(paymentId),
                 eq(ShopLatePaymentConstants.PORTONE_CANCEL_REASON));
-        assertThat(portOneCallInTransaction).containsExactly(Boolean.FALSE);
+        // verify + cancel 모두 기록될 수 있음 — 전부 TX 밖이면 통과(취소 횟수는 위 times(1))
+        assertThat(portOneCallInTransaction).isNotEmpty().containsOnly(Boolean.FALSE);
     }
 
     @Test
@@ -304,10 +314,12 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     @DisplayName("7. reconcile 은 승인 후 커밋된 최신 상태(PAID/APPROVED)를 반환, PortOne 검증은 트랜잭션 밖")
     void reconcilePayment_returnsLatestStateAfterApproval() {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(eq(tenantId), eq(paymentId), any()))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(eq(tenantId), eq(paymentId), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
-                    return Optional.of("{}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
 
         TenantContextHolder.setTenantId(tenantId);
@@ -325,13 +337,15 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     void h5_reconcile_userCancelCommittedAfterVerify_autoRefunded() {
         String paymentId = seedOrderWithPayment(ShopClientOrderStatus.PENDING_PAYMENT, Payment.PaymentStatus.PENDING);
         AtomicBoolean cancelledByUser = new AtomicBoolean(false);
-        when(portOneV2PaymentVerifyService.verifyPaidAmountBody(eq(tenantId), eq(paymentId), any()))
+        when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(eq(tenantId), eq(paymentId), any()))
                 .thenAnswer(inv -> {
                     portOneCallInTransaction.add(TransactionSynchronizationManager.isActualTransactionActive());
                     if (cancelledByUser.compareAndSet(false, true)) {
                         commitUserCancel(paymentId);
                     }
-                    return Optional.of("{}");
+                    return PortOneShopPaidMatch.match(
+                            "{\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                            java.math.BigDecimal.valueOf(1000L));
                 });
 
         TenantContextHolder.setTenantId(tenantId);
@@ -411,7 +425,12 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
     }
 
     private ResponseEntity<Map<String, Object>> sendWebhook(String body, String webhookId) throws Exception {
-        return webhookService.handleWebhook(body.getBytes(StandardCharsets.UTF_8), TIMESTAMP, sign(body), webhookId);
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
+        return webhookService.handleWebhook(
+                body.getBytes(StandardCharsets.UTF_8),
+                timestamp,
+                PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, webhookId, timestamp, body),
+                webhookId);
     }
 
     private static List<ResponseEntity<Map<String, Object>>> runConcurrently(
@@ -438,10 +457,4 @@ class ShopPaymentWebhookTxBoundaryIntegrationTest {
                 + "\",\"paymentId\":\"" + paymentId + "\"}}";
     }
 
-    private static String sign(String body) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(WEBHOOK_SECRET.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] digest = mac.doFinal((TIMESTAMP + "." + body).getBytes(StandardCharsets.UTF_8));
-        return "v1," + Base64.getEncoder().encodeToString(digest);
-    }
 }

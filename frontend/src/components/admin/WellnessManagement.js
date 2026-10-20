@@ -102,8 +102,9 @@ const WellnessManagement = () => {
 
                 console.log('📊 통계 응답:', usageStatsResponse);
 
-                if (usageStatsResponse && usageStatsResponse.success) {
-                    setStats(usageStatsResponse.data);
+                // apiGet unwrap → 통계·템플릿·환율 페이로드 직접 사용
+                if (usageStatsResponse != null && usageStatsResponse.success !== false) {
+                    setStats(usageStatsResponse.data != null ? usageStatsResponse.data : usageStatsResponse);
                 }
 
                 // 템플릿 목록 로드
@@ -111,8 +112,11 @@ const WellnessManagement = () => {
 
                 console.log('📋 템플릿 응답:', templatesResponse);
 
-                if (templatesResponse && templatesResponse.success) {
-                    setTemplates(templatesResponse.data);
+                if (templatesResponse != null && templatesResponse.success !== false) {
+                    const templatesPayload = Array.isArray(templatesResponse)
+                        ? templatesResponse
+                        : (templatesResponse.data != null ? templatesResponse.data : templatesResponse);
+                    setTemplates(templatesPayload);
                 }
 
                 // 환율 정보 로드
@@ -120,11 +124,14 @@ const WellnessManagement = () => {
 
                 console.log('💰 환율 응답:', exchangeRateResponse);
 
-                if (exchangeRateResponse && exchangeRateResponse.success) {
+                if (exchangeRateResponse != null && exchangeRateResponse.success !== false) {
+                    const ratePayload = exchangeRateResponse.data != null
+                        ? exchangeRateResponse.data
+                        : exchangeRateResponse;
                     setStats(prev => ({
                         ...prev,
-                        exchangeRate: exchangeRateResponse.data.exchangeRate || 1300.0,
-                        exchangeRateDisplay: exchangeRateResponse.data.exchangeRateDisplay || ''
+                        exchangeRate: ratePayload.exchangeRate || 1300.0,
+                        exchangeRateDisplay: ratePayload.exchangeRateDisplay || ''
                     }));
                 }
 
@@ -170,12 +177,12 @@ const WellnessManagement = () => {
                     setSending(true);
                     const response = await apiPost(API_ADMIN_WELLNESS_TEST_SEND);
                     
-                    if (response.success) {
+                    if (response != null && response.success !== false) {
                         notificationManager.show(t('admin:wellnessMgmt.msg.testSendSuccess'), 'success');
                         await softRefresh(loadData);
                         window.dispatchEvent(new CustomEvent('admin-dashboard-refresh-stats'));
                     } else {
-                        notificationManager.show(response.message || t('admin:wellnessMgmt.msg.testSendFailed'), 'error');
+                        notificationManager.show(response?.message || t('admin:wellnessMgmt.msg.testSendFailed'), 'error');
                     }
                 } catch (error) {
                     console.error('❌ 테스트 발송 실패:', error);
@@ -203,12 +210,11 @@ const WellnessManagement = () => {
             setRefreshing(true);
             const response = await apiPost(API_ADMIN_WELLNESS_EXCHANGE_RATE_REFRESH);
             
-            if (response.success) {
+            if (response != null && response.success !== false) {
                 notificationManager.show(t('admin:wellnessMgmt.msg.exchangeRefreshed'), 'success');
-                // 전체 데이터 다시 로드
                 await softRefresh(loadData);
             } else {
-                notificationManager.show(response.message || t('admin:wellnessMgmt.msg.exchangeRefreshFailed'), 'error');
+                notificationManager.show(response?.message || t('admin:wellnessMgmt.msg.exchangeRefreshFailed'), 'error');
             }
         } catch (error) {
             console.error('❌ 환율 새로고침 실패:', error);

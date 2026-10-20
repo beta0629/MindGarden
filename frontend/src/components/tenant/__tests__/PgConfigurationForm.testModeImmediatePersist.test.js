@@ -190,6 +190,68 @@ describe('PgConfigurationForm — testMode 폼 상태 전용 (PATCH 없음)', ()
       .toHaveAttribute('aria-checked', 'true');
   });
 
+  it('edit+IAMPORT+testMode ON+빈 라이브 키여도 #portoneChannelKey·#secretKey 가 렌더된다 (deadlock 재현 방지)', () => {
+    render(
+      <PgConfigurationForm
+        mode="edit"
+        tenantId={TENANT_ID}
+        configId={CONFIG_ID}
+        initialData={{
+          ...IAMPORT_INITIAL,
+          testMode: true,
+          settingsJson: JSON.stringify({
+            portoneChannelKeyTest: 'channel-key-test-xxxxx'
+          })
+        }}
+        onSave={jest.fn()}
+        onCancel={jest.fn()}
+        hidePageTitle
+      />
+    );
+
+    expect(screen.getByRole('switch', { name: '테스트 모드' }))
+      .toHaveAttribute('aria-checked', 'true');
+    expect(document.getElementById('portoneChannelKey')).toBeInTheDocument();
+    expect(document.getElementById('secretKey')).toBeInTheDocument();
+    expect(document.getElementById('portoneChannelKeyTest')).toBeInTheDocument();
+  });
+
+  it('testMode ON 상태에서 라이브 채널 키 입력 후 스위치 OFF 가 성공한다', async() => {
+    render(
+      <PgConfigurationForm
+        mode="edit"
+        tenantId={TENANT_ID}
+        configId={CONFIG_ID}
+        initialData={{
+          ...IAMPORT_INITIAL,
+          testMode: true,
+          settingsJson: JSON.stringify({
+            portoneChannelKeyTest: 'channel-key-test-xxxxx'
+          })
+        }}
+        onSave={jest.fn()}
+        onCancel={jest.fn()}
+        hidePageTitle
+      />
+    );
+
+    const sw = screen.getByRole('switch', { name: '테스트 모드' });
+    expect(sw).toHaveAttribute('aria-checked', 'true');
+
+    const liveKeyInput = document.getElementById('portoneChannelKey');
+    expect(liveKeyInput).toBeInTheDocument();
+    fireEvent.change(liveKeyInput, { target: { value: 'channel-key-live-xxxxx' } });
+
+    fireEvent.click(sw);
+
+    await waitFor(() => {
+      expect(screen.getByRole('switch', { name: '테스트 모드' }))
+        .toHaveAttribute('aria-checked', 'false');
+    });
+    expect(screen.queryByTestId('pg-test-mode-error')).not.toBeInTheDocument();
+    expect(patchPgConfigurationTestMode).not.toHaveBeenCalled();
+  });
+
   it('create 모드에서는 testMode 가 로컬만 변경되고 PATCH 를 호출하지 않는다', async() => {
     render(
       <PgConfigurationForm

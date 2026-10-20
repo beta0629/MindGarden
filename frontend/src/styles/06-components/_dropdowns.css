@@ -278,3 +278,20 @@ select option,
     background: var(--ios-bg-secondary-dark);
   }
 }
+
+/*
+ * 인라인 목록 opt-out — 화면 안에 그대로 펼쳐지는 listbox(검색 결과·콤보 목록)용.
+ * 위 `[role="listbox"] > *`(position: fixed 등)가 항목을 한 점에 포개는 문제를 막는다.
+ * 클래스를 붙인 목록에만 적용되므로 다른 드롭다운 동작은 바뀌지 않는다.
+ */
+.mg-listbox--inline[role="listbox"] {
+  isolation: auto;
+}
+
+.mg-listbox--inline[role="listbox"] > * {
+  position: static;
+  z-index: auto;
+  transform: none;
+  will-change: auto;
+  isolation: auto;
+}

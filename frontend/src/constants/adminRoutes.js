@@ -88,6 +88,7 @@ export const ADMIN_ROUTES = {
     COMPLIANCE_DASHBOARD: '/admin/compliance/dashboard',
     COMPLIANCE_DESTRUCTION: '/admin/compliance/destruction',
     ERP_FINANCIAL: '/admin/erp/financial',
+    ERP_INTEGRATED_FINANCE: '/erp/integrated-finance',
     /** @deprecated CLN-02 — App.js redirects to DASHBOARD; navigate 시 DASHBOARD 사용 */
     DASHBOARDS: '/admin/dashboards',
     CACHE_MONITORING: '/admin/cache-monitoring',
@@ -112,6 +113,8 @@ export const ADMIN_ROUTES = {
     SHOP_POINT_POLICIES: '/admin/shop/point-policies',
     /** P2-admin 온라인 주문·환불 */
     SHOP_ORDERS: '/admin/shop/orders',
+    /** 내담자별 지정 결제 상품·할인가 */
+    SHOP_CLIENT_OFFERS: '/admin/shop/client-offers',
     /** 결제/구독 — 구독 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */
     BILLING_SUBSCRIPTIONS: '/admin/billing/subscriptions',
     /** 결제/구독 — 결제 수단 관리 라우트 (테넌트 결제·구독 SSOT 분리, 옵션 C, 2026-05-27) */

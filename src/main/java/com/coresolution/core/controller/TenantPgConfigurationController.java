@@ -37,15 +37,15 @@ import java.util.List;
  *   <li>{@code POST /{configId}/decrypt-keys} (복호화 평문 반환) 를 테넌트 경로에서 제거.
  *       복호화는 운영자 전용 {@code /api/v1/ops/...} 경로에만 남는다.</li>
  *   <li>{@code PATCH /{configId}/test-mode}, {@code PATCH /{configId}/webhook-secret} 는
- *       운영자 전용으로 차단 (항상 403).</li>
+ *       ROLE_OPS 만 허용한다. ROLE_ADMIN 은 메서드에서 403.</li>
  * </ul>
  * 브라우저 결제에 필요한 {@code GET /active/portone-client-config} 는 시크릿을 포함하지 않으므로
  * 인증 사용자 전체에 그대로 허용한다.
  * 
  * @author CoreSolution
- * @version 3.0.0
+ * @version 3.1.0
  * @since 2025-01-XX
- * @updated 2026-10-03 - 조회 ADMIN 제한 + 복호화 엔드포인트 제거 + 전역/시크릿 변경 차단
+ * @updated 2026-10-14 - OPS 전용 webhook-secret/test-mode PATCH 허용, ADMIN 403 유지
  */
 @Slf4j
 @RestController
@@ -198,65 +198,94 @@ public class TenantPgConfigurationController extends BaseApiController {
     }
 
     /**
-     * PG 설정 테스트 모드 변경 — P0 보안(2026-10-03) 이후 테넌트 경로에서는 차단된다.
+     * PG 설정 테스트 모드 변경 — ROLE_OPS 전용. ROLE_ADMIN 은 403.
      *
-     * <p>testMode 는 실결제/테스트 결제를 가르는 스위치이므로 테넌트 관리자 경로에서 즉시 변경할 수
-     * 없게 한다. 변경은 운영자 전용 경로에서만 수행한다.
+     * <p>testMode 는 실결제/테스트 결제를 가르는 스위치이므로 센터 ADMIN 은 변경할 수 없다.
+     * OPS HQ 는 테넌트 경로 또는 ops alias 로 변경한다.
      *
      * @param tenantId 테넌트 ID
      * @param configId PG 설정 ID
-     * @param request  testMode 요청 (사용하지 않음)
-     * @return 403 (운영자 전용)
+     * @param request  testMode 요청
+     * @return 변경된 PG 설정 (OPS) 또는 403 (ADMIN)
      */
     @Operation(
-            summary = "PG 테스트 모드 변경 (차단)",
-            description = "P0 보안: 테넌트 관리자 경로에서는 testMode 를 변경할 수 없습니다 (운영자 전용). 항상 403."
+            summary = "PG 테스트 모드 변경 (OPS 전용)",
+            description = "ROLE_OPS 만 testMode 를 변경할 수 있습니다. ROLE_ADMIN 은 403."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "운영자 전용")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "ADMIN/비OPS 거부")
     })
     @PatchMapping("/{configId}/test-mode")
-    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
+    @PreAuthorize("hasAnyAuthority('" + SecurityRoleConstants.ROLE_OPS + "', '"
+            + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchTestMode(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationTestModePatchRequest request) {
 
+        denyAdminAllowOpsOnly(MSG_PG_TEST_MODE_OPS_ONLY);
         accessControlService.validateTenantAccess(tenantId);
 
-        log.warn("PG 테스트 모드 변경 차단(운영자 전용): tenantId={}, configId={}", tenantId, configId);
-        throw new AccessDeniedException(MSG_PG_TEST_MODE_OPS_ONLY);
+        log.info("PG 테스트 모드 변경(OPS): tenantId={}, configId={}, testMode={}",
+                tenantId, configId, request.getTestMode());
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchTestMode(tenantId, configId, request.getTestMode());
+        return updated("PG 테스트 모드가 변경되었습니다.", response);
     }
 
     /**
-     * PG 설정 포트원 웹훅 시크릿 변경 — P0 보안(2026-10-03) 이후 테넌트 경로에서는 차단된다.
+     * PG 설정 포트원 웹훅 시크릿 변경 — ROLE_OPS 전용. ROLE_ADMIN 은 403.
      *
-     * <p>웹훅 시크릿은 결제 통지 위조를 막는 공유 비밀이므로 테넌트 관리자 경로에서 교체할 수 없게
-     * 한다. 교체는 운영자 전용 경로에서만 수행한다.
+     * <p>웹훅 시크릿은 결제 통지 위조를 막는 공유 비밀이므로 센터 ADMIN 은 교체할 수 없다.
+     * 응답·로그에 평문 시크릿을 남기지 않는다.
      *
      * @param tenantId 테넌트 ID
      * @param configId PG 설정 ID
-     * @param request  시크릿 요청 (사용하지 않음)
-     * @return 403 (운영자 전용)
+     * @param request  시크릿 요청
+     * @return 변경된 PG 설정 (OPS) 또는 403 (ADMIN)
      */
     @Operation(
-            summary = "PG 웹훅 시크릿 변경 (차단)",
-            description = "P0 보안: 테넌트 관리자 경로에서는 웹훅 시크릿을 변경할 수 없습니다 (운영자 전용). 항상 403."
+            summary = "PG 웹훅 시크릿 변경 (OPS 전용)",
+            description = "ROLE_OPS 만 웹훅 시크릿을 변경할 수 있습니다. ROLE_ADMIN 은 403. 평문 시크릿은 응답에 포함되지 않습니다."
     )
     @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "운영자 전용")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "변경 성공",
+                    content = @Content(schema = @Schema(implementation = TenantPgConfigurationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "시크릿 형식 오류"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "ADMIN/비OPS 거부")
     })
     @PatchMapping("/{configId}/webhook-secret")
-    @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_ADMIN + "')")
+    @PreAuthorize("hasAnyAuthority('" + SecurityRoleConstants.ROLE_OPS + "', '"
+            + SecurityRoleConstants.ROLE_ADMIN + "')")
     public ResponseEntity<ApiResponse<TenantPgConfigurationResponse>> patchWebhookSecret(
             @Parameter(description = "테넌트 ID", required = true) @PathVariable String tenantId,
             @Parameter(description = "PG 설정 ID", required = true) @PathVariable String configId,
             @Valid @RequestBody PgConfigurationWebhookSecretPatchRequest request) {
 
+        denyAdminAllowOpsOnly(MSG_PG_WEBHOOK_SECRET_OPS_ONLY);
         accessControlService.validateTenantAccess(tenantId);
 
-        log.warn("PG 웹훅 시크릿 변경 차단(운영자 전용): tenantId={}, configId={}", tenantId, configId);
-        throw new AccessDeniedException(MSG_PG_WEBHOOK_SECRET_OPS_ONLY);
+        int secretLength = request.getWebhookSecret() != null ? request.getWebhookSecret().trim().length() : 0;
+        log.info("PG 웹훅 시크릿 변경(OPS): tenantId={}, configId={}, secretLength={}",
+                tenantId, configId, secretLength);
+        TenantPgConfigurationResponse response =
+                pgConfigurationService.patchWebhookSecret(tenantId, configId, request.getWebhookSecret());
+        return updated("PG 웹훅 시크릿이 변경되었습니다.", response);
+    }
+
+    /**
+     * 테넌트 경로의 ops-only 엔드포인트에서 ROLE_ADMIN 을 거부한다.
+     * (addFilters=false IT 에서도 메서드 본문이 ADMIN 403 을 보장한다.)
+     *
+     * @param message AccessDeniedException 메시지
+     */
+    private void denyAdminAllowOpsOnly(String message) {
+        if (!accessControlService.hasOpsRole()) {
+            log.warn("PG ops-only 엔드포인트 거부(ADMIN/비OPS): message={}", message);
+            throw new AccessDeniedException(message);
+        }
     }
     
     /**

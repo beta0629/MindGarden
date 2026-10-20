@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import java.util.List;
+import java.util.Set;
 import com.coresolution.consultation.entity.SystemNotification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +35,11 @@ public interface SystemNotificationService {
      * 공지 읽음 여부 확인
      */
     boolean isNotificationRead(Long notificationId, Long userId);
+
+    /**
+     * 현재 테넌트에서 사용자가 읽은 공지 ID. 목록 isRead 는 이 한 번 조회로 채운다.
+     */
+    Set<Long> findReadNotificationIds(Long userId);
     
     /**
      * 사용자의 읽지 않은 공지 수 조회

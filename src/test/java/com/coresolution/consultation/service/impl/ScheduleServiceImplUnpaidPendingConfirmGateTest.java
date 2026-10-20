@@ -9,6 +9,9 @@ import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
+import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import java.lang.reflect.Method;
@@ -60,6 +63,12 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     private TenantAccessControlService accessControlService;
     @Mock
     private ConsultantClientMappingRepository mappingRepository;
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private NotificationService notificationService;
+    @Mock
+    private MobilePushDispatchService mobilePushDispatchService;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -152,7 +161,7 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     @DisplayName("같은 테넌트에서 매칭을 찾을 수 없는 가예약은 확정을 거절한다")
     void confirmSchedule_tentativeWithoutMapping_rejected() {
         Schedule schedule = tentativeSchedule();
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(PENDING_MAPPING_ID)))
                 .thenReturn(Optional.empty());
@@ -251,6 +260,8 @@ class ScheduleServiceImplUnpaidPendingConfirmGateTest {
     }
 
     private void stubScheduleAndMapping(Schedule schedule, ConsultantClientMapping pending) {
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(schedule));
         when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
                 .thenReturn(Optional.of(schedule));
         when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(PENDING_MAPPING_ID)))

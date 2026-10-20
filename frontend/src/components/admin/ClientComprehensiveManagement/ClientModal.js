@@ -27,10 +27,6 @@ import { API_ENDPOINTS } from '../../../constants/apiEndpoints';
 import NotificationChannelPreferenceSection from '../../mypage/components/NotificationChannelPreferenceSection';
 import { NOTIFICATION_CHANNEL_PREFERENCE_VALUE } from '../../../constants/notificationChannelPreference';
 import {
-    LOGIN_PASSWORD_FIELD_PLACEHOLDER,
-    LOGIN_PASSWORD_POLICY_HINT_ONE_LINE
-} from '../../../constants/passwordPolicyUi';
-import {
   CLIENT_ENGAGEMENT_TYPE,
   CLIENT_ENGAGEMENT_TYPE_OPTIONS,
   CLIENT_PREPAID_CHOICE,
@@ -360,7 +356,10 @@ const ClientModal = ({
             }
         }
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return {
+            ok: Object.keys(newErrors).length === 0,
+            form: formData
+        };
     };
 
     const handleClientPhoneDuplicateCheck = useCallback(async() => {
@@ -469,9 +468,11 @@ const ClientModal = ({
 
     const handleSubmit = async(e) => {
         e.preventDefault();
-        if (!validateForm()) {
+        const validation = validateForm();
+        if (!validation.ok) {
             return undefined;
         }
+        const submitForm = validation.form;
         const plateRaw = formData.vehiclePlate;
         if (plateRaw != null && String(plateRaw).trim() !== '' && !isValidVehiclePlateOptional(plateRaw)) {
             setVehiclePlateError(VALIDATION_MESSAGES.INVALID_VEHICLE_PLATE);
@@ -493,10 +494,10 @@ const ClientModal = ({
                 return undefined;
             }
         }
-        let payloadForSave = formData;
+        let payloadForSave = submitForm;
         try {
-            payloadForSave = await ensurePartnerInstitutionOnForm(formData);
-            if (payloadForSave !== formData) {
+            payloadForSave = await ensurePartnerInstitutionOnForm(submitForm);
+            if (payloadForSave !== submitForm) {
                 setFormData(payloadForSave);
             }
         } catch (error) {
@@ -619,7 +620,6 @@ const ClientModal = ({
         const safeFormData = {
             name: formData.name || '',
             email: formData.email || '',
-            password: formData.password || '',
             phone: formData.phone || '',
             status: formData.status || 'ACTIVE',
             grade: formData.grade || 'BRONZE',
@@ -673,7 +673,7 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                         <p className="mg-v2-info-text">
-                            {t('admin:clientModal.form.passwordHint')}
+                            {t('auth:tempPasswordSms.resetHelp')}
                         </p>
                     </div>
                 )}
@@ -978,23 +978,6 @@ const ClientModal = ({
                         <small className="mg-v2-form-help mg-v2-form-help--success">{VALIDATION_MESSAGES.EMAIL_AVAILABLE}</small>
                     )}
                 </div>
-                {type === 'create' && (
-                    <div className="mg-v2-form-group">
-                        <label htmlFor="password" className="mg-v2-form-label">{t('admin:clientModal.form.passwordLabel')}</label>
-                        <input
-                            type="password"
-                            id="password"
-                            name="password"
-                            value={safeFormData.password}
-                            onChange={handleInputChange}
-                            placeholder={LOGIN_PASSWORD_FIELD_PLACEHOLDER}
-                            className="mg-v2-form-input"
-                        />
-                        <small className="mg-v2-form-help">
-                            {LOGIN_PASSWORD_POLICY_HINT_ONE_LINE}{t('admin:clientModal.form.passwordHelpSuffix')}
-                        </small>
-                    </div>
-                )}
                 <div className="mg-v2-form-group">
                     <label htmlFor="status" className="mg-v2-form-label">{t('admin:labels.status')}</label>
                     <BadgeSelect

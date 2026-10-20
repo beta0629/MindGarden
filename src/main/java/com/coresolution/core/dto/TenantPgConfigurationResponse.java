@@ -143,6 +143,12 @@ public class TenantPgConfigurationResponse {
      * 시크릿 값 자체는 클라이언트에 내려주지 않는다.
      */
     private Boolean portoneWebhookSecretConfigured;
+
+    /**
+     * API/Secret Key 암호문이 저장되어 있는지 여부.
+     * 평문·복호화 값은 노출하지 않는다. 수정 폼에서 공란 유지(기존 값 유지) 판단에 사용.
+     */
+    private Boolean apiSecretConfigured;
     
     /**
      * 비고
@@ -160,5 +166,21 @@ public class TenantPgConfigurationResponse {
      */
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime updatedAt;
+
+    /**
+     * ACTIVE 재승인용 스테이징 수정 존재 여부 ({@code pending_request_json} non-null).
+     */
+    private Boolean hasPendingEdit;
+
+    /**
+     * 스테이징 수정 요청 시각
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime pendingRequestedAt;
+
+    /**
+     * pending vs live 마스킹 차이. pending 없으면 null.
+     */
+    private TenantPgPendingEditDiff pendingEditDiff;
 }
 

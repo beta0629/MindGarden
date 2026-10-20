@@ -1,6 +1,7 @@
 package com.coresolution.consultation.dto;
 
 import com.coresolution.consultation.entity.CommonCode;
+import com.coresolution.consultation.util.CommonCodeFieldNormalizer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,7 +40,12 @@ public class CommonCodeResponse {
     private LocalDateTime updatedAt;
     
     /**
-     * CommonCode 엔티티를 Response DTO로 변환
+     * CommonCode 엔티티를 Response DTO로 변환.
+     * codeGroup/codeValue/parentCodeGroup/parentCodeValue 만 응답 시 공백 trim (레거시 DB 패딩 방어).
+     * codeLabel/koreanName/codeDescription/extraData 등 라벨·본문은 원문 그대로.
+     *
+     * @param code 엔티티
+     * @return 응답 DTO 또는 null
      */
     public static CommonCodeResponse fromEntity(CommonCode code) {
         if (code == null) {
@@ -49,15 +55,15 @@ public class CommonCodeResponse {
         return CommonCodeResponse.builder()
                 .id(code.getId())
                 .tenantId(code.getTenantId())
-                .codeGroup(code.getCodeGroup())
-                .codeValue(code.getCodeValue())
+                .codeGroup(CommonCodeFieldNormalizer.normalizeCodeGroup(code.getCodeGroup()))
+                .codeValue(CommonCodeFieldNormalizer.normalizeCodeValue(code.getCodeValue()))
                 .codeLabel(code.getCodeLabel())
                 .koreanName(code.getKoreanName())
                 .codeDescription(code.getCodeDescription())
                 .sortOrder(code.getSortOrder())
                 .isActive(code.getIsActive())
-                .parentCodeGroup(code.getParentCodeGroup())
-                .parentCodeValue(code.getParentCodeValue())
+                .parentCodeGroup(CommonCodeFieldNormalizer.normalizeCodeGroup(code.getParentCodeGroup()))
+                .parentCodeValue(CommonCodeFieldNormalizer.normalizeCodeValue(code.getParentCodeValue()))
                 .extraData(code.getExtraData())
                 .icon(code.getIcon())
                 .colorCode(code.getColorCode())

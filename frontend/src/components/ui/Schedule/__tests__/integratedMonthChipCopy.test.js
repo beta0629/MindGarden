@@ -56,6 +56,7 @@ describe('buildIntegratedMonthChipCopy', () => {
       translate,
       timeText: '오후 12시',
       clientName: '이서준',
+      consultantName: '김상담',
       sessionAriaLabel: '이 일정 6회기',
       statusLabel: '예약됨',
       isSameDayPending: false,
@@ -64,7 +65,7 @@ describe('buildIntegratedMonthChipCopy', () => {
       scheduleUnresolvedCount: 0,
       clientWideUnresolvedCount: 0
     });
-    expect(copy.ariaLabel).toBe('오후 12시 · 이서준 이 일정 6회기 · 예약됨 · 기관연계 · 문자 발송됨');
+    expect(copy.ariaLabel).toBe('오후 12시 · 이서준 이 일정 6회기 · 김상담 · 예약됨 · 기관연계 · 문자 발송됨');
   });
 
   test('당일 가예약과 문자 실패를 전체 라벨로 남긴다', () => {
@@ -72,12 +73,13 @@ describe('buildIntegratedMonthChipCopy', () => {
       translate,
       timeText: '오전 10:30',
       clientName: '정민호',
+      consultantName: '이상담',
       statusLabel: '가예약',
       isSameDayPending: true,
       institutionLabel: '기관연계',
       reminderSmsStatus: 'FAILED'
     });
-    expect(copy.ariaLabel).toBe('당일 결제 대기 · 오전 10:30 · 정민호 · 가예약 · 기관연계 · 문자 발송 실패');
+    expect(copy.ariaLabel).toBe('당일 결제 대기 · 오전 10:30 · 정민호 · 이상담 · 가예약 · 기관연계 · 문자 발송 실패');
     expect(copy.sameDayPrefix).toBe('당일');
   });
 
@@ -163,9 +165,12 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     );
     expect(source).toMatch(/ScheduleEventMarks/);
     expect(marksJs).toContain('aria-hidden="true"');
-    expect(marksCss).toContain('@container mg-month-event (width < 224px)');
-    expect(marksCss).toContain('@container mg-compact-row (width < 224px)');
+    expect(marksCss).toContain('@container mg-month-event (width >= 109px)');
+    expect(marksCss).not.toContain('(width < 224px)');
+    expect(marksCss).not.toMatch(/color:\s*transparent/);
     expect(marksCss).toContain('var(--mg-v2-space-0-5)');
+    expect(marksJs).toMatch(/title=\{institutionTitle/);
+    expect(marksJs).not.toMatch(/mg-schedule-event-marks__institution"[^>]*title=/);
     expect(marksCss).not.toMatch(/transform\s*:/);
     expect(marksCss).not.toMatch(/scale\s*\(/);
   });
@@ -177,6 +182,8 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(imsCss).toContain('@container mg-month-event (width < 146px)');
     expect(imsCss).toContain('@container mg-month-event (width < 109px)');
     expect(imsCss).toContain('opacity: 1');
+    expect(imsCss).toContain('.fc-event.fc-event-past');
+    expect(imsCss).toContain('var(--mg-v2-month-chip-padding-inline-end)');
     expect(imsCss).not.toMatch(/content:\s*"당일"/);
     expect(imsCss).not.toMatch(/grayscale/);
   });
@@ -193,8 +200,12 @@ describe('월간 컴팩트 칩 소스 계약', () => {
     expect(scheduleJson.calendar.reminderSms.aria.PENDING).toBe('문자 발송 예정');
     expect(scheduleJson.calendar.reminderSms.aria.FAILED).toBe('문자 발송 실패');
     expect(scheduleJson.calendar.legend.status).toBe('상태');
-    expect(scheduleJson.calendar.legend.sms).toBe('문자 발송');
+    expect(scheduleJson.calendar.legend.sms).toContain('문자 발송됨');
+    expect(scheduleJson.calendar.legend.institution).toContain('기관연계');
     expect(scheduleJson.calendar.legend.unresolved).toBe('미해소');
     expect(scheduleJson.calendar.legend.hint).toContain('마우스');
+    expect(scheduleJson.calendar.toolbar.month).toBe('월');
+    expect(scheduleJson.calendar.toolbar.week).toBe('주');
+    expect(scheduleJson.calendar.toolbar.day).toBe('일');
   });
 });

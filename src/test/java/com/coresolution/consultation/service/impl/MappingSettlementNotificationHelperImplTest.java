@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.MappingSettlementNotificationCopy;
+import com.coresolution.consultation.constant.PersonalNotificationMetadata;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -20,7 +21,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,7 +77,7 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(CLIENT_ID),
                 eq(null),
                 eq(MappingSettlementNotificationCopy.TITLE_PAYMENT_CONFIRMED),
-                any(),
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
@@ -90,8 +93,9 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(MobilePushCanonicalTypes.PAYMENT_COMPLETED),
                 eq("mapping-payment-confirmed"),
                 any(),
-                any(),
-                eq(null));
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
+                eq(null),
+                eq(expectedMetadata(PersonalNotificationMetadata.KIND_PAYMENT_CONFIRMED)));
         verify(notificationService).sendPaymentCompleted(
                 eq(clientUser()), eq(500_000L), eq("10회 패키지"), eq("김상담"));
     }
@@ -114,7 +118,7 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(CLIENT_ID),
                 eq(null),
                 eq(MappingSettlementNotificationCopy.TITLE_DEPOSIT_CONFIRMED),
-                any(),
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
@@ -129,8 +133,9 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(MobilePushCanonicalTypes.PAYMENT_COMPLETED),
                 eq("mapping-deposit-confirmed"),
                 any(),
-                any(),
-                eq(null));
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
+                eq(null),
+                eq(expectedMetadata(PersonalNotificationMetadata.KIND_DEPOSIT_CONFIRMED)));
         verify(notificationService).sendPaymentCompleted(
                 eq(clientUser()), eq(500_000L), eq("10회 패키지"), eq("김상담"));
     }
@@ -154,7 +159,7 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(null),
                 eq("CONSULTANT"),
                 eq(MappingSettlementNotificationCopy.TITLE_MAPPING_APPROVED),
-                any(),
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
@@ -164,7 +169,7 @@ class MappingSettlementNotificationHelperImplTest {
                 eq(null),
                 eq("CLIENT"),
                 eq(MappingSettlementNotificationCopy.TITLE_MAPPING_APPROVED),
-                any(),
+                argThat(MappingSettlementNotificationHelperImplTest::productLabelBody),
                 eq("PAYMENT_COMPLETION"),
                 eq(false),
                 eq(false));
@@ -179,7 +184,8 @@ class MappingSettlementNotificationHelperImplTest {
                 eq("mapping-approved"),
                 any(),
                 any(),
-                any());
+                any(),
+                eq(expectedMetadata(PersonalNotificationMetadata.KIND_MAPPING_APPROVED)));
         verify(notificationService, never()).sendPaymentCompleted(any(), any(Long.class), any(), any());
     }
 
@@ -197,8 +203,18 @@ class MappingSettlementNotificationHelperImplTest {
         verify(consultationMessageService, never()).sendSystemThreadMessage(
                 any(), any(), any(), any(), any(), any(), any(), any(), any());
         verify(mobilePushDispatchService, never()).dispatchMappingSettlement(
-                any(), any(), any(), any(), any(Boolean.class), any(), any(), any(), any(), any());
+                any(), any(), any(), any(), any(Boolean.class), any(), any(), any(), any(), any(), any());
         verify(notificationService, never()).sendPaymentCompleted(any(), any(Long.class), any(), any());
+    }
+
+    private static boolean productLabelBody(String body) {
+        assertThat(body).contains("상품: 10회 패키지");
+        assertThat(body).doesNotContain("패키지:");
+        return true;
+    }
+
+    private static String expectedMetadata(String kind) {
+        return PersonalNotificationMetadata.toJson(kind, MAPPING_ID, "10회 패키지", 500_000L);
     }
 
     private void stubClientAndConsultantUsers() {

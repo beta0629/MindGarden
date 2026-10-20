@@ -619,7 +619,6 @@
       "tenantCommonCodes": "센터 코드",
       "pgConfig": "PG 설정",
       "aiProvider": "AI 프로바이더",
-      "packagePricing": "패키지 요금 관리",
       "testNotification": "알림 테스트 발송",
       "manualNotification": "수동 알림 발송",
       "smsTemplates": "SMS 템플릿 관리",
@@ -2071,7 +2070,7 @@
       }
     },
     "form": {
-      "passwordHint": "비밀번호는 정책에 맞는 값으로 자동 채워집니다. 비우면 임시 비밀번호(이메일 안내)로 등록됩니다.",
+      "passwordHint": "서버가 임시 비밀번호를 만들어 등록된 전화번호로 보냅니다. 화면에는 비밀번호를 표시하지 않습니다.",
       "profileImageHelp": "이미지 파일만 가능, 최대 2MB (리사이즈·크롭 적용)",
       "editHelp": "수정 시 기존 값은 표시하지 않습니다. 변경할 때만 입력해 주세요.",
       "rrnFirstLabel": "주민번호 앞 6자리 (선택)",
@@ -2100,7 +2099,6 @@
       "emailLabel": "이메일",
       "emailPlaceholder": "example@email.com",
       "passwordLabel": "비밀번호",
-      "passwordHelpSuffix": " 비우면 임시 비밀번호로 등록됩니다.",
       "gradeLabel": "등급",
       "consultationSectionTitle": "상담 정보",
       "consultationPurposeLabel": "상담 목적",
@@ -2232,6 +2230,11 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
+    "confirmMultiplePackages": {
+      "title": "상품 다중 선택 확인",
+      "message": "상품 {{count}}개가 선택됐습니다. 이대로 등록할까요?",
+      "confirmLabel": "등록"
+    },
     "error": {
       "noPackage": "상담 패키지가 등록되지 않았습니다. 공통코드 관리에서 등록해주세요.",
       "packageLoad": "패키지 정보를 불러오는 중 오류가 발생했습니다.",
@@ -2316,8 +2319,6 @@
       "deleteError": "상담사 삭제 중 오류가 발생했습니다.",
       "passwordResetSuccess": "비밀번호가 성공적으로 초기화되었습니다.",
       "passwordResetFailed": "비밀번호 초기화에 실패했습니다.",
-      "passwordPolicy": "비밀번호는 {{min}}~{{max}}자이며, 영문 대문자·소문자·숫자·특수문자({{specials}})를 각각 1자 이상 포함해야 합니다. 허용된 문자만 사용할 수 있고, 연속된 문자 3자와 같은 문자 3회 반복은 사용할 수 없습니다.",
-      "passwordOptionalHint": "비우면 임시 비밀번호로 등록됩니다.",
       "submitError": "작업 중 오류가 발생했습니다."
     }
   },
@@ -3124,6 +3125,8 @@
       "collapseAria": "안내 영역 접기",
       "consultantCompletedAria": "{{name}}, 이번 달 완료 {{count}}회",
       "consultantMonthlyCompleted": "상담사 · {{month}}월 완료",
+      "consultantShownAria": "{{name}}, 이번 달 일정 {{count}}건",
+      "consultantMonthlyShown": "상담사 · {{month}}월",
       "consultantCumulativeCompleted": "상담사 · 누적 완료",
       "consultantCumulativeCompletedAria": "{{name}}, 누적 완료 {{count}}회"
     },
@@ -3173,7 +3176,20 @@
       "monthlyBillingAmountLabel": "월간 총 금액",
       "monthlyBillingChargeHint": "이 금액으로 기관 청구",
       "monthlyBillingChargeWithAmount": "이 금액({{amount}})으로 기관 청구",
-      "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다."
+      "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다.",
+      "statusClose": {
+        "cta": "종료 처리",
+        "modalTitle": "매칭 종료 처리",
+        "modalSubtitle": "환불·회기 차감 없이 상태만 종료합니다.",
+        "remainingSessionsLabel": "남은 회기",
+        "reasonLabel": "종료 사유",
+        "reasonPlaceholder": "종료 사유를 입력해 주세요.",
+        "reasonRequired": "종료 사유를 입력해 주세요.",
+        "confirm": "종료 처리",
+        "cancel": "취소",
+        "success": "매칭이 종료 처리되었습니다.",
+        "failed": "매칭 종료 처리에 실패했습니다."
+      }
     },
     "vehiclePlate": {
       "registerCta": "차량 등록",
@@ -3852,5 +3868,13 @@
   },
   "menu": {
     "pendingPaymentCleanup": "디러티 배정 정리"
+  },
+  "shopProductGuide": {
+    "productsMenuLabel": "상품 관리",
+    "packageEmptyWarning": "등록된 상담 패키지가 없습니다. 상품 관리에서 상품을 등록해 주세요.",
+    "packageEmptyHelpSuffix": "에서 상품을 등록해 주세요.",
+    "merchantProductListHintPrefix": "고객에게 보이는 상품·가격 목록은 ",
+    "merchantProductListHintMiddle": "에 등록된 상품이며, 공개 페이지 ",
+    "merchantProductListHintSuffix": "에서 확인합니다."
   }
 }

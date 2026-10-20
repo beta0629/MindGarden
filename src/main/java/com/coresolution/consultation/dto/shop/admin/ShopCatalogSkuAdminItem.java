@@ -23,6 +23,8 @@ public record ShopCatalogSkuAdminItem(
         int sessionCount,
         String packageType,
         String fieldCode,
-        Long consultantId
+        Long consultantId,
+        /** 연결된 상담 패키지 코드 (CONSULTATION_PACKAGE). 연결 없으면 null */
+        String sourcePackageCode
 ) {
 }

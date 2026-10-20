@@ -42,6 +42,7 @@ import com.coresolution.consultation.service.UserIdGenerator;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -50,6 +51,7 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
 import com.coresolution.core.security.PasswordService;
+import org.springframework.test.util.ReflectionTestUtils;
 import com.coresolution.core.service.UserRoleQueryService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
@@ -135,6 +137,7 @@ class AdminServiceImplConsultantVehiclePlateTest {
     @Mock private com.coresolution.consultation.service.AdminRequestIdempotencyService adminRequestIdempotencyService;
     @Mock private com.coresolution.consultation.service.SalaryTaxRateLookupService salaryTaxRateLookupService;
     @Mock private com.coresolution.consultation.repository.PartnerInstitutionRepository partnerInstitutionRepository;
+    @Mock private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
     @InjectMocks
     private AdminServiceImpl adminService;
@@ -142,6 +145,8 @@ class AdminServiceImplConsultantVehiclePlateTest {
     @BeforeEach
     void setTenantContext() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
+        ReflectionTestUtils.setField(adminService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
     }
 
     @AfterEach
@@ -170,7 +175,6 @@ class AdminServiceImplConsultantVehiclePlateTest {
         when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
                 .thenReturn(Collections.emptyMap());
         doNothing().when(consultantStatsService).evictAllConsultantStatsCache();
-        when(passwordResetService.sendPasswordResetEmail(anyString())).thenReturn(true);
         when(userRepository.save(any(User.class))).thenAnswer(inv -> {
             User u = inv.getArgument(0);
             u.setId(88_001L);

@@ -46,7 +46,19 @@ public class NotificationLifecycleServiceImpl implements NotificationLifecycleSe
             NotificationType type,
             String title,
             String body) {
-        // TODO: 후속 위임에서 비즈니스 로직 작성 — 발송 채널 라우팅·중복 억제·배치 큐 등
+        return send(tenantId, recipientUserId, senderUserId, type, title, body, null);
+    }
+
+    @Override
+    @Transactional
+    public Notification send(
+            String tenantId,
+            Long recipientUserId,
+            Long senderUserId,
+            NotificationType type,
+            String title,
+            String body,
+            String metadataJson) {
         Notification entry = Notification.builder()
                 .tenantId(tenantId)
                 .recipientUserId(recipientUserId)
@@ -54,6 +66,7 @@ public class NotificationLifecycleServiceImpl implements NotificationLifecycleSe
                 .notificationType(type)
                 .title(title)
                 .body(body)
+                .metadataJson(metadataJson)
                 .status(Notification.STATUS_SENT)
                 .build();
         return notificationRepository.save(entry);

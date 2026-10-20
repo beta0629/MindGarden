@@ -1,5 +1,5 @@
 /**
- * 상담사 등록 — 비밀번호 정책 실패는 제출을 막고, 서버 문구는 일반 500 보다 우선한다.
+ * 상담사 등록 — 비밀번호는 화면에서 받지 않고, 서버 문구는 일반 500 보다 우선한다.
  */
 import React from 'react';
 import { webcrypto } from 'crypto';
@@ -10,6 +10,25 @@ import ConsultantComprehensiveManagement from '../ConsultantComprehensiveManagem
 import { apiGet, apiPost } from '../../../utils/ajax';
 import { SANITIZED_INTERNAL_SERVER_ERROR_MESSAGE } from '../../../constants/genericServerErrorMessages';
 import '../../../i18n';
+
+jest.mock('axios', () => ({
+  __esModule: true,
+  default: {
+    get: jest.fn(() => Promise.resolve({ data: {} })),
+    post: jest.fn(() => Promise.resolve({ data: {} })),
+    put: jest.fn(() => Promise.resolve({ data: {} })),
+    delete: jest.fn(() => Promise.resolve({ data: {} })),
+    create: jest.fn(() => ({
+      get: jest.fn(() => Promise.resolve({ data: {} })),
+      post: jest.fn(() => Promise.resolve({ data: {} })),
+      interceptors: { request: { use: jest.fn() }, response: { use: jest.fn() } }
+    })),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() }
+    }
+  }
+}));
 
 jest.mock('../../../utils/ajax', () => {
   const actual = jest.requireActual('../../../utils/ajax');
@@ -41,6 +60,10 @@ jest.mock('../../../utils/commonCodeApi', () => ({
   getCommonCodes: jest.fn().mockResolvedValue([])
 }));
 
+jest.mock('../../../utils/menuApi', () => ({
+  getLnbMenus: jest.fn().mockResolvedValue([])
+}));
+
 jest.mock('../../../utils/sessionManager', () => ({
   sessionManager: {
     getUser: () => ({ id: 'admin-test', tenantId: 'tenant-test', role: 'ADMIN' }),
@@ -58,8 +81,6 @@ beforeAll(() => {
   }
 });
 
-const COMPLIANT_PASSWORD = 'Aa1!qzxm';
-const NO_UPPERCASE_PASSWORD = 'abcd1234!';
 const DUPLICATE_MESSAGE = '이미 등록된 이메일입니다.';
 
 function renderPage() {
@@ -74,43 +95,24 @@ async function openCreateModal() {
   renderPage();
   const openButtons = await screen.findAllByRole('button', { name: '새 상담사 등록' });
   await userEvent.click(openButtons[0]);
-  const password = await screen.findByLabelText('비밀번호', {}, { timeout: 8000 });
-  expect(password).toBeInTheDocument();
+  expect(await screen.findByText(/화면에는 비밀번호를 표시하지 않습니다/, {}, { timeout: 8000 }))
+    .toBeInTheDocument();
+  expect(screen.queryByLabelText('비밀번호')).not.toBeInTheDocument();
 }
 
 function setField(element, value) {
   fireEvent.change(element, { target: { name: element.getAttribute('name'), value } });
 }
 
-describe('ConsultantComprehensiveManagement 비밀번호·서버 메시지', () => {
+describe('ConsultantComprehensiveManagement 임시 비밀번호·서버 메시지', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     apiGet.mockResolvedValue({ isDuplicate: false });
     apiPost.mockResolvedValue({ id: 'consultant-1', email: 'new@example.com', userId: 'new' });
   });
 
-  test('대문자 없는 비밀번호는 제출하지 않고 정책 안내를 표시한다', async() => {
+  test('비밀번호 없이 등록 요청을 보낸다', async() => {
     await openCreateModal();
-    setField(screen.getByLabelText('비밀번호'), NO_UPPERCASE_PASSWORD);
-    setField(screen.getByPlaceholderText('이름을 입력하세요'), '홍길동');
-    setField(screen.getByLabelText('이메일 *'), 'new@example.com');
-    fireEvent.click(document.querySelector('[data-action="email-duplicate-check"]'));
-    await screen.findByText('사용 가능한 이메일입니다.');
-
-    fireEvent.click(screen.getByRole('button', { name: '등록' }));
-
-    const alert = await screen.findByRole('alert');
-    expect(alert).toHaveClass('mg-v2-form-help--error');
-    expect(alert).toHaveTextContent('대문자');
-    expect(alert).toHaveTextContent('소문자');
-    expect(alert).toHaveTextContent('특수문자');
-    expect(screen.getByLabelText('비밀번호')).toHaveAttribute('aria-invalid', 'true');
-    expect(apiPost).not.toHaveBeenCalled();
-  });
-
-  test('빈 비밀번호는 정책 검사를 통과하고 등록 요청을 보낸다', async() => {
-    await openCreateModal();
-    setField(screen.getByLabelText('비밀번호'), '');
     setField(screen.getByPlaceholderText('이름을 입력하세요'), '홍길동');
     setField(screen.getByLabelText('이메일 *'), 'new@example.com');
     fireEvent.click(document.querySelector('[data-action="email-duplicate-check"]'));
@@ -122,7 +124,7 @@ describe('ConsultantComprehensiveManagement 비밀번호·서버 메시지', () 
       expect(apiPost).toHaveBeenCalled();
     });
     const payload = apiPost.mock.calls[0][1];
-    expect(payload.password).toBe('');
+    expect(payload.password).toBeUndefined();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
@@ -136,7 +138,6 @@ describe('ConsultantComprehensiveManagement 비밀번호·서버 메시지', () 
     window.addEventListener('showNotification', onNotice);
 
     await openCreateModal();
-    setField(screen.getByLabelText('비밀번호'), COMPLIANT_PASSWORD);
     setField(screen.getByPlaceholderText('이름을 입력하세요'), '홍길동');
     setField(screen.getByLabelText('이메일 *'), 'new@example.com');
     fireEvent.click(document.querySelector('[data-action="email-duplicate-check"]'));
@@ -166,7 +167,6 @@ describe('ConsultantComprehensiveManagement 비밀번호·서버 메시지', () 
     window.addEventListener('showNotification', onNotice);
 
     await openCreateModal();
-    setField(screen.getByLabelText('비밀번호'), COMPLIANT_PASSWORD);
     setField(screen.getByPlaceholderText('이름을 입력하세요'), '홍길동');
     setField(screen.getByLabelText('이메일 *'), 'new@example.com');
     fireEvent.click(document.querySelector('[data-action="email-duplicate-check"]'));

@@ -1,0 +1,62 @@
+/**
+ * 담당 선생님 색 점 — 토큰만 사용 (hex/px 금지).
+ */
+
+.mg-v2-teacher-dot {
+  display: inline-block;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  inline-size: var(--mg-v2-teacher-dot-size);
+  block-size: var(--mg-v2-teacher-dot-size);
+  min-inline-size: var(--mg-v2-teacher-dot-size);
+  min-block-size: var(--mg-v2-teacher-dot-size);
+  border-radius: var(--mg-v2-radius-pill);
+  align-self: center;
+  /* 칩 바탕 대비 링 */
+  box-shadow: 0 0 0 var(--mg-v2-teacher-dot-ring)
+    var(--mg-month-event-surface, var(--mg-v2-color-surface-card));
+}
+
+.mg-v2-teacher-dot--solid {
+  background-color: var(--mg-v2-teacher-dot-color);
+  border: none;
+}
+
+.mg-v2-teacher-dot--hollow {
+  background-color: transparent;
+  border-style: solid;
+  border-width: var(--mg-v2-teacher-dot-hollow-border);
+  border-color: var(--mg-v2-teacher-dot-color);
+}
+
+.mg-v2-teacher-dot--palette-1 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-1);
+}
+
+.mg-v2-teacher-dot--palette-2 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-2);
+}
+
+.mg-v2-teacher-dot--palette-3 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-3);
+}
+
+.mg-v2-teacher-dot--palette-4 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-4);
+}
+
+.mg-v2-teacher-dot--palette-5 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-5);
+}
+
+.mg-v2-teacher-dot--palette-6 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-6);
+}
+
+.mg-v2-teacher-dot--palette-7 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-7);
+}
+
+.mg-v2-teacher-dot--palette-8 {
+  --mg-v2-teacher-dot-color: var(--mg-v2-teacher-8);
+}

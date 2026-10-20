@@ -1,11 +1,16 @@
 package com.coresolution.consultation.config;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.filter.TenantContextFilter;
+import com.coresolution.core.util.TenantHostSubdomainUtil;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
+import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -163,10 +168,10 @@ public class SecurityConfig {
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
-                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
-                    // 공통코드 API는 허용 (온보딩에서 사용)
-                    .requestMatchers("/api/common-codes/**").permitAll()
-                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, AccountIntegrationApiPaths.PUBLIC_SEND_VERIFICATION_CODE,
+                        AccountIntegrationApiPaths.PUBLIC_VERIFY_CODE, AccountIntegrationApiPaths.PUBLIC_INTEGRATE).permitAll()
+                    // 공통코드: 비로그인 GET 은 화이트리스트 그룹(PublicApiPathPolicy)만. 그 외 조회·쓰기는 anyRequest 인증 + 컨트롤러 권한 가드
+                    .requestMatchers(new PublicCommonCodeRequestMatcher()).permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
                     // 표준화 원칙: 온보딩 프로세스는 로그인 전 접근이 필요하므로 공개 API로 설정
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
@@ -247,7 +252,9 @@ public class SecurityConfig {
         } else {
             // 개발 환경: 편의성 우선 (운영 환경과 분리)
             http
-                // CSRF 비활성화 (개발 편의성)
+                // CSRF 비활성화 (개발 편의성).
+                // 별칭 호스트(tenant.host-aliases) 로그인 POST 는 CORS origin 허용이 게이트이며
+                // CSRF 검사가 아니다. 운영 프로필 CSRF 정책은 변경하지 않는다.
                 .csrf(csrf -> csrf.disable())
                 
                 // 세션 관리 활성화 (매칭 생성 등을 위해)
@@ -307,9 +314,10 @@ public class SecurityConfig {
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)
                     .requestMatchers("/api/v1/payments/webhooks/**").permitAll()
                     // 계정 통합 API는 허용 (온보딩 이메일 인증 등)
-                    .requestMatchers("/api/v1/accounts/integration/**").permitAll()
-                    // 공통코드 API는 허용 (온보딩에서 사용)
-                    .requestMatchers("/api/v1/common-codes/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, AccountIntegrationApiPaths.PUBLIC_SEND_VERIFICATION_CODE,
+                        AccountIntegrationApiPaths.PUBLIC_VERIFY_CODE, AccountIntegrationApiPaths.PUBLIC_INTEGRATE).permitAll()
+                    // 공통코드: 비로그인 GET 은 화이트리스트 그룹(PublicApiPathPolicy)만. 그 외 조회·쓰기는 anyRequest 인증 + 컨트롤러 권한 가드
+                    .requestMatchers(new PublicCommonCodeRequestMatcher()).permitAll()
                     // 업종 카테고리 API는 허용 (온보딩에서 사용)
                     .requestMatchers("/api/v1/business-categories/**").permitAll()
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
@@ -391,7 +399,7 @@ public class SecurityConfig {
             // 재무 거래 DELETE만 CSRF 제외(SPA가 axios DELETE 시 헤더 미포함 등). v1 실제 경로와 레거시 경로 모두.
             new AntPathRequestMatcher("/api/erp/finance/transactions/**", HttpMethod.DELETE.name()),
             new AntPathRequestMatcher("/api/v1/erp/finance/transactions/**", HttpMethod.DELETE.name()),
-            new AntPathRequestMatcher("/api/v1/accounts/integration/**"),
+            new AntPathRequestMatcher(AccountIntegrationApiPaths.BASE + "/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
@@ -446,10 +454,13 @@ public class SecurityConfig {
         log.info("🔧 isLocal: {}, isDev: {}, isProd: {}", isLocal, isDev, isProd);
         
         if (isProd) {
-            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 + 서브도메인 허용");
-            // 운영: 실제 운영 도메인들 + 서브도메인 패턴
+            log.info("🌐 CORS 설정: 운영 환경 - 프로덕션 도메인 + 서브도메인 허용 (비운영 호스트 제외)");
+            // 운영: 와일드카드 *.core-solution.co.kr 는 mindgarden-dev / *.dev.core-solution 에도 매칭되므로
+            // TenantHostSubdomainUtil 로 비운영 Origin 을 checkOrigin 단계에서 거부한다.
+            // (Spring OriginPattern 만으로는 부정 매칭이 어렵다.)
+            configuration = createProductionCorsConfiguration();
             configuration.setAllowedOriginPatterns(Arrays.asList(
-                "https://*.core-solution.co.kr",  // 서브도메인 패턴
+                "https://*.core-solution.co.kr",  // 서브도메인 패턴 (비운영은 checkOrigin 에서 제외)
                 "http://*.core-solution.co.kr",
                 "https://core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
                 "http://core-solution.co.kr",
@@ -457,20 +468,20 @@ public class SecurityConfig {
                 "http://*.e-trinity.co.kr",
                 "https://e-trinity.co.kr",        // apex (와일드카드 *.e-trinity.co.kr 미매칭)
                 "http://e-trinity.co.kr",
-                "https://apply.e-trinity.co.kr", 
+                "https://apply.e-trinity.co.kr",
                 "http://apply.e-trinity.co.kr",
-                "https://ops.e-trinity.co.kr", 
+                "https://ops.e-trinity.co.kr",
                 "http://ops.e-trinity.co.kr"
             ));
         } else if (isDev) {
             log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
             // 개발: 실제 개발 도메인들 + 서브도메인 패턴 + localhost
             // 서브도메인 패턴 사용 (예: *.dev.core-solution.co.kr, *.dev.e-trinity.co.kr 등)
-            configuration.setAllowedOriginPatterns(Arrays.asList(
+            List<String> devOriginPatterns = new ArrayList<>(Arrays.asList(
                 "https://*.dev.core-solution.co.kr",  // 서브도메인 패턴 (mindgarden.dev.core-solution.co.kr 등)
                 "http://*.dev.core-solution.co.kr",
                 "https://dev.core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
-                "http://dev.core-solution.co.kr", 
+                "http://dev.core-solution.co.kr",
                 "https://*.dev.e-trinity.co.kr",
                 "http://*.dev.e-trinity.co.kr",
                 "https://dev.e-trinity.co.kr",        // apex (와일드카드 *.dev.e-trinity.co.kr 미매칭)
@@ -479,10 +490,18 @@ public class SecurityConfig {
                 "http://apply.dev.e-trinity.co.kr",
                 "https://ops.dev.e-trinity.co.kr",
                 "http://ops.dev.e-trinity.co.kr",
-                "http://localhost:3000", 
+                "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:4300"  // Ops Portal 프론트엔드
             ));
+            // Cloudflare 프록시 별칭: tenant.host-aliases / TENANT_HOST_ALIASES (yml 기본값 포함)
+            // — CORS_ALLOWED_ORIGINS 가 비어 있어도 별칭 호스트를 exact origin 으로 합류.
+            // Spring Environment 프로퍼티를 직접 읽어 TenantHostAliasesInitializer PostConstruct 레이스를 피한다.
+            mergeTenantHostAliasOriginsFromEnvironment(devOriginPatterns);
+            // 선택적 추가 exact origin (CORS_ALLOWED_ORIGINS)
+            mergeCorsAllowedOriginsFromEnv(devOriginPatterns);
+            configuration.setAllowedOriginPatterns(devOriginPatterns);
+            log.info("🌐 CORS 허용 OriginPatterns (dev): {}", devOriginPatterns);
         } else {
             // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
             log.info("🌐 CORS 설정: 로컬 환경 - localhost 허용");
@@ -575,6 +594,111 @@ public class SecurityConfig {
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
+    }
+
+    /**
+     * 운영 CORS — {@link CorsConfiguration#checkOrigin(String)} 에서
+     * {@link TenantHostSubdomainUtil#isNonProductionOrigin(String)} 비운영 Origin 을 거부한다.
+     * {@code https://*.core-solution.co.kr} 패턴이 {@code *-dev}·{@code *.dev.core-solution.co.kr} 에도
+     * 매칭되는 것을 막는다. e-trinity 등 다른 도메인은 util 이 false 를 반환하므로 기존 pattern 을 따른다.
+     *
+     * @return 운영용 CorsConfiguration
+     */
+    static CorsConfiguration createProductionCorsConfiguration() {
+        return new CorsConfiguration() {
+            @Override
+            public String checkOrigin(String requestOrigin) {
+                if (requestOrigin == null || requestOrigin.isBlank()) {
+                    return null;
+                }
+                if (TenantHostSubdomainUtil.isNonProductionOrigin(requestOrigin)) {
+                    return null;
+                }
+                return super.checkOrigin(requestOrigin);
+            }
+        };
+    }
+
+    /**
+     * {@code tenant.host-aliases}(또는 {@code TENANT_HOST_ALIASES})에서 호스트를 읽어
+     * CORS 허용 목록에 {@code https://}/{@code http://} exact origin 으로 합친다.
+     * Spring 이 yml 기본값을 해석한 프로퍼티를 쓰므로 env 미설정·재시작 후에도 별칭이 반영된다.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     */
+    private void mergeTenantHostAliasOriginsFromEnvironment(List<String> target) {
+        String raw = environment.getProperty("tenant.host-aliases");
+        if (raw == null || raw.isBlank()) {
+            raw = environment.getProperty("TENANT_HOST_ALIASES");
+        }
+        Set<String> hosts = TenantHostSubdomainUtil.parseHostAliases(raw).keySet();
+        int added = mergeTenantHostAliasOrigins(target, raw);
+        log.info("🌐 CORS tenant.host-aliases 합류: added={}, hosts={}", added, hosts);
+    }
+
+    /**
+     * {@code host:subdomain[,...]} 별칭 문자열의 hostname 을 CORS exact origin 으로 합친다.
+     * 단위 테스트·패키지 내 재사용용. 시크릿이 아닌 hostname 만 다룬다.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     * @param rawAliases {@code TENANT_HOST_ALIASES} / {@code tenant.host-aliases} 원문
+     * @return 새로 추가된 origin 개수
+     */
+    static int mergeTenantHostAliasOrigins(List<String> target, String rawAliases) {
+        if (target == null) {
+            return 0;
+        }
+        Map<String, String> aliases = TenantHostSubdomainUtil.parseHostAliases(rawAliases);
+        if (aliases.isEmpty()) {
+            return 0;
+        }
+        int added = 0;
+        for (String host : aliases.keySet()) {
+            if (host == null || host.isBlank()) {
+                continue;
+            }
+            String httpsOrigin = "https://" + host;
+            String httpOrigin = "http://" + host;
+            if (!target.contains(httpsOrigin)) {
+                target.add(httpsOrigin);
+                added++;
+            }
+            if (!target.contains(httpOrigin)) {
+                target.add(httpOrigin);
+                added++;
+            }
+        }
+        return added;
+    }
+
+    /**
+     * {@code CORS_ALLOWED_ORIGINS}(쉼표 구분 exact origin)를 허용 목록에 합친다.
+     * Spring Environment 우선, 없으면 프로세스 환경변수. 선택적 추가분이며
+     * 별칭 CORS 의 SSOT 는 {@link #mergeTenantHostAliasOriginsFromEnvironment}.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     */
+    private void mergeCorsAllowedOriginsFromEnv(List<String> target) {
+        if (target == null) {
+            return;
+        }
+        String raw = environment.getProperty("CORS_ALLOWED_ORIGINS");
+        if (raw == null || raw.isBlank()) {
+            raw = System.getenv("CORS_ALLOWED_ORIGINS");
+        }
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String part : raw.split(",")) {
+            if (part == null) {
+                continue;
+            }
+            String origin = part.trim();
+            if (origin.isEmpty() || target.contains(origin)) {
+                continue;
+            }
+            target.add(origin);
+        }
     }
     
     // 비밀번호 인코더는 PasswordPolicyConfig에서 관리

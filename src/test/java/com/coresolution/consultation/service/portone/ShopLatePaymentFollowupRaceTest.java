@@ -13,13 +13,10 @@ import static org.mockito.Mockito.when;
 
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import com.coresolution.consultation.constant.ShopCheckoutConstants;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
@@ -73,8 +70,7 @@ import org.springframework.transaction.annotation.Transactional;
 class ShopLatePaymentFollowupRaceTest {
 
     private static final String STORE_ID = "store-late-followup";
-    private static final String WEBHOOK_SECRET = "whsec_late_followup_secret";
-    private static final String TIMESTAMP = "1700000000";
+    private static final String WEBHOOK_SECRET = PortOneWebhookTestSignatures.secretForLabel("late-followup");
     private static final String TENANT_ID = "tenant-late-followup";
     private static final String ORDER_PUBLIC_ID = "ord-late-followup-1";
     private static final String PAYMENT_ID = "pay-late-followup-1";
@@ -99,6 +95,8 @@ class ShopLatePaymentFollowupRaceTest {
     private ClientPointWalletService clientPointWalletService;
     @Mock
     private PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    @Mock
+    private PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     @Mock
     private PortOneV2PaymentCancelService portOneV2PaymentCancelService;
     @Mock
@@ -131,9 +129,20 @@ class ShopLatePaymentFollowupRaceTest {
                 encryptionService,
                 tenantPgConfigurationRepository,
                 paymentRepository,
+                shopClientOrderRepository,
                 paymentService,
                 clientShopCheckoutService,
-                guard);
+                guard,
+                portOneV2PaymentVerifyService,
+                portOneVerifyUnknownRetryTracker,
+                PortOneWebhookTestSignatures.properties());
+        lenient().when(portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(anyString(), anyString()))
+                .thenReturn(PortOneVerifyUnknownRetryOutcome.RETRYABLE);
+        lenient().when(portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        eq(TENANT_ID), eq(PAYMENT_ID), any(ShopClientOrder.class)))
+                .thenReturn(PortOneShopPaidMatch.match(
+                        "{\"status\":\"PAID\",\"amount\":{\"total\":15000,\"paid\":15000,\"currency\":\"KRW\"}}",
+                        java.math.BigDecimal.valueOf(15_000L)));
         cancelService = new ClientShopPaymentCancelServiceImpl(
                 shopClientOrderRepository,
                 shopClientOrderLineRepository,
@@ -378,17 +387,11 @@ class ShopLatePaymentFollowupRaceTest {
                 + "\"storeId\":\"" + STORE_ID + "\","
                 + "\"paymentId\":\"" + PAYMENT_ID + "\""
                 + "}}";
+        String timestamp = PortOneWebhookTestSignatures.currentTimestamp();
         return webhookService.handleWebhook(
                 rawBody.getBytes(StandardCharsets.UTF_8),
-                TIMESTAMP,
-                v1Signature(WEBHOOK_SECRET, TIMESTAMP, rawBody),
+                timestamp,
+                PortOneWebhookTestSignatures.v1(WEBHOOK_SECRET, webhookId, timestamp, rawBody),
                 webhookId);
-    }
-
-    private static String v1Signature(String secret, String timestamp, String body) throws Exception {
-        Mac mac = Mac.getInstance("HmacSHA256");
-        mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-        byte[] digest = mac.doFinal((timestamp + "." + body).getBytes(StandardCharsets.UTF_8));
-        return "v1," + Base64.getEncoder().encodeToString(digest);
     }
 }

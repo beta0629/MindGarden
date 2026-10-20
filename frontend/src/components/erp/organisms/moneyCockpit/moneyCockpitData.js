@@ -14,12 +14,12 @@
  */
 
 import {
-  OFD_CATEGORY_LABELS,
   OFD_FACTS,
   OFD_HERO,
   OFD_LEDGER,
   OFD_MAPPING_ENTITY,
   OFD_MIX_CATEGORY,
+  OFD_OUTFLOW_CONSULTATION_REFUND_LABEL,
   OFD_REFUND_SUBCATEGORIES,
   OFD_SALARY_CHECKLIST,
   OFD_SALARY_PAID_STATUS,
@@ -33,6 +33,7 @@ import {
   SALARY_TYPE
 } from '../../../../constants/salaryConstants';
 import { FINANCIAL_CARD_MERCHANT_FEE_LABEL } from '../../../../utils/erpFinancialAmountStack';
+import { resolveCategoryCodeDisplayLabel } from '../../../../utils/financialTransactionCategoryPicker';
 import { toSafeNumber } from '../../../../utils/safeDisplay';
 import {
   sumPendingPaymentAmount,
@@ -97,11 +98,45 @@ const RENT_UTILITY_CATEGORY_ALIASES = new Set([
   '관리비'
 ]);
 
-/** 나간 곳 세금·식대 별칭 (other 합산 시 정규화) */
+/** 나간 곳 세금·식대 별칭 */
 const TAX_CATEGORY_ALIASES = new Set(['TAX', '세금']);
 const MEAL_CATEGORY_ALIASES = new Set(['MEAL', '식대']);
 
-const OUTFLOW_KNOWN_KEYS = new Set([
+/** BE OperatorFinanceAggregation.CATEGORY_CARD_MERCHANT_FEE */
+const CARD_MERCHANT_FEE_CATEGORY_KEY = 'CARD_MERCHANT_FEE';
+
+/**
+ * BE FinancialTransaction.TransactionType.
+ * 장부 mix 폴백은 이 코드로만 수입·지출을 가른다.
+ */
+export const FINANCE_TX_TYPE = Object.freeze({
+  INCOME: 'INCOME',
+  EXPENSE: 'EXPENSE'
+});
+
+/**
+ * BE FinancialTransaction.TransactionStatus.
+ * 운영 재무 숫자는 COMPLETED 만 집계한다 (OperatorFinanceAggregation.COUNTABLE_STATUSES).
+ */
+export const FINANCE_TX_STATUS = Object.freeze({
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
+});
+
+/** @type {string} */
+export const FINANCE_COUNTABLE_TX_STATUS = FINANCE_TX_STATUS.COMPLETED;
+
+/** FINANCE_DASHBOARD 카테고리 맵 필드 (레거시 categoryBreakdown 과 구분) */
+const FINANCE_DASHBOARD_BREAKDOWN_FIELD = Object.freeze({
+  INCOME: 'incomeCategoryBreakdown',
+  EXPENSE: 'expenseCategoryBreakdown'
+});
+
+/** 수입 mix에서 제외할 지출 전용 키 (레거시 혼합 breakdown 방어) */
+const EXPENSE_ONLY_CATEGORY_KEYS = new Set([
   'SALARY',
   '급여',
   'RENT',
@@ -113,9 +148,24 @@ const OUTFLOW_KNOWN_KEYS = new Set([
   '세금',
   'MEAL',
   '식대',
+  'EQUIPMENT',
+  'OFFICE_SUPPLIES',
+  CARD_MERCHANT_FEE_CATEGORY_KEY,
   'CONSULTATION_REFUND',
   ...OFD_REFUND_SUBCATEGORIES
 ]);
+
+/** 별칭 병합 후 개별 표시에서 제외하는 키 */
+const OUTFLOW_MERGED_ALIAS_KEYS = new Set([
+  ...SALARY_CATEGORY_ALIASES,
+  ...RENT_UTILITY_CATEGORY_ALIASES,
+  'CONSULTATION_REFUND',
+  ...OFD_REFUND_SUBCATEGORIES,
+  CARD_MERCHANT_FEE_CATEGORY_KEY
+]);
+
+/** 장부 캡션에서 posted가 아닌 상태. null·공백 status는 posted로 본다. */
+const LEDGER_NON_POSTED_STATUSES = new Set(['CANCELLED', 'REJECTED']);
 
 /**
  * FINANCE_DASHBOARD 응답에서 summary·transactions·categoryBreakdown 추출
@@ -265,13 +315,25 @@ function hasBreakdownKey(map, key) {
 }
 
 /**
+ * 상담료 계열(수입 별칭·결제수단-as-category) 키 여부.
+ * @param {string} key
+ * @returns {boolean}
+ */
+function isConsultationCategoryAliasKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return false;
+  return CONSULTATION_CATEGORY_ALIASES.has(raw)
+    || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase());
+}
+
+/**
  * @param {string} key
  * @returns {boolean}
  */
 function isIncomeCategoryKey(key) {
   const raw = String(key || '').trim();
   if (!raw) return false;
-  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+  if (isConsultationCategoryAliasKey(raw)) {
     return true;
   }
   const upper = raw.toUpperCase();
@@ -287,7 +349,7 @@ function isIncomeCategoryKey(key) {
 function canonicalizeIncomeCategoryKey(key) {
   const raw = String(key || '').trim();
   if (!raw) return '';
-  if (CONSULTATION_CATEGORY_ALIASES.has(raw) || CONSULTATION_CATEGORY_ALIASES.has(raw.toUpperCase())) {
+  if (isConsultationCategoryAliasKey(raw)) {
     return INCOME_CONSULTATION_CANONICAL;
   }
   return raw.toUpperCase();
@@ -351,22 +413,27 @@ function sumBreakdownAliases(map, aliases) {
 }
 
 /**
+ * 표시 라벨만 — 합산/별칭 키 로직은 canonicalize* 를 건드리지 않는다.
+ * 공통코드 행이 있으면 resolveCategoryCodeDisplayLabel 우선.
+ *
  * @param {string} key
+ * @param {Array<object>|null|undefined} [categoryRows] EXPENSE/INCOME 공통코드 행 또는 {value,label}
  * @returns {string}
  */
-export function resolveCategoryLabel(key) {
-  const canonical = canonicalizeIncomeCategoryKey(key);
-  if (OFD_CATEGORY_LABELS[canonical]) {
-    return OFD_CATEGORY_LABELS[canonical];
-  }
+export function resolveCategoryLabel(key, categoryRows) {
   const upper = String(key || '').toUpperCase();
-  if (OFD_CATEGORY_LABELS[upper]) {
-    return OFD_CATEGORY_LABELS[upper];
-  }
   if (OFD_REFUND_SUBCATEGORIES.includes(upper)) {
     return OFD_MIX_CATEGORY.REFUND;
   }
-  return key ? String(key) : OFD_MIX_CATEGORY.OTHER;
+  const canonical = canonicalizeIncomeCategoryKey(key);
+  if (!canonical && !key) {
+    return OFD_MIX_CATEGORY.OTHER;
+  }
+  const resolved = resolveCategoryCodeDisplayLabel(canonical || key, categoryRows);
+  if (resolved === '-') {
+    return OFD_MIX_CATEGORY.OTHER;
+  }
+  return resolved;
 }
 
 /**
@@ -379,72 +446,179 @@ function readTxCategoryKey(tx) {
 }
 
 /**
- * 나간 곳 mix — payload 키 또는 지출 tx에서 관측된 카테고리만. 0원이어도 표시.
+ * breakdown 값 합 (카드 total === sum(items) 불변식용).
+ * @param {Record<string, number>|null|undefined} map
+ * @returns {number}
+ */
+export function sumBreakdownValues(map) {
+  if (!map || typeof map !== 'object') {
+    return 0;
+  }
+  return Object.keys(map).reduce((sum, key) => sum + toSafeNumber(map[key]), 0);
+}
+
+/**
+ * 장부 posted 행. 없으면 false.
+ * status가 null·undefined·공백이면 posted. CANCELLED·REJECTED(대소문자 무시)는 제외.
+ * @param {object|null|undefined} tx
+ * @returns {boolean}
+ */
+export function isPostedLedgerTransaction(tx) {
+  if (!tx) {
+    return false;
+  }
+  const rawStatus = tx.status;
+  if (rawStatus == null) {
+    return true;
+  }
+  const trimmed = String(rawStatus).trim();
+  if (trimmed === '') {
+    return true;
+  }
+  return !LEDGER_NON_POSTED_STATUSES.has(trimmed.toUpperCase());
+}
+
+/**
+ * 나간 곳 mix — 서버 expenseCategoryBreakdown 을 SSOT로 쓴다.
+ * 별칭(급여·임대·관리·환불 서브카테고리)만 표시용 병합하고, 나머지 카테고리는 키별 항목으로 전부 표시.
+ * 지출 breakdown 의 상담료 계열은 수입 별칭으로 거르지 않고 `환불(상담료)` 항목으로 표시.
+ * 카드 수수료는 breakdown 키 우선, 없으면 INCOME tx fee 합(레거시).
+ * options.periodRefundAmount 가 유한 숫자면 환불 버킷은 그 금액만 쓴다(0이면 환불 항목 없음).
+ * options.categoryRows 는 표시 라벨용 공통코드 행(합산 키 불변).
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
+ * @param {{ periodRefundAmount?: number, categoryRows?: Array<object> }} [options]
  * @returns {Array<{ id: string, label: string, amount: number }>}
  */
-export function buildOutflowMixItems(categoryBreakdown, transactions) {
+export function buildOutflowMixItems(categoryBreakdown, transactions, options = {}) {
   const breakdown = categoryBreakdown || {};
   const items = [];
   const txList = Array.isArray(transactions) ? transactions : [];
+  const breakdownKeys = Object.keys(breakdown);
+  const periodRefundAmount = options?.periodRefundAmount;
+  const hasPeriodRefundAmount = Number.isFinite(periodRefundAmount);
+  const categoryRows = options?.categoryRows;
 
+  if (breakdownKeys.length > 0) {
+    const salaryPresent = hasAnyBreakdownAlias(breakdown, SALARY_CATEGORY_ALIASES);
+    if (salaryPresent) {
+      items.push({
+        id: 'salary',
+        label: OFD_MIX_CATEGORY.SALARY,
+        amount: sumBreakdownAliases(breakdown, SALARY_CATEGORY_ALIASES)
+      });
+    }
+
+    const rentPresent = hasAnyBreakdownAlias(breakdown, RENT_UTILITY_CATEGORY_ALIASES);
+    if (rentPresent) {
+      items.push({
+        id: 'rentUtility',
+        label: OFD_MIX_CATEGORY.RENT_UTILITY,
+        amount: sumBreakdownAliases(breakdown, RENT_UTILITY_CATEGORY_ALIASES)
+      });
+    }
+
+    if (hasPeriodRefundAmount) {
+      if (periodRefundAmount !== 0) {
+        items.push({
+          id: 'refund',
+          label: OFD_MIX_CATEGORY.REFUND,
+          amount: periodRefundAmount
+        });
+      }
+    } else {
+      const refundKeyPresent =
+        hasBreakdownKey(breakdown, 'CONSULTATION_REFUND')
+        || OFD_REFUND_SUBCATEGORIES.some((k) => hasBreakdownKey(breakdown, k));
+      if (refundKeyPresent) {
+        let refundAmount = toSafeNumber(breakdown.CONSULTATION_REFUND);
+        OFD_REFUND_SUBCATEGORIES.forEach((k) => {
+          if (k !== 'CONSULTATION_REFUND') {
+            refundAmount += toSafeNumber(breakdown[k]);
+          }
+        });
+        items.push({
+          id: 'refund',
+          label: OFD_MIX_CATEGORY.REFUND,
+          amount: refundAmount
+        });
+      }
+    }
+
+    if (hasBreakdownKey(breakdown, CARD_MERCHANT_FEE_CATEGORY_KEY)) {
+      items.push({
+        id: 'cardMerchantFee',
+        label: FINANCIAL_CARD_MERCHANT_FEE_LABEL,
+        amount: toSafeNumber(breakdown[CARD_MERCHANT_FEE_CATEGORY_KEY])
+      });
+    }
+
+    const remainingCanonical = {};
+    breakdownKeys.forEach((key) => {
+      const raw = String(key).trim();
+      if (!raw) return;
+      if (OUTFLOW_MERGED_ALIAS_KEYS.has(raw) || OUTFLOW_MERGED_ALIAS_KEYS.has(raw.toUpperCase())) {
+        return;
+      }
+      // 지출 breakdown 키는 수입 별칭으로 버리지 않음(상담료 환불 누락 방지)
+      const canonical = isConsultationCategoryAliasKey(raw)
+        ? INCOME_CONSULTATION_CANONICAL
+        : (canonicalizeOutflowCategoryKey(raw) || raw.toUpperCase());
+      remainingCanonical[canonical] =
+        (remainingCanonical[canonical] || 0) + toSafeNumber(breakdown[key]);
+    });
+    Object.keys(remainingCanonical).forEach((canonical) => {
+      items.push({
+        id: `expense-${String(canonical).toLowerCase()}`,
+        label: resolveOutflowCategoryLabel(canonical, categoryRows),
+        amount: remainingCanonical[canonical]
+      });
+    });
+
+    return items;
+  }
+
+  // breakdown 비어 있을 때만 tx 관측 폴백 (레거시)
   const observedExpenseCats = new Set();
   txList.forEach((tx) => {
     if (isIncomeTransaction(tx)) return;
     const key = String(tx?.category ?? tx?.subcategory ?? tx?.subCategory ?? '').trim();
     if (key) observedExpenseCats.add(key);
   });
-
   const observedCanonical = new Set(
     [...observedExpenseCats].map((k) => canonicalizeOutflowCategoryKey(k)).filter(Boolean)
   );
-
-  const salaryPresent =
-    hasAnyBreakdownAlias(breakdown, SALARY_CATEGORY_ALIASES)
-    || observedCanonical.has('SALARY');
-  if (salaryPresent) {
-    items.push({
-      id: 'salary',
-      label: OFD_MIX_CATEGORY.SALARY,
-      amount: sumBreakdownAliases(breakdown, SALARY_CATEGORY_ALIASES)
-    });
+  if (observedCanonical.has('SALARY')) {
+    items.push({ id: 'salary', label: OFD_MIX_CATEGORY.SALARY, amount: 0 });
   }
-
-  const rentPresent =
-    hasAnyBreakdownAlias(breakdown, RENT_UTILITY_CATEGORY_ALIASES)
-    || observedCanonical.has('RENT')
-    || observedCanonical.has('UTILITY');
-  if (rentPresent) {
-    items.push({
-      id: 'rentUtility',
-      label: OFD_MIX_CATEGORY.RENT_UTILITY,
-      amount: sumBreakdownAliases(breakdown, RENT_UTILITY_CATEGORY_ALIASES)
-    });
+  if (observedCanonical.has('RENT') || observedCanonical.has('UTILITY')) {
+    items.push({ id: 'rentUtility', label: OFD_MIX_CATEGORY.RENT_UTILITY, amount: 0 });
   }
-
-  const refundKeyPresent =
-    hasBreakdownKey(breakdown, 'CONSULTATION_REFUND')
-    || OFD_REFUND_SUBCATEGORIES.some((k) => hasBreakdownKey(breakdown, k));
-  const refundObservedInTx = txList.some((tx) => {
-    const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
-    const cat = String(tx?.category ?? '').toUpperCase();
-    return (
-      OFD_REFUND_SUBCATEGORIES.includes(sub)
-      || OFD_REFUND_SUBCATEGORIES.includes(cat)
-    );
-  });
-  if (refundKeyPresent || refundObservedInTx) {
-    const refundFromTx = sumRefundFromTransactions(txList);
-    const refundFromBreakdown = toSafeNumber(breakdown.CONSULTATION_REFUND);
-    const amount = refundObservedInTx ? refundFromTx : refundFromBreakdown;
-    items.push({
-      id: 'refund',
-      label: OFD_MIX_CATEGORY.REFUND,
-      amount
+  if (hasPeriodRefundAmount) {
+    if (periodRefundAmount !== 0) {
+      items.push({
+        id: 'refund',
+        label: OFD_MIX_CATEGORY.REFUND,
+        amount: periodRefundAmount
+      });
+    }
+  } else {
+    const refundObservedInTx = txList.some((tx) => {
+      if (!isPostedLedgerTransaction(tx)) {
+        return false;
+      }
+      const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
+      const cat = String(tx?.category ?? '').toUpperCase();
+      return OFD_REFUND_SUBCATEGORIES.includes(sub) || OFD_REFUND_SUBCATEGORIES.includes(cat);
     });
+    if (refundObservedInTx) {
+      items.push({
+        id: 'refund',
+        label: OFD_MIX_CATEGORY.REFUND,
+        amount: sumRefundFromTransactions(txList)
+      });
+    }
   }
-
   const cardFeeAmount = sumCardMerchantFeeFromTransactions(txList);
   if (cardFeeAmount > 0) {
     items.push({
@@ -453,44 +627,24 @@ export function buildOutflowMixItems(categoryBreakdown, transactions) {
       amount: cardFeeAmount
     });
   }
-
-  let other = 0;
-  let otherPresent = false;
-  const otherCanonicalAmounts = {};
-  Object.keys(breakdown).forEach((key) => {
-    const raw = String(key).trim();
-    const upper = raw.toUpperCase();
-    if (OUTFLOW_KNOWN_KEYS.has(raw) || OUTFLOW_KNOWN_KEYS.has(upper)) return;
-    if (isIncomeCategoryKey(raw) || isIncomeCategoryKey(upper)) return;
-    otherPresent = true;
-    const canonical = canonicalizeOutflowCategoryKey(raw) || upper;
-    otherCanonicalAmounts[canonical] = (otherCanonicalAmounts[canonical] || 0) + toSafeNumber(breakdown[key]);
-  });
-  Object.keys(otherCanonicalAmounts).forEach((k) => {
-    other += otherCanonicalAmounts[k];
-  });
-  observedExpenseCats.forEach((key) => {
-    const canonical = canonicalizeOutflowCategoryKey(key);
-    if (OUTFLOW_KNOWN_KEYS.has(key) || OUTFLOW_KNOWN_KEYS.has(key.toUpperCase())) return;
-    if (canonical === 'SALARY' || canonical === 'RENT' || canonical === 'UTILITY'
-      || canonical === 'TAX' || canonical === 'MEAL') {
-      return;
-    }
-    if (isIncomeCategoryKey(key)) return;
-    if (hasBreakdownKey(breakdown, key) || hasBreakdownKey(breakdown, key.toLowerCase())) {
-      return;
-    }
-    otherPresent = true;
-  });
-  if (otherPresent) {
-    items.push({
-      id: 'other',
-      label: OFD_MIX_CATEGORY.OTHER,
-      amount: other
-    });
-  }
-
   return items;
+}
+
+/**
+ * @param {string} key
+ * @param {Array<object>|null|undefined} [categoryRows]
+ * @returns {string}
+ */
+function resolveOutflowCategoryLabel(key, categoryRows) {
+  const raw = String(key || '').trim();
+  if (
+    isConsultationCategoryAliasKey(raw)
+    || raw === INCOME_CONSULTATION_CANONICAL
+  ) {
+    return OFD_OUTFLOW_CONSULTATION_REFUND_LABEL;
+  }
+  const canonical = canonicalizeOutflowCategoryKey(key);
+  return resolveCategoryLabel(canonical || key, categoryRows);
 }
 
 /**
@@ -509,52 +663,80 @@ export function sumCardMerchantFeeFromTransactions(transactions) {
 }
 
 /**
- * 들어온 곳 mix — payload 수입 키 또는 수입 tx 관측 카테고리만. 0원이어도 표시.
- * breakdown 우선(기간 합). 없으면 tx amount 합산. 상담료 계열은 canonical 하나로 병합.
+ * 들어온 곳 mix — 서버 incomeCategoryBreakdown 을 SSOT로 쓴다.
+ * 지출 전용 키만 제외(레거시 혼합 맵 방어). 상담료 계열은 canonical 하나로 병합.
+ * breakdown 이 비면 수입 tx 합산 폴백.
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
+ * @param {Array<object>|null|undefined} [categoryRows] 표시 라벨용 공통코드 행
  * @returns {Array<{ id: string, label: string, amount: number }>}
  */
-export function buildIncomeMixItems(categoryBreakdown, transactions) {
+export function buildIncomeMixItems(categoryBreakdown, transactions, categoryRows) {
   const breakdown = categoryBreakdown || {};
   const amounts = {};
   const fromBreakdown = new Set();
   const txList = Array.isArray(transactions) ? transactions : [];
+  const breakdownKeys = Object.keys(breakdown);
 
-  Object.keys(breakdown).forEach((key) => {
-    if (!isIncomeCategoryKey(key)) return;
+  breakdownKeys.forEach((key) => {
+    if (isExpenseOnlyCategoryKey(key)) return;
+    // 레거시 혼합: 알려진 수입 키이거나, income-only 맵의 동적 키
+    if (!isIncomeCategoryKey(key) && hasExpenseOnlySibling(breakdown)) {
+      return;
+    }
     const canonical = canonicalizeIncomeCategoryKey(key);
     if (!canonical) return;
     amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(breakdown[key]);
     fromBreakdown.add(canonical);
   });
 
-  txList.forEach((tx) => {
-    if (!isIncomeTransaction(tx)) return;
-    const rawKey = String(tx?.category ?? tx?.subcategory ?? tx?.subCategory ?? '').trim();
-    if (!rawKey) return;
-    const canonical = canonicalizeIncomeCategoryKey(rawKey);
-    if (!canonical) return;
-    // breakdown에서 이미 canonical 채움 → 이중 집계 금지
-    if (fromBreakdown.has(canonical)) return;
-    amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(tx?.amount);
-  });
+  if (fromBreakdown.size === 0) {
+    txList.forEach((tx) => {
+      if (!isIncomeTransaction(tx)) return;
+      const rawKey = String(tx?.category ?? tx?.subcategory ?? tx?.subCategory ?? '').trim();
+      if (!rawKey) return;
+      const canonical = canonicalizeIncomeCategoryKey(rawKey);
+      if (!canonical) return;
+      amounts[canonical] = (amounts[canonical] || 0) + toSafeNumber(tx?.amount);
+    });
+  }
 
   return Object.keys(amounts).map((key) => ({
     id: `income-${String(key).toLowerCase()}`,
-    label: resolveCategoryLabel(key),
+    label: resolveCategoryLabel(key, categoryRows),
     amount: toSafeNumber(amounts[key])
   }));
+}
+
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
+function isExpenseOnlyCategoryKey(key) {
+  const raw = String(key || '').trim();
+  if (!raw) return false;
+  return EXPENSE_ONLY_CATEGORY_KEYS.has(raw) || EXPENSE_ONLY_CATEGORY_KEYS.has(raw.toUpperCase());
+}
+
+/**
+ * 혼합 breakdown 에 지출 키가 같이 있는지 (income-only 맵이면 false).
+ * @param {Record<string, number>} map
+ * @returns {boolean}
+ */
+function hasExpenseOnlySibling(map) {
+  if (!map) return false;
+  return Object.keys(map).some((key) => isExpenseOnlyCategoryKey(key));
 }
 
 /**
  * 수입 top caption — 예: `상담료 1,200,000원`. 없으면 빈 문자열.
  * @param {Record<string, number>} categoryBreakdown
  * @param {Array<object>} transactions
+ * @param {Array<object>|null|undefined} [categoryRows]
  * @returns {string}
  */
-export function buildTopIncomeCaption(categoryBreakdown, transactions) {
-  const items = buildIncomeMixItems(categoryBreakdown, transactions);
+export function buildTopIncomeCaption(categoryBreakdown, transactions, categoryRows) {
+  const items = buildIncomeMixItems(categoryBreakdown, transactions, categoryRows);
   if (!items.length) return '';
   const top = items.reduce((best, item) => (
     toSafeNumber(item.amount) > toSafeNumber(best.amount) ? item : best
@@ -575,6 +757,165 @@ export function buildTopExpenseCaption(expenseMixItems) {
     toSafeNumber(item.amount) > toSafeNumber(best.amount) ? item : best
   ), expenseMixItems[0]);
   return `${top.label} ${formatWonDisplay(top.amount)}`;
+}
+
+/**
+ * FINANCE_DASHBOARD 본문에서 financialData 노드를 찾는다.
+ * StandardizedApi 언랩({ financialData })과 래퍼({ data: { financialData } }) 모두 허용.
+ * @param {unknown} raw
+ * @returns {{ data: unknown, financialData: unknown }}
+ */
+function locateFinanceDashboardNodes(raw) {
+  const data = raw?.data ?? raw;
+  const financialData = data?.financialData ?? data;
+  return { data, financialData };
+}
+
+/**
+ * @param {unknown} node
+ * @param {string} fieldName
+ * @returns {unknown|undefined} 필드가 없으면 undefined
+ */
+function readOwnMapField(node, fieldName) {
+  if (!node || typeof node !== 'object' || Array.isArray(node)) {
+    return undefined;
+  }
+  if (!Object.prototype.hasOwnProperty.call(node, fieldName)) {
+    return undefined;
+  }
+  return node[fieldName];
+}
+
+/**
+ * 대시보드 응답에 breakdown 필드가 있으면 정규화 맵, 없으면 null.
+ * 레거시 categoryBreakdown(수입)으로 대체하지 않는다. 빈 객체는 서버가 준 확정 값이다.
+ * @param {unknown} raw
+ * @param {string} fieldName
+ * @returns {Record<string, number>|null}
+ */
+function readExplicitFinanceDashboardBreakdown(raw, fieldName) {
+  if (raw == null || typeof raw !== 'object') {
+    return null;
+  }
+  const { data, financialData } = locateFinanceDashboardNodes(raw);
+  const fromFinancial = readOwnMapField(financialData, fieldName);
+  if (fromFinancial !== undefined) {
+    return normalizeBreakdownMap(fromFinancial);
+  }
+  if (data !== financialData) {
+    const fromData = readOwnMapField(data, fieldName);
+    if (fromData !== undefined) {
+      return normalizeBreakdownMap(fromData);
+    }
+  }
+  return null;
+}
+
+/**
+ * @param {object} tx
+ * @returns {string}
+ */
+function readFinanceTransactionType(tx) {
+  return String(tx?.transactionType ?? tx?.type ?? '').toUpperCase();
+}
+
+/**
+ * @param {object} tx
+ * @param {string} transactionType FINANCE_TX_TYPE 값
+ * @returns {boolean}
+ */
+function isCountableFinanceTransaction(tx, transactionType) {
+  const type = readFinanceTransactionType(tx);
+  const status = String(tx?.status ?? '').toUpperCase();
+  return type === transactionType && status === FINANCE_COUNTABLE_TX_STATUS;
+}
+
+/**
+ * @param {Array<object>|unknown} transactions
+ * @param {string} transactionType
+ * @returns {Array<object>}
+ */
+function filterCountableTransactions(transactions, transactionType) {
+  if (!Array.isArray(transactions)) {
+    return [];
+  }
+  return transactions.filter((tx) => isCountableFinanceTransaction(tx, transactionType));
+}
+
+/**
+ * 장부 거래에서 카테고리 합계. COMPLETED 이면서 transactionType 이 일치하는 행만.
+ * @param {Array<object>|unknown} transactions
+ * @param {string} transactionType FINANCE_TX_TYPE.INCOME | FINANCE_TX_TYPE.EXPENSE
+ * @returns {Record<string, number>}
+ */
+export function buildCategoryBreakdownFromTransactions(transactions, transactionType) {
+  const breakdown = {};
+  const wanted = String(transactionType || '').toUpperCase();
+  if (wanted !== FINANCE_TX_TYPE.INCOME && wanted !== FINANCE_TX_TYPE.EXPENSE) {
+    return breakdown;
+  }
+  filterCountableTransactions(transactions, wanted).forEach((tx) => {
+    const key = String(tx?.category ?? '').trim();
+    if (!key) {
+      return;
+    }
+    breakdown[key] = (breakdown[key] || 0) + toSafeNumber(tx?.amount);
+  });
+  return breakdown;
+}
+
+/**
+ * 장부 「나간 돈」 mix.
+ * expenseCategoryBreakdown 필드가 있으면 그 맵만 쓴다 (ErpDashboard 와 동일 SSOT, 빈 맵 유지).
+ * 필드가 없으면 COMPLETED EXPENSE 행만 합산한다. 수입 상담료는 환불로 넣지 않는다.
+ * options.periodRefundAmount 가 유한 숫자면 서버·폴백 모두 환불 버킷에 그 금액만 쓴다.
+ * @param {unknown} dashboardRaw FINANCE_DASHBOARD 응답. 조회 실패 시 null.
+ * @param {Array<object>} transactions 장부 페이지 행 (폴백)
+ * @param {{ periodRefundAmount?: number, categoryRows?: Array<object> }} [options]
+ * @returns {Array<{ id: string, label: string, amount: number }>}
+ */
+export function buildLedgerOutflowMixFromDashboard(dashboardRaw, transactions, options = {}) {
+  const periodRefundAmount = options?.periodRefundAmount;
+  const hasPeriodRefundAmount = Number.isFinite(periodRefundAmount);
+  const categoryRows = options?.categoryRows;
+  const mixOptions = {
+    ...(hasPeriodRefundAmount ? { periodRefundAmount } : {}),
+    ...(categoryRows != null ? { categoryRows } : {})
+  };
+  const serverBreakdown = readExplicitFinanceDashboardBreakdown(
+    dashboardRaw,
+    FINANCE_DASHBOARD_BREAKDOWN_FIELD.EXPENSE
+  );
+  if (serverBreakdown != null) {
+    return buildOutflowMixItems(serverBreakdown, [], mixOptions);
+  }
+  const countable = filterCountableTransactions(transactions, FINANCE_TX_TYPE.EXPENSE);
+  const breakdown = buildCategoryBreakdownFromTransactions(countable, FINANCE_TX_TYPE.EXPENSE);
+  return buildOutflowMixItems(breakdown, countable, mixOptions);
+}
+
+/**
+ * 장부 「들어온 돈」 top caption.
+ * incomeCategoryBreakdown 이 있으면 그 맵, 없으면 COMPLETED INCOME 행만.
+ * @param {unknown} dashboardRaw
+ * @param {Array<object>} transactions
+ * @param {Array<object>|null|undefined} [categoryRows]
+ * @returns {string}
+ */
+export function buildLedgerIncomeCaptionFromDashboard(dashboardRaw, transactions, categoryRows) {
+  const serverBreakdown = readExplicitFinanceDashboardBreakdown(
+    dashboardRaw,
+    FINANCE_DASHBOARD_BREAKDOWN_FIELD.INCOME
+  );
+  if (serverBreakdown != null) {
+    return buildTopIncomeCaption(serverBreakdown, [], categoryRows);
+  }
+  const countable = filterCountableTransactions(transactions, FINANCE_TX_TYPE.INCOME);
+  return buildTopIncomeCaption(
+    buildCategoryBreakdownFromTransactions(countable, FINANCE_TX_TYPE.INCOME),
+    countable,
+    categoryRows
+  );
 }
 
 /**
@@ -609,6 +950,9 @@ export function sumRefundFromTransactions(transactions) {
     return 0;
   }
   return transactions.reduce((sum, tx) => {
+    if (!isPostedLedgerTransaction(tx)) {
+      return sum;
+    }
     const sub = String(tx?.subcategory ?? tx?.subCategory ?? '').toUpperCase();
     const cat = String(tx?.category ?? '').toUpperCase();
     if (
@@ -1341,6 +1685,5 @@ export function computeSeriesMonthlyAverages(series, now = new Date()) {
  * @returns {boolean}
  */
 export function isIncomeTransaction(tx) {
-  const type = String(tx?.type ?? tx?.transactionType ?? '').toUpperCase();
-  return type === 'INCOME';
+  return readFinanceTransactionType(tx) === FINANCE_TX_TYPE.INCOME;
 }

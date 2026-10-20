@@ -115,6 +115,35 @@ export function isApiGetNullFailure(raw) {
 }
 
 /**
+ * apiGet/StandardizedApi.get 기본 unwrap 후 페이로드가 쓸 수 있는지.
+ * `response.success` 게이트 대체 — unwrap 뒤에는 success가 없어 항상 실패로 보이는 문제 방지.
+ * `success === false` 래퍼가 남은 경우만 실패로 본다.
+ *
+ * @param {*} payload — apiGet·StandardizedApi.get 결과
+ * @returns {boolean}
+ */
+export function hasApiGetPayload(payload) {
+  if (payload == null) {
+    return false;
+  }
+  if (typeof payload === 'object' && !Array.isArray(payload) && payload.success === false) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * with-vacation 등 상담사 목록 페이로드.
+ * `{ consultants }` / 배열 / 레거시 `{ data }` dual-shape 수용.
+ *
+ * @param {*} payload
+ * @returns {unknown[]}
+ */
+export function normalizeConsultantsPayload(payload) {
+  return asArray(payload, 'consultants');
+}
+
+/**
  * 힐링 등 단일 객체 페이로드 (래핑 해제 여부 혼용)
  * @param {*} payload
  * @returns {object|null}

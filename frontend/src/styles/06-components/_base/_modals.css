@@ -1,10 +1,10 @@
 /* ===== 모달 컴포넌트 ===== */
 /* BEM 네이밍 컨벤션 적용 */
 
-/* 모달 오버레이 */
+/* 모달 오버레이 — 헤더 아래부터 깔아 GNB 시계가 보이도록 */
 .mg-modal-overlay {
   position: fixed;
-  top: 0;
+  top: var(--mg-layout-header-height, 64px);
   left: 0;
   right: 0;
   bottom: 0;
@@ -19,6 +19,16 @@
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 767px) {
+  .mg-modal-overlay {
+    top: var(--mg-layout-header-height-mobile, 56px);
+  }
+}
+
+.mg-modal-overlay:has(.mg-modal--fullscreen) {
+  top: 0;
 }
 
 .mg-modal-overlay--visible {

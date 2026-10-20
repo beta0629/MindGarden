@@ -13,6 +13,8 @@ import {
   isStaff,
   isClient
 } from './RoleUtils';
+import { consumeLoginReturnPath } from './loginReturnPath';
+import { resolveRoleLoginReturnAllowedPrefixes } from './roleAccessiblePathPrefixes';
 
 const TENANT_DASHBOARDS_BASE = '/api/v1/tenant/dashboards';
 
@@ -226,6 +228,18 @@ export const getLegacyDashboardPath = (role) => {
 };
 
 /**
+ * 로그인 후 복귀 허용 접두 — 역할별 접근 가능 내부 경로 SSOT
+ * ({@link resolveRoleLoginReturnAllowedPrefixes}).
+ * ADMIN 은 `/admin/` + ERP(`/erp/`), STAFF 는 `/admin/` 만(ERP 불가).
+ *
+ * @param {Object} user
+ * @returns {string[]}
+ */
+export const resolveLoginReturnAllowedPrefixes = (user) => (
+  resolveRoleLoginReturnAllowedPrefixes(user)
+);
+
+/**
  * 동적 대시보드 라우팅 (우선순위: 동적 조회 > 레거시)
 /**
  * 
@@ -237,6 +251,13 @@ export const getLegacyDashboardPath = (role) => {
  * @returns {Promise<void>}
  */
 export const redirectToDynamicDashboard = async(authResponse, navigate) => {
+  // 로그인 전에 열려던 내부 주소(?redirect= 또는 소셜 로그인 왕복 중 맡긴 값)가 있으면 그리로 돌아간다.
+  // 역할 허용 목록(역할 기본 화면과 같은 구역, 예: 내담자 /client/) 밖이면 역할 기본 화면으로 간다.
+  const returnPath = consumeLoginReturnPath(resolveLoginReturnAllowedPrefixes(authResponse?.user));
+  if (returnPath) {
+    navigate(returnPath, { replace: true });
+    return;
+  }
   try {
     const user = authResponse?.user;
     const roleLandingPath = resolvePostLoginLandingPath(user);

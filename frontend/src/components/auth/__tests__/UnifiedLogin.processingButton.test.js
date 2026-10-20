@@ -10,7 +10,7 @@
  */
 
 import React from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 
@@ -188,5 +188,45 @@ describe('UnifiedLogin 로그인 버튼 처리중 상태', () => {
     });
     expect(getSubmitButton(container)).not.toBeDisabled();
     expect(mockCheckSession).not.toHaveBeenCalled();
+  });
+
+  test('requiresPasswordChange 이면 변경 모달이 열리고 현재 비밀번호 칸은 비어 있다', async() => {
+    mockLogin.mockResolvedValue({
+      ...LOGIN_SUCCESS,
+      data: {
+        ...LOGIN_SUCCESS.data,
+        requiresPasswordChange: true
+      }
+    });
+    mockCheckSession.mockResolvedValue(undefined);
+    const { container } = renderLogin();
+
+    await fillAndSubmit(container);
+
+    const dialog = await screen.findByRole('dialog');
+    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
+    expect(currentInput).toHaveValue('');
+    expect(currentInput).toBeEnabled();
+    expect(currentInput).toHaveAttribute('autoComplete', 'current-password');
+    expect(within(dialog).getByLabelText('새 비밀번호')).toHaveAttribute('autoComplete', 'new-password');
+    expect(mockRedirectToDynamicDashboard).not.toHaveBeenCalled();
+  });
+});
+
+describe('UnifiedLogin 변경 모달 값 전달 정적 계약', () => {
+  test('로그인 입력값을 현재 비밀번호 칸 초기값으로 넣지 않는다', () => {
+    const fs = require('fs');
+    const path = require('path');
+    const loginSource = fs.readFileSync(path.resolve(__dirname, '../UnifiedLogin.js'), 'utf8');
+    const modalSource = fs.readFileSync(
+      path.resolve(__dirname, '../../mypage/components/PasswordChangeModal.js'),
+      'utf8'
+    );
+
+    expect(loginSource).not.toMatch(/setTempPassword\s*\(/);
+    expect(loginSource).not.toMatch(/setForcePasswordChange\(\s*actualFormData\.password/);
+    expect(loginSource).not.toMatch(/setForcePasswordChange\(\s*formData\.password/);
+    expect(modalSource).not.toMatch(/currentPassword:\s*tempPassword/);
+    expect(modalSource).toMatch(/autoComplete="current-password"/);
   });
 });

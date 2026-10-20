@@ -36,7 +36,9 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
+import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.OutsideTransactionScope;
@@ -88,6 +90,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final PortOneV2PaymentVerifyService portOneV2PaymentVerifyService;
+    private final PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker;
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
     /** PortOne 조회를 트랜잭션 밖에서 끝낸 뒤 상태 변경만 담는 짧은 트랜잭션 */
     private final TransactionTemplate shortTx;
@@ -106,6 +109,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             NotificationService notificationService,
             UserRepository userRepository,
             PortOneV2PaymentVerifyService portOneV2PaymentVerifyService,
+            PortOneVerifyUnknownRetryTracker portOneVerifyUnknownRetryTracker,
             @Lazy ClientShopCheckoutService clientShopCheckoutService,
             @Lazy ShopLatePaymentRefundService shopLatePaymentRefundService,
             PlatformTransactionManager transactionManager) {
@@ -122,6 +126,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         this.notificationService = notificationService;
         this.userRepository = userRepository;
         this.portOneV2PaymentVerifyService = portOneV2PaymentVerifyService;
+        this.portOneVerifyUnknownRetryTracker = portOneVerifyUnknownRetryTracker;
         this.clientShopCheckoutService = clientShopCheckoutService;
         this.shopLatePaymentRefundService = shopLatePaymentRefundService;
         this.shortTx = new TransactionTemplate(transactionManager);
@@ -158,6 +163,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 .paymentId(generatePaymentId())
                 .orderId(request.getOrderId())
                 .amount(request.getAmount())
+                .requestedAmount(request.getAmount())
                 // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. CommonCodeService 사용
                 .status(Payment.PaymentStatus.PENDING)
                 .method(Payment.PaymentMethod.valueOf(request.getMethod()))
@@ -881,13 +887,62 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
 
         if (portOneV2PaymentVerifyService.isIamportPayment(payment)) {
             // PortOne 조회는 트랜잭션 밖 — 결과만 들고 짧은 트랜잭션에서 주문 잠금·재확인·상태 변경
-            Optional<String> verifiedBody = portOneV2PaymentVerifyService
-                    .verifyPaidAmountBody(tenantId, paymentId, amount);
-            if (verifiedBody.isEmpty()) {
-                log.warn("포트원 REST 검증 실패: paymentId={}, amount={}", paymentId, amount);
-                return false;
-            }
             boolean shopOrder = isShopOrderPayment(payment);
+            Optional<String> verifiedBody;
+            if (shopOrder) {
+                // 쇼핑: 클라이언트 amount 무시 — PortOne REST vs order.cashDueMinor SSOT
+                ShopClientOrder shopOrderEntity = shopClientOrderRepository
+                        .findByTenantIdAndPublicId(tenantId, payment.getOrderId())
+                        .orElse(null);
+                if (shopOrderEntity == null) {
+                    log.warn("포트원 REST 검증 실패: 쇼핑 주문 없음 paymentId={}", paymentId);
+                    return false;
+                }
+                PortOneShopPaidMatch match = portOneV2PaymentVerifyService.verifyPaidMatchesShopOrder(
+                        tenantId, paymentId, shopOrderEntity);
+                if (match.isUnknown()) {
+                    portOneVerifyUnknownRetryTracker.recordUnknownAndDecide(tenantId, paymentId);
+                    log.warn(
+                            "포트원 REST 검증 UNKNOWN(쇼핑, 취소 없음): paymentId={}, orderPublicId={}, cashDue={}",
+                            paymentId,
+                            shopOrderEntity.getPublicId(),
+                            shopOrderEntity.getCashDueMinor());
+                    return false;
+                }
+                if (match.isMismatch()) {
+                    log.warn(
+                            "포트원 REST 검증 실패(쇼핑 금액·주문 불일치): paymentId={}, orderPublicId={}, cashDue={}",
+                            paymentId,
+                            shopOrderEntity.getPublicId(),
+                            shopOrderEntity.getCashDueMinor());
+                    match.getActualPaidAmount().ifPresent(
+                            paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(payment, paid));
+                    clientShopCheckoutService.cancelMismatchedApprovedPaymentForOrder(
+                            tenantId,
+                            shopOrderEntity.getPublicId(),
+                            match.getActualPaidAmount().orElse(null));
+                    return false;
+                }
+                match.getActualPaidAmount().ifPresent(
+                        paid -> portOneVerifyUnknownRetryTracker.recordPortOnePaidAmount(payment, paid));
+                verifiedBody = match.getBody();
+            } else {
+                // 비쇼핑: 서버 저장 금액만 신뢰 — 클라이언트 amount 는 경고만
+                BigDecimal serverAmount = payment.getAmount();
+                if (amount != null && serverAmount != null && amount.compareTo(serverAmount) != 0) {
+                    log.warn(
+                            "포트원 REST 검증: 클라이언트 금액 무시(서버 금액 사용) paymentId={}, clientAmount={}, serverAmount={}",
+                            paymentId,
+                            amount,
+                            serverAmount);
+                }
+                verifiedBody = portOneV2PaymentVerifyService.verifyPaidAmountBody(
+                        tenantId, paymentId, serverAmount);
+                if (verifiedBody.isEmpty()) {
+                    log.warn("포트원 REST 검증 실패: paymentId={}, serverAmount={}", paymentId, serverAmount);
+                    return false;
+                }
+            }
             if (shopOrder && isLatePaymentHandled(tenantId, paymentId)) {
                 return false;
             }

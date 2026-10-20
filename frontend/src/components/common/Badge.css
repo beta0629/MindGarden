@@ -107,7 +107,9 @@
   color: var(--ad-b0kla-blue);
 }
 
-/* 배정 계약 유형 배지 — 공통 Badge 토큰만 사용 */
+/* 배정 계약 유형 배지 — 공통 Badge 토큰만 사용. 글자 네 자는 말줄임하지 않는다. */
 .mg-engagement-type-badge {
-  flex: 0 0 auto;
+  flex: none;
+  white-space: nowrap;
+  overflow: visible;
 }

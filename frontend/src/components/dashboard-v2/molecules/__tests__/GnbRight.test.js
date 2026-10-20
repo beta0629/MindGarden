@@ -1,5 +1,5 @@
 /**
- * GnbRight 단위 테스트 — GNB 우측 검색바 + 아이콘 + 프로필 클러스터
+ * GnbRight 단위 테스트 — GNB 우측 아이콘 + 프로필 클러스터 (검색 제외)
  *
  * @see docs/standards/TESTING_STANDARD.md
  */
@@ -77,33 +77,34 @@ describe('GnbRight', () => {
     sessionState.sessionInfo = sessionInfoWithRemaining;
   });
 
-  it('SearchInput과 ProfileDropdown이 렌더된다', () => {
+  it('SearchInput 없이 ProfileDropdown이 렌더된다', () => {
     render(
       <DarkModeProvider>
-        <GnbRight searchValue="" onSearchChange={jest.fn()} />
+        <GnbRight />
       </DarkModeProvider>
     );
-    expect(screen.getByLabelText('통합 검색')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('통합 검색...')).toBeInTheDocument();
+    expect(screen.queryByLabelText('통합 검색')).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('통합 검색...')).not.toBeInTheDocument();
     expect(screen.getByText('테스트 사용자')).toBeInTheDocument();
   });
 
   it('.mg-v2-gnb-right 안에 tenant cluster가 있고 EntityRowActions는 없다', () => {
     const { container } = render(
       <DarkModeProvider>
-        <GnbRight searchValue="" onSearchChange={jest.fn()} />
+        <GnbRight />
       </DarkModeProvider>
     );
     const gnbRight = container.querySelector('.mg-v2-gnb-right');
     expect(gnbRight).toBeTruthy();
     expect(gnbRight.querySelector('.mg-v2-tenant-header-cluster')).toBeTruthy();
     expect(gnbRight.querySelector('.mg-v2-entity-row-actions')).toBeNull();
+    expect(gnbRight.querySelector('.mg-v2-search-input')).toBeNull();
   });
 
   it('프로필 메뉴 aria-label 트리거가 정확히 하나다', () => {
     render(
       <DarkModeProvider>
-        <GnbRight searchValue="" onSearchChange={jest.fn()} />
+        <GnbRight />
       </DarkModeProvider>
     );
     expect(

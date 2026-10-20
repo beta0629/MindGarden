@@ -99,6 +99,77 @@ public final class ShopCheckoutConstants {
             "결제하려면 휴대폰 인증이 필요합니다. 설정(/client/settings)에서 휴대폰 번호를 인증해 주세요.";
 
     /**
+     * 내담자 전용 지정 상품 결제 — 필수 약관 3종(구매·이용기간/환불·제3자 제공)이 모두 동의되지 않음.
+     */
+    public static final String MSG_REQUIRED_CONSENTS =
+            "필수 약관에 모두 동의한 뒤에만 결제할 수 있습니다.";
+
+    /**
+     * 지정 상품이 이 내담자의 활성 지정이 아님(다른 내담자·취소·비활성·이미 결제·만료).
+     */
+    public static final String MSG_ASSIGNED_OFFER_NOT_PAYABLE =
+            "지정된 상품이 이 내담자의 것이 아니거나 만료되어 결제할 수 없습니다.";
+
+    /**
+     * 쇼핑 PG 결제 통화 (PortOne prepare·검증 SSOT). {@code amount.currency} 와 동일해야 한다.
+     */
+    public static final String CURRENCY_KRW = "KRW";
+
+    /**
+     * 결제 확정에서 승인 금액이 주문 현금 결제액과 다르거나 결제 건의 주문이 다를 때
+     * PortOne 전액 취소·단일 환불에 넣는 사유. 개인정보·시크릿을 넣지 않는다.
+     */
+    public static final String PAYMENT_MISMATCH_CANCEL_REASON =
+            "결제 금액 또는 주문이 일치하지 않아 결제를 취소했습니다.";
+
+    /**
+     * 금액·주문 불일치 자동 취소 시도 횟수. 결제 건 {@code failure_reason} 에만 남긴다.
+     * 카드·결제 식별자는 넣지 않는다.
+     */
+    public static final String PAYMENT_MISMATCH_CANCEL_ATTEMPT_PREFIX = "PAYMENT_MISMATCH_CANCEL_ATTEMPT:";
+
+    /** 관리자 알림 단계 — PG 취소 실패, 수동 확인 */
+    public static final String ADMIN_ALERT_STEP_CANCEL_FAILED = "CANCEL_FAILED";
+
+    /** 관리자 알림 출처 */
+    public static final String ADMIN_ALERT_SOURCE_PAYMENT_MISMATCH = "ShopPaymentMismatch";
+
+    /**
+     * PortOne 검증 UNKNOWN 재시도 상한 기본값 ({@code shop.portone.verify-unknown-max-attempts}).
+     */
+    public static final int DEFAULT_VERIFY_UNKNOWN_MAX_ATTEMPTS = 10;
+
+    /**
+     * PortOne 검증 UNKNOWN 최대 경과 기본값(ms). {@code 0} = 연령 한도 비활성
+     * ({@code shop.portone.verify-unknown-max-age-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_MAX_AGE_MS = 0L;
+
+    /**
+     * PortOne 검증 UNKNOWN/IN_PROGRESS 재시도 소진 후 장주기 폴링 간격 기본값(ms).
+     * ({@code shop.portone.verify-unknown-exhausted-poll-interval-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_EXHAUSTED_POLL_INTERVAL_MS = 3_600_000L;
+
+    /**
+     * PortOne 검증 추적 컬럼 저장 시 낙관적 락 충돌 최대 재시도 횟수.
+     * ({@code shop.portone.verify-unknown-lock-max-retries}).
+     */
+    public static final int DEFAULT_VERIFY_UNKNOWN_LOCK_MAX_RETRIES = 3;
+
+    /**
+     * PortOne 검증 추적 낙관적 락 재시도 대기 기본값(ms).
+     * ({@code shop.portone.verify-unknown-lock-retry-delay-ms}).
+     */
+    public static final long DEFAULT_VERIFY_UNKNOWN_LOCK_RETRY_DELAY_MS = 20L;
+
+    /** 관리자 알림 출처 — PortOne 검증 UNKNOWN 재시도 소진 */
+    public static final String ADMIN_ALERT_SOURCE_VERIFY_UNKNOWN = "ShopPortOneVerifyUnknown";
+
+    /** 관리자 알림 단계 — UNKNOWN 재시도 소진, 수동 확인(자동 취소 없음) */
+    public static final String ADMIN_ALERT_STEP_VERIFY_UNKNOWN_EXHAUSTED = "VERIFY_UNKNOWN_EXHAUSTED";
+
+    /**
      * preparePayment — CREATED / PENDING_PAYMENT / EXPIRED 외 주문 상태.
      */
     public static final String MSG_PREPARE_INVALID_ORDER_STATUS =

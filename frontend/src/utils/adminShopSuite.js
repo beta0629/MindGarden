@@ -27,6 +27,7 @@ import {
   SHOP_CATALOG_CATEGORY
 } from '../constants/clientShopConstants';
 import { isPublicVisible, parseExtraData } from './packagePricing';
+import { computeMallComposition } from './packageComposition';
 import { isShopCatalogPlaceholderUrl } from './shopCatalogThumbnail';
 import { toDisplayString } from './safeDisplay';
 
@@ -39,7 +40,6 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/;
 const DATE_DISPLAY_SEPARATOR = '.';
 const BPS_SCALE = ADMIN_SHOP_BPS_PER_PERCENT * ADMIN_SHOP_BPS_PER_PERCENT;
-const PERCENT_FULL = 100;
 
 /**
  * 주문 공개 ID → 헤더·목록용 짧은 ID (`#앞4·뒤4`).
@@ -900,7 +900,8 @@ export function mapAdminShopProductToForm(product) {
     sessions: product.sessions != null ? String(product.sessions) : '',
     price: product.price != null ? String(product.price) : '',
     remark: extra.remark || '',
-    items: Array.isArray(extra.items) ? extra.items : [],
+    /** 구성은 package-compositions API 에서 따로 불러온다(레거시 extraData.items 는 쓰지 않음) */
+    items: [],
     discountRate: extra.discountRate || 0,
     originalPrice: extra.originalPrice,
     homePublic: product.homePublic === true,
@@ -917,26 +918,34 @@ export function mapAdminShopProductToForm(product) {
 }
 
 /**
- * 구성(조합 패키지) → 회기·가격 합산. 할인율(%) 적용.
+ * 구성(몰 SKU) → 회기·가격 자동 계산. 몰 판매가 × 수량 합계에 할인율(%) 적용.
  *
  * @param {object} form
- * @param {Array<{ sessions: number, price: number }>} items
+ * @param {Array<{ unitPrice: number, sessions: number, quantity: number }>} items
  * @returns {object}
  */
 export function applyAdminShopProductComposition(form, items) {
   if (!items || items.length === 0) {
     return { ...form, items: [], originalPrice: null };
   }
-  const sessions = items.reduce((acc, item) => acc + (Number(item.sessions) || 0), 0);
-  const originalPrice = items.reduce((acc, item) => acc + (Number(item.price) || 0), 0);
-  const rate = Number(form.discountRate) || 0;
+  const { subtotal, sessions, finalPrice } = computeMallComposition(items, form.discountRate);
   return {
     ...form,
     items,
     sessions: String(sessions),
-    originalPrice,
-    price: String(Math.floor((originalPrice * (PERCENT_FULL - rate)) / PERCENT_FULL))
+    originalPrice: subtotal,
+    price: String(finalPrice)
   };
+}
+
+/**
+ * 구성을 모두 비웠을 때: 자동 계산된 회기·가격·할인율을 비워 직접 입력으로 되돌린다.
+ *
+ * @param {object} form
+ * @returns {object}
+ */
+export function clearAdminShopProductComposition(form) {
+  return { ...form, items: [], sessions: '', price: '', originalPrice: null, discountRate: 0 };
 }
 
 /**

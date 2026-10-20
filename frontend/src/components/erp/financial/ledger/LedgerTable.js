@@ -17,6 +17,7 @@ import {
   localizePaymentMethodParens,
   resolveLedgerShopIdentifiers,
   isLedgerRefundOrRevenueCancelRow,
+  canCompleteRecordedExpense,
   groupTransactionsForLedger
 } from '../../../../utils/erpFinanceDisplay';
 import {
@@ -24,9 +25,9 @@ import {
   FM_SUMMARY,
   FM_TX_LIST_SECTION,
   FM_ROW_ACTIONS,
-  FM_RECORD_CTA,
-  getCategoryDisplayLabel
+  FM_RECORD_CTA
 } from '../../../../constants/financialManagementStrings';
+import { resolveCategoryCodeDisplayLabel } from '../../../../utils/financialTransactionCategoryPicker';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../common/erpMgButtonProps';
 
 /**
@@ -34,18 +35,22 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../com
  * @param {Array<object>} props.transactions
  * @param {boolean} [props.loading]
  * @param {boolean} [props.hasSearch]
+ * @param {Array<object>} [props.categoryOptions] 공통코드 행 또는 {value,label} 필터 옵션
  * @param {() => void} [props.onRecordClick]
  * @param {(tx: object) => void} [props.onEdit]
  * @param {(tx: object) => void} [props.onDelete]
+ * @param {(tx: object) => void} [props.onComplete]
  * @param {(tx: object) => void} [props.onView]
  */
 const LedgerTable = ({
   transactions = [],
   loading = false,
   hasSearch = false,
+  categoryOptions = [],
   onRecordClick,
   onEdit,
   onDelete,
+  onComplete,
   onView
 }) => {
   if (!loading && (!transactions || transactions.length === 0)) {
@@ -85,7 +90,7 @@ const LedgerTable = ({
     const desc = localizePaymentMethodParens(
       toDisplayString(tx.description, FM_SUMMARY.DASH)
     );
-    const categoryLabel = getCategoryDisplayLabel(tx.category);
+    const categoryLabel = resolveCategoryCodeDisplayLabel(tx.category, categoryOptions);
     const ownIds = resolveLedgerShopIdentifiers(tx);
     const parentIds = parentTx ? resolveLedgerShopIdentifiers(parentTx) : null;
     const orderPublicId = ownIds.orderPublicId || (parentIds ? parentIds.orderPublicId : null) || (fallbackIds ? fallbackIds.orderPublicId : null);
@@ -143,9 +148,7 @@ const LedgerTable = ({
                 {FM_TX_TABLE_LABELS.REFUND_ORPHAN_LABEL}
               </span>
             ) : null}
-            {categoryLabel && categoryLabel !== '-' ? (
-              <span className="operator-ledger-table__desc-secondary">{categoryLabel}</span>
-            ) : null}
+            <span className="operator-ledger-table__desc-secondary">{categoryLabel}</span>
             {orderPublicId ? (
               <span className="operator-ledger-table__desc-secondary">
                 {FM_TX_TABLE_LABELS.ORDER_ID}
@@ -219,19 +222,7 @@ const LedgerTable = ({
             <EntityRowActions
               layout={ENTITY_ROW_ACTIONS_LAYOUT.TABLE}
               ariaLabel={FM_ROW_ACTIONS.MORE}
-              items={[
-                {
-                  id: 'edit',
-                  label: FM_ROW_ACTIONS.EDIT,
-                  onClick: () => onEdit?.(tx)
-                },
-                {
-                  id: 'delete',
-                  label: FM_ROW_ACTIONS.DELETE,
-                  onClick: () => onDelete?.(tx),
-                  variant: 'destructive'
-                }
-              ]}
+              items={buildLedgerRowMenuItems(tx, { onEdit, onDelete, onComplete })}
             />
           </div>
         </td>
@@ -307,10 +298,43 @@ LedgerTable.propTypes = {
   transactions: PropTypes.array,
   loading: PropTypes.bool,
   hasSearch: PropTypes.bool,
+  categoryOptions: PropTypes.array,
   onRecordClick: PropTypes.func,
   onEdit: PropTypes.func,
   onDelete: PropTypes.func,
+  onComplete: PropTypes.func,
   onView: PropTypes.func
 };
+
+/**
+ * 장부 행 더보기 메뉴. 대기·승인 지출에만 완료 처리를 넣는다.
+ *
+ * @param {object} tx
+ * @param {{ onEdit?: Function, onDelete?: Function, onComplete?: Function }} actions
+ * @returns {Array<object>}
+ */
+function buildLedgerRowMenuItems(tx, actions) {
+  const items = [
+    {
+      id: 'edit',
+      label: FM_ROW_ACTIONS.EDIT,
+      onClick: () => actions.onEdit?.(tx)
+    }
+  ];
+  if (canCompleteRecordedExpense(tx)) {
+    items.push({
+      id: 'complete',
+      label: FM_ROW_ACTIONS.COMPLETE,
+      onClick: () => actions.onComplete?.(tx)
+    });
+  }
+  items.push({
+    id: 'delete',
+    label: FM_ROW_ACTIONS.DELETE,
+    onClick: () => actions.onDelete?.(tx),
+    variant: 'destructive'
+  });
+  return items;
+}
 
 export default LedgerTable;

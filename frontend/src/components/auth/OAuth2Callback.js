@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 // import UnifiedLoading from '../../components/common/UnifiedLoading'; // 임시 비활성화
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import notificationManager from '../../utils/notification';
 import { sessionManager } from '../../utils/sessionManager';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import { useSession } from '../../contexts/SessionContext';
 import { redirectToDynamicDashboard } from '../../utils/dashboardUtils';
 import SocialSignupModal from './SocialSignupModal';
@@ -34,6 +36,7 @@ import { USER_ROLES } from '../../constants/roles';
 import { OAUTH_SERVER_VERIFY_FAILED_MESSAGE, OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE } from '../../constants/session';
 import { loadSessionSecurityFlags } from '../../utils/sessionSecurityFlags';
 import { AUTH_API } from '../../constants/api';
+import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
@@ -44,6 +47,7 @@ const API_AUTH_TENANT_ACCESSIBLE = '/api/v1/auth/tenant/accessible';
 const OAUTH2_ERROR_QUERY_DISPLAY_MAX_LEN = 200;
 
 const OAuth2Callback = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const { testLogin } = useSession();
@@ -106,6 +110,10 @@ const OAuth2Callback = () => {
         toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
         'success'
       );
+      if (data.requiresPasswordChange === true) {
+        dispatchPasswordChangeRequired();
+        return;
+      }
       const authResponse = { success: true, user: userInfo, currentTenantRole: null };
       await redirectToDynamicDashboard(authResponse, navigate);
     } catch (e) {
@@ -691,7 +699,8 @@ const OAuth2Callback = () => {
           accessToken,
           refreshToken,
           matchedAccount,
-          provider: matchedProvider
+          provider: matchedProvider,
+          requiresPasswordChange
         }) => {
           const userInfo = {
             id: matchedAccount?.userId,
@@ -728,6 +737,10 @@ const OAuth2Callback = () => {
             ),
             'success'
           );
+          if (requiresPasswordChange === true) {
+            dispatchPasswordChangeRequired();
+            return;
+          }
           await redirectToDynamicDashboard(
             { success: true, user: userInfo, currentTenantRole: null },
             navigate
@@ -804,11 +817,19 @@ const OAuth2Callback = () => {
           isOpen={showIntegrationModal}
           onClose={() => setShowIntegrationModal(false)}
           socialUserInfo={socialUserData}
-          onIntegrationSuccess={async(response) => {
+          onIntegrationSuccess={async() => {
             logger.debug('계정 통합 성공');
             setShowIntegrationModal(false);
-            // 통합 성공 후 동적 대시보드로 이동
-            await redirectToDynamicDashboard(response, navigate);
+            // 서버는 통합 응답에 토큰을 싣지 않는다. 세션이 있으면 세션 사용자로 이동하고,
+            // 없으면 연결된 SNS 계정으로 다시 로그인하도록 로그인 화면으로 보낸다.
+            await sessionManager.checkSession(true);
+            const sessionUser = sessionManager.getUser();
+            if (sessionUser) {
+              await redirectToDynamicDashboard({ user: sessionUser }, navigate);
+              return;
+            }
+            notificationManager.show(t('auth:AccountIntegrationModal.reloginRequired'), 'success');
+            redirectToLoginPageOnce();
           }}
         />
       </>

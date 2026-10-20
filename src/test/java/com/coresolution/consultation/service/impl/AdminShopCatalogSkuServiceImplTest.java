@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.ShopCatalogSkuPriceHistoryReposi
 import com.coresolution.consultation.repository.ShopCatalogSkuRepository;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
+import com.coresolution.consultation.dto.shop.admin.ShopCatalogSkuAdminItem;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -504,5 +505,86 @@ class AdminShopCatalogSkuServiceImplTest {
         assertNull(captor.getValue().getConsultantId());
         assertNull(item.consultantId());
         verify(userRepository, never()).findByTenantIdAndId(any(), any());
+    }
+
+    @Test
+    @DisplayName("listPackageFees — 내담자 전용 SKU(OFFER_·비노출)는 미연결 목록에서 제외")
+    void listPackageFees_excludesClientOfferSku() {
+        when(shopCatalogPackageOfferResolver.listActivePackages(TENANT)).thenReturn(List.of());
+        ShopCatalogSku legacy = new ShopCatalogSku();
+        legacy.setId(1L);
+        legacy.setSkuCode("LEGACY-1");
+        legacy.setTitle("직접 등록");
+        legacy.setUnitPriceMinor(50000L);
+        legacy.setCatalogVisible(false);
+        ShopCatalogSku offer = new ShopCatalogSku();
+        offer.setId(2L);
+        offer.setSkuCode("OFFER_ABC123");
+        offer.setTitle("전용");
+        offer.setUnitPriceMinor(40000L);
+        offer.setCatalogVisible(false);
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(List.of(legacy, offer));
+
+        var response = adminShopCatalogSkuService.listPackageFees(TENANT);
+
+        assertEquals(1, response.unlinkedSkus().size());
+        assertEquals("LEGACY-1", response.unlinkedSkus().get(0).skuCode());
+    }
+
+    private static ShopCatalogSku offerSku(Long id) {
+        ShopCatalogSku row = existingSku(id);
+        row.setSkuCode(com.coresolution.consultation.constant.ShopClientOfferConstants.SKU_CODE_PREFIX + "ZZ1");
+        row.setCatalogVisible(false);
+        return row;
+    }
+
+    @Test
+    @DisplayName("listAllForTenant — 내담자 전용 SKU 는 제외")
+    void listAllForTenant_excludesClientOfferSku() {
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(java.util.List.of(existingSku(1L), offerSku(2L)));
+
+        var items = adminShopCatalogSkuService.listAllForTenant(TENANT);
+
+        assertEquals(1, items.size());
+        assertEquals("PKG-01", items.get(0).skuCode());
+    }
+
+    @Test
+    @DisplayName("patchCatalogVisible — 내담자 전용 SKU 노출 전환은 거부, 저장 없음")
+    void patchCatalogVisible_clientOfferSku_rejected() {
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(eq(2L), eq(TENANT)))
+                .thenReturn(Optional.of(offerSku(2L)));
+
+        assertThrows(EntityNotFoundException.class,
+                () -> adminShopCatalogSkuService.patchCatalogVisible(TENANT, 2L, true));
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("update — 내담자 전용 SKU 수정은 거부, 저장 없음")
+    void update_clientOfferSku_rejected() {
+        when(shopCatalogSkuRepository.findByIdAndTenantIdAndIsDeletedFalse(eq(2L), eq(TENANT)))
+                .thenReturn(Optional.of(offerSku(2L)));
+
+        assertThrows(EntityNotFoundException.class,
+                () -> adminShopCatalogSkuService.update(TENANT, 2L, upsert("PKG-01", 10000L)));
+        verify(shopCatalogSkuRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("목록 응답에 연결된 상담 패키지 코드(sourcePackageCode)를 담는다")
+    void listAllForTenant_includesSourcePackageCode() {
+        ShopCatalogSku linked = existingSku(11L);
+        linked.setSourcePackageCode("PACKAGE001");
+        ShopCatalogSku unlinked = existingSku(12L);
+        when(shopCatalogSkuRepository.findByTenantIdAndIsDeletedFalseOrderBySortOrderAscIdAsc(TENANT))
+                .thenReturn(List.of(linked, unlinked));
+
+        List<ShopCatalogSkuAdminItem> items = adminShopCatalogSkuService.listAllForTenant(TENANT);
+
+        assertEquals("PACKAGE001", items.get(0).sourcePackageCode());
+        assertNull(items.get(1).sourcePackageCode());
     }
 }

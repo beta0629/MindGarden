@@ -7,6 +7,10 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import DesktopGnb from '../DesktopGnb';
 
+jest.mock('../../atoms', () => ({
+  CurrentTimeChip: () => <time data-testid="current-time-chip" />
+}));
+
 jest.mock('../../molecules', () => ({
   GnbRight: () => <div data-testid="gnb-right" />
 }));

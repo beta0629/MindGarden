@@ -33,8 +33,8 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { markJustLoggedIn } from '../../utils/sessionAuthPolicy';
-import { sanitizeSameOriginReturnPath } from '../../utils/sessionRedirect';
 import { appleLogin, googleLogin, kakaoLogin, naverLogin } from '../../utils/socialLogin';
+import { readLoginReturnPathFromUrl } from '../../utils/loginReturnPath';
 import {
   OAUTH2_LOGIN_UI,
   isGoogleWebClientIdConfigured
@@ -79,6 +79,7 @@ import {
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 import { mergeGuestShopCartIntoServer } from '../../services/clientShopService';
+import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
 
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
 const EMPTY_MERCHANT_LEGAL = {
@@ -131,7 +132,7 @@ const UnifiedLogin = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
-  const [tempPassword, setTempPassword] = useState(''); // 임시 비밀번호 저장 (비밀번호 변경 모달에 전달)
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
   // GIS 웹 흐름 OAuth 휴대폰 매칭(OTP) 모달 — `OAuthPhoneVerificationModal` 표시 여부와 BE payload 보관.
   const [showOAuthPhoneVerificationModal, setShowOAuthPhoneVerificationModal] = useState(false);
   const [oauthPhoneVerificationPayload, setOAuthPhoneVerificationPayload] = useState(null);
@@ -509,26 +510,16 @@ const UnifiedLogin = () => {
         return;
       }
 
-      // 단일 테넌트 또는 멀티 테넌트가 아닌 경우: redirect 파라미터 확인 후 리다이렉트
-      const searchParams = new URLSearchParams(location.search);
-      const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
-
+      // 단일 테넌트: 복귀 주소(?redirect=)는 공통 착지점 redirectToDynamicDashboard 가
+      // sanitizeLoginReturnPath·역할 허용 목록으로 검사해 쓴다(직접 navigate 하지 않음).
       try {
         await mergeGuestShopCartIntoServer();
       } catch (mergeError) {
         console.warn('게스트 장바구니 병합 실패:', mergeError);
       }
 
-      if (redirectPath) {
-        navigate(redirectPath, { replace: true });
-      } else {
-        const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-        const authResponse = {
-          user: user,
-          isMultiTenant: false
-        };
-        await redirectToDynamicDashboard(authResponse, navigate);
-      }
+      const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+      await redirectToDynamicDashboard({ user: user, isMultiTenant: false }, navigate);
     } catch (error) {
       console.error('멀티 테넌트 확인 오류:', error);
     }
@@ -664,11 +655,10 @@ const UnifiedLogin = () => {
           console.warn('로그인 직후 세션 확인 실패:', sessionError);
         });
 
-        // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
+        // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시. 로그인 입력값은 넘기지 않는다.
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
           logger.debug('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
-          // 입력한 비밀번호를 임시 비밀번호로 저장 (비밀번호 변경 모달에서 현재 비밀번호로 사용)
-          setTempPassword(actualFormData.password);
+          setForcePasswordChange(true);
           setIsLoading(false);
           setShowPasswordChangeModal(true);
           return; // 비밀번호 변경 완료 전까지 리다이렉트하지 않음
@@ -684,9 +674,9 @@ const UnifiedLogin = () => {
           return;
         }
 
-        // 단일 테넌트 사용자: redirect 파라미터 확인 후 리다이렉트
-        const searchParams = new URLSearchParams(location.search);
-        const redirectPath = sanitizeSameOriginReturnPath(searchParams.get('redirect'));
+        // 단일 테넌트 사용자: 복귀 주소(?redirect=)는 공통 착지점 redirectToDynamicDashboard 가
+        // sanitizeLoginReturnPath·역할 허용 목록으로 검사해 쓴다(직접 navigate 하지 않음).
+        const hasReturnPath = Boolean(readLoginReturnPathFromUrl());
 
         try {
           await mergeGuestShopCartIntoServer();
@@ -695,13 +685,11 @@ const UnifiedLogin = () => {
         }
 
         try {
-          if (redirectPath) {
-            navigate(redirectPath, { replace: true });
-          } else {
+          if (!hasReturnPath) {
             await new Promise((resolve) => setTimeout(resolve, 300));
-            const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
-            await redirectToDynamicDashboard(loginData, navigate);
           }
+          const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
+          await redirectToDynamicDashboard(loginData, navigate);
         } finally {
           // navigate 직후에도 로딩 스피너가 남는 경우(세션·라우팅 지연) 방지
           setIsLoading(false);
@@ -1012,6 +1000,7 @@ const UnifiedLogin = () => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     name="password"
+                    autoComplete="current-password"
                     defaultValue={formData.password}
                     onChange={handleInputChange}
                     onFocus={() => logger.debug('🔒 비밀번호 필드 포커스됨')}
@@ -1207,7 +1196,7 @@ const UnifiedLogin = () => {
       {showPasswordChangeModal && (
         <PasswordChangeModal
           isOpen={showPasswordChangeModal}
-          tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
+          tempPassword={forcePasswordChange}
           onClose={() => {
             // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
             notificationManager.show(t('auth:common.tempPasswordChangeRequired'), 'warning');
@@ -1216,7 +1205,7 @@ const UnifiedLogin = () => {
             // 비밀번호 변경 성공 시 대시보드로 리다이렉트
             logger.debug('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
             setShowPasswordChangeModal(false);
-            setTempPassword(''); // 임시 비밀번호 초기화
+            setForcePasswordChange(false);
             
             // 세션 정보 다시 확인 후 대시보드로 이동
             try {
@@ -1275,6 +1264,11 @@ const UnifiedLogin = () => {
             markJustLoggedIn();
             await checkSession(true, { background: true });
             setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
+            if (data.requiresPasswordChange === true) {
+              setForcePasswordChange(true);
+              setShowPasswordChangeModal(true);
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userObj }, navigate);
           }}
@@ -1304,7 +1298,13 @@ const UnifiedLogin = () => {
             setOAuthPhoneVerificationPayload(null);
           }}
           socialUser={oauthPhoneVerificationPayload}
-          onVerifiedSingle={async({ accessToken, refreshToken, matchedAccount, provider: matchedProvider }) => {
+          onVerifiedSingle={async({
+            accessToken,
+            refreshToken,
+            matchedAccount,
+            provider: matchedProvider,
+            requiresPasswordChange
+          }) => {
             const userInfo = {
               id: matchedAccount?.userId,
               tenantId: matchedAccount?.tenantId,
@@ -1319,6 +1319,10 @@ const UnifiedLogin = () => {
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
             await checkSession(true, { background: true });
+            if (requiresPasswordChange === true) {
+              dispatchPasswordChangeRequired();
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

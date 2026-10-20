@@ -32,15 +32,72 @@
   min-height: 0;
 }
 
+/* 본문 상단 왼쪽 — GNB에서 옮긴 통합 검색 */
+.mg-v2-desktop-layout__search {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  margin-bottom: var(--mg-v2-space-4);
+  max-width: 100%;
+}
+
 /* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
 .mg-v2-desktop-layout__main > * {
   flex: 1 1 0%;
   min-height: 0;
 }
 
+.mg-v2-desktop-layout__main > .mg-v2-desktop-layout__search {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
 /* ContentHeader는 본래 크기만 사용, 세로 확장 제외(ContentHeader+ContentArea 형제 페이지 대응) */
 .mg-v2-desktop-layout__main > .mg-v2-content-header {
   flex: 0 0 auto;
+}
+
+/* ≥1024 시계 전체 형식. 1024 근처: 검색 아이콘 버튼 */
+@media (max-width: 1024px) {
+  .mg-v2-desktop-layout__search .mg-v2-search-input {
+    width: var(--mg-v2-component-height-md);
+    min-width: var(--mg-v2-component-height-md);
+    max-width: var(--mg-v2-component-height-md);
+    padding: 0;
+    justify-content: center;
+    gap: 0;
+  }
+
+  .mg-v2-desktop-layout__search .mg-v2-search-input__field {
+    position: absolute;
+    width: var(--mg-v2-space-0-5);
+    height: var(--mg-v2-space-0-5);
+    padding: 0;
+    margin: calc(-1 * var(--mg-v2-space-0-5));
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .mg-v2-desktop-layout__search .mg-v2-search-input:focus-within {
+    width: min(100%, calc(var(--mg-v2-space-20) * 3));
+    max-width: 100%;
+    min-width: var(--mg-v2-component-height-md);
+    padding: var(--mg-v2-space-3) var(--mg-v2-space-5);
+    gap: var(--mg-v2-space-3);
+    justify-content: flex-start;
+  }
+
+  .mg-v2-desktop-layout__search .mg-v2-search-input:focus-within .mg-v2-search-input__field {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
 }
 
 /*

@@ -1,17 +1,19 @@
 /**
- * Core Solution 로그인 비밀번호 정책과 동일한 문자열 생성.
- * {@link com.coresolution.core.security.PasswordService#validatePassword} 와 맞춤
- * (대·소문자·숫자·@$!%*?& 각 1+, 허용 문자만, 연속 3자·동일 3연속 금지).
+ * Core Solution 로그인 비밀번호 정책을 만족하는 임의 문자열 생성.
+ * 정책 판단은 {@link ./loginPasswordPolicy} 만 사용한다(백엔드 PasswordPolicy 와 동일).
  */
+import { LOGIN_PASSWORD_ALLOWED_SPECIALS } from '../constants/passwordPolicyUi';
+import { isBlankPassword, isLoginPasswordCompliant } from './loginPasswordPolicy';
 
 const LOWER = 'abcdefghijklmnopqrstuvwxyz';
 const UPPER = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const DIGIT = '0123456789';
-const SPECIAL = '@$!%*?&';
-const ALL_ALLOWED = LOWER + UPPER + DIGIT + SPECIAL;
+const ALL_ALLOWED = LOWER + UPPER + DIGIT + LOGIN_PASSWORD_ALLOWED_SPECIALS;
 
-const PASSWORD_PATTERN =
-  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+const GENERATED_MIN_LENGTH = 12;
+const GENERATED_MAX_LENGTH = 32;
+const GENERATED_DEFAULT_LENGTH = 14;
+const GENERATE_MAX_ATTEMPTS = 200;
 
 function randomInt(max) {
   if (max <= 0) return 0;
@@ -24,21 +26,6 @@ function pick(pool) {
   return pool[randomInt(pool.length)];
 }
 
-function hasSequentialCharacters(password) {
-  for (let i = 0; i < password.length - 2; i++) {
-    const c1 = password.charCodeAt(i);
-    const c2 = password.charCodeAt(i + 1);
-    const c3 = password.charCodeAt(i + 2);
-    if (c1 + 1 === c2 && c2 + 1 === c3) return true;
-    if (c1 - 1 === c2 && c2 - 1 === c3) return true;
-  }
-  return false;
-}
-
-function hasRepeatedCharacters(password) {
-  return /(.)\1{2,}/.test(password);
-}
-
 /**
  * 백엔드 encodePassword 정책 통과 여부 (클라이언트 사전 검증용).
  * @param {string} password
@@ -46,40 +33,30 @@ function hasRepeatedCharacters(password) {
  */
 export function isMgLoginPasswordCompliant(password) {
   if (!password || typeof password !== 'string') return false;
-  if (password.length < 8 || password.length > 100) return false;
-  if (!PASSWORD_PATTERN.test(password)) return false;
-  if (hasSequentialCharacters(password)) return false;
-  if (hasRepeatedCharacters(password)) return false;
-  return true;
+  return isLoginPasswordCompliant(password);
 }
 
 /**
  * 선택 입력 비밀번호. 비어 있거나 공백만이면 임시 비밀번호 등록으로 통과한다.
- * 값이 있으면 {@link isMgLoginPasswordCompliant} 만 사용한다.
  * @param {unknown} password
  * @returns {boolean} true 이면 제출을 막는다
  */
 export function shouldBlockOptionalMgLoginPassword(password) {
-  const value = password == null ? '' : String(password);
-  if (value.trim() === '') return false;
-  return !isMgLoginPasswordCompliant(value);
+  if (isBlankPassword(password)) return false;
+  return !isLoginPasswordCompliant(String(password));
 }
 
 /**
  * 정책을 만족하는 임의 비밀번호 (crypto.getRandomValues 기반).
+ * 시도가 모두 실패하면 빈 문자열을 돌려준다(화면은 정책 검증에서 막거나 서버 임시 비밀번호로 처리).
  * @param {number} [length=14] — 최소 12, 최대 32로 클램프
  * @returns {string}
  */
-export function generateMgLoginPassword(length = 14) {
-  const targetLen = Math.min(32, Math.max(12, length));
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const chars = [];
-    chars.push(pick(LOWER));
-    chars.push(pick(UPPER));
-    chars.push(pick(DIGIT));
-    chars.push(pick(SPECIAL));
-    const extra = targetLen - 4;
-    for (let i = 0; i < extra; i++) {
+export function generateMgLoginPassword(length = GENERATED_DEFAULT_LENGTH) {
+  const targetLen = Math.min(GENERATED_MAX_LENGTH, Math.max(GENERATED_MIN_LENGTH, length));
+  for (let attempt = 0; attempt < GENERATE_MAX_ATTEMPTS; attempt++) {
+    const chars = [pick(LOWER), pick(UPPER), pick(DIGIT), pick(LOGIN_PASSWORD_ALLOWED_SPECIALS)];
+    while (chars.length < targetLen) {
       chars.push(pick(ALL_ALLOWED));
     }
     for (let i = chars.length - 1; i > 0; i--) {
@@ -89,7 +66,7 @@ export function generateMgLoginPassword(length = 14) {
       chars[j] = t;
     }
     const pwd = chars.join('');
-    if (isMgLoginPasswordCompliant(pwd)) return pwd;
+    if (isLoginPasswordCompliant(pwd)) return pwd;
   }
-  return 'Mg9!kPxQw2vH';
+  return '';
 }

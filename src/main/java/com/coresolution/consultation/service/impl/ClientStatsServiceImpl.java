@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
+import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
@@ -126,9 +127,12 @@ public class ClientStatsServiceImpl implements ClientStatsService {
             throw new AccessDeniedException("상담사 식별 정보가 없습니다.");
         }
 
-        Optional<ConsultantClientMapping> mapping = mappingRepository
-                .findActiveOrExhaustedByTenantIdAndConsultantIdAndClientId(
+        // 복수 ACTIVE/SESSIONS_EXHAUSTED 매핑 시 NonUniqueResult 방지 — List + 최신 선택
+        List<ConsultantClientMapping> mappingCandidates = mappingRepository
+                .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                         tenantId, consultantUserId, clientId);
+        Optional<ConsultantClientMapping> mapping =
+                ScheduleMappingContextResolver.selectLatestActiveOrExhaustedMapping(mappingCandidates);
         if (mapping.isPresent()) {
             ConsultantClientMapping m = mapping.get();
             String reason = m.getStatus() == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED

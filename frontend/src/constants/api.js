@@ -19,6 +19,14 @@ import ENV from './environment';
 export const getApiBaseUrl = () => ENV.API_BASE_URL;
 export const { API_BASE_URL } = ENV; // 하위 호환성을 위해 유지 (getter로 동작)
 
+// 계정 연동 API (서버 AccountIntegrationApiPaths 와 동일 경로. 이 상수 한 곳만 쓴다)
+const ACCOUNT_INTEGRATION_BASE = '/api/v1/accounts/integration';
+export const ACCOUNT_INTEGRATION_API = {
+  SEND_VERIFICATION_CODE: `${ACCOUNT_INTEGRATION_BASE}/send-verification-code`,
+  VERIFY_CODE: `${ACCOUNT_INTEGRATION_BASE}/verify-code`,
+  INTEGRATE: `${ACCOUNT_INTEGRATION_BASE}/integrate`
+};
+
 // 인증 관련 API (표준 경로: /api/v1/auth)
 export const AUTH_API = {
   // 일반 로그인/회원가입
@@ -466,6 +474,7 @@ export const ERP_API = {
   /** 재무 거래 (수입/지출 직접 등록·조회·수정·삭제 — ErpController) */
   FINANCE_TRANSACTIONS: '/api/v1/erp/finance/transactions',
   FINANCE_TRANSACTION_BY_ID: (id) => `/api/v1/erp/finance/transactions/${id}`,
+  FINANCE_TRANSACTION_COMPLETE: (id) => `/api/v1/erp/finance/transactions/${id}/complete`,
 
   /** 매월 나가는 돈 (반복 지출 — ErpController) */
   RECURRING_EXPENSES: '/api/v1/erp/recurring-expenses',
@@ -474,6 +483,7 @@ export const ERP_API = {
   RECURRING_EXPENSE_RECORD_MONTH: (id) => `/api/v1/erp/recurring-expenses/${id}/record-month`,
   CARD_MERCHANT_FEE_SETTINGS: '/api/v1/erp/card-merchant-fee-settings',
   COMMON_CODES_FINANCIAL: '/api/v1/erp/common-codes/financial',
+  FINANCE_QUICK_EXPENSE: '/api/v1/erp/finance/quick-expense',
 
   /** 예산 관리 (CRUD — 프론트 표준 경로, 백엔드와 동일 유지) */
   BUDGETS: '/api/v1/erp/budgets',

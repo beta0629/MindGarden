@@ -3,7 +3,7 @@
  *
  * - 모바일 툴바: 제목 한 줄 전폭, 버튼 줄바꿈 금지 (토큰만, px·색 리터럴 없음)
  * - 두 줄 단계(F): 24시 HH:mm 짧은 시간으로 바꿔 오전/오후 잘림 방지
- * - 가장 좁은 단계(G): 시간 줄 전폭, 표식은 이름 줄 끝, 상태 색은 시작 테두리
+ * - 가장 좁은 단계(G): 시간 줄 전폭, 상담사 __dot 유지, 상태 색은 시작 테두리
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -65,10 +65,20 @@ describe('짧은 시간 포맷', () => {
     expect(formatIntegratedMonthChipShortTime('not-a-date')).toBe('');
   });
 
-  test('통합 월간 칩만 전체/짧은 시간 두 칸을 그린다', () => {
+  test('월간 칩은 전체/짧은 시간 두 칸, 주/일은 measure fit 컴포넌트', () => {
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-full');
     expect(CALENDAR_JS).toContain('mg-v2-ad-calendar-event__time-short');
     expect(CALENDAR_JS).toMatch(/integratedMonthEventLayout \? \(\s*<>\s*<span className="mg-v2-ad-calendar-event__time-full">/);
+    expect(CALENDAR_JS).toMatch(/WeekDayScheduleEventChip/);
+    expect(CALENDAR_CSS).not.toContain('@container mg-week-event (width < 109px)');
+    expect(CALENDAR_CSS).toContain('mg-v2-ad-calendar-event--week-day-fit');
+  });
+
+  test('주/일 CSS 는 ellipsis 잘림 없이 measure stage 클래스를 쓴다', () => {
+    expect(CALENDAR_CSS).toMatch(/--week-day-fit[\s\S]*?text-overflow:\s*clip/);
+    expect(CALENDAR_CSS).not.toMatch(
+      /\.mg-v2-ad-calendar-event:not\(\.mg-v2-ad-calendar-event--compact\) \.mg-v2-ad-calendar-event__time-text\s*\{[^}]*text-overflow:\s*ellipsis/
+    );
   });
 });
 
@@ -98,25 +108,31 @@ describe('월간 칩 좁은 단계', () => {
     expect(IMS_CSS).toMatch(/__time-short\s*\{\s*display:\s*none;\s*\}/);
   });
 
-  test('가장 좁은 단계: 시간 전폭, 표식은 흐름 안, 상태 색은 시작 테두리', () => {
+  test('가장 좁은 단계: 시간 전폭, 상담사 __dot 유지, 상태 색은 시작 테두리', () => {
     const stageG = extractBlock(IMS_CSS, '@container mg-month-event (width < 64px)');
     expect(stageG).not.toBe('');
     expect(stageG).toMatch(/__time\s*\{\s*flex-basis:\s*100%;/);
     expect(stageG).toMatch(/\.mg-schedule-event-marks\s*\{[^}]*position:\s*static;[^}]*order:\s*2;/);
     expect(stageG).toContain('border-inline-start: var(--mg-v2-border-width-thick) solid var(--mg-month-event-status-color)');
-    expect(stageG).toMatch(/__dot\s*\{\s*display:\s*none;/);
+    expect(stageG).not.toMatch(/__dot\s*\{\s*display:\s*none;/);
+    expect(stageG).toMatch(/mg-v2-teacher-dot[\s\S]*?display:\s*none;/);
     const decls = declarationsOnly(stageG);
     expect(decls).not.toMatch(/\d+px/);
     expect(decls).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
 
-  test('상태 색은 칩 변수 한 곳에서 정하고 점이 그 변수를 쓴다', () => {
+  test('상태 색은 좁은 테두리용이고 앞 점은 상담사 색 변수를 쓴다', () => {
     ['booked', 'confirmed', 'completed', 'tentative', 'cancelled'].forEach((status) => {
       expect(IMS_CSS).toMatch(
         new RegExp(`mg-v2-ad-calendar-event--status-${status} \\{\\s*--mg-month-event-status-color:`)
       );
     });
-    expect(IMS_CSS).toMatch(/__dot \{[^}]*background-color: var\(--mg-month-event-status-color\);/);
+    expect(IMS_CSS).toMatch(
+      /__dot \{[\s\S]*?background-color: var\(--mg-consultant-color, var\(--mg-v2-color-neutral-500\)\);/
+    );
+    expect(IMS_CSS).toMatch(
+      /border-inline-start: var\(--mg-v2-border-width-thick\) solid var\(--mg-month-event-status-color\)/
+    );
     expect(IMS_CSS).not.toMatch(/__dot--booked \{/);
   });
 });

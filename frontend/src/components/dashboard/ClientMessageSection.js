@@ -20,6 +20,7 @@ import '../../styles/unified-design-tokens.css';
 import './ClientMessageSection.css';
 import { USER_ROLES } from '../../constants/roles';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../constants/notificationTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -236,7 +237,7 @@ const ClientMessageSection = ({ userId }) => {
 
   // 전체 메시지 보기
   const handleViewAllMessages = () => {
-    navigate('/notifications');
+    navigate(CLIENT_NOTIFICATIONS_ENTRY_PATH);
   };
 
   // 컴포넌트 마운트 시 메시지 로드

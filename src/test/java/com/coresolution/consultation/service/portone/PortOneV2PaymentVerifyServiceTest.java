@@ -166,6 +166,162 @@ class PortOneV2PaymentVerifyServiceTest {
         verify(restTemplate, never()).exchange(any(), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
     }
 
+    @Test
+    @DisplayName("쇼핑 검증 — PAID+total/paid/통화/주문/paymentId 일치 시 MATCH")
+    void verifyPaidMatchesShopOrder_fullMatch_returnsMatch() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        String body = "{"
+                + "\"id\":\"pay-1\","
+                + "\"status\":\"PAID\","
+                + "\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"},"
+                + "\"customData\":{\"orderPublicId\":\"ord-1\"}"
+                + "}";
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(body, HttpStatus.OK));
+
+        PortOneShopPaidMatch result = service.verifyPaidMatchesShopOrder(
+                "t1", "pay-1", 1000L, "ord-1", "KRW");
+        assertEquals(PortOneShopPaidMatchResult.MATCH, result.getResult());
+        assertTrue(result.getBody().isPresent());
+        assertEquals(0, new BigDecimal("1000").compareTo(result.getActualPaidAmount().orElseThrow()));
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — underpay(total/paid=100 vs 1000) 즉시 MISMATCH·actualPaid=100")
+    void verifyPaidMatchesShopOrder_underpay_mismatchWithoutRetry() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":100,\"paid\":100,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        PortOneShopPaidMatch result = service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW");
+        assertEquals(PortOneShopPaidMatchResult.MISMATCH, result.getResult());
+        assertEquals(0, new BigDecimal("100").compareTo(result.getActualPaidAmount().orElseThrow()));
+        verify(restTemplate, times(1)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — overpay 즉시 MISMATCH")
+    void verifyPaidMatchesShopOrder_overpay_mismatch() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1100,\"paid\":1100,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.MISMATCH,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — paid 누락 → UNKNOWN")
+    void verifyPaidMatchesShopOrder_missingPaid_unknown() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.UNKNOWN,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — 통화 불일치 MISMATCH")
+    void verifyPaidMatchesShopOrder_wrongCurrency_mismatch() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"USD\"}}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.MISMATCH,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — 주문 참조 불일치 MISMATCH")
+    void verifyPaidMatchesShopOrder_wrongOrderId_mismatch() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"},"
+                                + "\"merchantOrderReference\":\"ord-other\"}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.MISMATCH,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — paymentId 불일치 MISMATCH")
+    void verifyPaidMatchesShopOrder_wrongPaymentId_mismatch() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-other\",\"status\":\"PAID\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.MISMATCH,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — fetch empty(timeout) → UNKNOWN")
+    void verifyPaidMatchesShopOrder_fetchEmpty_unknown() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenThrow(new ResourceAccessException("timeout"));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.UNKNOWN,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — READY 재시도 후에도 PAID 아니면 UNKNOWN")
+    void verifyPaidMatchesShopOrder_readyAfterRetries_unknown() {
+        stubActiveApprovedConfig();
+        when(encryptionService.decrypt("enc-secret")).thenReturn("plain-secret");
+        when(restTemplate.exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(
+                        "{\"id\":\"pay-1\",\"status\":\"READY\",\"amount\":{\"total\":1000,\"paid\":1000,\"currency\":\"KRW\"}}",
+                        HttpStatus.OK));
+
+        assertEquals(
+                PortOneShopPaidMatchResult.UNKNOWN,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+        verify(restTemplate, times(3)).exchange(any(), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("쇼핑 검증 — PG 설정 없으면 UNKNOWN")
+    void verifyPaidMatchesShopOrder_noConfig_unknown() {
+        when(tenantPgConfigurationRepository.findByTenantIdAndPgProviderAndStatusAndIsDeletedFalse(
+                eq("t1"), eq(PgProvider.IAMPORT), eq(PgConfigurationStatus.ACTIVE)))
+                .thenReturn(Optional.empty());
+
+        assertEquals(
+                PortOneShopPaidMatchResult.UNKNOWN,
+                service.verifyPaidMatchesShopOrder("t1", "pay-1", 1000L, "ord-1", "KRW").getResult());
+        verify(restTemplate, never()).exchange(any(), any(HttpMethod.class), any(HttpEntity.class), eq(String.class));
+    }
+
     private void stubActiveApprovedConfig() {
         TenantPgConfiguration config = TenantPgConfiguration.builder()
                 .configId("cfg-1")

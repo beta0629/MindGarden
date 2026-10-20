@@ -1,0 +1,10 @@
+/**
+ * EngagementTypeBadge — 의도된 분리점 조각.
+ * 좁은 칩에서 배지가 wrap 되어도 조각(__seg) 내부는 한 줄(nowrap)을 유지한다.
+ * Badge.css 기본 스타일은 변경하지 않는다.
+ */
+
+.mg-engagement-type-badge__seg {
+  display: inline-block;
+  white-space: nowrap;
+}

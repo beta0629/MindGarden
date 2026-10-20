@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import com.coresolution.consultation.constant.FinancialTransactionConstants;
 import com.coresolution.consultation.constant.ScheduleStatus;
+import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
@@ -256,6 +257,57 @@ class AdminServiceImplTerminateUnusedFullVoidTest {
         verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
                 eq(mappingId),
                 eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+    }
+
+    @Test
+    @DisplayName("미사용 전액 무효 — 병합 추가 패키지 매핑 INCOME도 같은 경로에서 취소")
+    void terminateMapping_unusedFullVoid_cancelsMergedAddonIncome() {
+        Long targetId = 340L;
+        Long mergedId = 341L;
+        ConsultantClientMapping target = newActiveUnusedMapping(targetId, 10L, 20L, 10, 800_000L);
+        ConsultantClientMapping merged = newActiveUnusedMapping(mergedId, 10L, 20L, 5, 400_000L);
+        merged.setConsultant(target.getConsultant());
+        merged.setClient(target.getClient());
+        merged.setStatus(MappingStatus.TERMINATED);
+        merged.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_FMT, targetId, 5));
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(targetId)))
+                .thenReturn(Optional.of(target));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findByTenantIdAndConsultantAndClient(eq(TEST_TENANT_ID), any(User.class), any(User.class)))
+                .thenReturn(List.of(target, merged));
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("TERMINATED")))
+                .thenReturn(MappingStatus.TERMINATED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("CANCELLED")))
+                .thenReturn(MappingStatus.CANCELLED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("MAPPING_STATUS"), eq("PENDING_PAYMENT")))
+                .thenReturn(MappingStatus.PENDING_PAYMENT.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("PAYMENT_STATUS"), eq("REFUNDED")))
+                .thenReturn(PaymentStatus.REFUNDED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("BOOKED")))
+                .thenReturn(ScheduleStatus.BOOKED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CONFIRMED")))
+                .thenReturn(ScheduleStatus.CONFIRMED.name());
+        when(statusCodeHelper.getStatusCodeValue(eq("SCHEDULE_STATUS"), eq("CANCELLED")))
+                .thenReturn(ScheduleStatus.CANCELLED.name());
+        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                eq(TEST_TENANT_ID), eq(10L), eq(20L), any(LocalDate.class)))
+                .thenReturn(Collections.emptyList());
+        when(financialTransactionService.cancelRelatedPostedIncomeTransactions(anyLong(), anyString()))
+                .thenReturn(1);
+
+        adminService.terminateMapping(targetId, "병합 후 미사용 종료");
+
+        assertThat(target.getStatus()).isEqualTo(MappingStatus.CANCELLED);
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                eq(targetId), eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                eq(mergedId), eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING));
+        verify(financialTransactionService).cancelRelatedPostedIncomeTransactions(
+                eq(mergedId), eq(FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL));
         verify(financialTransactionService, never()).createTransaction(any(), any());
     }
 

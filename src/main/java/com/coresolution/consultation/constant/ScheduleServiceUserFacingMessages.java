@@ -32,12 +32,28 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_INSTITUTION_LINK_NOT_PROVISIONAL =
             "기관연계 일정은 가예약으로 등록할 수 없습니다.";
 
+    /** 같은 상담사·날짜에 이미 점유 중인 시간과 겹칠 때. */
+    public static final String MSG_TIME_SLOT_ALREADY_OCCUPIED =
+            "해당 시간대에 이미 스케줄이 존재합니다.";
+
+    /** 점유 시간과 겹치거나 최소 간격(휴식)을 지키지 못할 때. */
+    public static final String MSG_TIME_SLOT_CONFLICT_OR_TOO_CLOSE =
+            "해당 시간대에 이미 스케줄이 존재하거나 시간이 충돌합니다.";
+
     /**
      * 같은 테넌트에서 연결 매칭을 찾을 수 없는 가예약 일정은 확정·점유 전환하지 않는다.
      * 결제 대기 매칭의 가예약 확정은 허용한다(회기 차감은 결제 후).
      */
     public static final String MSG_TENTATIVE_WITHOUT_MAPPING_CONFIRM_DENIED =
             "연결된 매칭을 찾을 수 없어 가예약 일정을 확정할 수 없습니다. 매칭을 확인한 뒤 다시 시도해 주세요.";
+
+    /** 취소·휴가·완료·진행 중 등 확정할 수 없는 상태의 일정에 확정을 요청한 경우 (회기 변경 없음). */
+    public static final String MSG_SCHEDULE_STATUS_NOT_CONFIRMABLE =
+            "현재 상태에서는 일정을 확정할 수 없습니다. 예약됨 또는 가예약 일정만 확정할 수 있습니다.";
+
+    /** 취소·완료된 일정을 예약·확정·진행 중으로 되돌리려 한 경우 (회기 변경 없음). */
+    public static final String MSG_SCHEDULE_TERMINAL_REOCCUPY_DENIED =
+            "취소되었거나 완료된 일정은 다시 예약·확정 상태로 바꿀 수 없습니다. 새 일정을 등록해 주세요.";
 
     /** 같은 테넌트에 없는 일정 id로 확정·당일 결제 대상을 지정한 경우. */
     public static final String MSG_SCHEDULE_NOT_FOUND = "일정을 찾을 수 없습니다.";

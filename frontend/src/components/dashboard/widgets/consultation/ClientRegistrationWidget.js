@@ -24,7 +24,8 @@ import StandardizedApi from '../../../../utils/standardizedApi';
 import './ClientRegistrationWidget.css';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
-import { generateMgLoginPassword } from '../../../../utils/generateMgLoginPassword';
+import { resolveUserFacingApiErrorMessage } from '../../../../utils/userFacingApiErrorMessage';
+import { tempPasswordSmsNotice } from '../../../../utils/tempPasswordSmsNotice';
 import { useTranslation } from 'react-i18next';
 
 const CLIENT_REGISTER_API = '/api/v1/admin/clients';
@@ -38,7 +39,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
   const [formData, setFormData] = useState({
     userId: '',
     email: '',
-    password: '',
     name: '',
     phone: '',
     rrnFirst6: '',
@@ -112,7 +112,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
         break;
       default:
         // 필수 필드 검사 (이메일·휴대폰은 택1이므로 여기서 단독 필수 처리하지 않음)
-        if (['userId', 'name', 'password'].includes(name) && !value.trim()) {
+        if (['userId', 'name'].includes(name) && !value.trim()) {
           newErrors[name] = '이 필드는 필수입니다.';
         } else {
           delete newErrors[name];
@@ -129,7 +129,8 @@ const ClientRegistrationWidget = ({ widget, user }) => {
 
   // 등록 성공 핸들러
   const handleRegistrationSuccess = (response) => {
-    showNotification('내담자가 성공적으로 등록되었습니다.', 'success');
+    const smsNotice = tempPasswordSmsNotice(t, response);
+    showNotification(smsNotice || '내담자가 성공적으로 등록되었습니다.', 'success');
     
     // 폼 초기화
     handleReset();
@@ -169,14 +170,13 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       return;
     }
 
-    const requiredFields = ['userId', 'name', 'password'];
+    const requiredFields = ['userId', 'name'];
     const missingFields = requiredFields.filter(field => !formData[field]?.trim());
 
     if (missingFields.length > 0) {
       showNotification('필수 항목을 모두 입력해주세요.', 'warning');
       return;
     }
-    
     // 유효성 검사
     if (Object.keys(validationErrors).length > 0) {
       showNotification('입력 오류를 수정해주세요.', 'error');
@@ -201,7 +201,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     const requestData = {
       userId: formData.userId?.trim(),
       email: emailTrim,
-      password: formData.password,
       name: formData.name?.trim(),
       phone: phoneTrim,
       role: USER_ROLES.CLIENT,
@@ -225,7 +224,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
       handleRegistrationSuccess(response);
     } catch (error) {
       console.error('❌ 내담자 등록 실패:', error);
-      const message = error.message || '내담자 등록 중 오류가 발생했습니다.';
+      const message = resolveUserFacingApiErrorMessage(error, t('common:dashboard.ClientRegistrationWidget.registerFailed'));
       setSubmitError(message);
       showNotification(message, 'error');
     } finally {
@@ -238,7 +237,6 @@ const ClientRegistrationWidget = ({ widget, user }) => {
     setFormData({
       userId: '',
       email: '',
-      password: generateMgLoginPassword(),
       name: '',
       phone: '',
       rrnFirst6: '',
@@ -399,27 +397,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     )}
                   </div>
 
-                  <div className="form-group">
-                    <label htmlFor="password" className="form-label">
-                      {t('common:dashboard.ClientRegistrationWidget.t_81973897')} <span className="required">*</span>
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={formData.password}
-                      onChange={handleInputChange}
-                      required
-                      className={`form-control ${getFieldError('password') ? 'error' : ''}`}
-                      placeholder={t('common:dashboard.ClientRegistrationWidget.t_6669670d')}
-                    />
-                    {getFieldError('password') && (
-                      <div className="field-error">
-                        
-                        {getFieldError('password')}
-                      </div>
-                    )}
-                  </div>
+                  <p className="mg-v2-form-help">{t('auth:tempPasswordSms.resetHelp')}</p>
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">

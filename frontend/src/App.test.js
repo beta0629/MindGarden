@@ -4,6 +4,10 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 
+jest.mock('./utils/portonePayment', () => ({
+  requestPortOnePayment: jest.fn()
+}));
+
 jest.mock('axios', () => ({
   __esModule: true,
   default: {
@@ -48,6 +52,19 @@ jest.mock('./components/common/ProtectedRoute', () => ({
   __esModule: true,
   default: ({ children }) => children
 }));
+
+// App 이 SchedulePage/ConsultantSchedule 등을 eager import 하며 ScheduleCalendarView
+// → @fullcalendar/luxon3 를 끌어온다. 홈 스모크는 캘린더 패키지(미설치 luxon3 포함)에
+// 의존하지 않도록 스케줄 리프만 stub 한다.
+jest.mock('./components/ui/Schedule/ScheduleCalendarView', () => ({
+  __esModule: true,
+  default: function MockScheduleCalendarView() {
+    return null;
+  }
+}));
+jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), {
+  virtual: true
+});
 
 import App from './App';
 

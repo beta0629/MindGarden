@@ -89,7 +89,9 @@ public interface FinancialTransactionService {
      * @param category        카테고리, null/ALL이면 전체
      * @param startDate       시작일(포함), null이면 하한 없음
      * @param endDate         종료일(포함), null이면 상한 없음
-     * @return {@code totalIncome}, {@code totalExpense}, {@code totalCardMerchantFee}, {@code remaining}
+     * @return {@code totalIncome}, {@code totalExpense}, {@code totalCardMerchantFee}, {@code remaining},
+     *         {@code refundAmount}(posted EXPENSE 중 환불 subcategory 또는 category 합.
+     *         CANCELLED·REJECTED는 기존 posted 필터로 제외)
      * @author CoreSolution
      * @since 2026-08-29
      */
@@ -123,6 +125,26 @@ public interface FinancialTransactionService {
      * 거래 거부
      */
     FinancialTransactionResponse rejectTransaction(Long id, String comment, User approver);
+
+    /**
+     * 빠른 지출을 저장한 뒤 바로 완료(COMPLETED)로 둔다.
+     * 결제·환불·입금 경로의 {@link #createTransaction} 은 호출하지 않는다.
+     *
+     * @param request 지출 요청 (EXPENSE, 환불 서브카테고리 아님)
+     * @param currentUser 관리자
+     * @return 완료 상태 거래
+     */
+    FinancialTransactionResponse createCompletedQuickExpense(FinancialTransactionRequest request, User currentUser);
+
+    /**
+     * 이미 대기·승인으로 저장된 지출을 화면에서 완료 처리한다.
+     * 수입·환불 거래는 거부한다.
+     *
+     * @param id 거래 ID
+     * @param currentUser 관리자
+     * @return 완료 상태 거래
+     */
+    FinancialTransactionResponse completeRecordedExpense(Long id, User currentUser);
     
     /**
      * 재무 대시보드 데이터 조회

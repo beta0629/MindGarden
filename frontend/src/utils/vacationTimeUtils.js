@@ -20,9 +20,9 @@ let lastCacheTime = 0;
  */
 const fetchBusinessTimeSettings = async() => {
     try {
-        const response = await apiGet('/api/admin/business-time/settings');
-        if (response && response.success) {
-            return response.data;
+        const response = await apiGet('/api/v1/admin/business-time/settings');
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
     } catch (error) {
         console.error('업무 시간 설정 API 호출 실패:', error);

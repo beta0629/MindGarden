@@ -25,6 +25,11 @@ import {
   resolvePortoneChannelKey
 } from '../../utils/portonePgSettingsJson';
 import {
+  areProviderSecretsRequiredOnSave,
+  isIamportApiSecretRequired
+} from '../../utils/pgConfigurationSecretPolicy';
+import { PG_CONFIGURATION_SECRET_COPY } from '../../constants/pgConfigurationSecretPolicy';
+import {
   KICC_DOCS_AI_GUIDE_URL,
   KICC_DOCS_LLM_INDEX_URL,
   KICC_DOCS_ONLINE_PAYMENT_BASE,
@@ -49,7 +54,11 @@ export const PG_TEST_MODE_LIVE_CHANNEL_KEY_REQUIRED =
 
 /** 수정 모드 테스트 모드 안내 — 저장 시 재승인 요청으로 제출되고 운영자 승인 후 반영 */
 export const PG_TEST_MODE_REAPPROVAL_NOTICE =
-  '테스트 모드 변경은 저장하면 재승인 요청으로 제출되고, 운영자 승인 후 반영돼요.';
+  '테스트 모드 변경은 저장하면 재승인 요청으로 제출되고, 운영자 승인 후 반영돼요. ACTIVE 설정은 승인 전까지 결제가 유지됩니다.';
+
+/** 승인·운영 설정 수정 시 상단 재승인 안내 */
+export const PG_EDIT_REAPPROVAL_NOTICE =
+  '승인·운영 중인 설정을 수정하면 재승인이 필요합니다. ACTIVE 설정은 승인 전까지 계속 결제됩니다.';
 
 /**
  * settings_json 에서 KICC 이지페이 호스트 오버라이드 분리
@@ -210,12 +219,7 @@ const PgConfigurationForm = ({
       {PG_TEST_MODE_REAPPROVAL_NOTICE}
     </small>
   ) : null;
-  const isActiveLikeStatus = Boolean(
-    initialData
-      && (initialData.status === 'ACTIVE'
-        || initialData.status === 'APPROVED'
-        || initialData.approvalStatus === 'APPROVED')
-  );
+  const apiSecretConfigured = initialData?.apiSecretConfigured;
 
   useEffect(() => {
     if (typeof onLoadingChange === 'function') {
@@ -346,29 +350,38 @@ const PgConfigurationForm = ({
       newErrors.pgProvider = t('common:tenant.PgConfigurationForm.t_d5d2a5e5');
     }
 
+    const secretsRequired = areProviderSecretsRequiredOnSave({
+      mode,
+      apiSecretConfigured
+    });
+
     if (isKicc) {
       if (!formData.merchantId || !String(formData.merchantId).trim()) {
         newErrors.merchantId = t('common:tenant.PgConfigurationForm.t_a5c3076a');
       }
-      if (!formData.apiKey || !String(formData.apiKey).trim()) {
-        newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
-      }
-      if (!formData.secretKey || !String(formData.secretKey).trim()) {
-        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_d43a548a');
+      if (secretsRequired) {
+        if (!formData.apiKey || !String(formData.apiKey).trim()) {
+          newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
+        }
+        if (!formData.secretKey || !String(formData.secretKey).trim()) {
+          newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_d43a548a');
+        }
       }
     } else if (isIamportPortoneV2) {
       if (!formData.storeId || !String(formData.storeId).trim()) {
         newErrors.storeId = t('common:tenant.PgConfigurationForm.t_6a5134ed');
       }
       const secretTrim = formData.secretKey ? String(formData.secretKey).trim() : '';
-      // testMode ON: API 시크릿 선택. OFF(리얼): 필수 — 단 ACTIVE 수정에서 공란은 「변경 없음」→ PATCH 경로.
-      if (!secretTrim) {
-        if (!formData.testMode) {
-          const allowBlankSecret = mode === 'edit' && isActiveLikeStatus;
-          if (!allowBlankSecret) {
-            newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
-          }
-        }
+      // testMode ON: 선택. OFF: create 필수 / edit+저장본 있으면 공란=변경 없음(PENDING 포함).
+      if (
+        !secretTrim
+        && isIamportApiSecretRequired({
+          mode,
+          testMode: !!formData.testMode,
+          apiSecretConfigured
+        })
+      ) {
+        newErrors.secretKey = t('common:tenant.PgConfigurationForm.t_3d449702');
       }
       const resolvedKey = resolvePortoneChannelKey(
         { channelKey: portoneChannelKey, channelKeyTest: portoneChannelKeyTest },
@@ -381,7 +394,7 @@ const PgConfigurationForm = ({
           newErrors.portoneChannelKey = '운영(라이브) 채널 키를 입력하세요.';
         }
       }
-    } else {
+    } else if (secretsRequired) {
       if (!formData.apiKey) {
         newErrors.apiKey = t('common:tenant.PgConfigurationForm.t_cd49be19');
       }
@@ -653,12 +666,23 @@ const PgConfigurationForm = ({
             </div>
           </div>
         )}
-        {mode === 'edit' && !hideFooter && initialData?.approvalStatus === 'PENDING' && (
-          <div className="form-warning-box">
+        {mode === 'edit' && !hideFooter && (
+          <div className="form-warning-box" data-testid="pg-edit-reapproval-notice">
             <AlertCircleIcon size={18} />
             <div>
-              <strong>{t('common:tenant.PgConfigurationForm.t_b1e3631b')}</strong>
-              <p>{t('common:tenant.PgConfigurationForm.t_989f1eea')}</p>
+              <strong>{t('common:tenant.PgConfigurationForm.t_b1e3631b', {
+                defaultValue: '재승인 안내'
+              })}</strong>
+              <p>
+                {initialData?.status === 'ACTIVE'
+                  || initialData?.status === 'APPROVED'
+                  || initialData?.approvalStatus === 'APPROVED'
+                  || initialData?.approvalStatus === 'REJECTED'
+                  ? PG_EDIT_REAPPROVAL_NOTICE
+                  : t('common:tenant.PgConfigurationForm.t_989f1eea', {
+                    defaultValue: '수정 내용을 저장하면 승인 대기 상태로 제출됩니다.'
+                  })}
+              </p>
             </div>
           </div>
         )}
@@ -1031,7 +1055,11 @@ const PgConfigurationForm = ({
                       type={showSecretKey ? 'text' : 'password'}
                       value={formData.secretKey}
                       onChange={(e) => handleChange('secretKey', e.target.value)}
-                      placeholder={mode === 'edit' ? '변경 시에만 새 API 시크릿을 입력하세요' : t('common:tenant.PgConfigurationForm.t_ba8eeaae')}
+                      placeholder={
+                        mode === 'edit'
+                          ? PG_CONFIGURATION_SECRET_COPY.EDIT_SECRET_PLACEHOLDER
+                          : t('common:tenant.PgConfigurationForm.t_ba8eeaae')
+                      }
                       className={`form-input ${getFieldError('secretKey') ? 'error' : ''}`}
                       autoComplete="new-password"
                       aria-required={!formData.testMode ? 'true' : 'false'}
@@ -1065,9 +1093,9 @@ const PgConfigurationForm = ({
                   <small id="secretKey-help" className="help-text">
                     <InfoIcon size={14} aria-hidden="true" />
                     {formData.testMode
-                      ? '테스트용 · 선택'
+                      ? PG_CONFIGURATION_SECRET_COPY.TEST_MODE_SECRET_HINT
                       : (mode === 'edit'
-                        ? '운영 시크릿 · 수정 시에만 새 값 입력'
+                        ? PG_CONFIGURATION_SECRET_COPY.EDIT_SECRET_HINT
                         : t('common:tenant.PgConfigurationForm.t_9aec1615'))}
                   </small>
                 </div>
@@ -1097,98 +1125,65 @@ const PgConfigurationForm = ({
                   </small>
                 </div>
 
-                {formData.testMode ? (
-                  <div className="form-group pg-config-form__grid2-full">
-                    <label htmlFor="portoneChannelKeyTest" className="required">
-                      채널 키
-                      <span className="required-mark"> *</span>
-                    </label>
-                    <input
-                      id="portoneChannelKeyTest"
-                      type="text"
-                      value={portoneChannelKeyTest}
-                      onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
-                      placeholder="channel-key-…"
-                      className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
-                      aria-required="true"
-                      aria-describedby="portoneChannelKeyTest-help"
-                    />
-                    {getFieldError('portoneChannelKeyTest') && (
-                      <span className="error-message">
-                        <AlertCircleIcon size={14} aria-hidden="true" />
-                        {getFieldError('portoneChannelKeyTest')}
-                      </span>
-                    )}
-                    <small id="portoneChannelKeyTest-help" className="help-text">
-                      <InfoIcon size={14} aria-hidden="true" />
-                      포트원 채널 키 · 테스트 ·
-                      {' '}
-                      <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
-                    </small>
-                    <p className="help-text pg-config-form__live-hint" role="status">
-                      운영 채널 키·시크릿은 테스트에선 사용 안 함
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="form-group pg-config-form__grid2-full">
-                      <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
-                        채널 키
-                        {!formData.testMode ? <span className="required-mark"> *</span> : null}
-                      </label>
-                      <input
-                        id="portoneChannelKey"
-                        type="text"
-                        value={portoneChannelKey}
-                        onChange={(e) => handlePortoneChannelKeyChange(e.target.value)}
-                        placeholder="channel-key-…"
-                        className={`form-input ${getFieldError('portoneChannelKey') ? 'error' : ''}`}
-                        aria-required={!formData.testMode ? 'true' : 'false'}
-                        aria-describedby="portoneChannelKey-help"
-                      />
-                      {getFieldError('portoneChannelKey') && (
-                        <span className="error-message">
-                          <AlertCircleIcon size={14} aria-hidden="true" />
-                          {getFieldError('portoneChannelKey')}
-                        </span>
-                      )}
-                      <small id="portoneChannelKey-help" className="help-text">
-                        <InfoIcon size={14} aria-hidden="true" />
-                        포트원 채널 키 · 운영 ·
-                        {' '}
-                        <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
-                      </small>
-                    </div>
-                    <div className="form-group pg-config-form__grid2-full">
-                      <label htmlFor="portoneChannelKeyTest" className={formData.testMode ? 'required' : undefined}>
-                        채널 키 (테스트)
-                        {formData.testMode ? <span className="required-mark"> *</span> : null}
-                      </label>
-                      <input
-                        id="portoneChannelKeyTest"
-                        type="text"
-                        value={portoneChannelKeyTest}
-                        onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
-                        placeholder="channel-key-…"
-                        className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
-                        aria-required={formData.testMode ? 'true' : 'false'}
-                        aria-describedby="portoneChannelKeyTest-help"
-                      />
-                      {getFieldError('portoneChannelKeyTest') && (
-                        <span className="error-message">
-                          <AlertCircleIcon size={14} aria-hidden="true" />
-                          {getFieldError('portoneChannelKeyTest')}
-                        </span>
-                      )}
-                      <small id="portoneChannelKeyTest-help" className="help-text">
-                        <InfoIcon size={14} aria-hidden="true" />
-                        테스트 전환 시 사용 ·
-                        {' '}
-                        <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
-                      </small>
-                    </div>
-                  </>
-                )}
+                {/* 테스트 모드 ON 이어도 운영 채널 키·시크릿을 미리 입력할 수 있어야 OFF 가능 (deadlock 방지) */}
+                <div className="form-group pg-config-form__grid2-full">
+                  <label htmlFor="portoneChannelKey" className={formData.testMode ? undefined : 'required'}>
+                    채널 키
+                    {!formData.testMode ? <span className="required-mark"> *</span> : null}
+                  </label>
+                  <input
+                    id="portoneChannelKey"
+                    type="text"
+                    value={portoneChannelKey}
+                    onChange={(e) => handlePortoneChannelKeyChange(e.target.value)}
+                    placeholder="channel-key-…"
+                    className={`form-input ${getFieldError('portoneChannelKey') ? 'error' : ''}`}
+                    aria-required={!formData.testMode ? 'true' : 'false'}
+                    aria-describedby="portoneChannelKey-help"
+                  />
+                  {getFieldError('portoneChannelKey') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('portoneChannelKey')}
+                    </span>
+                  )}
+                  <small id="portoneChannelKey-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    {formData.testMode
+                      ? '운영(라이브) · 테스트 모드 끄기 전 입력 · '
+                      : '포트원 채널 키 · 운영 · '}
+                    <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY}</span>
+                  </small>
+                </div>
+                <div className="form-group pg-config-form__grid2-full">
+                  <label htmlFor="portoneChannelKeyTest" className={formData.testMode ? 'required' : undefined}>
+                    채널 키 (테스트)
+                    {formData.testMode ? <span className="required-mark"> *</span> : null}
+                  </label>
+                  <input
+                    id="portoneChannelKeyTest"
+                    type="text"
+                    value={portoneChannelKeyTest}
+                    onChange={(e) => handlePortoneChannelKeyTestChange(e.target.value)}
+                    placeholder="channel-key-…"
+                    className={`form-input ${getFieldError('portoneChannelKeyTest') ? 'error' : ''}`}
+                    aria-required={formData.testMode ? 'true' : 'false'}
+                    aria-describedby="portoneChannelKeyTest-help"
+                  />
+                  {getFieldError('portoneChannelKeyTest') && (
+                    <span className="error-message">
+                      <AlertCircleIcon size={14} aria-hidden="true" />
+                      {getFieldError('portoneChannelKeyTest')}
+                    </span>
+                  )}
+                  <small id="portoneChannelKeyTest-help" className="help-text">
+                    <InfoIcon size={14} aria-hidden="true" />
+                    {formData.testMode
+                      ? '포트원 채널 키 · 테스트 · '
+                      : '테스트 전환 시 사용 · '}
+                    <span className="pg-config-portone-v2-code">{PORTONE_SETTINGS_KEY_CHANNEL_KEY_TEST}</span>
+                  </small>
+                </div>
 
                 {showConnectionMeta && (
                   <>

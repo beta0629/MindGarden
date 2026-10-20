@@ -3,8 +3,10 @@ package com.coresolution.consultation.service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import com.coresolution.consultation.dto.ConsultationLogGroupedPage;
 import com.coresolution.consultation.entity.ConsultationRecord;
 import com.coresolution.consultation.service.support.ConsultationRecordWriter;
+import com.coresolution.consultation.util.ConsultationLogTimelineSort;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -40,6 +42,47 @@ public interface ConsultationRecordService {
      */
     Page<ConsultationRecord> getConsultationRecords(Long consultantId, Long clientId,
         LocalDate startDate, LocalDate endDate, Pageable pageable);
+
+    /**
+     * 상담일지 조회. 상태·검색어가 없으면 기간 조회와 같다.
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable)
+     * @param startDate 세션 일자 시작 (nullable)
+     * @param endDate 세션 일자 종료 (nullable)
+     * @param sessionCompleted 완료 여부 (nullable = 전체)
+     * @param keyword 내담자 이름(매칭 id) 또는 요약 검색어 (nullable)
+     * @param matchedClientIds 화면이 고른 내담자 id CSV (nullable)
+     * @param pageable 페이징
+     * @return 세션일 내림차순 페이지
+     */
+    Page<ConsultationRecord> getConsultationRecordsForLogView(Long consultantId, Long clientId,
+        LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+        String matchedClientIds, Pageable pageable);
+
+    /**
+     * 관리자 상담일지 조회의 묶음 페이지.
+     *
+     * <p>내담자 선택(둘 다 포함)은 {@code timelineSort} 로 최근 순(기본) 또는 회기 순 페이지와,
+     * 같은 필터의 기간 전체 건수·첫·최근 상담일을 돌려준다.
+     * 상담사만 선택하면 최근 상담일·표시명 순 묶음이고, 묶음 안은 최근 순이다. 이 모드는 {@code timelineSort} 를 쓰지 않는다.
+     * 정렬 키만 모아 자른 뒤 그 쪽의 본문을 다시 읽는다. 응답 경계에는 이전 쪽 마지막 행의 상담사·내담자를 싣는다.
+     * 선택 없음은 이 메서드를 쓰지 않고 {@link #getConsultationRecordsForLogView} 의 상담일 내림차순을 유지한다.</p>
+     *
+     * @param consultantId 상담사 ID (nullable)
+     * @param clientId 내담자 ID (nullable). 둘 중 하나는 있어야 한다
+     * @param startDate 세션 일자 시작 (nullable)
+     * @param endDate 세션 일자 종료 (nullable)
+     * @param sessionCompleted 완료 여부 (nullable = 전체)
+     * @param keyword 검색어 (nullable)
+     * @param matchedClientIds 이름 매칭 내담자 id CSV (nullable)
+     * @param pageable 페이지
+     * @param timelineSort 내담자 선택 정렬. null 이면 최근 순. 상담사만 선택하면 무시한다
+     * @return 정렬된 페이지, 기간 집계, 쪽 경계
+     */
+    ConsultationLogGroupedPage getGroupedConsultationLogPage(Long consultantId, Long clientId,
+        LocalDate startDate, LocalDate endDate, Boolean sessionCompleted, String keyword,
+        String matchedClientIds, Pageable pageable, ConsultationLogTimelineSort timelineSort);
     
     /**
      * 상담일지 상세 조회

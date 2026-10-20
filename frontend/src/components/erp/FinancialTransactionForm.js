@@ -5,7 +5,6 @@ import MGButton from '../common/MGButton';
 import BadgeSelect from '../common/BadgeSelect';
 import notificationManager from '../../utils/notification';
 import SafeErrorDisplay from '../common/SafeErrorDisplay';
-import csrfTokenManager from '../../utils/csrfTokenManager';
 import { getTenantId } from '../../utils/apiHeaders';
 import StandardizedApi from '../../utils/standardizedApi';
 import { formatLocalDateYmd } from '../../utils/erpFinanceDisplay';
@@ -41,6 +40,7 @@ import {
   buildFixedCategoryOptions,
   buildSubcategoryPickerOptions,
   parseSubcategoryPickerValue,
+  resolveCommonCodeDisplayLabel,
   resolvePrimaryCategoryHighlight,
   resolveSubcategoryPickerValue
 } from '../../utils/financialTransactionCategoryPicker';
@@ -48,9 +48,6 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/
 import './FinancialTransactionForm.css';
 import './FinancialManagement.css';
 import { useTranslation } from 'react-i18next';
-
-// T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
-const API_ERP_COMMON_CODES_FINANCIAL = '/api/v1/erp/common-codes/financial';
 
 const PAYMENT_METHOD_CODE_GROUP = 'PAYMENT_METHOD';
 
@@ -184,14 +181,26 @@ const FinancialTransactionForm = ({
   const loadCommonCodes = async() => {
     try {
       setLoadingCodes(true);
-      const response = await csrfTokenManager.get(API_ERP_COMMON_CODES_FINANCIAL);
-      const body = await response.json().catch(() => ({}));
-
-      if (response.ok && body.success) {
-        setCommonCodes(body.data);
-      } else {
+      const envelope = await StandardizedApi.get(ERP_API.COMMON_CODES_FINANCIAL);
+      const body = envelope?.data ?? envelope ?? {};
+      const hasCodePayload = Array.isArray(body.transactionTypes)
+        || Array.isArray(body.incomeCategories)
+        || Array.isArray(body.expenseCategories)
+        || Array.isArray(body.incomeSubcategories)
+        || Array.isArray(body.expenseSubcategories)
+        || Array.isArray(body.vatCategories);
+      if (!envelope || body.success === false || !hasCodePayload) {
         setError(body.message || t('erp:FinancialTransactionForm.t_1c08ebb9'));
+        return;
       }
+      setCommonCodes({
+        transactionTypes: body.transactionTypes || [],
+        incomeCategories: body.incomeCategories || [],
+        expenseCategories: body.expenseCategories || [],
+        incomeSubcategories: body.incomeSubcategories || [],
+        expenseSubcategories: body.expenseSubcategories || [],
+        vatCategories: body.vatCategories || []
+      });
     } catch (err) {
       console.error('공통 코드 로드 실패:', err);
       setError(t('erp:FinancialTransactionForm.t_1c08ebb9'));
@@ -434,7 +443,7 @@ const FinancialTransactionForm = ({
   const legacyCategoryOptions = useMemo(() => (
     currentCategories.map((category) => ({
       value: category.codeValue,
-      label: category.codeLabel
+      label: resolveCommonCodeDisplayLabel(category)
     }))
   ), [currentCategories]);
 
@@ -445,7 +454,7 @@ const FinancialTransactionForm = ({
   const legacySubcategoryOptions = useMemo(() => (
     legacyFilteredSubcategories.map((subcategory) => ({
       value: subcategory.codeValue,
-      label: subcategory.codeLabel
+      label: resolveCommonCodeDisplayLabel(subcategory)
     }))
   ), [legacyFilteredSubcategories]);
 

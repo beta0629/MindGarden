@@ -155,6 +155,7 @@ public class SessionDeductionRecoveryBatch {
                 .findActiveByConsultantAndClient(tenantId, consultantId, clientId);
         if (opt.isEmpty()) {
             if (scheduleService.assignProvisionalSessionSequenceWithoutDeduction(schedule)) {
+                scheduleService.reorderOccupyingSessionSequences(null, schedule);
                 resolveOpenAlerts(tenantId, schedule.getId());
                 return RecoveryOutcome.SUCCESS;
             }
@@ -165,6 +166,7 @@ public class SessionDeductionRecoveryBatch {
         Integer remaining = mapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
             if (scheduleService.assignProvisionalSessionSequenceWithoutDeduction(schedule)) {
+                scheduleService.reorderOccupyingSessionSequences(mapping, schedule);
                 resolveOpenAlerts(tenantId, schedule.getId());
                 return RecoveryOutcome.SUCCESS;
             }
@@ -174,6 +176,7 @@ public class SessionDeductionRecoveryBatch {
         try {
             scheduleService.useSessionForSpecificMapping(
                     tenantId, mapping.getId(), consultantId, clientId, schedule);
+            scheduleService.reorderOccupyingSessionSequences(mapping, schedule);
             resolveOpenAlerts(tenantId, schedule.getId());
             log.info("session deduction recovery: scheduleId={}, mappingId={}, batch_recovery=true",
                     schedule.getId(), mapping.getId());

@@ -287,6 +287,7 @@ const BranchSpecificLogin = () => {
                   type={showPassword ? 'text' : 'password'}
                   id="password"
                   name="password"
+                  autoComplete="current-password"
                   value={formData.password}
                   onChange={handleInputChange}
                   className="form-input"

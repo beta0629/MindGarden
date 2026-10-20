@@ -5,6 +5,20 @@
     z-index: 1;
     /* 뷰 전환: opacity만. transform/scale/zoom 금지(DnD 히트테스트 보호) */
     transition: opacity var(--animation-duration-fast) var(--animation-easing-out);
+    /*
+     * timegrid 슬롯·이벤트 최소 높이 — 토큰만 사용(하드코딩 px 금지).
+     * space-8(2rem) → 30분 슬롯 ≈32px → 50분 ≈53px 로 시간+이름 두 줄 확보.
+     * event-min = space-4(1rem) → FC eventMinHeight 16 과 동기.
+     */
+    --mg-v2-calendar-slot-min-height: var(--mg-v2-space-8);
+    --mg-v2-calendar-event-min-height: var(--mg-v2-space-4);
+}
+
+/* FullCalendar 슬롯 높이 하한 — expandRows 압축으로 50분 칩이 ~42px 이하로 줄지 않게 */
+.mg-v2-schedule-calendar-view .fc-timegrid-slot,
+.mg-v2-schedule-calendar-view .fc-timegrid-slot-lane {
+    min-height: var(--mg-v2-calendar-slot-min-height) !important;
+    height: var(--mg-v2-calendar-slot-min-height);
 }
 
 .mg-v2-schedule-calendar-view.mg-v2-schedule-calendar-view--fading {
@@ -34,7 +48,7 @@
     color: inherit !important;
 }
 
-/* 주간/일간 풀 카드 — 텍스트 클리핑 방지 (토큰 min-height, overflow visible) */
+/* 주간/일간 풀 카드 — FC 하네스 높이에 맞춤(슬롯 초과·글자 가림 금지) */
 .mg-v2-ad-calendar-event {
     position: relative;
     display: flex;
@@ -44,14 +58,22 @@
     border: 1px solid var(--cs-brown-300);
     border-left-width: 1px;
     border-left-style: solid;
-    padding: var(--mg-v2-space-2, var(--mg-spacing-sm, 8px)) var(--mg-v2-space-3, 0.75rem);
-    overflow: visible;
+    padding: var(--mg-v2-space-1, 0.25rem) var(--mg-v2-space-2, 0.5rem);
+    overflow: hidden;
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
     cursor: pointer;
-    min-height: var(--mg-v2-space-16, 4rem);
-    height: auto;
+    min-height: 0;
+    max-height: 100%;
+    height: 100%;
     box-sizing: border-box;
-    gap: var(--mg-v2-space-1, 0.25rem);
+    gap: var(--mg-v2-space-0-5, 0.125rem);
+}
+
+/* timegrid harness 안 칩은 일정 시간 높이를 넘지 않음 */
+.mg-v2-schedule-calendar-view .fc-timegrid-event-harness .mg-v2-ad-calendar-event--week-day-fit {
+    max-height: 100%;
+    height: 100%;
+    min-height: 0;
 }
 
 /* 월간 컴팩트는 좌측 악센트 유지 */
@@ -107,6 +129,197 @@
 
 .mg-v2-ad-calendar-event__engagement {
     flex-shrink: 0;
+}
+
+/*
+ * 주/일 풀 카드: measure-based time-first stages (WeekDayScheduleEventChip).
+ * 뷰포트·@container 109px short-time 토글 제거 — 잘림(ellipsis) 금지.
+ */
+/* 주/일 풀 카드: 시간 행에 배지 인라인 (시간·배지 모두 shrink/ellipsis 금지) */
+.mg-v2-ad-calendar-event:not(.mg-v2-ad-calendar-event--compact) > .mg-v2-ad-calendar-event__time {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+    min-width: 0;
+    width: 100%;
+}
+
+/*
+ * 주/일 칩 각 줄(시간·이름·상태) — flex 로 눌려 ~1.8px 가 되지 않도록 shrink 금지.
+ * 높이 판정(readRowHeight)도 자연 줄 높이 기준.
+ */
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__title,
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__status,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__title {
+    flex-shrink: 0;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text {
+    flex: 0 0 auto;
+    min-width: 0;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+}
+
+/* 선생님 점: 축소·말줄임 금지. 숨김 시에만 measure(폭 예산용). */
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__teacher-dot {
+    flex: 0 0 auto;
+    margin-inline-end: 0;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__teacher-dot--measure {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit > .mg-v2-ad-calendar-event__time,
+.mg-v2-ad-calendar-event--week-day-fit
+  .mg-v2-ad-calendar-event__merge-row > .mg-v2-ad-calendar-event__time {
+    gap: var(--mg-v2-teacher-dot-gap);
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-measured {
+    white-space: nowrap;
+}
+
+/*
+ * 좁은 칩: 내담자 우선 + 상담사 먼저 shrink/ellipsis.
+ * 기관연계 배지는 말줄임 금지(전부 또는 생략).
+ * marker(표식) 단계에서는 min-width:1ch 미적용 — 글자 조각 방지.
+ */
+.mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
+  .mg-v2-ad-calendar-event__title .client-name {
+    flex: 1 1 auto;
+    min-width: 1ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .counselor-name {
+    flex: 0 3 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/*
+ * Stage 5 compact-pad: 정상 padding(space-1 / space-2) → 축소(space-0-5 / space-1).
+ * 하드코딩 px 금지 — calendar event padding 토큰만 사용.
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-pad-compact {
+    padding: var(--mg-v2-space-0-5) var(--mg-v2-space-1);
+}
+
+/*
+ * marker(표식) 단계: 글자 0 + 상태 색 막대만.
+ * compact status border 토큰과 동일 계열 재사용 (hex/rgb 금지).
+ */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker {
+    overflow: hidden;
+    min-width: 0;
+    padding: var(--mg-v2-space-0-5);
+    border-left-width: var(--mg-v2-border-width-thick);
+    border-left-style: solid;
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-booked {
+    border-left-color: var(--mg-v2-color-primary-main);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-primary-main) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-confirmed {
+    border-left-color: var(--mg-v2-color-semantic-success-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-success-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-completed {
+    border-left-color: var(--mg-v2-color-neutral-600);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-600) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-tentative {
+    border-left-color: var(--mg-v2-color-semantic-warning-dark);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-semantic-warning-dark) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker.mg-v2-ad-calendar-event--status-cancelled {
+    border-left-color: var(--mg-v2-color-neutral-500);
+    background-color: color-mix(
+        in srgb,
+        var(--mg-v2-color-neutral-500) 18%,
+        transparent
+    );
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--chip-marker
+  > .mg-v2-ad-calendar-event__time {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__time-text[hidden] {
+    display: none !important;
+}
+
+/* merge-time-title: 시간+이름을 한 줄에 (높이 단계) */
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title > .mg-v2-ad-calendar-event__merge-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-1);
+    min-width: 0;
+    width: 100%;
+    flex: 1 1 auto;
+    overflow: hidden;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__time {
+    flex: 0 0 auto;
+}
+
+.mg-v2-ad-calendar-event--week-day-fit.mg-v2-ad-calendar-event--merge-time-title .mg-v2-ad-calendar-event__title {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
 }
 
 /* 월간 뷰 컴팩트 이벤트 (다중 이벤트 시 공간 절약) - core-designer 스펙 */
@@ -253,13 +466,9 @@
 }
 
 /*
- * 통합 스킨: 공휴일 + 월간 주말 틴트 SSOT(한 블록).
- * 2026-05-23 옵션 A 정착 — 공휴일 셀에도 일요일과 동일 톤(분홍) 배경을 부여하고,
- * 그 위에 공휴일 배지·날짜 텍스트(빨강)가 z-index 위로 표시되도록 한다.
- * 범례 문구 SCHEDULE_LEGEND_INTEGRATED_WEEKEND_HOLIDAY_NOTE 와 시각 정합.
- * SSOT: docs/project-management/2026-05-23/CALENDAR_OPTION_A_DESIGN_HANDOFF.md §2,
- *       docs/project-management/2026-05-23/CALENDAR_HOLIDAY_BG_REGRESSION_ANALYSIS.md §5
- * 우선순위: 공휴일·일요일·토요일 우선순위는 셀렉터 특이도로 결정 — 공휴일이 마지막에 선언.
+ * 통합 스킨: 월간 셀.
+ * 셀 바탕은 칠하지 않는다. 토요일은 파랑, 일요일·공휴일은 코랄 글자만.
+ * 토요일 공휴일도 공휴일 색. 다른 달 숫자는 비활성색이 우선한다.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc .fc-bg-event.mg-v2-ad-calendar-event--kr-public-holiday-bg {
     /* 배경 이벤트 레이어는 비가시(셀 td 배경이 SSOT, 데이터·포커스는 유지) */
@@ -272,20 +481,12 @@
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
-    background-color: var(--mg-calendar-holiday-bg) !important;
     border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
     box-shadow: none !important;
     outline: none !important;
 }
 
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday a.fc-daygrid-day-number,
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
-    color: var(--mg-calendar-holiday-text) !important;
-    font-weight: 700;
-}
-
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday:hover {
-    background-color: var(--mg-calendar-holiday-bg) !important;
     border-color: var(--fc-border-color, var(--ad-b0kla-border)) !important;
 }
 
@@ -315,8 +516,7 @@
 }
 
 /*
- * 통합 월간: 일자(«5일») 한 줄 + 공휴일 배지는 다음 줄 전폭.
- * (day-top 가로 플렉스에서 배지가 100% 너비를 같이 끌어가며 일자 링크가 극단적으로 좁아지는 현상 방지)
+ * 통합 월간: 날짜 숫자는 오른쪽. 공휴일 이름은 그 왼쪽 캡션으로 두고, 좁으면 말줄임.
  */
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top {
     position: relative;
@@ -346,35 +546,81 @@
     text-decoration: none;
 }
 
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-substitute-eve-badge {
-    flex: 1 0 100%;
-    order: 2;
-    max-width: 100%;
+/*
+ * 월간 dayGrid: 머리글·날짜 숫자만 요일·공휴일 색.
+ * 우선순위(낮음→높음): 지난 평일 → 토요일 → 일요일·공휴일(토요일 공휴일 포함) → 다른 달 → 오늘 숫자.
+ */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell .fc-col-header-cell-cushion {
+    background-color: var(--ad-b0kla-bg);
+    color: var(--ad-b0kla-title-color);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sat,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sat .fc-col-header-cell-cushion {
+    color: var(--mg-calendar-saturday-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sun,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-col-header-cell.fc-day-sun .fc-col-header-cell-cushion {
+    color: var(--mg-calendar-holiday-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-past .fc-daygrid-day-number {
+    color: var(--mg-calendar-past-fg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-sat .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat .fc-daygrid-day-number {
+    color: var(--mg-calendar-saturday-fg);
+    font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-sun .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number {
+    color: var(--mg-calendar-holiday-fg);
+    font-weight: var(--mg-v2-font-weight-semibold);
 }
 
 /*
- * 월간 dayGrid만: dayCellClassNames가 부여한 주말 클래스.
- * 2026-05-23 옵션 A 정착 — 일요일+공휴일 겹침 시 공휴일 배경(분홍)이 우선되도록
- * CSS 선언 순서를 「주말 → 공휴일」 로 두는 대신 동일 톤 토큰을 공유한다.
- * (공휴일·일요일은 모두 --mg-calendar-weekend-sun-bg = --mg-calendar-holiday-bg)
+ * 다른 달 숫자·공휴일 이름은 요일·공휴일보다 우선해 비활성색.
  */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat {
-    background-color: var(--mg-calendar-weekend-sat-bg) !important;
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.fc-day-sat .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.mg-v2-ad-calendar-day--weekend-sun .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other.mg-v2-ad-calendar-day--kr-public-holiday .fc-daygrid-day-number,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-other .mg-v2-ad-calendar-day-holiday-badge__name {
+    color: var(--mg-calendar-other-month-fg);
+    font-weight: var(--mg-v2-font-weight-regular);
 }
 
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun {
-    background-color: var(--mg-calendar-weekend-sun-bg) !important;
+/* 오늘: 숫자 알약. 셀 바탕은 칠하지 않는다. 요일·공휴일 색보다 우선. */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today {
+    background-color: transparent;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+    color: var(--mg-calendar-today-fg);
+    background-color: var(--mg-calendar-today-bg);
+    border-radius: var(--mg-v2-radius-pill);
+    padding-inline: var(--mg-v2-space-2);
+    font-weight: var(--mg-v2-font-weight-bold);
 }
 
 /*
- * 공휴일 우선 override: 토요일+공휴일 겹침 시 공휴일 배경(분홍)이 토요일 배경(파랑)을
- * 덮어쓰도록 weekend 셀렉터 뒤에 같은 특이도로 한 번 더 선언한다.
- * 일요일+공휴일은 동일 토큰(--mg-calendar-weekend-sun-bg = --mg-calendar-holiday-bg)이라
- * 시각적으로 동일하지만, 의미적으로도 공휴일 우선 규칙을 명시한다.
- * 디자인 핸드오프 §2.1 옵션 A — 「겹치면 공휴일 우선」 정합.
+ * 선택: 중립 채움 + 1px 중립 테두리.
+ * inset box-shadow 는 셀 프레임(바탕 층)에 두어 칩을 가리지 않는다.
  */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--kr-public-holiday {
-    background-color: var(--mg-calendar-holiday-bg) !important;
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--selected,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-past.mg-v2-ad-calendar-day--selected,
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today.mg-v2-ad-calendar-day--selected {
+    background-color: var(--mg-calendar-selected-bg);
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--selected .fc-daygrid-day-frame {
+    background-color: var(--mg-calendar-selected-bg);
+    box-shadow: inset 0 0 0 var(--mg-calendar-selected-border-width) var(--mg-calendar-selected-border);
 }
 
 /*
@@ -397,61 +643,54 @@
  * Refs: core-debugger 보고서 §9, R-3 b8336cf11, R-4 7d7567550,
  *       ScheduleB0KlA.css:628·634, ScheduleCalendarView.css:293·301
  */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sat .fc-non-business,
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.mg-v2-ad-calendar-day--weekend-sun .fc-non-business {
     background: transparent !important;
 }
 
-/* 통합: 공휴일명·대체 전날 배지 — day-top에서 전폭 줄(일자 위 한 줄 확보), 내부는 세로 스택.
- * 2026-05-23 옵션 A — 공휴일 셀 배경이 분홍이 되었으므로 배지 배경은 반투명 흰(`--mg-calendar-holiday-badge-bg`)으로
- * 양쪽 색 모두 노출되게 한다(가독성 + 분홍 배경 시각 정합). */
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
-    flex: 1 0 100%;
+/* 통합: 공휴일 이름은 날짜 숫자와 같은 기준선. 좁으면 말줄임, 전체 이름은 title. */
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) {
+    align-items: baseline;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) .fc-daygrid-day-number {
     order: 1;
+}
+
+[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge {
+    flex: 1 1 auto;
+    order: 0;
+    width: auto;
+    min-width: 0;
     max-width: 100%;
     display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1px;
-    background-color: var(--mg-calendar-holiday-badge-bg);
-    color: var(--mg-calendar-holiday-text);
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: flex-end;
+    gap: var(--mg-v2-space-1);
+    margin: 0;
+    padding: 0;
+    background-color: transparent;
+    color: var(--mg-calendar-holiday-caption-fg);
     border: none;
+    font-size: var(--mg-v2-font-size-caption);
+    font-weight: var(--mg-v2-font-weight-medium);
+    line-height: var(--mg-v2-font-line-height-caption);
+    pointer-events: auto;
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__name {
-    font-weight: var(--cs-font-semibold, 600);
     min-width: 0;
-    color: var(--mg-calendar-holiday-text);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: end;
+    font-size: var(--mg-v2-font-size-caption);
+    font-weight: var(--mg-v2-font-weight-medium);
+    color: var(--mg-calendar-holiday-caption-fg);
 }
 
 [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-holiday-badge__eve-hint {
-    font-size: var(--cs-text-2xs, 0.625rem);
-    font-weight: var(--cs-font-medium, 500);
-    line-height: 1.2;
-    color: var(--mg-color-text-secondary, var(--mg-error-400));
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-[data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top .mg-v2-ad-calendar-day-substitute-eve-badge {
-    box-sizing: border-box;
-    display: block;
-    width: 100%;
-    margin-top: 2px;
-    padding: 2px var(--mg-spacing-xs, 4px);
-    border-radius: var(--cs-radius-sm, 4px);
-    font-size: var(--cs-text-2xs, 0.625rem);
-    font-weight: var(--cs-font-semibold, 600);
-    line-height: 1.25;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-    text-align: center;
-    background-color: color-mix(in srgb, var(--mg-info-400) 14%, var(--mg-color-surface-main, var(--mg-white)));
-    color: var(--mg-color-text-secondary, var(--mg-info-600));
-    border: 1px solid color-mix(in srgb, var(--mg-info-400) 28%, transparent);
+    display: none;
 }
 
 /* 월간 공휴일명: day-top 일반 흐름(절대배치 금지 — 이벤트·bg z-index에 가려짐). 비통합 스킨은 primary 유지 */
@@ -511,10 +750,60 @@
         font-size: var(--mg-v2-font-size-caption);
         white-space: nowrap;
     }
+
+    /* 390(< 768px): 공휴일 이름은 숫자 아래 줄. 오늘 알약 안쪽 여백을 줄인다. */
+    [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view .fc-daygrid-day-top:has(.mg-v2-ad-calendar-day-holiday-badge) .mg-v2-ad-calendar-day-holiday-badge {
+        order: 2;
+        flex-basis: 100%;
+    }
+
+    [data-calendar-skin="integrated"] .mg-v2-schedule-calendar.mg-v2-ad-b0kla .mg-v2-schedule-calendar-view td.fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+        padding-inline: var(--mg-v2-space-1);
+    }
 }
 
 /* FullCalendar .fc-timegrid-col-bg(z-index 2, 주말·09시 이전 비영업 오버레이)보다 위여야 일정 클릭 가능 */
 .mg-v2-schedule-calendar-view .fc-timegrid-col-events {
     position: relative;
     z-index: 3;
+}
+
+/* ---- 지금선 (nowIndicator) — 틸/일요일 빨강 금지. 기관연계 칩 색 변경 금지 ---- */
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-line {
+    border: 0;
+    border-top: var(--mg-v2-now-line-width) solid var(--mg-v2-now-line-color);
+    z-index: var(--mg-v2-z-now-line);
+    pointer-events: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-line::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: var(--mg-v2-now-line-dot-size);
+    height: var(--mg-v2-now-line-dot-size);
+    margin-top: calc(var(--mg-v2-now-line-dot-size) / -2);
+    border-radius: var(--mg-v2-radius-pill);
+    background: var(--mg-v2-now-line-color);
+    pointer-events: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-arrow,
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-container .fc-timegrid-now-indicator-arrow {
+    display: none;
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-now-indicator-container {
+    pointer-events: none;
+    z-index: var(--mg-v2-z-now-line);
+}
+
+/* 오늘 열/칸 — 월·주·일 공통 배경 (공휴일·주말 토큰이 뒤 규칙이면 덮어씀) */
+.mg-v2-schedule-calendar-view .fc .fc-day-today {
+    background-color: var(--mg-v2-today-col-bg);
+}
+
+.mg-v2-schedule-calendar-view .fc .fc-timegrid-col.fc-day-today {
+    background-color: var(--mg-v2-today-col-bg);
 }

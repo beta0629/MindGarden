@@ -1,0 +1,51 @@
+# MobileGnb 4폭 레이아웃 Playwright 스모크 — 로그인·시크릿 불필요 (정적 하네스)
+name: E2E MobileGnb layout smoke
+
+on:
+  pull_request:
+    branches: [main, develop, release/dev]
+    paths:
+      - 'tests/e2e/tests/layout/mobile-gnb-layout.spec.ts'
+      - 'tests/e2e/playwright.config.ts'
+      - 'frontend/src/components/dashboard-v2/organisms/MobileGnb.js'
+      - 'frontend/src/components/dashboard-v2/organisms/MobileGnb.css'
+      - 'frontend/src/components/dashboard-v2/atoms/CurrentTimeChip.js'
+      - 'frontend/src/components/dashboard-v2/atoms/CurrentTimeChip.css'
+      - 'frontend/src/styles/tokens/design-v2-tokens.css'
+      - '.github/workflows/e2e-mobile-gnb-layout-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  e2e-mobile-gnb-layout-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+
+      - name: Install E2E dependencies
+        working-directory: tests/e2e
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright Chromium
+        working-directory: tests/e2e
+        run: node node_modules/playwright/cli.js install chromium --with-deps
+
+      - name: Run MobileGnb layout smoke (chromium, harness — no webServer)
+        working-directory: tests/e2e
+        env:
+          # 비-localhost → playwright.config webServer(npm start) 미기동. 정적 setContent만 사용.
+          BASE_URL: http://mobile-gnb-harness.local
+          CI: 'true'
+        run: node node_modules/playwright/cli.js test tests/layout/mobile-gnb-layout.spec.ts --project=chromium

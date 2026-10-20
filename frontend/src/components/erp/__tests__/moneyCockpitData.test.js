@@ -6,15 +6,23 @@
  */
 
 import {
+  buildCategoryBreakdownFromTransactions,
   buildIncomeMixItems,
   buildLateSessionTodoComments,
+  buildLedgerIncomeCaptionFromDashboard,
+  buildLedgerOutflowMixFromDashboard,
   buildMoneyTodoRuleComments,
   buildNtsChecklistComments,
   buildOutflowMixItems,
+  isPostedLedgerTransaction,
   buildPaydayChecklistComment,
+  buildTopExpenseCaption,
   buildWithholdingStoredAmountComment,
   collectPrimaryPreConfirmQueries,
   computeSeriesMonthlyAverages,
+  FINANCE_COUNTABLE_TX_STATUS,
+  FINANCE_TX_STATUS,
+  FINANCE_TX_TYPE,
   formatAxisTick,
   formatWonAmount,
   formatWonDisplay,
@@ -24,15 +32,33 @@ import {
   buildStoredTaxCaption,
   parsePreConfirmWarningPayload,
   resolveSalaryPayDayFromCodes,
+  sumBreakdownValues,
   sumPendingConsultationFees,
-  sumPendingSalaryNet
+  sumPendingSalaryNet,
+  sumRefundFromTransactions
 } from '../organisms/moneyCockpit/moneyCockpitData';
 import {
   OFD_HERO,
   OFD_LEDGER,
+  OFD_OUTFLOW_CONSULTATION_REFUND_LABEL,
   OFD_SALARY_CHECKLIST
 } from '../../../constants/operatorFinanceDashboardStrings';
 import { SALARY_LATE_NOTES_LABELS, SALARY_TYPE } from '../../../constants/salaryConstants';
+
+/** 표시 라벨용 공통코드 목 — 고정 OFD/EXPENSE 맵 대체 */
+const MOCK_FINANCE_CATEGORY_ROWS = [
+  { codeValue: 'TAX', codeLabel: '세금' },
+  { codeValue: 'MEAL', codeLabel: '식대' },
+  { codeValue: 'EQUIPMENT', codeLabel: '장비' },
+  { codeValue: 'OFFICE_SUPPLIES', codeLabel: '사무용품' },
+  { codeValue: 'RENT', codeLabel: '임대' },
+  { codeValue: 'UTILITY', codeLabel: '관리' },
+  { codeValue: 'SALARY', codeLabel: '급여' },
+  { codeValue: 'CONSULTATION', codeLabel: '상담료' },
+  { codeValue: 'OTHER', codeLabel: '기타' },
+  { codeValue: 'PACKAGE', codeLabel: '패키지' },
+  { codeValue: 'CUSTOM_ADS', codeLabel: '광고' }
+];
 
 describe('moneyCockpitData format helpers', () => {
   test('formatWonAmount(1000000) → 1,000,000', () => {
@@ -244,6 +270,66 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
     });
   });
 
+  test('outflow: breakdown CARD_MERCHANT_FEE 를 쓰고 tx fee와 이중합산하지 않음', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 50000, CARD_MERCHANT_FEE: 2500 },
+      [{ type: 'INCOME', amount: 100000, cardMerchantFeeAmount: 2500 }]
+    );
+    expect(items.find((i) => i.id === 'cardMerchantFee')?.amount).toBe(2500);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(50000);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(52500);
+  });
+
+  test('outflow: TAX·MEAL·동적 카테고리 모두 표시 (공통코드 라벨 · 합산 키 불변)', () => {
+    const breakdown = {
+      SALARY: 10000,
+      RENT: 20000,
+      UTILITY: 5000,
+      TAX: 3000,
+      MEAL: 4000,
+      EQUIPMENT: 6000,
+      OFFICE_SUPPLIES: 7000,
+      CUSTOM_ADS: 8000
+    };
+    const items = buildOutflowMixItems(breakdown, [], {
+      categoryRows: MOCK_FINANCE_CATEGORY_ROWS
+    });
+    expect(items.find((i) => i.id === 'salary')?.amount).toBe(10000);
+    expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(25000);
+    expect(items.some((i) => i.label === '세금' && i.amount === 3000)).toBe(true);
+    expect(items.some((i) => i.label === '식대' && i.amount === 4000)).toBe(true);
+    expect(items.some((i) => i.amount === 8000)).toBe(true);
+    expect(items.length).toBeGreaterThanOrEqual(7);
+    const sum = items.reduce((s, i) => s + i.amount, 0);
+    expect(sum).toBe(Object.values(breakdown).reduce((a, b) => a + b, 0));
+  });
+
+  test('outflow: 공통코드 없으면 TAX/MEAL 은 bare code 라벨 (고정 맵 없음)', () => {
+    const items = buildOutflowMixItems({ TAX: 1000, MEAL: 2000 }, []);
+    expect(items.some((i) => i.label === 'TAX' && i.amount === 1000)).toBe(true);
+    expect(items.some((i) => i.label === 'MEAL' && i.amount === 2000)).toBe(true);
+  });
+
+  test('income/outflow: sum(items) === sum(breakdown) 불변식', () => {
+    const expenseBreakdown = {
+      SALARY: 100000,
+      RENT: 1540000,
+      TAX: 50000,
+      MEAL: 20000,
+      CARD_MERCHANT_FEE: 2500
+    };
+    const incomeBreakdown = { 상담료: 1800000, OTHER: 100000 };
+    const expenseItems = buildOutflowMixItems(expenseBreakdown, []);
+    const incomeItems = buildIncomeMixItems(incomeBreakdown, []);
+    expect(expenseItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(expenseBreakdown).reduce((a, b) => a + b, 0)
+    );
+    expect(incomeItems.reduce((s, i) => s + i.amount, 0)).toBe(
+      Object.values(incomeBreakdown).reduce((a, b) => a + b, 0)
+    );
+  });
+
   test('미지급 급여 net은 나간 곳 mix에 넣지 않는다', () => {
     const pendingNet = sumPendingSalaryNet([
       { status: 'PENDING', netSalary: 999999 }
@@ -373,6 +459,248 @@ describe('moneyCockpitData mix builders (날조 금지 · 0원 유지)', () => {
       []
     );
     expect(items.find((i) => i.id === 'rentUtility')?.amount).toBe(250000);
+  });
+
+  test('outflow: expense 상담료(환불)를 버리지 않고 환불(상담료)로 표시 · total==sum(items)', () => {
+    const expenseBreakdown = {
+      RENT: 1540000,
+      SALARY: 1000000,
+      TAX: 421293,
+      상담료: 91000
+    };
+    const items = buildOutflowMixItems(expenseBreakdown, []);
+    const consultationRefund = items.find(
+      (i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL
+    );
+    expect(consultationRefund).toBeDefined();
+    expect(consultationRefund.amount).toBe(91000);
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+    const itemSum = items.reduce((s, i) => s + i.amount, 0);
+    expect(itemSum).toBe(sumBreakdownValues(expenseBreakdown));
+    expect(itemSum).toBe(3052293);
+  });
+
+  test('outflow: CONSULTATION_REFUND 는 기존 환불 버킷 유지', () => {
+    const items = buildOutflowMixItems(
+      { RENT: 100000, CONSULTATION_REFUND: 50000, 상담료: 91000 },
+      []
+    );
+    expect(items.find((i) => i.id === 'refund')).toEqual({
+      id: 'refund',
+      label: '환불',
+      amount: 50000
+    });
+    expect(items.find((i) => i.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(items.reduce((s, i) => s + i.amount, 0)).toBe(241000);
+  });
+
+  test('sumRefundFromTransactions: CANCELLED·REJECTED 환불은 합에서 제외', () => {
+    expect(sumRefundFromTransactions([
+      { status: 'COMPLETED', subcategory: 'CONSULTATION_REFUND', amount: 100000 },
+      { status: 'CANCELLED', subcategory: 'CONSULTATION_REFUND', amount: 4135000 },
+      { status: 'REJECTED', subcategory: 'SESSION_REFUND', amount: 500000 }
+    ])).toBe(100000);
+  });
+
+  test('sumRefundFromTransactions: 공백·누락 status는 posted, null tx는 제외', () => {
+    expect(isPostedLedgerTransaction(null)).toBe(false);
+    expect(sumRefundFromTransactions([
+      null,
+      { status: '   ', subcategory: 'CONSULTATION_REFUND', amount: 30000 },
+      { subcategory: 'SESSION_REFUND', amount: 20000 },
+      { category: 'CONSULTATION_PARTIAL_REFUND', amount: 10000 }
+    ])).toBe(60000);
+  });
+
+  test('outflow: periodRefundAmount가 있으면 취소 tx와 무관하게 그 금액 하나만 환불 버킷', () => {
+    const cancelledRefund = {
+      status: 'CANCELLED',
+      transactionType: 'EXPENSE',
+      category: 'CONSULTATION_REFUND',
+      subcategory: 'CONSULTATION_REFUND',
+      amount: 4135000
+    };
+    const items = buildOutflowMixItems({}, [cancelledRefund], { periodRefundAmount: 100000 });
+    expect(items.filter((i) => i.id === 'refund')).toEqual([
+      { id: 'refund', label: '환불', amount: 100000 }
+    ]);
+  });
+
+  test('outflow: periodRefundAmount 0이면 취소 tx로도 환불 항목을 만들지 않는다', () => {
+    const cancelledRefund = {
+      status: 'CANCELLED',
+      transactionType: 'EXPENSE',
+      category: 'CONSULTATION_REFUND',
+      subcategory: 'CONSULTATION_REFUND',
+      amount: 4135000
+    };
+    const items = buildOutflowMixItems({}, [cancelledRefund], { periodRefundAmount: 0 });
+    expect(items.find((i) => i.id === 'refund')).toBeUndefined();
+  });
+
+  test('outflow: 2인자 호출은 breakdown CONSULTATION_REFUND 금액을 유지하고 취소 tx로 바꾸지 않는다', () => {
+    const fromBreakdown = buildOutflowMixItems({ CONSULTATION_REFUND: 50000 }, []);
+    expect(fromBreakdown.find((i) => i.id === 'refund')?.amount).toBe(50000);
+
+    const withCancelled = buildOutflowMixItems(
+      { CONSULTATION_REFUND: 50000 },
+      [{
+        status: 'CANCELLED',
+        transactionType: 'EXPENSE',
+        category: 'CONSULTATION_REFUND',
+        subcategory: 'CONSULTATION_REFUND',
+        amount: 4135000
+      }]
+    );
+    expect(withCancelled.find((i) => i.id === 'refund')?.amount).toBe(50000);
+  });
+});
+
+describe('장부 나간 돈 — 수입 상담료·미완료 지출 회귀', () => {
+  const incomeConsultation = {
+    transactionType: FINANCE_TX_TYPE.INCOME,
+    category: '상담료',
+    amount: 9000000,
+    status: FINANCE_COUNTABLE_TX_STATUS
+  };
+  const pendingRent = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: 'RENT',
+    amount: 8000000,
+    status: FINANCE_TX_STATUS.PENDING
+  };
+  const approvedSalary = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: 'SALARY',
+    amount: 7000000,
+    status: FINANCE_TX_STATUS.APPROVED
+  };
+  const completedConsultationRefund = {
+    transactionType: FINANCE_TX_TYPE.EXPENSE,
+    category: '상담료',
+    amount: 91000,
+    status: FINANCE_COUNTABLE_TX_STATUS
+  };
+  const pageRows = [
+    incomeConsultation,
+    pendingRent,
+    approvedSalary,
+    completedConsultationRefund
+  ];
+
+  test('income 상담료 행은 나간 돈 caption·breakdown에 없다', () => {
+    const items = buildLedgerOutflowMixFromDashboard(null, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    const refund = items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(refund?.amount).toBe(91000);
+    expect(refund?.amount).not.toBe(incomeConsultation.amount);
+    expect(caption).not.toContain('9,000,000');
+    expect(caption).not.toContain('상담료 9,000,000');
+  });
+
+  test('PENDING·APPROVED 지출 행은 제외한다', () => {
+    const breakdown = buildCategoryBreakdownFromTransactions(pageRows, FINANCE_TX_TYPE.EXPENSE);
+    expect(breakdown.RENT).toBeUndefined();
+    expect(breakdown.SALARY).toBeUndefined();
+    expect(breakdown['상담료']).toBe(91000);
+    const items = buildLedgerOutflowMixFromDashboard(null, pageRows);
+    expect(items.find((item) => item.id === 'rentUtility')).toBeUndefined();
+    expect(items.find((item) => item.id === 'salary')).toBeUndefined();
+    const caption = buildTopExpenseCaption(items);
+    expect(caption).not.toContain('임대');
+    expect(caption).not.toContain('급여');
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+  });
+
+  test('COMPLETED 지출 상담료 환불은 환불(상담료)로 남긴다', () => {
+    const items = buildLedgerOutflowMixFromDashboard(null, [
+      incomeConsultation,
+      completedConsultationRefund
+    ]);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+  });
+
+  test('서버 expenseCategoryBreakdown 이 페이지 수입 상담료보다 우선한다', () => {
+    const raw = {
+      financialData: {
+        incomeCategoryBreakdown: { 상담료: 9000000 },
+        expenseCategoryBreakdown: { RENT: 1540000 }
+      }
+    };
+    const items = buildLedgerOutflowMixFromDashboard(raw, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.some((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)).toBe(false);
+    expect(caption).toContain('1,540,000');
+    expect(caption).not.toContain(OFD_OUTFLOW_CONSULTATION_REFUND_LABEL);
+    expect(buildLedgerIncomeCaptionFromDashboard(raw, pageRows)).toContain('9,000,000');
+  });
+
+  test('서버 지출 breakdown의 COMPLETED 상담료는 환불(상담료)이고 수입 금액은 섞이지 않는다', () => {
+    const raw = {
+      data: {
+        financialData: {
+          incomeCategoryBreakdown: { 상담료: 9000000 },
+          expenseCategoryBreakdown: { 상담료: 91000 }
+        }
+      }
+    };
+    const items = buildLedgerOutflowMixFromDashboard(raw, pageRows);
+    const caption = buildTopExpenseCaption(items);
+    expect(items.find((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)?.amount)
+      .toBe(91000);
+    expect(caption).toBe(`${OFD_OUTFLOW_CONSULTATION_REFUND_LABEL} 91,000원`);
+    expect(caption).not.toContain('9,000,000');
+    expect(caption).not.toContain('8,000,000');
+    expect(caption).not.toContain('7,000,000');
+  });
+
+  test('수입 상담료 키는 outflow items에 들어가지 않는다', () => {
+    const incomeRows = Array.from({ length: 19 }, (_, index) => {
+      const n = index + 1;
+      return {
+        id: 300 + n,
+        transactionDate: '2026-10-02',
+        transactionType: FINANCE_TX_TYPE.INCOME,
+        category: '상담료',
+        description: `상담료 입금 ${n}`,
+        amount: n === 19 ? 535000 : 200000,
+        status: FINANCE_COUNTABLE_TX_STATUS
+      };
+    });
+    const rows = [
+      ...incomeRows,
+      {
+        id: 320,
+        transactionDate: '2026-10-03',
+        transactionType: FINANCE_TX_TYPE.EXPENSE,
+        category: 'RENT',
+        description: '임대료',
+        amount: 800000,
+        status: FINANCE_TX_STATUS.PENDING
+      }
+    ];
+    const dashboardRaw = {
+      financialData: {
+        incomeCategoryBreakdown: { 상담료: 4135000 },
+        categoryBreakdown: { 상담료: 4135000 },
+        expenseCategoryBreakdown: {}
+      }
+    };
+
+    const mixes = [
+      buildLedgerOutflowMixFromDashboard(dashboardRaw, rows, { periodRefundAmount: 0 }),
+      buildLedgerOutflowMixFromDashboard(null, rows, { periodRefundAmount: 0 })
+    ];
+
+    mixes.forEach((items) => {
+      expect(Array.isArray(items)).toBe(true);
+      expect(items.some((item) => item.label === OFD_OUTFLOW_CONSULTATION_REFUND_LABEL)).toBe(false);
+      expect(items.some((item) => item.amount === 4135000)).toBe(false);
+    });
   });
 });
 

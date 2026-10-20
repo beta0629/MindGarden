@@ -20,6 +20,8 @@ import { formatKrw } from '../../utils/erpFinancialAmountStack';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import FinancialTransactionForm from './FinancialTransactionForm';
 import { ERP_API } from '../../constants/api';
+import { ADMIN_ROUTES } from '../../constants/adminRoutes';
+import { IFS_HEADER_ACTIONS } from '../../constants/integratedFinanceDashboardStrings';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea } from '../dashboard-v2/content';
 import ErpPageShell from './shell/ErpPageShell';
@@ -43,8 +45,7 @@ import {
   FM_DETAIL_MODAL,
   FM_TX_TYPE,
   FM_PAGINATION,
-  FM_RETRY,
-  getCategoryDisplayLabel
+  FM_RETRY
 } from '../../constants/financialManagementStrings';
 import {
   LedgerQuietHeader,
@@ -58,12 +59,15 @@ import {
   CardMerchantFeeSettingsPanel
 } from './financial/ledger';
 import { LEDGER_CALENDAR_MIN_MONTH_YM } from './financial/ledger/LedgerCalendar';
-import { buildLedgerFilterCategoryOptions } from '../../utils/financialTransactionCategoryPicker';
 import {
-  buildTopIncomeCaption,
+  buildLedgerFilterCategoryOptions,
+  resolveCategoryCodeDisplayLabel
+} from '../../utils/financialTransactionCategoryPicker';
+import {
   buildTopExpenseCaption,
   buildRemainingVsPreviousCaption,
-  buildOutflowMixItems,
+  buildLedgerIncomeCaptionFromDashboard,
+  buildLedgerOutflowMixFromDashboard,
   parseMonthlyReportTotals
 } from './organisms/moneyCockpit/moneyCockpitData';
 import { getPreviousComparableRange, getRolling12MonthKeys } from './organisms/moneyCockpit/moneyCockpitPeriod';
@@ -154,23 +158,27 @@ const financialTransactionMatchesSearchText = (transaction, searchLower) => {
 };
 
 /**
- * 장부 거래 목록에서 카테고리별 합계 맵 생성 (caption mix helpers용)
- * @param {Array<object>} transactions
- * @returns {Record<string, number>}
+ * 서버 summary의 기간 전체 posted 환불 합.
+ * 필드가 없거나 파싱 불가면 null (페이지 posted 합 폴백).
+ * @param {unknown} serverSummary
+ * @returns {number|null}
  */
-const buildCategoryBreakdownFromTransactions = (transactions) => {
-  const breakdown = {};
-  if (!Array.isArray(transactions)) {
-    return breakdown;
+const readPeriodRefundAmount = (serverSummary) => {
+  if (!serverSummary || typeof serverSummary !== 'object') {
+    return null;
   }
-  transactions.forEach((tx) => {
-    const key = String(tx?.category ?? '').trim();
-    if (!key) {
-      return;
-    }
-    breakdown[key] = (breakdown[key] || 0) + (parseFloat(tx.amount) || 0);
-  });
-  return breakdown;
+  if (!Object.prototype.hasOwnProperty.call(serverSummary, 'refundAmount')) {
+    return null;
+  }
+  const raw = serverSummary.refundAmount;
+  if (raw == null) {
+    return null;
+  }
+  if (typeof raw === 'string' && raw.trim() === '') {
+    return null;
+  }
+  const amount = Number(raw);
+  return Number.isFinite(amount) ? amount : null;
 };
 
 /**
@@ -216,6 +224,7 @@ const FinancialManagement = () => {
   const [deleteSubmitting, setDeleteSubmitting] = useState(false);
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [ledgerCategoryOptions, setLedgerCategoryOptions] = useState([]);
+  const [financialCategoryRows, setFinancialCategoryRows] = useState([]);
   const recurringPanelRef = useRef(null);
   const [moneyRecordPrefill, setMoneyRecordPrefill] = useState({
     date: null,
@@ -227,6 +236,8 @@ const FinancialManagement = () => {
     totalExpense: 0,
     remaining: 0
   });
+  /** 기간 전체 posted 환불 합. null이면 응답에 필드가 없어 페이지 posted 합으로 폴백. */
+  const [periodRefundAmount, setPeriodRefundAmount] = useState(null);
   const [summaryCaptions, setSummaryCaptions] = useState({
     income: '',
     expense: '',
@@ -271,6 +282,7 @@ const FinancialManagement = () => {
    */
   const applyLedgerSummary = useCallback((transactionData, serverSummary) => {
     if (serverSummary && typeof serverSummary === 'object') {
+      setPeriodRefundAmount(readPeriodRefundAmount(serverSummary));
       const totalIncome = Number(serverSummary.totalIncome) || 0;
       const totalExpense = Number(serverSummary.totalExpense) || 0;
       const remaining = serverSummary.remaining != null
@@ -279,6 +291,7 @@ const FinancialManagement = () => {
       setSummary({ totalIncome, totalExpense, remaining });
       return;
     }
+    setPeriodRefundAmount(null);
     const active = (transactionData || []).filter((tx) => {
       const status = String(tx.status || '').toUpperCase();
       return status !== 'REJECTED' && status !== 'CANCELLED';
@@ -416,12 +429,16 @@ const FinancialManagement = () => {
           return;
         }
         const body = envelope?.data ?? envelope ?? {};
+        const incomeRows = body.incomeCategories || [];
+        const expenseRows = body.expenseCategories || [];
+        setFinancialCategoryRows([...incomeRows, ...expenseRows]);
         setLedgerCategoryOptions(buildLedgerFilterCategoryOptions(
-          body.incomeCategories || [],
-          body.expenseCategories || []
+          incomeRows,
+          expenseRows
         ));
       } catch (err) {
         if (!cancelled) {
+          setFinancialCategoryRows([]);
           setLedgerCategoryOptions([]);
         }
       }
@@ -572,11 +589,40 @@ const FinancialManagement = () => {
    * (MoneyHeroBand SSOT helpers; previous remaining via ledger transactions API)
    */
   useEffect(() => {
+    if (sessionLoading || !isLoggedIn) {
+      return undefined;
+    }
     let cancelled = false;
     const run = async() => {
-      const breakdown = buildCategoryBreakdownFromTransactions(transactions);
-      const incomeCaption = buildTopIncomeCaption(breakdown, transactions);
-      const expenseMix = buildOutflowMixItems(breakdown, transactions);
+      const { startDate, endDate } = getDateRangeForFilter();
+      let dashboardRaw = null;
+      if (startDate && endDate) {
+        try {
+          dashboardRaw = await StandardizedApi.get(ERP_API.FINANCE_DASHBOARD, {
+            startDate,
+            endDate
+          });
+        } catch {
+          dashboardRaw = null;
+        }
+      }
+      if (cancelled) {
+        return;
+      }
+      const incomeCaption = buildLedgerIncomeCaptionFromDashboard(
+        dashboardRaw,
+        transactions,
+        financialCategoryRows
+      );
+      const mixOptions = {
+        categoryRows: financialCategoryRows,
+        ...(Number.isFinite(periodRefundAmount) ? { periodRefundAmount } : {})
+      };
+      const expenseMix = buildLedgerOutflowMixFromDashboard(
+        dashboardRaw,
+        transactions,
+        mixOptions
+      );
       const expenseCaption = buildTopExpenseCaption(expenseMix);
 
       let remainingCaption = '';
@@ -621,7 +667,16 @@ const FinancialManagement = () => {
     return () => {
       cancelled = true;
     };
-  }, [transactions, summary.remaining, period]);
+  }, [
+    transactions,
+    summary.remaining,
+    period,
+    periodRefundAmount,
+    financialCategoryRows,
+    sessionLoading,
+    isLoggedIn,
+    getDateRangeForFilter
+  ]);
 
   /**
    * 롤링 12개월 차트 — ErpDashboard `loadRolling12Chart` 미러 (표시/연동만 · calc SSOT 변경 없음)
@@ -793,6 +848,23 @@ const FinancialManagement = () => {
     }
   };
 
+  const completeRecordedExpense = async(tx) => {
+    if (!tx?.id) {
+      return;
+    }
+    try {
+      const result = await StandardizedApi.post(ERP_API.FINANCE_TRANSACTION_COMPLETE(tx.id), {});
+      if (result?.success === false) {
+        notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+        return;
+      }
+      notificationManager.success(FM_TOAST.COMPLETE_SUCCESS);
+      refreshLedgerViews();
+    } catch (err) {
+      notificationManager.error(FM_TOAST.COMPLETE_GENERIC);
+    }
+  };
+
   const forbiddenEqualTabsVisible = useMemo(() => {
     // Guard for tests: default view must not surface accountant equal tabs
     return false;
@@ -831,6 +903,23 @@ const FinancialManagement = () => {
               onPeriodChange={handlePeriodChange}
               onRecordClick={openMoneyRecordDefault}
             />
+            <nav className="operator-ledger-quick-expense" aria-label={IFS_HEADER_ACTIONS.QUICK_EXPENSE}>
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => navigate(ADMIN_ROUTES.ERP_INTEGRATED_FINANCE)}
+                preventDoubleClick={false}
+              >
+                {IFS_HEADER_ACTIONS.QUICK_EXPENSE}
+              </MGButton>
+            </nav>
 
             <LedgerSummaryStrip
               loading={loading && !silentListRefreshing}
@@ -886,6 +975,7 @@ const FinancialManagement = () => {
                         transactions={transactions}
                         loading={loading}
                         hasSearch={hasSearch}
+                        categoryOptions={ledgerCategoryOptions}
                         onRecordClick={openMoneyRecordDefault}
                         onView={(tx) => {
                           setSelectedTransaction(tx);
@@ -893,6 +983,7 @@ const FinancialManagement = () => {
                         }}
                         onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                         onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                        onComplete={completeRecordedExpense}
                       />
                     )}
                   </div>
@@ -961,6 +1052,7 @@ const FinancialManagement = () => {
                     category={filters.category}
                     searchText={filters.searchText}
                     refreshKey={calendarRefreshKey}
+                    categoryOptions={ledgerCategoryOptions}
                     onMonthChange={handleCalendarMonthChange}
                     onAddOnDate={handleCalendarAddOnDate}
                     onView={(tx) => {
@@ -969,6 +1061,7 @@ const FinancialManagement = () => {
                     }}
                     onEdit={(tx) => setEditModal({ open: true, transaction: tx })}
                     onDelete={(tx) => setDeleteModal({ isOpen: true, transaction: tx })}
+                    onComplete={completeRecordedExpense}
                   />
                 </div>
               )}
@@ -1038,7 +1131,10 @@ const FinancialManagement = () => {
             <div>
               <strong>{FM_DETAIL_MODAL.LABEL_CATEGORY}</strong>{' '}
               <ErpSafeText fallback="-">
-                {getCategoryDisplayLabel(selectedTransaction.category)}
+                {resolveCategoryCodeDisplayLabel(
+                  selectedTransaction.category,
+                  ledgerCategoryOptions
+                )}
               </ErpSafeText>
             </div>
             <div>

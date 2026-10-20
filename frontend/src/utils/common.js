@@ -5,6 +5,7 @@
  */
 
 import { formatKoreanMobileForDisplay } from './koreanMobilePhone';
+import { isLoginPasswordCompliant } from './loginPasswordPolicy';
 
 // 날짜 포맷팅
 export const formatDate = (date, format = 'YYYY-MM-DD') => {
@@ -64,34 +65,9 @@ export const isValidEmail = (email) => {
 };
 
 /**
- * 백엔드 PasswordService.validatePassword 와 동일한 문자 종류·최소 길이(8~100).
- * 대·소문자·숫자·특수(@$!%*?&) 각 1자 이상, 허용 문자만 사용.
+ * 로그인 비밀번호 정책 통과 여부. 정책 판단은 loginPasswordPolicy 단일 함수에 위임한다.
  */
-export const isValidPassword = (password) => {
-  if (password == null || password.length < 8 || password.length > 100) {
-    return false;
-  }
-  const passwordRegex =
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-  if (!passwordRegex.test(password)) {
-    return false;
-  }
-  for (let i = 0; i < password.length - 2; i += 1) {
-    const c1 = password.charCodeAt(i);
-    const c2 = password.charCodeAt(i + 1);
-    const c3 = password.charCodeAt(i + 2);
-    if (c2 === c1 + 1 && c3 === c2 + 1) {
-      return false;
-    }
-    if (c2 === c1 - 1 && c3 === c2 - 1) {
-      return false;
-    }
-  }
-  if (/(.)\1{2,}/.test(password)) {
-    return false;
-  }
-  return true;
-};
+export const isValidPassword = (password) => isLoginPasswordCompliant(password);
 
 // 문자열 길이 제한 및 말줄임표 추가
 export const truncateText = (text, maxLength = 100) => {

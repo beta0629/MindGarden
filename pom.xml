@@ -558,5 +558,32 @@
                 <spring.profiles.active>prod</spring.profiles.active>
             </properties>
         </profile>
+
+        <!-- PR 필수 BE 테스트 묶음(결제 · 회기 · ERP · 일정). 실행: mvn -B -ntp test -Pci-be-critical
+             대상 패턴은 src/test/resources/ci/backend-critical-tests.txt 한 곳에서만 관리한다(확장 시 그 파일에 줄 추가).
+             이 묶음에서는 *IntegrationTest.java 도 surefire 로 함께 돌린다.
+             forkCount=3 + reuseForks=false: 클래스마다 새 JVM 이라 ApplicationContext 캐시가 쌓이지 않는다
+             (단일 fork 재사용 + -Xmx2g 로 전체 실행 시 OOM 이 났던 사례 방지). -->
+        <profile>
+            <id>ci-be-critical</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes combine.self="override"/>
+                            <includesFile>${project.basedir}/src/test/resources/ci/backend-critical-tests.txt</includesFile>
+                            <excludes combine.self="override">
+                                <exclude>**/*$*</exclude>
+                            </excludes>
+                            <forkCount>3</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <argLine>-Xmx2g -Xms256m -XX:MaxMetaspaceSize=768m -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>

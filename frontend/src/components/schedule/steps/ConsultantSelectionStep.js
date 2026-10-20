@@ -8,6 +8,7 @@ import SpecialtyDisplay from '../../ui/SpecialtyDisplay';
 import ConsultantFilter from '../components/ConsultantFilter';
 import UnifiedLoading from '../../../components/common/UnifiedLoading';
 import notificationManager from '../../../utils/notification';
+import { selectActiveConsultants } from '../../../utils/selectActiveConsultants';
 import './ConsultantSelectionStep.css';
 import SafeText from '../../common/SafeText';
 
@@ -103,56 +104,11 @@ const ConsultantSelectionStepNew = ({
                     return;
                 }
                 
-                // 휴무 정보가 이미 포함된 상담사 데이터 처리
-                console.log('🔍 필터링 전 상담사 목록:', data.map(c => ({ name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType })));
+                // 선택 목록: 활성만 (with-vacation API는 비활성 포함 — 색 SSOT용)
+                const activeData = selectActiveConsultants(data);
+                console.log('🔍 필터링 전 상담사 목록:', activeData.map(c => ({ name: c.name, isOnVacation: c.isOnVacation, vacationType: c.vacationType })));
                 
-                // 김선희2 원본 데이터 확인
-                const kimSunHee2Original = data.find(c => c.name === '김선희2');
-                if (kimSunHee2Original) {
-                    console.log('🔍 김선희2 원본 API 데이터:', kimSunHee2Original);
-                } else {
-                    console.log('❌ 김선희2를 원본 데이터에서 찾을 수 없습니다');
-                }
-                
-                // 김선희2 데이터 특별 확인
-                const kimSunHee2 = data.find(c => c.name === '김선희2');
-                if (kimSunHee2) {
-                    console.log('🔍 김선희2 상세 데이터:', kimSunHee2);
-                    console.log('🔍 김선희2 휴가 정보:', {
-                        isOnVacation: kimSunHee2.isOnVacation,
-                        vacationType: kimSunHee2.vacationType,
-                        vacationReason: kimSunHee2.vacationReason,
-                        busy: kimSunHee2.busy,
-                        isVacation: kimSunHee2.isVacation
-                    });
-                } else {
-                    console.log('🔍 김선희2를 찾을 수 없습니다.');
-                }
-                
-                const consultantsWithAvailability = data
-                    .filter((consultant) => {
-                        // 종일 휴가인 상담사는 목록에서 제외
-                        const isOnVacation = consultant.isOnVacation || false;
-                        const { vacationType } = consultant;
-                        
-                        console.log(`🔍 상담사 ${consultant.name} - isOnVacation: ${isOnVacation}, vacationType: ${vacationType}`);
-                        
-                        // 김선희2에 대한 특별 로그
-                        if (consultant.name === '김선희2') {
-                            console.log(`🔍 김선희2 필터링 체크:`, {
-                                isOnVacation: isOnVacation,
-                                vacationType: vacationType,
-                                isOnVacationType: typeof isOnVacation,
-                                vacationTypeType: typeof vacationType,
-                                isOnVacationValue: consultant.isOnVacation,
-                                vacationTypeValue: consultant.vacationType
-                            });
-                        }
-                        
-                        // 모든 상담사를 포함하되, 휴가 정보는 표시
-                        console.log(`✅ 상담사 ${consultant.name} 포함됨 (휴가: ${isOnVacation}, 타입: ${vacationType})`);
-                        return true; // 모든 상담사 포함
-                    })
+                const consultantsWithAvailability = activeData
                     .map((consultant, index) => {
                         // 휴무 상태 확인
                         const isOnVacation = consultant.isOnVacation || false;

@@ -381,8 +381,9 @@ export const getCodeGroupDisplayOptions = async(groupName) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`/`);
-        if (response.success && response.data) {
-            return response.data;
+        // apiGet unwrap → 표시 옵션 페이로드 직접 사용
+        if (response != null && response.success !== false) {
+            return response.data != null ? response.data : response;
         }
     } catch (error) {
         console.error('코드그룹 표시 옵션 조회 실패:', error);
@@ -441,8 +442,12 @@ export const getUserStatusKoreanName = async(status) => {
     try {
         // 표준화 2025-12-08: 올바른 API 경로 사용
         const response = await apiGet(`${COMMON_CODES_GROUPS_BASE}/STATUS`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === status);
+        // apiGet unwrap → codes 배열/{ codes } 직접 수용
+        const codes = Array.isArray(response)
+            ? response
+            : (response?.codes || response?.data?.codes || []);
+        if (Array.isArray(codes) && codes.length > 0) {
+            const code = codes.find(c => c.codeValue === status);
             if (code && code.codeLabel) {
                 return code.codeLabel;
             }
@@ -466,9 +471,12 @@ export const getUserStatusKoreanNameSync = (status) => {
  */
 export const getUserGradeKoreanName = async(grade) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === grade);
+        const response = await apiGet(`/api/v1/common-codes/groups/USER_GRADE`);
+        const codes = Array.isArray(response)
+            ? response
+            : (response?.codes || response?.data?.codes || []);
+        if (Array.isArray(codes) && codes.length > 0) {
+            const code = codes.find(c => c.codeValue === grade);
             if (code && code.codeLabel) {
                 return code.codeLabel;
             }
@@ -492,9 +500,12 @@ export const getUserGradeKoreanNameSync = (grade) => {
  */
 export const getUserGradeIcon = async(grade) => {
     try {
-        const response = await apiGet(`/api/admin/common-codes/USER_GRADE/display-options`);
-        if (response.success && response.data && response.data.codes) {
-            const code = response.data.codes.find(c => c.codeValue === grade);
+        const response = await apiGet(`/api/v1/common-codes/groups/USER_GRADE`);
+        const codes = Array.isArray(response)
+            ? response
+            : (response?.codes || response?.data?.codes || []);
+        if (Array.isArray(codes) && codes.length > 0) {
+            const code = codes.find(c => c.codeValue === grade);
             if (code && code.icon) {
                 return code.icon;
             }

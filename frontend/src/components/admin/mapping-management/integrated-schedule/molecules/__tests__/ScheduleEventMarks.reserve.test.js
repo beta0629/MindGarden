@@ -1,9 +1,11 @@
 /**
- * ScheduleEventMarks — 절대 위치 표식의 끝 여백 계약 (#1486 후속, gate-1486 항목 1)
+ * ScheduleEventMarks — 좁은 폭 표식 계약
  *
- * - 표식 폭은 토큰 하나(--mg-schedule-event-marks-size), 끝 여백은 그 토큰에서 계산
- * - 월간 칩 여백 선택자가 칩 기본 padding-inline 규칙보다 특이도가 높아야 실제로 적용된다
- * - 사이드바 행은 자기 자신을 컨테이너 쿼리할 수 없으므로 흐름 마지막 칸에 여백을 둔다
+ * SSOT(2026-10-07): 기관연계는 어디서나 일정 상세와 같은 EngagementTypeBadge 글자 배지다.
+ * #1486 의 @container < 224px ■ 축소(color: transparent, font-size: 0)는 폐기했다.
+ * - 월간 칩·팝오버: 표식이 안 들어가면 다음 줄로 내린다(칩 기본 규칙보다 높은 특이도)
+ * - 기관연계 배지는 말줄임하지 않는다. 칩이 줄바꿈·전폭 다음 줄로 높이를 키운다
+ * - 사이드바 행·당일 칩: 표식을 절대 위치 ■ 로 바꾸는 규칙이 없다
  *
  * @author CoreSolution
  * @since 2026-10-06
@@ -15,21 +17,16 @@ import path from 'path';
 const SRC = path.resolve(__dirname, '..', '..', '..', '..', '..', '..');
 const read = (...parts) => fs.readFileSync(path.resolve(SRC, ...parts), 'utf8');
 
-const MARKS_CSS = read(
-  'components',
-  'admin',
-  'mapping-management',
-  'integrated-schedule',
-  'molecules',
-  'ScheduleEventMarks.css'
-);
+const MOLECULES = ['components', 'admin', 'mapping-management', 'integrated-schedule', 'molecules'];
+const MARKS_CSS = read(...MOLECULES, 'ScheduleEventMarks.css');
+const COMPACT_ROW_CSS = read(...MOLECULES, 'MatchingScheduleCompactRow.css');
 const IMS_CSS = read('components', 'admin', 'mapping-management', 'IntegratedMatchingSchedule.css');
-const TOKENS_CSS = read('styles', 'tokens', 'design-v2-tokens.css');
 
 const CHIP_BASE_SELECTOR =
   '.integrated-schedule__calendar-wrapper--integrated .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month';
-const CHIP_RESERVE_SELECTOR =
+const CHIP_WRAP_SELECTOR =
   '.mg-v2-ad-calendar-event.mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month:has(.mg-schedule-event-marks)';
+const MONTH_WRAP_QUERY = '@container mg-month-event (width >= 109px)';
 
 const countClassSelectors = (selector) => (selector.match(/\.[A-Za-z_][\w-]*/g) || []).length;
 
@@ -60,51 +57,71 @@ const ruleBody = (block, selector) => {
   return block.slice(open + 1, block.indexOf('}', open));
 };
 
-describe('ScheduleEventMarks 끝 여백', () => {
-  test('표식 폭 토큰 하나에서 끝 여백을 계산한다', () => {
-    expect(TOKENS_CSS).toMatch(/--mg-schedule-event-marks-size:\s*var\(--mg-size-dot-sm\);/);
-    const reserve = TOKENS_CSS.match(/--mg-schedule-event-marks-reserve:\s*calc\(([^;]*)\);/);
-    expect(reserve).not.toBeNull();
-    expect(reserve[1]).toContain('var(--mg-schedule-event-marks-size)');
-    expect(reserve[1]).toContain('var(--mg-v2-space-0-5)');
+/** 기관연계 배지를 대상으로 하는 규칙 본문만 모은다. */
+const engagementBadgeRuleBodies = (css) => {
+  const bodies = [];
+  const pattern = /([^{}]*\.mg-engagement-type-badge[^{}]*)\{([^}]*)\}/g;
+  let match = pattern.exec(css);
+  while (match) {
+    bodies.push({ selector: match[1].trim(), body: match[2] });
+    match = pattern.exec(css);
+  }
+  return bodies;
+};
+
+describe('ScheduleEventMarks 좁은 폭 — 글자 배지 유지', () => {
+  test.each([
+    ['ScheduleEventMarks.css', MARKS_CSS],
+    ['MatchingScheduleCompactRow.css', COMPACT_ROW_CSS],
+    ['IntegratedMatchingSchedule.css', IMS_CSS]
+  ])('%s: 기관연계 배지 글자를 숨기거나 ■ 크기로 줄이는 규칙이 없다', (name, css) => {
+    const rules = engagementBadgeRuleBodies(css);
+    rules.forEach(({ selector, body }) => {
+      expect({ selector, hidesText: /color:\s*transparent/.test(body) }).toEqual({
+        selector,
+        hidesText: false
+      });
+      expect(body).not.toMatch(/font-size:\s*0/);
+      expect(body).not.toContain('var(--mg-schedule-event-marks-size)');
+    });
   });
 
-  test('월간 칩·팝오버: 여백 규칙이 칩 기본 padding-inline 보다 특이도가 높다', () => {
-    const block = extractContainerBlock(MARKS_CSS, '@container mg-month-event (width < 224px)');
-    const body = ruleBody(block, CHIP_RESERVE_SELECTOR);
+  test('#1486 의 < 224px ■ 축소 쿼리와 당일 칩 < 249px 쿼리가 없다', () => {
+    expect(MARKS_CSS).not.toContain('@container mg-month-event (width < 224px)');
+    expect(MARKS_CSS).not.toContain('@container mg-compact-row (width < 224px)');
+    expect(IMS_CSS).not.toContain('@container mg-month-event (width < 249px)');
+    expect(MARKS_CSS).not.toContain('var(--mg-schedule-event-marks-reserve)');
+    expect(IMS_CSS).not.toContain('var(--mg-schedule-event-marks-reserve)');
+  });
+
+  test('월간 칩: 표식이 안 들어가면 줄바꿈하고, 규칙 특이도가 칩 기본보다 높다', () => {
+    const block = extractContainerBlock(MARKS_CSS, MONTH_WRAP_QUERY);
+    const body = ruleBody(block, CHIP_WRAP_SELECTOR);
     expect(body).not.toBeNull();
-    expect(body).toContain('padding-inline-end: var(--mg-schedule-event-marks-reserve)');
+    expect(body).toContain('flex-wrap: wrap');
 
     expect(IMS_CSS).toContain(`${CHIP_BASE_SELECTOR} {`);
-    expect(countClassSelectors(CHIP_RESERVE_SELECTOR)).toBeGreaterThan(
+    expect(countClassSelectors(CHIP_WRAP_SELECTOR)).toBeGreaterThan(
       countClassSelectors(CHIP_BASE_SELECTOR)
     );
   });
 
-  test('절대 위치 표식 크기도 같은 토큰을 쓴다', () => {
-    const block = extractContainerBlock(MARKS_CSS, '@container mg-month-event (width < 224px)');
-    const badge = ruleBody(
-      block,
-      '.mg-v2-ad-calendar-event--integrated-month .mg-schedule-event-marks .mg-engagement-type-badge'
-    );
-    expect(badge).toContain('inline-size: var(--mg-schedule-event-marks-size)');
-    expect(badge).toContain('block-size: var(--mg-schedule-event-marks-size)');
+  test('폭이 끝까지 모자라면 글자 배지는 말줄임하지 않고 칩이 줄바꿈한다', () => {
+    const body = ruleBody(MARKS_CSS, '.mg-schedule-event-marks .mg-engagement-type-badge');
+    expect(body).not.toBeNull();
+    expect(body).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(body).not.toMatch(/overflow:\s*hidden/);
+    expect(body).toContain('white-space: nowrap');
+    expect(body).toMatch(/overflow:\s*visible/);
+
+    const wrapBlock = extractContainerBlock(MARKS_CSS, MONTH_WRAP_QUERY);
+    const wrapBody = ruleBody(wrapBlock, CHIP_WRAP_SELECTOR);
+    expect(wrapBody).toContain('flex-wrap: wrap');
+    expect(wrapBody).toMatch(/height:\s*auto/);
   });
 
-  test('사이드바 행: 컨테이너 자신이 아니라 흐름 마지막 칸에 여백을 둔다', () => {
-    const block = extractContainerBlock(MARKS_CSS, '@container mg-compact-row (width < 224px)');
-    expect(block).not.toMatch(/\.integrated-schedule__compact-row:has\(\.mg-schedule-event-marks\)\s*\{/);
-    const body = ruleBody(
-      block,
-      '.integrated-schedule__compact-row:has(.mg-schedule-event-marks) .integrated-schedule__compact-row-secondary'
-    );
-    expect(body).toContain('margin-inline-end: var(--mg-schedule-event-marks-reserve)');
-  });
-
-  test('당일 칩 변형도 같은 여백 토큰을 쓰고 예전 고정 calc 가 남지 않는다', () => {
-    const block = extractContainerBlock(IMS_CSS, '@container mg-month-event (width < 249px)');
-    expect(block).toContain('padding-inline-end: var(--mg-schedule-event-marks-reserve)');
-    expect(MARKS_CSS).not.toContain('calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5))');
-    expect(IMS_CSS).not.toContain('calc(var(--mg-v2-space-2) + var(--mg-v2-space-0-5))');
+  test('표식 묶음은 절대 위치로 바뀌지 않는다', () => {
+    expect(MARKS_CSS).not.toMatch(/position:\s*absolute/);
+    expect(COMPACT_ROW_CSS).not.toMatch(/\.mg-schedule-event-marks[^{]*\{[^}]*position:\s*absolute/);
   });
 });

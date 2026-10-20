@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -10,6 +12,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
+import com.coresolution.consultation.constant.AccountIntegrationMessages;
+import com.coresolution.consultation.service.support.SecureNumericCodeGenerator;
+import com.coresolution.consultation.service.support.VerificationAttemptLimiter;
 import com.coresolution.consultation.dto.EmailVerificationSendOutcome;
 import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.AccountIntegrationRequest;
@@ -22,7 +27,6 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AccountIntegrationService;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.consultation.service.EmailService;
-import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
@@ -52,10 +56,14 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
-    private final JwtService jwtService;
     private final PasswordService passwordService;
     private final EmailService emailService;
     private final MindgardenSecurityProperties mindgardenSecurityProperties;
+    private final SecureNumericCodeGenerator codeGenerator;
+    private final VerificationAttemptLimiter attemptLimiter;
+
+    private static final int CODE_EXPIRY_MINUTES = 10;
+    private static final int MAX_PROVIDER_USER_ID_LENGTH = 255;
 
     // 이메일 인증 코드 저장 (실제 운영에서는 Redis 등 사용)
     private final Map<String, EmailVerificationCode> emailVerificationCodes = new ConcurrentHashMap<>();
@@ -108,127 +116,158 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     
     @Override
     public AccountIntegrationResponse integrateAccountsByEmail(AccountIntegrationRequest request) {
+        return integrateAccountsByEmail(request, null);
+    }
+
+    @Override
+    public AccountIntegrationResponse integrateAccountsByEmail(AccountIntegrationRequest request, String clientIp) {
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
             String normalizedProvider = SocialProvider.normalize(request.getProvider());
-            log.info("계정 통합 시작: existingEmail={}, socialEmail={}, provider={}", 
+            log.info("계정 통합 시작: existingEmail={}, socialEmail={}, provider={}",
                     EmailLogMasking.maskForLog(request.getExistingEmail()),
                     EmailLogMasking.maskForLog(request.getSocialEmail()), normalizedProvider);
 
             if (normalizedProvider == null) {
                 return AccountIntegrationResponse.failure(
-                    "SNS 제공자 정보가 올바르지 않습니다.",
+                    AccountIntegrationMessages.PROVIDER_INVALID,
                     AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
                 );
             }
-            
-            // 1. 기존 계정 존재 확인
-            Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmail(tenantId, request.getExistingEmail());
-            if (existingUserOpt.isEmpty()) {
+            String providerUserId = request.getProviderUserId();
+            if (providerUserId == null || providerUserId.isBlank()
+                    || providerUserId.length() > MAX_PROVIDER_USER_ID_LENGTH) {
                 return AccountIntegrationResponse.failure(
-                    "기존 계정을 찾을 수 없습니다.", 
-                    AccountIntegrationResponse.IntegrationStatus.ACCOUNT_NOT_FOUND
+                    AccountIntegrationMessages.SOCIAL_ID_INVALID,
+                    AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
                 );
             }
-            
-            User existingUser = existingUserOpt.get();
-            
-            // 2. 이미 SNS 계정이 연결되어 있는지 확인
-            boolean hasSocialAccount = userSocialAccountRepository
-                .findByUserAndProviderAndIsDeletedFalse(existingUser, normalizedProvider)
-                .isPresent();
-            
-            if (hasSocialAccount) {
-                return AccountIntegrationResponse.failure(
-                    "이미 " + normalizedProvider + " 계정이 연결되어 있습니다.", 
-                    AccountIntegrationResponse.IntegrationStatus.ALREADY_INTEGRATED
-                );
+            if (request.getExistingPassword() == null || request.getExistingPassword().isBlank()) {
+                return AccountIntegrationResponse.passwordVerificationRequired(
+                    AccountIntegrationMessages.PASSWORD_REQUIRED);
             }
-            
-            // 3. 이메일 인증 코드 검증
-            if (!verifyEmailCode(request.getExistingEmail(), request.getVerificationCode())) {
+
+            // 1. 이메일 인증 코드 검증 (계정 존재 여부를 먼저 드러내지 않도록 코드 검증을 앞에 둔다)
+            if (!verifyEmailCode(request.getExistingEmail(), request.getVerificationCode(), clientIp)) {
                 return AccountIntegrationResponse.failure(
-                    "이메일 인증 코드가 올바르지 않습니다.", 
+                    AccountIntegrationMessages.INTEGRATION_VERIFY_FAILED,
                     AccountIntegrationResponse.IntegrationStatus.VERIFICATION_FAILED
                 );
             }
-            
-            // 4. 기존 계정 비밀번호 검증 (선택사항)
-            if (request.getExistingPassword() != null) {
-                if (!passwordService.matches(request.getExistingPassword(), existingUser.getPassword())) {
-                    return AccountIntegrationResponse.failure(
-                        "기존 계정 비밀번호가 올바르지 않습니다.", 
-                        AccountIntegrationResponse.IntegrationStatus.VERIFICATION_FAILED
-                    );
-                }
+
+            String normalizedEmail = normalizeEmail(request.getExistingEmail());
+            Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+            if (existingUserOpt.isEmpty()) {
+                return AccountIntegrationResponse.failure(
+                    AccountIntegrationMessages.INTEGRATION_VERIFY_FAILED,
+                    AccountIntegrationResponse.IntegrationStatus.VERIFICATION_FAILED
+                );
             }
-            
+            User existingUser = existingUserOpt.get();
+
+            // 2. 기존 계정 비밀번호 검증 (필수) — 실패는 인증 시도 횟수에 합산한다
+            if (!passwordService.matches(request.getExistingPassword(), existingUser.getPassword())) {
+                recordVerificationFailure(normalizedEmail, clientIp);
+                return AccountIntegrationResponse.failure(
+                    AccountIntegrationMessages.INTEGRATION_VERIFY_FAILED,
+                    AccountIntegrationResponse.IntegrationStatus.VERIFICATION_FAILED
+                );
+            }
+
+            // 3. 이미 SNS 계정이 연결되어 있는지 확인
+            boolean hasSocialAccount = userSocialAccountRepository
+                .findByUserAndProviderAndIsDeletedFalse(existingUser, normalizedProvider)
+                .isPresent();
+            if (hasSocialAccount) {
+                return AccountIntegrationResponse.failure(
+                    "이미 " + normalizedProvider + " 계정이 연결되어 있습니다.",
+                    AccountIntegrationResponse.IntegrationStatus.ALREADY_INTEGRATED
+                );
+            }
+
+            // 4. 같은 SNS 식별자가 다른 사용자에 이미 연결되어 있으면 거부
+            boolean usedByOther = userSocialAccountRepository
+                .findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(tenantId, normalizedProvider, providerUserId)
+                .isPresent();
+            if (usedByOther) {
+                return AccountIntegrationResponse.failure(
+                    AccountIntegrationMessages.SOCIAL_ID_IN_USE,
+                    AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
+                );
+            }
+
             // 5. SNS 계정 정보 생성
             UserSocialAccount socialAccount = UserSocialAccount.builder()
                 .user(existingUser)
                 .provider(normalizedProvider)
-                .providerUserId(request.getProviderUserId())
+                .providerUserId(providerUserId)
                 .providerUsername(request.getFinalNickname())
-                .providerProfileImage(null) // 필요시 추가
-                .isPrimary(false) // 기존 계정이 primary
+                .providerProfileImage(null)
+                .isPrimary(false)
                 .isVerified(true)
                 .isActive(true)
                 .build();
-            
             userSocialAccountRepository.save(socialAccount);
-            
-            // 6. 사용자 정보 업데이트 (필요시)
+
+            // 6. 사용자 정보 업데이트 — 이메일은 기존 이메일 또는 SNS 이메일로만 바꿀 수 있다
             if (request.getFinalName() != null) {
                 existingUser.setName(request.getFinalName());
             }
             if (request.getFinalNickname() != null) {
                 existingUser.setNickname(request.getFinalNickname());
             }
-            if (request.getFinalEmail() != null && !request.getFinalEmail().equals(request.getExistingEmail())) {
-                existingUser.setEmail(request.getFinalEmail());
+            String finalEmail = request.getFinalEmail();
+            if (finalEmail != null && !finalEmail.isBlank()
+                    && !normalizeEmail(finalEmail).equals(normalizedEmail)
+                    && normalizeEmail(finalEmail).equals(normalizeEmail(request.getSocialEmail()))) {
+                existingUser.setEmail(finalEmail);
             }
-            
             userRepository.save(existingUser);
-            
-            // 7. JWT 토큰 생성
-            String accessToken = jwtService.generateToken(existingUser.getEmail());
-            String refreshToken = jwtService.generateRefreshToken(existingUser.getEmail());
-            
-            // 8. 인증 코드 삭제
-            emailVerificationCodes.remove(normalizeEmail(request.getExistingEmail()));
-            
-            // 9. 계정 통합 완료 이메일 발송
+
+            // 7. 인증 코드·시도 카운터 정리
+            emailVerificationCodes.remove(normalizedEmail);
+            attemptLimiter.reset(VerificationAttemptLimiter.Scope.VERIFY_EMAIL, normalizedEmail);
+
+            // 8. 계정 통합 완료 이메일 발송 (토큰은 응답에 싣지 않는다. 로그인은 세션으로 진행)
             sendAccountIntegrationSuccessEmail(existingUser.getEmail(), existingUser.getName(), normalizedProvider);
-            
+
             log.info("계정 통합 완료: userId={}, provider={}", existingUser.getId(), normalizedProvider);
-            
+
             return AccountIntegrationResponse.success(
-                "계정 통합이 완료되었습니다.",
+                AccountIntegrationMessages.INTEGRATION_DONE,
                 existingUser.getId(),
                 existingUser.getEmail(),
                 existingUser.getName(),
                 existingUser.getNickname(),
-                existingUser.getRole().getValue(),
-                accessToken,
-                refreshToken
+                existingUser.getRole().getValue()
             );
-            
+
         } catch (Exception e) {
             log.error("계정 통합 실패", e);
             return AccountIntegrationResponse.failure(
-                "계정 통합 중 오류가 발생했습니다: " + e.getMessage(),
+                AccountIntegrationMessages.INTEGRATION_FAILED,
                 AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
             );
         }
     }
-    
+
     @Override
     public EmailVerificationSendOutcome sendEmailVerificationCode(String email) {
+        return sendEmailVerificationCode(email, null);
+    }
+
+    @Override
+    public EmailVerificationSendOutcome sendEmailVerificationCode(String email, String clientIp) {
         String normalized = normalizeEmail(email);
         if (normalized.isEmpty()) {
             log.warn("이메일 인증 코드 발송 거부: 이메일이 비어 있거나 공백만 있음");
             return EmailVerificationSendOutcome.emailSendFailed();
         }
+        if (attemptLimiter.isLocked(VerificationAttemptLimiter.Scope.SEND_IP, clientIp)) {
+            log.warn("이메일 인증 코드 발송 IP 한도 초과");
+            return EmailVerificationSendOutcome.ipLimit();
+        }
+        attemptLimiter.recordAttempt(VerificationAttemptLimiter.Scope.SEND_IP, clientIp);
 
         Object lock = emailSendLocksByNormalizedEmail.computeIfAbsent(normalized, k -> new Object());
         synchronized (lock) {
@@ -259,36 +298,64 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                     return EmailVerificationSendOutcome.dailyLimit();
                 }
 
-                String code = String.format("%06d", (int) (Math.random() * 1000000));
-                LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(10);
+                // 가입 여부와 무관하게 쿨다운·일일 카운트를 똑같이 올려 응답 차이로 가입 여부가 드러나지 않게 한다.
+                emailSendThrottleByNormalizedEmail.put(normalized, entry.afterSuccessfulSend(today));
+
+                String tenantId = TenantContextHolder.getRequiredTenantId();
+                boolean registered = userRepository.findByTenantIdAndEmail(tenantId, normalized).isPresent();
+                if (!registered) {
+                    log.info("이메일 인증 코드 발송 생략: 해당 기관에 가입된 이메일 아님, email={}",
+                        EmailLogMasking.maskForLog(normalized));
+                    return EmailVerificationSendOutcome.success();
+                }
+
+                String code = codeGenerator.generateEmailCode();
+                LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(CODE_EXPIRY_MINUTES);
                 emailVerificationCodes.put(normalized, new EmailVerificationCode(code, expiryTime));
+                attemptLimiter.reset(VerificationAttemptLimiter.Scope.VERIFY_EMAIL, normalized);
 
                 try {
                     sendEmailVerificationCodeEmail(normalized, code);
-                    emailSendThrottleByNormalizedEmail.put(normalized, entry.afterSuccessfulSend(today));
                     log.info("이메일 인증 코드 생성 및 발송 성공: email={}, expiryTime={}", EmailLogMasking.maskForLog(normalized), expiryTime);
-                    return EmailVerificationSendOutcome.success();
                 } catch (Exception emailException) {
-                    log.error("이메일 인증 코드 이메일 발송 실패: email={}, error={}",
-                        EmailLogMasking.maskForLog(normalized), emailException.getMessage(), emailException);
-                    return EmailVerificationSendOutcome.emailSendFailed();
+                    // 응답 동일성을 위해 호출자에게는 성공과 같은 결과를 돌려준다. 실패 원인은 서버 로그에만 남긴다.
+                    log.error("이메일 인증 코드 이메일 발송 실패: email={}",
+                        EmailLogMasking.maskForLog(normalized), emailException);
                 }
+                return EmailVerificationSendOutcome.success();
             } catch (Exception e) {
                 log.error("이메일 인증 코드 발송 실패: email={}", EmailLogMasking.maskForLog(normalized), e);
                 return EmailVerificationSendOutcome.emailSendFailed();
             }
         }
     }
-    
+
     @Override
     public boolean verifyEmailCode(String email, String code) {
+        return verifyEmailCode(email, code, null);
+    }
+
+    @Override
+    public boolean isVerificationLocked(String email) {
+        return attemptLimiter.isLocked(VerificationAttemptLimiter.Scope.VERIFY_EMAIL, normalizeEmail(email));
+    }
+
+    @Override
+    public boolean verifyEmailCode(String email, String code, String clientIp) {
         try {
             String normalized = normalizeEmail(email);
-            log.info("이메일 인증 코드 검증: email={}, code={}", EmailLogMasking.maskForLog(normalized), code);
+            log.info("이메일 인증 코드 검증: email={}", EmailLogMasking.maskForLog(normalized));
+
+            if (attemptLimiter.isLocked(VerificationAttemptLimiter.Scope.VERIFY_EMAIL, normalized)
+                    || attemptLimiter.isLocked(VerificationAttemptLimiter.Scope.VERIFY_IP, clientIp)) {
+                log.warn("이메일 인증 시도 잠금 중: email={}", EmailLogMasking.maskForLog(normalized));
+                return false;
+            }
 
             EmailVerificationCode storedCode = emailVerificationCodes.get(normalized);
             if (storedCode == null) {
                 log.warn("인증 코드를 찾을 수 없음: email={}", EmailLogMasking.maskForLog(normalized));
+                recordVerificationFailure(normalized, clientIp);
                 return false;
             }
 
@@ -298,12 +365,14 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                 return false;
             }
 
-            boolean isValid = storedCode.getCode().equals(code);
+            boolean isValid = code != null && MessageDigest.isEqual(
+                storedCode.getCode().getBytes(StandardCharsets.UTF_8),
+                code.getBytes(StandardCharsets.UTF_8));
             if (isValid) {
                 log.info("이메일 인증 성공: email={}", EmailLogMasking.maskForLog(normalized));
             } else {
-                log.warn("이메일 인증 실패: email={}, 입력코드={}, 저장코드={}",
-                    EmailLogMasking.maskForLog(normalized), code, storedCode.getCode());
+                log.warn("이메일 인증 실패: email={}", EmailLogMasking.maskForLog(normalized));
+                recordVerificationFailure(normalized, clientIp);
             }
 
             return isValid;
@@ -313,7 +382,20 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             return false;
         }
     }
-    
+
+    /**
+     * 검증 실패를 이메일·IP 단위로 기록한다. 이메일 한도에 도달하면 저장된 코드를 폐기한다.
+     */
+    private void recordVerificationFailure(String normalizedEmail, String clientIp) {
+        boolean emailLocked = attemptLimiter.recordAttempt(
+            VerificationAttemptLimiter.Scope.VERIFY_EMAIL, normalizedEmail);
+        attemptLimiter.recordAttempt(VerificationAttemptLimiter.Scope.VERIFY_IP, clientIp);
+        if (emailLocked) {
+            emailVerificationCodes.remove(normalizedEmail);
+            log.warn("이메일 인증 시도 초과로 코드 폐기·잠금: email={}", EmailLogMasking.maskForLog(normalizedEmail));
+        }
+    }
+
     @Override
     public boolean linkSocialAccount(Long existingUserId, String provider, String providerUserId) {
         try {
@@ -366,66 +448,36 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
         try {
             String tenantId = TenantContextHolder.getRequiredTenantId();
             log.info("계정 통합 상태 확인: email={}", EmailLogMasking.maskForLog(email));
-            
-            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
+
+            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizeEmail(email));
             if (userOpt.isEmpty()) {
                 return AccountIntegrationResponse.failure(
-                    "계정을 찾을 수 없습니다.",
+                    AccountIntegrationMessages.STATUS_NOT_LINKED,
                     AccountIntegrationResponse.IntegrationStatus.ACCOUNT_NOT_FOUND
                 );
             }
-            
-            User user = userOpt.get();
-            
-            // 연결된 SNS 계정 목록 조회
-            List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserAndIsDeletedFalse(user);
-            
-            if (socialAccounts.isEmpty()) {
-                return AccountIntegrationResponse.builder()
-                    .success(true)
-                    .message("연결된 SNS 계정이 없습니다.")
-                    .userId(user.getId())
-                    .email(user.getEmail())
-                    .name(user.getName())
-                    .nickname(user.getNickname())
-                    .role(user.getRole().getValue())
-                    .status(AccountIntegrationResponse.IntegrationStatus.SUCCESS)
-                    .build();
-            }
-            
-            // 첫 번째 SNS 계정 정보 반환
-            UserSocialAccount firstSocialAccount = socialAccounts.get(0);
-            AccountIntegrationResponse.SocialAccountInfo socialInfo = 
-                AccountIntegrationResponse.SocialAccountInfo.builder()
-                    .provider(firstSocialAccount.getProvider())
-                    .providerUserId(firstSocialAccount.getProviderUserId())
-                    .providerUsername(firstSocialAccount.getProviderUsername())
-                    .providerProfileImage(firstSocialAccount.getProviderProfileImage())
-                    .isPrimary(firstSocialAccount.getIsPrimary())
-                    .isVerified(firstSocialAccount.getIsVerified())
-                    .build();
-            
+
+            List<UserSocialAccount> socialAccounts = userSocialAccountRepository.findByUserAndIsDeletedFalse(userOpt.get());
+            boolean linked = !socialAccounts.isEmpty();
+
+            // 최소 정보: 연동 여부만 돌려준다(이름·역할·SNS 식별자 제외)
             return AccountIntegrationResponse.builder()
                 .success(true)
-                .message("연결된 SNS 계정이 있습니다.")
-                .userId(user.getId())
-                .email(user.getEmail())
-                .name(user.getName())
-                .nickname(user.getNickname())
-                .role(user.getRole().getValue())
-                .status(AccountIntegrationResponse.IntegrationStatus.ALREADY_INTEGRATED)
-                .socialAccountInfo(socialInfo)
+                .message(linked ? AccountIntegrationMessages.STATUS_LINKED : AccountIntegrationMessages.STATUS_NOT_LINKED)
+                .status(linked
+                    ? AccountIntegrationResponse.IntegrationStatus.ALREADY_INTEGRATED
+                    : AccountIntegrationResponse.IntegrationStatus.SUCCESS)
                 .build();
-            
+
         } catch (Exception e) {
             log.error("계정 통합 상태 확인 실패: email={}", EmailLogMasking.maskForLog(email), e);
             return AccountIntegrationResponse.failure(
-                "계정 통합 상태 확인 중 오류가 발생했습니다: " + e.getMessage(),
+                AccountIntegrationMessages.STATUS_FAILED,
                 AccountIntegrationResponse.IntegrationStatus.INTEGRATION_FAILED
             );
         }
     }
-    
+
     // ==================== Private helpers ====================
 
     /**
@@ -457,7 +509,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             variables.put("supportEmail", "admin@e-trinity.co.kr");
             variables.put("currentYear", String.valueOf(java.time.Year.now().getValue()));
             variables.put("verificationCode", code);
-            variables.put("expiryMinutes", "10");
+            variables.put("expiryMinutes", String.valueOf(CODE_EXPIRY_MINUTES));
             
             // 템플릿 기반 이메일 발송 (이메일 인증 코드용 템플릿 사용)
             EmailResponse response = emailService.sendTemplateEmail(

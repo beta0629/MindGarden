@@ -1,0 +1,47 @@
+/**
+ * 내담자별 지정 상품 화면(관리자·내담자)에서 쓰는 보조 토큰.
+ * 시안 SPEC 「토큰 갭」: 폼 칸 폭·표 열 폭·상태 화면 높이 등 이름 붙인 값. 화면 CSS 는 var() 만 쓴다.
+ *
+ * @author CoreSolution
+ * @since 2026-10-12
+ */
+:root {
+  --mg-v2-touch-target-min: 2.75rem;
+  --mg-control-height-sm: var(--mg-v2-space-8);
+  --mg-icon-size-sm: var(--mg-v2-space-4);
+  --mg-icon-size-md: var(--mg-v2-space-5);
+  --mg-icon-size-xl: var(--mg-v2-space-10);
+  --mg-status-shape-size: var(--mg-v2-space-2);
+  --mg-sr-only-size: 1px;
+  --mg-card-title-size: 1.125rem;
+  --mg-offer-field-client: 16rem;
+  --mg-offer-field-product: 26rem;
+  --mg-offer-field-mode: 14rem; /* 판매 금액 방식 4개 선택지가 2줄(2×2) 안에 겹치지 않게 */
+  --mg-offer-field-value: 12rem;
+  --mg-offer-col-discount: 10rem;
+  --mg-offer-col-amount: 10rem;
+  --mg-offer-col-status: 9rem;
+  --mg-offer-col-date: 8rem;
+  --mg-offer-col-action: 6rem;
+  --mg-offer-preview-min: 22rem;
+  --mg-state-min-height: 12rem;
+  --mg-skeleton-bar-height: 0.75rem;
+  --mg-toast-min-width: 20rem;
+  --mg-mall-offer-card-gap: var(--mg-v2-space-4);
+  --mg-offer-combo-list-max: 16rem;
+  --mg-offer-line-title: 1.25;
+
+  /* G-3. /client/offers PC 결제 요약. 값은 시안 tokens.css G-3. 모달은 body 포탈이라 :root 에 둔다. */
+  --mg-offer-pay-aside-w: 22.5rem;
+  --mg-offer-pay-stage-max: 75rem;
+  --mg-offer-card-min: 13.5rem;
+  --mg-offer-pay-sticky-top: var(--client-mall-sticky-top, 5.5rem);
+  --mg-offer-pay-disabled-bg: var(--cs-slate-100);
+  --mg-offer-pay-disabled-fg: var(--cs-slate-700);
+  --mg-offer-pay-disabled-border: var(--cs-slate-400);
+  --mg-offer-select-hover-bg: var(--cs-slate-100);
+  --mg-offer-select-hover-fg: var(--cs-slate-900);
+  --mg-offer-select-hover-border: var(--cs-slate-900);
+  --mg-offer-bar-reserve: 7.5rem;
+  --mg-offer-terms-body-max: 24rem;
+}

@@ -67,7 +67,8 @@ describe('QuickExpenseForm Clinic-OS chrome', () => {
   });
 
   test('chips load from common-codes financial API only', () => {
-    expect(formJs).toMatch(/\/api\/v1\/erp\/common-codes\/financial/);
+    expect(formJs).toMatch(/ERP_API\.COMMON_CODES_FINANCIAL/);
+    expect(formJs).not.toMatch(/\/api\/v1\/erp\/common-codes\/financial/);
     expect(formJs).toMatch(/getQuickExpenses/);
     expect(formJs).toMatch(/expenseSubcategories/);
     expect(formJs).toMatch(/expenseCategories/);
@@ -94,5 +95,43 @@ describe('QuickExpenseForm Clinic-OS chrome', () => {
     expect(formJs).not.toMatch(/IntegratedFinanceDashboard/);
     expect(formCss).not.toMatch(/design-v2-tokens\.css/);
     expect(formCss).not.toMatch(/@import\s+['"]\.\/FinancialTransactionForm\.css['"]/);
+  });
+});
+
+describe('quick expense auth route source', () => {
+  const formJs = read('src/components/erp/QuickExpenseForm.js');
+  const transactionFormJs = read('src/components/erp/FinancialTransactionForm.js');
+  const recurringModalJs = read('src/components/finance/RecurringExpenseModal.js');
+  const appJs = read('src/App.js');
+
+  test('QuickExpenseForm uses StandardizedApi constants and drops csrfTokenManager', () => {
+    expect(formJs).toMatch(/StandardizedApi/);
+    expect(formJs).toMatch(/ERP_API\.COMMON_CODES_FINANCIAL/);
+    expect(formJs).toMatch(/ERP_API\.FINANCE_QUICK_EXPENSE/);
+    expect(formJs).not.toMatch(/csrfTokenManager/);
+  });
+
+  test('FinancialTransactionForm loadCommonCodes uses StandardizedApi financial codes', () => {
+    const loadCommonCodes = transactionFormJs.match(
+      /const loadCommonCodes = async\(\) => \{[\s\S]*?\n  \};/
+    );
+    expect(loadCommonCodes).not.toBeNull();
+    expect(loadCommonCodes[0]).toMatch(
+      /StandardizedApi\.get\(ERP_API\.COMMON_CODES_FINANCIAL\)/
+    );
+    expect(transactionFormJs).not.toMatch(/API_ERP_COMMON_CODES_FINANCIAL/);
+  });
+
+  test('RecurringExpenseModal loadCategories uses StandardizedApi financial codes', () => {
+    const loadCategories = recurringModalJs.match(
+      /const loadCategories = async\(\) => \{[\s\S]*?\n    \};/
+    );
+    expect(loadCategories).not.toBeNull();
+    expect(loadCategories[0]).toMatch(/StandardizedApi/);
+    expect(loadCategories[0]).toMatch(/ERP_API\.COMMON_CODES_FINANCIAL/);
+  });
+
+  test('App.js mounts integrated finance with ADMIN_ROUTES.ERP_INTEGRATED_FINANCE', () => {
+    expect(appJs).toMatch(/ADMIN_ROUTES\.ERP_INTEGRATED_FINANCE/);
   });
 });

@@ -8,6 +8,8 @@ import {
   buildSubcategoryPickerOptions,
   isOtherGroupCategory,
   parseSubcategoryPickerValue,
+  resolveCategoryCodeDisplayLabel,
+  resolveCommonCodeDisplayLabel,
   resolvePrimaryCategoryHighlight,
   resolveSubcategoryPickerValue
 } from '../financialTransactionCategoryPicker';
@@ -42,6 +44,73 @@ const mockIncomeCategories = [
 ];
 
 describe('financialTransactionCategoryPicker', () => {
+  it('resolveCommonCodeDisplayLabel — codeLabel 있으면 라벨', () => {
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'MARKETING', codeLabel: '마케팅' }))
+      .toBe('마케팅');
+  });
+
+  it('resolveCommonCodeDisplayLabel — codeLabel 없거나 공백이면 codeValue', () => {
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'EXP_CAT_001', codeLabel: '' }))
+      .toBe('EXP_CAT_001');
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'COFFE' }))
+      .toBe('COFFE');
+    expect(resolveCommonCodeDisplayLabel({ codeValue: 'X', codeLabel: '   ' }))
+      .toBe('X');
+  });
+
+  // FE display trim ≠ BE persist: 피커는 표시용으로만 trim 한다.
+  // 서버는 codeLabel/본문 개행·공백을 저장·조회 시 그대로 보존한다.
+  it('resolveCommonCodeDisplayLabel — FE 표시 trim만 수행(BE persist와 무관)', () => {
+    expect(resolveCommonCodeDisplayLabel({
+      codeValue: 'COFFE',
+      codeLabel: '  커피 안내  \n\n'
+    })).toBe('커피 안내');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 행 codeLabel 있으면 라벨', () => {
+    expect(resolveCategoryCodeDisplayLabel('MARKETING', mockExpenseCategories)).toBe('마케팅');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 공통코드 codeLabel이 고정 i18n/맵 라벨보다 우선', () => {
+    // 예전 고정 한글 맵(예: RENT → '임대료')이 있어도
+    // 공통코드 행 codeLabel(API)만 사용한다.
+    const rows = [{ codeValue: 'RENT', codeLabel: 'API임대료라벨' }];
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('API임대료라벨');
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).not.toBe('임대료');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 행 label 공백이면 codeValue', () => {
+    const rows = [{ codeValue: 'EXP_CAT_001', codeLabel: '' }];
+    expect(resolveCategoryCodeDisplayLabel('EXP_CAT_001', rows)).toBe('EXP_CAT_001');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — {value,label} 옵션이면 label', () => {
+    const options = [{ value: 'RENT', label: '임대료' }];
+    expect(resolveCategoryCodeDisplayLabel('RENT', options)).toBe('임대료');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 미매칭 bare code는 코드 문자열', () => {
+    expect(resolveCategoryCodeDisplayLabel('UNKNOWN_CAT', mockExpenseCategories)).toBe('UNKNOWN_CAT');
+    expect(resolveCategoryCodeDisplayLabel('RENT', [])).toBe('RENT');
+    expect(resolveCategoryCodeDisplayLabel('RENT', null)).toBe('RENT');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 빈 코드는 -', () => {
+    expect(resolveCategoryCodeDisplayLabel('', mockExpenseCategories)).toBe('-');
+    expect(resolveCategoryCodeDisplayLabel(null, mockExpenseCategories)).toBe('-');
+    expect(resolveCategoryCodeDisplayLabel(undefined, [])).toBe('-');
+  });
+
+  it('resolveCategoryCodeDisplayLabel — 패딩된 codeValue/codeLabel 도 매칭', () => {
+    const rows = [
+      { codeValue: '  RENT  ', codeLabel: '  임대료  ' },
+      { value: '  MEAL  ', label: '  식대  ' }
+    ];
+    expect(resolveCategoryCodeDisplayLabel('RENT', rows)).toBe('임대료');
+    expect(resolveCategoryCodeDisplayLabel('  MEAL  ', rows)).toBe('식대');
+    expect(resolveCategoryCodeDisplayLabel('MEAL', rows)).toBe('식대');
+  });
+
   it('buildFixedCategoryOptions — API SSOT 전체 부모 (고정 6칩/demote 없음)', () => {
     const options = buildFixedCategoryOptions('EXPENSE', mockExpenseCategories);
     expect(options.map((o) => o.value)).toEqual([
@@ -55,8 +124,18 @@ describe('financialTransactionCategoryPicker', () => {
       'OTHER'
     ]);
     expect(options.find((o) => o.value === 'OTHER')?.label).toBe('기타잡비');
+    expect(options.find((o) => o.value === 'MARKETING')?.label).toBe('마케팅');
     expect(options.some((o) => o.value === 'MARKETING')).toBe(true);
     expect(options.some((o) => o.value === 'OFFICE_SUPPLIES')).toBe(true);
+  });
+
+  it('buildFixedCategoryOptions — codeLabel 없으면 codeValue를 label로 사용', () => {
+    const options = buildFixedCategoryOptions('EXPENSE', [
+      { codeValue: 'EXP_CAT_001', sortOrder: 1 },
+      { codeValue: 'MARKETING', codeLabel: '마케팅', sortOrder: 2 }
+    ]);
+    expect(options.find((o) => o.value === 'EXP_CAT_001')?.label).toBe('EXP_CAT_001');
+    expect(options.find((o) => o.value === 'MARKETING')?.label).toBe('마케팅');
   });
 
   it('buildFixedCategoryOptions — 수입 API SSOT 전체', () => {

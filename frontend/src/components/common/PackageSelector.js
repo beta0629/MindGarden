@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { ADMIN_SHOP_PRODUCT_ROUTES } from '../../constants/adminShopSuite';
 import { CODE_GROUP_CONSULTATION_PACKAGE } from '../../constants/packagePricingConstants';
 import { toPackageOption } from '../../utils/packagePricing';
 import notificationManager from '../../utils/notification';
@@ -6,7 +9,7 @@ import notificationManager from '../../utils/notification';
 /**
  * 공통 패키지 선택 컴포넌트
  * - 매칭 생성·회기 추가 등에서 재사용
- * - SSOT: `/admin/package-pricing` 과 동일하게 CONSULTATION_PACKAGE + extraData 사용
+ * - SSOT: 「상품 관리」(ADMIN_SHOP_PRODUCT_ROUTES)와 동일하게 CONSULTATION_PACKAGE + extraData 사용
  * - 레거시 PACKAGE 공통코드·가격/회기 하드코딩 폴백 금지
  *
  * @author Core Solution
@@ -19,6 +22,7 @@ const PackageSelector = ({
   disabled = false,
   className = ''
 }) => {
+  const { t } = useTranslation('admin');
   const [packageOptions, setPackageOptions] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -39,7 +43,7 @@ const PackageSelector = ({
       const codes = await getTenantCodes(CODE_GROUP_CONSULTATION_PACKAGE);
 
       if (!codes || codes.length === 0) {
-        notificationManager.warning('등록된 상담 패키지가 없습니다. 패키지 요금 관리에서 등록해 주세요.');
+        notificationManager.warning(t('shopProductGuide.packageEmptyWarning'));
         setPackageOptions([]);
         return;
       }
@@ -100,7 +104,8 @@ const PackageSelector = ({
       </select>
       {!loading && packageOptions.length === 0 && (
         <div className="mg-v2-form-help">
-          패키지 요금 관리에서 활성 패키지를 등록하면 여기에 표시됩니다.
+          <Link to={ADMIN_SHOP_PRODUCT_ROUTES.LIST}>{t('shopProductGuide.productsMenuLabel')}</Link>
+          {t('shopProductGuide.packageEmptyHelpSuffix')}
         </div>
       )}
       {value && (

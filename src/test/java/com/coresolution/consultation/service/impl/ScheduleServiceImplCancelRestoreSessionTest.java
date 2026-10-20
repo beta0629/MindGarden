@@ -518,7 +518,7 @@ class ScheduleServiceImplCancelRestoreSessionTest {
     @DisplayName("없는 일정 id 확정은 EntityNotFoundException")
     void confirmSchedule_missingId_throwsEntityNotFound() {
         Long missingId = 9999L;
-        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(missingId)))
+        when(scheduleRepository.findByTenantIdAndIdForUpdate(eq(TENANT_ID), eq(missingId)))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> scheduleService.confirmSchedule(missingId, "확정"))

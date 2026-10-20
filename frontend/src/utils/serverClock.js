@@ -4,6 +4,7 @@
  *
  * 공개 GET /api/v1/time 은 session-info 부작용을 피하기 위해 thin fetch 사용
  * (StandardizedApi 세션 갱신·tenant 헤더 경로 우회).
+ * 앱 시작에서 startServerClockSync() 를 한 번 호출하면 즉시·주기·온라인 복귀에 동기화한다.
  *
  * @author CoreSolution
  * @since 2026-10-14
@@ -12,12 +13,23 @@
 import { getApiBaseUrl, SYSTEM_TIME_API } from '../constants/api';
 import { DEFAULT_ZONE } from './zonedDateTime';
 
+/** 서버 시각 재동기화 간격. 10분. */
+export const SERVER_CLOCK_SYNC_INTERVAL_MS = 10 * 60 * 1000;
+
 /** @type {number|null} serverEpoch - (t0 + rtt/2) */
 let offsetMs = null;
 /** @type {boolean} */
 let synced = false;
 /** @type {string} */
 let serverZone = DEFAULT_ZONE;
+/** @type {boolean} */
+let syncLoopStarted = false;
+/** @type {ReturnType<typeof setInterval>|null} */
+let syncIntervalId = null;
+/** @type {(() => void)|null} */
+let onlineHandler = null;
+/** @type {(() => void)|null} */
+let visibilityHandler = null;
 
 /**
  * RTT 절반 보정 offset 계산.
@@ -154,9 +166,62 @@ export const syncServerClock = async () => {
   }
 };
 
+/**
+ * 앱 시작 시 한 번 호출. 즉시 동기화하고, 주기와 온라인·탭 복귀 때 다시 동기화한다.
+ * 이미 시작했으면 리스너를 중복 등록하지 않는다.
+ */
+export const startServerClockSync = () => {
+  if (syncLoopStarted) {
+    return;
+  }
+  syncLoopStarted = true;
+  syncServerClock();
+
+  onlineHandler = () => {
+    syncServerClock();
+  };
+  visibilityHandler = () => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+      return;
+    }
+    syncServerClock();
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('online', onlineHandler);
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', visibilityHandler);
+  }
+  syncIntervalId = setInterval(() => {
+    syncServerClock();
+  }, SERVER_CLOCK_SYNC_INTERVAL_MS);
+};
+
+/**
+ * 테스트에서 주기·리스너를 해제한다.
+ */
+export const stopServerClockSync = () => {
+  if (typeof window !== 'undefined' && onlineHandler) {
+    window.removeEventListener('online', onlineHandler);
+  }
+  if (typeof document !== 'undefined' && visibilityHandler) {
+    document.removeEventListener('visibilitychange', visibilityHandler);
+  }
+  if (syncIntervalId != null) {
+    clearInterval(syncIntervalId);
+  }
+  syncIntervalId = null;
+  onlineHandler = null;
+  visibilityHandler = null;
+  syncLoopStarted = false;
+};
+
 export default {
   getNow,
   syncServerClock,
+  startServerClockSync,
+  stopServerClockSync,
   computeServerClockOffset,
   isServerClockSynced,
   getServerClockOffsetMs,

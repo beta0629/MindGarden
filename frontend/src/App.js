@@ -5,6 +5,7 @@ import './styles/main.css'; // 새로운 통합 디자인 시스템 사용
 import { USER_ROLES } from './constants/roles';
 // import './styles/css-variables.css'; // CSS 상수 시스템 (통합됨)
 import { initializeDynamicThemeSystem } from './utils/designSystemHelper';
+import { startServerClockSync } from './utils/serverClock';
 import unifiedLayoutManager from './utils/unifiedLayoutSystem';
 import { useTenantBranding } from './hooks/useTenantBranding';
 import TabletHomepage from './components/homepage/Homepage';
@@ -1388,5 +1389,7 @@ if (process.env.NODE_ENV === 'development') {
     });
   };
 }
+
+startServerClockSync();
 
 export default App;

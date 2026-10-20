@@ -6,11 +6,14 @@
  */
 
 import {
+  SERVER_CLOCK_SYNC_INTERVAL_MS,
   computeServerClockOffset,
   getNow,
   parseServerTimePayload,
   resetServerClock,
   setServerClockOffsetForTest,
+  startServerClockSync,
+  stopServerClockSync,
   syncServerClock,
   isServerClockSynced
 } from '../serverClock';
@@ -127,5 +130,98 @@ describe('syncServerClock', () => {
     global.fetch = jest.fn();
     expect(await syncServerClock()).toBe(false);
     expect(global.fetch).not.toHaveBeenCalled();
+  });
+});
+
+const flushPromises = async () => {
+  for (let i = 0; i < 8; i += 1) {
+    await Promise.resolve();
+  }
+};
+
+describe('startServerClockSync', () => {
+  const originalOnLine = navigator.onLine;
+  const originalFetch = global.fetch;
+  const originalVisibility = Object.getOwnPropertyDescriptor(document, 'visibilityState');
+
+  afterEach(() => {
+    stopServerClockSync();
+    resetServerClock();
+    jest.useRealTimers();
+    global.fetch = originalFetch;
+    Object.defineProperty(navigator, 'onLine', {
+      configurable: true,
+      get: () => originalOnLine
+    });
+    if (originalVisibility) {
+      Object.defineProperty(document, 'visibilityState', originalVisibility);
+    }
+    jest.restoreAllMocks();
+  });
+
+  it('시작 즉시 /api/v1/time 을 동기화하고, 온라인 복귀·주기에도 다시 호출한다', async () => {
+    const deviceNow = 2_000_000_000_000;
+    const skewMs = 5 * 60 * 1000;
+    jest.useFakeTimers();
+    jest.spyOn(Date, 'now').mockReturnValue(deviceNow);
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { epochMillis: deviceNow + skewMs, zone: 'Asia/Seoul' }
+      })
+    });
+
+    expect(getNow().getTime()).toBe(deviceNow);
+
+    startServerClockSync();
+    await flushPromises();
+
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining(SYSTEM_TIME_API.NOW),
+      expect.objectContaining({ method: 'GET', credentials: 'omit' })
+    );
+    expect(isServerClockSynced()).toBe(true);
+    expect(getNow().getTime()).toBe(deviceNow + skewMs);
+
+    window.dispatchEvent(new Event('online'));
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+
+    jest.advanceTimersByTime(SERVER_CLOCK_SYNC_INTERVAL_MS);
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+
+    startServerClockSync();
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('탭이 숨겨져 있으면 재동기화하지 않고, 다시 보이면 동기화한다', async () => {
+    jest.useFakeTimers({ now: 3_000_000_000_000 });
+    Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        data: { epochMillis: 3_000_000_000_000, zone: 'Asia/Seoul' }
+      })
+    });
+
+    startServerClockSync();
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await flushPromises();
+    expect(global.fetch).toHaveBeenCalledTimes(2);
   });
 });

@@ -8,8 +8,45 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import ScheduleCalendarView from '../ScheduleCalendarView';
 import { DEFAULT_ZONE, formatDateKeyInZone } from '../../../../utils/zonedDateTime';
+
+jest.mock('@fullcalendar/luxon3', () => {
+  try {
+    return jest.requireActual('@fullcalendar/luxon3');
+  } catch (error) {
+    const { createPlugin } = require('@fullcalendar/core');
+    const { DateTime } = require('luxon');
+    class LuxonNamedTimeZone {
+      constructor(timeZoneName) {
+        this.timeZoneName = timeZoneName;
+      }
+      offsetForArray(parts) {
+        return DateTime.fromObject({
+          year: parts[0],
+          month: parts[1],
+          day: parts[2],
+          hour: parts[3],
+          minute: parts[4],
+          second: parts[5],
+          millisecond: parts[6]
+        }, { zone: this.timeZoneName }).offset;
+      }
+      timestampToArray(ms) {
+        const dt = DateTime.fromMillis(ms, { zone: this.timeZoneName });
+        return [dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second, dt.millisecond];
+      }
+    }
+    return {
+      __esModule: true,
+      default: createPlugin({
+        name: '@fullcalendar/luxon3',
+        namedTimeZonedImpl: LuxonNamedTimeZone
+      })
+    };
+  }
+}, { virtual: true });
+
+import ScheduleCalendarView from '../ScheduleCalendarView';
 
 class ResizeObserverStub {
   observe() {}

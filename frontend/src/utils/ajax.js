@@ -231,6 +231,18 @@ const throwIfCallerOwnedAuthLost = async(response, requestUrl, authGraceAtStart,
 };
 
 /**
+ * 자격 증명 변경 403이면 비밀번호 변경 모달을 연다.
+ * 각 요청 메서드는 실패 응답({@code !response.ok}) 처리의 맨 앞에서 호출한다.
+ *
+ * @param {unknown} body 응답 JSON
+ */
+const notifyPasswordChangeRequired = (body) => {
+  if (bodyRequiresCredentialChange(body)) {
+    dispatchPasswordChangeRequired();
+  }
+};
+
+/**
  * 401 시 refresh 후 원 요청 재시도 가능 여부 (Expo client 와 동일)
  * @param {string} requestUrl
  * @param {boolean} alreadyRetried
@@ -474,6 +486,7 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
     }
     
     if (!response.ok) {
+      notifyPasswordChangeRequired(jsonData);
       // 401 → refresh → 새 access 로 1회 재요청 (Expo 와 동일). 실패 시에만 로그인 리다이렉트.
       if (response.status === 401
           && await tryRefreshAccessTokenForRetry(url, _authRetry === true)) {
@@ -541,9 +554,6 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 403 오류: 응답 body의 message가 있으면 그대로 전달, 없으면 기본 문구
       if (response.status === 403) {
-        if (bodyRequiresCredentialChange(jsonData)) {
-          dispatchPasswordChangeRequired();
-        }
         const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
           ? String(jsonData.message)
           : AJAX_ACCESS_DENIED_DEFAULT;
@@ -698,6 +708,7 @@ export const apiPost = async(endpoint, data = {}, options = {}) => {
     const jsonData = await readJsonBody(response);
     
     if (!response.ok) {
+      notifyPasswordChangeRequired(jsonData);
       const requestUrl = endpoint.startsWith('http')
         ? endpoint
         : `${getApiBaseUrl()}${endpoint}`;
@@ -770,6 +781,7 @@ export const apiPut = async(endpoint, data = {}, options = {}) => {
     }
     
     if (!response.ok) {
+      notifyPasswordChangeRequired(jsonData);
       const requestUrl = endpoint.startsWith('http')
         ? endpoint
         : `${getApiBaseUrl()}${endpoint}`;
@@ -840,6 +852,7 @@ export const apiPatch = async(endpoint, data = {}, options = {}) => {
     }
 
     if (!response.ok) {
+      notifyPasswordChangeRequired(jsonData);
       const requestUrl = endpoint.startsWith('http')
         ? endpoint
         : `${getApiBaseUrl()}${endpoint}`;
@@ -903,6 +916,7 @@ export const apiPostFormData = async(endpoint, formData, options = {}) => {
       } catch (_) {
         // ignore parse error
       }
+      notifyPasswordChangeRequired(errorBody);
       const serverMessage = errorBody.message || errorBody.error;
       const errorCode = errorBody.errorCode || errorBody.error;
 
@@ -952,6 +966,7 @@ export const apiDelete = async(endpoint, options = {}) => {
     const jsonData = await readJsonBody(response);
 
     if (!response.ok) {
+      notifyPasswordChangeRequired(jsonData);
       const requestUrl = endpoint.startsWith('http')
         ? endpoint
         : `${getApiBaseUrl()}${endpoint}`;
@@ -1016,6 +1031,8 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
     });
 
     if (!response.ok) {
+      const uploadErrorBody = await readJsonBody(response);
+      notifyPasswordChangeRequired(uploadErrorBody);
       const requestUrl = typeof endpoint === 'string' && endpoint.startsWith('http')
         ? endpoint
         : `${getApiBaseUrl()}${endpoint}`;
@@ -1029,8 +1046,7 @@ export const apiUpload = async(endpoint, formData, options = {}) => {
       if (redirected) {
         return null; // 리다이렉트됨
       }
-      
-      const uploadErrorBody = await readJsonBody(response);
+
       handleError(new Error(AJAX_FILE_UPLOAD_FAILED), response.status, uploadErrorBody);
     }
 

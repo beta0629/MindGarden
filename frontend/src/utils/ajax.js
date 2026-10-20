@@ -12,6 +12,10 @@ import {
   FETCH_INIT_SKIP_FORM_SESSION_HOOK,
   SESSION_VERIFY_FETCH_RETRY_DELAYS_MS
 } from '../constants/session';
+import {
+  bodyRequiresCredentialChange,
+  dispatchPasswordChangeRequired
+} from '../constants/passwordChangeRequired';
 import csrfTokenManager from './csrfTokenManager';
 import { getDefaultApiHeaders } from './apiHeaders';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
@@ -537,6 +541,9 @@ export const apiGet = async(endpoint, params = {}, options = {}) => {
       }
       // 403 오류: 응답 body의 message가 있으면 그대로 전달, 없으면 기본 문구
       if (response.status === 403) {
+        if (bodyRequiresCredentialChange(jsonData)) {
+          dispatchPasswordChangeRequired();
+        }
         const serverMessage = (jsonData && typeof jsonData === 'object' && jsonData.message)
           ? String(jsonData.message)
           : AJAX_ACCESS_DENIED_DEFAULT;

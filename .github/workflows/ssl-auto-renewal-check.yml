@@ -1,6 +1,9 @@
 # SSL 인증서 점검 (certbot timer·authenticator·만료 예정)
-# 대상 서버에 ensure-auto-renewal.sh를 SCP 전송 후 실행
+# 대상 서버에 ensure-auto-renewal.sh(+lib·deploy hook)를 SCP 전송 후 실행
 # SSOT: docs/runbooks/SSL_CERTIFICATE_STATUS.md
+#
+# DEV: standalone→webroot 전환 + dry-run 실패 시 job 실패
+# PROD: 동일 스크립트, authenticator 변경 없음(경고만)
 
 name: SSL 인증서 점검
 
@@ -32,8 +35,8 @@ jobs:
           username: ${{ secrets.DEV_SERVER_USER }}
           key: ${{ secrets.DEV_SERVER_SSH_KEY }}
           port: 22
-          source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
-          target: "/tmp/"
+          source: "scripts/server-management/ssl/ensure-auto-renewal.sh,scripts/server-management/ssl/ensure-auto-renewal-lib.sh,scripts/server-management/ssl/01-reload-nginx.sh"
+          target: "/tmp/ssl-auto-renewal/"
           strip_components: 3
 
       - name: 개발 서버 SSL 점검
@@ -44,7 +47,7 @@ jobs:
           username: ${{ secrets.DEV_SERVER_USER }}
           key: ${{ secrets.DEV_SERVER_SSH_KEY }}
           port: 22
-          script: sudo bash /tmp/ensure-auto-renewal.sh dev
+          script: sudo bash /tmp/ssl-auto-renewal/ensure-auto-renewal.sh dev
 
       - name: 스크립트 업로드 (운영)
         if: inputs.target == 'prod'
@@ -54,8 +57,8 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
-          source: "scripts/server-management/ssl/ensure-auto-renewal.sh"
-          target: "/tmp/"
+          source: "scripts/server-management/ssl/ensure-auto-renewal.sh,scripts/server-management/ssl/ensure-auto-renewal-lib.sh,scripts/server-management/ssl/01-reload-nginx.sh"
+          target: "/tmp/ssl-auto-renewal/"
           strip_components: 3
 
       - name: 운영 서버 SSL 점검
@@ -66,4 +69,4 @@ jobs:
           username: ${{ secrets.PRODUCTION_USER }}
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
-          script: sudo bash /tmp/ensure-auto-renewal.sh prod
+          script: sudo bash /tmp/ssl-auto-renewal/ensure-auto-renewal.sh prod

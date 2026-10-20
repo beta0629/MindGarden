@@ -1,5 +1,5 @@
 /**
- * (레거시) 상담사 등록 폼 — 공통 비밀번호 정책 적용. 필수 입력이라 빈 값은 막는다.
+ * (레거시) 상담사 등록 폼 — 비밀번호는 서버가 만들고 문자로만 알린다.
  */
 import React from 'react';
 import { webcrypto } from 'crypto';
@@ -39,39 +39,26 @@ async function openForm() {
   const set = (el, value) => fireEvent.change(el, { target: { value } });
   set(inputs[0], 'fakeconsultant');
   set(inputs[1], 'fake.consultant@example.com');
-  set(inputs[3], '홍길동');
-  set(inputs[4], '010-1234-5678');
-  const pwd = dialog.querySelector('#legacy-consultant-password');
-  return { dialog, pwd, set };
+  set(inputs[2], '홍길동');
+  set(inputs[3], '010-1234-5678');
+  return { dialog };
 }
 
-describe('ConsultantManagement(레거시) 비밀번호 정책', () => {
+describe('ConsultantManagement(레거시) 임시 비밀번호 문자', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     StandardizedApi.get.mockResolvedValue([]);
-    StandardizedApi.post.mockResolvedValue({ id: 'c-1', email: 'fake.consultant@example.com' });
+    StandardizedApi.post.mockResolvedValue({ id: 'c-1', email: 'fake.consultant@example.com', smsSent: true });
   });
 
-  test('대문자 없는 비밀번호는 등록 API 를 부르지 않고 정책 안내를 표시한다', async() => {
-    const { dialog, pwd, set } = await openForm();
-    set(pwd, 'noupper1!x');
-    fireEvent.click(within(dialog).getAllByRole('button', { name: '등록' }).pop());
+  test('비밀번호 입력란 없이 등록하고 요청에 비밀번호를 넣지 않는다', async() => {
+    const { dialog } = await openForm();
+    expect(dialog.querySelector('#legacy-consultant-password')).toBeNull();
+    expect(dialog.querySelector('input[name="password"]')).toBeNull();
+    expect(within(dialog).getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
 
-    const alert = await within(dialog).findByText(/대문자를 포함해야/);
-    expect(alert).toHaveAttribute('role', 'alert');
-    expect(pwd).toHaveAttribute('aria-invalid', 'true');
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-  });
-
-  test('빈 비밀번호는 필수 입력 안내로 막고, 정책 통과 값은 등록한다', async() => {
-    const { dialog, pwd, set } = await openForm();
-    set(pwd, '');
-    fireEvent.click(within(dialog).getAllByRole('button', { name: '등록' }).pop());
-    expect(await within(dialog).findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-
-    set(pwd, 'Fake7!Qzm');
     fireEvent.click(within(dialog).getAllByRole('button', { name: '등록' }).pop());
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalled());
+    expect(StandardizedApi.post.mock.calls[0][1].password).toBeUndefined();
   });
 });

@@ -179,6 +179,7 @@ export const mapOAuthPhoneSendResponse = (response) => {
  *   accessToken?: string,
  *   refreshToken?: string,
  *   matchedAccount?: { userId: number, tenantId?: string, role?: string },
+ *   requiresPasswordChange?: boolean,
  *   phoneAccountSelectionToken?: string,
  *   code?: string,
  *   message?: string
@@ -197,7 +198,8 @@ export const mapOAuthPhoneVerifyResponse = (response) => {
       kind: 'authenticated',
       accessToken: safe.accessToken,
       refreshToken: safe.refreshToken,
-      matchedAccount: safe.matchedAccount
+      matchedAccount: safe.matchedAccount,
+      requiresPasswordChange: safe.requiresPasswordChange === true
     };
   }
   return {

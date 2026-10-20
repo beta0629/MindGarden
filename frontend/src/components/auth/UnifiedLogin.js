@@ -79,6 +79,7 @@ import {
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 import { mergeGuestShopCartIntoServer } from '../../services/clientShopService';
+import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
 
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
 const EMPTY_MERCHANT_LEGAL = {
@@ -131,7 +132,7 @@ const UnifiedLogin = () => {
   const [showTenantSelection, setShowTenantSelection] = useState(false);
   const [accessibleTenants, setAccessibleTenants] = useState([]);
   const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
-  const [tempPassword, setTempPassword] = useState(''); // 임시 비밀번호 저장 (비밀번호 변경 모달에 전달)
+  const [forcePasswordChange, setForcePasswordChange] = useState(false);
   // GIS 웹 흐름 OAuth 휴대폰 매칭(OTP) 모달 — `OAuthPhoneVerificationModal` 표시 여부와 BE payload 보관.
   const [showOAuthPhoneVerificationModal, setShowOAuthPhoneVerificationModal] = useState(false);
   const [oauthPhoneVerificationPayload, setOAuthPhoneVerificationPayload] = useState(null);
@@ -654,11 +655,10 @@ const UnifiedLogin = () => {
           console.warn('로그인 직후 세션 확인 실패:', sessionError);
         });
 
-        // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시
+        // 임시 비밀번호로 로그인한 경우 비밀번호 변경 모달 표시. 로그인 입력값은 넘기지 않는다.
         if (result.data?.requiresPasswordChange || loginData.requiresPasswordChange) {
           logger.debug('⚠️ 임시 비밀번호로 로그인 감지 - 비밀번호 변경 모달 표시');
-          // 입력한 비밀번호를 임시 비밀번호로 저장 (비밀번호 변경 모달에서 현재 비밀번호로 사용)
-          setTempPassword(actualFormData.password);
+          setForcePasswordChange(true);
           setIsLoading(false);
           setShowPasswordChangeModal(true);
           return; // 비밀번호 변경 완료 전까지 리다이렉트하지 않음
@@ -1196,7 +1196,7 @@ const UnifiedLogin = () => {
       {showPasswordChangeModal && (
         <PasswordChangeModal
           isOpen={showPasswordChangeModal}
-          tempPassword={tempPassword} // 임시 비밀번호 전달 (현재 비밀번호로 자동 입력)
+          tempPassword={forcePasswordChange}
           onClose={() => {
             // 비밀번호 변경 모달을 닫을 수 없도록 설정 (임시 비밀번호인 경우 필수)
             notificationManager.show(t('auth:common.tempPasswordChangeRequired'), 'warning');
@@ -1205,7 +1205,7 @@ const UnifiedLogin = () => {
             // 비밀번호 변경 성공 시 대시보드로 리다이렉트
             logger.debug('✅ 비밀번호 변경 완료 - 대시보드로 리다이렉트');
             setShowPasswordChangeModal(false);
-            setTempPassword(''); // 임시 비밀번호 초기화
+            setForcePasswordChange(false);
             
             // 세션 정보 다시 확인 후 대시보드로 이동
             try {
@@ -1264,6 +1264,11 @@ const UnifiedLogin = () => {
             markJustLoggedIn();
             await checkSession(true, { background: true });
             setAccountSelectionModal({ isOpen: false, candidates: [], selectionToken: null });
+            if (data.requiresPasswordChange === true) {
+              setForcePasswordChange(true);
+              setShowPasswordChangeModal(true);
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userObj }, navigate);
           }}
@@ -1293,7 +1298,13 @@ const UnifiedLogin = () => {
             setOAuthPhoneVerificationPayload(null);
           }}
           socialUser={oauthPhoneVerificationPayload}
-          onVerifiedSingle={async({ accessToken, refreshToken, matchedAccount, provider: matchedProvider }) => {
+          onVerifiedSingle={async({
+            accessToken,
+            refreshToken,
+            matchedAccount,
+            provider: matchedProvider,
+            requiresPasswordChange
+          }) => {
             const userInfo = {
               id: matchedAccount?.userId,
               tenantId: matchedAccount?.tenantId,
@@ -1308,6 +1319,10 @@ const UnifiedLogin = () => {
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
             await checkSession(true, { background: true });
+            if (requiresPasswordChange === true) {
+              dispatchPasswordChangeRequired();
+              return;
+            }
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

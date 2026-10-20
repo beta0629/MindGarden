@@ -5,6 +5,8 @@
  * - 이동 후 시각: 운영 타임존 현재 시각보다 이전이면 거부.
  * - 생성: 시작이 현재보다 이전이면 칸 선택 불가.
  * PUT 본문(buildScheduleDatetimeUpdateBody)과 같은 벽시계 값으로 판정한다.
+ * 기준 시각은 serverClock.getNow() 다. 온라인이고 동기화됐으면 서버 시각, 아니면 기기 시각.
+ * 벽시계 비교는 Asia/Seoul(zonedDateTime) 을 유지한다.
  * 최종 판정은 서버(400 SCHEDULE_MOVE_FROM_PAST / SCHEDULE_MOVE_TO_PAST / SCHEDULE_CREATE_IN_PAST)가 한다.
  *
  * @author CoreSolution
@@ -14,6 +16,7 @@ import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultat
 import i18n from '../i18n';
 import { extractServerErrorMessageFromError } from './ajax';
 import { formatNowInSessionZone } from './scheduleSessionStart';
+import { getNow } from './serverClock';
 import { startOfDayInZone } from './zonedDateTime';
 import {
   buildScheduleDatetimeUpdateBody,
@@ -55,7 +58,7 @@ const isValidDate = (value) => value instanceof Date && !Number.isNaN(value.getT
  * @param {Date} [from]
  * @returns {Date}
  */
-export const startOfLocalCalendarDay = (from = new Date()) =>
+export const startOfLocalCalendarDay = (from = getNow()) =>
   startOfDayInZone(from, CONSULTATION_LOG_SESSION_START_TIME_ZONE);
 
 /**
@@ -66,7 +69,7 @@ export const startOfLocalCalendarDay = (from = new Date()) =>
  * @param {Date} [now]
  * @returns {boolean} 판정 불가(빈 값)면 false — 서버가 최종 판정
  */
-export const isScheduleMoveTargetKeyInPast = (dateKey, timeKey, now = new Date()) => {
+export const isScheduleMoveTargetKeyInPast = (dateKey, timeKey, now = getNow()) => {
   if (!dateKey || !timeKey) {
     return false;
   }
@@ -84,7 +87,7 @@ export const isScheduleMoveTargetKeyInPast = (dateKey, timeKey, now = new Date()
  * @param {Date} [now]
  * @returns {boolean}
  */
-export const isScheduleMoveTargetInPast = (targetStart, now = new Date()) => {
+export const isScheduleMoveTargetInPast = (targetStart, now = getNow()) => {
   if (targetStart == null) {
     return false;
   }
@@ -140,7 +143,7 @@ export const resolveCalendarDropTargetStart = (dropInfo, draggedEvent) => {
  * @param {Date} [now]
  * @returns {boolean}
  */
-export const isScheduleMoveSourceLocked = ({ status, start } = {}, now = new Date()) =>
+export const isScheduleMoveSourceLocked = ({ status, start } = {}, now = getNow()) =>
   isScheduleStatusSlotLocked(status) || isScheduleMoveTargetInPast(start, now);
 
 /**
@@ -150,7 +153,7 @@ export const isScheduleMoveSourceLocked = ({ status, start } = {}, now = new Dat
  * @param {Date} [now]
  * @returns {string|null}
  */
-export const getScheduleMoveSourceLockedMessage = ({ status, start } = {}, now = new Date()) => {
+export const getScheduleMoveSourceLockedMessage = ({ status, start } = {}, now = getNow()) => {
   const statusMessage = getScheduleCalendarDragLockedMessage({ status });
   if (statusMessage) {
     return statusMessage;

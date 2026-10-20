@@ -29,6 +29,7 @@ import koSchedule from '../../locales/ko/schedule.json';
 import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../../constants/consultationLogAutosaveConstants';
 import { dateFromWallClockInZone } from '../zonedDateTime';
 import { buildScheduleDatetimeUpdateBody } from '../scheduleRescheduleUtils';
+import { resetServerClock, setServerClockOffsetForTest } from '../serverClock';
 
 jest.mock('../../i18n', () => ({
   __esModule: true,
@@ -172,6 +173,52 @@ describe('scheduleMoveGuard', () => {
     test('500·사유 없음 → fallback', () => {
       expect(resolveScheduleMoveFailureMessage({ status: 500 }, 'fallback')).toBe('fallback');
       expect(resolveScheduleMoveFailureMessage(null, 'fallback')).toBe('fallback');
+    });
+  });
+
+  describe('기준 시각 — 기기 시계와 서버 시계가 어긋날 때', () => {
+    const originalOnLine = navigator.onLine;
+    /** 2026-10-06 13:50:00 KST. 서버는 이보다 10분 앞(14:00 KST). */
+    const deviceNow = Date.parse('2026-10-06T04:50:00.000Z');
+    const skewMs = 10 * 60 * 1000;
+
+    afterEach(() => {
+      resetServerClock();
+      jest.restoreAllMocks();
+      Object.defineProperty(navigator, 'onLine', {
+        configurable: true,
+        get: () => originalOnLine
+      });
+    });
+
+    test('온라인이고 동기화됐으면 서버 시각으로 13:55 를 거부하고 14:00 은 허용한다', () => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+      jest.spyOn(Date, 'now').mockReturnValue(deviceNow);
+      setServerClockOffsetForTest(skewMs, { synced: true, zone: CONSULTATION_LOG_SESSION_START_TIME_ZONE });
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '13:55')).toBe(true);
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '14:00')).toBe(false);
+      expect(isScheduleMoveTargetInPast(wallDate(2026, 10, 6, 13, 55))).toBe(true);
+      expect(isScheduleMoveSourceLocked({
+        status: 'BOOKED',
+        start: wallDate(2026, 10, 6, 13, 55)
+      })).toBe(true);
+    });
+
+    test('오프라인이면 같은 13:55 를 기기 시각으로 허용하고 13:49 는 거부한다', () => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => false });
+      jest.spyOn(Date, 'now').mockReturnValue(deviceNow);
+      setServerClockOffsetForTest(skewMs, { synced: true, zone: CONSULTATION_LOG_SESSION_START_TIME_ZONE });
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '13:55')).toBe(false);
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '13:49')).toBe(true);
+      expect(isScheduleMoveTargetInPast(wallDate(2026, 10, 6, 13, 55))).toBe(false);
+    });
+
+    test('온라인이어도 동기화 전이면 기기 시각으로 판정한다', () => {
+      Object.defineProperty(navigator, 'onLine', { configurable: true, get: () => true });
+      jest.spyOn(Date, 'now').mockReturnValue(deviceNow);
+      resetServerClock();
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '13:55')).toBe(false);
+      expect(isScheduleMoveTargetKeyInPast('2026-10-06', '13:49')).toBe(true);
     });
   });
 });

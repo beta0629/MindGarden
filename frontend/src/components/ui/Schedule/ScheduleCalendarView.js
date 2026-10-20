@@ -18,6 +18,7 @@ import {
   parseScheduleDateKey,
   toFloatingDateTimeInZone
 } from '../../../utils/zonedDateTime';
+import { getNow } from '../../../utils/serverClock';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   CALENDAR_EXTENDED_TYPE_VACATION,
@@ -93,6 +94,7 @@ const SCHEDULE_CALENDAR_PLUGINS = [dayGridPlugin, timeGridPlugin, interactionPlu
 
 /**
  * 기기 local 자정이 아니라 운영 타임존(DEFAULT_ZONE) 캘린더일로 past 판정.
+ * 기준 시각은 serverClock.getNow() (온라인이고 동기화됐으면 서버 시각).
  * @param {Date|string|null|undefined} dateLike
  * @returns {boolean}
  */
@@ -104,7 +106,7 @@ const isPastCalendarDayInZone = (dateLike) => {
     if (!eventKey) {
         return false;
     }
-    return eventKey < formatDateKeyInZone(new Date(), DEFAULT_ZONE);
+    return eventKey < formatDateKeyInZone(getNow(), DEFAULT_ZONE);
 };
 
 /**
@@ -203,9 +205,9 @@ const ScheduleCalendarView = ({
     useCalendarDragEscapeCancel();
     /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
     const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
-    /** 초기 스크롤: Asia/Seoul 현재시 − 2h (slotMin 클램프). 마운트 시점 기준 */
+    /** 초기 스크롤: Asia/Seoul 현재시 − 2h (slotMin 클램프). 마운트 시점의 getNow() */
     const scrollTime = useMemo(
-        () => resolveCalendarScrollTime(new Date(), slotTimeRange.slotMinTime),
+        () => resolveCalendarScrollTime(getNow(), slotTimeRange.slotMinTime),
         [slotTimeRange.slotMinTime]
     );
     /** absolute 휴가 ISO 등을 floating KST로 맞춰 LA/Seoul 기기 벽시계 표시 동일화 */
@@ -818,6 +820,7 @@ const ScheduleCalendarView = ({
                 slotMinTime={slotTimeRange.slotMinTime}
                 slotMaxTime={slotTimeRange.slotMaxTime}
                 slotDuration="00:30:00"
+                now={getNow}
                 nowIndicator={true}
                 scrollTime={scrollTime}
                 scrollTimeReset={false}

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.SystemTimeConstants;
 import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
@@ -286,6 +287,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/v1/public/kr-public-data/") // 비로그인 공공데이터 프록시
                 || path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
                 || path.startsWith("/api/health/") || path.equals("/error")
+                || path.equals(SystemTimeConstants.API_PATH)
                 || path.startsWith("/actuator/");
     }
 

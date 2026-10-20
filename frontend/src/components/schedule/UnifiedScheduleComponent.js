@@ -33,6 +33,7 @@ import {
   resolveScheduleMoveFailureMessage,
   resolveScheduleMoveTarget
 } from '../../utils/scheduleMoveGuard';
+import { getNow } from '../../utils/serverClock';
 import {
   buildMissingConsultationLogFallbackRoute,
   resolveMissingLogSchedule
@@ -1066,7 +1067,7 @@ const UnifiedScheduleComponent = ({
         console.log('📅 날짜 클릭:', info.dateStr);
         
         const clickedDate = new Date(info.date);
-        const today = new Date();
+        const today = getNow();
         today.setHours(0, 0, 0, 0);
         clickedDate.setHours(0, 0, 0, 0);
         

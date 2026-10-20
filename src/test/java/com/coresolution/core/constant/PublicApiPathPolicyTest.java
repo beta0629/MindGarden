@@ -6,6 +6,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+import com.coresolution.consultation.constant.SystemTimeConstants;
+
 /**
  * {@link PublicApiPathPolicy} 경로 분류·공통코드 공개 그룹 판정 단위 테스트.
  *
@@ -32,6 +34,10 @@ class PublicApiPathPolicyTest {
     void isPublicApi() {
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/auth/login")).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi("/login")).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi(SystemTimeConstants.API_PATH)).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi(SystemTimeConstants.API_PATH + "?x=1")).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/timeline")).isFalse();
+        assertThat(PublicApiPathPolicy.isStrictHostPath(SystemTimeConstants.API_PATH)).isFalse();
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/admin/users")).isFalse();
     }
 

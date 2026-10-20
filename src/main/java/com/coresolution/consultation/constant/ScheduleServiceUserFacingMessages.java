@@ -20,6 +20,18 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_PAST_SLOT_CHANGE_DENIED =
             "과거 스케줄은 일시를 변경할 수 없습니다.";
 
+    /** 원래 시작 시각이 이미 지난 일정을 다른 시각으로 옮길 때 */
+    public static final String MSG_SCHEDULE_MOVE_FROM_PAST =
+            "이미 시작 시각이 지난 일정은 옮길 수 없습니다. 완료·취소 등 상태 변경으로 처리해 주세요.";
+
+    /** 이동 후 시각이 현재(서울)보다 이전일 때 */
+    public static final String MSG_SCHEDULE_MOVE_TO_PAST =
+            "현재 시각 이전으로는 일정을 옮길 수 없습니다. 지금 이후의 시간을 선택해 주세요.";
+
+    /** 생성할 시작 시각이 현재(서울)보다 이전일 때 */
+    public static final String MSG_SCHEDULE_CREATE_IN_PAST =
+            "현재 시각 이전에는 일정을 등록할 수 없습니다. 지금 이후의 시간을 선택해 주세요.";
+
     /**
      * 가예약(TENTATIVE) 경로에서 매핑에 이미 점유 일정
      * (BOOKED/TENTATIVE_PENDING_PAYMENT/CONFIRMED/COMPLETED/IN_PROGRESS)이

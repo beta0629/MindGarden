@@ -42,7 +42,8 @@ const WeekDayScheduleEventChip = ({
   cancelledClass,
   extendedProps,
   showInstitutionMark,
-  institutionLabel
+  institutionLabel,
+  lockMessage
 }) => {
   const chipRef = useRef(null);
   const timeRef = useRef(null);
@@ -83,6 +84,7 @@ const WeekDayScheduleEventChip = ({
     institutionLabel,
     showInstitution: Boolean(showInstitutionMark && institutionLabel)
   });
+  const visibleTitle = lockMessage ? `${chipTitle} — ${lockMessage}` : chipTitle;
   const mergeTimeTitle = !markerOnly
     && Boolean(fit.mergeTimeTitle)
     && fit.heightStage === WEEK_DAY_CHIP_HEIGHT_STAGE.MERGE_TIME_TITLE
@@ -136,8 +138,9 @@ const WeekDayScheduleEventChip = ({
         data-chip-fit-stage={fit.stage}
         data-chip-height-stage={fit.heightStage}
         data-chip-marker="true"
-        title={chipTitle}
+        title={visibleTitle}
         aria-label={chipTitle}
+        aria-disabled={lockMessage ? 'true' : undefined}
       >
         {measureTimeBlock}
       </div>
@@ -187,8 +190,9 @@ const WeekDayScheduleEventChip = ({
       className={chipClass}
       data-chip-fit-stage={fit.stage}
       data-chip-height-stage={fit.heightStage}
-      title={chipTitle}
+      title={visibleTitle}
       aria-label={chipTitle}
+      aria-disabled={lockMessage ? 'true' : undefined}
     >
       {mergeTimeTitle ? (
         <div className="mg-v2-ad-calendar-event__merge-row">
@@ -226,7 +230,8 @@ WeekDayScheduleEventChip.propTypes = {
   cancelledClass: PropTypes.string,
   extendedProps: PropTypes.object,
   showInstitutionMark: PropTypes.bool,
-  institutionLabel: PropTypes.string
+  institutionLabel: PropTypes.string,
+  lockMessage: PropTypes.string
 };
 
 WeekDayScheduleEventChip.defaultProps = {
@@ -241,7 +246,8 @@ WeekDayScheduleEventChip.defaultProps = {
   cancelledClass: '',
   extendedProps: {},
   showInstitutionMark: false,
-  institutionLabel: ''
+  institutionLabel: '',
+  lockMessage: ''
 };
 
 export default WeekDayScheduleEventChip;

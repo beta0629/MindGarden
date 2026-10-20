@@ -537,7 +537,7 @@ describe('scheduleExternalDropGuards', () => {
       const r = assertDropDateNotPast(new Date('2000-01-01'));
       expect(r.ok).toBe(false);
       expect(r.kind).toBe('past_date');
-      expect(r.userMessage).toBe(EXTERNAL_DROP_PAST_DATE_MESSAGE);
+      expect(r.userMessage).toEqual(expect.any(String));
     });
 
     it('accepts ISO string same as Date for past', () => {
@@ -550,6 +550,20 @@ describe('scheduleExternalDropGuards', () => {
       const future = new Date();
       future.setDate(future.getDate() + 14);
       expect(assertDropDateNotPast(future)).toEqual({ ok: true });
+    });
+
+    it('rejects a timed slot earlier than now on the same day', () => {
+      const now = new Date('2026-10-06T05:00:00Z');
+      const pastSlot = new Date('2026-10-06T02:00:00.000Z');
+      const r = assertDropDateNotPast(pastSlot, now);
+      expect(r.ok).toBe(false);
+      expect(r.kind).toBe('past_date');
+    });
+
+    it('allows today at midnight (card «일정 등록» 기본 날짜)', () => {
+      const now = new Date('2026-10-06T05:00:00Z');
+      const todayMidnight = new Date('2026-10-05T15:00:00.000Z');
+      expect(assertDropDateNotPast(todayMidnight, now)).toEqual({ ok: true });
     });
   });
 });

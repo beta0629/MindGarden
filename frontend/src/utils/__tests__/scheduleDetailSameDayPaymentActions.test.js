@@ -1,15 +1,21 @@
 /**
  * scheduleDetailSameDayPaymentActions — 가예약 과거 슬롯 당일결제 enablement
  */
+import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../../constants/consultationLogAutosaveConstants';
 import {
   isTentativePendingPaymentStatus,
   resolveScheduleDetailPaymentActions,
   resolveScheduleSlotBounds,
   resolveSameDayActivationPrimaryAction
 } from '../scheduleDetailSameDayPaymentActions';
+import { dateFromWallClockInZone } from '../zonedDateTime';
 
 describe('scheduleDetailSameDayPaymentActions', () => {
-  const now = new Date(2026, 7, 26, 15, 0, 0, 0); // 2026-08-26 15:00 local
+  // 2026-08-26 15:00 운영 타임존. 브라우저가 그 시간대이면 로컬 15:00 과 같은 순간.
+  const now = dateFromWallClockInZone(
+    { year: 2026, month: 8, day: 26, hour: 15, minute: 0 },
+    CONSULTATION_LOG_SESSION_START_TIME_ZONE
+  );
 
   describe('isTentativePendingPaymentStatus', () => {
     test('TENTATIVE_PENDING_PAYMENT / 가예약 → true', () => {
@@ -26,17 +32,21 @@ describe('scheduleDetailSameDayPaymentActions', () => {
   });
 
   describe('resolveScheduleSlotBounds', () => {
-    test('date + apiStartTime/apiEndTime → local Date', () => {
+    test('date + apiStartTime/apiEndTime → 운영 타임존 Date', () => {
       const { start, end } = resolveScheduleSlotBounds({
         date: '2026-08-26',
         apiStartTime: '10:00',
         apiEndTime: '11:00'
       });
-      expect(start.getFullYear()).toBe(2026);
-      expect(start.getMonth()).toBe(7);
-      expect(start.getDate()).toBe(26);
-      expect(start.getHours()).toBe(10);
-      expect(end.getHours()).toBe(11);
+      expect(start.toISOString()).toBe('2026-08-26T01:00:00.000Z');
+      expect(end.toISOString()).toBe('2026-08-26T02:00:00.000Z');
+      if (Intl.DateTimeFormat().resolvedOptions().timeZone === CONSULTATION_LOG_SESSION_START_TIME_ZONE) {
+        expect(start.getFullYear()).toBe(2026);
+        expect(start.getMonth()).toBe(7);
+        expect(start.getDate()).toBe(26);
+        expect(start.getHours()).toBe(10);
+        expect(end.getHours()).toBe(11);
+      }
     });
   });
 

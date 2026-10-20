@@ -5,6 +5,7 @@
  * @since 2026-04-02
  */
 
+import { CONSULTATION_LOG_SESSION_START_TIME_ZONE } from '../constants/consultationLogAutosaveConstants';
 import {
   CALENDAR_EXTENDED_TYPE_KR_PUBLIC_HOLIDAY,
   isScheduleStatusOccupyingTimeSlotForConflict,
@@ -12,10 +13,15 @@ import {
   resolveScheduleStatusCodeForConflict,
   STATUS
 } from '../constants/schedule';
-import { formatLocalDateYmd } from './erpFinanceDisplay';
+import { getNow } from './serverClock';
+import {
+  dateFromWallClockInZone,
+  formatDateKeyInZone,
+  formatTimeKeyInZone
+} from './zonedDateTime';
 
-/** API·input[type=time] 공통 HH:mm 길이 */
-const HM_LEN = 5;
+/** 일정 이동·생성 벽시계. 상담 시작 판정과 같은 타임존 상수. */
+const SCHEDULE_WALL_ZONE = CONSULTATION_LOG_SESSION_START_TIME_ZONE;
 
 /** 완료 스케줄 DnD/리사이즈 거부 */
 export const SCHEDULE_DRAG_LOCKED_COMPLETED_MESSAGE = '완료된 스케줄은 이동할 수 없습니다.';
@@ -30,17 +36,16 @@ export const SCHEDULE_DRAG_LOCKED_PAST_MESSAGE = '과거 스케줄은 이동할 
 export const SCHEDULE_DRAG_TO_PAST_DATE_MESSAGE = '과거 날짜로는 스케줄을 이동할 수 없습니다.';
 
 /**
- * 로컬 Date 기준으로 PUT /api/v1/schedules/{id} 본문 생성 (handleEventDrop과 동일)
+ * 운영 타임존 벽시계로 PUT /api/v1/schedules/{id} 본문 생성 (handleEventDrop과 동일)
  * @param {Date} newStart 시작
  * @param {Date} newEnd 종료
  * @returns {{ date: string, startTime: string, endTime: string }}
  */
 export function buildScheduleDatetimeUpdateBody(newStart, newEnd) {
-  const ts = (d) => d.toTimeString().split(' ')[0].slice(0, HM_LEN);
   return {
-    date: formatLocalDateYmd(newStart),
-    startTime: ts(newStart),
-    endTime: ts(newEnd)
+    date: formatDateKeyInZone(newStart, SCHEDULE_WALL_ZONE),
+    startTime: formatTimeKeyInZone(newStart, SCHEDULE_WALL_ZONE),
+    endTime: formatTimeKeyInZone(newEnd, SCHEDULE_WALL_ZONE)
   };
 }
 
@@ -67,7 +72,8 @@ export function resolveMovedScheduleEnd(newStart, newEnd, originalStart, origina
 }
 
 /**
- * YYYY-MM-DD + HH:mm 로 로컬 Date 생성
+ * YYYY-MM-DD + HH:mm 를 운영 타임존 벽시계 Date 로 만든다.
+ * 브라우저가 그 타임존이면 로컬 생성자와 같은 순간이다.
  * @param {string} dateStr YYYY-MM-DD
  * @param {string} timeHm HH:mm
  * @returns {Date}
@@ -76,7 +82,10 @@ export function combineDateAndTimeHm(dateStr, timeHm) {
   const [y, mo, d] = String(dateStr || '').split('-').map((n) => parseInt(n, 10));
   const [hh, mmRaw] = String(timeHm || '00:00').split(':').map((n) => parseInt(n, 10));
   const mm = Number.isFinite(mmRaw) ? mmRaw : 0;
-  return new Date(y, mo - 1, d, hh, mm, 0, 0);
+  return dateFromWallClockInZone(
+    { year: y, month: mo, day: d, hour: hh, minute: mm },
+    SCHEDULE_WALL_ZONE
+  );
 }
 
 /**
@@ -135,7 +144,7 @@ export function isPastDateOnly(day) {
   if (day == null) {
     return false;
   }
-  const today = new Date();
+  const today = getNow();
   today.setHours(0, 0, 0, 0);
   const dropDate = new Date(day);
   dropDate.setHours(0, 0, 0, 0);
@@ -168,7 +177,7 @@ export function isScheduleSlotInPast(start, end) {
   if (Number.isNaN(endDate.getTime())) {
     return false;
   }
-  return endDate.getTime() < Date.now();
+  return endDate.getTime() < getNow().getTime();
 }
 
 /**
@@ -182,7 +191,8 @@ export function isScheduleStatusSlotLocked(status) {
 }
 
 /**
- * 완료·취소·과거로 DnD/리사이즈가 잠긴지.
+ * 완료·취소·과거 일정인지 — 캘린더 흐림(past) 표시용.
+ * 이동 허용 판정이 아니다. 이동은 scheduleMoveGuard(원본은 완료·취소 또는 지난 시작, 목적지는 과거 시각)로 판정한다.
  * @param {{ status?: *, start?: *, end?: * }} params
  * @returns {boolean}
  */
@@ -194,7 +204,7 @@ export function isScheduleCalendarDragLocked({ status, start, end } = {}) {
 }
 
 /**
- * DnD/리사이즈 잠금 시 사용자 경고 문구.
+ * 완료·취소·과거 일정 경고 문구. start 를 넘기지 않으면 완료·취소만 판정한다(scheduleMoveGuard).
  * @param {{ status?: *, start?: *, end?: * }} params
  * @returns {string|null}
  */

@@ -285,7 +285,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/v1/onboarding/") // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
                 || path.startsWith("/api/v1/public/kr-public-data/") // 비로그인 공공데이터 프록시
                 || path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
-                || path.startsWith("/api/health/") || path.equals("/error")
+                || path.startsWith("/api/health/")
+                || path.equals("/api/v1/health") || path.startsWith("/api/v1/health/")
+                || path.equals("/api/v1/time")
+                || path.equals("/error")
                 || path.startsWith("/actuator/");
     }
 

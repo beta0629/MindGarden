@@ -388,6 +388,17 @@ export const SCHEDULE_API = {
   CONSULTATION_TYPE_KOREAN: '/api/v1/schedules/consultation-type-korean'
 };
 
+/**
+ * 서버 시각 SSOT (공개 GET, 인증·테넌트 불필요).
+ * session-info / health 와 계약 분리.
+ */
+export const SYSTEM_TIME_API = {
+  NOW: '/api/v1/time'
+};
+
+/** 서버 clock 주기 동기화 간격 (ms) — 10분 */
+export const SERVER_CLOCK_SYNC_INTERVAL_MS = 10 * 60 * 1000;
+
 // 대시보드 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const DASHBOARD_API = {
   // 내담자 대시보드
@@ -557,6 +568,7 @@ export const API_ENDPOINTS = {
   CONSULTATION: CONSULTATION_API,
   ADMIN: ADMIN_API,
   SCHEDULE: SCHEDULE_API,
+  SYSTEM_TIME: SYSTEM_TIME_API,
   DASHBOARD: DASHBOARD_API,
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,

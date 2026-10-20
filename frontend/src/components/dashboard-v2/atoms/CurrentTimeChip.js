@@ -8,6 +8,7 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import { ICONS, ICON_SIZES } from '../../../constants/icons';
+import { useServerClock } from '../../../hooks/useServerClock';
 import { DEFAULT_ZONE, formatDateTimeKeyInZone } from '../../../utils/zonedDateTime';
 import './CurrentTimeChip.css';
 
@@ -93,7 +94,8 @@ const msUntilNextMinute = (date = new Date()) => {
  * @param {{ timeZone?: string, className?: string }} props
  */
 const CurrentTimeChip = ({ timeZone = DEFAULT_ZONE, className = '' }) => {
-  const [now, setNow] = useState(() => new Date());
+  const { getNow } = useServerClock();
+  const [now, setNow] = useState(() => getNow());
 
   useEffect(() => {
     let timeoutId;
@@ -111,7 +113,7 @@ const CurrentTimeChip = ({ timeZone = DEFAULT_ZONE, className = '' }) => {
     };
 
     const tick = () => {
-      setNow(new Date());
+      setNow(getNow());
     };
 
     const arm = () => {
@@ -119,7 +121,7 @@ const CurrentTimeChip = ({ timeZone = DEFAULT_ZONE, className = '' }) => {
       timeoutId = setTimeout(() => {
         tick();
         intervalId = setInterval(tick, MS_PER_MINUTE);
-      }, msUntilNextMinute(new Date()));
+      }, msUntilNextMinute(getNow()));
     };
 
     tick();
@@ -145,7 +147,7 @@ const CurrentTimeChip = ({ timeZone = DEFAULT_ZONE, className = '' }) => {
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onFocus);
     };
-  }, []);
+  }, [getNow]);
 
   const labels = formatCurrentTimeChipLabels(now, timeZone);
   const rootClass = ['mg-v2-current-time-chip', className].filter(Boolean).join(' ');

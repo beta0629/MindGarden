@@ -174,6 +174,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { DarkModeProvider } from './contexts/DarkModeContext';
 import { NotificationProvider, useNotification } from './contexts/NotificationContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { ServerClockProvider } from './hooks/useServerClock';
 import AppToast from './components/common/AppToast';
 import PasswordChangeRequiredHost from './components/auth/PasswordChangeRequiredHost';
 import { sessionManager } from './utils/sessionManager';
@@ -1350,15 +1351,17 @@ function App() {
       <ThemeProvider>
         <DarkModeProvider>
           <SessionProvider>
-            <TenantComponentFlagsProvider>
-              <NotificationProvider>
-                <ToastProvider>
-                  <Router>
-                    <AppContent />
-                  </Router>
-                </ToastProvider>
-              </NotificationProvider>
-            </TenantComponentFlagsProvider>
+            <ServerClockProvider>
+              <TenantComponentFlagsProvider>
+                <NotificationProvider>
+                  <ToastProvider>
+                    <Router>
+                      <AppContent />
+                    </Router>
+                  </ToastProvider>
+                </NotificationProvider>
+              </TenantComponentFlagsProvider>
+            </ServerClockProvider>
           </SessionProvider>
         </DarkModeProvider>
       </ThemeProvider>

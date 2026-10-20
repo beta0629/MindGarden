@@ -3,11 +3,11 @@
 # (root/네트워크 없이 fixture로 단위 검증 가능)
 #
 # 제약: app/DB/nginx 미접촉. apply 는 slew-only (date -s / makestep 금지).
+# chrony: managed 블록에 활성 makestep 을 넣지 않음 (생략 = never step).
 
 # 권장 NTP 서버 (대한민국 공용)
 STS_NTP_SERVERS="${STS_NTP_SERVERS:-time.bora.net kr.pool.ntp.org}"
-# makestep -1 -1 : 스텝(강제 점프) 비활성 → slew 만 사용
-STS_MAKESTEP_LINE="${STS_MAKESTEP_LINE:-makestep -1 -1}"
+# no makestep ⇒ chrony 기본값 = never step (매 업데이트 step 인 makestep -1 -1 금지)
 STS_MAXSLEWRATE="${STS_MAXSLEWRATE:-500}"
 STS_MANAGED_BEGIN="# BEGIN MINDGARDEN_TIME_SYNC"
 STS_MANAGED_END="# END MINDGARDEN_TIME_SYNC"
@@ -92,14 +92,15 @@ sts_skew_seconds() {
 # ---------------------------------------------------------------------------
 
 # managed 블록 본문 (BEGIN/END 마커 포함) 출력
+# 활성 makestep 줄 없음 (생략 = never step). servers + maxslewrate 만.
 sts_generate_chrony_managed_block() {
     local srv
     printf '%s\n' "$STS_MANAGED_BEGIN"
     printf '%s\n' "# Managed by server-time-sync.sh — slew only (no step)"
+    printf '%s\n' "# no makestep ⇒ never step (do not use makestep -1 -1; that steps every update)"
     for srv in $STS_NTP_SERVERS; do
         printf 'server %s iburst\n' "$srv"
     done
-    printf '%s\n' "$STS_MAKESTEP_LINE"
     printf 'maxslewrate %s\n' "$STS_MAXSLEWRATE"
     printf '%s\n' "$STS_MANAGED_END"
 }
@@ -181,37 +182,33 @@ sts_write_chrony_conf_idempotent() {
 }
 
 # conf 내용이 slew-only 요건을 만족하는지 검사 (테스트/검증용)
+# servers + maxslewrate 있고, 활성(uncommented) makestep 이 없어야 함
 # return: 0=ok, 1=missing
 sts_chrony_conf_is_slew_only() {
     local conf="$1"
     [ -f "$conf" ] || return 1
     grep -qE '^[[:space:]]*server[[:space:]]+time\.bora\.net' "$conf" || return 1
     grep -qE '^[[:space:]]*server[[:space:]]+kr\.pool\.ntp\.org' "$conf" || return 1
-    # makestep -1 -1 (또는 양수 threshold 없는 비활성 형태)
-    grep -qE '^[[:space:]]*makestep[[:space:]]+-1[[:space:]]+-1' "$conf" || return 1
     grep -qE '^[[:space:]]*maxslewrate[[:space:]]+[0-9]+' "$conf" || return 1
+    sts_chrony_no_active_step_makestep "$conf" || return 1
     return 0
 }
 
-# 활성(주석 아님) makestep 줄이 모두 -1 -1 이거나 없는지 확인
-# return: 0=ok, 1=스텝 허용 makestep 잔존
+# 활성(주석 아님) makestep 줄이 하나도 없어야 OK (never step)
+# return: 0=ok, 1=활성 makestep 잔존
 sts_chrony_no_active_step_makestep() {
     local conf="$1"
-    local line
     [ -f "$conf" ] || return 1
-    while IFS= read -r line; do
-        [ -n "$line" ] || continue
-        if ! printf '%s\n' "$line" | grep -qE '^[[:space:]]*makestep[[:space:]]+-1[[:space:]]+-1([[:space:]]|$)'; then
-            return 1
-        fi
-    done < <(grep -E '^[[:space:]]*makestep[[:space:]]' "$conf" 2>/dev/null || true)
+    if grep -qE '^[[:space:]]*makestep([[:space:]]|$)' "$conf" 2>/dev/null; then
+        return 1
+    fi
     return 0
 }
 
 # 메인 chrony.conf 등에서 managed 블록 밖의 활성 makestep 줄을 주석 처리 (멱등)
-# Ubuntu 기본 `makestep 1.0 3` 가 conf.d 드롭인의 makestep -1 -1 보다 먼저/함께
-# 해석되어 스텝이 허용되는 것을 막기 위함.
-# 이미 `#` 주석인 줄은 유지. managed BEGIN..END 내부는 변경하지 않음.
+# Ubuntu 기본 `makestep 1.0 3` 등이 남아 스텝이 허용되는 것을 막기 위함.
+# 이미 `#` 주석인 줄은 유지. managed BEGIN..END 내부는 변경하지 않음
+# (managed 블록에는 활성 makestep 을 넣지 않음).
 # stdout: MAKESTEP_COMMENTED:path | MAKESTEP_UNCHANGED:path | MAKESTEP_SKIP:path
 # return: 0=ok, 1=write fail
 sts_comment_unmanaged_makestep() {
@@ -274,7 +271,7 @@ sts_grep_ntp_server_lines() {
 }
 
 # ---------------------------------------------------------------------------
-# timesyncd conf 멱등 패치 (chrony 불가 시 폴백)
+# timesyncd conf 멱등 패치 (diagnose/단위테스트용 — apply 에서 호출 금지)
 # ---------------------------------------------------------------------------
 
 # 인자: timesyncd.conf 경로

@@ -7,7 +7,8 @@
 # - app JAR / DB / nginx 설정·서비스에 손대지 않음
 # - 시크릿·키를 로그에 출력하지 않음
 # - apply 는 slew-only: date -s / chronyc makestep / 강제 스텝 금지
-# - makestep -1 -1 로 스텝 비활성, maxslewrate 로 슬루 상한
+# - managed 블록에 활성 makestep 없음 (생략 = never step); maxslewrate 로 슬루 상한
+# - apt-get 로 chrony 설치하지 않음; timesyncd 폴백으로 apply 하지 않음
 
 set -euo pipefail
 
@@ -79,6 +80,11 @@ sts_detect_chrony_unit() {
 
 sts_active_time_daemon() {
     local u
+    # 테스트 오버라이드 (설정 변경 없이 조기 중단 경로 검증)
+    if [ -n "${STS_FORCE_ACTIVE_DAEMON:-}" ]; then
+        echo "$STS_FORCE_ACTIVE_DAEMON"
+        return 0
+    fi
     for u in chrony chronyd systemd-timesyncd ntpd ntp; do
         if sts_cmd_exists systemctl && systemctl is-active --quiet "$u" 2>/dev/null; then
             echo "$u"
@@ -327,26 +333,20 @@ sts_snapshot_short() {
     fi
 }
 
-sts_ensure_chrony_package() {
-    if sts_cmd_exists chronyd || sts_cmd_exists chronyc; then
-        echo "  chrony 이미 사용 가능"
+# chronyc/chronyd 존재 확인. apt-get 설치 없음.
+# STS_FORCE_NO_CHRONY=1 이면 강제로 없음으로 간주 (테스트용).
+# return: 0=ok, 1=missing
+sts_require_chrony_installed() {
+    if [ "${STS_FORCE_NO_CHRONY:-0}" = "1" ]; then
+        echo "  ERROR: chrony not installed" >&2
+        return 1
+    fi
+    if sts_cmd_exists chronyc || sts_cmd_exists chronyd; then
+        echo "  chrony 사용 가능"
         return 0
     fi
-    if ! sts_cmd_exists apt-get; then
-        echo "  WARN: chrony 없고 apt-get 없음 — timesyncd 폴백 시도" >&2
-        return 1
-    fi
-    echo "  chrony 패키지 설치 시도 (apt-get)..."
-    export DEBIAN_FRONTEND=noninteractive
-    apt-get update -qq || {
-        echo "  ERROR: apt-get update 실패" >&2
-        return 1
-    }
-    apt-get install -y -qq chrony || {
-        echo "  ERROR: chrony 설치 실패" >&2
-        return 1
-    }
-    return 0
+    echo "  ERROR: chrony not installed" >&2
+    return 1
 }
 
 sts_pick_chrony_conf_target() {
@@ -370,118 +370,139 @@ sts_pick_chrony_conf_target() {
     echo "$STS_CHRONY_DROPIN"
 }
 
+# conf 반영 후 chronyc 우선 reload. date -s / chronyc makestep 금지.
+# stdout: RELOAD_METHOD=...
 sts_reload_chrony() {
     local unit="$1"
+    local srv
+    local added=0
+    local reloaded=0
+
     if sts_cmd_exists chronyc; then
-        chronyc reload sources 2>/dev/null && echo "  chronyc reload sources OK" && return 0
+        for srv in $STS_NTP_SERVERS; do
+            if chronyc add server "$srv" iburst 2>/dev/null; then
+                added=1
+            fi
+        done
+        if chronyc reload sources 2>/dev/null; then
+            reloaded=1
+        fi
+        if [ "$reloaded" -eq 1 ] && [ "$added" -eq 1 ]; then
+            echo "RELOAD_METHOD=chronyc add server + reload sources"
+            return 0
+        fi
+        if [ "$reloaded" -eq 1 ]; then
+            echo "RELOAD_METHOD=chronyc reload sources"
+            return 0
+        fi
+        if [ "$added" -eq 1 ]; then
+            echo "RELOAD_METHOD=chronyc add server"
+            return 0
+        fi
     fi
+
     if sts_cmd_exists systemctl; then
-        systemctl reload "$unit" 2>/dev/null && echo "  systemctl reload $unit OK" && return 0
-        systemctl restart "$unit" 2>/dev/null && echo "  systemctl restart $unit OK (reload 불가)" && return 0
+        if systemctl reload "$unit" 2>/dev/null; then
+            echo "RELOAD_METHOD=systemctl reload $unit"
+            return 0
+        fi
+        if systemctl restart "$unit" 2>/dev/null; then
+            echo "RELOAD_METHOD=systemctl restart $unit"
+            return 0
+        fi
     fi
     echo "  WARN: chrony reload 실패 [soft]" >&2
+    echo "RELOAD_METHOD=none"
     return 0
 }
 
 sts_run_apply() {
     local hard_fail=0
-    local chrony_unit="" conf_target=""
+    local chrony_unit="" conf_target="" active_daemon=""
 
     sts_section "SERVER TIME APPLY (slew-only)"
     echo "host: $(hostname -f 2>/dev/null || hostname)"
     echo "mode: apply"
     echo "constraint: NO date -s / NO chronyc makestep / NO forced step"
     echo "servers: $STS_NTP_SERVERS"
-    echo "makestep: $STS_MAKESTEP_LINE ; maxslewrate: $STS_MAXSLEWRATE"
+    echo "makestep: omitted (never step); maxslewrate: $STS_MAXSLEWRATE"
 
     sts_section "BEFORE snapshot"
     sts_snapshot_short "BEFORE"
 
-    sts_section "1. ensure chrony (preferred)"
-    if sts_ensure_chrony_package; then
-        conf_target=$(sts_pick_chrony_conf_target) || {
-            echo "  ERROR: chrony conf 경로를 결정할 수 없음" >&2
+    sts_section "0. preflight (no config change yet)"
+    # timesyncd 가 active 이면 설정·서비스 변경 없이 즉시 중단 (폴백 apply 없음)
+    active_daemon=$(sts_active_time_daemon)
+    echo "  active time daemon: $active_daemon"
+    if [ "$active_daemon" = "systemd-timesyncd" ]; then
+        echo "  ERROR: active daemon is systemd-timesyncd — refuse apply without changes" >&2
+        echo "APPLY_FAILED: systemd-timesyncd is active (no config changes)"
+        return 1
+    fi
+    # apt-get 설치 없음 — chronyc/chronyd 없으면 변경 없이 실패
+    if ! sts_require_chrony_installed; then
+        echo "APPLY_FAILED: chrony not installed (no config changes)"
+        return 1
+    fi
+
+    sts_section "1. chrony conf (slew-only, no active makestep)"
+    conf_target=$(sts_pick_chrony_conf_target) || {
+        echo "  ERROR: chrony conf 경로를 결정할 수 없음" >&2
+        hard_fail=1
+    }
+    if [ "$hard_fail" -eq 0 ]; then
+        echo "  conf target: $conf_target"
+        if ! sts_write_chrony_conf_idempotent "$conf_target"; then
+            echo "  ERROR: chrony conf 기록 실패" >&2
             hard_fail=1
-        }
-        if [ "$hard_fail" -eq 0 ]; then
-            echo "  conf target: $conf_target"
-            if ! sts_write_chrony_conf_idempotent "$conf_target"; then
-                echo "  ERROR: chrony conf 기록 실패" >&2
-                hard_fail=1
-            fi
         fi
+    fi
 
-        # 메인 conf 의 Ubuntu 기본 makestep 1.0 3 등이 드롭인보다 먼저
-        # 해석되지 않도록 managed 밖 활성 makestep 을 주석 처리 (멱등)
-        if [ "$hard_fail" -eq 0 ]; then
-            echo "  disable unmanaged makestep in main chrony.conf (slew-only)"
-            if ! sts_comment_unmanaged_makestep_mains; then
-                echo "  ERROR: 메인 conf makestep 주석 처리 실패" >&2
-                hard_fail=1
-            fi
-            # 드롭인이 아닌 메인 conf 자체에 managed 블록을 쓴 경우도 동일 파일 재처리
-            if [ -n "$conf_target" ] && [ -f "$conf_target" ]; then
-                case " $STS_CHRONY_MAIN_CANDIDATES " in
-                    *" $conf_target "*) ;;
-                    *)
-                        sts_comment_unmanaged_makestep "$conf_target" || {
-                            echo "  ERROR: conf_target makestep 주석 처리 실패" >&2
-                            hard_fail=1
-                        }
-                        ;;
-                esac
-            fi
+    # 메인 conf 의 Ubuntu 기본 makestep 1.0 3 등이 남아
+    # 스텝이 허용되지 않도록 managed 밖 활성 makestep 을 주석 처리 (멱등)
+    if [ "$hard_fail" -eq 0 ]; then
+        echo "  disable unmanaged makestep in main chrony.conf (slew-only)"
+        if ! sts_comment_unmanaged_makestep_mains; then
+            echo "  ERROR: 메인 conf makestep 주석 처리 실패" >&2
+            hard_fail=1
         fi
-
-        if [ "$hard_fail" -eq 0 ]; then
-            chrony_unit=$(sts_detect_chrony_unit || echo "chrony")
-            echo "  chrony unit: $chrony_unit"
-            if sts_cmd_exists systemctl; then
-                # timesyncd 충돌 방지 (app/nginx/DB 미접촉)
-                if systemctl is-active --quiet systemd-timesyncd 2>/dev/null \
-                    || systemctl is-enabled --quiet systemd-timesyncd 2>/dev/null; then
-                    echo "  systemd-timesyncd disable --now (chrony 충돌 방지)"
-                    systemctl disable --now systemd-timesyncd 2>/dev/null || \
-                        echo "  WARN: timesyncd disable 실패 [soft]" >&2
-                fi
-                systemctl enable --now "$chrony_unit" || {
-                    # 유닛명 교차 시도
-                    if [ "$chrony_unit" = "chrony" ]; then
-                        systemctl enable --now chronyd || hard_fail=1
-                        chrony_unit="chronyd"
-                    else
-                        systemctl enable --now chrony || hard_fail=1
-                        chrony_unit="chrony"
-                    fi
-                }
-                if [ "$hard_fail" -ne 0 ]; then
-                    echo "  ERROR: chrony 유닛 기동 실패" >&2
-                else
-                    sts_reload_chrony "$chrony_unit"
-                fi
-            else
-                echo "  WARN: systemctl 없음 — conf 만 기록됨" >&2
-            fi
-        fi
-    else
-        sts_section "1b. timesyncd fallback"
-        if [ -d /etc/systemd ] || [ -f "$STS_TIMESYNCD_CONF" ]; then
-            if ! sts_write_timesyncd_ntp_idempotent "$STS_TIMESYNCD_CONF"; then
-                echo "  ERROR: timesyncd.conf 기록 실패" >&2
-                hard_fail=1
-            else
-                if sts_cmd_exists systemctl; then
-                    systemctl enable --now systemd-timesyncd 2>/dev/null || {
-                        echo "  ERROR: systemd-timesyncd 기동 실패" >&2
+        # 드롭인이 아닌 메인 conf 자체에 managed 블록을 쓴 경우도 동일 파일 재처리
+        if [ -n "$conf_target" ] && [ -f "$conf_target" ]; then
+            case " $STS_CHRONY_MAIN_CANDIDATES " in
+                *" $conf_target "*) ;;
+                *)
+                    sts_comment_unmanaged_makestep "$conf_target" || {
+                        echo "  ERROR: conf_target makestep 주석 처리 실패" >&2
                         hard_fail=1
                     }
-                    systemctl restart systemd-timesyncd 2>/dev/null || true
-                    timedatectl set-ntp true 2>/dev/null || true
+                    ;;
+            esac
+        fi
+    fi
+
+    if [ "$hard_fail" -eq 0 ]; then
+        chrony_unit=$(sts_detect_chrony_unit || echo "chrony")
+        echo "  chrony unit: $chrony_unit"
+        if sts_cmd_exists systemctl; then
+            systemctl enable --now "$chrony_unit" || {
+                # 유닛명 교차 시도
+                if [ "$chrony_unit" = "chrony" ]; then
+                    systemctl enable --now chronyd || hard_fail=1
+                    chrony_unit="chronyd"
+                else
+                    systemctl enable --now chrony || hard_fail=1
+                    chrony_unit="chrony"
                 fi
+            }
+            if [ "$hard_fail" -ne 0 ]; then
+                echo "  ERROR: chrony 유닛 기동 실패" >&2
+            else
+                sts_reload_chrony "$chrony_unit"
             fi
         else
-            echo "  ERROR: chrony/timesyncd 모두 구성 불가" >&2
-            hard_fail=1
+            echo "  WARN: systemctl 없음 — conf 만 기록됨" >&2
+            # chronyc 만으로라도 reload 시도
+            sts_reload_chrony "${chrony_unit:-chrony}"
         fi
     fi
 

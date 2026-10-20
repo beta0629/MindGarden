@@ -3,6 +3,7 @@
 # - app JAR / DB / nginx 설정·서비스에 손대지 않음
 # - 시크릿을 로그에 출력하지 않음
 # - apply 는 slew-only (date -s / chronyc makestep / 강제 스텝 금지)
+# - managed 블록에 활성 makestep 없음 (생략 = never step; makestep -1 -1 금지)
 # - 기존 SSH secrets 만 사용 (신규 시크릿 없음)
 # SSOT 패턴: .github/workflows/ssl-auto-renewal-check.yml
 

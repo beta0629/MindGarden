@@ -90,20 +90,28 @@ assert_grep "BEGIN 마커" "BEGIN MINDGARDEN_TIME_SYNC"
 assert_grep "END 마커" "END MINDGARDEN_TIME_SYNC"
 assert_grep "server time.bora.net" '^server time\.bora\.net iburst$'
 assert_grep "server kr.pool.ntp.org" '^server kr\.pool\.ntp\.org iburst$'
-assert_grep "makestep disabled" '^makestep -1 -1$'
 assert_grep "maxslewrate" '^maxslewrate 500$'
+if echo "$LAST_OUT" | grep -qE '^[[:space:]]*makestep([[:space:]]|$)'; then
+  echo "not ok - managed 블록에 활성 makestep 없어야 함"
+  fail=1
+else
+  echo "ok - managed 블록에 활성 makestep 없음"
+fi
 
 # --- idempotent conf write on fixture ---
 CONF="$FIXTURE/chrony.conf"
-cat > "$CONF" || true
 printf '%s\n' '# existing hand config' 'pool 0.debian.pool.ntp.org iburst' 'makestep 1.0 3' > "$CONF"
 
 check "chrony conf 1차 기록" 0 sts_write_chrony_conf_idempotent "$CONF"
 assert_grep "UPDATED 표시" "CHRONY_CONF_UPDATED"
-if sts_chrony_conf_is_slew_only "$CONF"; then
-  echo "ok - slew-only 요건 충족"
+if grep -qE '^server time\.bora\.net iburst$' "$CONF" \
+  && grep -qE '^server kr\.pool\.ntp\.org iburst$' "$CONF" \
+  && grep -qE '^maxslewrate 500$' "$CONF" \
+  && ! awk '/BEGIN MINDGARDEN_TIME_SYNC/,/END MINDGARDEN_TIME_SYNC/' "$CONF" \
+       | grep -qE '^[[:space:]]*makestep([[:space:]]|$)'; then
+  echo "ok - managed 블록: servers + maxslewrate, 활성 makestep 없음"
 else
-  echo "not ok - slew-only 요건 미충족"
+  echo "not ok - managed 블록 요건 미충족"
   cat "$CONF"
   fail=1
 fi
@@ -118,13 +126,14 @@ else
   fail=1
 fi
 
-# Ubuntu 기본 makestep 1.0 3 주석 처리 (managed 밖만)
+# Ubuntu 기본 makestep 1.0 3 주석 처리 (managed 밖만) → 파일 전체 활성 makestep 없음
 check "unmanaged makestep 주석" 0 sts_comment_unmanaged_makestep "$CONF"
 assert_grep "MAKESTEP_COMMENTED" "MAKESTEP_COMMENTED:"
 if grep -qE '^[[:space:]]*#[[:space:]]*makestep[[:space:]]+1\.0[[:space:]]+3' "$CONF" \
-  && grep -qE '^[[:space:]]*makestep[[:space:]]+-1[[:space:]]+-1' "$CONF" \
-  && sts_chrony_no_active_step_makestep "$CONF"; then
-  echo "ok - 활성 makestep 은 -1 -1 만"
+  && ! grep -qE '^[[:space:]]*makestep([[:space:]]|$)' "$CONF" \
+  && sts_chrony_no_active_step_makestep "$CONF" \
+  && sts_chrony_conf_is_slew_only "$CONF"; then
+  echo "ok - write+comment 후 활성 makestep 없음 (slew-only)"
 else
   echo "not ok - makestep 주석/활성 상태 이상"
   cat "$CONF"
@@ -150,12 +159,6 @@ BEGIN_COUNT=$(grep -c 'BEGIN MINDGARDEN_TIME_SYNC' "$CONF" || true)
 assert_eq "BEGIN 마커 1개" "1" "$BEGIN_COUNT"
 
 # 손상된 managed 블록 재작성
-awk '
-  /BEGIN MINDGARDEN_TIME_SYNC/ { print; print "server evil.example iburst"; next }
-  /END MINDGARDEN_TIME_SYNC/ { print; next }
-  { print }
-' "$CONF" > "$CONF.broken"
-# 위 awk는 불완전 — 직접 깨진 파일 작성
 {
   echo '# existing'
   echo "$STS_MANAGED_BEGIN"
@@ -217,12 +220,12 @@ assert_grep "alt SKIP" "MAKESTEP_SKIP:$MAIN_ALT"
 
 if grep -qE '^[[:space:]]*#[[:space:]]*makestep[[:space:]]+1\.0[[:space:]]+3' "$MAIN_CONF" \
   && grep -qE '^[[:space:]]*#[[:space:]]*makestep[[:space:]]+0\.1[[:space:]]+1' "$MAIN_CONF" \
-  && ! grep -qE '^[[:space:]]*makestep[[:space:]]' "$MAIN_CONF" \
-  && grep -qE '^[[:space:]]*makestep[[:space:]]+-1[[:space:]]+-1' "$DROPIN_U" \
+  && ! grep -qE '^[[:space:]]*makestep([[:space:]]|$)' "$MAIN_CONF" \
+  && ! grep -qE '^[[:space:]]*makestep([[:space:]]|$)' "$DROPIN_U" \
   && sts_chrony_no_active_step_makestep "$MAIN_CONF" \
   && sts_chrony_no_active_step_makestep "$DROPIN_U" \
   && sts_chrony_conf_is_slew_only "$DROPIN_U"; then
-  echo "ok - ubuntu-like: 메인 스텝 makestep 주석 + 드롭인 -1 -1 만 활성"
+  echo "ok - ubuntu-like: 메인/드롭인 모두 활성 makestep 없음 + servers/maxslewrate"
 else
   echo "not ok - ubuntu-like makestep 상태"
   echo "--- MAIN ---"; cat "$MAIN_CONF"
@@ -244,7 +247,7 @@ else
   fail=1
 fi
 
-# --- timesyncd idempotent ---
+# --- timesyncd idempotent (lib helper unit only; apply must not call this) ---
 TSD="$FIXTURE/timesyncd.conf"
 cat > "$TSD" <<'EOF'
 [Time]
@@ -291,6 +294,94 @@ else
   echo "not ok - diagnose STS_SKIP_NETWORK (exit $CODE)"
   printf '    %s\n' "${OUT//$'\n'/$'\n'    }"
   fail=1
+fi
+
+# apply: chrony missing → non-zero + "chrony not installed", no conf write
+APPLY_ROOT="$FIXTURE/apply-no-chrony"
+mkdir -p "$APPLY_ROOT/conf.d"
+MARKER_BEFORE="$APPLY_ROOT/conf.d/.marker"
+: > "$MARKER_BEFORE"
+set +e
+OUT=$(
+  STS_FORCE_NO_CHRONY=1 \
+  STS_FORCE_ACTIVE_DAEMON=none \
+  STS_CHRONY_CONFD="$APPLY_ROOT/conf.d" \
+  STS_CHRONY_DROPIN="$APPLY_ROOT/conf.d/99-mindgarden-time-sync.conf" \
+  STS_CHRONY_MAIN_CANDIDATES="$APPLY_ROOT/chrony.conf" \
+  STS_SKIP_NETWORK=1 \
+  bash "$ENTRY" apply 2>&1
+)
+CODE=$?
+set -e
+if [ "$CODE" -ne 0 ] && echo "$OUT" | grep -q 'chrony not installed'; then
+  echo "ok - apply chrony missing → fail + chrony not installed"
+else
+  echo "not ok - apply chrony missing (exit $CODE)"
+  printf '    %s\n' "${OUT//$'\n'/$'\n'    }"
+  fail=1
+fi
+if [ ! -f "$APPLY_ROOT/conf.d/99-mindgarden-time-sync.conf" ]; then
+  echo "ok - apply chrony missing: conf 미변경"
+else
+  echo "not ok - apply chrony missing: conf 가 쓰임"
+  fail=1
+fi
+
+# apply: active daemon timesyncd → stop without changes
+APPLY_TSD="$FIXTURE/apply-timesyncd"
+mkdir -p "$APPLY_TSD/conf.d"
+set +e
+OUT=$(
+  STS_FORCE_ACTIVE_DAEMON=systemd-timesyncd \
+  STS_CHRONY_CONFD="$APPLY_TSD/conf.d" \
+  STS_CHRONY_DROPIN="$APPLY_TSD/conf.d/99-mindgarden-time-sync.conf" \
+  STS_CHRONY_MAIN_CANDIDATES="$APPLY_TSD/chrony.conf" \
+  STS_SKIP_NETWORK=1 \
+  bash "$ENTRY" apply 2>&1
+)
+CODE=$?
+set -e
+if [ "$CODE" -ne 0 ] \
+  && echo "$OUT" | grep -qi 'timesyncd' \
+  && echo "$OUT" | grep -qi 'active'; then
+  echo "ok - apply timesyncd active → stop without changes"
+else
+  echo "not ok - apply timesyncd active (exit $CODE)"
+  printf '    %s\n' "${OUT//$'\n'/$'\n'    }"
+  fail=1
+fi
+if [ ! -f "$APPLY_TSD/conf.d/99-mindgarden-time-sync.conf" ]; then
+  echo "ok - apply timesyncd active: conf 미변경"
+else
+  echo "not ok - apply timesyncd active: conf 가 쓰임"
+  fail=1
+fi
+
+# STS_MAKESTEP_LINE 제거·활성 makestep 지시어 출력 없음 (경고 문구의 "-1 -1" 는 허용)
+if grep -q 'STS_MAKESTEP_LINE' "$DIR/server-time-sync-lib.sh" \
+  || grep -qE "printf ['\"]makestep|printf '%s\\\\n' \"\\\$STS_MAKESTEP" "$DIR/server-time-sync-lib.sh"; then
+  echo "not ok - lib 에 STS_MAKESTEP_LINE 또는 makestep 지시어 printf 잔존"
+  fail=1
+else
+  echo "ok - lib 에 STS_MAKESTEP_LINE / makestep 지시어 printf 없음"
+fi
+
+# apply 스크립트에 apt-get / timesyncd fallback 쓰기 경로 없음
+if grep -qE 'apt-get install|sts_ensure_chrony_package|sts_write_timesyncd_ntp_idempotent' \
+  "$DIR/server-time-sync.sh"; then
+  echo "not ok - apply 스크립트에 apt-get/timesyncd write 경로 잔존"
+  fail=1
+else
+  echo "ok - apply 스크립트에 apt-get/timesyncd write 없음"
+fi
+
+# hang 위험: stdin 대기 cat > FILE (heredoc/printf 없이)
+if grep -nE '^[[:space:]]*cat[[:space:]]*>[[:space:]]*[^<]' "$DIR/server-time-sync.test.sh" \
+  | grep -vE '<<|cat[[:space:]]+"\$'; then
+  echo "not ok - 테스트에 stdin 대기 가능 cat > 잔존"
+  fail=1
+else
+  echo "ok - 테스트에 위험한 cat > stdin 대기 없음"
 fi
 
 # shellcheck 있으면 참고 실행 (실패해도 테스트 전체 실패로 취급하지 않음 — 로컬 힌트)

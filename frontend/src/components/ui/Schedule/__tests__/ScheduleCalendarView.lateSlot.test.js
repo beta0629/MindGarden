@@ -8,8 +8,70 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import ScheduleCalendarView from '../ScheduleCalendarView';
 import { DEFAULT_ZONE, formatDateKeyInZone } from '../../../../utils/zonedDateTime';
+
+/**
+ * 가드레일 환경에는 @fullcalendar/luxon3 가 없다. 실 FullCalendar 렌더(주 보기 20:00 슬롯)는
+ * 유지하고, createPlugin 형태만 가상 모듈로 채워 스윗이 로드되게 한다.
+ */
+jest.mock('@fullcalendar/luxon3', () => {
+  const { createPlugin } = require('@fullcalendar/core');
+  const MS_PER_MINUTE = 60 * 1000;
+
+  class VirtualNamedTimeZone {
+    constructor(timeZoneName) {
+      this.timeZoneName = timeZoneName;
+    }
+
+    offsetForArray(parts) {
+      const utcMs = Date.UTC(
+        parts[0],
+        parts[1],
+        parts[2],
+        parts[3],
+        parts[4],
+        parts[5] || 0,
+        parts[6] || 0
+      );
+      const zoned = new Date(utcMs).toLocaleString('en-US', { timeZone: this.timeZoneName });
+      const asUtc = new Date(zoned + ' UTC');
+      return (asUtc.getTime() - utcMs) / MS_PER_MINUTE;
+    }
+
+    timestampToArray(ms) {
+      const formatted = new Intl.DateTimeFormat('en-US', {
+        timeZone: this.timeZoneName,
+        hourCycle: 'h23',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric'
+      }).formatToParts(new Date(ms));
+      const valueOf = (type) => Number(formatted.find((part) => part.type === type).value);
+      return [
+        valueOf('year'),
+        valueOf('month') - 1,
+        valueOf('day'),
+        valueOf('hour'),
+        valueOf('minute'),
+        valueOf('second'),
+        new Date(ms).getUTCMilliseconds()
+      ];
+    }
+  }
+
+  return {
+    __esModule: true,
+    default: createPlugin({
+      name: '@fullcalendar/luxon3',
+      namedTimeZonedImpl: VirtualNamedTimeZone
+    })
+  };
+}, { virtual: true });
+
+import ScheduleCalendarView from '../ScheduleCalendarView';
 
 class ResizeObserverStub {
   observe() {}

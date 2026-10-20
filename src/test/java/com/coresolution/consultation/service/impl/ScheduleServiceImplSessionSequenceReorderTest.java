@@ -223,7 +223,7 @@ class ScheduleServiceImplSessionSequenceReorderTest {
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(past.getId(), patch))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PAST_SLOT_CHANGE_DENIED);
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_FROM_PAST);
         assertThat(past.getSessionSequence()).isEqualTo(4);
         assertThat(past.getDate()).isEqualTo(today.minusDays(1));
         verify(scheduleRepository, never()).findDeductedConsultationSchedulesForMapping(

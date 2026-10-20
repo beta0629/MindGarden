@@ -155,7 +155,7 @@ class MappingSessionSequenceReorderIntegrationTest {
 
         assertThatThrownBy(() -> scheduleService.updateSchedule(past.getId(), patch))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage(ScheduleServiceUserFacingMessages.MSG_PAST_SLOT_CHANGE_DENIED);
+                .hasMessage(ScheduleServiceUserFacingMessages.MSG_SCHEDULE_MOVE_FROM_PAST);
         assertThat(reloadSchedule(past).getSessionSequence()).isEqualTo(3);
         assertThat(reloadSchedule(past).getDate()).isEqualTo(today.minusDays(1));
     }

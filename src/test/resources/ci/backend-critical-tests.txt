@@ -72,3 +72,9 @@
 # 2026-10-19 이메일·관리자 임시 비밀번호 재설정 (#1697) — 기존 패턴에 걸리지 않음
 **/UserServiceImplResetPasswordByEmailTest.java
 **/UserServiceImplResetPasswordByAdminTest.java
+
+# 2026-10-20 일정 과거 시각 이동·생성 (#1499) — 상담 재예약은 Schedule* 패턴에 없음
+**/ScheduleServiceImplPastTimeGateTest.java
+**/ScheduleControllerPastTimeGateTest.java
+**/SchedulePastTimeGateTest.java
+**/ConsultationServiceImplRescheduleEndTimeTest.java

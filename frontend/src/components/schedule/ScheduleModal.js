@@ -15,6 +15,12 @@ import ActionBarButton from '../common/ActionBarButton';
 import notificationManager from '../../utils/notification';
 import { useSession } from '../../contexts/SessionContext';
 import StandardizedApi from '../../utils/standardizedApi';
+import {
+  getScheduleCreateInPastMessage,
+  isScheduleMoveTargetKeyInPast,
+  isSchedulePastTimeError,
+  resolveScheduleMoveFailureMessage
+} from '../../utils/scheduleMoveGuard';
 import { resolveServerFailureMessage } from '../../utils/serverFailureMessage';
 import '../../styles/modules/schedule-modal.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
@@ -229,7 +235,11 @@ const ScheduleModalNew = ({
             const month = String(effectiveSelectedDate.getMonth() + 1).padStart(2, '0');
             const day = String(effectiveSelectedDate.getDate()).padStart(2, '0');
             const dateString = `${year}-${month}-${day}`;
-            
+            if (isScheduleMoveTargetKeyInPast(dateString, startTime)) {
+                notificationManager.warning(getScheduleCreateInPastMessage());
+                return;
+            }
+
             const scheduleData = {
                 consultantId: selectedConsultant.originalId || selectedConsultant.id,
                 clientId: selectedClient.originalId || selectedClient.id,
@@ -256,12 +266,14 @@ const ScheduleModalNew = ({
             handleClose();
         } catch (error) {
             console.error('스케줄 생성 오류:', error);
-            const displayMessage = resolveServerFailureMessage(
-                t,
-                error,
-                'schedule:ScheduleModal.createFailedWithMessage',
-                'schedule:ScheduleModal.createFailed'
-            );
+            const displayMessage = isSchedulePastTimeError(error)
+                ? resolveScheduleMoveFailureMessage(error, t('schedule:ScheduleModal.createFailed'))
+                : resolveServerFailureMessage(
+                    t,
+                    error,
+                    'schedule:ScheduleModal.createFailedWithMessage',
+                    'schedule:ScheduleModal.createFailed'
+                );
             notificationManager.error(displayMessage);
             if (
                 displayMessage.includes('회기') ||

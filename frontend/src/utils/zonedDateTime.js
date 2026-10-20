@@ -64,6 +64,92 @@ export const formatDateTimeKeyInZone = (date = new Date(), timeZone = DEFAULT_ZO
   return `${d}T${time}`;
 };
 
+/**
+ * 운영 타임존 기준 'HH:mm'.
+ *
+ * @param {Date} [date=new Date()]
+ * @param {string} [timeZone]
+ * @returns {string}
+ */
+export const formatTimeKeyInZone = (date = new Date(), timeZone = DEFAULT_ZONE) =>
+  zonedParts(date, timeZone).time;
+
+const WALL_CLOCK_PARTS = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/;
+
+/**
+ * 벽시계(연·월·일·시·분)를 그 타임존의 시각으로 갖는 Date.
+ * 브라우저 로컬 자정이 아니라 timeZone 의 벽시계다.
+ *
+ * @param {{ year: number, month: number, day: number, hour?: number, minute?: number }} parts month 는 1–12
+ * @param {string} [timeZone]
+ * @returns {Date}
+ */
+export const dateFromWallClockInZone = (parts, timeZone = DEFAULT_ZONE) => {
+  const year = Number(parts?.year);
+  const month = Number(parts?.month);
+  const day = Number(parts?.day);
+  const hour = Number(parts?.hour ?? 0);
+  const minute = Number(parts?.minute ?? 0);
+  if (![year, month, day, hour, minute].every((n) => Number.isFinite(n))) {
+    return new Date(NaN);
+  }
+  let utc = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
+  const want = utc;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const floating = toFloatingDateTimeInZone(new Date(utc), timeZone);
+    const match = WALL_CLOCK_PARTS.exec(String(floating));
+    if (!match) {
+      return new Date(NaN);
+    }
+    const got = Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3]),
+      Number(match[4]),
+      Number(match[5]),
+      Number(match[6])
+    );
+    utc += want - got;
+  }
+  return new Date(utc);
+};
+
+/**
+ * timeZone 달력일의 00:00:00.000.
+ *
+ * @param {Date} [from]
+ * @param {string} [timeZone]
+ * @returns {Date}
+ */
+export const startOfDayInZone = (from = new Date(), timeZone = DEFAULT_ZONE) => {
+  const base = from instanceof Date ? new Date(from.getTime()) : new Date(from);
+  if (!isValidDate(base)) {
+    return startOfDayInZone(new Date(), timeZone);
+  }
+  const floating = String(toFloatingDateTimeInZone(base, timeZone));
+  const match = WALL_CLOCK_PARTS.exec(floating);
+  if (!match) {
+    return base;
+  }
+  const elapsed = ((Number(match[4]) * 60 + Number(match[5])) * 60 + Number(match[6])) * 1000
+    + base.getMilliseconds();
+  return new Date(base.getTime() - elapsed);
+};
+
+/**
+ * timeZone 기준 자정(날짜만 있는 값)인지.
+ *
+ * @param {Date} date
+ * @param {string} [timeZone]
+ * @returns {boolean}
+ */
+export const isMidnightInZone = (date, timeZone = DEFAULT_ZONE) => {
+  if (!isValidDate(date) || date.getMilliseconds() !== 0) {
+    return false;
+  }
+  return String(toFloatingDateTimeInZone(date, timeZone)).endsWith('T00:00:00');
+};
+
 /** 오프셋(Z, +09:00 등)이 붙은 ISO 날짜시각인지 */
 const ISO_WITH_OFFSET = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})$/i;
 const ISO_LOCAL = /^(\d{4}-\d{2}-\d{2})[T ](\d{1,2}:\d{2}(:\d{2}(\.\d+)?)?)$/;

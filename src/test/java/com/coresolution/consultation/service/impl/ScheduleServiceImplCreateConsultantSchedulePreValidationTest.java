@@ -115,6 +115,7 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        ScheduleSessionClockFixtures.pinBeforeFixtures(scheduleService);
         // 옵션 B P0 핫픽스 2026-05-28: createConsultantSchedule 진입부에서
         // PENDING_PAYMENT 매핑을 추가 조회 (SAME_DAY_CARD 자동 강제 분기 fallback).
         // 기존 테스트는 SAME_DAY_CARD 시나리오가 아니므로 빈 리스트 lenient 스텁으로 통과시킨다.

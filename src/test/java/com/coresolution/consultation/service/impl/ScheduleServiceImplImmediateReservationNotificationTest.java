@@ -129,6 +129,7 @@ class ScheduleServiceImplImmediateReservationNotificationTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        ScheduleSessionClockFixtures.pinBeforeFixtures(scheduleService);
         when(commonCodeService.getCodeValue("ROLE", UserRole.CONSULTANT.name())).thenReturn("CONSULTANT");
         when(commonCodeService.getCodeValue("ROLE", UserRole.CLIENT.name())).thenReturn("CLIENT");
         when(commonCodeService.getCodeValue("MESSAGE_TYPE", "APPOINTMENT")).thenReturn("APPOINTMENT");

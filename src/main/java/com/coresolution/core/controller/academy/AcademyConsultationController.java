@@ -103,10 +103,15 @@ public class AcademyConsultationController extends BaseApiController {
         }
         consultation.setTenantId(tenantId);
         
+        boolean createsSchedule = request.getConsultantId() != null && request.getConsultationDate() != null
+            && request.getStartTime() != null && request.getEndTime() != null;
+        if (createsSchedule) {
+            scheduleService.requireCreateStartNotInPast(request.getConsultationDate(), request.getStartTime());
+        }
+
         Consultation createdConsultation = consultationService.createConsultationRequest(consultation);
         
-        if (request.getConsultantId() != null && request.getConsultationDate() != null 
-            && request.getStartTime() != null && request.getEndTime() != null) {
+        if (createsSchedule) {
             try {
                 Schedule schedule = scheduleService.createConsultantSchedule(
                     request.getConsultantId(),

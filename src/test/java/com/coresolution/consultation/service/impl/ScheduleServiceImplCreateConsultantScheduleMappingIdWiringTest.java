@@ -143,6 +143,7 @@ class ScheduleServiceImplCreateConsultantScheduleMappingIdWiringTest {
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        ScheduleSessionClockFixtures.pinBeforeFixtures(scheduleService);
         when(consultantAvailabilityService.isConsultantOnVacation(
                 eq(CONSULTANT_ID), any(LocalDate.class), any(LocalTime.class), any(LocalTime.class)))
                 .thenReturn(false);

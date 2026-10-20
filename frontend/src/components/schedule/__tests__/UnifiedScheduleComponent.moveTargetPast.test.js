@@ -52,6 +52,7 @@ jest.mock('../../../utils/notification', () => ({
 import UnifiedScheduleComponent from '../UnifiedScheduleComponent';
 import StandardizedApi from '../../../utils/standardizedApi';
 import notificationManager from '../../../utils/notification';
+import { resetConsultantColorPaletteCache } from '../../../hooks/useConsultantColorPalette';
 import { SCHEDULE_MOVE_TO_PAST_ERROR_CODE } from '../../../utils/scheduleMoveGuard';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -90,6 +91,9 @@ const renderAndGetDrop = async() => {
 
 beforeEach(() => {
   globalThis.__USC_CALENDAR_PROPS = undefined;
+  resetConsultantColorPaletteCache();
+  StandardizedApi.get.mockReset();
+  StandardizedApi.get.mockResolvedValue([]);
   StandardizedApi.put.mockReset();
   notificationManager.warning.mockClear();
   notificationManager.error.mockClear();

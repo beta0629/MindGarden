@@ -405,6 +405,9 @@ describe('ScheduleCalendarView — 날짜 클릭 일간 확대', () => {
       view: { type: 'timeGridDay' },
       timeText: '11:00'
     });
-    expect(node.props.title).toEqual(expect.stringContaining('지난 일정'));
+    const { container } = render(node);
+    expect(container.firstElementChild?.getAttribute('title')).toEqual(
+      expect.stringContaining('지난 일정')
+    );
   });
 });

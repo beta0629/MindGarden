@@ -74,6 +74,7 @@ jobs:
         src/components/common/__tests__/PasswordPolicyInput.commitTiming.test.js
         src/utils/__tests__/userFacingApiErrorMessage.test.js
         src/utils/__tests__/ajax.passwordChangeRequired.test.js
+        src/utils/__tests__/ajax.formDataUpload.test.js
         src/utils/__tests__/weekDayChipFit.test.js
         src/utils/__tests__/safeDisplay.formatNameWithSecondary.test.js
         src/utils/__tests__/scheduleMoveGuard.test.js

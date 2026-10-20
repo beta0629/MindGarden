@@ -6,6 +6,8 @@ import java.util.Optional;
 import java.util.Set;
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.coresolution.consultation.constant.SystemTimeConstants;
+
 /**
  * 비로그인 공개 API 경로 분류 SSOT. {@code TenantContextFilter} 와 {@code SecurityConfig} 가 함께 쓴다.
  *
@@ -52,6 +54,7 @@ public final class PublicApiPathPolicy {
             "/api/v1/admin/css-themes",
             "/api/v1/health",
             "/api/health",
+            SystemTimeConstants.API_PATH,
             "/api/v1/test",
             "/api/v1/payments/webhooks",
             "/api/v1/shop/catalog",

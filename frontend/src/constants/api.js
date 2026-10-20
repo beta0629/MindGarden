@@ -388,6 +388,14 @@ export const SCHEDULE_API = {
   CONSULTATION_TYPE_KOREAN: '/api/v1/schedules/consultation-type-korean'
 };
 
+/**
+ * 서버 시각 (공개 GET). 응답 data 는 epochMillis·zone 만.
+ * session-info / health 와 계약을 나누고, 테넌트·사용자 필드는 없다.
+ */
+export const SYSTEM_TIME_API = {
+  NOW: '/api/v1/time'
+};
+
 // 대시보드 관련 API (표준화 2025-12-05: /api/v1/ 경로 적용)
 export const DASHBOARD_API = {
   // 내담자 대시보드
@@ -557,6 +565,7 @@ export const API_ENDPOINTS = {
   CONSULTATION: CONSULTATION_API,
   ADMIN: ADMIN_API,
   SCHEDULE: SCHEDULE_API,
+  SYSTEM_TIME: SYSTEM_TIME_API,
   DASHBOARD: DASHBOARD_API,
   FILE: FILE_API,
   NOTIFICATION: NOTIFICATION_API,

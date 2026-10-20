@@ -13,6 +13,7 @@ import {
   resolveScheduleStatusCodeForConflict,
   STATUS
 } from '../constants/schedule';
+import { getNow } from './serverClock';
 import {
   dateFromWallClockInZone,
   formatDateKeyInZone,
@@ -143,7 +144,7 @@ export function isPastDateOnly(day) {
   if (day == null) {
     return false;
   }
-  const today = new Date();
+  const today = getNow();
   today.setHours(0, 0, 0, 0);
   const dropDate = new Date(day);
   dropDate.setHours(0, 0, 0, 0);
@@ -176,7 +177,7 @@ export function isScheduleSlotInPast(start, end) {
   if (Number.isNaN(endDate.getTime())) {
     return false;
   }
-  return endDate.getTime() < Date.now();
+  return endDate.getTime() < getNow().getTime();
 }
 
 /**

@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,9 +59,17 @@ class SystemTimeControllerTest {
                 .andReturn();
 
         JsonNode root = objectMapper.readTree(result.getResponse().getContentAsString());
-        long epoch = root.path("data").path("epochMillis").asLong();
+        JsonNode data = root.path("data");
+        long epoch = data.path("epochMillis").asLong();
         assertThat(epoch).isEqualTo(FIXED_EPOCH_MILLIS);
-        assertThat(root.path("data").path("zone").asText()).isEqualTo("Asia/Seoul");
+        assertThat(data.path("zone").asText()).isEqualTo("Asia/Seoul");
+        List<String> dataFields = new ArrayList<>();
+        data.fieldNames().forEachRemaining(dataFields::add);
+        assertThat(dataFields).containsExactlyInAnyOrder("epochMillis", "zone");
+        String raw = result.getResponse().getContentAsString();
+        assertThat(raw).doesNotContain("tenantId");
+        assertThat(raw).doesNotContain("userId");
+        assertThat(raw).doesNotContain("email");
     }
 
     @Test

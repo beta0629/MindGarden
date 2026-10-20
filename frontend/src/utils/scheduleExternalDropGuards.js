@@ -17,6 +17,7 @@ import {
   getScheduleCreateInPastMessage,
   isScheduleMoveTargetInPast
 } from './scheduleMoveGuard';
+import { getNow } from './serverClock';
 import { formatDateKeyInZone, isMidnightInZone } from './zonedDateTime';
 
 export const EXTERNAL_DROP_INVALID_PAYLOAD_MESSAGE = '배정 정보가 올바르지 않습니다.';
@@ -248,7 +249,7 @@ export function assertExternalMappingDropAllowed(mappingPayload, options = {}) {
  * @param {Date} [now]
  * @returns {{ ok: true } | { ok: false, kind: 'past_date', userMessage: string }}
  */
-export function assertDropDateNotPast(dropDate, now = new Date()) {
+export function assertDropDateNotPast(dropDate, now = getNow()) {
   const drop = dropDate instanceof Date ? dropDate : new Date(dropDate);
   if (Number.isNaN(drop.getTime())) {
     return { ok: true };

@@ -5,6 +5,15 @@
 import React from 'react';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+
+jest.mock('dompurify', () => {
+  try {
+    return jest.requireActual('dompurify');
+  } catch (_error) {
+    return { __esModule: true, default: { sanitize: (html) => html } };
+  }
+}, { virtual: true });
+
 import { USER_ROLES } from '../../../constants/roles';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import { CLIENT_NOTIFICATIONS_ENTRY_PATH, NOTIFICATION_PAGE_TEST_IDS } from '../../../constants/notificationTabs';

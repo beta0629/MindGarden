@@ -65,6 +65,13 @@ jest.mock('./components/ui/Schedule/ScheduleCalendarView', () => ({
 jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), {
   virtual: true
 });
+jest.mock('dompurify', () => {
+  try {
+    return jest.requireActual('dompurify');
+  } catch (_error) {
+    return { __esModule: true, default: { sanitize: (html) => html } };
+  }
+}, { virtual: true });
 
 import App from './App';
 

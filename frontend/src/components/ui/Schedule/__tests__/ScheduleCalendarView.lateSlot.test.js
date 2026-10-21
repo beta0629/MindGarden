@@ -6,6 +6,14 @@
  * @since 2026-10-07
  */
 
+jest.mock('@fullcalendar/luxon3', () => {
+  try {
+    return jest.requireActual('@fullcalendar/luxon3');
+  } catch (_error) {
+    return { __esModule: true, default: { id: 'luxon3' } };
+  }
+}, { virtual: true });
+
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import ScheduleCalendarView from '../ScheduleCalendarView';

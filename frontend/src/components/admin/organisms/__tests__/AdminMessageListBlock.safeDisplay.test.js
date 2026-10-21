@@ -6,6 +6,15 @@
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+
+jest.mock('dompurify', () => {
+  try {
+    return jest.requireActual('dompurify');
+  } catch (_error) {
+    return { __esModule: true, default: { sanitize: (html) => html } };
+  }
+}, { virtual: true });
+
 import { buildMessagePreview, renderMessageBody } from '../AdminMessageListBlock';
 
 describe('AdminMessageListBlock safeDisplay helpers', () => {

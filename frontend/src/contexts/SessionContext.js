@@ -504,13 +504,13 @@ export const SessionProvider = ({ children }) => {
     }
   };
 
-  // 로그아웃 함수
-  const logout = async() => {
+  // 로그아웃 함수 — 유휴 만료 시 options(preserveReturnPath/reason)를 sessionManager 로 전달
+  const logout = async(options) => {
     try {
       dispatch({ type: SessionActionTypes.SET_LOADING, payload: true });
       
       // sessionManager 로그아웃
-      await sessionManager.logout();
+      await sessionManager.logout(options);
       
       // 상태 초기화
       dispatch({ type: SessionActionTypes.CLEAR_SESSION });

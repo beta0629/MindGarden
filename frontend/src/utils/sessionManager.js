@@ -7,8 +7,11 @@ import {
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
   DUPLICATE_LOGIN_REDIRECT_SEARCH,
   FETCH_INIT_SKIP_FORM_SESSION_HOOK,
-  HTTP_AUTHORIZATION_HEADER
+  HTTP_AUTHORIZATION_HEADER,
+  LOGOUT_REDIRECT_QUERY,
+  SESSION_LOGOUT_REASON
 } from '../constants/session';
+import { LOGIN_RETURN_URL_PARAM } from '../constants/consultationLogAutosaveConstants';
 import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
   buildTenantAuthBaseUrl,
@@ -16,13 +19,36 @@ import {
   isLocalhost
 } from './subdomainUtils';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
-import { redirectToLoginPageOnce } from './sessionRedirect';
+import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from './sessionRedirect';
+import { sanitizeLoginReturnPath } from './loginReturnPath';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
 import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
 import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
+
+/**
+ * 로그아웃 후 /login 검색 문자열.
+ * 기본은 {@code ?logout=success}. 세션 만료 보존 옵션일 때만 안전한 내부 경로를
+ * {@code redirect} 로 붙인다(스킴·//·외부·/login 자기참조는 sanitize 가 거부).
+ *
+ * @param {{ preserveReturnPath?: boolean, reason?: string }} [options]
+ * @returns {string} 선행 ? 포함
+ */
+export function buildPostLogoutLoginSearch(options = {}) {
+  const params = new URLSearchParams();
+  params.set(LOGOUT_REDIRECT_QUERY.PARAM, LOGOUT_REDIRECT_QUERY.SUCCESS);
+  const preserveReturnPath = options.preserveReturnPath === true
+    || options.reason === SESSION_LOGOUT_REASON.SESSION_EXPIRY;
+  if (preserveReturnPath) {
+    const safePath = sanitizeLoginReturnPath(getCurrentLocationReturnUrl());
+    if (safePath) {
+      params.set(LOGIN_RETURN_URL_PARAM, safePath);
+    }
+  }
+  return `?${params.toString()}`;
+}
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -688,8 +714,16 @@ class SessionManager {
     }
   }
 
-  // 로그아웃
-  async logout() {
+  /**
+   * 로그아웃.
+   *
+   * @param {{ preserveReturnPath?: boolean, reason?: string }} [options]
+   *   유휴/세션 만료 자동 로그아웃만 {@code preserveReturnPath: true} 또는
+   *   {@code reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY}. 수동 로그아웃은 인자 없이 호출.
+   */
+  async logout(options = {}) {
+    // sessionStorage.clear 전에 현재 경로를 읽어 복귀 쿼리를 만든다(만료 보존 시에만 사용).
+    const loginSearch = buildPostLogoutLoginSearch(options);
     const preservedForRedirect = {
       subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
       subdomain: sessionStorage.getItem('subdomain'),
@@ -748,7 +782,7 @@ class SessionManager {
       // 로컬 환경: 현재 origin 유지 (subdomainUtils와 동일 기준)
       if (isLocalhost()) {
         console.log('✅ 로컬 환경 - 현재 origin 유지:', window.location.origin);
-        window.location.replace(`${window.location.origin}/login?logout=success`);
+        window.location.replace(`${window.location.origin}/login${loginSearch}`);
       } else {
         let targetSubdomain = getTenantSubdomainFromHost();
         if (targetSubdomain) {
@@ -761,13 +795,19 @@ class SessionManager {
         if (targetSubdomain) {
           const baseUrl = buildTenantAuthBaseUrl(targetSubdomain);
           const logoutUrl = baseUrl
-            ? `${baseUrl}/login?logout=success`
-            : `${window.location.origin}/login?logout=success`;
+            ? `${baseUrl}/login${loginSearch}`
+            : `${window.location.origin}/login${loginSearch}`;
           console.log('✅ 서브도메인으로 이동:', logoutUrl);
           window.location.replace(logoutUrl);
         } else {
           console.error('❌ 서브도메인 정보 없음 - 로그인 페이지로 이동 불가');
-          const errorUrl = `${window.location.origin}/login?logout=error&message=${encodeURIComponent('서브도메인 정보가 없습니다. 올바른 서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr')}`;
+          const errorParams = new URLSearchParams();
+          errorParams.set(LOGOUT_REDIRECT_QUERY.PARAM, LOGOUT_REDIRECT_QUERY.ERROR);
+          errorParams.set(
+            'message',
+            '서브도메인 정보가 없습니다. 올바른 서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr'
+          );
+          const errorUrl = `${window.location.origin}/login?${errorParams.toString()}`;
           window.location.replace(errorUrl);
         }
       }

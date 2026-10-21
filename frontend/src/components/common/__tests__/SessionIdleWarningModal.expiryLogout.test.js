@@ -151,12 +151,46 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     expect(remainingMsOf(probed, CLOCK_BASE_MS)).toBeGreaterThan(SESSION_IDLE_WARNING_MS);
     expect(checkSession).toHaveBeenCalledWith(true, { silent: true, idleExpiry: true });
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(logout).toHaveBeenCalledWith(expect.objectContaining({
+      preserveReturnPath: true,
+      reason: 'sessionExpiry'
+    }));
 
     await act(async() => {
       jest.advanceTimersByTime(DUPLICATE_GUARD_ADVANCE_MS);
       await flushMicrotasks();
     });
     expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  it('수동 로그아웃 버튼은 복귀 보존 옵션 없이 logout 한다', async() => {
+    const sessionInfo = sessionInfoAt({
+      now: CLOCK_BASE_MS,
+      maxInactiveSec: ACTIVE_WINDOW_SEC,
+      elapsedSec: 0
+    });
+    const logout = jest.fn(() => Promise.resolve());
+    const checkSession = jest.fn().mockResolvedValue(true);
+    useSession.mockReturnValue({
+      user: SIGNED_IN_USER,
+      sessionInfo,
+      checkSession,
+      logout
+    });
+    sessionManager.getUser.mockReturnValue(SIGNED_IN_USER);
+    sessionManager.getSessionInfo.mockReturnValue(sessionInfo);
+
+    await renderAndSettle();
+    expect(screen.getByTestId('session-idle-logout')).toBeInTheDocument();
+
+    await act(async() => {
+      fireEvent.click(screen.getByTestId('session-idle-logout'));
+      await flushMicrotasks();
+    });
+
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(logout).toHaveBeenCalledWith();
+    expect(logout.mock.calls[0]).toEqual([]);
   });
 
   it('0 전에 연장을 누르면 logout 하지 않는다', async() => {

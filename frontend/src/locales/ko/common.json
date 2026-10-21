@@ -444,7 +444,7 @@
     "goToPage": "{{page}}페이지로 이동",
     "perPage": "페이지당 {{count}}건",
     "total": "전체 {{count}}건",
-    "rangeSummary": "전체 {{total}}건 중 {{start}}–{{end}}건 · {{page}}/{{totalPages}}페이지"
+    "rangeSummary": "{{page}}페이지 / 총 {{totalPages}}페이지"
   },
   "date": {
     "today": "오늘",

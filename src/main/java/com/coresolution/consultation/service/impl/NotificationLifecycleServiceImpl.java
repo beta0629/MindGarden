@@ -118,12 +118,42 @@ public class NotificationLifecycleServiceImpl implements NotificationLifecycleSe
         return notificationRepository.countUnreadByTenantIdAndRecipient(tenantId, recipientUserId);
     }
 
+    /**
+     * 수신자 본인·현재 테넌트의 미삭제 알림만 반환한다.
+     * 웰니스({@code WELLNESS})를 포함한 개인 알림 상세가 이 경로를 탄다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param recipientUserId 수신자 ID
+     * @param notificationId 알림 ID
+     * @return 보이는 알림
+     * @throws com.coresolution.consultation.exception.EntityNotFoundException 없거나 삭제되었거나 다른 테넌트·수신자일 때
+     */
     @Override
     @Transactional(readOnly = true)
     public Notification findForRecipient(String tenantId, Long recipientUserId, Long notificationId) {
         return notificationRepository
                 .findByTenantIdAndIdAndRecipientUserIdAndIsDeletedFalse(tenantId, notificationId, recipientUserId)
-                .orElseThrow(() -> new EntityNotFoundException("Notification not found: " + notificationId));
+                .filter(found -> isVisibleToRecipient(found, tenantId, recipientUserId))
+                .orElseThrow(() -> new com.coresolution.consultation.exception.EntityNotFoundException(
+                        "Notification", notificationId));
+    }
+
+    /**
+     * 소프트 삭제·테넌트·수신자가 어긋나면 상세에 노출하지 않는다.
+     *
+     * @param found 조회된 알림
+     * @param tenantId 요청 테넌트 ID
+     * @param recipientUserId 요청 수신자 ID
+     * @return 노출 가능하면 true
+     */
+    private boolean isVisibleToRecipient(Notification found, String tenantId, Long recipientUserId) {
+        if (found == null || Boolean.TRUE.equals(found.getIsDeleted())) {
+            return false;
+        }
+        return tenantId != null
+                && tenantId.equals(found.getTenantId())
+                && recipientUserId != null
+                && recipientUserId.equals(found.getRecipientUserId());
     }
 
     @Override

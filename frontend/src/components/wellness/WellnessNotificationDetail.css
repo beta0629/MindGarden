@@ -1,5 +1,26 @@
 /* 웰니스 알림 상세 — reading 카드. 본문 HTML 은 sanitizeRichNoticeHtml 로 정제된 것만 들어온다. */
 
+.wellness-reading__back-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mg-v2-touch-target-min);
+  margin: 0 0 var(--mg-v2-space-3);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--mg-v2-color-text-secondary);
+  font: inherit;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.wellness-reading__back-link:hover,
+.wellness-reading__back-link:focus-visible {
+  color: var(--mg-v2-color-text-primary);
+}
+
 .wellness-reading-wrap,
 .wellness-reading {
   margin-top: var(--mg-v2-space-6);

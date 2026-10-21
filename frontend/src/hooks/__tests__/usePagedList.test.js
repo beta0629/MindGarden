@@ -111,4 +111,30 @@ describe('usePagedList', () => {
     expect(result.current.error).toBeTruthy();
     expect(result.current.items).toEqual([]);
   });
+
+  test('mode=replace · pageSize 6 · goToPage 는 목록을 교체한다', async() => {
+    const fetchPage = jest.fn((page, size) => Promise.resolve({
+      messages: makeItems(page * size, page === 0 ? size : 3),
+      totalElements: 9,
+      totalPages: 2
+    }));
+    const { result } = renderHook(() => usePagedList({
+      fetchPage,
+      pageSize: 6,
+      mode: 'replace'
+    }));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(fetchPage).toHaveBeenCalledWith(0, 6);
+    expect(result.current.items).toHaveLength(6);
+    expect(result.current.currentPage).toBe(1);
+    expect(result.current.totalPages).toBe(2);
+    expect(result.current.hasMore).toBe(false);
+
+    await act(async() => {
+      await result.current.goToPage(2);
+    });
+    expect(fetchPage).toHaveBeenLastCalledWith(1, 6);
+    expect(result.current.items).toHaveLength(3);
+    expect(result.current.currentPage).toBe(2);
+  });
 });

@@ -68,7 +68,7 @@
 }
 
 .mg-pagination__info-text {
-  font-size: var(--mg-v2-font-size-caption);
+  font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-secondary);
   font-weight: var(--mg-v2-font-weight-medium);
 }

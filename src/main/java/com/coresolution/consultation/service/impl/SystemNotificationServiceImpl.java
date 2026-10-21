@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.support.SystemNotificationAudience;
 import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -108,32 +109,69 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         }
     }
     
+    /**
+     * 공지를 읽음 처리한다. (notification_id, user_id) UK 동시 충돌은 멱등 성공으로 처리한다.
+     *
+     * @param notificationId 공지 ID
+     * @param userId 사용자 ID
+     * @param userRole 사용자 역할
+     * @throws EntityNotFoundException 공지가 없거나 수신 대상이 아닐 때
+     */
     @Override
+    @Transactional(noRollbackFor = DataIntegrityViolationException.class)
     public void markAsRead(Long notificationId, Long userId, String userRole) {
         log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
 
         // 수신 대상이 아니면 읽음 기록을 남기지 않는다 (존재 여부 노출 금지 → 404)
         requireVisibleForRecipient(notificationId, userRole);
 
-        Optional<SystemNotificationRead> existingRead = 
-            systemNotificationReadRepository.findByNotificationIdAndUserId(notificationId, userId);
-        
-        SystemNotificationRead readStatus;
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Optional<SystemNotificationRead> existingRead =
+            systemNotificationReadRepository.findByTenantIdAndNotificationIdAndUserId(
+                tenantId, notificationId, userId);
+
         if (existingRead.isPresent()) {
-            readStatus = existingRead.get();
+            SystemNotificationRead readStatus = existingRead.get();
             if (!readStatus.getIsRead()) {
                 readStatus.markAsRead();
                 systemNotificationReadRepository.save(readStatus);
                 log.info("✅ 기존 읽음 상태 업데이트 완료");
             }
-        } else {
-            readStatus = new SystemNotificationRead();
-            readStatus.setNotificationId(notificationId);
-            readStatus.setUserId(userId);
-            readStatus.markAsRead();
-            systemNotificationReadRepository.save(readStatus);
-            log.info("✅ 새 읽음 상태 생성 완료");
+            return;
         }
+
+        try {
+            systemNotificationReadRepository.saveAndFlush(
+                newMarkedRead(tenantId, notificationId, userId));
+            log.info("✅ 새 읽음 상태 생성 완료");
+        } catch (DataIntegrityViolationException ex) {
+            Optional<SystemNotificationRead> raced =
+                systemNotificationReadRepository.findByTenantIdAndNotificationIdAndUserId(
+                    tenantId, notificationId, userId);
+            if (raced.isPresent()) {
+                log.info("📢 공지 읽음 동시성 충돌(멱등 성공) - 공지 ID: {}, 사용자 ID: {}",
+                    notificationId, userId);
+                return;
+            }
+            throw ex;
+        }
+    }
+
+    /**
+     * 신규 읽음 행을 생성한다. 단건·일괄 읽음이 공유한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param notificationId 공지 ID
+     * @param userId 사용자 ID
+     * @return 읽음 표시된 신규 엔티티
+     */
+    private SystemNotificationRead newMarkedRead(String tenantId, Long notificationId, Long userId) {
+        SystemNotificationRead r = new SystemNotificationRead();
+        r.setTenantId(tenantId);
+        r.setNotificationId(notificationId);
+        r.setUserId(userId);
+        r.markAsRead();
+        return r;
     }
     
     @Override
@@ -188,12 +226,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
                     toSave.add(r);
                 }
             } else {
-                SystemNotificationRead r = new SystemNotificationRead();
-                r.setTenantId(tenantId);
-                r.setNotificationId(notificationId);
-                r.setUserId(userId);
-                r.markAsRead();
-                toSave.add(r);
+                toSave.add(newMarkedRead(tenantId, notificationId, userId));
             }
             if (toSave.size() >= batchSize) {
                 systemNotificationReadRepository.saveAll(toSave);

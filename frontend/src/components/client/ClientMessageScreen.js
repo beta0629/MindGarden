@@ -5,19 +5,64 @@ import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
 import ClientWebPageShell from './ClientWebPageShell';
-import MGButton from '../common/MGButton';
-import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import UnifiedModal from '../common/modals/UnifiedModal';
+import ActionBar from '../common/ActionBar';
+import ActionBarButton from '../common/ActionBarButton';
+import EmptyState from '../common/EmptyState';
 import ListLoadMore from '../common/ListLoadMore';
 import SafeText from '../common/SafeText';
+import NotificationListCard, {
+  NotificationSectionLabel,
+  NotificationUrgentBadge,
+  toNotificationPreview
+} from '../notifications/NotificationListCard';
+import { ICONS, ICON_SIZES } from '../../constants/icons';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/themes/client-theme.css';
+import '../notifications/UnifiedNotifications.css';
 import './ClientMessageScreen.css';
 import { useTranslation } from 'react-i18next';
 
 const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
+const REPLY_MAX_LENGTH = 500;
+const MessageIcon = ICONS.MESSAGE_CIRCLE;
+const CloseIcon = ICONS.X;
+
+const MESSAGE_FILTER = {
+  ALL: 'all',
+  UNREAD: 'unread',
+  IMPORTANT: 'important'
+};
+const MESSAGE_FILTER_ORDER = [MESSAGE_FILTER.ALL, MESSAGE_FILTER.UNREAD, MESSAGE_FILTER.IMPORTANT];
+
+const MESSAGE_COPY = {
+  TAB_LIST_LABEL: '메시지 보기 방식',
+  TAB_ALL: '전체',
+  TAB_UNREAD: '안 읽음',
+  TAB_IMPORTANT: '중요',
+  SECTION_UNREAD: (count) => `안 읽은 메시지 ${count}건`,
+  SECTION_READ: '읽은 메시지',
+  UNREAD_SR: '읽지 않은 메시지',
+  EMPTY_TITLE: '받은 메시지가 없어요',
+  EMPTY_DESC: '상담 선생님이 메시지를 보내면 여기에 보여요.',
+  EMPTY_FILTERED_TITLE: '해당하는 메시지가 없어요',
+  MODAL_SUBTITLE_LABEL: '상담사 메시지',
+  FIELD_SENDER: '보낸 사람',
+  FIELD_READ_AT: '읽은 시각',
+  REPLY_LABEL: '답장하기',
+  REPLY_PLACEHOLDER: '선생님께 보낼 답장을 적어 주세요.',
+  REPLY_SEND: '답장 전송',
+  REPLY_COUNT: (length) => `${length} / ${REPLY_MAX_LENGTH}자`,
+  MODAL_CLOSE_LABEL: '닫기'
+};
+
+const FILTER_PREDICATES = {
+  [MESSAGE_FILTER.ALL]: () => true,
+  [MESSAGE_FILTER.UNREAD]: (message) => !message.isRead,
+  [MESSAGE_FILTER.IMPORTANT]: (message) => Boolean(message.isImportant || message.isUrgent)
+};
 
 /**
  * 내담자 메시지 확인 화면
@@ -30,6 +75,7 @@ const ClientMessageScreen = () => {
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [replying, setReplying] = useState(false);
   const [replyContent, setReplyContent] = useState('');
+  const [filter, setFilter] = useState(MESSAGE_FILTER.ALL);
 
   const handleCloseMessageModal = useCallback(() => {
     setSelectedMessage(null);
@@ -125,17 +171,6 @@ const ClientMessageScreen = () => {
     }
   };
 
-  const getMessageTypeIcon = (messageType) => {
-    const icons = {
-      GENERAL: '💬',
-      FOLLOW_UP: '📋',
-      HOMEWORK: '📝',
-      REMINDER: '🔔',
-      URGENT: '⚠️'
-    };
-    return icons[messageType] || '💬';
-  };
-
   const getMessageTypeLabel = (messageType) => {
     const labels = {
       GENERAL: '일반',
@@ -153,47 +188,49 @@ const ClientMessageScreen = () => {
         ? dateInput
         : toDisplayString(dateInput, '');
     if (raw === '' || raw === '—') {
-      return '—';
+      return '';
     }
     const date = new Date(raw);
     if (Number.isNaN(date.getTime())) {
-      return '—';
+      return '';
     }
     return date.toLocaleDateString('ko-KR', {
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
       hour: '2-digit',
       minute: '2-digit'
     });
   };
 
-  const unreadCount = messages.filter(m => !m.isRead).length;
-  const importantCount = messages.filter(m => m.isImportant).length;
-  const urgentCount = messages.filter(m => m.isUrgent).length;
+  const messageSource = (message) => {
+    const consultantLabel = t('common.labels.consultant');
+    const senderName = toDisplayString(message.senderName, '');
+    return senderName ? `${consultantLabel} · ${senderName}` : consultantLabel;
+  };
 
-  const messageModalSubtitle = selectedMessage
-    ? [
-      getMessageTypeLabel(selectedMessage.messageType),
-      formatDate(selectedMessage.sentAt),
-      selectedMessage.isImportant ? '⭐ 중요' : null,
-      selectedMessage.isUrgent ? '⚠️ 긴급' : null
-    ].filter(Boolean).join(' • ')
-    : '';
+  const visibleMessages = messages.filter(FILTER_PREDICATES[filter]);
+  const unreadMessages = visibleMessages.filter((message) => !message.isRead);
+  const readMessages = visibleMessages.filter((message) => message.isRead);
 
-  const messageModalTitle = selectedMessage
-    ? `${getMessageTypeIcon(selectedMessage.messageType)} ${toDisplayString(selectedMessage.title)}`
-    : '';
+  const filterLabels = {
+    [MESSAGE_FILTER.ALL]: MESSAGE_COPY.TAB_ALL,
+    [MESSAGE_FILTER.UNREAD]: MESSAGE_COPY.TAB_UNREAD,
+    [MESSAGE_FILTER.IMPORTANT]: MESSAGE_COPY.TAB_IMPORTANT
+  };
 
   const pageShell = (body) => (
     <ClientWebPageShell
+      className="unified-notifications-shell"
       title={CLIENT_WEB_SUITE_COPY.MESSAGES_TITLE}
       titleId={CLIENT_MESSAGE_TITLE_ID}
-    >
-      <div data-testid="client-messages-page">
-        <p className="client-message-screen-header-subtitle">
+      meta={(
+        <p className="unified-notifications__subtitle">
           {CLIENT_WEB_SUITE_COPY.MESSAGES_SUBTITLE}
         </p>
+      )}
+    >
+      <div className="unified-notifications" data-testid="client-messages-page">
         <main aria-labelledby={CLIENT_MESSAGE_TITLE_ID}>
           {body}
         </main>
@@ -201,31 +238,54 @@ const ClientMessageScreen = () => {
     </ClientWebPageShell>
   );
 
-  const renderMessageModalActions = () => (
+  const renderMessageCard = (message) => (
+    <NotificationListCard
+      key={message.id}
+      testId="client-messages-message-item"
+      title={toDisplayString(message.title, '')}
+      timeLabel={formatDate(message.sentAt || message.createdAt)}
+      timeIso={toDisplayString(message.sentAt || message.createdAt, '')}
+      summary={toNotificationPreview(message.content)}
+      meta={messageSource(message)}
+      badge={message.isUrgent ? <NotificationUrgentBadge label={t('admin.labels.urgent')} /> : null}
+      unread={!message.isRead}
+      unreadSr={MESSAGE_COPY.UNREAD_SR}
+      icon={MessageIcon}
+      showChevron
+      onClick={() => { void handleMessageClick(message); }}
+    />
+  );
+
+  const renderMessageSection = (label, items) => (items.length > 0 ? (
     <>
-      <MGButton
-        type="button"
-        variant="secondary"
-        className={buildErpMgButtonClassName({ variant: 'secondary', loading: false })}
+      <NotificationSectionLabel>{label}</NotificationSectionLabel>
+      <ul className="notif-list">
+        {items.map(renderMessageCard)}
+      </ul>
+    </>
+  ) : null);
+
+  const renderMessageModalActions = () => (
+    <ActionBar align="end" gap="md" className="unified-notifications-modal__actions">
+      <ActionBarButton
+        variant="outline"
         onClick={handleCloseMessageModal}
         disabled={replying}
-        preventDoubleClick={false}
+        data-gnb-chrome-free="true"
       >
         {t('common.actions.close')}
-      </MGButton>
-      <MGButton
-        type="button"
+      </ActionBarButton>
+      <ActionBarButton
         variant="primary"
-        className={buildErpMgButtonClassName({ variant: 'primary', loading: replying })}
         onClick={handleReply}
-        disabled={replying || !replyContent.trim()}
+        disabled={!replyContent.trim()}
         loading={replying}
-        loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-        preventDoubleClick={false}
+        data-testid="client-message-reply-submit"
+        data-gnb-chrome-free="true"
       >
-        답장 전송
-      </MGButton>
-    </>
+        {MESSAGE_COPY.REPLY_SEND}
+      </ActionBarButton>
+    </ActionBar>
   );
 
   if (loading) {
@@ -240,131 +300,128 @@ const ClientMessageScreen = () => {
     );
   }
 
+  const selectedSenderName = selectedMessage ? toDisplayString(selectedMessage.senderName, '') : '';
+  const modalSubtitle = selectedMessage
+    ? [MESSAGE_COPY.MODAL_SUBTITLE_LABEL, formatDate(selectedMessage.sentAt || selectedMessage.createdAt)]
+      .filter(Boolean)
+      .join(' · ')
+    : '';
+
   return pageShell(
-    <div className="client-message-screen-container">
-      <div className="client-message-screen-stats-card">
-        <div className="client-message-screen-stats-grid">
-          <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value">{totalElements ?? messages.length}</div>
-            <div className="client-message-screen-stat-label">전체 메시지</div>
-          </div>
-          <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{unreadCount}</div>
-            <div className="client-message-screen-stat-label">읽지 않음</div>
-          </div>
-          <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value client-message-screen-stat-value-warning">{importantCount}</div>
-            <div className="client-message-screen-stat-label">중요 메시지</div>
-          </div>
-          <div className="client-message-screen-stat-item">
-            <div className="client-message-screen-stat-value client-message-screen-stat-value-danger">{urgentCount}</div>
-            <div className="client-message-screen-stat-label">긴급 메시지</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="client-message-screen-messages-card">
-        <h2 className="client-message-screen-messages-title">
-          📨 메시지 목록
-        </h2>
-
-        {messages.length === 0 ? (
-          <div className="client-message-screen-empty-state">
-            <div className="client-message-screen-empty-icon" aria-hidden="true"></div>
-            <div className="client-message-screen-empty-title">받은 메시지가 없습니다</div>
-            <div className="client-message-screen-empty-message">상담사로부터 메시지를 받으면 여기에 표시됩니다.</div>
-          </div>
-        ) : (
-          <div
-            className="client-message-screen-message-list"
-            data-testid="client-messages-message-list"
+    <>
+      <div
+        className="mg-tab-chip-row unified-notifications__tabs"
+        role="tablist"
+        aria-label={MESSAGE_COPY.TAB_LIST_LABEL}
+      >
+        {MESSAGE_FILTER_ORDER.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            className="unified-notifications__tab"
+            aria-selected={filter === id}
+            data-gnb-chrome-free="true"
+            onClick={() => setFilter(id)}
           >
-            {messages.map(message => (
-              <div
-                key={message.id}
-                data-testid="client-messages-message-item"
-                className={`client-message-screen-message-item ${message.isUrgent ? 'client-message-screen-message-item-urgent' : ''} ${message.isImportant && !message.isUrgent ? 'client-message-screen-message-item-important' : ''} ${!message.isRead ? 'client-message-screen-message-item-unread' : ''}`}
-                onClick={() => handleMessageClick(message)}
-              >
-                <div className="client-message-screen-message-header">
-                  <div>
-                    <div className="client-message-screen-message-title">
-                      {getMessageTypeIcon(message.messageType)}{' '}
-                      <SafeText>{message.title}</SafeText>
-                    </div>
-                    <div className="client-message-screen-message-meta">
-                      {getMessageTypeLabel(message.messageType)} • {formatDate(message.sentAt)}
-                    </div>
-                  </div>
-                  <div className="client-message-screen-message-badges">
-                    {!message.isRead && <span className="client-message-screen-badge client-message-screen-badge-unread">읽지 않음</span>}
-                    {message.isImportant && <span className="client-message-screen-badge client-message-screen-badge-important">중요</span>}
-                    {message.isUrgent && <span className="client-message-screen-badge client-message-screen-badge-urgent">{t('admin.labels.urgent')}</span>}
-                    {message.isRead && <span className="client-message-screen-badge client-message-screen-badge-read">읽음</span>}
-                  </div>
-                </div>
-                <div className="client-message-screen-message-content">
-                  <SafeText>
-                    {(toDisplayString(message.content, '').length > 100
-                      ? `${toDisplayString(message.content, '').substring(0, 100)}...`
-                      : toDisplayString(message.content, ''))}
-                  </SafeText>
-                </div>
-                <div className="client-message-screen-message-footer">
-                  <span>{t('common.labels.consultant')}</span>
-                  <span>
-                    {message.isRead
-                      ? `읽음 ${formatDate(message.readAt)}`
-                      : '읽지 않음'}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        <ListLoadMore
-          loadedCount={messages.length}
-          totalCount={totalElements}
-          hasMore={hasMore}
-          loading={loadingMore}
-          onLoadMore={loadMore}
-        />
+            {filterLabels[id]}
+          </button>
+        ))}
       </div>
+
+      {messages.length === 0 ? (
+        <EmptyState
+          icon={<MessageIcon size={ICON_SIZES.XXL} aria-hidden />}
+          title={MESSAGE_COPY.EMPTY_TITLE}
+          description={MESSAGE_COPY.EMPTY_DESC}
+        />
+      ) : null}
+      {messages.length > 0 && visibleMessages.length === 0 ? (
+        <EmptyState
+          icon={<MessageIcon size={ICON_SIZES.XXL} aria-hidden />}
+          title={MESSAGE_COPY.EMPTY_FILTERED_TITLE}
+        />
+      ) : null}
+      {visibleMessages.length > 0 ? (
+        <div data-testid="client-messages-message-list">
+          {renderMessageSection(MESSAGE_COPY.SECTION_UNREAD(unreadMessages.length), unreadMessages)}
+          {renderMessageSection(MESSAGE_COPY.SECTION_READ, readMessages)}
+        </div>
+      ) : null}
+      <ListLoadMore
+        loadedCount={messages.length}
+        totalCount={totalElements}
+        hasMore={hasMore}
+        loading={loadingMore}
+        onLoadMore={loadMore}
+      />
 
       <UnifiedModal
         isOpen={Boolean(selectedMessage)}
         onClose={handleCloseMessageModal}
-        title={messageModalTitle}
-        subtitle={messageModalSubtitle}
-        size="large"
+        title={selectedMessage ? toDisplayString(selectedMessage.title, '') : ''}
+        subtitle={modalSubtitle}
+        size="medium"
         backdropClick={!replying}
-        showCloseButton={true}
+        closeChromeFree
+        closeContent={<CloseIcon size={ICON_SIZES.XL} aria-hidden />}
         closeButtonDataTestId="client-message-detail-close"
         loading={replying}
-        className="client-message-screen-detail-modal"
+        className="unified-notifications-modal"
         actions={renderMessageModalActions()}
         data-testid="client-message-detail-modal"
       >
         {selectedMessage && (
           <>
-            <div className="client-message-screen-message-detail-content">
-              <SafeText tag="div">{selectedMessage.content}</SafeText>
+            <div className="unified-notifications-modal__badges">
+              {selectedMessage.isUrgent ? (
+                <NotificationUrgentBadge label={t('admin.labels.urgent')} />
+              ) : null}
+              <span className="mg-badge mg-badge-message-type" data-type={selectedMessage.messageType}>
+                {getMessageTypeLabel(selectedMessage.messageType)}
+              </span>
             </div>
+            <SafeText tag="p" className="unified-notifications__content-text">
+              {selectedMessage.content}
+            </SafeText>
+            {selectedSenderName || selectedMessage.isRead ? (
+              <dl className="unified-notifications__modal-fields">
+                {selectedSenderName ? (
+                  <>
+                    <dt>{MESSAGE_COPY.FIELD_SENDER}</dt>
+                    <dd><SafeText>{selectedSenderName}</SafeText></dd>
+                  </>
+                ) : null}
+                {selectedMessage.isRead && formatDate(selectedMessage.readAt) ? (
+                  <>
+                    <dt>{MESSAGE_COPY.FIELD_READ_AT}</dt>
+                    <dd>{formatDate(selectedMessage.readAt)}</dd>
+                  </>
+                ) : null}
+              </dl>
+            ) : null}
             <div className="client-message-screen-reply-section">
-              <div className="client-message-screen-reply-title">답장하기</div>
+              <label className="unified-notifications-modal__reply-label" htmlFor="client-message-reply">
+                {MESSAGE_COPY.REPLY_LABEL}
+              </label>
               <textarea
-                className="client-message-screen-reply-textarea"
+                id="client-message-reply"
+                className="unified-notifications-modal__reply-textarea"
                 data-testid="client-message-reply-textarea"
                 value={replyContent}
+                maxLength={REPLY_MAX_LENGTH}
                 onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="답장 내용을 입력하세요..."
+                placeholder={MESSAGE_COPY.REPLY_PLACEHOLDER}
                 disabled={replying}
               />
+              <p className="unified-notifications-modal__reply-hint">
+                {MESSAGE_COPY.REPLY_COUNT(replyContent.length)}
+              </p>
             </div>
           </>
         )}
       </UnifiedModal>
-    </div>
+    </>
   );
 };
 

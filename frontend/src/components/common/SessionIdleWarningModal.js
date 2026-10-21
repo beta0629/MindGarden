@@ -34,7 +34,12 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
-import { SESSION_IDLE_WARNING_MS, SESSION_REMAINING_DISPLAY, isSessionPublicPath } from '../../constants/session';
+import {
+  SESSION_IDLE_EXPIRY_TIMER_SLACK_MS,
+  SESSION_IDLE_WARNING_MS,
+  SESSION_REMAINING_DISPLAY,
+  isSessionPublicPath
+} from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import { sessionManager } from '../../utils/sessionManager';
 import {
@@ -53,12 +58,12 @@ const SESSION_IDLE_MODAL_AUTO_CLOSE_SURPLUS_MS = 3000;
 /**
  * 경고 모달 오픈 여부를 refs 스냅샷으로 판정(폴링·setTimeout 콜백 공통).
  *
- * @param {object} snap — { isOpen, user, isLoginPath, sessionInfo }
+ * @param {object} snap — { isOpen, expiryLogoutDone, user, isLoginPath, sessionInfo }
  * @param {number} clientNowMs
  * @returns {'open'|'reschedule'|'noop'}
  */
 function evaluateIdleWarnOpenFromSnapshot(snap, clientNowMs) {
-  if (snap.isOpen) {
+  if (snap.isOpen || snap.expiryLogoutDone) {
     return 'noop';
   }
   if (!snap.user || snap.isLoginPath) {
@@ -87,10 +92,16 @@ const SessionIdleWarningModal = () => {
   const timerRef = useRef(null);
   const countdownIntervalRef = useRef(null);
   const warnPollIntervalRef = useRef(null);
+  /** 실제 만료 시각에 맞춘 판정 타이머 (표시 초와 무관) */
+  const expiryTimerRef = useRef(null);
+  /** 만료 판정 재실행 트리거 — 만료 타이머 발화 시 증가 */
+  const [expiryCheckSeq, setExpiryCheckSeq] = useState(0);
   /** 카운트다운 0 도달 시 logout 1회만 (중복 호출 방지) */
   const expiryLogoutStartedRef = useRef(false);
   /** 연장 클릭이 진행 중이면, 그 확인이 성공한 경우에만 만료 logout 을 건너뛴다 */
   const extendInFlightRef = useRef(false);
+  /** 만료 logout 을 이미 호출했으면 같은 만료 세션으로 모달을 다시 열거나 logout 을 다시 부르지 않는다 */
+  const expiryLogoutDoneRef = useRef(false);
 
   const isLoginPath = isSessionPublicPath(pathname);
   const sessionInfoRef = useRef(sessionInfo);
@@ -119,6 +130,38 @@ const SessionIdleWarningModal = () => {
     }
   }, []);
 
+  const clearExpiryTimer = useCallback(() => {
+    if (expiryTimerRef.current != null) {
+      clearTimeout(expiryTimerRef.current);
+      expiryTimerRef.current = null;
+    }
+  }, []);
+
+  /**
+   * 모달이 열려 있으면 만료 시각(remainingMs)에 맞춰 판정 타이머를 건다.
+   * 표시용 remainingSec 은 1→0 전환 뒤 0 으로 고정돼 재평가 트리거가 되지 못하므로(만료 시각이
+   * 정수 초에서 어긋난 경우) 실제 만료 시각 기준 타이머로 판정을 다시 돌린다.
+   */
+  useEffect(() => {
+    clearExpiryTimer();
+    if (!isOpen || !sessionInfo || sessionInfo.isAuthenticated !== true) {
+      return undefined;
+    }
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
+    if (remainingMs == null || remainingMs <= 0) {
+      return undefined;
+    }
+    expiryTimerRef.current = setTimeout(() => {
+      expiryTimerRef.current = null;
+      setExpiryCheckSeq((seq) => seq + 1);
+    }, remainingMs + SESSION_IDLE_EXPIRY_TIMER_SLACK_MS);
+    return () => {
+      clearExpiryTimer();
+    };
+  }, [isOpen, sessionInfo, expiryCheckSeq, clearExpiryTimer]);
+
   const clearWarnPollInterval = useCallback(() => {
     if (warnPollIntervalRef.current != null) {
       clearInterval(warnPollIntervalRef.current);
@@ -129,6 +172,7 @@ const SessionIdleWarningModal = () => {
   const tryOpenIdleWarningFromRefs = useCallback(() => {
     const snap = {
       isOpen: isOpenRef.current,
+      expiryLogoutDone: expiryLogoutDoneRef.current,
       user: userRef.current,
       isLoginPath: isLoginPathRef.current,
       sessionInfo: sessionInfoRef.current
@@ -140,7 +184,7 @@ const SessionIdleWarningModal = () => {
 
   const armWarnTimer = useCallback(() => {
     clearTimer();
-    if (isOpenRef.current) {
+    if (isOpenRef.current || expiryLogoutDoneRef.current) {
       return;
     }
     const si = sessionInfoRef.current;
@@ -160,6 +204,7 @@ const SessionIdleWarningModal = () => {
     timerRef.current = setTimeout(() => {
       const snap = {
         isOpen: isOpenRef.current,
+        expiryLogoutDone: expiryLogoutDoneRef.current,
         user: userRef.current,
         isLoginPath: isLoginPathRef.current,
         sessionInfo: sessionInfoRef.current
@@ -219,6 +264,19 @@ const SessionIdleWarningModal = () => {
     };
   }, [isOpen, sessionInfo, clearCountdownInterval]);
 
+  /** 사용자가 바뀌거나 새 세션(잔여>0)이 오면 만료 logout 완료 표시를 푼다 */
+  useEffect(() => {
+    if (!expiryLogoutDoneRef.current) {
+      return;
+    }
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
+    if (!user || (remainingMs != null && remainingMs > 0)) {
+      expiryLogoutDoneRef.current = false;
+    }
+  }, [user, sessionInfo]);
+
   useEffect(() => {
     if (!user) {
       setIsOpen(false);
@@ -254,13 +312,13 @@ const SessionIdleWarningModal = () => {
       expiryLogoutStartedRef.current = false;
       return;
     }
-    if (!sessionInfo || expiryLogoutStartedRef.current) {
+    if (!sessionInfo || expiryLogoutStartedRef.current || expiryLogoutDoneRef.current) {
       return;
     }
     const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
       allowFallback: false
     });
-    // remainingSec 의존: 1초 틱마다 재평가. 모달 오픈 직후 remainingSec=0 잔존과 무관하게 remainingMs로 판정.
+    // 판정은 remainingMs(실제 만료 시각) 기준. expiryCheckSeq(만료 시각 타이머)·remainingSec(1초 틱) 모두 재평가 트리거.
     if (remainingMs == null || remainingMs > 0) {
       return;
     }
@@ -291,10 +349,11 @@ const SessionIdleWarningModal = () => {
         setIsOpen(false);
         return;
       }
+      expiryLogoutDoneRef.current = true;
       setIsOpen(false);
       await logout();
     })();
-  }, [isOpen, sessionInfo, remainingSec, logout, checkSession]);
+  }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 
   useEffect(() => {
     armWarnTimer();

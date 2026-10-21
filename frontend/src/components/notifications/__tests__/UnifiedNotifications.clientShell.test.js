@@ -172,7 +172,11 @@ describe('UnifiedNotifications 내 알림', () => {
 
     renderPage('/notifications?tab=personal');
     const payment = await screen.findByRole('button', { name: /결제 확인/ });
-    expect(payment).toHaveTextContent('안 읽음');
+    expect(payment).toHaveTextContent('읽지 않은 알림');
+    expect(payment).not.toHaveTextContent('안 읽음');
+    expect(payment.querySelector('.notif-card__dot')).not.toBeNull();
+    expect(payment.querySelector('.notif-card__unread')).toBeNull();
+    expect(payment.querySelector('.notif-card__icon').className).toBe('notif-card__icon');
     expect(payment).toHaveTextContent('상품');
     expect(payment).toHaveTextContent('1,000원');
     expect(payment.className).toContain('notif-card--unread');
@@ -210,7 +214,7 @@ describe('UnifiedNotifications 내 알림', () => {
     expect(dialog).toHaveTextContent('연결된 화면을 열 수 없어요');
     expect(dialog).toHaveTextContent('2026');
     expect(dialog).not.toHaveTextContent('관리자');
-    expect(dialog).not.toHaveTextContent('결제가 확인됐어요.');
+    expect(dialog).toHaveTextContent('결제가 확인됐어요.');
     const closeButton = screen.getByRole('button', { name: '닫기' });
     expect(closeButton).toHaveAttribute('data-gnb-chrome-free', 'true');
     expect(closeButton.querySelector('svg')).not.toBeNull();

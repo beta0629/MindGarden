@@ -20,7 +20,11 @@ import SafeText from '../common/SafeText';
 import EmptyState from '../common/EmptyState';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
 import PersonalNotificationsTab from './PersonalNotificationsTab';
-import NotificationListCard, { NotificationLoadingList, toNotificationPreview } from './NotificationListCard';
+import NotificationListCard, {
+  NotificationLoadingList,
+  NotificationUrgentBadge,
+  toNotificationPreview
+} from './NotificationListCard';
 import {
   NOTIFICATION_PAGE_TEST_IDS,
   NOTIFICATION_TABS,
@@ -29,6 +33,7 @@ import {
 } from '../../constants/notificationTabs';
 import {
   PERSONAL_NOTIFICATION_PRESENTATION,
+  formatPersonalOrderNumber,
   isClientNotificationUser,
   resolveNotificationsListPath,
   resolvePersonalNotificationDestination,
@@ -359,8 +364,8 @@ const UnifiedNotifications = () => {
 
   const pageTitle = t('common:notification.unified.pageTitle');
   const subtitle = t('common:notification.unified.subtitle');
-  const unreadLabel = t('common:notification.unified.new_unread');
   const unreadSr = t('common:notification.unified.new_unreadSr');
+  const urgentLabel = t('common:notification.unified.messageTypeUrgent');
 
   const tabItems = [
     {
@@ -428,8 +433,8 @@ const UnifiedNotifications = () => {
               timeLabel={formatDate(when)}
               timeIso={when || ''}
               summary={toNotificationPreview(notification.content)}
+              badge={notification.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
               unread={notification.isRead === false}
-              unreadLabel={unreadLabel}
               unreadSr={unreadSr}
               icon={VolumeIcon}
               showChevron
@@ -468,8 +473,8 @@ const UnifiedNotifications = () => {
               timeIso={when || ''}
               summary={toNotificationPreview(message.content)}
               meta={messageMeta(message)}
+              badge={message.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
               unread={message.isRead === false}
-              unreadLabel={unreadLabel}
               unreadSr={unreadSr}
               icon={MessageIcon}
               showChevron
@@ -487,6 +492,40 @@ const UnifiedNotifications = () => {
   const personalPresentation = personalMeta
     ? PERSONAL_NOTIFICATION_PRESENTATION[personalMeta.kind]
     : null;
+
+  const personalFields = [];
+  if (personalMeta) {
+    const orderNumber = formatPersonalOrderNumber(personalMeta.mappingId);
+    if (orderNumber) {
+      personalFields.push({
+        label: t('common:notification.unified.personal.field.orderNumber'),
+        value: orderNumber
+      });
+    }
+    if (personalMeta.productName) {
+      personalFields.push({
+        label: t('common:notification.unified.personal.field.product'),
+        value: personalMeta.productName
+      });
+    }
+    if (personalMeta.amount != null) {
+      personalFields.push({
+        label: t('common:notification.unified.personal.field.amount'),
+        value: t('common:notification.unified.personal.field.amountValue', {
+          amount: new Intl.NumberFormat('ko-KR').format(personalMeta.amount)
+        })
+      });
+    }
+  }
+
+  const modalDestination = selectedItem && selectedItem.destinationPath && selectedItem.destinationLabel
+    ? { path: selectedItem.destinationPath, label: selectedItem.destinationLabel }
+    : null;
+
+  const handleModalDestination = (path) => {
+    setSelectedItem(null);
+    navigate(path);
+  };
 
   const pageBody = !isLoggedIn ? (
     <p className="unified-notifications__login" role="status" data-testid={NOTIFICATION_PAGE_TEST_IDS.LOGIN}>
@@ -549,18 +588,52 @@ const UnifiedNotifications = () => {
           data-testid={selectedItem.unavailable ? NOTIFICATION_PAGE_TEST_IDS.UNAVAILABLE : undefined}
           actions={(
             <ActionBar align="end" gap="md" className="unified-notifications-modal__actions">
-              <ActionBarButton
-                variant="primary"
-                onClick={closeModal}
-                data-gnb-chrome-free="true"
-              >
-                {t('common.actions.confirm')}
-              </ActionBarButton>
+              {modalDestination ? (
+                <>
+                  <ActionBarButton
+                    variant="outline"
+                    onClick={closeModal}
+                    data-gnb-chrome-free="true"
+                  >
+                    {t('common.actions.close')}
+                  </ActionBarButton>
+                  <ActionBarButton
+                    variant="primary"
+                    onClick={() => handleModalDestination(modalDestination.path)}
+                    data-gnb-chrome-free="true"
+                  >
+                    {modalDestination.label}
+                  </ActionBarButton>
+                </>
+              ) : (
+                <ActionBarButton
+                  variant="primary"
+                  onClick={closeModal}
+                  data-gnb-chrome-free="true"
+                >
+                  {t('common.actions.confirm')}
+                </ActionBarButton>
+              )}
             </ActionBar>
           )}
         >
           {selectedItem.unavailable ? (
             <>
+              <p className="unified-notifications__content-text">
+                {personalPresentation
+                  ? t(personalPresentation.summaryKey)
+                  : toNotificationPreview(selectedItem.data.content)}
+              </p>
+              {personalFields.length > 0 ? (
+                <dl className="unified-notifications__modal-fields">
+                  {personalFields.map((field) => (
+                    <React.Fragment key={field.label}>
+                      <dt>{field.label}</dt>
+                      <dd><SafeText>{field.value}</SafeText></dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
+              ) : null}
               <div className="unified-notifications__notice">
                 <span className="unified-notifications__notice-icon" aria-hidden="true">
                   <InfoIcon size={ICON_SIZES.XL} />
@@ -574,32 +647,12 @@ const UnifiedNotifications = () => {
                   </p>
                 </div>
               </div>
-              {personalMeta && (personalMeta.productName || personalMeta.amount != null) ? (
-                <dl className="unified-notifications__modal-fields">
-                  {personalMeta.productName ? (
-                    <>
-                      <dt>{t('common:notification.unified.personal.field.product')}</dt>
-                      <dd><SafeText>{personalMeta.productName}</SafeText></dd>
-                    </>
-                  ) : null}
-                  {personalMeta.amount != null ? (
-                    <>
-                      <dt>{t('common:notification.unified.personal.field.amount')}</dt>
-                      <dd>
-                        {t('common:notification.unified.personal.field.amountValue', {
-                          amount: new Intl.NumberFormat('ko-KR').format(personalMeta.amount)
-                        })}
-                      </dd>
-                    </>
-                  ) : null}
-                </dl>
-              ) : null}
             </>
           ) : (
             <>
-              <div className="mg-flex mg-align-center mg-gap-sm mg-mb-md">
+              <div className="unified-notifications-modal__badges">
                 {selectedItem.data.isUrgent ? (
-                  <span className="mg-badge mg-badge-danger">{t('admin.labels.urgent')}</span>
+                  <NotificationUrgentBadge label={urgentLabel} />
                 ) : null}
                 {selectedItem.data.isImportant ? (
                   <span className="mg-badge mg-badge-warning">
@@ -622,7 +675,7 @@ const UnifiedNotifications = () => {
                 ) : null}
               </div>
               <div
-                className="notification-content"
+                className="notification-content unified-notifications__content-text"
                 dangerouslySetInnerHTML={{
                   __html: sanitizeRichNoticeHtml(selectedItem.data.content || '')
                 }}

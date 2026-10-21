@@ -1,8 +1,8 @@
 /**
  * AppToast — 전역 토스트 알림 컴포넌트
  *
- * 상단에서 슬라이드 다운, 타입별 좌측 컬러 바,
- * 자동 사라짐(progress bar), 수동 닫기.
+ * 우상단 카드. 아이콘 타일은 알림 카드와 같은 중립색, 상태는 왼쪽 띠만.
+ * 자동 사라짐, 수동 닫기.
  * ToastContext에서 토스트 목록을 구독하여 렌더링.
  *
  * @author MindGarden
@@ -12,9 +12,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 import { useToast } from '../../contexts/ToastContext';
+import '../notifications/NotificationListCard.css';
 import './AppToast.css';
 
 const ICON_SIZE = 20;
+const EXIT_ANIMATION_MS = 200;
 
 const TOAST_ICONS = {
   success: CheckCircle,
@@ -28,7 +30,7 @@ const AppToast = () => {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="app-toast-container" role="status" aria-live="polite">
+    <div className="app-toast-container" aria-live="polite">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onClose={removeToast} />
       ))}
@@ -39,44 +41,41 @@ const AppToast = () => {
 const ToastItem = ({ toast, onClose }) => {
   const [exiting, setExiting] = useState(false);
   const IconComponent = TOAST_ICONS[toast.type] || TOAST_ICONS.info;
+  const toneClass = TOAST_ICONS[toast.type] ? toast.type : 'info';
 
   const handleClose = useCallback(() => {
     setExiting(true);
-    setTimeout(() => onClose(toast.id), 200);
+    setTimeout(() => onClose(toast.id), EXIT_ANIMATION_MS);
   }, [toast.id, onClose]);
 
   useEffect(() => {
-    const exitDelay = toast.duration - 200;
+    const exitDelay = toast.duration - EXIT_ANIMATION_MS;
     if (exitDelay > 0) {
       const timer = setTimeout(() => setExiting(true), exitDelay);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [toast.duration]);
 
   return (
     <div
-      className={`app-toast app-toast--${toast.type} ${exiting ? 'app-toast--exit' : 'app-toast--enter'}`}
-      role="alert"
+      className={`app-toast app-toast--${toneClass} ${exiting ? 'app-toast--exit' : 'app-toast--enter'}`}
+      role={toneClass === 'error' ? 'alert' : 'status'}
     >
-      <div className={`app-toast__accent app-toast__accent--${toast.type}`} />
+      <span className="notif-card__icon" aria-hidden="true">
+        <IconComponent size={ICON_SIZE} />
+      </span>
       <div className="app-toast__body">
-        <IconComponent size={ICON_SIZE} className={`app-toast__icon app-toast__icon--${toast.type}`} />
-        <span className="app-toast__message">{toast.message}</span>
-        <button
-          type="button"
-          className="app-toast__close"
-          onClick={handleClose}
-          aria-label="토스트 닫기"
-        >
-          <X size={16} />
-        </button>
+        <span className="notif-card__title">{toast.message}</span>
       </div>
-      <div className="app-toast__progress-track">
-        <div
-          className={`app-toast__progress-bar app-toast__progress-bar--${toast.type}`}
-          style={{ animationDuration: `${toast.duration}ms` }}
-        />
-      </div>
+      <button
+        type="button"
+        className="app-toast__close"
+        onClick={handleClose}
+        aria-label="토스트 닫기"
+      >
+        <X size={ICON_SIZE} />
+      </button>
     </div>
   );
 };

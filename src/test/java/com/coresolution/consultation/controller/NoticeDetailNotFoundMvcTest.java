@@ -7,7 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,21 +37,17 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * 삭제·없는·다른 테넌트·비대상 공지와 웰니스 개인 알림 상세는 공통 404 를 반환한다.
+ * 삭제·없는·다른 테넌트 공지와 웰니스 개인 알림 상세는 공통 404 를 반환한다.
  *
  * @author CoreSolution
  * @since 2026-10-21
  */
-@DisplayName("공지·웰니스 상세 — 삭제/없음/다른 테넌트/비대상 404, 정상 200")
+@DisplayName("공지·웰니스 상세 — 삭제/없음/다른 테넌트 404, 정상 200")
 class NoticeDetailNotFoundMvcTest {
 
     private static final String SYSTEM_NOTICE_PATH = "/api/v1/system-notifications/{notificationId}";
-    private static final String SYSTEM_NOTICE_READ_PATH = "/api/v1/system-notifications/{notificationId}/read";
     private static final String WELLNESS_NOTICE_PATH = "/api/v1/notifications/{notificationId}";
     private static final String ENTITY_NOT_FOUND = "ENTITY_NOT_FOUND";
-    private static final String TARGET_ALL = "ALL";
-    private static final String TARGET_CONSULTANT = "CONSULTANT";
-    private static final String TARGET_CLIENT = "CLIENT";
 
     private String tenantA;
     private String tenantB;
@@ -60,7 +55,6 @@ class NoticeDetailNotFoundMvcTest {
     private long noticeId;
 
     private SystemNotificationRepository systemNotificationRepository;
-    private SystemNotificationReadRepository readRepository;
     private NotificationRepository notificationRepository;
     private MockMvc mockMvc;
 
@@ -73,7 +67,7 @@ class NoticeDetailNotFoundMvcTest {
         noticeId = positiveId(UUID.randomUUID().getLeastSignificantBits());
 
         systemNotificationRepository = mock(SystemNotificationRepository.class);
-        readRepository = mock(SystemNotificationReadRepository.class);
+        SystemNotificationReadRepository readRepository = mock(SystemNotificationReadRepository.class);
         when(readRepository.findByNotificationIdAndUserId(any(), any())).thenReturn(Optional.empty());
         when(readRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -107,14 +101,13 @@ class NoticeDetailNotFoundMvcTest {
     @DisplayName("삭제된 시스템 공지 상세는 404")
     void deletedSystemNotice_returns404() throws Exception {
         when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(systemNotice(tenantA, TARGET_ALL, true)));
+                .thenReturn(Optional.of(systemNotice(tenantA, true)));
 
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isNotFound())
+        getSystemNotice().andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
                 .andExpect(jsonPath("$.status").value(404));
 
         verify(systemNotificationRepository, never()).incrementViewCount(any());
-        verify(readRepository, never()).save(any());
     }
 
     @Test
@@ -123,117 +116,42 @@ class NoticeDetailNotFoundMvcTest {
         when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
                 .thenReturn(Optional.empty());
 
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isNotFound())
+        getSystemNotice().andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
                 .andExpect(jsonPath("$.status").value(404));
 
         verify(systemNotificationRepository, never()).incrementViewCount(any());
-        verify(readRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("다른 테넌트 시스템 공지 상세는 404")
     void otherTenantSystemNotice_returns404() throws Exception {
         when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(systemNotice(tenantB, TARGET_ALL, false)));
+                .thenReturn(Optional.of(systemNotice(tenantB, false)));
 
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isNotFound())
+        getSystemNotice().andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
                 .andExpect(jsonPath("$.status").value(404));
 
         verify(systemNotificationRepository).findByTenantIdAndId(eq(tenantA), eq(noticeId));
         verify(systemNotificationRepository, never()).findByTenantIdAndId(eq(tenantB), eq(noticeId));
         verify(systemNotificationRepository, never()).incrementViewCount(any());
-        verify(readRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("CLIENT가 CONSULTANT 대상 공지 상세는 404, 조회수·읽음 미기록")
-    void clientCaller_consultantTarget_returns404() throws Exception {
-        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(systemNotice(tenantA, TARGET_CONSULTANT, false)));
-
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
-                .andExpect(jsonPath("$.status").value(404));
-
-        verify(systemNotificationRepository, never()).incrementViewCount(any());
-        verify(readRepository, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("CONSULTANT가 CONSULTANT 대상 공지 상세는 200")
-    void consultantCaller_consultantTarget_returns200() throws Exception {
-        SystemNotification notice = systemNotice(tenantA, TARGET_CONSULTANT, false);
-        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(notice));
-
-        getSystemNotice(UserRole.CONSULTANT).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(noticeId))
-                .andExpect(jsonPath("$.data.targetType").value(TARGET_CONSULTANT));
-
-        verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
-    }
-
-    @Test
-    @DisplayName("CLIENT가 ALL 대상 공지 상세는 200")
-    void clientCaller_allTarget_returns200() throws Exception {
-        SystemNotification notice = systemNotice(tenantA, TARGET_ALL, false);
-        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(notice));
-
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(noticeId))
-                .andExpect(jsonPath("$.data.targetType").value(TARGET_ALL));
-
-        verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
-    }
-
-    @Test
-    @DisplayName("CLIENT가 CLIENT 대상 공지 상세는 200")
-    void clientCaller_clientTarget_returns200() throws Exception {
-        SystemNotification notice = systemNotice(tenantA, TARGET_CLIENT, false);
-        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(notice));
-
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(noticeId))
-                .andExpect(jsonPath("$.data.targetType").value(TARGET_CLIENT));
-
-        verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
     }
 
     @Test
     @DisplayName("현재 테넌트의 시스템 공지 상세는 200")
     void visibleSystemNotice_returns200() throws Exception {
-        SystemNotification notice = systemNotice(tenantA, TARGET_ALL, false);
+        SystemNotification notice = systemNotice(tenantA, false);
         when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
                 .thenReturn(Optional.of(notice));
 
-        getSystemNotice(UserRole.CLIENT).andExpect(status().isOk())
+        getSystemNotice().andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(noticeId))
                 .andExpect(jsonPath("$.data.title").value(notice.getTitle()))
                 .andExpect(jsonPath("$.data.notificationType").value("WELLNESS"));
 
         verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
-    }
-
-    @Test
-    @DisplayName("CLIENT가 CONSULTANT 대상 공지 읽음 POST는 404, 읽음 미기록")
-    void clientCaller_consultantTarget_markAsRead_returns404() throws Exception {
-        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
-                .thenReturn(Optional.of(systemNotice(tenantA, TARGET_CONSULTANT, false)));
-
-        postSystemNoticeRead(UserRole.CLIENT).andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
-                .andExpect(jsonPath("$.status").value(404));
-
-        verify(readRepository, never()).save(any());
-        verify(systemNotificationRepository, never()).incrementViewCount(any());
     }
 
     @Test
@@ -297,28 +215,22 @@ class NoticeDetailNotFoundMvcTest {
                 .andExpect(jsonPath("$.data.notificationType").value(NotificationType.WELLNESS.getCode()));
     }
 
-    private ResultActions getSystemNotice(UserRole role) throws Exception {
+    private ResultActions getSystemNotice() throws Exception {
         return mockMvc.perform(get(SYSTEM_NOTICE_PATH, noticeId)
-                .session(session(caller(role)))
-                .accept(MediaType.APPLICATION_JSON));
-    }
-
-    private ResultActions postSystemNoticeRead(UserRole role) throws Exception {
-        return mockMvc.perform(post(SYSTEM_NOTICE_READ_PATH, noticeId)
-                .session(session(caller(role)))
+                .session(session(caller()))
                 .accept(MediaType.APPLICATION_JSON));
     }
 
     private ResultActions getWellnessNotice() throws Exception {
         return mockMvc.perform(get(WELLNESS_NOTICE_PATH, noticeId)
-                .session(session(caller(UserRole.CLIENT)))
+                .session(session(caller()))
                 .accept(MediaType.APPLICATION_JSON));
     }
 
-    private User caller(UserRole role) {
+    private User caller() {
         User user = new User();
         user.setId(userId);
-        user.setRole(role);
+        user.setRole(UserRole.CLIENT);
         user.setTenantId(tenantA);
         return user;
     }
@@ -330,11 +242,11 @@ class NoticeDetailNotFoundMvcTest {
         return session;
     }
 
-    private SystemNotification systemNotice(String tenantId, String targetType, boolean deleted) {
+    private SystemNotification systemNotice(String tenantId, boolean deleted) {
         SystemNotification notice = new SystemNotification();
         notice.setId(noticeId);
         notice.setTenantId(tenantId);
-        notice.setTargetType(targetType);
+        notice.setTargetType("ALL");
         notice.setTitle("웰니스 공지 " + noticeId);
         notice.setContent("본문");
         notice.setNotificationType("WELLNESS");

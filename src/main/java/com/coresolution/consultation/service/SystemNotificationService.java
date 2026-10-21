@@ -17,25 +17,14 @@ public interface SystemNotificationService {
     Page<SystemNotification> getNotificationsForUser(Long userId, String userRole, Pageable pageable);
     
     /**
-     * 공지 상세 조회 및 조회수 증가.
-     * 목록과 동일한 수신 대상({@code ALL} + 역할별)이 아니면 존재하지 않는 것으로 처리한다.
-     *
-     * @param notificationId 공지 ID
-     * @param userId 조회 사용자 ID
-     * @param userRole 조회 사용자 역할
-     * @return 수신 대상인 공지
+     * 공지 상세 조회 및 조회수 증가
      */
-    SystemNotification getNotificationDetail(Long notificationId, Long userId, String userRole);
-
+    SystemNotification getNotificationDetail(Long notificationId, Long userId);
+    
     /**
-     * 공지 읽음 처리.
-     * 수신 대상이 아니면 읽음 기록을 남기지 않고 존재하지 않는 것으로 처리한다.
-     *
-     * @param notificationId 공지 ID
-     * @param userId 사용자 ID
-     * @param userRole 사용자 역할
+     * 공지 읽음 처리
      */
-    void markAsRead(Long notificationId, Long userId, String userRole);
+    void markAsRead(Long notificationId, Long userId);
 
     /**
      * 현재 사용자 기준 읽지 않은 모든 공지 일괄 읽음 처리

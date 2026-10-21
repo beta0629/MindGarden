@@ -257,18 +257,16 @@ public class SystemNotificationController extends BaseApiController {
         }
         
         Long userId = currentUser.getId();
-        String userRole = currentUser.getRole().name();
         
-        log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
+        log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
 
         try {
         setTenantContextFromUser(currentUser);
-        SystemNotification notification =
-            systemNotificationService.getNotificationDetail(notificationId, userId, userRole);
+        SystemNotification notification = systemNotificationService.getNotificationDetail(notificationId, userId);
         
-        // 자동 읽음 처리 (상세가 수신 대상일 때만 도달)
+        // 자동 읽음 처리
         try {
-            systemNotificationService.markAsRead(notificationId, userId, userRole);
+            systemNotificationService.markAsRead(notificationId, userId);
             log.info("✅ 공지 자동 읽음 처리 완료 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
         } catch (Exception e) {
             log.warn("⚠️ 공지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
@@ -309,17 +307,12 @@ public class SystemNotificationController extends BaseApiController {
         }
         
         Long userId = currentUser.getId();
-        String userRole = currentUser.getRole().name();
         
-        log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
-
-        try {
-            setTenantContextFromUser(currentUser);
-            systemNotificationService.markAsRead(notificationId, userId, userRole);
-            return success("공지를 읽음 처리했습니다.");
-        } finally {
-            TenantContextHolder.clear();
-        }
+        log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
+        
+        systemNotificationService.markAsRead(notificationId, userId);
+        
+        return success("공지를 읽음 처리했습니다.");
     }
 
     /**

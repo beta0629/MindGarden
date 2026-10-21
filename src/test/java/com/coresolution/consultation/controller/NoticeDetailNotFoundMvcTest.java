@@ -24,12 +24,15 @@ import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.impl.NotificationLifecycleServiceImpl;
 import com.coresolution.consultation.service.impl.SystemNotificationServiceImpl;
 import com.coresolution.core.context.TenantContextHolder;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -38,12 +41,13 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 /**
- * 삭제·없는·다른 테넌트·비대상 공지와 웰니스 개인 알림 상세는 공통 404 를 반환한다.
+ * 삭제·없는·다른 테넌트·비대상·비게시 공지와 웰니스 개인 알림 상세는 공통 404 를 반환한다.
+ * 관리자는 같은 테넌트 공지를 대상·게시상태와 무관하게 열람하며 조회수·읽음 부작용이 없다.
  *
  * @author CoreSolution
  * @since 2026-10-21
  */
-@DisplayName("공지·웰니스 상세 — 삭제/없음/다른 테넌트/비대상 404, 정상 200")
+@DisplayName("공지·웰니스 상세 — 삭제/없음/다른 테넌트/비대상/비게시 404, 관리자 미리보기, 정상 200")
 class NoticeDetailNotFoundMvcTest {
 
     private static final String SYSTEM_NOTICE_PATH = "/api/v1/system-notifications/{notificationId}";
@@ -53,6 +57,9 @@ class NoticeDetailNotFoundMvcTest {
     private static final String TARGET_ALL = "ALL";
     private static final String TARGET_CONSULTANT = "CONSULTANT";
     private static final String TARGET_CLIENT = "CLIENT";
+    private static final String STATUS_PUBLISHED = "PUBLISHED";
+    private static final String STATUS_DRAFT = "DRAFT";
+    private static final String STATUS_ARCHIVED = "ARCHIVED";
 
     private String tenantA;
     private String tenantB;
@@ -222,6 +229,166 @@ class NoticeDetailNotFoundMvcTest {
         verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
     }
 
+    @ParameterizedTest(name = "{0} — DRAFT ALL 대상 상세는 404")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT"})
+    @DisplayName("수신자 DRAFT 공지 상세는 404")
+    void recipient_draft_returns404(UserRole role) throws Exception {
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(
+                        tenantA, TARGET_ALL, false, STATUS_DRAFT, null, null)));
+
+        getSystemNotice(role).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "{0} — ARCHIVED ALL 대상 상세는 404")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT"})
+    @DisplayName("수신자 ARCHIVED 공지 상세는 404")
+    void recipient_archived_returns404(UserRole role) throws Exception {
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(
+                        tenantA, TARGET_ALL, false, STATUS_ARCHIVED, null, null)));
+
+        getSystemNotice(role).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "{0} — expiresAt 과거 상세는 404")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT"})
+    @DisplayName("수신자 만료 공지 상세는 404")
+    void recipient_expired_returns404(UserRole role) throws Exception {
+        LocalDateTime past = LocalDateTime.now().minusDays(1);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(
+                        tenantA, TARGET_ALL, false, STATUS_PUBLISHED, null, past)));
+
+        getSystemNotice(role).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "{0} — publishedAt 미래 상세는 404")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT"})
+    @DisplayName("수신자 예약게시 공지 상세는 404")
+    void recipient_futurePublishedAt_returns404(UserRole role) throws Exception {
+        LocalDateTime future = LocalDateTime.now().plusDays(1);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(
+                        tenantA, TARGET_ALL, false, STATUS_PUBLISHED, future, null)));
+
+        getSystemNotice(role).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "{0} — PUBLISHED ALL 대상 상세는 200")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT"})
+    @DisplayName("수신자 PUBLISHED 공지 상세는 200")
+    void recipient_published_returns200(UserRole role) throws Exception {
+        SystemNotification notice = systemNotice(tenantA, TARGET_ALL, false);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(notice));
+
+        getSystemNotice(role).andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(noticeId));
+
+        verify(systemNotificationRepository).incrementViewCount(eq(noticeId));
+    }
+
+    @Test
+    @DisplayName("ADMIN이 CONSULTANT 대상 DRAFT 상세는 200, 조회수·읽음 미기록")
+    void admin_consultantDraft_returns200_withoutSideEffects() throws Exception {
+        SystemNotification notice = systemNotice(
+                tenantA, TARGET_CONSULTANT, false, STATUS_DRAFT, null, null);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(notice));
+
+        getSystemNotice(UserRole.ADMIN).andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(noticeId))
+                .andExpect(jsonPath("$.data.targetType").value(TARGET_CONSULTANT))
+                .andExpect(jsonPath("$.data.status").value(STATUS_DRAFT));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN이 만료 CONSULTANT 대상 상세는 200, 조회수·읽음 미기록")
+    void admin_consultantExpired_returns200_withoutSideEffects() throws Exception {
+        LocalDateTime past = LocalDateTime.now().minusHours(1);
+        SystemNotification notice = systemNotice(
+                tenantA, TARGET_CONSULTANT, false, STATUS_PUBLISHED, null, past);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(notice));
+
+        getSystemNotice(UserRole.ADMIN).andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(noticeId));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN이 ARCHIVED 공지 상세는 200, 조회수·읽음 미기록")
+    void admin_archived_returns200_withoutSideEffects() throws Exception {
+        SystemNotification notice = systemNotice(
+                tenantA, TARGET_CLIENT, false, STATUS_ARCHIVED, null, null);
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(notice));
+
+        getSystemNotice(UserRole.ADMIN).andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value(STATUS_ARCHIVED));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN 다른 테넌트 공지 상세는 404")
+    void admin_otherTenant_returns404() throws Exception {
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(tenantB, TARGET_ALL, false)));
+
+        getSystemNotice(UserRole.ADMIN).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("ADMIN 삭제된 공지 상세는 404")
+    void admin_deleted_returns404() throws Exception {
+        when(systemNotificationRepository.findByTenantIdAndId(eq(tenantA), eq(noticeId)))
+                .thenReturn(Optional.of(systemNotice(tenantA, TARGET_CONSULTANT, true)));
+
+        getSystemNotice(UserRole.ADMIN).andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.errorCode").value(ENTITY_NOT_FOUND))
+                .andExpect(jsonPath("$.status").value(404));
+
+        verify(systemNotificationRepository, never()).incrementViewCount(any());
+        verify(readRepository, never()).save(any());
+    }
+
     @Test
     @DisplayName("CLIENT가 CONSULTANT 대상 공지 읽음 POST는 404, 읽음 미기록")
     void clientCaller_consultantTarget_markAsRead_returns404() throws Exception {
@@ -331,6 +498,16 @@ class NoticeDetailNotFoundMvcTest {
     }
 
     private SystemNotification systemNotice(String tenantId, String targetType, boolean deleted) {
+        return systemNotice(tenantId, targetType, deleted, STATUS_PUBLISHED, null, null);
+    }
+
+    private SystemNotification systemNotice(
+            String tenantId,
+            String targetType,
+            boolean deleted,
+            String status,
+            LocalDateTime publishedAt,
+            LocalDateTime expiresAt) {
         SystemNotification notice = new SystemNotification();
         notice.setId(noticeId);
         notice.setTenantId(tenantId);
@@ -341,6 +518,9 @@ class NoticeDetailNotFoundMvcTest {
         notice.setIsDeleted(deleted);
         notice.setAuthorId(userId);
         notice.setViewCount(0);
+        notice.setStatus(status);
+        notice.setPublishedAt(publishedAt);
+        notice.setExpiresAt(expiresAt);
         return notice;
     }
 

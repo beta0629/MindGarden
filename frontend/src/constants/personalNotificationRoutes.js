@@ -92,6 +92,28 @@ export const resolveNotificationsListPath = (user) => (
     : CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
 );
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ORDER_NUMBER_VISIBLE_CHARS = 8;
+const ORDER_NUMBER_GROUP_CHARS = 4;
+
+/**
+ * 화면에 보이는 주문 번호. UUID 면 앞 8자만 4-4 로 끊어 보여 준다.
+ *
+ * @param {unknown} id
+ * @returns {string}
+ */
+export const formatPersonalOrderNumber = (id) => {
+  const raw = id == null ? '' : String(id).trim();
+  if (!raw) {
+    return '';
+  }
+  if (!UUID_PATTERN.test(raw)) {
+    return raw;
+  }
+  const head = raw.slice(0, ORDER_NUMBER_VISIBLE_CHARS).toUpperCase();
+  return `${head.slice(0, ORDER_NUMBER_GROUP_CHARS)}-${head.slice(ORDER_NUMBER_GROUP_CHARS)}`;
+};
+
 /**
  * @param {unknown} metadata 객체 또는 JSON 문자열
  * @returns {{ kind: string, mappingId: string, productName: string, amount: number|null }}

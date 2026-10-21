@@ -49,6 +49,8 @@ import {
   HardDrive,
   ArrowRight,
   ChevronRight,
+  ChevronLeft,
+  Leaf,
   ChevronDown,
   ChevronUp,
   Menu,
@@ -326,6 +328,8 @@ export const ICONS = {
 
   ARROW_RIGHT: ArrowRight,
   CHEVRON_RIGHT: ChevronRight,
+  CHEVRON_LEFT: ChevronLeft,
+  LEAF: Leaf,
   CHEVRON_DOWN: ChevronDown,
   CHEVRON_UP: ChevronUp,
   MENU: Menu,

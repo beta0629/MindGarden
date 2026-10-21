@@ -1,6 +1,7 @@
 /**
- * 알림 카드 — 아이콘 · 제목 · 안 읽음 · 요약 · 이동 안내.
+ * 알림 카드 — 아이콘(중립 한 색) · 제목 · 안 읽음 점 · 요약 · 이동 안내.
  * 이동이 있으면 「…보기」, 없으면 오른쪽 › 만.
+ * 긴급 등 글자 배지는 badge 슬롯. 좁은 화면에서는 시각이 meta 줄(출처 · 시각)로 내려간다.
  *
  * @author CoreSolution
  * @since 2026-10-16
@@ -11,6 +12,7 @@ import PropTypes from 'prop-types';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
+import './NotificationListCard.css';
 import { NOTIFICATION_PREVIEW_MAX_CHARS, NOTIFICATION_SKELETON_COUNT, NOTIFICATION_PAGE_TEST_IDS } from '../../constants/notificationTabs';
 
 const ChevronIcon = ICONS.CHEVRON_RIGHT;
@@ -33,18 +35,16 @@ const NotificationListCard = ({
   timeIso,
   summary,
   meta,
+  badge,
   unread,
-  unreadLabel,
   unreadSr,
   icon: Icon,
-  iconTone,
   fields,
   goLabel,
   showChevron,
   onClick,
   testId
 }) => {
-  const toneClass = iconTone ? ` notif-card__icon--${iconTone}` : '';
   const readClass = unread ? 'notif-card--unread' : 'notif-card--read';
   const visibleFields = (fields || []).filter((field) => field && field.value);
 
@@ -57,7 +57,7 @@ const NotificationListCard = ({
         data-gnb-chrome-free="true"
         data-testid={testId}
       >
-        <span className={`notif-card__icon${toneClass}`} aria-hidden="true">
+        <span className="notif-card__icon" aria-hidden="true">
           {Icon ? <Icon size={ICON_SIZES.XL} /> : null}
         </span>
         <span className="notif-card__main">
@@ -66,12 +66,8 @@ const NotificationListCard = ({
             <span className="notif-card__title">
               <SafeText>{title}</SafeText>
             </span>
-            {unread ? (
-              <>
-                <span className="sr-only">{unreadSr}</span>
-                <span className="notif-card__unread" aria-hidden="true">{unreadLabel}</span>
-              </>
-            ) : null}
+            {badge || null}
+            {unread && unreadSr ? <span className="sr-only">{unreadSr}</span> : null}
             {timeLabel ? (
               <time className="notif-card__time" dateTime={timeIso || undefined}>{timeLabel}</time>
             ) : null}
@@ -91,9 +87,15 @@ const NotificationListCard = ({
               ))}
             </dl>
           ) : null}
-          {meta ? (
-            <span className="notif-card__meta">
-              <SafeText>{meta}</SafeText>
+          {meta || timeLabel ? (
+            <span className={`notif-card__meta${meta ? '' : ' notif-card__meta--time-only'}`}>
+              {meta ? <span className="notif-card__meta-source"><SafeText>{meta}</SafeText></span> : null}
+              {meta && timeLabel ? (
+                <span className="notif-card__meta-time" aria-hidden="true"> · </span>
+              ) : null}
+              {timeLabel ? (
+                <time className="notif-card__meta-time" dateTime={timeIso || undefined}>{timeLabel}</time>
+              ) : null}
             </span>
           ) : null}
           {goLabel ? (
@@ -120,10 +122,9 @@ NotificationListCard.propTypes = {
   summary: PropTypes.string,
   meta: PropTypes.string,
   unread: PropTypes.bool,
-  unreadLabel: PropTypes.string,
+  badge: PropTypes.node,
   unreadSr: PropTypes.string,
   icon: PropTypes.elementType,
-  iconTone: PropTypes.string,
   fields: PropTypes.arrayOf(PropTypes.shape({
     label: PropTypes.string.isRequired,
     value: PropTypes.string
@@ -140,14 +141,39 @@ NotificationListCard.defaultProps = {
   summary: '',
   meta: '',
   unread: false,
-  unreadLabel: '',
+  badge: null,
   unreadSr: '',
   icon: null,
-  iconTone: '',
   fields: [],
   goLabel: '',
   showChevron: false,
   testId: undefined
+};
+
+/**
+ * 「긴급」 등 글자 배지 — 아이콘 색은 바꾸지 않는다.
+ *
+ * @param {{ label: string }} props
+ */
+export const NotificationUrgentBadge = ({ label }) => (
+  <span className="mg-badge mg-badge-danger">{label}</span>
+);
+
+NotificationUrgentBadge.propTypes = {
+  label: PropTypes.string.isRequired
+};
+
+/**
+ * 목록 구간 라벨(안 읽은 메시지 N건 / 읽은 메시지).
+ *
+ * @param {{ children: React.ReactNode }} props
+ */
+export const NotificationSectionLabel = ({ children }) => (
+  <p className="notif-section-label">{children}</p>
+);
+
+NotificationSectionLabel.propTypes = {
+  children: PropTypes.node.isRequired
 };
 
 export const NotificationLoadingList = ({ label }) => (

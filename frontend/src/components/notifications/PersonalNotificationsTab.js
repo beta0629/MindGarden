@@ -183,10 +183,8 @@ const PersonalNotificationsTab = ({
               ? t(presentation.summaryKey)
               : toNotificationPreview(notification.content)}
             unread={!notification.isRead}
-            unreadLabel={t('common:notification.unified.new_unread')}
             unreadSr={t('common:notification.unified.new_unreadSr')}
             icon={(presentation && TONE_ICONS[presentation.tone]) || BellIcon}
-            iconTone={presentation ? presentation.tone : ''}
             fields={fields}
             goLabel={goLabel}
             showChevron={!destination.path}

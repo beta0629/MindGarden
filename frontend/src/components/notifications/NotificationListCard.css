@@ -1,0 +1,239 @@
+/* 알림 카드·목록·구간 라벨 공통 스타일 (r2). 토큰만 사용. 모든 아이콘 타일은 중립 한 색 */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.notif-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notif-section-label {
+  margin: var(--mg-v2-space-5) 0 var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.notif-section-label:first-child {
+  margin-top: 0;
+}
+
+.notif-card {
+  position: relative;
+  display: flex;
+  gap: var(--mg-v2-space-4);
+  align-items: flex-start;
+  width: 100%;
+  min-height: var(--mg-v2-touch-target-min);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-panel);
+  background: var(--mg-v2-color-surface-card);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.notif-card--unread {
+  border-color: var(--mg-v2-color-border-default);
+}
+
+.notif-card:focus-visible {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-border-focus);
+  outline-offset: var(--mg-v2-space-0-5);
+}
+
+.notif-card__icon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--mg-v2-space-10);
+  height: var(--mg-v2-space-10);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-notif-default-bg);
+  color: var(--mg-v2-notif-default-fg);
+}
+
+.notif-card__main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.notif-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-1) var(--mg-v2-space-2);
+}
+
+.notif-card__dot {
+  flex: 0 0 auto;
+  width: var(--mg-v2-space-2);
+  height: var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-pill);
+  background: var(--mg-v2-notif-unread-dot);
+}
+
+.notif-card__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.notif-card__time {
+  margin-left: auto;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+  white-space: nowrap;
+}
+
+.notif-card__summary {
+  display: block;
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  overflow-wrap: anywhere;
+}
+
+.notif-card--read .notif-card__summary {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.notif-card__fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--mg-v2-space-1) var(--mg-v2-space-4);
+  margin: var(--mg-v2-space-1) 0 0;
+}
+
+.notif-card__fields dt {
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  line-height: var(--mg-v2-space-5);
+}
+
+.notif-card__fields dd {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  line-height: var(--mg-v2-space-5);
+  overflow-wrap: anywhere;
+}
+
+.notif-card__go {
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.notif-card__chev {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.notif-card__meta {
+  display: block;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+/* 넓은 화면: 시각은 제목 줄 오른쪽. 출처가 없으면 meta 줄은 숨긴다. */
+.notif-card__meta-time {
+  display: none;
+}
+
+.notif-card__meta--time-only {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .notif-card {
+    gap: var(--mg-v2-space-3);
+    padding: var(--mg-v2-space-4);
+  }
+
+  .notif-card__head > .notif-card__time {
+    display: none;
+  }
+
+  .notif-card__meta-time,
+  .notif-card__meta--time-only {
+    display: inline;
+  }
+
+  .notif-card__meta--time-only {
+    display: block;
+  }
+
+  .notif-card__chev {
+    display: none;
+  }
+}
+
+.notif-skel {
+  display: flex;
+  gap: var(--mg-v2-space-4);
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-5);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-panel);
+  background: var(--mg-v2-color-surface-card);
+}
+
+.notif-skel__block {
+  display: block;
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-notif-skeleton);
+}
+
+.notif-skel__icon {
+  flex: 0 0 auto;
+  width: var(--mg-v2-space-10);
+  height: var(--mg-v2-space-10);
+  border-radius: var(--mg-v2-radius-lg);
+}
+
+.notif-skel__lines {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.notif-skel__line--title {
+  width: 30%;
+  height: var(--mg-v2-font-size-body-md);
+}
+
+.notif-skel__line--body {
+  width: 60%;
+  height: var(--mg-v2-font-size-caption);
+}
+
+.notif-skel__line--meta {
+  width: 45%;
+  height: var(--mg-v2-font-size-caption);
+}

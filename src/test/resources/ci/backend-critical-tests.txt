@@ -91,3 +91,6 @@
 
 # 2026-10-21 삭제·없는 공지/웰니스 상세 — 500 이 아닌 공통 404
 **/NoticeDetailNotFoundMvcTest.java
+
+# 2026-10-21 알림 수신자 격리 (#1728) — Payment/Session 등 기존 패턴에 없어 ci-be-critical 0건
+**/NotificationLifecycleServiceImplRecipientIsolationTest.java

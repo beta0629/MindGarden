@@ -66,7 +66,23 @@ jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'lux
   virtual: true
 });
 
+// Redirect smoke tests must not mount heavy admin pages or idle-timer UI.
+jest.mock('./components/dashboard-v2/AdminDashboardV2', () => ({
+  __esModule: true,
+  default: function MockAdminDashboardV2() {
+    return null;
+  }
+}));
+jest.mock('./components/common/SessionIdleWarningModal', () => ({
+  __esModule: true,
+  default: function MockSessionIdleWarningModal() {
+    return null;
+  }
+}));
+
 import App from './App';
+
+const ADMIN_ORPHAN_REDIRECT_TIMEOUT_MS = 10000;
 
 describe('App', () => {
   test('루트(/)에서 Phase 3 Public Main Homepage가 렌더된다', async() => {
@@ -116,7 +132,7 @@ describe('App', () => {
 
       await waitFor(() => {
         expect(window.location.pathname).toBe(to);
-      });
+      }, { timeout: ADMIN_ORPHAN_REDIRECT_TIMEOUT_MS });
 
       errSpy.mockRestore();
     });

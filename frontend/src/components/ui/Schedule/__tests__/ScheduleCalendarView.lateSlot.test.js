@@ -8,7 +8,6 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
-import ScheduleCalendarView from '../ScheduleCalendarView';
 import { DEFAULT_ZONE, formatDateKeyInZone } from '../../../../utils/zonedDateTime';
 
 class ResizeObserverStub {
@@ -17,6 +16,20 @@ class ResizeObserverStub {
   disconnect() {}
 }
 global.ResizeObserver = global.ResizeObserver || ResizeObserverStub;
+
+// @fullcalendar/luxon3 may be listed in package.json but absent in CI/agent node_modules.
+// This suite renders real FullCalendar, so prefer the real plugin when installed.
+jest.mock('@fullcalendar/luxon3', () => {
+  try {
+    return jest.requireActual('@fullcalendar/luxon3');
+  } catch {
+    return { __esModule: true, default: { id: 'luxon3' } };
+  }
+}, {
+  virtual: true
+});
+
+import ScheduleCalendarView from '../ScheduleCalendarView';
 
 const LATE_TITLE = 'late-2000-schedule';
 const LATER_TITLE = 'late-2130-schedule';

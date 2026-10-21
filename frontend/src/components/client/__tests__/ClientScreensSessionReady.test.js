@@ -53,7 +53,7 @@ jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: (key, vars) => {
       if (key === 'common:pagination.rangeSummary' && vars) {
-        return `전체 ${vars.total}건 중 ${vars.start}–${vars.end}건 · ${vars.page}/${vars.totalPages}페이지`;
+        return `전체 ${vars.total}건 중 ${vars.start}–${vars.end}건 · ${vars.page}페이지 / 총 ${vars.totalPages}페이지`;
       }
       return key;
     }

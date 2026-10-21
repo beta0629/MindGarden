@@ -1,5 +1,5 @@
 /**
- * 공통 페이징 안내 문구 — 「1페이지 / 총 N페이지」
+ * 공통 페이징 안내 문구 — 「전체 N건 중 x–y건 · p페이지 / 총 m페이지」
  *
  * @author CoreSolution
  * @since 2026-10-21
@@ -54,7 +54,8 @@ export const buildPagedListSummaryLabel = ({
   if (typeof t === 'function') {
     return t(i18nKey, range);
   }
-  return `${range.page}페이지 / 총 ${range.totalPages}페이지`;
+  // t 미주입 폴백 — common:pagination.rangeSummary(ko) 와 동일 변수 구조
+  return `전체 ${range.total}건 중 ${range.start}–${range.end}건 · ${range.page}페이지 / 총 ${range.totalPages}페이지`;
 };
 
 export default buildPagedListSummaryLabel;

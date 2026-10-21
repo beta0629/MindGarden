@@ -88,3 +88,6 @@
 **/RichNoticeHtmlSanitizerTest.java
 **/SystemNotificationContentSanitizeTest.java
 **/WellnessNotificationSchedulerSanitizeTest.java
+
+# 2026-10-21 삭제·없는 공지/웰니스 상세 — 500 이 아닌 공통 404
+**/NoticeDetailNotFoundMvcTest.java

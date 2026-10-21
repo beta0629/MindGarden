@@ -8,8 +8,8 @@ import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.NotificationType;
 import com.coresolution.consultation.entity.Notification;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.NotificationRepository;
-import jakarta.persistence.EntityNotFoundException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;

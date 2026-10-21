@@ -353,15 +353,24 @@
           }
         },
         "route": {
-          "order": { "go": "주문 보기" },
-          "schedule": { "go": "일정 보기" },
-          "message": { "go": "메시지 보기" },
-          "wellness": { "go": "웰니스 보기" }
+          "order": {
+            "go": "주문 보기"
+          },
+          "schedule": {
+            "go": "일정 보기"
+          },
+          "message": {
+            "go": "메시지 보기"
+          },
+          "wellness": {
+            "go": "웰니스 보기"
+          }
         },
         "field": {
           "product": "상품",
           "amount": "금액",
-          "amountValue": "{{amount}}원"
+          "amountValue": "{{amount}}원",
+          "orderNumber": "주문 번호"
         }
       },
       "systemEmpty": "시스템 공지가 없습니다",
@@ -380,7 +389,9 @@
       "messageTypeHomework": "과제 안내",
       "messageTypeReminder": "알림",
       "messageTypeUrgent": "긴급",
-      "adminLabel": "관리자"
+      "adminLabel": "관리자",
+      "sectionUnread": "안 읽은 메시지 {{count}}건",
+      "sectionRead": "읽은 메시지"
     }
   },
   "menu": {

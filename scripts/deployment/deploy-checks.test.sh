@@ -1680,4 +1680,51 @@ PY
   fi
 fi
 
+# Dev JVM heap is one file. Prod workflows must not reference it, and the flag string
+# must not be copied into dev workflow YAML (fallbacks load EnvironmentFile only).
+DEV_JVM_ENV="$REPO_ROOT/config/jvm/mindgarden-dev-jvm.env"
+DEV_UNIT="$REPO_ROOT/config/systemd/mindgarden-dev.service"
+ONBOARD_WF="$REPO_ROOT/.github/workflows/deploy-onboarding-dev.yml"
+UNIFIED_DEV_WF="$REPO_ROOT/.github/workflows/deploy-dev.yml"
+if [ -f "$DEV_JVM_ENV" ] && grep -q 'JAVA_OPTS="-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=384m -XX:+UseG1GC"' "$DEV_JVM_ENV"; then
+  echo "ok - mindgarden-dev-jvm.env has dev heap 512m/1536m and MaxMetaspaceSize 384m"
+else
+  echo "not ok - mindgarden-dev-jvm.env missing expected JAVA_OPTS"
+  fail=1
+fi
+if [ -f "$DEV_UNIT" ] && grep -q 'EnvironmentFile=-/etc/mindgarden/dev-jvm.env' "$DEV_UNIT" \
+  && ! grep -q 'Xmx4g' "$DEV_UNIT"; then
+  echo "ok - mindgarden-dev.service loads dev-jvm.env and has no Xmx4g"
+else
+  echo "not ok - mindgarden-dev.service must load dev-jvm.env and drop Xmx4g"
+  fail=1
+fi
+for wf in "$DEV_WF" "$ONBOARD_WF" "$UNIFIED_DEV_WF"; do
+  if grep -q 'Xmx4g\|Xmx1536m\|MaxMetaspaceSize' "$wf"; then
+    echo "not ok - $(basename "$wf") still embeds JVM heap flags"
+    fail=1
+  elif ! grep -q 'dev-jvm.env' "$wf"; then
+    echo "not ok - $(basename "$wf") does not install dev-jvm.env"
+    fail=1
+  elif ! grep -q 'print-dev-backend-memory.sh' "$wf"; then
+    echo "not ok - $(basename "$wf") missing post-restart memory snapshot"
+    fail=1
+  else
+    echo "ok - $(basename "$wf") uses dev-jvm.env and memory snapshot"
+  fi
+done
+if grep -q 'dev-jvm.env\|Xmx1536m\|MaxMetaspaceSize=384m' "$PROD_WF" \
+  || grep -q 'dev-jvm.env\|Xmx1536m' "$REPO_ROOT/deployment/deploy-production.sh"; then
+  echo "not ok - prod deploy references dev JVM opts"
+  fail=1
+else
+  echo "ok - prod deploy does not reference dev JVM opts"
+fi
+if ! grep -q 'Xmx2g' "$REPO_ROOT/deployment/deploy-production.sh"; then
+  echo "not ok - deployment/deploy-production.sh lost prod -Xmx2g"
+  fail=1
+else
+  echo "ok - deployment/deploy-production.sh still has prod -Xmx2g"
+fi
+
 exit "$fail"

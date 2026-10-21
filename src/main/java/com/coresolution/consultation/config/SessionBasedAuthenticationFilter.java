@@ -8,6 +8,7 @@ import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSession;
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
@@ -276,18 +277,21 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                     // 세션에 SecurityContext 저장 (명시적으로)
                     session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
                     
+                    // 역할별 HttpSession TTL (활성 역할 기준; 역할 전환 시에도 재설정)
+                    int roleTtlSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole());
+                    if (session.getMaxInactiveInterval() != roleTtlSeconds) {
+                        session.setMaxInactiveInterval(roleTtlSeconds);
+                    }
+
                     // HttpSession·쿠키·DB user_sessions 동일 SSOT로 활동 슬라이딩
                     slideDbSessionIfNeeded(session, jsessionIdFromCookie);
                     
                     // 세션 쿠키 설정 (운영 환경 호환성)
                     if (requestPath.contains("/social-account")) {
                         log.info("🔍 소셜 계정 요청 - 세션 쿠키 설정 확인");
-                        // 세션 쿠키가 제대로 설정되었는지 확인
                         String sessionId = session.getId();
                         log.info("🔍 현재 세션 ID: {}", sessionId);
-                        
-                        session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
-                        log.info("🔍 세션 만료 시간 설정: {}초", sessionTimeoutProperties.getTimeoutSeconds());
+                        log.info("🔍 세션 만료 시간 설정: {}초 (role={})", roleTtlSeconds, user.getRole());
                     }
                     
                     log.info("✅ 세션 기반 인증 성공: 사용자={}, 역할={}, tenantId={}", EmailLogMasking.maskForLog(user.getEmail()), user.getRole(), user.getTenantId());
@@ -375,14 +379,35 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
+            int timeoutMinutes = resolveSlidingTimeoutMinutes(session);
             userSessionService.slideActiveSession(
                     dbSessionId,
-                    sessionTimeoutProperties.getTimeoutMinutes(),
+                    timeoutMinutes,
                     SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
         } catch (Exception e) {
             log.warn("⚠️ user_sessions 슬라이딩 실패(인증 유지): sessionId={}, error={}",
                     dbSessionId, e.getMessage());
         }
+    }
+
+    /**
+     * DB user_sessions 슬라이딩 TTL(분). 세션 역할 우선, 없으면 기존 maxInactiveInterval, 최후 ADMIN 폴백.
+     *
+     * @param session HttpSession (nullable)
+     * @return 타임아웃 분
+     */
+    private int resolveSlidingTimeoutMinutes(HttpSession session) {
+        if (session != null) {
+            UserRole role = sessionTimeoutProperties.resolveRoleFromSession(session);
+            if (role != null) {
+                return sessionTimeoutProperties.getTimeoutMinutesForRole(role);
+            }
+            int existingSeconds = session.getMaxInactiveInterval();
+            if (existingSeconds > 0) {
+                return Math.max(1, existingSeconds / 60);
+            }
+        }
+        return sessionTimeoutProperties.getTimeoutMinutes();
     }
 
     /**
@@ -582,7 +607,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             session.setAttribute(SessionConstants.SESSION_ID, jsessionId);
             session.setAttribute(SessionConstants.TENANT_ID, user.getTenantId());
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
-            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            session.setMaxInactiveInterval(
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
         }
         slideDbSessionIfNeeded(session, jsessionId);
         return true;

@@ -50,6 +50,9 @@ class SessionBasedAuthenticationFilterSlidingTest {
 
     private static final String SESSION_ID = "AABBCCDDEEFF00112233445566778899";
     private static final String REQUEST_PATH = "/api/v1/schedules/consultation-records";
+    /** CONSULTANT 역할 TTL(분) — SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT / 60 */
+    private static final int CONSULTANT_TIMEOUT_MINUTES =
+            SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT / 60;
 
     @Mock
     private UserSessionService userSessionService;
@@ -93,7 +96,7 @@ class SessionBasedAuthenticationFilterSlidingTest {
         when(userSessionService.getActiveSession(SESSION_ID)).thenReturn(dbSession);
         when(userSessionService.slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(CONSULTANT_TIMEOUT_MINUTES),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
                 .thenReturn(true);
 
@@ -110,8 +113,10 @@ class SessionBasedAuthenticationFilterSlidingTest {
 
         verify(userSessionService).slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(CONSULTANT_TIMEOUT_MINUTES),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS));
+        assertThat(httpSession.getMaxInactiveInterval())
+                .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT);
         assertThat(httpSession.isInvalid()).isFalse();
         assertThat(SecurityContextHolder.getContext().getAuthentication())
                 .as("활성 세션 핑 후 인증이 유지되어야 함")
@@ -159,7 +164,7 @@ class SessionBasedAuthenticationFilterSlidingTest {
         when(userSessionService.getActiveSession(base64Cookie)).thenReturn(null);
         when(userSessionService.slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(CONSULTANT_TIMEOUT_MINUTES),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
                 .thenReturn(true);
 
@@ -180,7 +185,7 @@ class SessionBasedAuthenticationFilterSlidingTest {
                 .isNotNull();
         verify(userSessionService).slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(CONSULTANT_TIMEOUT_MINUTES),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS));
         verify(filterChain).doFilter(request, response);
     }
@@ -204,7 +209,7 @@ class SessionBasedAuthenticationFilterSlidingTest {
                 .thenReturn(java.util.Optional.of(user));
         when(userSessionService.slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(CONSULTANT_TIMEOUT_MINUTES),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
                 .thenReturn(true);
 
@@ -220,6 +225,8 @@ class SessionBasedAuthenticationFilterSlidingTest {
         assertThat(request.getSession(false)).isNotNull();
         assertThat(request.getSession(false).getAttribute(SessionConstants.SESSION_ID))
                 .isEqualTo(SESSION_ID);
+        assertThat(request.getSession(false).getMaxInactiveInterval())
+                .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT);
         verify(filterChain).doFilter(request, response);
     }
 

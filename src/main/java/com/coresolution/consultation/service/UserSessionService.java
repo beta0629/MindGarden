@@ -141,8 +141,8 @@ public interface UserSessionService {
      * 활성 세션을 슬라이딩 연장한다 ({@code lastActivityAt} + {@code expiresAt}).
      *
      * <p>마지막 활동이 {@code throttleSeconds} 이내이면 DB 쓰기를 건너뛴다.
-     * TTL은 {@link com.coresolution.consultation.config.SessionTimeoutProperties} 분 값과
-     * 동일하게 넘긴다 (HttpSession·쿠키와 SSOT 정합).</p>
+     * TTL은 {@link com.coresolution.consultation.config.SessionTimeoutProperties#getTimeoutMinutesForRole}
+     * 역할별 분 값과 동일하게 넘긴다 (HttpSession·쿠키와 SSOT 정합).</p>
      *
      * @param sessionId HTTP/DB 세션 ID
      * @param timeoutMinutes 연장 TTL(분) — SSOT timeout minutes

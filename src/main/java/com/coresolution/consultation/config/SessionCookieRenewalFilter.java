@@ -41,8 +41,9 @@ import lombok.extern.slf4j.Slf4j;
  * (이 필터는 {@link SecurityConfig} 에서 {@code SessionBasedAuthenticationFilter} 뒤에 등록되어
  * pre-chain 시점에 이미 {@code SecurityContextHolder} 가 채워져 있다.)</p>
  *
- * <p><strong>TTL SSOT</strong>: Max-Age 와 {@code HttpSession#setMaxInactiveInterval} 은 모두
- * {@link SessionTimeoutProperties#getTimeoutSeconds()} ({@code HTTP_SESSION_MAX_INACTIVE}) 를 쓴다.</p>
+ * <p><strong>TTL SSOT</strong>: Max-Age 와 {@code HttpSession#setMaxInactiveInterval} 은
+ * {@link SessionTimeoutProperties#resolveTimeoutSeconds(HttpSession)} 로 역할별 TTL을 쓴다.
+ * 역할을 알 수 없으면 기존 {@code maxInactiveInterval} 을 유지한다(짧은/긴 TTL로 덮어쓰지 않음).</p>
  *
  * <p>성능을 위해 갱신은 {@link SessionConstants#SESSION_SLIDING_THROTTLE_SECONDS} 간격으로 스로틀링된다.
  * 이 값은 쿠키 Set-Cookie 헤더 갱신 빈도 제한이며, HttpSession TTL
@@ -153,19 +154,19 @@ public class SessionCookieRenewalFilter extends OncePerRequestFilter {
     }
 
     /**
-     * 쿠키 Max-Age 와 HttpSession {@code maxInactiveInterval} 을 TTL SSOT 로 함께 연장한다.
+     * 쿠키 Max-Age 와 HttpSession {@code maxInactiveInterval} 을 역할별 TTL SSOT 로 함께 연장한다.
      *
      * @return Set-Cookie 를 추가했으면 true
      */
     private boolean renewCookie(HttpServletRequest request,
                                 HttpServletResponse response,
                                 HttpSession session) {
-        int ttlSeconds = sessionTimeoutProperties.getTimeoutSeconds();
+        int ttlSeconds = sessionTimeoutProperties.resolveTimeoutSeconds(session);
         if (ttlSeconds <= 0) {
             return false;
         }
 
-        // 컨테이너 세션과 쿠키가 서로 다른 만료를 갖지 않도록 SSOT 로 정렬 (UI 리필만으로 착시 금지)
+        // 역할이 알려진 경우에만 interval 을 SSOT 로 정렬. 역할 미상 시 resolve 가 기존 값을 유지한다.
         if (session.getMaxInactiveInterval() != ttlSeconds) {
             session.setMaxInactiveInterval(ttlSeconds);
         }

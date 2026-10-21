@@ -101,4 +101,13 @@ describe('MGPagination Clinic-OS', () => {
     );
     expect(cssSource).not.toMatch(/\.mg-pagination__button--current-neutral\.mg-v2-button-outline\s*\{/);
   });
+
+  test('CSS: 좁은 폭에서 compact 포함 컬럼(문구/버튼 두 줄)·넘침 방지', () => {
+    expect(cssSource).toMatch(/max-width:\s*100%/);
+    expect(cssSource).toMatch(/min-width:\s*0/);
+    expect(cssSource).not.toMatch(/\.mg-pagination:not\(\.mg-pagination--compact\)/);
+    expect(cssSource).toMatch(
+      /@media\s*\(\s*max-width:\s*768px\s*\)\s*\{[\s\S]*?\.mg-pagination\s*\{[\s\S]*?flex-direction:\s*column/
+    );
+  });
 });

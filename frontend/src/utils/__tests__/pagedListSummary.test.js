@@ -21,13 +21,21 @@ describe('resolvePagedListRange', () => {
 
 describe('buildPagedListSummaryLabel', () => {
   test('i18n 키로 요약을 만든다', () => {
-    const t = (key, vars) => `${key}:${vars.total}:${vars.start}-${vars.end}:${vars.page}/${vars.totalPages}`;
+    const t = (key, vars) => `${key}:${vars.page}/${vars.totalPages}`;
     expect(buildPagedListSummaryLabel({
       t,
       total: 9,
       page: 2,
       pageSize: 6,
       totalPages: 2
-    })).toBe('common:pagination.rangeSummary:9:7-9:2/2');
+    })).toBe('common:pagination.rangeSummary:2/2');
+  });
+
+  test('t 없이 「N페이지 / 총 M페이지」형식을 쓴다', () => {
+    expect(buildPagedListSummaryLabel({
+      total: 34,
+      page: 1,
+      pageSize: 6
+    })).toBe('1페이지 / 총 6페이지');
   });
 });

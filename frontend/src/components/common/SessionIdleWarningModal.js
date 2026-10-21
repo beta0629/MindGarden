@@ -9,7 +9,9 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
- * 카운트다운 remainingMs≤0 이고 연장 버튼이 진행 중이 아니면 logout() → /login?logout=success.
+ * 카운트다운 remainingMs≤0 이고 연장 버튼이 진행 중이 아니면
+ * logout({ reason: sessionExpiry }) → /login?logout=success&redirect=… (복귀 경로 보존).
+ * 모달 「로그아웃」 버튼·수동 로그아웃은 options 없이 복귀 경로를 붙이지 않는다.
  * 그 전 checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다.
  * current-user 가 200 이거나 재확인 뒤 remainingMs>0 이어도 연장으로 보지 않고 로그아웃한다.
  * 연장으로 세는 것은 연장 버튼뿐이다.
@@ -38,6 +40,7 @@ import { useSession } from '../../contexts/SessionContext';
 import {
   SESSION_IDLE_EXPIRY_TIMER_SLACK_MS,
   SESSION_IDLE_WARNING_MS,
+  SESSION_LOGOUT_REASON,
   SESSION_REMAINING_DISPLAY,
   isSessionPublicPath
 } from '../../constants/session';
@@ -305,7 +308,8 @@ const SessionIdleWarningModal = () => {
   }, [isOpen, sessionInfo]);
 
   /**
-   * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면 logout() → /login?logout=success.
+   * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면
+   * logout({ reason: SESSION_EXPIRY }) → /login?logout=success&redirect=… .
    * checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다. 200 이나 remainingMs>0 은 연장이 아니다.
    * current-user 401 로 사용자가 비어도 서버 logout 으로 refresh 를 폐기하고 로그인으로 보낸다.
    * logout 이 거절돼도 이동은 한다. 같은 만료에서 logout 은 한 번만.
@@ -365,7 +369,10 @@ const SessionIdleWarningModal = () => {
       }
       expiryLogoutDoneRef.current = true;
       setIsOpen(false);
-      await logout();
+      await logout({
+        preserveReturnPath: true,
+        reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY
+      });
     })();
   }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 

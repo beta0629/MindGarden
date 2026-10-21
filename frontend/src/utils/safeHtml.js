@@ -194,6 +194,22 @@ function unwrapElement(element) {
 }
 
 /**
+ * 허용 목록에 없는 속성을 모두 제거한다.
+ * DOMPurify 미설치(Jest stub)여도 힐링 본문의 onclick/style/class 가 남지 않게 한다.
+ *
+ * @param {Element} element
+ * @param {readonly string[]|undefined} allowedAttrs
+ */
+function stripDisallowedAttributes(element, allowedAttrs) {
+  const allowed = new Set(allowedAttrs || []);
+  Array.from(element.attributes || []).forEach((attr) => {
+    if (!allowed.has(attr.name)) {
+      element.removeAttribute(attr.name);
+    }
+  });
+}
+
+/**
  * script·style·iframe 은 내용까지 지우고, 나머지 비허용 태그는 벗긴다.
  *
  * @param {string} html
@@ -218,7 +234,9 @@ function prepareFragment(html, policy) {
       }
       if (!allowed.has(tag)) {
         unwrapElement(element);
+        continue;
       }
+      stripDisallowedAttributes(element, policy.allowedAttrs);
     }
     removeComments(root);
     if (policy.stripEmoji) {

@@ -121,6 +121,29 @@ const removeStored = () => {
   }
 };
 
+const writeStored = (path) => {
+  try {
+    window.sessionStorage.setItem(LOGIN_RETURN_PATH_STORAGE_KEY, JSON.stringify({ path, savedAt: Date.now() }));
+  } catch {
+    /* 저장 불가면 기존 동작(역할 대시보드) */
+  }
+};
+
+/**
+ * 유휴 만료·401 로그아웃처럼 지금 화면(pathname+search)을 재로그인 복귀 주소로 맡긴다.
+ * {@link sanitizeLoginReturnPath} 를 통과한 내부 경로만 {@code mg.loginReturnPath} 에 남긴다.
+ * 외부 URL·{@code //}·스킴·로그인 루프는 저장하지 않으며, 거절이 이미 맡긴 값을 지우지는 않는다.
+ *
+ * @param {unknown} value
+ * @returns {string} 저장한 경로, 거절이면 빈 문자열
+ */
+export const rememberLoginReturnPath = (value) => {
+  const path = sanitizeLoginReturnPath(value);
+  if (!path) return '';
+  writeStored(path);
+  return path;
+};
+
 /**
  * 외부 인증 화면으로 떠나기 직전, 현재 주소의 {@code ?redirect=} 를 맡긴다. 값이 없거나 안전하지 않으면 지운다.
  */
@@ -130,11 +153,7 @@ export const rememberLoginReturnPathFromUrl = () => {
     removeStored();
     return;
   }
-  try {
-    window.sessionStorage.setItem(LOGIN_RETURN_PATH_STORAGE_KEY, JSON.stringify({ path, savedAt: Date.now() }));
-  } catch {
-    /* 저장 불가면 기존 동작(역할 대시보드) */
-  }
+  writeStored(path);
 };
 
 const readStored = () => {

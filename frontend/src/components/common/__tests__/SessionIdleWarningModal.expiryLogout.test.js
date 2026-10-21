@@ -28,7 +28,8 @@ jest.mock('../../../utils/sessionManager', () => ({
 }));
 
 jest.mock('../../../utils/sessionRedirect', () => ({
-  redirectToLoginPageOnce: jest.fn(() => true)
+  redirectToLoginPageOnce: jest.fn(() => true),
+  getCurrentLocationReturnUrl: jest.fn(() => '/admin/clients?tab=3')
 }));
 
 /* eslint-disable import/first -- jest.mock 이후 import */
@@ -38,8 +39,8 @@ import { MemoryRouter } from 'react-router-dom';
 import SessionIdleWarningModal from '../SessionIdleWarningModal';
 import { useSession } from '../../../contexts/SessionContext';
 import { sessionManager } from '../../../utils/sessionManager';
-import { redirectToLoginPageOnce } from '../../../utils/sessionRedirect';
-import { SESSION_IDLE_WARNING_MS } from '../../../constants/session';
+import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from '../../../utils/sessionRedirect';
+import { SESSION_IDLE_WARNING_MS, SESSION_LOGOUT_REASON } from '../../../constants/session';
 import { computeSessionExpiryState } from '../../../utils/sessionExpiryDisplay';
 /* eslint-enable import/first */
 
@@ -52,6 +53,8 @@ const RENEWED_ELAPSED_SEC = 0;
 const DUPLICATE_GUARD_ADVANCE_MS = 5 * MS_PER_SECOND;
 const PAST_EXPIRY_SLACK_MS = MS_PER_SECOND;
 const DASHBOARD_PATH = '/admin/dashboard';
+/** 만료 직전에 잡아 두는 복귀 경로. 라우터 엔트리와 별개로 window 주소를 흉내 낸다. */
+const RETURN_PATH = '/admin/clients?tab=3';
 const SIGNED_IN_USER = Object.freeze({ id: 1, role: 'ADMIN' });
 const MICROTASK_FLUSHES = 4;
 
@@ -113,6 +116,8 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     sessionManager.getUser.mockReset();
     sessionManager.getSessionInfo.mockReset();
     redirectToLoginPageOnce.mockClear();
+    getCurrentLocationReturnUrl.mockReset();
+    getCurrentLocationReturnUrl.mockReturnValue(RETURN_PATH);
   });
 
   afterEach(() => {
@@ -160,7 +165,8 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     expect(logout).toHaveBeenCalledTimes(1);
     expect(logout).toHaveBeenCalledWith(expect.objectContaining({
       preserveReturnPath: true,
-      reason: 'sessionExpiry'
+      reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+      returnPath: RETURN_PATH
     }));
 
     await act(async() => {
@@ -280,10 +286,16 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
       await flushMicrotasks();
     });
 
-    // Then — 서버 로그아웃 1회, 로그인 이동 1회
+    // Then — 서버 로그아웃 1회(복귀 보존), 잡아 둔 경로로 로그인 이동 1회
     expect(checkSession).toHaveBeenCalledWith(true, { silent: true, idleExpiry: true });
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(logout).toHaveBeenCalledWith({
+      preserveReturnPath: true,
+      reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+      returnPath: RETURN_PATH
+    });
     expect(redirectToLoginPageOnce).toHaveBeenCalledTimes(1);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith({ returnUrl: RETURN_PATH });
     expect(screen.queryByTestId('session-idle-extend')).not.toBeInTheDocument();
   });
 
@@ -297,7 +309,13 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
 
     // Then
     expect(logout).toHaveBeenCalledTimes(1);
+    expect(logout).toHaveBeenCalledWith({
+      preserveReturnPath: true,
+      reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+      returnPath: RETURN_PATH
+    });
     expect(redirectToLoginPageOnce).toHaveBeenCalledTimes(1);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith({ returnUrl: RETURN_PATH });
     expect(screen.queryByTestId('session-idle-extend')).not.toBeInTheDocument();
   });
 });

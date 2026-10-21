@@ -5,6 +5,8 @@
  * @since 2026-10-04
  */
 
+const { LOGIN_RETURN_PATH_STORAGE_KEY } = require('../loginReturnPath');
+
 const HOST = 'tenant.example.test';
 const ORIGIN = `https://${HOST}`;
 
@@ -17,6 +19,7 @@ const loadModule = () => {
 
 beforeEach(() => {
   originalLocation = window.location;
+  window.sessionStorage.clear();
   delete window.location;
   window.location = {
     hostname: HOST,
@@ -68,6 +71,8 @@ describe('redirectToLoginPageOnce + 예약 복귀 경로', () => {
 
     expect(window.location.href)
       .toBe(`${ORIGIN}/login?redirect=${encodeURIComponent('/consultant/schedule?scheduleId=30')}`);
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe('/consultant/schedule?scheduleId=30');
   });
 
   test('반례: 외부 주소는 예약되지 않는다', () => {
@@ -86,9 +91,11 @@ describe('redirectToLoginPageOnce + 예약 복귀 경로', () => {
     first.redirectToLoginPageOnce();
     expect(window.location.href).toBe(`${ORIGIN}/login?redirect=${encodeURIComponent('/consultant/schedule')}` /* 복귀 주소 없으면 현재 화면 */);
 
+    window.sessionStorage.clear();
     const second = loadModule();
     second.setPendingLoginReturnUrl('/consultant/schedule');
     second.redirectToLoginPageOnce({ search: '?reason=duplicate-login' });
     expect(window.location.href).toBe(`${ORIGIN}/login?reason=duplicate-login`);
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
   });
 });

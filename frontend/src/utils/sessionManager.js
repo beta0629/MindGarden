@@ -20,7 +20,7 @@ import {
 } from './subdomainUtils';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from './sessionRedirect';
-import { sanitizeLoginReturnPath } from './loginReturnPath';
+import { rememberLoginReturnPath, sanitizeLoginReturnPath } from './loginReturnPath';
 import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
@@ -29,11 +29,26 @@ import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocal
 import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
 
 /**
+ * 만료 로그아웃이 맡길 복귀 경로.
+ * {@code returnPath} 를 넘기면 그 값만 검사한다(이미 /login 으로 바뀐 주소를 다시 읽지 않음).
+ * 없으면 현재 주소. 안전하지 않으면 빈 문자열.
+ *
+ * @param {{ returnPath?: string }} [options]
+ * @returns {string}
+ */
+function resolvePostLogoutReturnPath(options = {}) {
+  const rawReturn = Object.prototype.hasOwnProperty.call(options, 'returnPath')
+    ? options.returnPath
+    : getCurrentLocationReturnUrl();
+  return sanitizeLoginReturnPath(rawReturn);
+}
+
+/**
  * 로그아웃 후 /login 검색 문자열.
  * 기본은 {@code ?logout=success}. 세션 만료 보존 옵션일 때만 안전한 내부 경로를
  * {@code redirect} 로 붙인다(스킴·//·외부·/login 자기참조는 sanitize 가 거부).
  *
- * @param {{ preserveReturnPath?: boolean, reason?: string }} [options]
+ * @param {{ preserveReturnPath?: boolean, reason?: string, returnPath?: string }} [options]
  * @returns {string} 선행 ? 포함
  */
 export function buildPostLogoutLoginSearch(options = {}) {
@@ -42,7 +57,7 @@ export function buildPostLogoutLoginSearch(options = {}) {
   const preserveReturnPath = options.preserveReturnPath === true
     || options.reason === SESSION_LOGOUT_REASON.SESSION_EXPIRY;
   if (preserveReturnPath) {
-    const safePath = sanitizeLoginReturnPath(getCurrentLocationReturnUrl());
+    const safePath = resolvePostLogoutReturnPath(options);
     if (safePath) {
       params.set(LOGIN_RETURN_URL_PARAM, safePath);
     }
@@ -717,13 +732,18 @@ class SessionManager {
   /**
    * 로그아웃.
    *
-   * @param {{ preserveReturnPath?: boolean, reason?: string }} [options]
+   * @param {{ preserveReturnPath?: boolean, reason?: string, returnPath?: string }} [options]
    *   유휴/세션 만료 자동 로그아웃만 {@code preserveReturnPath: true} 또는
    *   {@code reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY}. 수동 로그아웃은 인자 없이 호출.
+   *   {@code returnPath} 는 이동 전에 잡아 둔 pathname+search. 없으면 지금 주소를 쓴다.
    */
   async logout(options = {}) {
-    // sessionStorage.clear 전에 현재 경로를 읽어 복귀 쿼리를 만든다(만료 보존 시에만 사용).
+    // sessionStorage.clear 전에 복귀 경로를 확정한다(만료 보존 시에만 사용).
+    // 저장은 clear 이후에 한다. 정리가 mg.loginReturnPath 를 지우지 않게.
     const loginSearch = buildPostLogoutLoginSearch(options);
+    const preserveReturnPath = options.preserveReturnPath === true
+      || options.reason === SESSION_LOGOUT_REASON.SESSION_EXPIRY;
+    const safeReturnPath = preserveReturnPath ? resolvePostLogoutReturnPath(options) : '';
     const preservedForRedirect = {
       subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
       subdomain: sessionStorage.getItem('subdomain'),
@@ -771,6 +791,9 @@ class SessionManager {
         await this.applyClientLogoutCleanupPreserveSubdomain();
       } catch (purgeError) {
         console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
+      }
+      if (safeReturnPath) {
+        rememberLoginReturnPath(safeReturnPath);
       }
 
       console.log('✅ 클라이언트 로그아웃 완료');

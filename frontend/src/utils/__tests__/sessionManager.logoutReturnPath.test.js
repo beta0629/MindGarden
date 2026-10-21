@@ -25,8 +25,8 @@ jest.mock('../sessionRedirect', () => {
 
 import { LOGIN_RETURN_URL_PARAM } from '../../constants/consultationLogAutosaveConstants';
 import { LOGOUT_REDIRECT_QUERY, SESSION_LOGOUT_REASON } from '../../constants/session';
-import { buildPostLogoutLoginSearch } from '../sessionManager';
-import sessionManager from '../sessionManager';
+import { LOGIN_RETURN_PATH_STORAGE_KEY } from '../loginReturnPath';
+import sessionManager, { buildPostLogoutLoginSearch } from '../sessionManager';
 
 /** isLocalhost() 가 true 가 되도록 localhost origin 사용 */
 const ORIGIN = 'http://localhost';
@@ -97,10 +97,14 @@ describe('sessionManager.logout — redirect 쿼리', () => {
     setLocation('/admin/clients', '?tab=2');
     mockGetCurrentLocationReturnUrl.mockReset();
     mockGetCurrentLocationReturnUrl.mockReturnValue('/admin/clients?tab=2');
+    window.sessionStorage.clear();
     global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
     jest.spyOn(sessionManager, 'setPostLogoutGateBeforeRedirect').mockImplementation(() => {});
+    // clear 가 저장보다 먼저면 복귀 경로가 사라진다. 구현은 clear 이후에 맡겨야 한다.
     jest.spyOn(sessionManager, 'applyClientLogoutCleanupPreserveSubdomain')
-      .mockResolvedValue(undefined);
+      .mockImplementation(async() => {
+        window.sessionStorage.clear();
+      });
   });
 
   afterEach(() => {
@@ -109,14 +113,15 @@ describe('sessionManager.logout — redirect 쿼리', () => {
     jest.restoreAllMocks();
   });
 
-  it('수동 logout() 은 redirect 없이 /login?logout=success', async() => {
+  it('수동 logout() 은 redirect 없이 /login?logout=success 이고 저장소에 맡기지 않는다', async() => {
     await sessionManager.logout();
     expect(window.location.replace).toHaveBeenCalledWith(
       `${ORIGIN}/login?${LOGOUT_REDIRECT_QUERY.PARAM}=${LOGOUT_REDIRECT_QUERY.SUCCESS}`
     );
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
   });
 
-  it('세션 만료 logout 은 redirect 를 포함한다', async() => {
+  it('세션 만료 logout 은 redirect 쿼리와 mg.loginReturnPath 를 남긴다', async() => {
     await sessionManager.logout({
       preserveReturnPath: true,
       reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY
@@ -126,5 +131,40 @@ describe('sessionManager.logout — redirect 쿼리', () => {
     const params = new URLSearchParams(calledUrl.slice(`${ORIGIN}/login?`.length));
     expect(params.get(LOGOUT_REDIRECT_QUERY.PARAM)).toBe(LOGOUT_REDIRECT_QUERY.SUCCESS);
     expect(params.get(LOGIN_RETURN_URL_PARAM)).toBe('/admin/clients?tab=2');
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe('/admin/clients?tab=2');
+  });
+
+  it('이미 /login 이어도 잡아 둔 returnPath 를 쿼리와 저장소에 싣는다', async() => {
+    setLocation('/login', '?logout=success');
+    mockGetCurrentLocationReturnUrl.mockReturnValue('/login?logout=success');
+    await sessionManager.logout({
+      preserveReturnPath: true,
+      reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+      returnPath: '/admin/clients?tab=2'
+    });
+    const calledUrl = window.location.replace.mock.calls[0][0];
+    const params = new URLSearchParams(calledUrl.slice(`${ORIGIN}/login?`.length));
+    expect(params.get(LOGIN_RETURN_URL_PARAM)).toBe('/admin/clients?tab=2');
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe('/admin/clients?tab=2');
+  });
+
+  it.each([
+    ['스킴', 'javascript:alert(1)'],
+    ['프로토콜 상대', '//evil.com'],
+    ['외부 URL', 'https://evil.com/phish'],
+    ['로그인 자기참조', '/login']
+  ])('위험한 returnPath(%s)는 redirect 와 저장소를 남기지 않는다', async(_label, unsafePath) => {
+    await sessionManager.logout({
+      preserveReturnPath: true,
+      reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+      returnPath: unsafePath
+    });
+    const calledUrl = window.location.replace.mock.calls[0][0];
+    expect(calledUrl).toBe(
+      `${ORIGIN}/login?${LOGOUT_REDIRECT_QUERY.PARAM}=${LOGOUT_REDIRECT_QUERY.SUCCESS}`
+    );
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
   });
 });

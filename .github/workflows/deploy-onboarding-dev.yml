@@ -285,6 +285,32 @@ jobs:
         source: "config/systemd/mindgarden-dev.service"
         target: "/tmp/mindgarden-dev.service"
         overwrite: true
+
+    - name: 📤 dev JVM opts 업로드 (개발 서버)
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "config/jvm/mindgarden-dev-jvm.env"
+        target: "/tmp/"
+        strip_components: 2
+        overwrite: true
+
+    - name: 📤 dev 메모리 스냅샷 스크립트 업로드
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 60s
+        source: "scripts/deployment/print-dev-backend-memory.sh"
+        target: "/var/www/mindgarden-dev/"
+        strip_components: 2
+        overwrite: true
         
     - name: 🔄 개발 서버 서비스 재시작
       uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
@@ -297,6 +323,18 @@ jobs:
         command_timeout: 10m
         script: |
           cd /var/www/mindgarden-dev
+
+          # Dev JVM flags: one file (config/jvm/mindgarden-dev-jvm.env). No flag string here.
+          echo "📝 dev JVM opts 설치 (/etc/mindgarden/dev-jvm.env)"
+          JVM_ENV_SRC=/tmp/mindgarden-dev-jvm.env
+          if [ ! -f "$JVM_ENV_SRC" ]; then
+            echo "::error::dev JVM opts file missing: $JVM_ENV_SRC"
+            exit 1
+          fi
+          sudo mkdir -p /etc/mindgarden
+          sudo cp "$JVM_ENV_SRC" /etc/mindgarden/dev-jvm.env
+          sudo chown root:root /etc/mindgarden/dev-jvm.env
+          sudo chmod 644 /etc/mindgarden/dev-jvm.env
           
           # JAR 파일명 변경
           if [ -f consultation-management-system-1.0.0.jar ]; then
@@ -319,17 +357,19 @@ jobs:
           sudo bash -c 'echo "set -a" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "# shellcheck source=/dev/null" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "source /etc/mindgarden/dev.env" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo "# JVM SSOT after dev.env so a stale JAVA_OPTS there cannot raise the heap" >> /opt/mindgarden/start.sh'
+          sudo bash -c 'echo ". /etc/mindgarden/dev-jvm.env" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "set +a" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "cd /var/www/mindgarden-dev" >> /opt/mindgarden/start.sh'
-          sudo bash -c 'echo "JAVA_OPTS=\"\${JAVA_OPTS:--Xms1g -Xmx4g -XX:+UseG1GC}\"" >> /opt/mindgarden/start.sh'
           sudo bash -c 'echo "exec /usr/bin/java \$JAVA_OPTS -jar app.jar --spring.profiles.active=dev" >> /opt/mindgarden/start.sh'
           sudo chmod +x /opt/mindgarden/start.sh
           # 회귀 즉시 감지: set -a / source / set +a 3종 라인이 모두 작성되었는지 검증
           # 한 줄이라도 누락되면 dev.env 변수가 export 되지 않아 기동 시 placeholder 미해결 오류 발생
           if ! sudo grep -q '^set -a$' /opt/mindgarden/start.sh \
             || ! sudo grep -q '^source /etc/mindgarden/dev.env$' /opt/mindgarden/start.sh \
+            || ! sudo grep -q '^\. /etc/mindgarden/dev-jvm.env$' /opt/mindgarden/start.sh \
             || ! sudo grep -q '^set +a$' /opt/mindgarden/start.sh; then
-            echo "::error::start.sh 에 set -a / source / set +a 패턴이 누락되었습니다. dev.env 변수가 export 되지 않아 기동 시 placeholder 미해결 오류가 발생합니다."
+            echo "::error::start.sh 에 set -a / source dev.env / dev-jvm.env / set +a 패턴이 누락되었습니다. dev.env 변수가 export 되지 않거나 JVM 힙 한도가 빠집니다."
             sudo cat /opt/mindgarden/start.sh || true
             exit 1
           fi
@@ -360,7 +400,7 @@ jobs:
             # 🔒 이중 안전망: start.sh 의 set -a/source 패턴이 회귀하더라도 systemd 가 dev.env 의 모든 키를 환경변수로 로드
             # (- 접두사 = 파일 없으면 무시, 운영 unit 및 config/systemd/mindgarden-dev.service 와 동일한 패턴)
             sudo bash -c "echo 'EnvironmentFile=-/etc/mindgarden/dev.env' >> $UNIT_FILE"
-            sudo bash -c "echo 'Environment=JAVA_OPTS=\"-Xms1g -Xmx4g -XX:+UseG1GC\"' >> $UNIT_FILE"
+            sudo bash -c "echo 'EnvironmentFile=-/etc/mindgarden/dev-jvm.env' >> $UNIT_FILE"
             sudo bash -c "echo 'ExecStart=/opt/mindgarden/start.sh' >> $UNIT_FILE"
             sudo bash -c "echo 'Restart=always' >> $UNIT_FILE"
             sudo bash -c "echo 'RestartSec=10' >> $UNIT_FILE"
@@ -445,6 +485,14 @@ jobs:
           # 서비스 상태 확인
           echo "🔍 서비스 상태 확인..."
           sudo systemctl status mindgarden-dev.service --no-pager | head -20
+
+          echo "🔎 dev backend memory snapshot (read-only)"
+          MEM_SH=/var/www/mindgarden-dev/print-dev-backend-memory.sh
+          if [ -f "$MEM_SH" ]; then
+            bash "$MEM_SH" || true
+          else
+            echo "::warning::print-dev-backend-memory.sh missing — memory snapshot skipped"
+          fi
           
           if [ "$SERVICE_STARTED" = true ] && sudo systemctl is-active --quiet mindgarden-dev.service; then
             echo "✅ 개발 서버 서비스 정상 시작됨 (actuator/health 확인됨)"

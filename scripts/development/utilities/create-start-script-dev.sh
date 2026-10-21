@@ -40,8 +40,13 @@ export OPS_ADMIN_PASSWORD
 export OPS_ADMIN_ROLE
 export EXPO_ACCESS_TOKEN
 export EXPO_PUSH_API_URL="${EXPO_PUSH_API_URL:-https://exp.host/--/api/v2/push/send}"
+# JVM SSOT (repo config/jvm/mindgarden-dev-jvm.env). After dev.env so it wins.
+set -a
+# shellcheck source=/dev/null
+. /etc/mindgarden/dev-jvm.env
+set +a
 cd /var/www/mindgarden-dev
-exec /usr/bin/java -jar app.jar --spring.profiles.active=dev -Dops.admin.userId="$OPS_ADMIN_USERNAME" -Dops.admin.password="$OPS_ADMIN_PASSWORD" -Dops.admin.role="$OPS_ADMIN_ROLE"
+exec /usr/bin/java $JAVA_OPTS -jar app.jar --spring.profiles.active=dev -Dops.admin.userId="$OPS_ADMIN_USERNAME" -Dops.admin.password="$OPS_ADMIN_PASSWORD" -Dops.admin.role="$OPS_ADMIN_ROLE"
 EOF
 
 sudo chmod +x $START_SCRIPT

@@ -15,8 +15,9 @@
  * 그 전 checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다.
  * current-user 가 200 이거나 재확인 뒤 remainingMs>0 이어도 연장으로 보지 않고 로그아웃한다.
  * 연장으로 세는 것은 연장 버튼뿐이다.
- * current-user 401 로 sessionManager 사용자가 비어도 서버 logout 을 한 번 호출하고
- * 로그인으로 보낸다. logout 이 거절돼도 이동은 한다.
+ * current-user 401 로 sessionManager 사용자가 비어도 서버 logout(세션 만료·복귀 보존)을
+ * 한 번 호출하고, 그 전에 잡아 둔 경로를 redirectToLoginPageOnce 가 싣는다.
+ * logout 이 거절돼도 이동은 한다.
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -46,7 +47,7 @@ import {
 } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import { sessionManager } from '../../utils/sessionManager';
-import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
+import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import {
   buildSessionExpiryLabel,
   computeSessionExpiryState,
@@ -311,7 +312,8 @@ const SessionIdleWarningModal = () => {
    * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면
    * logout({ reason: SESSION_EXPIRY }) → /login?logout=success&redirect=… .
    * checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다. 200 이나 remainingMs>0 은 연장이 아니다.
-   * current-user 401 로 사용자가 비어도 서버 logout 으로 refresh 를 폐기하고 로그인으로 보낸다.
+   * current-user 401 로 사용자가 비어도 서버 logout(복귀 보존)으로 refresh 를 폐기하고
+   * 이동 전에 잡아 둔 경로를 redirectToLoginPageOnce 가 싣는다.
    * logout 이 거절돼도 이동은 한다. 같은 만료에서 logout 은 한 번만.
    */
   useEffect(() => {
@@ -332,6 +334,13 @@ const SessionIdleWarningModal = () => {
     expiryLogoutStartedRef.current = true;
 
     void (async() => {
+      // checkSession 401 이 /login 으로 보낸 뒤에는 현재 주소를 복귀 경로로 쓸 수 없다.
+      const returnUrl = getCurrentLocationReturnUrl();
+      const expiryLogoutOptions = {
+        preserveReturnPath: true,
+        reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+        returnPath: returnUrl
+      };
       // 이미 연장 클릭이 진행 중이면 그 foreground 확인에 맡긴다.
       if (extendInFlightRef.current) {
         expiryLogoutStartedRef.current = false;
@@ -358,21 +367,18 @@ const SessionIdleWarningModal = () => {
           expiryLogoutDoneRef.current = true;
           setIsOpen(false);
           try {
-            await logout();
+            await logout(expiryLogoutOptions);
           } catch {
             // 서버 로그아웃 실패·거절이어도 아래 이동은 한다.
           } finally {
-            redirectToLoginPageOnce();
+            redirectToLoginPageOnce({ returnUrl });
           }
         }
         return;
       }
       expiryLogoutDoneRef.current = true;
       setIsOpen(false);
-      await logout({
-        preserveReturnPath: true,
-        reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY
-      });
+      await logout(expiryLogoutOptions);
     })();
   }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 

@@ -1,6 +1,6 @@
 name: 🧪 FE jest regression lock (PR)
 
-# PR 마다 이미 PASS 된 프론트 동작(로그인 처리중 · 통합스케줄 배지 한 줄 · soft refresh · 내담자 몰 · 일정 과거 이동·생성 잠금 · 비밀번호 변경 403 모달)을
+# PR 마다 이미 PASS 된 프론트 동작(로그인 처리중 · 유휴 만료 로그인 복귀 경로 · 통합스케줄 배지 한 줄 · soft refresh · 내담자 몰 · 일정 과거 이동·생성 잠금 · 비밀번호 변경 403 모달)을
 # jest 로 잠근다. 하나라도 FAIL → job fail (머지 차단은 branch protection required check 로 지정).
 # 전체 스위트는 기존 무관 실패가 있어 여기서 돌리지 않는다. 잠금 대상은 아래 목록만.
 # 규칙: .cursor/rules/frontend-no-overwrite.mdc
@@ -31,6 +31,8 @@ jobs:
         src/components/common/__tests__/SessionIdleWarningModal.expiryLogout.test.js
         src/components/common/__tests__/SessionIdleWarningModal.expiryMsOffset.test.js
         src/utils/__tests__/sessionManager.idleExpiryBearer.test.js
+        src/utils/__tests__/loginReturnPath.test.js
+        src/utils/__tests__/sessionManager.logoutReturnPath.test.js
         src/components/admin/mapping-management/integrated-schedule/molecules/__tests__/CardMeta.test.js
         src/components/admin/mapping-management/integrated-schedule/molecules/__tests__/CardMeta.badgeRowLock.test.js
         src/components/admin/mapping-management/integrated-schedule/organisms/__tests__/MappingScheduleCard.test.js

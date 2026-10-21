@@ -10,7 +10,7 @@ import {
   LOGIN_REDIRECT_RESCUE_TIMEOUT_MS,
   LOGIN_RETURN_URL_PARAM
 } from '../constants/consultationLogAutosaveConstants';
-import { sanitizeLoginReturnPath } from './loginReturnPath';
+import { rememberLoginReturnPath, sanitizeLoginReturnPath } from './loginReturnPath';
 import { sanitizeSameOriginReturnPath } from './sameOriginReturnPath';
 
 let redirectScheduled = false;
@@ -105,8 +105,9 @@ const pickRescueReturnPath = (results) => {
  * @param {object} [options]
  * @param {string} [options.search] — 예: "?reason=duplicate-login" (선행 ? 포함)
  * @param {string} [options.returnUrl] — 재로그인 후 돌아올 같은 오리진 경로.
- *   {@code search} 가 없을 때만 사용되며, 로그인 성공 시 기존 {@code redirect} 파라미터
- *   흐름(UnifiedLogin)이 이 경로로 복귀시킨다.
+ *   {@code search} 가 없을 때만 로그인 URL 쿼리에 실리며, 그 경우 같은 값을
+ *   {@code mg.loginReturnPath} 에도 맡긴다(로그인 화면이 쿼리를 지워도 복귀).
+ *   로그인 성공 시 기존 {@code redirect} 파라미터 흐름(UnifiedLogin)이 이 경로로 복귀시킨다.
  * @returns {boolean} 이동을 예약했으면 true, 이미 예약됨이면 false
  */
 export const redirectToLoginPageOnce = (options = {}) => {
@@ -127,9 +128,14 @@ export const redirectToLoginPageOnce = (options = {}) => {
   }
   const explicitSearch = typeof options.search === 'string' ? options.search : '';
   const navigate = (rescueReturnPath) => {
-    const search = explicitSearch
-      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath
-        || getCurrentLocationReturnUrl());
+    const candidate = options.returnUrl || rescueReturnPath || pendingReturnPath
+      || getCurrentLocationReturnUrl();
+    // 명시 search(중복 로그인 등)는 복귀 쿼리를 대체한다. 그 외에는 안전한 경로만 쿼리와 저장소에 싣는다.
+    const safePath = explicitSearch ? '' : sanitizeLoginReturnPath(candidate);
+    if (safePath) {
+      rememberLoginReturnPath(safePath);
+    }
+    const search = explicitSearch || buildLoginReturnSearch(candidate);
     window.location.href = `${window.location.origin}/login${search}`;
   };
   const pending = startLoginRedirectRescues();

@@ -8,6 +8,15 @@
 
 import React from 'react';
 import { act, fireEvent, render, waitFor } from '@testing-library/react';
+
+jest.mock('@fullcalendar/luxon3', () => {
+  try {
+    return jest.requireActual('@fullcalendar/luxon3');
+  } catch (_error) {
+    return { __esModule: true, default: { id: 'luxon3' } };
+  }
+}, { virtual: true });
+
 import ScheduleCalendarView from '../ScheduleCalendarView';
 import { DEFAULT_ZONE, formatDateKeyInZone } from '../../../../utils/zonedDateTime';
 

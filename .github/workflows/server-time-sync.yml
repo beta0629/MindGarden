@@ -1,0 +1,81 @@
+# 서버 시각 진단(diagnose) / slew-only 적용(apply)
+#
+# - app JAR / DB / nginx 설정·서비스에 손대지 않음
+# - 시크릿을 로그에 출력하지 않음
+# - apply 는 slew-only (date -s / chronyc makestep / 강제 스텝 금지)
+# - managed 블록에 활성 makestep 없음 (생략 = never step; makestep -1 -1 금지)
+# - 기존 SSH secrets 만 사용 (신규 시크릿 없음)
+# SSOT 패턴: .github/workflows/ssl-auto-renewal-check.yml
+
+name: 서버 시각 동기화
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '대상 서버'
+        required: true
+        type: choice
+        options:
+          - prod
+          - dev
+      mode:
+        description: 'diagnose(읽기전용) | apply(slew-only)'
+        required: true
+        default: 'diagnose'
+        type: choice
+        options:
+          - diagnose
+          - apply
+
+jobs:
+  server-time-sync:
+    name: 서버 시각 ${{ inputs.mode }} (${{ inputs.target }})
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 스크립트 업로드 (개발)
+        if: inputs.target == 'dev'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          source: "scripts/server-management/time/server-time-sync.sh,scripts/server-management/time/server-time-sync-lib.sh"
+          target: "/tmp/server-time-sync/"
+          strip_components: 3
+
+      - name: 개발 서버 시각 작업
+        if: inputs.target == 'dev'
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          script: sudo bash /tmp/server-time-sync/server-time-sync.sh '${{ inputs.mode }}'
+
+      - name: 스크립트 업로드 (운영)
+        if: inputs.target == 'prod'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          source: "scripts/server-management/time/server-time-sync.sh,scripts/server-management/time/server-time-sync-lib.sh"
+          target: "/tmp/server-time-sync/"
+          strip_components: 3
+
+      - name: 운영 서버 시각 작업
+        if: inputs.target == 'prod'
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          script: sudo bash /tmp/server-time-sync/server-time-sync.sh '${{ inputs.mode }}'

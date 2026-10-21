@@ -1,6 +1,7 @@
 /**
- * SessionIdleWarningModal — 카운트다운 0 로그아웃, 연장, 중복 로그인.
+ * SessionIdleWarningModal — 카운트다운 0 로그아웃, 연장, current-user 401.
  * 유휴 만료 재확인이 새 세션 remaining 을 돌려줘도 연장 버튼이 아니면 logout 한다.
+ * current-user 401 로 사용자가 비어도 서버 logout 은 한 번, 거절돼도 로그인으로 보낸다.
  * checkSession 이 끝난 뒤의 렌더는 SessionProvider 처럼 그 스냅을 다시 내려준다.
  *
  * @author CoreSolution
@@ -26,6 +27,10 @@ jest.mock('../../../utils/sessionManager', () => ({
   }
 }));
 
+jest.mock('../../../utils/sessionRedirect', () => ({
+  redirectToLoginPageOnce: jest.fn(() => true)
+}));
+
 /* eslint-disable import/first -- jest.mock 이후 import */
 import React from 'react';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -33,6 +38,7 @@ import { MemoryRouter } from 'react-router-dom';
 import SessionIdleWarningModal from '../SessionIdleWarningModal';
 import { useSession } from '../../../contexts/SessionContext';
 import { sessionManager } from '../../../utils/sessionManager';
+import { redirectToLoginPageOnce } from '../../../utils/sessionRedirect';
 import { SESSION_IDLE_WARNING_MS } from '../../../constants/session';
 import { computeSessionExpiryState } from '../../../utils/sessionExpiryDisplay';
 /* eslint-enable import/first */
@@ -106,6 +112,7 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     useSession.mockReset();
     sessionManager.getUser.mockReset();
     sessionManager.getSessionInfo.mockReset();
+    redirectToLoginPageOnce.mockClear();
   });
 
   afterEach(() => {
@@ -209,14 +216,12 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     );
   });
 
-  it('중복 로그인이면 logout 하지 않고 연장 버튼을 닫는다', async() => {
-    // Given — 세션 잔여 0, current-user 실패, sessionManager 사용자 없음
+  const renderExpiredWithClearedUser = (logout) => {
     const expired = sessionInfoAt({
       now: CLOCK_BASE_MS,
       maxInactiveSec: ACTIVE_WINDOW_SEC,
       elapsedSec: ACTIVE_WINDOW_SEC
     });
-    const logout = jest.fn(() => Promise.resolve());
     const checkSession = jest.fn().mockResolvedValue(false);
     useSession.mockReturnValue({
       user: SIGNED_IN_USER,
@@ -226,13 +231,39 @@ describe('SessionIdleWarningModal 유휴 만료 로그아웃', () => {
     });
     sessionManager.getUser.mockReturnValue(null);
     sessionManager.getSessionInfo.mockReturnValue(expired);
+    return { checkSession };
+  };
+
+  it('current-user 401 로 사용자가 비면 logout 을 한 번 호출하고 로그인으로 보낸다', async() => {
+    // Given — 만료 재확인(current-user 401)이 사용자를 비운 뒤 false
+    const logout = jest.fn(() => Promise.resolve());
+    const { checkSession } = renderExpiredWithClearedUser(logout);
+
+    // When
+    await renderAndSettle();
+    await act(async() => {
+      jest.advanceTimersByTime(DUPLICATE_GUARD_ADVANCE_MS);
+      await flushMicrotasks();
+    });
+
+    // Then — 서버 로그아웃 1회, 로그인 이동 1회
+    expect(checkSession).toHaveBeenCalledWith(true, { silent: true, idleExpiry: true });
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('session-idle-extend')).not.toBeInTheDocument();
+  });
+
+  it('logout 이 거절돼도 로그인으로 보낸다', async() => {
+    // Given
+    const logout = jest.fn(() => Promise.reject(new Error('logout failed')));
+    renderExpiredWithClearedUser(logout);
 
     // When
     await renderAndSettle();
 
     // Then
-    expect(checkSession).toHaveBeenCalledWith(true, { silent: true, idleExpiry: true });
-    expect(logout).not.toHaveBeenCalled();
+    expect(logout).toHaveBeenCalledTimes(1);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('session-idle-extend')).not.toBeInTheDocument();
   });
 });

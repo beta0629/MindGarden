@@ -9,10 +9,15 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
- * 카운트다운 remainingMs≤0 이면 logout 직전 checkSession(idleExpiry)으로 서버를 재확인한다.
- * silent 주기 폴과 달리 이 재확인은 background 401 유지·로그인 직후 grace·토큰 갱신 부활을 타지 않는다.
- * 재확인이 유효하고 remainingMs>0 이면 연장으로 보고 모달만 닫고,
- * 무효·≤0 이면 logout() → /login?logout=success (토큰·스토리지 정리).
+ * 카운트다운 remainingMs≤0 이고 연장 버튼이 진행 중이 아니면
+ * logout({ reason: sessionExpiry }) → /login?logout=success&redirect=… (복귀 경로 보존).
+ * 모달 「로그아웃」 버튼·수동 로그아웃은 options 없이 복귀 경로를 붙이지 않는다.
+ * 그 전 checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다.
+ * current-user 가 200 이거나 재확인 뒤 remainingMs>0 이어도 연장으로 보지 않고 로그아웃한다.
+ * 연장으로 세는 것은 연장 버튼뿐이다.
+ * current-user 401 로 sessionManager 사용자가 비어도 서버 logout(세션 만료·복귀 보존)을
+ * 한 번 호출하고, 그 전에 잡아 둔 경로를 redirectToLoginPageOnce 가 싣는다.
+ * logout 이 거절돼도 이동은 한다.
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -33,14 +38,21 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import SafeText from './SafeText';
 import { useSession } from '../../contexts/SessionContext';
-import { SESSION_IDLE_WARNING_MS, SESSION_REMAINING_DISPLAY, isSessionPublicPath } from '../../constants/session';
+import {
+  SESSION_IDLE_EXPIRY_TIMER_SLACK_MS,
+  SESSION_IDLE_WARNING_MS,
+  SESSION_LOGOUT_REASON,
+  SESSION_REMAINING_DISPLAY,
+  isSessionPublicPath
+} from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import { sessionManager } from '../../utils/sessionManager';
+import { rememberLoginReturnPath } from '../../utils/loginReturnPath';
+import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import {
   buildSessionExpiryLabel,
   computeSessionExpiryState,
-  formatSessionCountdown,
-  pickFresherSessionInfo
+  formatSessionCountdown
 } from '../../utils/sessionExpiryDisplay';
 
 /** setTimeout 콜백에서 “아직 1분+여유”면 모달을 열지 않고 타이머만 재스케줄 (스냅샷·갱신 레이스) */
@@ -53,12 +65,12 @@ const SESSION_IDLE_MODAL_AUTO_CLOSE_SURPLUS_MS = 3000;
 /**
  * 경고 모달 오픈 여부를 refs 스냅샷으로 판정(폴링·setTimeout 콜백 공통).
  *
- * @param {object} snap — { isOpen, user, isLoginPath, sessionInfo }
+ * @param {object} snap — { isOpen, expiryLogoutDone, user, isLoginPath, sessionInfo }
  * @param {number} clientNowMs
  * @returns {'open'|'reschedule'|'noop'}
  */
 function evaluateIdleWarnOpenFromSnapshot(snap, clientNowMs) {
-  if (snap.isOpen) {
+  if (snap.isOpen || snap.expiryLogoutDone) {
     return 'noop';
   }
   if (!snap.user || snap.isLoginPath) {
@@ -87,10 +99,16 @@ const SessionIdleWarningModal = () => {
   const timerRef = useRef(null);
   const countdownIntervalRef = useRef(null);
   const warnPollIntervalRef = useRef(null);
+  /** 실제 만료 시각에 맞춘 판정 타이머 (표시 초와 무관) */
+  const expiryTimerRef = useRef(null);
+  /** 만료 판정 재실행 트리거 — 만료 타이머 발화 시 증가 */
+  const [expiryCheckSeq, setExpiryCheckSeq] = useState(0);
   /** 카운트다운 0 도달 시 logout 1회만 (중복 호출 방지) */
   const expiryLogoutStartedRef = useRef(false);
   /** 연장 클릭이 진행 중이면, 그 확인이 성공한 경우에만 만료 logout 을 건너뛴다 */
   const extendInFlightRef = useRef(false);
+  /** 만료 logout 을 이미 호출했으면 같은 만료 세션으로 모달을 다시 열거나 logout 을 다시 부르지 않는다 */
+  const expiryLogoutDoneRef = useRef(false);
 
   const isLoginPath = isSessionPublicPath(pathname);
   const sessionInfoRef = useRef(sessionInfo);
@@ -119,6 +137,38 @@ const SessionIdleWarningModal = () => {
     }
   }, []);
 
+  const clearExpiryTimer = useCallback(() => {
+    if (expiryTimerRef.current != null) {
+      clearTimeout(expiryTimerRef.current);
+      expiryTimerRef.current = null;
+    }
+  }, []);
+
+  /**
+   * 모달이 열려 있으면 만료 시각(remainingMs)에 맞춰 판정 타이머를 건다.
+   * 표시용 remainingSec 은 1→0 전환 뒤 0 으로 고정돼 재평가 트리거가 되지 못하므로(만료 시각이
+   * 정수 초에서 어긋난 경우) 실제 만료 시각 기준 타이머로 판정을 다시 돌린다.
+   */
+  useEffect(() => {
+    clearExpiryTimer();
+    if (!isOpen || !sessionInfo || sessionInfo.isAuthenticated !== true) {
+      return undefined;
+    }
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
+    if (remainingMs == null || remainingMs <= 0) {
+      return undefined;
+    }
+    expiryTimerRef.current = setTimeout(() => {
+      expiryTimerRef.current = null;
+      setExpiryCheckSeq((seq) => seq + 1);
+    }, remainingMs + SESSION_IDLE_EXPIRY_TIMER_SLACK_MS);
+    return () => {
+      clearExpiryTimer();
+    };
+  }, [isOpen, sessionInfo, expiryCheckSeq, clearExpiryTimer]);
+
   const clearWarnPollInterval = useCallback(() => {
     if (warnPollIntervalRef.current != null) {
       clearInterval(warnPollIntervalRef.current);
@@ -129,6 +179,7 @@ const SessionIdleWarningModal = () => {
   const tryOpenIdleWarningFromRefs = useCallback(() => {
     const snap = {
       isOpen: isOpenRef.current,
+      expiryLogoutDone: expiryLogoutDoneRef.current,
       user: userRef.current,
       isLoginPath: isLoginPathRef.current,
       sessionInfo: sessionInfoRef.current
@@ -140,7 +191,7 @@ const SessionIdleWarningModal = () => {
 
   const armWarnTimer = useCallback(() => {
     clearTimer();
-    if (isOpenRef.current) {
+    if (isOpenRef.current || expiryLogoutDoneRef.current) {
       return;
     }
     const si = sessionInfoRef.current;
@@ -160,6 +211,7 @@ const SessionIdleWarningModal = () => {
     timerRef.current = setTimeout(() => {
       const snap = {
         isOpen: isOpenRef.current,
+        expiryLogoutDone: expiryLogoutDoneRef.current,
         user: userRef.current,
         isLoginPath: isLoginPathRef.current,
         sessionInfo: sessionInfoRef.current
@@ -219,6 +271,19 @@ const SessionIdleWarningModal = () => {
     };
   }, [isOpen, sessionInfo, clearCountdownInterval]);
 
+  /** 사용자가 바뀌거나 새 세션(잔여>0)이 오면 만료 logout 완료 표시를 푼다 */
+  useEffect(() => {
+    if (!expiryLogoutDoneRef.current) {
+      return;
+    }
+    const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+      allowFallback: false
+    });
+    if (!user || (remainingMs != null && remainingMs > 0)) {
+      expiryLogoutDoneRef.current = false;
+    }
+  }, [user, sessionInfo]);
+
   useEffect(() => {
     if (!user) {
       setIsOpen(false);
@@ -245,30 +310,41 @@ const SessionIdleWarningModal = () => {
   }, [isOpen, sessionInfo]);
 
   /**
-   * 만료(remainingMs≤0) 직전 idleExpiry 재확인.
-   * 연장으로 서버 세션이 살아 있으면 모달만 닫고, 아니면 logout() → /login?logout=success.
-   * 중복 로그인 킥은 sessionManager 가 이미 이동시키므로 logout 으로 쿼리를 덮지 않는다.
+   * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면
+   * logout({ reason: SESSION_EXPIRY }) → /login?logout=success&redirect=… .
+   * checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다. 200 이나 remainingMs>0 은 연장이 아니다.
+   * current-user 401 로 사용자가 비어도 서버 logout(복귀 보존)으로 refresh 를 폐기하고
+   * 이동 전에 잡아 둔 경로를 redirectToLoginPageOnce 가 싣는다.
+   * logout 이 거절돼도 이동은 한다. 같은 만료에서 logout 은 한 번만.
    */
   useEffect(() => {
     if (!isOpen) {
       expiryLogoutStartedRef.current = false;
       return;
     }
-    if (!sessionInfo || expiryLogoutStartedRef.current) {
+    if (!sessionInfo || expiryLogoutStartedRef.current || expiryLogoutDoneRef.current) {
       return;
     }
     const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
       allowFallback: false
     });
-    // remainingSec 의존: 1초 틱마다 재평가. 모달 오픈 직후 remainingSec=0 잔존과 무관하게 remainingMs로 판정.
+    // 판정은 remainingMs(실제 만료 시각) 기준. expiryCheckSeq(만료 시각 타이머)·remainingSec(1초 틱) 모두 재평가 트리거.
     if (remainingMs == null || remainingMs > 0) {
       return;
     }
     expiryLogoutStartedRef.current = true;
 
     void (async() => {
+      // checkSession 401 이 /login 으로 보낸 뒤에는 현재 주소를 복귀 경로로 쓸 수 없다.
+      // 어느 401 경로가 먼저여도 복귀 주소가 남도록, 이동 전에 저장소에 맡긴다.
+      const returnUrl = getCurrentLocationReturnUrl();
+      rememberLoginReturnPath(returnUrl);
+      const expiryLogoutOptions = {
+        preserveReturnPath: true,
+        reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
+        returnPath: returnUrl
+      };
       // 이미 연장 클릭이 진행 중이면 그 foreground 확인에 맡긴다.
-      // (만료 재확인이 연장 요청보다 먼저 로그아웃하지 않게)
       if (extendInFlightRef.current) {
         expiryLogoutStartedRef.current = false;
         return;
@@ -279,7 +355,6 @@ const SessionIdleWarningModal = () => {
         // 유휴 만료는 그 경로가 아니므로 idleExpiry 로 grace·refresh·background 유지를 끈다.
         stillValid = await checkSession(true, { silent: true, idleExpiry: true }) === true;
       } catch {
-        // checkSession 내부에서 처리. 아래 스냅샷으로 최종 판정.
         stillValid = false;
       }
       // 연장 클릭의 확인이 세션을 살렸으면 logout 하지 않음 (모달을 닫는 쪽은 handleExtend)
@@ -287,29 +362,32 @@ const SessionIdleWarningModal = () => {
         expiryLogoutStartedRef.current = false;
         return;
       }
-      // 중복 로그인 종료는 sessionManager 가 user 를 비우고 redirect 까지 끝낸다.
+      // current-user 401 은 사용자를 비운 뒤 이 분기로 온다. 여기서 return 하면
+      // POST /api/v1/auth/logout 이 없어 refresh 가 폐기되지 않는다.
+      // 한 번만 서버 로그아웃하고, 거절돼도 로그인 이동은 공용 경로로 한다.
       if (!stillValid && !sessionManager.getUser()) {
-        expiryLogoutStartedRef.current = false;
-        setIsOpen(false);
+        if (!expiryLogoutDoneRef.current) {
+          expiryLogoutDoneRef.current = true;
+          setIsOpen(false);
+          try {
+            await logout(expiryLogoutOptions);
+          } catch {
+            // 서버 로그아웃 실패·거절이어도 아래 이동은 한다.
+          } finally {
+            redirectToLoginPageOnce({ returnUrl });
+          }
+        }
         return;
       }
-      const freshSi = pickFresherSessionInfo(
-        sessionInfoRef.current,
-        sessionManager.getSessionInfo()
-      );
-      const stillAuth = freshSi?.isAuthenticated === true;
-      const rem = computeSessionExpiryState(freshSi, Date.now(), {
-        allowFallback: false
-      }).remainingMs;
-      if (stillValid && stillAuth && rem != null && rem > 0) {
-        expiryLogoutStartedRef.current = false;
-        setIsOpen(false);
-        return;
-      }
+      expiryLogoutDoneRef.current = true;
       setIsOpen(false);
-      await logout();
+      try {
+        await logout(expiryLogoutOptions);
+      } finally {
+        redirectToLoginPageOnce({ returnUrl, expiry: true });
+      }
     })();
-  }, [isOpen, sessionInfo, remainingSec, logout, checkSession]);
+  }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 
   useEffect(() => {
     armWarnTimer();

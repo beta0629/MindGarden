@@ -9,9 +9,11 @@ import java.util.Set;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.SystemNotificationService;
+import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,25 +74,46 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         return notifications;
     }
     
+    /**
+     * 현재 테넌트의 공지 상세를 조회한다.
+     * 없거나, 소프트 삭제되었거나, 다른 테넌트 공지는 {@link EntityNotFoundException} 이다.
+     *
+     * @param notificationId 공지 ID
+     * @param userId 조회 사용자 ID
+     * @return 현재 테넌트에서 보이는 공지
+     * @throws EntityNotFoundException 공지가 없거나 삭제되었거나 다른 테넌트일 때
+     */
     @Override
     public SystemNotification getNotificationDetail(Long notificationId, Long userId) {
         log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
-        
+
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        Optional<SystemNotification> notificationOpt =
-            systemNotificationRepository.findByTenantIdAndId(tenantId, notificationId);
-        if (notificationOpt.isEmpty()) {
-            throw new RuntimeException("공지를 찾을 수 없습니다: " + notificationId);
-        }
-        
-        SystemNotification notification = notificationOpt.get();
-        
+        SystemNotification notification = systemNotificationRepository
+            .findByTenantIdAndId(tenantId, notificationId)
+            .filter(found -> isVisibleInTenant(found, tenantId))
+            .orElseThrow(() -> new EntityNotFoundException("SystemNotification", notificationId));
+
         // 조회수 증가는 별도 메서드로 처리 (버전 충돌 방지)
         incrementViewCount(notificationId);
-        
+
         log.info("✅ 공지 상세 조회 완료 - 공지 ID: {}", notificationId);
-        
+
         return notification;
+    }
+
+    /**
+     * 현재 테넌트에서 공지를 보여도 되는지 확인한다.
+     * 소프트 삭제 플래그(엔티티·상위 필드)와 테넌트가 모두 맞아야 한다.
+     *
+     * @param found 조회된 공지
+     * @param tenantId 현재 테넌트 ID
+     * @return 노출 가능하면 true
+     */
+    private boolean isVisibleInTenant(SystemNotification found, String tenantId) {
+        if (found == null || Boolean.TRUE.equals(found.getIsDeleted()) || found.isDeleted()) {
+            return false;
+        }
+        return tenantId != null && tenantId.equals(found.getTenantId());
     }
     
     /**
@@ -260,7 +283,8 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         notification.setStatus("DRAFT");
         notification.setIsDeleted(false);
         notification.setViewCount(0);
-        
+        notification.setContent(RichNoticeHtmlSanitizer.sanitize(notification.getContent()));
+
         SystemNotification saved = systemNotificationRepository.save(notification);
         
         log.info("✅ 공지 생성 완료 - ID: {}", saved.getId());
@@ -281,7 +305,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         
         SystemNotification existing = existingOpt.get();
         existing.setTitle(notification.getTitle());
-        existing.setContent(notification.getContent());
+        existing.setContent(RichNoticeHtmlSanitizer.sanitize(notification.getContent()));
         existing.setTargetType(notification.getTargetType());
         existing.setNotificationType(notification.getNotificationType());
         existing.setIsImportant(notification.getIsImportant());

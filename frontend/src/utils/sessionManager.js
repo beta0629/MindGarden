@@ -6,8 +6,12 @@ import {
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
   DUPLICATE_LOGIN_REDIRECT_SEARCH,
-  FETCH_INIT_SKIP_FORM_SESSION_HOOK
+  FETCH_INIT_SKIP_FORM_SESSION_HOOK,
+  HTTP_AUTHORIZATION_HEADER,
+  LOGOUT_REDIRECT_QUERY,
+  SESSION_LOGOUT_REASON
 } from '../constants/session';
+import { LOGIN_RETURN_URL_PARAM } from '../constants/consultationLogAutosaveConstants';
 import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
   buildTenantAuthBaseUrl,
@@ -15,13 +19,51 @@ import {
   isLocalhost
 } from './subdomainUtils';
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
-import { redirectToLoginPageOnce } from './sessionRedirect';
-import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
+import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from './sessionRedirect';
+import { rememberLoginReturnPath, sanitizeLoginReturnPath } from './loginReturnPath';
+import { clearStoredSessionExpiry, computeSessionExpiryState, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
 import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
 import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
+
+/**
+ * 만료 로그아웃이 맡길 복귀 경로.
+ * {@code returnPath} 를 넘기면 그 값만 검사한다(이미 /login 으로 바뀐 주소를 다시 읽지 않음).
+ * 없으면 현재 주소. 안전하지 않으면 빈 문자열.
+ *
+ * @param {{ returnPath?: string }} [options]
+ * @returns {string}
+ */
+function resolvePostLogoutReturnPath(options = {}) {
+  const rawReturn = Object.prototype.hasOwnProperty.call(options, 'returnPath')
+    ? options.returnPath
+    : getCurrentLocationReturnUrl();
+  return sanitizeLoginReturnPath(rawReturn);
+}
+
+/**
+ * 로그아웃 후 /login 검색 문자열.
+ * 기본은 {@code ?logout=success}. 세션 만료 보존 옵션일 때만 안전한 내부 경로를
+ * {@code redirect} 로 붙인다(스킴·//·외부·/login 자기참조는 sanitize 가 거부).
+ *
+ * @param {{ preserveReturnPath?: boolean, reason?: string, returnPath?: string }} [options]
+ * @returns {string} 선행 ? 포함
+ */
+export function buildPostLogoutLoginSearch(options = {}) {
+  const params = new URLSearchParams();
+  params.set(LOGOUT_REDIRECT_QUERY.PARAM, LOGOUT_REDIRECT_QUERY.SUCCESS);
+  const preserveReturnPath = options.preserveReturnPath === true
+    || options.reason === SESSION_LOGOUT_REASON.SESSION_EXPIRY;
+  if (preserveReturnPath) {
+    const safePath = resolvePostLogoutReturnPath(options);
+    if (safePath) {
+      params.set(LOGIN_RETURN_URL_PARAM, safePath);
+    }
+  }
+  return `?${params.toString()}`;
+}
 
 /**
  * current-user / session-info 등: `{ success, data }` 래퍼면 `data`만 사용.
@@ -50,6 +92,41 @@ function isDuplicateLoginTerminatedResponse(body) {
     || body.data?.errorCode
     || body.error;
   return code === SESSION_TERMINATED_DUPLICATE_ERROR_CODE;
+}
+
+/**
+ * 클라이언트가 이미 만료로 보는 세션인지.
+ * 서버는 비활성 user_sessions(타임아웃 포함)에도 중복 로그인 errorCode 를 붙인다.
+ * 남은 시간이 0 이하이면 그 코드는 만료이지 중복 로그인이 아니다.
+ *
+ * @param {object|null|undefined} sessionInfo
+ * @returns {boolean}
+ */
+function isLocalSessionExpired(sessionInfo) {
+  if (!sessionInfo || typeof sessionInfo !== 'object') {
+    return false;
+  }
+  const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+    allowFallback: false
+  });
+  return remainingMs != null && remainingMs <= 0;
+}
+
+/**
+ * current-user / session-info 확인용 헤더.
+ * idleExpiry 는 Authorization(Bearer) 를 제거해, 만료된 HttpSession 이 JWT 만으로 200 이 되며
+ * lastAccessedTime 이 리셋되는 경로를 타지 않게 한다. 그 외 경로는 getDefaultApiHeaders() 그대로다.
+ * refresh 재시도의 명시 Bearer 는 이 함수를 쓰지 않는다 (idleExpiry 401 은 그 전에 return).
+ *
+ * @param {boolean} idleExpiry
+ * @returns {Record<string, string>}
+ */
+function buildSessionProbeHeaders(idleExpiry) {
+  const headers = { ...getDefaultApiHeaders() };
+  if (idleExpiry) {
+    delete headers[HTTP_AUTHORIZATION_HEADER];
+  }
+  return headers;
 }
 
 /**
@@ -205,6 +282,7 @@ class SessionManager {
    *   사용자를 유지하고 /login 으로 보내지 않는다(중복 로그인 종료 401 만 예외).
    *   idleExpiry=true: 유휴 경고 모달 만료 재확인. grace·토큰 갱신·background 유지로
    *   세션을 되살리지 않는다. 리다이렉트는 모달 logout() → /login?logout=success.
+   *   idleExpiry 재확인의 current-user·session-info 는 Bearer 를 보내지 않는다.
    * @returns {Promise<boolean>} 세션 유효 여부
    */
   async checkSession(force = false, options = {}) {
@@ -284,7 +362,7 @@ class SessionManager {
       let userResponse;
       try {
         // getDefaultApiHeaders를 사용하여 tenantId 헤더 자동 포함
-        const headers = getDefaultApiHeaders();
+        const headers = buildSessionProbeHeaders(idleExpiry);
 
         userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
           credentials: 'include',
@@ -328,10 +406,10 @@ class SessionManager {
         duplicateTerminated = await readDuplicateTerminated(userResponse);
         // 유휴 모달 카운트다운 만료 재확인. 연장 버튼을 누르지 않은 401 은
         // 로그인 직후 grace·refresh 부활·background 사용자 유지 대상이 아니다.
-        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 /login?logout=success 에 보낸다.
-        // 중복 로그인 종료는 아래 확정 킥으로 보낸다.
-        if (idleExpiry && !duplicateTerminated) {
-          console.log('🔍 유휴 만료 재확인 401 - grace/refresh/background 유지 없음');
+        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 복귀 경로를 실은 로그인으로 보낸다.
+        // 비활성 세션 401 에 중복 로그인 코드가 붙어 있어도 만료 로그아웃으로 본다.
+        if (idleExpiry) {
+          console.log('🔍 유휴 만료 재확인 401 - 만료 로그아웃(중복 로그인 사유 아님)');
           this.lastCheckTime = now;
           this.notifyListeners();
           return false;
@@ -411,6 +489,9 @@ class SessionManager {
           console.log('🔍 백그라운드 세션 확인 401 - 무토큰 팬텀, 사용자 클리어');
         }
 
+        // clear 전에 만료 여부를 고정한다. 비활성 세션 401 의 중복 로그인 코드를
+        // 이미 만료된 로컬 세션에 붙이지 않기 위함이다.
+        const expiryLogout = isLocalSessionExpired(this.sessionInfo);
         this.user = null;
         this.sessionInfo = null;
         this.lastVerifiedAt = 0;
@@ -435,10 +516,13 @@ class SessionManager {
         // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
         if (!isPublicPage && !startedOnPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
+          // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동.
+          // 로컬 세션이 이미 만료면 중복 로그인 코드가 있어도 만료 리다이렉트(복귀 경로 유지).
           this.applyClientLogoutCleanupPreserveSubdomain();
-          if (duplicateTerminated) {
+          if (duplicateTerminated && !expiryLogout) {
             redirectToLoginPageOnce({ search: DUPLICATE_LOGIN_REDIRECT_SEARCH });
+          } else if (expiryLogout) {
+            redirectToLoginPageOnce({ expiry: true });
           } else {
             redirectToLoginPageOnce();
           }
@@ -489,7 +573,7 @@ class SessionManager {
         // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
         try {
           console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/v1/auth/session-info`);
-          const sessionHeaders = getDefaultApiHeaders();
+          const sessionHeaders = buildSessionProbeHeaders(idleExpiry);
           const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/session-info`, {
             credentials: 'include',
             method: 'GET',
@@ -669,8 +753,21 @@ class SessionManager {
     }
   }
 
-  // 로그아웃
-  async logout() {
+  /**
+   * 로그아웃.
+   *
+   * @param {{ preserveReturnPath?: boolean, reason?: string, returnPath?: string }} [options]
+   *   유휴/세션 만료 자동 로그아웃만 {@code preserveReturnPath: true} 또는
+   *   {@code reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY}. 수동 로그아웃은 인자 없이 호출.
+   *   {@code returnPath} 는 이동 전에 잡아 둔 pathname+search. 없으면 지금 주소를 쓴다.
+   */
+  async logout(options = {}) {
+    // sessionStorage.clear 전에 복귀 경로를 확정한다(만료 보존 시에만 사용).
+    // 저장은 clear 이후에 한다. 정리가 mg.loginReturnPath 를 지우지 않게.
+    const loginSearch = buildPostLogoutLoginSearch(options);
+    const preserveReturnPath = options.preserveReturnPath === true
+      || options.reason === SESSION_LOGOUT_REASON.SESSION_EXPIRY;
+    const safeReturnPath = preserveReturnPath ? resolvePostLogoutReturnPath(options) : '';
     const preservedForRedirect = {
       subdomain_tenant_id: sessionStorage.getItem('subdomain_tenant_id'),
       subdomain: sessionStorage.getItem('subdomain'),
@@ -719,6 +816,9 @@ class SessionManager {
       } catch (purgeError) {
         console.warn('⚠️ 상담일지 초안 백업 삭제 실패(로그아웃은 계속):', purgeError);
       }
+      if (safeReturnPath) {
+        rememberLoginReturnPath(safeReturnPath);
+      }
 
       console.log('✅ 클라이언트 로그아웃 완료');
 
@@ -729,7 +829,7 @@ class SessionManager {
       // 로컬 환경: 현재 origin 유지 (subdomainUtils와 동일 기준)
       if (isLocalhost()) {
         console.log('✅ 로컬 환경 - 현재 origin 유지:', window.location.origin);
-        window.location.replace(`${window.location.origin}/login?logout=success`);
+        window.location.replace(`${window.location.origin}/login${loginSearch}`);
       } else {
         let targetSubdomain = getTenantSubdomainFromHost();
         if (targetSubdomain) {
@@ -742,13 +842,19 @@ class SessionManager {
         if (targetSubdomain) {
           const baseUrl = buildTenantAuthBaseUrl(targetSubdomain);
           const logoutUrl = baseUrl
-            ? `${baseUrl}/login?logout=success`
-            : `${window.location.origin}/login?logout=success`;
+            ? `${baseUrl}/login${loginSearch}`
+            : `${window.location.origin}/login${loginSearch}`;
           console.log('✅ 서브도메인으로 이동:', logoutUrl);
           window.location.replace(logoutUrl);
         } else {
           console.error('❌ 서브도메인 정보 없음 - 로그인 페이지로 이동 불가');
-          const errorUrl = `${window.location.origin}/login?logout=error&message=${encodeURIComponent('서브도메인 정보가 없습니다. 올바른 서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr')}`;
+          const errorParams = new URLSearchParams();
+          errorParams.set(LOGOUT_REDIRECT_QUERY.PARAM, LOGOUT_REDIRECT_QUERY.ERROR);
+          errorParams.set(
+            'message',
+            '서브도메인 정보가 없습니다. 올바른 서브도메인으로 접속해주세요. 예: mindgarden.dev.core-solution.co.kr'
+          );
+          const errorUrl = `${window.location.origin}/login?${errorParams.toString()}`;
           window.location.replace(errorUrl);
         }
       }

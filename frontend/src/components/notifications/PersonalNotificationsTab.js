@@ -1,19 +1,20 @@
 /**
- * 통합 알림 「내 알림」 탭 — 본인 개인 알림(/api/v1/notifications)을 page/size 로 읽고 더 보기로 이어 붙인다.
+ * 통합 알림 「내 알림」 탭 — 본인 개인 알림(/api/v1/notifications)을 page/size 로 읽고 MGPagination 으로 넘긴다.
  * 유형·이동은 metadata.kind 만 보고, 본문·제목 문자열은 비교하지 않는다.
  *
  * @author CoreSolution
  * @since 2026-10-03
  */
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useTranslation } from 'react-i18next';
 import StandardizedApi from '../../utils/standardizedApi';
 import { usePagedList } from '../../hooks/usePagedList';
-import ListLoadMore from '../common/ListLoadMore';
+import { useToast } from '../../contexts/ToastContext';
 import EmptyState from '../common/EmptyState';
 import MGButton from '../common/MGButton';
+import MGPagination from '../common/MGPagination';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
 import {
@@ -22,10 +23,16 @@ import {
   PERSONAL_NOTIFICATION_TEST_IDS
 } from '../../constants/notificationTabs';
 import {
+  CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+  PAGED_LIST_MODE
+} from '../../constants/pagedList';
+import {
   PERSONAL_NOTIFICATION_PRESENTATION,
   PERSONAL_NOTIFICATION_ROUTE_GO_KEY,
   resolvePersonalNotificationDestination
 } from '../../constants/personalNotificationRoutes';
+import { formatNotificationSummaryText } from '../../utils/displayId';
+import { buildPagedListSummaryLabel } from '../../utils/pagedListSummary';
 import NotificationListCard, { NotificationLoadingList, toNotificationPreview } from './NotificationListCard';
 
 const BellIcon = ICONS.BELL;
@@ -36,10 +43,6 @@ const TONE_ICONS = {
   deposit: ICONS.BUILDING_2
 };
 
-/**
- * @param {number|null} amount
- * @returns {string}
- */
 /**
  * 이동이 있는 카드의 「…보기」 키. kind 문구가 있으면 그걸, 없으면 참고 경로 문구.
  *
@@ -70,6 +73,7 @@ const PersonalNotificationsTab = ({
   destinationOptions
 }) => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
 
   const fetchPage = useCallback(
     (page, size) => StandardizedApi.get(API_PERSONAL_NOTIFICATIONS_LIST, { page, size }),
@@ -80,13 +84,30 @@ const PersonalNotificationsTab = ({
     items,
     setItems,
     totalElements,
+    totalPages,
+    currentPage,
     loading,
-    loadingMore,
     error,
-    hasMore,
-    loadMore,
+    goToPage,
     reload
-  } = usePagedList({ fetchPage, enabled, resetKey });
+  } = usePagedList({
+    fetchPage,
+    enabled,
+    resetKey,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    mode: PAGED_LIST_MODE.REPLACE
+  });
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+    // 목록 API 실패 시에만 AppToast(.app-toast) — EmptyState+재시도와 함께 표시.
+    showToast({
+      message: t('common:notification.unified.new_errorToast'),
+      type: 'error'
+    });
+  }, [error, showToast, t]);
 
   const options = destinationOptions || {};
 
@@ -106,7 +127,7 @@ const PersonalNotificationsTab = ({
     if (destination.meta.productName) {
       fields.push({
         label: t('common:notification.unified.personal.field.product'),
-        value: destination.meta.productName
+        value: formatNotificationSummaryText(destination.meta.productName)
       });
     }
     if (destination.meta.amount != null) {
@@ -167,6 +188,17 @@ const PersonalNotificationsTab = ({
     );
   }
 
+  const resolvedTotalPages = totalPages != null
+    ? totalPages
+    : Math.max(1, Math.ceil((totalElements || 0) / CLIENT_NOTIFICATION_LIST_PAGE_SIZE));
+  const paginationSummary = buildPagedListSummaryLabel({
+    t,
+    total: totalElements,
+    page: currentPage,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    totalPages: resolvedTotalPages
+  });
+
   return (
     <div>
       <ul className="notif-list" data-testid={PERSONAL_NOTIFICATION_TEST_IDS.LIST}>
@@ -183,10 +215,8 @@ const PersonalNotificationsTab = ({
               ? t(presentation.summaryKey)
               : toNotificationPreview(notification.content)}
             unread={!notification.isRead}
-            unreadLabel={t('common:notification.unified.new_unread')}
             unreadSr={t('common:notification.unified.new_unreadSr')}
             icon={(presentation && TONE_ICONS[presentation.tone]) || BellIcon}
-            iconTone={presentation ? presentation.tone : ''}
             fields={fields}
             goLabel={goLabel}
             showChevron={!destination.path}
@@ -194,13 +224,19 @@ const PersonalNotificationsTab = ({
           />
         ))}
       </ul>
-      <ListLoadMore
-        loadedCount={items.length}
-        totalCount={totalElements}
-        hasMore={hasMore}
-        loading={loadingMore}
-        onLoadMore={loadMore}
-      />
+      <nav className="unified-notifications__pagination">
+        <MGPagination
+          currentPage={currentPage}
+          totalPages={resolvedTotalPages}
+          totalItems={totalElements || items.length}
+          itemsPerPage={CLIENT_NOTIFICATION_LIST_PAGE_SIZE}
+          onPageChange={(page) => { void goToPage(page); }}
+          showInfo
+          showItemsPerPage={false}
+          summaryLabel={paginationSummary}
+          variant="compact"
+        />
+      </nav>
     </div>
   );
 };

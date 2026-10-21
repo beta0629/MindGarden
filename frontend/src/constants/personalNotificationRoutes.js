@@ -92,6 +92,8 @@ export const resolveNotificationsListPath = (user) => (
     : CLIENT_DASHBOARD_ROUTES.NOTIFICATIONS
 );
 
+export { formatPersonalOrderNumber } from '../utils/displayId';
+
 /**
  * @param {unknown} metadata 객체 또는 JSON 문자열
  * @returns {{ kind: string, mappingId: string, productName: string, amount: number|null }}

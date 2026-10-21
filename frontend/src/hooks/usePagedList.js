@@ -1,8 +1,9 @@
 /**
- * page/size 목록 + 더 보기(append) 공통 훅.
+ * page/size 목록 공통 훅.
  *
  * - 서버 page 0부터, size 고정 (관리자 목록 adminListFetch 와 같은 기준).
- * - 첫 페이지만 blocking loading. 더 보기는 loadingMore 로 따로 표시한다.
+ * - mode=append(기본): 더 보기로 이어 붙인다. 첫 페이지만 blocking loading.
+ * - mode=replace: goToPage(1-based) 로 현재 페이지만 교체한다 (MGPagination).
  * - enabled 가 false 이면 요청하지 않는다 (세션 준비 전 등).
  * - 늦게 끝난 이전 요청(재조회·언마운트)은 상태를 덮지 않고, loading 도 마지막 요청만 내린다.
  *
@@ -11,7 +12,11 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { CLIENT_LIST_PAGE_SIZE, PAGED_LIST_FIRST_PAGE } from '../constants/pagedList';
+import {
+  CLIENT_LIST_PAGE_SIZE,
+  PAGED_LIST_FIRST_PAGE,
+  PAGED_LIST_MODE
+} from '../constants/pagedList';
 import { hasMorePagedItems, normalizePagedListPayload } from '../utils/pagedListPayload';
 
 /**
@@ -21,15 +26,19 @@ import { hasMorePagedItems, normalizePagedListPayload } from '../utils/pagedList
  * @param {boolean} [params.enabled=true]
  * @param {unknown} [params.resetKey] 바뀌면 첫 페이지부터 다시 읽는다 (예: userId)
  * @param {{ itemKeys?: ReadonlyArray<string> }} [params.normalizeOptions]
+ * @param {'append'|'replace'} [params.mode='append']
  * @returns {{
  *   items: Array<any>,
  *   setItems: (updater: Array<any>|((prev: Array<any>) => Array<any>)) => void,
  *   totalElements: number|null,
+ *   totalPages: number|null,
+ *   currentPage: number,
  *   loading: boolean,
  *   loadingMore: boolean,
  *   error: unknown,
  *   hasMore: boolean,
  *   loadMore: () => Promise<void>,
+ *   goToPage: (page1Based: number) => Promise<void>,
  *   reload: (options?: { silent?: boolean }) => Promise<void>
  * }}
  */
@@ -38,8 +47,10 @@ export function usePagedList({
   pageSize = CLIENT_LIST_PAGE_SIZE,
   enabled = true,
   resetKey,
-  normalizeOptions
+  normalizeOptions,
+  mode = PAGED_LIST_MODE.APPEND
 }) {
+  const replaceMode = mode === PAGED_LIST_MODE.REPLACE;
   const [items, setItems] = useState([]);
   const [lastPage, setLastPage] = useState(PAGED_LIST_FIRST_PAGE);
   const [lastPageCount, setLastPageCount] = useState(0);
@@ -71,6 +82,18 @@ export function usePagedList({
     return normalizePagedListPayload(raw, normalizeOptionsRef.current || {});
   }, [pageSize]);
 
+  const applyPageResult = useCallback((page0, result, { append }) => {
+    setItems((prev) => (append ? [...prev, ...result.items] : result.items));
+    setLastPage(page0);
+    setLastPageCount(result.items.length);
+    if (result.totalElements != null) {
+      setTotalElements(result.totalElements);
+    }
+    if (result.totalPages != null) {
+      setTotalPages(result.totalPages);
+    }
+  }, []);
+
   const reload = useCallback(async(options = {}) => {
     const silent = options.silent === true;
     seqRef.current += 1;
@@ -84,11 +107,7 @@ export function usePagedList({
       if (!isCurrent(seq)) {
         return;
       }
-      setItems(result.items);
-      setLastPage(PAGED_LIST_FIRST_PAGE);
-      setLastPageCount(result.items.length);
-      setTotalElements(result.totalElements);
-      setTotalPages(result.totalPages);
+      applyPageResult(PAGED_LIST_FIRST_PAGE, result, { append: false });
     } catch (err) {
       if (!isCurrent(seq)) {
         return;
@@ -99,13 +118,14 @@ export function usePagedList({
         setTotalElements(null);
         setTotalPages(null);
         setLastPageCount(0);
+        setLastPage(PAGED_LIST_FIRST_PAGE);
       }
     } finally {
       if (isCurrent(seq)) {
         setLoading(false);
       }
     }
-  }, [readPage]);
+  }, [applyPageResult, readPage]);
 
   const hasMore = hasMorePagedItems({
     loadedCount: items.length,
@@ -117,7 +137,7 @@ export function usePagedList({
   });
 
   const loadMore = useCallback(async() => {
-    if (loadingMoreRef.current || !hasMore) {
+    if (replaceMode || loadingMoreRef.current || !hasMore) {
       return;
     }
     const seq = seqRef.current;
@@ -129,15 +149,7 @@ export function usePagedList({
       if (!isCurrent(seq)) {
         return;
       }
-      setItems((prev) => [...prev, ...result.items]);
-      setLastPage(nextPage);
-      setLastPageCount(result.items.length);
-      if (result.totalElements != null) {
-        setTotalElements(result.totalElements);
-      }
-      if (result.totalPages != null) {
-        setTotalPages(result.totalPages);
-      }
+      applyPageResult(nextPage, result, { append: true });
     } catch (err) {
       if (isCurrent(seq)) {
         setError(err || new Error('list load more failed'));
@@ -148,25 +160,69 @@ export function usePagedList({
         setLoadingMore(false);
       }
     }
-  }, [hasMore, lastPage, readPage]);
+  }, [applyPageResult, hasMore, lastPage, readPage, replaceMode]);
+
+  const goToPage = useCallback(async(page1Based) => {
+    if (!replaceMode) {
+      return;
+    }
+    const page0 = Math.floor(Number(page1Based)) - 1;
+    if (!Number.isFinite(page0) || page0 < PAGED_LIST_FIRST_PAGE) {
+      return;
+    }
+    if (page0 === lastPage && items.length > 0 && !error) {
+      return;
+    }
+    seqRef.current += 1;
+    const seq = seqRef.current;
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await readPage(page0);
+      if (!isCurrent(seq)) {
+        return;
+      }
+      applyPageResult(page0, result, { append: false });
+    } catch (err) {
+      if (!isCurrent(seq)) {
+        return;
+      }
+      setError(err || new Error('list page load failed'));
+      setItems([]);
+      setTotalElements(null);
+      setTotalPages(null);
+      setLastPageCount(0);
+    } finally {
+      if (isCurrent(seq)) {
+        setLoading(false);
+      }
+    }
+  }, [applyPageResult, error, items.length, lastPage, readPage, replaceMode]);
 
   useEffect(() => {
     if (!enabled) {
       return;
     }
     void reload();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPage 는 ref; resetKey·enabled 만 재조회 키
-  }, [enabled, resetKey, pageSize]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fetchPage 는 ref; resetKey·enabled·mode·pageSize 만 재조회 키
+  }, [enabled, resetKey, pageSize, mode]);
+
+  const resolvedTotalPages = totalPages != null
+    ? totalPages
+    : (totalElements != null ? Math.max(1, Math.ceil(totalElements / pageSize)) : null);
 
   return {
     items,
     setItems,
     totalElements,
+    totalPages: resolvedTotalPages,
+    currentPage: lastPage + 1,
     loading,
     loadingMore,
     error,
-    hasMore,
+    hasMore: replaceMode ? false : hasMore,
     loadMore,
+    goToPage,
     reload
   };
 }

@@ -68,6 +68,8 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+  # push to release/dev|prod skips this job (same if as other PR guardrails).
+  # #1718 time tests are in backend-critical-tests.txt; post-step prints/asserts their surefire lines.
   guardrail-be-critical-tests:
     name: Guardrail BE tests (payment · session · ERP · schedule)
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
@@ -86,6 +88,10 @@ jobs:
 
       - name: Run critical backend test bundle
         run: mvn -B -ntp test -Pci-be-critical
+
+      - name: Print #1718 time-test surefire results
+        if: always()
+        run: node scripts/verification/print-be-critical-time-test-results.js
 
       - name: Upload surefire reports
         if: always()

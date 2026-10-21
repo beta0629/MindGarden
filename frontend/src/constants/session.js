@@ -18,6 +18,12 @@ export const SESSION_CHECK_INTERVAL = SESSION_CHECK_INTERVAL_MS;
  */
 export const SESSION_IDLE_WARNING_MS = 60 * 1000;
 
+/**
+ * SessionIdleWarningModal 만료 판정 타이머 여유(ms).
+ * 만료 시각(remainingMs) + 이 값 뒤에 판정을 다시 돌려, 브라우저 타이머가 조금 일찍 깨어나도 remainingMs≤0 이 되게 한다.
+ */
+export const SESSION_IDLE_EXPIRY_TIMER_SLACK_MS = 50;
+
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 
@@ -184,6 +190,12 @@ export function getDashboardPathByRole(role) {
 export const DEFAULT_DASHBOARD_PATH = DASHBOARD_PATHS.CLIENT;
 
 /**
+ * HTTP Authorization 헤더 이름.
+ * 유휴 만료 재확인(idleExpiry)에서는 이 키를 빼 Bearer 가 만료된 HttpSession 을 200으로 되살리지 않게 한다.
+ */
+export const HTTP_AUTHORIZATION_HEADER = 'Authorization';
+
+/**
  * current-user 401 — 서버가 중복 로그인으로 기존 세션을 종료했을 때 errorCode.
  * BE {@code SessionManagementConstants.ERROR_CODE_SESSION_TERMINATED_DUPLICATE} 와 정합.
  */
@@ -194,6 +206,24 @@ export const DUPLICATE_LOGIN_REDIRECT_SEARCH = '?reason=duplicate-login';
 
 /** URL searchParam {@code reason} 값 — 중복 로그인 안내 */
 export const DUPLICATE_LOGIN_REASON_VALUE = 'duplicate-login';
+
+/**
+ * 로그아웃 후 /login 쿼리 — {@code logout=success|error}.
+ * 유휴 만료 시에만 안전한 내부 복귀 경로({@code redirect})를 함께 붙인다.
+ */
+export const LOGOUT_REDIRECT_QUERY = Object.freeze({
+  PARAM: 'logout',
+  SUCCESS: 'success',
+  ERROR: 'error'
+});
+
+/**
+ * sessionManager.logout(options) — 유휴/세션 만료 자동 로그아웃일 때만 복귀 경로 보존.
+ * 수동 로그아웃은 options 없이 호출해 redirect 를 붙이지 않는다.
+ */
+export const SESSION_LOGOUT_REASON = Object.freeze({
+  SESSION_EXPIRY: 'sessionExpiry'
+});
 
 /**
  * 로그인 직후 parallel XHR(브랜딩·LNB·공통코드) 401 레이스 완화용 TTL.

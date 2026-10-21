@@ -12,6 +12,15 @@ export const PAGED_LIST_FIRST_PAGE = 0;
 /** 내담자 목록 기본 page size */
 export const CLIENT_LIST_PAGE_SIZE = 20;
 
+/** 내담자 알림·메시지 목록 page size (r2 게이트) */
+export const CLIENT_NOTIFICATION_LIST_PAGE_SIZE = 6;
+
+/** usePagedList — 더 보기(append) / 페이지 교체(replace) */
+export const PAGED_LIST_MODE = Object.freeze({
+  APPEND: 'append',
+  REPLACE: 'replace'
+});
+
 /** 무한 스크롤: 목록 끝에서 이 거리(px) 안에 들어오면 다음 페이지를 부른다 */
 export const INFINITE_SCROLL_END_THRESHOLD_PX = 24;
 

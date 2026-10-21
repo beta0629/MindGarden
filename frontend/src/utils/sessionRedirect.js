@@ -10,7 +10,8 @@ import {
   LOGIN_REDIRECT_RESCUE_TIMEOUT_MS,
   LOGIN_RETURN_URL_PARAM
 } from '../constants/consultationLogAutosaveConstants';
-import { sanitizeLoginReturnPath } from './loginReturnPath';
+import { DUPLICATE_LOGIN_REDIRECT_SEARCH } from '../constants/session';
+import { rememberLoginReturnPath, sanitizeLoginReturnPath } from './loginReturnPath';
 import { sanitizeSameOriginReturnPath } from './sameOriginReturnPath';
 
 let redirectScheduled = false;
@@ -99,18 +100,115 @@ const pickRescueReturnPath = (results) => {
   return kept ? kept.value.returnUrl : '';
 };
 
+/** 중복 로그인 리다이렉트 쿼리. 키 이름은 상수 검색 문자열에서만 읽는다. */
+const duplicateLoginSearchParams = () => {
+  const query = DUPLICATE_LOGIN_REDIRECT_SEARCH.charAt(0) === '?'
+    ? DUPLICATE_LOGIN_REDIRECT_SEARCH.slice(1)
+    : DUPLICATE_LOGIN_REDIRECT_SEARCH;
+  return new URLSearchParams(query);
+};
+
+/**
+ * {@code search} 가 중복 로그인 사유인지.
+ * 만료 로그아웃은 이 사유를 쓰지 않는다. 진짜 중복 로그인 신호만 붙인다.
+ *
+ * @param {string} search
+ * @returns {boolean}
+ */
+const isDuplicateLoginRedirectSearch = (search) => {
+  if (typeof search !== 'string' || search.length === 0) {
+    return false;
+  }
+  try {
+    const query = search.charAt(0) === '?' ? search.slice(1) : search;
+    const actual = new URLSearchParams(query);
+    const expected = duplicateLoginSearchParams();
+    const keys = [...expected.keys()];
+    return keys.length > 0 && keys.every((key) => actual.get(key) === expected.get(key));
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * 로그인 주소에 중복 로그인 사유가 붙어 있는지.
+ *
+ * @param {URLSearchParams} params
+ * @returns {boolean}
+ */
+const hasDuplicateLoginReason = (params) => {
+  const expected = duplicateLoginSearchParams();
+  const keys = [...expected.keys()];
+  return keys.length > 0 && keys.every((key) => params.get(key) === expected.get(key));
+};
+
+/**
+ * 이미 로그인 화면인데 복귀 쿼리가 없거나, 만료가 중복 로그인 사유로 덮인 주소인지.
+ *
+ * @returns {boolean}
+ */
+const loginHrefDropsReturnPath = () => {
+  try {
+    const url = new URL(window.location.href, window.location.origin);
+    const onLogin = url.pathname === '/login' || url.pathname.endsWith('/login');
+    if (!onLogin) {
+      return false;
+    }
+    if (hasDuplicateLoginReason(url.searchParams)) {
+      return true;
+    }
+    return !url.searchParams.get(LOGIN_RETURN_URL_PARAM);
+  } catch {
+    return false;
+  }
+};
+
+const assignLoginHref = (search) => {
+  window.location.href = `${window.location.origin}/login${search}`;
+};
+
 /**
  * 로그인 페이지로 한 번만 이동합니다.
+ * 401 처리와 만료 로그아웃 중 어느 쪽이 먼저여도, 만료 경로면 복귀 주소를
+ * {@code mg.loginReturnPath} 와 {@code redirect} 쿼리에 남긴다.
+ * 이미 이동이 예약된 뒤의 만료 호출도 저장하고, 중복 로그인 사유로 덮인 주소는 고친다.
  *
  * @param {object} [options]
- * @param {string} [options.search] — 예: "?reason=duplicate-login" (선행 ? 포함)
+ * @param {string} [options.search] — 예: "?reason=duplicate-login" (선행 ? 포함).
+ *   {@code expiry: true} 이면 이 사유는 무시한다.
  * @param {string} [options.returnUrl] — 재로그인 후 돌아올 같은 오리진 경로.
- *   {@code search} 가 없을 때만 사용되며, 로그인 성공 시 기존 {@code redirect} 파라미터
- *   흐름(UnifiedLogin)이 이 경로로 복귀시킨다.
+ *   중복 로그인 사유가 아닐 때만 로그인 URL 쿼리에 실리며, 그 경우 같은 값을
+ *   {@code mg.loginReturnPath} 에도 맡긴다(로그인 화면이 쿼리를 지워도 복귀).
+ *   로그인 성공 시 기존 {@code redirect} 파라미터 흐름(UnifiedLogin)이 이 경로로 복귀시킨다.
+ * @param {boolean} [options.expiry] — 유휴·세션 만료. 중복 로그인 사유로 분류하지 않는다.
  * @returns {boolean} 이동을 예약했으면 true, 이미 예약됨이면 false
  */
 export const redirectToLoginPageOnce = (options = {}) => {
+  const rawSearch = typeof options.search === 'string' ? options.search : '';
+  const duplicateRequested = isDuplicateLoginRedirectSearch(rawSearch);
+  const expiryLogout = options.expiry === true;
+  const duplicateLogin = duplicateRequested && !expiryLogout;
+  const explicitSearch = duplicateRequested && expiryLogout ? '' : rawSearch;
+  const keepReturnPath = !duplicateLogin && explicitSearch === '';
+  const stashReturnPath = (rescueReturnPath) => {
+    if (!keepReturnPath) {
+      return '';
+    }
+    const candidate = options.returnUrl || rescueReturnPath || pendingReturnPath
+      || getCurrentLocationReturnUrl();
+    const safePath = sanitizeLoginReturnPath(candidate);
+    if (safePath) {
+      pendingReturnPath = safePath;
+      rememberLoginReturnPath(safePath);
+    }
+    return safePath;
+  };
+  const stashedNow = stashReturnPath('');
   if (redirectScheduled) {
+    // 401 처리가 먼저 중복 로그인 주소로 보낸 뒤에도, 만료 쪽 returnUrl 은 남긴다.
+    if (stashedNow && loginHrefDropsReturnPath()) {
+      assignLoginHref(buildLoginReturnSearch(stashedNow));
+    }
     return false;
   }
   redirectScheduled = true;
@@ -125,12 +223,18 @@ export const redirectToLoginPageOnce = (options = {}) => {
   } catch {
     /* private mode 등 */
   }
-  const explicitSearch = typeof options.search === 'string' ? options.search : '';
   const navigate = (rescueReturnPath) => {
-    const search = explicitSearch
-      || buildLoginReturnSearch(options.returnUrl || rescueReturnPath || pendingReturnPath
-        || getCurrentLocationReturnUrl());
-    window.location.href = `${window.location.origin}/login${search}`;
+    const safePath = keepReturnPath
+      ? (stashReturnPath(rescueReturnPath) || stashedNow)
+      : '';
+    const candidate = safePath || options.returnUrl || rescueReturnPath || pendingReturnPath
+      || getCurrentLocationReturnUrl();
+    // 진짜 중복 로그인 사유만 복귀 쿼리를 대체한다. 만료는 redirect 와 저장소를 유지한다.
+    if (safePath) {
+      rememberLoginReturnPath(safePath);
+    }
+    const search = explicitSearch || buildLoginReturnSearch(keepReturnPath ? candidate : '');
+    assignLoginHref(search);
   };
   const pending = startLoginRedirectRescues();
   if (pending.length === 0) {

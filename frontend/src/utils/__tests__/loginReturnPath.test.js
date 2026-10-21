@@ -12,6 +12,7 @@ import {
   LOGIN_RETURN_PATH_TTL_MS,
   consumeLoginReturnPath,
   isReturnPathAllowedForPrefixes,
+  rememberLoginReturnPath,
   rememberLoginReturnPathFromUrl,
   sanitizeLoginReturnPath
 } from '../loginReturnPath';
@@ -155,6 +156,13 @@ describe('consumeLoginReturnPath', () => {
     expect(consumeLoginReturnPath(CLIENT)).toBe('/client/offers');
   });
 
+  it('역할 불일치 경로면 빈 문자열(대시보드 fallback)', () => {
+    setUrl(`/login?redirect=${encodeURIComponent('/admin/clients')}`);
+    expect(consumeLoginReturnPath(CLIENT)).toBe('');
+    setUrl(`/login?redirect=${encodeURIComponent('/client/offers')}`);
+    expect(consumeLoginReturnPath(['/admin/'])).toBe('');
+  });
+
   it('외부 주소 ?redirect= 는 버린다', () => {
     setUrl(`/login?redirect=${encodeURIComponent('//evil.com')}`);
     expect(consumeLoginReturnPath(CLIENT)).toBe('');
@@ -260,6 +268,83 @@ describe('redirectToDynamicDashboard — 원래 주소 복귀', () => {
     const navigate2 = jest.fn();
     await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate2);
     expect(navigate2).toHaveBeenCalledWith('/admin/dashboard', { replace: true });
+  });
+
+  it('만료로 맡긴 경로+쿼리는 redirect 쿼리가 없어도 재로그인 시 그 화면으로 간다', async() => {
+    const returnPath = '/admin/clients?tab=2';
+    expect(rememberLoginReturnPath(returnPath)).toBe(returnPath);
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe(returnPath);
+    expect(JSON.stringify(stored)).not.toContain('token');
+
+    setUrl('/login');
+    const navigate = jest.fn();
+    await redirectToDynamicDashboard({ user: { role: 'ADMIN' } }, navigate);
+    expect(navigate).toHaveBeenCalledWith(returnPath, { replace: true });
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
+  });
+
+  it('만료 저장은 토큰 쿼리를 뺀 경로만 맡긴다', () => {
+    expect(rememberLoginReturnPath('/admin/clients?tab=2&token=secret')).toBe('/admin/clients?tab=2');
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe('/admin/clients?tab=2');
+    expect(JSON.stringify(stored)).not.toContain('secret');
+  });
+
+  it.each([
+    ['프로토콜 상대', '//evil.com'],
+    ['스킴', 'javascript:alert(1)'],
+    ['외부 URL', 'https://evil.com/phish'],
+    ['로그인 루프', '/login'],
+    ['로그인 루프 쿼리', '/login?redirect=%2Fadmin%2Fclients']
+  ])('rememberLoginReturnPath 는 %s 를 저장하지 않는다', (_label, input) => {
+    window.sessionStorage.setItem(LOGIN_RETURN_PATH_STORAGE_KEY,
+      JSON.stringify({ path: '/admin/clients?tab=1', savedAt: Date.now() }));
+    expect(rememberLoginReturnPath(input)).toBe('');
+    const kept = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(kept.path).toBe('/admin/clients?tab=1');
+  });
+
+  it('redirectToLoginPageOnce 는 현재 pathname+search 를 쿼리와 저장소에 싣는다', () => {
+    setUrl('/erp/dashboard?month=2026-09');
+    jest.isolateModules(() => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      expect(redirectToLoginPageOnce()).toBe(true);
+    });
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe('/login');
+    expect(url.searchParams.get('redirect')).toBe('/erp/dashboard?month=2026-09');
+    const stored = JSON.parse(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY));
+    expect(stored.path).toBe('/erp/dashboard?month=2026-09');
+  });
+
+  it('redirectToLoginPageOnce 는 //·스킴·로그인 루프를 싣지 않는다', () => {
+    setUrl('/admin/clients?tab=1');
+    jest.isolateModules(() => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      expect(redirectToLoginPageOnce({ returnUrl: '//evil.com' })).toBe(true);
+    });
+    const protocolRelative = new URL(window.location.href);
+    expect(protocolRelative.searchParams.get('redirect')).toBeNull();
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
+
+    setUrl('/login?logout=success');
+    window.sessionStorage.clear();
+    jest.isolateModules(() => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      redirectToLoginPageOnce();
+    });
+    const loginLoop = new URL(window.location.href);
+    expect(loginLoop.searchParams.get('redirect')).toBeNull();
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
+
+    setUrl('/admin/clients?tab=1');
+    jest.isolateModules(() => {
+      const { redirectToLoginPageOnce } = require('../sessionRedirect');
+      redirectToLoginPageOnce({ returnUrl: 'javascript:alert(1)' });
+    });
+    expect(new URL(window.location.href).searchParams.get('redirect')).toBeNull();
+    expect(window.sessionStorage.getItem(LOGIN_RETURN_PATH_STORAGE_KEY)).toBeNull();
   });
 
   it('소셜 remember+consume: ADMIN /erp/ 복귀가 동일 허용 접두로 통과', async() => {

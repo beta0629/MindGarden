@@ -6,13 +6,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.SystemNotificationService;
+import com.coresolution.consultation.service.support.SystemNotificationAudience;
 import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,31 +36,12 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     @Autowired
     private SystemNotificationReadRepository systemNotificationReadRepository;
     
-    /**
-     * 사용자 역할에 따른 대상 타입 목록 반환
-     */
-    private List<String> getTargetTypesForUser(String userRole) {
-        List<String> targetTypes = new ArrayList<>();
-        targetTypes.add("ALL"); // 전체 공지는 모두 포함
-        
-        // 2026-06 4종 SSOT: 전문가 세부 분류(놀이·언어)는 enum 이 아니라
-        // users.professional_provider_type_code 컬럼으로 표현됨. targetType 은 CONSULTANT 단일.
-        UserRole role = UserRole.fromString(userRole);
-        if (role != null && role.isProfessionalProvider()) {
-            targetTypes.add(UserRole.CONSULTANT.name());
-        } else if (role == UserRole.CLIENT) {
-            targetTypes.add(UserRole.CLIENT.name());
-        }
-        
-        return targetTypes;
-    }
-    
     @Override
     public Page<SystemNotification> getNotificationsForUser(Long userId, String userRole, Pageable pageable) {
         log.info("📢 사용자 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
         String tenantId = TenantContextHolder.getTenantId();
-        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<String> targetTypes = SystemNotificationAudience.getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         Page<SystemNotification> notifications = systemNotificationRepository
@@ -75,25 +56,22 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     }
     
     /**
-     * 현재 테넌트의 공지 상세를 조회한다.
-     * 없거나, 소프트 삭제되었거나, 다른 테넌트 공지는 {@link EntityNotFoundException} 이다.
+     * 현재 테넌트·수신 대상의 공지 상세를 조회한다.
+     * 없거나, 소프트 삭제되었거나, 다른 테넌트이거나, 수신 대상이 아니면 {@link EntityNotFoundException} 이다.
      *
      * @param notificationId 공지 ID
      * @param userId 조회 사용자 ID
-     * @return 현재 테넌트에서 보이는 공지
-     * @throws EntityNotFoundException 공지가 없거나 삭제되었거나 다른 테넌트일 때
+     * @param userRole 조회 사용자 역할
+     * @return 수신자에게 보이는 공지
+     * @throws EntityNotFoundException 공지가 없거나 삭제·다른 테넌트·비대상일 때
      */
     @Override
-    public SystemNotification getNotificationDetail(Long notificationId, Long userId) {
-        log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
+    public SystemNotification getNotificationDetail(Long notificationId, Long userId, String userRole) {
+        log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
 
-        String tenantId = TenantContextHolder.getRequiredTenantId();
-        SystemNotification notification = systemNotificationRepository
-            .findByTenantIdAndId(tenantId, notificationId)
-            .filter(found -> isVisibleInTenant(found, tenantId))
-            .orElseThrow(() -> new EntityNotFoundException("SystemNotification", notificationId));
+        SystemNotification notification = requireVisibleForRecipient(notificationId, userRole);
 
-        // 조회수 증가는 별도 메서드로 처리 (버전 충돌 방지)
+        // 조회수 증가는 대상 검사 이후 (버전 충돌 방지)
         incrementViewCount(notificationId);
 
         log.info("✅ 공지 상세 조회 완료 - 공지 ID: {}", notificationId);
@@ -102,18 +80,19 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     }
 
     /**
-     * 현재 테넌트에서 공지를 보여도 되는지 확인한다.
-     * 소프트 삭제 플래그(엔티티·상위 필드)와 테넌트가 모두 맞아야 한다.
+     * 테넌트·삭제·수신 대상이 모두 맞는 공지를 로드한다. 아니면 404.
      *
-     * @param found 조회된 공지
-     * @param tenantId 현재 테넌트 ID
-     * @return 노출 가능하면 true
+     * @param notificationId 공지 ID
+     * @param userRole 조회 사용자 역할
+     * @return 수신 대상 공지
+     * @throws EntityNotFoundException 없거나 비노출일 때
      */
-    private boolean isVisibleInTenant(SystemNotification found, String tenantId) {
-        if (found == null || Boolean.TRUE.equals(found.getIsDeleted()) || found.isDeleted()) {
-            return false;
-        }
-        return tenantId != null && tenantId.equals(found.getTenantId());
+    private SystemNotification requireVisibleForRecipient(Long notificationId, String userRole) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return systemNotificationRepository
+            .findByTenantIdAndId(tenantId, notificationId)
+            .filter(found -> SystemNotificationAudience.isVisibleForRecipient(found, tenantId, userRole))
+            .orElseThrow(() -> new EntityNotFoundException("SystemNotification", notificationId));
     }
     
     /**
@@ -130,9 +109,12 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     }
     
     @Override
-    public void markAsRead(Long notificationId, Long userId) {
-        log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
-        
+    public void markAsRead(Long notificationId, Long userId, String userRole) {
+        log.info("📢 공지 읽음 처리 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
+
+        // 수신 대상이 아니면 읽음 기록을 남기지 않는다 (존재 여부 노출 금지 → 404)
+        requireVisibleForRecipient(notificationId, userRole);
+
         Optional<SystemNotificationRead> existingRead = 
             systemNotificationReadRepository.findByNotificationIdAndUserId(notificationId, userId);
         
@@ -188,7 +170,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
             log.warn("📢 일괄 읽음 처리 스킵 - tenantId 없음");
             return;
         }
-        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<String> targetTypes = SystemNotificationAudience.getTargetTypesForUser(userRole);
         List<Long> unreadIds = systemNotificationRepository.findUnreadNotificationIdsByTenantIdAndUser(tenantId, userId, targetTypes);
         if (unreadIds == null || unreadIds.isEmpty()) {
             log.info("📢 일괄 읽음 - 읽지 않은 공지 없음");
@@ -234,7 +216,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
             return 0L;
         }
 
-        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<String> targetTypes = SystemNotificationAudience.getTargetTypesForUser(userRole);
         Long count = systemNotificationReadRepository.countUnreadNotificationsByTenantIdAndUser(tenantId, userId, targetTypes);
 
         log.info("✅ 읽지 않은 공지 수: {} (tenantId: {})", count, tenantId);
@@ -247,7 +229,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         log.info("📢 긴급 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<String> targetTypes = SystemNotificationAudience.getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         List<SystemNotification> notifications = systemNotificationRepository
@@ -263,7 +245,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         log.info("📢 중요 공지 조회 - 사용자 ID: {}, 역할: {}", userId, userRole);
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<String> targetTypes = getTargetTypesForUser(userRole);
+        List<String> targetTypes = SystemNotificationAudience.getTargetTypesForUser(userRole);
         LocalDateTime now = LocalDateTime.now();
         
         List<SystemNotification> notifications = systemNotificationRepository

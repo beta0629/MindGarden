@@ -151,5 +151,16 @@
       "defaultMessage": "Please review.",
       "defaultConfirmButton": "OK"
     }
+  },
+  "pagination": {
+    "prev": "Previous",
+    "next": "Next",
+    "first": "First",
+    "last": "Last",
+    "pageOf": "{{current}} / {{total}}",
+    "goToPage": "Go to page {{page}}",
+    "perPage": "{{count}} per page",
+    "total": "{{count}} total",
+    "rangeSummary": "Page {{page}} / {{totalPages}} total pages"
   }
 }

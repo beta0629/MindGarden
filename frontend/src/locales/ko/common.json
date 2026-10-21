@@ -330,10 +330,15 @@
       "new_systemEmptyTitle": "시스템 공지가 없어요",
       "new_messagesEmptyTitle": "받은 메시지가 없어요",
       "new_errorTitle": "알림을 불러오지 못했어요",
-      "new_errorDesc": "잠시 후 다시 시도해 주세요.",
+      "new_errorDesc": "인터넷 연결을 확인한 뒤 다시 시도해 주세요.",
+      "new_errorToast": "알림을 불러오지 못했어요. 인터넷 연결을 확인한 뒤 다시 시도해 주세요.",
       "new_retry": "다시 시도",
       "new_targetUnavailableTitle": "연결된 화면을 열 수 없어요",
       "new_targetUnavailableDesc": "화면이 바뀌었거나 지금은 이용할 수 없어요. 알림 내용은 아래에서 확인해 주세요.",
+      "messageFieldSender": "보낸 사람",
+      "messageFieldRelatedConsultation": "관련 상담",
+      "messageFieldRemainingSessions": "남은 회기",
+      "messageFieldReadAt": "읽은 시각",
       "personal": {
         "type": {
           "matching": {
@@ -353,15 +358,26 @@
           }
         },
         "route": {
-          "order": { "go": "주문 보기" },
-          "schedule": { "go": "일정 보기" },
-          "message": { "go": "메시지 보기" },
-          "wellness": { "go": "웰니스 보기" }
+          "order": {
+            "go": "주문 보기"
+          },
+          "schedule": {
+            "go": "일정 보기"
+          },
+          "message": {
+            "go": "메시지 보기"
+          },
+          "wellness": {
+            "go": "웰니스 보기"
+          }
         },
         "field": {
           "product": "상품",
           "amount": "금액",
-          "amountValue": "{{amount}}원"
+          "amountValue": "{{amount}}원",
+          "orderNumber": "주문 번호",
+          "completedAt": "완료 시각",
+          "occurredAt": "발생 시각"
         }
       },
       "systemEmpty": "시스템 공지가 없습니다",
@@ -380,7 +396,9 @@
       "messageTypeHomework": "과제 안내",
       "messageTypeReminder": "알림",
       "messageTypeUrgent": "긴급",
-      "adminLabel": "관리자"
+      "adminLabel": "관리자",
+      "sectionUnread": "안 읽은 메시지 {{count}}건",
+      "sectionRead": "읽은 메시지"
     }
   },
   "menu": {
@@ -425,7 +443,8 @@
     "pageOf": "{{current}} / {{total}}",
     "goToPage": "{{page}}페이지로 이동",
     "perPage": "페이지당 {{count}}건",
-    "total": "전체 {{count}}건"
+    "total": "전체 {{count}}건",
+    "rangeSummary": "{{page}}페이지 / 총 {{totalPages}}페이지"
   },
   "date": {
     "today": "오늘",

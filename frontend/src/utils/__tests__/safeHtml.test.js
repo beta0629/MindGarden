@@ -304,8 +304,11 @@ describe('공지 HTML 렌더 배선', () => {
 
   it('시스템 공지·메시지 본문은 sanitizeRichNoticeHtml 을 거친다', () => {
     const src = read('components/notifications/UnifiedNotifications.js');
-    expect(src).toContain('sanitizeRichNoticeHtml(selectedItem.data.content || \'\')');
-    expect(src).not.toContain('__html: selectedItem.data.content || \'\'');
+    // 표시용 요약(UUID 축약·패키지→상담 회차) 후 정제. 원문 content 직접 __html 금지.
+    expect(src).toMatch(
+      /sanitizeRichNoticeHtml\(\s*(?:formatNotificationSummaryText\()?\s*selectedItem\.data\.content\s*\|\|\s*''/
+    );
+    expect(src).not.toMatch(/__html:\s*selectedItem\.data\.content\s*\|\|\s*''/);
   });
 
   it('웰니스 상세는 sanitizeRichNoticeHtml 을 거친다', () => {

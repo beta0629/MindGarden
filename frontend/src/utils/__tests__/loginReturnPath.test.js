@@ -155,6 +155,13 @@ describe('consumeLoginReturnPath', () => {
     expect(consumeLoginReturnPath(CLIENT)).toBe('/client/offers');
   });
 
+  it('역할 불일치 경로면 빈 문자열(대시보드 fallback)', () => {
+    setUrl(`/login?redirect=${encodeURIComponent('/admin/clients')}`);
+    expect(consumeLoginReturnPath(CLIENT)).toBe('');
+    setUrl(`/login?redirect=${encodeURIComponent('/client/offers')}`);
+    expect(consumeLoginReturnPath(['/admin/'])).toBe('');
+  });
+
   it('외부 주소 ?redirect= 는 버린다', () => {
     setUrl(`/login?redirect=${encodeURIComponent('//evil.com')}`);
     expect(consumeLoginReturnPath(CLIENT)).toBe('');

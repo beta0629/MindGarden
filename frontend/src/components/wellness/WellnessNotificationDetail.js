@@ -6,16 +6,19 @@ import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import notificationManager from '../../utils/notification';
 import ClientWebPageShell from '../client/ClientWebPageShell';
-import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
+import EmptyState from '../common/EmptyState';
+import { NotificationUrgentBadge } from '../notifications/NotificationListCard';
+import { ICONS, ICON_SIZES } from '../../constants/icons';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { sanitizeRichNoticeHtml } from '../../utils/safeHtml';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import '../../styles/unified-design-tokens.css';
-import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
+import '../notifications/UnifiedNotifications.css';
 import './WellnessNotificationDetail.css';
 import { useTranslation } from 'react-i18next';
 
@@ -27,6 +30,9 @@ import { useTranslation } from 'react-i18next';
  * @since 2025-01-21
  */
 const WELLNESS_NOTIFICATION_DETAIL_TITLE_ID = 'wellness-notification-detail-title';
+const AlertIcon = ICONS.ALERT_CIRCLE;
+const LIST_LABEL = '목록으로';
+const BACK_LINK_LABEL = '< 웰니스 알림';
 
 const WellnessNotificationDetail = () => {
   const { t } = useTranslation();
@@ -50,7 +56,7 @@ const WellnessNotificationDetail = () => {
         notificationManager.show('알림을 불러오는데 실패했습니다.', 'error');
       }
     } catch (err) {
-      console.error('❌ 웰니스 알림 상세 로드 실패:', err);
+      console.error('웰니스 알림 상세 로드 실패:', err);
       setError('알림을 불러오는 중 오류가 발생했습니다.');
       notificationManager.show('알림을 불러오는데 실패했습니다.', 'error');
     }
@@ -63,8 +69,8 @@ const WellnessNotificationDetail = () => {
     extraDeps: [id]
   });
 
-  const handleBack = () => {
-    navigate(-1);
+  const handleBackToList = () => {
+    navigate(CLIENT_DASHBOARD_ROUTES.WELLNESS);
   };
 
   const getNotificationTypeLabel = (type) => {
@@ -79,24 +85,12 @@ const WellnessNotificationDetail = () => {
     return toDisplayString(types[type] ?? type, '—');
   };
 
-  const getNotificationTypeClass = (type) => {
-    const classes = {
-      GENERAL: 'type-general',
-      URGENT: 'type-urgent',
-      MAINTENANCE: 'type-maintenance',
-      EVENT: 'type-event',
-      UPDATE: 'type-update',
-      WELLNESS: 'type-wellness'
-    };
-    return classes[type] || 'type-general';
-  };
-
   const getMetaSubtitle = (n) => {
     const author = toDisplayString(n.authorName, '관리자');
     const published = toDisplayString(
       new Date(n.publishedAt || n.createdAt).toLocaleDateString('ko-KR')
     );
-    const parts = [`작성 ${author}`, `게시 ${published}`];
+    const parts = [`${author} · ${published}`];
     if (n.expiresAt) {
       parts.push(`만료 ${toDisplayString(new Date(n.expiresAt).toLocaleDateString('ko-KR'))}`);
     }
@@ -113,47 +107,50 @@ const WellnessNotificationDetail = () => {
     const html = sanitizeRichNoticeHtml(raw);
     return (
       <div
-        className="wellness-content-html"
+        className="wellness-reading__html"
         dangerouslySetInnerHTML={{ __html: html }}
       />
     );
   };
 
-  const backAction = (
+  const backLink = (
+    <button
+      type="button"
+      className="wellness-reading__back-link"
+      data-testid="wellness-detail-back-link"
+      data-gnb-chrome-free="true"
+      onClick={handleBackToList}
+    >
+      {BACK_LINK_LABEL}
+    </button>
+  );
+
+  const listButton = (
     <MGButton
       type="button"
       variant="outline"
-      size="small"
-      className={buildErpMgButtonClassName({
-        variant: 'outline',
-        size: 'sm',
-        loading: false,
-        className: 'back-button'
-      })}
+      className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-      onClick={handleBack}
+      onClick={handleBackToList}
       preventDoubleClick={false}
     >
-      <span>← 목록으로</span>
+      {LIST_LABEL}
     </MGButton>
   );
 
-  const pageShell = (headerTitle, headerSubtitle, body, actions = null) => (
-    <ClientWebPageShell>
-      <div className="mg-v2-ad-b0kla" data-testid="client-wellness-detail-page">
-        <div className="mg-v2-ad-b0kla__container">
-          <ContentArea ariaLabel="웰니스 알림 상세">
-            <ContentHeader
-              title={headerTitle}
-              subtitle={headerSubtitle}
-              titleId={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}
-              actions={actions}
-            />
-            <main aria-labelledby={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}>
-              {body}
-            </main>
-          </ContentArea>
-        </div>
+  const pageShell = (headerTitle, headerSubtitle, body) => (
+    <ClientWebPageShell
+      className="unified-notifications-shell"
+      title={headerTitle}
+      titleId={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}
+      meta={headerSubtitle ? (
+        <p className="unified-notifications__subtitle">{headerSubtitle}</p>
+      ) : null}
+    >
+      <div className="unified-notifications" data-testid="client-wellness-detail-page">
+        <main aria-labelledby={WELLNESS_NOTIFICATION_DETAIL_TITLE_ID}>
+          {body}
+        </main>
       </div>
     </ClientWebPageShell>
   );
@@ -162,94 +159,50 @@ const WellnessNotificationDetail = () => {
     return pageShell(
       '웰니스 알림',
       '상세 내용을 불러오는 중입니다.',
-      <div aria-busy="true" aria-live="polite">
+      <div className="wellness-reading-wrap" aria-busy="true" aria-live="polite">
         <UnifiedLoading type="inline" text="웰니스 알림을 불러오는 중..." />
-      </div>,
-      backAction
+      </div>
     );
   }
 
   if (error || !notification) {
     return pageShell(
       '웰니스 알림',
-      '요청하신 알림을 찾을 수 없습니다.',
-      <div className="wellness-notification-detail">
-        <div className="wellness-notification-error">
-          <div className="error-icon" aria-hidden="true">
-            {t('common.labels.notification')}
-          </div>
-          <h2 className="error-title">알림을 찾을 수 없습니다</h2>
-          <p className="error-message">
-            <SafeText fallback="요청하신 알림을 찾을 수 없습니다.">{error}</SafeText>
-          </p>
-          <MGButton
-            type="button"
-            variant="primary"
-            className={buildErpMgButtonClassName({
-              variant: 'primary',
-              size: 'md',
-              loading: false,
-              className: 'mg-btn mg-btn--primary'
-            })}
-            loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            onClick={handleBack}
-            preventDoubleClick={false}
-          >
-            <span>← 돌아가기</span>
-          </MGButton>
-        </div>
-      </div>,
-      backAction
+      '요청하신 알림을 찾을 수 없어요.',
+      <div className="wellness-reading-wrap" role="alert">
+        <EmptyState
+          icon={<AlertIcon size={ICON_SIZES.XXL} aria-hidden />}
+          title="알림을 찾을 수 없어요"
+          description={<SafeText fallback="요청하신 알림을 찾을 수 없어요.">{error}</SafeText>}
+          action={listButton}
+        />
+      </div>
     );
   }
 
   return pageShell(
     toDisplayString(notification.title, '웰니스 알림'),
     getMetaSubtitle(notification),
-    <div className="wellness-notification-detail">
-      <div className="wellness-notification-header wellness-notification-header--badges-only">
-        <div className="header-badges">
-          {notification.isImportant && (
-            <span className="badge badge-important">
-              <span>중요</span>
-            </span>
-          )}
-          {notification.isUrgent && (
-            <span className="badge badge-urgent">
-              <span>{t('admin.labels.urgent')}</span>
-            </span>
-          )}
-          <span className={`badge badge-type ${getNotificationTypeClass(notification.notificationType)}`}>
+    <div className="wellness-reading-wrap">
+      {backLink}
+      <article className="wellness-reading">
+        <div className="wellness-reading__meta">
+          {notification.isUrgent ? (
+            <NotificationUrgentBadge label={t('admin.labels.urgent')} />
+          ) : null}
+          {notification.isImportant ? <span className="mg-badge">중요</span> : null}
+          <span className="mg-badge">
             <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
           </span>
         </div>
-      </div>
-
-      <div className="wellness-notification-content">
-        <div className="content-body">
+        <div className="wellness-reading__body">
           {formatWellnessContent(notification.content)}
         </div>
-      </div>
-
-      <div className="wellness-notification-actions">
-        <MGButton
-          type="button"
-          variant="secondary"
-          className={buildErpMgButtonClassName({
-            variant: 'secondary',
-            size: 'md',
-            loading: false,
-            className: 'mg-btn mg-btn--secondary'
-          })}
-          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-          onClick={handleBack}
-          preventDoubleClick={false}
-        >
-          <span>← 목록으로 돌아가기</span>
-        </MGButton>
-      </div>
-    </div>,
-    backAction
+        <div className="wellness-reading__foot">
+          {listButton}
+        </div>
+      </article>
+    </div>
   );
 };
 

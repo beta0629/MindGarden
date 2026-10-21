@@ -208,6 +208,24 @@ export const DUPLICATE_LOGIN_REDIRECT_SEARCH = '?reason=duplicate-login';
 export const DUPLICATE_LOGIN_REASON_VALUE = 'duplicate-login';
 
 /**
+ * 로그아웃 후 /login 쿼리 — {@code logout=success|error}.
+ * 유휴 만료 시에만 안전한 내부 복귀 경로({@code redirect})를 함께 붙인다.
+ */
+export const LOGOUT_REDIRECT_QUERY = Object.freeze({
+  PARAM: 'logout',
+  SUCCESS: 'success',
+  ERROR: 'error'
+});
+
+/**
+ * sessionManager.logout(options) — 유휴/세션 만료 자동 로그아웃일 때만 복귀 경로 보존.
+ * 수동 로그아웃은 options 없이 호출해 redirect 를 붙이지 않는다.
+ */
+export const SESSION_LOGOUT_REASON = Object.freeze({
+  SESSION_EXPIRY: 'sessionExpiry'
+});
+
+/**
  * 로그인 직후 parallel XHR(브랜딩·LNB·공통코드) 401 레이스 완화용 TTL.
  * one-shot removeItem 대신 이 창 안에서는 /login 킥을 스킵한다.
  */

@@ -5,10 +5,14 @@
 
 .mg-pagination {
   position: relative;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-4);
+  max-width: 100%;
+  min-width: 0;
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   background: var(--mg-v2-color-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-border-card);
@@ -65,12 +69,17 @@
 /* ===== 페이징 정보 ===== */
 .mg-pagination__info {
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mg-pagination__info-text {
-  font-size: var(--mg-v2-font-size-caption);
+  display: block;
+  max-width: 100%;
+  font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-secondary);
   font-weight: var(--mg-v2-font-weight-medium);
+  overflow-wrap: anywhere;
 }
 
 /* ===== 페이징 내용 ===== */
@@ -78,7 +87,10 @@
 .mg-pagination__pages {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-1);
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ===== 페이징 버튼 ===== */
@@ -188,16 +200,20 @@
   cursor: not-allowed;
 }
 
-/* ===== 반응형 ===== */
+/* ===== 반응형 (breakpoint-tablet 과 동일 폭 — compact 포함 문구/버튼 두 줄) ===== */
 @media (max-width: 768px) {
-  .mg-pagination:not(.mg-pagination--compact) {
+  .mg-pagination {
     flex-direction: column;
     align-items: stretch;
     gap: var(--mg-v2-space-3);
   }
 
+  .mg-pagination__info,
   .mg-pagination__content,
   .mg-pagination__items-per-page {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: 100%;
     justify-content: center;
   }
 }

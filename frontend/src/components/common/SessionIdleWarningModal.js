@@ -9,11 +9,14 @@
  * maxInactiveInterval, lastAccessedTime, serverNow 포함 확인 →
  * 만료 `SESSION_IDLE_WARNING_MS` 전 모달 표시 → 연장 시 세션 갱신(checkSession(true))·모달 닫힘 →
  * 로그아웃 시 SessionContext.logout 재사용.
- * 카운트다운 remainingMs≤0 이고 연장 버튼이 진행 중이 아니면 logout() → /login?logout=success.
+ * 카운트다운 remainingMs≤0 이고 연장 버튼이 진행 중이 아니면
+ * logout({ reason: sessionExpiry }) → /login?logout=success&redirect=… (복귀 경로 보존).
+ * 모달 「로그아웃」 버튼·수동 로그아웃은 options 없이 복귀 경로를 붙이지 않는다.
  * 그 전 checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다.
  * current-user 가 200 이거나 재확인 뒤 remainingMs>0 이어도 연장으로 보지 않고 로그아웃한다.
  * 연장으로 세는 것은 연장 버튼뿐이다.
- * 중복 로그인으로 sessionManager 사용자가 비면 logout 하지 않고 모달만 닫는다.
+ * current-user 401 로 sessionManager 사용자가 비어도 서버 logout 을 한 번 호출하고
+ * 로그인으로 보낸다. logout 이 거절돼도 이동은 한다.
  * 남은 시간은 `lastAccessedTime`(ms) + `maxInactiveInterval`(s)×1000 만료 시각 기준이며,
  * 서버 `ApiResponse`는 sessionManager에서 `data` 언랩됨(미언랩 시 toSafeNumber가 -1로 떨어져 타이머가 비활성).
  * lastAccessedTime / maxInactiveInterval = Servlet HttpSession(밀리초/초), serverNow = 서버 now(ms),
@@ -37,11 +40,13 @@ import { useSession } from '../../contexts/SessionContext';
 import {
   SESSION_IDLE_EXPIRY_TIMER_SLACK_MS,
   SESSION_IDLE_WARNING_MS,
+  SESSION_LOGOUT_REASON,
   SESSION_REMAINING_DISPLAY,
   isSessionPublicPath
 } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import { sessionManager } from '../../utils/sessionManager';
+import { redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import {
   buildSessionExpiryLabel,
   computeSessionExpiryState,
@@ -303,9 +308,11 @@ const SessionIdleWarningModal = () => {
   }, [isOpen, sessionInfo]);
 
   /**
-   * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면 logout() → /login?logout=success.
+   * 만료(remainingMs≤0) 이고 연장 버튼이 진행 중이 아니면
+   * logout({ reason: SESSION_EXPIRY }) → /login?logout=success&redirect=… .
    * checkSession(idleExpiry) 는 중복 로그인 종료만 구분한다. 200 이나 remainingMs>0 은 연장이 아니다.
-   * 중복 로그인 킥은 sessionManager 가 이미 이동시키므로 logout 으로 쿼리를 덮지 않는다.
+   * current-user 401 로 사용자가 비어도 서버 logout 으로 refresh 를 폐기하고 로그인으로 보낸다.
+   * logout 이 거절돼도 이동은 한다. 같은 만료에서 logout 은 한 번만.
    */
   useEffect(() => {
     if (!isOpen) {
@@ -343,15 +350,29 @@ const SessionIdleWarningModal = () => {
         expiryLogoutStartedRef.current = false;
         return;
       }
-      // 중복 로그인 종료는 sessionManager 가 user 를 비우고 redirect 까지 끝낸다.
+      // current-user 401 은 사용자를 비운 뒤 이 분기로 온다. 여기서 return 하면
+      // POST /api/v1/auth/logout 이 없어 refresh 가 폐기되지 않는다.
+      // 한 번만 서버 로그아웃하고, 거절돼도 로그인 이동은 공용 경로로 한다.
       if (!stillValid && !sessionManager.getUser()) {
-        expiryLogoutStartedRef.current = false;
-        setIsOpen(false);
+        if (!expiryLogoutDoneRef.current) {
+          expiryLogoutDoneRef.current = true;
+          setIsOpen(false);
+          try {
+            await logout();
+          } catch {
+            // 서버 로그아웃 실패·거절이어도 아래 이동은 한다.
+          } finally {
+            redirectToLoginPageOnce();
+          }
+        }
         return;
       }
       expiryLogoutDoneRef.current = true;
       setIsOpen(false);
-      await logout();
+      await logout({
+        preserveReturnPath: true,
+        reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY
+      });
     })();
   }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 

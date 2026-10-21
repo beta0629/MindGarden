@@ -161,6 +161,6 @@
     "goToPage": "Go to page {{page}}",
     "perPage": "{{count}} per page",
     "total": "{{count}} total",
-    "rangeSummary": "Page {{page}} / {{totalPages}} total pages"
+    "rangeSummary": "{{total}} items, {{start}}–{{end}} · Page {{page}} / {{totalPages}} total pages"
   }
 }

@@ -66,6 +66,13 @@ jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'lux
   virtual: true
 });
 
+// App → safeHtml → dompurify. findRelatedTests 로 App.test 가 끌려올 때
+// node_modules 미설치 환경에서도 스위트가 로드되도록 virtual stub.
+jest.mock('dompurify', () => ({
+  __esModule: true,
+  default: { sanitize: (html) => html }
+}), { virtual: true });
+
 import App from './App';
 
 describe('App', () => {

@@ -92,6 +92,23 @@ const EMPTY_MERCHANT_LEGAL = {
   productPriceGuideText: ''
 };
 
+/**
+ * 로그인 상태 토스트용 쿼리만 제거하고 redirect 등 나머지는 유지한다.
+ *
+ * @param {string} search location.search (? 포함 가능)
+ * @param {string[]} keysToRemove 제거할 쿼리 키
+ * @returns {string} `/login` 또는 `/login?...`
+ */
+function stripLoginStatusQueryParams(search, keysToRemove) {
+  const raw = typeof search === 'string' ? search : '';
+  const params = new URLSearchParams(raw.startsWith('?') ? raw.slice(1) : raw);
+  keysToRemove.forEach((key) => {
+    params.delete(key);
+  });
+  const qs = params.toString();
+  return qs ? `/login?${qs}` : '/login';
+}
+
 const UnifiedLogin = () => {
   logger.debug('🚀 UnifiedLogin 컴포넌트 렌더링 시작');
   const { t } = useTranslation(['common', 'auth']);
@@ -317,7 +334,11 @@ const UnifiedLogin = () => {
       const terminatedMsg = t('auth:unifiedLogin.msg.sessionTerminatedDuplicate');
       showTooltip(terminatedMsg, 'warning');
       notificationManager.show(terminatedMsg, 'warning');
-      window.history.replaceState({}, document.title, '/login');
+      window.history.replaceState(
+        {},
+        document.title,
+        stripLoginStatusQueryParams(location.search, ['reason'])
+      );
       return;
     }
 
@@ -340,14 +361,21 @@ const UnifiedLogin = () => {
         }, 1000);
       }
       
-      // URL에서 파라미터 제거
-      window.history.replaceState({}, document.title, '/login');
+      // logout 만 제거하고 redirect 등 복귀 쿼리는 유지
+      window.history.replaceState(
+        {},
+        document.title,
+        stripLoginStatusQueryParams(location.search, ['logout'])
+      );
     } else if (logoutStatus === 'error') {
       const errorMsg = logoutMessage ? decodeURIComponent(logoutMessage) : t('auth:unifiedLogin.msg.logoutError');
       showTooltip(errorMsg, 'error');
       notificationManager.show(errorMsg, 'error');
-      // URL에서 파라미터 제거
-      window.history.replaceState({}, document.title, '/login');
+      window.history.replaceState(
+        {},
+        document.title,
+        stripLoginStatusQueryParams(location.search, ['logout', 'message'])
+      );
     }
   }, [location.search]);
 
@@ -387,15 +415,22 @@ const UnifiedLogin = () => {
           notificationManager.show(decodedError, 'error');
         }
         
-        // URL에서 에러 파라미터 제거
-        window.history.replaceState({}, document.title, '/login');
+        // error 만 제거하고 redirect 등 복귀 쿼리는 유지
+        window.history.replaceState(
+          {},
+          document.title,
+          stripLoginStatusQueryParams(location.search, ['error'])
+        );
         logger.debug('🧹 URL에서 에러 파라미터 제거됨');
         return;
       } catch (parseError) {
         console.error('OAuth 에러 메시지 파싱 실패:', parseError);
         showTooltip(t('auth:unifiedLogin.msg.oauthGeneralError'), 'error');
-        // URL에서 에러 파라미터 제거
-        window.history.replaceState({}, document.title, '/login');
+        window.history.replaceState(
+          {},
+          document.title,
+          stripLoginStatusQueryParams(location.search, ['error'])
+        );
         return;
       }
     }

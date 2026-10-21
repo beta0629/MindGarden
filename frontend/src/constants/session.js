@@ -18,6 +18,12 @@ export const SESSION_CHECK_INTERVAL = SESSION_CHECK_INTERVAL_MS;
  */
 export const SESSION_IDLE_WARNING_MS = 60 * 1000;
 
+/**
+ * SessionIdleWarningModal 만료 판정 타이머 여유(ms).
+ * 만료 시각(remainingMs) + 이 값 뒤에 판정을 다시 돌려, 브라우저 타이머가 조금 일찍 깨어나도 remainingMs≤0 이 되게 한다.
+ */
+export const SESSION_IDLE_EXPIRY_TIMER_SLACK_MS = 50;
+
 // 세션 확인 타임아웃 (밀리초)
 export const SESSION_CHECK_TIMEOUT = 10 * 1000; // 10초
 

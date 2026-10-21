@@ -11,6 +11,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../common/SafeText';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { formatNotificationSummaryText } from '../../utils/displayId';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
 import './NotificationListCard.css';
 import { NOTIFICATION_PREVIEW_MAX_CHARS, NOTIFICATION_SKELETON_COUNT, NOTIFICATION_PAGE_TEST_IDS } from '../../constants/notificationTabs';
@@ -22,7 +23,8 @@ const ChevronIcon = ICONS.CHEVRON_RIGHT;
  * @returns {string}
  */
 export const toNotificationPreview = (content) => {
-  const text = toDisplayString(content, '').replace(/<[^>]*>/g, '').trim();
+  const plain = toDisplayString(content, '').replace(/<[^>]*>/g, '').trim();
+  const text = formatNotificationSummaryText(plain);
   if (text.length <= NOTIFICATION_PREVIEW_MAX_CHARS) {
     return text;
   }

@@ -189,9 +189,7 @@
     display: block;
   }
 
-  .notif-card__chev {
-    display: none;
-  }
+  /* 390 포함 — chevron 유지(시안 r2). 시각만 meta 줄로 내린다. */
 }
 
 .notif-skel {

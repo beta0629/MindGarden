@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { usePagedList } from '../../hooks/usePagedList';
+import { useToast } from '../../contexts/ToastContext';
 import StandardizedApi from '../../utils/standardizedApi';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import notificationManager from '../../utils/notification';
@@ -9,7 +10,9 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import EmptyState from '../common/EmptyState';
-import ListLoadMore from '../common/ListLoadMore';
+import MGPagination from '../common/MGPagination';
+import MGButton from '../common/MGButton';
+import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import SafeText from '../common/SafeText';
 import NotificationListCard, {
   NotificationSectionLabel,
@@ -18,6 +21,13 @@ import NotificationListCard, {
 } from '../notifications/NotificationListCard';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { formatNotificationSummaryText } from '../../utils/displayId';
+import { parseMessageConsultationFields } from '../../utils/messageConsultationFields';
+import { buildPagedListSummaryLabel } from '../../utils/pagedListSummary';
+import {
+  CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+  PAGED_LIST_MODE
+} from '../../constants/pagedList';
 import { CLIENT_WEB_SUITE_COPY } from '../../constants/clientWebSuiteConstants';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/themes/client-theme.css';
@@ -29,6 +39,7 @@ const CLIENT_MESSAGE_TITLE_ID = 'client-message-screen-title';
 const REPLY_MAX_LENGTH = 500;
 const MessageIcon = ICONS.MESSAGE_CIRCLE;
 const CloseIcon = ICONS.X;
+const AlertIcon = ICONS.ALERT_CIRCLE;
 
 const MESSAGE_FILTER = {
   ALL: 'all',
@@ -49,13 +60,10 @@ const MESSAGE_COPY = {
   EMPTY_DESC: '상담 선생님이 메시지를 보내면 여기에 보여요.',
   EMPTY_FILTERED_TITLE: '해당하는 메시지가 없어요',
   MODAL_SUBTITLE_LABEL: '상담사 메시지',
-  FIELD_SENDER: '보낸 사람',
-  FIELD_READ_AT: '읽은 시각',
   REPLY_LABEL: '답장하기',
   REPLY_PLACEHOLDER: '선생님께 보낼 답장을 적어 주세요.',
   REPLY_SEND: '답장 전송',
-  REPLY_COUNT: (length) => `${length} / ${REPLY_MAX_LENGTH}자`,
-  MODAL_CLOSE_LABEL: '닫기'
+  REPLY_COUNT: (length) => `${length} / ${REPLY_MAX_LENGTH}자`
 };
 
 const FILTER_PREDICATES = {
@@ -70,6 +78,7 @@ const FILTER_PREDICATES = {
  */
 const ClientMessageScreen = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { ready, userId, userRef } = useClientSessionReady();
 
   const [selectedMessage, setSelectedMessage] = useState(null);
@@ -91,14 +100,16 @@ const ClientMessageScreen = () => {
     items: messages,
     setItems: setMessages,
     totalElements,
+    totalPages,
+    currentPage,
     loading,
-    loadingMore,
     error: messagesError,
-    hasMore,
-    loadMore,
+    goToPage,
     reload: reloadMessages
   } = usePagedList({
     fetchPage: fetchMessagePage,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    mode: PAGED_LIST_MODE.REPLACE,
     enabled: ready,
     resetKey: userId
   });
@@ -108,10 +119,12 @@ const ClientMessageScreen = () => {
       return;
     }
     console.error('메시지 로드 오류:', messagesError);
-    if (messagesError.status !== 403 && messagesError.message?.includes('접근 권한') === false) {
-      notificationManager.show('메시지를 불러오는 중 오류가 발생했습니다.', 'error');
-    }
-  }, [messagesError]);
+    // 목록 API 실패 시에만 AppToast(.app-toast) — EmptyState 와 함께 보여 성공 빈 목록과 구분한다.
+    showToast({
+      message: t('common:notification.unified.new_errorToast'),
+      type: 'error'
+    });
+  }, [messagesError, showToast, t]);
 
   const handleMessageClick = async(message) => {
     setReplyContent('');
@@ -300,12 +313,55 @@ const ClientMessageScreen = () => {
     );
   }
 
+  if (messagesError) {
+    return pageShell(
+      <div role="alert" data-testid="client-messages-error">
+        <EmptyState
+          icon={<AlertIcon size={ICON_SIZES.XXL} aria-hidden />}
+          title={t('common:notification.unified.new_errorTitle')}
+          description={t('common:notification.unified.new_errorDesc')}
+          action={(
+            <MGButton
+              type="button"
+              variant="primary"
+              className={buildErpMgButtonClassName({ variant: 'primary', loading: false })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={() => { void reloadMessages(); }}
+              preventDoubleClick={false}
+            >
+              {t('common:notification.unified.new_retry')}
+            </MGButton>
+          )}
+        />
+      </div>
+    );
+  }
+
   const selectedSenderName = selectedMessage ? toDisplayString(selectedMessage.senderName, '') : '';
+  const consultationFields = selectedMessage
+    ? parseMessageConsultationFields(selectedMessage)
+    : { relatedConsultation: '', remainingSessions: '' };
   const modalSubtitle = selectedMessage
     ? [MESSAGE_COPY.MODAL_SUBTITLE_LABEL, formatDate(selectedMessage.sentAt || selectedMessage.createdAt)]
       .filter(Boolean)
       .join(' · ')
     : '';
+  const showModalFields = Boolean(
+    selectedSenderName
+    || consultationFields.relatedConsultation
+    || consultationFields.remainingSessions
+    || (selectedMessage && selectedMessage.isRead && formatDate(selectedMessage.readAt))
+  );
+  const paginationSummary = buildPagedListSummaryLabel({
+    t,
+    total: totalElements,
+    page: currentPage,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    totalPages
+  });
+  const resolvedTotalPages = totalPages != null
+    ? totalPages
+    : Math.max(1, Math.ceil((totalElements || 0) / CLIENT_NOTIFICATION_LIST_PAGE_SIZE));
 
   return pageShell(
     <>
@@ -348,13 +404,25 @@ const ClientMessageScreen = () => {
           {renderMessageSection(MESSAGE_COPY.SECTION_READ, readMessages)}
         </div>
       ) : null}
-      <ListLoadMore
-        loadedCount={messages.length}
-        totalCount={totalElements}
-        hasMore={hasMore}
-        loading={loadingMore}
-        onLoadMore={loadMore}
-      />
+      {messages.length > 0 && (totalElements == null || totalElements > 0) ? (
+        <nav className="unified-notifications__pagination" aria-label={t('common:pagination.pageOf', {
+          current: currentPage,
+          total: resolvedTotalPages
+        })}
+        >
+          <MGPagination
+            currentPage={currentPage}
+            totalPages={resolvedTotalPages}
+            totalItems={totalElements || messages.length}
+            itemsPerPage={CLIENT_NOTIFICATION_LIST_PAGE_SIZE}
+            onPageChange={(page) => { void goToPage(page); }}
+            showInfo
+            showItemsPerPage={false}
+            summaryLabel={paginationSummary}
+            variant="compact"
+          />
+        </nav>
+      ) : null}
 
       <UnifiedModal
         isOpen={Boolean(selectedMessage)}
@@ -382,19 +450,31 @@ const ClientMessageScreen = () => {
               </span>
             </div>
             <SafeText tag="p" className="unified-notifications__content-text">
-              {selectedMessage.content}
+              {formatNotificationSummaryText(selectedMessage.content)}
             </SafeText>
-            {selectedSenderName || selectedMessage.isRead ? (
+            {showModalFields ? (
               <dl className="unified-notifications__modal-fields">
                 {selectedSenderName ? (
                   <>
-                    <dt>{MESSAGE_COPY.FIELD_SENDER}</dt>
+                    <dt>{t('common:notification.unified.messageFieldSender')}</dt>
                     <dd><SafeText>{selectedSenderName}</SafeText></dd>
+                  </>
+                ) : null}
+                {consultationFields.relatedConsultation ? (
+                  <>
+                    <dt>{t('common:notification.unified.messageFieldRelatedConsultation')}</dt>
+                    <dd><SafeText>{consultationFields.relatedConsultation}</SafeText></dd>
+                  </>
+                ) : null}
+                {consultationFields.remainingSessions ? (
+                  <>
+                    <dt>{t('common:notification.unified.messageFieldRemainingSessions')}</dt>
+                    <dd><SafeText>{consultationFields.remainingSessions}</SafeText></dd>
                   </>
                 ) : null}
                 {selectedMessage.isRead && formatDate(selectedMessage.readAt) ? (
                   <>
-                    <dt>{MESSAGE_COPY.FIELD_READ_AT}</dt>
+                    <dt>{t('common:notification.unified.messageFieldReadAt')}</dt>
                     <dd>{formatDate(selectedMessage.readAt)}</dd>
                   </>
                 ) : null}

@@ -1,9 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
 import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
+import { useToast } from '../../contexts/ToastContext';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import UnifiedLoading from '../../components/common/UnifiedLoading';
 import SafeText from '../common/SafeText';
@@ -14,6 +15,7 @@ import NotificationListCard, { NotificationUrgentBadge } from '../notifications/
 import { ICONS, ICON_SIZES } from '../../constants/icons';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { toPlainNoticePreview } from '../../utils/safeHtml';
+import { formatNotificationSummaryText } from '../../utils/displayId';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/themes/client-theme.css';
 import '../notifications/UnifiedNotifications.css';
@@ -60,7 +62,8 @@ const formatDateTime = (value) => {
 };
 
 const toCardPreview = (content) => {
-  const text = toPlainNoticePreview(typeof content === 'string' ? content : toDisplayString(content, ''));
+  const plain = toPlainNoticePreview(typeof content === 'string' ? content : toDisplayString(content, ''));
+  const text = formatNotificationSummaryText(plain);
   if (text.length <= NOTIFICATION_PREVIEW_MAX_CHARS) {
     return text;
   }
@@ -69,14 +72,17 @@ const toCardPreview = (content) => {
 
 const WellnessNotificationList = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const { ready, userId } = useClientSessionReady();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const toastedErrorRef = useRef(false);
 
   const { load: loadNotificationList } = useSoftResourceLoad(setLoading, async() => {
     setError(null);
+    toastedErrorRef.current = false;
     try {
       const response = await StandardizedApi.get(API_ENDPOINTS.SYSTEM.NOTIFICATIONS.ACTIVE);
 
@@ -97,6 +103,18 @@ const WellnessNotificationList = () => {
       setError('알림을 불러오는 중 오류가 발생했습니다.');
     }
   });
+
+  useEffect(() => {
+    if (!error || toastedErrorRef.current) {
+      return;
+    }
+    toastedErrorRef.current = true;
+    // 목록 API 실패 시에만 AppToast(.app-toast) — EmptyState 와 함께 표시.
+    showToast({
+      message: t('common:notification.unified.new_errorToast'),
+      type: 'error'
+    });
+  }, [error, showToast, t]);
 
   useUserIdScopedLoad({ userId, loadFn: loadNotificationList, enabled: ready });
 

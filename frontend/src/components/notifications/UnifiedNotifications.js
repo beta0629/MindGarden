@@ -1,24 +1,37 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useSession } from '../../contexts/SessionContext';
 import { useNotification } from '../../contexts/NotificationContext';
+import { useToast } from '../../contexts/ToastContext';
 import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
+import { usePagedList } from '../../hooks/usePagedList';
 import { apiGet } from '../../utils/ajax';
 import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { sanitizeRichNoticeHtml } from '../../utils/safeHtml';
+import {
+  formatNotificationSummaryText,
+  formatPersonalOrderNumber
+} from '../../utils/displayId';
+import { parseMessageConsultationFields } from '../../utils/messageConsultationFields';
+import { buildPagedListSummaryLabel } from '../../utils/pagedListSummary';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import MGButton from '../common/MGButton';
+import MGPagination from '../common/MGPagination';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import ActionBar from '../common/ActionBar';
 import ActionBarButton from '../common/ActionBarButton';
 import SafeText from '../common/SafeText';
 import EmptyState from '../common/EmptyState';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
+import {
+  CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+  PAGED_LIST_MODE
+} from '../../constants/pagedList';
 import PersonalNotificationsTab from './PersonalNotificationsTab';
 import NotificationListCard, {
   NotificationLoadingList,
@@ -33,7 +46,6 @@ import {
 } from '../../constants/notificationTabs';
 import {
   PERSONAL_NOTIFICATION_PRESENTATION,
-  formatPersonalOrderNumber,
   isClientNotificationUser,
   resolveNotificationsListPath,
   resolvePersonalNotificationDestination,
@@ -42,7 +54,7 @@ import {
 import '../../styles/unified-design-tokens.css';
 import './UnifiedNotifications.css';
 
-const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications?page=0&size=50';
+const API_SYSTEM_NOTIFICATIONS = '/api/v1/system-notifications';
 const UNIFIED_NOTIFICATIONS_TITLE_ID = 'unified-notifications-title';
 const TAB_ORDER = [
   NOTIFICATION_TABS.SYSTEM,
@@ -93,6 +105,7 @@ const modalSubtitle = (selectedItem, formatDate, t) => {
  */
 const UnifiedNotifications = () => {
   const { t } = useTranslation();
+  const { showToast } = useToast();
   const { user, isLoggedIn } = useSession();
   const location = useLocation();
   const navigate = useNavigate();
@@ -104,11 +117,6 @@ const UnifiedNotifications = () => {
   } = useTenantComponentFlags();
 
   const [activeTab, setActiveTab] = useState(() => resolveInitialTab(location.search));
-  const [systemNotifications, setSystemNotifications] = useState([]);
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [systemError, setSystemError] = useState(false);
-  const [messagesError, setMessagesError] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const tabRefs = useRef({});
 
@@ -120,52 +128,58 @@ const UnifiedNotifications = () => {
     shopGateKnown: !shopFlagsLoading
   }), [clientUser, shopFlagsFailed, clientShopEnabled, shopFlagsLoading]);
 
-  const loadSystemNotifications = async() => {
-    if (!isLoggedIn || !user?.id) {
-      setSystemNotifications([]);
-      setSystemError(false);
-      setLoading(false);
-      return;
-    }
-    try {
-      setLoading(true);
-      setSystemError(false);
-      const response = await apiGet(API_SYSTEM_NOTIFICATIONS);
-      const notificationsData = response?.notifications || (Array.isArray(response) ? response : []);
-      setSystemNotifications(notificationsData);
-    } catch (error) {
-      setSystemError(true);
-      setSystemNotifications([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const sessionReady = Boolean(isLoggedIn && user?.id);
 
-  const loadMessages = async() => {
-    if (!isLoggedIn || !user?.id) {
-      setMessages([]);
-      setMessagesError(false);
-      setLoading(false);
+  const fetchSystemPage = useCallback(
+    (page, size) => apiGet(API_SYSTEM_NOTIFICATIONS, { page, size }),
+    []
+  );
+
+  const fetchMessagesPage = useCallback((page, size) => {
+    const basePath = getConsultationMessagesListPath(user);
+    if (!basePath) {
+      return Promise.resolve({ messages: [], totalElements: 0, totalPages: 0 });
+    }
+    return apiGet(basePath, { page, size });
+  }, [user]);
+
+  const systemList = usePagedList({
+    fetchPage: fetchSystemPage,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    mode: PAGED_LIST_MODE.REPLACE,
+    enabled: sessionReady && activeTab === NOTIFICATION_TABS.SYSTEM,
+    resetKey: user?.id
+  });
+
+  const messagesList = usePagedList({
+    fetchPage: fetchMessagesPage,
+    pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+    mode: PAGED_LIST_MODE.REPLACE,
+    enabled: sessionReady && activeTab === NOTIFICATION_TABS.MESSAGES,
+    resetKey: user?.id
+  });
+
+  useEffect(() => {
+    if (!systemList.error) {
       return;
     }
-    try {
-      setLoading(true);
-      setMessagesError(false);
-      const basePath = getConsultationMessagesListPath(user);
-      if (!basePath) {
-        setMessages([]);
-        return;
-      }
-      const response = await apiGet(basePath, { page: 0, size: 50 });
-      const messagesData = response?.messages || (Array.isArray(response) ? response : []);
-      setMessages(messagesData);
-    } catch (error) {
-      setMessagesError(true);
-      setMessages([]);
-    } finally {
-      setLoading(false);
+    // 시스템 공지 목록 API 실패 시에만 AppToast(.app-toast)
+    showToast({
+      message: t('common:notification.unified.new_errorToast'),
+      type: 'error'
+    });
+  }, [systemList.error, showToast, t]);
+
+  useEffect(() => {
+    if (!messagesList.error) {
+      return;
     }
-  };
+    // 일반 메시지 목록 API 실패 시에만 AppToast(.app-toast)
+    showToast({
+      message: t('common:notification.unified.new_errorToast'),
+      type: 'error'
+    });
+  }, [messagesList.error, showToast, t]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -181,13 +195,6 @@ const UnifiedNotifications = () => {
       { pathname: location.pathname, search: search ? `?${search}` : '' },
       { replace: true }
     );
-    if (tab === NOTIFICATION_TABS.SYSTEM) {
-      void loadSystemNotifications();
-    } else if (tab === NOTIFICATION_TABS.MESSAGES) {
-      void loadMessages();
-    } else {
-      setLoading(false);
-    }
   };
 
   const handleTabKeyDown = (event) => {
@@ -254,10 +261,10 @@ const UnifiedNotifications = () => {
       return;
     }
     if (closed.type === NOTIFICATION_TABS.SYSTEM) {
-      await loadSystemNotifications();
+      await systemList.reload({ silent: true });
       window.dispatchEvent(new Event('notification-read'));
     } else {
-      await loadMessages();
+      await messagesList.reload({ silent: true });
       window.dispatchEvent(new Event('message-read'));
     }
   };
@@ -295,18 +302,6 @@ const UnifiedNotifications = () => {
       : (message.senderName || t('common:notification.unified.senderUnknown'));
     return `${role} · ${name}`;
   };
-
-  useEffect(() => {
-    if (activeTab === NOTIFICATION_TABS.SYSTEM) {
-      void loadSystemNotifications();
-    } else if (activeTab === NOTIFICATION_TABS.MESSAGES) {
-      void loadMessages();
-    } else {
-      setLoading(false);
-    }
-    // 첫 진입·사용자 변경만. 탭 전환은 handleTabChange 가 다시 읽는다.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoggedIn, user?.id]);
 
   useEffect(() => {
     const openSystemId = location.state?.openSystemNotificationId;
@@ -407,14 +402,45 @@ const UnifiedNotifications = () => {
     </div>
   );
 
+  const renderListPagination = (listState) => {
+    const total = listState.totalElements;
+    if (listState.items.length === 0 && (total == null || total === 0)) {
+      return null;
+    }
+    const resolvedTotalPages = listState.totalPages != null
+      ? listState.totalPages
+      : Math.max(1, Math.ceil((total || 0) / CLIENT_NOTIFICATION_LIST_PAGE_SIZE));
+    return (
+      <nav className="unified-notifications__pagination">
+        <MGPagination
+          currentPage={listState.currentPage}
+          totalPages={resolvedTotalPages}
+          totalItems={total || listState.items.length}
+          itemsPerPage={CLIENT_NOTIFICATION_LIST_PAGE_SIZE}
+          onPageChange={(page) => { void listState.goToPage(page); }}
+          showInfo
+          showItemsPerPage={false}
+          summaryLabel={buildPagedListSummaryLabel({
+            t,
+            total,
+            page: listState.currentPage,
+            pageSize: CLIENT_NOTIFICATION_LIST_PAGE_SIZE,
+            totalPages: resolvedTotalPages
+          })}
+          variant="compact"
+        />
+      </nav>
+    );
+  };
+
   const renderSystemList = () => {
-    if (loading) {
+    if (systemList.loading) {
       return <NotificationLoadingList label={t('common:notification.unified.new_loading')} />;
     }
-    if (systemError) {
-      return errorState(() => { void loadSystemNotifications(); });
+    if (systemList.error) {
+      return errorState(() => { void systemList.reload(); });
     }
-    if (systemNotifications.length === 0) {
+    if (systemList.items.length === 0) {
       return (
         <EmptyState
           icon={<VolumeIcon size={ICON_SIZES.XXL} aria-hidden />}
@@ -423,37 +449,40 @@ const UnifiedNotifications = () => {
       );
     }
     return (
-      <ul className="notif-list">
-        {systemNotifications.map((notification) => {
-          const when = notification.publishedAt || notification.createdAt;
-          return (
-            <NotificationListCard
-              key={notification.id}
-              title={toDisplayString(notification.title, '')}
-              timeLabel={formatDate(when)}
-              timeIso={when || ''}
-              summary={toNotificationPreview(notification.content)}
-              badge={notification.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
-              unread={notification.isRead === false}
-              unreadSr={unreadSr}
-              icon={VolumeIcon}
-              showChevron
-              onClick={() => { void handleSystemNotificationClick(notification); }}
-            />
-          );
-        })}
-      </ul>
+      <>
+        <ul className="notif-list">
+          {systemList.items.map((notification) => {
+            const when = notification.publishedAt || notification.createdAt;
+            return (
+              <NotificationListCard
+                key={notification.id}
+                title={toDisplayString(notification.title, '')}
+                timeLabel={formatDate(when)}
+                timeIso={when || ''}
+                summary={toNotificationPreview(notification.content)}
+                badge={notification.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
+                unread={notification.isRead === false}
+                unreadSr={unreadSr}
+                icon={VolumeIcon}
+                showChevron
+                onClick={() => { void handleSystemNotificationClick(notification); }}
+              />
+            );
+          })}
+        </ul>
+        {renderListPagination(systemList)}
+      </>
     );
   };
 
   const renderMessageList = () => {
-    if (loading) {
+    if (messagesList.loading) {
       return <NotificationLoadingList label={t('common:notification.unified.new_loading')} />;
     }
-    if (messagesError) {
-      return errorState(() => { void loadMessages(); });
+    if (messagesList.error) {
+      return errorState(() => { void messagesList.reload(); });
     }
-    if (messages.length === 0) {
+    if (messagesList.items.length === 0) {
       return (
         <EmptyState
           icon={<MessageIcon size={ICON_SIZES.XXL} aria-hidden />}
@@ -462,27 +491,30 @@ const UnifiedNotifications = () => {
       );
     }
     return (
-      <ul className="notif-list">
-        {messages.map((message) => {
-          const when = message.createdAt;
-          return (
-            <NotificationListCard
-              key={message.id}
-              title={toDisplayString(message.title, '')}
-              timeLabel={formatDate(when)}
-              timeIso={when || ''}
-              summary={toNotificationPreview(message.content)}
-              meta={messageMeta(message)}
-              badge={message.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
-              unread={message.isRead === false}
-              unreadSr={unreadSr}
-              icon={MessageIcon}
-              showChevron
-              onClick={() => { void handleMessageClick(message); }}
-            />
-          );
-        })}
-      </ul>
+      <>
+        <ul className="notif-list">
+          {messagesList.items.map((message) => {
+            const when = message.createdAt;
+            return (
+              <NotificationListCard
+                key={message.id}
+                title={toDisplayString(message.title, '')}
+                timeLabel={formatDate(when)}
+                timeIso={when || ''}
+                summary={toNotificationPreview(message.content)}
+                meta={messageMeta(message)}
+                badge={message.isUrgent ? <NotificationUrgentBadge label={urgentLabel} /> : null}
+                unread={message.isRead === false}
+                unreadSr={unreadSr}
+                icon={MessageIcon}
+                showChevron
+                onClick={() => { void handleMessageClick(message); }}
+              />
+            );
+          })}
+        </ul>
+        {renderListPagination(messagesList)}
+      </>
     );
   };
 
@@ -494,7 +526,7 @@ const UnifiedNotifications = () => {
     : null;
 
   const personalFields = [];
-  if (personalMeta) {
+  if (selectedItem && selectedItem.type === NOTIFICATION_TABS.PERSONAL && personalMeta) {
     const orderNumber = formatPersonalOrderNumber(personalMeta.mappingId);
     if (orderNumber) {
       personalFields.push({
@@ -505,7 +537,7 @@ const UnifiedNotifications = () => {
     if (personalMeta.productName) {
       personalFields.push({
         label: t('common:notification.unified.personal.field.product'),
-        value: personalMeta.productName
+        value: formatNotificationSummaryText(personalMeta.productName)
       });
     }
     if (personalMeta.amount != null) {
@@ -516,7 +548,49 @@ const UnifiedNotifications = () => {
         })
       });
     }
+    const whenRaw = selectedItem.data.publishedAt || selectedItem.data.createdAt;
+    const whenLabel = formatDate(whenRaw);
+    if (whenLabel) {
+      const whenFieldKey = personalMeta.kind === 'PAYMENT_CONFIRMED'
+        || personalMeta.kind === 'DEPOSIT_CONFIRMED'
+        ? 'common:notification.unified.personal.field.completedAt'
+        : 'common:notification.unified.personal.field.occurredAt';
+      personalFields.push({
+        label: t(whenFieldKey),
+        value: whenLabel
+      });
+    }
   }
+
+  const messageDetailFields = [];
+  if (selectedItem && selectedItem.type === NOTIFICATION_TABS.MESSAGES) {
+    const senderName = toDisplayString(selectedItem.data.senderName, '');
+    if (senderName) {
+      messageDetailFields.push({
+        label: t('common:notification.unified.messageFieldSender'),
+        value: senderName
+      });
+    }
+    const consultation = parseMessageConsultationFields(selectedItem.data);
+    if (consultation.relatedConsultation) {
+      messageDetailFields.push({
+        label: t('common:notification.unified.messageFieldRelatedConsultation'),
+        value: consultation.relatedConsultation
+      });
+    }
+    if (consultation.remainingSessions) {
+      messageDetailFields.push({
+        label: t('common:notification.unified.messageFieldRemainingSessions'),
+        value: consultation.remainingSessions
+      });
+    }
+  }
+
+  const personalBodyText = personalPresentation
+    ? t(personalPresentation.summaryKey)
+    : formatNotificationSummaryText(
+      toDisplayString(selectedItem?.data?.content, '')
+    );
 
   const modalDestination = selectedItem && selectedItem.destinationPath && selectedItem.destinationLabel
     ? { path: selectedItem.destinationPath, label: selectedItem.destinationLabel }
@@ -617,12 +691,10 @@ const UnifiedNotifications = () => {
             </ActionBar>
           )}
         >
-          {selectedItem.unavailable ? (
+          {selectedItem.type === NOTIFICATION_TABS.PERSONAL ? (
             <>
               <p className="unified-notifications__content-text">
-                {personalPresentation
-                  ? t(personalPresentation.summaryKey)
-                  : toNotificationPreview(selectedItem.data.content)}
+                <SafeText>{personalBodyText}</SafeText>
               </p>
               {personalFields.length > 0 ? (
                 <dl className="unified-notifications__modal-fields">
@@ -677,9 +749,21 @@ const UnifiedNotifications = () => {
               <div
                 className="notification-content unified-notifications__content-text"
                 dangerouslySetInnerHTML={{
-                  __html: sanitizeRichNoticeHtml(selectedItem.data.content || '')
+                  __html: sanitizeRichNoticeHtml(
+                    formatNotificationSummaryText(selectedItem.data.content || '')
+                  )
                 }}
               />
+              {messageDetailFields.length > 0 ? (
+                <dl className="unified-notifications__modal-fields">
+                  {messageDetailFields.map((field) => (
+                    <React.Fragment key={field.label}>
+                      <dt>{field.label}</dt>
+                      <dd><SafeText>{field.value}</SafeText></dd>
+                    </React.Fragment>
+                  ))}
+                </dl>
+              ) : null}
             </>
           )}
         </UnifiedModal>

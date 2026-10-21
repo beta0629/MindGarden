@@ -1,6 +1,6 @@
 /**
  * 내담자 화면 — 공통 세션 준비 훅으로만 로드 시작 · 전역 세션 재확인(isLoading)에 「불러오는 중」 고착 없음
- * 메시지: 공통 page/size(20) + 더 보기
+ * 메시지: 공통 page/size(6) + MGPagination
  *
  * @author CoreSolution
  * @since 2026-10-03
@@ -12,7 +12,7 @@ import '@testing-library/jest-dom';
 import { MemoryRouter } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import { CLIENT_WEB_SUITE_COPY } from '../../../constants/clientWebSuiteConstants';
-import { PAGED_LIST_TEST_IDS } from '../../../constants/pagedList';
+import { CLIENT_NOTIFICATION_LIST_PAGE_SIZE } from '../../../constants/pagedList';
 import ClientSchedule from '../ClientSchedule';
 import ClientSessionManagement from '../ClientSessionManagement';
 import ClientMessageScreen from '../ClientMessageScreen';
@@ -21,6 +21,10 @@ jest.mock('../../../contexts/SessionContext', () => ({
   __esModule: true,
   useSession: jest.fn(),
   SessionContext: jest.requireActual('react').createContext(null)
+}));
+
+jest.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({ showToast: jest.fn(), removeToast: jest.fn(), toasts: [] })
 }));
 
 jest.mock('../../../utils/standardizedApi', () => ({
@@ -46,7 +50,14 @@ jest.mock('../ClientWebPageShell', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key) => key })
+  useTranslation: () => ({
+    t: (key, vars) => {
+      if (key === 'common:pagination.rangeSummary' && vars) {
+        return `전체 ${vars.total}건 중 ${vars.start}–${vars.end}건 · ${vars.page}/${vars.totalPages}페이지`;
+      }
+      return key;
+    }
+  })
 }));
 
 import { useSession } from '../../../contexts/SessionContext';
@@ -85,9 +96,11 @@ beforeEach(() => {
   StandardizedApi.get.mockImplementation((url, params) => {
     if (url.startsWith('/api/v1/consultation-messages/client/')) {
       const page = params?.page ?? 0;
+      const size = params?.size ?? CLIENT_NOTIFICATION_LIST_PAGE_SIZE;
+      const totalElements = size + 3;
       return Promise.resolve({
-        messages: page === 0 ? buildMessages(0, params.size) : buildMessages(params.size, 3),
-        totalElements: (params?.size ?? 20) + 3,
+        messages: page === 0 ? buildMessages(0, size) : buildMessages(size, 3),
+        totalElements,
         totalPages: 2
       });
     }
@@ -144,25 +157,27 @@ describe.each([
   });
 });
 
-describe('ClientMessageScreen — 공통 page/size + 더 보기', () => {
-  test('size 20 첫 페이지 · 「20 / 23」 · 더 보기 → 23건', async() => {
+describe('ClientMessageScreen — 공통 page/size + MGPagination', () => {
+  test('size 6 첫 페이지 · 범위 안내 · 2페이지로 교체', async() => {
     setSession({ user: CLIENT_USER, isLoggedIn: true, hasCheckedSession: true });
     renderScreen(<ClientMessageScreen />);
-    expect(await screen.findAllByTestId('client-messages-message-item')).toHaveLength(20);
+    expect(await screen.findAllByTestId('client-messages-message-item')).toHaveLength(
+      CLIENT_NOTIFICATION_LIST_PAGE_SIZE
+    );
     expect(StandardizedApi.get).toHaveBeenCalledWith(
       `/api/v1/consultation-messages/client/${CLIENT_USER.id}`,
-      { page: 0, size: 20, sort: 'createdAt,desc' }
+      { page: 0, size: CLIENT_NOTIFICATION_LIST_PAGE_SIZE, sort: 'createdAt,desc' }
     );
-    expect(screen.getByTestId(PAGED_LIST_TEST_IDS.COUNT)).toHaveTextContent('20 / 23');
+    expect(screen.getByText(/전체 9건 중 1–6건/)).toBeInTheDocument();
 
     await act(async() => {
-      fireEvent.click(screen.getByTestId(PAGED_LIST_TEST_IDS.LOAD_MORE_BUTTON));
+      fireEvent.click(screen.getByRole('button', { name: '2' }));
     });
-    await waitFor(() => expect(screen.getAllByTestId('client-messages-message-item')).toHaveLength(23));
+    await waitFor(() => expect(screen.getAllByTestId('client-messages-message-item')).toHaveLength(3));
     expect(StandardizedApi.get).toHaveBeenLastCalledWith(
       `/api/v1/consultation-messages/client/${CLIENT_USER.id}`,
-      { page: 1, size: 20, sort: 'createdAt,desc' }
+      { page: 1, size: CLIENT_NOTIFICATION_LIST_PAGE_SIZE, sort: 'createdAt,desc' }
     );
-    expect(screen.queryByTestId(PAGED_LIST_TEST_IDS.LOAD_MORE_BUTTON)).toBeNull();
+    expect(screen.getByText(/전체 9건 중 7–9건/)).toBeInTheDocument();
   });
 });

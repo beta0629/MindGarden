@@ -129,9 +129,7 @@
       "^react-router/dom$": "<rootDir>/node_modules/react-router/dist/development/dom-export.js",
       "^@portone/browser-sdk/v2$": "<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs",
       "^axios$": "<rootDir>/node_modules/axios/dist/node/axios.cjs",
-      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js",
-      "^dompurify$": "<rootDir>/jest-stubs/dompurify.js",
-      "^@fullcalendar/luxon3$": "<rootDir>/jest-stubs/fullcalendarLuxon3.js"
+      "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js"
     }
   }
 }

@@ -6,7 +6,8 @@ import {
   SESSION_CHECK_COOLDOWN_MS,
   SESSION_TERMINATED_DUPLICATE_ERROR_CODE,
   DUPLICATE_LOGIN_REDIRECT_SEARCH,
-  FETCH_INIT_SKIP_FORM_SESSION_HOOK
+  FETCH_INIT_SKIP_FORM_SESSION_HOOK,
+  HTTP_AUTHORIZATION_HEADER
 } from '../constants/session';
 import { getDefaultApiHeaders, getDefaultApiHeadersWithCsrf } from './apiHeaders';
 import {
@@ -50,6 +51,23 @@ function isDuplicateLoginTerminatedResponse(body) {
     || body.data?.errorCode
     || body.error;
   return code === SESSION_TERMINATED_DUPLICATE_ERROR_CODE;
+}
+
+/**
+ * current-user / session-info 확인용 헤더.
+ * idleExpiry 는 Authorization(Bearer) 를 제거해, 만료된 HttpSession 이 JWT 만으로 200 이 되며
+ * lastAccessedTime 이 리셋되는 경로를 타지 않게 한다. 그 외 경로는 getDefaultApiHeaders() 그대로다.
+ * refresh 재시도의 명시 Bearer 는 이 함수를 쓰지 않는다 (idleExpiry 401 은 그 전에 return).
+ *
+ * @param {boolean} idleExpiry
+ * @returns {Record<string, string>}
+ */
+function buildSessionProbeHeaders(idleExpiry) {
+  const headers = { ...getDefaultApiHeaders() };
+  if (idleExpiry) {
+    delete headers[HTTP_AUTHORIZATION_HEADER];
+  }
+  return headers;
 }
 
 /**
@@ -205,6 +223,7 @@ class SessionManager {
    *   사용자를 유지하고 /login 으로 보내지 않는다(중복 로그인 종료 401 만 예외).
    *   idleExpiry=true: 유휴 경고 모달 만료 재확인. grace·토큰 갱신·background 유지로
    *   세션을 되살리지 않는다. 리다이렉트는 모달 logout() → /login?logout=success.
+   *   idleExpiry 재확인의 current-user·session-info 는 Bearer 를 보내지 않는다.
    * @returns {Promise<boolean>} 세션 유효 여부
    */
   async checkSession(force = false, options = {}) {
@@ -284,7 +303,7 @@ class SessionManager {
       let userResponse;
       try {
         // getDefaultApiHeaders를 사용하여 tenantId 헤더 자동 포함
-        const headers = getDefaultApiHeaders();
+        const headers = buildSessionProbeHeaders(idleExpiry);
 
         userResponse = await fetch(`${API_BASE_URL}/api/v1/auth/current-user`, {
           credentials: 'include',
@@ -489,7 +508,7 @@ class SessionManager {
         // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
         try {
           console.log('🔍 세션 정보 요청:', `${API_BASE_URL}/api/v1/auth/session-info`);
-          const sessionHeaders = getDefaultApiHeaders();
+          const sessionHeaders = buildSessionProbeHeaders(idleExpiry);
           const sessionResponse = await fetch(`${API_BASE_URL}/api/v1/auth/session-info`, {
             credentials: 'include',
             method: 'GET',

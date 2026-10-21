@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.exception.EntityNotFoundException;
@@ -13,6 +14,7 @@ import com.coresolution.consultation.repository.SystemNotificationReadRepository
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.SystemNotificationService;
 import com.coresolution.consultation.service.support.SystemNotificationAudience;
+import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,21 +59,31 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     
     /**
      * 현재 테넌트·수신 대상의 공지 상세를 조회한다.
-     * 없거나, 소프트 삭제되었거나, 다른 테넌트이거나, 수신 대상이 아니면 {@link EntityNotFoundException} 이다.
+     * 없거나, 소프트 삭제되었거나, 다른 테넌트이거나, 수신 대상이 아니거나, 비게시면
+     * {@link EntityNotFoundException} 이다.
+     *
+     * <p>관리자는 같은 테넌트·비삭제 공지를 대상·게시상태와 무관하게 열람하며,
+     * 조회수 증가를 하지 않는다.</p>
      *
      * @param notificationId 공지 ID
      * @param userId 조회 사용자 ID
      * @param userRole 조회 사용자 역할
-     * @return 수신자에게 보이는 공지
-     * @throws EntityNotFoundException 공지가 없거나 삭제·다른 테넌트·비대상일 때
+     * @return 수신자 또는 관리자에게 보이는 공지
+     * @throws EntityNotFoundException 공지가 없거나 삭제·다른 테넌트·비대상·비게시일 때
      */
     @Override
     public SystemNotification getNotificationDetail(Long notificationId, Long userId, String userRole) {
         log.info("📢 공지 상세 조회 - 공지 ID: {}, 사용자 ID: {}, 역할: {}", notificationId, userId, userRole);
 
+        if (AdminRoleUtils.isAdmin(UserRole.fromString(userRole))) {
+            SystemNotification notification = requireAdminPreviewSameTenant(notificationId);
+            log.info("✅ 공지 상세 조회 완료(관리자 미리보기) - 공지 ID: {}", notificationId);
+            return notification;
+        }
+
         SystemNotification notification = requireVisibleForRecipient(notificationId, userRole);
 
-        // 조회수 증가는 대상 검사 이후 (버전 충돌 방지)
+        // 조회수 증가는 대상 검사 이후 (버전 충돌 방지). 관리자 미리보기는 증가하지 않음.
         incrementViewCount(notificationId);
 
         log.info("✅ 공지 상세 조회 완료 - 공지 ID: {}", notificationId);
@@ -80,7 +92,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
     }
 
     /**
-     * 테넌트·삭제·수신 대상이 모두 맞는 공지를 로드한다. 아니면 404.
+     * 테넌트·삭제·게시·수신 대상이 모두 맞는 공지를 로드한다. 아니면 404.
      *
      * @param notificationId 공지 ID
      * @param userRole 조회 사용자 역할
@@ -92,6 +104,21 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         return systemNotificationRepository
             .findByTenantIdAndId(tenantId, notificationId)
             .filter(found -> SystemNotificationAudience.isVisibleForRecipient(found, tenantId, userRole))
+            .orElseThrow(() -> new EntityNotFoundException("SystemNotification", notificationId));
+    }
+
+    /**
+     * 관리자 미리보기: 같은 테넌트·비삭제 공지만 로드한다. 아니면 404.
+     *
+     * @param notificationId 공지 ID
+     * @return 관리자 열람 가능 공지
+     * @throws EntityNotFoundException 없거나 삭제·다른 테넌트일 때
+     */
+    private SystemNotification requireAdminPreviewSameTenant(Long notificationId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        return systemNotificationRepository
+            .findByTenantIdAndId(tenantId, notificationId)
+            .filter(found -> SystemNotificationAudience.canAdminPreviewSameTenant(found, tenantId))
             .orElseThrow(() -> new EntityNotFoundException("SystemNotification", notificationId));
     }
     

@@ -11,6 +11,7 @@ import com.coresolution.consultation.entity.SystemNotification;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.SystemNotificationService;
+import com.coresolution.consultation.util.AdminRoleUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.controller.BaseApiController;
@@ -266,12 +267,14 @@ public class SystemNotificationController extends BaseApiController {
         SystemNotification notification =
             systemNotificationService.getNotificationDetail(notificationId, userId, userRole);
         
-        // 자동 읽음 처리 (상세가 수신 대상일 때만 도달)
-        try {
-            systemNotificationService.markAsRead(notificationId, userId, userRole);
-            log.info("✅ 공지 자동 읽음 처리 완료 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
-        } catch (Exception e) {
-            log.warn("⚠️ 공지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
+        // 자동 읽음 처리 (수신자만). 관리자 미리보기는 읽음·조회수 부작용 없음.
+        if (!AdminRoleUtils.isAdmin(currentUser)) {
+            try {
+                systemNotificationService.markAsRead(notificationId, userId, userRole);
+                log.info("✅ 공지 자동 읽음 처리 완료 - 공지 ID: {}, 사용자 ID: {}", notificationId, userId);
+            } catch (Exception e) {
+                log.warn("⚠️ 공지 자동 읽음 처리 실패 (무시): {}", e.getMessage());
+            }
         }
         
         Map<String, Object> data = new HashMap<>();

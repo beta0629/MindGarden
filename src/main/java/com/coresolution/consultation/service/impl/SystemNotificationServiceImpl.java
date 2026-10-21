@@ -12,6 +12,7 @@ import com.coresolution.consultation.entity.SystemNotificationRead;
 import com.coresolution.consultation.repository.SystemNotificationReadRepository;
 import com.coresolution.consultation.repository.SystemNotificationRepository;
 import com.coresolution.consultation.service.SystemNotificationService;
+import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -260,7 +261,8 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         notification.setStatus("DRAFT");
         notification.setIsDeleted(false);
         notification.setViewCount(0);
-        
+        notification.setContent(RichNoticeHtmlSanitizer.sanitize(notification.getContent()));
+
         SystemNotification saved = systemNotificationRepository.save(notification);
         
         log.info("✅ 공지 생성 완료 - ID: {}", saved.getId());
@@ -281,7 +283,7 @@ public class SystemNotificationServiceImpl implements SystemNotificationService 
         
         SystemNotification existing = existingOpt.get();
         existing.setTitle(notification.getTitle());
-        existing.setContent(notification.getContent());
+        existing.setContent(RichNoticeHtmlSanitizer.sanitize(notification.getContent()));
         existing.setTargetType(notification.getTargetType());
         existing.setNotificationType(notification.getNotificationType());
         existing.setIsImportant(notification.getIsImportant());

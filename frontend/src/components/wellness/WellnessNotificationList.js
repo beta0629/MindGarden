@@ -12,11 +12,13 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { toPlainNoticePreview } from '../../utils/safeHtml';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
 import './WellnessNotificationList.css';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { NOTIFICATION_PREVIEW_MAX_CHARS } from '../../constants/notificationTabs';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -29,9 +31,12 @@ import { useTranslation } from 'react-i18next';
  */
 const WELLNESS_NOTIFICATION_LIST_TITLE_ID = 'wellness-notification-list-title';
 
-const stripHtmlToPreview = (raw) => {
-  const text = toDisplayString(raw, '');
-  return text.replace(/<[^>]*>/g, '');
+const toCardPreview = (content) => {
+  const text = toPlainNoticePreview(typeof content === 'string' ? content : toDisplayString(content, ''));
+  if (text.length <= NOTIFICATION_PREVIEW_MAX_CHARS) {
+    return text;
+  }
+  return `${text.substring(0, NOTIFICATION_PREVIEW_MAX_CHARS)}...`;
 };
 
 const WellnessNotificationList = () => {
@@ -172,17 +177,9 @@ const WellnessNotificationList = () => {
 
               <div className="card-content">
                 <h3 className="card-title"><SafeText>{notification.title}</SafeText></h3>
-                <div
-                  className="card-description"
-                  dangerouslySetInnerHTML={{
-                    __html: (() => {
-                      const textOnly = stripHtmlToPreview(notification.content);
-                      return textOnly.length > 100
-                        ? `${textOnly.substring(0, 100)}...`
-                        : textOnly;
-                    })()
-                  }}
-                />
+                <div className="card-description">
+                  {toCardPreview(notification.content)}
+                </div>
                 <div className="card-meta">
                   <div className="meta-item">
                     <span className="meta-label">게시</span>

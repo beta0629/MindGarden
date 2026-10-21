@@ -25,9 +25,21 @@ jest.mock('../../common/SegmentedTabs', () => ({
 
 jest.mock('../../common/MGButton', () => ({
   __esModule: true,
-  default: ({ children, onClick, disabled, loading, ...rest }) => (
+  default: ({
+    children,
+    onClick,
+    disabled,
+    loading,
+    loadingText: _loadingText,
+    preventDoubleClick: _preventDoubleClick,
+    variant: _variant,
+    size: _size,
+    className,
+    ...rest
+  }) => (
     <button
       type="button"
+      className={className}
       onClick={onClick}
       disabled={disabled || loading}
       {...rest}

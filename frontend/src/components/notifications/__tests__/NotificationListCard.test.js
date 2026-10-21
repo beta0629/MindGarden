@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import NotificationListCard, { NotificationUrgentBadge } from '../NotificationListCard';
+import NotificationListCard, { NotificationUrgentBadge, toNotificationPreview } from '../NotificationListCard';
 import { formatPersonalOrderNumber } from '../../../constants/personalNotificationRoutes';
 
 const renderCard = (props) => render(
@@ -49,5 +49,13 @@ describe('formatPersonalOrderNumber', () => {
   test('UUID 가 아니면 그대로, 비어 있으면 빈 문자열', () => {
     expect(formatPersonalOrderNumber('929')).toBe('929');
     expect(formatPersonalOrderNumber(null)).toBe('');
+  });
+});
+
+describe('toNotificationPreview display formatting', () => {
+  test('카드 요약에서 패키지→상담 회차 · UUID 축약', () => {
+    expect(toNotificationPreview(
+      '패키지 주문번호 87f33a1f-488e-4b6c-8a8c-c28c76ac5988'
+    )).toBe('상담 회차 주문번호 87F3-3A1F');
   });
 });

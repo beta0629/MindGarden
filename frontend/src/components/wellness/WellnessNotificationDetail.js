@@ -15,6 +15,7 @@ import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
 import { sanitizeRichNoticeHtml } from '../../utils/safeHtml';
+import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import '../../styles/unified-design-tokens.css';
 import '../../styles/themes/client-theme.css';
 import '../notifications/UnifiedNotifications.css';
@@ -31,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 const WELLNESS_NOTIFICATION_DETAIL_TITLE_ID = 'wellness-notification-detail-title';
 const AlertIcon = ICONS.ALERT_CIRCLE;
 const LIST_LABEL = '목록으로';
+const BACK_LINK_LABEL = '< 웰니스 알림';
 
 const WellnessNotificationDetail = () => {
   const { t } = useTranslation();
@@ -67,8 +69,8 @@ const WellnessNotificationDetail = () => {
     extraDeps: [id]
   });
 
-  const handleBack = () => {
-    navigate(-1);
+  const handleBackToList = () => {
+    navigate(CLIENT_DASHBOARD_ROUTES.WELLNESS);
   };
 
   const getNotificationTypeLabel = (type) => {
@@ -111,13 +113,25 @@ const WellnessNotificationDetail = () => {
     );
   };
 
-  const backButton = (
+  const backLink = (
+    <button
+      type="button"
+      className="wellness-reading__back-link"
+      data-testid="wellness-detail-back-link"
+      data-gnb-chrome-free="true"
+      onClick={handleBackToList}
+    >
+      {BACK_LINK_LABEL}
+    </button>
+  );
+
+  const listButton = (
     <MGButton
       type="button"
       variant="outline"
       className={buildErpMgButtonClassName({ variant: 'outline', size: 'md', loading: false })}
       loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-      onClick={handleBack}
+      onClick={handleBackToList}
       preventDoubleClick={false}
     >
       {LIST_LABEL}
@@ -160,7 +174,7 @@ const WellnessNotificationDetail = () => {
           icon={<AlertIcon size={ICON_SIZES.XXL} aria-hidden />}
           title="알림을 찾을 수 없어요"
           description={<SafeText fallback="요청하신 알림을 찾을 수 없어요.">{error}</SafeText>}
-          action={backButton}
+          action={listButton}
         />
       </div>
     );
@@ -169,23 +183,26 @@ const WellnessNotificationDetail = () => {
   return pageShell(
     toDisplayString(notification.title, '웰니스 알림'),
     getMetaSubtitle(notification),
-    <article className="wellness-reading">
-      <div className="wellness-reading__meta">
-        {notification.isUrgent ? (
-          <NotificationUrgentBadge label={t('admin.labels.urgent')} />
-        ) : null}
-        {notification.isImportant ? <span className="mg-badge">중요</span> : null}
-        <span className="mg-badge">
-          <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
-        </span>
-      </div>
-      <div className="wellness-reading__body">
-        {formatWellnessContent(notification.content)}
-      </div>
-      <div className="wellness-reading__foot">
-        {backButton}
-      </div>
-    </article>
+    <div className="wellness-reading-wrap">
+      {backLink}
+      <article className="wellness-reading">
+        <div className="wellness-reading__meta">
+          {notification.isUrgent ? (
+            <NotificationUrgentBadge label={t('admin.labels.urgent')} />
+          ) : null}
+          {notification.isImportant ? <span className="mg-badge">중요</span> : null}
+          <span className="mg-badge">
+            <SafeText>{getNotificationTypeLabel(notification.notificationType)}</SafeText>
+          </span>
+        </div>
+        <div className="wellness-reading__body">
+          {formatWellnessContent(notification.content)}
+        </div>
+        <div className="wellness-reading__foot">
+          {listButton}
+        </div>
+      </article>
+    </div>
   );
 };
 

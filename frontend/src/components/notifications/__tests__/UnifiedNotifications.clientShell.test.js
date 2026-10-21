@@ -56,6 +56,14 @@ jest.mock('../../../hooks/useTenantComponentFlags', () => ({
   })
 }));
 
+jest.mock('../../../contexts/ToastContext', () => ({
+  useToast: () => ({ showToast: jest.fn(), removeToast: jest.fn(), toasts: [] })
+}));
+
+jest.mock('../../../utils/safeHtml', () => ({
+  sanitizeRichNoticeHtml: (html) => (html == null ? '' : String(html))
+}));
+
 jest.mock('../../../utils/ajax', () => ({
   apiGet: jest.fn()
 }));

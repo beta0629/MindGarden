@@ -16,6 +16,7 @@ import notificationManager from '../../../utils/notification';
 const mockCheckSession = jest.fn();
 const mockLogin = jest.fn();
 const mockRedirectToDynamicDashboard = jest.fn();
+const CONSOLE_LEVELS = ['log', 'debug', 'info', 'warn', 'error'];
 
 jest.mock('react-i18next', () => ({
   __esModule: true,
@@ -91,8 +92,10 @@ jest.mock('../../../utils/notification', () => ({
   }
 }));
 
-// eslint-disable-next-line import/first
-import UnifiedLogin from '../UnifiedLogin';
+// ESM import 호이스트를 피해 require 직전에 spy — roles 공통코드 로드 콘솔 노이즈 축소.
+const consoleSpies = CONSOLE_LEVELS.map((level) => jest.spyOn(console, level).mockImplementation(() => {}));
+// eslint-disable-next-line global-require, import/no-commonjs
+const UnifiedLogin = require('../UnifiedLogin').default;
 
 const REDIRECT_PATH = '/admin/integrated-schedule';
 const REDIRECT_ENCODED = encodeURIComponent(REDIRECT_PATH);
@@ -110,6 +113,10 @@ describe('UnifiedLogin logout=success keeps redirect', () => {
   afterEach(() => {
     replaceStateSpy.mockRestore();
     global.fetch = originalFetch;
+  });
+
+  afterAll(() => {
+    consoleSpies.forEach((spy) => spy.mockRestore());
   });
 
   test('logout=success 처리 후 replaceState URL 에 redirect 유지·logout 제거', async() => {

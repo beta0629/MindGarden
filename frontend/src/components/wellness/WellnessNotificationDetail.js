@@ -12,6 +12,7 @@ import SafeText from '../common/SafeText';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { sanitizeRichNoticeHtml } from '../../utils/safeHtml';
 import '../../styles/unified-design-tokens.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import '../../styles/themes/client-theme.css';
@@ -103,14 +104,13 @@ const WellnessNotificationDetail = () => {
   };
 
   /**
-   * AI 생성 웰니스 컨텐츠를 HTML로 렌더링
-   * - HTML 태그를 그대로 렌더링
-   * - 안전한 HTML 렌더링을 위해 dangerouslySetInnerHTML 사용
+   * AI 생성 웰니스 컨텐츠를 정화된 HTML 로 렌더링한다.
    */
   const formatWellnessContent = (content) => {
     if (content == null || content === '') return null;
 
-    const html = typeof content === 'string' ? content : toDisplayString(content, '');
+    const raw = typeof content === 'string' ? content : toDisplayString(content, '');
+    const html = sanitizeRichNoticeHtml(raw);
     return (
       <div
         className="wellness-content-html"

@@ -7,6 +7,7 @@ import { useTenantComponentFlags } from '../../hooks/useTenantComponentFlags';
 import { apiGet } from '../../utils/ajax';
 import { getConsultationMessagesListPath } from '../../utils/consultationMessagesApi';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { sanitizeRichNoticeHtml } from '../../utils/safeHtml';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ClientWebPageShell from '../client/ClientWebPageShell';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -622,7 +623,9 @@ const UnifiedNotifications = () => {
               </div>
               <div
                 className="notification-content"
-                dangerouslySetInnerHTML={{ __html: selectedItem.data.content || '' }}
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeRichNoticeHtml(selectedItem.data.content || '')
+                }}
               />
             </>
           )}

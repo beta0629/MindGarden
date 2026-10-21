@@ -66,6 +66,15 @@ jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'lux
   virtual: true
 });
 
+// App 이 WellnessNotificationList 를 eager import 하며 safeHtml → dompurify 를 끌어온다.
+// 홈 스모크는 정화 패키지 설치 여부에 의존하지 않도록 웰니스 목록 리프만 stub 한다.
+jest.mock('./components/wellness/WellnessNotificationList', () => ({
+  __esModule: true,
+  default: function MockWellnessNotificationList() {
+    return null;
+  }
+}));
+
 import App from './App';
 
 describe('App', () => {

@@ -66,6 +66,21 @@ jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'lux
   virtual: true
 });
 
+// App → WellnessNotificationList/UnifiedNotifications 가 safeHtml → dompurify 를
+// eager import 한다. 홈 스모크는 sanitizer 패키지(환경에 미설치일 수 있음)에 의존하지 않는다.
+jest.mock('./utils/safeHtml', () => ({
+  sanitizeHealingHtml: (html) => (html == null ? '' : String(html)),
+  sanitizeRichNoticeHtml: (html) => (html == null ? '' : String(html)),
+  stripAllHtmlTags: (html) => (html == null ? '' : String(html)),
+  toPlainNoticePreview: (html) => (html == null ? '' : String(html))
+}));
+jest.mock('dompurify', () => ({
+  __esModule: true,
+  default: () => ({
+    sanitize: (html) => (html == null ? '' : String(html))
+  })
+}), { virtual: true });
+
 import App from './App';
 
 describe('App', () => {

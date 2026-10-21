@@ -30,6 +30,7 @@
         <!-- local-mysql 태그는 기본 CI에서 제외. 로컬 실행 시 -Djunit.excludedGroups=none -->
         <junit.excludedGroups>local-mysql</junit.excludedGroups>
         <jwt.version>0.11.5</jwt.version>
+        <jsoup.version>1.21.1</jsoup.version>
         <oauth2.version>3.1.0</oauth2.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
@@ -256,6 +257,13 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-aspects</artifactId>
+        </dependency>
+
+        <!-- 공지·웰니스 본문 HTML 정화 (jsoup Safelist) -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
         </dependency>
 
         <!-- Google Cloud Speech-to-Text -->

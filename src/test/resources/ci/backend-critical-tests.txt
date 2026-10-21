@@ -83,3 +83,8 @@
 **/SystemTimeControllerTest.java
 **/JwtAuthenticationFilterPublicTimePathTest.java
 **/AcademyConsultationControllerPastTimeTest.java
+
+# 2026-10-21 공지·웰니스 본문 저장 XSS — 기존 Payment/Session 패턴에 걸리지 않음
+**/RichNoticeHtmlSanitizerTest.java
+**/SystemNotificationContentSanitizeTest.java
+**/WellnessNotificationSchedulerSanitizeTest.java

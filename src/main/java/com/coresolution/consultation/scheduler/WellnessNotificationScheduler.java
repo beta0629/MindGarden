@@ -19,6 +19,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.DailyHealingContentGenerator;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WellnessTemplateService;
+import com.coresolution.consultation.util.RichNoticeHtmlSanitizer;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
@@ -252,7 +253,7 @@ public class WellnessNotificationScheduler {
         // SystemNotification 생성
         SystemNotification notification = new SystemNotification();
         notification.setTitle(template.getTitle());
-        notification.setContent(template.getContent());
+        notification.setContent(RichNoticeHtmlSanitizer.sanitize(template.getContent()));
         notification.setNotificationType("WELLNESS");
         notification.setTargetType("ALL");
         notification.setStatus("PUBLISHED");

@@ -40,7 +40,8 @@ public class SessionCookieSupport {
      * JSESSIONID {@link ResponseCookie} 를 서버 세션 쿠키 설정과 정합되게 만든다.
      *
      * @param sessionId     세션 ID
-     * @param maxAgeSeconds Max-Age (초). {@link SessionTimeoutProperties#getTimeoutSeconds()} 권장
+     * @param maxAgeSeconds Max-Age (초). {@link SessionTimeoutProperties#resolveTimeoutSeconds} /
+     *                      {@link SessionTimeoutProperties#getTimeoutSecondsForRole} 권장
      * @param request       Secure 미설정 시 요청 프로토콜 판단용 (nullable 허용, null이면 Secure=false 폴백)
      * @return ResponseCookie
      */

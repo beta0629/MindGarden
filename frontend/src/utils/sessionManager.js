@@ -21,7 +21,7 @@ import {
 import { isTransientNetworkError, notifyTransientNetworkIssue } from './networkErrorUtils';
 import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from './sessionRedirect';
 import { rememberLoginReturnPath, sanitizeLoginReturnPath } from './loginReturnPath';
-import { clearStoredSessionExpiry, syncStoredSessionExpiry } from './sessionExpiryDisplay';
+import { clearStoredSessionExpiry, computeSessionExpiryState, syncStoredSessionExpiry } from './sessionExpiryDisplay';
 import { clearJustRefreshed, hasStoredAccessToken, hasStoredRefreshToken, isWithinAuthGraceWindow } from './sessionAuthPolicy';
 import { isBackground401KeepUser, loadSessionSecurityFlags } from './sessionSecurityFlags';
 import { isPublicSpaPath } from './publicSpaPaths';
@@ -92,6 +92,24 @@ function isDuplicateLoginTerminatedResponse(body) {
     || body.data?.errorCode
     || body.error;
   return code === SESSION_TERMINATED_DUPLICATE_ERROR_CODE;
+}
+
+/**
+ * 클라이언트가 이미 만료로 보는 세션인지.
+ * 서버는 비활성 user_sessions(타임아웃 포함)에도 중복 로그인 errorCode 를 붙인다.
+ * 남은 시간이 0 이하이면 그 코드는 만료이지 중복 로그인이 아니다.
+ *
+ * @param {object|null|undefined} sessionInfo
+ * @returns {boolean}
+ */
+function isLocalSessionExpired(sessionInfo) {
+  if (!sessionInfo || typeof sessionInfo !== 'object') {
+    return false;
+  }
+  const { remainingMs } = computeSessionExpiryState(sessionInfo, Date.now(), {
+    allowFallback: false
+  });
+  return remainingMs != null && remainingMs <= 0;
 }
 
 /**
@@ -388,10 +406,10 @@ class SessionManager {
         duplicateTerminated = await readDuplicateTerminated(userResponse);
         // 유휴 모달 카운트다운 만료 재확인. 연장 버튼을 누르지 않은 401 은
         // 로그인 직후 grace·refresh 부활·background 사용자 유지 대상이 아니다.
-        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 /login?logout=success 에 보낸다.
-        // 중복 로그인 종료는 아래 확정 킥으로 보낸다.
-        if (idleExpiry && !duplicateTerminated) {
-          console.log('🔍 유휴 만료 재확인 401 - grace/refresh/background 유지 없음');
+        // 사용자 정리는 하지 않는다. 모달이 logout() 으로 복귀 경로를 실은 로그인으로 보낸다.
+        // 비활성 세션 401 에 중복 로그인 코드가 붙어 있어도 만료 로그아웃으로 본다.
+        if (idleExpiry) {
+          console.log('🔍 유휴 만료 재확인 401 - 만료 로그아웃(중복 로그인 사유 아님)');
           this.lastCheckTime = now;
           this.notifyListeners();
           return false;
@@ -471,6 +489,9 @@ class SessionManager {
           console.log('🔍 백그라운드 세션 확인 401 - 무토큰 팬텀, 사용자 클리어');
         }
 
+        // clear 전에 만료 여부를 고정한다. 비활성 세션 401 의 중복 로그인 코드를
+        // 이미 만료된 로컬 세션에 붙이지 않기 위함이다.
+        const expiryLogout = isLocalSessionExpired(this.sessionInfo);
         this.user = null;
         this.sessionInfo = null;
         this.lastVerifiedAt = 0;
@@ -495,10 +516,13 @@ class SessionManager {
         // (방금 markJustRefreshed 된 창으로 soft-skip 하면 안 됨)
         if (!isPublicPage && !startedOnPublicPage) {
           console.log('🔍 로그인 페이지로 리다이렉트 (서브도메인 유지)');
-          // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동
+          // 401(유휴 만료 등): 강제 연장 없이 클라이언트 인증 상태 정리 후 이동.
+          // 로컬 세션이 이미 만료면 중복 로그인 코드가 있어도 만료 리다이렉트(복귀 경로 유지).
           this.applyClientLogoutCleanupPreserveSubdomain();
-          if (duplicateTerminated) {
+          if (duplicateTerminated && !expiryLogout) {
             redirectToLoginPageOnce({ search: DUPLICATE_LOGIN_REDIRECT_SEARCH });
+          } else if (expiryLogout) {
+            redirectToLoginPageOnce({ expiry: true });
           } else {
             redirectToLoginPageOnce();
           }

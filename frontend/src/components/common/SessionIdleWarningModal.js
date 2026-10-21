@@ -47,6 +47,7 @@ import {
 } from '../../constants/session';
 import { toSafeNumber } from '../../utils/safeDisplay';
 import { sessionManager } from '../../utils/sessionManager';
+import { rememberLoginReturnPath } from '../../utils/loginReturnPath';
 import { getCurrentLocationReturnUrl, redirectToLoginPageOnce } from '../../utils/sessionRedirect';
 import {
   buildSessionExpiryLabel,
@@ -335,7 +336,9 @@ const SessionIdleWarningModal = () => {
 
     void (async() => {
       // checkSession 401 이 /login 으로 보낸 뒤에는 현재 주소를 복귀 경로로 쓸 수 없다.
+      // 어느 401 경로가 먼저여도 복귀 주소가 남도록, 이동 전에 저장소에 맡긴다.
       const returnUrl = getCurrentLocationReturnUrl();
+      rememberLoginReturnPath(returnUrl);
       const expiryLogoutOptions = {
         preserveReturnPath: true,
         reason: SESSION_LOGOUT_REASON.SESSION_EXPIRY,
@@ -378,7 +381,11 @@ const SessionIdleWarningModal = () => {
       }
       expiryLogoutDoneRef.current = true;
       setIsOpen(false);
-      await logout(expiryLogoutOptions);
+      try {
+        await logout(expiryLogoutOptions);
+      } finally {
+        redirectToLoginPageOnce({ returnUrl, expiry: true });
+      }
     })();
   }, [isOpen, sessionInfo, remainingSec, expiryCheckSeq, logout, checkSession]);
 

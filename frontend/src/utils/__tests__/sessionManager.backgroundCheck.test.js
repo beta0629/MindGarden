@@ -276,7 +276,7 @@ describe('sessionManager.checkSession — background 401', () => {
     expect(global.fetch).toHaveBeenCalledTimes(1);
   });
 
-  it('idleExpiry 여도 중복 로그인 종료 401 은 reason=duplicate-login 으로 이동', async() => {
+  it('idleExpiry 401 은 중복 종료 코드여도 duplicate-login 으로 이동하지 않는다', async() => {
     const { redirectToLoginPageOnce } = require('../sessionRedirect');
     const { refreshAccessTokenPair } = require('../authTokenRefresh');
     localStorage.setItem(SESSION_KEYS.REFRESH_TOKEN, 'old-refresh');
@@ -286,8 +286,32 @@ describe('sessionManager.checkSession — background 401', () => {
 
     expect(ok).toBe(false);
     expect(refreshAccessTokenPair).not.toHaveBeenCalled();
-    expect(sessionManager.getUser()).toBeNull();
-    expect(redirectToLoginPageOnce).toHaveBeenCalledWith({
+    expect(sessionManager.getUser()).toEqual(LOGGED_IN_USER);
+    expect(sessionManager.applyClientLogoutCleanupPreserveSubdomain).not.toHaveBeenCalled();
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalled();
+  });
+
+  it('로컬 세션이 이미 만료면 중복 종료 코드여도 reason=duplicate-login 으로 보내지 않는다', async() => {
+    const { redirectToLoginPageOnce } = require('../sessionRedirect');
+    const now = CLOCK_BASE_MS;
+    const maxInactiveSec = 30;
+    const elapsedMs = maxInactiveSec * 1000;
+    sessionManager.sessionInfo = {
+      isAuthenticated: true,
+      maxInactiveInterval: maxInactiveSec,
+      lastAccessedTime: now - elapsedMs,
+      serverNow: now - elapsedMs,
+      clientReceivedAt: now - elapsedMs
+    };
+    jest.spyOn(Date, 'now').mockReturnValue(now);
+    global.fetch = jest.fn().mockResolvedValue(duplicateTerminatedResponse());
+
+    const ok = await sessionManager.checkSession(true);
+
+    expect(ok).toBe(false);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledTimes(1);
+    expect(redirectToLoginPageOnce).toHaveBeenCalledWith({ expiry: true });
+    expect(redirectToLoginPageOnce).not.toHaveBeenCalledWith({
       search: DUPLICATE_LOGIN_REDIRECT_SEARCH
     });
   });

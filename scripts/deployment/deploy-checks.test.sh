@@ -1727,4 +1727,153 @@ else
   echo "ok - deployment/deploy-production.sh still has prod -Xmx2g"
 fi
 
+# deploy-onboarding-dev.yml: dev JVM env must be in the deploy-job checkout and copied
+# the same way as deploy-backend-dev.yml (combined source, /tmp/mindgarden-dev-systemd/, strip 2).
+# All scp steps must precede systemctl stop, and a later failure must still start the unit.
+if [ ! -f "$ONBOARD_WF" ]; then
+  echo "not ok - deploy-onboarding-dev.yml missing (onboarding jvm scp guard)"
+  fail=1
+else
+  SPARSE_JVM="$(python3 - "$ONBOARD_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+for i, line in enumerate(lines):
+    if re.match(r"\s*sparse-checkout:\s*\|", line):
+        base = len(line) - len(line.lstrip(" "))
+        paths = []
+        for nxt in lines[i + 1:]:
+            if nxt.strip() == "":
+                continue
+            indent = len(nxt) - len(nxt.lstrip(" "))
+            if indent <= base:
+                break
+            paths.append(nxt.strip())
+        print("ok" if "config/jvm" in paths and "scripts/deployment" in paths else "missing")
+        raise SystemExit(0)
+print("missing")
+PY
+)"
+  if [ "$SPARSE_JVM" = "ok" ]; then
+    echo "ok - deploy-onboarding-dev.yml sparse-checkout includes config/jvm"
+  else
+    echo "not ok - deploy-onboarding-dev.yml sparse-checkout must include config/jvm (got $SPARSE_JVM)"
+    fail=1
+  fi
+
+  if grep -q 'test -s config/jvm/mindgarden-dev-jvm.env' "$ONBOARD_WF"; then
+    echo "ok - deploy-onboarding-dev.yml validates mindgarden-dev-jvm.env before upload"
+  else
+    echo "not ok - deploy-onboarding-dev.yml missing test -s config/jvm/mindgarden-dev-jvm.env"
+    fail=1
+  fi
+
+  ONBOARD_UNIT_SCP="$(awk '
+    /name:.*systemd 서비스 파일 업로드/ { capturing=1 }
+    capturing { print }
+    capturing && /overwrite:/ { exit }
+  ' "$ONBOARD_WF")"
+  if printf '%s\n' "$ONBOARD_UNIT_SCP" | grep -qx '        source: "config/systemd/mindgarden-dev.service,config/jvm/mindgarden-dev-jvm.env"'; then
+    echo "ok - deploy-onboarding-dev.yml JVM env SCP source matches deploy-backend-dev.yml"
+  else
+    echo "not ok - deploy-onboarding-dev.yml JVM env SCP source must be the backend combined path"
+    fail=1
+  fi
+  if printf '%s\n' "$ONBOARD_UNIT_SCP" | grep -qE 'target:[[:space:]]*"/tmp/mindgarden-dev-systemd/"?'; then
+    echo "ok - deploy-onboarding-dev.yml JVM env SCP target is /tmp/mindgarden-dev-systemd/"
+  else
+    echo "not ok - deploy-onboarding-dev.yml JVM env SCP target must be \"/tmp/mindgarden-dev-systemd/\""
+    fail=1
+  fi
+  if printf '%s\n' "$ONBOARD_UNIT_SCP" | grep -q 'strip_components:[[:space:]]*2'; then
+    echo "ok - deploy-onboarding-dev.yml JVM env SCP has strip_components: 2"
+  else
+    echo "not ok - deploy-onboarding-dev.yml JVM env SCP missing strip_components: 2"
+    fail=1
+  fi
+  if grep -q 'source: "config/jvm/mindgarden-dev-jvm.env"' "$ONBOARD_WF"; then
+    echo "not ok - deploy-onboarding-dev.yml still copies JVM env alone to a path that yields an empty archive"
+    fail=1
+  else
+    echo "ok - deploy-onboarding-dev.yml does not copy JVM env as a lone source"
+  fi
+  if grep -q 'JVM_ENV_SRC=/tmp/mindgarden-dev-systemd/mindgarden-dev-jvm.env' "$ONBOARD_WF"; then
+    echo "ok - deploy-onboarding-dev.yml installs JVM env from /tmp/mindgarden-dev-systemd/"
+  else
+    echo "not ok - deploy-onboarding-dev.yml JVM_ENV_SRC must be /tmp/mindgarden-dev-systemd/mindgarden-dev-jvm.env"
+    fail=1
+  fi
+
+  ONBOARD_PREP="$(awk '
+    /name:.*개발 서버 배포 준비/ { capturing=1 }
+    capturing { print }
+    capturing && found && /^[[:space:]]*-[[:space:]]*name:/ { exit }
+    capturing && /백업 완료/ { found=1 }
+  ' "$ONBOARD_WF")"
+  if printf '%s\n' "$ONBOARD_PREP" | grep -q 'systemctl stop'; then
+    echo "not ok - deploy-onboarding-dev.yml backup prep must not systemctl stop before uploads"
+    fail=1
+  elif printf '%s\n' "$ONBOARD_PREP" | grep -q '백업 완료'; then
+    echo "ok - deploy-onboarding-dev.yml backup prep has no systemctl stop"
+  else
+    echo "not ok - deploy-onboarding-dev.yml backup prep block (백업 완료) not found"
+    fail=1
+  fi
+
+  ONBOARD_STOP_LINE="$(grep -n 'systemctl stop mindgarden-dev' "$ONBOARD_WF" | head -1 | cut -d: -f1 || true)"
+  ONBOARD_SCP_AFTER=0
+  while IFS= read -r scp_ln; do
+    if [ -n "$ONBOARD_STOP_LINE" ] && [ "$scp_ln" -ge "$ONBOARD_STOP_LINE" ]; then
+      echo "not ok - onboarding scp-action at line $scp_ln is after systemctl stop (line $ONBOARD_STOP_LINE)"
+      ONBOARD_SCP_AFTER=1
+      fail=1
+    fi
+  done < <(grep -n 'appleboy/scp-action' "$ONBOARD_WF" | cut -d: -f1)
+  if [ "$ONBOARD_SCP_AFTER" = "0" ] && [ -n "$ONBOARD_STOP_LINE" ]; then
+    ONBOARD_SCP_COUNT="$(grep -c 'appleboy/scp-action' "$ONBOARD_WF" || true)"
+    echo "ok - all $ONBOARD_SCP_COUNT onboarding scp-action step(s) appear before systemctl stop (line $ONBOARD_STOP_LINE)"
+  elif [ -z "$ONBOARD_STOP_LINE" ]; then
+    echo "not ok - systemctl stop mindgarden-dev not found in deploy-onboarding-dev.yml"
+    fail=1
+  fi
+
+  JVM_TEST_LINE="$(grep -n 'test -s config/jvm/mindgarden-dev-jvm.env' "$ONBOARD_WF" | head -1 | cut -d: -f1 || true)"
+  if [ -n "${JVM_TEST_LINE:-}" ] && [ -n "${ONBOARD_STOP_LINE:-}" ] && [ "$JVM_TEST_LINE" -lt "$ONBOARD_STOP_LINE" ]; then
+    echo "ok - onboarding JVM env validation is before systemctl stop (validate=$JVM_TEST_LINE stop=$ONBOARD_STOP_LINE)"
+  else
+    echo "not ok - onboarding JVM env validation must precede systemctl stop (validate=${JVM_TEST_LINE:-?} stop=${ONBOARD_STOP_LINE:-?})"
+    fail=1
+  fi
+
+  ONBOARD_ALWAYS_START="$(python3 - "$ONBOARD_WF" <<'PY'
+import re, sys
+lines = open(sys.argv[1], encoding="utf-8").read().splitlines()
+stop_at = None
+for i, line in enumerate(lines, 1):
+    if "systemctl stop mindgarden-dev" in line:
+        stop_at = i
+        break
+for i, line in enumerate(lines):
+    if re.match(r"\s*if:\s*always\(\)\s*$", line):
+        block = [line]
+        j = i + 1
+        while j < len(lines):
+            if re.match(r"^    - name:", lines[j]) or re.match(r"^  [A-Za-z0-9_-]+:", lines[j]):
+                break
+            block.append(lines[j])
+            j += 1
+        text = "\n".join(block)
+        if "systemctl start" in text and stop_at is not None and (i + 1) > stop_at:
+            print("FOUND")
+            raise SystemExit(0)
+print("MISSING")
+PY
+)"
+  if [ "$ONBOARD_ALWAYS_START" = "FOUND" ]; then
+    echo "ok - deploy-onboarding-dev.yml has if: always() systemctl start after stop"
+  else
+    echo "not ok - deploy-onboarding-dev.yml missing if: always() start after systemctl stop"
+    fail=1
+  fi
+fi
+
 exit "$fail"

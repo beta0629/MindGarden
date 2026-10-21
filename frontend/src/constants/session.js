@@ -184,6 +184,12 @@ export function getDashboardPathByRole(role) {
 export const DEFAULT_DASHBOARD_PATH = DASHBOARD_PATHS.CLIENT;
 
 /**
+ * HTTP Authorization 헤더 이름.
+ * 유휴 만료 재확인(idleExpiry)에서는 이 키를 빼 Bearer 가 만료된 HttpSession 을 200으로 되살리지 않게 한다.
+ */
+export const HTTP_AUTHORIZATION_HEADER = 'Authorization';
+
+/**
  * current-user 401 — 서버가 중복 로그인으로 기존 세션을 종료했을 때 errorCode.
  * BE {@code SessionManagementConstants.ERROR_CODE_SESSION_TERMINATED_DUPLICATE} 와 정합.
  */

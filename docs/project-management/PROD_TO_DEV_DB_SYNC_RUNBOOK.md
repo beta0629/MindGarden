@@ -55,6 +55,36 @@ CRON_TZ=Asia/Seoul
 - **시각 변경**: 분·시만 바꾸면 됨 (예: `30 3` → 매일 03:30 KST, `crontab.example` 과 동일).
 - **타임존**: OS가 이미 `Asia/Seoul` 이면 `CRON_TZ` 생략 가능. 그 외에는 `date` 로 확인 후 `CRON_TZ` 유지.
 - 로그: 스크립트 자체가 `LOG_DIR` 아래 `prod-to-dev-sync_*.log` 에도 기록한다 (기본 `/var/log/mindgarden`).
+- **재기동 시각**: 03:30 동기화가 복원·PII·프로시저 db-diff 까지 성공한 직후, 같은 프로세스에서 `mindgarden-dev.service` 를 재기동한다. 이 시각은 운영 시간(11~20시 KST, 11:00–20:59) 밖이다. 11~20시에 재기동을 켠 채 스크립트를 시작하면 덤프 전에 중단된다.
+
+## 동기화 직후 개발 백엔드 재기동
+
+운영 이력에 없는 Flyway 버전은 개발 백엔드가 다시 기동할 때 적용된다. 복원만 하고 프로세스를 그대로 두면 그 버전은 적용되지 않는다.
+
+순서: 덤프 복원 → `POST_SYNC_SQL_FILE` → 프로시저 db-diff → `systemctl restart`. 앞 단계가 실패하면 재기동하지 않는다. 재기동 뒤 `DEV_BACKEND_HEALTH_URL`(기본 `http://127.0.0.1:8080/actuator/health`)이 HTTP 200인지 확인하고, Flyway 줄은 `journalctl` 을 동기화 로그에 남긴다. 헬스 실패는 exit 1 이다.
+
+| 변수 | 기본값 | 의미 |
+|------|--------|------|
+| `SKIP_BACKEND_RESTART` | 비움(재기동함) | `1` 이면 재기동만 생략 |
+| `DEV_BACKEND_SERVICE` | `mindgarden-dev.service` | systemd 유닛 |
+| `DEV_BACKEND_HEALTH_URL` | `http://127.0.0.1:8080/actuator/health` | 기동 확인 |
+| `DEV_BACKEND_HEALTH_WAIT_SECONDS` | `600` | 헬스 대기. 개발 배포 워크플로의 actuator 대기와 같다 |
+| `DEV_BACKEND_HEALTH_INTERVAL_SECONDS` | `5` | 폴링 간격 |
+| `DEV_BACKEND_RESTART_CMD` | 비움 | 비우면 `sudo -n systemctl restart "$DEV_BACKEND_SERVICE"` |
+
+개발 대상 호스트·DB 이름이 운영과 같으면 기존 가드가 덤프 전에 멈추고, 재기동 함수도 같은 가드로 한 번 더 멈춘다.
+
+### cron 과 systemctl
+
+저장소의 개발 배포 워크플로(`.github/workflows/deploy-backend-dev.yml`, `deploy-dev.yml`, `deploy-onboarding-dev.yml`)는 SSH 세션에서 `sudo systemctl restart mindgarden-dev.service` 를 실행한다. 이 동기화 cron 사용자용 sudoers 파일은 저장소에 없다. cron이 root면 `sudo -n` 이 그대로 된다. root가 아니면 비밀번호 프롬프트에서 `sudo -n` 이 실패하고 스크립트는 non-zero 로 끝난다.
+
+서버에 넣지 않은 예시이다. 적용은 승인 뒤에 `visudo` 로만 한다.
+
+```sudoers
+# /etc/sudoers.d/mindgarden-prod-to-dev-sync
+# 배치 계정을 실제 cron 사용자로 바꾼다. 와일드카드 systemctl 은 넣지 않는다.
+syncuser ALL=(root) NOPASSWD: /usr/bin/systemctl restart mindgarden-dev.service, /usr/bin/journalctl -u mindgarden-dev.service *
+```
 
 ## 복원 후 익명화 (PII) · 개발 서버
 
@@ -160,7 +190,7 @@ mysql --defaults-extra-file=... -N -e "
 
 - **MariaDB / 구버전 MySQL**: `mysqldump` 가 `--set-gtid-purged` 를 모르면 `EXTRA_DUMP_OPTS` 로 덮어쓰거나 스크립트에서 해당 옵션을 제거한 포크를 둔다.
 - **DEFINER 오류**: 운영 덤프의 `DEFINER` 가 개발에 없으면 복원 실패할 수 있다. 필요 시 덤프 후처리(`sed`) 또는 개발에 동일 DEFINER 계정 생성을 검토한다.
-- **D-1 restore 후 스키마**: 복원만으로는 develop 코드의 스키마와 맞지 않을 수 있다. **BE가 Flyway를 실행해야** 마이그레이션이 적용된다.
+- **D-1 restore 후 스키마**: 복원만으로는 develop 코드의 스키마와 맞지 않을 수 있다. 스크립트가 프로시저 db-diff 뒤에 개발 백엔드를 재기동하고, 그 기동에서 Flyway 가 운영 이력에 없는 버전을 적용한다. 헬스 실패·재기동 실패는 동기화 로그의 `ERROR:` 와 exit 1 이다. Flyway 문장은 같은 로그에 붙은 `journalctl` 발췌로 확인한다.
 - **가짜 BadCredentials**: `consultants` 등 Consultant JOINED 전용 컬럼(`vehicle_plate` 등) 누락 시 로그인 실패가 BadCredentials로 보일 수 있다. 실제 원인은 `InvalidDataAccessResourceUsageException`(컬럼 없음). 보정: `V20260904_005__ensure_consultants_vehicle_plate.sql` (멱등 ensure).
 
 ### 배치가 “안 도는 것 같을 때” (확인 순서)

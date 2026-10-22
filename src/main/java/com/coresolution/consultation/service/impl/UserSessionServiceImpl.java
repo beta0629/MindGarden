@@ -57,7 +57,8 @@ public class UserSessionServiceImpl implements UserSessionService {
                     .user(user)
                     .sessionId(sessionId)
                     .lastActivityAt(now)
-                    .expiresAt(now.plusMinutes(sessionTimeoutProperties.getTimeoutMinutes()))
+                    .expiresAt(now.plusMinutes(
+                            sessionTimeoutProperties.getTimeoutMinutesForRole(user.getRole())))
                     .clientIp(clientIp)
                     .userAgent(userAgent)
                     .loginType(loginType)

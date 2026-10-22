@@ -4,7 +4,7 @@
  * 폴백: storage SESSION_EXPIRY / LOGIN_TIME+SESSION_DURATION.
  * JWT·쿠키 원문은 다루지 않는다.
  *
- * storage 폴백은 **절대 만료**(로그인 시각 + 4h)라 두 번째 시계가 되므로,
+ * storage 폴백은 **절대 만료**(로그인 시각 + 역할별 SESSION_DURATION)라 두 번째 시계가 되므로,
  * session-info 동기화 때 `syncStoredSessionExpiry`로 함께 슬라이딩하고
  * 미인증·로그아웃 시 `clearStoredSessionExpiry`로 제거한다.
  *
@@ -12,9 +12,31 @@
  * @since 2026-08-05
  */
 
-import { SESSION_DURATION, SESSION_KEYS, SESSION_REMAINING_DISPLAY } from '../constants/session';
+import {
+  SESSION_DURATION,
+  SESSION_KEYS,
+  SESSION_REMAINING_DISPLAY,
+  getSessionDurationMsForRole
+} from '../constants/session';
 import { storage } from './common';
 import { toDisplayString, toSafeNumber } from './safeDisplay';
+
+/**
+ * storage USER_INFO.role 기준 폴백 기간(ms). 역할 없으면 ADMIN SESSION_DURATION.
+ *
+ * @returns {number}
+ */
+function resolveFallbackDurationMs() {
+  try {
+    const user = storage.get(SESSION_KEYS.USER_INFO);
+    if (user && user.role != null) {
+      return getSessionDurationMsForRole(user.role);
+    }
+  } catch {
+    // storage 미가용 시 ADMIN 폴백
+  }
+  return SESSION_DURATION;
+}
 
 /**
  * Context `sessionInfo`와 `sessionManager.getSessionInfo()` 중 더 최신 스냅샷을 고른다.
@@ -100,7 +122,7 @@ export function computeSessionExpiryState(si, clientNowMs, options = {}) {
     let maxSec = toSafeNumber(si.maxInactiveInterval, -1);
     const lastAcc = toSafeNumber(si.lastAccessedTime, -1);
     if (maxSec <= 0 && lastAcc > 0 && allowFallback) {
-      maxSec = SESSION_DURATION / 1000;
+      maxSec = resolveFallbackDurationMs() / 1000;
     }
     if (maxSec > 0 && lastAcc > 0) {
       const serverNow =
@@ -144,7 +166,8 @@ export function computeSessionExpiryState(si, clientNowMs, options = {}) {
     }
     const loginTime = toSafeNumber(storage.get(SESSION_KEYS.LOGIN_TIME), -1);
     if (loginTime > 0) {
-      const expiryMs = loginTime + SESSION_DURATION;
+      const fallbackDurationMs = resolveFallbackDurationMs();
+      const expiryMs = loginTime + fallbackDurationMs;
       return {
         expiryMs,
         offsetMs: 0,
@@ -157,7 +180,7 @@ export function computeSessionExpiryState(si, clientNowMs, options = {}) {
   }
 
   // 고정 expiry를 스냅샷·저장해 이후 틱에서 카운트다운되도록 함 (매 틱 now+duration이면 remaining 상수 고정)
-  const expiryMs = now + SESSION_DURATION;
+  const expiryMs = now + resolveFallbackDurationMs();
   try {
     storage.set(SESSION_KEYS.SESSION_EXPIRY, expiryMs);
   } catch {

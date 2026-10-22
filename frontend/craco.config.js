@@ -46,7 +46,10 @@ module.exports = {
         '^@portone/browser-sdk/v2$':
           '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs',
         // axios 1.x ESM entry breaks Jest (import outside module)
-        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
+        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
+        // guardrail findRelatedTests: packages may be absent from node_modules
+        '^dompurify$': '<rootDir>/jest-stubs/dompurify.js',
+        '^@fullcalendar/luxon3$': '<rootDir>/jest-stubs/fullcalendarLuxon3.js'
       };
       return jestConfig;
     }

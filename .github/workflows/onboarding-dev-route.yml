@@ -10,11 +10,15 @@
 #   while SPA static remains the prod frontend root.
 #   Jaehak approved 10:50 KST.
 #
+# Upstream:
+#   Public HTTPS https://api.dev.core-solution.co.kr (port 443) — avoids opening
+#   :8080 through the firewall. No DEV_SERVER_HOST / direct IP:8080 upstream.
+#
 # Bans:
 #   - NEVER edit /etc/nginx/sites-available/core-solution or other prod domain blocks
 #   - systemctl reload nginx ONLY — NEVER restart nginx; no app restart, no DB, no JAR deploy
-#   - Do NOT SSH to the .dev server; DEV_SERVER_HOST is for upstream resolution only
-#   - Never print SSH keys (upstream host/IP, HTTP codes, actuator JSON are OK)
+#   - Do NOT SSH to the .dev server; PRODUCTION_* appleboy only
+#   - Never print SSH keys (upstream host, HTTP codes, actuator JSON are OK)
 #   - Do NOT auto-run; workflow_dispatch only (operator must choose mode)
 #   - No bash heredocs in remote scripts (indented EOF/PY closers never match)
 #
@@ -99,8 +103,6 @@ jobs:
           echo "✅ 시크릿 가드 통과 (SSH 키는 출력하지 않음)"
 
       - name: Remote diagnose (read-only)
-        env:
-          DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
         uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정 — server-time-sync.yml 과 동일
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -109,7 +111,6 @@ jobs:
           port: 22
           timeout: 120s
           command_timeout: 10m
-          envs: DEV_SERVER_HOST
           script: |
             set -euo pipefail
 
@@ -120,47 +121,47 @@ jobs:
             SSL_FULLCHAIN=/etc/letsencrypt/live/core-solution.co.kr/fullchain.pem
             SSL_PRIVKEY=/etc/letsencrypt/live/core-solution.co.kr/privkey.pem
             KNOWN_PROD_COMMIT=ba96cb3
-            DEV_DNS_FALLBACK=api.dev.core-solution.co.kr
+            UPSTREAM_URL=https://api.dev.core-solution.co.kr
+            UPSTREAM_HOST=api.dev.core-solution.co.kr
 
-            resolve_dev_upstream() {
-              local host_ip=""
-              if [ -n "${DEV_SERVER_HOST:-}" ]; then
-                echo "::notice::DEV_SERVER_HOST 사용 → http://${DEV_SERVER_HOST}:8080" >&2
-                printf '%s' "http://${DEV_SERVER_HOST}:8080"
+            resolve_proxy_ssl_ca() {
+              if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+                printf '%s' /etc/ssl/certs/ca-certificates.crt
                 return 0
               fi
-              echo "::warning::DEV_SERVER_HOST empty — DNS fallback to ${DEV_DNS_FALLBACK}" >&2
-              host_ip="$(getent ahostsv4 "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
-              if [ -z "$host_ip" ]; then
-                host_ip="$(dig +short A "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              if [ -f /etc/pki/tls/certs/ca-bundle.crt ]; then
+                printf '%s' /etc/pki/tls/certs/ca-bundle.crt
+                return 0
               fi
-              if [ -z "$host_ip" ]; then
-                echo "::error::DEV_SERVER_HOST empty and DNS resolve of ${DEV_DNS_FALLBACK} failed" >&2
-                return 1
-              fi
-              echo "::notice::DNS fallback IP=${host_ip} → http://${host_ip}:8080" >&2
-              printf '%s' "http://${host_ip}:8080"
-              return 0
+              echo "::error::No system CA bundle found (tried /etc/ssl/certs/ca-certificates.crt and /etc/pki/tls/certs/ca-bundle.crt)" >&2
+              return 1
             }
             write_desired_conf() {
-              # $1 = output path, $2 = upstream URL (http://host:8080)
-              # No bash heredoc — indented EOF closers never match (breaks remote script).
+              # $1 = output path
+              # Fixed HTTPS upstream — no :8080. No bash heredoc (indented EOF never matches).
               local out="$1"
-              local upstream="$2"
-              OD_OUT="$out" OD_UPSTREAM="$upstream" OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" \
+              local ca_bundle
+              ca_bundle="$(resolve_proxy_ssl_ca)"
+              OD_OUT="$out" OD_UPSTREAM="$UPSTREAM_URL" OD_UPSTREAM_HOST="$UPSTREAM_HOST" \
+              OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" OD_CA="$ca_bundle" \
               python3 -c '
             import os
             out = os.environ["OD_OUT"]
             upstream = os.environ["OD_UPSTREAM"]
+            upstream_host = os.environ["OD_UPSTREAM_HOST"]
             host = os.environ["OD_HOST"]
             fc = os.environ["OD_FC"]
             pk = os.environ["OD_PK"]
+            ca = os.environ["OD_CA"]
 
-            def proxy_block(path, upstream, http11=False, timeouts=True):
+            def proxy_block(path, upstream, upstream_host, ca, http11=False, timeouts=True):
                 lines = [
                     "    location %s {" % path,
                     "        proxy_pass %s;" % upstream,
-                    "        proxy_set_header Host $host;",
+                    "        proxy_ssl_server_name on;",
+                    "        proxy_ssl_verify on;",
+                    "        proxy_ssl_trusted_certificate %s;" % ca,
+                    "        proxy_set_header Host api.dev.core-solution.co.kr;",
                     "        proxy_set_header X-Real-IP $remote_addr;",
                     "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
                     "        proxy_set_header X-Forwarded-Proto $scheme;",
@@ -180,7 +181,7 @@ jobs:
             parts = []
             parts.append("# Dedicated exact server_name for %s" % host)
             parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
-            parts.append("# Upstream (.dev BE): %s" % upstream)
+            parts.append("# Upstream (.dev BE public HTTPS): %s" % upstream)
             parts.append("")
             parts.append("server {")
             parts.append("    listen 80;")
@@ -216,15 +217,15 @@ jobs:
             parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
             parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
             parts.append("")
-            parts.append(proxy_block("/api/", upstream, http11=True, timeouts=True))
+            parts.append(proxy_block("/api/", upstream, upstream_host, ca, http11=True, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/actuator/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/login/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("^~ /legal/", upstream, http11=False, timeouts=False))
+            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca, http11=False, timeouts=False))
             parts.append("")
             parts.append("    location ^~ /static/ {")
             parts.append("        root /var/www/mindgarden/frontend;")
@@ -275,7 +276,7 @@ jobs:
                 if re.search(r"server_name\s+" + re.escape(host) + r"\s*;", p):
                     lines = []
                     for line in p.splitlines():
-                        if re.search(r"server_name|proxy_pass|^\s*root\s|listen|location |try_files|ssl_certificate", line):
+                        if re.search(r"server_name|proxy_pass|proxy_ssl_|^\s*root\s|listen|location |try_files|ssl_certificate", line):
                             lines.append(line)
                     print("\n".join(lines[:80]))
                     print("---")
@@ -346,38 +347,25 @@ jobs:
             echo "informational: known prod commit prefix=${KNOWN_PROD_COMMIT}"
 
             echo ""
-            echo "========== (4) .dev BE upstream address + reachability =========="
+            echo "========== (4) .dev BE public HTTPS reachability =========="
+            echo "Upstream=${UPSTREAM_URL} (Host=${UPSTREAM_HOST})"
             set +e
-            UPSTREAM="$(resolve_dev_upstream)"
-            UP_RC=$?
+            DEV_CODE="$(curl -sS -o /tmp/dev-be-info.json -w '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              "${UPSTREAM_URL}/actuator/info" 2>/tmp/dev-be-info.err)"
             set -e
-            if [ "$UP_RC" -ne 0 ] || [ -z "${UPSTREAM:-}" ]; then
-              echo "::warning::Could not resolve .dev BE upstream (diagnose continues)"
-              UPSTREAM=""
+            echo ".dev BE ${UPSTREAM_URL}/actuator/info HTTP ${DEV_CODE:-000}"
+            if [ -s /tmp/dev-be-info.json ]; then
+              head -c 4000 /tmp/dev-be-info.json; echo
             else
-              echo "Upstream=${UPSTREAM}"
-              set +e
-              DEV_CODE="$(curl -sS -o /tmp/dev-be-info.json -w '%{http_code}' \
-                --connect-timeout 10 --max-time 30 \
-                "${UPSTREAM}/actuator/info" 2>/tmp/dev-be-info.err)"
-              set -e
-              echo ".dev BE /actuator/info HTTP ${DEV_CODE:-000}"
-              if [ -s /tmp/dev-be-info.json ]; then
-                head -c 4000 /tmp/dev-be-info.json; echo
-              else
-                echo "(empty body)"
-                head -20 /tmp/dev-be-info.err || true
-              fi
+              echo "(empty body)"
+              head -20 /tmp/dev-be-info.err || true
             fi
 
             echo ""
             echo "========== (5) proposed conf diff =========="
             DESIRED="$(mktemp)"
-            if [ -n "${UPSTREAM:-}" ]; then
-              write_desired_conf "$DESIRED" "$UPSTREAM"
-            else
-              write_desired_conf "$DESIRED" "http://DEV_UPSTREAM_UNRESOLVED:8080"
-            fi
+            write_desired_conf "$DESIRED"
             if [ -f "$CONF" ]; then
               echo "Existing $CONF — diff vs desired:"
               diff -u "$CONF" "$DESIRED" || true
@@ -422,14 +410,9 @@ jobs:
             echo "::error::필수 운영 SSH 시크릿이 없어 apply 를 중단합니다."
             exit 1
           fi
-          if [ -z "${{ secrets.DEV_SERVER_HOST }}" ]; then
-            echo "::warning::DEV_SERVER_HOST empty — remote will DNS-fallback to api.dev.core-solution.co.kr"
-          fi
           echo "✅ 시크릿 가드 통과 (SSH 키는 출력하지 않음)"
 
       - name: Remote apply (backup → conf → reload → verify → auto-rollback)
-        env:
-          DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
         uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정 — server-time-sync.yml 과 동일
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
@@ -438,7 +421,6 @@ jobs:
           port: 22
           timeout: 120s
           command_timeout: 15m
-          envs: DEV_SERVER_HOST
           script: |
             set -euo pipefail
 
@@ -449,47 +431,47 @@ jobs:
             SSL_FULLCHAIN=/etc/letsencrypt/live/core-solution.co.kr/fullchain.pem
             SSL_PRIVKEY=/etc/letsencrypt/live/core-solution.co.kr/privkey.pem
             KNOWN_PROD_COMMIT=ba96cb3
-            DEV_DNS_FALLBACK=api.dev.core-solution.co.kr
+            UPSTREAM_URL=https://api.dev.core-solution.co.kr
+            UPSTREAM_HOST=api.dev.core-solution.co.kr
 
-            resolve_dev_upstream() {
-              local host_ip=""
-              if [ -n "${DEV_SERVER_HOST:-}" ]; then
-                echo "::notice::DEV_SERVER_HOST 사용 → http://${DEV_SERVER_HOST}:8080" >&2
-                printf '%s' "http://${DEV_SERVER_HOST}:8080"
+            resolve_proxy_ssl_ca() {
+              if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+                printf '%s' /etc/ssl/certs/ca-certificates.crt
                 return 0
               fi
-              echo "::warning::DEV_SERVER_HOST empty — DNS fallback to ${DEV_DNS_FALLBACK}" >&2
-              host_ip="$(getent ahostsv4 "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
-              if [ -z "$host_ip" ]; then
-                host_ip="$(dig +short A "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              if [ -f /etc/pki/tls/certs/ca-bundle.crt ]; then
+                printf '%s' /etc/pki/tls/certs/ca-bundle.crt
+                return 0
               fi
-              if [ -z "$host_ip" ]; then
-                echo "::error::DEV_SERVER_HOST empty and DNS resolve of ${DEV_DNS_FALLBACK} failed — abort apply" >&2
-                return 1
-              fi
-              echo "::notice::DNS fallback IP=${host_ip} → http://${host_ip}:8080" >&2
-              printf '%s' "http://${host_ip}:8080"
-              return 0
+              echo "::error::No system CA bundle found (tried /etc/ssl/certs/ca-certificates.crt and /etc/pki/tls/certs/ca-bundle.crt) — abort apply" >&2
+              return 1
             }
             write_desired_conf() {
-              # $1 = output path, $2 = upstream URL (http://host:8080)
-              # No bash heredoc — indented EOF closers never match (breaks remote script).
+              # $1 = output path
+              # Fixed HTTPS upstream — no :8080. No bash heredoc (indented EOF never matches).
               local out="$1"
-              local upstream="$2"
-              OD_OUT="$out" OD_UPSTREAM="$upstream" OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" \
+              local ca_bundle
+              ca_bundle="$(resolve_proxy_ssl_ca)"
+              OD_OUT="$out" OD_UPSTREAM="$UPSTREAM_URL" OD_UPSTREAM_HOST="$UPSTREAM_HOST" \
+              OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" OD_CA="$ca_bundle" \
               python3 -c '
             import os
             out = os.environ["OD_OUT"]
             upstream = os.environ["OD_UPSTREAM"]
+            upstream_host = os.environ["OD_UPSTREAM_HOST"]
             host = os.environ["OD_HOST"]
             fc = os.environ["OD_FC"]
             pk = os.environ["OD_PK"]
+            ca = os.environ["OD_CA"]
 
-            def proxy_block(path, upstream, http11=False, timeouts=True):
+            def proxy_block(path, upstream, upstream_host, ca, http11=False, timeouts=True):
                 lines = [
                     "    location %s {" % path,
                     "        proxy_pass %s;" % upstream,
-                    "        proxy_set_header Host $host;",
+                    "        proxy_ssl_server_name on;",
+                    "        proxy_ssl_verify on;",
+                    "        proxy_ssl_trusted_certificate %s;" % ca,
+                    "        proxy_set_header Host api.dev.core-solution.co.kr;",
                     "        proxy_set_header X-Real-IP $remote_addr;",
                     "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
                     "        proxy_set_header X-Forwarded-Proto $scheme;",
@@ -509,7 +491,7 @@ jobs:
             parts = []
             parts.append("# Dedicated exact server_name for %s" % host)
             parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
-            parts.append("# Upstream (.dev BE): %s" % upstream)
+            parts.append("# Upstream (.dev BE public HTTPS): %s" % upstream)
             parts.append("")
             parts.append("server {")
             parts.append("    listen 80;")
@@ -545,15 +527,15 @@ jobs:
             parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
             parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
             parts.append("")
-            parts.append(proxy_block("/api/", upstream, http11=True, timeouts=True))
+            parts.append(proxy_block("/api/", upstream, upstream_host, ca, http11=True, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/actuator/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("/login/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
             parts.append("")
-            parts.append(proxy_block("^~ /legal/", upstream, http11=False, timeouts=False))
+            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca, http11=False, timeouts=False))
             parts.append("")
             parts.append("    location ^~ /static/ {")
             parts.append("        root /var/www/mindgarden/frontend;")
@@ -618,9 +600,9 @@ jobs:
               curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 30 "$1" 2>/dev/null || echo "000"
             }
 
-            echo "🔐 Resolving .dev BE upstream (abort if both DEV_SERVER_HOST and DNS fail)"
-            UPSTREAM="$(resolve_dev_upstream)"
-            echo "Upstream=${UPSTREAM}"
+            echo "🔐 Using fixed public HTTPS upstream (abort if system CA bundle missing)"
+            CA_BUNDLE="$(resolve_proxy_ssl_ca)"
+            echo "Upstream=${UPSTREAM_URL} Host=${UPSTREAM_HOST} CA=${CA_BUNDLE}"
 
             TS="$(date +%Y%m%d-%H%M%S)"
             TS_DIR="${BACKUP_ROOT}/${TS}"
@@ -628,6 +610,7 @@ jobs:
             {
               echo "ts=${TS}"
               echo "target=${TARGET_HOST}"
+              echo "upstream=${UPSTREAM_URL}"
               echo "note=onboarding-dev-route apply backup before dedicated conf write"
               echo "had_conf=$([ -f "$CONF" ] && echo 1 || echo 0)"
               echo "enabled_present=$([ -e "$ENABLED" ] && echo 1 || echo 0)"
@@ -648,7 +631,7 @@ jobs:
             echo "✅ Backup ${TS_DIR} ; LATEST=${TS}"
 
             DESIRED="$(mktemp)"
-            write_desired_conf "$DESIRED" "$UPSTREAM"
+            write_desired_conf "$DESIRED"
             sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
             sudo cp "$DESIRED" "${CONF}.new"
             sudo mv -f "${CONF}.new" "$CONF"
@@ -699,7 +682,7 @@ jobs:
             fi
             set +e
             curl -sS -o /tmp/dev-after-info.json --connect-timeout 10 --max-time 30 \
-              "${UPSTREAM}/actuator/info" >/dev/null 2>&1
+              "${UPSTREAM_URL}/actuator/info" >/dev/null 2>&1
             set -e
             if command -v python3 >/dev/null 2>&1 && [ -s /tmp/dev-after-info.json ]; then
               DEV_COMMIT="$(python3 -c 'import json;d=json.load(open("/tmp/dev-after-info.json"));c=(d.get("git")or{}).get("commit")or{};print(c.get("id")or c.get("id.abbrev")or"")' 2>/dev/null || true)"

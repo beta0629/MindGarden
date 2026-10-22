@@ -14,6 +14,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import com.coresolution.consultation.util.JwtTokenCutoffUtils;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.context.TenantContextHolder;
@@ -151,7 +152,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             }
                             // 폐기·컷오프·중복로그인 차단은 ops 경로에서도 동일 적용.
                             // 순수 ops(env, user==null)는 위 if (user != null) 밖이라 영향 없음.
+                            // lifecycle inactive 거부와 구분: 폐기만 request 에 mark → 세션 필터가 hydrate 생략.
                             if (isAccessTokenRevoked(user, token)) {
+                                AccessTokenRevocationRequestMarker.mark(request);
                                 log.warn(
                                         "Revoked access token rejected: path={}, userId={}",
                                         requestPath, user.getId());

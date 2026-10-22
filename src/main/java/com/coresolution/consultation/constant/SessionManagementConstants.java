@@ -232,6 +232,14 @@ public final class SessionManagementConstants {
             "mg.session.host.tenant.mismatch";
 
     /**
+     * Access JWT 가 denylist·컷오프·중복로그인 차단으로 폐기된 요청.
+     * {@code JwtAuthenticationFilter} 가 표시하고,
+     * {@code SessionBasedAuthenticationFilter} 가 JSESSIONID 세션 복원을 건너뛴다.
+     */
+    public static final String REQUEST_ATTR_ACCESS_TOKEN_REVOKED =
+            "mg.auth.access.token.revoked";
+
+    /**
      * 최대 세션 수 초과 메시지
      */
     public static final String MAX_SESSION_EXCEEDED_MESSAGE = "최대 동시 세션 수를 초과했습니다.";

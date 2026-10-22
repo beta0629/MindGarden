@@ -15,16 +15,16 @@ import java.util.stream.Collectors;
 
 import com.coresolution.consultation.config.DuplicateLoginAccessBlockRegistry;
 import com.coresolution.consultation.constant.LifecycleState;
+import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +34,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -58,11 +60,11 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
     @Mock private UserRepository userRepository;
     @Mock private DuplicateLoginAccessBlockRegistry blockRegistry;
     @Mock private AuthTokenRevocationService revocationService;
-    @Mock private HttpServletRequest request;
-    @Mock private HttpServletResponse response;
     @Mock private FilterChain filterChain;
 
     private JwtAuthenticationFilter filter;
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
     private String tenantId;
     private String userId;
     private String token;
@@ -77,8 +79,9 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
 
         filter = new JwtAuthenticationFilter(jwtService, userService, userRepository, blockRegistry,
             revocationService);
-        when(request.getRequestURI()).thenReturn(OPS_REQUEST_PATH);
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
+        request = new MockHttpServletRequest("GET", OPS_REQUEST_PATH);
+        request.addHeader("Authorization", "Bearer " + token);
+        response = new MockHttpServletResponse();
         when(jwtService.isTokenValid(token)).thenReturn(true);
         when(jwtService.extractUsername(token)).thenReturn(userId);
         when(jwtService.extractTenantId(token)).thenReturn(tenantId);
@@ -90,7 +93,23 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
     }
 
     @Test
-    @DisplayName("ops 경로 + 센터 DB user + denylist true → Authentication null")
+    @DisplayName("A) ops 경로 + 정상 센터 DB user 토큰 → Authentication 설정")
+    void opsPath_validCenterUserToken_setsAuthentication() throws Exception {
+        User user = activeCenterUser();
+        when(userRepository.findByTenantIdAndUserId(tenantId, userId)).thenReturn(Optional.of(user));
+        when(blockRegistry.isBlocked(userPk)).thenReturn(false);
+        when(jwtService.extractIssuedAt(token)).thenReturn(new Date());
+        when(revocationService.isAccessTokenRevoked(token)).thenReturn(false);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isFalse();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("ops 경로 + 센터 DB user + denylist true → Authentication null + mark")
     void opsPath_denylistRevoked_skipsAuthentication() throws Exception {
         // Given
         User user = activeCenterUser();
@@ -104,11 +123,14 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
 
         // Then
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
+        assertThat(request.getAttribute(SessionManagementConstants.REQUEST_ATTR_ACCESS_TOKEN_REVOKED))
+            .isEqualTo(Boolean.TRUE);
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    @DisplayName("ops 경로 + tokens_invalidated_at 이전 발급 → Authentication null")
+    @DisplayName("ops 경로 + tokens_invalidated_at 이전 발급 → Authentication null + mark")
     void opsPath_issuedBeforeAccountCutoff_skipsAuthentication() throws Exception {
         // Given
         User user = activeCenterUser();
@@ -123,11 +145,12 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
 
         // Then
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    @DisplayName("ops 경로 + DuplicateLoginAccessBlockRegistry block → Authentication null")
+    @DisplayName("ops 경로 + DuplicateLoginAccessBlockRegistry block → Authentication null + mark")
     void opsPath_blockedByRegistry_skipsAuthentication() throws Exception {
         // Given
         User user = activeCenterUser();
@@ -139,11 +162,86 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
 
         // Then
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
-    @DisplayName("ops 경로 + tenantId 없는 순수 ops 토큰(HQ_ADMIN) → Authentication 설정 + ROLE_OPS")
+    @DisplayName("C) /api/v1/ops/onboarding/ + denylist → Authentication null")
+    void opsOnboardingPath_denylistRevoked_skipsAuthentication() throws Exception {
+        request.setRequestURI("/api/v1/ops/onboarding/tenants");
+        User user = activeCenterUser();
+        when(userRepository.findByTenantIdAndUserId(tenantId, userId)).thenReturn(Optional.of(user));
+        when(blockRegistry.isBlocked(userPk)).thenReturn(false);
+        when(jwtService.extractIssuedAt(token)).thenReturn(new Date());
+        when(revocationService.isAccessTokenRevoked(token)).thenReturn(true);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("C) /api/v1/ops/onboarding/ + 정상 토큰 → Authentication 설정")
+    void opsOnboardingPath_validToken_setsAuthentication() throws Exception {
+        request.setRequestURI("/api/v1/ops/onboarding/tenants");
+        User user = activeCenterUser();
+        when(userRepository.findByTenantIdAndUserId(tenantId, userId)).thenReturn(Optional.of(user));
+        when(blockRegistry.isBlocked(userPk)).thenReturn(false);
+        when(jwtService.extractIssuedAt(token)).thenReturn(new Date());
+        when(revocationService.isAccessTokenRevoked(token)).thenReturn(false);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isFalse();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("D) tenantId null + email 조회 경로 + denylist → Authentication null")
+    void emailClaimPath_denylistRevoked_skipsAuthentication() throws Exception {
+        String email = "email-claim-" + UUID.randomUUID() + "@example.com";
+        User user = activeCenterUser();
+        user.setEmail(email);
+        when(jwtService.extractTenantId(token)).thenReturn(null);
+        when(jwtService.extractEmail(token)).thenReturn(email);
+        when(userService.findByEmail(email)).thenReturn(Optional.of(user));
+        when(blockRegistry.isBlocked(userPk)).thenReturn(false);
+        when(jwtService.extractIssuedAt(token)).thenReturn(new Date());
+        when(revocationService.isAccessTokenRevoked(token)).thenReturn(true);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("D) tenantId null + email 조회 경로 + 정상 → Authentication 설정")
+    void emailClaimPath_validToken_setsAuthentication() throws Exception {
+        String email = "email-claim-" + UUID.randomUUID() + "@example.com";
+        User user = activeCenterUser();
+        user.setEmail(email);
+        when(jwtService.extractTenantId(token)).thenReturn(null);
+        when(jwtService.extractEmail(token)).thenReturn(email);
+        when(userService.findByEmail(email)).thenReturn(Optional.of(user));
+        when(blockRegistry.isBlocked(userPk)).thenReturn(false);
+        when(jwtService.extractIssuedAt(token)).thenReturn(new Date());
+        when(revocationService.isAccessTokenRevoked(token)).thenReturn(false);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isFalse();
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    @DisplayName("ops 경로 + tenantId 없는 순수 ops 토큰(HQ_ADMIN) → Authentication 설정 + ROLE_OPS (mark 없음)")
     void opsPath_pureOpsTokenWithoutTenant_setsAuthenticationWithRoleOps() throws Exception {
         // Given — tenantId 없음 + DB 미스 → user==null (순수 ops). revoke 게이트는 if (user != null) 밖.
         when(jwtService.extractTenantId(token)).thenReturn(null);
@@ -161,6 +259,7 @@ class JwtAuthenticationFilterOpsAccessRevokeTest {
             .map(GrantedAuthority::getAuthority)
             .collect(Collectors.toSet());
         assertThat(authorities).contains(SecurityRoleConstants.ROLE_OPS);
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isFalse();
         verify(filterChain).doFilter(request, response);
     }
 

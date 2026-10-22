@@ -17,9 +17,8 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +28,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
@@ -55,18 +56,19 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
     @Mock private UserRepository userRepository;
     @Mock private DuplicateLoginAccessBlockRegistry blockRegistry;
     @Mock private AuthTokenRevocationService revocationService;
-    @Mock private HttpServletRequest request;
-    @Mock private HttpServletResponse response;
     @Mock private FilterChain filterChain;
 
     private JwtAuthenticationFilter filter;
+    private MockHttpServletRequest request;
+    private MockHttpServletResponse response;
 
     @BeforeEach
     void setUp() {
         filter = new JwtAuthenticationFilter(jwtService, userService, userRepository, blockRegistry,
             revocationService);
-        when(request.getRequestURI()).thenReturn(REQUEST_PATH);
-        when(request.getHeader("Authorization")).thenReturn(AUTH_HEADER);
+        request = new MockHttpServletRequest("GET", REQUEST_PATH);
+        request.addHeader("Authorization", AUTH_HEADER);
+        response = new MockHttpServletResponse();
         when(jwtService.isTokenValid(TOKEN)).thenReturn(true);
         when(jwtService.extractUsername(TOKEN)).thenReturn(USER_ID);
         when(jwtService.extractTenantId(TOKEN)).thenReturn(TENANT);
@@ -87,6 +89,7 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
         filter.doFilterInternal(request, response, filterChain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
         verify(filterChain).doFilter(request, response);
     }
 
@@ -104,6 +107,7 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
         filter.doFilterInternal(request, response, filterChain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isFalse();
         verify(filterChain).doFilter(request, response);
     }
 
@@ -120,6 +124,7 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
         filter.doFilterInternal(request, response, filterChain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
         verify(filterChain).doFilter(request, response);
     }
 
@@ -150,6 +155,7 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
         filter.doFilterInternal(request, response, filterChain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
+        assertThat(AccessTokenRevocationRequestMarker.isMarked(request)).isTrue();
         verify(filterChain).doFilter(request, response);
     }
 

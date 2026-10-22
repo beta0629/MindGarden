@@ -2933,7 +2933,8 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+                    session.setMaxInactiveInterval(
+                            sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
                     // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
                     String naverProviderForSession = "NAVER";
@@ -3605,7 +3606,8 @@ public class OAuth2Controller extends BaseApiController {
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
 
-                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+                    session.setMaxInactiveInterval(
+                            sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
                     // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
                     persistOAuthDbUserSession(request, session, user, "KAKAO");
@@ -4137,7 +4139,8 @@ public class OAuth2Controller extends BaseApiController {
                     setSpringSecurityAuthentication(user);
                     session.setAttribute("SPRING_SECURITY_CONTEXT",
                             SecurityContextHolder.getContext());
-                    session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+                    session.setMaxInactiveInterval(
+                            sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
                     // DB user_sessions — SessionBasedAuthenticationFilter 게이트 (비밀번호·social-login 과 동일)
                     persistOAuthDbUserSession(request, session, user, "GOOGLE");
@@ -4595,7 +4598,8 @@ public class OAuth2Controller extends BaseApiController {
             setSpringSecurityAuthentication(appleSessionUser);
             sessionForLogin.setAttribute("SPRING_SECURITY_CONTEXT",
                     SecurityContextHolder.getContext());
-            sessionForLogin.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            sessionForLogin.setMaxInactiveInterval(
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(appleSessionUser.getRole()));
             persistOAuthDbUserSession(request, sessionForLogin, appleSessionUser, "APPLE");
 
             String redirectTenantId = finalTenantId;
@@ -4698,7 +4702,8 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            session.setMaxInactiveInterval(
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
             persistOAuthDbUserSession(request, session, user,
                     provider != null ? provider : "UNKNOWN");
@@ -5117,7 +5122,8 @@ public class OAuth2Controller extends BaseApiController {
             // 세션에 SecurityContext 저장 (명시적으로 - 다른 메서드와 동일)
             session.setAttribute("SPRING_SECURITY_CONTEXT", SecurityContextHolder.getContext());
 
-            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            session.setMaxInactiveInterval(
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
             // UserSession 엔티티 생성 (데이터베이스에 저장하여 SessionBasedAuthenticationFilter에서 조회 가능하도록)
             persistOAuthDbUserSession(request, session, user, provider);
@@ -5140,7 +5146,7 @@ public class OAuth2Controller extends BaseApiController {
             // iOS 네이티브: SessionCookieSupport 로 웹/필터와 동일 속성(+ Max-Age) 발급
             response.setHeader("Set-Cookie", sessionCookieSupport.buildJsessionSetCookieHeader(
                     session.getId(),
-                    sessionTimeoutProperties.getTimeoutSeconds(),
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()),
                     request));
 
             return ResponseEntity.ok(Map.of("success", true, "user",

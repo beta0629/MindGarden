@@ -1,6 +1,7 @@
 package com.coresolution.consultation.util;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
@@ -70,8 +71,9 @@ public class SessionManager {
                 session.setAttribute(SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.SOCIAL_PROVIDER, socialProvider);
             }
 
-            // 세션 타임아웃 설정 — SSOT: SessionTimeoutProperties (HTTP_SESSION_MAX_INACTIVE)
-            session.setMaxInactiveInterval(sessionTimeoutProperties.getTimeoutSeconds());
+            // 세션 타임아웃 — 역할별 SSOT (활성 역할 User.getRole())
+            session.setMaxInactiveInterval(
+                    sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole()));
 
             log.info("로그인 세션 생성 완료: userId={}, email={}", user.getId(), EmailLogMasking.maskForLog(user.getEmail()));
 
@@ -112,8 +114,8 @@ public class SessionManager {
             session.setAttribute(SessionConstants.BUSINESS_SESSION_NAMESPACE + "." + SessionConstants.USER_PROFILE, userProfile);
             session.setAttribute(SessionConstants.BUSINESS_SESSION_NAMESPACE + "." + SessionConstants.LAST_ACTIVITY_TIME, LocalDateTime.now());
 
-            // 비즈니스 세션 타임아웃 설정 (로그인 세션보다 짧게 두지 않음)
-            int timeoutSeconds = sessionTimeoutProperties.getTimeoutSeconds();
+            // 비즈니스 세션 타임아웃 — 역할별 TTL과 기존 interval 중 더 긴 쪽(짧게 두지 않음)
+            int timeoutSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole());
             int businessTimeout = Math.max(session.getMaxInactiveInterval(), timeoutSeconds);
             session.setMaxInactiveInterval(businessTimeout);
 
@@ -223,7 +225,13 @@ public class SessionManager {
                 LocalDateTime now = LocalDateTime.now();
                 int maxInactive = session.getMaxInactiveInterval();
                 if (maxInactive <= 0) {
-                    maxInactive = sessionTimeoutProperties.getTimeoutSeconds();
+                    Object roleAttr = session.getAttribute(
+                            SessionConstants.LOGIN_SESSION_NAMESPACE + "." + SessionConstants.ROLE);
+                    if (roleAttr instanceof UserRole role) {
+                        maxInactive = sessionTimeoutProperties.getTimeoutSecondsForRole(role);
+                    } else {
+                        maxInactive = sessionTimeoutProperties.getTimeoutSeconds();
+                    }
                 }
                 if (lastActivity.plusSeconds(maxInactive).isBefore(now)) {
                     log.info("세션이 만료되었습니다: userId={}", userId);

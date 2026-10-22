@@ -12,6 +12,22 @@
 const path = require('path');
 
 /**
+ * node_modules 에 패키지가 있으면 실구현을 쓰고, 없을 때만 Jest stub 을 매핑한다.
+ * 항상 stub 하면 `DOMPurify(window)` 계약이 깨져 XSS 가드 테스트가 평문 fallback 으로 떨어진다.
+ *
+ * @param {string} packageName
+ * @returns {boolean}
+ */
+function isPackageInstalled(packageName) {
+  try {
+    require.resolve(packageName, { paths: [__dirname] });
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
  * src 밖에서 import 를 허용하는 파일 — 로그인 비밀번호 정책 BE/FE 공용 픽스처 하나뿐.
  * constants/passwordPolicyUi.js 가 길이·특수문자·일반 단어 목록을 여기서만 읽는다.
  */
@@ -37,7 +53,7 @@ module.exports = {
   },
   jest: {
     configure: (jestConfig) => {
-      jestConfig.moduleNameMapper = {
+      const moduleNameMapper = {
         ...jestConfig.moduleNameMapper,
         '^react-router-dom$': '<rootDir>/node_modules/react-router-dom/dist/index.js',
         '^react-router$': '<rootDir>/node_modules/react-router/dist/development/index.js',
@@ -48,6 +64,15 @@ module.exports = {
         // axios 1.x ESM entry breaks Jest (import outside module)
         '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
       };
+      delete moduleNameMapper['^dompurify$'];
+      delete moduleNameMapper['^@fullcalendar/luxon3$'];
+      if (!isPackageInstalled('dompurify')) {
+        moduleNameMapper['^dompurify$'] = '<rootDir>/jest-stubs/dompurify.js';
+      }
+      if (!isPackageInstalled('@fullcalendar/luxon3')) {
+        moduleNameMapper['^@fullcalendar/luxon3$'] = '<rootDir>/jest-stubs/fullcalendarLuxon3.js';
+      }
+      jestConfig.moduleNameMapper = moduleNameMapper;
       return jestConfig;
     }
   }

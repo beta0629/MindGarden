@@ -6,6 +6,18 @@
  * @since 2026-10-07
  */
 
+// 실 FullCalendar 사용 — createPlugin 형태여야 addDefs(deps) 가 깨지지 않음.
+// moduleNameMapper stub 과 동일 계약; 형제 테스트의 virtual mock 패턴 유지.
+jest.mock('@fullcalendar/luxon3', () => {
+  const { createPlugin } = require('@fullcalendar/core');
+  return {
+    __esModule: true,
+    default: createPlugin({ name: '@fullcalendar/luxon3' })
+  };
+}, {
+  virtual: true
+});
+
 import React from 'react';
 import { act, fireEvent, render } from '@testing-library/react';
 import ScheduleCalendarView from '../ScheduleCalendarView';

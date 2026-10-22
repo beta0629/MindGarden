@@ -149,8 +149,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 filterChain.doFilter(request, response);
                                 return;
                             }
-                            // 계정 전체 종료(강제 로그아웃 등) 이후 발급분이 아니거나, 현재 세션 로그아웃으로 폐기된 Access JWT 거부
-                            if (!isOpsApi && isAccessTokenRevoked(user, token)) {
+                            // 폐기·컷오프·중복로그인 차단은 ops 경로에서도 동일 적용.
+                            // 순수 ops(env, user==null)는 위 if (user != null) 밖이라 영향 없음.
+                            if (isAccessTokenRevoked(user, token)) {
                                 log.warn(
                                         "Revoked access token rejected: path={}, userId={}",
                                         requestPath, user.getId());

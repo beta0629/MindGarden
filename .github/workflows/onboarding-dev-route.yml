@@ -171,7 +171,8 @@ jobs:
                     "        proxy_ssl_verify on;",
                     "        proxy_ssl_verify_depth 3;",
                     "        proxy_ssl_trusted_certificate %s;" % ca,
-                    "        proxy_set_header Host %s;" % upstream_host,
+                    "        # tenant Host=$host; SNI stays api.dev via proxy_ssl_name",
+                    "        proxy_set_header Host $host;",
                     "        proxy_set_header X-Real-IP $remote_addr;",
                     "        # Avoid CF->CF loop / forged CF headers when client already came via Cloudflare:",
                     "        proxy_set_header X-Forwarded-For $remote_addr;",
@@ -461,6 +462,213 @@ jobs:
             fi
 
             echo ""
+            echo "========== (9) Backup vs live nginx tree diff =========="
+            BACKUP_USED=""
+            BACKUP_TS=""
+            if [ -f "${BACKUP_ROOT}/LATEST" ]; then
+              BACKUP_TS="$(sudo cat "${BACKUP_ROOT}/LATEST" 2>/dev/null | tr -d '\r\n' || true)"
+              if [ -n "$BACKUP_TS" ] && [ -d "${BACKUP_ROOT}/${BACKUP_TS}" ]; then
+                BACKUP_USED="${BACKUP_ROOT}/${BACKUP_TS}"
+                echo "backup source: LATEST -> ${BACKUP_USED}"
+              fi
+            fi
+            if [ -z "$BACKUP_USED" ]; then
+              FALLBACK_TS=20261022-172230
+              if [ -d "${BACKUP_ROOT}/${FALLBACK_TS}" ]; then
+                BACKUP_TS="$FALLBACK_TS"
+                BACKUP_USED="${BACKUP_ROOT}/${FALLBACK_TS}"
+                echo "backup source: hardcoded fallback ${FALLBACK_TS} (LATEST missing or invalid)"
+              else
+                echo "backup source: none (LATEST missing/invalid and fallback ${FALLBACK_TS} absent under ${BACKUP_ROOT})"
+              fi
+            fi
+            if [ -n "$BACKUP_USED" ]; then
+              echo "--- backup NOTE / had_conf / file list ---"
+              if [ -f "${BACKUP_USED}/NOTE.txt" ]; then
+                sudo cat "${BACKUP_USED}/NOTE.txt" || true
+              else
+                echo "(no NOTE.txt)"
+              fi
+              if [ -f "${BACKUP_USED}/had_conf" ]; then
+                printf 'had_conf='
+                sudo cat "${BACKUP_USED}/had_conf" || true
+                printf '\n'
+              fi
+              echo "--- backup dir listing ---"
+              sudo ls -la "${BACKUP_USED}" || true
+              HAS_TREE=0
+              for sub in sites-available sites-enabled conf.d; do
+                if [ -d "${BACKUP_USED}/${sub}" ] || [ -d "${BACKUP_USED}/etc/nginx/${sub}" ]; then
+                  HAS_TREE=1
+                fi
+              done
+              if [ "$HAS_TREE" -eq 1 ]; then
+                for sub in sites-available sites-enabled conf.d; do
+                  for cand in "${BACKUP_USED}/${sub}" "${BACKUP_USED}/etc/nginx/${sub}"; do
+                    if [ -d "$cand" ]; then
+                      echo "--- diff -qr ${cand} vs /etc/nginx/${sub} ---"
+                      sudo diff -qr "$cand" "/etc/nginx/${sub}" || true
+                    fi
+                  done
+                done
+              else
+                echo "backup shape: dedicated conf + NOTE only (no full tree snapshots; do not invent writes)"
+                BAK_CONF="${BACKUP_USED}/onboarding-dev.core-solution.co.kr.conf"
+                if [ -f "$BAK_CONF" ] && [ -f "$CONF" ]; then
+                  echo "--- diff -u backup dedicated conf vs live CONF ---"
+                  sudo diff -u "$BAK_CONF" "$CONF" || true
+                elif [ -f "$BAK_CONF" ]; then
+                  echo "backup dedicated conf present; live CONF absent"
+                elif [ -f "$CONF" ]; then
+                  echo "live CONF present; backup dedicated conf absent"
+                else
+                  echo "neither backup nor live dedicated conf present"
+                fi
+              fi
+            fi
+            echo "--- live /etc/nginx/sites-available ---"
+            sudo ls -la /etc/nginx/sites-available 2>/dev/null || true
+            echo "--- live /etc/nginx/sites-enabled ---"
+            sudo ls -la /etc/nginx/sites-enabled 2>/dev/null || true
+            echo "--- live /etc/nginx/conf.d ---"
+            sudo ls -la /etc/nginx/conf.d 2>/dev/null || true
+            echo "dedicated conf present: $([ -f "$CONF" ] && echo yes || echo no) ($CONF)"
+            echo "dedicated enabled present: $([ -e "$ENABLED" ] && echo yes || echo no) ($ENABLED)"
+
+            echo ""
+            echo "========== (10) m-garden conflicting server name — pre-existing? =========="
+            echo "(read-only; never modify live nginx config)"
+            echo "--- current: sudo nginx -T conflicting server name ---"
+            sudo nginx -T 2>&1 | grep -i 'conflicting server name' || true
+            echo "--- files declaring m-garden.co.kr / www.m-garden.co.kr server_name ---"
+            MG_FILES="$(sudo grep -rlE 'server_name[[:space:]].*(www\.)?m-garden\.co\.kr' \
+              /etc/nginx/sites-available /etc/nginx/sites-enabled /etc/nginx/conf.d 2>/dev/null || true)"
+            if [ -z "$MG_FILES" ]; then
+              echo "(no matching files under sites-available/sites-enabled/conf.d)"
+            else
+              for f in $MG_FILES; do
+                echo "path=$f"
+                sudo ls -la "$f" || true
+                sudo stat "$f" || true
+              done
+            fi
+            echo "--- mtime vs backup timestamp (Asia/Seoul; UTC fallback) ---"
+            BAK_EPOCH=""
+            if [ -n "${BACKUP_TS:-}" ]; then
+              BAK_DATE="${BACKUP_TS:0:4}-${BACKUP_TS:4:2}-${BACKUP_TS:6:2} ${BACKUP_TS:9:2}:${BACKUP_TS:11:2}:${BACKUP_TS:13:2}"
+              BAK_EPOCH="$(TZ=Asia/Seoul date -d "$BAK_DATE" +%s 2>/dev/null || true)"
+              if [ -n "$BAK_EPOCH" ]; then
+                echo "backup_ts=${BACKUP_TS} parsed_as=Asia/Seoul epoch=${BAK_EPOCH} human=$(TZ=Asia/Seoul date -d "@${BAK_EPOCH}" 2>/dev/null || true)"
+              else
+                BAK_EPOCH="$(TZ=UTC date -d "$BAK_DATE" +%s 2>/dev/null || true)"
+                echo "backup_ts=${BACKUP_TS} parsed_as=UTC epoch=${BAK_EPOCH:-unparsed} human=$(TZ=UTC date -d "@${BAK_EPOCH}" 2>/dev/null || true)"
+              fi
+            else
+              echo "no backup_ts available — skip mtime comparison"
+            fi
+            MG_ALL_OLDER=yes
+            MG_ANY=no
+            if [ -n "$MG_FILES" ] && [ -n "${BAK_EPOCH:-}" ]; then
+              for f in $MG_FILES; do
+                MG_ANY=yes
+                MT="$(sudo stat -c %Y "$f" 2>/dev/null || echo 0)"
+                echo "file=$f mtime_epoch=$MT backup_epoch=$BAK_EPOCH"
+                if [ "$MT" -ge "$BAK_EPOCH" ]; then
+                  MG_ALL_OLDER=no
+                  echo "  note: mtime >= backup ts"
+                else
+                  echo "  note: mtime older than backup ts"
+                fi
+              done
+            fi
+            echo "--- verdict ---"
+            echo "dedicated onboarding-dev conf does not declare m-garden server_name; it cannot introduce those conflicts."
+            if [ "$MG_ANY" = "yes" ] && [ "$MG_ALL_OLDER" = "yes" ] && [ -n "${BAK_EPOCH:-}" ]; then
+              echo "verdict: m-garden conf file mtimes older than backup ts — conflicting server name warnings likely pre-existed before onboarding-dev dedicated conf."
+            elif [ "$MG_ANY" = "yes" ] && [ "$MG_ALL_OLDER" = "no" ]; then
+              echo "verdict: at least one m-garden conf mtime >= backup ts — cannot conclude pre-existing from mtime alone; still unlikely from dedicated onboarding-dev conf."
+            elif [ "$MG_ANY" = "no" ]; then
+              echo "verdict: no m-garden server_name files found in scanned dirs."
+            else
+              echo "verdict: inconclusive (missing backup_ts or parse)."
+            fi
+            echo "skip temp nginx -t -c: rewriting include paths under a temp root is fragile and risks false negatives; prefer mtime+grep above (read-only)."
+
+            echo ""
+            echo "========== (11) Tenant Host header matrix (from prod, read-only) =========="
+            echo "Upstream=${UPSTREAM_URL} ; SNI/connect-to ${UPSTREAM_HOST}:443"
+            LOGIN_JSON='{"email":"nosuch-onboarding-probe@example.invalid","password":"x"}'
+            od_matrix_get() {
+              local label="$1"
+              shift
+              local out=/tmp/od-host-matrix-body.out
+              local code
+              set +e
+              code="$(curl -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 \
+                --connect-to "${UPSTREAM_HOST}:443:${UPSTREAM_HOST}:443" \
+                "$@" "${UPSTREAM_URL}/actuator/info" 2>/tmp/od-host-matrix.err)"
+              set -e
+              echo "--- GET /actuator/info :: ${label} ---"
+              echo "HTTP ${code:-000}"
+              echo -n "body_snippet: "
+              head -c 300 "$out" 2>/dev/null; echo
+            }
+            od_matrix_login() {
+              local label="$1"
+              shift
+              local out=/tmp/od-host-matrix-login.out
+              local code
+              set +e
+              code="$(curl -sS -o "$out" -w '%{http_code}' --connect-timeout 10 --max-time 30 \
+                --connect-to "${UPSTREAM_HOST}:443:${UPSTREAM_HOST}:443" \
+                -H 'Content-Type: application/json' \
+                -d "$LOGIN_JSON" \
+                "$@" "${UPSTREAM_URL}/api/v1/auth/login" 2>/tmp/od-host-matrix-login.err)"
+              set -e
+              echo "--- POST /api/v1/auth/login :: ${label} ---"
+              echo "HTTP ${code:-000}"
+              echo -n "body_snippet: "
+              head -c 300 "$out" 2>/dev/null; echo
+              printf '%s\t%s\n' "$label" "${code:-000}" >> /tmp/od-host-matrix-login-codes.tsv
+            }
+            : > /tmp/od-host-matrix-login-codes.tsv
+            od_matrix_get "1 default Host (URL=${UPSTREAM_HOST})"
+            od_matrix_get "2 Host=onboarding-dev.core-solution.co.kr" \
+              -H "Host: onboarding-dev.core-solution.co.kr"
+            od_matrix_get "3 Host=api.dev + X-Forwarded-Host=onboarding-dev" \
+              -H "Host: ${UPSTREAM_HOST}" \
+              -H "X-Forwarded-Host: onboarding-dev.core-solution.co.kr"
+            echo "--- login probe (fake credentials; no real secrets) ---"
+            od_matrix_login "L1 Host=api.dev only" \
+              -H "Host: ${UPSTREAM_HOST}"
+            od_matrix_login "L2 Host=onboarding-dev" \
+              -H "Host: onboarding-dev.core-solution.co.kr"
+            od_matrix_login "L3 Host=api.dev + X-Forwarded-Host=onboarding-dev" \
+              -H "Host: ${UPSTREAM_HOST}" \
+              -H "X-Forwarded-Host: onboarding-dev.core-solution.co.kr"
+            od_matrix_login "L4 Host=api.dev + X-Tenant-Subdomain=onboarding-dev" \
+              -H "Host: ${UPSTREAM_HOST}" \
+              -H "X-Tenant-Subdomain: onboarding-dev"
+            od_matrix_login "L5 Host=api.dev + X-Tenant-Subdomain=mindgarden" \
+              -H "Host: ${UPSTREAM_HOST}" \
+              -H "X-Tenant-Subdomain: mindgarden"
+            echo "--- login status summary (label which combo changes error shape) ---"
+            if [ -s /tmp/od-host-matrix-login-codes.tsv ]; then
+              cat /tmp/od-host-matrix-login-codes.tsv
+              BASE_CODE="$(awk -F'\t' 'NR==1 {print $2; exit}' /tmp/od-host-matrix-login-codes.tsv)"
+              echo "baseline status (L1 Host=api.dev only)=${BASE_CODE}"
+              while IFS="$(printf '\t')" read -r lab code; do
+                if [ "$code" != "$BASE_CODE" ]; then
+                  echo "DIFFERS from baseline: ${lab} -> HTTP ${code} (tenant-sensitive shape change candidate)"
+                else
+                  echo "same as baseline: ${lab} -> HTTP ${code}"
+                fi
+              done < /tmp/od-host-matrix-login-codes.tsv
+            else
+              echo "(no login probe results)"
+            fi
+
+            echo ""
             echo "✅ diagnose complete (no changes). exit 0"
             exit 0
 
@@ -563,7 +771,8 @@ jobs:
                     "        proxy_ssl_verify on;",
                     "        proxy_ssl_verify_depth 3;",
                     "        proxy_ssl_trusted_certificate %s;" % ca,
-                    "        proxy_set_header Host %s;" % upstream_host,
+                    "        # tenant Host=$host; SNI stays api.dev via proxy_ssl_name",
+                    "        proxy_set_header Host $host;",
                     "        proxy_set_header X-Real-IP $remote_addr;",
                     "        # Avoid CF->CF loop / forged CF headers when client already came via Cloudflare:",
                     "        proxy_set_header X-Forwarded-For $remote_addr;",

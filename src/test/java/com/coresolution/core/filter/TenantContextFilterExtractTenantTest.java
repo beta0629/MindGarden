@@ -6,6 +6,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
@@ -13,6 +15,7 @@ import com.coresolution.core.util.TenantHostSubdomainUtil;
 import jakarta.servlet.FilterChain;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.util.ReflectionTestUtils;
 
 /**
@@ -235,6 +239,39 @@ class TenantContextFilterExtractTenantTest {
 
         assertThat(captured).isEqualTo(FIXTURE_TENANT_ID);
         verify(tenantRepository).findBySubdomainIgnoreCase(eq(FIXTURE_SUBDOMAIN));
+    }
+
+    @Test
+    @DisplayName("폐기 마커 + 세션 TENANT_ID 캐시 → 세션 tenant 미설정(공개 auth)")
+    void extract_whenRevocationMarked_skipsSessionTenantCache() throws Exception {
+        String sessionTenantId = "tenant-session-" + UUID.randomUUID();
+
+        String captured = runPublicAuthAndCaptureTenant(req -> {
+            req.addHeader("Host", "localhost:8080");
+            MockHttpSession session = new MockHttpSession();
+            session.setAttribute(SessionConstants.TENANT_ID, sessionTenantId);
+            session.setAttribute("tenantId", sessionTenantId);
+            req.setSession(session);
+            AccessTokenRevocationRequestMarker.mark(req);
+        });
+
+        assertThat(captured).isNull();
+        verify(tenantRepository, never()).findBySubdomainIgnoreCase(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    @DisplayName("폐기 마커 없음 + 세션 TENANT_ID → 세션 tenant 설정(회귀)")
+    void extract_whenUnmarked_usesSessionTenantCache() throws Exception {
+        String sessionTenantId = "tenant-session-" + UUID.randomUUID();
+
+        String captured = runPublicAuthAndCaptureTenant(req -> {
+            req.addHeader("Host", "localhost:8080");
+            MockHttpSession session = new MockHttpSession();
+            session.setAttribute(SessionConstants.TENANT_ID, sessionTenantId);
+            req.setSession(session);
+        });
+
+        assertThat(captured).isEqualTo(sessionTenantId);
     }
 
     private boolean invokeIsLocalProfile() throws Exception {

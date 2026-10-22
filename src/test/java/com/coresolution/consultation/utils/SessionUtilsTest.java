@@ -101,4 +101,45 @@ class SessionUtilsTest {
         assertThat(SessionUtils.isLoggedIn(httpSession)).isFalse();
         assertThat(SessionUtils.getRole(httpSession)).isNull();
     }
+
+    @Test
+    @DisplayName("마커 있음 + 세션 TENANT_ID/ROLE_ID 캐시 → getTenantId·getRoleId null")
+    void getTenantIdAndRoleId_whenRevocationMarked_returnsNullDespiteSessionCache() {
+        String cachedRoleId = "role-" + UUID.randomUUID();
+        httpSession.setAttribute(SessionConstants.TENANT_ID, sessionUser.getTenantId());
+        httpSession.setAttribute(SessionConstants.ROLE_ID, cachedRoleId);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/auth/current-user");
+        AccessTokenRevocationRequestMarker.mark(request);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        assertThat(SessionUtils.getTenantId(httpSession)).isNull();
+        assertThat(SessionUtils.getRoleId(httpSession)).isNull();
+        assertThat(SessionUtils.isLoggedIn(httpSession)).isFalse();
+    }
+
+    @Test
+    @DisplayName("마커 없음 + 세션 TENANT_ID 캐시 → getTenantId 반환·isLoggedIn true(회귀)")
+    void getTenantId_whenUnmarked_returnsSessionCache() {
+        httpSession.setAttribute(SessionConstants.TENANT_ID, sessionUser.getTenantId());
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/auth/session-info");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        assertThat(SessionUtils.getTenantId(httpSession)).isEqualTo(sessionUser.getTenantId());
+        assertThat(SessionUtils.isLoggedIn(httpSession)).isTrue();
+    }
+
+    @Test
+    @DisplayName("isLoggedIn: 마커 true → false, 마커 없음 → true")
+    void isLoggedIn_respectsRevocationMarker() {
+        MockHttpServletRequest unmarked = new MockHttpServletRequest("GET", "/api/v1/auth/current-user");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(unmarked));
+        assertThat(SessionUtils.isLoggedIn(httpSession)).isTrue();
+
+        MockHttpServletRequest marked = new MockHttpServletRequest("GET", "/api/auth/oauth2/web-session-tokens");
+        AccessTokenRevocationRequestMarker.mark(marked);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(marked));
+        assertThat(SessionUtils.isLoggedIn(httpSession)).isFalse();
+    }
 }

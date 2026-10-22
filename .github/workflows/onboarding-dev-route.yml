@@ -13,6 +13,9 @@
 # Upstream:
 #   Public HTTPS https://api.dev.core-solution.co.kr (port 443) — avoids opening
 #   :8080 through the firewall. No DEV_SERVER_HOST / direct IP:8080 upstream.
+#   apply#39736614094: nginx→CF(api.dev) returned Cloudflare HTTP 502 while direct
+#   curl to api.dev was 200. Mitigations in proxy_block: proxy_ssl_name + HTTP/1.1
+#   Connection "" + strip CDN-Loop/CF-* + X-Forwarded-For $remote_addr.
 #
 # Bans:
 #   - NEVER edit /etc/nginx/sites-available/core-solution or other prod domain blocks
@@ -139,6 +142,7 @@ jobs:
             write_desired_conf() {
               # $1 = output path
               # Fixed HTTPS upstream — no :8080. No bash heredoc (indented EOF never matches).
+              # apply#39736614094 CF 502: proxy_ssl_name + HTTP/1.1 Connection "" + strip CDN-Loop/CF-* + XFF=$remote_addr
               local out="$1"
               local ca_bundle
               ca_bundle="$(resolve_proxy_ssl_ca)"
@@ -154,34 +158,42 @@ jobs:
             pk = os.environ["OD_PK"]
             ca = os.environ["OD_CA"]
 
-            def proxy_block(path, upstream, upstream_host, ca, http11=False, timeouts=True):
+            def proxy_block(path, upstream, upstream_host, ca):
+                # Literal proxy_pass (no variable host / no resolver). Uniform for all API paths.
                 lines = [
                     "    location %s {" % path,
                     "        proxy_pass %s;" % upstream,
+                    "        proxy_http_version 1.1;",
+                    "        proxy_set_header Connection \"\";",
                     "        proxy_ssl_server_name on;",
+                    "        proxy_ssl_name %s;" % upstream_host,
+                    "        proxy_ssl_protocols TLSv1.2 TLSv1.3;",
                     "        proxy_ssl_verify on;",
                     "        proxy_ssl_trusted_certificate %s;" % ca,
-                    "        proxy_set_header Host api.dev.core-solution.co.kr;",
+                    "        proxy_set_header Host %s;" % upstream_host,
                     "        proxy_set_header X-Real-IP $remote_addr;",
-                    "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+                    "        # Avoid CF->CF loop / forged CF headers when client already came via Cloudflare:",
+                    "        proxy_set_header X-Forwarded-For $remote_addr;",
                     "        proxy_set_header X-Forwarded-Proto $scheme;",
                     "        proxy_set_header X-Forwarded-Host $host;",
+                    "        proxy_set_header CF-Connecting-IP \"\";",
+                    "        proxy_set_header CF-Ray \"\";",
+                    "        proxy_set_header CF-Visitor \"\";",
+                    "        proxy_set_header CF-IPCountry \"\";",
+                    "        proxy_set_header CDN-Loop \"\";",
+                    "        proxy_set_header True-Client-IP \"\";",
+                    "        proxy_connect_timeout 60s;",
+                    "        proxy_send_timeout 60s;",
+                    "        proxy_read_timeout 60s;",
+                    "    }",
                 ]
-                if http11:
-                    lines.append("        proxy_http_version 1.1;")
-                if timeouts:
-                    lines.extend([
-                        "        proxy_connect_timeout 60s;",
-                        "        proxy_send_timeout 60s;",
-                        "        proxy_read_timeout 60s;",
-                    ])
-                lines.append("    }")
                 return "\n".join(lines)
 
             parts = []
             parts.append("# Dedicated exact server_name for %s" % host)
             parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
             parts.append("# Upstream (.dev BE public HTTPS): %s" % upstream)
+            parts.append("# apply#39736614094 CF 502; mitigations = proxy_ssl_name + HTTP/1.1 Connection \"\" + strip CDN-Loop/CF-* + XFF=$remote_addr")
             parts.append("")
             parts.append("server {")
             parts.append("    listen 80;")
@@ -217,15 +229,15 @@ jobs:
             parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
             parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
             parts.append("")
-            parts.append(proxy_block("/api/", upstream, upstream_host, ca, http11=True, timeouts=True))
+            parts.append(proxy_block("/api/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca, http11=False, timeouts=False))
+            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca))
             parts.append("")
             parts.append("    location ^~ /static/ {")
             parts.append("        root /var/www/mindgarden/frontend;")
@@ -376,6 +388,78 @@ jobs:
             rm -f "$DESIRED"
 
             echo ""
+            echo "========== (6) nginx error.log tails (onboarding-dev|api.dev) =========="
+            OD_ERR_LOG="/var/log/nginx/onboarding-dev.core-solution.co.kr.error.log"
+            if [ -f "$OD_ERR_LOG" ]; then
+              echo "--- ${OD_ERR_LOG} (last 200, filtered) ---"
+              OD_FILT="$(sudo tail -n 200 "$OD_ERR_LOG" 2>/dev/null | grep -E 'onboarding-dev|api\.dev' || true)"
+              if [ -n "$OD_FILT" ]; then
+                printf '%s\n' "$OD_FILT"
+              else
+                echo "(filter empty — last 30 unfiltered)"
+                sudo tail -n 30 "$OD_ERR_LOG" 2>/dev/null || true
+              fi
+            else
+              echo "(absent: ${OD_ERR_LOG})"
+            fi
+            echo "--- /var/log/nginx/error.log (last 200, filtered; skip error.log.1) ---"
+            if [ -f /var/log/nginx/error.log ]; then
+              NG_FILT="$(sudo tail -n 200 /var/log/nginx/error.log 2>/dev/null | grep -E 'onboarding-dev|api\.dev' || true)"
+              if [ -n "$NG_FILT" ]; then
+                printf '%s\n' "$NG_FILT"
+              else
+                echo "(filter empty — last 30 unfiltered)"
+                sudo tail -n 30 /var/log/nginx/error.log 2>/dev/null || true
+              fi
+            else
+              echo "(absent: /var/log/nginx/error.log)"
+            fi
+
+            echo ""
+            echo "========== (7) TLS handshake summary to api.dev (no --resolve) =========="
+            set +e
+            curl -v --connect-timeout 10 --max-time 30 -o /dev/null \
+              "https://${UPSTREAM_HOST}/actuator/info" >/tmp/od-tls-v.out 2>/tmp/od-tls-v.err
+            set -e
+            grep -iE 'SSL|TLS|subject|issuer|expire|Connected|HTTP/|server:|cf-|cloudflare' /tmp/od-tls-v.err 2>/dev/null | head -80 || true
+
+            echo ""
+            echo "========== (8) Is api.dev Cloudflare-proxied? =========="
+            echo "--- dig +short A ${UPSTREAM_HOST} ---"
+            A_IPS="$(dig +short A "${UPSTREAM_HOST}" 2>/dev/null || true)"
+            printf '%s\n' "${A_IPS:-"(empty)"}"
+            echo "--- dig +short AAAA ${UPSTREAM_HOST} ---"
+            AAAA_IPS="$(dig +short AAAA "${UPSTREAM_HOST}" 2>/dev/null || true)"
+            printf '%s\n' "${AAAA_IPS:-"(empty)"}"
+            CF_DNS=no
+            for ip in $A_IPS $AAAA_IPS; do
+              case "$ip" in
+                104.16.*|104.17.*|104.18.*|104.19.*|104.21.*|104.22.*|172.64.*|172.67.*|162.158.*)
+                  CF_DNS=yes
+                  ;;
+              esac
+            done
+            if [ "$CF_DNS" = "yes" ]; then
+              echo "DNS note: A/AAAA look like Cloudflare ranges"
+            else
+              echo "DNS note: A/AAAA raw (not matching common CF ranges above) or empty"
+            fi
+            echo "--- response headers https://${UPSTREAM_HOST}/actuator/health ---"
+            set +e
+            curl -sI --connect-timeout 10 --max-time 30 \
+              "https://${UPSTREAM_HOST}/actuator/health" >/tmp/od-cf-hdr.out 2>/tmp/od-cf-hdr.err
+            set -e
+            grep -iE '^(HTTP/|server:|cf-ray:|cf-cache-status:)' /tmp/od-cf-hdr.out 2>/dev/null || true
+            if grep -qiE '^(cf-ray:|cf-cache-status:)' /tmp/od-cf-hdr.out 2>/dev/null \
+              || grep -qiE '^server:[[:space:]]*cloudflare' /tmp/od-cf-hdr.out 2>/dev/null; then
+              echo "conclusion: Cloudflare-proxied=yes"
+            elif [ "$CF_DNS" = "yes" ]; then
+              echo "conclusion: Cloudflare-proxied=likely (CF-range DNS; headers inconclusive)"
+            else
+              echo "conclusion: Cloudflare-proxied=no (or inconclusive)"
+            fi
+
+            echo ""
             echo "✅ diagnose complete (no changes). exit 0"
             exit 0
 
@@ -449,6 +533,7 @@ jobs:
             write_desired_conf() {
               # $1 = output path
               # Fixed HTTPS upstream — no :8080. No bash heredoc (indented EOF never matches).
+              # apply#39736614094 CF 502: proxy_ssl_name + HTTP/1.1 Connection "" + strip CDN-Loop/CF-* + XFF=$remote_addr
               local out="$1"
               local ca_bundle
               ca_bundle="$(resolve_proxy_ssl_ca)"
@@ -464,34 +549,42 @@ jobs:
             pk = os.environ["OD_PK"]
             ca = os.environ["OD_CA"]
 
-            def proxy_block(path, upstream, upstream_host, ca, http11=False, timeouts=True):
+            def proxy_block(path, upstream, upstream_host, ca):
+                # Literal proxy_pass (no variable host / no resolver). Uniform for all API paths.
                 lines = [
                     "    location %s {" % path,
                     "        proxy_pass %s;" % upstream,
+                    "        proxy_http_version 1.1;",
+                    "        proxy_set_header Connection \"\";",
                     "        proxy_ssl_server_name on;",
+                    "        proxy_ssl_name %s;" % upstream_host,
+                    "        proxy_ssl_protocols TLSv1.2 TLSv1.3;",
                     "        proxy_ssl_verify on;",
                     "        proxy_ssl_trusted_certificate %s;" % ca,
-                    "        proxy_set_header Host api.dev.core-solution.co.kr;",
+                    "        proxy_set_header Host %s;" % upstream_host,
                     "        proxy_set_header X-Real-IP $remote_addr;",
-                    "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+                    "        # Avoid CF->CF loop / forged CF headers when client already came via Cloudflare:",
+                    "        proxy_set_header X-Forwarded-For $remote_addr;",
                     "        proxy_set_header X-Forwarded-Proto $scheme;",
                     "        proxy_set_header X-Forwarded-Host $host;",
+                    "        proxy_set_header CF-Connecting-IP \"\";",
+                    "        proxy_set_header CF-Ray \"\";",
+                    "        proxy_set_header CF-Visitor \"\";",
+                    "        proxy_set_header CF-IPCountry \"\";",
+                    "        proxy_set_header CDN-Loop \"\";",
+                    "        proxy_set_header True-Client-IP \"\";",
+                    "        proxy_connect_timeout 60s;",
+                    "        proxy_send_timeout 60s;",
+                    "        proxy_read_timeout 60s;",
+                    "    }",
                 ]
-                if http11:
-                    lines.append("        proxy_http_version 1.1;")
-                if timeouts:
-                    lines.extend([
-                        "        proxy_connect_timeout 60s;",
-                        "        proxy_send_timeout 60s;",
-                        "        proxy_read_timeout 60s;",
-                    ])
-                lines.append("    }")
                 return "\n".join(lines)
 
             parts = []
             parts.append("# Dedicated exact server_name for %s" % host)
             parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
             parts.append("# Upstream (.dev BE public HTTPS): %s" % upstream)
+            parts.append("# apply#39736614094 CF 502; mitigations = proxy_ssl_name + HTTP/1.1 Connection \"\" + strip CDN-Loop/CF-* + XFF=$remote_addr")
             parts.append("")
             parts.append("server {")
             parts.append("    listen 80;")
@@ -527,15 +620,15 @@ jobs:
             parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
             parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
             parts.append("")
-            parts.append(proxy_block("/api/", upstream, upstream_host, ca, http11=True, timeouts=True))
+            parts.append(proxy_block("/api/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/actuator/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/oauth2/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca, http11=False, timeouts=True))
+            parts.append(proxy_block("/login/oauth2/", upstream, upstream_host, ca))
             parts.append("")
-            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca, http11=False, timeouts=False))
+            parts.append(proxy_block("^~ /legal/", upstream, upstream_host, ca))
             parts.append("")
             parts.append("    location ^~ /static/ {")
             parts.append("        root /var/www/mindgarden/frontend;")

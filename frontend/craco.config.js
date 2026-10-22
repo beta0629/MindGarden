@@ -46,7 +46,9 @@ module.exports = {
         '^@portone/browser-sdk/v2$':
           '<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs',
         // axios 1.x ESM entry breaks Jest (import outside module)
-        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs'
+        '^axios$': '<rootDir>/node_modules/axios/dist/node/axios.cjs',
+        // guardrail findRelatedTests: node_modules에 패키지가 없어도 스위트 로드
+        '^dompurify$': '<rootDir>/jest-stubs/dompurify.js'
       };
       return jestConfig;
     }

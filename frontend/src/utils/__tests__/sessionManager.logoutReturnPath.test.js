@@ -98,6 +98,8 @@ describe('sessionManager.logout — redirect 쿼리', () => {
     mockGetCurrentLocationReturnUrl.mockReset();
     mockGetCurrentLocationReturnUrl.mockReturnValue('/admin/clients?tab=2');
     window.sessionStorage.clear();
+    // 싱글톤 로그아웃 사이클(성공/in-flight)이 이전 케이스에 남지 않게
+    sessionManager._resetServerLogoutCycle();
     global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
     jest.spyOn(sessionManager, 'setPostLogoutGateBeforeRedirect').mockImplementation(() => {});
     // clear 가 저장보다 먼저면 복귀 경로가 사라진다. 구현은 clear 이후에 맡겨야 한다.
@@ -110,6 +112,7 @@ describe('sessionManager.logout — redirect 쿼리', () => {
   afterEach(() => {
     window.location = originalLocation;
     global.fetch = originalFetch;
+    sessionManager._resetServerLogoutCycle();
     jest.restoreAllMocks();
   });
 

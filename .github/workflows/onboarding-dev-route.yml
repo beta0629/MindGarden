@@ -1,0 +1,836 @@
+# =============================================================================
+# onboarding-dev nginx route (ops, workflow_dispatch only)
+# =============================================================================
+#
+# Purpose:
+#   Production nginx currently matches host onboarding-dev.core-solution.co.kr via
+#   the prod wildcard server_name regex and proxies API/actuator to prod Core BE
+#   (known commit ba96cb3 / release/prod). This workflow adds/replaces a dedicated
+#   exact server_name block so API/actuator/oauth2/legal proxy to the .dev BE
+#   while SPA static remains the prod frontend root.
+#   Jaehak approved 10:50 KST.
+#
+# Bans:
+#   - NEVER edit /etc/nginx/sites-available/core-solution or other prod domain blocks
+#   - systemctl reload nginx ONLY — NEVER restart nginx; no app restart, no DB, no JAR deploy
+#   - Do NOT SSH to the .dev server; DEV_SERVER_HOST is for upstream resolution only
+#   - Never print SSH keys (upstream host/IP, HTTP codes, actuator JSON are OK)
+#   - Do NOT auto-run; workflow_dispatch only (operator must choose mode)
+#   - No bash heredocs in remote scripts (indented EOF/PY closers never match)
+#
+# SSOT connection (no new SSH secrets):
+#   Same approved PRODUCTION_* appleboy path as:
+#     - .github/workflows/server-time-sync.yml (#1726)
+#     - .github/workflows/deploy-production.yml
+#   Pin: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327
+#   Secrets: PRODUCTION_HOST, PRODUCTION_USER, PRODUCTION_SSH_KEY (port 22)
+#   Inline SSH script (prefer prod-core-be-rolling-restart.yml style; no SCP of scripts)
+#
+# Prod domain blocks: IMMUTABLE — only the dedicated onboarding-dev conf is touched.
+# =============================================================================
+
+name: onboarding-dev nginx route
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'diagnose (read-only) | apply | rollback'
+        required: true
+        default: 'diagnose'
+        type: choice
+        options:
+          - diagnose
+          - apply
+          - rollback
+
+permissions:
+  contents: read
+
+concurrency:
+  group: onboarding-dev-nginx-route
+  cancel-in-progress: false
+
+jobs:
+  require-main:
+    name: Guard main for apply/rollback
+    if: inputs.mode == 'apply' || inputs.mode == 'rollback'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require refs/heads/main
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref }}" != "refs/heads/main" ]; then
+            echo "::error::mode=${{ inputs.mode }} requires github.ref == refs/heads/main (got ${{ github.ref }})"
+            exit 1
+          fi
+          echo "✅ main guard passed"
+
+  diagnose:
+    name: Diagnose onboarding-dev route
+    if: inputs.mode == 'diagnose'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Secret guard (PRODUCTION_*)
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${PRODUCTION_HOST}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_USER}" ]; then
+            echo "::error::PRODUCTION_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_SSH_KEY}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::필수 운영 SSH 시크릿이 없어 diagnose 를 중단합니다."
+            exit 1
+          fi
+          echo "✅ 시크릿 가드 통과 (SSH 키는 출력하지 않음)"
+
+      - name: Remote diagnose (read-only)
+        env:
+          DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정 — server-time-sync.yml 과 동일
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 10m
+          envs: DEV_SERVER_HOST
+          script: |
+            set -euo pipefail
+
+            TARGET_HOST=onboarding-dev.core-solution.co.kr
+            CONF=/etc/nginx/sites-available/onboarding-dev.core-solution.co.kr.conf
+            ENABLED=/etc/nginx/sites-enabled/onboarding-dev.core-solution.co.kr.conf
+            BACKUP_ROOT=/var/backups/nginx-onboarding-dev
+            SSL_FULLCHAIN=/etc/letsencrypt/live/core-solution.co.kr/fullchain.pem
+            SSL_PRIVKEY=/etc/letsencrypt/live/core-solution.co.kr/privkey.pem
+            KNOWN_PROD_COMMIT=ba96cb3
+            DEV_DNS_FALLBACK=api.dev.core-solution.co.kr
+
+            resolve_dev_upstream() {
+              local host_ip=""
+              if [ -n "${DEV_SERVER_HOST:-}" ]; then
+                echo "::notice::DEV_SERVER_HOST 사용 → http://${DEV_SERVER_HOST}:8080" >&2
+                printf '%s' "http://${DEV_SERVER_HOST}:8080"
+                return 0
+              fi
+              echo "::warning::DEV_SERVER_HOST empty — DNS fallback to ${DEV_DNS_FALLBACK}" >&2
+              host_ip="$(getent ahostsv4 "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              if [ -z "$host_ip" ]; then
+                host_ip="$(dig +short A "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              fi
+              if [ -z "$host_ip" ]; then
+                echo "::error::DEV_SERVER_HOST empty and DNS resolve of ${DEV_DNS_FALLBACK} failed" >&2
+                return 1
+              fi
+              echo "::notice::DNS fallback IP=${host_ip} → http://${host_ip}:8080" >&2
+              printf '%s' "http://${host_ip}:8080"
+              return 0
+            }
+            write_desired_conf() {
+              # $1 = output path, $2 = upstream URL (http://host:8080)
+              # No bash heredoc — indented EOF closers never match (breaks remote script).
+              local out="$1"
+              local upstream="$2"
+              OD_OUT="$out" OD_UPSTREAM="$upstream" OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" \
+              python3 -c '
+            import os
+            out = os.environ["OD_OUT"]
+            upstream = os.environ["OD_UPSTREAM"]
+            host = os.environ["OD_HOST"]
+            fc = os.environ["OD_FC"]
+            pk = os.environ["OD_PK"]
+
+            def proxy_block(path, upstream, http11=False, timeouts=True):
+                lines = [
+                    "    location %s {" % path,
+                    "        proxy_pass %s;" % upstream,
+                    "        proxy_set_header Host $host;",
+                    "        proxy_set_header X-Real-IP $remote_addr;",
+                    "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+                    "        proxy_set_header X-Forwarded-Proto $scheme;",
+                    "        proxy_set_header X-Forwarded-Host $host;",
+                ]
+                if http11:
+                    lines.append("        proxy_http_version 1.1;")
+                if timeouts:
+                    lines.extend([
+                        "        proxy_connect_timeout 60s;",
+                        "        proxy_send_timeout 60s;",
+                        "        proxy_read_timeout 60s;",
+                    ])
+                lines.append("    }")
+                return "\n".join(lines)
+
+            parts = []
+            parts.append("# Dedicated exact server_name for %s" % host)
+            parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
+            parts.append("# Upstream (.dev BE): %s" % upstream)
+            parts.append("")
+            parts.append("server {")
+            parts.append("    listen 80;")
+            parts.append("    listen [::]:80;")
+            parts.append("    server_name %s;" % host)
+            parts.append("")
+            parts.append("    location /.well-known/acme-challenge/ {")
+            parts.append("        default_type text/plain;")
+            parts.append("        root /var/www/html;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    location / {")
+            parts.append("        return 301 https://$host$request_uri;")
+            parts.append("    }")
+            parts.append("}")
+            parts.append("")
+            parts.append("server {")
+            parts.append("    listen 443 ssl http2;")
+            parts.append("    listen [::]:443 ssl http2;")
+            parts.append("    server_name %s;" % host)
+            parts.append("")
+            parts.append("    ssl_certificate %s;" % fc)
+            parts.append("    ssl_certificate_key %s;" % pk)
+            parts.append("")
+            parts.append("    ssl_protocols TLSv1.2 TLSv1.3;")
+            parts.append("    ssl_ciphers HIGH:!aNULL:!MD5;")
+            parts.append("    ssl_prefer_server_ciphers on;")
+            parts.append("    ssl_session_cache shared:SSL:10m;")
+            parts.append("    ssl_session_timeout 10m;")
+            parts.append("")
+            parts.append("    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;")
+            parts.append("    add_header X-Frame-Options \"SAMEORIGIN\" always;")
+            parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
+            parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
+            parts.append("")
+            parts.append(proxy_block("/api/", upstream, http11=True, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/actuator/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/login/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("^~ /legal/", upstream, http11=False, timeouts=False))
+            parts.append("")
+            parts.append("    location ^~ /static/ {")
+            parts.append("        root /var/www/mindgarden/frontend;")
+            parts.append("        expires 1y;")
+            parts.append("        add_header Cache-Control \"public, immutable\" always;")
+            parts.append("        access_log off;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    location / {")
+            parts.append("        root /var/www/mindgarden/frontend;")
+            parts.append("        try_files $uri $uri/ /index.html;")
+            parts.append("        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;")
+            parts.append("        add_header Pragma \"no-cache\" always;")
+            parts.append("        add_header Expires \"0\" always;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    access_log /var/log/nginx/%s.access.log;" % host)
+            parts.append("    error_log /var/log/nginx/%s.error.log;" % host)
+            parts.append("}")
+            parts.append("")
+            open(out, "w").write("\n".join(parts))
+              '
+            }
+
+            echo "========== (1) nginx -T: which server matches ${TARGET_HOST} =========="
+            NGINX_T="$(mktemp)"
+            set +e
+            sudo nginx -T >"$NGINX_T" 2>/tmp/nginx-T.err
+            NT_RC=$?
+            set -e
+            if [ "$NT_RC" -ne 0 ]; then
+              echo "::warning::nginx -T exit=${NT_RC}; stderr follows"
+              head -50 /tmp/nginx-T.err || true
+            fi
+
+            if grep -qE "server_name[[:space:]]+${TARGET_HOST}[[:space:]]*;" "$NGINX_T"; then
+              echo "✅ Exact server_name ${TARGET_HOST} present in nginx -T"
+              echo "--- matching server block(s) (server_name + proxy_pass / root) ---"
+              python3 -c '
+            import re, sys
+            path, host = sys.argv[1], sys.argv[2]
+            text = open(path, encoding="utf-8", errors="replace").read()
+            parts = re.split(r"(?=server\s*\{)", text)
+            shown = 0
+            for p in parts:
+                if not p.strip().startswith("server"):
+                    continue
+                if re.search(r"server_name\s+" + re.escape(host) + r"\s*;", p):
+                    lines = []
+                    for line in p.splitlines():
+                        if re.search(r"server_name|proxy_pass|^\s*root\s|listen|location |try_files|ssl_certificate", line):
+                            lines.append(line)
+                    print("\n".join(lines[:80]))
+                    print("---")
+                    shown += 1
+            if shown == 0:
+                print("(no exact block parsed)")
+              ' "$NGINX_T" "$TARGET_HOST" || true
+              grep -nE "server_name[[:space:]]+${TARGET_HOST}|proxy_pass" "$NGINX_T" | head -80 || true
+            else
+              echo "⚠️ No exact server_name ${TARGET_HOST} — likely matched by wildcard regex"
+              echo "--- wildcard server_name / proxy_pass context ---"
+              grep -nE 'server_name[[:space:]]+~\\^\[\^\.\]\+\\.core-solution\\.co\\.kr\$|proxy_pass|mindgarden_core_backend' "$NGINX_T" | head -60 || true
+              python3 -c '
+            import re, sys
+            text = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+            parts = re.split(r"(?=server\s*\{)", text)
+            for p in parts:
+                if not p.strip().startswith("server"):
+                    continue
+                if re.search(r"server_name\s+~\^\[\^\.\]\+\\.core-solution\\.co\\.kr\$\s*;", p):
+                    lines = []
+                    for line in p.splitlines():
+                        if re.search(r"server_name|proxy_pass|^\s*root\s|listen|location |try_files|ssl_certificate|include", line):
+                            lines.append(line)
+                    print("WILDCARD BLOCK SUMMARY:")
+                    print("\n".join(lines[:100]))
+                    print("---")
+              ' "$NGINX_T" || true
+            fi
+            echo "Dedicated conf path exists: $([ -f "$CONF" ] && echo yes || echo no) ($CONF)"
+            echo "Enabled symlink: $(readlink -f "$ENABLED" 2>/dev/null || echo '(absent)')"
+            rm -f "$NGINX_T"
+
+            echo ""
+            echo "========== (2) DNS getent/dig for ${TARGET_HOST} =========="
+            getent ahosts "${TARGET_HOST}" 2>/dev/null || true
+            getent hosts "${TARGET_HOST}" 2>/dev/null || true
+            dig +short A "${TARGET_HOST}" 2>/dev/null || true
+            dig +short AAAA "${TARGET_HOST}" 2>/dev/null || true
+
+            echo ""
+            echo "========== (3) current https://${TARGET_HOST}/actuator/info =========="
+            set +e
+            INFO_CODE="$(curl -sS -o /tmp/onb-dev-info.json -w '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              "https://${TARGET_HOST}/actuator/info" 2>/tmp/onb-dev-info.err)"
+            INFO_CURL_RC=$?
+            set -e
+            echo "HTTP ${INFO_CODE:-000} (curl_rc=${INFO_CURL_RC})"
+            if [ -s /tmp/onb-dev-info.json ]; then
+              head -c 4000 /tmp/onb-dev-info.json; echo
+              if command -v python3 >/dev/null 2>&1; then
+                python3 -c '
+            import json
+            try:
+                d = json.load(open("/tmp/onb-dev-info.json"))
+                commit = (d.get("git") or {}).get("commit") or {}
+                cid = commit.get("id") or commit.get("id.abbrev") or ""
+                print("parsed git.commit.id=%s" % cid)
+            except Exception as e:
+                print("(json parse skip: %s)" % e)
+                ' || true
+              fi
+            else
+              echo "(empty body)"
+              head -20 /tmp/onb-dev-info.err || true
+            fi
+            echo "informational: known prod commit prefix=${KNOWN_PROD_COMMIT}"
+
+            echo ""
+            echo "========== (4) .dev BE upstream address + reachability =========="
+            set +e
+            UPSTREAM="$(resolve_dev_upstream)"
+            UP_RC=$?
+            set -e
+            if [ "$UP_RC" -ne 0 ] || [ -z "${UPSTREAM:-}" ]; then
+              echo "::warning::Could not resolve .dev BE upstream (diagnose continues)"
+              UPSTREAM=""
+            else
+              echo "Upstream=${UPSTREAM}"
+              set +e
+              DEV_CODE="$(curl -sS -o /tmp/dev-be-info.json -w '%{http_code}' \
+                --connect-timeout 10 --max-time 30 \
+                "${UPSTREAM}/actuator/info" 2>/tmp/dev-be-info.err)"
+              set -e
+              echo ".dev BE /actuator/info HTTP ${DEV_CODE:-000}"
+              if [ -s /tmp/dev-be-info.json ]; then
+                head -c 4000 /tmp/dev-be-info.json; echo
+              else
+                echo "(empty body)"
+                head -20 /tmp/dev-be-info.err || true
+              fi
+            fi
+
+            echo ""
+            echo "========== (5) proposed conf diff =========="
+            DESIRED="$(mktemp)"
+            if [ -n "${UPSTREAM:-}" ]; then
+              write_desired_conf "$DESIRED" "$UPSTREAM"
+            else
+              write_desired_conf "$DESIRED" "http://DEV_UPSTREAM_UNRESOLVED:8080"
+            fi
+            if [ -f "$CONF" ]; then
+              echo "Existing $CONF — diff vs desired:"
+              diff -u "$CONF" "$DESIRED" || true
+            else
+              echo "No existing dedicated conf — full desired conf:"
+              cat "$DESIRED"
+            fi
+            rm -f "$DESIRED"
+
+            echo ""
+            echo "✅ diagnose complete (no changes). exit 0"
+            exit 0
+
+  apply:
+    name: Apply onboarding-dev dedicated nginx route
+    needs: [require-main]
+    if: inputs.mode == 'apply' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Secret guard (PRODUCTION_*)
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${PRODUCTION_HOST}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_USER}" ]; then
+            echo "::error::PRODUCTION_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_SSH_KEY}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::필수 운영 SSH 시크릿이 없어 apply 를 중단합니다."
+            exit 1
+          fi
+          if [ -z "${{ secrets.DEV_SERVER_HOST }}" ]; then
+            echo "::warning::DEV_SERVER_HOST empty — remote will DNS-fallback to api.dev.core-solution.co.kr"
+          fi
+          echo "✅ 시크릿 가드 통과 (SSH 키는 출력하지 않음)"
+
+      - name: Remote apply (backup → conf → reload → verify → auto-rollback)
+        env:
+          DEV_SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정 — server-time-sync.yml 과 동일
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 15m
+          envs: DEV_SERVER_HOST
+          script: |
+            set -euo pipefail
+
+            TARGET_HOST=onboarding-dev.core-solution.co.kr
+            CONF=/etc/nginx/sites-available/onboarding-dev.core-solution.co.kr.conf
+            ENABLED=/etc/nginx/sites-enabled/onboarding-dev.core-solution.co.kr.conf
+            BACKUP_ROOT=/var/backups/nginx-onboarding-dev
+            SSL_FULLCHAIN=/etc/letsencrypt/live/core-solution.co.kr/fullchain.pem
+            SSL_PRIVKEY=/etc/letsencrypt/live/core-solution.co.kr/privkey.pem
+            KNOWN_PROD_COMMIT=ba96cb3
+            DEV_DNS_FALLBACK=api.dev.core-solution.co.kr
+
+            resolve_dev_upstream() {
+              local host_ip=""
+              if [ -n "${DEV_SERVER_HOST:-}" ]; then
+                echo "::notice::DEV_SERVER_HOST 사용 → http://${DEV_SERVER_HOST}:8080" >&2
+                printf '%s' "http://${DEV_SERVER_HOST}:8080"
+                return 0
+              fi
+              echo "::warning::DEV_SERVER_HOST empty — DNS fallback to ${DEV_DNS_FALLBACK}" >&2
+              host_ip="$(getent ahostsv4 "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              if [ -z "$host_ip" ]; then
+                host_ip="$(dig +short A "${DEV_DNS_FALLBACK}" 2>/dev/null | awk 'NR==1 {print $1}')"
+              fi
+              if [ -z "$host_ip" ]; then
+                echo "::error::DEV_SERVER_HOST empty and DNS resolve of ${DEV_DNS_FALLBACK} failed — abort apply" >&2
+                return 1
+              fi
+              echo "::notice::DNS fallback IP=${host_ip} → http://${host_ip}:8080" >&2
+              printf '%s' "http://${host_ip}:8080"
+              return 0
+            }
+            write_desired_conf() {
+              # $1 = output path, $2 = upstream URL (http://host:8080)
+              # No bash heredoc — indented EOF closers never match (breaks remote script).
+              local out="$1"
+              local upstream="$2"
+              OD_OUT="$out" OD_UPSTREAM="$upstream" OD_HOST="$TARGET_HOST" OD_FC="$SSL_FULLCHAIN" OD_PK="$SSL_PRIVKEY" \
+              python3 -c '
+            import os
+            out = os.environ["OD_OUT"]
+            upstream = os.environ["OD_UPSTREAM"]
+            host = os.environ["OD_HOST"]
+            fc = os.environ["OD_FC"]
+            pk = os.environ["OD_PK"]
+
+            def proxy_block(path, upstream, http11=False, timeouts=True):
+                lines = [
+                    "    location %s {" % path,
+                    "        proxy_pass %s;" % upstream,
+                    "        proxy_set_header Host $host;",
+                    "        proxy_set_header X-Real-IP $remote_addr;",
+                    "        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;",
+                    "        proxy_set_header X-Forwarded-Proto $scheme;",
+                    "        proxy_set_header X-Forwarded-Host $host;",
+                ]
+                if http11:
+                    lines.append("        proxy_http_version 1.1;")
+                if timeouts:
+                    lines.extend([
+                        "        proxy_connect_timeout 60s;",
+                        "        proxy_send_timeout 60s;",
+                        "        proxy_read_timeout 60s;",
+                    ])
+                lines.append("    }")
+                return "\n".join(lines)
+
+            parts = []
+            parts.append("# Dedicated exact server_name for %s" % host)
+            parts.append("# Managed by .github/workflows/onboarding-dev-route.yml — do not hand-edit prod core-solution blocks.")
+            parts.append("# Upstream (.dev BE): %s" % upstream)
+            parts.append("")
+            parts.append("server {")
+            parts.append("    listen 80;")
+            parts.append("    listen [::]:80;")
+            parts.append("    server_name %s;" % host)
+            parts.append("")
+            parts.append("    location /.well-known/acme-challenge/ {")
+            parts.append("        default_type text/plain;")
+            parts.append("        root /var/www/html;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    location / {")
+            parts.append("        return 301 https://$host$request_uri;")
+            parts.append("    }")
+            parts.append("}")
+            parts.append("")
+            parts.append("server {")
+            parts.append("    listen 443 ssl http2;")
+            parts.append("    listen [::]:443 ssl http2;")
+            parts.append("    server_name %s;" % host)
+            parts.append("")
+            parts.append("    ssl_certificate %s;" % fc)
+            parts.append("    ssl_certificate_key %s;" % pk)
+            parts.append("")
+            parts.append("    ssl_protocols TLSv1.2 TLSv1.3;")
+            parts.append("    ssl_ciphers HIGH:!aNULL:!MD5;")
+            parts.append("    ssl_prefer_server_ciphers on;")
+            parts.append("    ssl_session_cache shared:SSL:10m;")
+            parts.append("    ssl_session_timeout 10m;")
+            parts.append("")
+            parts.append("    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;")
+            parts.append("    add_header X-Frame-Options \"SAMEORIGIN\" always;")
+            parts.append("    add_header X-Content-Type-Options \"nosniff\" always;")
+            parts.append("    add_header X-XSS-Protection \"1; mode=block\" always;")
+            parts.append("")
+            parts.append(proxy_block("/api/", upstream, http11=True, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/actuator/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("/login/oauth2/", upstream, http11=False, timeouts=True))
+            parts.append("")
+            parts.append(proxy_block("^~ /legal/", upstream, http11=False, timeouts=False))
+            parts.append("")
+            parts.append("    location ^~ /static/ {")
+            parts.append("        root /var/www/mindgarden/frontend;")
+            parts.append("        expires 1y;")
+            parts.append("        add_header Cache-Control \"public, immutable\" always;")
+            parts.append("        access_log off;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    location / {")
+            parts.append("        root /var/www/mindgarden/frontend;")
+            parts.append("        try_files $uri $uri/ /index.html;")
+            parts.append("        add_header Cache-Control \"no-cache, no-store, must-revalidate\" always;")
+            parts.append("        add_header Pragma \"no-cache\" always;")
+            parts.append("        add_header Expires \"0\" always;")
+            parts.append("    }")
+            parts.append("")
+            parts.append("    access_log /var/log/nginx/%s.access.log;" % host)
+            parts.append("    error_log /var/log/nginx/%s.error.log;" % host)
+            parts.append("}")
+            parts.append("")
+            open(out, "w").write("\n".join(parts))
+              '
+            }
+
+            restore_from_latest() {
+              local latest tsdir
+              latest="$(sudo cat "${BACKUP_ROOT}/LATEST" 2>/dev/null | tr -d '\r\n' || true)"
+              if [ -z "$latest" ]; then
+                echo "::error::LATEST pointer missing — cannot restore"
+                return 1
+              fi
+              tsdir="${BACKUP_ROOT}/${latest}"
+              if [ ! -d "$tsdir" ]; then
+                echo "::error::Backup dir missing: $tsdir"
+                return 1
+              fi
+              echo "♻️ Restoring from $tsdir"
+              if [ -f "${tsdir}/had_conf" ] && grep -qx '1' "${tsdir}/had_conf" 2>/dev/null; then
+                sudo cp -a "${tsdir}/onboarding-dev.core-solution.co.kr.conf" "$CONF"
+                if [ -f "${tsdir}/enabled_symlink_target" ]; then
+                  tgt="$(tr -d '\r\n' < "${tsdir}/enabled_symlink_target")"
+                  if [ -n "$tgt" ]; then
+                    sudo ln -sfn "$tgt" "$ENABLED"
+                  fi
+                else
+                  sudo ln -sfn "$CONF" "$ENABLED"
+                fi
+              else
+                echo "Backup had no dedicated conf — removing dedicated conf+symlink"
+                sudo rm -f "$CONF" "$ENABLED"
+              fi
+              if ! sudo nginx -t 2>&1; then
+                echo "::error::nginx -t failed after restore"
+                return 1
+              fi
+              sudo systemctl reload nginx
+              echo "✅ reload after restore"
+              return 0
+            }
+
+            http_code() {
+              curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 30 "$1" 2>/dev/null || echo "000"
+            }
+
+            echo "🔐 Resolving .dev BE upstream (abort if both DEV_SERVER_HOST and DNS fail)"
+            UPSTREAM="$(resolve_dev_upstream)"
+            echo "Upstream=${UPSTREAM}"
+
+            TS="$(date +%Y%m%d-%H%M%S)"
+            TS_DIR="${BACKUP_ROOT}/${TS}"
+            sudo mkdir -p "$TS_DIR"
+            {
+              echo "ts=${TS}"
+              echo "target=${TARGET_HOST}"
+              echo "note=onboarding-dev-route apply backup before dedicated conf write"
+              echo "had_conf=$([ -f "$CONF" ] && echo 1 || echo 0)"
+              echo "enabled_present=$([ -e "$ENABLED" ] && echo 1 || echo 0)"
+              echo "enabled_link=$(readlink "$ENABLED" 2>/dev/null || echo '')"
+            } | sudo tee "${TS_DIR}/NOTE.txt" > /dev/null
+
+            if [ -f "$CONF" ]; then
+              echo 1 | sudo tee "${TS_DIR}/had_conf" > /dev/null
+              sudo cp -a "$CONF" "${TS_DIR}/onboarding-dev.core-solution.co.kr.conf"
+            else
+              echo 0 | sudo tee "${TS_DIR}/had_conf" > /dev/null
+            fi
+            if [ -L "$ENABLED" ] || [ -e "$ENABLED" ]; then
+              readlink "$ENABLED" 2>/dev/null | sudo tee "${TS_DIR}/enabled_symlink_target" > /dev/null || true
+              ls -la "$ENABLED" 2>/dev/null | sudo tee "${TS_DIR}/enabled_ls.txt" > /dev/null || true
+            fi
+            echo "$TS" | sudo tee "${BACKUP_ROOT}/LATEST" > /dev/null
+            echo "✅ Backup ${TS_DIR} ; LATEST=${TS}"
+
+            DESIRED="$(mktemp)"
+            write_desired_conf "$DESIRED" "$UPSTREAM"
+            sudo mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
+            sudo cp "$DESIRED" "${CONF}.new"
+            sudo mv -f "${CONF}.new" "$CONF"
+            sudo ln -sfn "$CONF" "$ENABLED"
+            rm -f "$DESIRED"
+            echo "✅ Wrote $CONF and enabled symlink → $CONF"
+
+            set +e
+            TEST_OUT="$(sudo nginx -t 2>&1)"
+            TEST_RC=$?
+            set -e
+            echo "$TEST_OUT"
+            if [ "$TEST_RC" -ne 0 ]; then
+              echo "::error::nginx -t failed — restoring backup then reload"
+              restore_from_latest || true
+              set +e
+              sudo systemctl reload nginx
+              set -e
+              exit 1
+            fi
+
+            sudo systemctl reload nginx
+            echo "✅ systemctl reload nginx"
+
+            sleep 2
+            set +e
+            curl -sS -o /tmp/onb-after-info.json -w '%{http_code}' \
+              --connect-timeout 10 --max-time 30 \
+              "https://${TARGET_HOST}/actuator/info" > /tmp/onb-after-code.txt 2>/tmp/onb-after.err
+            ONB_CODE="$(cat /tmp/onb-after-code.txt 2>/dev/null || echo 000)"
+            set -e
+            echo "--- onboarding-dev /actuator/info HTTP ${ONB_CODE} ---"
+            if [ -s /tmp/onb-after-info.json ]; then
+              head -c 4000 /tmp/onb-after-info.json; echo
+            else
+              echo "(empty body)"; head -20 /tmp/onb-after.err || true
+            fi
+
+            APP_CODE="$(http_code "https://app.core-solution.co.kr/actuator/health")"
+            MG_CODE="$(http_code "https://mindgarden.core-solution.co.kr/actuator/health")"
+            echo "app.core-solution.co.kr /actuator/health HTTP ${APP_CODE}"
+            echo "mindgarden.core-solution.co.kr /actuator/health HTTP ${MG_CODE}"
+
+            ONB_COMMIT=""
+            DEV_COMMIT=""
+            if command -v python3 >/dev/null 2>&1 && [ -s /tmp/onb-after-info.json ]; then
+              ONB_COMMIT="$(python3 -c 'import json;d=json.load(open("/tmp/onb-after-info.json"));c=(d.get("git")or{}).get("commit")or{};print(c.get("id")or c.get("id.abbrev")or"")' 2>/dev/null || true)"
+            fi
+            set +e
+            curl -sS -o /tmp/dev-after-info.json --connect-timeout 10 --max-time 30 \
+              "${UPSTREAM}/actuator/info" >/dev/null 2>&1
+            set -e
+            if command -v python3 >/dev/null 2>&1 && [ -s /tmp/dev-after-info.json ]; then
+              DEV_COMMIT="$(python3 -c 'import json;d=json.load(open("/tmp/dev-after-info.json"));c=(d.get("git")or{}).get("commit")or{};print(c.get("id")or c.get("id.abbrev")or"")' 2>/dev/null || true)"
+            fi
+            echo "ℹ️ git.commit.id onboarding-dev=${ONB_COMMIT:-?} known_prod=${KNOWN_PROD_COMMIT} .dev=${DEV_COMMIT:-?}"
+            echo "ℹ️ (informational only — HTTP status is the hard rollback trigger)"
+
+            onb_ok=0
+            case "$ONB_CODE" in
+              2??) onb_ok=1 ;;
+            esac
+            app_ok=0
+            case "$APP_CODE" in
+              2??) app_ok=1 ;;
+            esac
+            mg_ok=0
+            case "$MG_CODE" in
+              2??) mg_ok=1 ;;
+            esac
+
+            if [ "$onb_ok" -ne 1 ] || [ "$app_ok" -ne 1 ] || [ "$mg_ok" -ne 1 ]; then
+              echo "::error::Post-apply verify failed (onboarding-dev=${ONB_CODE} app=${APP_CODE} mindgarden=${MG_CODE}) — auto rollback from LATEST"
+              restore_from_latest
+              echo "--- post-rollback status ---"
+              echo "onboarding-dev info HTTP $(http_code "https://${TARGET_HOST}/actuator/info")"
+              echo "app health HTTP $(http_code "https://app.core-solution.co.kr/actuator/health")"
+              echo "mindgarden health HTTP $(http_code "https://mindgarden.core-solution.co.kr/actuator/health")"
+              exit 1
+            fi
+
+            echo "✅ apply succeeded — dedicated route active; prod app/mindgarden health still 2xx"
+
+  rollback:
+    name: Rollback onboarding-dev dedicated nginx route
+    needs: [require-main]
+    if: inputs.mode == 'rollback' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Secret guard (PRODUCTION_*)
+        env:
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_USER: ${{ secrets.PRODUCTION_USER }}
+          PRODUCTION_SSH_KEY: ${{ secrets.PRODUCTION_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          missing=0
+          if [ -z "${PRODUCTION_HOST}" ]; then
+            echo "::error::PRODUCTION_HOST 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_USER}" ]; then
+            echo "::error::PRODUCTION_USER 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ -z "${PRODUCTION_SSH_KEY}" ]; then
+            echo "::error::PRODUCTION_SSH_KEY 시크릿이 비어 있습니다."
+            missing=1
+          fi
+          if [ "$missing" -ne 0 ]; then
+            echo "::error::필수 운영 SSH 시크릿이 없어 rollback 을 중단합니다."
+            exit 1
+          fi
+          echo "✅ 시크릿 가드 통과 (SSH 키는 출력하지 않음)"
+
+      - name: Remote rollback from LATEST
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정 — server-time-sync.yml 과 동일
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+
+            TARGET_HOST=onboarding-dev.core-solution.co.kr
+            CONF=/etc/nginx/sites-available/onboarding-dev.core-solution.co.kr.conf
+            ENABLED=/etc/nginx/sites-enabled/onboarding-dev.core-solution.co.kr.conf
+            BACKUP_ROOT=/var/backups/nginx-onboarding-dev
+
+            http_code() {
+              curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 10 --max-time 30 "$1" 2>/dev/null || echo "000"
+            }
+
+            latest="$(sudo cat "${BACKUP_ROOT}/LATEST" 2>/dev/null | tr -d '\r\n' || true)"
+            if [ -z "$latest" ]; then
+              echo "::error::${BACKUP_ROOT}/LATEST missing — nothing to restore"
+              exit 1
+            fi
+            tsdir="${BACKUP_ROOT}/${latest}"
+            if [ ! -d "$tsdir" ]; then
+              echo "::error::Backup dir missing: $tsdir"
+              exit 1
+            fi
+
+            echo "♻️ Rollback from LATEST=${latest} ($tsdir)"
+            if [ -f "${tsdir}/had_conf" ] && grep -qx '1' "${tsdir}/had_conf" 2>/dev/null; then
+              sudo cp -a "${tsdir}/onboarding-dev.core-solution.co.kr.conf" "$CONF"
+              if [ -f "${tsdir}/enabled_symlink_target" ]; then
+                tgt="$(tr -d '\r\n' < "${tsdir}/enabled_symlink_target")"
+                if [ -n "$tgt" ]; then
+                  sudo ln -sfn "$tgt" "$ENABLED"
+                else
+                  sudo ln -sfn "$CONF" "$ENABLED"
+                fi
+              else
+                sudo ln -sfn "$CONF" "$ENABLED"
+              fi
+              echo "Restored previous dedicated conf"
+            else
+              echo "Backup had no dedicated conf — removing dedicated conf+symlink"
+              sudo rm -f "$CONF" "$ENABLED"
+            fi
+
+            if ! sudo nginx -t 2>&1; then
+              echo "::error::nginx -t failed after rollback restore"
+              exit 1
+            fi
+            sudo systemctl reload nginx
+            echo "✅ systemctl reload nginx (never restart)"
+
+            echo "--- post-restore status ---"
+            set +e
+            curl -sS -o /tmp/onb-rb-info.json -w '%{http_code}'               --connect-timeout 10 --max-time 30               "https://${TARGET_HOST}/actuator/info" > /tmp/onb-rb-code.txt 2>/dev/null
+            set -e
+            echo "onboarding-dev /actuator/info HTTP $(cat /tmp/onb-rb-code.txt 2>/dev/null || echo 000)"
+            if [ -s /tmp/onb-rb-info.json ]; then
+              head -c 2000 /tmp/onb-rb-info.json; echo
+            fi
+            echo "app.core-solution.co.kr /actuator/health HTTP $(http_code "https://app.core-solution.co.kr/actuator/health")"
+            echo "mindgarden.core-solution.co.kr /actuator/health HTTP $(http_code "https://mindgarden.core-solution.co.kr/actuator/health")"
+            echo "✅ rollback complete"

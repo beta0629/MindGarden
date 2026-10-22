@@ -153,20 +153,29 @@ public class SessionUtils implements ApplicationContextAware {
     
     /**
      * 테넌트 ID 조회
-     * 1. 세션에서 직접 조회 (캐시된 값)
-     * 2. User 객체에서 추출
+     * <ol>
+     *   <li>현재 요청에 Access 토큰 폐기 마커가 있으면 null (세션 TENANT_ID 캐시 선행 반환 금지)</li>
+     *   <li>세션에서 직접 조회 (캐시된 값)</li>
+     *   <li>User 객체에서 추출</li>
+     * </ol>
+     *
+     * @param session HTTP 세션 (null 허용)
+     * @return 테넌트 ID 또는 null
      */
     public static String getTenantId(HttpSession session) {
+        if (isAccessTokenRevokedOnCurrentRequest()) {
+            return null;
+        }
         if (session == null) {
             return null;
         }
-        
+
         // 1. 세션에서 직접 조회 시도
         String tenantId = (String) session.getAttribute(SessionConstants.TENANT_ID);
         if (tenantId != null) {
             return tenantId;
         }
-        
+
         // 2. User 객체에서 추출
         User user = getCurrentUser(session);
         if (user != null && user.getTenantId() != null) {
@@ -174,27 +183,36 @@ public class SessionUtils implements ApplicationContextAware {
             session.setAttribute(SessionConstants.TENANT_ID, user.getTenantId());
             return user.getTenantId();
         }
-        
+
         return null;
     }
-    
+
     /**
      * 역할 ID (tenant_role_id) 조회
-     * 1. 세션에서 직접 조회 (캐시된 값)
-     * 2. UserRoleQueryService를 통해 데이터베이스에서 조회
-     * 3. 조회 성공 시 세션에 캐싱
+     * <ol>
+     *   <li>현재 요청에 Access 토큰 폐기 마커가 있으면 null (세션 ROLE_ID 캐시 선행 반환 금지)</li>
+     *   <li>세션에서 직접 조회 (캐시된 값)</li>
+     *   <li>UserRoleQueryService를 통해 데이터베이스에서 조회</li>
+     *   <li>조회 성공 시 세션에 캐싱</li>
+     * </ol>
+     *
+     * @param session HTTP 세션 (null 허용)
+     * @return 역할 ID 또는 null
      */
     public static String getRoleId(HttpSession session) {
+        if (isAccessTokenRevokedOnCurrentRequest()) {
+            return null;
+        }
         if (session == null) {
             return null;
         }
-        
+
         // 1. 세션에서 직접 조회 시도
         String roleId = (String) session.getAttribute(SessionConstants.ROLE_ID);
         if (roleId != null) {
             return roleId;
         }
-        
+
         // 2. UserRoleQueryService를 통해 데이터베이스에서 조회
         User user = getCurrentUser(session);
         if (user == null) {

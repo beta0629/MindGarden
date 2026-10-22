@@ -69,6 +69,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String requestPath = request.getRequestURI();
 
+        // /api/auth/** 는 permitAll — Bearer 가 있을 때만 진입하며 폐기 마커만 남기고 인증하지 않는다.
+        // (SecurityContext·lifecycle·권한 부여 금지. SessionUtils 가 마커로 세션 User 를 숨긴다.)
+        if (isAuthPermitAllPath(requestPath)) {
+            markRevokedBearerOnly(request);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         // Ops Portal API 요청인 경우 상세 로깅 (onboarding 포함)
         boolean isOpsApi = requestPath.startsWith("/api/v1/ops/")
                 || requestPath.startsWith("/api/v1/onboarding/");
@@ -112,29 +120,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     if (userId != null && shouldSetAuth) {
                         // 표준화 2025-12-08: extractUsername이 userId를 반환하므로 userId로 사용자 조회
-                        // JWT 토큰에서 tenantId 추출하여 사용자 조회
-                        User user = null;
-                        try {
-                            String tenantId = jwtService.extractTenantId(token);
-                            if (tenantId != null && !tenantId.trim().isEmpty()) {
-                                // tenantId가 있으면 테넌트별 조회 (Repository 직접 사용)
-                                user = userRepository.findByTenantIdAndUserId(tenantId, userId)
-                                        .orElse(null);
-                            } else {
-                                // tenantId가 없으면 email로 조회 시도 (레거시 토큰 또는 email이 클레임에 있는 경우)
-                                String email = jwtService.extractEmail(token);
-                                if (email != null && !email.trim().isEmpty()) {
-                                    user = userService.findByEmail(email).orElse(null);
-                                    // userId도 확인
-                                    if (user != null && !user.getUserId().equals(userId)) {
-                                        user = null; // userId가 일치하지 않으면 null
-                                    }
-                                }
-                            }
-                        } catch (Exception e) {
-                            log.warn("JWT 토큰에서 사용자 조회 실패: userId={}, error={}", userId,
-                                    e.getMessage());
-                        }
+                        User user = resolveUserFromAccessToken(token, userId);
 
                         // USER_LIFECYCLE_TERMINATION_POLICY §3.6 — 매 요청마다 lifecycle_state 게이트 (P1)
                         // 발급된 access JWT TTL 1시간 동안 lifecycle 전이가 일어나도 다음 요청부터 즉시 차단.
@@ -276,16 +262,100 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return authTokenRevocationService != null && authTokenRevocationService.isAccessTokenRevoked(token);
     }
 
+    /**
+     * permitAll 레거시 인증 경로 여부 ({@code /api/auth/**}).
+     * {@code /api/v1/auth/**} 는 기존처럼 전체 JWT 인증 경로를 탄다.
+     *
+     * @param path 요청 URI
+     * @return 레거시 auth 경로이면 true
+     */
+    private boolean isAuthPermitAllPath(String path) {
+        return path != null && path.startsWith("/api/auth/");
+    }
+
+    /**
+     * Authorization Bearer 헤더 존재 여부.
+     *
+     * @param request HTTP 요청
+     * @return Bearer 토큰이 있으면 true
+     */
+    private boolean hasBearerAuthorization(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        return authHeader != null && authHeader.startsWith("Bearer ");
+    }
+
+    /**
+     * {@code /api/auth/**} 전용: 폐기된 Access Bearer 만 request 에 mark 하고 인증은 하지 않는다.
+     *
+     * <p>토큰 무효·user 미조회(순수 ops 등)이면 mark 하지 않는다.
+     * denylist/컷오프/중복로그인 차단은 센터·ops 와 동일 {@link #isAccessTokenRevoked}.</p>
+     *
+     * @param request HTTP 요청
+     */
+    private void markRevokedBearerOnly(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+        String token = authHeader.substring(7);
+        if (!jwtService.isTokenValid(token)) {
+            return;
+        }
+        String userId = jwtService.extractUsername(token);
+        if (userId == null) {
+            return;
+        }
+        User user = resolveUserFromAccessToken(token, userId);
+        if (user == null) {
+            return;
+        }
+        if (isAccessTokenRevoked(user, token)) {
+            AccessTokenRevocationRequestMarker.mark(request);
+            log.warn(
+                    "Revoked access token marked (auth path, no authentication): path={}, userId={}",
+                    request.getRequestURI(), user.getId());
+        }
+    }
+
+    /**
+     * Access JWT 클레임으로 DB 사용자를 조회한다 (tenantId 우선, 없으면 email 레거시).
+     *
+     * @param token  Access JWT
+     * @param userId JWT subject(userId)
+     * @return 조회된 User 또는 null
+     */
+    private User resolveUserFromAccessToken(String token, String userId) {
+        try {
+            String tenantId = jwtService.extractTenantId(token);
+            if (tenantId != null && !tenantId.trim().isEmpty()) {
+                return userRepository.findByTenantIdAndUserId(tenantId, userId).orElse(null);
+            }
+            String email = jwtService.extractEmail(token);
+            if (email != null && !email.trim().isEmpty()) {
+                User user = userService.findByEmail(email).orElse(null);
+                if (user != null && !user.getUserId().equals(userId)) {
+                    return null;
+                }
+                return user;
+            }
+        } catch (Exception e) {
+            log.warn("JWT 토큰에서 사용자 조회 실패: userId={}, error={}", userId, e.getMessage());
+        }
+        return null;
+    }
+
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
 
         // 정적 리소스와 공개 API만 필터링하지 않음
         // 주의: /api/v1/ops/onboarding/는 JWT 인증이 필요하므로 필터를 거쳐야 함
+        // /api/auth/** : Bearer 없을 때만 skip. Bearer 있으면 진입해 폐기 마커만 설정(인증 금지).
         return path.startsWith("/static/") || path.startsWith("/css/") || path.startsWith("/js/")
                 || path.startsWith("/images/") || path.startsWith("/fonts/")
                 || path.equals("/favicon.ico") || path.equals("/robots.txt")
-                || path.equals("/manifest.json") || path.startsWith("/api/auth/") // 모든 인증 관련 API 제외
+                || path.equals("/manifest.json")
+                || (isAuthPermitAllPath(path) && !hasBearerAuthorization(request))
                 || path.startsWith("/api/v1/mobile/app-version/") // 모바일 버전 검사(공개)
                 || path.startsWith("/api/v1/onboarding/") // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
                 || path.startsWith("/api/v1/public/kr-public-data/") // 비로그인 공공데이터 프록시

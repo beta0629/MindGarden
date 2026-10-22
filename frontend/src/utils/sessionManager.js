@@ -28,6 +28,14 @@ import { isPublicSpaPath } from './publicSpaPaths';
 import { purgeAllLegacyConsultationLogLocalDrafts } from './consultationLogLocalDraft';
 import { purgeAllDraftBackups, purgeRescueBackupsOfOtherUsers } from './consultationLogDraftBackupStore';
 
+/** 로그아웃 직후 /login 마운트 게이트(sessionStorage). */
+const POST_LOGOUT_GATE_KEY = 'mg_post_logout';
+/**
+ * 이번 로그아웃 사이클에서 서버 logout POST 가 이미 성공했음을 표시.
+ * location.replace 이후 싱글톤이 재생성되어도 invalidate 가 두 번째 POST 를 내지 않게 한다.
+ */
+const LOGOUT_SERVER_OK_KEY = 'mg_logout_server_ok';
+
 /**
  * 만료 로그아웃이 맡길 복귀 경로.
  * {@code returnPath} 를 넘기면 그 값만 검사한다(이미 /login 으로 바뀐 주소를 다시 읽지 않음).
@@ -205,6 +213,9 @@ class SessionManager {
     this.formSubmitCount = 0; // 폼 제출 카운터
     // 동시 호출(force 포함) 중복 fetch 방지: 진행 중 promise 공유 (P0 hotfix 2026-06-12)
     this.inflightCheckPromise = null;
+    // 서버 logout POST: in-flight 공유 + 사이클 내 성공 후 no-op (유휴/수동 이중 POST 방지)
+    this._logoutInFlight = null;
+    this._logoutCompletedOk = this._readPersistedLogoutServerOk();
 
     // localStorage에서 사용자 정보 복원
     this.restoreUserFromStorage();
@@ -568,6 +579,11 @@ class SessionManager {
 
         this.user = newUser;
         this.lastVerifiedAt = now;
+        // 새 인증 세션 확정 시 로그아웃 사이클 리셋.
+        // 포스트 로그아웃 게이트용 LOGOUT_SERVER_OK 가 남아 있으면 invalidate 스킵을 위해 유지.
+        if (!this._readPersistedLogoutServerOk()) {
+          this._resetServerLogoutCycle({ clearPersisted: false });
+        }
         console.log('✅ 사용자 정보 로드 완료:', this.user);
 
         // 세션 정보(비활성 타임아웃·마지막 접근 시각 등) — idle 경고용으로 항상 동기화
@@ -655,12 +671,87 @@ class SessionManager {
   }
 
   /**
+   * sessionStorage 에 남은 서버 logout 성공 표시를 읽는다.
+   * @returns {boolean}
+   */
+  _readPersistedLogoutServerOk() {
+    try {
+      return sessionStorage.getItem(LOGOUT_SERVER_OK_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * 서버 logout POST 사이클 플래그 리셋.
+   * @param {{ clearPersisted?: boolean }} [options] clearPersisted=false 이면
+   *   메모리만 리셋(포스트 로그아웃 게이트 invalidate 가 storage 로 스킵 가능).
+   * @returns {void}
+   */
+  _resetServerLogoutCycle({ clearPersisted = true } = {}) {
+    this._logoutCompletedOk = false;
+    this._logoutInFlight = null;
+    if (clearPersisted) {
+      try {
+        sessionStorage.removeItem(LOGOUT_SERVER_OK_KEY);
+      } catch {
+        /* private mode 등 */
+      }
+    }
+  }
+
+  /**
+   * POST /api/v1/auth/logout 단일 진입점.
+   * in-flight Promise 공유, 이번 사이클에서 이미 성공한 POST 가 있으면 fetch 없이 resolve.
+   *
+   * @returns {Promise<{ ok: boolean, skipped?: boolean, status?: number, error?: unknown }>}
+   */
+  _requestServerLogoutOnce() {
+    if (this._logoutCompletedOk || this._readPersistedLogoutServerOk()) {
+      this._logoutCompletedOk = true;
+      return Promise.resolve({ ok: true, skipped: true });
+    }
+    if (this._logoutInFlight) {
+      return this._logoutInFlight;
+    }
+
+    this._logoutInFlight = (async() => {
+      try {
+        const csrfToken = this.getCsrfToken();
+        const headers = getDefaultApiHeadersWithCsrf(csrfToken, {
+          'X-Requested-With': 'XMLHttpRequest'
+        });
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+          method: 'POST',
+          credentials: 'include',
+          headers
+        });
+        if (response.ok) {
+          this._logoutCompletedOk = true;
+          return { ok: true, skipped: false };
+        }
+        return { ok: false, skipped: false, status: response.status };
+      } catch (error) {
+        return { ok: false, skipped: false, error };
+      } finally {
+        this._logoutInFlight = null;
+      }
+    })();
+
+    return this._logoutInFlight;
+  }
+
+  /**
    * 로그아웃 직후 /login 로드 시에도 서버 세션 쿠키가 남으면 current-user 200으로
    * SessionProvider가 사용자를 복원해 대시보드로 튕기는 문제를 막기 위한 일회성 플래그.
+   * 서버 logout 이 이미 성공했으면 LOGOUT_SERVER_OK 도 함께 남겨 invalidate 가 no-op 하게 한다.
    */
   setPostLogoutGateBeforeRedirect() {
     try {
-      sessionStorage.setItem('mg_post_logout', '1');
+      sessionStorage.setItem(POST_LOGOUT_GATE_KEY, '1');
+      if (this._logoutCompletedOk) {
+        sessionStorage.setItem(LOGOUT_SERVER_OK_KEY, '1');
+      }
     } catch {
       /* private mode 등 */
     }
@@ -671,10 +762,10 @@ class SessionManager {
    */
   consumePostLogoutGate() {
     try {
-      if (sessionStorage.getItem('mg_post_logout') !== '1') {
+      if (sessionStorage.getItem(POST_LOGOUT_GATE_KEY) !== '1') {
         return false;
       }
-      sessionStorage.removeItem('mg_post_logout');
+      sessionStorage.removeItem(POST_LOGOUT_GATE_KEY);
       return true;
     } catch {
       return false;
@@ -734,19 +825,17 @@ class SessionManager {
   /** 로그아웃 게이트: 남은 서버 세션 한 번 더 무효화 시도(리다이렉트 없음) */
   async postLogoutInvalidateServerSession() {
     try {
-      const csrfToken = this.getCsrfToken();
-      const headers = getDefaultApiHeadersWithCsrf(csrfToken, {
-        'X-Requested-With': 'XMLHttpRequest'
-      });
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-        headers
-      });
-      if (response.ok) {
+      const result = await this._requestServerLogoutOnce();
+      if (result.skipped) {
+        console.log('✅ 로그아웃 게이트: 서버 로그아웃 이미 완료 — 재무효화 스킵');
+        return;
+      }
+      if (result.ok) {
         console.log('✅ 로그아웃 게이트: 서버 세션 재무효화 성공');
+      } else if (result.error) {
+        console.warn('⚠️ 로그아웃 게이트: 서버 무효화 요청 실패(무시)', result.error);
       } else {
-        console.warn('⚠️ 로그아웃 게이트: 서버 응답', response.status);
+        console.warn('⚠️ 로그아웃 게이트: 서버 응답', result.status);
       }
     } catch (e) {
       console.warn('⚠️ 로그아웃 게이트: 서버 무효화 요청 실패(무시)', e);
@@ -783,27 +872,16 @@ class SessionManager {
     }
     try {
       console.log('🔓 로그아웃 시작...');
-
-      // CSRF 토큰 가져오기
-      const csrfToken = this.getCsrfToken();
-      console.log('🔑 CSRF 토큰:', csrfToken ? '발견됨' : '없음');
-
-      // 운영 Spring Security: HttpSessionCsrfTokenRepository headerName = X-XSRF-TOKEN (X-CSRF-TOKEN 아님)
-      const headers = getDefaultApiHeadersWithCsrf(csrfToken, {
-        'X-Requested-With': 'XMLHttpRequest'
-      });
-
-      // 서버에 로그아웃 요청
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: headers
-      });
-
-      if (response.ok) {
-        console.log('✅ 서버 로그아웃 완료');
+      // CSRF: _requestServerLogoutOnce → getDefaultApiHeadersWithCsrf (X-XSRF-TOKEN)
+      const result = await this._requestServerLogoutOnce();
+      if (result.ok) {
+        console.log(result.skipped
+          ? '✅ 서버 로그아웃 이미 완료(스킵)'
+          : '✅ 서버 로그아웃 완료');
+      } else if (result.error) {
+        console.error('❌ 서버 로그아웃 실패:', result.error);
       } else {
-        console.warn('⚠️ 서버 로그아웃 응답 오류:', response.status, response.statusText);
+        console.warn('⚠️ 서버 로그아웃 응답 오류:', result.status);
       }
     } catch (error) {
       console.error('❌ 서버 로그아웃 실패:', error);
@@ -1013,6 +1091,8 @@ class SessionManager {
 
     // 사용자 정보를 localStorage에 저장
     if (user) {
+      // 새 로그인 사이클 — 다음 로그아웃이 다시 서버 POST 가능
+      this._resetServerLogoutCycle();
       localStorage.setItem('userInfo', JSON.stringify(user));
     }
 

@@ -314,7 +314,8 @@ mindgarden:
     zone-id: Asia/Seoul
     min-opening-year: 1900
     nts:
-      api-key: ${DATA_GO_KR_SERVICE_KEY:}
+      # NTS_BIZ_API_SERVICE_KEY 우선. 하위호환으로 DATA_GO_KR_SERVICE_KEY 허용.
+      api-key: ${NTS_BIZ_API_SERVICE_KEY:${DATA_GO_KR_SERVICE_KEY:}}
       status-url: https://api.odcloud.kr/api/nts-businessman/v1/status
       validate-url: https://api.odcloud.kr/api/nts-businessman/v1/validate
       connect-timeout-ms: 1500

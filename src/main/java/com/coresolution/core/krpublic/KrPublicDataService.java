@@ -29,7 +29,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * 온보딩·테넌트 사업자정보·Ops 가 함께 쓰는 국세청·도로명주소 서비스.
- * 외부 호출은 트랜잭션 밖에서만 하고, 결과와 무관하게 저장을 막지 않는다.
+ * 외부 호출은 트랜잭션 밖에서만 한다.
+ * 온보딩 제출({@link #enrichOnboardingChecklist})은 진위 불일치·폐업·미등록을 차단한다.
+ * 키 미설정·API 장애는 미확인으로 두고 등록을 막지 않는다.
  * 개발 프로필에서 스텁이 켜져 있고 키가 없으면 조회만 성공으로 대체한다.
  *
  * <p>TODO: 과학기술정보통신부 '모두의 AI' 공식 오픈(12월) 이후 공공 AI 검색과
@@ -66,17 +68,21 @@ public class KrPublicDataService {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final Environment environment;
+    private final BusinessRegistrationVerifier businessRegistrationVerifier;
 
     /**
      * @param krPublicDataClient HTTP 클라이언트
      * @param properties         설정
      * @param objectMapper       JSON
      * @param environment        활성 프로필. 스텁은 개발 프로필에서만 허용
+     * @param businessRegistrationVerifier 온보딩 게이트·영속 코드
      */
     @Autowired
     public KrPublicDataService(KrPublicDataClient krPublicDataClient, KrPublicDataProperties properties,
-            ObjectMapper objectMapper, Environment environment) {
-        this(krPublicDataClient, properties, objectMapper, Clock.system(resolveZone(properties)), environment);
+            ObjectMapper objectMapper, Environment environment,
+            BusinessRegistrationVerifier businessRegistrationVerifier) {
+        this(krPublicDataClient, properties, objectMapper, Clock.system(resolveZone(properties)), environment,
+                businessRegistrationVerifier);
     }
 
     /**
@@ -85,14 +91,19 @@ public class KrPublicDataService {
      * @param objectMapper       JSON
      * @param clock              개업일자 상한(KST) 기준 시계
      * @param environment        활성 프로필. 없으면 스텁을 켜지 않는다
+     * @param businessRegistrationVerifier 온보딩 게이트·영속 코드
      */
     KrPublicDataService(KrPublicDataClient krPublicDataClient, KrPublicDataProperties properties,
-            ObjectMapper objectMapper, Clock clock, Environment environment) {
+            ObjectMapper objectMapper, Clock clock, Environment environment,
+            BusinessRegistrationVerifier businessRegistrationVerifier) {
         this.krPublicDataClient = krPublicDataClient;
         this.properties = properties;
         this.objectMapper = objectMapper;
         this.clock = clock;
         this.environment = environment;
+        this.businessRegistrationVerifier = businessRegistrationVerifier != null
+                ? businessRegistrationVerifier
+                : new BusinessRegistrationVerifier();
     }
 
     /**
@@ -123,10 +134,11 @@ public class KrPublicDataService {
 
     /**
      * 온보딩 제출 checklist 에 사업자번호를 필수로 하고 조회 결과를 merchantLegal 에 넣는다.
-     * 외부 실패여도 JSON 은 반환한다.
+     * 진위 불일치·폐업·미등록이면 등록을 차단한다. 키 미설정·API 장애(미확인)는 허용한다.
      *
      * @param checklistJson 신청 JSON
      * @return 조회 결과가 병합된 JSON
+     * @throws IllegalArgumentException 형식 오류 또는 게이트 차단
      */
     public String enrichOnboardingChecklist(String checklistJson) {
         Map<String, Object> checklist = readObject(checklistJson);
@@ -135,6 +147,7 @@ public class KrPublicDataService {
         String opening = requireOpeningDate(stringOrNull(merchantLegal.get("openingDate")));
         String representative = requireRepresentative(stringOrNull(merchantLegal.get("representativeName")));
         BusinessVerificationResult result = lookupRemote(formatted, opening, representative);
+        businessRegistrationVerifier.assertOnboardingAllowed(result);
         merchantLegal.put("businessRegistrationNumber", formatted);
         merchantLegal.put("openingDate", opening);
         merchantLegal.put("representativeName", representative);
@@ -206,58 +219,68 @@ public class KrPublicDataService {
     private BusinessVerificationResult lookupRemote(String formatted, String openingIso, String representative) {
         if (useBusinessStub()) {
             log.info("stub business");
-            return stubVerified(BusinessRegistrationNumberValidator.normalizeDigits(formatted));
+            return finalizeResult(stubVerified(BusinessRegistrationNumberValidator.normalizeDigits(formatted)));
         }
         if (!krPublicDataClient.isBusinessLookupConfigured()) {
             log.info("nts lookup skipped: key or url missing");
-            return unconfirmed();
+            return finalizeResult(unconfirmed());
         }
         String digits = BusinessRegistrationNumberValidator.normalizeDigits(formatted);
         Optional<String> statusBody = krPublicDataClient.fetchStatus(digits);
         if (statusBody.isEmpty()) {
             log.info("nts status unavailable: overall={}", KrPublicDataMessages.overallUnconfirmed());
-            return unconfirmed();
+            return finalizeResult(unconfirmed());
         }
         StatusView status = parseStatus(statusBody.get(), digits);
         if (status.unconfirmed()) {
-            return unconfirmed();
+            return finalizeResult(unconfirmed());
         }
         if (status.unregistered()) {
-            return BusinessVerificationResult.builder()
+            return finalizeResult(BusinessVerificationResult.builder()
                     .authenticityMatch(null)
                     .businessStatus(KrPublicDataMessages.businessUnregistered())
                     .taxType(null)
                     .checkedAt(now())
                     .overallStatus(KrPublicDataMessages.overallUnregistered())
-                    .build();
+                    .resultCode(BusinessRegistrationVerifier.composeResultCode(status.statusCode(), null))
+                    .build());
         }
         Optional<String> validateBody = krPublicDataClient.fetchValidate(digits, compact(openingIso), representative);
         if (validateBody.isEmpty()) {
-            return BusinessVerificationResult.builder()
+            return finalizeResult(BusinessVerificationResult.builder()
                     .authenticityMatch(null)
                     .businessStatus(status.businessStatus())
                     .taxType(status.taxType())
                     .checkedAt(now())
                     .overallStatus(KrPublicDataMessages.overallUnconfirmed())
-                    .build();
+                    .resultCode(BusinessRegistrationVerifier.composeResultCode(status.statusCode(), null))
+                    .build());
         }
-        Boolean match = parseMatch(validateBody.get());
-        if (match == null) {
-            return BusinessVerificationResult.builder()
+        ValidateView validate = parseValidate(validateBody.get());
+        if (validate.match() == null) {
+            return finalizeResult(BusinessVerificationResult.builder()
                     .authenticityMatch(null)
                     .businessStatus(status.businessStatus())
                     .taxType(status.taxType())
                     .checkedAt(now())
                     .overallStatus(KrPublicDataMessages.overallUnconfirmed())
-                    .build();
+                    .resultCode(BusinessRegistrationVerifier.composeResultCode(status.statusCode(), validate.validCode()))
+                    .build());
         }
-        return BusinessVerificationResult.builder()
-                .authenticityMatch(match)
+        return finalizeResult(BusinessVerificationResult.builder()
+                .authenticityMatch(validate.match())
                 .businessStatus(status.businessStatus())
                 .taxType(status.taxType())
                 .checkedAt(now())
-                .overallStatus(match ? KrPublicDataMessages.overallMatch() : KrPublicDataMessages.overallMismatch())
-                .build();
+                .overallStatus(validate.match()
+                        ? KrPublicDataMessages.overallMatch()
+                        : KrPublicDataMessages.overallMismatch())
+                .resultCode(BusinessRegistrationVerifier.composeResultCode(status.statusCode(), validate.validCode()))
+                .build());
+    }
+
+    private BusinessVerificationResult finalizeResult(BusinessVerificationResult result) {
+        return businessRegistrationVerifier.enrich(result);
     }
 
     private StatusView parseStatus(String body, String digits) {
@@ -280,35 +303,36 @@ public class KrPublicDataService {
             if (businessStatus == null) {
                 return StatusView.unconfirmedView();
             }
-            return new StatusView(false, false, businessStatus, sanitizeTaxType(text(row, "tax_type"), digits));
+            return new StatusView(false, false, businessStatus, sanitizeTaxType(text(row, "tax_type"), digits),
+                    statusCode);
         } catch (Exception ex) {
             log.warn("nts status parse failed: type={}", ex.getClass().getSimpleName());
             return StatusView.unconfirmedView();
         }
     }
 
-    private Boolean parseMatch(String body) {
+    private ValidateView parseValidate(String body) {
         try {
             JsonNode root = objectMapper.readTree(body);
             JsonNode code = root.get("status_code");
             if (code != null && !code.asText("").equalsIgnoreCase(STATUS_CODE_OK)) {
-                return null;
+                return ValidateView.empty();
             }
             JsonNode data = root.get("data");
             if (data == null || !data.isArray() || data.isEmpty()) {
-                return null;
+                return ValidateView.empty();
             }
             String valid = text(data.get(0), "valid");
             if (NTS_VALID.equals(valid)) {
-                return Boolean.TRUE;
+                return new ValidateView(Boolean.TRUE, valid);
             }
             if (NTS_INVALID.equals(valid)) {
-                return Boolean.FALSE;
+                return new ValidateView(Boolean.FALSE, valid);
             }
-            return null;
+            return new ValidateView(null, valid.isEmpty() ? null : valid);
         } catch (Exception ex) {
             log.warn("nts validate parse failed: type={}", ex.getClass().getSimpleName());
-            return null;
+            return ValidateView.empty();
         }
     }
 
@@ -502,6 +526,7 @@ public class KrPublicDataService {
                 .taxType(sanitizeTaxType(KrPublicDataStubSamples.taxType(), digits))
                 .checkedAt(now())
                 .overallStatus(KrPublicDataMessages.overallMatch())
+                .resultCode(BusinessRegistrationVerifier.composeResultCode(NTS_CONTINUE, NTS_VALID))
                 .build();
     }
 
@@ -521,6 +546,7 @@ public class KrPublicDataService {
                 .taxType(null)
                 .checkedAt(now())
                 .overallStatus(KrPublicDataMessages.overallUnconfirmed())
+                .resultCode(null)
                 .build();
     }
 
@@ -587,13 +613,20 @@ public class KrPublicDataService {
         }
     }
 
-    private record StatusView(boolean unconfirmed, boolean unregistered, String businessStatus, String taxType) {
+    private record StatusView(boolean unconfirmed, boolean unregistered, String businessStatus, String taxType,
+            String statusCode) {
         private static StatusView unconfirmedView() {
-            return new StatusView(true, false, null, null);
+            return new StatusView(true, false, null, null, null);
         }
 
         private static StatusView unregisteredView() {
-            return new StatusView(false, true, null, null);
+            return new StatusView(false, true, null, null, null);
+        }
+    }
+
+    private record ValidateView(Boolean match, String validCode) {
+        private static ValidateView empty() {
+            return new ValidateView(null, null);
         }
     }
 }

@@ -166,6 +166,21 @@ class OnboardingControllerTest {
     }
 
     @Test
+    @DisplayName("국세청 진위 불일치 게이트면 서비스 create 를 호출하지 않는다")
+    void create_whenBusinessVerificationMismatch_doesNotPersist() throws Exception {
+        when(captchaVerifier.requiresCaptchaToken()).thenReturn(false);
+        lenient().when(objectMapper.writeValueAsString(any())).thenReturn("{}");
+        when(krPublicDataService.enrichOnboardingChecklist(any()))
+                .thenThrow(new IllegalArgumentException(KrPublicDataMessages.gateMismatch()));
+
+        assertThatThrownBy(() -> onboardingController.create(basePayload(), httpSession, httpRequest))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(KrPublicDataMessages.gateMismatch());
+
+        verify(onboardingService, never()).create(any(), any(), any(), any(), any(), any());
+    }
+
+    @Test
     @DisplayName("site-key: 실검증 비활성 시 enabled false·siteKey null")
     void getCaptchaSiteKey_whenDisabled_returnsDisabled() {
         MindgardenSecurityProperties.Captcha captcha = new MindgardenSecurityProperties.Captcha();

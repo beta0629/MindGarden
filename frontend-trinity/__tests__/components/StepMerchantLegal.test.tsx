@@ -3,9 +3,10 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import StepMerchantLegal from '../../components/onboarding/StepMerchantLegal';
+import { KR_PUBLIC_DATA_COPY } from '../../content/krPublicData';
 import { TRINITY_CONSTANTS } from '../../constants/trinity';
 
 describe('StepMerchantLegal', () => {
@@ -26,8 +27,9 @@ describe('StepMerchantLegal', () => {
     paymentMethodToken: '',
     paymentMethodId: '',
     subscriptionId: '',
-    businessRegistrationNumber: '',
-    representativeName: '',
+    businessRegistrationNumber: '120-81-47521',
+    representativeName: '홍길동',
+    openingDate: '2020-01-15',
     businessLandline: '',
     businessAddress: '',
     mailOrderReportNumber: '',
@@ -61,5 +63,35 @@ describe('StepMerchantLegal', () => {
       />
     );
     expect(screen.getByText(/사업자등록번호 형식이 올바르지 않습니다/i)).toBeInTheDocument();
+  });
+
+  it('shows verification result and suspended warning', async () => {
+    const onLookupBusiness = jest.fn().mockResolvedValue({
+      overallStatus: KR_PUBLIC_DATA_COPY.OVERALL_MATCH,
+      businessStatus: KR_PUBLIC_DATA_COPY.BUSINESS_SUSPENDED,
+      checkedAt: '2026-10-14T00:00:00Z',
+      suspendedWarning: true,
+    });
+
+    render(
+      <StepMerchantLegal
+        formData={baseForm as any}
+        setFormData={jest.fn()}
+        bizNumberError={null}
+        setBizNumberError={jest.fn()}
+        businessLookupEnabled
+        onLookupBusiness={onLookupBusiness}
+      />
+    );
+
+    fireEvent.click(screen.getByTestId('onboarding-merchant-legal-verify'));
+
+    await waitFor(() => {
+      const panel = screen.getByTestId('onboarding-merchant-legal-verification');
+      expect(panel).toHaveTextContent(KR_PUBLIC_DATA_COPY.OVERALL_MATCH);
+      expect(panel).toHaveTextContent(KR_PUBLIC_DATA_COPY.BUSINESS_SUSPENDED);
+      expect(panel).toHaveTextContent(KR_PUBLIC_DATA_COPY.WARNING_SUSPENDED);
+    });
+    expect(onLookupBusiness).toHaveBeenCalled();
   });
 });

@@ -60,6 +60,11 @@ jest.mock('../integrated-schedule/molecules/VehiclePlateQuickRegisterModal', () 
   default: () => null
 }));
 
+jest.mock('../../session-transfer-history/SessionTransferHistorySection', () => ({
+  __esModule: true,
+  default: () => null
+}));
+
 jest.mock('../../../common/CustomSelect', () => ({
   __esModule: true,
   default: ({ options, value, onChange, disabled }) => (

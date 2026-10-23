@@ -117,6 +117,63 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
   });
 
+  test('후보 행을 클릭하면 onAdd 가 한 번 호출되고, 행 mousedown 은 기본 동작을 막는다', () => {
+    const h = setup();
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const row = within(list).getAllByRole('option')[0];
+    const mouseDown = createEvent.mouseDown(row);
+    fireEvent(row, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+    fireEvent.click(within(list).getByText('개인상담 4회 패키지'));
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('담긴 행과 이미 구성된 행은 클릭과 Enter 로도 담기지 않는다', () => {
+    const composed = { ...C2, composed: true };
+    const h = setup({ items: [ITEM1], candidates: [C1, composed], totalActive: 2 });
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const rows = within(list).getAllByRole('option');
+    fireEvent.click(rows[0]);
+    fireEvent.click(rows[1]);
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(h.onAdd).not.toHaveBeenCalled();
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+  });
+
+  test('행 안의 담기 버튼을 눌러도 onAdd 는 한 번만 호출된다', () => {
+    const h = setup();
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    fireEvent.click(screen.getByRole('button', { name: '개인상담 4회 패키지 담기' }));
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('아래·위 화살표로 활성 행을 옮기고 Enter 로 한 번 담으며 Escape 는 목록을 닫는다', () => {
+    const h = setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const options = within(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).getAllByRole('option');
+
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[0].id);
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[1].id);
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[0].id);
+
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+
+    fireEvent.keyDown(search, { key: 'Escape' });
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+  });
+
   test('검색 칸에서 바깥 요소로 포커스가 이동하면 목록이 닫힌다', () => {
     setup();
     const search = screen.getByLabelText('몰 상품 검색');

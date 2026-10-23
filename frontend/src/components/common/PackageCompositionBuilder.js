@@ -76,6 +76,11 @@ function PackageCompositionBuilder({
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [overRange, setOverRange] = useState(false);
+  const [nav, setNav] = useState({ key: '', index: -1 });
+  const candidateKey = candidates.map((c) => String(c.skuId)).join('\u0000');
+  const activeIndex = nav.key === candidateKey && nav.index >= 0 && nav.index < candidates.length
+    ? nav.index
+    : -1;
   const hasItems = items.length > 0;
   const loaded = status === COMPOSITION_FETCH_STATUS.READY;
   const candidateState = loaded
@@ -109,6 +114,50 @@ function PackageCompositionBuilder({
   // mousedown 기본 동작을 막아 검색 입력 포커스를 유지한다. 키보드 이동은 그대로다.
   const preventSearchBlur = (event) => {
     event.preventDefault();
+  };
+
+  const addCandidate = (candidate) => {
+    if (!candidate || addedIds.has(candidate.skuId) || candidate.composed) return;
+    onAdd(candidate);
+  };
+
+  const optionIdAt = (index) => `${baseId}-opt-${index}`;
+
+  const moveActive = (delta) => {
+    if (candidates.length === 0) return;
+    const next = activeIndex < 0
+      ? (delta > 0 ? 0 : candidates.length - 1)
+      : Math.min(candidates.length - 1, Math.max(0, activeIndex + delta));
+    setNav({ key: candidateKey, index: next });
+  };
+
+  const resultsVisible = popOpen
+    && status !== COMPOSITION_FETCH_STATUS.ERROR
+    && !noResults
+    && candidates.length > 0;
+
+  // ↓/↑ 는 활성 행, Enter 는 막히지 않은 활성 행만 담는다. Escape 는 목록을 닫는다.
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      if (open) event.preventDefault();
+      setOpen(false);
+      return;
+    }
+    if (!resultsVisible) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveActive(1);
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActive(-1);
+      return;
+    }
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      addCandidate(candidates[activeIndex]);
+    }
   };
 
   const awaitingFirstResults = candidates.length === 0
@@ -152,11 +201,22 @@ function PackageCompositionBuilder({
       <div className="mg-package-composition__pop" id={listId} onMouseDown={preventSearchBlur}>
         <p className="mg-package-composition__count">{t('resultCount', { n: candidates.length })}</p>
         <ul className="mg-package-composition__results mg-listbox--inline" role="listbox" aria-label={t('resultsLabel')}>
-          {candidates.map((c) => {
+          {candidates.map((c, index) => {
             const added = addedIds.has(c.skuId);
             const blocked = added || c.composed;
+            const active = index === activeIndex;
             return (
-              <li key={c.skuId} className="mg-package-composition__opt" role="option" aria-selected={added} aria-disabled={blocked}>
+              <li
+                key={c.skuId}
+                id={optionIdAt(index)}
+                className={`mg-package-composition__opt${active ? ' mg-package-composition__opt--active' : ''}`}
+                role="option"
+                aria-selected={added}
+                aria-disabled={blocked}
+                onMouseDown={preventSearchBlur}
+                onMouseEnter={() => setNav({ key: candidateKey, index })}
+                onClick={() => addCandidate(c)}
+              >
                 <span className="mg-package-composition__opt-main">
                   <span className="mg-package-composition__opt-name"><HighlightedName label={c.label} query={query} /></span>
                   <span className="mg-package-composition__opt-meta"><SafeText>{metaOf(c)}</SafeText></span>
@@ -175,7 +235,10 @@ function PackageCompositionBuilder({
                     type="button"
                     className="mg-package-composition__add-btn"
                     aria-label={`${c.label} ${t('add')}`}
-                    onClick={() => onAdd(c)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      addCandidate(c);
+                    }}
                   >
                     {t('add')}
                   </button>
@@ -204,13 +267,14 @@ function PackageCompositionBuilder({
             aria-expanded={popOpen}
             aria-controls={listId}
             aria-autocomplete="list"
+            aria-activedescendant={resultsVisible && activeIndex >= 0 ? optionIdAt(activeIndex) : undefined}
             className="mg-package-composition__search"
             value={query}
             placeholder={t('searchPlaceholder')}
             disabled={disabled || noCandidates}
             aria-describedby={`${baseId}-search-hint`}
             onFocus={() => setOpen(true)}
-            onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); } }}
+            onKeyDown={handleSearchKeyDown}
             onChange={(e) => { setOpen(true); onQueryChange(e.target.value); }}
           />
         </span>

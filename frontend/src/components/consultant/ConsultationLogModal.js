@@ -23,6 +23,10 @@ import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecauti
 import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
+import {
+  buildInstitutionLinkLogRoutingFields,
+  isInstitutionLinkConsultationLogContext
+} from '../../utils/consultationLogInstitutionContext';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 
@@ -827,11 +831,19 @@ const ConsultationLogModal = ({
     }
   };
 
+  const isInstitutionLinkLog = isInstitutionLinkConsultationLogContext(
+    scheduleData,
+    client,
+    clientWithStats
+  );
+
   const validateForm = () => {
     const errors = {};
 
-    if (formData.sessionNumber == null || formData.sessionNumber === ''
-        || Number.isNaN(Number(formData.sessionNumber))) {
+    // 타기관 연계: sessionNumber 미요구 (BE InstitutionLinkConsultationLog 경로). null→1 위조 금지.
+    if (!isInstitutionLinkLog
+        && (formData.sessionNumber == null || formData.sessionNumber === ''
+          || Number.isNaN(Number(formData.sessionNumber)))) {
       errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
         '회기수(sessionNumber)는 필수입니다.');
     }
@@ -892,13 +904,19 @@ const ConsultationLogModal = ({
             : parseInt(scheduleData.id, 10))
         : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(scheduleData, client);
       const recordData = {
         ...formData,
         sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
         consultationId: consultationId,
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
-        isSessionCompleted: formData.isSessionCompleted ?? false
+        isSessionCompleted: formData.isSessionCompleted ?? false,
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
@@ -968,6 +986,7 @@ const ConsultationLogModal = ({
             : parseInt(scheduleData.id, 10))
         : (consultationRecord?.consultationId != null ? Number(consultationRecord.consultationId) : null);
 
+      const routing = buildInstitutionLinkLogRoutingFields(scheduleData, client);
       const recordData = {
         ...formData,
         sessionNumber: formData.sessionNumber != null ? Number(formData.sessionNumber) : null,
@@ -975,7 +994,12 @@ const ConsultationLogModal = ({
         clientId: client?.id ?? consultationRecord?.clientId,
         consultantId: scheduleData?.consultantId != null ? Number(scheduleData.consultantId) : (consultationRecord?.consultantId ?? user.id),
         isSessionCompleted: true,
-        completionTime: new Date().toISOString()
+        completionTime: new Date().toISOString(),
+        ...(isInstitutionLinkLog ? {
+          mappingId: routing.mappingId,
+          paymentTiming: routing.paymentTiming,
+          engagementType: routing.engagementType
+        } : {})
       };
 
       let response;
@@ -1182,6 +1206,7 @@ const ConsultationLogModal = ({
           <ConsultationLogSessionHeaderMeta
             sessionNumber={formData.sessionNumber}
             sessionDateLabel={formData.sessionDate}
+            institutionLink={isInstitutionLinkLog}
           />
 
           <div className="mg-v2-consultation-log__layout">

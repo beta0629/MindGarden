@@ -135,4 +135,19 @@ describe('useScheduleNotesReminder', () => {
 
     expect(StandardizedApi.get).not.toHaveBeenCalled();
   });
+
+  it('does not fetch when paused by another start-reminder modal', async() => {
+    const events = [makeEvent(42, 4 * 60 * 1000)];
+    renderHook(() => useScheduleNotesReminder({
+      enabled: true,
+      scheduleEvents: events,
+      paused: true
+    }));
+
+    await act(async() => {
+      jest.advanceTimersByTime(SCHEDULE_NOTES_REMINDER_POLL_MS);
+    });
+
+    expect(StandardizedApi.get).not.toHaveBeenCalled();
+  });
 });

@@ -1,5 +1,8 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
+import java.util.List;
+
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.entity.ConsultantClientMappingHistory;
 
@@ -29,4 +32,14 @@ public interface ConsultantClientMappingHistoryRepository
     Page<ConsultantClientMappingHistory>
             findByTenantIdAndEventTypeOrderByCreatedAtDesc(
                     String tenantId, MappingHistoryEventType eventType, Pageable pageable);
+
+    /**
+     * 매핑 ID 목록의 이력을 최신순으로 조회한다. {@code mappingIds} 가 비면 호출하지 말 것.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingIds 매핑 ID
+     * @return 이력 목록
+     */
+    List<ConsultantClientMappingHistory> findByTenantIdAndMappingIdInOrderByCreatedAtDesc(
+            String tenantId, Collection<Long> mappingIds);
 }

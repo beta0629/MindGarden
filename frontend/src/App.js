@@ -41,6 +41,7 @@ import ErrorBoundary from './components/common/ErrorBoundary';
 import UnifiedHeaderTest from './components/test/UnifiedHeaderTest';
 import UserManagementPage from './components/admin/UserManagementPage';
 import MappingManagement from './components/admin/MappingManagement';
+import InstitutionLinkAdminPage from './components/admin/institution-link/InstitutionLinkAdminPage';
 import ConsultationLogView from './components/admin/ConsultationLogView';
 import IntegratedMatchingScheduleManagement from './components/admin/IntegratedMatchingScheduleManagement';
 import CommonCodeManagement from './components/admin/CommonCodeManagement';
@@ -847,6 +848,7 @@ function AppContent() {
               </ProtectedRoute>
             } />
             <Route path="/admin/mapping-management" element={<MappingManagement />} />
+            <Route path={ADMIN_ROUTES.INSTITUTION_LINKS} element={<InstitutionLinkAdminPage />} />
             <Route path="/admin/consultation-logs" element={<ConsultationLogView />} />
             <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />

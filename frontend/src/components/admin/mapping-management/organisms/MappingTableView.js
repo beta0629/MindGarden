@@ -10,6 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
 import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
+import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
@@ -121,6 +122,7 @@ const MappingTableView = ({
                     >
                       {statusLabel}
                     </StatusBadge>
+                    <EngagementTypeBadge mapping={mapping} />
                     {isErpIntegrated && (
                       <span className="mg-v2-mapping-table__erp" title="ERP 연동됨">
                         ERP

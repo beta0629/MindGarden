@@ -22,6 +22,7 @@ import {
   resolveMappingScheduleDesync
 } from '../utils/mappingScheduleDesync';
 import ScheduleReminderSmsBadge from './ScheduleReminderSmsBadge';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import './MatchingScheduleCompactRow.css';
 
 const STATUS_ACCENT_CLASS = {
@@ -157,6 +158,7 @@ const MatchingScheduleCompactRow = ({
         </span>
       )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
+        <EngagementTypeBadge mapping={mapping} />
         <SafeText>{secondaryLabel}</SafeText>
         {statusSegment ? (
           <>
@@ -189,6 +191,8 @@ MatchingScheduleCompactRow.propTypes = {
     hasConsultationSchedule: PropTypes.bool,
     nextConsultationDate: PropTypes.string,
     paymentTiming: PropTypes.string,
+    engagementType: PropTypes.string,
+    mappingEngagementType: PropTypes.string,
     clientReminderSms: PropTypes.object
   }),
   onOpenPeek: PropTypes.func,

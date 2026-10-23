@@ -4,6 +4,7 @@ import java.io.IOException;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.constant.PublicApiPathPolicy;
@@ -133,15 +134,17 @@ public class TenantContextFilter implements Filter {
                     sessionUser != null ? sessionUser.getId() : "null",
                     sessionUser != null ? sessionUser.getRole() : "null",
                     sessionUser != null ? sessionUser.getTenantId() : "null");
-            
-            // 세션 속성 확인 (디버깅용)
+
+            // 세션 속성 확인 (디버깅용) — 폐기 마커 시 USER_OBJECT 직접 읽기로 세션 사용자로 취급하지 않음
             Object tenantIdAttr = session.getAttribute(SESSION_TENANT_ID);
             Object tenantIdConst = session.getAttribute(SessionConstants.TENANT_ID);
-            Object userObject = session.getAttribute(SessionConstants.USER_OBJECT);
-            log.info("🔍 세션 속성 확인: SESSION_TENANT_ID={}, SessionConstants.TENANT_ID={}, USER_OBJECT={}",
+            boolean revocationMarked = AccessTokenRevocationRequestMarker.isMarked(httpRequest);
+            Object userObject = revocationMarked ? null : session.getAttribute(SessionConstants.USER_OBJECT);
+            log.info("🔍 세션 속성 확인: SESSION_TENANT_ID={}, SessionConstants.TENANT_ID={}, USER_OBJECT={}, revocationMarked={}",
                     tenantIdAttr != null ? tenantIdAttr.toString() : "null",
                     tenantIdConst != null ? tenantIdConst.toString() : "null",
-                    userObject != null ? "있음" : "없음");
+                    userObject != null ? "있음" : "없음",
+                    revocationMarked);
         }
 
         try {
@@ -261,6 +264,9 @@ public class TenantContextFilter implements Filter {
      * @return 비어 있지 않은 테넌트 ID 또는 null
      */
     private String resolveTenantHintForUserReload(HttpSession session, HttpServletRequest request, User user) {
+        if (AccessTokenRevocationRequestMarker.isMarked(request)) {
+            return null;
+        }
         if (session != null) {
             Object scTenant = session.getAttribute(SessionConstants.TENANT_ID);
             if (scTenant != null && !scTenant.toString().isEmpty()) {
@@ -292,9 +298,12 @@ public class TenantContextFilter implements Filter {
      * @return tenant_id (없으면 null)
      */
     private String extractTenantId(HttpServletRequest request, HttpSession session) {
+        // Access 폐기 마커: 세션 User·TENANT_ID 캐시 폴백 전부 스킵 (헤더 X-Tenant-Id 등은 기존 순서 유지)
+        boolean sessionTenantAllowed = !AccessTokenRevocationRequestMarker.isMarked(request);
+
         // ⚠️ 우선순위 변경: 세션의 User 정보를 최우선으로 확인 (보안상 더 안전)
         // 1. 세션에서 User 정보를 통해 tenant_id 조회 (최우선순위)
-        if (session != null) {
+        if (session != null && sessionTenantAllowed) {
             User user = SessionUtils.getCurrentUser(session);
             if (user != null) {
                 log.info("🔍 세션에서 User 정보 확인: userId={}, role={}, tenantId={}", user.getId(),
@@ -359,8 +368,10 @@ public class TenantContextFilter implements Filter {
                 session.setAttribute(SESSION_TENANT_ID, tenantIdStr);
                 return tenantIdStr;
             }
-        } else {
+        } else if (session == null) {
             log.debug("세션이 없습니다.");
+        } else {
+            log.debug("Access 폐기 마커 — 세션 기반 tenant 추출 스킵: URI={}", request.getRequestURI());
         }
 
         // 1-3. JSESSIONID 없이 Bearer만 쓰는 모바일 — SecurityContext JWT details의 User tenantId

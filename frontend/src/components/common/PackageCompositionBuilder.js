@@ -94,16 +94,24 @@ function PackageCompositionBuilder({
     ? t('tagSession', { kind: t('kindSession'), n: item.sessions })
     : t('kindGoods'));
 
+  // 포커스가 검색 블록 밖 요소로 옮겨질 때만 닫는다.
+  // relatedTarget 이 null 인 blur(macOS Safari·Firefox 의 버튼 클릭)는 목록을 닫지 않는다.
   const handleBlur = (event) => {
-    if (wrapRef.current && !wrapRef.current.contains(event.relatedTarget)) {
+    const next = event.relatedTarget;
+    if (next && wrapRef.current && !wrapRef.current.contains(next)) {
       setOpen(false);
     }
+  };
+
+  // mousedown 기본 동작을 막아 검색 입력 포커스를 유지한다. 키보드 이동은 그대로다.
+  const preventSearchBlur = (event) => {
+    event.preventDefault();
   };
 
   const renderPop = () => {
     if (status === COMPOSITION_FETCH_STATUS.LOADING || status === COMPOSITION_FETCH_STATUS.IDLE) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status" onMouseDown={preventSearchBlur}>
           <span className="mg-package-composition__spinner" aria-hidden="true" />
           <span>{t('searching')}</span>
         </div>
@@ -111,7 +119,7 @@ function PackageCompositionBuilder({
     }
     if (status === COMPOSITION_FETCH_STATUS.ERROR) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state mg-package-composition__pop--error" id={listId} role="alert">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state mg-package-composition__pop--error" id={listId} role="alert" onMouseDown={preventSearchBlur}>
           <AlertCircle className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
           <span className="mg-package-composition__state-body">
             <strong className="mg-package-composition__state-title">{t('error')}</strong>
@@ -123,7 +131,7 @@ function PackageCompositionBuilder({
     }
     if (noResults) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status" onMouseDown={preventSearchBlur}>
           <SearchX className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
           <span className="mg-package-composition__state-body">
             <strong className="mg-package-composition__state-title">
@@ -135,7 +143,7 @@ function PackageCompositionBuilder({
       );
     }
     return (
-      <div className="mg-package-composition__pop" id={listId}>
+      <div className="mg-package-composition__pop" id={listId} onMouseDown={preventSearchBlur}>
         <p className="mg-package-composition__count">{t('resultCount', { n: candidates.length })}</p>
         <ul className="mg-package-composition__results mg-listbox--inline" role="listbox" aria-label={t('resultsLabel')}>
           {candidates.map((c) => {

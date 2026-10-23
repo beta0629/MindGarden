@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, createEvent } from '@testing-library/react';
 import PackageCompositionBuilder from '../PackageCompositionBuilder';
 import { COMPOSITION_FETCH_STATUS } from '../../../hooks/useCompositionCandidates';
 
@@ -39,6 +39,36 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(screen.getByText('판매가 12,000원 · 회기 없음(실물 상품)')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('개인상담 4회 패키지 담기'));
     expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('담기 mousedown 은 기본 동작을 막고, relatedTarget 이 null 인 blur 뒤에도 클릭은 onAdd 를 한 번 호출한다', () => {
+    const h = setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const addButton = screen.getByRole('button', { name: '개인상담 4회 패키지 담기' });
+
+    const mouseDown = createEvent.mouseDown(addButton);
+    fireEvent(addButton, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+
+    fireEvent.focusOut(search, { relatedTarget: null });
+    fireEvent.click(addButton);
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('검색 칸에서 바깥 요소로 포커스가 이동하면 목록이 닫힌다', () => {
+    setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    const outside = document.createElement('button');
+    outside.type = 'button';
+    document.body.appendChild(outside);
+    fireEvent.focusOut(search, { relatedTarget: outside });
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+    outside.remove();
   });
 
   test('이미 담은 후보는 「담김」이고 담기 버튼이 없다', () => {

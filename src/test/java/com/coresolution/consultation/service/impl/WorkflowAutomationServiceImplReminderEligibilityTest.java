@@ -183,6 +183,22 @@ class WorkflowAutomationServiceImplReminderEligibilityTest {
     }
 
     @Test
+    @DisplayName("30분 전 — 재조회가 같은 예약 일정이면 푸시를 한 번 보낸다")
+    void t30_rereadBooked_dispatchesReminderOnce() {
+        // Given
+        Schedule listed = listedSchedule(LocalTime.now().plusMinutes(30));
+        stubList(listed);
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, SCHEDULE_ID)).thenReturn(Optional.of(listed));
+
+        // When
+        service.sendScheduleReminders();
+
+        // Then
+        verify(mobilePushDispatchService, times(1)).dispatchBookingReminder(
+                eq(TENANT_ID), eq(listed), any(String.class), eq("T30"));
+    }
+
+    @Test
     @DisplayName("1시간 전 — 일정은 예약인데 연결 상담이 취소면 인앱·푸시를 보내지 않는다")
     void t60_consultationCancelled_doesNotNotify() {
         // Given

@@ -257,4 +257,24 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).not.toMatch(/content:\s*"🕐"/);
     expect(scheduleCss).toMatch(/content:\s*"당일"/);
   });
+
+  test('회기·가예약·기관연계 칩 색은 semantic 토큰만 (hex 없음)', () => {
+    const pendingBlock = scheduleCss.match(
+      /\.integrated-schedule__event--same-day-pending,[\s\S]*?font-style:\s*italic;/
+    );
+    const institutionBlock = scheduleCss.match(
+      /\.integrated-schedule__event--institution-link,[\s\S]*?font-style:\s*normal;/
+    );
+    expect(pendingBlock).not.toBeNull();
+    expect(institutionBlock).not.toBeNull();
+    expect(pendingBlock[0]).toMatch(/--mg-v2-color-semantic-warning/);
+    expect(pendingBlock[0]).toMatch(/dashed/);
+    expect(pendingBlock[0]).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    expect(institutionBlock[0]).toMatch(/--mg-v2-color-semantic-info/);
+    expect(institutionBlock[0]).toMatch(/solid/);
+    expect(institutionBlock[0]).not.toMatch(/dashed/);
+    expect(institutionBlock[0]).not.toMatch(/#[0-9A-Fa-f]{3,8}/);
+    expect(scheduleJs).toMatch(/legend-swatch--institution-link/);
+    expect(scheduleJs).toMatch(/legend-swatch--same-day/);
+  });
 });

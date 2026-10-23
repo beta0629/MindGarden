@@ -107,6 +107,17 @@ describe('mappingScheduleDesync', () => {
       expect(result.tooltip).toBe('완료 처리해 주세요');
     });
 
+    it('타기관 연계 ACTIVE rem=0 → desync 아님', () => {
+      const result = resolveMappingScheduleDesync({
+        status: 'ACTIVE',
+        remainingSessions: 0,
+        paymentTiming: 'INSTITUTION_LINK',
+        nextConsultationDate: null
+      });
+      expect(result.kind).toBe(MAPPING_DESYNC_KIND.NONE);
+      expect(result.isDesync).toBe(false);
+    });
+
     it('ACTIVE + remaining > 0 → none', () => {
       expect(
         resolveMappingScheduleDesync({

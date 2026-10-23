@@ -15,9 +15,12 @@
  */
 
 import {
+  decorateScheduleEventsForInstitutionLink,
   decorateScheduleEventsForSameDayPending,
+  isInstitutionLinkCalendarEvent,
   isSameDayPendingEvent,
   buildMappingPaymentTimingLookup,
+  INSTITUTION_LINK_EVENT_CLASS,
   SAME_DAY_PENDING_EVENT_CLASS,
   SAME_DAY_PENDING_TITLE_PREFIX
 } from '../sameDayPendingEventDecorator';
@@ -213,12 +216,9 @@ describe('decorateScheduleEventsForSameDayPending', () => {
 // ===== 매트릭스 §8 케이스 56: 다크 모드 cascade 토큰 — 상수 SSOT 검증 =====
 describe('[56] 다크 모드 cascade 토큰 SSOT', () => {
   test('SAME_DAY_PENDING_EVENT_CLASS 상수는 CSS 셀렉터와 정확히 일치 (cascade 토큰 의존)', () => {
-    // 이 클래스명을 CSS .integrated-schedule__event--same-day-pending (그리고 v2.0 cascade
-    // 보강 후 inner .mg-v2-ad-calendar-event 까지) 가 var(--mg-color-warning-bg/dark) 토큰으로
-    // 스타일링한다. 토큰은 :root[data-theme="dark"] 에 분기가 정의되어 cascade 되므로
-    // 클래스명 SSOT 만 유지하면 다크 모드 정합 보장.
     expect(SAME_DAY_PENDING_EVENT_CLASS).toBe('integrated-schedule__event--same-day-pending');
     expect(SAME_DAY_PENDING_TITLE_PREFIX).toBe('[당일결제] ');
+    expect(INSTITUTION_LINK_EVENT_CLASS).toBe('integrated-schedule__event--institution-link');
   });
 });
 
@@ -243,5 +243,29 @@ describe('buildMappingPaymentTimingLookup', () => {
     expect(buildMappingPaymentTimingLookup(null).size).toBe(0);
     expect(buildMappingPaymentTimingLookup(undefined).size).toBe(0);
     expect(buildMappingPaymentTimingLookup('not-array').size).toBe(0);
+  });
+});
+
+describe('기관연계 캘린더 데코', () => {
+  test('BOOKED + INSTITUTION_LINK 에 실선 클래스, 가예약 클래스 없음', () => {
+    const lookup = new Map([['100', 'INSTITUTION_LINK']]);
+    const event = {
+      id: 1,
+      title: '기관내담자',
+      className: 'schedule-event status-booked',
+      extendedProps: { mappingId: 100, status: 'BOOKED' }
+    };
+    const result = decorateScheduleEventsForInstitutionLink([event], lookup);
+    expect(result[0].className).toContain(INSTITUTION_LINK_EVENT_CLASS);
+    expect(result[0].extendedProps.isInstitutionLink).toBe(true);
+    expect(isInstitutionLinkCalendarEvent(event, lookup)).toBe(true);
+  });
+
+  test('TENTATIVE 는 기관연계 클래스를 주지 않는다', () => {
+    const lookup = new Map([['100', 'INSTITUTION_LINK']]);
+    const event = tentativeEvent(100, '가예약이면 안 됨');
+    expect(isInstitutionLinkCalendarEvent(event, lookup)).toBe(false);
+    const result = decorateScheduleEventsForInstitutionLink([event], lookup);
+    expect(result[0]).toBe(event);
   });
 });

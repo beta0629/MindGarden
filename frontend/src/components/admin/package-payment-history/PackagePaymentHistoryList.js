@@ -24,6 +24,7 @@ import {
 import notificationManager from '../../../utils/notification';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import StandardizedApi from '../../../utils/standardizedApi';
+import SessionTransferHistorySection from '../session-transfer-history/SessionTransferHistorySection';
 import './PackagePaymentHistoryList.css';
 
 const TYPE_ACCENT_CLASS = Object.freeze({
@@ -196,6 +197,8 @@ const PackagePaymentHistoryList = ({
           <SafeText>{formatSummarySessions(summary)}</SafeText>
         </p>
       </header>
+
+      <SessionTransferHistorySection clientId={clientId} />
 
       {items.length === 0 ? (
         <EmptyState

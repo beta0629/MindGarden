@@ -10,6 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.coresolution.consultation.service.OtpCurrentTokenService;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +40,14 @@ public class OtpCurrentTokenServiceImpl implements OtpCurrentTokenService {
     private final SecureRandom random = new SecureRandom();
     private final Clock clock;
 
+    /**
+     * Spring DI 운영용 생성자. {@code @Autowired} 명시 — 다중 생성자(아래 테스트 전용 패키지 가시성
+     * 생성자) 존재 시 Spring 이 단일 생성자 자동 선택을 하지 않고 default constructor 로 fallback
+     * 시도하다 {@link NoSuchMethodException} 으로 ApplicationContext 로딩이 실패할 수 있다.
+     * PR #227 cascade fix({@code SmsGatewayServiceImpl}) 패턴을 동일 정책으로 확장하여 B5 표준
+     * (다중 생성자 명시) 적용 — 2026-06-12.
+     */
+    @Autowired
     public OtpCurrentTokenServiceImpl() {
         this(Clock.systemUTC());
     }

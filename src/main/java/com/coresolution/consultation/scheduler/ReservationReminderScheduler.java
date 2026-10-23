@@ -22,6 +22,7 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
@@ -101,6 +102,7 @@ public class ReservationReminderScheduler {
     private final SchedulerAlertService alertService;
     private final SystemConfigService systemConfigService;
     private final SmsTemplateService smsTemplateService;
+    private final ScheduleNotificationEligibility scheduleNotificationEligibility;
     private final Clock clock;
 
     /**
@@ -117,6 +119,7 @@ public class ReservationReminderScheduler {
      * @param alertService                               알림
      * @param systemConfigService                        스케줄러 플래그
      * @param smsTemplateService                         종목별 자동 발송 플래그
+     * @param scheduleNotificationEligibility            발송 직전 일정 재조회 자격
      */
     @Autowired
     public ReservationReminderScheduler(
@@ -130,7 +133,8 @@ public class ReservationReminderScheduler {
             SchedulerExecutionLogService logService,
             SchedulerAlertService alertService,
             SystemConfigService systemConfigService,
-            SmsTemplateService smsTemplateService) {
+            SmsTemplateService smsTemplateService,
+            ScheduleNotificationEligibility scheduleNotificationEligibility) {
         this(
                 tenantService,
                 scheduleRepository,
@@ -143,6 +147,7 @@ public class ReservationReminderScheduler {
                 alertService,
                 systemConfigService,
                 smsTemplateService,
+                scheduleNotificationEligibility,
                 Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL));
     }
 
@@ -150,6 +155,7 @@ public class ReservationReminderScheduler {
      * 테스트용 시계 주입 생성자.
      *
      * @param smsTemplateService 종목별 자동 발송 플래그
+     * @param scheduleNotificationEligibility 발송 직전 일정 재조회 자격
      * @param clock              당일 pending 윈도우 판정용
      */
     ReservationReminderScheduler(
@@ -164,6 +170,7 @@ public class ReservationReminderScheduler {
             SchedulerAlertService alertService,
             SystemConfigService systemConfigService,
             SmsTemplateService smsTemplateService,
+            ScheduleNotificationEligibility scheduleNotificationEligibility,
             Clock clock) {
         this.tenantService = tenantService;
         this.scheduleRepository = scheduleRepository;
@@ -176,6 +183,7 @@ public class ReservationReminderScheduler {
         this.alertService = alertService;
         this.systemConfigService = systemConfigService;
         this.smsTemplateService = smsTemplateService;
+        this.scheduleNotificationEligibility = scheduleNotificationEligibility;
         this.clock = clock;
     }
 
@@ -569,6 +577,11 @@ public class ReservationReminderScheduler {
                 continue;
             }
             if (!shouldSendForSchedule(tenantId, schedule)) {
+                continue;
+            }
+            if (!scheduleNotificationEligibility.isSendable(
+                    tenantId, schedule.getId(), schedule.getDate(), schedule.getStartTime())) {
+                log.info("D-1 푸시 생략 — 일정 발송 자격 없음: scheduleId={}", schedule.getId());
                 continue;
             }
             tryDispatchD1Push(tenantId, schedule);

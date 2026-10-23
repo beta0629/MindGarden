@@ -25,6 +25,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.util.List;
@@ -68,6 +69,7 @@ class MobilePushDispatchServiceImplInboxPersistenceTest {
     @Mock private ScheduleRepository scheduleRepository;
     @Mock private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     @Mock private MobilePushInboxPersister mobilePushInboxPersister;
+    @Mock private ScheduleNotificationEligibility scheduleNotificationEligibility;
 
     @InjectMocks
     private MobilePushDispatchServiceImpl mobilePushDispatchService;

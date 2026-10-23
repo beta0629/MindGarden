@@ -20,6 +20,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.WorkflowAutomationService;
@@ -52,6 +53,7 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     private final MobilePushDispatchService mobilePushDispatchService;
     private final SystemConfigService systemConfigService;
     private final TenantService tenantService;
+    private final ScheduleNotificationEligibility scheduleNotificationEligibility;
     
     // 워크플로우 실행 로그 저장용 (실제 환경에서는 별도 테이블 사용 권장)
     private final List<Map<String, Object>> workflowLogs = new ArrayList<>();
@@ -536,6 +538,11 @@ public class WorkflowAutomationServiceImpl implements WorkflowAutomationService 
     
     private void sendReminderMessage(Schedule schedule, String title, String message, String reminderSlotCode) {
         try {
+            if (!scheduleNotificationEligibility.isSendable(
+                    schedule.getTenantId(), schedule.getId(), schedule.getDate(), schedule.getStartTime())) {
+                log.info("리마인더 발송 생략 — 일정 발송 자격 없음: scheduleId={}", schedule.getId());
+                return;
+            }
             String reminderBody = MobilePushMessageFormatter.buildBookingReminderLead(message, schedule);
             try {
                 TenantContextHolder.setTenantId(schedule.getTenantId());

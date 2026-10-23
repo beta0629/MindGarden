@@ -37,6 +37,25 @@
   margin-bottom: var(--mg-layout-gap, 1rem);
 }
 
+.mg-v2-client-modal__institution-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-client-modal__institution-select,
+.mg-v2-client-modal__institution-search {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+}
+
+.mg-v2-client-modal__institution-summary {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+}
+
 .mg-v2-client-modal__summary-loading {
   margin: 0;
   font-size: var(--mg-font-size-sm, 0.875rem);
@@ -178,4 +197,12 @@
     grid-template-columns: 1fr;
     gap: 2px;
   }
+}
+
+.mg-v2-client-modal__engagement-type-row .mg-v2-form-help {
+  margin: 0;
+}
+
+.mg-v2-client-modal__prepaid-amount {
+  font-variant-numeric: tabular-nums;
 }

@@ -303,6 +303,14 @@
   overflow: hidden;
 }
 
+.mg-v2-mapping-creation-modal__card-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-spacing-sm);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 .mg-v2-mapping-creation-modal__card-info strong {
   font-size: var(--font-size-sm, 0.875rem);
   font-weight: 600;

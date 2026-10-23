@@ -202,7 +202,7 @@ class AdminServiceImplConsultationTrendBookedCountTest {
                 refundAutoCancelNotificationService,
                 Mockito.mock(UserLifecycleService.class),
                 Mockito.mock(AdminRequestIdempotencyService.class),
-                Mockito.mock(SalaryTaxRateLookupService.class));
+                Mockito.mock(SalaryTaxRateLookupService.class), null);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
 
         Consultant consultant = new Consultant();

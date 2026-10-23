@@ -40,6 +40,7 @@ import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.ConsultantAvailabilityService;
 import com.coresolution.consultation.service.ConsultationRecordDraftService;
 import com.coresolution.consultation.service.ConsultationRecordService;
+import com.coresolution.consultation.service.InstitutionLinkConsultationLogWriteRouter;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -93,6 +94,7 @@ public class ScheduleController extends BaseApiController {
     private final ScheduleService scheduleService;
     private final AdminService adminService;
     private final ConsultationRecordService consultationRecordService;
+    private final InstitutionLinkConsultationLogWriteRouter institutionLinkConsultationLogWriteRouter;
     private final ConsultationRecordDraftService consultationRecordDraftService;
     private final CommonCodeService commonCodeService;
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
@@ -1206,16 +1208,18 @@ public class ScheduleController extends BaseApiController {
      /**
      * 상담일지 작성
      * POST /api/schedules/consultation-records
+     *
+     * <p>타기관 연계는 {@link InstitutionLinkConsultationLogWriteRouter} 에 위임만 한다.
+     * 타기관 예외를 catch 하지 않는다.</p>
      */
     @PostMapping("/consultation-records")
-    public ResponseEntity<ApiResponse<com.coresolution.consultation.entity.ConsultationRecord>> createConsultationRecord(
+    public ResponseEntity<ApiResponse<Object>> createConsultationRecord(
             @RequestBody Map<String, Object> recordData,
             HttpSession session) {
         
         log.info("📝 상담일지 작성 - 데이터: {}", recordData);
-        
-        com.coresolution.consultation.entity.ConsultationRecord savedRecord = 
-            consultationRecordService.createConsultationRecord(recordData);
+
+        Object savedRecord = institutionLinkConsultationLogWriteRouter.create(recordData);
         
         return created("상담일지가 성공적으로 작성되었습니다.", savedRecord);
     }

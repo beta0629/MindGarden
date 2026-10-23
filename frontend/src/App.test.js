@@ -2,7 +2,7 @@
  * App 스모크 테스트 — 상위 Provider·라우트가 마운트되는지 확인
  */
 import React from 'react';
-import { render, waitFor } from '@testing-library/react';
+import { cleanup, render, waitFor } from '@testing-library/react';
 
 jest.mock('./utils/portonePayment', () => ({
   requestPortOnePayment: jest.fn()
@@ -76,6 +76,10 @@ jest.mock('dompurify', () => ({
 import App from './App';
 
 describe('App', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
   test('루트(/)에서 Phase 3 Public Main Homepage가 렌더된다', async() => {
     const errSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 

@@ -1146,6 +1146,8 @@ function AppContent() {
             <Route path="/admin/integrated-schedule" element={<IntegratedMatchingScheduleManagement />} />
             <Route path="/admin/common-codes" element={<CommonCodeManagement />} />
             <Route path="/admin/sessions" element={<Navigate to={ADMIN_ROUTES.MAPPING_MANAGEMENT} replace />} />
+            <Route path="/admin/schedules" element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />} />
+            <Route path="/admin/schedule" element={<RedirectWithSearch to={ADMIN_ROUTES.INTEGRATED_SCHEDULE} />} />
             <Route path="/admin/accounts" element={
               <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.STAFF]}>
                 <AccountManagement />

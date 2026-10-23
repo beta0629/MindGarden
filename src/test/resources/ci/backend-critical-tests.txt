@@ -94,3 +94,9 @@
 
 # 2026-10-21 알림 수신자 격리 (#1728) — Payment/Session 등 기존 패턴에 없어 ci-be-critical 0건
 **/NotificationLifecycleServiceImplRecipientIsolationTest.java
+
+# 2026-10-23 예약 알림 발송 직전 일정·상담 재조회 — 취소·삭제·이동·상담취소 누락 방지
+**/ScheduleNotificationEligibilityTest.java
+**/WorkflowAutomationServiceImplReminderEligibilityTest.java
+**/ReservationReminderSchedulerD1EligibilityTest.java
+**/MobilePushDispatchServiceImplBookingEligibilityTest.java

@@ -7,6 +7,14 @@ description: Core Solution(MindGarden) 디버그 전용 스킬. 에러·500·예
 
 에러·오류 원인 분석·수정 제안 시 **core-debugger** 서브에이전트와 함께 이 스킬을 적용하세요. 코드 직접 수정은 하지 않고, 분석·제안만 수행 후 **core-coder**에게 수정을 위임합니다.
 
+## 원인 우선 (필수)
+
+버그·이상 보고 시 **증상 수정·싱크(정합)·배포 맞춤보다 원인 확정을 먼저** 한다.
+
+- 로그·코드·재현·데이터 등 **증거 없이 추측으로 완료·싱크하지 않는다.**
+- 순서: **원인 확정** → 수정(`core-coder`) → 검증(`core-tester`) → 필요 시 운영 싱크/배포 맞춤.
+- 교차 참조: 기획 분배 시 `/core-solution-planning`, 검증 게이트는 `/core-solution-testing`.
+
 ## 적용 시점
 
 - 500 Internal Server Error, 400 Bad Request 등 API 오류 원인 파악

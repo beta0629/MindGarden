@@ -1,6 +1,6 @@
 ---
 name: core-solution-deployment
-description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, systemd, 배포 체크리스트·롤백·paths 트리거 준수.
+description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, systemd, 배포 체크리스트·롤백·paths 트리거 준수. 기능 브랜치 단독 빌드 덮어쓰기 금지·번들/JAR 체크리스트.
 ---
 
 # 배포·CI 워크플로 스킬 (Deployment & CI)
@@ -23,6 +23,34 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 - **실패 대비**: 헬스체크 실패·기동 실패 시 로그 수집(예: error.log tail), 필요 시 백업 복원·롤백 절차가 워크플로에 포함되어 있는지 확인.
 - **환경 분리**: 개발(develop)·운영(main/workflow_dispatch) 트리거와 배포 대상 서버가 표준과 일치하는지 확인.
 
+## 배포 덮어쓰기 금지 (기능 소실 방지)
+
+기능 브랜치 단독 빌드로 frontend/JAR를 **통째 교체**하면 이미 반영된 기능이 빠질 수 있다. 아래를 **배포 전 필수**로 적용한다.
+
+### 규칙
+
+1. **동일 스택 + 새 커밋만 배포**: 항상 **지금 운영(또는 개발)과 같은 스택** 위에 새 커밋을 올린 결과만 배포한다. 기능 브랜치 단독 빌드로 정적 번들·JAR를 통째 교체하지 않는다.
+2. **개발 = 운영 동일 해시**를 기본으로 한다. 의도적 분기가 아니면 해시가 갈라지지 않게 맞춘다.
+3. **큰 기능은 검증된 통합 스택 커밋 하나**만 운영에 올린다. 서로 다른 “최종 빌드”로 연달아 덮지 않는다.
+4. **배포마다 prev 롤백 경로**를 남긴다 (이전 번들/JAR 백업·복원 경로).
+5. **가드·도메인 한 줄**: `rem=0` SAME_DAY_CARD는 가예약 가드와 분리; **기관연계 ≠ 바우처**.
+
+### 배포 전 번들/JAR 체크리스트
+
+하나라도 없으면 **배포 중단**. 최소 항목:
+
+- [ ] **잔여 SSOT** — `remainingSessions` 우선; `total − sessionSequence` 금지
+- [ ] **회차 문구** — `N회기` / 잔여와 구분
+- [ ] **승계·이관 이력** — session-transfer-history
+- [ ] **가예약 COMPLETED 점유 가드 완화** — OPEN만 차단
+- [ ] **기관연계** — `INSTITUTION_LINK` / 배지 / 배정 배타
+- [ ] **패키지 만료 임박 모달** (있으면)
+- [ ] **슬롯 occupancy**
+
+### 사고 메모 (재발 방지)
+
+institution-link choi 단독 번들 `main.cf6e984e.js`가 운영에 올라가 **#1001·회차 라벨·승계이력을 덮어** 이승민 잔여1·히스토리가 소실된 사례가 있다. → **통합 스택이 아닌 단독 빌드 덮어쓰기 금지.**
+
 ## 참조 문서
 
 - `docs/standards/DEPLOYMENT_STANDARD.md` — 배포 원칙, 환경 분리, 체크리스트
@@ -42,6 +70,7 @@ description: 배포·CI/CD 워크플로 수정 시 적용. GitHub Actions, syste
 - [ ] 실패 시 로그 수집( journalctl, error.log ) 및 필요 시 롤백 절차 포함 여부 확인
 - [ ] 배포 브랜치(develop/main) 및 수동 실행(workflow_dispatch) 여부 확인
 - [ ] DEPLOYMENT_STANDARD, DEV_DEPLOYMENT_STABILITY_CHECKLIST 와 충돌 없는지 확인
+- [ ] **덮어쓰기 금지**: 대상이 동일 스택+새 커밋인지, 번들/JAR 체크리스트·prev 롤백 경로 확보 여부 확인
 
 ## 담당
 

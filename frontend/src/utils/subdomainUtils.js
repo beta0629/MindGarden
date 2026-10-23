@@ -61,11 +61,10 @@ export function parseTenantHostAliases(raw) {
  * @returns {Record<string, string>}
  */
 export function getTenantHostAliasMap() {
-  const raw =
-    typeof process !== 'undefined' && process.env
-      ? process.env.REACT_APP_TENANT_HOST_ALIASES
-      : '';
-  return parseTenantHostAliases(raw || '');
+  // CRA(DefinePlugin)는 process.env.REACT_APP_* 를 직접 참조할 때만 빌드 시 인라인한다.
+  // process 존재 여부 가드를 두면 브라우저(process 전역 없음)에서 빈 값이 되므로 직접 참조한다.
+  const raw = process.env.REACT_APP_TENANT_HOST_ALIASES || '';
+  return parseTenantHostAliases(raw);
 }
 
 /**

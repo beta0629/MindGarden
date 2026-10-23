@@ -1443,6 +1443,7 @@ const UnifiedScheduleComponent = ({
                     userRole={userRole}
                     userId={userId}
                     onScheduleCreated={handleScheduleCreated}
+                    calendarEvents={events}
                 />
             )}
 

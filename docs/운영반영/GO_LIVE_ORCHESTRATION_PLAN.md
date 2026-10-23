@@ -21,7 +21,7 @@
 | 항목 | 상태 | 비고 |
 |------|------|------|
 | `docs/운영반영/` 폴더 | ✅ 정리 완료 | README, 체크리스트, 회의·의견서 6개 존재 |
-| PRE_PRODUCTION_GO_LIVE_CHECKLIST | ✅ §1~§10 존재 | 도메인·TLS·CORS·OAuth·DB·인프라·스모크·Go/No-Go |
+| PRE_PRODUCTION_GO_LIVE_CHECKLIST | ✅ §1~§11 존재 | 도메인·TLS·CORS·OAuth·DB·인프라·스모크·하드코딩 게이트(§10)·Go/No-Go(§11) |
 | PRODUCTION_ESSENTIAL_DATA | ✅ §1.1 원칙 명시 | 운영 테넌트 온보딩만 생성, 덤프 금지 |
 | 회의·의견서 4종 | ✅ 동일 폴더에 존재 | READINESS, TESTER, DEBUGGER, SHELL |
 | DEPLOYMENT_STANDARD | ✅ 참조 링크 | `docs/standards/` 에 유지, README에서 연결 |

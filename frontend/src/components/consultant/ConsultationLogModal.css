@@ -138,6 +138,11 @@
   line-height: var(--mg-v2-font-line-height-body);
 }
 
+.mg-v2-clinic-os .mg-v2-consultation-log__session-chip--unassigned {
+  color: var(--mg-v2-color-text-secondary);
+  font-weight: var(--mg-v2-font-weight-medium);
+}
+
 .mg-v2-clinic-os .mg-v2-consultation-log__session-dl {
   display: flex;
   flex-wrap: wrap;

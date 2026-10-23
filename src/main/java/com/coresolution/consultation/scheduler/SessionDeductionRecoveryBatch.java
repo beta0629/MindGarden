@@ -154,12 +154,20 @@ public class SessionDeductionRecoveryBatch {
         Optional<ConsultantClientMapping> opt = mappingRepository
                 .findActiveByConsultantAndClient(tenantId, consultantId, clientId);
         if (opt.isEmpty()) {
+            if (scheduleService.assignProvisionalSessionSequenceWithoutDeduction(schedule)) {
+                resolveOpenAlerts(tenantId, schedule.getId());
+                return RecoveryOutcome.SUCCESS;
+            }
             return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), null,
                     SessionRecoveryAlert.REASON_ACTIVE_MAPPING_NOT_FOUND);
         }
         ConsultantClientMapping mapping = opt.get();
         Integer remaining = mapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
+            if (scheduleService.assignProvisionalSessionSequenceWithoutDeduction(schedule)) {
+                resolveOpenAlerts(tenantId, schedule.getId());
+                return RecoveryOutcome.SUCCESS;
+            }
             return saveAlertOrAlreadyOpen(tenantId, schedule.getId(), mapping.getId(),
                     SessionRecoveryAlert.REASON_REMAINING_SESSIONS_ZERO);
         }

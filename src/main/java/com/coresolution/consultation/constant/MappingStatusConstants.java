@@ -10,6 +10,13 @@ public class MappingStatusConstants {
     
     // 매핑 상태 코드값들
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
+    /**
+     * 옵션 B 결제 의도 — 당일 방문 카드 결제 후 활성화.
+     * {@code consultant_client_mappings.payment_timing} 값. 대소문자 무시 비교.
+     */
+    public static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
+
     public static final String PAYMENT_CONFIRMED = "PAYMENT_CONFIRMED";
     public static final String ACTIVE = "ACTIVE";
     public static final String INACTIVE = "INACTIVE";

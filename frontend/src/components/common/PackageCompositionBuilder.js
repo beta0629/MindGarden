@@ -30,19 +30,22 @@ const NS = 'adminShopComposition';
 
 const money = (value) => Number(value || 0).toLocaleString();
 
-/** 상품명에서 검색어와 맞는 부분만 굵게(색 없음). */
+/** 상품명에서 검색어와 맞는 부분만 굵게(색 없음). 빈 조각은 그리지 않는다. */
 function HighlightedName({ label = '', query = '' }) {
   const q = String(query || '').trim();
   const text = String(label || '');
   const at = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
   if (at < 0) {
-    return <SafeText>{text}</SafeText>;
+    return <SafeText fallback="">{text}</SafeText>;
   }
+  const before = text.slice(0, at);
+  const match = text.slice(at, at + q.length);
+  const after = text.slice(at + q.length);
   return (
     <>
-      <SafeText>{text.slice(0, at)}</SafeText>
-      <b><SafeText>{text.slice(at, at + q.length)}</SafeText></b>
-      <SafeText>{text.slice(at + q.length)}</SafeText>
+      {before ? <SafeText fallback="">{before}</SafeText> : null}
+      {match ? <b><SafeText fallback="">{match}</SafeText></b> : null}
+      {after ? <SafeText fallback="">{after}</SafeText> : null}
     </>
   );
 }
@@ -108,8 +111,11 @@ function PackageCompositionBuilder({
     event.preventDefault();
   };
 
+  const awaitingFirstResults = candidates.length === 0
+    && (status === COMPOSITION_FETCH_STATUS.LOADING || status === COMPOSITION_FETCH_STATUS.IDLE);
+
   const renderPop = () => {
-    if (status === COMPOSITION_FETCH_STATUS.LOADING || status === COMPOSITION_FETCH_STATUS.IDLE) {
+    if (awaitingFirstResults) {
       return (
         <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status" onMouseDown={preventSearchBlur}>
           <span className="mg-package-composition__spinner" aria-hidden="true" />

@@ -57,6 +57,66 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(h.onAdd).toHaveBeenCalledWith(C1);
   });
 
+  test('검색어가 이름 앞에 있으면 빈 앞조각을 「—」로 그리지 않는다', () => {
+    const candidate = {
+      skuId: 9,
+      label: '초기상담료',
+      catalogCategory: 'CONSULTATION',
+      unitPrice: 100000,
+      sessions: 1,
+      composed: false
+    };
+    setup({ candidates: [candidate], totalActive: 1, query: '초기' });
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const name = within(list).getByText((_, node) => (
+      node.classList?.contains('mg-package-composition__opt-name')
+      && node.textContent === '초기상담료'
+    ));
+    expect(name.textContent).toBe('초기상담료');
+    expect(name.textContent).not.toContain('—');
+    expect(list.textContent).not.toContain('—');
+  });
+
+  test('재조회 LOADING 중에도 이전 결과의 담기 버튼이 남고 클릭된다', () => {
+    const onAdd = jest.fn();
+    const props = {
+      candidates: [C1],
+      totalActive: 1,
+      status: COMPOSITION_FETCH_STATUS.READY,
+      onAdd,
+      onRemove: jest.fn(),
+      onQuantityChange: jest.fn(),
+      onDiscountChange: jest.fn(),
+      onQueryChange: jest.fn(),
+      onRecalc: jest.fn(),
+      onRetry: jest.fn()
+    };
+    const { rerender } = render(<PackageCompositionBuilder {...props} />);
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const addButton = screen.getByRole('button', { name: '개인상담 4회 패키지 담기' });
+    fireEvent.mouseDown(addButton);
+
+    rerender(
+      <PackageCompositionBuilder
+        {...props}
+        status={COMPOSITION_FETCH_STATUS.LOADING}
+      />
+    );
+
+    expect(screen.queryByText('몰 상품을 검색하는 중…')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '개인상담 4회 패키지 담기' }));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('첫 조회 LOADING 이고 후보가 없으면 검색 중 표시를 유지한다', () => {
+    setup({ candidates: [], totalActive: 2, status: COMPOSITION_FETCH_STATUS.LOADING });
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    expect(screen.getByText('몰 상품을 검색하는 중…')).toBeTruthy();
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+  });
+
   test('검색 칸에서 바깥 요소로 포커스가 이동하면 목록이 닫힌다', () => {
     setup();
     const search = screen.getByLabelText('몰 상품 검색');

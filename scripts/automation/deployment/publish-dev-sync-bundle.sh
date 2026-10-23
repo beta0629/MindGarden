@@ -42,6 +42,11 @@ dev_sync_bundle_build() {
     cp "$ROOT/$SYNC_REL" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize.sql" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql" "$dest/scripts/database/sync/"
+    # 복원 뒤 Flyway 재적용 확인용: 공통 함수와 저장소 최신 마이그레이션 버전
+    cp "$ROOT/scripts/database/sync/flyway-latest-version.sh" "$dest/scripts/database/sync/"
+    bash "$ROOT/scripts/database/sync/flyway-latest-version.sh" "$ROOT/src/main/resources/db/migration" \
+        >"$dest/scripts/database/sync/flyway-expected-version" \
+        || fail "저장소 Flyway 최신 버전을 구하지 못했습니다."
     for f in deploy-standardized-procedures.sh procedure-deploy-changed-only.sh procedure-deploy-db-diff.sh; do
         cp "$ROOT/scripts/automation/deployment/$f" "$dest/scripts/automation/deployment/"
     done

@@ -30,19 +30,22 @@ const NS = 'adminShopComposition';
 
 const money = (value) => Number(value || 0).toLocaleString();
 
-/** 상품명에서 검색어와 맞는 부분만 굵게(색 없음). */
+/** 상품명에서 검색어와 맞는 부분만 굵게(색 없음). 빈 조각은 그리지 않는다. */
 function HighlightedName({ label = '', query = '' }) {
   const q = String(query || '').trim();
   const text = String(label || '');
   const at = q ? text.toLowerCase().indexOf(q.toLowerCase()) : -1;
   if (at < 0) {
-    return <SafeText>{text}</SafeText>;
+    return <SafeText fallback="">{text}</SafeText>;
   }
+  const before = text.slice(0, at);
+  const match = text.slice(at, at + q.length);
+  const after = text.slice(at + q.length);
   return (
     <>
-      <SafeText>{text.slice(0, at)}</SafeText>
-      <b><SafeText>{text.slice(at, at + q.length)}</SafeText></b>
-      <SafeText>{text.slice(at + q.length)}</SafeText>
+      {before ? <SafeText fallback="">{before}</SafeText> : null}
+      {match ? <b><SafeText fallback="">{match}</SafeText></b> : null}
+      {after ? <SafeText fallback="">{after}</SafeText> : null}
     </>
   );
 }
@@ -73,6 +76,11 @@ function PackageCompositionBuilder({
   const wrapRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [overRange, setOverRange] = useState(false);
+  const [nav, setNav] = useState({ key: '', index: -1 });
+  const candidateKey = candidates.map((c) => String(c.skuId)).join('\u0000');
+  const activeIndex = nav.key === candidateKey && nav.index >= 0 && nav.index < candidates.length
+    ? nav.index
+    : -1;
   const hasItems = items.length > 0;
   const loaded = status === COMPOSITION_FETCH_STATUS.READY;
   const candidateState = loaded
@@ -94,16 +102,71 @@ function PackageCompositionBuilder({
     ? t('tagSession', { kind: t('kindSession'), n: item.sessions })
     : t('kindGoods'));
 
+  // 포커스가 검색 블록 밖 요소로 옮겨질 때만 닫는다.
+  // relatedTarget 이 null 인 blur(macOS Safari·Firefox 의 버튼 클릭)는 목록을 닫지 않는다.
   const handleBlur = (event) => {
-    if (wrapRef.current && !wrapRef.current.contains(event.relatedTarget)) {
+    const next = event.relatedTarget;
+    if (next && wrapRef.current && !wrapRef.current.contains(next)) {
       setOpen(false);
     }
   };
 
+  // mousedown 기본 동작을 막아 검색 입력 포커스를 유지한다. 키보드 이동은 그대로다.
+  const preventSearchBlur = (event) => {
+    event.preventDefault();
+  };
+
+  const addCandidate = (candidate) => {
+    if (!candidate || addedIds.has(candidate.skuId) || candidate.composed) return;
+    onAdd(candidate);
+  };
+
+  const optionIdAt = (index) => `${baseId}-opt-${index}`;
+
+  const moveActive = (delta) => {
+    if (candidates.length === 0) return;
+    const next = activeIndex < 0
+      ? (delta > 0 ? 0 : candidates.length - 1)
+      : Math.min(candidates.length - 1, Math.max(0, activeIndex + delta));
+    setNav({ key: candidateKey, index: next });
+  };
+
+  const resultsVisible = popOpen
+    && status !== COMPOSITION_FETCH_STATUS.ERROR
+    && !noResults
+    && candidates.length > 0;
+
+  // ↓/↑ 는 활성 행, Enter 는 막히지 않은 활성 행만 담는다. Escape 는 목록을 닫는다.
+  const handleSearchKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      if (open) event.preventDefault();
+      setOpen(false);
+      return;
+    }
+    if (!resultsVisible) return;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      moveActive(1);
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      moveActive(-1);
+      return;
+    }
+    if (event.key === 'Enter' && activeIndex >= 0) {
+      event.preventDefault();
+      addCandidate(candidates[activeIndex]);
+    }
+  };
+
+  const awaitingFirstResults = candidates.length === 0
+    && (status === COMPOSITION_FETCH_STATUS.LOADING || status === COMPOSITION_FETCH_STATUS.IDLE);
+
   const renderPop = () => {
-    if (status === COMPOSITION_FETCH_STATUS.LOADING || status === COMPOSITION_FETCH_STATUS.IDLE) {
+    if (awaitingFirstResults) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status" onMouseDown={preventSearchBlur}>
           <span className="mg-package-composition__spinner" aria-hidden="true" />
           <span>{t('searching')}</span>
         </div>
@@ -111,7 +174,7 @@ function PackageCompositionBuilder({
     }
     if (status === COMPOSITION_FETCH_STATUS.ERROR) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state mg-package-composition__pop--error" id={listId} role="alert">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state mg-package-composition__pop--error" id={listId} role="alert" onMouseDown={preventSearchBlur}>
           <AlertCircle className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
           <span className="mg-package-composition__state-body">
             <strong className="mg-package-composition__state-title">{t('error')}</strong>
@@ -123,7 +186,7 @@ function PackageCompositionBuilder({
     }
     if (noResults) {
       return (
-        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status">
+        <div className="mg-package-composition__pop mg-package-composition__pop--state" id={listId} role="status" onMouseDown={preventSearchBlur}>
           <SearchX className="mg-package-composition__state-icon" aria-hidden="true" focusable="false" />
           <span className="mg-package-composition__state-body">
             <strong className="mg-package-composition__state-title">
@@ -135,14 +198,25 @@ function PackageCompositionBuilder({
       );
     }
     return (
-      <div className="mg-package-composition__pop" id={listId}>
+      <div className="mg-package-composition__pop" id={listId} onMouseDown={preventSearchBlur}>
         <p className="mg-package-composition__count">{t('resultCount', { n: candidates.length })}</p>
         <ul className="mg-package-composition__results mg-listbox--inline" role="listbox" aria-label={t('resultsLabel')}>
-          {candidates.map((c) => {
+          {candidates.map((c, index) => {
             const added = addedIds.has(c.skuId);
             const blocked = added || c.composed;
+            const active = index === activeIndex;
             return (
-              <li key={c.skuId} className="mg-package-composition__opt" role="option" aria-selected={added} aria-disabled={blocked}>
+              <li
+                key={c.skuId}
+                id={optionIdAt(index)}
+                className={`mg-package-composition__opt${active ? ' mg-package-composition__opt--active' : ''}`}
+                role="option"
+                aria-selected={added}
+                aria-disabled={blocked}
+                onMouseDown={preventSearchBlur}
+                onMouseEnter={() => setNav({ key: candidateKey, index })}
+                onClick={() => addCandidate(c)}
+              >
                 <span className="mg-package-composition__opt-main">
                   <span className="mg-package-composition__opt-name"><HighlightedName label={c.label} query={query} /></span>
                   <span className="mg-package-composition__opt-meta"><SafeText>{metaOf(c)}</SafeText></span>
@@ -161,7 +235,10 @@ function PackageCompositionBuilder({
                     type="button"
                     className="mg-package-composition__add-btn"
                     aria-label={`${c.label} ${t('add')}`}
-                    onClick={() => onAdd(c)}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      addCandidate(c);
+                    }}
                   >
                     {t('add')}
                   </button>
@@ -190,13 +267,14 @@ function PackageCompositionBuilder({
             aria-expanded={popOpen}
             aria-controls={listId}
             aria-autocomplete="list"
+            aria-activedescendant={resultsVisible && activeIndex >= 0 ? optionIdAt(activeIndex) : undefined}
             className="mg-package-composition__search"
             value={query}
             placeholder={t('searchPlaceholder')}
             disabled={disabled || noCandidates}
             aria-describedby={`${baseId}-search-hint`}
             onFocus={() => setOpen(true)}
-            onKeyDown={(e) => { if (e.key === 'Escape') { setOpen(false); } }}
+            onKeyDown={handleSearchKeyDown}
             onChange={(e) => { setOpen(true); onQueryChange(e.target.value); }}
           />
         </span>

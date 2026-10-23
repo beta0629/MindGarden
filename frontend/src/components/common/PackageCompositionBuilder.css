@@ -126,6 +126,11 @@
   border-radius: var(--mg-v2-radius-sm);
 }
 
+.mg-package-composition__opt:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
+
+.mg-package-composition__opt--active,
 .mg-package-composition__opt:focus-within,
 .mg-package-composition__opt:hover {
   background: var(--cs-slate-100);

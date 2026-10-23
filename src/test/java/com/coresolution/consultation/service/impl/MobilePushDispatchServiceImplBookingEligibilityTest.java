@@ -2,12 +2,15 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 import com.coresolution.consultation.config.ExpoPushProperties;
 import com.coresolution.consultation.constant.ConsultationStatus;
+import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.Consultation;
+import com.coresolution.consultation.entity.MobilePushToken;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.ConsultationRepository;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
@@ -31,6 +34,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -119,6 +123,87 @@ class MobilePushDispatchServiceImplBookingEligibilityTest {
         verify(consultationRepository, atLeastOnce()).findByTenantIdAndId(TENANT_ID, CONSULTATION_ID);
         verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
         verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("예약 일정 — 리마인더 푸시를 내담자와 상담사에게 보낸다")
+    void bookedSchedule_reminderFansOutToClientAndConsultant() {
+        // Given
+        Schedule schedule = bookedSchedule();
+        stubSendableBooked(schedule);
+
+        // When
+        service.dispatchBookingReminder(TENANT_ID, schedule, "상담이 곧 시작됩니다.", "T60");
+
+        // Then
+        verify(consultationRepository).findByTenantIdAndId(TENANT_ID, CONSULTATION_ID);
+        verifyFanout(MobilePushCanonicalTypes.BOOKING_REMINDER);
+    }
+
+    @Test
+    @DisplayName("예약 일정 — 일정 변경 푸시를 내담자와 상담사에게 보낸다")
+    void bookedSchedule_rescheduleFansOutToClientAndConsultant() {
+        // Given
+        Schedule schedule = bookedSchedule();
+        stubSendableBooked(schedule);
+
+        // When
+        service.dispatchBookingRescheduled(
+                TENANT_ID,
+                schedule,
+                SLOT_DATE.minusDays(1),
+                SLOT_START.minusHours(2),
+                SLOT_START.minusHours(1),
+                null);
+
+        // Then
+        verify(consultationRepository).findByTenantIdAndId(TENANT_ID, CONSULTATION_ID);
+        verifyFanout(MobilePushCanonicalTypes.BOOKING_RESCHEDULED);
+    }
+
+    private void stubSendableBooked(Schedule schedule) {
+        when(scheduleRepository.findByTenantIdAndId(TENANT_ID, SCHEDULE_ID)).thenReturn(Optional.of(schedule));
+        Consultation consultation = new Consultation();
+        consultation.setId(CONSULTATION_ID);
+        consultation.setStatus(ConsultationStatus.CONFIRMED);
+        when(consultationRepository.findByTenantIdAndId(TENANT_ID, CONSULTATION_ID))
+                .thenReturn(Optional.of(consultation));
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+        when(userRepository.findByTenantIdAndId(TENANT_ID, CLIENT_ID)).thenReturn(Optional.empty());
+        when(userRepository.findByTenantIdAndId(TENANT_ID, CONSULTANT_ID)).thenReturn(Optional.empty());
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(TENANT_ID, CLIENT_ID))
+                .thenReturn(Optional.empty());
+        when(mobilePushSettingsRepository.findByTenantIdAndUserIdAndIsDeletedFalse(TENANT_ID, CONSULTANT_ID))
+                .thenReturn(Optional.empty());
+
+        MobilePushToken clientToken = pushToken(CLIENT_ID, "ExponentPushToken[booked-client]");
+        MobilePushToken consultantToken = pushToken(CONSULTANT_ID, "ExponentPushToken[booked-consultant]");
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq(TENANT_ID), eq(List.of(CLIENT_ID)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq(TENANT_ID), eq(List.of(CONSULTANT_ID)))).thenReturn(List.of(consultantToken));
+        when(mobilePushDispatchDedupService.tryClaim(eq(TENANT_ID), anyString(), anyString(), anyString()))
+                .thenReturn(true);
+        when(restTemplate.postForObject(anyString(), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+    }
+
+    private void verifyFanout(String canonicalType) {
+        verify(mobilePushTokenRepository).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq(TENANT_ID), eq(List.of(CLIENT_ID)));
+        verify(mobilePushTokenRepository).findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                eq(TENANT_ID), eq(List.of(CONSULTANT_ID)));
+        verify(mobilePushDispatchDedupService, times(2)).tryClaim(
+                eq(TENANT_ID), eq(canonicalType), eq(String.valueOf(SCHEDULE_ID)), anyString());
+        verify(restTemplate, times(2)).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    private MobilePushToken pushToken(Long userId, String token) {
+        MobilePushToken pushToken = new MobilePushToken();
+        pushToken.setUserId(userId);
+        pushToken.setPushToken(token);
+        return pushToken;
     }
 
     private Schedule bookedSchedule() {

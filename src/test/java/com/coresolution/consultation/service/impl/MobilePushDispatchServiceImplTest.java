@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -35,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,8 +93,16 @@ class MobilePushDispatchServiceImplTest {
     @Mock
     private MobilePushInboxPersister mobilePushInboxPersister;
 
+    @Mock
+    private ScheduleNotificationEligibility scheduleNotificationEligibility;
+
     @InjectMocks
     private MobilePushDispatchServiceImpl mobilePushDispatchService;
+
+    @BeforeEach
+    void allowScheduleNotifications() {
+        lenient().when(scheduleNotificationEligibility.isSendable(any(), any(), any(), any())).thenReturn(true);
+    }
 
     @Test
     @DisplayName("Expo access token 미설정이면 토큰 조회·멱등·Expo POST를 하지 않는다")
@@ -1433,5 +1444,102 @@ class MobilePushDispatchServiceImplTest {
         Map<String, String> dataPayload = (Map<String, String>) messages.get(0).get("data");
         assertThat(dataPayload).containsEntry("type", MobilePushCanonicalTypes.OTP_DELIVERY);
         assertThat(dataPayload).containsEntry("purpose", "phone_change");
+    }
+
+    @Test
+    @DisplayName("예약 리마인더 — 발송 자격이 없으면 멱등 claim과 Expo POST를 하지 않는다")
+    void dispatchBookingReminder_whenNotSendable_doesNotFanout() {
+        // Given
+        when(scheduleNotificationEligibility.isSendable(any(), any(), any(), any())).thenReturn(false);
+        Schedule schedule = reminderSchedule();
+
+        // When
+        mobilePushDispatchService.dispatchBookingReminder("tenant-a", schedule, "상담이 곧 시작됩니다.", "T60");
+
+        // Then
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("예약 변경 — 현재·이전 슬롯 모두 발송 불가면 팬아웃하지 않는다")
+    void dispatchBookingRescheduled_whenCurrentAndPreviousNotSendable_doesNotFanout() {
+        // Given
+        when(scheduleNotificationEligibility.isSendable(any(), any(), any(), any())).thenReturn(false);
+        Schedule schedule = reminderSchedule();
+        schedule.setDate(LocalDate.of(2026, 5, 21));
+        schedule.setStartTime(LocalTime.of(14, 0));
+
+        // When
+        mobilePushDispatchService.dispatchBookingRescheduled(
+                "tenant-a",
+                schedule,
+                LocalDate.of(2026, 5, 20),
+                LocalTime.of(10, 0),
+                LocalTime.of(11, 0),
+                null);
+
+        // Then
+        verify(mobilePushDispatchDedupService, never()).tryClaim(anyString(), anyString(), anyString(), anyString());
+        verify(restTemplate, never()).postForObject(anyString(), any(), eq(String.class));
+    }
+
+    @Test
+    @DisplayName("예약 변경 — 미커밋 새 슬롯은 막고 이전 슬롯이 발송 가능하면 팬아웃한다")
+    void dispatchBookingRescheduled_whenOnlyPreviousSlotSendable_stillFansOut() {
+        // Given
+        LocalDate newDate = LocalDate.of(2026, 5, 21);
+        LocalTime newStart = LocalTime.of(14, 0);
+        LocalDate previousDate = LocalDate.of(2026, 5, 20);
+        LocalTime previousStart = LocalTime.of(10, 0);
+        when(scheduleNotificationEligibility.isSendable(eq("tenant-a"), eq(50L), eq(newDate), eq(newStart)))
+                .thenReturn(false);
+        when(scheduleNotificationEligibility.isSendable(eq("tenant-a"), eq(50L), eq(previousDate), eq(previousStart)))
+                .thenReturn(true);
+        when(expoPushProperties.getAccessToken()).thenReturn("expo-test-token");
+        when(expoPushProperties.getApiUrl()).thenReturn("https://exp.test/--/api/v2/push/send");
+
+        MobilePushToken clientToken = new MobilePushToken();
+        clientToken.setPushToken("ExponentPushToken[reschedule-client]");
+        clientToken.setUserId(77L);
+        MobilePushToken consultantToken = new MobilePushToken();
+        consultantToken.setPushToken("ExponentPushToken[reschedule-consultant]");
+        consultantToken.setUserId(88L);
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(77L)))).thenReturn(List.of(clientToken));
+        when(mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(eq("tenant-a"),
+                eq(List.of(88L)))).thenReturn(List.of(consultantToken));
+        when(mobilePushDispatchDedupService.tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString()))
+                .thenReturn(true);
+        when(restTemplate.postForObject(eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class)))
+                .thenReturn("{\"data\":[{\"status\":\"ok\"}]}");
+
+        Schedule schedule = reminderSchedule();
+        schedule.setDate(newDate);
+        schedule.setStartTime(newStart);
+        schedule.setEndTime(LocalTime.of(15, 0));
+
+        // When
+        mobilePushDispatchService.dispatchBookingRescheduled(
+                "tenant-a", schedule, previousDate, previousStart, LocalTime.of(11, 0), null);
+
+        // Then
+        verify(mobilePushDispatchDedupService, times(2)).tryClaim(
+                eq("tenant-a"), eq(MobilePushCanonicalTypes.BOOKING_RESCHEDULED), eq("50"), anyString());
+        verify(restTemplate, times(2)).postForObject(
+                eq("https://exp.test/--/api/v2/push/send"), any(), eq(String.class));
+    }
+
+    private Schedule reminderSchedule() {
+        Schedule schedule = new Schedule();
+        schedule.setId(50L);
+        schedule.setTenantId("tenant-a");
+        schedule.setClientId(77L);
+        schedule.setConsultantId(88L);
+        schedule.setDate(LocalDate.of(2026, 6, 11));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(11, 0));
+        return schedule;
     }
 }

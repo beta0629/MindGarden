@@ -17,6 +17,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchDedupService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.util.MobilePushMessageFormatter;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -68,6 +69,7 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
      * 앱/웹 알림센터가 비어 있던 갭을 해소한다. 실패는 swallow.
      */
     private final MobilePushInboxPersister mobilePushInboxPersister;
+    private final ScheduleNotificationEligibility scheduleNotificationEligibility;
 
     @Override
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -77,6 +79,11 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         }
         String tid = requireTenantId(tenantId, schedule.getTenantId());
         if (tid == null) {
+            return;
+        }
+        if (!scheduleNotificationEligibility.isSendable(
+                tid, schedule.getId(), schedule.getDate(), schedule.getStartTime())) {
+            log.info("예약 리마인더 푸시 생략 — 일정 발송 자격 없음: scheduleId={}", schedule.getId());
             return;
         }
         Map<String, String> data = buildScheduleData(tid, schedule, MobilePushCanonicalTypes.BOOKING_REMINDER);
@@ -247,6 +254,10 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
         if (tid == null) {
             return;
         }
+        if (!isRescheduleFanoutAllowed(tid, schedule, previousDate, previousStart)) {
+            log.info("예약 변경 푸시 생략 — 일정 발송 자격 없음: scheduleId={}", schedule.getId());
+            return;
+        }
         String oldSlot = MobilePushMessageFormatter.formatScheduleSlot(previousDate, previousStart, previousEnd);
         String newSlot = MobilePushMessageFormatter.formatScheduleSlot(
                 schedule.getDate(), schedule.getStartTime(), schedule.getEndTime());
@@ -282,6 +293,34 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                         title, consultantBody, data, entityId, bucket + "|consultant");
             }
         }
+    }
+
+    /**
+     * 일정 변경 푸시 팬아웃 허용 여부.
+     *
+     * <p>이 메서드는 {@link Propagation#NOT_SUPPORTED} 라 호출부 트랜잭션의 미커밋 슬롯을
+     * 재조회가 보지 못한다. 커밋된 행이 메모리의 새 슬롯으로 발송 가능하면 진행하고,
+     * 메모리 슬롯이 이전 슬롯과 다르고 커밋된 행이 그 이전 슬롯으로 발송 가능할 때만 진행한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param schedule 호출부가 보유한 일정
+     * @param previousDate 변경 전 날짜
+     * @param previousStart 변경 전 시작 시각
+     * @return 팬아웃해도 되면 true
+     */
+    private boolean isRescheduleFanoutAllowed(
+            String tenantId, Schedule schedule, LocalDate previousDate, LocalTime previousStart) {
+        if (scheduleNotificationEligibility.isSendable(
+                tenantId, schedule.getId(), schedule.getDate(), schedule.getStartTime())) {
+            return true;
+        }
+        boolean slotDiffers = !Objects.equals(schedule.getDate(), previousDate)
+                || !Objects.equals(schedule.getStartTime(), previousStart);
+        if (!slotDiffers) {
+            return false;
+        }
+        return scheduleNotificationEligibility.isSendable(
+                tenantId, schedule.getId(), previousDate, previousStart);
     }
 
     /**

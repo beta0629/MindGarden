@@ -18,6 +18,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.ConsultationMessageService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -58,6 +59,7 @@ class WorkflowAutomationServiceImplTenantLoopTest {
     @Mock private MobilePushDispatchService mobilePushDispatchService;
     @Mock private SystemConfigService systemConfigService;
     @Mock private TenantService tenantService;
+    @Mock private ScheduleNotificationEligibility scheduleNotificationEligibility;
 
     private WorkflowAutomationServiceImpl service;
 
@@ -66,7 +68,7 @@ class WorkflowAutomationServiceImplTenantLoopTest {
         service = new WorkflowAutomationServiceImpl(
                 scheduleRepository, userRepository, consultationMessageService,
                 statisticsService, commonCodeService, mobilePushDispatchService,
-                systemConfigService, tenantService);
+                systemConfigService, tenantService, scheduleNotificationEligibility);
         when(systemConfigService.getGlobalBoolean(
                 eq(NotificationSchedulerFlagKeys.WORKFLOW_AUTOMATION_ENABLED), anyBoolean()))
             .thenReturn(true);

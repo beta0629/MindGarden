@@ -26,6 +26,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.scheduler.ReservationReminderScheduler;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -402,7 +403,7 @@ class ReservationReminderRescheduleResendIntegrationTest {
             mappingRepository, pendingRepository, dispatchService,
             mock(MobilePushDispatchService.class), properties,
             mock(SchedulerExecutionLogService.class), mock(SchedulerAlertService.class),
-            systemConfigService, smsTemplateService);
+            systemConfigService, smsTemplateService, mock(ScheduleNotificationEligibility.class));
     }
 
     private long lateSendsFor(String tenant, LocalDate slotDate) {

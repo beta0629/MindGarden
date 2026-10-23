@@ -78,6 +78,8 @@ spring:
         jdbc:
           batch_size: 20
           batch_versioned_data: true
+          # 표준화 v2 §F1: 모든 프로파일 KST 통일 (LocalDateTime ↔ TIMESTAMP 변환 기준)
+          time_zone: Asia/Seoul
     database-platform: org.hibernate.dialect.MySQLDialect
 
   # ⚠️ 포트 충돌 방지: 애플리케이션 종료 설정

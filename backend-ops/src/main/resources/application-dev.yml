@@ -39,6 +39,8 @@ spring:
           batch_size: 20
           batch_versioned_data: true
           fetch_size: 50
+          # 표준화 v2 §F1: 모든 프로파일 KST 통일 (LocalDateTime ↔ TIMESTAMP 변환 기준)
+          time_zone: Asia/Seoul
         logging:
           level:
             org.hibernate.SQL: INFO

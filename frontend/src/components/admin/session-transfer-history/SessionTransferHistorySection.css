@@ -1,0 +1,68 @@
+/**
+ * SessionTransferHistorySection — 토큰 기반 스타일
+ */
+
+.session-transfer-history {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+  min-height: 0;
+}
+
+.session-transfer-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-spacing-md);
+}
+
+.session-transfer-history__item {
+  margin: 0;
+  padding: var(--mg-spacing-md);
+  background: var(--mg-color-surface-main);
+  border: 1px solid var(--mg-color-border-main);
+  border-radius: var(--mg-radius-md);
+}
+
+.session-transfer-history__item-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-spacing-sm);
+}
+
+.session-transfer-history__headline {
+  margin: 0;
+  font-size: var(--mg-font-size-base, var(--font-size-md));
+  font-weight: 600;
+  color: var(--mg-color-text-main);
+}
+
+.session-transfer-history__meta {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+}
+
+.session-transfer-history__reason {
+  margin: var(--mg-spacing-xs) 0 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-main);
+}
+
+.session-transfer-history__error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--mg-spacing-md);
+  padding: var(--mg-spacing-md);
+}
+
+.session-transfer-history__error-message {
+  margin: 0;
+  font-size: var(--mg-font-size-sm, var(--font-size-sm));
+  color: var(--mg-color-text-secondary);
+}

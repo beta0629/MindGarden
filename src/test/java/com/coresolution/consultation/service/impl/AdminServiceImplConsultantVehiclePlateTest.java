@@ -134,6 +134,7 @@ class AdminServiceImplConsultantVehiclePlateTest {
     @Mock private UserLifecycleService userLifecycleService;
     @Mock private com.coresolution.consultation.service.AdminRequestIdempotencyService adminRequestIdempotencyService;
     @Mock private com.coresolution.consultation.service.SalaryTaxRateLookupService salaryTaxRateLookupService;
+    @Mock private com.coresolution.consultation.repository.PartnerInstitutionRepository partnerInstitutionRepository;
 
     @InjectMocks
     private AdminServiceImpl adminService;

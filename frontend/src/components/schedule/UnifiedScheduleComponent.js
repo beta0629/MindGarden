@@ -1260,7 +1260,9 @@ const UnifiedScheduleComponent = ({
                 consultantId,
                 date,
                 scheduleId,
-                clientId
+                clientId,
+                userId,
+                userRole
             });
             if (resolved?.id != null) {
                 handleConsultationLogModalOpen(resolved);
@@ -1293,7 +1295,7 @@ const UnifiedScheduleComponent = ({
         } finally {
             missingLogChipResolvingRef.current = false;
         }
-    }, [navigate, t]);
+    }, [navigate, t, userId, userRole]);
 
     /**
      * FullCalendar datesSet → 가시 범위 캡처 + 부모 onMonthChange 전달.

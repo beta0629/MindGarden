@@ -25,6 +25,15 @@ export const CONSULTATION_LOG_LOCAL_AUTOSAVE_MAX_INTERVAL_MS = 60 * 1000;
 export const CONSULTATION_LOG_SERVER_DRAFT_API_PATH = '/api/v1/schedules/consultation-records/draft';
 
 /**
+ * 초안 PUT expectedVersion 불일치(400) 시 재조회 후 재시도 횟수.
+ * 무한 루프 방지 — 1회만.
+ */
+export const CONSULTATION_LOG_DRAFT_VERSION_CONFLICT_RETRY_COUNT = 1;
+
+/** ValidationException.field / 메시지에서 버전 충돌 판별용 */
+export const CONSULTATION_LOG_DRAFT_EXPECTED_VERSION_FIELD = 'expectedVersion';
+
+/**
  * 상담일지 모달 "큰 본문" textarea 공통 최대 글자수.
  *
  * 적용 대상 (슈퍼블록 4개 + 풀폭 진행 평가):

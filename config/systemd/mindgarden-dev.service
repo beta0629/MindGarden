@@ -8,8 +8,10 @@ User=root
 WorkingDirectory=/var/www/mindgarden-dev
 # 세션 쿠키 도메인 등 OAuth/세션 env 로드 (파일 없으면 무시: -)
 EnvironmentFile=-/etc/mindgarden/dev.env
-# JVM 힙 설정 (AnomalyDetectionService 메모리 경고 방지)
-Environment=JAVA_OPTS="-Xms1g -Xmx4g -XX:+UseG1GC"
+# Dev JVM SSOT: /etc/mindgarden/dev-jvm.env (repo config/jvm/mindgarden-dev-jvm.env).
+# Loaded after dev.env so this file wins if dev.env still has JAVA_OPTS.
+# Previous 4g heap was for AnomalyDetection warnings; 4GB host RSS was ~2.1GB.
+EnvironmentFile=-/etc/mindgarden/dev-jvm.env
 ExecStart=/opt/mindgarden/start.sh
 Restart=always
 RestartSec=10

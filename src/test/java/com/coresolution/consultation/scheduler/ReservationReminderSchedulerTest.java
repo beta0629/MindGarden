@@ -19,6 +19,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.MobilePushDispatchService;
+import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.core.service.SchedulerAlertService;
@@ -38,6 +39,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -92,6 +94,8 @@ class ReservationReminderSchedulerTest {
     private SystemConfigService systemConfigService;
     @Mock
     private SmsTemplateService smsTemplateService;
+    @Mock
+    private ScheduleNotificationEligibility scheduleNotificationEligibility;
 
     private BatchNotificationProperties properties;
     private ReservationReminderScheduler scheduler;
@@ -103,7 +107,8 @@ class ReservationReminderSchedulerTest {
         scheduler = new ReservationReminderScheduler(tenantService, scheduleRepository,
             mappingRepository, immediateReservationSmsPendingRepository, dispatchService,
             mobilePushDispatchService, properties,
-            logService, alertService, systemConfigService, smsTemplateService);
+            logService, alertService, systemConfigService, smsTemplateService,
+            scheduleNotificationEligibility);
         when(smsTemplateService.isAutoDispatchEnabledFor(anyString(), anyString())).thenReturn(true);
         // 기본: DB 플래그 ON (기존 테스트 시나리오 그대로 동작).
         when(systemConfigService.getGlobalBoolean(
@@ -479,6 +484,10 @@ class ReservationReminderSchedulerTest {
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
         when(dispatchService.dispatchReservationImmediateLate(201L)).thenReturn(success(801L));
+        lenient().when(scheduleNotificationEligibility.isSendable(
+                eq(TENANT_A), eq(scheduleD1Push.getId()), eq(scheduleD1Push.getDate()),
+                eq(scheduleD1Push.getStartTime())))
+            .thenReturn(true);
 
         scheduler.runDailyReminder();
 
@@ -504,6 +513,10 @@ class ReservationReminderSchedulerTest {
         givenEligibleMapping(TENANT_A, 5002L, 6002L, 10, 3);
         when(dispatchService.dispatchReservationReminderD2(101L)).thenReturn(success(701L));
         when(dispatchService.dispatchReservationImmediateLate(201L)).thenReturn(success(801L));
+        lenient().when(scheduleNotificationEligibility.isSendable(
+                eq(TENANT_A), eq(scheduleD1Push.getId()), eq(scheduleD1Push.getDate()),
+                eq(scheduleD1Push.getStartTime())))
+            .thenReturn(true);
         org.mockito.Mockito.doThrow(new RuntimeException("expo down"))
             .when(mobilePushDispatchService).dispatchBookingReminder(
                 eq(TENANT_A), eq(scheduleD1Push), any(String.class),

@@ -28,6 +28,8 @@ jobs:
       LOCK_TESTS: |
         src/components/auth/__tests__/UnifiedLogin.processingButton.test.js
         src/utils/__tests__/sessionManager.callerCap.test.js
+        src/components/common/__tests__/PackageCompositionBuilder.test.js
+        src/hooks/__tests__/useCompositionCandidates.searchTerm.test.js
         src/components/common/__tests__/SessionIdleWarningModal.expiryLogout.test.js
         src/components/common/__tests__/SessionIdleWarningModal.expiryMsOffset.test.js
         src/utils/__tests__/sessionManager.idleExpiryBearer.test.js

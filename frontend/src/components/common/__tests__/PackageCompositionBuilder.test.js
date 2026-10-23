@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, within, createEvent } from '@testing-library/react';
 import PackageCompositionBuilder from '../PackageCompositionBuilder';
 import { COMPOSITION_FETCH_STATUS } from '../../../hooks/useCompositionCandidates';
 
@@ -39,6 +39,153 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(screen.getByText('판매가 12,000원 · 회기 없음(실물 상품)')).toBeTruthy();
     fireEvent.click(screen.getByLabelText('개인상담 4회 패키지 담기'));
     expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('담기 mousedown 은 기본 동작을 막고, relatedTarget 이 null 인 blur 뒤에도 클릭은 onAdd 를 한 번 호출한다', () => {
+    const h = setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const addButton = screen.getByRole('button', { name: '개인상담 4회 패키지 담기' });
+
+    const mouseDown = createEvent.mouseDown(addButton);
+    fireEvent(addButton, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+
+    fireEvent.focusOut(search, { relatedTarget: null });
+    fireEvent.click(addButton);
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('검색어가 이름 앞에 있으면 빈 앞조각을 「—」로 그리지 않는다', () => {
+    const candidate = {
+      skuId: 9,
+      label: '초기상담료',
+      catalogCategory: 'CONSULTATION',
+      unitPrice: 100000,
+      sessions: 1,
+      composed: false
+    };
+    setup({ candidates: [candidate], totalActive: 1, query: '초기' });
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const name = within(list).getByText((_, node) => (
+      node.classList?.contains('mg-package-composition__opt-name')
+      && node.textContent === '초기상담료'
+    ));
+    expect(name.textContent).toBe('초기상담료');
+    expect(name.textContent).not.toContain('—');
+    expect(list.textContent).not.toContain('—');
+  });
+
+  test('재조회 LOADING 중에도 이전 결과의 담기 버튼이 남고 클릭된다', () => {
+    const onAdd = jest.fn();
+    const props = {
+      candidates: [C1],
+      totalActive: 1,
+      status: COMPOSITION_FETCH_STATUS.READY,
+      onAdd,
+      onRemove: jest.fn(),
+      onQuantityChange: jest.fn(),
+      onDiscountChange: jest.fn(),
+      onQueryChange: jest.fn(),
+      onRecalc: jest.fn(),
+      onRetry: jest.fn()
+    };
+    const { rerender } = render(<PackageCompositionBuilder {...props} />);
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const addButton = screen.getByRole('button', { name: '개인상담 4회 패키지 담기' });
+    fireEvent.mouseDown(addButton);
+
+    rerender(
+      <PackageCompositionBuilder
+        {...props}
+        status={COMPOSITION_FETCH_STATUS.LOADING}
+      />
+    );
+
+    expect(screen.queryByText('몰 상품을 검색하는 중…')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '개인상담 4회 패키지 담기' }));
+    expect(onAdd).toHaveBeenCalledTimes(1);
+    expect(onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('첫 조회 LOADING 이고 후보가 없으면 검색 중 표시를 유지한다', () => {
+    setup({ candidates: [], totalActive: 2, status: COMPOSITION_FETCH_STATUS.LOADING });
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    expect(screen.getByText('몰 상품을 검색하는 중…')).toBeTruthy();
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+  });
+
+  test('후보 행을 클릭하면 onAdd 가 한 번 호출되고, 행 mousedown 은 기본 동작을 막는다', () => {
+    const h = setup();
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const row = within(list).getAllByRole('option')[0];
+    const mouseDown = createEvent.mouseDown(row);
+    fireEvent(row, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+    fireEvent.click(within(list).getByText('개인상담 4회 패키지'));
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('담긴 행과 이미 구성된 행은 클릭과 Enter 로도 담기지 않는다', () => {
+    const composed = { ...C2, composed: true };
+    const h = setup({ items: [ITEM1], candidates: [C1, composed], totalActive: 2 });
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const list = screen.getByRole('listbox', { name: '몰 상품 검색 결과' });
+    const rows = within(list).getAllByRole('option');
+    fireEvent.click(rows[0]);
+    fireEvent.click(rows[1]);
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(h.onAdd).not.toHaveBeenCalled();
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+  });
+
+  test('행 안의 담기 버튼을 눌러도 onAdd 는 한 번만 호출된다', () => {
+    const h = setup();
+    fireEvent.focus(screen.getByLabelText('몰 상품 검색'));
+    fireEvent.click(screen.getByRole('button', { name: '개인상담 4회 패키지 담기' }));
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+  });
+
+  test('아래·위 화살표로 활성 행을 옮기고 Enter 로 한 번 담으며 Escape 는 목록을 닫는다', () => {
+    const h = setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    const options = within(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).getAllByRole('option');
+
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[0].id);
+    fireEvent.keyDown(search, { key: 'ArrowDown' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[1].id);
+    fireEvent.keyDown(search, { key: 'ArrowUp' });
+    expect(search.getAttribute('aria-activedescendant')).toBe(options[0].id);
+
+    fireEvent.keyDown(search, { key: 'Enter' });
+    expect(h.onAdd).toHaveBeenCalledTimes(1);
+    expect(h.onAdd).toHaveBeenCalledWith(C1);
+
+    fireEvent.keyDown(search, { key: 'Escape' });
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+  });
+
+  test('검색 칸에서 바깥 요소로 포커스가 이동하면 목록이 닫힌다', () => {
+    setup();
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    const outside = document.createElement('button');
+    outside.type = 'button';
+    document.body.appendChild(outside);
+    fireEvent.focusOut(search, { relatedTarget: outside });
+    expect(screen.queryByRole('listbox', { name: '몰 상품 검색 결과' })).toBeNull();
+    outside.remove();
   });
 
   test('이미 담은 후보는 「담김」이고 담기 버튼이 없다', () => {
@@ -91,6 +238,38 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(screen.getByText('최종 판매가')).toBeTruthy();
     expect(screen.getByText('309,600원')).toBeTruthy();
     expect(screen.getByText('24,000원')).toBeTruthy();
+  });
+
+  test('목록이 열린 채 삭제 ✕ 를 mousedown 한 뒤 클릭하면 항목을 뺀다', () => {
+    const h = setup({ items: [ITEM1, ITEM2] });
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    const remove = screen.getByRole('button', { name: '개인상담 4회 패키지 삭제' });
+    const icon = remove.querySelector('svg');
+    const mouseDown = createEvent.mouseDown(icon);
+    fireEvent(icon, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+    fireEvent.focusOut(search, { relatedTarget: remove });
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    fireEvent.click(remove);
+    expect(h.onRemove).toHaveBeenCalledTimes(1);
+    expect(h.onRemove).toHaveBeenCalledWith(ITEM1.skuId);
+
+    const increase = screen.getByRole('button', { name: '마음일기 노트 수량 늘리기' });
+    const increaseDown = createEvent.mouseDown(increase);
+    fireEvent(increase, increaseDown);
+    expect(increaseDown.defaultPrevented).toBe(true);
+    fireEvent.click(increase);
+    expect(h.onQuantityChange).toHaveBeenCalledTimes(1);
+    expect(h.onQuantityChange).toHaveBeenCalledWith(ITEM2.skuId, ITEM2.quantity + 1);
+
+    const discount = screen.getByLabelText(/할인율/);
+    const discountDown = createEvent.mouseDown(discount);
+    fireEvent(discount, discountDown);
+    expect(discountDown.defaultPrevented).toBe(false);
   });
 
   test('수량 스테퍼: 늘리기·줄이기, 1에서는 줄이기 잠금', () => {

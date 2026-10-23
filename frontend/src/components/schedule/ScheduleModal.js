@@ -43,6 +43,7 @@ import { useTranslation } from 'react-i18next';
 /**
  * @param {Object} [preFilledMapping] - 매칭 통합 화면에서 전달 시 상담사/내담자 자동 채움. { consultantId, clientId, consultantName?, clientName? }
  * @param {() => void} [onScheduleCreateFailed] - 생성 실패 시(통합 화면 등) 부모 목록 갱신용
+ * @param {Array} [calendarEvents] - 월간 캘린더 이벤트. 동일 상담사·당일만 슬롯 점유 보강
  */
 const ScheduleModalNew = ({
     isOpen,
@@ -53,7 +54,8 @@ const ScheduleModalNew = ({
     userId,
     onScheduleCreated,
     onScheduleCreateFailed,
-    preFilledMapping
+    preFilledMapping,
+    calendarEvents
 }) => {
     const { t } = useTranslation();
     const [selectedConsultant, setSelectedConsultant] = useState(null);
@@ -457,6 +459,7 @@ const ScheduleModalNew = ({
                                     selectedTimeSlot={selectedTimeSlot}
                                     onTimeSlotSelect={handleTimeSlotSelect}
                                     onCodeOptionsLoaded={handleCodeOptionsLoaded}
+                                    calendarEvents={calendarEvents}
                                 />
                             </div>
                         </div>

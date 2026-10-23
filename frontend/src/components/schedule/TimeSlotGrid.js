@@ -1,17 +1,32 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
+import SafeText from '../common/SafeText';
 import { API_BASE_URL } from '../../constants/api';
 import notificationManager from '../../utils/notification';
 import '../../styles/main.css';
 import './TimeSlotGrid.css';
 import { 
-    BUSINESS_HOURS, 
-    TIME_SLOT_INTERVAL, 
     DEFAULT_CONSULTATION_DURATION,
-    isScheduleStatusOccupyingTimeSlotForConflict,
-    resolveScheduleStatusCodeForConflict,
+    TIME_SLOT_PAST_BADGE_TEXT,
+    TIME_SLOT_PAST_CLICK_MESSAGE,
+    TIME_SLOT_CONFLICT_BADGE_TEXT,
+    TIME_SLOT_AVAILABLE_BADGE_TEXT,
+    TIME_SLOT_VACATION_BADGE_TEXT,
+    TIME_SLOT_SELECTED_BADGE_TEXT,
+    TIME_SLOT_UNAVAILABLE_BADGE_TEXT,
+    TIME_SLOT_OCCUPYING_START_HINT_LABEL,
+    TIME_SLOT_OCCUPY_HINT_CLASS,
+    TIME_SLOT_OCCUPY_HINT_LEGACY_CLASS,
     isScheduleShownInExistingBookingsList
 } from '../../constants/schedule';
+import { isSameDayTimeSlotInPast } from '../../utils/isSameDayTimeSlotInPast';
+import { toDisplayString } from '../../utils/safeDisplay';
+import {
+    checkTimeSlotConflict,
+    formatOccupyingScheduleTimeRange,
+    formatOccupyingStartHint,
+    mergeOccupancySchedules
+} from '../../utils/timeSlotOccupancy';
 
 /**
  * 시간 슬롯 그리드 컴포넌트
@@ -23,6 +38,9 @@ import {
  * - 충돌 검사 및 가용성 표시
 /**
  * 
+/**
+ * @param {Array} [occupyingHints] 점유 보강 일정(동일 상담사·당일만)
+ * @param {Array} [calendarEvents] 월간 캘린더 이벤트(동일 상담사·당일만)
 /**
  * @author Core Solution
 /**
@@ -37,7 +55,9 @@ const TimeSlotGrid = ({
     onTimeSlotSelect, 
     selectedTimeSlot,
     variant = 'default', // 'default' | 'b0kla' — B0KlA 모달용 아토믹 클래스
-    excludeScheduleId = null
+    excludeScheduleId = null,
+    occupyingHints = null,
+    calendarEvents = null
 }) => {
     // date prop을 selectedDate로 사용
     const selectedDate = date;
@@ -46,6 +66,33 @@ const TimeSlotGrid = ({
     const [loading, setLoading] = useState(false);
     const [consultantInfo, setConsultantInfo] = useState(null);
     const [vacationInfo, setVacationInfo] = useState(null);
+
+    const occupancySchedules = useMemo(
+        () => mergeOccupancySchedules({
+            schedules: existingSchedules,
+            occupyingHints,
+            calendarEvents,
+            consultantId,
+            selectedDate: date,
+            excludeScheduleId
+        }),
+        [existingSchedules, occupyingHints, calendarEvents, consultantId, date, excludeScheduleId]
+    );
+
+    /**
+     * 시간 충돌 검사 — 순수 유틸만 호출 (재예약 시 excludeScheduleId 제외는 병합 단계에서 처리)
+     */
+    const resolveSlotConflict = (slot, schedules) => checkTimeSlotConflict({
+        slotTime: slot.time,
+        slotEndTime: slot.endTime,
+        durationMinutes: duration,
+        schedules,
+        excludeScheduleId,
+        consultantId,
+        selectedDate: date
+    });
+
+    const checkTimeConflict = (slot, schedules) => resolveSlotConflict(slot, schedules).conflict;
 
     useEffect(() => {
         if (consultantId) {
@@ -61,7 +108,7 @@ const TimeSlotGrid = ({
         if (consultantInfo) {
             generateTimeSlots();
         }
-    }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId]);
+    }, [consultantInfo, duration, vacationInfo, existingSchedules, excludeScheduleId, occupyingHints, calendarEvents]);
 
     // 선택된 시간 슬롯이 변경될 때마다 슬롯 가용성 업데이트
     useEffect(() => {
@@ -242,11 +289,13 @@ const TimeSlotGrid = ({
                     // 현재 시간과 비교하여 지난 시간인지 확인
                     const isPastTime = isTimeInPast(timeString, selectedDate);
                     
-                    // 기존 스케줄과의 충돌 확인
-                    const hasConflict = checkTimeConflict({
+                    const slotForConflict = {
                         time: timeString,
                         endTime: slotEndTime
-                    }, existingSchedules);
+                    };
+                    const hasConflict = checkTimeConflict(slotForConflict, occupancySchedules);
+                    const occupyingStartHint = resolveSlotConflict(slotForConflict, occupancySchedules)
+                        .occupyingStartHm;
                     
                     slots.push({
                         id: `slot-${timeString}`,
@@ -255,6 +304,7 @@ const TimeSlotGrid = ({
                         duration: duration,
                         available: !isVacationTime && !isPastTime && !hasConflict,
                         conflict: hasConflict,
+                        occupyingStartHint: occupyingStartHint,
                         vacation: isVacationTime,
                         past: isPastTime
                     });
@@ -283,32 +333,11 @@ const TimeSlotGrid = ({
         setTimeSlots(sortedSlots);
     };
 
-/**
-     * 지난 시간인지 확인
+    /**
+     * 지난 시간인지 확인 (리드타임 버퍼 없음, 슬롯 시작 < now)
      */
-    const isTimeInPast = (timeString, selectedDate) => {
-        const now = new Date();
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const selectedDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-        
-        // 선택된 날짜가 오늘보다 이전이면 모든 시간이 지난 시간
-        if (selectedDay < today) {
-            return true;
-        }
-        
-        // 선택된 날짜가 오늘인 경우에만 시간 비교
-        if (selectedDay.getTime() === today.getTime()) {
-            const [hour, minute] = timeString.split(':').map(Number);
-            const slotTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hour, minute);
-            
-            // 현재 시간보다 30분 이전이면 지난 시간으로 간주 (예약 여유시간)
-            const bufferMinutes = 30;
-            const currentTimeWithBuffer = new Date(now.getTime() + bufferMinutes * 60000);
-            
-            return slotTime < currentTimeWithBuffer;
-        }
-        
-        return false;
+    const isTimeInPast = (timeString, selectedDateValue) => {
+        return isSameDayTimeSlotInPast(timeString, selectedDateValue, new Date());
     };
 
 /**
@@ -489,70 +518,25 @@ const TimeSlotGrid = ({
      * 슬롯 가용성 업데이트
      */
     const updateSlotAvailability = (schedules) => {
+        const merged = mergeOccupancySchedules({
+            schedules,
+            occupyingHints,
+            calendarEvents,
+            consultantId,
+            selectedDate: date,
+            excludeScheduleId
+        });
         setTimeSlots(prevSlots => 
             prevSlots.map(slot => {
-                const conflict = checkTimeConflict(slot, schedules);
+                const conflictResult = resolveSlotConflict(slot, merged);
                 return {
                     ...slot,
-                    available: !conflict && !slot.past && !slot.vacation,
-                    conflict: conflict
+                    available: !conflictResult.conflict && !slot.past && !slot.vacation,
+                    conflict: conflictResult.conflict,
+                    occupyingStartHint: conflictResult.occupyingStartHm
                 };
             })
         );
-    };
-
-    /** API LocalTime "HH:mm:ss" / 배열 / 객체와 슬롯 "HH:mm" 비교 정규화 */
-    const normalizeTimeStringForSlotCompare = (t) => {
-        if (t == null || t === '') {
-            return '';
-        }
-        if (typeof t === 'string') {
-            const m = t.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
-            if (!m) {
-                return t;
-            }
-            const h = String(Number(m[1])).padStart(2, '0');
-            const mi = String(Number(m[2])).padStart(2, '0');
-            return `${h}:${mi}`;
-        }
-        if (Array.isArray(t) && t.length >= 2) {
-            const h = String(Number(t[0])).padStart(2, '0');
-            const mi = String(Number(t[1])).padStart(2, '0');
-            return `${h}:${mi}`;
-        }
-        if (typeof t === 'object' && t.hour != null) {
-            const h = String(Number(t.hour)).padStart(2, '0');
-            const mi = String(Number(t.minute != null ? t.minute : 0)).padStart(2, '0');
-            return `${h}:${mi}`;
-        }
-        return String(t);
-    };
-
-/**
-     * 시간 충돌 검사 (재예약 시 excludeScheduleId 해당 일정은 제외)
-     */
-    const checkTimeConflict = (slot, schedules) => {
-        const slotStart = slot.time;
-        const slotEnd = slot.endTime;
-
-        const filtered =
-            excludeScheduleId == null || excludeScheduleId === ''
-                ? schedules
-                : schedules.filter((s) => String(s.id) !== String(excludeScheduleId));
-
-        const occupying = filtered.filter((s) => {
-            const code = resolveScheduleStatusCodeForConflict(s);
-            return isScheduleStatusOccupyingTimeSlotForConflict(code);
-        });
-        
-        return occupying.some(schedule => {
-            const scheduleStart = normalizeTimeStringForSlotCompare(schedule.startTime);
-            const scheduleEnd = normalizeTimeStringForSlotCompare(schedule.endTime);
-            
-            // 10분 휴식 시간을 고려한 충돌 검사
-            return isTimeOverlapping(slotStart, slotEnd, scheduleStart, scheduleEnd) ||
-                   isTimeTooClose(slotStart, slotEnd, scheduleStart, scheduleEnd);
-        });
     };
 
 /**
@@ -644,8 +628,7 @@ const TimeSlotGrid = ({
      */
     const handleSlotClick = (slot) => {
         if (slot.past) {
-            // 지난 시간 클릭 시 알림
-            notificationManager.show(`해당 시간은 이미 지났습니다.\n현재 시간 이후의 시간을 선택해주세요.`, 'info');
+            notificationManager.show(TIME_SLOT_PAST_CLICK_MESSAGE, 'info');
             return;
         }
         
@@ -678,12 +661,12 @@ const TimeSlotGrid = ({
      * 슬롯 상태 아이콘 (색상 원으로 대체)
      */
     const getSlotIcon = (slot) => {
-        if (slot.vacation) return { color: 'var(--mg-warning-500)', text: '휴' };
-        if (slot.past) return { color: 'var(--mg-secondary-500)', text: '과' };
-        if (slot.selected) return { color: 'var(--mg-success-500)', text: '선' };
-        if (slot.conflict) return { color: 'var(--mg-error-500)', text: '충' };
-        if (!slot.available) return { color: 'var(--mg-secondary-500)', text: '불' };
-        return { color: 'var(--mg-success-500)', text: '가' };
+        if (slot.vacation) return { color: 'var(--mg-warning-500)', text: TIME_SLOT_VACATION_BADGE_TEXT };
+        if (slot.past) return { color: 'var(--mg-secondary-500)', text: TIME_SLOT_PAST_BADGE_TEXT };
+        if (slot.selected) return { color: 'var(--mg-success-500)', text: TIME_SLOT_SELECTED_BADGE_TEXT };
+        if (slot.conflict) return { color: 'var(--mg-error-500)', text: TIME_SLOT_CONFLICT_BADGE_TEXT };
+        if (!slot.available) return { color: 'var(--mg-secondary-500)', text: TIME_SLOT_UNAVAILABLE_BADGE_TEXT };
+        return { color: 'var(--mg-success-500)', text: TIME_SLOT_AVAILABLE_BADGE_TEXT };
     };
 
 /**
@@ -712,7 +695,7 @@ const TimeSlotGrid = ({
     }
 
     const groupedSlots = groupSlotsByHour();
-    const existingSchedulesForDisplayList = existingSchedules.filter(isScheduleShownInExistingBookingsList);
+    const existingSchedulesForDisplayList = occupancySchedules.filter(isScheduleShownInExistingBookingsList);
 
     const getSlotModifierClass = (slot) => {
         if (slot.vacation) return 'mg-v2-ad-ts-item--vacation';
@@ -777,7 +760,14 @@ const TimeSlotGrid = ({
                                     key={slot.id}
                                     className={useB0kla ? `mg-v2-ad-ts-item ${getSlotModifierClass(slot)}` : getSlotLegacyClass(slot)}
                                     onClick={() => handleSlotClick(slot)}
-                                    title={`${slot.time} - ${slot.endTime} (${duration}분)`}
+                                    title={toDisplayString(
+                                        `${slot.time} - ${slot.endTime} (${duration}분)${
+                                            slot.conflict && slot.occupyingStartHint
+                                                ? ` ${formatOccupyingStartHint(slot.occupyingStartHint, TIME_SLOT_OCCUPYING_START_HINT_LABEL)}`
+                                                : ''
+                                        }`,
+                                        ''
+                                    )}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
@@ -791,14 +781,24 @@ const TimeSlotGrid = ({
                                         className={useB0kla ? 'mg-v2-ad-ts-item__icon' : 'mg-v2-time-slot-icon'}
                                         style={useB0kla ? undefined : { '--slot-icon-color': getSlotIcon(slot).color }}
                                     >
-                                        {getSlotIcon(slot).text}
+                                        <SafeText>{getSlotIcon(slot).text}</SafeText>
                                     </div>
                                     <div className={useB0kla ? 'mg-v2-ad-ts-item__time' : `mg-v2-time-slot-time ${slot.selected ? 'mg-v2-time-slot-time--selected' : 'mg-v2-time-slot-time--available'}`}>
-                                        {slot.time}
+                                        <SafeText>{slot.time}</SafeText>
                                     </div>
                                     <div className={useB0kla ? 'mg-v2-ad-ts-item__duration' : 'mg-v2-time-slot-duration-text'}>
-                                        {duration}분
+                                        <SafeText>{`${duration}분`}</SafeText>
                                     </div>
+                                    {slot.conflict && slot.occupyingStartHint ? (
+                                        <div className={useB0kla ? TIME_SLOT_OCCUPY_HINT_CLASS : TIME_SLOT_OCCUPY_HINT_LEGACY_CLASS}>
+                                            <SafeText>
+                                                {formatOccupyingStartHint(
+                                                    slot.occupyingStartHint,
+                                                    TIME_SLOT_OCCUPYING_START_HINT_LABEL
+                                                )}
+                                            </SafeText>
+                                        </div>
+                                    ) : null}
                                 </div>
                             ))}
                         </div>
@@ -818,12 +818,14 @@ const TimeSlotGrid = ({
                     <h6 className={useB0kla ? 'mg-v2-ad-ts__existing-title' : 'mg-v2-schedule-info-title'}>기존 스케줄</h6>
                     <div className={useB0kla ? 'mg-v2-ad-ts__existing-list' : 'mg-v2-schedule-list'}>
                         {existingSchedulesForDisplayList.map(schedule => (
-                            <div key={schedule.id} className={useB0kla ? 'mg-v2-ad-ts__existing-item' : 'mg-v2-schedule-item'}>
+                            <div key={toDisplayString(schedule.id ?? formatOccupyingScheduleTimeRange(schedule), 'schedule')} className={useB0kla ? 'mg-v2-ad-ts__existing-item' : 'mg-v2-schedule-item'}>
                                 <span className={useB0kla ? 'mg-v2-ad-ts__existing-time' : 'mg-v2-schedule-time'}>
-                                    {schedule.startTime} - {schedule.endTime}
+                                    <SafeText>{formatOccupyingScheduleTimeRange(schedule)}</SafeText>
                                 </span>
                                 <span className={useB0kla ? 'mg-v2-ad-ts__existing-label' : 'mg-v2-schedule-title'}>
-                                    {schedule.title || `${schedule.consultantName || `상담사 ID ${schedule.consultantId || '알 수 없음'}`} - ${schedule.clientName || `내담자 ID ${schedule.clientId || '알 수 없음'}`}`}
+                                    <SafeText>
+                                        {schedule.title || `${schedule.consultantName || `상담사 ID ${schedule.consultantId || '알 수 없음'}`} - ${schedule.clientName || `내담자 ID ${schedule.clientId || '알 수 없음'}`}`}
+                                    </SafeText>
                                 </span>
                             </div>
                         ))}

@@ -10,7 +10,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 /**
  * 가예약 단일 일정 규칙·카드 hasConsultationSchedule enrich 점유 SSOT 검증.
- * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도 — COMPLETED 포함.
+ * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과 집합은 별도 SSOT이나 COMPLETED는 둘 다 포함.
  *
  * @author MindGarden
  * @since 2026-09-09
@@ -51,9 +51,9 @@ class ScheduleStatusOccupiesForProvisionalMappingGuardTest {
     }
 
     @Test
-    @DisplayName("COMPLETED는 슬롯 충돌 비점유이지만 가예약 매핑 가드에는 점유")
-    void completed_occupiesProvisionalButNotTimeConflict() {
+    @DisplayName("COMPLETED는 가예약 매핑 가드와 시간 슬롯 충돌 모두 점유")
+    void completed_occupiesProvisionalAndTimeConflict() {
         assertThat(ScheduleStatus.COMPLETED.occupiesForProvisionalMappingGuard()).isTrue();
-        assertThat(ScheduleStatus.COMPLETED.occupiesTimeForConflictCheck()).isFalse();
+        assertThat(ScheduleStatus.COMPLETED.occupiesTimeForConflictCheck()).isTrue();
     }
 }

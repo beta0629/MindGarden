@@ -73,7 +73,7 @@ function PackageCompositionBuilder({
 }) {
   const { t } = useTranslation(NS);
   const baseId = useId();
-  const wrapRef = useRef(null);
+  const rootRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [overRange, setOverRange] = useState(false);
   const [nav, setNav] = useState({ key: '', index: -1 });
@@ -102,17 +102,25 @@ function PackageCompositionBuilder({
     ? t('tagSession', { kind: t('kindSession'), n: item.sessions })
     : t('kindGoods'));
 
-  // 포커스가 검색 블록 밖 요소로 옮겨질 때만 닫는다.
-  // relatedTarget 이 null 인 blur(macOS Safari·Firefox 의 버튼 클릭)는 목록을 닫지 않는다.
+  // 포커스가 구성 빌더 밖 요소로 옮겨질 때만 닫는다.
+  // 삭제·수량처럼 빌더 안의 컨트롤, relatedTarget 이 null 인 blur 는 목록을 닫지 않는다.
   const handleBlur = (event) => {
     const next = event.relatedTarget;
-    if (next && wrapRef.current && !wrapRef.current.contains(next)) {
+    if (next && rootRef.current && !rootRef.current.contains(next)) {
       setOpen(false);
     }
   };
 
   // mousedown 기본 동작을 막아 검색 입력 포커스를 유지한다. 키보드 이동은 그대로다.
   const preventSearchBlur = (event) => {
+    event.preventDefault();
+  };
+
+  // 빌더 안 어디를 눌러도 목록이 닫히며 자리가 밀리지 않게 한다. 포커스가 필요한 입력은 그대로 둔다.
+  const keepFieldFocus = (event) => {
+    const raw = event.target;
+    const target = raw instanceof Element ? raw : raw?.parentElement;
+    if (target && target.closest('input, textarea, select, label')) return;
     event.preventDefault();
   };
 
@@ -252,9 +260,14 @@ function PackageCompositionBuilder({
   };
 
   return (
-    <div className="mg-package-composition" aria-busy={disabled ? 'true' : undefined}>
+    <div
+      className="mg-package-composition"
+      ref={rootRef}
+      onMouseDown={keepFieldFocus}
+      aria-busy={disabled ? 'true' : undefined}
+    >
       <p className="mg-package-composition__lead">{t('hint')}</p>
-      <div className="mg-package-composition__search-block" ref={wrapRef} onBlur={handleBlur}>
+      <div className="mg-package-composition__search-block" onBlur={handleBlur}>
         <label className="mg-package-composition__label" htmlFor={`${baseId}-search`}>
           {t('searchLabel')}
         </label>

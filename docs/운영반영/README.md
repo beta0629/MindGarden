@@ -2,6 +2,10 @@
 
 **목적**: 운영 서버 반영 준비 회의 산출물 및 의견서를 한곳에서 참조.
 
+## 홀드·일괄 반영 메모
+
+- **[PRODUCTION_BATCH_20260912_1500_KST.md](./PRODUCTION_BATCH_20260912_1500_KST.md)** — 문서/홀드. 2026-09-12 15:00 KST 이전 `main` 머지·운영 배포 금지. 회기 leftover(#977)·occupying rem=0 후보만 15시 이후 일괄.
+
 ## 운영 반영 전 필수(종합 체크리스트)
 
 - **[PRE_PRODUCTION_GO_LIVE_CHECKLIST.md](./PRE_PRODUCTION_GO_LIVE_CHECKLIST.md)** — 도메인·서브도메인·TLS·CORS·OAuth·보안·DB·인프라·스모크·전 에이전트 회의 합의 ( **Go-Live 시 최우선** )

@@ -23,10 +23,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
 /**
- * 가예약 카드 {@code hasConsultationSchedule} enrich — 상담사·내담자 쌍 점유(날짜 무관·COMPLETED 포함).
+ * 가예약 카드 {@code hasConsultationSchedule} enrich — 상담사·내담자 쌍 이력(날짜 무관·COMPLETED 포함).
  *
  * <p>레거시 {@code mapping_id IS NULL} COMPLETED 일정은 mappingId 전용 쿼리에 잡히지 않으므로
- * 쌍 키 배치 enrich 가 필요하다.</p>
+ * 쌍 키 배치 enrich 가 「일정 이력 있음」표시에 필요하다. 가예약 일정등록 차단에는 쓰지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-09-09
@@ -92,7 +92,9 @@ class AdminServiceImplProvisionalOccupancyPairEnrichTest {
                 mock(com.coresolution.consultation.service.RefundAutoCancelNotificationService.class),
                 mock(com.coresolution.consultation.service.UserLifecycleService.class),
                 mock(com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
     }
 
     @Test
@@ -110,7 +112,8 @@ class AdminServiceImplProvisionalOccupancyPairEnrichTest {
         verify(scheduleRepository).findConsultantClientPairsOccupyingSchedules(
                 eq(TENANT_ID), statusesCaptor.capture());
         assertThat(statusesCaptor.getValue())
-                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping())
+                .containsExactlyInAnyOrderElementsOf(
+                        ScheduleStatus.occupyingStatusesForConsultationScheduleHistory())
                 .contains(ScheduleStatus.COMPLETED, ScheduleStatus.IN_PROGRESS);
     }
 
@@ -130,5 +133,24 @@ class AdminServiceImplProvisionalOccupancyPairEnrichTest {
     void getConsultantClientKeysWithOccupyingConsultationSchedules_blankTenant_returnsEmpty() {
         assertThat(adminService.getConsultantClientKeysWithOccupyingConsultationSchedules(null)).isEmpty();
         assertThat(adminService.getConsultantClientKeysWithOccupyingConsultationSchedules("")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("OPEN mappingId enrich 는 occupyingStatusesForProvisionalMapping (COMPLETED 제외)")
+    void getMappingIdsWithOpenOccupyingConsultationSchedules_usesOpenStatuses() {
+        when(scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(eq(TENANT_ID), any()))
+                .thenReturn(List.of(269L));
+
+        Set<Long> ids = adminService.getMappingIdsWithOpenOccupyingConsultationSchedules(TENANT_ID);
+
+        assertThat(ids).containsExactly(269L);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ScheduleStatus>> statusesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(scheduleRepository).findDistinctMappingIdsWithOccupyingSchedules(
+                eq(TENANT_ID), statusesCaptor.capture());
+        assertThat(statusesCaptor.getValue())
+                .containsExactlyInAnyOrderElementsOf(ScheduleStatus.occupyingStatusesForProvisionalMapping())
+                .doesNotContain(ScheduleStatus.COMPLETED);
     }
 }

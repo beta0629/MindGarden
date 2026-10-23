@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
@@ -134,17 +135,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     private final NotificationBatchSendLogRepository notificationBatchSendLogRepository;
     private final SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
     private final ObjectMapper sessionHistoryObjectMapper = new ObjectMapper();
-
-    /**
-     * 옵션 B 결제 의도 코드 — 매핑 {@code payment_timing} 컬럼 값.
-     * <ul>
-     *   <li>{@code "ADVANCE"} — 선납 입금 (기본/현행 흐름)</li>
-     *   <li>{@link #PAYMENT_TIMING_SAME_DAY_CARD} — 당일 방문 카드 결제 후 활성화 (옵션 B)</li>
-     *   <li>{@code null} — 레거시 매핑(마이그레이션 V20260606_006 이전). ADVANCE 와 동등 취급.</li>
-     * </ul>
-     * 신규 코드는 새 상수 클래스 분리 시 {@code PaymentTimingConstants} 로 이전될 예정.
-     */
-    private static final String PAYMENT_TIMING_SAME_DAY_CARD = "SAME_DAY_CARD";
 
     /**
      * R5 (2026-06-06) — «상담일지 미작성(누락)» 응답 대상 상태 집합 SSOT.
@@ -609,6 +599,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     @Override
     public Schedule createConsultantSchedule(Long consultantId, Long clientId, LocalDate date,
             LocalTime startTime, LocalTime endTime, String title, String description, boolean tentativeBeforeDeposit) {
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성: 상담사 {}, 내담자 {}, 날짜 {}, 가예약={} (요청={})", consultantId, clientId, date,
@@ -711,6 +704,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.warn("⚠️ Deprecated 파라미터: branchCode는 더 이상 사용하지 않음. branchCode={}", branchCode);
         }
         String tenantId = com.coresolution.core.context.TenantContextHolder.getTenantId();
+        if (tentativeBeforeDeposit && hasInstitutionLinkMappingForPair(consultantId, clientId)) {
+            throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_INSTITUTION_LINK_NOT_PROVISIONAL);
+        }
         boolean effectiveTentative = resolveEffectiveTentativeBeforeDeposit(consultantId, clientId,
                 tentativeBeforeDeposit);
         log.info("📅 상담사 스케줄 생성 (상담유형 포함): 상담사 {}, 내담자 {}, 날짜 {}, 상담유형 {}, tenantId={}, 가예약={} (요청={})",
@@ -1246,6 +1242,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     "가예약 확정 시 회기 차감은 활성·입금대기 매핑에서만 가능합니다. mappingId="
                             + mappingId + ", status=" + mappingStatus);
         }
+        if (PaymentTimingConstants.isInstitutionLink(freshMapping.getPaymentTiming())) {
+            persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+            log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                    mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
+            return;
+        }
         Integer remaining = freshMapping.getRemainingSessions();
         if (remaining == null || remaining <= 0) {
             throw new IllegalStateException(
@@ -1712,7 +1714,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(tenantId,
                 MappingStatus.ACTIVE);
         for (ConsultantClientMapping mapping : activeMappings) {
-            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && !isInstitutionLinkPaymentTiming(mapping)) {
                 log.debug("가예약 허용 매칭: status=ACTIVE, mappingId={}", mapping.getId());
                 return true;
             }
@@ -1777,7 +1780,39 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 레거시(NULL paymentTiming)는 ADVANCE 동등 취급이므로 false 를 반환한다.
      */
     private boolean isSameDayCardPaymentTiming(ConsultantClientMapping mapping) {
-        return mapping != null && PAYMENT_TIMING_SAME_DAY_CARD.equalsIgnoreCase(mapping.getPaymentTiming());
+        return mapping != null && PaymentTimingConstants.isSameDayCard(mapping.getPaymentTiming());
+    }
+
+    private boolean isInstitutionLinkPaymentTiming(ConsultantClientMapping mapping) {
+        return mapping != null && PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming());
+    }
+
+    /**
+     * 상담사·내담자 쌍에 기관연계 배정이 있는지. 가예약과 교차하지 않는다.
+     *
+     * @param consultantId 상담사 ID
+     * @param clientId 내담자 ID
+     * @return 기관연계 매핑이 있으면 true
+     */
+    private boolean hasInstitutionLinkMappingForPair(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        for (ConsultantClientMapping mapping : activeMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        List<ConsultantClientMapping> pendingMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.PENDING_PAYMENT);
+        for (ConsultantClientMapping mapping : pendingMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && isInstitutionLinkPaymentTiming(mapping)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1856,15 +1891,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 가예약(effectiveTentative) 생성 시 동일 매핑에 이미 점유 일정이 있으면 fail-closed.
+     * 가예약(effectiveTentative) 생성 시 현재 매핑에 OPEN 점유 일정이 있으면 fail-closed.
      *
      * <p>점유 SSOT: {@link ScheduleStatus#occupyingStatusesForProvisionalMapping()}
-     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS; CANCELLED 제외).
+     * (BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / IN_PROGRESS; COMPLETED·CANCELLED 제외).
+     * 단회기 당일카드는 매 회기 새 매핑이므로 과거 COMPLETED(다른 mappingId·레거시 null mapping_id)는 이력이며 차단하지 않는다.
      * remainingSessions &gt; 0 이면 복수 스케줄 허용(의도적 예외).
      * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도.</p>
      *
      * @param mapping resolve된 매핑 (null이면 스킵)
-     * @throws RuntimeException 점유 일정 존재 + rem &lt;= 0
+     * @throws RuntimeException 현재 매핑 OPEN 점유 + rem &lt;= 0
      */
     private void assertProvisionalMappingNotAlreadyOccupied(ConsultantClientMapping mapping) {
         if (mapping == null || mapping.getId() == null) {
@@ -1878,22 +1914,16 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         List<ScheduleStatus> occupyingStatuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
         Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
         Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
-        // mapping_id 일치 또는 legacy(null mapping_id + 동일 상담사·내담자)
+        // 현재 mapping_id 또는 legacy(null mapping_id + 동일 상담사·내담자) OPEN만.
+        // 다른 mappingId 의 COMPLETED/OPEN 쌍 점유는 #991 범위 — 여기서 머지하지 않음.
         if (consultantId != null && clientId != null) {
             long forMapping = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
                     tenantId, mapping.getId(), consultantId, clientId, occupyingStatuses);
             if (forMapping > 0) {
                 throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
             }
-            // 다른 mappingId 에 묶인 동일 쌍 점유도 fail-closed (ops pair 케이스)
-            long forPair = scheduleRepository.countOccupyingConsultationSchedulesForConsultantClient(
-                    tenantId, consultantId, clientId, occupyingStatuses);
-            if (forPair > 0) {
-                throw new RuntimeException(ScheduleServiceUserFacingMessages.MSG_PROVISIONAL_ALREADY_HAS_SCHEDULE);
-            }
             return;
         }
-        // consultant/client 미해석 시 mappingId 전용 배치로 최소 fail-closed 유지
         List<Long> occupiedMappingIds = scheduleRepository.findDistinctMappingIdsWithOccupyingSchedules(
                 tenantId, occupyingStatuses);
         if (occupiedMappingIds != null && occupiedMappingIds.contains(mapping.getId())) {
@@ -1914,6 +1944,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             if (mapping.getConsultant().getId().equals(consultantId) && 
                 mapping.getClient().getId().equals(clientId)) {
                 
+                if (isInstitutionLinkPaymentTiming(mapping)) {
+                    log.debug("타기관 연계 매핑 — 회기 잔여 게이트 생략: mappingId={}", mapping.getId());
+                    return true;
+                }
                 Integer remainingSessions = mapping.getRemainingSessions();
                 log.debug("남은 회기 수: {}", remainingSessions);
                 
@@ -2654,6 +2688,46 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 schedule.getId(), mapping.getId(), sequence);
     }
 
+    /**
+     * 타기관 연계 방문 회차. 회기 {@code remainingSessions} 가 아니라 점유 상담 일정 건수로 매긴다.
+     * 일지 {@code sessionNumber} 가 {@code sessionSequence} 와 맞도록 일정 저장 시 스탬프한다.
+     *
+     * @param schedule 저장된 일정
+     * @param mapping 타기관 연계 매핑
+     */
+    private void persistInstitutionLinkVisitSequence(Schedule schedule, ConsultantClientMapping mapping) {
+        if (schedule == null || schedule.getId() == null || mapping == null || mapping.getId() == null) {
+            return;
+        }
+        if (schedule.getSessionSequence() != null) {
+            if (schedule.getMappingId() == null) {
+                schedule.setMappingId(mapping.getId());
+                scheduleRepository.save(schedule);
+            }
+            return;
+        }
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Long consultantId = mapping.getConsultant() != null
+                ? mapping.getConsultant().getId() : schedule.getConsultantId();
+        Long clientId = mapping.getClient() != null
+                ? mapping.getClient().getId() : schedule.getClientId();
+        long occupyingCount = 0L;
+        if (consultantId != null && clientId != null) {
+            occupyingCount = scheduleRepository.countOccupyingConsultationSchedulesForMapping(
+                    tenantId,
+                    mapping.getId(),
+                    consultantId,
+                    clientId,
+                    ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        }
+        int sequence = occupyingCount < 1L ? 1 : (int) occupyingCount;
+        schedule.setMappingId(mapping.getId());
+        schedule.setSessionSequence(sequence);
+        scheduleRepository.save(schedule);
+        log.info("타기관 연계 방문 회차 저장: scheduleId={}, mappingId={}, sessionSequence={}",
+                schedule.getId(), mapping.getId(), sequence);
+    }
+
      /**
      * 매칭의 회기 사용 처리
      */
@@ -2678,6 +2752,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             MappingStatus mappingStatus = freshMapping.getStatus();
             if (mappingStatus != MappingStatus.ACTIVE && mappingStatus != MappingStatus.SESSIONS_EXHAUSTED) {
                 log.warn("회기 차감 불가 매핑 상태: mappingId={}, status={}", mappingId, mappingStatus);
+                return;
+            }
+            if (isInstitutionLinkPaymentTiming(freshMapping)) {
+                persistInstitutionLinkVisitSequence(scheduleForSequence, freshMapping);
+                log.info("타기관 연계 방문 회차 저장(회기 차감 없음): mappingId={}, scheduleId={}",
+                        mappingId, scheduleForSequence != null ? scheduleForSequence.getId() : null);
                 return;
             }
             Integer remaining = freshMapping.getRemainingSessions();

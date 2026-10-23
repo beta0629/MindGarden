@@ -87,11 +87,17 @@ const fetchScheduleNotes = async(event) => {
  * @param {object} params
  * @param {boolean} params.enabled 알림 스위치 ON
  * @param {Array<object>} params.scheduleEvents 캘린더 스케줄 이벤트(휴일·휴가 제외 권장)
+ * @param {boolean} [params.paused=false] 다른 시작 전 모달이 열려 있으면 대기
+ * @param {{ current: boolean }} [params.pausedRef] 다른 훅이 연 모달 — fetch 이후에도 최신값 확인
  */
-export function useScheduleNotesReminder({ enabled, scheduleEvents }) {
+export function useScheduleNotesReminder({ enabled, scheduleEvents, paused = false, pausedRef }) {
   const remindedScheduleIdsRef = useRef(new Set());
   const inFlightRef = useRef(false);
+  const pausedFlagRef = useRef(paused);
+  pausedFlagRef.current = paused;
   const [reminderState, setReminderState] = useState(null);
+
+  const isPaused = () => pausedFlagRef.current || Boolean(pausedRef && pausedRef.current);
 
   const dismissReminder = useCallback(() => {
     if (reminderState?.scheduleId != null) {
@@ -101,7 +107,7 @@ export function useScheduleNotesReminder({ enabled, scheduleEvents }) {
   }, [reminderState?.scheduleId]);
 
   const checkReminders = useCallback(async() => {
-    if (!enabled || inFlightRef.current || reminderState) {
+    if (!enabled || isPaused() || inFlightRef.current || reminderState) {
       return;
     }
 
@@ -132,6 +138,9 @@ export function useScheduleNotesReminder({ enabled, scheduleEvents }) {
         remindedScheduleIdsRef.current.add(scheduleKey);
         return;
       }
+      if (isPaused()) {
+        return;
+      }
 
       const props = event.extendedProps || {};
       setReminderState({
@@ -147,7 +156,7 @@ export function useScheduleNotesReminder({ enabled, scheduleEvents }) {
     } finally {
       inFlightRef.current = false;
     }
-  }, [enabled, reminderState, scheduleEvents]);
+  }, [enabled, paused, reminderState, scheduleEvents]);
 
   useEffect(() => {
     if (!enabled) {

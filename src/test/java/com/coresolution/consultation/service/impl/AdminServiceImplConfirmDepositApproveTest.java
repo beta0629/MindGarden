@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
+import com.coresolution.consultation.constant.InstitutionLinkConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -240,7 +241,9 @@ class AdminServiceImplConfirmDepositApproveTest {
                         com.coresolution.consultation.service.UserLifecycleService.class),
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
         adminService = Mockito.spy(real);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
@@ -343,6 +346,52 @@ class AdminServiceImplConfirmDepositApproveTest {
         assertEquals(0, result.getRemainingSessions());
         verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
         verify(adminService, never()).createConsultationIncomeTransactionAsync(any());
+    }
+
+    @Test
+    @DisplayName("INSTITUTION_LINK confirmDeposit: remainingSessions 충전 금지(0 유지)")
+    void confirmDeposit_institutionLink_doesNotFillRemainingSessions() {
+        Long mappingId = 70L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setPaymentTiming(InstitutionLinkConstants.PAYMENT_TIMING);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(0);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
+                .thenReturn(Map.of("success", true, "message", "OK"));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-IL");
+
+        assertEquals(0, result.getRemainingSessions());
+        verify(scheduleService, never()).finalizeTentativeSchedulesAfterDepositConfirmed(any());
+        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("ADVANCE confirmDeposit: remainingSessions를 total-used 로 충전")
+    void confirmDeposit_advance_fillsRemainingSessions() {
+        Long mappingId = 71L;
+        ConsultantClientMapping mapping = buildMappingForConfirmDeposit(mappingId);
+        mapping.setPaymentTiming(InstitutionLinkConstants.PAYMENT_TIMING_ADVANCE);
+        mapping.setTotalSessions(10);
+        mapping.setRemainingSessions(0);
+        mapping.setUsedSessions(2);
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(mappingId))).thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        doNothing().when(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
+        when(storedProcedureService.updateMappingInfo(any(), any(), anyDouble(), anyInt(), any()))
+                .thenReturn(Map.of("success", true, "message", "OK"));
+
+        ConsultantClientMapping result = adminService.confirmDeposit(mappingId, "REF-ADV");
+
+        assertEquals(8, result.getRemainingSessions());
+        verify(scheduleService).finalizeTentativeSchedulesAfterDepositConfirmed(any(ConsultantClientMapping.class));
+        verify(adminService).createConsultationIncomeTransactionAsync(any(ConsultantClientMapping.class));
     }
 
     @Test

@@ -136,6 +136,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
     @Mock private UserLifecycleService userLifecycleService;
     @Mock private AdminRequestIdempotencyService adminRequestIdempotencyService;
     @Mock private SalaryTaxRateLookupService salaryTaxRateLookupService;
+    @Mock private com.coresolution.consultation.repository.InstitutionLinkContractRepository institutionLinkContractRepository;
 
     private final PlatformTransactionManager noopTransactionManager = new AbstractPlatformTransactionManager() {
         @Override
@@ -206,7 +207,9 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 refundAutoCancelNotificationService,
                 userLifecycleService,
                 adminRequestIdempotencyService,
-                salaryTaxRateLookupService);
+                salaryTaxRateLookupService,
+                null,
+                institutionLinkContractRepository);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

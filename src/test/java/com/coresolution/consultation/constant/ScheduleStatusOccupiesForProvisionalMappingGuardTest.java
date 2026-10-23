@@ -9,8 +9,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 /**
- * 가예약 단일 일정 규칙·카드 hasConsultationSchedule enrich 점유 SSOT 검증.
- * 시간 슬롯 충돌({@link ScheduleStatus#occupiesTimeForConflictCheck()})과는 별도 — COMPLETED 포함.
+ * 가예약 rem=0 일정등록 OPEN 점유 SSOT.
+ * COMPLETED는 이력 표시만({@link ScheduleStatus#occupiesForConsultationScheduleHistory()}).
  *
  * @author MindGarden
  * @since 2026-09-09
@@ -21,39 +21,51 @@ class ScheduleStatusOccupiesForProvisionalMappingGuardTest {
     @ParameterizedTest
     @EnumSource(
             value = ScheduleStatus.class,
-            names = {"BOOKED", "TENTATIVE_PENDING_PAYMENT", "CONFIRMED", "COMPLETED", "IN_PROGRESS"})
-    @DisplayName("상담 일정 점유 상태는 true")
+            names = {"BOOKED", "TENTATIVE_PENDING_PAYMENT", "CONFIRMED", "IN_PROGRESS"})
+    @DisplayName("OPEN 상담 일정 점유 상태는 true")
     void occupyingStatuses_returnTrue(ScheduleStatus status) {
         assertThat(status.occupiesForProvisionalMappingGuard()).isTrue();
+        assertThat(status.occupiesForConsultationScheduleHistory()).isTrue();
     }
 
     @ParameterizedTest
     @EnumSource(
             value = ScheduleStatus.class,
-            names = {"CANCELLED", "AVAILABLE", "VACATION"})
-    @DisplayName("CANCELLED·AVAILABLE·VACATION은 false")
+            names = {"CANCELLED", "AVAILABLE", "VACATION", "COMPLETED"})
+    @DisplayName("CANCELLED·AVAILABLE·VACATION·COMPLETED는 가예약 차단 false")
     void nonOccupyingStatuses_returnFalse(ScheduleStatus status) {
         assertThat(status.occupiesForProvisionalMappingGuard()).isFalse();
     }
 
     @Test
-    @DisplayName("occupyingStatusesForProvisionalMapping 목록에 COMPLETED·IN_PROGRESS 포함, CANCELLED 미포함")
-    void occupyingStatusesList_includesCompletedAndInProgress_excludesCancelled() {
+    @DisplayName("occupyingStatusesForProvisionalMapping 목록에 IN_PROGRESS 포함, COMPLETED·CANCELLED 미포함")
+    void occupyingStatusesList_includesInProgress_excludesCompletedAndCancelled() {
         List<ScheduleStatus> statuses = ScheduleStatus.occupyingStatusesForProvisionalMapping();
         assertThat(statuses).containsExactlyInAnyOrder(
                 ScheduleStatus.BOOKED,
                 ScheduleStatus.TENTATIVE_PENDING_PAYMENT,
                 ScheduleStatus.CONFIRMED,
-                ScheduleStatus.COMPLETED,
                 ScheduleStatus.IN_PROGRESS);
-        assertThat(statuses).doesNotContain(ScheduleStatus.CANCELLED, ScheduleStatus.AVAILABLE, ScheduleStatus.VACATION);
+        assertThat(statuses).doesNotContain(
+                ScheduleStatus.COMPLETED, ScheduleStatus.CANCELLED,
+                ScheduleStatus.AVAILABLE, ScheduleStatus.VACATION);
         assertThat(statuses).allMatch(ScheduleStatus::occupiesForProvisionalMappingGuard);
     }
 
     @Test
-    @DisplayName("COMPLETED는 슬롯 충돌 비점유이지만 가예약 매핑 가드에는 점유")
-    void completed_occupiesProvisionalButNotTimeConflict() {
-        assertThat(ScheduleStatus.COMPLETED.occupiesForProvisionalMappingGuard()).isTrue();
+    @DisplayName("이력 목록은 COMPLETED를 포함하고 가예약 OPEN 목록과 분리")
+    void historyStatusesList_includesCompleted() {
+        List<ScheduleStatus> history = ScheduleStatus.occupyingStatusesForConsultationScheduleHistory();
+        assertThat(history).contains(ScheduleStatus.COMPLETED, ScheduleStatus.IN_PROGRESS);
+        assertThat(history).containsAll(ScheduleStatus.occupyingStatusesForProvisionalMapping());
+        assertThat(history).allMatch(ScheduleStatus::occupiesForConsultationScheduleHistory);
+    }
+
+    @Test
+    @DisplayName("COMPLETED는 슬롯 충돌·가예약 차단 모두 비점유, 이력 표시만 true")
+    void completed_isHistoryNotProvisionalOccupy() {
+        assertThat(ScheduleStatus.COMPLETED.occupiesForProvisionalMappingGuard()).isFalse();
+        assertThat(ScheduleStatus.COMPLETED.occupiesForConsultationScheduleHistory()).isTrue();
         assertThat(ScheduleStatus.COMPLETED.occupiesTimeForConflictCheck()).isFalse();
     }
 }

@@ -207,7 +207,9 @@ class AdminServiceImplConsultationTrendCancelledCountTest {
                 refundAutoCancelNotificationService,
                 Mockito.mock(UserLifecycleService.class),
                 Mockito.mock(AdminRequestIdempotencyService.class),
-                Mockito.mock(SalaryTaxRateLookupService.class)
+                Mockito.mock(SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class)
         );
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
 

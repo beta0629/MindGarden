@@ -33,6 +33,7 @@
 | 관련 사고 문서 | 상대 경로 마크다운 링크 |
 | 외부 콘솔 | 콘솔명 + 회전 시각 |
 | 2026-06-14 18:14 | `JWT_SECRET` | `dev` | 재시도 | [27494295730](https://github.com/beta0629/MindGarden/actions/runs/27494295730) | beta0629 | len=128 hex, sha256=ad7b3541 (구 키 N/A — 평문 미보유). 정책 §3 자동 회전. |
+| 2026-10-02 02:05 | `DB_PASSWORD` (mindgarden_readonly) | `dev` | 정기 | [36896741137](https://github.com/beta0629/MindGarden/actions/runs/36896741137) | beta0629 | len=85, sha256=31786f29 (구 키 N/A — 평문 미보유). 정책 §3.3 자동 회전 (BE 미사용). |
 
 ---
 

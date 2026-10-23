@@ -240,6 +240,38 @@ describe('PackageCompositionBuilder (몰 SKU 구성)', () => {
     expect(screen.getByText('24,000원')).toBeTruthy();
   });
 
+  test('목록이 열린 채 삭제 ✕ 를 mousedown 한 뒤 클릭하면 항목을 뺀다', () => {
+    const h = setup({ items: [ITEM1, ITEM2] });
+    const search = screen.getByLabelText('몰 상품 검색');
+    fireEvent.focus(search);
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    const remove = screen.getByRole('button', { name: '개인상담 4회 패키지 삭제' });
+    const icon = remove.querySelector('svg');
+    const mouseDown = createEvent.mouseDown(icon);
+    fireEvent(icon, mouseDown);
+    expect(mouseDown.defaultPrevented).toBe(true);
+    fireEvent.focusOut(search, { relatedTarget: remove });
+    expect(screen.getByRole('listbox', { name: '몰 상품 검색 결과' })).toBeTruthy();
+
+    fireEvent.click(remove);
+    expect(h.onRemove).toHaveBeenCalledTimes(1);
+    expect(h.onRemove).toHaveBeenCalledWith(ITEM1.skuId);
+
+    const increase = screen.getByRole('button', { name: '마음일기 노트 수량 늘리기' });
+    const increaseDown = createEvent.mouseDown(increase);
+    fireEvent(increase, increaseDown);
+    expect(increaseDown.defaultPrevented).toBe(true);
+    fireEvent.click(increase);
+    expect(h.onQuantityChange).toHaveBeenCalledTimes(1);
+    expect(h.onQuantityChange).toHaveBeenCalledWith(ITEM2.skuId, ITEM2.quantity + 1);
+
+    const discount = screen.getByLabelText(/할인율/);
+    const discountDown = createEvent.mouseDown(discount);
+    fireEvent(discount, discountDown);
+    expect(discountDown.defaultPrevented).toBe(false);
+  });
+
   test('수량 스테퍼: 늘리기·줄이기, 1에서는 줄이기 잠금', () => {
     const h = setup({ items: [ITEM1, ITEM2] });
     expect(screen.getByLabelText('개인상담 4회 패키지 수량 줄이기').disabled).toBe(true);

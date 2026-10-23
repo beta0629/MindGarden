@@ -308,6 +308,45 @@
     </dependencies>
 
     <build>
+        <!-- ============================================================================
+             CI runner JVM heap + fork 표준 (STANDARDIZATION_ROADMAP §C6, PR #232)
+             - 참조: docs/project-management/2026-06-11/STANDARDIZATION_ROADMAP.md §C6
+             - 발견 소스: PR #232 (commit fadeef4c, 2026-06-12) — 244 IT 누적 OOM(Process Exit Code: 3)
+             - 적용 범위: maven-failsafe-plugin (통합 테스트), maven-surefire-plugin (단위 테스트)
+
+             [표준 값]
+               failsafe (통합 테스트):
+                 - forkCount=2, reuseForks=false  (각 IT 클래스마다 새 JVM, heap 누적 차단)
+                 - argLine: -Xmx3g -Xms512m -XX:MaxMetaspaceSize=1g
+                 - 총 fork 메모리 6g (GitHub Actions ubuntu-latest runner 7GB 한도 내 1g 안전 마진)
+                 - ExitOnOutOfMemoryError 제외 (heap dump/잔여 정리 기회 보전)
+
+               surefire (단위 테스트):
+                 - forkCount=1, reuseForks=true  (Spring TestContext 캐시 적중률 + Mockito 인라인 mock 안정성)
+                 - argLine: -Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m
+                 - 단위 테스트는 ApplicationContext 누적 캐시가 적어 OOM 위험 낮음 — failsafe 동일 정책 미적용.
+                 - ExitOnOutOfMemoryError 유지 (단위 OOM 은 즉시 회귀 알람이 더 가치 있음)
+
+             [공통 정책]
+               - 모든 테스트 fork 에 `-Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR` 고정
+                 (CI runner 기본 UTC 와 운영 KST 차이로 인한 LocalDate 경계 회귀 차단, hotfix-4 패턴).
+               - `forkedProcessTimeoutInSeconds` 로 단일 fork hang 명시적 실패 처리 (surefire 900s / failsafe 1800s).
+               - `forkedProcessExitTimeoutInSeconds=30` 으로 shutdown hook 미실행 시 강제 종료.
+               - `excludedGroups=local-mysql` 로 로컬 MySQL 의존 테스트 CI 제외.
+
+             [다른 plugin 검토 결과]
+               - maven-compiler-plugin: 컴파일러 heap 은 MAVEN_OPTS (환경변수) 로 제어. plugin 자체 heap 설정 불필요.
+               - maven-jar-plugin: 아카이브 작성만 수행, heap 부담 없음. 설정 불필요.
+               - spring-boot-maven-plugin: repackage/run 전용 jvmArguments 유지 (`-Xmx4g -Xms2g -XX:+UseG1GC ...`)
+                 — 테스트 fork 와 무관.
+
+             [sub-module]
+               - 본 프로젝트는 단일 pom.xml (parent: spring-boot-starter-parent). 자식 모듈 없음 → inherit 검토 불필요.
+
+             [C4 후속 영향 (변경 금지 영역)]
+               - 운영 BE Dockerfile / systemd `JAVA_TOOL_OPTIONS` 는 `deployment/jvm-memory-config.sh` 가 관리.
+                 본 표준(C6) 은 CI 테스트 fork 한정. 운영 JVM heap 정책은 C4 후속에서 별도 통일.
+             ============================================================================ -->
         <plugins>
             <!-- 운영 JAR 식별: git.properties + MANIFEST + Spring build-info.properties -->
             <plugin>
@@ -387,6 +426,11 @@
                 </configuration>
             </plugin>
 
+            <!-- maven-surefire-plugin: 단위 테스트(*Test.java, *Tests.java, *TestCase.java) 전용.
+                 표준 근거: STANDARDIZATION_ROADMAP §C6 (PR #232 — failsafe OOM 회귀 차단 표준화).
+                 - failsafe(통합 테스트) 와 달리 단위 테스트는 ApplicationContext 누적 캐시가 적어 OOM 위험이 낮음.
+                 - 따라서 reuseForks=true(캐시 적중) + 낮은 heap(2g) + ExitOnOutOfMemoryError(즉시 회귀 알람) 유지.
+                 - 동일 heap(3g) 미적용 사유: surefire 단위 테스트 244 케이스 누적 실측에서 -Xmx2g 한도 미접근. -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -405,8 +449,10 @@
                     </excludes>
                     <!-- 테스트 실패 시에도 빌드 계속 진행 (선택적) -->
                     <testFailureIgnore>false</testFailureIgnore>
-                    <!-- 단위 테스트는 가벼우므로 fork 재사용. Mockito 인라인 mock 사용 클래스에서
-                         Metaspace 부족 시 argLine 의 MaxMetaspaceSize 상한이 보호. -->
+                    <!-- C6 표준: 단위 테스트는 가벼우므로 fork 재사용(reuseForks=true). Mockito 인라인 mock 사용
+                         클래스에서 Metaspace 부족 시 argLine 의 MaxMetaspaceSize 상한이 보호.
+                         failsafe 의 forkCount=2 + reuseForks=false 패턴은 미적용 (단위 테스트는 ApplicationContext
+                         누적 캐시 부담이 작아 OOM 위험 낮음 — PR #232 분석 결과). -->
                     <forkCount>1</forkCount>
                     <reuseForks>true</reuseForks>
                     <!-- 단위 테스트 전용 JVM 옵션(heap + metaspace 상한).
@@ -414,7 +460,8 @@
                          경계 검증 테스트가 9F (균일 -1일) 로 회귀하는 사례를 차단하기 위해
                          JVM 시작 시점에 KST/ko_KR 로 고정한다. TimeZoneConfig 는 @PostConstruct 에서
                          재설정하지만, Hikari 풀 오픈/HikariConfig 가 기본 TZ 를 캐시한 이후라 늦다.
-                         (디버거 보고 §A 참조) -->
+                         (디버거 보고 §A 참조)
+                         ExitOnOutOfMemoryError 유지 — 단위 OOM 발생 시 즉시 회귀 알람이 디버깅에 더 유리. -->
                     <argLine>-Xmx2g -Xms512m -XX:MaxMetaspaceSize=512m -XX:+ExitOnOutOfMemoryError -Duser.timezone=Asia/Seoul -Duser.language=ko -Duser.country=KR</argLine>
                     <!-- 단일 fork 당 최대 15 분. 무한 hang 을 detect 하고 명시적 실패 처리. -->
                     <forkedProcessTimeoutInSeconds>900</forkedProcessTimeoutInSeconds>
@@ -429,7 +476,8 @@
                  surefire 의 단위 테스트와 분리되어 CI step 도 별도 job 으로 split (Stage 3).
                  lifecycle 기본 바인딩(integration-test, verify phase) 을 그대로 사용한다.
 
-                 forkCount=2 + reuseForks=false (2026-06-12 CI heap OOM 회귀 방지): 과거 단일 fork
+                 표준 근거: STANDARDIZATION_ROADMAP §C6 (PR #232, commit fadeef4c, 2026-06-12).
+                 forkCount=2 + reuseForks=false (CI heap OOM 회귀 방지): 과거 단일 fork
                  reuseForks=true 에서 Spring ApplicationContext 캐시 누적으로 244 통합 테스트 중
                  OOM(Java heap space) → fork 비정상 종료(Exit Code 3) 회귀가 발생.
                  각 테스트 클래스마다 새 JVM 으로 heap 누적을 차단하는 대신 컨텍스트 캐시 적중률은 일부 손실됨.

@@ -67,6 +67,8 @@ import {
 import ScheduleNotesReminderToggle from './integrated-schedule/molecules/ScheduleNotesReminderToggle';
 import ScheduleNotesReminderModal from './integrated-schedule/molecules/ScheduleNotesReminderModal';
 import { useScheduleNotesReminder } from './integrated-schedule/hooks/useScheduleNotesReminder';
+import PackageExpiryReminderModal from './integrated-schedule/molecules/PackageExpiryReminderModal';
+import { usePackageExpiryReminder } from './integrated-schedule/hooks/usePackageExpiryReminder';
 import '../../../styles/unified-design-tokens.css';
 import './IntegratedMatchingSchedule.css';
 import {
@@ -206,14 +208,29 @@ const IntegratedMatchingSchedule = () => {
   const handleScheduleEventsChange = useCallback((events) => {
     setScheduleEventsForReminder(Array.isArray(events) ? events : []);
   }, []);
+  const packageExpiryOpenRef = useRef(false);
   const {
     reminderState,
     dismissReminder,
     isReminderOpen
   } = useScheduleNotesReminder({
     enabled: notesReminderEnabled,
-    scheduleEvents: scheduleEventsForReminder
+    scheduleEvents: scheduleEventsForReminder,
+    pausedRef: packageExpiryOpenRef
   });
+  const {
+    reminderState: packageExpiryState,
+    dismissReminder: dismissPackageExpiry,
+    isReminderOpen: isPackageExpiryOpen
+  } = usePackageExpiryReminder({
+    enabled: true,
+    scheduleEvents: scheduleEventsForReminder,
+    mappings,
+    paused: isReminderOpen
+  });
+  useEffect(() => {
+    packageExpiryOpenRef.current = isPackageExpiryOpen;
+  }, [isPackageExpiryOpen]);
   const {
     savedView,
     setSavedView,
@@ -1472,6 +1489,15 @@ const IntegratedMatchingSchedule = () => {
         consultantName={reminderState?.consultantName}
         startTimeLabel={reminderState?.startTimeLabel}
         notes={reminderState?.notes ?? []}
+      />
+      <PackageExpiryReminderModal
+        isOpen={isPackageExpiryOpen}
+        onClose={dismissPackageExpiry}
+        clientName={packageExpiryState?.clientName}
+        consultantName={packageExpiryState?.consultantName}
+        startTimeLabel={packageExpiryState?.startTimeLabel}
+        remainingSessions={packageExpiryState?.remainingSessions}
+        totalSessions={packageExpiryState?.totalSessions}
       />
       <ConfirmModal />
     </div>

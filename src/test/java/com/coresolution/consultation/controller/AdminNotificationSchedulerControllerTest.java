@@ -31,6 +31,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -43,7 +44,7 @@ import org.springframework.http.ResponseEntity;
  * @author MindGarden
  * @since 2026-05-25
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AdminNotificationSchedulerController — 토글 + RBAC + whitelist + audit")
 class AdminNotificationSchedulerControllerTest {
 

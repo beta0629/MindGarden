@@ -4,10 +4,13 @@ import java.lang.reflect.Method;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -33,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @since 2026-06-11
  */
 @DisplayName("OAuth2Controller — dual-mount /api/auth + /api/v1/auth (nginx legacy proxy 정합 회귀 방어)")
+@ExtendWith(SecurityContextIsolationExtension.class)
 class OAuth2ControllerLegacyProxyTest {
 
     @Test

@@ -26,6 +26,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.springframework.core.env.Environment;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,7 +42,7 @@ import static org.mockito.Mockito.when;
  * 가입이 거절되고 {@link UserService#registerUser} 가 호출되지 않아야 한다.
  *
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @DisplayName("AuthController 공개 회원가입 전화 중복 거절")
 class AuthControllerPublicRegisterPhoneDuplicateTest {
 

@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.coresolution.testsupport.SecurityContextIsolationExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
@@ -38,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @author MindGarden
  * @since 2026-06-11
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, SecurityContextIsolationExtension.class})
 @MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("OAuth2Controller#assertRegisteredCallbackUrl — OAuth 4종 REGISTERED_URLS 검증 표준화")
 class OAuth2ControllerRegisteredUrlsTest {

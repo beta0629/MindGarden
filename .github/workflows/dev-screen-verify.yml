@@ -1,0 +1,363 @@
+# .dev 전용 읽기 전용 화면 검증
+#
+# Triggers:
+#   - workflow_dispatch (primary) — full inputs
+#   - pull_request → release/dev when this workflow or the collector script changes
+#     (fixed safe defaults; collector mode only)
+#
+# mode:
+#   - spec_file 비움 → tests/e2e/scripts/dev-screen-verify.mjs 수집기 실행
+#   - spec_file 설정 → 해당 Playwright 스펙만 실행 (playwright.manual.config.ts)
+#
+# 시크릿 SSOT: .cursor/skills/core-solution-testing/SKILL.md
+# 호스트: 스크립트 allowlist — mindgarden.dev.core-solution.co.kr, Cloudflare 별칭 mindgarden-dev.core-solution.co.kr, 또는 *.dev.core-solution.co.kr 만
+name: Dev screen verify (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Comma-separated paths (collector mode). e.g. /login,/admin/dashboard'
+        required: true
+        type: string
+        default: '/login,/admin/dashboard'
+      viewports:
+        description: 'Comma-separated viewport widths. e.g. 390,1440'
+        required: false
+        type: string
+        default: '390,1440'
+      role:
+        description: 'Login role for credential mapping'
+        required: false
+        type: choice
+        options:
+          - admin
+          - counselor
+          - client
+        default: admin
+      base_url:
+        description: '.dev base URL only (production/localhost rejected by script)'
+        required: false
+        type: string
+        default: 'https://mindgarden.dev.core-solution.co.kr'
+      spec_file:
+        description: 'If set, ONLY run this repo-relative Playwright spec under tests/e2e (skips collector). Empty = run collector script.'
+        required: false
+        type: string
+        default: ''
+      wait_ms:
+        description: 'Settle time after navigation (ms, collector mode)'
+        required: false
+        type: string
+        default: '2000'
+  pull_request:
+    branches:
+      - release/dev
+    paths:
+      - '.github/workflows/dev-screen-verify.yml'
+      - 'tests/e2e/scripts/dev-screen-verify.mjs'
+
+jobs:
+  dev-screen-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Without `environment: dev`, ${{ secrets.X }} only resolves repository-level secrets.
+    # E2E_* credentials live in the GitHub Environment `dev` (same pattern as deploy-backend-dev.yml).
+    environment: dev
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve inputs (dispatch inputs or PR defaults)
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_PATHS: ${{ github.event_name == 'workflow_dispatch' && inputs.paths || '' }}
+          INPUT_VIEWPORTS: ${{ github.event_name == 'workflow_dispatch' && inputs.viewports || '' }}
+          INPUT_ROLE: ${{ github.event_name == 'workflow_dispatch' && inputs.role || '' }}
+          INPUT_BASE_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.base_url || '' }}
+          INPUT_SPEC_FILE: ${{ github.event_name == 'workflow_dispatch' && inputs.spec_file || '' }}
+          INPUT_WAIT_MS: ${{ github.event_name == 'workflow_dispatch' && inputs.wait_ms || '' }}
+          SECRET_E2E_BASE_URL: ${{ secrets.E2E_BASE_URL }}
+        run: |
+          set -euo pipefail
+          # PR / non-dispatch: fixed safe defaults (collector against .dev)
+          PATHS_VAL="${INPUT_PATHS:-}"
+          VIEWPORTS_VAL="${INPUT_VIEWPORTS:-}"
+          ROLE_VAL="${INPUT_ROLE:-}"
+          BASE_VAL="${INPUT_BASE_URL:-}"
+          SPEC_VAL="${INPUT_SPEC_FILE:-}"
+          WAIT_VAL="${INPUT_WAIT_MS:-}"
+
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            PATHS_VAL="/login,/admin/dashboard"
+            VIEWPORTS_VAL="390,1440"
+            ROLE_VAL="admin"
+            BASE_VAL="https://mindgarden.dev.core-solution.co.kr"
+            SPEC_VAL=""
+            WAIT_VAL="2000"
+          fi
+
+          if [ -z "${PATHS_VAL}" ]; then PATHS_VAL="/login,/admin/dashboard"; fi
+          if [ -z "${VIEWPORTS_VAL}" ]; then VIEWPORTS_VAL="390,1440"; fi
+          if [ -z "${ROLE_VAL}" ]; then ROLE_VAL="admin"; fi
+          if [ -z "${BASE_VAL}" ]; then BASE_VAL="https://mindgarden.dev.core-solution.co.kr"; fi
+          if [ -z "${WAIT_VAL}" ]; then WAIT_VAL="2000"; fi
+
+          # Prefer resolved base_url. Optionally adopt E2E_BASE_URL secret only if it looks like .dev.
+          if [ -n "${SECRET_E2E_BASE_URL:-}" ]; then
+            case "${SECRET_E2E_BASE_URL}" in
+              *mindgarden.dev.core-solution.co.kr*|*mindgarden-dev.core-solution.co.kr*|*'.dev.core-solution.co.kr'*)
+                echo "secret_e2e_base_url_is_dev=true" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "secret_e2e_base_url_is_dev=false" >> "$GITHUB_OUTPUT"
+                echo "::warning::E2E_BASE_URL secret is set but not a .dev host; ignoring secret (resolved base_url wins)."
+                ;;
+            esac
+          else
+            echo "secret_e2e_base_url_is_dev=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          SPEC_TRIMMED="$(printf '%s' "${SPEC_VAL}" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          if [ -n "${SPEC_TRIMMED}" ]; then
+            echo "mode=spec" >> "$GITHUB_OUTPUT"
+            echo "spec_file=${SPEC_TRIMMED}" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=collector" >> "$GITHUB_OUTPUT"
+            echo "spec_file=" >> "$GITHUB_OUTPUT"
+          fi
+
+          {
+            echo "paths=${PATHS_VAL}"
+            echo "viewports=${VIEWPORTS_VAL}"
+            echo "role=${ROLE_VAL}"
+            echo "base_url=${BASE_VAL}"
+            echo "wait_ms=${WAIT_VAL}"
+            echo "event_name=${EVENT_NAME}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Resolved: event=${EVENT_NAME} mode=$( [ -n "${SPEC_TRIMMED}" ] && echo spec || echo collector ) role=${ROLE_VAL} paths=${PATHS_VAL} viewports=${VIEWPORTS_VAL} wait_ms=${WAIT_VAL}"
+          echo "base_url host gate enforced by collector/spec step (dev-only)."
+
+      - name: Credential gate (presence only — no secrets logged)
+        id: cred_gate
+        env:
+          ROLE: ${{ steps.resolve.outputs.role }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          E2E_CONSULTANT_LOGIN_ID: ${{ secrets.E2E_CONSULTANT_LOGIN_ID }}
+          E2E_CONSULTANT_PASSWORD: ${{ secrets.E2E_CONSULTANT_PASSWORD }}
+          CONSULTANT_USERNAME: ${{ secrets.CONSULTANT_USERNAME }}
+          CONSULTANT_PASSWORD: ${{ secrets.CONSULTANT_PASSWORD }}
+          E2E_CLIENT_LOGIN_ID: ${{ secrets.E2E_CLIENT_LOGIN_ID }}
+          E2E_CLIENT_PASSWORD: ${{ secrets.E2E_CLIENT_PASSWORD }}
+          TEST_CLIENT_USERNAME: ${{ secrets.TEST_CLIENT_USERNAME }}
+          TEST_CLIENT_PASSWORD: ${{ secrets.TEST_CLIENT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          ROLE_NORM="$(printf '%s' "${ROLE:-admin}" | tr '[:upper:]' '[:lower:]')"
+          HAS_USER=false
+          HAS_PASS=false
+          REQUIRED_NAMES=""
+          case "${ROLE_NORM}" in
+            admin)
+              if [ -n "${E2E_TEST_EMAIL:-}" ] || [ -n "${E2E_ADMIN_USERNAME:-}" ]; then HAS_USER=true; fi
+              if [ -n "${E2E_TEST_PASSWORD:-}" ] || [ -n "${E2E_ADMIN_PASSWORD:-}" ]; then HAS_PASS=true; fi
+              REQUIRED_NAMES="E2E_TEST_EMAIL, E2E_TEST_PASSWORD (fallback: E2E_ADMIN_USERNAME, E2E_ADMIN_PASSWORD)"
+              ;;
+            counselor)
+              if [ -n "${E2E_CONSULTANT_LOGIN_ID:-}" ] || [ -n "${CONSULTANT_USERNAME:-}" ]; then HAS_USER=true; fi
+              if [ -n "${E2E_CONSULTANT_PASSWORD:-}" ] || [ -n "${CONSULTANT_PASSWORD:-}" ]; then HAS_PASS=true; fi
+              REQUIRED_NAMES="E2E_CONSULTANT_LOGIN_ID, E2E_CONSULTANT_PASSWORD (fallback: CONSULTANT_USERNAME, CONSULTANT_PASSWORD)"
+              ;;
+            client)
+              if [ -n "${E2E_CLIENT_LOGIN_ID:-}" ] || [ -n "${TEST_CLIENT_USERNAME:-}" ]; then HAS_USER=true; fi
+              if [ -n "${E2E_CLIENT_PASSWORD:-}" ] || [ -n "${TEST_CLIENT_PASSWORD:-}" ]; then HAS_PASS=true; fi
+              REQUIRED_NAMES="E2E_CLIENT_LOGIN_ID, E2E_CLIENT_PASSWORD (fallback: TEST_CLIENT_USERNAME, TEST_CLIENT_PASSWORD)"
+              ;;
+            *)
+              echo "::error::Unknown role: ${ROLE_NORM}"
+              exit 1
+              ;;
+          esac
+          PRESENT=false
+          if [ "${HAS_USER}" = "true" ] && [ "${HAS_PASS}" = "true" ]; then PRESENT=true; fi
+          if [ "${PRESENT}" = "true" ]; then
+            AUTH_MODE="authenticated"
+          else
+            AUTH_MODE="unauthenticated"
+            echo "::warning::Missing E2E secrets for role=${ROLE_NORM}; continuing unauthenticated collector. Configure: ${REQUIRED_NAMES}"
+          fi
+          echo "role=${ROLE_NORM}" >> "$GITHUB_OUTPUT"
+          echo "credential_present=${PRESENT}" >> "$GITHUB_OUTPUT"
+          echo "auth_mode=${AUTH_MODE}" >> "$GITHUB_OUTPUT"
+          echo "Credential gate: role=${ROLE_NORM} credential_present=${PRESENT} auth_mode=${AUTH_MODE} (user=${HAS_USER} pass=${HAS_PASS})"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: tests/e2e/package-lock.json
+
+      - name: Install E2E dependencies
+        working-directory: tests/e2e
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+
+      - name: Install Playwright Chromium
+        working-directory: tests/e2e
+        run: npx playwright install chromium --with-deps
+
+      - name: Prepare artifacts directory
+        run: mkdir -p tests/e2e/artifacts/dev-screen-verify/screenshots
+
+      - name: Run collector (dev-screen-verify.mjs)
+        if: steps.resolve.outputs.mode == 'collector'
+        working-directory: tests/e2e
+        env:
+          CI: 'true'
+          ROLE: ${{ steps.cred_gate.outputs.role }}
+          AUTH_MODE: ${{ steps.cred_gate.outputs.auth_mode }}
+          SKIP_LOGIN: ${{ steps.cred_gate.outputs.auth_mode == 'unauthenticated' && 'true' || 'false' }}
+          PATHS: ${{ steps.resolve.outputs.paths }}
+          VIEWPORTS: ${{ steps.resolve.outputs.viewports }}
+          WAIT_MS: ${{ steps.resolve.outputs.wait_ms }}
+          BASE_URL: ${{ steps.resolve.outputs.base_url }}
+          E2E_BASE_URL: ${{ steps.resolve.outputs.secret_e2e_base_url_is_dev == 'true' && secrets.E2E_BASE_URL || '' }}
+          E2E_TENANT_ID: ${{ secrets.E2E_TENANT_ID }}
+          ARTIFACTS_DIR: ${{ github.workspace }}/tests/e2e/artifacts/dev-screen-verify
+          # admin
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          TEST_USERNAME: ${{ secrets.E2E_TEST_EMAIL != '' && secrets.E2E_TEST_EMAIL || secrets.E2E_ADMIN_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD != '' && secrets.E2E_TEST_PASSWORD || secrets.E2E_ADMIN_PASSWORD }}
+          # counselor
+          E2E_CONSULTANT_LOGIN_ID: ${{ secrets.E2E_CONSULTANT_LOGIN_ID }}
+          E2E_CONSULTANT_PASSWORD: ${{ secrets.E2E_CONSULTANT_PASSWORD }}
+          CONSULTANT_USERNAME: ${{ secrets.CONSULTANT_USERNAME }}
+          CONSULTANT_PASSWORD: ${{ secrets.CONSULTANT_PASSWORD }}
+          # client
+          E2E_CLIENT_LOGIN_ID: ${{ secrets.E2E_CLIENT_LOGIN_ID }}
+          E2E_CLIENT_PASSWORD: ${{ secrets.E2E_CLIENT_PASSWORD }}
+          TEST_CLIENT_USERNAME: ${{ secrets.TEST_CLIENT_USERNAME }}
+          TEST_CLIENT_PASSWORD: ${{ secrets.TEST_CLIENT_PASSWORD }}
+        run: node scripts/dev-screen-verify.mjs
+
+      - name: Run Playwright spec only (manual config)
+        if: steps.resolve.outputs.mode == 'spec'
+        working-directory: tests/e2e
+        env:
+          CI: 'true'
+          AUTH_MODE: ${{ steps.cred_gate.outputs.auth_mode }}
+          CREDENTIAL_PRESENT: ${{ steps.cred_gate.outputs.credential_present }}
+          BASE_URL: ${{ steps.resolve.outputs.base_url }}
+          E2E_BASE_URL: ${{ steps.resolve.outputs.secret_e2e_base_url_is_dev == 'true' && secrets.E2E_BASE_URL || '' }}
+          E2E_TENANT_ID: ${{ secrets.E2E_TENANT_ID }}
+          E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          E2E_ADMIN_USERNAME: ${{ secrets.E2E_ADMIN_USERNAME }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
+          TEST_USERNAME: ${{ secrets.E2E_TEST_EMAIL != '' && secrets.E2E_TEST_EMAIL || secrets.E2E_ADMIN_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD != '' && secrets.E2E_TEST_PASSWORD || secrets.E2E_ADMIN_PASSWORD }}
+          E2E_CONSULTANT_LOGIN_ID: ${{ secrets.E2E_CONSULTANT_LOGIN_ID }}
+          E2E_CONSULTANT_PASSWORD: ${{ secrets.E2E_CONSULTANT_PASSWORD }}
+          CONSULTANT_USERNAME: ${{ secrets.CONSULTANT_USERNAME }}
+          CONSULTANT_PASSWORD: ${{ secrets.CONSULTANT_PASSWORD }}
+          E2E_CLIENT_LOGIN_ID: ${{ secrets.E2E_CLIENT_LOGIN_ID }}
+          E2E_CLIENT_PASSWORD: ${{ secrets.E2E_CLIENT_PASSWORD }}
+          TEST_CLIENT_USERNAME: ${{ secrets.TEST_CLIENT_USERNAME }}
+          TEST_CLIENT_PASSWORD: ${{ secrets.TEST_CLIENT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          SPEC="${{ steps.resolve.outputs.spec_file }}"
+          ROLE_OUT="${{ steps.cred_gate.outputs.role }}"
+          ART_DIR="${{ github.workspace }}/tests/e2e/artifacts/dev-screen-verify"
+          mkdir -p "${ART_DIR}/screenshots"
+
+          # Reject non-.dev BASE_URL before playwright (same allowlist as collector script)
+          node -e '
+            const host = new URL(process.env.BASE_URL).hostname.toLowerCase();
+            const ok =
+              host === "mindgarden.dev.core-solution.co.kr" ||
+              host === "mindgarden-dev.core-solution.co.kr" ||
+              host.endsWith(".dev.core-solution.co.kr");
+            if (!ok || host === "localhost" || host === "127.0.0.1") {
+              console.error("BASE_URL host rejected (dev-only)");
+              process.exit(1);
+            }
+          '
+
+          if [ "${CREDENTIAL_PRESENT}" != "true" ] || [ "${AUTH_MODE}" = "unauthenticated" ]; then
+            echo "::warning::Skipping Playwright spec (credentials missing). Wrote minimal summary for PR proof."
+            {
+              echo "# Dev screen verify summary (spec mode — skipped)"
+              echo ""
+              echo "- **mode**: spec"
+              echo "- **spec_file**: \`${SPEC}\`"
+              echo "- **base_url**: \`${BASE_URL}\`"
+              echo "- **role**: \`${ROLE_OUT}\`"
+              echo "- **auth_mode**: unauthenticated"
+              echo "- **note**: Spec skipped — E2E secrets not configured; configure secrets for authenticated spec runs."
+              echo ""
+            } > "${ART_DIR}/summary.md"
+            echo "{\"mode\":\"spec\",\"skipped\":true,\"reason\":\"credentials_missing\",\"specFile\":\"${SPEC}\",\"baseUrl\":\"${BASE_URL}\",\"role\":\"${ROLE_OUT}\",\"authMode\":\"unauthenticated\"}" \
+              > "${ART_DIR}/summary.json"
+            exit 0
+          fi
+
+          {
+            echo "# Dev screen verify summary (spec mode)"
+            echo ""
+            echo "- **mode**: spec"
+            echo "- **spec_file**: \`${SPEC}\`"
+            echo "- **base_url**: \`${BASE_URL}\`"
+            echo "- **role** (credential gate): \`${ROLE_OUT}\`"
+            echo "- **auth_mode**: authenticated"
+            echo "- **note**: Collector was skipped; Playwright ran this spec with playwright.manual.config.ts"
+            echo ""
+          } > "${ART_DIR}/summary.md"
+          echo "{\"mode\":\"spec\",\"specFile\":\"${SPEC}\",\"baseUrl\":\"${BASE_URL}\",\"role\":\"${ROLE_OUT}\",\"authMode\":\"authenticated\"}" \
+            > "${ART_DIR}/summary.json"
+          npx playwright test "${SPEC}" --project=chromium --config=playwright.manual.config.ts
+          # Copy common Playwright outputs if present
+          if [ -d test-results ]; then
+            mkdir -p "${ART_DIR}/playwright-test-results"
+            cp -R test-results/. "${ART_DIR}/playwright-test-results/" || true
+          fi
+          if [ -d test-reports ]; then
+            mkdir -p "${ART_DIR}/playwright-test-reports"
+            cp -R test-reports/. "${ART_DIR}/playwright-test-reports/" || true
+          fi
+
+      - name: Append summary to job summary
+        if: always()
+        run: |
+          SUMMARY_MD="tests/e2e/artifacts/dev-screen-verify/summary.md"
+          if [ -f "${SUMMARY_MD}" ]; then
+            cat "${SUMMARY_MD}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### Dev screen verify" >> "$GITHUB_STEP_SUMMARY"
+            echo "No summary.md produced (collector/spec may have failed before write)." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-screen-verify-${{ steps.cred_gate.outputs.role }}-${{ github.run_id }}
+          path: |
+            tests/e2e/artifacts/dev-screen-verify/
+            tests/e2e/test-results/
+            tests/e2e/test-reports/
+          if-no-files-found: warn
+          retention-days: 7

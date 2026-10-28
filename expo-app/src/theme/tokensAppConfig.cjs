@@ -7,6 +7,7 @@
 'use strict';
 
 module.exports = {
-  clientBgMain: '#FAF9F7',
+  /** tokens.ts CLIENT_COLORS.bgMain (stage cream) 과 동기화 */
+  clientBgMain: '#FAF7F2',
   consultantPrimary: '#0E5F5A',
 };

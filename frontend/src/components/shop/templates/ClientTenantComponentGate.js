@@ -39,9 +39,10 @@ const ClientTenantComponentGate = ({ componentCode, children }) => {
     clientShopEnabled,
     clientRewardEnabled
   } = useTenantComponentFlags();
-  const { isLoading: sessionLoading, hasCheckedSession, isLoggedIn } = useSession();
+  // 전역 세션 재확인(isLoading)은 대기 게이트에 넣지 않는다 — hasCheckedSession 이후 자식 유지
+  const { hasCheckedSession, isLoggedIn } = useSession();
   const { pathname } = useLocation();
-  const sessionAwaiting = !hasCheckedSession || sessionLoading;
+  const sessionAwaiting = !hasCheckedSession;
   const publicCatalogPath = isPublicClientShopPath(pathname);
 
   const enabled = useMemo(() => {

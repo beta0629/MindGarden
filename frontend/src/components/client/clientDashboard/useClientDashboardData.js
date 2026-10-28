@@ -1,6 +1,9 @@
 /**
  * Client Dashboard — 데이터 로드 훅 (StandardizedApi)
  *
+ * ready(useClientSessionReady) 이후에만 로드한다.
+ * SessionContext.isLoading / isLoggedIn 을 화면 로딩·게이트로 쓰지 않는다.
+ *
  * @author CoreSolution
  * @since 2026-07-07
  */
@@ -25,6 +28,7 @@ import {
   consumeClientHomeMappingsSoftRefreshFlag
 } from '../../../utils/clientHomeSoftRefresh';
 import { runResourceLoad, softRefresh } from '../../../utils/softRefresh';
+import { useUserIdScopedLoad } from '../../../hooks/useUserIdScopedLoad';
 import {
   API_CLIENT_MAPPINGS,
   API_CONSULTATION_MESSAGES_UNREAD_COUNT,
@@ -32,7 +36,14 @@ import {
 } from './constants';
 import { parseUnreadCountPayload, selectClientUpcomingSchedules } from './scheduleUtils';
 
-export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) {
+/**
+ * @param {{
+ *   ready: boolean,
+ *   userId: string|number|null,
+ *   userRef: React.MutableRefObject<object|null|undefined>
+ * }} params
+ */
+export function useClientDashboardData({ ready, userId, userRef }) {
   const [consultationData, setConsultationData] = useState(EMPTY_CONSULTATION_DATA);
   const [clientStatus, setClientStatus] = useState(null);
   const [sharedClientMappings, setSharedClientMappings] = useState(null);
@@ -46,7 +57,8 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
    * @param {{ silent?: boolean }} [options] silent=true 이면 레이아웃 blank 없이 부분 갱신
    */
   const loadClientData = useCallback(async(options = {}) => {
-    if (!currentUser?.id) {
+    const scopedUserId = userRef?.current?.id ?? userId;
+    if (scopedUserId == null || scopedUserId === '') {
       setIsLoading(false);
       return;
     }
@@ -59,7 +71,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
         let schedules = [];
         try {
           const scheduleRaw = await StandardizedApi.get(DASHBOARD_API.CLIENT_SCHEDULES, {
-            userId: currentUser.id,
+            userId: scopedUserId,
             userRole: USER_ROLES.CLIENT
           });
           schedules = normalizeScheduleListPayload(scheduleRaw);
@@ -71,7 +83,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
 
         let mappings = [];
         try {
-          const mappingRaw = await StandardizedApi.get(API_CLIENT_MAPPINGS(currentUser.id));
+          const mappingRaw = await StandardizedApi.get(API_CLIENT_MAPPINGS(scopedUserId));
           if (isApiGetNullFailure(mappingRaw)) {
             setMappingsLoadFailed(true);
             mappings = [];
@@ -141,7 +153,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
         let unreadMsg = 0;
         try {
           const unreadRes = await StandardizedApi.get(API_CONSULTATION_MESSAGES_UNREAD_COUNT, {
-            userId: currentUser.id,
+            userId: scopedUserId,
             userType: USER_ROLES.CLIENT,
             _t: Date.now()
           });
@@ -173,20 +185,20 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
       setUnreadMessageCount(0);
       setConsultationData(EMPTY_CONSULTATION_DATA);
     }
-  }, [currentUser?.id]);
+  }, [userId, userRef]);
 
   loadClientDataRef.current = loadClientData;
 
-  useEffect(() => {
-    if (sessionLoading || !isLoggedIn || !currentUser?.id) {
-      return;
-    }
-    loadClientData();
-  }, [sessionLoading, isLoggedIn, currentUser?.id, loadClientData]);
+  useUserIdScopedLoad({
+    userId,
+    loadFn: loadClientData,
+    enabled: ready,
+    onMissingUserId: () => setIsLoading(false)
+  });
 
   // 결제 verify / fulfill-retry SUCCESS · focus/visibility → soft-refresh (hard reload 금지)
   useEffect(() => {
-    if (sessionLoading || !isLoggedIn || !currentUser?.id) {
+    if (!ready || userId == null || userId === '') {
       return undefined;
     }
 
@@ -227,9 +239,8 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
       document.removeEventListener('visibilitychange', onVisibility);
       window.removeEventListener('focus', onFocus);
     };
-  }, [sessionLoading, isLoggedIn, currentUser?.id]);
+  }, [ready, userId]);
 
-  const sectionLoading = isLoading || sessionLoading;
   const sectionError = scheduleLoadFailed;
 
   return {
@@ -238,7 +249,7 @@ export function useClientDashboardData(currentUser, sessionLoading, isLoggedIn) 
     sharedClientMappings,
     mappingsLoadFailed,
     unreadMessageCount,
-    isLoading: sectionLoading,
+    isLoading,
     scheduleLoadFailed,
     sectionError,
     reload: () => softRefresh(loadClientData)

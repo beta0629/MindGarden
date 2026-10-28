@@ -76,7 +76,7 @@ describe('PasswordChangeRequiredHost', () => {
     fireEvent.click(screen.getByRole('button', { name: 'close' }));
 
     expect(notificationManager.show).toHaveBeenCalledWith(CHANGE_REQUIRED_MESSAGE, 'warning');
-    expect(screen.getByRole('dialog')).toHaveAttribute('data-temp-password-passed', 'no');
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-temp-password-passed', 'yes');
   });
 
   test('성공 뒤 onClose 는 경고를 보여 주지 않는다', () => {

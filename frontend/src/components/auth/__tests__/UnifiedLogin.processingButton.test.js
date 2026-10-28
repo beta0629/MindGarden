@@ -20,11 +20,15 @@ const mockCheckSession = jest.fn();
 const mockLogin = jest.fn();
 const mockRedirectToDynamicDashboard = jest.fn();
 
-jest.mock('react-i18next', () => ({
-  __esModule: true,
-  useTranslation: () => ({ t: (key) => key, i18n: { language: 'ko' } }),
-  initReactI18next: { type: '3rdParty', init: jest.fn() }
-}));
+jest.mock('react-i18next', () => {
+  // 모듈 스코프 안정 함수 — 매 렌더 새 화살표 금지 (unstable t → effect 루프 → jest hang)
+  const stableTranslate = (key) => key;
+  return {
+    __esModule: true,
+    useTranslation: () => ({ t: stableTranslate, i18n: { language: 'ko' } }),
+    initReactI18next: { type: '3rdParty', init: jest.fn() }
+  };
+});
 
 jest.mock('../../../contexts/SessionContext', () => ({
   __esModule: true,
@@ -190,7 +194,7 @@ describe('UnifiedLogin 로그인 버튼 처리중 상태', () => {
     expect(mockCheckSession).not.toHaveBeenCalled();
   });
 
-  test('requiresPasswordChange 이면 변경 모달이 열리고 현재 비밀번호 칸은 비어 있다', async() => {
+  test('requiresPasswordChange 이면 변경 모달이 열리고 현재 비밀번호 칸은 없으며 새/확인만 보인다', async() => {
     mockLogin.mockResolvedValue({
       ...LOGIN_SUCCESS,
       data: {
@@ -204,11 +208,10 @@ describe('UnifiedLogin 로그인 버튼 처리중 상태', () => {
     await fillAndSubmit(container);
 
     const dialog = await screen.findByRole('dialog');
-    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
-    expect(currentInput).toHaveValue('');
-    expect(currentInput).toBeEnabled();
-    expect(currentInput).toHaveAttribute('autoComplete', 'current-password');
-    expect(within(dialog).getByLabelText('새 비밀번호')).toHaveAttribute('autoComplete', 'new-password');
+    expect(within(dialog).queryByLabelText('현재 비밀번호')).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText('새 비밀번호')).toBeInTheDocument();
+    expect(within(dialog).getByLabelText('새 비밀번호 확인')).toBeInTheDocument();
+    expect(within(dialog).getByText('임시 비밀번호로 로그인하셨습니다.')).toBeInTheDocument();
     expect(mockRedirectToDynamicDashboard).not.toHaveBeenCalled();
   });
 });

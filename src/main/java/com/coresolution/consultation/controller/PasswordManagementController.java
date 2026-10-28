@@ -173,27 +173,31 @@ public class PasswordManagementController {
                     "message", "비밀번호 확인이 일치하지 않습니다."
                 ));
             }
-            
-            // 현재 비밀번호 확인 — DB 해시
-            if (!passwordService.matches(currentPassword, dbUser.getPassword())) {
-                return ResponseEntity.badRequest().body(Map.of(
-                    "success", false,
-                    "message", "현재 비밀번호가 올바르지 않습니다."
-                ));
+
+            // 임시 비밀번호 강제 변경(isPasswordChanged=false)이면 현재 비밀번호 검증 생략
+            boolean mustChangePassword = Boolean.FALSE.equals(dbUser.getIsPasswordChanged());
+            if (!mustChangePassword) {
+                if (currentPassword.isEmpty()
+                        || !passwordService.matches(currentPassword, dbUser.getPassword())) {
+                    return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "현재 비밀번호가 올바르지 않습니다."
+                    ));
+                }
             }
-            
-            // 새 비밀번호가 현재 비밀번호와 같은지 확인
+
+            // 새 비밀번호가 현재(임시) 비밀번호와 같은지 확인
             if (passwordService.matches(newPassword, dbUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "새 비밀번호는 현재 비밀번호와 달라야 합니다."
                 ));
             }
-            
-            // 비밀번호 변경 (UserService 호출)
+
+            // 강제 변경 시 oldPassword=null — UserService 가 현재 비밀번호 대조를 건너뛴다
             userService.changePassword(
                 dbUser.getId(),
-                currentPassword,
+                mustChangePassword ? null : currentPassword,
                 newPassword
             );
             

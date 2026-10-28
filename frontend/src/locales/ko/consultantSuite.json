@@ -193,7 +193,12 @@
     "emptyDescription": "가능 시간 설정에서 예약 가능 시간을 확인해 주세요",
     "footCaption": "공휴일·주말은 날짜 색으로만 구분합니다. 일정 등록·배정은 관리자·스태프 화면에서 처리합니다.",
     "sessionLoading": "일정을 불러오는 중…",
-    "userLoading": "사용자 정보를 확인하는 중…"
+    "userLoading": "사용자 정보를 확인하는 중…",
+    "agendaAria": "일정 아젠다",
+    "agendaInProgress": "진행",
+    "agendaInProgressMeta": "지금 진행 중",
+    "agendaDuration": "{{count}}분",
+    "agendaDayLabel": "{{year}}년 {{month}}월 {{day}}일 ({{weekday}})"
   },
   "salary": {
     "title": "급여 정산",

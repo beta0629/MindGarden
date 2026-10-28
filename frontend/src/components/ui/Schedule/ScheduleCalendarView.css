@@ -807,3 +807,39 @@
 .mg-v2-schedule-calendar-view .fc .fc-timegrid-col.fc-day-today {
     background-color: var(--mg-v2-today-col-bg);
 }
+
+/*
+ * 상담사 태블릿 일정 v2 (opt-in class only — 어드민 회귀 금지)
+ * portrait: FC timegrid harness 숨김 → ConsultantTabletAgendaList
+ * landscape: 셀 이름 2줄 clamp (1줄 ellipsis FAIL 해소)
+ */
+.mg-v2-schedule-calendar-view--tablet-agenda-active .fc .fc-view-harness {
+  display: none;
+}
+
+.mg-v2-schedule-calendar-view--tablet-agenda-active {
+  min-height: 0;
+  height: auto;
+}
+
+.mg-v2-schedule-calendar-view--consultant-tablet-v2.mg-v2-schedule-calendar-view--tablet-landscape
+  .mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
+  .mg-v2-ad-calendar-event__title .client-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  overflow: hidden;
+  text-overflow: unset;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mg-v2-schedule-calendar-view--consultant-tablet-v2.mg-v2-schedule-calendar-view--tablet-landscape
+  .mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
+  .mg-v2-ad-calendar-event__title {
+  white-space: normal;
+  align-items: flex-start;
+}

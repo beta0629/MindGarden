@@ -1,0 +1,145 @@
+/**
+ * 상담사 태블릿 일정 v2 — 세로 일/주 아젠다 리스트
+ * clinic-os 토큰만 · 신규 hex 금지 · touch≥44 · hover fine-only · tip 1769
+ *
+ * @author CoreSolution
+ * @since 2026-10-28
+ */
+
+.consultant-schedule-tablet-agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  width: 100%;
+  padding-block: var(--mg-v2-space-1);
+  padding-inline: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.consultant-schedule-tablet-agenda__day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+}
+
+.consultant-schedule-tablet-agenda__day-label {
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-secondary);
+  letter-spacing: var(--mg-v2-font-letter-spacing-tight);
+  padding-inline: var(--mg-v2-space-1);
+}
+
+.consultant-schedule-tablet-agenda__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--mg-v2-consultant-row-gap);
+  min-width: 0;
+  width: 100%;
+  min-height: var(--mg-v2-consultant-row-min-height);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  margin: 0;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
+  border-radius: var(--mg-v2-consultant-card-radius);
+  background: var(--mg-v2-consultant-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  font: inherit;
+}
+
+.consultant-schedule-tablet-agenda__item:active {
+  background: var(--mg-v2-consultant-selection-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consultant-schedule-tablet-agenda__item:hover {
+    background: var(--mg-v2-consultant-chip-neutral-bg);
+  }
+}
+
+.consultant-schedule-tablet-agenda__item--now {
+  border-color: var(--mg-v2-color-primary-main);
+  background: var(--mg-v2-color-primary-subtle);
+}
+
+.consultant-schedule-tablet-agenda__item--done {
+  opacity: 0.78;
+}
+
+.consultant-schedule-tablet-agenda__time {
+  flex: none;
+  width: var(--mg-v2-space-16);
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-font-weight-bold);
+  font-variant-numeric: tabular-nums;
+  color: var(--mg-v2-color-primary-main);
+  line-height: 1.3;
+  padding-top: var(--mg-v2-space-0-5);
+}
+
+.consultant-schedule-tablet-agenda__item--done .consultant-schedule-tablet-agenda__time {
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-schedule-tablet-agenda__time-end {
+  display: block;
+  margin-top: var(--mg-v2-space-0-5);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.consultant-schedule-tablet-agenda__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.consultant-schedule-tablet-agenda__name {
+  font-size: var(--mg-v2-consultant-card-title-size);
+  font-weight: var(--mg-v2-consultant-card-title-weight);
+  color: var(--mg-v2-color-text-primary);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.consultant-schedule-tablet-agenda__meta {
+  margin-top: var(--mg-v2-space-1);
+  font-size: var(--mg-v2-consultant-card-meta-size);
+  color: var(--mg-v2-color-text-tertiary);
+  line-height: 1.35;
+}
+
+.consultant-schedule-tablet-agenda__chip {
+  flex: none;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mg-v2-space-8);
+  height: var(--mg-v2-space-8);
+  padding: 0 var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-md);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-selection-border);
+  background: var(--mg-v2-consultant-selection-bg);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  white-space: nowrap;
+}
+
+.consultant-schedule-tablet-agenda__item--now .consultant-schedule-tablet-agenda__chip {
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-inverse);
+}

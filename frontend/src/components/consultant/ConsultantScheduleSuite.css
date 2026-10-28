@@ -335,3 +335,25 @@
     margin: var(--mg-v2-border-width-thin);
   }
 }
+
+/*
+ * ===== 태블릿 일정 v2 (opt-in data-tablet-schedule-v2) =====
+ * SSOT tobe-schedule-v2: portrait 아젠다 · landscape 2줄 · 옛 1줄 밀도 P0 블록 재도입 금지
+ * clinic-os 토큰만 · 신규 hex 금지 · hover fine-only · touch≥44 · min-height row token(72)
+ */
+.consultant-schedule__panel[data-tablet-schedule-v2="true"] .mg-v2-schedule-calendar-view--tablet-agenda-active {
+  min-height: 0;
+}
+
+.consultant-schedule__panel[data-tablet-schedule-v2="true"][data-status-filter="scheduled"]
+  .consultant-schedule-tablet-agenda__item:not(.status-booked):not(.status-confirmed):not(.status-tentative_pending_payment),
+.consultant-schedule__panel[data-tablet-schedule-v2="true"][data-status-filter="completed"]
+  .consultant-schedule-tablet-agenda__item:not(.status-completed),
+.consultant-schedule__panel[data-tablet-schedule-v2="true"][data-status-filter="cancelled"]
+  .consultant-schedule-tablet-agenda__item:not(.status-cancelled) {
+  display: none;
+}
+
+.consultant-schedule__panel[data-tablet-schedule-v2="true"] .consultant-schedule-tablet-agenda__item {
+  min-height: max(var(--mg-v2-consultant-row-min-height), var(--mg-v2-touch-target-min));
+}

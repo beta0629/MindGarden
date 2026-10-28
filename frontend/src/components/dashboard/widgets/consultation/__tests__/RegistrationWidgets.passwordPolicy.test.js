@@ -76,7 +76,7 @@ describe.each(CASES)('$label 임시 비밀번호 문자', ({ Component, start, f
   test('비밀번호 입력란 없이 등록하고 요청에 비밀번호를 넣지 않는다', async() => {
     await openForm();
     expect(document.querySelector('input[name="password"]')).toBeNull();
-    expect(screen.getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/문자로 보내지 않습니다.*화면에는 표시하지 않으니/)).toBeInTheDocument();
 
     fireEvent.submit(document.querySelector(formSelector));
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalled());

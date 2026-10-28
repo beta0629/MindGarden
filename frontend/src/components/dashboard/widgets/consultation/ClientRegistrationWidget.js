@@ -397,7 +397,7 @@ const ClientRegistrationWidget = ({ widget, user }) => {
                     )}
                   </div>
 
-                  <p className="mg-v2-form-help">{t('auth:tempPasswordSms.resetHelp')}</p>
+                  <p className="mg-v2-form-help">{t('auth:tempPasswordSms.registerHelp')}</p>
 
                   <div className="form-group">
                     <label htmlFor="phone" className="form-label">

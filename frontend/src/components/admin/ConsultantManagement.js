@@ -398,7 +398,7 @@ const ConsultantManagement = ({ onUpdate, showToast }) => {
                                 <span className="mg-v2-form-error" role="alert">{formErrors.email}</span>
                             ) : null}
                         </Form.Group>
-                        <p className="mg-v2-form-help mb-3">{t('auth:tempPasswordSms.resetHelp')}</p>
+                        <p className="mg-v2-form-help mb-3">{t('auth:tempPasswordSms.registerHelp')}</p>
                         <Form.Group className="mb-3">
                             <Form.Label>
                                 {t('common.labels.name')}

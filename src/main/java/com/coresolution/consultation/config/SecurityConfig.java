@@ -314,6 +314,8 @@ public class SecurityConfig {
                     ).permitAll()
                     // Ops Portal 인증 API는 허용
                     .requestMatchers("/api/v1/ops/auth/**").permitAll()
+                    // 레거시 Kakao/Naver OAuth 콜백은 /api/auth/** (콘솔 redirect_uri·OAuth2Controller dual-mount)
+                    .requestMatchers("/api/auth/**").permitAll()
                     // 인증 API는 허용
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     // 포트원 등 PG 웹훅 (서명 검증, 인증 없음)

@@ -108,8 +108,10 @@ describe('ConsultantSchedule suite 수용', () => {
       userId: 77,
       hideScheduleTitle: true,
       calendarSkin: 'integrated',
-      integratedMonthEventLayout: true
+      integratedMonthEventLayout: true,
+      consultantTabletScheduleV2: true
     }));
+    expect(panel).toHaveAttribute('data-tablet-schedule-v2', 'true');
     expect(panel.querySelector(`.${CONSULTANT_SUITE_CLASS.EMPTY}`)).toHaveTextContent('이 기간에 일정이 없습니다');
     expect(panel).toHaveTextContent('일정 등록·배정은 관리자·스태프 화면에서 처리합니다.');
   });

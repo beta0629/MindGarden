@@ -213,6 +213,8 @@ const UnifiedScheduleComponent = ({
   hideScheduleTitle = false,
   integratedMonthEventLayout = false,
   calendarSkin,
+  /** 상담사 태블릿 일정 v2 옵트인 — ScheduleCalendarView 패스스루(어드민 미전달) */
+  consultantTabletScheduleV2 = false,
   /** 명시 시 우선. 미지정이면 `onDropFromExternal` 존재 여부로 통합 스케줄 잠금 추론 */
   disableCalendarEventDrag: disableCalendarEventDragProp,
   acceptExternalCalendarDrops: acceptExternalCalendarDropsProp,
@@ -1642,6 +1644,7 @@ const UnifiedScheduleComponent = ({
                 disableCalendarEventDrag={resolvedDisableCalendarEventDrag}
                 acceptExternalCalendarDrops={resolvedAcceptExternalCalendarDrops}
                 onMonthChange={handleCalendarDatesSet}
+                consultantTabletScheduleV2={consultantTabletScheduleV2}
             />
 
             {/* 모달들 */}
@@ -1739,6 +1742,7 @@ UnifiedScheduleComponent.propTypes = {
   hideScheduleTitle: PropTypes.bool,
   integratedMonthEventLayout: PropTypes.bool,
   calendarSkin: PropTypes.oneOf(['integrated']),
+  consultantTabletScheduleV2: PropTypes.bool,
   disableCalendarEventDrag: PropTypes.bool,
   acceptExternalCalendarDrops: PropTypes.bool,
   /** 옵션 B 가예약 시각 구분용 — Map 또는 일반 객체. mappingId(문자열/숫자) → paymentTiming */

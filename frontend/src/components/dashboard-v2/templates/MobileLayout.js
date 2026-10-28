@@ -25,9 +25,12 @@ const MobileLayout = ({
   onProfileClick,
   onLogout,
   showBottomTabBar = false,
-  bottomTabContent
+  bottomTabContent,
+  /** 'soft-sheet' = 상담사 태블릿 stone 드로어 (시안 shell-outline) */
+  drawerVariant
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const isSoftSheet = drawerVariant === 'soft-sheet';
 
   const handleMenuClick = () => setDrawerOpen(true);
   const handleDrawerClose = () => setDrawerOpen(false);
@@ -38,7 +41,9 @@ const MobileLayout = ({
   };
 
   return (
-    <div className="mg-v2-mobile-layout">
+    <div
+      className={`mg-v2-mobile-layout${isSoftSheet ? ' mg-v2-mobile-layout--soft-sheet' : ''}`}
+    >
       <MobileGnb
         logoLabel={logoLabel}
         logoUrl={logoUrl}
@@ -55,12 +60,15 @@ const MobileLayout = ({
         menuItems={menuItems}
         headerTitle={headerTitle}
         onLogout={onLogout ? handleLogout : undefined}
+        variant={drawerVariant}
       />
       <main className="mg-v2-mobile-layout__main" role="main">
-        <div className="mg-v2-mobile-layout__search">
-          <SearchInput value={searchValue} onChange={onSearchChange} />
+        <div className="mg-v2-mobile-layout__stage">
+          <div className="mg-v2-mobile-layout__search">
+            <SearchInput value={searchValue} onChange={onSearchChange} />
+          </div>
+          {children}
         </div>
-        {children}
       </main>
       {showBottomTabBar && bottomTabContent && (
         <nav className="mg-v2-mobile-layout__tabbar" role="navigation">

@@ -8,6 +8,13 @@ import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
+/**
+ * 상담사 Clinic-OS 셸: iPad(≥768)도 햄버거+soft-sheet.
+ * Desktop LNB는 ≥1024만 (ConsultantScheduleRenewal DESKTOP_MEDIA_QUERY 와 정합).
+ * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(768) 유지 — 회귀 금지.
+ */
+const BREAKPOINT_CONSULTANT_DESKTOP = 1024;
+
 /** LNB menuCode SSOT — STAFF ERP strip 등에서 재사용 */
 export const LNB_MENU_CODES = Object.freeze({
   ADM_ERP: 'ADM_ERP'
@@ -274,6 +281,7 @@ const ERP_MENU_ITEMS = [
 
 export {
   BREAKPOINT_DESKTOP,
+  BREAKPOINT_CONSULTANT_DESKTOP,
   DEFAULT_MENU_ITEMS,
   CLIENT_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS,

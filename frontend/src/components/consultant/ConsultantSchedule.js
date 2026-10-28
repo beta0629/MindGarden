@@ -161,6 +161,7 @@ const ConsultantSchedule = () => {
         className={`${CONSULTANT_SUITE_CLASS.PANEL} consultant-schedule__panel`}
         data-calendar-skin="integrated"
         data-layout-context="consultant-schedule"
+        data-tablet-schedule-v2="true"
         data-status-filter={statusFilter}
       >
         <ConsultantFilterChips
@@ -177,6 +178,7 @@ const ConsultantSchedule = () => {
           hideScheduleTitle
           integratedMonthEventLayout
           calendarSkin="integrated"
+          consultantTabletScheduleV2
           refetchTrigger={refetchTrigger}
           onScheduleEventsChange={handleScheduleEventsChange}
           onCheckoutSameDayFromDetail={onCheckoutSameDayFromDetail}

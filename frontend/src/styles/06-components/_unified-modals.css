@@ -408,10 +408,12 @@
   overflow-x: hidden;
 }
 
-/* fullscreen: 500px 등 기본 max-width 덮어서 전체 화면 사용 (상담일지 등 참고 자료용) */
+/* fullscreen: 500px 등 기본 max-width 덮어서 전체 화면 사용 (상담일지 등 참고 자료용)
+ * iPad Safari: 100vh 폴백 후 100dvh — 홈 인디케이터 아래로 푸터 잘림 방지 */
 .mg-modal.mg-modal--fullscreen {
   width: 100vw !important;
   height: 100vh !important;
+  height: 100dvh !important;
   max-width: none !important;
   max-height: none !important;
   border-radius: 0;
@@ -422,6 +424,12 @@
 .mg-modal.mg-modal--fullscreen .mg-modal__body {
   max-height: none !important;
   flex: 1 1 auto;
+}
+
+/* fullscreen 액션바: 기존 padding + safe-area bottom (바 위 빈 띠·FAB 금지) */
+.mg-modal.mg-modal--fullscreen .mg-modal__actions {
+  flex-shrink: 0;
+  padding-bottom: calc(var(--spacing-lg) + env(safe-area-inset-bottom, 0px));
 }
 
 /* --------------------------------------------------------------------------

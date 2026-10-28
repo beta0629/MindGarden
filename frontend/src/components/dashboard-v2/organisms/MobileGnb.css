@@ -21,8 +21,8 @@
     minmax(var(--mg-v2-mobile-gnb-side-min), 1fr);
   align-items: center;
   column-gap: var(--mg-v2-mobile-gnb-chip-gap-sides);
-  height: var(--mg-layout-header-height-mobile, 56px);
-  padding: 0 var(--mg-v2-mobile-gnb-edge-pad);
+  height: calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) var(--mg-v2-mobile-gnb-edge-pad) 0;
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
   border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-layout-header-border, var(--mg-color-border-main));
   z-index: var(--mg-v2-z-header, var(--z-header, 1000));

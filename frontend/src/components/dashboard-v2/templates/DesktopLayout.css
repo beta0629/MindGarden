@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--mg-v2-color-surface-bg, var(--mg-layout-main-bg-start, var(--mg-color-background-main)));
 }
 
@@ -29,6 +30,12 @@
    * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 부족 해소) */
   padding-block: var(--mg-v2-space-6, var(--mg-layout-page-padding, 24px));
   padding-inline: var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px));
+  padding-left: calc(
+    var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px)) + env(safe-area-inset-left, 0px)
+  );
+  padding-right: calc(
+    var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px)) + env(safe-area-inset-right, 0px)
+  );
   min-height: 0;
 }
 

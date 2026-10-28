@@ -14,6 +14,7 @@
 .mg-app-shell {
   display: flex;
   min-height: 100vh;
+  min-height: 100dvh;
   background-color: var(--shell-bg);
   font-family: var(--mg-font-family-body);
 }
@@ -109,14 +110,15 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .mg-app-shell__content {
   flex: 1;
-  padding-top: 56px;
-  padding-bottom: 64px;
-  padding-left: var(--mg-spacing-md);
-  padding-right: var(--mg-spacing-md);
+  padding-top: calc(56px + env(safe-area-inset-top, 0px));
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(var(--mg-spacing-md) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--mg-spacing-md) + env(safe-area-inset-right, 0px));
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
@@ -124,9 +126,9 @@
 /* 태블릿 */
 @media (min-width: 768px) {
   .mg-app-shell__content {
-    padding-top: 64px;
-    padding-left: var(--mg-spacing-lg);
-    padding-right: var(--mg-spacing-lg);
+    padding-top: calc(64px + env(safe-area-inset-top, 0px));
+    padding-left: calc(var(--mg-spacing-lg) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--mg-spacing-lg) + env(safe-area-inset-right, 0px));
   }
 }
 
@@ -134,6 +136,7 @@
 @media (min-width: 1024px) {
   .mg-app-shell__sidebar {
     display: flex;
+    padding-left: env(safe-area-inset-left, 0px);
   }
 
   .mg-app-shell__main {
@@ -141,7 +144,7 @@
   }
 
   .mg-app-shell__content {
-    padding-bottom: var(--mg-spacing-xl);
+    padding-bottom: calc(var(--mg-spacing-xl) + env(safe-area-inset-bottom, 0px));
     max-width: 1200px;
     margin: 0 auto;
     width: 100%;

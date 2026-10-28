@@ -10,6 +10,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  min-height: 100dvh;
   background: linear-gradient(
     180deg,
     var(--mg-layout-main-bg-start, var(--mg-color-background-main)) 0%,
@@ -22,8 +23,17 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  /* top inset은 MobileGnb가 흡수. main은 좌·우·하단만 env 보완 */
   padding: var(--mg-layout-page-padding-mobile, 16px);
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-left: calc(
+    var(--mg-layout-page-padding-mobile, 16px) + env(safe-area-inset-left, 0px)
+  );
+  padding-right: calc(
+    var(--mg-layout-page-padding-mobile, 16px) + env(safe-area-inset-right, 0px)
+  );
+  padding-bottom: calc(
+    var(--mg-layout-page-padding-mobile, 16px) + env(safe-area-inset-bottom, 0px)
+  );
   min-height: 0;
 }
 

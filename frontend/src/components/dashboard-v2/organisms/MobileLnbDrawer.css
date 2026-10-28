@@ -29,6 +29,7 @@
   width: var(--mg-layout-sidebar-width-mobile, 280px);
   max-width: 85vw;
   height: 100vh;
+  height: 100dvh;
   background: var(--mg-layout-sidebar-bg, var(--mg-dark-bg-800));
   z-index: 1000;
   transform: translateX(-100%);

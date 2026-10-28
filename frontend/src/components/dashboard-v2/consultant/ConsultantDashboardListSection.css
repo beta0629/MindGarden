@@ -10,6 +10,19 @@
 
 .consultant-dashboard-list-section__table {
   margin-bottom: var(--mg-spacing-sm, 0.5rem);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+.consultant-dashboard-list-section {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .consultant-dashboard-list-section__empty,

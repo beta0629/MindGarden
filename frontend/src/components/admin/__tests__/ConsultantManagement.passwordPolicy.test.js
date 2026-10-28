@@ -55,7 +55,7 @@ describe('ConsultantManagement(레거시) 임시 비밀번호 문자', () => {
     const { dialog } = await openForm();
     expect(dialog.querySelector('#legacy-consultant-password')).toBeNull();
     expect(dialog.querySelector('input[name="password"]')).toBeNull();
-    expect(within(dialog).getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
+    expect(within(dialog).getByText(/문자로 보내지 않습니다.*화면에는 표시하지 않으니/)).toBeInTheDocument();
 
     fireEvent.click(within(dialog).getAllByRole('button', { name: '등록' }).pop());
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalled());

@@ -2098,7 +2098,7 @@ const ConsultantComprehensiveManagement = ({ embedded = false, initialOpenUserId
                         )}
                     </div>
                     {modalType === 'create' && (
-                        <p className="mg-v2-form-help">{t('auth:tempPasswordSms.resetHelp')}</p>
+                        <p className="mg-v2-form-help">{t('auth:tempPasswordSms.registerHelp')}</p>
                     )}
                     <div className="mg-v2-form-group">
                         <label id="consultant-specialty-label" className="mg-v2-form-label">{t('admin:ConsultantComprehensiveManagement.t_6a1abaf0')}</label>

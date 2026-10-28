@@ -673,7 +673,7 @@ const ClientModal = ({
                 {type === 'create' && (
                     <div className="mg-v2-info-box mg-v2-ad-b0kla-info-box">
                         <p className="mg-v2-info-text">
-                            {t('auth:tempPasswordSms.resetHelp')}
+                            {t('auth:tempPasswordSms.registerHelp')}
                         </p>
                     </div>
                 )}

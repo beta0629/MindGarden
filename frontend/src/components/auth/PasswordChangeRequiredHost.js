@@ -25,6 +25,7 @@ const PasswordChangeRequiredHost = () => {
   return (
     <PasswordChangeModal
       isOpen={open}
+      tempPassword={true}
       onClose={() => {
         if (closedBySuccessRef.current) {
           closedBySuccessRef.current = false;

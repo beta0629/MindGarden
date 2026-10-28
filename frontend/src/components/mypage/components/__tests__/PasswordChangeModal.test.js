@@ -122,14 +122,12 @@ describe('PasswordChangeModal', () => {
     expect(notificationManager.show).toHaveBeenCalledWith(expect.any(String), 'info');
   });
 
-  it('입력 직후 즉시 제출하면 POST 본문에 입력한 새 비밀번호가 들어간다', async() => {
+  it('tempPassword=true 이면 현재 비밀번호 UI 가 없고 새+확인만 POST 한다', async() => {
     renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');
-    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
-    expect(currentInput).toHaveValue('');
-    fireEvent.change(currentInput, {
-      target: { name: 'currentPassword', value: 'x'.repeat(3) }
-    });
+    expect(within(dialog).queryByLabelText('현재 비밀번호')).not.toBeInTheDocument();
+    expect(within(dialog).getByText('임시 비밀번호로 로그인하셨습니다.')).toBeInTheDocument();
+
     fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
       target: { name: 'newPassword', value: 'Newfake8@Z' }
     });
@@ -139,17 +137,46 @@ describe('PasswordChangeModal', () => {
     fireEvent.submit(dialog.querySelector('form'));
 
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
-    expect(StandardizedApi.post.mock.calls[0][1]).toEqual(expect.objectContaining({
+    expect(StandardizedApi.post.mock.calls[0][1]).toEqual({
       newPassword: 'Newfake8@Z',
       confirmPassword: 'Newfake8@Z'
-    }));
+    });
+    expect(StandardizedApi.post.mock.calls[0][1]).not.toHaveProperty('currentPassword');
   });
 
-  it('제출 시 current/new/confirm 을 trim 하여 POST 한다', async() => {
+  it('tempPassword=true: 제출 시 new/confirm 을 trim 하여 POST 한다', async() => {
     renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
+      target: { name: 'newPassword', value: '  Newfake8@Z  ' }
+    });
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호 확인'), {
+      target: { name: 'confirmPassword', value: '  Newfake8@Z  ' }
+    });
+    fireEvent.submit(dialog.querySelector('form'));
+
+    await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.post.mock.calls[0][1]).toEqual({
+      newPassword: 'Newfake8@Z',
+      confirmPassword: 'Newfake8@Z'
+    });
+  });
+
+  it('tempPassword=true: 새 비밀번호가 빈 값이면 제출해도 POST 하지 않는다', async() => {
+    renderOpen({ tempPassword: true });
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).queryByLabelText('현재 비밀번호')).not.toBeInTheDocument();
+    fireEvent.submit(dialog.querySelector('form'));
+
+    expect(await within(dialog).findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
+    expect(StandardizedApi.post).not.toHaveBeenCalled();
+  });
+
+  it('일반 변경은 현재 비밀번호를 trim 하여 POST 한다', async() => {
+    renderOpen();
+    const dialog = screen.getByRole('dialog');
     fireEvent.change(within(dialog).getByLabelText('현재 비밀번호'), {
-      target: { name: 'currentPassword', value: '  TempPass1@  ' }
+      target: { name: 'currentPassword', value: '  OldPass1@  ' }
     });
     fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
       target: { name: 'newPassword', value: '  Newfake8@Z  ' }
@@ -161,32 +188,17 @@ describe('PasswordChangeModal', () => {
 
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
     expect(StandardizedApi.post.mock.calls[0][1]).toEqual({
-      currentPassword: 'TempPass1@',
+      currentPassword: 'OldPass1@',
       newPassword: 'Newfake8@Z',
       confirmPassword: 'Newfake8@Z'
     });
   });
 
-  it('새 비밀번호가 빈 값이면 제출해도 POST 하지 않는다', async() => {
+  it('변경 요구(tempPassword)로 열려도 현재 비밀번호 칸은 없고 힌트는 유지된다', () => {
     renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');
-    expect(within(dialog).getByLabelText('현재 비밀번호')).toHaveValue('');
-    fireEvent.submit(dialog.querySelector('form'));
-
-    expect(await within(dialog).findByText('비밀번호를 입력해주세요.')).toBeInTheDocument();
-    expect(StandardizedApi.post).not.toHaveBeenCalled();
-  });
-
-  it('변경 요구로 열려도 현재 비밀번호 칸은 비어 있고 autocomplete 은 유지된다', () => {
-    renderOpen({ tempPassword: true });
-    const dialog = screen.getByRole('dialog');
-    const currentInput = within(dialog).getByLabelText('현재 비밀번호');
-    const newInput = within(dialog).getByLabelText('새 비밀번호');
-
-    expect(currentInput).toHaveValue('');
-    expect(currentInput).toBeEnabled();
-    expect(currentInput).toHaveAttribute('autoComplete', 'current-password');
-    expect(newInput).toHaveAttribute('autoComplete', 'new-password');
+    expect(within(dialog).queryByLabelText('현재 비밀번호')).not.toBeInTheDocument();
+    expect(within(dialog).getByLabelText('새 비밀번호')).toHaveAttribute('autoComplete', 'new-password');
     expect(within(dialog).getByText('임시 비밀번호로 로그인하셨습니다.')).toBeInTheDocument();
 
     const hint = dialog.querySelector('#mypage-pw-new-policy-hint');

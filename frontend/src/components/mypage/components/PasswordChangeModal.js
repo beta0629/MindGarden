@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AUTH_API } from '../../../constants/api';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import usePasswordPolicyField from '../../../hooks/usePasswordPolicyField';
@@ -12,8 +12,14 @@ import notificationManager from '../../../utils/notification';
 import { persistReissuedSessionTokens } from '../../../utils/persistReissuedSessionTokens';
 import { useTranslation } from 'react-i18next';
 
+const isSameFieldValidation = (prev, next) => (
+  prev.isValid === next.isValid && prev.message === next.message
+);
+
 const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   const [formData, setFormData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -37,7 +43,9 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     confirm: false
   });
 
+  // t identity가 렌더마다 바뀌어도 validateField 안정 identity 유지 (effect 루프 방지)
   const validateField = useCallback((fieldName, value, currentPassword = '') => {
+    const translate = tRef.current;
     let isValid = true;
     let message = '';
 
@@ -45,13 +53,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       case 'currentPassword':
         if (!value.trim()) {
           isValid = false;
-          message = t('common:mypage.PasswordChangeModal.t_4ed21ecf');
+          message = translate('common:mypage.PasswordChangeModal.t_4ed21ecf');
         }
         break;
       case 'newPassword':
         if (value.trim() && currentPassword && value === currentPassword) {
           isValid = false;
-          message = t('common:mypage.PasswordChangeModal.t_89a14bed');
+          message = translate('common:mypage.PasswordChangeModal.t_89a14bed');
         }
         break;
       default:
@@ -59,7 +67,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     }
 
     return { isValid, message };
-  }, [t]);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -92,9 +100,17 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       tempPassword ? '' : formData.currentPassword
     );
     validateCommittedNewPassword(formData.newPassword, formData.confirmPassword);
-    setValidation({
-      currentPassword: currentResult,
-      newPassword: newResult
+    setValidation((prev) => {
+      if (
+        isSameFieldValidation(prev.currentPassword, currentResult)
+        && isSameFieldValidation(prev.newPassword, newResult)
+      ) {
+        return prev;
+      }
+      return {
+        currentPassword: currentResult,
+        newPassword: newResult
+      };
     });
   }, [
     formData.currentPassword,

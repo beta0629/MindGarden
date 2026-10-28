@@ -26,9 +26,17 @@ import {
 } from '../utils/lnbAccordion';
 import './MobileLnbDrawer.css';
 
-const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '운영', onLogout }) => {
+const MobileLnbDrawer = ({
+  isOpen,
+  onClose,
+  menuItems = [],
+  headerTitle = '운영',
+  onLogout,
+  variant
+}) => {
   const location = useLocation();
   const { pathname } = location;
+  const isSoftSheet = variant === 'soft-sheet';
 
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
     getInitialExpandedKey(menuItems, pathname)
@@ -47,11 +55,32 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '운�
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        onClose?.();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   const handleGroupToggle = (e, groupKey) => {
     e.preventDefault();
     e.stopPropagation();
     setExpandedGroupKey((prev) => (prev === groupKey ? null : groupKey));
   };
+
+  const drawerClassName = [
+    'mg-v2-mobile-lnb-drawer',
+    isOpen ? 'mg-v2-mobile-lnb-drawer--open' : '',
+    isSoftSheet ? 'mg-v2-mobile-lnb-drawer--soft-sheet' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <>
@@ -64,12 +93,31 @@ const MobileLnbDrawer = ({ isOpen, onClose, menuItems = [], headerTitle = '운�
         aria-label="메뉴 닫기"
       />
       <aside
-        className={`mg-v2-mobile-lnb-drawer ${isOpen ? 'mg-v2-mobile-lnb-drawer--open' : ''}`}
+        className={drawerClassName}
         role="navigation"
         aria-label="메뉴"
       >
         <div className="mg-v2-mobile-lnb-drawer__header">
           <span className="mg-v2-mobile-lnb-drawer__title">{headerTitle}</span>
+          {isSoftSheet ? (
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              className={buildErpMgButtonClassName({
+                variant: 'outline',
+                size: 'sm',
+                loading: false,
+                className: 'mg-v2-mobile-lnb-drawer__close'
+              })}
+              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+              onClick={onClose}
+              preventDoubleClick={false}
+              aria-label="메뉴 닫기"
+            >
+              <Icon name="X" size="MD" color="INHERIT" aria-hidden />
+            </MGButton>
+          ) : null}
         </div>
         <nav className="mg-v2-mobile-lnb-drawer__nav">
           <ul className="mg-v2-mobile-lnb-drawer__list">

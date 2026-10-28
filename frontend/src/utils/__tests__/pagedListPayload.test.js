@@ -5,7 +5,7 @@
  * @since 2026-10-03
  */
 
-import { hasMorePagedItems, normalizePagedListPayload } from '../pagedListPayload';
+import { drainPagedList, hasMorePagedItems, normalizePagedListPayload } from '../pagedListPayload';
 
 describe('normalizePagedListPayload', () => {
   test('배열 응답 → 총계 없음', () => {
@@ -62,8 +62,14 @@ describe('normalizePagedListPayload', () => {
     expect(normalizePagedListPayload({ content: [1], totalElements: 1, totalPages: 1 }).items).toEqual([1]);
   });
 
-  test('null·문자열·음수 총계 → 빈 목록 / null 총계', () => {
+  test('null·문자열·음수 총계·빈 객체 → 빈 목록 / null 총계 (crash 없음)', () => {
     expect(normalizePagedListPayload(null)).toEqual({
+      items: [],
+      totalElements: null,
+      totalPages: null,
+      statusCounts: null
+    });
+    expect(normalizePagedListPayload({})).toEqual({
       items: [],
       totalElements: null,
       totalPages: null,
@@ -107,5 +113,24 @@ describe('hasMorePagedItems', () => {
   test('총계 없음 → 마지막 페이지가 꽉 찼는지', () => {
     expect(hasMorePagedItems(base)).toBe(true);
     expect(hasMorePagedItems({ ...base, lastPageCount: 3 })).toBe(false);
+  });
+});
+
+describe('drainPagedList', () => {
+  test('배열·content 페이지를 공통 normalize 로 이어 붙인다', async() => {
+    const fetchPage = jest.fn()
+      .mockResolvedValueOnce({ content: [1, 2], totalElements: 3, totalPages: 2 })
+      .mockResolvedValueOnce({ content: [3], totalElements: 3, totalPages: 2 });
+    const items = await drainPagedList({ fetchPage, pageSize: 2, maxPages: 5 });
+    expect(items).toEqual([1, 2, 3]);
+    expect(fetchPage).toHaveBeenCalledTimes(2);
+    expect(fetchPage).toHaveBeenNthCalledWith(1, 0, 2);
+    expect(fetchPage).toHaveBeenNthCalledWith(2, 1, 2);
+  });
+
+  test('빈 객체 페이지 → [] (crash 없음) · 1회만 호출', async() => {
+    const fetchPage = jest.fn().mockResolvedValue({});
+    await expect(drainPagedList({ fetchPage, pageSize: 50, maxPages: 3 })).resolves.toEqual([]);
+    expect(fetchPage).toHaveBeenCalledTimes(1);
   });
 });

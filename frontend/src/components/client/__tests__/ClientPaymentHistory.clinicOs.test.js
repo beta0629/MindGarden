@@ -1,7 +1,7 @@
 /**
  * ClientPaymentHistory — Clinic-OS 개편 화면 테스트
  * 칩 URL 쿼리 · 배지 매핑(APPROVED 포함) · 결제수단 「카드」만 · 환불 「-1」 폴백 · 빈/에러/일부 실패
- * 세션 준비(useClientSessionReady) 후 세션 사용자 id 로만 매핑을 읽는다.
+ * 세션 준비 후 me/package-payment-history + shop/orders (admin mappings 비사용).
  * 스펙: docs/design/clinic-os-client-payments.md
  *
  * @author CoreSolution
@@ -17,7 +17,10 @@ import StandardizedApi from '../../../utils/standardizedApi';
 import { fetchShopOrder, fetchShopOrders } from '../../../services/clientShopService';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { useClientSessionReady } from '../../../hooks/useClientSessionReady';
-import { CLIENT_PAYMENT_TEST_IDS } from '../../../constants/clientPaymentHistoryConstants';
+import {
+  CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API,
+  CLIENT_PAYMENT_TEST_IDS
+} from '../../../constants/clientPaymentHistoryConstants';
 import ClientPaymentHistory from '../ClientPaymentHistory';
 
 jest.mock('../../../utils/standardizedApi', () => ({
@@ -68,38 +71,39 @@ const renderScreen = (initialEntry = '/client/payment-history') => render(
 
 const USER = { id: 77 };
 
-const MAPPINGS = [
+/** ClientPackagePaymentHistoryResponse.items 형태 */
+const HISTORY_ITEMS = [
   {
-    id: 930,
+    type: 'INITIAL_MAPPING',
+    mappingId: 930,
     packageName: '-1',
-    productTitle: null,
-    paymentAmount: 90000,
+    amount: 90000,
     paymentStatus: 'REFUNDED',
-    effectivePaymentStatus: 'REFUNDED',
     paymentMethod: 'CREDIT_CARD',
     paymentSource: 'MANUAL',
-    paymentProvider: 'IAMPORT',
-    totalSessions: 10,
+    sessions: 10,
     paymentDate: '2026-09-30T10:00:00'
   },
   {
-    id: 929,
+    type: 'INITIAL_MAPPING',
+    mappingId: 929,
     packageName: '기본 10회기',
-    paymentAmount: 100000,
+    amount: 100000,
     paymentStatus: 'APPROVED',
     paymentMethod: 'CARD_TERMINAL',
     paymentSource: 'MANUAL',
-    totalSessions: 10,
+    sessions: 10,
     paymentDate: '2026-09-29T10:00:00'
   },
   {
-    id: 928,
+    type: 'INITIAL_MAPPING',
+    mappingId: 928,
     packageName: '검사',
-    paymentAmount: 30000,
+    amount: 30000,
     paymentStatus: 'PENDING',
     paymentMethod: 'BANK_TRANSFER',
     paymentSource: 'MANUAL',
-    totalSessions: 0,
+    sessions: 0,
     paymentDate: '2026-09-28T10:00:00'
   }
 ];
@@ -108,14 +112,15 @@ const SHOP_ORDERS = [
   { orderPublicId: 'pub-1', status: 'PAID', cashDueMinor: 50000, createdAt: '2026-09-27T10:00:00' }
 ];
 
-const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
-
-const mockApi = ({ mappings = MAPPINGS, mappingsFail = false } = {}) => {
-  StandardizedApi.get.mockImplementation(() => {
-    if (mappingsFail) {
+const mockApi = ({ items = HISTORY_ITEMS, historyFail = false } = {}) => {
+  StandardizedApi.get.mockImplementation((url) => {
+    if (historyFail) {
       return Promise.resolve(null);
     }
-    return Promise.resolve({ mappings, count: mappings.length });
+    if (String(url) !== CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API) {
+      return Promise.resolve(null);
+    }
+    return Promise.resolve({ summary: { itemCount: items.length }, items });
   });
 };
 
@@ -135,13 +140,16 @@ afterEach(() => {
   console.warn.mockRestore();
 });
 
-describe('ClientPaymentHistory — 출처 (세션 사용자 id)', () => {
-  test('current-user 를 다시 부르지 않고 세션 id 로만 매핑을 읽는다', async() => {
+describe('ClientPaymentHistory — 출처 (me/package-payment-history)', () => {
+  test('admin mappings 를 부르지 않고 me/package-payment-history 만 읽는다', async() => {
     mockApi();
     renderScreen();
     await waitForRows();
     expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
-    expect(StandardizedApi.get).toHaveBeenCalledWith(API_ADMIN_MAPPINGS_CLIENT, { clientId: USER.id });
+    expect(StandardizedApi.get).toHaveBeenCalledWith(CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API);
+    StandardizedApi.get.mock.calls.forEach(([url]) => {
+      expect(String(url)).not.toMatch(/\/api\/v1\/admin\/mappings\/client/);
+    });
     expect(fetchShopOrders).toHaveBeenCalledWith(0, 50);
   });
 
@@ -152,6 +160,31 @@ describe('ClientPaymentHistory — 출처 (세션 사용자 id)', () => {
     expect(StandardizedApi.get).not.toHaveBeenCalled();
     expect(fetchShopOrders).not.toHaveBeenCalled();
     expect(screen.getAllByTestId(CLIENT_PAYMENT_TEST_IDS.SKELETON).length).toBeGreaterThan(0);
+  });
+
+  test('TERMINATED 추가패키지 이력이 me API 응답에 있으면 행으로 표시된다', async() => {
+    mockApi({
+      items: [{
+        type: 'ADDITIONAL_PACKAGE',
+        mappingId: 777,
+        packageName: '추가 5회기',
+        amount: 45000,
+        paymentStatus: 'APPROVED',
+        status: 'TERMINATED',
+        paymentMethod: 'CARD',
+        paymentSource: 'MANUAL',
+        sessions: 5,
+        paymentDate: '2026-09-25T10:00:00',
+        mergedIntoActive: true
+      }]
+    });
+    fetchShopOrders.mockResolvedValue([]);
+    renderScreen();
+    await waitForRows();
+    expect(screen.getByText('추가 5회기')).toBeInTheDocument();
+    expect(screen.getByText('45,000원')).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_PAYMENT_TEST_IDS.SUMMARY).textContent)
+      .toBe('1건 · 결제 45,000원');
   });
 
   test('.dev 분포: 온라인 EXPIRED 14 + REFUNDED 4 + 센터 환불 1 → 5행 · 결제 193,000원 · 환불 193,000원', async() => {
@@ -172,15 +205,15 @@ describe('ClientPaymentHistory — 출처 (세션 사용자 id)', () => {
     }));
     fetchShopOrders.mockResolvedValue([...expired, ...refunded]);
     mockApi({
-      mappings: [{
-        id: 501,
+      items: [{
+        type: 'INITIAL_MAPPING',
+        mappingId: 501,
         packageName: '단회기',
-        paymentAmount: 1000,
+        amount: 1000,
         paymentStatus: 'REFUNDED',
-        effectivePaymentStatus: 'REFUNDED',
         paymentMethod: 'CREDIT_CARD',
         paymentSource: 'MANUAL',
-        totalSessions: 1,
+        sessions: 1,
         paymentDate: '2026-09-30T10:00:00'
       }]
     });
@@ -303,7 +336,7 @@ describe('ClientPaymentHistory — 필터 칩 URL 쿼리', () => {
 
 describe('ClientPaymentHistory — 빈·에러·일부 실패 (§7)', () => {
   test('전체 없음: 필터 바 숨김 · 「회기 고르기」 primary', async() => {
-    mockApi({ mappings: [] });
+    mockApi({ items: [] });
     fetchShopOrders.mockResolvedValue([]);
     renderScreen();
     expect(await screen.findByText('아직 결제 내역이 없어요')).toBeInTheDocument();
@@ -312,7 +345,7 @@ describe('ClientPaymentHistory — 빈·에러·일부 실패 (§7)', () => {
   });
 
   test('필터 결과 없음: 필터 바·요약 유지 · 「필터 초기화」', async() => {
-    mockApi({ mappings: [MAPPINGS[1]] });
+    mockApi({ items: [HISTORY_ITEMS[1]] });
     fetchShopOrders.mockResolvedValue([]);
     renderScreen('/client/payment-history?status=refunded');
     expect(await screen.findByText('조건에 맞는 결제 내역이 없어요')).toBeInTheDocument();
@@ -323,7 +356,7 @@ describe('ClientPaymentHistory — 빈·에러·일부 실패 (§7)', () => {
   });
 
   test('전체 실패: role=alert · 필터 바 숨김 · 다시 시도', async() => {
-    mockApi({ mappingsFail: true });
+    mockApi({ historyFail: true });
     renderScreen();
     const alert = await screen.findByRole('alert');
     expect(within(alert).getByText('결제 내역을 불러오지 못했어요')).toBeInTheDocument();
@@ -359,15 +392,16 @@ describe('ClientPaymentHistory — 빈·에러·일부 실패 (§7)', () => {
 describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
   test('10건 초과 → 페이지네이션 · 페이지 이동 시 URL page', async() => {
     const many = Array.from({ length: 12 }, (_, i) => ({
-      id: i + 1,
+      type: 'INITIAL_MAPPING',
+      mappingId: i + 1,
       packageName: `상품 ${i + 1}`,
-      paymentAmount: 1000,
+      amount: 1000,
       paymentStatus: 'CONFIRMED',
       paymentMethod: 'CASH',
       paymentSource: 'MANUAL',
       paymentDate: `2026-09-${String(i + 1).padStart(2, '0')}T10:00:00`
     }));
-    mockApi({ mappings: many });
+    mockApi({ items: many });
     fetchShopOrders.mockResolvedValue([]);
     renderScreen();
     await screen.findByTestId(CLIENT_PAYMENT_TEST_IDS.PAGINATION);
@@ -378,7 +412,7 @@ describe('ClientPaymentHistory — 페이징 (공통 MGPagination)', () => {
   });
 
   test('온라인 주문 끝까지 읽기 (서버 size 50 페이지 반복)', async() => {
-    mockApi({ mappings: [] });
+    mockApi({ items: [] });
     const fullPage = Array.from({ length: 50 }, (_, i) => ({
       orderPublicId: `p-${i}`, status: 'EXPIRED', cashDueMinor: 0, createdAt: '2026-09-01T10:00:00'
     }));
@@ -420,14 +454,15 @@ describe('ClientPaymentHistory — 알림 mappingId 강조', () => {
 
   test('기간 밖 건은 필터를 넓히고 mappingId 는 유지한다', async() => {
     mockApi({
-      mappings: [{
-        id: 800,
+      items: [{
+        type: 'INITIAL_MAPPING',
+        mappingId: 800,
         packageName: '예전 상품',
-        paymentAmount: 10000,
+        amount: 10000,
         paymentStatus: 'APPROVED',
         paymentMethod: 'CARD',
         paymentSource: 'MANUAL',
-        totalSessions: 1,
+        sessions: 1,
         paymentDate: '2024-01-15T10:00:00'
       }]
     });
@@ -462,17 +497,18 @@ describe('ClientPaymentHistory — 알림 mappingId 강조', () => {
   });
 
   test('목록 뒤쪽 건은 해당 페이지로 옮긴다', async() => {
-    const mappings = Array.from({ length: 12 }, (_, index) => ({
-      id: 1000 + index,
+    const items = Array.from({ length: 12 }, (_, index) => ({
+      type: 'INITIAL_MAPPING',
+      mappingId: 1000 + index,
       packageName: `상품 ${index}`,
-      paymentAmount: 1000,
+      amount: 1000,
       paymentStatus: 'APPROVED',
       paymentMethod: 'CARD',
       paymentSource: 'MANUAL',
-      totalSessions: 1,
+      sessions: 1,
       paymentDate: `2026-01-${String(index + 1).padStart(2, '0')}T10:00:00`
     }));
-    mockApi({ mappings });
+    mockApi({ items });
     fetchShopOrders.mockResolvedValue([]);
     renderScreen('/client/payment-history?mappingId=1000');
     await waitFor(() => {

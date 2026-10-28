@@ -122,23 +122,39 @@ public class PasswordManagementController {
     
     /**
      * 비밀번호 변경
+     *
+     * <p>세션 User 해시만 쓰지 않고 DB 에서 재조회한 해시와 비교한다.
+     * 로그인({@code AuthController})과 같이 current/new/confirm 을 trim 한다.</p>
      */
     @PostMapping("/change")
     public ResponseEntity<Map<String, Object>> changePassword(@RequestBody PasswordChangeRequest request,
             HttpSession session, HttpServletRequest httpRequest) {
         try {
             User currentUser = SessionUtils.getCurrentUser(session);
-            if (currentUser == null) {
+            if (currentUser == null || currentUser.getId() == null) {
+                return ResponseEntity.status(401).body(Map.of(
+                    "success", false,
+                    "message", "로그인이 필요합니다."
+                ));
+            }
+
+            String currentPassword = trimPassword(request != null ? request.getCurrentPassword() : null);
+            String newPassword = trimPassword(request != null ? request.getNewPassword() : null);
+            String confirmPassword = trimPassword(request != null ? request.getConfirmPassword() : null);
+            
+            log.info("🔑 비밀번호 변경 요청: userId={}", currentUser.getId());
+
+            // DB 최신 User (세션에 남은 이전 해시로 matches 하지 않음)
+            User dbUser = userService.findById(currentUser.getId()).orElse(null);
+            if (dbUser == null) {
                 return ResponseEntity.status(401).body(Map.of(
                     "success", false,
                     "message", "로그인이 필요합니다."
                 ));
             }
             
-            log.info("🔑 비밀번호 변경 요청: userId={}", currentUser.getId());
-            
             // 새 비밀번호 검증
-            Map<String, Object> validationResult = passwordValidationService.validatePassword(request.getNewPassword());
+            Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);
             if (!(Boolean) validationResult.get("isValid")) {
                 @SuppressWarnings("unchecked")
                 Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
@@ -151,15 +167,15 @@ public class PasswordManagementController {
             }
             
             // 비밀번호 확인 일치 검증
-            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            if (!newPassword.equals(confirmPassword)) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "비밀번호 확인이 일치하지 않습니다."
                 ));
             }
             
-            // 현재 비밀번호 확인
-            if (!passwordService.matches(request.getCurrentPassword(), currentUser.getPassword())) {
+            // 현재 비밀번호 확인 — DB 해시
+            if (!passwordService.matches(currentPassword, dbUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "현재 비밀번호가 올바르지 않습니다."
@@ -167,7 +183,7 @@ public class PasswordManagementController {
             }
             
             // 새 비밀번호가 현재 비밀번호와 같은지 확인
-            if (passwordService.matches(request.getNewPassword(), currentUser.getPassword())) {
+            if (passwordService.matches(newPassword, dbUser.getPassword())) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "새 비밀번호는 현재 비밀번호와 달라야 합니다."
@@ -176,22 +192,27 @@ public class PasswordManagementController {
             
             // 비밀번호 변경 (UserService 호출)
             userService.changePassword(
-                currentUser.getId(), 
-                request.getCurrentPassword(), 
-                request.getNewPassword()
+                dbUser.getId(),
+                currentPassword,
+                newPassword
             );
             
-            log.info("✅ 비밀번호 변경 성공: userId={}", currentUser.getId());
+            log.info("✅ 비밀번호 변경 성공: userId={}", dbUser.getId());
 
-            currentUser.setIsPasswordChanged(Boolean.TRUE);
-            SessionUtils.setCurrentUser(session, currentUser);
+            // 세션·토큰용 최신 User (새 해시 + isPasswordChanged=true)
+            User refreshedUser = userService.findById(dbUser.getId()).orElse(null);
+            if (refreshedUser == null) {
+                refreshedUser = dbUser;
+                refreshedUser.setIsPasswordChanged(Boolean.TRUE);
+            }
+            SessionUtils.setCurrentUser(session, refreshedUser);
 
             Map<String, Object> body = new HashMap<>();
             body.put("success", true);
             body.put("message", "비밀번호가 성공적으로 변경되었습니다.");
             body.put("requiresPasswordChange", false);
             try {
-                AuthResponse issued = authService.issueTokensForUser(currentUser, httpRequest);
+                AuthResponse issued = authService.issueTokensForUser(refreshedUser, httpRequest);
                 if (issued != null && issued.getToken() != null) {
                     body.put("accessToken", issued.getToken());
                 }
@@ -200,7 +221,7 @@ public class PasswordManagementController {
                 }
             } catch (Exception tokenError) {
                 log.warn("비밀번호 변경 후 토큰 재발급 실패: userId={}, error={}",
-                    currentUser.getId(), tokenError.getMessage());
+                    refreshedUser.getId(), tokenError.getMessage());
             }
             return ResponseEntity.ok(body);
 
@@ -265,9 +286,12 @@ public class PasswordManagementController {
     public ResponseEntity<Map<String, Object>> confirmPasswordReset(@RequestBody PasswordResetRequest request) {
         try {
             log.info("🔑 비밀번호 재설정 확인 요청: token={}", request.getToken());
+
+            String newPassword = trimPassword(request.getNewPassword());
+            String confirmPassword = trimPassword(request.getConfirmPassword());
             
             // 새 비밀번호 검증
-            Map<String, Object> validationResult = passwordValidationService.validatePassword(request.getNewPassword());
+            Map<String, Object> validationResult = passwordValidationService.validatePassword(newPassword);
             if (!(Boolean) validationResult.get("isValid")) {
                 @SuppressWarnings("unchecked")
                 Map<String, String> errMap = (Map<String, String>) validationResult.get("errors");
@@ -280,7 +304,7 @@ public class PasswordManagementController {
             }
             
             // 비밀번호 확인 일치 검증
-            if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            if (!newPassword.equals(confirmPassword)) {
                 return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "message", "비밀번호 확인이 일치하지 않습니다."
@@ -288,7 +312,7 @@ public class PasswordManagementController {
             }
             
             // 비밀번호 재설정 처리
-            boolean resetSuccess = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            boolean resetSuccess = passwordResetService.resetPassword(request.getToken(), newPassword);
             
             if (resetSuccess) {
                 log.info("✅ 비밀번호 재설정 성공: token={}", request.getToken());
@@ -317,6 +341,16 @@ public class PasswordManagementController {
                 "message", "비밀번호 재설정 중 오류가 발생했습니다."
             ));
         }
+    }
+
+    /**
+     * AuthController 로그인 trim 과 동일 — null 은 빈 문자열.
+     *
+     * @param value 원본 비밀번호
+     * @return trim 된 값 (null → "")
+     */
+    private static String trimPassword(String value) {
+        return value == null ? "" : value.trim();
     }
 
     private static String firstPasswordPolicyMessage(Map<String, String> errors) {

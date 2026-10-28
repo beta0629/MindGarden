@@ -321,8 +321,7 @@ const OAuthPhoneVerificationModal = ({
             accessToken: mapped.accessToken,
             refreshToken: mapped.refreshToken,
             matchedAccount: mapped.matchedAccount,
-            provider: socialUser.provider,
-            requiresPasswordChange: mapped.requiresPasswordChange === true
+            provider: socialUser.provider
           });
           return;
         }

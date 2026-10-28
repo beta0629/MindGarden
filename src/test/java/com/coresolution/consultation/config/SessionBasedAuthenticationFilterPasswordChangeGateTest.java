@@ -88,7 +88,7 @@ class SessionBasedAuthenticationFilterPasswordChangeGateTest {
     @Test
     @DisplayName("변경 전 세션도 현재 사용자 조회는 통과")
     void unchangedClient_allowsCurrentUser() throws Exception {
-        MockHttpServletRequest request = sessionRequest("GET", "/api/v1/auth/current-user", false);
+        MockHttpServletRequest request = sessionRequest("GET", "/api/v1/auth/current-user", false, false);
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, filterChain);
@@ -97,14 +97,28 @@ class SessionBasedAuthenticationFilterPasswordChangeGateTest {
         assertThat(response.getStatus()).isNotEqualTo(403);
     }
 
+    @Test
+    @DisplayName("OAuth 세션은 isPasswordChanged=false 여도 다른 API 통과")
+    void oauthSession_skipsPasswordChangeGate() throws Exception {
+        MockHttpServletRequest request = sessionRequest("GET", "/api/v1/schedules", false, true);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+        assertThat(response.getStatus()).isNotEqualTo(403);
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+    }
+
     private MockHttpServletResponse exercise(String method, String path, boolean passwordChanged) throws Exception {
-        MockHttpServletRequest request = sessionRequest(method, path, passwordChanged);
+        MockHttpServletRequest request = sessionRequest(method, path, passwordChanged, false);
         MockHttpServletResponse response = new MockHttpServletResponse();
         filter.doFilterInternal(request, response, filterChain);
         return response;
     }
 
-    private MockHttpServletRequest sessionRequest(String method, String path, boolean passwordChanged) {
+    private MockHttpServletRequest sessionRequest(String method, String path, boolean passwordChanged,
+            boolean oauthLogin) {
         User user = User.builder()
                 .email("consultant@example.com")
                 .role(UserRole.CONSULTANT)
@@ -130,6 +144,9 @@ class SessionBasedAuthenticationFilterPasswordChangeGateTest {
         MockHttpSession httpSession = new MockHttpSession(null, SESSION_ID);
         httpSession.setAttribute(SessionConstants.USER_OBJECT, user);
         httpSession.setAttribute(SessionConstants.SESSION_ID, SESSION_ID);
+        if (oauthLogin) {
+            httpSession.setAttribute(SessionConstants.OAUTH_LOGIN, Boolean.TRUE);
+        }
 
         MockHttpServletRequest request = new MockHttpServletRequest(method, path);
         request.setSession(httpSession);

@@ -254,7 +254,9 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if (session != null && user != null) {
-                    if (Boolean.FALSE.equals(user.getIsPasswordChanged())) {
+                    // SNS/OAuth 세션은 DB isPasswordChanged=false 여도 비밀번호 변경 게이트 면제
+                    if (Boolean.FALSE.equals(user.getIsPasswordChanged())
+                            && !PasswordChangeGate.isExemptFromPasswordChange(session)) {
                         sessionRequiresPasswordChange = true;
                     }
                     // 기존 인증 정보 확인

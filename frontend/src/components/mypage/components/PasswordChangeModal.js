@@ -123,16 +123,32 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
   const handleSubmit = async(e) => {
     e.preventDefault();
-    const committed = validateCommittedNewPassword(formData.newPassword, formData.confirmPassword);
-    if (!committed.valid || !validateForm()) return;
+    // AuthController 로그인·서버 changePassword 와 동일하게 trim (DOM ref 도 동기화)
+    const currentPassword = String(formData.currentPassword || '').trim();
+    const newPassword = String(formData.newPassword || '').trim();
+    const confirmPassword = String(formData.confirmPassword || '').trim();
+    if (passwordField.inputRef?.current) {
+      passwordField.inputRef.current.value = newPassword;
+    }
+    if (passwordField.confirmInputRef?.current) {
+      passwordField.confirmInputRef.current.value = confirmPassword;
+    }
+    const committed = validateCommittedNewPassword(newPassword, confirmPassword);
+    const currentResult = validateField('currentPassword', currentPassword, currentPassword);
+    const newResult = validateField('newPassword', newPassword, currentPassword);
+    setValidation({
+      currentPassword: currentResult,
+      newPassword: newResult
+    });
+    if (!committed.valid || !currentResult.isValid || !newResult.isValid) return;
 
     setIsLoading(true);
     setSubmitError('');
     try {
       const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, {
-        currentPassword: formData.currentPassword,
-        newPassword: committed.value,
-        confirmPassword: committed.confirmValue
+        currentPassword,
+        newPassword: String(committed.value || '').trim(),
+        confirmPassword: String(committed.confirmValue || '').trim()
       });
       if (result && result.success) {
         await persistReissuedSessionTokens(result);

@@ -145,6 +145,28 @@ describe('PasswordChangeModal', () => {
     }));
   });
 
+  it('제출 시 current/new/confirm 을 trim 하여 POST 한다', async() => {
+    renderOpen({ tempPassword: true });
+    const dialog = screen.getByRole('dialog');
+    fireEvent.change(within(dialog).getByLabelText('현재 비밀번호'), {
+      target: { name: 'currentPassword', value: '  TempPass1@  ' }
+    });
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호'), {
+      target: { name: 'newPassword', value: '  Newfake8@Z  ' }
+    });
+    fireEvent.change(within(dialog).getByLabelText('새 비밀번호 확인'), {
+      target: { name: 'confirmPassword', value: '  Newfake8@Z  ' }
+    });
+    fireEvent.submit(dialog.querySelector('form'));
+
+    await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalledTimes(1));
+    expect(StandardizedApi.post.mock.calls[0][1]).toEqual({
+      currentPassword: 'TempPass1@',
+      newPassword: 'Newfake8@Z',
+      confirmPassword: 'Newfake8@Z'
+    });
+  });
+
   it('새 비밀번호가 빈 값이면 제출해도 POST 하지 않는다', async() => {
     renderOpen({ tempPassword: true });
     const dialog = screen.getByRole('dialog');

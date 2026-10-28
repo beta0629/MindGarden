@@ -94,8 +94,8 @@ class ApplePhoneVerificationServiceImplTest {
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateApplePhoneOtpChallengeToken(any(ApplePhoneOtpChallengeClaims.class)))
             .thenReturn("otp-challenge-jwt");
-        when(jwtService.generateToken(any(User.class))).thenReturn("access-jwt");
-        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-jwt");
+        when(jwtService.generateTokenForOAuth(any(User.class))).thenReturn("access-jwt");
+        when(jwtService.generateRefreshTokenForOAuth(any(User.class))).thenReturn("refresh-jwt");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(

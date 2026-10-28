@@ -2,8 +2,10 @@ package com.coresolution.consultation.constant.auth;
 
 import java.io.IOException;
 import java.util.List;
+import com.coresolution.consultation.constant.SessionConstants;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 /**
  * 비밀번호 변경 전 토큰이 호출할 수 있는 API.
@@ -11,6 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
  * <p>클레임 {@code pwd_change_required=true} 인 Access/Refresh 와
  * {@code isPasswordChanged=false} 세션은 여기 없는 경로에서 403
  * {@code PASSWORD_CHANGE_REQUIRED} 를 받는다.</p>
+ *
+ * <p>SNS/OAuth 세션({@link SessionConstants#OAUTH_LOGIN})은 DB 플래그와 무관하게 면제한다.
+ * OAuth 로그인 시 DB {@code isPasswordChanged} 를 쓰지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-10-14
@@ -36,6 +41,17 @@ public final class PasswordChangeGate {
             new AllowedRoute(METHOD_POST, "/api/v1/auth/refresh-token"));
 
     private PasswordChangeGate() {
+    }
+
+    /**
+     * SNS/OAuth 로그인 세션이면 비밀번호 변경 게이트를 적용하지 않는다.
+     *
+     * @param session HTTP 세션 (null 허용)
+     * @return OAuth 면제이면 true
+     */
+    public static boolean isExemptFromPasswordChange(HttpSession session) {
+        return session != null
+                && Boolean.TRUE.equals(session.getAttribute(SessionConstants.OAUTH_LOGIN));
     }
 
     /**

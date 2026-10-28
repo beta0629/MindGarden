@@ -2,10 +2,12 @@ package com.coresolution.consultation.constant.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coresolution.consultation.constant.SessionConstants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockHttpSession;
 
 /**
  * 비밀번호 변경 전 허용 경로.
@@ -15,6 +17,18 @@ import org.springframework.mock.web.MockHttpServletResponse;
  */
 @DisplayName("PasswordChangeGate")
 class PasswordChangeGateTest {
+
+    @Test
+    @DisplayName("OAuth 세션 속성이 있으면 비밀번호 변경 게이트 면제")
+    void oauthSessionIsExempt() {
+        MockHttpSession oauthSession = new MockHttpSession();
+        oauthSession.setAttribute(SessionConstants.OAUTH_LOGIN, Boolean.TRUE);
+        assertThat(PasswordChangeGate.isExemptFromPasswordChange(oauthSession)).isTrue();
+
+        MockHttpSession emailSession = new MockHttpSession();
+        assertThat(PasswordChangeGate.isExemptFromPasswordChange(emailSession)).isFalse();
+        assertThat(PasswordChangeGate.isExemptFromPasswordChange(null)).isFalse();
+    }
 
     @Test
     @DisplayName("변경·로그아웃·현재 사용자·리프레시만 허용하고 그 외는 거부")

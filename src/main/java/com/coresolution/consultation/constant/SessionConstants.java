@@ -64,6 +64,12 @@ public final class SessionConstants {
      * 소셜 제공자
      */
     public static final String SOCIAL_PROVIDER = "SOCIAL_PROVIDER";
+
+    /**
+     * SNS/OAuth 로그인 세션 표시 ({@code Boolean.TRUE}).
+     * <p>비밀번호 변경 게이트 면제용. DB {@code isPasswordChanged} 와 무관하며 DB 를 갱신하지 않는다.</p>
+     */
+    public static final String OAUTH_LOGIN = "oauthLogin";
     
     // ===== 비즈니스 로직 세션 관련 상수 =====
     

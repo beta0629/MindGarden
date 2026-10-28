@@ -42,4 +42,16 @@ describe('MobileLayout', () => {
     const gnbProps = mockMobileGnb.mock.calls[0][0];
     expect(gnbProps.onLogout).toBeUndefined();
   });
+
+  it('drawerVariant soft-sheet를 MobileLnbDrawer에 전달한다', () => {
+    render(
+      <MobileLayout drawerVariant="soft-sheet">
+        <div>content</div>
+      </MobileLayout>
+    );
+
+    expect(mockMobileLnbDrawer).toHaveBeenCalled();
+    const drawerProps = mockMobileLnbDrawer.mock.calls[0][0];
+    expect(drawerProps.variant).toBe('soft-sheet');
+  });
 });

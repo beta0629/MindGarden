@@ -17,7 +17,13 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
 import { getGnbLogoUrl } from '../../utils/brandingUtils';
 import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
-import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
+import {
+  DEFAULT_MENU_ITEMS,
+  CONSULTANT_MENU_ITEMS,
+  CLIENT_MENU_ITEMS,
+  BREAKPOINT_DESKTOP,
+  BREAKPOINT_CONSULTANT_DESKTOP
+} from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
@@ -123,11 +129,14 @@ const AdminCommonLayoutShell = ({
     [brandingInfo]
   );
   const { windowSize } = useResponsive();
-  const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
   const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
+  // 상담사: 태블릿(768–1023)은 MobileLayout(햄버거+stone soft-sheet). 데스크톱 LNB는 ≥1024만.
+  // 운영/어드민: 기존 768 게이트 유지(데스크톱 LNB 회귀 금지).
+  const desktopBreakpoint = isCounselorOnly ? BREAKPOINT_CONSULTANT_DESKTOP : BREAKPOINT_DESKTOP;
+  const isDesktop = windowSize.width >= desktopBreakpoint;
 
   const [shellMeta, setShellMeta] = useState({});
 
@@ -295,7 +304,8 @@ const AdminCommonLayoutShell = ({
     onSearchChange: resolvedOnSearchChange,
     onBellClick: handleBellClick,
     onLogout: handleLogout,
-    navigateQuickActionsFromLnb
+    navigateQuickActionsFromLnb,
+    ...(isCounselorOnly ? { drawerVariant: 'soft-sheet' } : {})
   };
 
   // Clinic-OS chrome(GNB+LNB) 마운트 유지 — stage(Outlet/children)만 교체. 셸 레벨 loading 대체 금지.

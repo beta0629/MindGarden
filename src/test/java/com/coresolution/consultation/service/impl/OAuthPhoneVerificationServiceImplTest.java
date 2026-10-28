@@ -88,8 +88,8 @@ class OAuthPhoneVerificationServiceImplTest {
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateOAuthPhoneOtpChallengeToken(any(OAuthPhoneOtpChallengeClaims.class)))
             .thenReturn("oauth-otp-challenge-jwt");
-        when(jwtService.generateToken(any(User.class))).thenReturn("oauth-access-jwt");
-        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("oauth-refresh-jwt");
+        when(jwtService.generateTokenForOAuth(any(User.class))).thenReturn("oauth-access-jwt");
+        when(jwtService.generateRefreshTokenForOAuth(any(User.class))).thenReturn("oauth-refresh-jwt");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(

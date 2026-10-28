@@ -1110,8 +1110,9 @@ public class OAuth2Controller extends BaseApiController {
             log.warn("OAuth 권한 조회 실패 (빈 리스트): userId={}, err={}", user.getId(), e.getMessage());
             permissions = new java.util.ArrayList<>();
         }
-        String accessToken = jwtService.generateToken(user, permissions);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        // SNS/OAuth — pwd_change_required 클레임 생략 (DB isPasswordChanged 미갱신)
+        String accessToken = jwtService.generateTokenForOAuth(user, permissions);
+        String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
         if (accessToken == null || accessToken.isBlank()) {
             throw new IllegalStateException("OAuth accessToken 발급 실패");
         }
@@ -3425,10 +3426,10 @@ public class OAuth2Controller extends BaseApiController {
                                 e.getMessage());
                         permissions = new java.util.ArrayList<>();
                     }
-                    String jwtToken = jwtService.generateToken(user, permissions);
+                    String jwtToken = jwtService.generateTokenForOAuth(user, permissions);
                     // 표준화 2025-12-08: username = userId이므로 refreshToken도 userId 사용, User 객체로 생성하여
                     // tenantId, email 포함
-                    String refreshToken = jwtService.generateRefreshToken(user);
+                    String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
 
                     // 프로필 이미지 결정
                     String finalProfileImageUrl = user.getProfileImageUrl() != null
@@ -3982,8 +3983,8 @@ public class OAuth2Controller extends BaseApiController {
                                 e.getMessage());
                         permissions = new java.util.ArrayList<>();
                     }
-                    String jwtToken = jwtService.generateToken(user, permissions);
-                    String refreshToken = jwtService.generateRefreshToken(user);
+                    String jwtToken = jwtService.generateTokenForOAuth(user, permissions);
+                    String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
 
                     String finalProfileImageUrl = user.getProfileImageUrl() != null
                             && !user.getProfileImageUrl().trim().isEmpty()
@@ -4800,6 +4801,8 @@ public class OAuth2Controller extends BaseApiController {
                     provider);
             return;
         }
+        // 비밀번호 변경 게이트 면제 — DB isPasswordChanged 와 무관, DB 미갱신
+        SessionUtils.markOAuthLogin(session);
         String sessionId = session.getId();
         String socialProvider = provider != null && !provider.isBlank() ? provider : "UNKNOWN";
         try {
@@ -4922,8 +4925,8 @@ public class OAuth2Controller extends BaseApiController {
                 log.warn("권한 조회 실패 (빈 리스트): userId={}, err={}", user.getId(), e.getMessage());
                 permissions = new java.util.ArrayList<>();
             }
-            String accessToken = jwtService.generateToken(user, permissions);
-            String refreshToken = jwtService.generateRefreshToken(user);
+            String accessToken = jwtService.generateTokenForOAuth(user, permissions);
+            String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
             OAuthAccountSelectionCompleteData data = OAuthAccountSelectionCompleteData.builder()
                 .accessToken(accessToken).refreshToken(refreshToken).userId(user.getId()).email(user.getEmail())
                 .name(user.getName()).nickname(user.getNickname())
@@ -5131,8 +5134,8 @@ public class OAuth2Controller extends BaseApiController {
                 log.warn("⚠️ 권한 조회 실패 (빈 리스트 반환): userId={}, 오류={}", user.getId(), e.getMessage());
                 permissions = new java.util.ArrayList<>();
             }
-            String jwtToken = jwtService.generateToken(user, permissions);
-            String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+            String jwtToken = jwtService.generateTokenForOAuth(user, permissions);
+            String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
 
             log.info("네이티브 SDK 로그인 성공: userId={}, email={}, role={}, sessionId={}", user.getId(),
                     user.getEmail(), user.getRole(), session.getId());

@@ -112,6 +112,26 @@ public class SessionUtils implements ApplicationContextAware {
             session.setAttribute(SessionConstants.USER_OBJECT, user);
         }
     }
+
+    /**
+     * SNS/OAuth 로그인 세션으로 표시한다. 비밀번호 변경 게이트 면제용(DB 미갱신).
+     *
+     * @param session HTTP 세션
+     */
+    public static void markOAuthLogin(HttpSession session) {
+        if (session != null) {
+            session.setAttribute(SessionConstants.OAUTH_LOGIN, Boolean.TRUE);
+        }
+    }
+
+    /**
+     * @param session HTTP 세션
+     * @return OAuth/SNS 로그인 세션이면 true
+     */
+    public static boolean isOAuthLogin(HttpSession session) {
+        return session != null
+                && Boolean.TRUE.equals(session.getAttribute(SessionConstants.OAUTH_LOGIN));
+    }
     
     /**
      * 세션 무효화

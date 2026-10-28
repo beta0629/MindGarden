@@ -79,8 +79,6 @@ import {
   OAUTH_POST_SIGNUP_LOGIN_REMINDER
 } from '../../constants/loginDisplay';
 import { mergeGuestShopCartIntoServer } from '../../services/clientShopService';
-import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
-
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더 표시용) — MindGarden/플랫폼 문구 금지 */
 const EMPTY_MERCHANT_LEGAL = {
   businessRegistrationNumber: '',
@@ -1337,8 +1335,7 @@ const UnifiedLogin = () => {
             accessToken,
             refreshToken,
             matchedAccount,
-            provider: matchedProvider,
-            requiresPasswordChange
+            provider: matchedProvider
           }) => {
             const userInfo = {
               id: matchedAccount?.userId,
@@ -1354,10 +1351,7 @@ const UnifiedLogin = () => {
             setShowOAuthPhoneVerificationModal(false);
             setOAuthPhoneVerificationPayload(null);
             await checkSession(true, { background: true });
-            if (requiresPasswordChange === true) {
-              dispatchPasswordChangeRequired();
-              return;
-            }
+            // SNS/OAuth — 비밀번호 변경 게이트 미적용 (이메일+비밀번호 경로만 모달)
             const { redirectToDynamicDashboard } = await import('../../utils/dashboardUtils');
             await redirectToDynamicDashboard({ user: userInfo }, navigate);
           }}

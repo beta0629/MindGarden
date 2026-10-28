@@ -340,13 +340,13 @@ class OAuth2ControllerWebOAuthSessionTest {
     }
 
     @Test
-    @DisplayName("issueWebOAuthJwtPair: generateToken·refreshToken·createRefreshToken 호출")
+    @DisplayName("issueWebOAuthJwtPair: generateTokenForOAuth·refreshTokenForOAuth·createRefreshToken 호출")
     void issueWebOAuthJwtPair_issuesAndPersistsTokens() throws Exception {
         User user = sampleUser();
         MockHttpServletRequest request = new MockHttpServletRequest();
         when(dynamicPermissionService.getUserPermissionsAsStringList(any())).thenReturn(List.of());
-        when(jwtService.generateToken(eq(user), any())).thenReturn("access-jwt-web-oauth");
-        when(jwtService.generateRefreshToken(eq(user))).thenReturn("refresh-jwt-web-oauth");
+        when(jwtService.generateTokenForOAuth(eq(user), any())).thenReturn("access-jwt-web-oauth");
+        when(jwtService.generateRefreshTokenForOAuth(eq(user))).thenReturn("refresh-jwt-web-oauth");
 
         Method method = OAuth2Controller.class.getDeclaredMethod("issueWebOAuthJwtPair",
                 User.class, HttpServletRequest.class);

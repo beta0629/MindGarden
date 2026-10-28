@@ -16,10 +16,12 @@ import { Calendar, Clock, Ticket } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { toDisplayString } from '@/utils/safeDisplay';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
-import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { Avatar } from '@/components/atoms/Avatar';
+import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
+import { ProgressBar } from '@/components/molecules/ProgressBar';
 import { useCreateBooking } from '@/api/hooks/useBooking';
 import { useSessionBalance, PAYMENT_QUERY_KEYS } from '@/api/hooks/usePayments';
+import { useMerchantLegal } from '@/hooks/useMerchantLegal';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useTenantStore } from '@/stores/useTenantStore';
 
@@ -55,6 +57,8 @@ export default function BookingPayment() {
   const user = useAuthStore((s) => s.user);
   const tenantId = useTenantStore((s) => s.tenantId);
   const clientId = user?.id;
+  const { legal: merchantLegal, centerName: merchantCenterName, tenantCode } =
+    useMerchantLegal();
 
   const { data: balance, isLoading: balanceLoading } = useSessionBalance(clientId);
   const remainingSessions = balance?.remainingSessions ?? 0;
@@ -291,6 +295,14 @@ export default function BookingPayment() {
             </Pressable>
           )}
         </Animated.View>
+
+        {tenantCode ? (
+          <MerchantLegalFooter
+            centerName={merchantCenterName}
+            legal={merchantLegal}
+            compact
+          />
+        ) : null}
       </ScrollView>
 
       {/* 하단 고정 버튼 */}

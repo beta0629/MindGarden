@@ -88,10 +88,13 @@
   align-items: center;
   gap: var(--mg-v2-space-3);
   padding: var(--mg-v2-space-4) var(--mg-v2-space-6);
+  /* shorthand가 bottom을 덮으므로 fullscreen safe-area를 여기서 재적용 */
+  padding-bottom: calc(var(--mg-v2-space-4) + env(safe-area-inset-bottom, 0px));
   border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
   background: var(--mg-v2-color-surface-card);
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
 /* Footer MGButton row — equal height via unified-modals cascade + flex align */
@@ -229,6 +232,7 @@
     top: 0;
     align-self: flex-start;
     max-height: min(100vh, 100%);
+    max-height: min(100dvh, 100%);
     overflow-y: auto;
     z-index: 1;
   }
@@ -301,6 +305,15 @@
   background: var(--mg-v2-consultation-log-field-bg);
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* iOS 줌 방지: body-md(0.875rem) < 16px → coarse에서만 ≥16px */
+@media (pointer: coarse) {
+  .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-input,
+  .mg-v2-clinic-os .mg-v2-consultation-log-modal select,
+  .mg-v2-clinic-os .mg-v2-consultation-log-modal textarea {
+    font-size: var(--mg-font-size-base, 16px);
+  }
 }
 
 .mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-input:focus,

@@ -15,6 +15,7 @@
   min-width: 0;
   height: 100%;
   min-height: calc(100vh - 220px); /* GNB, LNB, 패딩, 헤더·범례 여유 */
+  min-height: calc(100dvh - 220px);
   overflow: hidden;
   box-sizing: border-box;
 }
@@ -1409,6 +1410,7 @@
     top: 0;
     align-self: flex-start;
     max-height: min(100vh, 100%);
+    max-height: min(100dvh, 100%);
     overflow-y: auto;
     z-index: 1;
   }
@@ -1605,6 +1607,7 @@
 
 .mg-v2-ad-modal__footer {
   padding: 16px 24px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--mg-gray-200);
   background: var(--ad-b0kla-card-bg);
   display: flex;

@@ -35,6 +35,12 @@ export interface User {
    * 표시 시에는 PII 정책상 반드시 maskKoreanMobileForDisplay 등으로 마스킹.
    */
   phone?: string;
+  phoneNumber?: string;
+  mobile?: string;
+  userEmail?: string;
+  /** 샵 PortOne 결제 게이트 — BE current-user `isPhoneVerified` */
+  isPhoneVerified?: boolean;
+  phoneVerified?: boolean;
   /** BE UserRoleCapabilityUtils — ADMIN 상담 겸직 */
   counselingEnabled?: boolean;
   hasOperatorRole?: boolean;

@@ -401,6 +401,20 @@ export const SHOP_API = {
     `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}`,
   preparePayment: (orderPublicId: string) =>
     `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/prepare-payment`,
+  /** 결제 전 CREATED/PENDING_PAYMENT 주문 취소 (고아 미결제 방지) */
+  cancelOrder: (orderPublicId: string) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/cancel`,
+  /** 결제창 사용자 취소 — 미결제·PortOne 미승인일 때만 CANCELLED */
+  userCancelPayment: (orderPublicId: string) =>
+    `/api/v1/clients/me/shop/orders/${encodeURIComponent(orderPublicId)}/user-cancel`,
+  /**
+   * PortOne SDK 성공 후 BE REST 검증 (amount 쿼리 필수).
+   *
+   * @param paymentId PortOne paymentId
+   * @param amount prepare에서 검증된 cashAmount
+   */
+  verifyPayment: (paymentId: string, amount: number | string) =>
+    `/api/v1/payments/${encodeURIComponent(paymentId)}/verify?amount=${encodeURIComponent(String(amount))}`,
 } as const;
 
 /** 테넌트 활성 컴포넌트 플래그 — CLIENT_SHOP 등 */

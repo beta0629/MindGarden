@@ -2,12 +2,16 @@
  * 내담자 대시보드 — Clinic-OS v4 「상담실 로비」 under ClientWebPageShell
  * `/client/dashboard` · ONE suite skeleton · slots: hero(+strip) · session/pay glance
  *
+ * 로그인·역할 판단은 ClientRouteGuard 가 한다. 이 화면은 useClientSessionReady 의
+ * ready 이후에만 본인 데이터를 로드하며, SessionContext.isLoading 을 화면 로딩으로 쓰지 않는다.
+ *
  * @author CoreSolution
  * @since 2026-09-17
  */
 
 import React, { useMemo } from 'react';
 import { useSession } from '../../contexts/SessionContext';
+import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { MAPPING_STATUS, selectPrimaryAssignedMapping } from '../../constants/mapping';
 import {
   CLIENT_DASHBOARD_ARIA_LABEL,
@@ -37,17 +41,10 @@ import {
 } from './clientDashboard/lobbyViewModel';
 import './clientDashboard/ClientLobby.css';
 
-const ClientDashboard = ({ user: userFromRoute }) => {
-  const {
-    user,
-    isLoggedIn,
-    isLoading: sessionLoading,
-    checkSession
-  } = useSession();
-  const { sessionUser, sessionIsLoggedIn } = useClientSessionBootstrap(checkSession);
-
-  const currentUser = sessionUser || user || userFromRoute;
-  const currentIsLoggedIn = sessionIsLoggedIn || isLoggedIn;
+const ClientDashboard = () => {
+  const { checkSession } = useSession();
+  const { ready, user, userId, userRef } = useClientSessionReady();
+  useClientSessionBootstrap(checkSession);
 
   const {
     consultationData,
@@ -56,14 +53,15 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     isLoading,
     sectionError,
     reload
-  } = useClientDashboardData(currentUser, sessionLoading, currentIsLoggedIn);
+  } = useClientDashboardData({ ready, userId, userRef });
 
   const primaryActiveMapping = useMemo(
     () => selectPrimaryAssignedMapping(sharedClientMappings),
     [sharedClientMappings]
   );
 
-  const sectionLoading = isLoading || sessionLoading || !currentIsLoggedIn || !currentUser?.id;
+  // 전역 세션 재확인(isLoading)은 OR 하지 않는다 — ready·데이터 로딩만 화면 게이트
+  const sectionLoading = !ready || isLoading;
 
   const nextSchedule = consultationData?.upcomingSchedules?.[0] || null;
   const remainingSessions = consultationData?.remainingSessions ?? 0;
@@ -112,7 +110,7 @@ const ClientDashboard = ({ user: userFromRoute }) => {
     [nextSchedule]
   );
 
-  const userName = currentUser?.name;
+  const userName = user?.name;
 
   const mainSlot = (
     <main

@@ -158,6 +158,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
       user: sessionUser,
       isLoggedIn: true,
       isLoading: false,
+      hasCheckedSession: true,
       checkSession: jest.fn(),
       logout: mockLogout,
       setModalOpen: jest.fn()
@@ -275,6 +276,7 @@ describe('ClientDashboard v4 상담실 로비', () => {
       user: sessionUser,
       isLoggedIn: true,
       isLoading: false,
+      hasCheckedSession: true,
       checkSession: jest.fn(),
       logout: mockLogout,
       setModalOpen: jest.fn()
@@ -303,6 +305,31 @@ describe('ClientDashboard v4 상담실 로비', () => {
     expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
     expect(container.querySelector('.client-web-topchrome__brand-mark')).toBeTruthy();
     expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
+  });
+
+  test('전역 isLoading 재확인 중에도 hasCheckedSession·user 있으면 로비를 유지한다', async() => {
+    const sessionUser = buildSessionUser();
+    mockUseSession.mockReturnValue({
+      user: sessionUser,
+      isLoggedIn: true,
+      isLoading: true,
+      hasCheckedSession: true,
+      checkSession: jest.fn(),
+      logout: mockLogout,
+      setModalOpen: jest.fn()
+    });
+    mockSessionGetUser.mockReturnValue(sessionUser);
+
+    render(
+      <MemoryRouter>
+        <ClientDashboard />
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('불러오는 중…')).not.toBeInTheDocument();
   });
 
   test('회기 0이면 히어로 우선순위 ZERO_SESSIONS', async() => {

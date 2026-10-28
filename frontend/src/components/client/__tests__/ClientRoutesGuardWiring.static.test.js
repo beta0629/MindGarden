@@ -49,6 +49,7 @@ const GUARDED_ROUTE_MARKERS = [
 ];
 
 const CLIENT_SCREENS = [
+  'components/client/ClientDashboard.js',
   'components/client/ClientSchedule.js',
   'components/client/ClientSessionManagement.js',
   'components/client/ClientPaymentHistory.js',
@@ -98,6 +99,29 @@ describe('Client routes — single shared guard', () => {
 
   test('세션 관리는 current-user 를 다시 부르지 않는다 (세션 사용자 id 사용)', () => {
     expect(stripComments(read('components/client/ClientSessionManagement.js'))).not.toMatch(/AUTH_API|current-user/);
+  });
+
+  test('대시보드 데이터·부트스트랩은 전역 isLoading 을 화면 게이트로 쓰지 않는다', () => {
+    const dataSrc = stripComments(read('components/client/clientDashboard/useClientDashboardData.js'));
+    expect(dataSrc).toMatch(/useUserIdScopedLoad\s*\(/);
+    expect(dataSrc).not.toMatch(/sessionLoading/);
+    expect(dataSrc).not.toMatch(/\bisLoggedIn\b/);
+
+    const bootSrc = stripComments(read('components/client/clientDashboard/useClientSessionBootstrap.js'));
+    expect(bootSrc).toMatch(/checkSession\(\s*true\s*,\s*\{\s*silent:\s*true\s*\}\s*\)/);
+    expect(bootSrc).not.toMatch(/checkSession\(\s*true\s*\)\s*;/);
+  });
+
+  test('쇼핑 auth·테넌트 게이트는 hasCheckedSession 만 대기하고 /login soft-kick 하지 않는다', () => {
+    const authSrc = stripComments(read('hooks/useClientShopAuth.js'));
+    expect(authSrc).toMatch(/sessionLoading\s*=\s*!hasCheckedSession/);
+    expect(authSrc).not.toMatch(/navigate\(\s*['"]\/login/);
+    expect(authSrc).not.toMatch(/\bisLoading\b/);
+
+    const gateSrc = stripComments(read('components/shop/templates/ClientTenantComponentGate.js'));
+    expect(gateSrc).toMatch(/sessionAwaiting\s*=\s*!hasCheckedSession/);
+    expect(gateSrc).not.toMatch(/sessionLoading/);
+    expect(gateSrc).not.toMatch(/isLoading\s*:/);
   });
 });
 

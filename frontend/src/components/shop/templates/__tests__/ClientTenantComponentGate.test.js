@@ -112,6 +112,56 @@ describe('ClientTenantComponentGate', () => {
     expect(screen.getByText('enabled-body')).toBeInTheDocument();
   });
 
+  test('hasCheckedSession true 이면 전역 isLoading 재확인 중에도 자식을 유지한다', () => {
+    mockUseSession.mockReturnValue({
+      isLoading: true,
+      hasCheckedSession: true,
+      isLoggedIn: true
+    });
+    mockUseTenantComponentFlags.mockReturnValue({
+      loading: false,
+      fetchFailed: false,
+      clientShopEnabled: true,
+      clientRewardEnabled: true
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/client/shop/cart']}>
+        <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+          <p>recheck-body</p>
+        </ClientTenantComponentGate>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('recheck-body')).toBeInTheDocument();
+    expect(screen.queryByTestId(CLIENT_SHOP_TEST_IDS.SESSION_LOADING)).not.toBeInTheDocument();
+  });
+
+  test('hasCheckedSession false 이면 세션 대기 로딩만 보여 준다', () => {
+    mockUseSession.mockReturnValue({
+      isLoading: false,
+      hasCheckedSession: false,
+      isLoggedIn: false
+    });
+    mockUseTenantComponentFlags.mockReturnValue({
+      loading: false,
+      fetchFailed: false,
+      clientShopEnabled: true,
+      clientRewardEnabled: true
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/client/shop/cart']}>
+        <ClientTenantComponentGate componentCode={PLATFORM_COMPONENT_CODES.CLIENT_SHOP}>
+          <p>hidden-until-checked</p>
+        </ClientTenantComponentGate>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByTestId(CLIENT_SHOP_TEST_IDS.SESSION_LOADING)).toBeInTheDocument();
+    expect(screen.queryByText('hidden-until-checked')).not.toBeInTheDocument();
+  });
+
   test('disabled shop uses FeatureUnavailable with live copy as the only h1', () => {
     mockUseTenantComponentFlags.mockReturnValue({
       loading: false,

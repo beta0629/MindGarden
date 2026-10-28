@@ -33,7 +33,10 @@ public final class PasswordChangeGate {
             new AllowedRoute(METHOD_POST, "/api/v1/auth/password/validate"),
             new AllowedRoute(METHOD_POST, "/api/v1/auth/logout"),
             new AllowedRoute(METHOD_GET, "/api/v1/auth/current-user"),
-            new AllowedRoute(METHOD_POST, "/api/v1/auth/refresh-token"));
+            new AllowedRoute(METHOD_POST, "/api/v1/auth/refresh-token"),
+            new AllowedRoute(METHOD_POST, "/api/v1/auth/sms/send"),
+            new AllowedRoute(METHOD_POST, "/api/v1/auth/sms/verify"),
+            new AllowedRoute(METHOD_GET, "/api/v1/auth/otp/current"));
 
     private PasswordChangeGate() {
     }

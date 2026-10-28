@@ -2,19 +2,25 @@ package com.coresolution.consultation.controller;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 import com.coresolution.consultation.dto.AuthResponse;
 import com.coresolution.consultation.dto.PasswordChangeRequest;
 import com.coresolution.consultation.dto.PasswordResetRequest;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.exception.SmsOtpVerificationFailedException;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.PasswordConfigService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.PasswordValidationService;
+import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,6 +44,16 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/api/v1/auth/password") // 표준화 2025-12-05: 레거시 경로 제거
 @RequiredArgsConstructor
 public class PasswordManagementController {
+
+    private static final Pattern OTP_SIX_DIGITS = Pattern.compile("^\\d{6}$");
+
+    /** 첫 로그인 비밀번호 변경 — 등록 휴대폰 없음. */
+    private static final String MSG_FIRST_LOGIN_PHONE_MISSING =
+            "등록된 휴대폰 번호가 없습니다. 관리자에게 문의해 주세요.";
+
+    /** 첫 로그인 비밀번호 변경 — OTP 미입력. */
+    private static final String MSG_FIRST_LOGIN_OTP_REQUIRED =
+            "휴대폰 인증 코드(6자리)를 입력해 주세요.";
     
     private final PasswordValidationService passwordValidationService;
     private final PasswordConfigService passwordConfigService;
@@ -45,6 +61,8 @@ public class PasswordManagementController {
     private final UserService userService;
     private final PasswordService passwordService;
     private final AuthService authService;
+    private final SmsOtpVerificationService smsOtpVerificationService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
      * 비밀번호 정책 요구사항 조회
@@ -136,6 +154,15 @@ public class PasswordManagementController {
             }
             
             log.info("🔑 비밀번호 변경 요청: userId={}", currentUser.getId());
+
+            // 첫 로그인(임시 비밀번호) — 등록 휴대폰 OTP 단일 사용 검증 후 비밀번호 변경
+            if (Boolean.FALSE.equals(currentUser.getIsPasswordChanged())) {
+                ResponseEntity<Map<String, Object>> otpGate =
+                        requireFirstLoginPhoneOtp(currentUser, request.getVerificationCode());
+                if (otpGate != null) {
+                    return otpGate;
+                }
+            }
             
             // 새 비밀번호 검증
             Map<String, Object> validationResult = passwordValidationService.validatePassword(request.getNewPassword());
@@ -210,12 +237,92 @@ public class PasswordManagementController {
                 "success", false,
                 "message", e.getMessage()
             ));
+        } catch (IllegalArgumentException e) {
+            log.warn("비밀번호 변경 요청 거절: userId 요청 검증 실패 — {}", e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                "success", false,
+                "message", e.getMessage() != null ? e.getMessage() : MSG_FIRST_LOGIN_OTP_REQUIRED
+            ));
         } catch (Exception e) {
             log.error("❌ 비밀번호 변경 실패: {}", e.getMessage(), e);
             return ResponseEntity.status(500).body(Map.of(
                 "success", false,
                 "message", "비밀번호 변경 중 오류가 발생했습니다."
             ));
+        }
+    }
+
+    /**
+     * 첫 로그인 비밀번호 변경 시 등록 휴대폰 OTP 를 검증·소비한다.
+     *
+     * @param currentUser 세션 사용자 ({@code isPasswordChanged=false})
+     * @param verificationCode 요청 본문 OTP (6자리)
+     * @return 실패 시 400/429 응답, 성공 시 null
+     */
+    private ResponseEntity<Map<String, Object>> requireFirstLoginPhoneOtp(
+            User currentUser, String verificationCode) {
+        String phonePlain = resolveSessionPhonePlain(currentUser);
+        if (!StringUtils.hasText(phonePlain)) {
+            log.warn("첫 로그인 비밀번호 변경 — 휴대폰 없음: userId={}", currentUser.getId());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", MSG_FIRST_LOGIN_PHONE_MISSING));
+        }
+
+        String normalizedPhone;
+        try {
+            normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phonePlain);
+        } catch (IllegalArgumentException ex) {
+            log.warn("첫 로그인 비밀번호 변경 — 휴대폰 형식 오류: userId={}", currentUser.getId());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", MSG_FIRST_LOGIN_PHONE_MISSING));
+        }
+
+        if (!StringUtils.hasText(verificationCode) || !OTP_SIX_DIGITS.matcher(verificationCode.trim()).matches()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", MSG_FIRST_LOGIN_OTP_REQUIRED));
+        }
+
+        boolean otpValid = smsOtpVerificationService.verifyAndConsume(
+                normalizedPhone, verificationCode.trim());
+        if (!otpValid) {
+            SmsOtpVerificationFailedException failure = SmsOtpVerificationFailedException.fromStatus(
+                    smsOtpVerificationService.getSendStatus(normalizedPhone));
+            log.warn("첫 로그인 비밀번호 변경 OTP 실패: userId={}, locked={}, remainingAttempts={}",
+                    currentUser.getId(), failure.isLocked(), failure.getRemainingAttempts());
+            int status = failure.isLocked() ? 429 : 400;
+            Map<String, Object> body = new HashMap<>();
+            body.put("success", false);
+            body.put("message", failure.getMessage());
+            body.put("errorCode", failure.getErrorCode());
+            if (failure.isLocked() && failure.getRetryAfterSeconds() != null) {
+                body.put("retryAfterSeconds", failure.getRetryAfterSeconds());
+            } else if (failure.getRemainingAttempts() >= 0) {
+                body.put("remainingAttempts", failure.getRemainingAttempts());
+            }
+            return ResponseEntity.status(status).body(body);
+        }
+        return null;
+    }
+
+    /**
+     * 세션 사용자 휴대폰을 평문으로 복호화한다. 값이 없으면 null.
+     *
+     * @param user 세션 사용자
+     * @return 평문 휴대폰 또는 null
+     */
+    private String resolveSessionPhonePlain(User user) {
+        if (user == null || !StringUtils.hasText(user.getPhone())) {
+            return null;
+        }
+        try {
+            String decrypted = encryptionUtil.safeDecrypt(user.getPhone());
+            return StringUtils.hasText(decrypted) ? decrypted.trim() : null;
+        } catch (Exception e) {
+            log.warn("세션 사용자 휴대폰 복호화 실패: userId={}", user.getId());
+            return StringUtils.hasText(user.getPhone()) ? user.getPhone().trim() : null;
         }
     }
     

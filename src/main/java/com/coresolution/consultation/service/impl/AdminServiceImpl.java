@@ -112,7 +112,6 @@ import com.coresolution.consultation.service.MappingSettlementScenario;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
-import com.coresolution.consultation.service.ClientCredentialNotificationService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.ProfessionalProviderTypeService;
@@ -159,7 +158,6 @@ import com.coresolution.core.security.PasswordService;
 import org.springframework.core.NestedExceptionUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -231,13 +229,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
-
-    /**
-     * 지연 주입. 즉시 주입하면 SecurityConfig 생성 중 RestTemplate와 순환한다.
-     */
-    @Lazy
-    @Autowired
-    private ClientCredentialNotificationService clientCredentialNotificationService;
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -413,7 +404,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
             }
             
-            scheduleTempPasswordSms(savedConsultant, request.getPhone(), userId, password, tenantId);
+            // 등록·재활성화 시 임시 비밀번호 SMS 미발송 — 첫 로그인에서 비밀번호 변경 + 휴대폰 OTP
             return savedConsultant;
         } else {
             // 새로운 상담사 생성
@@ -486,7 +477,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 log.warn("⚠️ 상담사 목록 캐시 무효화 실패 (등록은 계속 진행): tenantId={}", tenantId, e);
             }
             
-            scheduleTempPasswordSms(savedConsultant, request.getPhone(), userId, password, tenantId);
+            // 등록 시 임시 비밀번호 SMS 미발송 — 첫 로그인에서 비밀번호 변경 + 휴대폰 OTP
             return savedConsultant;
         }
     }
@@ -674,7 +665,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         Client persisted = clientRepository.saveAndFlush(client);
-        scheduleTempPasswordSms(persisted, normalizedPhoneDigits, userId, password, tenantId, savedUser.getId());
+        // 등록 시 임시 비밀번호 SMS 미발송 — 첫 로그인에서 비밀번호 변경 + 휴대폰 OTP
         return persisted;
     }
 
@@ -12830,36 +12821,5 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      */
     private String generateTempPassword() {
         return temporaryPasswordGenerator.generate();
-    }
-
-    private void scheduleTempPasswordSms(User saved, String phonePlain, String loginId, String tempPassword,
-            String tenantId) {
-        if (saved == null) {
-            return;
-        }
-        scheduleTempPasswordSms(result -> {
-            saved.setSmsSent(result.isSmsSent());
-            saved.setSmsSkipReason(result.getSkipReason());
-        }, phonePlain, loginId, tempPassword, tenantId, saved.getId());
-    }
-
-    private void scheduleTempPasswordSms(Client saved, String phonePlain, String loginId, String tempPassword,
-            String tenantId, Long userId) {
-        if (saved == null) {
-            return;
-        }
-        scheduleTempPasswordSms(result -> {
-            saved.setSmsSent(result.isSmsSent());
-            saved.setSmsSkipReason(result.getSkipReason());
-        }, phonePlain, loginId, tempPassword, tenantId, userId);
-    }
-
-    private void scheduleTempPasswordSms(java.util.function.Consumer<com.coresolution.consultation.dto.CredentialSmsResult> sink,
-            String phonePlain, String loginId, String tempPassword, String tenantId, Long userId) {
-        if (clientCredentialNotificationService == null) {
-            return;
-        }
-        clientCredentialNotificationService.deliverAfterCommit(
-                sink, phonePlain, loginId, tempPassword, tenantId, userId);
     }
 }

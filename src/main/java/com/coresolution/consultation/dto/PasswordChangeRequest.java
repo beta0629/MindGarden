@@ -29,4 +29,10 @@ public class PasswordChangeRequest {
     
     @NotBlank(message = "비밀번호 확인은 필수입니다.")
     private String confirmPassword;
+
+    /**
+     * 첫 로그인({@code isPasswordChanged=false}) 비밀번호 변경 시 필수인 휴대폰 OTP.
+     * 일반(자발적) 비밀번호 변경에서는 무시한다.
+     */
+    private String verificationCode;
 }

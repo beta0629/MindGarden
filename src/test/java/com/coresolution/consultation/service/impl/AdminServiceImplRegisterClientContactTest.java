@@ -193,9 +193,46 @@ class AdminServiceImplRegisterClientContactTest {
         Client result = adminService.registerClient(request);
 
         assertThat(result.getId()).isEqualTo(501L);
+        assertThat(result.getSmsSent()).isNull();
+        assertThat(result.getSmsSkipReason()).isNull();
         verify(userIdGenerator).generateUniqueUserIdFromPhone("01098765432", TENANT);
         verify(userIdGenerator, never()).generateUniqueUserId(anyString(), anyString());
         verify(userRepository).saveAndFlush(any(User.class));
+    }
+
+    @Test
+    @DisplayName("등록 성공 시 임시 비밀번호 문자 메타(smsSent)를 설정하지 않는다")
+    void registerClient_doesNotSetCredentialSmsMeta() {
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setPhone("010-3333-4444");
+        request.setPassword("");
+
+        when(userService.existsPhoneDuplicateForPublicSignup("01033334444", TENANT)).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmail(eq(TENANT), anyString())).thenReturn(false);
+        when(userIdGenerator.generateUniqueUserIdFromPhone("01033334444", TENANT)).thenReturn("01033334444");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
+                .thenReturn(Collections.emptyMap());
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.saveAndFlush(userCaptor.capture())).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(510L);
+            return u;
+        });
+
+        Client result = adminService.registerClient(request);
+
+        assertThat(result.getId()).isEqualTo(510L);
+        assertThat(result.getSmsSent()).isNull();
+        assertThat(result.getSmsSkipReason()).isNull();
+        User savedUser = userCaptor.getValue();
+        assertThat(savedUser.getIsPasswordChanged()).isFalse();
+        assertThat(savedUser.getSmsSent()).isNull();
     }
 
     @Test

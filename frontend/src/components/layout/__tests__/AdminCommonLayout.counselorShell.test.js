@@ -53,7 +53,11 @@ jest.mock('../../dashboard-v2/templates', () => ({
       {children}
     </div>
   ),
-  MobileLayout: ({ children }) => <div data-testid="mobile-layout">{children}</div>
+  MobileLayout: ({ children, drawerVariant }) => (
+    <div data-testid="mobile-layout" data-drawer-variant={drawerVariant || ''}>
+      {children}
+    </div>
+  )
 }));
 
 import AdminCommonLayout from '../AdminCommonLayout';
@@ -101,5 +105,61 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     expect(labels).not.toContain('시스템·설정');
     expect(labels).not.toContain('운영·재무');
     expect(mockGetLnbMenus).not.toHaveBeenCalled();
+  });
+
+  test('상담사 태블릿(820): MobileLayout + soft-sheet, Desktop LNB 없음', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 820, height: 1180 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
+  test('상담사 데스크톱(1280): DesktopLayout 유지', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1280, height: 800 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
+  });
+
+  test('운영자 태블릿(820): 기존 DesktopLayout(768 게이트) 유지', async() => {
+    mockUseSession.mockReturnValue({
+      user: { id: 2, role: 'ADMIN', name: '관리자' },
+      logout: jest.fn()
+    });
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 820, height: 1180 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
   });
 });

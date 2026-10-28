@@ -315,3 +315,138 @@
   gap: 10px;
   white-space: normal;
 }
+
+/*
+ * 상담사 태블릿 · stone soft-sheet (시안 shell-outline)
+ * 다크 드로어 레거시는 기본 클래스 유지. soft-sheet만 stone 패널.
+ */
+.mg-v2-mobile-lnb-drawer--soft-sheet {
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-primary, var(--mg-color-text-on-primary));
+  background: var(--mg-v2-color-surface-stone);
+  border-right: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+  box-shadow: none;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  min-height: var(--mg-v2-touch-target-min);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-3);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__title {
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__close {
+  flex: 0 0 auto;
+  width: var(--mg-v2-touch-target-min);
+  min-width: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+  min-height: var(--mg-v2-touch-target-min);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-primary);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__close:active {
+  background: var(--mg-v2-color-neutral-200, var(--mg-v2-consultant-selection-bg));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__close:hover:not(:disabled) {
+    background: var(--mg-v2-color-surface-hover, var(--mg-color-surface-hover));
+  }
+
+  .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group-head:hover {
+    background: color-mix(in srgb, var(--mg-v2-color-text-primary) 6%, transparent);
+    color: var(--mg-v2-color-text-primary);
+  }
+
+  .mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link:hover,
+  .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link:hover {
+    color: var(--mg-v2-color-text-primary);
+  }
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group-head {
+  color: var(--mg-v2-color-text-primary);
+  min-height: var(--mg-v2-touch-target-min);
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group-chevron {
+  color: var(--mg-v2-color-text-secondary);
+  width: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+  min-width: var(--mg-v2-touch-target-min);
+  min-height: var(--mg-v2-touch-target-min);
+}
+
+/* 활성 행만 dusty teal solid */
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link.mg-v2-nav-link--active,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link--active {
+  background: var(--mg-v2-color-primary-solid);
+  color: var(--mg-v2-color-text-on-primary, var(--mg-color-text-on-primary));
+  font-weight: var(--mg-v2-font-weight-bold);
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head::before {
+  display: none;
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon svg,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-chevron,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon svg {
+  color: var(--mg-v2-color-text-on-primary, var(--mg-color-text-on-primary));
+  stroke: currentColor;
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__sublist {
+  border-left-color: var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__sublist .mg-v2-lnb-menu-item .mg-v2-nav-link {
+  min-height: var(--mg-v2-touch-target-min);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__footer {
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link {
+  color: var(--mg-v2-color-text-primary);
+  min-height: var(--mg-v2-touch-target-min);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--soft-sheet a.mg-v2-nav-link:hover .mg-v2-nav-link__icon,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link:hover .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link:hover .mg-v2-nav-link__icon {
+  color: inherit;
+}

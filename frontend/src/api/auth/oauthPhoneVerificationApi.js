@@ -199,7 +199,8 @@ export const mapOAuthPhoneVerifyResponse = (response) => {
       accessToken: safe.accessToken,
       refreshToken: safe.refreshToken,
       matchedAccount: safe.matchedAccount,
-      requiresPasswordChange: safe.requiresPasswordChange === true
+      // SNS/OAuth — 비밀번호 변경 게이트 미적용 (서버·화면 모두 false 고정)
+      requiresPasswordChange: false
     };
   }
   return {

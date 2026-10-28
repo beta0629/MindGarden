@@ -36,7 +36,6 @@ import { USER_ROLES } from '../../constants/roles';
 import { OAUTH_SERVER_VERIFY_FAILED_MESSAGE, OAUTH_ACCESS_TOKEN_REQUIRED_MESSAGE } from '../../constants/session';
 import { loadSessionSecurityFlags } from '../../utils/sessionSecurityFlags';
 import { AUTH_API } from '../../constants/api';
-import { dispatchPasswordChangeRequired } from '../../constants/passwordChangeRequired';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
 const API_AUTH_TENANT_CHECK_MULTI = '/api/v1/auth/tenant/check-multi';
@@ -110,10 +109,7 @@ const OAuth2Callback = () => {
         toDisplayString(OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT, OAUTH_WEB_LOGIN_SUCCESS_LINKED_ACCOUNT),
         'success'
       );
-      if (data.requiresPasswordChange === true) {
-        dispatchPasswordChangeRequired();
-        return;
-      }
+      // SNS/OAuth — 비밀번호 변경 게이트 미적용 (이메일 임시비번 경로와 분리)
       const authResponse = { success: true, user: userInfo, currentTenantRole: null };
       await redirectToDynamicDashboard(authResponse, navigate);
     } catch (e) {
@@ -699,8 +695,7 @@ const OAuth2Callback = () => {
           accessToken,
           refreshToken,
           matchedAccount,
-          provider: matchedProvider,
-          requiresPasswordChange
+          provider: matchedProvider
         }) => {
           const userInfo = {
             id: matchedAccount?.userId,
@@ -737,10 +732,7 @@ const OAuth2Callback = () => {
             ),
             'success'
           );
-          if (requiresPasswordChange === true) {
-            dispatchPasswordChangeRequired();
-            return;
-          }
+          // SNS/OAuth — 비밀번호 변경 모달 미표시
           await redirectToDynamicDashboard(
             { success: true, user: userInfo, currentTenantRole: null },
             navigate

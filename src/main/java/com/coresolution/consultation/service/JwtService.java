@@ -97,6 +97,18 @@ public class JwtService {
      * @return JWT 토큰
      */
     public String generateToken(User user, List<String> permissions) {
+        return generateToken(user, permissions, false);
+    }
+
+    /**
+     * Access JWT 생성.
+     *
+     * @param user 사용자 엔티티
+     * @param permissions 권한 목록 (String 리스트, null 허용)
+     * @param skipPasswordChangeClaim true 이면 {@code pwd_change_required} 클레임을 넣지 않음 (SNS/OAuth)
+     * @return JWT 토큰
+     */
+    public String generateToken(User user, List<String> permissions, boolean skipPasswordChangeClaim) {
         Map<String, Object> claims = new HashMap<>();
         
         // 기본 사용자 정보
@@ -124,11 +136,12 @@ public class JwtService {
         }
 
         claims.put(SessionManagementConstants.JWT_CLAIM_SESSION_ID, bindPendingSessionId(user));
-        putPasswordChangeClaim(claims, user);
+        putPasswordChangeClaim(claims, user, skipPasswordChangeClaim);
         
-        log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}", 
+        log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}, skipPwdClaim={}", 
             user.getId(), user.getTenantId(), 
-            permissions != null ? permissions.size() : 0);
+            permissions != null ? permissions.size() : 0,
+            skipPasswordChangeClaim);
         
         // 표준화 2025-12-08: username = userId이므로 subject에 userId 사용
         return buildToken(claims, user.getUserId(), jwtExpiration);
@@ -141,7 +154,28 @@ public class JwtService {
      * @return JWT 토큰
      */
     public String generateToken(User user) {
-        return generateToken(user, null);
+        return generateToken(user, null, false);
+    }
+
+    /**
+     * SNS/OAuth Access JWT — 비밀번호 변경 클레임 없음 (DB 플래그 미갱신).
+     *
+     * @param user 사용자
+     * @param permissions 권한 목록 (null 허용)
+     * @return Access JWT
+     */
+    public String generateTokenForOAuth(User user, List<String> permissions) {
+        return generateToken(user, permissions, true);
+    }
+
+    /**
+     * SNS/OAuth Access JWT — 권한 목록 없이.
+     *
+     * @param user 사용자
+     * @return Access JWT
+     */
+    public String generateTokenForOAuth(User user) {
+        return generateToken(user, null, true);
     }
     
     /**
@@ -183,7 +217,7 @@ public class JwtService {
      * 연결한다. 연결할 sid 가 없으면 새 UUID 를 쓴다.</p>
      */
     public String generateRefreshToken(User user) {
-        return generateRefreshToken(user, null);
+        return generateRefreshToken(user, null, false);
     }
     
     /**
@@ -196,6 +230,18 @@ public class JwtService {
      * @return Refresh JWT
      */
     public String generateRefreshToken(User user, String tokenId) {
+        return generateRefreshToken(user, tokenId, false);
+    }
+
+    /**
+     * 리프레시 토큰 생성 (User 객체 기반, tokenId·비밀번호 변경 클레임 옵션).
+     *
+     * @param user                    사용자
+     * @param tokenId                 Refresh Token ID — 비어 있으면 동일 요청 Access sid 또는 새 UUID
+     * @param skipPasswordChangeClaim true 이면 {@code pwd_change_required} 생략 (SNS/OAuth)
+     * @return Refresh JWT
+     */
+    public String generateRefreshToken(User user, String tokenId, boolean skipPasswordChangeClaim) {
         String pendingSessionId = consumePendingSessionId(user);
         String resolvedTokenId = tokenId != null && !tokenId.trim().isEmpty()
             ? tokenId.trim()
@@ -206,15 +252,30 @@ public class JwtService {
             claims.put("tenantId", user.getTenantId());
         }
         claims.put(SessionManagementConstants.JWT_CLAIM_REFRESH_TOKEN_ID, resolvedTokenId);
-        putPasswordChangeClaim(claims, user);
+        putPasswordChangeClaim(claims, user, skipPasswordChangeClaim);
         return buildToken(claims, user.getUserId(), refreshExpiration);
+    }
+
+    /**
+     * SNS/OAuth Refresh JWT — 비밀번호 변경 클레임 없음.
+     *
+     * @param user 사용자
+     * @return Refresh JWT
+     */
+    public String generateRefreshTokenForOAuth(User user) {
+        return generateRefreshToken(user, null, true);
     }
 
     /**
      * 비밀번호 변경 전 계정이면 Access·Refresh 모두에 제한 클레임을 넣는다.
      * null·true 는 클레임을 넣지 않아 기존 로그인과 같다.
+     * {@code skipPasswordChangeClaim} 이면 SNS/OAuth 경로처럼 클레임을 생략한다.
      */
-    private static void putPasswordChangeClaim(Map<String, Object> claims, User user) {
+    private static void putPasswordChangeClaim(Map<String, Object> claims, User user,
+            boolean skipPasswordChangeClaim) {
+        if (skipPasswordChangeClaim) {
+            return;
+        }
         if (user != null && Boolean.FALSE.equals(user.getIsPasswordChanged())) {
             claims.put(PasswordChangeGate.CLAIM, Boolean.TRUE);
         }

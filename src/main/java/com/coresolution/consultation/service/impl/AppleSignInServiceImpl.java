@@ -365,8 +365,8 @@ public class AppleSignInServiceImpl implements AppleSignInService {
 
     @SuppressWarnings("deprecation")
     private AppleSignInResponse issueTokens(User user, String message) {
-        String accessToken = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
+        String accessToken = jwtService.generateTokenForOAuth(user);
+        String refreshToken = jwtService.generateRefreshTokenForOAuth(user);
         // P0: lastLoginAt 은 bulk UPDATE — 동시 로그인 시 @Version save 낙관적 락 500 방지
         try {
             String tenantId = user.getTenantId() != null

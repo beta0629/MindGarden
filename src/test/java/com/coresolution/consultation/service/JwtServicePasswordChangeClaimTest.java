@@ -55,6 +55,28 @@ class JwtServicePasswordChangeClaimTest {
         assertThat(jwtService.isPasswordChangeRequired(changedRefresh)).isFalse();
     }
 
+    @Test
+    @DisplayName("OAuth 발급은 isPasswordChanged=false 여도 클레임이 없다")
+    void oauthTokensOmitClaimEvenWhenPasswordUnchanged() {
+        User unchanged = user(false);
+        String access = jwtService.generateTokenForOAuth(unchanged, List.of("CLIENT"));
+        String refresh = jwtService.generateRefreshTokenForOAuth(unchanged);
+
+        assertThat(jwtService.isPasswordChangeRequired(access)).isFalse();
+        assertThat(jwtService.isPasswordChangeRequired(refresh)).isFalse();
+    }
+
+    @Test
+    @DisplayName("skipPasswordChangeClaim=true 이면 Access·Refresh 모두 클레임 생략")
+    void skipFlagOmitsClaimOnBothTokens() {
+        User unchanged = user(false);
+        String access = jwtService.generateToken(unchanged, List.of("CLIENT"), true);
+        String refresh = jwtService.generateRefreshToken(unchanged, null, true);
+
+        assertThat(jwtService.isPasswordChangeRequired(access)).isFalse();
+        assertThat(jwtService.isPasswordChangeRequired(refresh)).isFalse();
+    }
+
     private static User user(Boolean changed) {
         User user = User.builder()
                 .email("client@example.com")

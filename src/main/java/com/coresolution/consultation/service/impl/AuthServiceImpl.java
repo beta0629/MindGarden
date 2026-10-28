@@ -280,9 +280,12 @@ public class AuthServiceImpl implements AuthService {
             
             // Phase 3: 사용자 권한 조회
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
+
+            // OAuth 발급 Refresh 는 pwd_change_required 가 없음 → 갱신 시에도 클레임 생략 (DB 플래그 무시)
+            boolean skipPasswordChangeClaim = !jwtService.isPasswordChangeRequired(refreshToken);
             
             // Phase 3: 확장된 JWT 토큰 생성 (tenantId, branchId, permissions 포함)
-            String newToken = jwtService.generateToken(user, permissions);
+            String newToken = jwtService.generateToken(user, permissions, skipPasswordChangeClaim);
             
             // Phase 3: Refresh Token 로테이션 (기존 토큰 무효화 후 새 토큰 저장)
             // 기존 refreshToken에서 tokenId 추출
@@ -310,7 +313,7 @@ public class AuthServiceImpl implements AuthService {
                 }
                 
                 // 2. tokenId를 포함한 refreshToken JWT 생성 (표준화 2025-12-08: User 객체 사용하여 tenantId, email 포함)
-                newRefreshToken = jwtService.generateRefreshToken(user, newTokenId);
+                newRefreshToken = jwtService.generateRefreshToken(user, newTokenId, skipPasswordChangeClaim);
                 
                 // 3. refreshToken 해시 생성 및 DB 저장 — P0-3 hotfix 로 HttpServletRequest 전달.
                 refreshTokenService.createRefreshToken(user, newRefreshToken, request);
@@ -319,7 +322,7 @@ public class AuthServiceImpl implements AuthService {
             } catch (Exception e) {
                 log.warn("⚠️ Refresh Token 저장 실패 (기본 토큰 생성): {}", e.getMessage());
                 // 새 토큰 생성 실패 시에도 기본 refreshToken 생성 (tokenId 없음, 표준화 2025-12-08: User 객체 사용)
-                newRefreshToken = jwtService.generateRefreshToken(user);
+                newRefreshToken = jwtService.generateRefreshToken(user, null, skipPasswordChangeClaim);
             }
             
             // UserResponse 변환 (표준화된 DTO)
@@ -334,7 +337,7 @@ public class AuthServiceImpl implements AuthService {
                 .token(newToken)
                 .refreshToken(newRefreshToken)
                 .userResponse(userResponse)
-                .requiresPasswordChange(requiresPasswordChange(user))
+                .requiresPasswordChange(!skipPasswordChangeClaim && requiresPasswordChange(user))
                 .build();
         } catch (Exception e) {
             return AuthResponse.failure("토큰 갱신 실패: " + e.getMessage());

@@ -12,6 +12,7 @@ import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.util.AccessTokenRevocationRequestMarker;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.SessionIdCookieCodec;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -66,6 +67,13 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 SessionManagementConstants.REQUEST_ATTR_HOST_TENANT_MISMATCH))) {
             SecurityContextHolder.clearContext();
             log.info("Host/tenant 불일치 — 세션 복원 생략, 해당 Host 에서 재로그인");
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (AccessTokenRevocationRequestMarker.isMarked(request)) {
+            SecurityContextHolder.clearContext();
+            log.info("Access 토큰 폐기 표시 — 세션 복원 생략");
             filterChain.doFilter(request, response);
             return;
         }

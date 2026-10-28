@@ -1217,6 +1217,7 @@ public class OAuth2Controller extends BaseApiController {
         }
         String maskedSessionId = maskSessionIdForLog(session != null ? session.getId() : null);
 
+        // 폐기 Bearer 마커는 JwtAuthenticationFilter(/api/auth) + SessionUtils 단일 기준 — 컨트롤러 중복 가드 금지
         User sessionUser = SessionUtils.getCurrentUser(session);
         String accessToken = "";
         String refreshToken = "";

@@ -113,6 +113,24 @@ class SecurityConfigAnyRequestAuthenticatedRegressionIntegrationTest {
                 .isNotEqualTo(401);
     }
 
+    /**
+     * 레거시 Kakao OAuth 콜백({@code GET /api/auth/kakao/callback})은 콘솔 redirect_uri 가
+     * {@code /api/auth/**} 를 쓰므로 non-prod 분기도 {@code /api/v1/auth/**} 와 같이 permitAll 이어야 한다.
+     * 401 이면 CustomAuthenticationEntryPoint 가 콜백을 막아 로그인 리다이렉트 JSON 만 반환한다.
+     */
+    @Test
+    @DisplayName("/api/auth/kakao/callback 는 인증 없이도 401 이 아니다 (legacy OAuth 콜백 화이트리스트)")
+    void legacyKakaoAuthCallbackPath_withoutAuth_isNotUnauthorized() throws Exception {
+        int status = mockMvc.perform(get("/api/auth/kakao/callback"))
+                .andReturn().getResponse().getStatus();
+
+        assertThat(status)
+                .as("레거시 OAuth 콜백 화이트리스트 회귀: /api/auth/kakao/callback 가 401 입니다. "
+                        + "SecurityConfig non-prod 분기에 "
+                        + ".requestMatchers(\"/api/auth/**\").permitAll() 을 복원하세요.")
+                .isNotEqualTo(401);
+    }
+
     @Test
     @DisplayName("/actuator/health 는 인증 없이도 401 이 아니다 (관측성 화이트리스트)")
     void actuatorHealth_withoutAuth_isNotUnauthorized() throws Exception {

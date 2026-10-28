@@ -25,9 +25,13 @@ class PasswordChangeGateTest {
         assertThat(PasswordChangeGate.isAllowed(request("POST", "/api/v1/auth/logout"))).isTrue();
         assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/auth/current-user"))).isTrue();
         assertThat(PasswordChangeGate.isAllowed(request("POST", "/api/v1/auth/refresh-token"))).isTrue();
+        assertThat(PasswordChangeGate.isAllowed(request("POST", "/api/v1/auth/sms/send"))).isTrue();
+        assertThat(PasswordChangeGate.isAllowed(request("POST", "/api/v1/auth/sms/verify"))).isTrue();
+        assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/auth/otp/current"))).isTrue();
         assertThat(PasswordChangeGate.isAllowed(request("OPTIONS", "/api/v1/schedules"))).isTrue();
 
         assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/auth/password/change"))).isFalse();
+        assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/auth/sms/send"))).isFalse();
         assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/schedules"))).isFalse();
         assertThat(PasswordChangeGate.isAllowed(request("POST", "/api/v1/auth/logout/extra"))).isFalse();
         assertThat(PasswordChangeGate.isAllowed(request("GET", "/api/v1/auth/session-info"))).isFalse();

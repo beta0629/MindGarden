@@ -21,6 +21,9 @@ public enum OtpPurpose {
     /** 회원가입 단계 — 신규 휴대전화 본인확인. */
     SIGNUP_VERIFICATION("signup_verification"),
 
+    /** 이메일/비밀번호 첫 로그인 — 비밀번호 변경 게이트 중 등록 휴대폰 OTP 본인확인. */
+    FIRST_LOGIN_VERIFICATION("first_login_verification"),
+
     /** 기타 일반 본인확인(특정 목적 미지정). */
     GENERIC("generic");
 

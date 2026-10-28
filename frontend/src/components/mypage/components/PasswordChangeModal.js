@@ -10,7 +10,27 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp
 import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
 import { persistReissuedSessionTokens } from '../../../utils/persistReissuedSessionTokens';
+import { sessionManager } from '../../../utils/sessionManager';
+import { maskPhoneDisplay } from '../../../utils/partyPiiDisplay';
 import { useTranslation } from 'react-i18next';
+
+const OTP_LENGTH = 6;
+const OTP_PURPOSE_FIRST_LOGIN = 'FIRST_LOGIN_VERIFICATION';
+const DELIVERY_CHANNEL_PUSH = 'PUSH';
+const DELIVERY_CHANNEL_SMS = 'SMS';
+const DELIVERY_CHANNEL_SMS_STUB = 'SMS_STUB';
+
+/**
+ * 세션 사용자에서 등록 휴대폰 숫자를 읽는다.
+ *
+ * @param {object|null|undefined} user
+ * @returns {string} 숫자만
+ */
+const resolveSessionPhoneDigits = (user) => {
+  if (!user) return '';
+  const raw = user.phone || user.phoneNumber || '';
+  return String(raw).replace(/\D/g, '');
+};
 
 const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
   const { t } = useTranslation();
@@ -36,6 +56,12 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     new: false,
     confirm: false
   });
+  const [phoneDigits, setPhoneDigits] = useState('');
+  const [maskedPhone, setMaskedPhone] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [otpError, setOtpError] = useState('');
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
 
   const validateField = useCallback((fieldName, value, currentPassword = '') => {
     let isValid = true;
@@ -59,7 +85,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     }
 
     return { isValid, message };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -79,6 +105,20 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       confirm: false
     });
     setSubmitError('');
+    setOtpInput('');
+    setOtpError('');
+    setIsSendingOtp(false);
+    setOtpSent(false);
+
+    if (tempPassword) {
+      const user = sessionManager.getUser?.() || sessionManager.user || null;
+      const digits = resolveSessionPhoneDigits(user);
+      setPhoneDigits(digits);
+      setMaskedPhone(digits ? maskPhoneDisplay(digits) : '');
+    } else {
+      setPhoneDigits('');
+      setMaskedPhone('');
+    }
   }, [isOpen, tempPassword, clearPasswordError]);
 
   useEffect(() => {
@@ -107,18 +147,77 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     }));
   }, []);
 
+  const handleOtpChange = useCallback((e) => {
+    const digits = String(e.target.value || '').replace(/\D/g, '').slice(0, OTP_LENGTH);
+    setOtpInput(digits);
+    setOtpError('');
+    setSubmitError('');
+  }, []);
+
+  const buildOtpSentMessage = useCallback((channel) => {
+    if (channel === DELIVERY_CHANNEL_PUSH) {
+      return t('auth:tempPasswordSms.otpSentPush');
+    }
+    if (channel === DELIVERY_CHANNEL_SMS || channel === DELIVERY_CHANNEL_SMS_STUB) {
+      return t('auth:tempPasswordSms.otpSentSms');
+    }
+    return t('auth:tempPasswordSms.otpSentDefault');
+  }, [t]);
+
+  const handleSendOtp = useCallback(async () => {
+    if (!phoneDigits) {
+      const msg = t('auth:tempPasswordSms.phoneMissingContactAdmin');
+      setSubmitError(msg);
+      notificationManager.show(msg, 'error');
+      return;
+    }
+    setIsSendingOtp(true);
+    setSubmitError('');
+    setOtpError('');
+    try {
+      const response = await StandardizedApi.post(AUTH_API.SMS_SEND, {
+        phoneNumber: phoneDigits,
+        purpose: OTP_PURPOSE_FIRST_LOGIN
+      });
+      if (response && response.success !== false) {
+        const channel = response?.deliveryChannel || null;
+        const sentMessage = buildOtpSentMessage(channel);
+        notificationManager.show(sentMessage, 'info');
+        setOtpSent(true);
+        setOtpInput('');
+      } else {
+        const msg = (response && response.message) || t('auth:tempPasswordSms.otpSendFailed');
+        setSubmitError(msg);
+        notificationManager.show(msg, 'error');
+      }
+    } catch (error) {
+      const msg = resolveUserFacingApiErrorMessage(error)
+        || t('auth:tempPasswordSms.otpSendFailed');
+      setSubmitError(msg);
+      notificationManager.show(msg, 'error');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  }, [phoneDigits, t, buildOtpSentMessage]);
+
   const validateForm = useCallback(() => {
-    return (
+    const passwordOk = (
       validation.currentPassword.isValid &&
       validation.newPassword.isValid &&
       !passwordField.errorCode &&
       !passwordField.confirmErrorCode
     );
+    if (!tempPassword) {
+      return passwordOk;
+    }
+    return passwordOk && otpInput.length === OTP_LENGTH;
   }, [
     validation.currentPassword.isValid,
     validation.newPassword.isValid,
     passwordField.errorCode,
-    passwordField.confirmErrorCode
+    passwordField.confirmErrorCode,
+    tempPassword,
+    otpInput
   ]);
 
   const handleSubmit = async(e) => {
@@ -126,14 +225,35 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     const committed = validateCommittedNewPassword(formData.newPassword, formData.confirmPassword);
     if (!committed.valid || !validateForm()) return;
 
+    if (tempPassword) {
+      if (!phoneDigits) {
+        const msg = t('auth:tempPasswordSms.phoneMissingContactAdmin');
+        setSubmitError(msg);
+        notificationManager.show(msg, 'error');
+        return;
+      }
+      if (!otpInput) {
+        setOtpError(t('auth:tempPasswordSms.otpRequired'));
+        return;
+      }
+      if (!/^\d{6}$/.test(otpInput)) {
+        setOtpError(t('auth:tempPasswordSms.otpInvalid'));
+        return;
+      }
+    }
+
     setIsLoading(true);
     setSubmitError('');
     try {
-      const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, {
+      const payload = {
         currentPassword: formData.currentPassword,
         newPassword: committed.value,
         confirmPassword: committed.confirmValue
-      });
+      };
+      if (tempPassword) {
+        payload.verificationCode = otpInput;
+      }
+      const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, payload);
       if (result && result.success) {
         await persistReissuedSessionTokens(result);
         notificationManager.show(t('common:mypage.PasswordChangeModal.t_3c574e69'), 'info');
@@ -171,13 +291,69 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       size="medium"
       backdropClick={!tempPassword}
       showCloseButton={!tempPassword}
-      loading={isLoading}
+      loading={isLoading || isSendingOtp}
     >
       <form onSubmit={handleSubmit} className="mg-mypage-password-form">
         {tempPassword ? (
           <div className="mg-mypage-alert--warning" role="alert">
-            <strong>임시 비밀번호로 로그인하셨습니다.</strong>
-            <p className="mg-mypage__section-description">보안을 위해 비밀번호를 변경해주세요.</p>
+            <strong>{t('auth:tempPasswordSms.firstLoginAlert')}</strong>
+          </div>
+        ) : null}
+
+        {tempPassword ? (
+          <div className="mg-mypage-password-form__group">
+            <label className="mg-mypage-password-form__label" htmlFor="mypage-pw-masked-phone">
+              {t('auth:tempPasswordSms.maskedPhoneLabel')}
+            </label>
+            <input
+              type="text"
+              id="mypage-pw-masked-phone"
+              className="mg-mypage-password-form__input"
+              value={maskedPhone || t('auth:tempPasswordSms.phoneMissingContactAdmin')}
+              readOnly
+              disabled
+            />
+            <div className="mg-mypage-password-form__actions">
+              <MGButton
+                type="button"
+                variant="outline"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: isSendingOtp
+                })}
+                loading={isSendingOtp}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={handleSendOtp}
+                disabled={isLoading || isSendingOtp || !phoneDigits}
+              >
+                {t('auth:tempPasswordSms.sendOtp')}
+              </MGButton>
+            </div>
+            <div className="mg-mypage-password-form__group">
+              <label className="mg-mypage-password-form__label" htmlFor="mypage-pw-otp">
+                {t('auth:tempPasswordSms.otpLabel')}
+              </label>
+              <input
+                type="text"
+                id="mypage-pw-otp"
+                name="verificationCode"
+                className="mg-mypage-password-form__input"
+                value={otpInput}
+                onChange={handleOtpChange}
+                placeholder={t('auth:tempPasswordSms.otpPlaceholder')}
+                inputMode="numeric"
+                pattern="\d{6}"
+                maxLength={OTP_LENGTH}
+                autoComplete="one-time-code"
+                disabled={isLoading || !otpSent}
+              />
+              {otpError ? (
+                <p className="mg-mypage-password-form__error" role="alert">
+                  <SafeText>{otpError}</SafeText>
+                </p>
+              ) : null}
+            </div>
           </div>
         ) : null}
 
@@ -345,7 +521,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
             className={buildErpMgButtonClassName({ variant: 'primary', size: 'md', loading: isLoading })}
             loading={isLoading}
             loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-            disabled={isLoading || !validateForm() || passwordField.pending}
+            disabled={isLoading || isSendingOtp || !validateForm() || passwordField.pending}
           >
             비밀번호 변경
           </MGButton>

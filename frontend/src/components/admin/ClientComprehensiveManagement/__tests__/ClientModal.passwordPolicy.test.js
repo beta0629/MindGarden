@@ -66,7 +66,7 @@ describe('ClientModal 임시 비밀번호 문자', () => {
     fill('email', 'fake.client@example.com');
 
     expect(document.querySelector('input[name="password"]')).toBeNull();
-    expect(screen.getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/등록 시 임시 비밀번호 문자는 보내지 않습니다/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: '등록' }));
 

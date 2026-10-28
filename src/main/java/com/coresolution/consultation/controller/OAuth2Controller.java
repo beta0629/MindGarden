@@ -627,6 +627,81 @@ public class OAuth2Controller extends BaseApiController {
     }
 
     /**
+     * Kakao OAuth authorize·콜백 공통 {@code redirect_uri}.
+     *
+     * <p>{@code KAKAO_REDIRECT_URI}({@code kakaoRedirectUri})가 non-blank면 동적 재계산보다
+     * 항상 설정값을 우선한다. 비어 있을 때만 요청 헤더로 생성하며, 호스트 우선순위는
+     * authorize와 동일하게 {@code X-Forwarded-Host} → {@code Host} → {@code serverName} 이다.</p>
+     *
+     * @param request HTTP 요청
+     * @return redirect_uri 절대 URL (생성 실패 시 null)
+     * @author MindGarden
+     * @since 2026-10-28
+     */
+    private String resolveKakaoCallbackRedirectUri(HttpServletRequest request) {
+        if (kakaoRedirectUri != null && !kakaoRedirectUri.isBlank()) {
+            return kakaoRedirectUri.trim();
+        }
+
+        try {
+            String requestScheme = resolveExternalScheme(request);
+
+            // X-Forwarded-Host 우선 (Nginx 등 프록시) — Host-only / :8080 특수 폴백 금지
+            String requestHost = request.getHeader("X-Forwarded-Host");
+            if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getHeader("Host");
+            }
+
+            if (requestHost != null && requestHost.contains("localhost")
+                    && !requestHost.contains(":8080")) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            } else if (requestHost == null || requestHost.isEmpty()) {
+                requestHost = request.getServerName() + ":" + request.getServerPort();
+            }
+
+            if (requestHost == null || requestHost.isEmpty()) {
+                return null;
+            }
+
+            String hostWithoutPort = requestHost.split(":")[0];
+            String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
+
+            String portSuffix = "";
+            if (requestHost.contains(":")) {
+                String port = requestHost.split(":")[1];
+                if (!"80".equals(port) && !"443".equals(port)) {
+                    portSuffix = ":" + port;
+                }
+            } else {
+                String forwardedPort = request.getHeader("X-Forwarded-Port");
+                if (forwardedPort != null && !forwardedPort.isEmpty()) {
+                    int port = Integer.parseInt(forwardedPort);
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                } else {
+                    int port = request.getServerPort();
+                    if (port != 80 && port != 443) {
+                        portSuffix = ":" + port;
+                    }
+                }
+            }
+
+            String callbackUrl =
+                    requestScheme + "://" + mainDomain + portSuffix + kakaoCallbackPath;
+            log.info(
+                    "카카오 OAuth2 - 동적 redirect_uri 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
+                    callbackUrl, requestHost, request.getScheme(),
+                    request.getHeader("X-Forwarded-Proto"),
+                    request.getHeader("X-Forwarded-Host"));
+            return callbackUrl;
+        } catch (Exception e) {
+            log.error("카카오 OAuth2 - redirect_uri 동적 생성 실패", e);
+            return null;
+        }
+    }
+
+    /**
      * 외부(클라이언트 기준) 스킴을 최대한 정확히 추정합니다. - 프록시 환경에서는 request.getScheme()가 http로 들어오는 경우가 있어 OAuth2
      * redirect_uri 불일치가 발생할 수 있음
      */
@@ -1548,74 +1623,12 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("카카오 OAuth2 - 모바일 클라이언트 감지 (Redis 저장): state={}", state);
             }
 
-            // 콜백 URL 동적 생성 (서브도메인은 메인 도메인으로 변환 - 카카오 개발자 센터 등록 문제 해결)
-            String callbackUrl = null;
-            try {
-                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
-                // Nginx를 통해 들어온 요청은 X-Forwarded-Host를 우선 확인
-                String requestScheme = resolveExternalScheme(request);
-
-                // X-Forwarded-Host 우선 확인 (Nginx를 통해 들어온 요청)
-                String requestHost = request.getHeader("X-Forwarded-Host");
-                if (requestHost == null || requestHost.isEmpty()) {
-                    // X-Forwarded-Host가 없으면 Host 헤더 확인
-                    requestHost = request.getHeader("Host");
-                }
-
-                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
-                if (requestHost != null && requestHost.contains("localhost")
-                        && !requestHost.contains(":8080")) {
-                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
-                    requestHost = request.getServerName() + ":" + request.getServerPort();
-                } else if (requestHost == null || requestHost.isEmpty()) {
-                    // Host 헤더도 없으면 서버 정보 사용
-                    requestHost = request.getServerName() + ":" + request.getServerPort();
-                }
-
-                // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
-                if (requestHost != null && !requestHost.isEmpty()) {
-                    String hostWithoutPort = requestHost.split(":")[0];
-                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
-
-                    // 포트 처리
-                    String portSuffix = "";
-                    if (requestHost.contains(":")) {
-                        String port = requestHost.split(":")[1];
-                        if (!port.equals("80") && !port.equals("443")) {
-                            portSuffix = ":" + port;
-                        }
-                    } else {
-                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
-                        String forwardedPort = request.getHeader("X-Forwarded-Port");
-                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
-                            int port = Integer.parseInt(forwardedPort);
-                            if (port != 80 && port != 443) {
-                                portSuffix = ":" + port;
-                            }
-                        } else {
-                            int port = request.getServerPort();
-                            if (port != 80 && port != 443) {
-                                portSuffix = ":" + port;
-                            }
-                        }
-                    }
-
-                    callbackUrl =
-                            requestScheme + "://" + mainDomain + portSuffix + kakaoCallbackPath;
-                    log.info(
-                            "카카오 OAuth2 - 동적 redirect URI 생성: {} (원본 host={}, scheme={}, forwardedProto={}, forwardedHost={})",
-                            callbackUrl, requestHost, request.getScheme(),
-                            request.getHeader("X-Forwarded-Proto"),
-                            request.getHeader("X-Forwarded-Host"));
-                }
-            } catch (Exception e) {
-                log.error("카카오 OAuth2 - redirect URI 동적 생성 실패", e);
-            }
-
-            if (callbackUrl == null || callbackUrl.isEmpty()) {
-                // 폴백: 설정값 사용
-                callbackUrl = kakaoRedirectUri;
-                log.warn("카카오 OAuth2 - 동적 생성 실패, 설정값 사용: {}", callbackUrl);
+            // authorize·callback 동일 헬퍼 (설정값 우선, 없으면 XFH→Host→serverName)
+            String callbackUrl = resolveKakaoCallbackRedirectUri(request);
+            if (callbackUrl == null || callbackUrl.isBlank()) {
+                log.error("카카오 OAuth2 - redirect_uri를 결정할 수 없습니다.");
+                return badRequest(OAuth2UserFacingMessages.MSG_AUTH_PROCESSING_FAILED,
+                        "KAKAO_REDIRECT_URI_MISSING");
             }
 
             String authUrl = "https://kauth.kakao.com/oauth/authorize?" + "client_id="
@@ -2189,7 +2202,7 @@ public class OAuth2Controller extends BaseApiController {
                     .build();
         }
 
-        if (code == null) {
+        if (code == null || code.isBlank()) {
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
             return ResponseEntity.status(302).header("Location", frontendUrl + "/login?error="
@@ -3132,7 +3145,7 @@ public class OAuth2Controller extends BaseApiController {
                     .build();
         }
 
-        if (code == null) {
+        if (code == null || code.isBlank()) {
             log.warn("카카오 OAuth2 콜백에서 인증 코드가 없습니다. error={}, state={}", error, state);
             String redirectTenantId = resolveTenantIdForRedirect(session, state);
             String frontendUrl = getTenantAwareFrontendBaseUrl(request, redirectTenantId);
@@ -3259,83 +3272,10 @@ public class OAuth2Controller extends BaseApiController {
                 log.info("카카오 콜백 - state 없음, 세션에서 확인: clientType={}", savedClientType);
             }
 
-            // 동적 redirectUri 계산 (항상 동적으로 생성, 프록시 헤더 고려)
-            String actualRedirectUri = null;
-            try {
-                // 프록시 헤더 확인 (X-Forwarded-Proto, X-Forwarded-Host)
-                // 단, 로컬 환경(localhost)에서는 실제 요청 Host를 우선 사용
-                String requestScheme = resolveExternalScheme(request);
+            // authorize와 동일 헬퍼 — Host≠X-Forwarded-Host 시 redirect_uri 불일치(KOE320 등) 방지
+            String actualRedirectUri = resolveKakaoCallbackRedirectUri(request);
 
-                // Host 헤더 우선 확인 (실제 백엔드 서버 주소)
-                String requestHost = request.getHeader("Host");
-                // 로컬 환경에서 프론트엔드 프록시를 통해 온 경우 처리
-                if (requestHost != null && requestHost.contains("localhost")
-                        && !requestHost.contains(":8080")) {
-                    // 프론트엔드(localhost:3000)에서 프록시로 온 경우, 실제 백엔드 주소 사용
-                    requestHost = request.getServerName() + ":" + request.getServerPort();
-                } else if (requestHost == null || requestHost.isEmpty()) {
-                    // Host 헤더가 없으면 X-Forwarded-Host 확인
-                    String forwardedHost = request.getHeader("X-Forwarded-Host");
-                    if (forwardedHost != null && !forwardedHost.isEmpty()) {
-                        // X-Forwarded-Host가 백엔드 포트를 포함하는 경우만 사용
-                        if (forwardedHost.contains(":8080")) {
-                            requestHost = forwardedHost;
-                        } else {
-                            // 아니면 실제 서버 주소 사용
-                            requestHost = request.getServerName() + ":" + request.getServerPort();
-                        }
-                    }
-                }
-                if (requestHost == null || requestHost.isEmpty()) {
-                    requestHost = request.getServerName();
-                    int port = request.getServerPort();
-                    if (port != 80 && port != 443) {
-                        requestHost = requestHost + ":" + port;
-                    }
-                }
-
-                if (requestHost != null && !requestHost.isEmpty()) {
-                    String hostWithoutPort = requestHost.split(":")[0];
-                    // 서브도메인을 메인 도메인으로 변환 (설정 파일 기반)
-                    String mainDomain = oauth2DomainUtil.convertToMainDomain(hostWithoutPort);
-
-                    // 포트가 포함된 경우와 아닌 경우 모두 처리
-                    String portSuffix = "";
-                    if (requestHost.contains(":")) {
-                        String port = requestHost.split(":")[1];
-                        if (!port.equals("80") && !port.equals("443")) {
-                            portSuffix = ":" + port;
-                        }
-                    } else {
-                        // 프록시를 통해 들어온 경우 포트는 헤더에서 확인
-                        String forwardedPort = request.getHeader("X-Forwarded-Port");
-                        if (forwardedPort != null && !forwardedPort.isEmpty()) {
-                            int port = Integer.parseInt(forwardedPort);
-                            if (port != 80 && port != 443) {
-                                portSuffix = ":" + port;
-                            }
-                        } else {
-                            int port = request.getServerPort();
-                            if (port != 80 && port != 443) {
-                                portSuffix = ":" + port;
-                            }
-                        }
-                    }
-
-                    actualRedirectUri =
-                            requestScheme + "://" + mainDomain + portSuffix + kakaoCallbackPath;
-
-                    log.info(
-                            "카카오 콜백 - 동적 redirect_uri 생성: {} (원본 host={}, 변환된 mainDomain={}, scheme={}, forwardedProto={}, forwardedHost={})",
-                            actualRedirectUri, requestHost, mainDomain, request.getScheme(),
-                            request.getHeader("X-Forwarded-Proto"),
-                            request.getHeader("X-Forwarded-Host"));
-                }
-            } catch (Exception e) {
-                log.error("카카오 콜백 - redirect_uri 동적 생성 실패", e);
-            }
-
-            if (actualRedirectUri == null || actualRedirectUri.isEmpty()) {
+            if (actualRedirectUri == null || actualRedirectUri.isBlank()) {
                 log.error(
                         "카카오 콜백 - redirect_uri를 생성할 수 없습니다. 요청 정보: scheme={}, host={}, serverName={}",
                         request.getScheme(), request.getHeader("Host"), request.getServerName());
@@ -3789,7 +3729,7 @@ public class OAuth2Controller extends BaseApiController {
                     .build();
         }
 
-        if (code == null) {
+        if (code == null || code.isBlank()) {
             log.warn("Google OAuth2 콜백에서 인증 코드가 없습니다. error={}, stateLen={}",
                     error, state != null ? state.length() : 0);
             String redirectTenantId = resolveTenantIdForRedirect(session, state);

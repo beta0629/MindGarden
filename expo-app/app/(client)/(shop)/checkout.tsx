@@ -19,6 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
+import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
 import { PointInput } from '@/components/shop/molecules/PointInput';
 import { CheckoutSummary } from '@/components/shop/organisms/CheckoutSummary';
 import { PriceText } from '@/components/shop/atoms/PriceText';
@@ -29,6 +30,7 @@ import {
   useClientShopCheckout,
   useClientShopPointBalance,
 } from '@/api/hooks/useClientShopCheckout';
+import { useMerchantLegal } from '@/hooks/useMerchantLegal';
 import { formatShopMoney, formatShopPoints } from '@/utils/clientShopFormat';
 import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
@@ -54,6 +56,8 @@ export default function ShopCheckoutScreen() {
   const [agreed, setAgreed] = useState(false);
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [message, setMessage] = useState('');
+  const { legal: merchantLegal, centerName: merchantCenterName, tenantCode } =
+    useMerchantLegal();
 
   const cartQuery = useClientShopCart();
   const catalogQuery = useClientShopCatalog();
@@ -531,6 +535,16 @@ export default function ShopCheckoutScreen() {
               {formatShopMoney(cashDueMinor)} 결제하기
             </Text>
           </Pressable>
+
+          {tenantCode ? (
+            <View style={styles.merchantLegalWrap}>
+              <MerchantLegalFooter
+                centerName={merchantCenterName}
+                legal={merchantLegal}
+                compact
+              />
+            </View>
+          ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -603,4 +617,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   payText: { lineHeight: 22 },
+  merchantLegalWrap: {
+    marginHorizontal: 16,
+    marginTop: 16,
+  },
 });

@@ -20,6 +20,7 @@ import MallCartBar from '../../../components/shop/organisms/MallCartBar';
 import MallCheckoutLine from '../../../components/shop/organisms/MallCheckoutLine';
 import MallPayPanel from '../../../components/shop/organisms/MallPayPanel';
 import MallPhoneVerifyInline from '../../../components/shop/organisms/MallPhoneVerifyInline';
+import MerchantLegalFooterPreview from '../../../components/tenant/MerchantLegalFooterPreview';
 import MGButton from '../../../components/common/MGButton';
 import SafeText from '../../../components/common/SafeText';
 import {
@@ -117,6 +118,18 @@ import {
 } from '../../../utils/clientMallBuyNow';
 import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 import { applyVerifiedPhoneToSession } from '../../../utils/clientPhoneVerifiedSession';
+import { fetchTenantPublicHomeMeta } from '../../../utils/tenantPublicHomeMeta';
+
+/** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더) — API/settings 만 사용, 하드코딩 금지 */
+const EMPTY_MERCHANT_LEGAL = {
+  businessRegistrationNumber: '',
+  representativeName: '',
+  businessLandline: '',
+  businessAddress: '',
+  mailOrderReportNumber: '',
+  refundPolicyText: '',
+  productPriceGuideText: ''
+};
 
 const EMPTY_AGREEMENTS = Object.freeze(
   CLIENT_MALL_AGREEMENT_ITEMS.reduce((acc, item) => ({ ...acc, [item.key]: false }), {})
@@ -164,6 +177,10 @@ const ShopCheckoutPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [payFailureReason, setPayFailureReason] = useState('');
+  const [merchantLegalFooter, setMerchantLegalFooter] = useState({
+    centerName: '{센터명}',
+    legal: EMPTY_MERCHANT_LEGAL
+  });
   const idempotencyStoreRef = useRef(null);
   if (idempotencyStoreRef.current == null) {
     idempotencyStoreRef.current = createShopCheckoutIdempotencyKeyStore();
@@ -174,6 +191,31 @@ const ShopCheckoutPage = () => {
       setBuyNowQty(buyNowQuery.quantity);
     }
   }, [buyNowQuery]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async() => {
+      try {
+        const meta = await fetchTenantPublicHomeMeta();
+        if (cancelled) {
+          return;
+        }
+        const tenantName = meta?.tenant?.name;
+        const centerName =
+          tenantName && String(tenantName).trim() ? String(tenantName).trim() : '{센터명}';
+        const legal = meta?.tenant?.merchantLegal || EMPTY_MERCHANT_LEGAL;
+        setMerchantLegalFooter({ centerName, legal });
+      } catch (err) {
+        console.warn('체크아웃 사업자 푸터 메타 로드 실패:', err);
+        if (!cancelled) {
+          setMerchantLegalFooter({ centerName: '{센터명}', legal: EMPTY_MERCHANT_LEGAL });
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const buyNowLines = useMemo(
     () => (isBuyNow ? toBuyNowCheckoutLines({ skuCode: buyNowSku, quantity: buyNowQty }) : null),
@@ -730,6 +772,18 @@ const ShopCheckoutPage = () => {
               <li>{CLIENT_REFUND_NOTICE}</li>
             </ul>
           </section>
+
+          <div
+            className="client-mall-checkout-merchant-legal"
+            data-testid="checkout-merchant-legal-footer"
+          >
+            <MerchantLegalFooterPreview
+              compact
+              showAccountLinks={false}
+              centerName={merchantLegalFooter.centerName}
+              legal={merchantLegalFooter.legal}
+            />
+          </div>
 
           <div className="client-mall-bar-spacer" aria-hidden="true" />
           <MallCartBar

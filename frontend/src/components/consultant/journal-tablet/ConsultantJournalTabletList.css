@@ -1,0 +1,214 @@
+/**
+ * 상담사 웹 태블릿 일지 목록 — 터치 행 ≥56 · slate 칩 · stone/slate 배지
+ * 시안 tobe-journal-list · clinic-os 토큰만 · 신규 hex 금지
+ *
+ * @author CoreSolution
+ * @since 2026-10-28
+ */
+
+.consultant-journal-tablet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-3);
+  min-width: 0;
+  width: 100%;
+}
+
+.consultant-journal-tablet__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+  margin-bottom: var(--mg-v2-space-1);
+}
+
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__chip {
+  min-height: var(--mg-v2-touch-target-min);
+  height: auto;
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-md);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__chip.consultant-journal-tablet__chip--on,
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__chip.consultant-journal-tablet__chip--on:hover:not(.mg-button--disabled) {
+  background: var(--mg-v2-consultant-selection-bg);
+  border-color: var(--mg-v2-consultant-selection-border);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__chip:active {
+  background: var(--mg-v2-consultant-selection-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consultant-journal-tablet .mg-button.consultant-journal-tablet__chip:hover:not(.mg-button--disabled):not(.consultant-journal-tablet__chip--on) {
+    background: var(--mg-v2-color-surface-hover, var(--mg-color-surface-hover));
+  }
+}
+
+.consultant-journal-tablet__list {
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-lg);
+  overflow: hidden;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.consultant-journal-tablet__row {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  /* ≥56: touch-min(44) + space-3(12) */
+  min-height: calc(var(--mg-v2-touch-target-min) + var(--mg-v2-space-3));
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  border: none;
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  color: inherit;
+  font: inherit;
+  min-width: 0;
+}
+
+.consultant-journal-tablet__row:last-child {
+  border-bottom: none;
+}
+
+.consultant-journal-tablet__row:active {
+  background: var(--mg-v2-consultant-selection-bg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .consultant-journal-tablet__row:hover {
+    background: var(--mg-v2-color-surface-hover, var(--mg-color-surface-hover));
+  }
+}
+
+.consultant-journal-tablet__row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.consultant-journal-tablet__row-name {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-journal-tablet__row-meta {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.consultant-journal-tablet__pill {
+  flex: none;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-bold);
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  border-radius: var(--mg-v2-radius-pill);
+  white-space: nowrap;
+}
+
+.consultant-journal-tablet__pill--open {
+  background: var(--mg-v2-color-surface-stone);
+  color: var(--mg-v2-color-text-primary);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+}
+
+.consultant-journal-tablet__pill--done {
+  background: var(--mg-v2-consultant-selection-bg);
+  color: var(--mg-v2-color-text-primary);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-selection-border);
+}
+
+.consultant-journal-tablet__empty {
+  background: var(--mg-v2-color-surface-card);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  border-radius: var(--mg-v2-radius-lg);
+  padding: var(--mg-v2-space-12) var(--mg-v2-space-6);
+  text-align: center;
+  min-width: 0;
+}
+
+.consultant-journal-tablet__empty-title {
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  margin: 0 0 var(--mg-v2-space-2);
+  letter-spacing: -0.01em;
+  color: var(--mg-v2-color-text-primary);
+}
+
+.consultant-journal-tablet__empty-cap {
+  font-size: var(--mg-v2-font-size-body-sm);
+  color: var(--mg-v2-color-text-secondary);
+  margin: 0 0 var(--mg-v2-space-5);
+}
+
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__empty-action {
+  min-height: var(--mg-v2-touch-target-min);
+  height: auto;
+  padding: 0 var(--mg-v2-space-4);
+  border-radius: var(--mg-v2-radius-md);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  background: var(--mg-v2-color-surface-card);
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-bold);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.consultant-journal-tablet .mg-button.consultant-journal-tablet__empty-action:active {
+  background: var(--mg-v2-consultant-selection-bg);
+}
+
+@media (orientation: landscape) and (min-width: 768px) {
+  .consultant-journal-tablet__row {
+    gap: var(--mg-v2-space-4);
+    padding: var(--mg-v2-space-3) var(--mg-v2-space-5);
+  }
+
+  .consultant-journal-tablet__row-main {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--mg-v2-space-4);
+  }
+
+  .consultant-journal-tablet__row-name {
+    flex: 1.2;
+    min-width: 0;
+  }
+
+  .consultant-journal-tablet__row-meta {
+    flex: 1;
+    margin: 0;
+    min-width: 0;
+  }
+}

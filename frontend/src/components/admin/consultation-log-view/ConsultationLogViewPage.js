@@ -48,6 +48,9 @@ import ConsultantSuitePage from '../../consultant/suite/ConsultantSuitePage';
 import ConsultantFilterChips from '../../consultant/suite/ConsultantFilterChips';
 import ConsultantSuiteButton from '../../consultant/suite/ConsultantSuiteButton';
 import ConsultantRecordCard from '../../consultant/suite/ConsultantRecordCard';
+import ConsultantJournalTabletList from '../../consultant/journal-tablet/ConsultantJournalTabletList';
+import ConsultantJournalTabletDetail from '../../consultant/journal-tablet/ConsultantJournalTabletDetail';
+import { CONSULTANT_JOURNAL_TABLET_MEDIA } from '../../consultant/journal-tablet/consultantJournalTabletConstants';
 import {
   CONSULTANT_SUITE_BUTTON_VARIANT,
   CONSULTANT_SUITE_CLASS,
@@ -65,6 +68,8 @@ import MGPagination from '../../common/MGPagination';
 import {
   API_ADMIN_CONSULTATION_RECORDS,
   CONSULTATION_LOG_STATUS_ALL,
+  CONSULTATION_LOG_STATUS_DONE,
+  CONSULTATION_LOG_STATUS_PENDING,
   consultationLogListPageSize,
   buildConsultationLogQueryParams,
   computeDefaultDateRange,
@@ -82,6 +87,7 @@ import {
 } from './consultationLogQuery';
 import { consultationLogGroupModeFromFilters, CONSULTATION_LOG_GROUP_MODE } from './consultationLogGrouping';
 import { CONSULTATION_LOG_TIMELINE_SORT } from './consultationLogTimeline';
+import { useMediaQuery } from './useConsultationLogMedia';
 import '../../../i18n';
 import '../ConsultationLogViewPage.css';
 
@@ -222,6 +228,8 @@ const ConsultationLogViewPage = ({ surface }) => {
   const isAdmin = RoleUtils.isAdmin(user);
   const canOpenConsultationLog = canAccessConsultationLogBody(user);
   const isConsultantSurface = surface === CONSULTATION_LOG_VIEW_SURFACE.CONSULTANT;
+  const isConsultantTabletViewport = useMediaQuery(CONSULTANT_JOURNAL_TABLET_MEDIA);
+  const isConsultantTablet = isConsultantSurface && isConsultantTabletViewport;
   const [searchParams] = useSearchParams();
 
   const initialQueryFilter = useMemo(() => {
@@ -424,6 +432,11 @@ const ConsultationLogViewPage = ({ surface }) => {
         if (clientId != null) {
           baseParams.clientId = clientId;
         }
+        if (status === CONSULTATION_LOG_STATUS_DONE) {
+          baseParams.sessionCompleted = true;
+        } else if (status === CONSULTATION_LOG_STATUS_PENDING) {
+          baseParams.sessionCompleted = false;
+        }
         if (viewMode === VIEW_MODE_CALENDAR) {
           const list = await fetchAllAdminConsultationRecords(StandardizedApi.get, baseParams, {
             endpoint
@@ -479,6 +492,7 @@ const ConsultationLogViewPage = ({ surface }) => {
     clientId,
     startDate,
     endDate,
+    status,
     normalizeConsultantRecords,
     viewMode,
     page,
@@ -655,8 +669,15 @@ const ConsultationLogViewPage = ({ surface }) => {
   }, [isConsultantSurface, resetPageAnd]);
 
   const handleStatusChange = useCallback((value) => {
+    if (isConsultantSurface) {
+      resetPageAnd(() => {
+        setStatus(value || CONSULTATION_LOG_STATUS_ALL);
+        setSelectedLogId(null);
+      });
+      return;
+    }
     setStatus(value || CONSULTATION_LOG_STATUS_ALL);
-  }, []);
+  }, [isConsultantSurface, resetPageAnd]);
 
   const handleKeywordChange = useCallback((value) => {
     setKeyword(value);
@@ -780,6 +801,25 @@ const ConsultationLogViewPage = ({ surface }) => {
     setSelectedLogId((current) => (current === recordId ? null : recordId));
   };
 
+  /**
+   * 태블릿 목록 행: 작성완료 → 읽기 상세, 미작성 → 등록 모달.
+   *
+   * @param {Object} record
+   */
+  const handleOpenTabletRecord = useCallback((record) => {
+    if (!canOpenConsultationLog || record?.id == null) {
+      notificationManager.info(CONSULTATION_LOG_BODY_ACCESS_STRINGS.RESTRICTED);
+      return;
+    }
+    if (record.isSessionCompleted === true) {
+      setSelectedLogId(record.id);
+      return;
+    }
+    setSelectedLogId(null);
+    setModalRecordId(record.id);
+    setModalOpen(true);
+  }, [canOpenConsultationLog]);
+
   const handleCloseDetail = useCallback(() => {
     setSelectedLogId(null);
   }, []);
@@ -814,7 +854,11 @@ const ConsultationLogViewPage = ({ surface }) => {
   }, [loading, records, initialQueryFilter.scheduleId, canOpenConsultationLog, isConsultantSurface]);
 
   useEffect(() => {
-    if (isConsultantSurface || selectedLogId == null || !canOpenConsultationLog || !user?.id) {
+    const shouldLoadDetail = selectedLogId != null
+      && canOpenConsultationLog
+      && user?.id
+      && (!isConsultantSurface || isConsultantTablet);
+    if (!shouldLoadDetail) {
       setDetailRecord(null);
       setDetailLoading(false);
       return undefined;
@@ -841,7 +885,14 @@ const ConsultationLogViewPage = ({ surface }) => {
     return () => {
       cancelled = true;
     };
-  }, [isConsultantSurface, selectedLogId, canOpenConsultationLog, isAdmin, user?.id]);
+  }, [
+    isConsultantSurface,
+    isConsultantTablet,
+    selectedLogId,
+    canOpenConsultationLog,
+    isAdmin,
+    user?.id
+  ]);
 
   const handleModalClose = () => {
     setModalOpen(false);
@@ -1358,7 +1409,7 @@ const ConsultationLogViewPage = ({ surface }) => {
   );
 
   if (isConsultantSurface) {
-    const consultantHeaderActions = (
+    const consultantHeaderActions = isConsultantTablet ? null : (
       <>
         <ConsultantSuiteButton
           variant={CONSULTANT_SUITE_BUTTON_VARIANT.GHOST}
@@ -1380,22 +1431,105 @@ const ConsultationLogViewPage = ({ surface }) => {
         </ConsultantSuiteButton>
       </>
     );
+
+    const tabletDetailSource = detailRecord || selectedRecord;
+    const tabletSessionCount = visibleSessionNumber(tabletDetailSource?.sessionNumber);
+    const tabletMethod = String(
+      tabletDetailSource?.sessionType
+        || tabletDetailSource?.consultationType
+        || tabletDetailSource?.consultationMethod
+        || tabletDetailSource?.method
+        || ''
+    ).trim();
+    const tabletPlace = String(
+      tabletDetailSource?.location
+        || tabletDetailSource?.place
+        || tabletDetailSource?.roomName
+        || ''
+    ).trim();
+    const tabletNextPlan = String(
+      tabletDetailSource?.nextSessionPlan
+        || tabletDetailSource?.followUpActions
+        || ''
+    ).trim();
+
+    const consultantTabletBody = selectedLogId != null ? (
+      <ConsultantJournalTabletDetail
+        clientName={resolvePersonName(
+          tabletDetailSource?.clientName,
+          tabletDetailSource?.clientId,
+          clientNameMap,
+          unknownName
+        )}
+        dateText={formatDisplayDate(
+          tabletDetailSource?.sessionDate ?? tabletDetailSource?.consultationDate
+        )}
+        sessionText={tabletSessionCount == null
+          ? ''
+          : tSuite('journalTablet.sessionUnit', { count: tabletSessionCount })}
+        methodText={tabletMethod}
+        placeText={tabletPlace}
+        done={tabletDetailSource?.isSessionCompleted === true}
+        summary={resolveSummaryText(tabletDetailSource)}
+        content={resolveContentText(detailRecord || tabletDetailSource)}
+        nextPlan={tabletNextPlan}
+        loading={detailLoading}
+        onBackToList={handleCloseDetail}
+        onEdit={handleEditDetail}
+      />
+    ) : (
+      <>
+        {showListLoading ? (
+          <ConsultationLogResultsState
+            phase="loading"
+            loadingTitle={t('states.loadingTitle')}
+            loadingDesc={t('states.loadingDesc')}
+            emptyTitle={t('states.emptyTitle')}
+            emptyDesc={t('states.emptyDesc')}
+            emptyActionLabel={t('states.emptyAction')}
+            errorTitle={t('states.errorTitle')}
+            errorDesc={t('states.errorDesc')}
+            errorActionLabel={t('states.errorAction')}
+          />
+        ) : (
+          <ConsultantJournalTabletList
+            records={filteredRecords}
+            status={status}
+            onStatusChange={handleStatusChange}
+            onOpenRecord={handleOpenTabletRecord}
+            clientNameMap={clientNameMap}
+          />
+        )}
+        {selectedLogId == null ? renderConsultantPager(
+          Math.max(1, Math.ceil((totalElements || 0) / CONSULTANT_SUITE_PAGE_SIZE))
+        ) : null}
+      </>
+    );
+
     return (
       <>
         <ConsultantSuitePage
-          title={PAGE_TITLE}
-          subtitle={PAGE_SUBTITLE}
+          title={isConsultantTablet ? tSuite('journalTablet.title') : PAGE_TITLE}
+          subtitle={isConsultantTablet
+            ? (selectedLogId != null
+              ? tSuite('journalTablet.detailSubtitle')
+              : tSuite('journalTablet.subtitle'))
+            : PAGE_SUBTITLE}
           titleId="consultation-log-view-page-title"
           ariaLabel={t('page.regionLabel')}
-          className={`${pageClassName} consultant-logs`}
+          className={`${pageClassName} consultant-logs${isConsultantTablet ? ' consultant-logs--tablet' : ''}`}
           testId={CONSULTANT_SUITE_TEST_ID.LOGS_PAGE}
           actions={consultantHeaderActions}
         >
-          {consultantViewChips}
-          {filterSection}
-          {consultantResults}
+          {isConsultantTablet ? consultantTabletBody : (
+            <>
+              {consultantViewChips}
+              {filterSection}
+              {consultantResults}
+            </>
+          )}
         </ConsultantSuitePage>
-        {saveViewModalOpen ? (
+        {saveViewModalOpen && !isConsultantTablet ? (
           <SaveViewModal
             isOpen={saveViewModalOpen}
             onClose={() => setSaveViewModalOpen(false)}

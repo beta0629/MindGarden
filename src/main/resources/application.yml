@@ -853,6 +853,13 @@ app:
   # 미설정 시 'default' 로 기록된다. (deployer 후속 작업: systemd Environment 추가)
   instance:
     id: ${APP_INSTANCE_ID:default}
+  # ASC App Review (Guideline 2.1(a) SIWA) — Review Notes에 리뷰용 전화·OTP를 안내할 때
+  # ops가 APP_REVIEW_APPLE_OTP_BYPASS=true + PHONES + CODE 시크릿을 서버에만 설정한다.
+  # 기본 OFF. SMS_TEST_MODE 전역 mock 과 별개(allowlist 전화만). 클라이언트에 코드 하드코딩 금지.
+  review:
+    apple-otp-bypass-enabled: ${APP_REVIEW_APPLE_OTP_BYPASS:false}
+    apple-otp-phones: ${APP_REVIEW_APPLE_OTP_PHONES:}
+    apple-otp-code: ${APP_REVIEW_APPLE_OTP_CODE:}
   notification:
     retention:
       enabled: ${APP_NOTIFICATION_RETENTION_ENABLED:true}

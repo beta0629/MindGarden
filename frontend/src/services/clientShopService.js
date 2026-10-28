@@ -20,6 +20,7 @@ import { toDisplayString } from '../utils/safeDisplay';
 import { API_CLIENT_MAPPINGS } from '../components/client/clientDashboard/constants';
 import { isApiGetNullFailure, normalizeMappingsListPayload } from '../utils/apiResponseNormalize';
 import { calculateClientSessionTotalsFromMappings } from '../utils/clientSessionTotals';
+import { normalizePagedListPayload } from '../utils/pagedListPayload';
 
 /**
  * StandardizedApi(apiGet)는 기본적으로 ApiResponse.data를 추출해 반환한다.
@@ -107,7 +108,8 @@ export const fetchPointLedger = async(limit = 20) => {
 export const fetchShopOrders = async(page = 0, size = 10) => {
   const res = await StandardizedApi.get(CLIENT_SHOP_API.ORDERS, { page, size });
   const data = unwrap(res);
-  return Array.isArray(data) ? data : [];
+  // 배열·{content|items|data}·빈 객체 모두 normalize — silent [] 우회 금지
+  return normalizePagedListPayload(data).items;
 };
 
 /**

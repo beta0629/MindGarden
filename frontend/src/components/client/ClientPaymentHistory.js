@@ -1,7 +1,8 @@
 /**
  * 내담자 결제 내역 — Clinic-OS 단열(aside 없음) · 필터 칩 바(URL 쿼리) · ≥768 표 / <768 카드
- * 매핑 결제(센터) + 쇼핑 PortOne(ONLINE/PAID·REFUNDED) 주문을 함께 표시한다.
- * 매핑 목록은 세션 사용자 id 로만 조회한다(서버가 본인 id 외 403).
+ * 패키지 이력(센터·TERMINATED·회기추가) + 쇼핑 PortOne(ONLINE/PAID·REFUNDED) 주문을 함께 표시한다.
+ * 패키지 이력은 me/package-payment-history 로만 조회한다(세션 clientId · admin mappings 비사용).
+ * ONLINE 이중 집계 방지: shop/orders = PortOne SSOT, package-history ONLINE 은 adapter 에서 skip.
  * 포맷·환불 문맥·상품명·합계는 utils/clientPaymentHistoryFormat 한 곳에서만.
  * 스펙: docs/design/clinic-os-client-payments.md
  *
@@ -12,11 +13,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import StandardizedApi from '../../utils/standardizedApi';
-import { isApiGetNullFailure, normalizeMappingsListPayload } from '../../utils/apiResponseNormalize';
+import { isApiGetNullFailure } from '../../utils/apiResponseNormalize';
 import { useClientSessionReady } from '../../hooks/useClientSessionReady';
 import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import {
+  adaptPackagePaymentHistoryItemsToMappings,
   buildClientPaymentCaption,
   buildClientPaymentRows,
   clientPaymentPageForKey,
@@ -30,9 +32,11 @@ import {
   paginateClientPaymentRows,
   summarizeClientPaymentRows
 } from '../../utils/clientPaymentHistoryFormat';
+import { drainPagedList } from '../../utils/pagedListPayload';
 import { fetchShopOrder, fetchShopOrders } from '../../services/clientShopService';
 import { buildShopOrderDetailPath } from '../../constants/clientShopConstants';
 import {
+  CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API,
   CLIENT_PAYMENT_COPY,
   CLIENT_PAYMENT_HISTORY_PAGE_SIZE,
   CLIENT_PAYMENT_PERIOD,
@@ -48,6 +52,7 @@ import {
   CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX,
   CLIENT_PAYMENT_TEST_IDS
 } from '../../constants/clientPaymentHistoryConstants';
+import { PAGED_LIST_FIRST_PAGE } from '../../constants/pagedList';
 import { CLIENT_WEB_SUITE_TEST_IDS } from '../../constants/clientWebSuiteConstants';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import SafeText from '../common/SafeText';
@@ -55,28 +60,32 @@ import MGPagination from '../common/MGPagination';
 import ClientWebPageShell from './ClientWebPageShell';
 import './ClientPaymentHistory.css';
 
-const API_ADMIN_MAPPINGS_CLIENT = '/api/v1/admin/mappings/client';
 const CLIENT_PAYMENT_HISTORY_TITLE_ID = 'client-payment-history-title';
 const MOBILE_MEDIA_QUERY = `(max-width: ${CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX - 1}px)`;
-const SHOP_ORDER_PAGE_START = 0;
 
 /**
- * 온라인 주문을 서버 page/size 로 끝까지 읽는다 (백엔드 변경 없음).
+ * 온라인 주문을 공통 drainPagedList 로 끝까지 읽는다.
  *
  * @returns {Promise<Array<object>>}
  */
-const fetchAllShopOrders = async() => {
-  const all = [];
-  for (let page = SHOP_ORDER_PAGE_START; page < CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES; page += 1) {
-    // eslint-disable-next-line no-await-in-loop
-    const chunk = await fetchShopOrders(page, CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE);
-    const list = Array.isArray(chunk) ? chunk : [];
-    all.push(...list);
-    if (list.length < CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE) {
-      break;
-    }
+const fetchAllShopOrders = () => drainPagedList({
+  fetchPage: fetchShopOrders,
+  pageSize: CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE,
+  maxPages: CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES,
+  firstPage: PAGED_LIST_FIRST_PAGE
+});
+
+/**
+ * me/package-payment-history 응답 → items[].
+ *
+ * @param {*} raw
+ * @returns {Array<object>}
+ */
+const packageHistoryItemsOf = (raw) => {
+  if (raw == null || typeof raw !== 'object') {
+    return [];
   }
-  return all;
+  return Array.isArray(raw.items) ? raw.items : [];
 };
 
 /**
@@ -391,19 +400,26 @@ const ClientPaymentHistory = () => {
     setPartialError(false);
     try {
       let shopFailed = false;
-      const [mappingsResponse, shopOrders] = await Promise.all([
-        StandardizedApi.get(API_ADMIN_MAPPINGS_CLIENT, { clientId: userId }),
+      const [historyResponse, shopOrders] = await Promise.all([
+        StandardizedApi.get(CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API),
         fetchAllShopOrders().catch(() => {
           shopFailed = true;
           return [];
         })
       ]);
-      if (isApiGetNullFailure(mappingsResponse)) {
+      if (isApiGetNullFailure(historyResponse)) {
         throw new Error(CLIENT_PAYMENT_COPY.ERROR_TITLE);
       }
+      const shopList = Array.isArray(shopOrders) ? shopOrders : [];
+      const shopOrderPublicIds = shopList
+        .map((order) => (order && order.orderPublicId != null ? String(order.orderPublicId).trim() : ''))
+        .filter(Boolean);
       setSources({
-        mappings: normalizeMappingsListPayload(mappingsResponse),
-        shopOrders
+        mappings: adaptPackagePaymentHistoryItemsToMappings(
+          packageHistoryItemsOf(historyResponse),
+          { shopOrderPublicIds }
+        ),
+        shopOrders: shopList
       });
       setPartialError(shopFailed);
     } catch (err) {

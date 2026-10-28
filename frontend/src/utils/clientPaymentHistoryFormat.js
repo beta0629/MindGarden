@@ -420,14 +420,94 @@ function paymentReferenceOf(mapping) {
 }
 
 /**
- * 센터 매핑 → 행 뷰모델.
+ * 패키지 결제 이력 item → 기존 매핑 행 파이프라인용 어댑터(금액·필드 발명 금지).
+ * ONLINE 은 쇼핑 주문 SSOT 와 이중 집계를 피하기 위해 호출부에서 걸러 넘긴다.
  *
- * @param {object} mapping `/api/v1/admin/mappings/client` 항목
+ * @param {object|null|undefined} item ClientPackagePaymentHistoryResponse.items[] 원소
+ * @returns {object|null}
+ */
+export function adaptPackagePaymentHistoryItemToMapping(item) {
+  if (!item || typeof item !== 'object') {
+    return null;
+  }
+  const extensionId = item.extensionRequestId;
+  const mappingId = item.mappingId;
+  const id = extensionId != null ? extensionId : mappingId;
+  if (id == null) {
+    return null;
+  }
+  const packageName = item.packageName != null ? item.packageName : null;
+  const paymentSource = item.paymentSource != null
+    ? String(item.paymentSource).trim().toUpperCase()
+    : null;
+  return {
+    id,
+    mappingId: mappingId != null ? mappingId : null,
+    packageName,
+    productTitle: packageName,
+    title: packageName,
+    paymentAmount: item.amount,
+    totalSessions: item.sessions,
+    paymentDate: item.paymentDate,
+    createdAt: item.createdAt,
+    paymentStatus: item.paymentStatus,
+    status: item.status,
+    paymentMethod: item.paymentMethod,
+    paymentSource,
+    paymentReference: item.paymentReference
+  };
+}
+
+/**
+ * 패키지 이력 items → 매핑 행 소스.
+ * Clinic-OS: ONLINE PortOne 은 shop/orders 가 SSOT. package-history 의 ONLINE(또는
+ * shop orderPublicId 와 같은 paymentReference) 은 건너뛰어 이중 집계를 막는다.
+ *
+ * @param {Array<object>|null|undefined} items
+ * @param {{ shopOrderPublicIds?: Iterable<string> }} [options]
+ * @returns {Array<object>}
+ */
+export function adaptPackagePaymentHistoryItemsToMappings(items, options = {}) {
+  const list = Array.isArray(items) ? items : [];
+  const shopIds = new Set();
+  if (options.shopOrderPublicIds) {
+    Array.from(options.shopOrderPublicIds).forEach((id) => {
+      if (id != null && String(id).trim() !== '') {
+        shopIds.add(String(id).trim());
+      }
+    });
+  }
+  const out = [];
+  list.forEach((item) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
+    const source = toUpperTrim(item.paymentSource);
+    if (source === CLIENT_PAYMENT_SOURCE.ONLINE) {
+      return;
+    }
+    const ref = paymentReferenceOf(item);
+    if (ref && shopIds.has(ref)) {
+      return;
+    }
+    const adapted = adaptPackagePaymentHistoryItemToMapping(item);
+    if (adapted) {
+      out.push(adapted);
+    }
+  });
+  return out;
+}
+
+/**
+ * 센터/패키지 이력 매핑 → 행 뷰모델.
+ *
+ * @param {object} mapping 매핑 또는 adaptPackagePaymentHistoryItemToMapping 결과
  * @param {object|null} [original] 같은 paymentReference 의 원결제(양수) 매핑
  * @returns {object}
  */
 export function buildMappingPaymentRow(mapping, original = null) {
   const safe = mapping && typeof mapping === 'object' ? mapping : {};
+  const highlightMappingId = safe.mappingId != null ? safe.mappingId : safe.id;
   return assembleRow({
     key: `mapping-${safe.id != null ? safe.id : paymentReferenceOf(safe) || ''}`,
     kind: CLIENT_PAYMENT_ROW_KIND.MAPPING,
@@ -445,7 +525,7 @@ export function buildMappingPaymentRow(mapping, original = null) {
     paymentSource: safe.paymentSource,
     dateIso: mappingDateIso(safe),
     linkKey: paymentReferenceOf(safe),
-    mappingId: safe.id
+    mappingId: highlightMappingId
   });
 }
 
@@ -550,12 +630,26 @@ export function buildClientPaymentRows(sources = {}) {
     ? sources.shopOrderDetails
     : {};
   const originals = indexOriginalMappings(mappings);
+  // ONLINE PortOne = shop/orders SSOT. 매핑 행에서 ONLINE·동일 paymentReference 는 표시 제외(이름 색인용 originals 은 유지).
+  const shopPublicIds = new Set(
+    shopOrders
+      .filter((order) => isVisibleShopOrder(order))
+      .map((order) => String(order.orderPublicId).trim())
+  );
 
-  const mappingRows = mappings.map((mapping) => {
-    const ref = paymentReferenceOf(mapping);
-    const original = ref && isNegativeMapping(mapping) ? originals.get(ref) : null;
-    return buildMappingPaymentRow(mapping, original && original !== mapping ? original : null);
-  });
+  const mappingRows = mappings
+    .filter((mapping) => {
+      if (toUpperTrim(mapping.paymentSource) === CLIENT_PAYMENT_SOURCE.ONLINE) {
+        return false;
+      }
+      const ref = paymentReferenceOf(mapping);
+      return !(ref && shopPublicIds.has(ref));
+    })
+    .map((mapping) => {
+      const ref = paymentReferenceOf(mapping);
+      const original = ref && isNegativeMapping(mapping) ? originals.get(ref) : null;
+      return buildMappingPaymentRow(mapping, original && original !== mapping ? original : null);
+    });
 
   const shopRows = shopOrders
     .map((order) => {

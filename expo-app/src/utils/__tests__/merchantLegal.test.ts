@@ -196,3 +196,32 @@ describe('MerchantLegalFooter 공개 /legal/refund 패리티 (소스 정적)', (
     expect(footerSource).not.toMatch(/openMerchantLegalGuideModal/);
   });
 });
+
+describe('결제 표면 MerchantLegalFooter 마운트 (소스 정적)', () => {
+  const shopCheckoutSource = fs.readFileSync(
+    path.join(__dirname, '../../../app/(client)/(shop)/checkout.tsx'),
+    'utf8',
+  );
+  const bookingPaymentSource = fs.readFileSync(
+    path.join(__dirname, '../../../app/(client)/(booking)/payment.tsx'),
+    'utf8',
+  );
+
+  test('shop checkout: useMerchantLegal + MerchantLegalFooter compact', () => {
+    expect(shopCheckoutSource).toMatch(/from '@/components\/molecules\/MerchantLegalFooter'/);
+    expect(shopCheckoutSource).toMatch(/from '@/hooks\/useMerchantLegal'/);
+    expect(shopCheckoutSource).toMatch(/useMerchantLegal\(\)/);
+    expect(shopCheckoutSource).toMatch(/<MerchantLegalFooter/);
+    expect(shopCheckoutSource).toMatch(/compact/);
+    expect(shopCheckoutSource).not.toMatch(/mailOrderReportNumber:\s*['"][^'"]+['"]/);
+  });
+
+  test('booking payment: useMerchantLegal + MerchantLegalFooter compact in ScrollView', () => {
+    expect(bookingPaymentSource).toMatch(/from '@/components\/molecules\/MerchantLegalFooter'/);
+    expect(bookingPaymentSource).toMatch(/from '@/hooks\/useMerchantLegal'/);
+    expect(bookingPaymentSource).toMatch(/useMerchantLegal\(\)/);
+    expect(bookingPaymentSource).toMatch(/<MerchantLegalFooter/);
+    expect(bookingPaymentSource).toMatch(/compact/);
+    expect(bookingPaymentSource).not.toMatch(/mailOrderReportNumber:\s*['"][^'"]+['"]/);
+  });
+});

@@ -1,5 +1,5 @@
 /**
- * 대시보드 등록 위젯(상담사·내담자) — 비밀번호는 서버가 만들고 문자로만 알린다.
+ * 대시보드 등록 위젯(상담사·내담자) — 비밀번호는 서버가 만들고 등록 시 SMS는 보내지 않는다.
  * 화면은 비밀번호를 받지 않고, 필수 항목이 있으면 등록 API 를 부른다.
  */
 import React from 'react';
@@ -76,7 +76,7 @@ describe.each(CASES)('$label 임시 비밀번호 문자', ({ Component, start, f
   test('비밀번호 입력란 없이 등록하고 요청에 비밀번호를 넣지 않는다', async() => {
     await openForm();
     expect(document.querySelector('input[name="password"]')).toBeNull();
-    expect(screen.getByText(/화면에는 비밀번호를 표시하지 않습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/등록 시 임시 비밀번호 문자는 보내지 않습니다/)).toBeInTheDocument();
 
     fireEvent.submit(document.querySelector(formSelector));
     await waitFor(() => expect(StandardizedApi.post).toHaveBeenCalled());

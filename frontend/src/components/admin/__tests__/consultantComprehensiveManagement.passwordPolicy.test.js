@@ -95,7 +95,7 @@ async function openCreateModal() {
   renderPage();
   const openButtons = await screen.findAllByRole('button', { name: '새 상담사 등록' });
   await userEvent.click(openButtons[0]);
-  expect(await screen.findByText(/화면에는 비밀번호를 표시하지 않습니다/, {}, { timeout: 8000 }))
+  expect(await screen.findByText(/등록 시 임시 비밀번호 문자는 보내지 않습니다/, {}, { timeout: 8000 }))
     .toBeInTheDocument();
   expect(screen.queryByLabelText('비밀번호')).not.toBeInTheDocument();
 }

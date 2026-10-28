@@ -49,7 +49,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
         }
         break;
       case 'newPassword':
-        if (value.trim() && value === currentPassword) {
+        if (value.trim() && currentPassword && value === currentPassword) {
           isValid = false;
           message = t('common:mypage.PasswordChangeModal.t_89a14bed');
         }
@@ -59,7 +59,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     }
 
     return { isValid, message };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -83,8 +83,14 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
   useEffect(() => {
     if (!isOpen) return;
-    const currentResult = validateField('currentPassword', formData.currentPassword, formData.currentPassword);
-    const newResult = validateField('newPassword', formData.newPassword, formData.currentPassword);
+    const currentResult = tempPassword
+      ? { isValid: true, message: '' }
+      : validateField('currentPassword', formData.currentPassword, formData.currentPassword);
+    const newResult = validateField(
+      'newPassword',
+      formData.newPassword,
+      tempPassword ? '' : formData.currentPassword
+    );
     validateCommittedNewPassword(formData.newPassword, formData.confirmPassword);
     setValidation({
       currentPassword: currentResult,
@@ -95,6 +101,7 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     formData.newPassword,
     formData.confirmPassword,
     isOpen,
+    tempPassword,
     validateField,
     validateCommittedNewPassword
   ]);
@@ -109,12 +116,13 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
 
   const validateForm = useCallback(() => {
     return (
-      validation.currentPassword.isValid &&
+      (tempPassword || validation.currentPassword.isValid) &&
       validation.newPassword.isValid &&
       !passwordField.errorCode &&
       !passwordField.confirmErrorCode
     );
   }, [
+    tempPassword,
     validation.currentPassword.isValid,
     validation.newPassword.isValid,
     passwordField.errorCode,
@@ -134,8 +142,14 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
       passwordField.confirmInputRef.current.value = confirmPassword;
     }
     const committed = validateCommittedNewPassword(newPassword, confirmPassword);
-    const currentResult = validateField('currentPassword', currentPassword, currentPassword);
-    const newResult = validateField('newPassword', newPassword, currentPassword);
+    const currentResult = tempPassword
+      ? { isValid: true, message: '' }
+      : validateField('currentPassword', currentPassword, currentPassword);
+    const newResult = validateField(
+      'newPassword',
+      newPassword,
+      tempPassword ? '' : currentPassword
+    );
     setValidation({
       currentPassword: currentResult,
       newPassword: newResult
@@ -145,11 +159,15 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
     setIsLoading(true);
     setSubmitError('');
     try {
-      const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, {
-        currentPassword,
+      // 임시 비밀번호 강제 변경: 현재 비밀번호 필드 없음 — 본문에서 생략
+      const payload = {
         newPassword: String(committed.value || '').trim(),
         confirmPassword: String(committed.confirmValue || '').trim()
-      });
+      };
+      if (!tempPassword) {
+        payload.currentPassword = currentPassword;
+      }
+      const result = await StandardizedApi.post(AUTH_API.PASSWORD_CHANGE, payload);
       if (result && result.success) {
         await persistReissuedSessionTokens(result);
         notificationManager.show(t('common:mypage.PasswordChangeModal.t_3c574e69'), 'info');
@@ -197,47 +215,49 @@ const PasswordChangeModal = ({ isOpen, onClose, onSuccess, tempPassword }) => {
           </div>
         ) : null}
 
-        <div className="mg-mypage-password-form__group">
-          <label className="mg-mypage-password-form__label" htmlFor="mypage-pw-current">
-            현재 비밀번호
-          </label>
-          <div className="mg-mypage-password-form__input-wrap">
-            <input
-              type={showPassword.current ? 'text' : 'password'}
-              id="mypage-pw-current"
-              name="currentPassword"
-              className="mg-mypage-password-form__input"
-              value={formData.currentPassword}
-              onChange={handleInputChange}
-              placeholder="현재 비밀번호"
-              disabled={isLoading}
-              autoComplete="current-password"
-            />
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'sm',
-                loading: false,
-                className: 'mg-mypage-password-form__toggle'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => togglePasswordVisibility('current')}
-              disabled={isLoading}
-              aria-label="비밀번호 표시 전환"
-              preventDoubleClick={false}
-            >
-              {showPassword.current ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
-            </MGButton>
+        {!tempPassword ? (
+          <div className="mg-mypage-password-form__group">
+            <label className="mg-mypage-password-form__label" htmlFor="mypage-pw-current">
+              현재 비밀번호
+            </label>
+            <div className="mg-mypage-password-form__input-wrap">
+              <input
+                type={showPassword.current ? 'text' : 'password'}
+                id="mypage-pw-current"
+                name="currentPassword"
+                className="mg-mypage-password-form__input"
+                value={formData.currentPassword}
+                onChange={handleInputChange}
+                placeholder="현재 비밀번호"
+                disabled={isLoading}
+                autoComplete="current-password"
+              />
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'sm',
+                  loading: false,
+                  className: 'mg-mypage-password-form__toggle'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => togglePasswordVisibility('current')}
+                disabled={isLoading}
+                aria-label="비밀번호 표시 전환"
+                preventDoubleClick={false}
+              >
+                {showPassword.current ? '숨김' : t('common:mypage.PasswordChangeModal.t_a61d568e')}
+              </MGButton>
+            </div>
+            {!validation.currentPassword.isValid ? (
+              <p className="mg-mypage-password-form__error">
+                <SafeText>{validation.currentPassword.message}</SafeText>
+              </p>
+            ) : null}
           </div>
-          {!validation.currentPassword.isValid ? (
-            <p className="mg-mypage-password-form__error">
-              <SafeText>{validation.currentPassword.message}</SafeText>
-            </p>
-          ) : null}
-        </div>
+        ) : null}
 
         <div className="mg-mypage-password-form__group">
           <label className="mg-mypage-password-form__label" htmlFor="mypage-pw-new">

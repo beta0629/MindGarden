@@ -19,8 +19,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PasswordChangeRequest {
-    
-    @NotBlank(message = "현재 비밀번호는 필수입니다.")
+
+    /**
+     * 현재 비밀번호. 일반 변경(isPasswordChanged=true) 시 컨트롤러에서 필수 검증.
+     * 임시 비밀번호 강제 변경(isPasswordChanged=false) 시에는 생략 가능.
+     */
     private String currentPassword;
     
     @NotBlank(message = "새 비밀번호는 필수입니다.")

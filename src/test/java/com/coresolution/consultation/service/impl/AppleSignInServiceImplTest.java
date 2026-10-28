@@ -74,8 +74,8 @@ class AppleSignInServiceImplTest {
         org.mockito.Mockito.lenient().when(userRepository.updateLastLoginAt(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any())).thenReturn(1);
 
         TenantContextHolder.setTenantId(TENANT_ID);
-        when(jwtService.generateToken(any(User.class))).thenReturn("access-jwt");
-        when(jwtService.generateRefreshToken(any(User.class))).thenReturn("refresh-jwt");
+        when(jwtService.generateTokenForOAuth(any(User.class))).thenReturn("access-jwt");
+        when(jwtService.generateRefreshTokenForOAuth(any(User.class))).thenReturn("refresh-jwt");
         when(jwtService.generateApplePhoneVerificationToken(any(ApplePhoneVerificationClaims.class)))
             .thenReturn("phone-verification-jwt");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));

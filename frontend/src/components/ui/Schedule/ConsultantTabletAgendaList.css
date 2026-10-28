@@ -25,6 +25,11 @@
   min-width: 0;
 }
 
+.consultant-schedule-tablet-agenda__day > [role='listitem'] {
+  min-width: 0;
+  width: 100%;
+}
+
 .consultant-schedule-tablet-agenda__day-label {
   font-size: var(--mg-v2-font-size-caption);
   font-weight: var(--mg-v2-font-weight-bold);

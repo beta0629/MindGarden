@@ -178,7 +178,7 @@ const ConsultantJournalTabletList = ({
           ) : null}
         </div>
       ) : (
-        <ul className={C.LIST} role="list" aria-label={t('journalTablet.listAria')}>
+        <ul className={C.LIST} aria-label={t('journalTablet.listAria')}>
           {records.map((record) => {
             const clientName = toDisplayString(
               record.clientName

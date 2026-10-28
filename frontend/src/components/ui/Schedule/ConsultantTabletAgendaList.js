@@ -131,37 +131,37 @@ const ConsultantTabletAgendaList = ({
               item.completed ? C.ITEM_DONE : ''
             ].filter(Boolean).join(' ');
             return (
-              <button
-                key={String(item.id)}
-                type="button"
-                role="listitem"
-                className={itemClass}
-                data-testid={CONSULTANT_SCHEDULE_TABLET_TEST_ID.ITEM}
-                data-schedule-id={item.id}
-                onClick={(nativeEvent) => emitEventClick(item, onEventClick, nativeEvent)}
-              >
-                <span className={C.TIME}>
-                  <SafeText>{item.startLabel}</SafeText>
-                  {item.endLabel ? (
-                    <span className={C.TIME_END}>
-                      <SafeText>{item.endLabel}</SafeText>
-                    </span>
-                  ) : null}
-                </span>
-                <span className={C.BODY}>
-                  <span className={C.NAME}>
-                    <SafeText>{item.clientName}</SafeText>
+              <div key={String(item.id)} role="listitem">
+                <button
+                  type="button"
+                  className={itemClass}
+                  data-testid={CONSULTANT_SCHEDULE_TABLET_TEST_ID.ITEM}
+                  data-schedule-id={item.id}
+                  onClick={(nativeEvent) => emitEventClick(item, onEventClick, nativeEvent)}
+                >
+                  <span className={C.TIME}>
+                    <SafeText>{item.startLabel}</SafeText>
+                    {item.endLabel ? (
+                      <span className={C.TIME_END}>
+                        <SafeText>{item.endLabel}</SafeText>
+                      </span>
+                    ) : null}
                   </span>
-                  {item.meta ? (
-                    <span className={C.META}>
-                      <SafeText>{item.meta}</SafeText>
+                  <span className={C.BODY}>
+                    <span className={C.NAME}>
+                      <SafeText>{item.clientName}</SafeText>
                     </span>
-                  ) : null}
-                </span>
-                <span className={C.CHIP}>
-                  <SafeText>{item.statusLabel}</SafeText>
-                </span>
-              </button>
+                    {item.meta ? (
+                      <span className={C.META}>
+                        <SafeText>{item.meta}</SafeText>
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className={C.CHIP}>
+                    <SafeText>{item.statusLabel}</SafeText>
+                  </span>
+                </button>
+              </div>
             );
           })}
         </section>

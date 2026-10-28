@@ -1,21 +1,16 @@
 /**
- * 상담사 웹 태블릿 P0 — schedule 밀도 · journal sticky save · #1769 축
+ * 상담사 웹 태블릿 — 셸 overlay · 일지 sticky (스케줄 밀도 검증 제거)
+ * @see ConsultantTabletShellJournal.css.test.js
  */
 import fs from 'fs';
 import path from 'path';
 
 const read = (rel) => fs.readFileSync(path.resolve(__dirname, '../../..', rel), 'utf8');
 
-describe('Consultant tablet P0 CSS', () => {
-  const schedule = read('components/consultant/ConsultantScheduleSuite.css');
+describe('Consultant tablet P0 CSS (shell + journal sticky only)', () => {
   const journal = read('components/consultant/ConsultationLogModal.css');
   const mobileLayout = read('components/dashboard-v2/templates/MobileLayout.css');
-
-  it('스케줄 태블릿 밀도: ellipsis · min-width:0 · now-indicator 유지', () => {
-    expect(schedule).toMatch(/@media \(min-width: 768px\) and \(max-width: 1023px\)/);
-    expect(schedule).toMatch(/text-overflow:\s*ellipsis/);
-    expect(schedule).toMatch(/fc-now-indicator-line/);
-  });
+  const drawer = read('components/dashboard-v2/organisms/MobileLnbDrawer.css');
 
   it('일지 actions sticky + safe-area-inset-bottom', () => {
     expect(journal).toMatch(/\.mg-modal__actions[\s\S]*position:\s*sticky/);
@@ -28,5 +23,10 @@ describe('Consultant tablet P0 CSS', () => {
     expect(mobileLayout).toMatch(/mg-v2-mobile-layout--soft-sheet/);
     expect(mobileLayout).toMatch(/env\(safe-area-inset-left/);
     expect(mobileLayout).toMatch(/env\(safe-area-inset-bottom/);
+  });
+
+  it('drawer/overlay는 position:fixed (본문 push 아님)', () => {
+    expect(drawer).toMatch(/\.mg-v2-mobile-lnb-overlay\s*\{[^}]*position:\s*fixed/);
+    expect(drawer).toMatch(/\.mg-v2-mobile-lnb-drawer\s*\{[^}]*position:\s*fixed/);
   });
 });

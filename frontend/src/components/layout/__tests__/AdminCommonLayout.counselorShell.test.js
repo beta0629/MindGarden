@@ -142,6 +142,41 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
   });
 
+  test('상담사 게이트(1024): DesktopLayout · soft-sheet Mobile 아님', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1024, height: 768 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
+  });
+
+  test('상담사 게이트(1023): MobileLayout + soft-sheet', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1023, height: 768 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
   test('운영자 태블릿(820): 기존 DesktopLayout(768 게이트) 유지', async() => {
     mockUseSession.mockReturnValue({
       user: { id: 2, role: 'ADMIN', name: '관리자' },

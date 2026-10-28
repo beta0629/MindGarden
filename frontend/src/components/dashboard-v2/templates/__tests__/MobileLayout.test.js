@@ -54,4 +54,20 @@ describe('MobileLayout', () => {
     const drawerProps = mockMobileLnbDrawer.mock.calls[0][0];
     expect(drawerProps.variant).toBe('soft-sheet');
   });
+
+  it('soft-sheet 루트 클래스 · main/stage는 drawer 상태와 무관하게 동일 마크업', () => {
+    const { container } = render(
+      <MobileLayout drawerVariant="soft-sheet">
+        <div>content</div>
+      </MobileLayout>
+    );
+    const root = container.querySelector('.mg-v2-mobile-layout--soft-sheet');
+    expect(root).toBeTruthy();
+    const main = container.querySelector('.mg-v2-mobile-layout__main');
+    const stage = container.querySelector('.mg-v2-mobile-layout__stage');
+    expect(main).toBeTruthy();
+    expect(stage).toBeTruthy();
+    expect(main.className).not.toMatch(/drawer-open|pushed|shifted/);
+    expect(stage.className).not.toMatch(/drawer-open|pushed|shifted/);
+  });
 });

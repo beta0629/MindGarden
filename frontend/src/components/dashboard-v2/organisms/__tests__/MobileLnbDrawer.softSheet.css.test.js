@@ -31,4 +31,15 @@ describe('MobileLnbDrawer soft-sheet', () => {
     expect(layoutJs).toMatch(/drawerVariant:\s*'soft-sheet'/);
     expect(layoutJs).toMatch(/isCounselorOnly/);
   });
+
+  it('overlay 게이트: drawer/overlay position:fixed · closed translateX(-100%)', () => {
+    expect(css).toMatch(/\.mg-v2-mobile-lnb-overlay\s*\{[^}]*position:\s*fixed/);
+    expect(css).toMatch(/\.mg-v2-mobile-lnb-drawer\s*\{[^}]*position:\s*fixed/);
+    expect(css).toMatch(/transform:\s*translateX\(-100%\)/);
+    const mobileLayoutCss = read('components/dashboard-v2/templates/MobileLayout.css');
+    expect(mobileLayoutCss).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet[\s\S]*margin-left:\s*0/
+    );
+    expect(mobileLayoutCss).not.toMatch(/--drawer-open|drawer-open.*width:\s*calc/);
+  });
 });

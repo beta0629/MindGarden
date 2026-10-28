@@ -2,6 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
@@ -92,9 +93,10 @@ class AuthServiceImplRefreshTenantContextTest {
         when(jwtService.isTokenValid(REFRESH_TOKEN, userDetails)).thenReturn(true);
         when(dynamicPermissionService.getUserPermissionsAsStringList(user))
             .thenReturn(Collections.emptyList());
-        when(jwtService.generateToken(eq(user), any())).thenReturn(NEW_ACCESS);
+        when(jwtService.isPasswordChangeRequired(REFRESH_TOKEN)).thenReturn(false);
+        when(jwtService.generateToken(eq(user), any(), anyBoolean())).thenReturn(NEW_ACCESS);
         when(jwtService.extractTokenId(REFRESH_TOKEN)).thenReturn(null);
-        when(jwtService.generateRefreshToken(eq(user), anyString())).thenReturn(NEW_REFRESH);
+        when(jwtService.generateRefreshToken(eq(user), any(), anyBoolean())).thenReturn(NEW_REFRESH);
         when(refreshTokenService.createRefreshToken(eq(user), eq(NEW_REFRESH), any()))
             .thenReturn(null);
 

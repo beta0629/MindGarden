@@ -94,6 +94,16 @@ export const PROFILE_API = {
   uploadProfileImage: (userId: string | number) => `/api/v1/users/profile/${userId}/image`,
 } as const;
 
+/**
+ * 마이페이지 — 자발 회원 탈퇴(계정 삭제). App Store 5.1.1(v).
+ * BE: UserWithdrawalController — 웹 MYPAGE_API / mypageApi 와 동일 계약.
+ */
+export const MYPAGE_API = {
+  WITHDRAWAL_REQUEST: '/api/v1/mypage/withdrawal/request',
+  WITHDRAWAL_CANCEL: '/api/v1/mypage/withdrawal/cancel',
+  WITHDRAWAL_STATUS: '/api/v1/mypage/withdrawal/status',
+} as const;
+
 export const DASHBOARD_API = {
   CLIENT: '/api/v1/dashboard/client',
   CONSULTANT: '/api/v1/dashboard/consultant',
@@ -453,6 +463,7 @@ export const API_ENDPOINTS = {
   TENANT: TENANT_API,
   USER: USER_API,
   PROFILE: PROFILE_API,
+  MYPAGE: MYPAGE_API,
   DASHBOARD: DASHBOARD_API,
   SCHEDULE: SCHEDULE_API,
   MESSAGE: MESSAGE_API,

@@ -12,8 +12,17 @@ export const PAGED_LIST_FIRST_PAGE = 0;
 /** 내담자 목록 기본 page size */
 export const CLIENT_LIST_PAGE_SIZE = 20;
 
-/** 내담자 알림·메시지 목록 page size (r2 게이트) */
+/** 내담자 알림·메시지 목록 page size (r2 스펙) */
 export const CLIENT_NOTIFICATION_LIST_PAGE_SIZE = 6;
+
+/** 내담자 결제 내역 UI 한 페이지 행 수 (MGPagination · in-memory) */
+export const CLIENT_PAYMENT_HISTORY_PAGE_SIZE = 10;
+
+/** 온라인 주문 목록 서버 page size 상한(백엔드 listMyOrders 최대 50) */
+export const CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE = 50;
+
+/** 온라인 주문 끝까지 읽기 안전 상한 (무한 루프 방지) */
+export const CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES = 20;
 
 /** usePagedList — 더 보기(append) / 페이지 교체(replace) */
 export const PAGED_LIST_MODE = Object.freeze({

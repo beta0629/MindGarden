@@ -108,8 +108,8 @@ const CoverClinicSvg = ({
           x="0"
           y="380"
           width="820"
-          height="100"
-          fill="var(--mg-v2-color-surface-sidebar)"
+          height="120"
+          fill="var(--mg-v2-color-neutral-900)"
         />
       </svg>
     );
@@ -119,7 +119,7 @@ const CoverClinicSvg = ({
     <svg
       className={className}
       viewBox="0 0 540 800"
-      preserveAspectRatio="xMidYMid slice"
+      preserveAspectRatio="xMidYMax slice"
       aria-hidden="true"
       focusable="false"
     >
@@ -206,8 +206,8 @@ const CoverClinicSvg = ({
         x="0"
         y="640"
         width="540"
-        height="160"
-        fill="var(--mg-v2-color-surface-sidebar)"
+        height="200"
+        fill="var(--mg-v2-color-neutral-900)"
       />
     </svg>
   );

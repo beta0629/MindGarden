@@ -70,13 +70,15 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toContain('--cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 5)');
     expect(source).toContain('--cch-cover-stack-ratio: 42%');
     expect(source).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
-    expect(source).toContain('--cch-stage-max: calc(var(--mg-v2-space-20) * 17.5)');
+    // stage-max 고정폭 박스 금지 (셸 full-bleed)
+    expect(source).not.toContain('--cch-stage-max');
+    expect(source).not.toMatch(/max-width:\s*var\(--cch-stage-max\)/);
     expect(source).not.toMatch(/min-height:\s*280px/);
     expect(source).not.toMatch(/min-height:\s*360px/);
     expect(source).not.toMatch(/min-height:\s*400px/);
   });
 
-  test('layout CSS: stack portrait 1-col; split≥1024; ≥1280 split 2-col; no hover MQ', () => {
+  test('layout CSS: stack portrait 1-col; split≥1024 full-bleed; ≥1440 2-col; no hover MQ', () => {
     const source = fs.readFileSync(
       path.join(DIR, 'ConsultantCoverChapterHome.css'),
       'utf8'
@@ -93,21 +95,31 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toMatch(
       /@media\s*\(min-width:\s*768px\)[\s\S]*?\[data-layout='stack'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*flex-direction:\s*column/s
     );
-    // split stage composition max-width
+    // split full-bleed — no stage-max
     expect(source).toMatch(
-      /@media\s*\(min-width:\s*1024px\)[\s\S]*?\[data-layout='split'\]\s*\{[^}]*max-width:\s*var\(--cch-stage-max\)/s
+      /@media\s*\(min-width:\s*1024px\)[\s\S]*?\[data-layout='split'\]\s*\{[^}]*max-width:\s*none/s
     );
-    // 2-col grid only at ≥1280 split (우 컬럼 밀도)
+    // 1280 split chapters = flex column (2열 금지). 1440 블록과 분리해 단정.
     expect(source).toMatch(
-      /@media\s*\(min-width:\s*1280px\)[\s\S]*?\[data-layout='split'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
+      /@media\s*\(min-width:\s*1280px\)\s*\{[^@]*\[data-layout='split'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*flex-direction:\s*column/s
+    );
+    expect(source).not.toMatch(
+      /@media\s*\(min-width:\s*1280px\)\s*\{[^@]*\[data-layout='split'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns/s
+    );
+    // 2-col grid only at ≥1440 split
+    expect(source).toMatch(
+      /@media\s*\(min-width:\s*1440px\)[\s\S]*?\[data-layout='split'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
     );
     // Must not force 2-col under 768 stack
     expect(source).not.toMatch(
       /@media\s*\(min-width:\s*768px\)\s*\{[^}]*\[data-layout='stack'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns/s
     );
-    // stack must never get 2-col grid at 1280 (desktop is split)
+    // stack must never get 2-col grid at 1280/1440
     expect(source).not.toMatch(
       /@media\s*\(min-width:\s*1280px\)[\s\S]*?\[data-layout='stack'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns/s
+    );
+    expect(source).not.toMatch(
+      /@media\s*\(min-width:\s*1440px\)[\s\S]*?\[data-layout='stack'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns/s
     );
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*position:\s*relative/s
@@ -119,9 +131,10 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*var\(--mg-v2-space-3\)/s
     );
     expect(source).toMatch(
-      /\.consultant-cover-chapter__cover-top\s*\{[^}]*justify-content:\s*flex-end/s
+      /\.consultant-cover-chapter__cover-top\s*\{/s
     );
     expect(source).not.toMatch(/consultant-cover-chapter__menu-btn/);
+    expect(source).not.toMatch(/consultant-cover-chapter__brand\s*\{/);
     // hover/pointer 는 CSS full-span에 쓰지 않음
     expect(source).not.toMatch(
       /@media\s*\([^)]*hover:\s*hover[^)]*pointer:\s*fine/

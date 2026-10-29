@@ -39,10 +39,15 @@ describe('consultant Cover+Chapter menu entry SSOT', () => {
     expect(source).not.toMatch(/useMediaQuery/);
   });
 
-  test('ConsultantCoverChapterHome.css: cover menu-btn 스타일 없음 · content/stage max', () => {
+  test('ConsultantCoverChapterHome.css: cover menu-btn 없음 · content-max · stage-max 금지', () => {
     const css = fs.readFileSync(path.join(DIR, 'ConsultantCoverChapterHome.css'), 'utf8');
     expect(css).not.toMatch(/consultant-cover-chapter__menu-btn/);
     expect(css).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
-    expect(css).toContain('--cch-stage-max: calc(var(--mg-v2-space-20) * 17.5)');
+    expect(css).not.toContain('--cch-stage-max');
+  });
+
+  test('ConsultantHomeCover: 커버 brand 칩 렌더 없음', () => {
+    const cover = fs.readFileSync(path.join(DIR, 'ConsultantHomeCover.js'), 'utf8');
+    expect(cover).not.toMatch(/consultant-cover-chapter__brand/);
   });
 });

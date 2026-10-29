@@ -1,5 +1,5 @@
 /**
- * 내담자 Cover+Chapter — hex SSOT · 세로 1열 · stage max · 메뉴 1개
+ * 내담자 Cover+Chapter — hex SSOT · 세로 1열 · full-bleed · 메뉴 헤더 1개
  *
  * @author CoreSolution
  * @since 2026-10-29
@@ -32,12 +32,13 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(CS_SLATE_DIRECT);
   });
 
-  test('content/stage max tokens · portrait 1-col · split≥64rem 2-col at 80rem', () => {
+  test('content-max · full-bleed split · portrait 1-col · 2-col only ≥90rem', () => {
     const css = fs.readFileSync(path.join(DIR, 'ClientCoverChapter.css'), 'utf8');
     expect(css).toContain('--client-cover-content-max: calc(var(--mg-v2-space-20) * 14)');
-    expect(css).toContain('--client-cover-stage-max: calc(var(--mg-v2-space-20) * 17.5)');
-    expect(css).toMatch(
-      /@media\s*\(min-width:\s*64rem\)[\s\S]*?max-width:\s*var\(--client-cover-stage-max\)/s
+    // stage-max 고정폭 박스 금지
+    expect(css).not.toContain('--client-cover-stage-max');
+    expect(css).not.toMatch(
+      /max-width:\s*var\(--client-cover-stage-max\)/
     );
     // portrait tablet: 1-col flex (not 2-col grid)
     expect(css).toMatch(
@@ -46,18 +47,26 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /@media\s*\(min-width:\s*48rem\)\s*and\s*\(orientation:\s*portrait\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*1\.25fr/s
     );
-    // wide desktop 2-col
+    // 1280(80rem) 포함 2열 금지
+    expect(css).not.toMatch(
+      /@media\s*\(min-width:\s*80rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)/s
+    );
+    // wide desktop 2-col only ≥1440 (90rem)
     expect(css).toMatch(
-      /@media\s*\(min-width:\s*80rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
+      /@media\s*\(min-width:\s*90rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
     );
   });
 
-  test('CoverPanel passes CoverClinicSvg variant; cover menu-btn is sole entry', () => {
+  test('CoverPanel: CoverClinicSvg variant · cover menu-btn 없음 · home chrome menu', () => {
     const panel = fs.readFileSync(path.join(DIR, 'CoverPanel.js'), 'utf8');
     const home = fs.readFileSync(path.join(DIR, 'ClientCoverChapterHome.js'), 'utf8');
     expect(panel).toContain('CoverClinicSvg');
     expect(panel).toContain('variant={svgVariant}');
-    expect(panel).toContain('client-cover__menu-btn');
+    expect(panel).not.toContain('client-cover__menu-btn');
+    expect(panel).not.toContain('onOpenMenu');
+    expect(panel).not.toContain('client-cover__brand-chip');
+    expect(home).toContain('ClientWebTopChrome');
+    expect(home).toContain('onMenuClick={openMenu}');
     expect(home).toContain('COVER_CLINIC_SVG_VARIANT_PORTRAIT');
     expect(home).toContain('COVER_CLINIC_SVG_VARIANT_LANDSCAPE');
     expect(home).toContain("CLIENT_COVER_SPLIT_MQ = '(min-width: 64rem)'");

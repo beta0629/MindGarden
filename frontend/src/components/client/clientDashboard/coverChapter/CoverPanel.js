@@ -1,5 +1,5 @@
 /**
- * 커버 패널 — SVG + 브랜드/내담자 메타 + 메뉴
+ * 커버 패널 — SVG + 내담자 메타 (햄버거·브랜드 칩은 TopChrome 단일)
  *
  * @author CoreSolution
  * @since 2026-10-29
@@ -10,7 +10,6 @@ import PropTypes from 'prop-types';
 import SafeText from '../../../common/SafeText';
 import {
   CLIENT_COVER_KICKER_SUFFIX,
-  CLIENT_COVER_MENU_ARIA,
   CLIENT_COVER_NAME_SUFFIX,
   CLIENT_COVER_PANEL_ARIA
 } from '../constants';
@@ -23,14 +22,12 @@ import CoverClinicSvg, {
  * @param {string} props.brandLabel
  * @param {string} props.userName
  * @param {string} props.coverSub
- * @param {() => void} props.onOpenMenu
  * @param {'portrait'|'landscape'} [props.svgVariant] split 좌커버=portrait · stack 전폭=landscape
  */
 const CoverPanel = ({
   brandLabel,
   userName,
   coverSub,
-  onOpenMenu,
   svgVariant = COVER_CLINIC_SVG_VARIANT_PORTRAIT
 }) => {
   const brand = String(brandLabel || '').trim();
@@ -43,24 +40,6 @@ const CoverPanel = ({
     <section className="client-cover__cover" aria-label={CLIENT_COVER_PANEL_ARIA}>
       <div className="client-cover__clip" aria-hidden="true">
         <CoverClinicSvg variant={svgVariant} />
-      </div>
-      <div className="client-cover__top">
-        <button
-          type="button"
-          className="client-cover__menu-btn"
-          aria-label={CLIENT_COVER_MENU_ARIA}
-          onClick={onOpenMenu}
-          data-testid="client-cover-menu-btn"
-        >
-          <span aria-hidden="true">☰</span>
-        </button>
-        {brand ? (
-          <span className="client-cover__brand-chip">
-            <SafeText>{brand}</SafeText>
-          </span>
-        ) : (
-          <span className="client-cover__brand-chip" aria-hidden="true" />
-        )}
       </div>
       <div className="client-cover__meta">
         <p className="client-cover__kicker">
@@ -91,7 +70,6 @@ CoverPanel.propTypes = {
   brandLabel: PropTypes.string,
   userName: PropTypes.string,
   coverSub: PropTypes.string,
-  onOpenMenu: PropTypes.func.isRequired,
   svgVariant: PropTypes.oneOf(['portrait', 'landscape'])
 };
 

@@ -187,14 +187,17 @@ describe('ClientDashboard 커버+챕터 홈', () => {
 
     expect(screen.getByTestId(CLIENT_COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
     expect(screen.queryByTestId('client-lobby')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('client-web-top-chrome')).not.toBeInTheDocument();
     expect(screen.queryByTestId('admin-common-layout')).not.toBeInTheDocument();
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
     expect(container.querySelector('.client-web-page-shell')).toBeNull();
-    // 메뉴 진입점 1개 — 커버 햄버거만 (셸 GNB 중복 없음)
-    expect(container.querySelectorAll('.client-cover__menu-btn')).toHaveLength(1);
+    // 메뉴 진입점 1개 — 헤더 TopChrome 햄버거만 (커버 menu-btn 0)
+    expect(container.querySelectorAll('.client-cover__menu-btn')).toHaveLength(0);
+    expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
+    expect(screen.getByTestId('client-web-topchrome-menu')).toBeInTheDocument();
+    expect(container.querySelectorAll('[data-testid="client-web-topchrome-menu"]')).toHaveLength(1);
     expect(container.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(0);
+    expect(container.querySelector('.client-cover__brand-chip')).toBeNull();
 
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
@@ -289,7 +292,7 @@ describe('ClientDashboard 커버+챕터 홈', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByTestId('client-cover-menu-btn'));
+    fireEvent.click(screen.getByTestId('client-web-topchrome-menu'));
     expect(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT }));

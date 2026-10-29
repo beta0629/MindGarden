@@ -16,6 +16,7 @@ import {
   CLIENT_COVER_ARIA_LABEL,
   CLIENT_COVER_CHAPTER_TEST_ID,
   CLIENT_COVER_LOADING,
+  CLIENT_COVER_MENU_ARIA,
   CLIENT_COVER_SHEET_MODE,
   CLIENT_COVER_SUB_HAS,
   CLIENT_COVER_SUB_PENDING,
@@ -33,6 +34,7 @@ import {
   resolveClientWebBrandLabels,
   resolveCoverSheetMode
 } from '../lobbyViewModel';
+import ClientWebTopChrome from '../../ClientWebTopChrome';
 import CoverPanel from './CoverPanel';
 import NextSheet from './NextSheet';
 import SessionChapter from './SessionChapter';
@@ -178,11 +180,21 @@ const ClientCoverChapterHome = ({
       data-sheet-mode={sheetMode}
       data-layout={isSplitLayout ? 'split' : 'stack'}
     >
+      <div className="client-cover__chrome">
+        <ClientWebTopChrome
+          brandWord={brandWord}
+          brandCenter={brandCenter}
+          nav={null}
+          onMenuClick={openMenu}
+          menuAriaLabel={CLIENT_COVER_MENU_ARIA}
+          className="client-cover__topchrome"
+        />
+      </div>
+      <div className="client-cover__stage">
       <CoverPanel
         brandLabel={brandLabel}
         userName={userName}
         coverSub={coverSub}
-        onOpenMenu={openMenu}
         svgVariant={
           isSplitLayout
             ? COVER_CLINIC_SVG_VARIANT_PORTRAIT
@@ -235,6 +247,7 @@ const ClientCoverChapterHome = ({
           ) : null}
         </main>
         <ClientMinimalDock activeId="home" />
+      </div>
       </div>
       <CoverMenuDrawer
         isOpen={menuOpen}

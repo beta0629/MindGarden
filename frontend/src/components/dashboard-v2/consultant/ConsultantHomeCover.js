@@ -19,7 +19,8 @@ import {
  * @since 2026-10-29
  */
 const ConsultantHomeCover = ({
-  brandName,
+  // brandName: MobileGnb 헤더만 표시 — 커버 칩 제거(크리틱 Fix-1)
+  brandName: _unusedBrandName,
   kicker,
   consultantName,
   subtitle,
@@ -40,11 +41,8 @@ const ConsultantHomeCover = ({
         />
       </div>
 
-      <div className="consultant-cover-chapter__cover-top">
-        <SafeText tag="span" className="consultant-cover-chapter__brand" fallback="">
-          {toDisplayString(brandName, '')}
-        </SafeText>
-      </div>
+      {/* 브랜드 칩은 MobileGnb 헤더만 — 커버 중복 금지 */}
+      <div className="consultant-cover-chapter__cover-top" aria-hidden="true" />
 
       <div className="consultant-cover-chapter__meta">
         <p className="consultant-cover-chapter__kicker">

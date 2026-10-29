@@ -74,33 +74,6 @@ const formatYmd = (date) => {
 };
 
 /**
- * @param {object|null|undefined} consultation
- * @returns {boolean}
- */
-const isConsultationJournalMissing = (consultation) => {
-  if (!consultation || typeof consultation !== 'object') {
-    return false;
-  }
-  if (consultation.hasConsultationRecord === true
-      || consultation.consultationRecordExists === true) {
-    return false;
-  }
-  if (consultation.consultationRecordId != null && consultation.consultationRecordId !== '') {
-    return false;
-  }
-  if (consultation.hasConsultationRecord === false
-      || consultation.hasRecord === false
-      || consultation.consultationRecordExists === false) {
-    return true;
-  }
-  if (Object.prototype.hasOwnProperty.call(consultation, 'consultationRecordId')
-      && (consultation.consultationRecordId == null || consultation.consultationRecordId === '')) {
-    return true;
-  }
-  return true;
-};
-
-/**
  * @param {Array<object>|null|undefined} items
  * @returns {{ consultantId?: *, date: string, scheduleId?: *, clientId?: * }|null}
  */
@@ -172,7 +145,6 @@ const ConsultantDashboardV2 = ({ user }) => {
   });
 
   const [incompleteRecords, setIncompleteRecords] = useState({ count: 0, schedules: [] });
-  const [nextConsultation, setNextConsultation] = useState(null);
   const [showConsultationLogModal, setShowConsultationLogModal] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [missingLogChipResolving, setMissingLogChipResolving] = useState(false);
@@ -287,53 +259,30 @@ const ConsultantDashboardV2 = ({ user }) => {
     return { schedules, todayOnlyCount };
   };
 
+  /**
+   * Phase1: 미작성 일지만. 다음 상담 시트는 todaySchedules SSOT
+   * (preparation API 는 preparations[] 계약이며 consultation 키 없음 — 호출하지 않음).
+   *
+   * @param {string|number} consultantId
+   * @returns {Promise<void>}
+   */
   const fetchPhase1Content = useCallback(async(consultantId) => {
     if (!consultantId) return;
 
     try {
-      const [incompleteRes, preparationRes] = await Promise.allSettled([
-        StandardizedApi.get(DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)),
-        StandardizedApi.get(DASHBOARD_API.CONSULTANT_UPCOMING_PREPARATION(consultantId))
-      ]);
-
-      if (incompleteRes.status === 'fulfilled' && incompleteRes.value) {
-        const data = incompleteRes.value;
-        const list = Array.isArray(data.records)
-          ? data.records
-          : (Array.isArray(data.schedules) ? data.schedules : []);
-        setIncompleteRecords({
-          count: data.count ?? list.length ?? 0,
-          schedules: list
-        });
+      const data = await StandardizedApi.get(
+        DASHBOARD_API.CONSULTANT_INCOMPLETE_RECORDS(consultantId)
+      );
+      if (!data) {
+        return;
       }
-
-      if (preparationRes.status === 'fulfilled' && preparationRes.value) {
-        const data = preparationRes.value;
-        if (data.consultation) {
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          const consultationDate = new Date(data.consultation.startTime);
-          consultationDate.setHours(0, 0, 0, 0);
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-
-          const isToday = consultationDate.getTime() === today.getTime();
-          const isTomorrow = consultationDate.getTime() === tomorrow.getTime();
-
-          if (isToday || isTomorrow) {
-            setNextConsultation({
-              ...data.consultation,
-              isToday
-            });
-          } else {
-            setNextConsultation(null);
-          }
-        } else {
-          setNextConsultation(null);
-        }
-      } else {
-        setNextConsultation(null);
-      }
+      const list = Array.isArray(data.records)
+        ? data.records
+        : (Array.isArray(data.schedules) ? data.schedules : []);
+      setIncompleteRecords({
+        count: data.count ?? list.length ?? 0,
+        schedules: list
+      });
     } catch (error) {
       console.warn('Phase 1 컨텐츠 로드 실패:', error);
     }
@@ -657,16 +606,13 @@ const ConsultantDashboardV2 = ({ user }) => {
   }, [navigate]);
 
   const handleOpenConsultation = useCallback((scheduleIdFromSheet) => {
-    // Cover+Chapter 시트는 todaySchedules SSOT 셀렉터 결과의 scheduleId를 전달
-    const scheduleId = scheduleIdFromSheet
-      ?? nextConsultation?.scheduleId
-      ?? nextConsultation?.id;
-    if (scheduleId != null && scheduleId !== '') {
-      navigate(buildConsultantConsultationRecordRoute(scheduleId));
+    // Cover+Chapter 시트 SSOT 셀렉터 scheduleId
+    if (scheduleIdFromSheet != null && scheduleIdFromSheet !== '') {
+      navigate(buildConsultantConsultationRecordRoute(scheduleIdFromSheet));
       return;
     }
     handleOpenSchedule();
-  }, [nextConsultation, navigate, handleOpenSchedule]);
+  }, [navigate, handleOpenSchedule]);
 
   const handleScheduleRowClick = useCallback((row) => {
     if (row?.scheduleId != null && row.scheduleId !== '') {
@@ -785,27 +731,10 @@ const ConsultantDashboardV2 = ({ user }) => {
       return;
     }
 
-    const nc = nextConsultation;
-    const nextScheduleId = nc?.scheduleId ?? nc?.id;
-    if (nextScheduleId != null && nextScheduleId !== '' && isConsultationJournalMissing(nc)) {
-      const opened = openConsultationLogForIncomplete({
-        scheduleId: nextScheduleId,
-        clientId: nc.clientId,
-        clientName: nc.clientName,
-        sessionDate: nc.sessionDate,
-        sessionNumber: nc.sessionNumber,
-        consultationDate: nc.sessionDate
-      });
-      if (opened) {
-        return;
-      }
-    }
-
     notificationManager.info(CONSULTANT_DASHBOARD_CREATE_RECORD_NONE);
   }, [
     incompleteRecords.schedules,
     scopedCumulativeMissingLogItems,
-    nextConsultation,
     handleMissingLogDateChipClick
   ]);
 
@@ -833,7 +762,6 @@ const ConsultantDashboardV2 = ({ user }) => {
         <ConsultantCoverChapterHome
           user={user}
           brandName={brandName}
-          nextConsultation={nextConsultation}
           todaySchedules={dashboardData.todaySchedules}
           upcomingSchedules={dashboardData.upcomingSchedules}
           stats={dashboardData.stats}

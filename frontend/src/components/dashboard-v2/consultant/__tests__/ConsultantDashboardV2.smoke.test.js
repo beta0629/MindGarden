@@ -122,7 +122,8 @@ let mockIncompleteRecords = {
   ]
 };
 
-let mockPreparation = { consultation: null };
+/** 실 API ScheduleController.getUpcomingPreparation 계약 — consultation 키 없음 */
+let mockPreparation = { preparations: [] };
 let mockScheduleList = [];
 
 jest.mock('../../../../utils/standardizedApi', () => ({
@@ -177,6 +178,7 @@ const mockApiGet = (url) => {
     return Promise.resolve(mockIncompleteRecords);
   }
   if (u.includes('upcoming-preparation')) {
+    // 대시보드는 더 이상 호출하지 않음 — 실계약 shape만 유지
     return Promise.resolve(mockPreparation);
   }
   if (u.includes('unread-count')) {
@@ -233,7 +235,7 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
         }
       ]
     };
-    mockPreparation = { consultation: null };
+    mockPreparation = { preparations: [] };
     mockScheduleList = [];
     mockStatsResponse.totalToday = 0;
     mockStatsResponse.completedToday = 0;
@@ -283,9 +285,9 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     expect(mockNavigate).toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   });
 
-  test('has next-sheet: todaySchedules SSOT (preparation empty) → 상담 열기 + 일정 CTA', async() => {
-    // preparation 비어 있어도 오늘 대기 일정이 있으면 has (A 버그 회귀 방지)
-    mockPreparation = { consultation: null };
+  test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담 열기 + 일정 CTA', async() => {
+    // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
+    mockPreparation = { preparations: [] };
     const start = new Date();
     start.setHours(start.getHours() + 2, 0, 0, 0);
     const end = new Date(start.getTime() + 50 * 60000);
@@ -310,6 +312,11 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     await waitFor(() => {
       expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
     });
+
+    const preparationCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+      String(url).includes('upcoming-preparation')
+    );
+    expect(preparationCalls).toHaveLength(0);
 
     expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_SCHEDULE })).toBeInTheDocument();

@@ -118,7 +118,7 @@ const ConsultantCoverChapterHome = ({
     [todaySchedules, now]
   );
 
-  // 스케줄 배열 SSOT — preparation nextConsultation 미사용
+  // 스케줄 배열 SSOT (preparation API 미사용)
   const nextWaiting = useMemo(
     () => selectNextWaitingSchedule(todayOnly, now),
     [todayOnly, now]
@@ -223,8 +223,6 @@ ConsultantCoverChapterHome.propTypes = {
     tenant: PropTypes.shape({ name: PropTypes.string })
   }),
   brandName: PropTypes.string,
-  /** @deprecated 시트 has/zero 는 todaySchedules SSOT — prop 유지하되 미사용 */
-  nextConsultation: PropTypes.object,
   todaySchedules: PropTypes.array,
   upcomingSchedules: PropTypes.array,
   stats: PropTypes.object,

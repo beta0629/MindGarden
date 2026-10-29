@@ -58,17 +58,37 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).not.toMatch(/min-height:\s*400px/);
   });
 
-  test('desktop fine-pointer forces full-span stack; split only via data-layout', () => {
+  test('layout CSS trusts data-layout stack/split; no hover/pointer media for span', () => {
     const source = fs.readFileSync(
       path.join(__dirname, '..', 'ConsultantCoverChapterHome.css'),
       'utf8'
     );
+    expect(source).toMatch(/data-layout='stack'/);
     expect(source).toMatch(/data-layout='split'/);
     expect(source).toMatch(
-      /@media\s*\(min-width:\s*1280px\)\s*and\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)/
+      /\.consultant-cover-chapter\[data-layout='stack'\]\s*\{[^}]*flex-direction:\s*column/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*width:\s*100%/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
     );
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*position:\s*relative/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__meta\s*\{[^}]*flex:\s*0\s+0\s+auto/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*calc\(var\(--cch-top-bar-h\)/s
+    );
+    // hover/pointer 는 JS MQ 전용 — CSS full-span에 쓰지 않음
+    expect(source).not.toMatch(
+      /@media\s*\([^)]*hover:\s*hover[^)]*pointer:\s*fine/
+    );
+    expect(source).not.toMatch(
+      /@media\s*\([^)]*pointer:\s*fine[^)]*hover:\s*hover/
     );
     // bare 1024 row on root (fake LNB) 금지 — split 게이트만
     expect(source).not.toMatch(

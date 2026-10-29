@@ -39,6 +39,77 @@ export const CLIENT_LOBBY_EMPTY_UPCOMING = '예정된 일정이 없습니다';
 export const CLIENT_LOBBY_LOAD_ERROR = '데이터를 불러오지 못했습니다';
 export const CLIENT_LOBBY_RETRY = '다시 시도';
 
+/** Clinic-OS 커버+챕터 홈 (`/client/dashboard`) */
+export const CLIENT_COVER_CHAPTER_TEST_ID = 'client-cover-chapter-home';
+export const CLIENT_COVER_NEXT_SHEET_TEST_ID = 'client-cover-next-sheet';
+export const CLIENT_COVER_DOCK_TEST_ID = 'client-cover-dock';
+export const CLIENT_COVER_MENU_TEST_ID = 'client-cover-menu';
+export const CLIENT_COVER_ARIA_LABEL = '내담자 홈';
+export const CLIENT_COVER_PANEL_ARIA = '커버';
+export const CLIENT_COVER_TODAY_LABEL = '오늘';
+export const CLIENT_COVER_TOMORROW_LABEL = '내일';
+export const CLIENT_COVER_CTA_VIEW_SCHEDULE = '상담 일정 보기';
+export const CLIENT_COVER_CTA_PICK_SESSION = '회기 고르기';
+export const CLIENT_COVER_CTA_PAY = '결제하기';
+export const CLIENT_COVER_SHEET_KICKER_NEXT = '다음 상담';
+export const CLIENT_COVER_SHEET_KICKER_REMAINING = '남은 회기';
+export const CLIENT_COVER_SESSION_UNIT = '회';
+export const CLIENT_COVER_CHAPTER_SESSION = '회기';
+export const CLIENT_COVER_CHAPTER_GUIDE = '안내';
+export const CLIENT_COVER_CHAPTER_NUM_01 = '01';
+export const CLIENT_COVER_CHAPTER_NUM_02 = '02';
+export const CLIENT_COVER_CHAPTER_MORE = '전체';
+export const CLIENT_COVER_ROW_REMAINING = '남은 회기';
+export const CLIENT_COVER_ROW_REMAIN_SHORT = '잔여';
+export const CLIENT_COVER_ROW_PAYMENT = '결제';
+export const CLIENT_COVER_ROW_UNPAID = '미결제';
+export const CLIENT_COVER_ROW_HISTORY = '내역';
+export const CLIENT_COVER_ROW_WAITING = '대기';
+export const CLIENT_COVER_NO_PACKAGE = '패키지 없음';
+export const CLIENT_COVER_CHIP_REMAIN_PREFIX = '잔여';
+export const CLIENT_COVER_CHIP_MONTH_PREFIX = '이번 달';
+export const CLIENT_COVER_CHIP_MONTH_SUFFIX = '회 완료';
+export const CLIENT_COVER_CHIP_UNPAID_PREFIX = '미결제';
+export const CLIENT_COVER_CHIP_DONE_PREFIX = '완료 이력';
+export const CLIENT_COVER_GUIDE_TITLE_HAS = '방문 전 체크';
+export const CLIENT_COVER_GUIDE_BODY_HAS =
+  '10분 전 도착 · 휴대폰 무음 · 주차는 센터 안내를 확인해 주세요';
+export const CLIENT_COVER_GUIDE_TITLE_ZERO = '회기 구매 안내';
+export const CLIENT_COVER_GUIDE_BODY_ZERO =
+  '고르기 → 결제 → 센터가 일정을 잡습니다. 웹에서 직접 예약하지 않아요.';
+export const CLIENT_COVER_SUB_HAS = '오늘은 상담이 있어요';
+export const CLIENT_COVER_SUB_ZERO = '회기를 채우면 상담을 이어갈 수 있어요';
+export const CLIENT_COVER_SUB_QUIET = '조용한 하루입니다';
+export const CLIENT_COVER_SUB_UNASSIGNED = '담당 상담사 배정을 확인 중입니다';
+export const CLIENT_COVER_SUB_PENDING = '확인이 필요한 결제가 있어요';
+export const CLIENT_COVER_KICKER_SUFFIX = '창가 대기실';
+export const CLIENT_COVER_NAME_SUFFIX = '님';
+export const CLIENT_COVER_ZERO_META =
+  '센터에서 안내한 패키지를 고르거나 결제를 마쳐 주세요';
+export const CLIENT_COVER_QUIET_META = '예정된 다음 상담이 없습니다. 남은 회기를 확인해 보세요.';
+export const CLIENT_COVER_CONSULTANT_SUFFIX = '상담사';
+export const CLIENT_COVER_DOCK_HOME = '홈';
+export const CLIENT_COVER_DOCK_SCHEDULE = '예정';
+export const CLIENT_COVER_DOCK_WELLNESS = '마음';
+export const CLIENT_COVER_DOCK_ME = '나';
+export const CLIENT_COVER_DOCK_ARIA = '하단 메뉴';
+export const CLIENT_COVER_MENU_ARIA = '메뉴';
+export const CLIENT_COVER_MENU_CLOSE_ARIA = '메뉴 닫기';
+export const CLIENT_COVER_MENU_SCHEDULE = '스케줄';
+export const CLIENT_COVER_MENU_SESSIONS = '회기';
+export const CLIENT_COVER_MENU_PAYMENT = '결제';
+export const CLIENT_COVER_MENU_SHOP = '회기 고르기';
+export const CLIENT_COVER_MENU_LOGOUT = '로그아웃';
+export const CLIENT_COVER_GUIDE_GO_ARIA = '더보기';
+export const CLIENT_COVER_LOADING = '불러오는 중…';
+export const CLIENT_COVER_BADGE_UNPAID_PREFIX = '미결제';
+export const CLIENT_COVER_RECENT_PAYMENT_PREFIX = '최근';
+export const CLIENT_COVER_SHEET_MODE = Object.freeze({
+  HAS: 'has',
+  ZERO: 'zero',
+  QUIET: 'quiet'
+});
+
 export const CLIENT_COMMUNITY_TEST_ID = 'client-community-page';
 export const CLIENT_COMMUNITY_MAIN_ID = 'client-community-main';
 export const CLIENT_COMMUNITY_ARIA_LABEL = '내담자 커뮤니티';

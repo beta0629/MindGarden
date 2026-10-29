@@ -35,6 +35,14 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
   test('content-max · full-bleed split · portrait 1-col · 2-col only ≥90rem', () => {
     const css = fs.readFileSync(path.join(DIR, 'ClientCoverChapter.css'), 'utf8');
     expect(css).toContain('--client-cover-content-max: calc(var(--mg-v2-space-20) * 14)');
+    expect(css).toContain('--client-cover-stack-ratio: 34%');
+    expect(css).toContain('--client-cover-min-h: calc(var(--mg-v2-space-20) * 3)');
+    expect(css).toMatch(
+      /\.client-cover__chapter\s*\{[^}]*animation:[^;]*forwards/s
+    );
+    expect(css).not.toMatch(
+      /\.client-cover__chapter\s*\{[^}]*animation:[^;]*\bboth\b/s
+    );
     // stage-max 고정폭 박스 금지
     expect(css).not.toContain('--client-cover-stage-max');
     expect(css).not.toMatch(

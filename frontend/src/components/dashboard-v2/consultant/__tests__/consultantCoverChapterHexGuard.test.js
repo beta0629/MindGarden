@@ -65,10 +65,11 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       path.join(DIR, 'ConsultantCoverChapterHome.css'),
       'utf8'
     );
-    expect(source).toContain('--cch-cover-min-h: calc(var(--mg-v2-space-20) * 3.5)');
-    expect(source).toContain('--cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 4.5)');
-    expect(source).toContain('--cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 5)');
-    expect(source).toContain('--cch-cover-stack-ratio: 42%');
+    expect(source).toContain('--cch-cover-min-h: calc(var(--mg-v2-space-20) * 3)');
+    expect(source).toContain('--cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 3.5)');
+    expect(source).toContain('--cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 4)');
+    expect(source).toContain('--cch-cover-stack-ratio: 34%');
+    expect(source).toContain('--cch-ghost-border: var(--mg-v2-color-border-default)');
     expect(source).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
     // stage-max 고정폭 박스 금지 (셸 full-bleed)
     expect(source).not.toContain('--cch-stage-max');
@@ -181,7 +182,7 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*bottom:\s*calc\(-1\s*\*\s*var\(--cch-sheet-overhang\)\)/s
     );
     expect(source).toMatch(
-      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__scroll\s*\{[^}]*padding-top:\s*calc\(var\(--cch-sheet-overhang\)\s*\+\s*var\(--mg-v2-space-4\)\)/s
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__scroll\s*\{[^}]*padding-top:\s*calc\(var\(--cch-sheet-overhang\)\s*\+\s*var\(--mg-v2-space-2\)\)/s
     );
     expect(source).toMatch(
       /\.consultant-cover-chapter__chapter\s*\{[^}]*animation:[^;]*forwards/s

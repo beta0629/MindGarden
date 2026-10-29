@@ -32,7 +32,7 @@ const CoverClinicSvg = ({
       <svg
         className={className}
         viewBox="0 0 820 480"
-        preserveAspectRatio="xMidYMid slice"
+        preserveAspectRatio="xMidYMax slice"
         aria-hidden="true"
         focusable="false"
       >

@@ -39,9 +39,10 @@ describe('consultant Cover+Chapter menu entry SSOT', () => {
     expect(source).not.toMatch(/useMediaQuery/);
   });
 
-  test('ConsultantCoverChapterHome.css: cover menu-btn 스타일 없음', () => {
+  test('ConsultantCoverChapterHome.css: cover menu-btn 스타일 없음 · content/stage max', () => {
     const css = fs.readFileSync(path.join(DIR, 'ConsultantCoverChapterHome.css'), 'utf8');
     expect(css).not.toMatch(/consultant-cover-chapter__menu-btn/);
     expect(css).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
+    expect(css).toContain('--cch-stage-max: calc(var(--mg-v2-space-20) * 17.5)');
   });
 });

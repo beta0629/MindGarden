@@ -5,7 +5,7 @@
  * @since 2026-10-29
  */
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmModal from '../../../common/ConfirmModal';
 import { useBranding } from '../../../../hooks/useBranding';
@@ -39,7 +39,24 @@ import SessionChapter from './SessionChapter';
 import GuideChapter from './GuideChapter';
 import ClientMinimalDock from './ClientMinimalDock';
 import CoverMenuDrawer from './CoverMenuDrawer';
+import {
+  COVER_CLINIC_SVG_VARIANT_LANDSCAPE,
+  COVER_CLINIC_SVG_VARIANT_PORTRAIT
+} from './CoverClinicSvg';
 import './ClientCoverChapter.css';
+
+/** 상담사 COVER_CHAPTER_TABLET_SPLIT_MQ 와 동일 — ≥1024(64rem) split */
+const CLIENT_COVER_SPLIT_MQ = '(min-width: 64rem)';
+
+/**
+ * @returns {boolean}
+ */
+const getIsSplitLayout = () => {
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+    return false;
+  }
+  return window.matchMedia(CLIENT_COVER_SPLIT_MQ).matches;
+};
 
 /**
  * @param {string} heroPriority
@@ -102,8 +119,26 @@ const ClientCoverChapterHome = ({
   } = useClientWebLogoutConfirm();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isSplitLayout, setIsSplitLayout] = useState(getIsSplitLayout);
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined;
+    }
+    const splitMql = window.matchMedia(CLIENT_COVER_SPLIT_MQ);
+    const onChange = () => {
+      setIsSplitLayout(getIsSplitLayout());
+    };
+    setIsSplitLayout(getIsSplitLayout());
+    if (typeof splitMql.addEventListener === 'function') {
+      splitMql.addEventListener('change', onChange);
+      return () => splitMql.removeEventListener('change', onChange);
+    }
+    splitMql.addListener(onChange);
+    return () => splitMql.removeListener(onChange);
+  }, []);
 
   const sheetMode = useMemo(
     () => resolveCoverSheetMode(heroPriority),
@@ -141,12 +176,18 @@ const ClientCoverChapterHome = ({
       className="client-cover"
       data-testid={CLIENT_COVER_CHAPTER_TEST_ID}
       data-sheet-mode={sheetMode}
+      data-layout={isSplitLayout ? 'split' : 'stack'}
     >
       <CoverPanel
         brandLabel={brandLabel}
         userName={userName}
         coverSub={coverSub}
         onOpenMenu={openMenu}
+        svgVariant={
+          isSplitLayout
+            ? COVER_CLINIC_SVG_VARIANT_PORTRAIT
+            : COVER_CLINIC_SVG_VARIANT_LANDSCAPE
+        }
       />
       <div className="client-cover__body">
         {!isLoading && !hasError ? (

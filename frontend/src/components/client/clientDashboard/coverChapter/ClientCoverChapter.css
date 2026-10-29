@@ -11,6 +11,11 @@
   --client-cover-safe-r: env(safe-area-inset-right, 0px);
   --client-cover-safe-b: env(safe-area-inset-bottom, 0px);
   --client-cover-safe-l: env(safe-area-inset-left, 0px);
+  /* 상담사 --cch-content-max / --cch-stage-max 와 동일 개념 */
+  --client-cover-content-max: calc(var(--mg-v2-space-20) * 14);
+  --client-cover-stage-max: calc(var(--mg-v2-space-20) * 17.5);
+  --client-cover-name-size: var(--mg-v2-font-size-h1);
+  --client-cover-sheet-dom-size: 1.875rem;
 
   display: flex;
   flex-direction: column;
@@ -132,7 +137,7 @@
 }
 
 .client-cover__name {
-  font-size: var(--mg-v2-font-size-h1);
+  font-size: var(--client-cover-name-size);
   font-weight: var(--mg-v2-font-weight-bold);
   line-height: var(--mg-v2-font-line-height-heading);
   letter-spacing: -0.03em;
@@ -224,7 +229,7 @@
 }
 
 .client-cover__sheet-dom {
-  font-size: 1.875rem;
+  font-size: var(--client-cover-sheet-dom-size);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.035em;
@@ -300,6 +305,10 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  width: 100%;
+  max-width: var(--client-cover-content-max);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .client-cover__chapter {
@@ -684,10 +693,19 @@
   font-family: var(--mg-v2-font-family-base);
 }
 
-/* ===== Web / Tablet Landscape: 좌 커버 | 우 시트+챕터 ===== */
-@media (min-width: 64rem), (orientation: landscape) and (min-width: 56.25rem) {
-  .client-cover {
+/*
+ * ≥64rem(1024): 좌 커버 | 우 시트+챕터 (웹·태블릿 가로·데스크톱).
+ * data-layout=split 과 CSS 병행 — JS SVG variant SSOT.
+ */
+@media (min-width: 64rem) {
+  .client-cover,
+  .client-cover[data-layout='split'] {
     flex-direction: row;
+    max-width: var(--client-cover-stage-max);
+    margin-left: auto;
+    margin-right: auto;
+    --client-cover-name-size: 2rem;
+    --client-cover-sheet-dom-size: 2.125rem;
   }
 
   .client-cover__cover {
@@ -703,23 +721,17 @@
     right: var(--mg-v2-space-6);
   }
 
-  .client-cover__name {
-    font-size: 2rem;
-  }
-
   .client-cover__body {
     flex: 1;
     height: 100%;
+    min-width: 0;
   }
 
   .client-cover__sheet {
     margin: var(--mg-v2-space-3) var(--mg-v2-space-4) 0;
+    max-width: var(--client-cover-content-max);
     padding: var(--mg-v2-space-4) var(--mg-v2-space-4) 0.875rem;
     box-shadow: var(--mg-v2-shadow-sm);
-  }
-
-  .client-cover__sheet-dom {
-    font-size: 2.125rem;
   }
 
   .client-cover__sheet-dom--zero {
@@ -730,17 +742,59 @@
     padding: 0.625rem var(--mg-v2-space-4) var(--mg-v2-space-2);
   }
 
+  .client-cover__chapters {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: var(--client-cover-content-max);
+  }
+
   .client-cover__dock {
     padding-left: var(--mg-v2-space-3);
     padding-right: var(--mg-v2-space-3);
   }
 }
 
-/* Tablet portrait density */
-@media (min-width: 48rem) and (orientation: portrait) {
+/* ≥80rem(1280) split — 우 컬럼 챕터 2열 밀도 */
+@media (min-width: 80rem) {
+  .client-cover__chapters {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
+    gap: var(--mg-v2-space-3);
+    align-items: start;
+  }
+
+  .client-cover__chapter {
+    margin-bottom: 0;
+    min-width: 0;
+  }
+}
+
+@media (min-width: 90rem) {
+  .client-cover,
+  .client-cover[data-layout='split'] {
+    --client-cover-name-size: 2.125rem;
+    --client-cover-sheet-dom-size: 2.25rem;
+  }
+}
+
+/*
+ * Tablet portrait (<64rem · 예: 820 세로) — 스택 + 챕터 1열.
+ * 상담사 FAIL과 동일: portrait 2열 금지.
+ */
+@media (min-width: 48rem) and (max-width: 63.9375rem) and (orientation: portrait) {
+  .client-cover,
+  .client-cover[data-layout='stack'] {
+    flex-direction: column;
+    --client-cover-name-size: 2rem;
+    --client-cover-sheet-dom-size: 2.125rem;
+  }
+
   .client-cover__cover {
+    width: 100%;
     height: 42%;
     min-height: 25rem;
+    flex: 0 0 auto;
   }
 
   .client-cover__meta {
@@ -749,19 +803,12 @@
     right: var(--mg-v2-space-6);
   }
 
-  .client-cover__name {
-    font-size: 2rem;
-  }
-
   .client-cover__sheet {
     margin-left: var(--mg-v2-space-6);
     margin-right: var(--mg-v2-space-6);
     margin-top: -3rem;
+    max-width: var(--client-cover-content-max);
     padding: var(--mg-v2-space-4) 1.125rem;
-  }
-
-  .client-cover__sheet-dom {
-    font-size: 2.125rem;
   }
 
   .client-cover__sheet-dom--zero {
@@ -774,14 +821,14 @@
   }
 
   .client-cover__chapters {
-    display: grid;
-    grid-template-columns: 1.25fr 0.85fr;
-    gap: var(--mg-v2-space-3);
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: var(--client-cover-content-max);
   }
 
   .client-cover__chapter {
-    margin-bottom: 0;
+    margin-bottom: 0.9375rem;
   }
 }
 

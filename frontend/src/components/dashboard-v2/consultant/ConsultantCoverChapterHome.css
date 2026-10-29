@@ -44,10 +44,14 @@
   --cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 4.5);
   --cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 5);
   --cch-cover-stack-ratio: 42%;
-  /* 본문(sheet·chapters) max-width — 커버는 full-bleed 유지 (space-20*14 ≈ 70rem) */
+  /* 본문(sheet·chapters) max-width (space-20*14 ≈ 70rem) */
   --cch-content-max: calc(var(--mg-v2-space-20) * 14);
+  /* 커버+본문 한 composition — 1440·1920 무한 확장 금지 (≈1400) */
+  --cch-stage-max: calc(var(--mg-v2-space-20) * 17.5);
   --cch-top-bar-h: var(--mg-v2-component-height-lg);
   --cch-sheet-overhang: calc(var(--mg-v2-space-12) + var(--mg-v2-space-2));
+  --cch-name-size: 1.75rem;
+  --cch-sheet-dom-size: 1.875rem;
 
   box-sizing: border-box;
   display: flex;
@@ -162,7 +166,7 @@
 
 .consultant-cover-chapter__name {
   margin: 0;
-  font-size: 1.75rem;
+  font-size: var(--cch-name-size);
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: -0.03em;
@@ -294,7 +298,7 @@
 }
 
 .consultant-cover-chapter__sheet-dom {
-  font-size: 1.875rem;
+  font-size: var(--cch-sheet-dom-size);
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.035em;
@@ -717,8 +721,9 @@
     padding-bottom: calc(var(--cch-sheet-overhang) + var(--mg-v2-space-2));
   }
 
-  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__name {
-    font-size: 2rem;
+  .consultant-cover-chapter[data-layout='stack'] {
+    --cch-name-size: 2rem;
+    --cch-sheet-dom-size: 2.125rem;
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet {
@@ -730,10 +735,6 @@
     max-width: var(--cch-content-max);
     margin: 0 auto;
     padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
-  }
-
-  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet-dom {
-    font-size: 2.125rem;
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__scroll {
@@ -761,13 +762,15 @@
 
 /*
  * ≥1024: data-layout만 신뢰.
- * stack → 전폭 커버 + 챕터 1열 (768–1279 포함).
- * split → 태블릿 가로 좌커버|우본문 (tobe-home ipad-l).
- * hover/pointer 는 JS COVER_CHAPTER_DESKTOP_SHELL_MQ 전용 — CSS에 두지 않음.
+ * JS SSOT: ≥1024 → 항상 split(웹·태블릿 가로·데스크톱).
+ * stack → <1024 전폭 커버 + 챕터 1열 (absolute sheet 유지).
+ * split → 좌커버|우시트+챕터. hover/pointer CSS 비사용.
  */
 @media (min-width: 1024px) {
   .consultant-cover-chapter[data-layout='stack'] {
     flex-direction: column;
+    --cch-name-size: 2rem;
+    --cch-sheet-dom-size: 2.125rem;
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__cover {
@@ -803,10 +806,6 @@
     width: 100%;
   }
 
-  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__name {
-    font-size: 2rem;
-  }
-
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet {
     position: absolute;
     left: 0;
@@ -829,6 +828,12 @@
 
   .consultant-cover-chapter[data-layout='split'] {
     flex-direction: row;
+    width: 100%;
+    max-width: var(--cch-stage-max);
+    margin-left: auto;
+    margin-right: auto;
+    --cch-name-size: 2rem;
+    --cch-sheet-dom-size: 2.125rem;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__cover {
@@ -847,10 +852,6 @@
     padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
   }
 
-  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__name {
-    font-size: 2rem;
-  }
-
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__body {
     flex: 1 1 auto;
     width: auto;
@@ -866,13 +867,10 @@
     right: auto;
     bottom: auto;
     width: calc(100% - (var(--mg-v2-space-4) * 2));
+    max-width: var(--cch-content-max);
     margin: var(--mg-v2-space-3) auto 0;
     padding: var(--mg-v2-space-4) var(--mg-v2-space-4) 0.875rem;
     box-shadow: var(--mg-v2-shadow-md);
-  }
-
-  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__sheet-dom {
-    font-size: 2.125rem;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__scroll {
@@ -886,6 +884,9 @@
     flex-direction: column;
     gap: 0;
     width: 100%;
+    max-width: var(--cch-content-max);
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapter {
@@ -896,11 +897,16 @@
 }
 
 /*
- * ≥1280 stack — desktop 셸 옆 본문에서만 챕터 2열.
- * 768–1279 stack(아이패드 세로 등)은 위 1열 유지.
+ * ≥1280 split — 우 컬럼 챕터 2열 밀도 (시안 1.25fr 0.85fr).
+ * stack(<1024·세로)은 1열 유지.
  */
 @media (min-width: 1280px) {
-  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__chapters {
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__cover {
+    width: 42%;
+    flex: 0 0 42%;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapters {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
     gap: var(--mg-v2-space-3);
@@ -911,10 +917,18 @@
     margin-right: auto;
   }
 
-  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__chapter {
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapter {
     margin-bottom: 0;
     min-width: 0;
     width: 100%;
+  }
+}
+
+/* 넓은 데스크톱 — 타이포 소폭 상향 (시안 2rem / 2.125rem 계열) */
+@media (min-width: 1440px) {
+  .consultant-cover-chapter[data-layout='split'] {
+    --cch-name-size: 2.125rem;
+    --cch-sheet-dom-size: 2.25rem;
   }
 }
 

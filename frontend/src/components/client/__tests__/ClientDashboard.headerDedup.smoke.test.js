@@ -192,6 +192,9 @@ describe('ClientDashboard 커버+챕터 홈', () => {
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
     expect(container.querySelector('.client-web-page-shell')).toBeNull();
+    // 메뉴 진입점 1개 — 커버 햄버거만 (셸 GNB 중복 없음)
+    expect(container.querySelectorAll('.client-cover__menu-btn')).toHaveLength(1);
+    expect(container.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(0);
 
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();

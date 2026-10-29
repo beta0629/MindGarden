@@ -14,7 +14,9 @@ import {
   CLIENT_COVER_NAME_SUFFIX,
   CLIENT_COVER_PANEL_ARIA
 } from '../constants';
-import CoverClinicSvg from './CoverClinicSvg';
+import CoverClinicSvg, {
+  COVER_CLINIC_SVG_VARIANT_PORTRAIT
+} from './CoverClinicSvg';
 
 /**
  * @param {object} props
@@ -22,12 +24,14 @@ import CoverClinicSvg from './CoverClinicSvg';
  * @param {string} props.userName
  * @param {string} props.coverSub
  * @param {() => void} props.onOpenMenu
+ * @param {'portrait'|'landscape'} [props.svgVariant] split 좌커버=portrait · stack 전폭=landscape
  */
 const CoverPanel = ({
   brandLabel,
   userName,
   coverSub,
-  onOpenMenu
+  onOpenMenu,
+  svgVariant = COVER_CLINIC_SVG_VARIANT_PORTRAIT
 }) => {
   const brand = String(brandLabel || '').trim();
   const name = String(userName || '').trim();
@@ -38,7 +42,7 @@ const CoverPanel = ({
   return (
     <section className="client-cover__cover" aria-label={CLIENT_COVER_PANEL_ARIA}>
       <div className="client-cover__clip" aria-hidden="true">
-        <CoverClinicSvg />
+        <CoverClinicSvg variant={svgVariant} />
       </div>
       <div className="client-cover__top">
         <button
@@ -87,7 +91,8 @@ CoverPanel.propTypes = {
   brandLabel: PropTypes.string,
   userName: PropTypes.string,
   coverSub: PropTypes.string,
-  onOpenMenu: PropTypes.func.isRequired
+  onOpenMenu: PropTypes.func.isRequired,
+  svgVariant: PropTypes.oneOf(['portrait', 'landscape'])
 };
 
 export default CoverPanel;

@@ -8,7 +8,6 @@ import {
   COVER_CHAPTER_ROOT_CLASS,
   COVER_CHAPTER_TEST_ID,
   COVER_CHAPTER_BRAND_FALLBACK,
-  COVER_CHAPTER_DESKTOP_SHELL_MQ,
   COVER_CHAPTER_TABLET_SPLIT_MQ,
   COVER_CHAPTER_SVG_VARIANT_LANDSCAPE,
   COVER_CHAPTER_SVG_VARIANT_PORTRAIT
@@ -30,16 +29,13 @@ import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../constants/consultantDash
 import './ConsultantCoverChapterHome.css';
 
 /**
- * 태블릿 가로 등 고정 LNB 없을 때만 좌커버 분할.
- * true desktop(≥1280+fine-pointer)은 DesktopLayout LNB + 커버 전폭 스택.
+ * ≥1024 → 항상 split(시안 web·ipad-l·데스크톱).
+ * <1024 → stack(시안 ipad-p·폰). fine-pointer stack 강제 없음.
  *
  * @returns {boolean}
  */
 const getIsSplitLayout = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
-    return false;
-  }
-  if (window.matchMedia(COVER_CHAPTER_DESKTOP_SHELL_MQ).matches) {
     return false;
   }
   return window.matchMedia(COVER_CHAPTER_TABLET_SPLIT_MQ).matches;
@@ -73,26 +69,17 @@ const ConsultantCoverChapterHome = ({
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return undefined;
     }
-    const desktopMql = window.matchMedia(COVER_CHAPTER_DESKTOP_SHELL_MQ);
     const splitMql = window.matchMedia(COVER_CHAPTER_TABLET_SPLIT_MQ);
     const onChange = () => {
       setIsSplitLayout(getIsSplitLayout());
     };
     setIsSplitLayout(getIsSplitLayout());
-    const bind = (mql) => {
-      if (typeof mql.addEventListener === 'function') {
-        mql.addEventListener('change', onChange);
-        return () => mql.removeEventListener('change', onChange);
-      }
-      mql.addListener(onChange);
-      return () => mql.removeListener(onChange);
-    };
-    const unbindDesktop = bind(desktopMql);
-    const unbindSplit = bind(splitMql);
-    return () => {
-      unbindDesktop();
-      unbindSplit();
-    };
+    if (typeof splitMql.addEventListener === 'function') {
+      splitMql.addEventListener('change', onChange);
+      return () => splitMql.removeEventListener('change', onChange);
+    }
+    splitMql.addListener(onChange);
+    return () => splitMql.removeListener(onChange);
   }, []);
 
   // 분 단위 재평가 — 다음 대기 셀렉터가 서버 now 기준으로 갱신되도록

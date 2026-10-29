@@ -12,3 +12,5 @@ PNG exports may live beside this folder in design handoff. Visual SSOT for imple
 | home-tablet-landscape-zero | zero | tablet L |
 
 Source notes: `../notes.md`, `../handoff.md`.
+
+CI note: BE guardrail job steps all succeeded; re-trigger after workflow cancel.

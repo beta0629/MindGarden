@@ -1,7 +1,7 @@
 /**
  * Jest resolver for @fullcalendar/luxon3.
- * 패키지가 있으면 실제 플러그인을 쓰고, 없을 때는 FullCalendar addDefs 가
- * 순회 가능한 빈 플러그인을 써서 스위트가 로드되게 한다.
+ * 패키지가 있으면 실제 플러그인을 쓰고, 없을 때는 FullCalendar createPlugin
+ * 형태(deps 포함)를 써서 addDefs 가 순회 가능하게 한다.
  *
  * @author CoreSolution
  * @since 2026-10-29
@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const LUXON3_PLUGIN_NAME = '@fullcalendar/luxon3';
 const realPackageJson = path.join(
   __dirname,
   '..',
@@ -19,10 +20,48 @@ const realPackageJson = path.join(
 );
 
 function createLoadOnlyPlugin() {
-  const plugin = [];
-  plugin.id = 'luxon3';
-  plugin.name = '@fullcalendar/luxon3';
-  return plugin;
+  try {
+    const { createPlugin } = require('@fullcalendar/core/index.cjs');
+    return createPlugin({ name: LUXON3_PLUGIN_NAME });
+  } catch (_error) {
+    return {
+      id: 'luxon3',
+      name: LUXON3_PLUGIN_NAME,
+      deps: [],
+      reducers: [],
+      isLoadingFuncs: [],
+      contextInit: [],
+      eventRefiners: {},
+      eventDefMemberAdders: [],
+      eventSourceRefiners: {},
+      isDraggableTransformers: [],
+      eventDragMutationMassagers: [],
+      eventDefMutationAppliers: [],
+      dateSelectionTransformers: [],
+      datePointTransforms: [],
+      dateSpanTransforms: [],
+      views: {},
+      viewPropsTransformers: [],
+      isPropsValid: null,
+      externalDefTransforms: [],
+      viewContainerAppends: [],
+      eventDropTransformers: [],
+      componentInteractions: [],
+      calendarInteractions: [],
+      themeClasses: {},
+      eventSourceDefs: [],
+      cmdFormatter: null,
+      recurringTypes: [],
+      namedTimeZonedImpl: null,
+      initialView: '',
+      elementDraggingImpl: null,
+      optionChangeHandlers: {},
+      scrollGridImpl: null,
+      listenerRefiners: {},
+      optionRefiners: {},
+      propSetHandlers: {}
+    };
+  }
 }
 
 if (fs.existsSync(realPackageJson)) {

@@ -21,6 +21,7 @@ const FILES = [
   'GuideChapter.js',
   'SessionChapter.js',
   'ClientMinimalDock.js',
+  'ClientMinimalDock.css',
   'CoverMenuDrawer.js'
 ];
 
@@ -46,6 +47,16 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /\.client-cover__chapter\s*\{[^}]*animation:[^;]*\bboth\b/s
     );
+    // sheet-rise: both=backwards → 첫 페인트 opacity:0. forwards만
+    expect(css).toMatch(
+      /\.client-cover__sheet\s*\{[^}]*animation:[^;]*forwards/s
+    );
+    expect(css).not.toMatch(
+      /\.client-cover__sheet\s*\{[^}]*animation:[^;]*\bboth\b/s
+    );
+    expect(css).toMatch(
+      /@import\s+['"]\.\.\/\.\.\/\.\.\/common\/coverChapter\/CoverGuideDenseRow\.css['"]/
+    );
     // stage-max 고정폭 박스 금지
     expect(css).not.toContain('--client-cover-stage-max');
     expect(css).not.toMatch(
@@ -65,6 +76,34 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     // wide desktop 2-col only ≥1440 (90rem)
     expect(css).toMatch(
       /@media\s*\(min-width:\s*90rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
+    );
+    // split: chrome 제외 뷰포트 고정 높이 · cover fill · body 가시 · sheet 거터
+    expect(css).toMatch(
+      /\[data-layout='split'\]\s*\{[^}]*height:\s*100dvh/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__stage\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*var\(--mg-v2-component-height-lg\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__stage\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--mg-v2-component-height-lg\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__cover\s*\{[^}]*height:\s*100%/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__cover\s*\{[^}]*min-height:\s*100%/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__body\s*\{[^}]*max-height:\s*none/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__body\s*\{[^}]*overflow:\s*auto/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__sheet\s*\{[^}]*width:\s*calc\(100%\s*-\s*\(var\(--mg-v2-space-4\)\s*\*\s*2\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__sheet\s*\{[^}]*margin:\s*var\(--mg-v2-space-3\)\s+var\(--mg-v2-space-4\)\s+0/s
     );
   });
 

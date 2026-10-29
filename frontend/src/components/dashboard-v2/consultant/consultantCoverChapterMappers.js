@@ -13,14 +13,21 @@ import {
   COVER_CHAPTER_CONSULTANT_SUFFIX,
   COVER_CHAPTER_ZERO_COVER_SUB,
   COVER_CHAPTER_BADGE_CONFIRMED,
+  COVER_CHAPTER_BADGE_IN_PROGRESS,
   COVER_CHAPTER_PILL_DONE,
   COVER_CHAPTER_PILL_WAIT,
+  COVER_CHAPTER_PILL_JOURNAL_PENDING,
   COVER_CHAPTER_MODE_FACE,
   COVER_CHAPTER_MODE_VIDEO,
   COVER_CHAPTER_INCOMPLETE_HINT,
   COVER_CHAPTER_GUIDE_DEFAULT_TITLE,
   COVER_CHAPTER_GUIDE_EMPTY,
-  COVER_CHAPTER_NEXT_WAITING_STATUSES
+  COVER_CHAPTER_NEXT_WAITING_STATUSES,
+  COVER_CHAPTER_DEFAULT_DURATION_MINUTES,
+  COVER_CHAPTER_SHEET_KIND_HAS,
+  COVER_CHAPTER_SHEET_KIND_IN_PROGRESS,
+  COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY
 } from './consultantCoverChapterConstants';
 
 const NEXT_WAITING_STATUS_SET = new Set(COVER_CHAPTER_NEXT_WAITING_STATUSES);
@@ -40,6 +47,90 @@ const resolveStatusLabel = (status) => {
     return COVER_CHAPTER_PILL_WAIT;
   }
   return CONSULTANT_SCHEDULE_STATUS_LABELS[statusKey] || COVER_CHAPTER_PILL_WAIT;
+};
+
+/**
+ * @param {*} timeValue
+ * @returns {Date|null}
+ */
+const toScheduleDate = (timeValue) => {
+  if (timeValue == null || timeValue === '') {
+    return null;
+  }
+  if (timeValue instanceof Date) {
+    return Number.isNaN(timeValue.getTime()) ? null : timeValue;
+  }
+  if (Array.isArray(timeValue)) {
+    const today = new Date();
+    const d = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      timeValue[0] || 0,
+      timeValue[1] || 0,
+      timeValue[2] || 0
+    );
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const d = new Date(timeValue);
+  return Number.isNaN(d.getTime()) ? null : d;
+};
+
+/**
+ * start/end 경계. end 없으면 durationMinutes 또는 기본 50분.
+ * 서버 status는 바꾸지 않음.
+ *
+ * @param {object} schedule
+ * @returns {{ startTs: number, endTs: number }|null}
+ */
+export const resolveScheduleTimeBounds = (schedule) => {
+  if (!schedule || typeof schedule !== 'object') {
+    return null;
+  }
+  const start = toScheduleDate(schedule.startTime);
+  if (!start) {
+    return null;
+  }
+  const startTs = start.getTime();
+  const end = toScheduleDate(schedule.endTime);
+  if (end && end.getTime() > startTs) {
+    return { startTs, endTs: end.getTime() };
+  }
+  const durationMins = toSafeNumber(
+    schedule.durationMinutes ?? schedule.duration,
+    COVER_CHAPTER_DEFAULT_DURATION_MINUTES
+  );
+  const mins = durationMins > 0 ? durationMins : COVER_CHAPTER_DEFAULT_DURATION_MINUTES;
+  return { startTs, endTs: startTs + (mins * 60000) };
+};
+
+/**
+ * @param {object} schedule
+ * @param {number} nowTs
+ * @returns {boolean}
+ */
+const isInProgressWindow = (schedule, nowTs) => {
+  const bounds = resolveScheduleTimeBounds(schedule);
+  if (!bounds) {
+    return false;
+  }
+  return bounds.startTs <= nowTs && nowTs < bounds.endTs;
+};
+
+/**
+ * @param {object} schedule
+ * @param {number} nowTs
+ * @returns {boolean}
+ */
+const isPastReservationWindow = (schedule, nowTs) => {
+  const bounds = resolveScheduleTimeBounds(schedule);
+  if (!bounds) {
+    return false;
+  }
+  if (isInProgressWindow(schedule, nowTs)) {
+    return false;
+  }
+  return nowTs >= bounds.endTs || nowTs >= bounds.startTs;
 };
 
 /**
@@ -97,6 +188,90 @@ export const selectNextWaitingSchedule = (schedules, now = getNow()) => {
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   return candidates[0] ?? null;
+};
+
+/**
+ * startTime &lt;= now &lt; endTime (없으면 duration/기본 50분), 터미널 아님 → 진행 중.
+ *
+ * @param {Array} schedules
+ * @param {Date} [now]
+ * @returns {object|null}
+ */
+export const selectInProgressSchedule = (schedules, now = getNow()) => {
+  if (!Array.isArray(schedules) || schedules.length === 0) {
+    return null;
+  }
+  const nowDate = now instanceof Date ? now : new Date(now);
+  const nowTs = nowDate.getTime();
+  if (Number.isNaN(nowTs)) {
+    return null;
+  }
+
+  const candidates = schedules
+    .filter((schedule) => {
+      if (!schedule || schedule.startTime == null || schedule.startTime === '') {
+        return false;
+      }
+      const statusKey = toDisplayString(schedule.status, '').toUpperCase();
+      if (TERMINAL_STATUS_SET.has(statusKey) || !isNextWaitingStatus(statusKey)) {
+        return false;
+      }
+      return isInProgressWindow(schedule, nowTs);
+    })
+    .sort((a, b) => {
+      const aBounds = resolveScheduleTimeBounds(a);
+      const bBounds = resolveScheduleTimeBounds(b);
+      return (aBounds?.startTs ?? 0) - (bBounds?.startTs ?? 0);
+    });
+
+  return candidates[0] ?? null;
+};
+
+/**
+ * in-progress 우선 → future next → remaining-empty / true-empty.
+ *
+ * @param {Array} schedules
+ * @param {Date} [now]
+ * @param {number} [todayCount] chips.today 보조(스케줄 길이보다 우선)
+ * @returns {{ schedule: object|null, sheetKind: string, isInProgress: boolean }}
+ */
+export const resolveNextSheetSelection = (schedules, now = getNow(), todayCount = null) => {
+  const list = Array.isArray(schedules) ? schedules : [];
+  const count = todayCount != null
+    ? toSafeNumber(todayCount, list.length)
+    : list.length;
+
+  const inProgress = selectInProgressSchedule(list, now);
+  if (inProgress) {
+    return {
+      schedule: inProgress,
+      sheetKind: COVER_CHAPTER_SHEET_KIND_IN_PROGRESS,
+      isInProgress: true
+    };
+  }
+
+  const nextWaiting = selectNextWaitingSchedule(list, now);
+  if (nextWaiting) {
+    return {
+      schedule: nextWaiting,
+      sheetKind: COVER_CHAPTER_SHEET_KIND_HAS,
+      isInProgress: false
+    };
+  }
+
+  if (count > 0) {
+    return {
+      schedule: null,
+      sheetKind: COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY,
+      isInProgress: false
+    };
+  }
+
+  return {
+    schedule: null,
+    sheetKind: COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY,
+    isInProgress: false
+  };
 };
 
 /**
@@ -261,9 +436,10 @@ export const buildCoverSubtitle = (nextConsultation, todayCount) => {
 
 /**
  * @param {object|null|undefined} consultation
+ * @param {{ isInProgress?: boolean, sheetKind?: string }} [options]
  * @returns {object|null}
  */
-export const mapNextConsultationSheet = (consultation) => {
+export const mapNextConsultationSheet = (consultation, options = {}) => {
   if (!consultation || typeof consultation !== 'object') {
     return null;
   }
@@ -278,10 +454,14 @@ export const mapNextConsultationSheet = (consultation) => {
   const location = resolveLocationLabel(consultation);
   const packageLabel = resolvePackageOrTypeLabel(consultation);
   const metaParts = [location, packageLabel].filter(Boolean);
+  const isInProgress = options.isInProgress === true
+    || options.sheetKind === COVER_CHAPTER_SHEET_KIND_IN_PROGRESS;
   const statusKey = toDisplayString(consultation.status, 'CONFIRMED').toUpperCase();
-  const badgeLabel = statusKey
-    ? resolveStatusLabel(consultation.status)
-    : COVER_CHAPTER_BADGE_CONFIRMED;
+  const badgeLabel = isInProgress
+    ? COVER_CHAPTER_BADGE_IN_PROGRESS
+    : (statusKey
+      ? resolveStatusLabel(consultation.status)
+      : COVER_CHAPTER_BADGE_CONFIRMED);
 
   return {
     scheduleId: consultation.scheduleId ?? consultation.id ?? null,
@@ -289,49 +469,79 @@ export const mapNextConsultationSheet = (consultation) => {
     timeLabel,
     bodyLabel,
     metaLabel: metaParts.join(' · '),
-    badgeLabel
+    badgeLabel,
+    sheetKind: isInProgress
+      ? COVER_CHAPTER_SHEET_KIND_IN_PROGRESS
+      : COVER_CHAPTER_SHEET_KIND_HAS
   };
 };
 
 /**
- * 행 pill = 서버 status 라벨 SSOT. isNext 로 「다음」 덮어쓰기 금지.
- * nextConsultation 은 셀렉터 강조용으로만 받으며 pill/sub 에 주입하지 않음.
+ * 행 pill — 서버 status mutate 금지.
+ * 예약계열·과거(비진행) → 「일지 미작성」; 진행 중 → 「진행 중」; 미래 → 기존 라벨.
+ * isNext 로 「다음」 덮어쓰기 금지.
  *
  * @param {Array} schedules - today's schedules
  * @param {object|null} [_nextConsultation]
+ * @param {Date} [now]
  * @returns {Array}
  */
-export const mapTodayScheduleRows = (schedules, _nextConsultation = null) => {
+export const mapTodayScheduleRows = (
+  schedules,
+  _nextConsultation = null,
+  now = getNow()
+) => {
   if (!Array.isArray(schedules)) {
     return [];
   }
   void _nextConsultation;
+
+  const nowDate = now instanceof Date ? now : new Date(now);
+  const nowTs = nowDate.getTime();
+  const hasValidNow = !Number.isNaN(nowTs);
 
   return schedules.map((schedule, idx) => {
     const id = schedule.id ?? schedule.scheduleId ?? `row-${idx}`;
     const idStr = String(id);
     const statusKey = toDisplayString(schedule.status, '').toUpperCase();
     const isCompleted = statusKey === 'COMPLETED';
-    const isWait = statusKey === 'PENDING'
-      || statusKey === 'WAITING'
-      || statusKey === 'IN_PROGRESS';
+    const isReservationFamily = isNextWaitingStatus(statusKey)
+      && !TERMINAL_STATUS_SET.has(statusKey);
 
-    const pillLabel = resolveStatusLabel(schedule.status);
-    const pillVariant = isWait ? 'wait' : 'default';
+    let pillLabel = resolveStatusLabel(schedule.status);
+    let isInProgressRow = false;
+    let isJournalPending = false;
+
+    if (hasValidNow && isReservationFamily) {
+      if (isInProgressWindow(schedule, nowTs)) {
+        isInProgressRow = true;
+        pillLabel = COVER_CHAPTER_BADGE_IN_PROGRESS;
+      } else if (isPastReservationWindow(schedule, nowTs)) {
+        isJournalPending = true;
+        pillLabel = COVER_CHAPTER_PILL_JOURNAL_PENDING;
+      }
+    }
+
+    /* 일지 미작성·대기 → wait(경고). 진행 중은 default(연틸) 유지 */
+    const pillVariant = isJournalPending
+      || ((statusKey === 'PENDING' || statusKey === 'WAITING') && !isInProgressRow)
+      ? 'wait'
+      : 'default';
 
     const mode = resolveConsultationMode(schedule);
     const duration = computeDurationMinutes(schedule.startTime, schedule.endTime);
     const packageLabel = resolvePackageOrTypeLabel(schedule);
     const subParts = [mode];
-    if (packageLabel) {
-      subParts.push(packageLabel);
-    }
-    if (isCompleted) {
-      subParts.push(COVER_CHAPTER_PILL_DONE);
-    } else if (duration != null) {
-      subParts.push(`${duration}분`);
-    } else if (isWait) {
-      subParts.push(resolveStatusLabel(schedule.status));
+    /* 일지 미작성: sub는 모드만(pill에만 「일지 미작성」). pill 문구 중복 금지 */
+    if (!isJournalPending) {
+      if (packageLabel) {
+        subParts.push(packageLabel);
+      }
+      if (isCompleted) {
+        subParts.push(COVER_CHAPTER_PILL_DONE);
+      } else if (duration != null) {
+        subParts.push(`${duration}분`);
+      }
     }
 
     return {

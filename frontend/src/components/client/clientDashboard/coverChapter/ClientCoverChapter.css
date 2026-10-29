@@ -4,6 +4,9 @@
  * 토큰: --mg-v2-* only · hex 금지 · Floor FAIL 없음
  */
 
+/* 챕터 02 안내 — CoverGuideDenseRow SSOT (복제 금지) */
+@import '../../../common/coverChapter/CoverGuideDenseRow.css';
+
 .client-cover {
   --client-cover-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --client-cover-ease-press: cubic-bezier(0.4, 0, 0.2, 1);
@@ -185,7 +188,8 @@
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   box-shadow: var(--mg-v2-shadow-md);
   padding: 0.875rem 0.875rem var(--mg-v2-space-3);
-  animation: client-cover-sheet-rise 480ms var(--client-cover-ease) both;
+  /* both=backwards → 첫 페인트 opacity:0. forwards만 (챕터·상담사 sheet와 정합) */
+  animation: client-cover-sheet-rise 480ms var(--client-cover-ease) forwards;
 }
 
 @keyframes client-cover-sheet-rise {
@@ -542,81 +546,9 @@
   color: var(--mg-v2-color-semantic-warning-dark);
 }
 
-/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 */
+/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 → 파일 상단 @import SSOT */
 
-/* ===== DOCK — body 패널 하단 (viewport fixed 금지 · split 커버 뒤로 가림 방지) ===== */
-.client-cover__dock {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: var(--mg-v2-z-sticky);
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  min-height: var(--client-cover-dock-h);
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2) calc(var(--mg-v2-space-1) + var(--client-cover-safe-b));
-  background: color-mix(in srgb, var(--mg-v2-color-surface-bg) 94%, transparent);
-  backdrop-filter: blur(12px);
-  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
-  box-sizing: border-box;
-}
-
-.client-cover__dock-item {
-  appearance: none;
-  background: none;
-  border: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1875rem;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-1);
-  min-height: 2.75rem;
-  cursor: pointer;
-  user-select: none;
-  color: var(--mg-v2-color-text-tertiary);
-  font-family: var(--mg-v2-font-family-base);
-  font-size: 0.6875rem;
-  font-weight: var(--mg-v2-font-weight-semibold);
-  text-decoration: none;
-}
-
-.client-cover__dock-item--on {
-  color: var(--mg-v2-color-text-primary);
-}
-
-.client-cover__dock-dot {
-  width: 1.375rem;
-  height: 0.1875rem;
-  border-radius: var(--mg-v2-radius-sm);
-  background: transparent;
-  transition: background 280ms var(--client-cover-ease);
-  order: 2;
-}
-
-.client-cover__dock-item--on .client-cover__dock-dot {
-  background: var(--mg-v2-color-primary-main);
-}
-
-.client-cover__dock-item svg {
-  display: block;
-  width: 1.375rem;
-  height: 1.375rem;
-  min-width: 1.375rem;
-  min-height: 1.375rem;
-  flex-shrink: 0;
-  order: 1;
-  overflow: visible;
-}
-
-.client-cover__dock-label {
-  order: 3;
-}
-
-.client-cover__dock-item:hover {
-  color: var(--mg-v2-color-text-primary);
-}
+/* DOCK → ClientMinimalDock.css SSOT */
 
 /* ===== MENU ===== */
 .client-cover__menu {
@@ -704,6 +636,11 @@
  */
 @media (min-width: 64rem) {
   .client-cover[data-layout='split'] {
+    /* 뷰포트 고정 — 내부 chrome + stage 높이 체인 */
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
     --client-cover-name-size: 2rem;
     --client-cover-sheet-dom-size: 2.125rem;
   }
@@ -714,11 +651,15 @@
     max-width: none;
     margin-left: 0;
     margin-right: 0;
+    /* chrome(--mg-v2-component-height-lg) 제외 뷰포트 채움 */
+    height: calc(100dvh - var(--mg-v2-component-height-lg));
+    min-height: calc(100dvh - var(--mg-v2-component-height-lg));
+    max-height: calc(100dvh - var(--mg-v2-component-height-lg));
   }
 
   .client-cover[data-layout='split'] .client-cover__cover {
     width: 42%;
-    height: auto;
+    height: 100%;
     align-self: stretch;
     min-height: 100%;
     max-height: none;
@@ -740,17 +681,23 @@
     right: var(--mg-v2-space-6);
   }
 
+  /* max-height:100% + overflow:hidden 은 부모 미확정 시 body 붕괴·클리핑 */
   .client-cover[data-layout='split'] .client-cover__body {
     flex: 1 1 auto;
-    height: auto;
+    height: 100%;
     align-self: stretch;
     min-width: 0;
     min-height: 0;
+    max-height: none;
     justify-content: flex-start;
+    overflow: auto;
   }
 
+  /* 01/02 챕터 열과 동일 우측 거터 — width 100% + margin 금지(넘침) */
   .client-cover[data-layout='split'] .client-cover__sheet {
     flex: 0 0 auto;
+    box-sizing: border-box;
+    width: calc(100% - (var(--mg-v2-space-4) * 2));
     margin: var(--mg-v2-space-3) var(--mg-v2-space-4) 0;
     max-width: var(--client-cover-content-max);
     padding: var(--mg-v2-space-4) var(--mg-v2-space-4) 0.875rem;
@@ -777,14 +724,6 @@
     margin-right: auto;
   }
 
-  /* dock은 body absolute — split에서도 left/width 커버 % 하드코딩 금지 */
-  .client-cover[data-layout='split'] .client-cover__dock {
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding-left: var(--mg-v2-space-3);
-    padding-right: var(--mg-v2-space-3);
-  }
 }
 
 /* ≥90rem(1440) split — 우 컬럼 챕터 2열 밀도 (1280 포함 1열) */
@@ -890,10 +829,6 @@
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  .client-cover__dock-dot {
-    transition: none !important;
   }
 
   .client-cover__cta {

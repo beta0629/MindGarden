@@ -14,12 +14,24 @@ import {
   formatConsultantDisplayName,
   filterTodayOnlySchedules,
   selectNextWaitingSchedule,
+  selectInProgressSchedule,
+  resolveNextSheetSelection,
   isNextWaitingStatus
 } from '../consultantCoverChapterMappers';
 import {
   COVER_CHAPTER_ZERO_COVER_SUB,
   COVER_CHAPTER_INCOMPLETE_HINT,
-  COVER_CHAPTER_PILL_NEXT
+  COVER_CHAPTER_PILL_NEXT,
+  COVER_CHAPTER_PILL_WAIT,
+  COVER_CHAPTER_PILL_JOURNAL_PENDING,
+  COVER_CHAPTER_MODE_FACE,
+  COVER_CHAPTER_BADGE_IN_PROGRESS,
+  COVER_CHAPTER_ZERO_BODY,
+  COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_HAS,
+  COVER_CHAPTER_SHEET_KIND_IN_PROGRESS,
+  COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY
 } from '../consultantCoverChapterConstants';
 
 describe('consultantCoverChapterMappers', () => {
@@ -50,6 +62,18 @@ describe('consultantCoverChapterMappers', () => {
     expect(model.badgeLabel).toBe('확정');
   });
 
+  test('mapNextConsultationSheet in-progress → badge 진행 중', () => {
+    const model = mapNextConsultationSheet({
+      scheduleId: 9,
+      clientName: '홍길동',
+      startTime: '2026-10-29T19:00:00',
+      endTime: '2026-10-29T19:50:00',
+      status: 'CONFIRMED'
+    }, { isInProgress: true, sheetKind: COVER_CHAPTER_SHEET_KIND_IN_PROGRESS });
+    expect(model.badgeLabel).toBe(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(model.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_IN_PROGRESS);
+  });
+
   test('mapScheduleChips: schedules + getNow SSOT (ignores inProgressToday:0)', () => {
     const now = new Date('2026-10-29T15:00:00');
     const schedules = [
@@ -62,7 +86,20 @@ describe('consultantCoverChapterMappers', () => {
       .toEqual({ today: 4, completed: 1, remaining: 2 });
   });
 
-  test('mapScheduleChips + rows: past WAITING stays 대기; next sheet/row status SSOT', () => {
+  test('mapScheduleChips completed is COMPLETED-only (past WAITING not completed)', () => {
+    const now = new Date('2026-10-29T20:00:00');
+    const schedules = [
+      { id: 1, startTime: '2026-10-29T10:00:00', status: 'WAITING' },
+      { id: 2, startTime: '2026-10-29T11:00:00', status: 'COMPLETED' },
+      { id: 3, startTime: '2026-10-29T12:00:00', status: 'CONFIRMED' }
+    ];
+    const chips = mapScheduleChips(schedules, now);
+    expect(chips.today).toBe(3);
+    expect(chips.completed).toBe(1);
+    expect(chips.remaining).toBe(0);
+  });
+
+  test('past WAITING → 일지 미작성; future WAITING → 대기; next sheet status SSOT', () => {
     const now = new Date('2026-10-29T15:00:00');
     const schedules = [
       { id: 1, startTime: '2026-10-29T10:00:00', endTime: '2026-10-29T10:50:00', status: 'COMPLETED', clientName: 'A' },
@@ -78,7 +115,7 @@ describe('consultantCoverChapterMappers', () => {
         id: 4,
         startTime: '2026-10-29T19:00:00',
         endTime: '2026-10-29T19:50:00',
-        status: 'CONFIRMED',
+        status: 'WAITING',
         clientName: 'D'
       }
     ];
@@ -94,16 +131,114 @@ describe('consultantCoverChapterMappers', () => {
     expect(sheet.badgeLabel).toBe('확정');
     expect(sheet.badgeLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
 
-    const rows = mapTodayScheduleRows(schedules, next);
+    const rows = mapTodayScheduleRows(schedules, next, now);
     const pastWait = rows.find((row) => row.id === '2');
-    expect(pastWait.pillLabel).toBe('대기');
+    expect(pastWait.pillLabel).toBe(COVER_CHAPTER_PILL_JOURNAL_PENDING);
+    expect(pastWait.pillLabel).not.toBe(COVER_CHAPTER_PILL_WAIT);
     expect(pastWait.pillLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
-    expect(pastWait.subLabel).not.toContain(COVER_CHAPTER_PILL_NEXT);
+    expect(pastWait.pillVariant).toBe('wait');
+    expect(pastWait.subLabel).not.toContain(COVER_CHAPTER_PILL_JOURNAL_PENDING);
+    expect(pastWait.subLabel).toBe(COVER_CHAPTER_MODE_FACE);
+
+    const futureWait = rows.find((row) => row.id === '4');
+    expect(futureWait.pillLabel).toBe(COVER_CHAPTER_PILL_WAIT);
+    expect(futureWait.pillVariant).toBe('wait');
 
     const nextRow = rows.find((row) => row.id === '3');
     expect(nextRow.pillLabel).toBe('확정');
     expect(nextRow.pillLabel).toBe(sheet.badgeLabel);
     expect(nextRow.pillLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
+  });
+
+  test('today 3 past-only → remaining 0, sheetKind remaining-empty, zero body 남은 상담 없음', () => {
+    const now = new Date('2026-10-29T20:00:00');
+    const schedules = [
+      { id: 1, startTime: '2026-10-29T10:00:00', endTime: '2026-10-29T10:50:00', status: 'WAITING' },
+      { id: 2, startTime: '2026-10-29T14:00:00', endTime: '2026-10-29T14:50:00', status: 'CONFIRMED' },
+      { id: 3, startTime: '2026-10-29T16:00:00', endTime: '2026-10-29T16:50:00', status: 'PENDING' }
+    ];
+    const chips = mapScheduleChips(schedules, now);
+    expect(chips.today).toBe(3);
+    expect(chips.remaining).toBe(0);
+
+    const selection = resolveNextSheetSelection(schedules, now, chips.today);
+    expect(selection.schedule).toBeNull();
+    expect(selection.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY);
+    expect(COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY).toBe('오늘 남은 상담 없음');
+    expect(COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY).not.toBe(COVER_CHAPTER_ZERO_BODY);
+  });
+
+  test('19:00 start ~ end 전 now → in-progress sheet with 진행 중', () => {
+    const now = new Date('2026-10-29T19:20:00');
+    const schedules = [
+      { id: 1, startTime: '2026-10-29T10:00:00', endTime: '2026-10-29T10:50:00', status: 'COMPLETED' },
+      {
+        id: 2,
+        startTime: '2026-10-29T19:00:00',
+        endTime: '2026-10-29T19:50:00',
+        status: 'CONFIRMED',
+        clientName: '진행내담'
+      }
+    ];
+    const inProgress = selectInProgressSchedule(schedules, now);
+    expect(inProgress).not.toBeNull();
+    expect(inProgress.id).toBe(2);
+
+    const selection = resolveNextSheetSelection(schedules, now);
+    expect(selection.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_IN_PROGRESS);
+    expect(selection.isInProgress).toBe(true);
+    expect(selection.schedule.id).toBe(2);
+
+    const sheet = mapNextConsultationSheet(selection.schedule, {
+      isInProgress: true,
+      sheetKind: selection.sheetKind
+    });
+    expect(sheet.badgeLabel).toBe(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(sheet.timeLabel).toBe('오늘 19:00');
+
+    const rows = mapTodayScheduleRows(schedules, selection.schedule, now);
+    const inProgressRow = rows.find((row) => row.id === '2');
+    expect(inProgressRow.pillLabel).toBe(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(inProgressRow.pillVariant).toBe('default');
+    expect(inProgressRow.subLabel).not.toContain(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(inProgressRow.subLabel).toContain(COVER_CHAPTER_MODE_FACE);
+    expect(inProgressRow.subLabel).toContain('50분');
+  });
+
+  test('today 0 → true-empty sheetKind (비어 있어요)', () => {
+    const now = new Date('2026-10-29T12:00:00');
+    const selection = resolveNextSheetSelection([], now, 0);
+    expect(selection.schedule).toBeNull();
+    expect(selection.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY);
+    expect(COVER_CHAPTER_ZERO_BODY).toBe('오늘 일정이 비어 있어요');
+  });
+
+  test('resolveNextSheetSelection prefers in-progress over future next', () => {
+    const now = new Date('2026-10-29T19:10:00');
+    const schedules = [
+      {
+        id: 1,
+        startTime: '2026-10-29T19:00:00',
+        endTime: '2026-10-29T19:50:00',
+        status: 'WAITING'
+      },
+      {
+        id: 2,
+        startTime: '2026-10-29T21:00:00',
+        endTime: '2026-10-29T21:50:00',
+        status: 'CONFIRMED'
+      }
+    ];
+    const selection = resolveNextSheetSelection(schedules, now);
+    expect(selection.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_IN_PROGRESS);
+    expect(selection.schedule.id).toBe(1);
+
+    const futureOnly = resolveNextSheetSelection(
+      [schedules[1]],
+      now
+    );
+    expect(futureOnly.sheetKind).toBe(COVER_CHAPTER_SHEET_KIND_HAS);
+    expect(futureOnly.schedule.id).toBe(2);
   });
 
   test('buildCoverSubtitle zero vs has', () => {
@@ -204,5 +339,19 @@ describe('consultantCoverChapterMappers', () => {
     ], now);
     expect(picked.id).toBe(1);
     expect(mapNextConsultationSheet(picked).timeLabel).toBe('오늘 14:00');
+  });
+
+  test('selectInProgressSchedule: default 50분 when no endTime', () => {
+    const now = new Date('2026-10-29T19:30:00');
+    const picked = selectInProgressSchedule([
+      { id: 1, startTime: '2026-10-29T19:00:00', status: 'CONFIRMED' }
+    ], now);
+    expect(picked).not.toBeNull();
+    expect(picked.id).toBe(1);
+
+    const afterEnd = selectInProgressSchedule([
+      { id: 1, startTime: '2026-10-29T19:00:00', status: 'CONFIRMED' }
+    ], new Date('2026-10-29T19:50:00'));
+    expect(afterEnd).toBeNull();
   });
 });

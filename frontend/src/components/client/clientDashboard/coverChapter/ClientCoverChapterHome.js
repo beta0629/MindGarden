@@ -45,6 +45,8 @@ import {
   COVER_CLINIC_SVG_VARIANT_LANDSCAPE,
   COVER_CLINIC_SVG_VARIANT_PORTRAIT
 } from './CoverClinicSvg';
+/* parent CSS @import + 번들 엔트리 side-effect — CoverGuideDenseRow SSOT */
+import '../../../common/coverChapter/CoverGuideDenseRow.css';
 import './ClientCoverChapter.css';
 
 /** 상담사 COVER_CHAPTER_TABLET_SPLIT_MQ 와 동일 — ≥1024(64rem) split */

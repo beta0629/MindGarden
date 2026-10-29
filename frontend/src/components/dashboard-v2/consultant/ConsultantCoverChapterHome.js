@@ -21,11 +21,13 @@ import {
   mapScheduleChips,
   mapGuideContent,
   filterTodayOnlySchedules,
-  selectNextWaitingSchedule
+  resolveNextSheetSelection
 } from './consultantCoverChapterMappers';
 import { getNow } from '../../../utils/serverClock';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../constants/consultantDashboardConstants';
+/* parent CSS @import + 번들 엔트리 side-effect — CoverGuideDenseRow SSOT */
+import '../../common/coverChapter/CoverGuideDenseRow.css';
 import './ConsultantCoverChapterHome.css';
 
 /**
@@ -106,25 +108,30 @@ const ConsultantCoverChapterHome = ({
     [todaySchedules, now]
   );
 
-  // 스케줄 배열 SSOT (preparation API 미사용)
-  const nextWaiting = useMemo(
-    () => selectNextWaitingSchedule(todayOnly, now),
-    [todayOnly, now]
-  );
-
-  const sheetModel = useMemo(
-    () => mapNextConsultationSheet(nextWaiting),
-    [nextWaiting]
-  );
-
-  const scheduleRows = useMemo(
-    () => mapTodayScheduleRows(todayOnly, nextWaiting),
-    [todayOnly, nextWaiting]
-  );
-
   const chips = useMemo(
     () => mapScheduleChips(todayOnly, now, stats),
     [todayOnly, now, stats]
+  );
+
+  // 스케줄 배열 SSOT (preparation API 미사용) — in-progress 우선 → future next
+  const nextSheetSelection = useMemo(
+    () => resolveNextSheetSelection(todayOnly, now, chips.today),
+    [todayOnly, now, chips.today]
+  );
+
+  const nextWaiting = nextSheetSelection.schedule;
+
+  const sheetModel = useMemo(
+    () => mapNextConsultationSheet(nextWaiting, {
+      isInProgress: nextSheetSelection.isInProgress,
+      sheetKind: nextSheetSelection.sheetKind
+    }),
+    [nextWaiting, nextSheetSelection.isInProgress, nextSheetSelection.sheetKind]
+  );
+
+  const scheduleRows = useMemo(
+    () => mapTodayScheduleRows(todayOnly, nextWaiting, now),
+    [todayOnly, nextWaiting, now]
   );
 
   const coverSubtitle = useMemo(
@@ -150,6 +157,8 @@ const ConsultantCoverChapterHome = ({
   const nextSheet = (
     <ConsultantHomeNextSheet
       nextConsultation={sheetModel}
+      sheetKind={nextSheetSelection.sheetKind}
+      todayCount={chips.today}
       onOpenConsultation={handleOpenConsultation}
       onOpenSchedule={onOpenSchedule}
     />

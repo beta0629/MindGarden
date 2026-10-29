@@ -11,32 +11,14 @@
   --client-cover-safe-r: env(safe-area-inset-right, 0px);
   --client-cover-safe-b: env(safe-area-inset-bottom, 0px);
   --client-cover-safe-l: env(safe-area-inset-left, 0px);
-  /* 본문 줄길이 — 전폭 활용, stage-max 금지 */
-  --client-cover-content-max: min(100%, calc(var(--mg-v2-space-20) * 16));
-  --client-cover-name-size: clamp(
-    var(--mg-v2-font-size-h1),
-    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-0-5)),
-    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1))
-  );
-  --client-cover-sheet-dom-size: clamp(
-    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-0-5)),
-    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
-    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2))
-  );
+  /* 본문 줄길이만 content-max — stage-max 고정폭 박스 금지(셸 full-bleed) */
+  --client-cover-content-max: calc(var(--mg-v2-space-20) * 14);
+  --client-cover-name-size: var(--mg-v2-font-size-h1);
+  --client-cover-sheet-dom-size: 1.875rem;
   --client-cover-stack-ratio: 34%;
-  --client-cover-min-h: clamp(
-    calc(var(--mg-v2-space-20) * 3),
-    calc(var(--mg-v2-space-20) * 3.25),
-    calc(var(--mg-v2-space-20) * 3.5)
-  );
-  --client-cover-min-h-tablet: clamp(
-    calc(var(--mg-v2-space-20) * 3.5),
-    calc(var(--mg-v2-space-20) * 3.75),
-    calc(var(--mg-v2-space-20) * 4)
-  );
+  --client-cover-min-h: calc(var(--mg-v2-space-20) * 3);
+  --client-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 3.5);
   --client-cover-sheet-overhang: calc(var(--mg-v2-space-10) + var(--mg-v2-space-1));
-  --client-cover-row-gap: var(--mg-v2-space-3);
-  --client-cover-chapter-gap: var(--mg-v2-space-4);
   /* 독 높이 = 아이템 + 상하 패딩 + safe-area */
   --client-cover-dock-h: calc(
     var(--mg-v2-component-height-lg)
@@ -722,20 +704,13 @@
  */
 @media (min-width: 64rem) {
   .client-cover[data-layout='split'] {
-    min-height: 100%;
-    height: 100%;
-    --client-cover-name-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1) + var(--mg-v2-space-0-5)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2))
-    );
-    --client-cover-sheet-dom-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1) + var(--mg-v2-space-0-5)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2))
-    );
-    --client-cover-chapter-gap: var(--mg-v2-space-3);
-    --client-cover-row-gap: var(--mg-v2-space-2);
+    /* 뷰포트 고정 — 내부 chrome + stage 높이 체인 */
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    --client-cover-name-size: 2rem;
+    --client-cover-sheet-dom-size: 2.125rem;
   }
 
   .client-cover[data-layout='split'] .client-cover__stage {
@@ -744,13 +719,15 @@
     max-width: none;
     margin-left: 0;
     margin-right: 0;
-    min-height: 100%;
-    height: 100%;
+    /* chrome(--mg-v2-component-height-lg) 제외 뷰포트 채움 */
+    height: calc(100dvh - var(--mg-v2-component-height-lg));
+    min-height: calc(100dvh - var(--mg-v2-component-height-lg));
+    max-height: calc(100dvh - var(--mg-v2-component-height-lg));
   }
 
   .client-cover[data-layout='split'] .client-cover__cover {
     width: 42%;
-    height: auto;
+    height: 100%;
     align-self: stretch;
     min-height: 100%;
     max-height: none;
@@ -772,21 +749,26 @@
     right: var(--mg-v2-space-6);
   }
 
+  /* max-height:100% + overflow:hidden 은 부모 미확정 시 body 붕괴·클리핑 */
   .client-cover[data-layout='split'] .client-cover__body {
     flex: 1 1 auto;
-    height: auto;
+    height: 100%;
     align-self: stretch;
     min-width: 0;
     min-height: 0;
+    max-height: none;
     justify-content: flex-start;
+    overflow: auto;
   }
 
+  /* 01/02 챕터 열과 동일 우측 거터 — width 100% + margin 금지(넘침) */
   .client-cover[data-layout='split'] .client-cover__sheet {
     flex: 0 0 auto;
-    width: 100%;
+    box-sizing: border-box;
+    width: calc(100% - (var(--mg-v2-space-4) * 2));
     margin: var(--mg-v2-space-3) var(--mg-v2-space-4) 0;
     max-width: var(--client-cover-content-max);
-    padding: var(--mg-v2-space-4) var(--mg-v2-space-4) var(--mg-v2-space-3);
+    padding: var(--mg-v2-space-4) var(--mg-v2-space-4) 0.875rem;
     box-shadow: var(--mg-v2-shadow-sm);
   }
 
@@ -803,15 +785,11 @@
   .client-cover[data-layout='split'] .client-cover__chapters {
     display: flex;
     flex-direction: column;
-    gap: var(--client-cover-row-gap);
+    gap: 0;
     width: 100%;
     max-width: var(--client-cover-content-max);
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .client-cover[data-layout='split'] .client-cover__chapter {
-    margin-bottom: var(--client-cover-chapter-gap);
+    margin-left: auto;
+    margin-right: auto;
   }
 
   /* dock은 body absolute — split에서도 left/width 커버 % 하드코딩 금지 */
@@ -824,88 +802,23 @@
   }
 }
 
-/* ≥80rem(1280) split — 타이포·커버 스케일 (챕터 1열 유지) */
-@media (min-width: 80rem) {
-  .client-cover[data-layout='split'] {
-    --client-cover-name-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3))
-    );
-    --client-cover-sheet-dom-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1) + var(--mg-v2-space-0-5)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3))
-    );
-    --client-cover-min-h: clamp(
-      calc(var(--mg-v2-space-20) * 3.5),
-      calc(var(--mg-v2-space-20) * 4),
-      calc(var(--mg-v2-space-20) * 4.5)
-    );
-  }
-
-  .client-cover[data-layout='split'] .client-cover__chapters {
-    display: flex;
-    flex-direction: column;
-    gap: var(--client-cover-row-gap);
-    width: 100%;
-    max-width: var(--client-cover-content-max);
-  }
-}
-
 /* ≥90rem(1440) split — 우 컬럼 챕터 2열 밀도 (1280 포함 1열) */
 @media (min-width: 90rem) {
   .client-cover[data-layout='split'] {
-    --client-cover-name-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-4))
-    );
-    --client-cover-sheet-dom-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-2)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-4))
-    );
-    --client-cover-chapter-gap: var(--mg-v2-space-4);
-    --client-cover-row-gap: var(--mg-v2-space-3);
+    --client-cover-name-size: 2.125rem;
+    --client-cover-sheet-dom-size: 2.25rem;
   }
 
   .client-cover[data-layout='split'] .client-cover__chapters {
     display: grid;
     grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
-    gap: var(--mg-v2-space-4);
+    gap: var(--mg-v2-space-3);
     align-items: start;
   }
 
   .client-cover[data-layout='split'] .client-cover__chapter {
     margin-bottom: 0;
     min-width: 0;
-  }
-}
-
-/* ≥120rem(1920) split — 와이드 타이포·간격 */
-@media (min-width: 120rem) {
-  .client-cover[data-layout='split'] {
-    --client-cover-name-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-4)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-5))
-    );
-    --client-cover-sheet-dom-size: clamp(
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-4)),
-      calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-5))
-    );
-    --client-cover-row-gap: var(--mg-v2-space-4);
-  }
-
-  .client-cover[data-layout='split'] .client-cover__chapters {
-    gap: var(--mg-v2-space-5);
-  }
-
-  .client-cover[data-layout='split'] .client-cover__sheet {
-    margin-top: var(--mg-v2-space-4);
-    padding: var(--mg-v2-space-5) var(--mg-v2-space-5) var(--mg-v2-space-4);
   }
 }
 

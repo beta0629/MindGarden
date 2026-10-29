@@ -37,14 +37,9 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
 
   test('content-max · full-bleed split · portrait 1-col · 2-col only ≥90rem', () => {
     const css = fs.readFileSync(path.join(DIR, 'ClientCoverChapter.css'), 'utf8');
-    expect(css).toContain(
-      '--client-cover-content-max: min(100%, calc(var(--mg-v2-space-20) * 16))'
-    );
+    expect(css).toContain('--client-cover-content-max: calc(var(--mg-v2-space-20) * 14)');
     expect(css).toContain('--client-cover-stack-ratio: 34%');
-    expect(css).toMatch(
-      /--client-cover-min-h:\s*clamp\(\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\)/
-    );
-    expect(css).toMatch(/--client-cover-name-size:\s*clamp\(/);
+    expect(css).toContain('--client-cover-min-h: calc(var(--mg-v2-space-20) * 3)');
     expect(css).toMatch(
       /\.client-cover__chapter\s*\{[^}]*animation:[^;]*forwards/s
     );
@@ -63,16 +58,41 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /@media\s*\(min-width:\s*48rem\)\s*and\s*\(orientation:\s*portrait\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*1\.25fr/s
     );
-    // 1280(80rem) 포함 2열 금지 — 해당 MQ 블록 내부만
-    expect(css).toMatch(
-      /@media\s*\(min-width:\s*80rem\)\s*\{[^@]*\.client-cover__chapters\s*\{[^}]*flex-direction:\s*column/s
-    );
+    // 1280(80rem) 포함 2열 금지
     expect(css).not.toMatch(
-      /@media\s*\(min-width:\s*80rem\)\s*\{[^@]*\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)/s
+      /@media\s*\(min-width:\s*80rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)/s
     );
     // wide desktop 2-col only ≥1440 (90rem)
     expect(css).toMatch(
       /@media\s*\(min-width:\s*90rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)\s*minmax\(0,\s*0\.85fr\)/s
+    );
+    // split: chrome 제외 뷰포트 고정 높이 · cover fill · body 가시 · sheet 거터
+    expect(css).toMatch(
+      /\[data-layout='split'\]\s*\{[^}]*height:\s*100dvh/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__stage\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*var\(--mg-v2-component-height-lg\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__stage\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--mg-v2-component-height-lg\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__cover\s*\{[^}]*height:\s*100%/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__cover\s*\{[^}]*min-height:\s*100%/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__body\s*\{[^}]*max-height:\s*none/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__body\s*\{[^}]*overflow:\s*auto/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__sheet\s*\{[^}]*width:\s*calc\(100%\s*-\s*\(var\(--mg-v2-space-4\)\s*\*\s*2\)\)/s
+    );
+    expect(css).toMatch(
+      /\[data-layout='split'\][^{]*\.client-cover__sheet\s*\{[^}]*margin:\s*var\(--mg-v2-space-3\)\s+var\(--mg-v2-space-4\)\s+0/s
     );
   });
 

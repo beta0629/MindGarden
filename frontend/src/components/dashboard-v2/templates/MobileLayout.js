@@ -26,6 +26,8 @@ const MobileLayout = ({
   onLogout,
   showBottomTabBar = false,
   bottomTabContent,
+  /** true면 stage 검색 행 미렌더(커버 홈 등) */
+  hideSearch = false,
   /** 'soft-sheet' = 상담사 태블릿 stone 드로어 (시안 shell-outline) */
   drawerVariant
 }) => {
@@ -64,9 +66,11 @@ const MobileLayout = ({
       />
       <main className="mg-v2-mobile-layout__main" role="main">
         <div className="mg-v2-mobile-layout__stage">
-          <div className="mg-v2-mobile-layout__search">
-            <SearchInput value={searchValue} onChange={onSearchChange} />
-          </div>
+          {!hideSearch ? (
+            <div className="mg-v2-mobile-layout__search">
+              <SearchInput value={searchValue} onChange={onSearchChange} />
+            </div>
+          ) : null}
           {children}
         </div>
       </main>

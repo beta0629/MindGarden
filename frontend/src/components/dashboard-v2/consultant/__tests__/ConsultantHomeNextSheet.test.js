@@ -152,6 +152,8 @@ describe('ConsultantHomeNextSheet', () => {
     expect(document.querySelector('.consultant-cover-chapter__sheet-body')).not.toBeInTheDocument();
     expect(document.querySelector('.consultant-cover-chapter__sheet-meta')).not.toBeInTheDocument();
     expect(screen.queryByText('—')).not.toBeInTheDocument();
+    // meta 미렌더여도 CTA 행은 독립 유지
+    expect(document.querySelector('.consultant-cover-chapter__cta-row')).toBeInTheDocument();
   });
 
   test('has: empty timeLabel omits sheet-dom row', () => {

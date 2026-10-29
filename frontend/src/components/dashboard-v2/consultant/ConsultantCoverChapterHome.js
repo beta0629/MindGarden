@@ -23,6 +23,7 @@ import {
   filterTodayOnlySchedules,
   resolveNextSheetSelection
 } from './consultantCoverChapterMappers';
+import { useAdminShell } from '../../../contexts/AdminShellContext';
 import { getNow } from '../../../utils/serverClock';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../constants/consultantDashboardConstants';
@@ -66,6 +67,18 @@ const ConsultantCoverChapterHome = ({
 }) => {
   const [isSplitLayout, setIsSplitLayout] = useState(getIsSplitLayout);
   const [clockTick, setClockTick] = useState(0);
+  const shell = useAdminShell();
+
+  // 커버 홈: stage 검색 줄 제거 — GNB/커버만 높이 체인 (핫픽스 :has 숨김 금지)
+  useEffect(() => {
+    if (!shell?.setShellMeta) {
+      return undefined;
+    }
+    shell.setShellMeta({ hideSearch: true });
+    return () => {
+      shell.setShellMeta({ hideSearch: false });
+    };
+  }, [shell]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {

@@ -30,6 +30,7 @@ import {
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import {
   CLIENT_WEB_PAGE_SHELL_TEST_ID,
+  CLIENT_WEB_PROFILE_LINK_TEST_ID,
   CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID
 } from '../../../constants/clientWebChromeConstants';
@@ -241,7 +242,9 @@ describe('ClientDashboard 커버+챕터 홈', () => {
     expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_ME) }))
       .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.MYPAGE);
 
-    expect(screen.getByText(/이재학/)).toBeInTheDocument();
+    // 커버 인사 + TopChrome 프로필(로그인 SSOT) — 동일 이름이 둘 다 노출
+    expect(screen.getAllByText(/이재학/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.getByTestId(CLIENT_WEB_PROFILE_LINK_TEST_ID)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '회기' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '안내' })).toBeInTheDocument();
 
@@ -302,9 +305,10 @@ describe('ClientDashboard 커버+챕터 홈', () => {
     renderCoverHome();
 
     fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
-    expect(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).toBeInTheDocument();
+    const coverMenu = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
+    expect(coverMenu).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT }));
+    fireEvent.click(within(coverMenu).getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT }));
 
     const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
     expect(within(dialog).getByText(CLIENT_LOBBY_LOGOUT_CONFIRM)).toBeInTheDocument();

@@ -665,55 +665,7 @@
   color: var(--cch-primary-hover);
 }
 
-/* Guide */
-.consultant-cover-chapter__guide-card {
-  width: 100%;
-  background: var(--cch-white);
-  border: 1px solid var(--cch-line);
-  border-radius: var(--cch-r12);
-  padding: 12px 14px;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 12px;
-  align-items: center;
-  text-align: left;
-  cursor: pointer;
-  font-family: var(--cch-font);
-  color: inherit;
-}
-
-.consultant-cover-chapter__guide-title {
-  margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--cch-ink);
-}
-
-.consultant-cover-chapter__guide-body {
-  margin: 0;
-  grid-column: 1;
-  font-size: 0.8125rem;
-  color: var(--cch-mute);
-  line-height: 1.45;
-}
-
-.consultant-cover-chapter__guide-go {
-  grid-row: 1 / span 2;
-  grid-column: 2;
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  border-radius: 10px;
-  background: var(--cch-line-soft);
-  border: 0;
-  color: var(--cch-ink);
-  font-size: 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
+/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 */
 
 .consultant-cover-chapter__alert {
   margin: 0 16px 8px;

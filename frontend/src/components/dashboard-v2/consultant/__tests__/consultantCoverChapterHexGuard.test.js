@@ -17,6 +17,7 @@ const FILES = [
   'ConsultantCoverChapterHome.css',
   'ConsultantHomeCover.js',
   'ConsultantHomeNextSheet.js',
+  'ConsultantHomeGuideChapter.js',
   'ConsultantCoverChapterHome.js',
   'consultantCoverChapterConstants.js'
 ];

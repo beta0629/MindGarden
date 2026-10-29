@@ -18,6 +18,9 @@ const FILES = [
   'CoverPanel.js',
   'CoverClinicSvg.js',
   'NextSheet.js',
+  'GuideChapter.js',
+  'SessionChapter.js',
+  'ClientMinimalDock.js',
   'CoverMenuDrawer.js'
 ];
 

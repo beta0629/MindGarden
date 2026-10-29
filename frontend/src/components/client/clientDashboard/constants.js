@@ -70,7 +70,8 @@ export const CLIENT_COVER_CHIP_REMAIN_PREFIX = '잔여';
 export const CLIENT_COVER_CHIP_MONTH_PREFIX = '이번 달';
 export const CLIENT_COVER_CHIP_MONTH_SUFFIX = '회 완료';
 export const CLIENT_COVER_CHIP_UNPAID_PREFIX = '미결제';
-export const CLIENT_COVER_CHIP_DONE_PREFIX = '완료 이력';
+export const CLIENT_COVER_CHIP_DONE_PREFIX = '결제 완료';
+export const CLIENT_COVER_CHIP_DONE_SUFFIX = '건';
 export const CLIENT_COVER_GUIDE_TITLE_HAS = '방문 전 체크';
 export const CLIENT_COVER_GUIDE_BODY_HAS =
   '10분 전 도착 · 휴대폰 무음 · 주차는 센터 안내를 확인해 주세요';

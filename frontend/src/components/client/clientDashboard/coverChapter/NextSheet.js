@@ -36,6 +36,22 @@ import {
   resolveScheduleDurationMinutes
 } from '../lobbyViewModel';
 
+const EMPTY_DISPLAY_PLACEHOLDER = '—';
+
+/**
+ * 시트 행 표시 여부 — 빈값·whitespace·「—」는 행 자체 미렌더 (상담사 NextSheet와 동일)
+ *
+ * @param {*} value
+ * @returns {string|null}
+ */
+const resolveSheetLine = (value) => {
+  const label = toDisplayString(value, '').trim();
+  if (!label || label === EMPTY_DISPLAY_PLACEHOLDER) {
+    return null;
+  }
+  return label;
+};
+
 /**
  * @param {object} props
  * @param {string} props.sheetMode
@@ -60,11 +76,14 @@ const NextSheet = ({
     const consultantName = resolveScheduleConsultantName(nextSchedule);
     const duration = resolveScheduleDurationMinutes(nextSchedule);
     const method = resolveConsultationMethodLabel(nextSchedule);
-    const memo = resolveCenterMemo(nextSchedule);
+    const memo = resolveSheetLine(resolveCenterMemo(nextSchedule));
     const statusCode = toDisplayString(nextSchedule.status, 'CONFIRMED').toUpperCase();
     const statusLabel = CLIENT_SCHEDULE_STATUS_LABELS[statusCode]
       || CLIENT_SCHEDULE_STATUS_LABELS.CONFIRMED;
-    const body = `${consultantName} ${CLIENT_COVER_CONSULTANT_SUFFIX} · ${method} ${duration}분`;
+    const timeLabel = resolveSheetLine(formatCoverSheetDomTime(nextSchedule));
+    const bodyLabel = resolveSheetLine(
+      `${consultantName} ${CLIENT_COVER_CONSULTANT_SUFFIX} · ${method} ${duration}분`
+    );
 
     return (
       <article
@@ -76,19 +95,21 @@ const NextSheet = ({
           <span className="client-cover__sheet-lab">{CLIENT_COVER_SHEET_KICKER_NEXT}</span>
           <span className="client-cover__badge client-cover__badge--ok">{statusLabel}</span>
         </div>
-        <p className="client-cover__sheet-dom">
-          <SafeText>{formatCoverSheetDomTime(nextSchedule)}</SafeText>
-        </p>
-        <p className="client-cover__sheet-body">
-          <SafeText>{body}</SafeText>
-        </p>
+        {timeLabel ? (
+          <p className="client-cover__sheet-dom">
+            <SafeText>{timeLabel}</SafeText>
+          </p>
+        ) : null}
+        {bodyLabel ? (
+          <p className="client-cover__sheet-body">
+            <SafeText>{bodyLabel}</SafeText>
+          </p>
+        ) : null}
         {memo ? (
           <p className="client-cover__sheet-meta">
             <SafeText>{memo}</SafeText>
           </p>
-        ) : (
-          <p className="client-cover__sheet-meta" aria-hidden="true">&nbsp;</p>
-        )}
+        ) : null}
         <div className="client-cover__cta-row">
           <MGButton
             variant="primary"

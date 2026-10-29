@@ -16,6 +16,7 @@ import {
   CLIENT_COVER_CHAPTER_NUM_01,
   CLIENT_COVER_CHAPTER_SESSION,
   CLIENT_COVER_CHIP_DONE_PREFIX,
+  CLIENT_COVER_CHIP_DONE_SUFFIX,
   CLIENT_COVER_CHIP_MONTH_PREFIX,
   CLIENT_COVER_CHIP_MONTH_SUFFIX,
   CLIENT_COVER_CHIP_REMAIN_PREFIX,
@@ -161,7 +162,7 @@ const SessionChapter = ({
               {CLIENT_COVER_CHIP_DONE_PREFIX}
               {' '}
               <span className="client-cover__chip-n">{toSafeNumber(completedCount)}</span>
-              회
+              {CLIENT_COVER_CHIP_DONE_SUFFIX}
             </span>
           ) : (
             <span className="client-cover__chip">

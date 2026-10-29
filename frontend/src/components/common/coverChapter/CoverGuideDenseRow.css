@@ -1,0 +1,76 @@
+/**
+ * Cover guide dense row — BEM `cover-guide-dense`
+ * 내담자·상담사 챕터 02 공용. 토큰만 · hex 금지.
+ */
+
+.cover-guide-dense {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: var(--mg-v2-space-3);
+  text-align: left;
+  font-family: var(--mg-v2-font-family-base);
+  color: inherit;
+  cursor: pointer;
+  appearance: none;
+  background: var(--mg-v2-color-surface-stone, var(--mg-v2-color-surface-card));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-soft, var(--mg-v2-color-border-light));
+  border-radius: var(--mg-v2-radius-panel);
+  text-decoration: none;
+}
+
+.cover-guide-dense__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+}
+
+.cover-guide-dense__title {
+  display: block;
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  line-height: var(--mg-v2-font-line-height-subheading);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.cover-guide-dense__body {
+  display: block;
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-regular);
+  color: var(--mg-v2-color-text-tertiary);
+  line-height: var(--mg-v2-font-line-height-subheading);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.cover-guide-dense__go {
+  flex: 0 0 auto;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  width: var(--mg-v2-component-height-md);
+  height: var(--mg-v2-component-height-md);
+  min-width: var(--mg-v2-component-height-md);
+  min-height: var(--mg-v2-component-height-md);
+  max-width: var(--mg-v2-component-height-md);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--mg-v2-color-neutral-100);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 1;
+}

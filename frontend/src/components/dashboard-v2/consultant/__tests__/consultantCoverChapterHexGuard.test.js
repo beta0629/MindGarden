@@ -140,14 +140,23 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*var\(--mg-v2-space-3\)/s
     );
-    // split: 뷰포트 높이 fill · 커버 아래 빈 캔버스 제거
+    // split: 뷰포트 고정 높이 · cover fill · body 가시(max-height 붕괴 금지)
+    expect(source).toMatch(
+      /\[data-layout='split'\]\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*var\(--cch-top-bar-h\)\)/s
+    );
     expect(source).toMatch(
       /\[data-layout='split'\]\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--cch-top-bar-h\)\)/s
     );
-    expect(source).toMatch(
-      /\[data-layout='split'\]\s*\{[^}]*height:\s*100%/s
-    );
     // soft-sheet stage calm kill — cover-chapter only · height 체인
+    expect(source).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)\s*,[\s\S]*?height:\s*100dvh/s
+    );
+    expect(source).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__main\s*\{[^}]*flex:\s*1/s
+    );
+    expect(source).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__main\s*\{[^}]*height:\s*calc\(100dvh\s*-\s*var\(--mg-v2-component-height-lg\)\)/s
+    );
     expect(source).toMatch(
       /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
     );
@@ -161,7 +170,16 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*align-self:\s*stretch/s
     );
     expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*height:\s*100%/s
+    );
+    expect(source).toMatch(
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*min-height:\s*100%/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__body\s*\{[^}]*max-height:\s*none/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__body\s*\{[^}]*overflow:\s*auto/s
     );
     expect(source).toMatch(
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*width:\s*calc\(100%\s*-\s*\(var\(--mg-v2-space-4\)\s*\*\s*2\)\)/s

@@ -837,11 +837,10 @@
     max-width: none;
     margin-left: 0;
     margin-right: 0;
-    /* 뷰포트 높이 체인 — %만 쓰면 셸 높이 미정 시 커버가 중간에 끊김 */
-    min-height: 100dvh;
+    /* 부모 % 의존 최소화 — GNB 제외 뷰포트 고정 높이 */
+    height: calc(100dvh - var(--cch-top-bar-h));
     min-height: calc(100dvh - var(--cch-top-bar-h));
-    height: 100%;
-    max-height: none;
+    max-height: calc(100dvh - var(--cch-top-bar-h));
     overflow: hidden;
     --cch-name-size: clamp(
       calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
@@ -860,7 +859,7 @@
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__cover {
     width: 44%;
     max-width: none;
-    height: auto;
+    height: 100%;
     align-self: stretch;
     min-height: 100%;
     max-height: none;
@@ -888,16 +887,17 @@
     padding-right: 0;
   }
 
+  /* max-height:100% + overflow:hidden 은 부모 미확정 시 body 붕괴·클리핑 */
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__body {
     flex: 1 1 auto;
     width: auto;
-    height: auto;
+    height: 100%;
     min-height: 0;
     min-width: 0;
-    max-height: 100%;
+    max-height: none;
     align-self: stretch;
     justify-content: flex-start;
-    overflow: hidden;
+    overflow: auto;
   }
 
   /* 01/02 챕터 열과 동일 우측 거터 — width 100% + margin 금지(넘침) */
@@ -1075,10 +1075,15 @@
 /*
  * 커버 홈 only — soft-sheet landscape stage calm(57.5rem) 해제.
  * 다른 상담사 페이지의 57.5rem calm은 MobileLayout.css 그대로 유지.
+ * split 높이 체인: layout → main → stage → cover-chapter (부모 % 붕괴 방지).
  */
 .mg-v2-mobile-layout--soft-sheet:has(.consultant-cover-chapter),
 .mg-v2-mobile-layout--soft-sheet:has(.consultant-dashboard-v2--cover-chapter) {
   background: var(--mg-v2-color-surface-bg);
+  height: 100dvh;
+  min-height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 .mg-v2-mobile-layout--soft-sheet:has(.consultant-cover-chapter) .mg-v2-mobile-layout__main,
@@ -1089,17 +1094,21 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
   width: 100%;
   margin: 0;
+  flex: 1 1 auto;
   min-height: 0;
-  height: 100%;
+  height: calc(100dvh - var(--mg-v2-component-height-lg));
+  overflow: hidden;
 }
 
 .mg-v2-mobile-layout--soft-sheet:has(.consultant-cover-chapter) .mg-v2-mobile-layout__stage,
 .mg-v2-mobile-layout--soft-sheet:has(.consultant-dashboard-v2--cover-chapter) .mg-v2-mobile-layout__stage {
   max-width: none;
   width: 100%;
-  height: 100%;
+  flex: 1 1 auto;
   min-height: 0;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 @media (orientation: landscape) and (min-width: 768px) {
@@ -1114,6 +1123,7 @@
   .mg-v2-mobile-layout--soft-sheet:has(.consultant-dashboard-v2--cover-chapter) .mg-v2-mobile-layout__stage {
     max-width: none;
     width: 100%;
+    height: 100%;
     margin: 0;
     margin-inline: 0;
   }

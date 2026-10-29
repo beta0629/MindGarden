@@ -6,6 +6,7 @@
  */
 
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
+import { getNow } from '../../../utils/serverClock';
 import { CONSULTANT_SCHEDULE_STATUS_LABELS } from '../../../constants/consultantDashboardConstants';
 import {
   COVER_CHAPTER_KICKER_PREFIX,
@@ -19,18 +20,67 @@ import {
   COVER_CHAPTER_MODE_VIDEO,
   COVER_CHAPTER_INCOMPLETE_HINT,
   COVER_CHAPTER_GUIDE_DEFAULT_TITLE,
-  COVER_CHAPTER_GUIDE_EMPTY
+  COVER_CHAPTER_GUIDE_EMPTY,
+  COVER_CHAPTER_NEXT_WAITING_STATUSES
 } from './consultantCoverChapterConstants';
+
+const NEXT_WAITING_STATUS_SET = new Set(COVER_CHAPTER_NEXT_WAITING_STATUSES);
 
 /**
  * @param {Date} [date]
  * @returns {string}
  */
-export const formatCoverDateLabel = (date = new Date()) => {
-  const d = date instanceof Date && !Number.isNaN(date.getTime()) ? date : new Date();
+export const formatCoverDateLabel = (date = getNow()) => {
+  const d = date instanceof Date && !Number.isNaN(date.getTime()) ? date : getNow();
   const month = d.getMonth() + 1;
   const day = d.getDate();
   return `${COVER_CHAPTER_KICKER_PREFIX} · 오늘 ${month}월 ${day}일`;
+};
+
+/**
+ * @param {string|null|undefined} status
+ * @returns {boolean}
+ */
+export const isNextWaitingStatus = (status) => {
+  const key = toDisplayString(status, '').toUpperCase();
+  return NEXT_WAITING_STATUS_SET.has(key);
+};
+
+/**
+ * 오늘(서버일) 일정 중 지금 이후 첫 대기/예정 건.
+ * 01 일정 챕터와 동일 스케줄 배열 SSOT — preparation API 단독 판정 금지.
+ *
+ * @param {Array} schedules - 오늘 일정(이미 today 필터된 배열 권장)
+ * @param {Date} [now]
+ * @returns {object|null}
+ */
+export const selectNextWaitingSchedule = (schedules, now = getNow()) => {
+  if (!Array.isArray(schedules) || schedules.length === 0) {
+    return null;
+  }
+  const nowDate = now instanceof Date ? now : new Date(now);
+  const nowTs = nowDate.getTime();
+  if (Number.isNaN(nowTs)) {
+    return null;
+  }
+
+  const candidates = schedules
+    .filter((schedule) => {
+      if (!schedule || schedule.startTime == null || schedule.startTime === '') {
+        return false;
+      }
+      if (!isNextWaitingStatus(schedule.status)) {
+        return false;
+      }
+      const start = new Date(schedule.startTime);
+      if (Number.isNaN(start.getTime())) {
+        return false;
+      }
+      return start.getTime() >= nowTs;
+    })
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+
+  return candidates[0] ?? null;
 };
 
 /**
@@ -348,12 +398,12 @@ export const mapGuideContent = (notifications, incompleteCount) => {
 };
 
 /**
- * 오늘 자정 기준 일정만 필터
+ * 오늘(서버 시각 SSOT) 자정 기준 일정만 필터
  * @param {Array} schedules
  * @param {Date} [todayMidnight]
  * @returns {Array}
  */
-export const filterTodayOnlySchedules = (schedules, todayMidnight = new Date()) => {
+export const filterTodayOnlySchedules = (schedules, todayMidnight = getNow()) => {
   if (!Array.isArray(schedules)) {
     return [];
   }

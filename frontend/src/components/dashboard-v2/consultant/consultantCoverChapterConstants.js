@@ -58,3 +58,23 @@ export const COVER_CHAPTER_MODE_VIDEO = '화상';
 
 export const COVER_CHAPTER_MENU_ARIA = '메뉴';
 export const COVER_CHAPTER_GUIDE_MORE_ARIA = '안내 더보기';
+
+/**
+ * 「다음 대기」 후보 상태 — 01 일정 매퍼 wait/확정 계열과 정합
+ * COMPLETED·CANCELLED·NO_SHOW 등은 제외
+ */
+export const COVER_CHAPTER_NEXT_WAITING_STATUSES = Object.freeze([
+  'PENDING',
+  'WAITING',
+  'CONFIRMED',
+  'IN_PROGRESS',
+  'BOOKED',
+  'SCHEDULED'
+]);
+
+/** true desktop 셸(≥1280 + fine-pointer) — 커버 전폭 스택 */
+export const COVER_CHAPTER_DESKTOP_SHELL_MQ =
+  '(min-width: 1280px) and (hover: hover) and (pointer: fine)';
+
+/** 태블릿 가로 등 — 고정 LNB 없는 좌커버|우본문 분할 (Desktop 셸 제외) */
+export const COVER_CHAPTER_TABLET_SPLIT_MQ = '(min-width: 1024px)';

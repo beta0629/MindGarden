@@ -123,6 +123,7 @@ let mockIncompleteRecords = {
 };
 
 let mockPreparation = { consultation: null };
+let mockScheduleList = [];
 
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -144,7 +145,7 @@ jest.mock('../../../../utils/standardizedApi', () => ({
         return Promise.resolve({ schedules: [] });
       }
       if (String(url).includes('schedules')) {
-        return Promise.resolve({ schedules: [] });
+        return Promise.resolve({ schedules: mockScheduleList });
       }
       return Promise.resolve(mockStatsResponse);
     })
@@ -188,7 +189,7 @@ const mockApiGet = (url) => {
     return Promise.resolve({ schedules: [] });
   }
   if (u.includes('schedules')) {
-    return Promise.resolve({ schedules: [] });
+    return Promise.resolve({ schedules: mockScheduleList });
   }
   return Promise.resolve(mockStatsResponse);
 };
@@ -233,6 +234,10 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
       ]
     };
     mockPreparation = { consultation: null };
+    mockScheduleList = [];
+    mockStatsResponse.totalToday = 0;
+    mockStatsResponse.completedToday = 0;
+    mockStatsResponse.inProgressToday = 0;
     fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
     StandardizedApi.get.mockImplementation(mockApiGet);
   });
@@ -278,22 +283,27 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     expect(mockNavigate).toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   });
 
-  test('has next-sheet: 상담 열기 + 일정 CTA', async() => {
-    const tomorrow = new Date();
-    tomorrow.setHours(14, 30, 0, 0);
-    mockPreparation = {
-      consultation: {
+  test('has next-sheet: todaySchedules SSOT (preparation empty) → 상담 열기 + 일정 CTA', async() => {
+    // preparation 비어 있어도 오늘 대기 일정이 있으면 has (A 버그 회귀 방지)
+    mockPreparation = { consultation: null };
+    const start = new Date();
+    start.setHours(start.getHours() + 2, 0, 0, 0);
+    const end = new Date(start.getTime() + 50 * 60000);
+    mockScheduleList = [
+      {
+        id: 501,
         scheduleId: 501,
         clientId: 9,
         clientName: '남궁민서윤아림정한솔예린',
-        startTime: tomorrow.toISOString(),
-        endTime: new Date(tomorrow.getTime() + 50 * 60000).toISOString(),
-        sessionNumber: 2,
-        status: 'CONFIRMED',
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        status: 'PENDING',
         packageName: '개인상담',
         roomName: '3층 상담실 B'
       }
-    };
+    ];
+    mockStatsResponse.totalToday = 1;
+    mockStatsResponse.inProgressToday = 1;
 
     renderDashboard();
 

@@ -11,7 +11,9 @@ import {
   mapGuideContent,
   buildCoverSubtitle,
   formatConsultantDisplayName,
-  filterTodayOnlySchedules
+  filterTodayOnlySchedules,
+  selectNextWaitingSchedule,
+  isNextWaitingStatus
 } from '../consultantCoverChapterMappers';
 import {
   COVER_CHAPTER_ZERO_COVER_SUB,
@@ -77,5 +79,80 @@ describe('consultantCoverChapterMappers', () => {
     ], today);
     expect(rows).toHaveLength(1);
     expect(rows[0].id).toBe(1);
+  });
+
+  test('isNextWaitingStatus matches pending/confirmed family', () => {
+    expect(isNextWaitingStatus('PENDING')).toBe(true);
+    expect(isNextWaitingStatus('WAITING')).toBe(true);
+    expect(isNextWaitingStatus('CONFIRMED')).toBe(true);
+    expect(isNextWaitingStatus('IN_PROGRESS')).toBe(true);
+    expect(isNextWaitingStatus('COMPLETED')).toBe(false);
+    expect(isNextWaitingStatus('NO_SHOW')).toBe(false);
+  });
+
+  test('selectNextWaitingSchedule: empty → null (zero)', () => {
+    expect(selectNextWaitingSchedule([], new Date('2026-10-29T12:00:00'))).toBeNull();
+    expect(selectNextWaitingSchedule(null, new Date('2026-10-29T12:00:00'))).toBeNull();
+  });
+
+  test('selectNextWaitingSchedule: past-only → null (zero)', () => {
+    const now = new Date('2026-10-29T13:00:00');
+    const picked = selectNextWaitingSchedule([
+      {
+        id: 1,
+        startTime: '2026-10-29T10:00:00',
+        status: 'PENDING'
+      },
+      {
+        id: 2,
+        startTime: '2026-10-29T11:00:00',
+        status: 'COMPLETED'
+      }
+    ], now);
+    expect(picked).toBeNull();
+  });
+
+  test('selectNextWaitingSchedule: has waiting → earliest future', () => {
+    const now = new Date('2026-10-29T12:00:00');
+    const picked = selectNextWaitingSchedule([
+      {
+        id: 10,
+        startTime: '2026-10-29T19:00:00',
+        status: 'PENDING',
+        clientName: 'C'
+      },
+      {
+        id: 11,
+        startTime: '2026-10-29T14:00:00',
+        status: 'WAITING',
+        clientName: 'A'
+      },
+      {
+        id: 12,
+        startTime: '2026-10-29T18:00:00',
+        status: 'CONFIRMED',
+        clientName: 'B'
+      },
+      {
+        id: 13,
+        startTime: '2026-10-29T09:00:00',
+        status: 'COMPLETED',
+        clientName: 'Past'
+      }
+    ], now);
+    expect(picked).not.toBeNull();
+    expect(picked.id).toBe(11);
+    expect(picked.clientName).toBe('A');
+  });
+
+  test('selectNextWaitingSchedule: injected server now picks 14:00 waiting', () => {
+    const now = new Date('2026-10-29T13:30:00');
+    const picked = selectNextWaitingSchedule([
+      { id: 1, startTime: '2026-10-29T14:00:00', status: 'PENDING' },
+      { id: 2, startTime: '2026-10-29T18:00:00', status: 'PENDING' },
+      { id: 3, startTime: '2026-10-29T19:00:00', status: 'PENDING' }
+    ], now);
+    expect(picked.id).toBe(1);
+    expect(mapNextConsultationSheet(picked).timeLabel).toBe('오늘 14:00');
   });
 });

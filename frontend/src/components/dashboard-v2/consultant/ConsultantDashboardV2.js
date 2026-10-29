@@ -656,8 +656,11 @@ const ConsultantDashboardV2 = ({ user }) => {
     navigate(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   }, [navigate]);
 
-  const handleOpenConsultation = useCallback(() => {
-    const scheduleId = nextConsultation?.scheduleId ?? nextConsultation?.id;
+  const handleOpenConsultation = useCallback((scheduleIdFromSheet) => {
+    // Cover+Chapter 시트는 todaySchedules SSOT 셀렉터 결과의 scheduleId를 전달
+    const scheduleId = scheduleIdFromSheet
+      ?? nextConsultation?.scheduleId
+      ?? nextConsultation?.id;
     if (scheduleId != null && scheduleId !== '') {
       navigate(buildConsultantConsultationRecordRoute(scheduleId));
       return;

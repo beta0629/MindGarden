@@ -1,5 +1,6 @@
 /**
  * AdminCommonLayout — 상담사-only LNB·로고 랜딩 가드
+ * 태블릿(P+L) 햄버거+soft-sheet / Desktop ≥1280+fine-pointer
  */
 
 import React from 'react';
@@ -11,6 +12,7 @@ const mockUseSession = jest.fn();
 const mockUseBranding = jest.fn();
 const mockUseResponsive = jest.fn();
 const mockUseTenantComponentFlags = jest.fn();
+const mockUseMediaQuery = jest.fn();
 
 jest.mock('../../../contexts/SessionContext', () => ({
   useSession: () => mockUseSession()
@@ -22,6 +24,11 @@ jest.mock('../../../hooks/useBranding', () => ({
 
 jest.mock('../../../hooks/useResponsive', () => ({
   useResponsive: () => mockUseResponsive()
+}));
+
+jest.mock('../../../hooks/useMediaQuery', () => ({
+  __esModule: true,
+  default: (query) => mockUseMediaQuery(query)
 }));
 
 jest.mock('../../../hooks/useTenantComponentFlags', () => ({
@@ -61,11 +68,16 @@ jest.mock('../../dashboard-v2/templates', () => ({
 }));
 
 import AdminCommonLayout from '../AdminCommonLayout';
+import { MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER } from '../../dashboard-v2/constants/menuItems';
 
 describe('AdminCommonLayout counselor Clinic-OS shell', () => {
   beforeEach(() => {
     mockUseBranding.mockReturnValue({ brandingInfo: null, isLoading: false });
     mockUseResponsive.mockReturnValue({ windowSize: { width: 1280 } });
+    // true desktop 기본: fine-pointer match
+    mockUseMediaQuery.mockImplementation(
+      (query) => query === MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER
+    );
     mockUseTenantComponentFlags.mockReturnValue({
       adminShopCatalogEnabled: false,
       clientShopEnabled: false,
@@ -125,24 +137,7 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
   });
 
-  test('상담사 데스크톱(1280): DesktopLayout 유지', async() => {
-    mockUseResponsive.mockReturnValue({ windowSize: { width: 1280, height: 800 } });
-
-    render(
-      <MemoryRouter>
-        <AdminCommonLayout>
-          <span>본문</span>
-        </AdminCommonLayout>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
-  });
-
-  test('상담사 게이트(1024): DesktopLayout · soft-sheet Mobile 아님', async() => {
+  test('상담사 iPad landscape(1024): MobileLayout + soft-sheet', async() => {
     mockUseResponsive.mockReturnValue({ windowSize: { width: 1024, height: 768 } });
 
     render(
@@ -154,13 +149,93 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     );
 
     await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
+  test('상담사 iPad landscape(1180): MobileLayout + soft-sheet', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1180, height: 820 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
+  test('상담사 Android-like(1366) coarse pointer: MobileLayout + soft-sheet', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1366, height: 768 } });
+    mockUseMediaQuery.mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
+  test('상담사 Android-like(1600) coarse pointer: MobileLayout + soft-sheet', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1600, height: 900 } });
+    mockUseMediaQuery.mockReturnValue(false);
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  });
+
+  test('상담사 데스크톱(1280+) fine-pointer: DesktopLayout', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1280, height: 800 } });
+    mockUseMediaQuery.mockImplementation(
+      (query) => query === MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER
+    );
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
       expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
     });
     expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
   });
 
-  test('상담사 게이트(1023): MobileLayout + soft-sheet', async() => {
-    mockUseResponsive.mockReturnValue({ windowSize: { width: 1023, height: 768 } });
+  test('상담사 게이트(1279): MobileLayout + soft-sheet', async() => {
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1279, height: 800 } });
+    mockUseMediaQuery.mockImplementation(
+      (query) => query === MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER
+    );
 
     render(
       <MemoryRouter>

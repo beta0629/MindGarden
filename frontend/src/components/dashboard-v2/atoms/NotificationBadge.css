@@ -4,10 +4,12 @@
  * @since 2026-03-09
  */
 
+/* 아이콘(NavIcon 44px)에 인접 — ClientWebTopChrome 배지 패턴과 동일 */
 .mg-v2-notification-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0;
+  right: 0;
+  transform: translate(35%, -35%);
   min-width: 18px;
   height: 18px;
   padding: 0 4px;

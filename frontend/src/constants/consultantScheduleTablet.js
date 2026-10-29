@@ -6,12 +6,20 @@
  * @since 2026-10-28
  */
 
-/** 세로·좁은 폭 — 일 아젠다 / 주 리스트 (타임그리드 금지) */
+/**
+ * 세로·좁은 폭 — 일 아젠다 / 주 리스트 (타임그리드 금지).
+ * 셸 태블릿 max(1279)와 정합 — 768–1279 portrait 포함.
+ */
 export const CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ =
-  '(max-width: 1023px) and (orientation: portrait)';
+  '(max-width: 1279px) and (orientation: portrait)';
 
-/** 가로 — 주 타임그리드 허용 */
-export const CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ = '(orientation: landscape)';
+/**
+ * 가로 — 주 타임그리드 허용(월 기본 금지).
+ * true desktop(≥1280 + fine-pointer) month 기본은 보존:
+ * landscape AND (폭≤1279 OR 터치/coarse).
+ */
+export const CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ =
+  '(orientation: landscape) and ((max-width: 1279px) or (hover: none) or (pointer: coarse))';
 
 export const CONSULTANT_SCHEDULE_TABLET_CLASS = {
   PANEL_ATTR: 'data-tablet-schedule-v2',

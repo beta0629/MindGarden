@@ -217,6 +217,7 @@ const ScheduleCalendarView = ({
     const [activeViewType, setActiveViewType] = useState(CALENDAR_VIEW_MONTH);
     const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
     const tabletPortraitDefaultAppliedRef = useRef(false);
+    const tabletLandscapeDefaultAppliedRef = useRef(false);
     const isTabletPortrait = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ);
     const isLandscape = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ);
     const tabletV2Active = consultantTabletScheduleV2 === true;
@@ -414,6 +415,29 @@ const ScheduleCalendarView = ({
             calendarApi.changeView(CALENDAR_VIEW_DAY);
         }
     }, [tabletV2Active, isTabletPortrait, events.length]);
+
+    /**
+     * 태블릿 v2 landscape 기본 = 「주」타임그리드.
+     * 태블릿 landscape에서 month에 머무르면 week로 전환(1회).
+     * landscape 이탈 시 ref 리셋 → 재진입 시 다시 적용.
+     */
+    useEffect(() => {
+        if (!tabletV2Active || !isLandscape) {
+            tabletLandscapeDefaultAppliedRef.current = false;
+            return;
+        }
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi) {
+            return;
+        }
+        if (tabletLandscapeDefaultAppliedRef.current) {
+            return;
+        }
+        if (calendarApi.view?.type === CALENDAR_VIEW_MONTH) {
+            tabletLandscapeDefaultAppliedRef.current = true;
+            calendarApi.changeView(CALENDAR_VIEW_WEEK);
+        }
+    }, [tabletV2Active, isLandscape, events.length]);
 
     const customButtons = useMemo(() => ({
         [ZOOM_OUT_BUTTON_ID]: {

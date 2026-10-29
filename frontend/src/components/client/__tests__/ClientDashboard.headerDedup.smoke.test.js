@@ -22,6 +22,7 @@ import {
   CLIENT_COVER_MENU_LOGOUT,
   CLIENT_COVER_MENU_TEST_ID,
   CLIENT_COVER_NEXT_SHEET_TEST_ID,
+  CLIENT_COVER_PANEL_ARIA,
   CLIENT_COVER_SHEET_MODE,
   CLIENT_LOBBY_LOGOUT,
   CLIENT_LOBBY_LOGOUT_CANCEL,
@@ -29,6 +30,7 @@ import {
 } from '../clientDashboard/constants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
 import {
+  CLIENT_WEB_LOGIN,
   CLIENT_WEB_PAGE_SHELL_TEST_ID,
   CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID
@@ -241,7 +243,13 @@ describe('ClientDashboard 커버+챕터 홈', () => {
     expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_ME) }))
       .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.MYPAGE);
 
-    expect(screen.getByText(/이재학/)).toBeInTheDocument();
+    // TopChrome + CoverPanel 둘 다 userName 노출 (헤더 SSOT + 커버 인사)
+    const chrome = screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID);
+    const cover = screen.getByRole('region', { name: CLIENT_COVER_PANEL_ARIA });
+    expect(within(chrome).getByText(/이재학/)).toBeInTheDocument();
+    expect(within(cover).getByText(/이재학/)).toBeInTheDocument();
+    expect(screen.getAllByText(/이재학/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole('link', { name: CLIENT_WEB_LOGIN })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '회기' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '안내' })).toBeInTheDocument();
 
@@ -302,9 +310,13 @@ describe('ClientDashboard 커버+챕터 홈', () => {
     renderCoverHome();
 
     fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
-    expect(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).toBeInTheDocument();
+    const coverMenu = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
+    expect(coverMenu).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT }));
+    // 헤더 TopChrome에도 「로그아웃」이 있으므로 커버 메뉴 경로만 스코프
+    fireEvent.click(
+      within(coverMenu).getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT })
+    );
 
     const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
     expect(within(dialog).getByText(CLIENT_LOBBY_LOGOUT_CONFIRM)).toBeInTheDocument();

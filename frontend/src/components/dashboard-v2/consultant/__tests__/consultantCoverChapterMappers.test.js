@@ -8,6 +8,7 @@
 import {
   mapNextConsultationSheet,
   mapScheduleChips,
+  mapTodayScheduleRows,
   mapGuideContent,
   buildCoverSubtitle,
   formatConsultantDisplayName,
@@ -17,7 +18,8 @@ import {
 } from '../consultantCoverChapterMappers';
 import {
   COVER_CHAPTER_ZERO_COVER_SUB,
-  COVER_CHAPTER_INCOMPLETE_HINT
+  COVER_CHAPTER_INCOMPLETE_HINT,
+  COVER_CHAPTER_PILL_NEXT
 } from '../consultantCoverChapterConstants';
 
 describe('consultantCoverChapterMappers', () => {
@@ -48,12 +50,60 @@ describe('consultantCoverChapterMappers', () => {
     expect(model.badgeLabel).toBe('확정');
   });
 
-  test('mapScheduleChips uses today statistics fields', () => {
-    expect(mapScheduleChips({
-      totalToday: 3,
-      completedToday: 1,
-      inProgressToday: 2
-    })).toEqual({ today: 3, completed: 1, remaining: 2 });
+  test('mapScheduleChips: schedules + getNow SSOT (ignores inProgressToday:0)', () => {
+    const now = new Date('2026-10-29T15:00:00');
+    const schedules = [
+      { id: 1, startTime: '2026-10-29T10:00:00', status: 'COMPLETED' },
+      { id: 2, startTime: '2026-10-29T14:00:00', status: 'WAITING' },
+      { id: 3, startTime: '2026-10-29T18:00:00', status: 'CONFIRMED' },
+      { id: 4, startTime: '2026-10-29T19:00:00', status: 'CONFIRMED' }
+    ];
+    expect(mapScheduleChips(schedules, now, { inProgressToday: 0, totalToday: 99 }))
+      .toEqual({ today: 4, completed: 1, remaining: 2 });
+  });
+
+  test('mapScheduleChips + rows: past WAITING stays 대기; next sheet/row status SSOT', () => {
+    const now = new Date('2026-10-29T15:00:00');
+    const schedules = [
+      { id: 1, startTime: '2026-10-29T10:00:00', endTime: '2026-10-29T10:50:00', status: 'COMPLETED', clientName: 'A' },
+      { id: 2, startTime: '2026-10-29T14:00:00', endTime: '2026-10-29T14:50:00', status: 'WAITING', clientName: 'B' },
+      {
+        id: 3,
+        startTime: '2026-10-29T18:00:00',
+        endTime: '2026-10-29T18:50:00',
+        status: 'CONFIRMED',
+        clientName: 'C'
+      },
+      {
+        id: 4,
+        startTime: '2026-10-29T19:00:00',
+        endTime: '2026-10-29T19:50:00',
+        status: 'CONFIRMED',
+        clientName: 'D'
+      }
+    ];
+
+    const chips = mapScheduleChips(schedules, now, { inProgressToday: 0 });
+    expect(chips).toEqual({ today: 4, completed: 1, remaining: 2 });
+
+    const next = selectNextWaitingSchedule(schedules, now);
+    expect(next).not.toBeNull();
+    expect(next.id).toBe(3);
+
+    const sheet = mapNextConsultationSheet(next);
+    expect(sheet.badgeLabel).toBe('확정');
+    expect(sheet.badgeLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
+
+    const rows = mapTodayScheduleRows(schedules, next);
+    const pastWait = rows.find((row) => row.id === '2');
+    expect(pastWait.pillLabel).toBe('대기');
+    expect(pastWait.pillLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
+    expect(pastWait.subLabel).not.toContain(COVER_CHAPTER_PILL_NEXT);
+
+    const nextRow = rows.find((row) => row.id === '3');
+    expect(nextRow.pillLabel).toBe('확정');
+    expect(nextRow.pillLabel).toBe(sheet.badgeLabel);
+    expect(nextRow.pillLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
   });
 
   test('buildCoverSubtitle zero vs has', () => {

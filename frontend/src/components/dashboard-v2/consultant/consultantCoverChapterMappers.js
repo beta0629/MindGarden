@@ -13,7 +13,6 @@ import {
   COVER_CHAPTER_CONSULTANT_SUFFIX,
   COVER_CHAPTER_ZERO_COVER_SUB,
   COVER_CHAPTER_BADGE_CONFIRMED,
-  COVER_CHAPTER_PILL_NEXT,
   COVER_CHAPTER_PILL_DONE,
   COVER_CHAPTER_PILL_WAIT,
   COVER_CHAPTER_MODE_FACE,
@@ -25,6 +24,23 @@ import {
 } from './consultantCoverChapterConstants';
 
 const NEXT_WAITING_STATUS_SET = new Set(COVER_CHAPTER_NEXT_WAITING_STATUSES);
+
+/** 칩 remaining 제외 — 서버 status 그대로 (시간 heal 금지) */
+const TERMINAL_STATUS_SET = new Set(['COMPLETED', 'CANCELLED', 'NO_SHOW', 'CANCELED']);
+
+/**
+ * 시트 배지·행 pill 공통 — 서버 status → CONSULTANT_SCHEDULE_STATUS_LABELS
+ *
+ * @param {string|null|undefined} status
+ * @returns {string}
+ */
+const resolveStatusLabel = (status) => {
+  const statusKey = toDisplayString(status, '').toUpperCase();
+  if (!statusKey) {
+    return COVER_CHAPTER_PILL_WAIT;
+  }
+  return CONSULTANT_SCHEDULE_STATUS_LABELS[statusKey] || COVER_CHAPTER_PILL_WAIT;
+};
 
 /**
  * @param {Date} [date]
@@ -263,8 +279,9 @@ export const mapNextConsultationSheet = (consultation) => {
   const packageLabel = resolvePackageOrTypeLabel(consultation);
   const metaParts = [location, packageLabel].filter(Boolean);
   const statusKey = toDisplayString(consultation.status, 'CONFIRMED').toUpperCase();
-  const badgeLabel = CONSULTANT_SCHEDULE_STATUS_LABELS[statusKey]
-    || COVER_CHAPTER_BADGE_CONFIRMED;
+  const badgeLabel = statusKey
+    ? resolveStatusLabel(consultation.status)
+    : COVER_CHAPTER_BADGE_CONFIRMED;
 
   return {
     scheduleId: consultation.scheduleId ?? consultation.id ?? null,
@@ -277,37 +294,30 @@ export const mapNextConsultationSheet = (consultation) => {
 };
 
 /**
+ * 행 pill = 서버 status 라벨 SSOT. isNext 로 「다음」 덮어쓰기 금지.
+ * nextConsultation 은 셀렉터 강조용으로만 받으며 pill/sub 에 주입하지 않음.
+ *
  * @param {Array} schedules - today's schedules
- * @param {object|null} nextConsultation
+ * @param {object|null} [_nextConsultation]
  * @returns {Array}
  */
-export const mapTodayScheduleRows = (schedules, nextConsultation) => {
+export const mapTodayScheduleRows = (schedules, _nextConsultation = null) => {
   if (!Array.isArray(schedules)) {
     return [];
   }
-  const nextId = nextConsultation
-    ? String(nextConsultation.scheduleId ?? nextConsultation.id ?? '')
-    : '';
+  void _nextConsultation;
 
   return schedules.map((schedule, idx) => {
     const id = schedule.id ?? schedule.scheduleId ?? `row-${idx}`;
     const idStr = String(id);
     const statusKey = toDisplayString(schedule.status, '').toUpperCase();
-    const isNext = nextId && (idStr === nextId || String(schedule.scheduleId ?? '') === nextId);
     const isCompleted = statusKey === 'COMPLETED';
-    const isWait = statusKey === 'PENDING' || statusKey === 'WAITING' || statusKey === 'IN_PROGRESS';
+    const isWait = statusKey === 'PENDING'
+      || statusKey === 'WAITING'
+      || statusKey === 'IN_PROGRESS';
 
-    let pillLabel = CONSULTANT_SCHEDULE_STATUS_LABELS[statusKey]
-      || COVER_CHAPTER_PILL_WAIT;
-    let pillVariant = isWait ? 'wait' : 'default';
-
-    if (isNext && !isCompleted) {
-      pillLabel = COVER_CHAPTER_PILL_NEXT;
-      pillVariant = 'default';
-    } else if (isCompleted) {
-      pillLabel = COVER_CHAPTER_PILL_DONE;
-      pillVariant = 'default';
-    }
+    const pillLabel = resolveStatusLabel(schedule.status);
+    const pillVariant = isWait ? 'wait' : 'default';
 
     const mode = resolveConsultationMode(schedule);
     const duration = computeDurationMinutes(schedule.startTime, schedule.endTime);
@@ -318,12 +328,10 @@ export const mapTodayScheduleRows = (schedules, nextConsultation) => {
     }
     if (isCompleted) {
       subParts.push(COVER_CHAPTER_PILL_DONE);
-    } else if (isNext && duration != null) {
-      subParts.push(`${duration}분`);
-    } else if (isWait) {
-      subParts.push(COVER_CHAPTER_PILL_WAIT);
     } else if (duration != null) {
       subParts.push(`${duration}분`);
+    } else if (isWait) {
+      subParts.push(resolveStatusLabel(schedule.status));
     }
 
     return {
@@ -339,20 +347,45 @@ export const mapTodayScheduleRows = (schedules, nextConsultation) => {
 };
 
 /**
- * @param {object} stats
- * @param {number} [todayRowCount]
+ * 칩 today/completed/remaining — 오늘 스케줄 배열 + 서버 now SSOT.
+ * remaining/completed 를 stats.inProgressToday 에 종속시키지 않음.
+ *
+ * @param {Array} schedules
+ * @param {Date} [now]
+ * @param {object} [stats] today 보조(선택)
  * @returns {{ today: number, completed: number, remaining: number }}
  */
-export const mapScheduleChips = (stats, todayRowCount) => {
-  const today = toSafeNumber(
-    stats?.totalToday ?? stats?.todaySchedules ?? todayRowCount,
-    0
-  );
-  const completed = toSafeNumber(stats?.completedToday ?? stats?.completed, 0);
-  const remainingFromApi = stats?.inProgressToday ?? stats?.remaining;
-  const remaining = remainingFromApi != null
-    ? toSafeNumber(remainingFromApi, 0)
-    : Math.max(today - completed, 0);
+export const mapScheduleChips = (schedules, now = getNow(), stats = null) => {
+  const list = Array.isArray(schedules) ? schedules : [];
+  const todayFromSchedules = list.length;
+  const today = todayFromSchedules > 0
+    ? todayFromSchedules
+    : toSafeNumber(stats?.totalToday ?? stats?.todaySchedules, 0);
+
+  const completed = list.reduce((count, schedule) => {
+    const statusKey = toDisplayString(schedule?.status, '').toUpperCase();
+    return statusKey === 'COMPLETED' ? count + 1 : count;
+  }, 0);
+
+  const nowDate = now instanceof Date ? now : new Date(now);
+  const nowTs = nowDate.getTime();
+  const remaining = Number.isNaN(nowTs)
+    ? 0
+    : list.reduce((count, schedule) => {
+      if (!schedule || schedule.startTime == null || schedule.startTime === '') {
+        return count;
+      }
+      const statusKey = toDisplayString(schedule.status, '').toUpperCase();
+      if (TERMINAL_STATUS_SET.has(statusKey) || !isNextWaitingStatus(statusKey)) {
+        return count;
+      }
+      const start = new Date(schedule.startTime);
+      if (Number.isNaN(start.getTime()) || start.getTime() < nowTs) {
+        return count;
+      }
+      return count + 1;
+    }, 0);
+
   return { today, completed, remaining };
 };
 

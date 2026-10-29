@@ -136,8 +136,8 @@ const ConsultantCoverChapterHome = ({
   );
 
   const chips = useMemo(
-    () => mapScheduleChips(stats, todayOnly.length),
-    [stats, todayOnly.length]
+    () => mapScheduleChips(todayOnly, now, stats),
+    [todayOnly, now, stats]
   );
 
   const coverSubtitle = useMemo(

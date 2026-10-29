@@ -103,4 +103,46 @@ describe('ConsultantHomeNextSheet', () => {
     expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
     expect(screen.getByText('오늘 14:00')).toBeInTheDocument();
   });
+
+  test('has: empty body/meta/whitespace/— rows are not rendered', () => {
+    render(
+      <ConsultantHomeNextSheet
+        nextConsultation={{
+          timeLabel: '오늘 15:00',
+          bodyLabel: '   ',
+          metaLabel: '—',
+          badgeLabel: COVER_CHAPTER_BADGE_CONFIRMED,
+          scheduleId: 88
+        }}
+        onOpenConsultation={jest.fn()}
+        onOpenSchedule={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('오늘 15:00')).toBeInTheDocument();
+    expect(document.querySelector('.consultant-cover-chapter__sheet-body')).not.toBeInTheDocument();
+    expect(document.querySelector('.consultant-cover-chapter__sheet-meta')).not.toBeInTheDocument();
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+  });
+
+  test('has: empty timeLabel omits sheet-dom row', () => {
+    render(
+      <ConsultantHomeNextSheet
+        nextConsultation={{
+          timeLabel: '',
+          bodyLabel: '홍길동 · 대면',
+          metaLabel: '',
+          badgeLabel: COVER_CHAPTER_BADGE_CONFIRMED,
+          scheduleId: 89
+        }}
+        onOpenConsultation={jest.fn()}
+        onOpenSchedule={jest.fn()}
+      />
+    );
+
+    expect(document.querySelector('.consultant-cover-chapter__sheet-dom')).not.toBeInTheDocument();
+    expect(document.querySelector('.consultant-cover-chapter__sheet-body')).toBeInTheDocument();
+    expect(document.querySelector('.consultant-cover-chapter__sheet-meta')).not.toBeInTheDocument();
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+  });
 });

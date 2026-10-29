@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import SafeText from '../../common/SafeText';
+import CoverGuideDenseRow from '../../common/coverChapter/CoverGuideDenseRow';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import {
   COVER_CHAPTER_GUIDE_TEST_ID,
@@ -43,20 +43,13 @@ const ConsultantHomeGuideChapter = ({
         </h2>
       </div>
 
-      <button
-        type="button"
-        className="consultant-cover-chapter__guide-card"
+      <CoverGuideDenseRow
+        title={displayTitle}
+        body={displayBody}
+        asButton
+        ariaLabel={COVER_CHAPTER_GUIDE_MORE_ARIA}
         onClick={onOpen}
-        aria-label={COVER_CHAPTER_GUIDE_MORE_ARIA}
-      >
-        <h4 className="consultant-cover-chapter__guide-title">
-          <SafeText tag="span">{displayTitle}</SafeText>
-        </h4>
-        <p className="consultant-cover-chapter__guide-body">
-          <SafeText tag="span">{displayBody}</SafeText>
-        </p>
-        <span className="consultant-cover-chapter__guide-go" aria-hidden="true">›</span>
-      </button>
+      />
     </section>
   );
 };

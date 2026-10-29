@@ -1,5 +1,5 @@
 /**
- * 상담사 태블릿 stone soft-sheet 드로어 CSS 계약
+ * 상담사 soft-sheet 드로어 CSS 계약
  */
 import fs from 'fs';
 import path from 'path';
@@ -25,16 +25,28 @@ describe('MobileLnbDrawer soft-sheet', () => {
     expect(js).toMatch(/variant === 'soft-sheet'/);
   });
 
-  it('상담사 셸만 BREAKPOINT_CONSULTANT_DESKTOP(1280) + fine-pointer MQ + soft-sheet', () => {
+  it('상담사 셸: 전 폭 MobileLayout + soft-sheet (Desktop LNB 게이트 폐기)', () => {
     expect(menu).toMatch(/BREAKPOINT_CONSULTANT_DESKTOP\s*=\s*1280/);
-    expect(menu).toMatch(
-      /MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER\s*=\s*'\(hover: hover\) and \(pointer: fine\)'/
-    );
-    expect(layoutJs).toMatch(/BREAKPOINT_CONSULTANT_DESKTOP/);
-    expect(layoutJs).toMatch(/MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER/);
-    expect(layoutJs).toMatch(/useMediaQuery/);
     expect(layoutJs).toMatch(/drawerVariant:\s*'soft-sheet'/);
     expect(layoutJs).toMatch(/isCounselorOnly/);
+    expect(layoutJs).toMatch(
+      /const isDesktop = isCounselorOnly\s*\?\s*false\s*:\s*\(windowSize\.width >= BREAKPOINT_DESKTOP\)/
+    );
+    expect(layoutJs).not.toMatch(/BREAKPOINT_CONSULTANT_DESKTOP/);
+    expect(layoutJs).not.toMatch(/MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER/);
+  });
+
+  it('soft-sheet 폭은 mg-v2 space 토큰 · ≥1280에서 더 얇음 (다크 드로어 비대상)', () => {
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*width:\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\.5\)/s
+    );
+    expect(css).toMatch(
+      /@media\s*\(min-width:\s*1280px\)[\s\S]*?\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*width:\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\)/s
+    );
+    // 기본 다크 드로어 width 규칙은 soft-sheet 블록 밖에서 유지
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-drawer\s*\{[^}]*width:\s*var\(--mg-layout-sidebar-width-mobile/s
+    );
   });
 
   it('overlay 게이트: drawer/overlay position:fixed · closed translateX(-100%)', () => {

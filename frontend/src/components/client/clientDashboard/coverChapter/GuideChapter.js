@@ -8,7 +8,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import SafeText from '../../../common/SafeText';
+import CoverGuideDenseRow from '../../../common/coverChapter/CoverGuideDenseRow';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../../../../constants/clientShopConstants';
 import {
@@ -41,22 +41,13 @@ const GuideChapter = ({ sheetMode }) => {
           {CLIENT_COVER_CHAPTER_GUIDE}
         </h2>
       </div>
-      <div className="client-cover__guide">
-        <h3 className="client-cover__guide-title">
-          <SafeText>{title}</SafeText>
-        </h3>
-        <p className="client-cover__guide-body">
-          <SafeText>{body}</SafeText>
-        </p>
-        <button
-          type="button"
-          className="client-cover__guide-go"
-          aria-label={CLIENT_COVER_GUIDE_GO_ARIA}
-          onClick={() => navigate(goTo)}
-        >
-          ›
-        </button>
-      </div>
+      <CoverGuideDenseRow
+        title={title}
+        body={body}
+        asButton
+        ariaLabel={CLIENT_COVER_GUIDE_GO_ARIA}
+        onClick={() => navigate(goTo)}
+      />
     </section>
   );
 };

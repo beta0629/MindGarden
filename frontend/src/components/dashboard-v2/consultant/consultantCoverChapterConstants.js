@@ -56,8 +56,11 @@ export const COVER_CHAPTER_CHIP_REMAINING = '남은';
 export const COVER_CHAPTER_MODE_FACE = '대면';
 export const COVER_CHAPTER_MODE_VIDEO = '화상';
 
-export const COVER_CHAPTER_MENU_ARIA = '메뉴';
 export const COVER_CHAPTER_GUIDE_MORE_ARIA = '안내 더보기';
+
+/** Cover SVG — split 좌커버(세로) / stack 전폭(가로, ipad-p) */
+export const COVER_CHAPTER_SVG_VARIANT_PORTRAIT = 'portrait';
+export const COVER_CHAPTER_SVG_VARIANT_LANDSCAPE = 'landscape';
 
 /**
  * 「다음 대기」 후보 상태 — 01 일정 매퍼 wait/확정 계열과 정합
@@ -72,9 +75,15 @@ export const COVER_CHAPTER_NEXT_WAITING_STATUSES = Object.freeze([
   'SCHEDULED'
 ]);
 
-/** true desktop 셸(≥1280 + fine-pointer) — 커버 전폭 스택 */
+/**
+ * @deprecated 레이아웃 SSOT는 COVER_CHAPTER_TABLET_SPLIT_MQ.
+ * 과거 ≥1280+fine-pointer → stack 강제에 쓰였으나 폐기(시안 web=split).
+ */
 export const COVER_CHAPTER_DESKTOP_SHELL_MQ =
   '(min-width: 1280px) and (hover: hover) and (pointer: fine)';
 
-/** 태블릿 가로 등 — 고정 LNB 없는 좌커버|우본문 분할 (Desktop 셸 제외) */
+/**
+ * Cover+Chapter 레이아웃 SSOT — ≥1024 항상 split(좌커버|우시트+챕터).
+ * 데스크톱 1280·1440·1920 · 태블릿 가로 1180 포함. <1024 → stack.
+ */
 export const COVER_CHAPTER_TABLET_SPLIT_MQ = '(min-width: 1024px)';

@@ -14,7 +14,13 @@ import {
   COVER_CHAPTER_CTA_OPEN_SCHEDULE,
   COVER_CHAPTER_NEXT_SHEET_TEST_ID,
   COVER_CHAPTER_BADGE_NONE,
-  COVER_CHAPTER_BADGE_CONFIRMED
+  COVER_CHAPTER_BADGE_CONFIRMED,
+  COVER_CHAPTER_BADGE_IN_PROGRESS,
+  COVER_CHAPTER_ZERO_BODY,
+  COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY,
+  COVER_CHAPTER_SHEET_KIND_IN_PROGRESS
 } from '../consultantCoverChapterConstants';
 
 jest.mock('../../../common/MGButton', () => ({
@@ -27,20 +33,26 @@ jest.mock('../../../common/MGButton', () => ({
 }));
 
 describe('ConsultantHomeNextSheet', () => {
-  test('zero: Primary 일정 열기 only — no 상담 열기 / 직접예약', () => {
+  test('zero true-empty: Primary 일정 열기 only — body 비어 있어요', () => {
     const onOpenConsultation = jest.fn();
     const onOpenSchedule = jest.fn();
 
     render(
       <ConsultantHomeNextSheet
         nextConsultation={null}
+        sheetKind={COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY}
+        todayCount={0}
         onOpenConsultation={onOpenConsultation}
         onOpenSchedule={onOpenSchedule}
       />
     );
 
     expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'zero');
+    expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID))
+      .toHaveAttribute('data-sheet-kind', COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY);
     expect(screen.getByText(COVER_CHAPTER_BADGE_NONE)).toBeInTheDocument();
+    expect(screen.getByText(COVER_CHAPTER_ZERO_BODY)).toBeInTheDocument();
+    expect(screen.queryByText(COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: COVER_CHAPTER_CTA_SCHEDULE })).not.toBeInTheDocument();
@@ -49,6 +61,23 @@ describe('ConsultantHomeNextSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE }));
     expect(onOpenSchedule).toHaveBeenCalledTimes(1);
     expect(onOpenConsultation).not.toHaveBeenCalled();
+  });
+
+  test('zero remaining-empty: today>0 → body 남은 상담 없음', () => {
+    render(
+      <ConsultantHomeNextSheet
+        nextConsultation={null}
+        sheetKind={COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY}
+        todayCount={3}
+        onOpenConsultation={jest.fn()}
+        onOpenSchedule={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID))
+      .toHaveAttribute('data-sheet-kind', COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY);
+    expect(screen.getByText(COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY)).toBeInTheDocument();
+    expect(screen.queryByText(COVER_CHAPTER_ZERO_BODY)).not.toBeInTheDocument();
   });
 
   test('has: 상담 열기 + 일정 — long name truncate class present', () => {
@@ -144,5 +173,28 @@ describe('ConsultantHomeNextSheet', () => {
     expect(document.querySelector('.consultant-cover-chapter__sheet-body')).toBeInTheDocument();
     expect(document.querySelector('.consultant-cover-chapter__sheet-meta')).not.toBeInTheDocument();
     expect(screen.queryByText('—')).not.toBeInTheDocument();
+  });
+
+  test('has in-progress: badge 진행 중', () => {
+    render(
+      <ConsultantHomeNextSheet
+        nextConsultation={{
+          timeLabel: '오늘 19:00',
+          bodyLabel: '홍길동 · 대면 50분',
+          metaLabel: '상담실',
+          badgeLabel: COVER_CHAPTER_BADGE_IN_PROGRESS,
+          scheduleId: 19,
+          sheetKind: COVER_CHAPTER_SHEET_KIND_IN_PROGRESS
+        }}
+        sheetKind={COVER_CHAPTER_SHEET_KIND_IN_PROGRESS}
+        onOpenConsultation={jest.fn()}
+        onOpenSchedule={jest.fn()}
+      />
+    );
+
+    expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
+    expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID))
+      .toHaveAttribute('data-sheet-kind', COVER_CHAPTER_SHEET_KIND_IN_PROGRESS);
+    expect(screen.getByText(COVER_CHAPTER_BADGE_IN_PROGRESS)).toBeInTheDocument();
   });
 });

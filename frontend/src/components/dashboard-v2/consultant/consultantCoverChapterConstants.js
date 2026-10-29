@@ -17,6 +17,7 @@ export const COVER_CHAPTER_CONSULTANT_SUFFIX = '상담사';
 
 export const COVER_CHAPTER_NEXT_LABEL = '다음 상담';
 export const COVER_CHAPTER_BADGE_CONFIRMED = '확정';
+export const COVER_CHAPTER_BADGE_IN_PROGRESS = '진행 중';
 export const COVER_CHAPTER_BADGE_NONE = '없음';
 
 export const COVER_CHAPTER_CTA_OPEN_CONSULTATION = '상담 열기';
@@ -27,9 +28,21 @@ export const COVER_CHAPTER_VIEW_ALL = '전체';
 
 export const COVER_CHAPTER_ZERO_DOM = '0';
 export const COVER_CHAPTER_ZERO_UNIT = '건';
+/** today=0 진짜 빈 날 */
 export const COVER_CHAPTER_ZERO_BODY = '오늘 일정이 비어 있어요';
+/** today>0 이고 미래 start remaining=0 */
+export const COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY = '오늘 남은 상담 없음';
 export const COVER_CHAPTER_ZERO_META = '주간 일정에서 배정·확인을 이어가세요';
 export const COVER_CHAPTER_ZERO_COVER_SUB = '오늘은 예정된 상담이 없어요';
+
+/** Next-Sheet 표시 종류 */
+export const COVER_CHAPTER_SHEET_KIND_HAS = 'has';
+export const COVER_CHAPTER_SHEET_KIND_IN_PROGRESS = 'in-progress';
+export const COVER_CHAPTER_SHEET_KIND_REMAINING_EMPTY = 'remaining-empty';
+export const COVER_CHAPTER_SHEET_KIND_TRUE_EMPTY = 'true-empty';
+
+/** endTime 없을 때 진행 중 판정용 기본 회기 길이(분) */
+export const COVER_CHAPTER_DEFAULT_DURATION_MINUTES = 50;
 
 export const COVER_CHAPTER_EMPTY_TITLE = '오늘 일정이 없어요';
 export const COVER_CHAPTER_EMPTY_DESC = '다음 상담이 잡히면 여기에 시간순으로 모입니다';
@@ -48,6 +61,8 @@ export const COVER_CHAPTER_INCOMPLETE_HINT = (count) => (
 export const COVER_CHAPTER_PILL_NEXT = '다음';
 export const COVER_CHAPTER_PILL_DONE = '완료';
 export const COVER_CHAPTER_PILL_WAIT = '대기';
+/** 과거 예약계열(서버 status mutate 금지) FE 표시용 */
+export const COVER_CHAPTER_PILL_JOURNAL_PENDING = '일지 미작성';
 
 export const COVER_CHAPTER_CHIP_TODAY = '오늘';
 export const COVER_CHAPTER_CHIP_DONE = '완료';

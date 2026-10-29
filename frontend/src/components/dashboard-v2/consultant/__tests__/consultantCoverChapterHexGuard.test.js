@@ -44,4 +44,35 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\.consultant-cover-chapter__chapters\s*\{[^}]*flex-direction:\s*column/s
     );
   });
+
+  test('cover min-height uses mg-v2 spacing tokens (no raw 280px/360px/400px)', () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', 'ConsultantCoverChapterHome.css'),
+      'utf8'
+    );
+    expect(source).toContain('--cch-cover-min-h: calc(var(--mg-v2-space-20) * 3.5)');
+    expect(source).toContain('--cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 4.5)');
+    expect(source).toContain('--cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 5)');
+    expect(source).not.toMatch(/min-height:\s*280px/);
+    expect(source).not.toMatch(/min-height:\s*360px/);
+    expect(source).not.toMatch(/min-height:\s*400px/);
+  });
+
+  test('desktop fine-pointer forces full-span stack; split only via data-layout', () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, '..', 'ConsultantCoverChapterHome.css'),
+      'utf8'
+    );
+    expect(source).toMatch(/data-layout='split'/);
+    expect(source).toMatch(
+      /@media\s*\(min-width:\s*1280px\)\s*and\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)/
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__meta\s*\{[^}]*position:\s*relative/s
+    );
+    // bare 1024 row on root (fake LNB) 금지 — split 게이트만
+    expect(source).not.toMatch(
+      /@media\s*\(min-width:\s*1024px\)\s*\{\s*\.consultant-cover-chapter\s*\{\s*flex-direction:\s*row/
+    );
+  });
 });

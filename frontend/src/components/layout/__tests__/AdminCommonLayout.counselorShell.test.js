@@ -113,7 +113,12 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     expect(layout).toHaveAttribute('data-header-title', '상담');
     expect(layout).toHaveAttribute('data-logo-home', '/consultant/dashboard');
     const labels = layout.getAttribute('data-menu-labels') || '';
+    expect(labels.length).toBeGreaterThan(0);
     expect(labels).toContain('대시보드');
+    expect(labels).toContain('일정 관리');
+    expect(labels).toContain('내담자 조회');
+    expect(labels).toContain('상담 기록');
+    expect(labels).toContain('급여 정산');
     expect(labels).not.toContain('시스템·설정');
     expect(labels).not.toContain('운영·재무');
     expect(mockGetLnbMenus).not.toHaveBeenCalled();

@@ -39,6 +39,12 @@
   --cch-safe-b: env(safe-area-inset-bottom, 0px);
   --cch-safe-l: env(safe-area-inset-left, 0px);
   --cch-font: var(--mg-v2-font-family-base);
+  /* 시안 280/360/400 → spacing 토큰 배수 (px 리터럴 금지) */
+  --cch-cover-min-h: calc(var(--mg-v2-space-20) * 3.5);
+  --cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 4.5);
+  --cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 5);
+  --cch-top-bar-h: var(--mg-v2-component-height-lg);
+  --cch-sheet-overhang: calc(var(--mg-v2-space-12) + var(--mg-v2-space-2));
 
   box-sizing: border-box;
   display: flex;
@@ -67,9 +73,12 @@
 /* ===== COVER ===== */
 .consultant-cover-chapter__cover {
   position: relative;
+  display: flex;
+  flex-direction: column;
   flex: 0 0 auto;
-  height: 42%;
-  min-height: 280px;
+  width: 100%;
+  height: auto;
+  min-height: var(--cch-cover-min-h);
   background: var(--cch-cover-deep);
   color: var(--cch-cover-fg);
   overflow: visible;
@@ -103,20 +112,22 @@
 .consultant-cover-chapter__cover-top {
   position: relative;
   z-index: 2;
+  flex: 0 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(12px + var(--cch-safe-t)) 16px 0;
-  padding-left: calc(16px + var(--cch-safe-l));
-  padding-right: calc(16px + var(--cch-safe-r));
-  gap: 10px;
+  min-height: calc(var(--cch-top-bar-h) + var(--mg-v2-space-3) + var(--cch-safe-t));
+  padding: calc(var(--mg-v2-space-3) + var(--cch-safe-t)) var(--mg-v2-space-4) 0;
+  padding-left: calc(var(--mg-v2-space-4) + var(--cch-safe-l));
+  padding-right: calc(var(--mg-v2-space-4) + var(--cch-safe-r));
+  gap: var(--mg-v2-space-2);
 }
 
 .consultant-cover-chapter__menu-btn {
-  width: 44px;
-  height: 44px;
-  min-width: 44px;
-  min-height: 44px;
+  width: var(--mg-v2-component-height-lg);
+  height: var(--mg-v2-component-height-lg);
+  min-width: var(--mg-v2-component-height-lg);
+  min-height: var(--mg-v2-component-height-lg);
   border: 1px solid color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 22%, transparent);
   border-radius: var(--cch-r8);
   background: color-mix(in srgb, var(--mg-v2-color-neutral-900) 35%, transparent);
@@ -142,14 +153,19 @@
   margin-left: auto;
 }
 
+/* flow meta — absolute 제거로 ~55px 높이 붕괴·햄버거 겹침 방지 */
 .consultant-cover-chapter__meta {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  left: 20px;
-  right: 20px;
-  bottom: 92px;
-  padding-left: var(--cch-safe-l);
-  padding-right: var(--cch-safe-r);
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  margin-top: var(--mg-v2-space-4);
+  padding: 0 var(--mg-v2-space-5) var(--cch-sheet-overhang);
+  padding-left: calc(var(--mg-v2-space-5) + var(--cch-safe-l));
+  padding-right: calc(var(--mg-v2-space-5) + var(--cch-safe-r));
+  min-width: 0;
 }
 
 .consultant-cover-chapter__kicker {
@@ -194,16 +210,16 @@
 
 /* ===== NEXT SHEET ===== */
 .consultant-cover-chapter__sheet {
-  position: absolute;
+  position: relative;
   z-index: 3;
-  left: 16px;
-  right: 16px;
-  bottom: -56px;
+  margin: calc(-1 * var(--cch-sheet-overhang) + var(--mg-v2-space-2))
+    var(--mg-v2-space-4)
+    0;
   background: var(--cch-white);
   border-radius: var(--cch-r16);
   border: 1px solid var(--cch-line);
   box-shadow: var(--mg-v2-shadow-lg);
-  padding: 14px 14px 12px;
+  padding: 0.875rem 0.875rem var(--mg-v2-space-3);
   animation: consultant-cch-sheet-rise 480ms var(--cch-ease) both;
 }
 
@@ -347,10 +363,15 @@
   flex: 1;
   overflow: auto;
   min-height: 0;
-  padding: 72px 16px calc(16px + var(--cch-safe-b));
-  padding-left: calc(16px + var(--cch-safe-l));
-  padding-right: calc(16px + var(--cch-safe-r));
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-4) calc(var(--mg-v2-space-4) + var(--cch-safe-b));
+  padding-left: calc(var(--mg-v2-space-4) + var(--cch-safe-l));
+  padding-right: calc(var(--mg-v2-space-4) + var(--cch-safe-r));
   -webkit-overflow-scrolling: touch;
+}
+
+/* stack 모드: 시트가 커버 자식일 때 스크롤 상단 여유 */
+.consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__scroll {
+  padding-top: var(--mg-v2-space-3);
 }
 
 .consultant-cover-chapter__chapters {
@@ -642,17 +663,17 @@
   font-weight: 600;
 }
 
-/* ===== Tablet portrait — stacked, sheet on cover ===== */
+/* ===== Tablet portrait — stacked, full-span cover ===== */
 @media (min-width: 768px) and (max-width: 1023px) {
   .consultant-cover-chapter__cover {
-    height: 42%;
-    min-height: 360px;
+    width: 100%;
+    min-height: var(--cch-cover-min-h-tablet);
   }
 
   .consultant-cover-chapter__meta {
-    bottom: 168px;
-    left: 28px;
-    right: 28px;
+    padding-left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
+    padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
+    padding-bottom: calc(var(--cch-sheet-overhang) + var(--mg-v2-space-4));
   }
 
   .consultant-cover-chapter__name {
@@ -660,10 +681,9 @@
   }
 
   .consultant-cover-chapter__sheet {
-    left: 28px;
-    right: 28px;
-    bottom: -48px;
-    padding: 16px 18px;
+    margin-left: var(--mg-v2-space-6);
+    margin-right: var(--mg-v2-space-6);
+    padding: var(--mg-v2-space-4) 1.125rem;
   }
 
   .consultant-cover-chapter__sheet-dom {
@@ -671,86 +691,143 @@
   }
 
   .consultant-cover-chapter__scroll {
-    padding-top: 64px;
-    padding-left: calc(28px + var(--cch-safe-l));
-    padding-right: calc(28px + var(--cch-safe-r));
+    padding-left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
+    padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
   }
 
   .consultant-cover-chapter__chapters {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1.25fr 0.85fr;
+    gap: var(--mg-v2-space-3);
+    align-items: start;
   }
 
   .consultant-cover-chapter__chapter {
     margin-bottom: 0;
     width: 100%;
+    min-width: 0;
   }
 }
 
-/* ===== Web / Tablet landscape — left cover | right sheet+chapters ===== */
+/*
+ * Tablet landscape / mid-width without true Desktop LNB:
+ * 좌커버 | 우시트+챕터 (tobe-home ipad-l).
+ * true desktop(≥1280 + fine-pointer)은 아래 오버라이드로 전폭 스택.
+ */
 @media (min-width: 1024px) {
-  .consultant-cover-chapter {
+  .consultant-cover-chapter[data-layout='split'] {
     flex-direction: row;
   }
 
-  .consultant-cover-chapter__cover {
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__cover {
     width: 44%;
-    max-width: 520px;
-    height: 100%;
-    min-height: 0;
-    flex: none;
+    max-width: calc(var(--mg-v2-space-20) * 6.5);
+    height: auto;
+    align-self: stretch;
+    min-height: max(var(--cch-cover-min-h-tablet), 100%);
+    flex: 0 0 44%;
     overflow: hidden;
   }
 
-  .consultant-cover-chapter__meta {
-    bottom: 28px;
-    left: 28px;
-    right: 28px;
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__meta {
+    padding-bottom: var(--mg-v2-space-6);
+    padding-left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
+    padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__name {
+    font-size: 2rem;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__body {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__sheet {
+    margin: var(--mg-v2-space-3) var(--mg-v2-space-4) 0;
+    padding: var(--mg-v2-space-4) var(--mg-v2-space-4) 0.875rem;
+    box-shadow: var(--mg-v2-shadow-md);
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__sheet-dom {
+    font-size: 2.125rem;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__scroll {
+    padding: 0.625rem var(--mg-v2-space-4) calc(0.875rem + var(--cch-safe-b));
+    flex: 1;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapters {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapter {
+    margin-bottom: 0.9375rem;
+  }
+}
+
+/*
+ * True desktop shell: DesktopLayout LNB + 본문 안 커버 전폭 스택.
+ * 1024 row 분할을 강제 해제해 가짜 LNB/빈 열 방지.
+ */
+@media (min-width: 1280px) and (hover: hover) and (pointer: fine) {
+  .consultant-cover-chapter,
+  .consultant-cover-chapter[data-layout='split'],
+  .consultant-cover-chapter[data-layout='stack'] {
+    flex-direction: column;
+  }
+
+  .consultant-cover-chapter__cover,
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__cover {
+    width: 100%;
+    max-width: none;
+    flex: 0 0 auto;
+    height: auto;
+    min-height: var(--cch-cover-min-h-tablet-lg);
+    align-self: stretch;
+    overflow: visible;
+  }
+
+  .consultant-cover-chapter__body,
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__body {
+    flex: 1;
+    width: 100%;
+    height: auto;
+  }
+
+  .consultant-cover-chapter__chapters,
+  .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__chapters {
+    display: grid;
+    grid-template-columns: 1.25fr 0.85fr;
+    gap: var(--mg-v2-space-3);
+    align-items: start;
+  }
+
+  .consultant-cover-chapter__chapter {
+    margin-bottom: 0;
+    min-width: 0;
   }
 
   .consultant-cover-chapter__name {
     font-size: 2rem;
   }
 
-  .consultant-cover-chapter__body {
-    flex: 1;
-    height: 100%;
-  }
-
   .consultant-cover-chapter__sheet {
-    position: relative;
-    left: auto;
-    right: auto;
-    bottom: auto;
-    margin: 12px 16px 0;
-    padding: 16px 16px 14px;
+    margin: calc(-1 * var(--cch-sheet-overhang) + var(--mg-v2-space-2))
+      var(--mg-v2-space-6)
+      0;
+    padding: var(--mg-v2-space-4);
     box-shadow: var(--mg-v2-shadow-md);
   }
 
-  .consultant-cover-chapter__sheet-dom {
-    font-size: 2.125rem;
-  }
-
   .consultant-cover-chapter__scroll {
-    padding: 10px 16px calc(14px + var(--cch-safe-b));
-    flex: 1;
-  }
-
-  .consultant-cover-chapter__chapters {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .consultant-cover-chapter__chapter {
-    margin-bottom: 15px;
-  }
-}
-
-@media (min-width: 1280px) {
-  .consultant-cover-chapter__cover {
-    width: 42%;
+    padding: var(--mg-v2-space-3) var(--mg-v2-space-6) calc(var(--mg-v2-space-4) + var(--cch-safe-b));
   }
 }
 

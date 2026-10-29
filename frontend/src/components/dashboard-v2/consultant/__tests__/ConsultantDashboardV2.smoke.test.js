@@ -122,7 +122,9 @@ let mockIncompleteRecords = {
   ]
 };
 
-let mockPreparation = { consultation: null };
+/** 실 API ScheduleController.getUpcomingPreparation 계약 — consultation 키 없음 */
+let mockPreparation = { preparations: [] };
+let mockScheduleList = [];
 
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
@@ -144,7 +146,7 @@ jest.mock('../../../../utils/standardizedApi', () => ({
         return Promise.resolve({ schedules: [] });
       }
       if (String(url).includes('schedules')) {
-        return Promise.resolve({ schedules: [] });
+        return Promise.resolve({ schedules: mockScheduleList });
       }
       return Promise.resolve(mockStatsResponse);
     })
@@ -176,6 +178,7 @@ const mockApiGet = (url) => {
     return Promise.resolve(mockIncompleteRecords);
   }
   if (u.includes('upcoming-preparation')) {
+    // 대시보드는 더 이상 호출하지 않음 — 실계약 shape만 유지
     return Promise.resolve(mockPreparation);
   }
   if (u.includes('unread-count')) {
@@ -188,7 +191,7 @@ const mockApiGet = (url) => {
     return Promise.resolve({ schedules: [] });
   }
   if (u.includes('schedules')) {
-    return Promise.resolve({ schedules: [] });
+    return Promise.resolve({ schedules: mockScheduleList });
   }
   return Promise.resolve(mockStatsResponse);
 };
@@ -232,7 +235,11 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
         }
       ]
     };
-    mockPreparation = { consultation: null };
+    mockPreparation = { preparations: [] };
+    mockScheduleList = [];
+    mockStatsResponse.totalToday = 0;
+    mockStatsResponse.completedToday = 0;
+    mockStatsResponse.inProgressToday = 0;
     fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
     StandardizedApi.get.mockImplementation(mockApiGet);
   });
@@ -278,28 +285,38 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     expect(mockNavigate).toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   });
 
-  test('has next-sheet: 상담 열기 + 일정 CTA', async() => {
-    const tomorrow = new Date();
-    tomorrow.setHours(14, 30, 0, 0);
-    mockPreparation = {
-      consultation: {
+  test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담 열기 + 일정 CTA', async() => {
+    // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
+    mockPreparation = { preparations: [] };
+    const start = new Date();
+    start.setHours(start.getHours() + 2, 0, 0, 0);
+    const end = new Date(start.getTime() + 50 * 60000);
+    mockScheduleList = [
+      {
+        id: 501,
         scheduleId: 501,
         clientId: 9,
         clientName: '남궁민서윤아림정한솔예린',
-        startTime: tomorrow.toISOString(),
-        endTime: new Date(tomorrow.getTime() + 50 * 60000).toISOString(),
-        sessionNumber: 2,
-        status: 'CONFIRMED',
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        status: 'PENDING',
         packageName: '개인상담',
         roomName: '3층 상담실 B'
       }
-    };
+    ];
+    mockStatsResponse.totalToday = 1;
+    mockStatsResponse.inProgressToday = 1;
 
     renderDashboard();
 
     await waitFor(() => {
       expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
     });
+
+    const preparationCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+      String(url).includes('upcoming-preparation')
+    );
+    expect(preparationCalls).toHaveLength(0);
 
     expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_SCHEDULE })).toBeInTheDocument();

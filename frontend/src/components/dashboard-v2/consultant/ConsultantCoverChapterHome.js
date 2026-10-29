@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ConsultantHomeCover from './ConsultantHomeCover';
 import ConsultantHomeNextSheet from './ConsultantHomeNextSheet';
@@ -7,7 +7,9 @@ import ConsultantHomeGuideChapter from './ConsultantHomeGuideChapter';
 import {
   COVER_CHAPTER_ROOT_CLASS,
   COVER_CHAPTER_TEST_ID,
-  COVER_CHAPTER_BRAND_FALLBACK
+  COVER_CHAPTER_BRAND_FALLBACK,
+  COVER_CHAPTER_DESKTOP_SHELL_MQ,
+  COVER_CHAPTER_TABLET_SPLIT_MQ
 } from './consultantCoverChapterConstants';
 import {
   formatCoverDateLabel,
@@ -17,23 +19,28 @@ import {
   mapTodayScheduleRows,
   mapScheduleChips,
   mapGuideContent,
-  filterTodayOnlySchedules
+  filterTodayOnlySchedules,
+  selectNextWaitingSchedule
 } from './consultantCoverChapterMappers';
+import { getNow } from '../../../utils/serverClock';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../constants/consultantDashboardConstants';
 import './ConsultantCoverChapterHome.css';
 
-/** Web / tablet landscape — 좌 커버 | 우 시트 (tobe-home.html) */
-const SPLIT_MQ = '(min-width: 1024px)';
-
 /**
+ * 태블릿 가로 등 고정 LNB 없을 때만 좌커버 분할.
+ * true desktop(≥1280+fine-pointer)은 DesktopLayout LNB + 커버 전폭 스택.
+ *
  * @returns {boolean}
  */
 const getIsSplitLayout = () => {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
     return false;
   }
-  return window.matchMedia(SPLIT_MQ).matches;
+  if (window.matchMedia(COVER_CHAPTER_DESKTOP_SHELL_MQ).matches) {
+    return false;
+  }
+  return window.matchMedia(COVER_CHAPTER_TABLET_SPLIT_MQ).matches;
 };
 
 /**
@@ -45,7 +52,6 @@ const getIsSplitLayout = () => {
 const ConsultantCoverChapterHome = ({
   user,
   brandName,
-  nextConsultation,
   todaySchedules = [],
   upcomingSchedules = [],
   stats = {},
@@ -60,41 +66,72 @@ const ConsultantCoverChapterHome = ({
   onMenuClick
 }) => {
   const [isSplitLayout, setIsSplitLayout] = useState(getIsSplitLayout);
+  const [clockTick, setClockTick] = useState(0);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
       return undefined;
     }
-    const mql = window.matchMedia(SPLIT_MQ);
-    const onChange = (event) => {
-      setIsSplitLayout(Boolean(event.matches));
+    const desktopMql = window.matchMedia(COVER_CHAPTER_DESKTOP_SHELL_MQ);
+    const splitMql = window.matchMedia(COVER_CHAPTER_TABLET_SPLIT_MQ);
+    const onChange = () => {
+      setIsSplitLayout(getIsSplitLayout());
     };
-    setIsSplitLayout(Boolean(mql.matches));
-    if (typeof mql.addEventListener === 'function') {
-      mql.addEventListener('change', onChange);
-      return () => mql.removeEventListener('change', onChange);
+    setIsSplitLayout(getIsSplitLayout());
+    const bind = (mql) => {
+      if (typeof mql.addEventListener === 'function') {
+        mql.addEventListener('change', onChange);
+        return () => mql.removeEventListener('change', onChange);
+      }
+      mql.addListener(onChange);
+      return () => mql.removeListener(onChange);
+    };
+    const unbindDesktop = bind(desktopMql);
+    const unbindSplit = bind(splitMql);
+    return () => {
+      unbindDesktop();
+      unbindSplit();
+    };
+  }, []);
+
+  // 분 단위 재평가 — 다음 대기 셀렉터가 서버 now 기준으로 갱신되도록
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
     }
-    mql.addListener(onChange);
-    return () => mql.removeListener(onChange);
+    const id = window.setInterval(() => {
+      setClockTick((prev) => prev + 1);
+    }, 60000);
+    return () => window.clearInterval(id);
   }, []);
 
   const centerLabel = toDisplayString(brandName, COVER_CHAPTER_BRAND_FALLBACK);
   const consultantName = formatConsultantDisplayName(user?.name);
-  const kicker = formatCoverDateLabel(new Date());
+  const now = useMemo(() => {
+    void clockTick;
+    return getNow();
+  }, [clockTick]);
+  const kicker = formatCoverDateLabel(now);
 
   const todayOnly = useMemo(
-    () => filterTodayOnlySchedules(todaySchedules),
-    [todaySchedules]
+    () => filterTodayOnlySchedules(todaySchedules, now),
+    [todaySchedules, now]
+  );
+
+  // 스케줄 배열 SSOT (preparation API 미사용)
+  const nextWaiting = useMemo(
+    () => selectNextWaitingSchedule(todayOnly, now),
+    [todayOnly, now]
   );
 
   const sheetModel = useMemo(
-    () => mapNextConsultationSheet(nextConsultation),
-    [nextConsultation]
+    () => mapNextConsultationSheet(nextWaiting),
+    [nextWaiting]
   );
 
   const scheduleRows = useMemo(
-    () => mapTodayScheduleRows(todayOnly, nextConsultation),
-    [todayOnly, nextConsultation]
+    () => mapTodayScheduleRows(todayOnly, nextWaiting),
+    [todayOnly, nextWaiting]
   );
 
   const chips = useMemo(
@@ -103,8 +140,8 @@ const ConsultantCoverChapterHome = ({
   );
 
   const coverSubtitle = useMemo(
-    () => buildCoverSubtitle(nextConsultation, chips.today),
-    [nextConsultation, chips.today]
+    () => buildCoverSubtitle(nextWaiting, chips.today),
+    [nextWaiting, chips.today]
   );
 
   const guide = useMemo(
@@ -112,13 +149,20 @@ const ConsultantCoverChapterHome = ({
     [notifications, incompleteCount]
   );
 
-  // upcoming 은 예비 소스(매퍼·확장용). 현재 시트는 preparation SSOT.
+  // upcoming 은 예비 소스(매퍼·확장용). 시트·필은 today 스케줄 SSOT.
   void upcomingSchedules;
+
+  const handleOpenConsultation = useCallback(() => {
+    if (typeof onOpenConsultation !== 'function') {
+      return;
+    }
+    onOpenConsultation(sheetModel?.scheduleId ?? nextWaiting?.id ?? null);
+  }, [onOpenConsultation, sheetModel, nextWaiting]);
 
   const nextSheet = (
     <ConsultantHomeNextSheet
       nextConsultation={sheetModel}
-      onOpenConsultation={onOpenConsultation}
+      onOpenConsultation={handleOpenConsultation}
       onOpenSchedule={onOpenSchedule}
     />
   );
@@ -179,7 +223,6 @@ ConsultantCoverChapterHome.propTypes = {
     tenant: PropTypes.shape({ name: PropTypes.string })
   }),
   brandName: PropTypes.string,
-  nextConsultation: PropTypes.object,
   todaySchedules: PropTypes.array,
   upcomingSchedules: PropTypes.array,
   stats: PropTypes.object,

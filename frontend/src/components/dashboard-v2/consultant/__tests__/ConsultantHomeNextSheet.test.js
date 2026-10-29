@@ -85,4 +85,22 @@ describe('ConsultantHomeNextSheet', () => {
     expect(screen.queryByText('직접예약')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE })).not.toBeInTheDocument();
   });
+
+  test('has model scheduleId is retained for CTA wiring', () => {
+    render(
+      <ConsultantHomeNextSheet
+        nextConsultation={{
+          timeLabel: '오늘 14:00',
+          bodyLabel: '홍길동 · 대면 50분',
+          metaLabel: '상담실',
+          badgeLabel: COVER_CHAPTER_BADGE_CONFIRMED,
+          scheduleId: 777
+        }}
+        onOpenConsultation={jest.fn()}
+        onOpenSchedule={jest.fn()}
+      />
+    );
+    expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
+    expect(screen.getByText('오늘 14:00')).toBeInTheDocument();
+  });
 });

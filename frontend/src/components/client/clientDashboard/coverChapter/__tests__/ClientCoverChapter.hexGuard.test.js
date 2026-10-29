@@ -46,6 +46,16 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /\.client-cover__chapter\s*\{[^}]*animation:[^;]*\bboth\b/s
     );
+    // sheet-rise: both=backwards → 첫 페인트 opacity:0. forwards만
+    expect(css).toMatch(
+      /\.client-cover__sheet\s*\{[^}]*animation:[^;]*forwards/s
+    );
+    expect(css).not.toMatch(
+      /\.client-cover__sheet\s*\{[^}]*animation:[^;]*\bboth\b/s
+    );
+    expect(css).toMatch(
+      /@import\s+['"]\.\.\/\.\.\/\.\.\/common\/coverChapter\/CoverGuideDenseRow\.css['"]/
+    );
     // stage-max 고정폭 박스 금지
     expect(css).not.toContain('--client-cover-stage-max');
     expect(css).not.toMatch(

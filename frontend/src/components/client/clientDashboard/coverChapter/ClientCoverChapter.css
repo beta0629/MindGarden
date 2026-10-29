@@ -4,6 +4,9 @@
  * 토큰: --mg-v2-* only · hex 금지 · Floor FAIL 없음
  */
 
+/* 챕터 02 안내 — CoverGuideDenseRow SSOT (복제 금지) */
+@import '../../../common/coverChapter/CoverGuideDenseRow.css';
+
 .client-cover {
   --client-cover-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --client-cover-ease-press: cubic-bezier(0.4, 0, 0.2, 1);
@@ -185,7 +188,8 @@
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   box-shadow: var(--mg-v2-shadow-md);
   padding: 0.875rem 0.875rem var(--mg-v2-space-3);
-  animation: client-cover-sheet-rise 480ms var(--client-cover-ease) both;
+  /* both=backwards → 첫 페인트 opacity:0. forwards만 (챕터·상담사 sheet와 정합) */
+  animation: client-cover-sheet-rise 480ms var(--client-cover-ease) forwards;
 }
 
 @keyframes client-cover-sheet-rise {
@@ -542,7 +546,7 @@
   color: var(--mg-v2-color-semantic-warning-dark);
 }
 
-/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 */
+/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 → 파일 상단 @import SSOT */
 
 /* ===== DOCK — body 패널 하단 (viewport fixed 금지 · split 커버 뒤로 가림 방지) ===== */
 .client-cover__dock {

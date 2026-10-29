@@ -26,6 +26,8 @@ import {
 import { getNow } from '../../../utils/serverClock';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { CONSULTANT_DASHBOARD_TITLE_ID } from '../../../constants/consultantDashboardConstants';
+/* parent CSS @import + 번들 엔트리 side-effect — CoverGuideDenseRow SSOT */
+import '../../common/coverChapter/CoverGuideDenseRow.css';
 import './ConsultantCoverChapterHome.css';
 
 /**

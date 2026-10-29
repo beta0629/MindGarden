@@ -3,6 +3,9 @@
  * Color/radius/font aliases resolve only to --mg-v2-* (no hex literals).
  */
 
+/* 챕터 02 안내 — CoverGuideDenseRow SSOT (복제 금지) */
+@import '../../common/coverChapter/CoverGuideDenseRow.css';
+
 .consultant-cover-chapter {
   --cch-ink: var(--mg-v2-color-neutral-900);
   --cch-ink2: var(--mg-v2-color-secondary-dark);
@@ -692,7 +695,7 @@
   color: var(--cch-primary-hover);
 }
 
-/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 */
+/* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 → 파일 상단 @import SSOT */
 
 .consultant-cover-chapter__alert {
   margin: 0 16px 8px;

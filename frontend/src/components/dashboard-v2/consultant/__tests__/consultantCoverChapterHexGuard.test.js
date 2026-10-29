@@ -253,6 +253,15 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\.consultant-cover-chapter__chapter\s*\{[^}]*animation:[^;]*\bboth\b/s
     );
     expect(source).toMatch(
+      /\.consultant-cover-chapter__sheet\s*\{[^}]*animation:[^;]*forwards/s
+    );
+    expect(source).not.toMatch(
+      /\.consultant-cover-chapter__sheet\s*\{[^}]*animation:[^;]*\bboth\b/s
+    );
+    expect(source).toMatch(
+      /@import\s+['"]\.\.\/\.\.\/common\/coverChapter\/CoverGuideDenseRow\.css['"]/
+    );
+    expect(source).toMatch(
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*position:\s*relative/s
     );
   });

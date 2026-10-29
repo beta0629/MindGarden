@@ -5,11 +5,14 @@
  * @since 2026-09-17
  */
 
-import { CLIENT_LOBBY_HERO_PRIORITY } from '../constants';
+import { CLIENT_COVER_SHEET_MODE, CLIENT_LOBBY_HERO_PRIORITY } from '../constants';
 import {
   buildSessionChipAndBalance,
+  countPendingPaymentMappings,
+  formatCoverSheetDomTime,
   formatLobbyAmPmTime,
   formatLobbyDateTime,
+  resolveCoverSheetMode,
   resolveHeroPriority,
   resolveLobbyBrandLabels
 } from '../lobbyViewModel';
@@ -151,5 +154,36 @@ describe('lobbyViewModel', () => {
     const label = formatLobbyDateTime({ date: '2099-09-20', startTime: '14:00' });
     expect(label).toMatch(/9월/);
     expect(label).toMatch(/오후 2:00/);
+  });
+
+  test('resolveCoverSheetMode: has / zero / quiet', () => {
+    expect(resolveCoverSheetMode(CLIENT_LOBBY_HERO_PRIORITY.NEXT_APPOINTMENT))
+      .toBe(CLIENT_COVER_SHEET_MODE.HAS);
+    expect(resolveCoverSheetMode(CLIENT_LOBBY_HERO_PRIORITY.ZERO_SESSIONS))
+      .toBe(CLIENT_COVER_SHEET_MODE.ZERO);
+    expect(resolveCoverSheetMode(CLIENT_LOBBY_HERO_PRIORITY.PENDING_PAYMENT))
+      .toBe(CLIENT_COVER_SHEET_MODE.ZERO);
+    expect(resolveCoverSheetMode(CLIENT_LOBBY_HERO_PRIORITY.QUIET_DAY))
+      .toBe(CLIENT_COVER_SHEET_MODE.QUIET);
+    expect(resolveCoverSheetMode(CLIENT_LOBBY_HERO_PRIORITY.CONSULTANT_UNASSIGNED))
+      .toBe(CLIENT_COVER_SHEET_MODE.QUIET);
+  });
+
+  test('formatCoverSheetDomTime · countPendingPaymentMappings', () => {
+    const today = new Date('2099-09-20T10:00:00');
+    expect(formatCoverSheetDomTime(
+      { date: '2099-09-20', startTime: '14:30' },
+      today
+    )).toBe('오늘 14:30');
+    expect(formatCoverSheetDomTime(
+      { date: '2099-09-21', startTime: '09:00' },
+      today
+    )).toBe('내일 09:00');
+
+    expect(countPendingPaymentMappings([
+      { status: MAPPING_STATUS.PENDING_PAYMENT },
+      { status: 'ACTIVE', paymentStatus: 'PENDING' },
+      { status: 'ACTIVE', paymentStatus: 'CONFIRMED' }
+    ])).toBe(2);
   });
 });

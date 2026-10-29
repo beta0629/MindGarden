@@ -19,6 +19,9 @@ import {
 } from '../../../constants/mapping';
 import {
   CLIENT_DEFAULT_CONSULTANT_LABEL,
+  CLIENT_COVER_SHEET_MODE,
+  CLIENT_COVER_TODAY_LABEL,
+  CLIENT_COVER_TOMORROW_LABEL,
   CLIENT_LOBBY_CHIP_PACKAGE,
   CLIENT_LOBBY_CHIP_SINGLE,
   CLIENT_LOBBY_DEFAULT_DURATION_MIN,
@@ -84,6 +87,67 @@ export function formatLobbyDateTime(schedule) {
   const wd = d.toLocaleDateString('ko-KR', { weekday: 'long' });
   const time = formatLobbyAmPmTime(schedule.startTime);
   return time ? `${md} ${wd} · ${time}` : `${md} ${wd}`;
+}
+
+/**
+ * 커버 next-sheet dominant 시각 — 「오늘 14:30」 / 「9월 20일 14:00」
+ * @param {object} schedule
+ * @param {Date} [now]
+ * @returns {string}
+ */
+export function formatCoverSheetDomTime(schedule, now = new Date()) {
+  if (!schedule?.date) {
+    return '—';
+  }
+  const d = new Date(schedule.date);
+  if (Number.isNaN(d.getTime())) {
+    return '—';
+  }
+  const rawTime = toDisplayString(schedule.startTime, '');
+  const timeParts = rawTime.split(':');
+  const hh = timeParts[0] != null ? String(timeParts[0]).padStart(2, '0') : '';
+  const mm = timeParts[1] != null ? String(timeParts[1]).padStart(2, '0') : '00';
+  const clock = hh ? `${hh}:${mm}` : '';
+  const days = daysUntilSchedule(schedule.date, now);
+  if (days === 0) {
+    return clock ? `${CLIENT_COVER_TODAY_LABEL} ${clock}` : CLIENT_COVER_TODAY_LABEL;
+  }
+  if (days === 1) {
+    return clock
+      ? `${CLIENT_COVER_TOMORROW_LABEL} ${clock}`
+      : CLIENT_COVER_TOMORROW_LABEL;
+  }
+  const md = d.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' });
+  return clock ? `${md} ${clock}` : md;
+}
+
+/**
+ * next-sheet has/zero/quiet 모드 — resolveHeroPriority 재사용
+ * @param {string} heroPriority
+ * @returns {string}
+ */
+export function resolveCoverSheetMode(heroPriority) {
+  if (heroPriority === CLIENT_LOBBY_HERO_PRIORITY.NEXT_APPOINTMENT) {
+    return CLIENT_COVER_SHEET_MODE.HAS;
+  }
+  if (
+    heroPriority === CLIENT_LOBBY_HERO_PRIORITY.ZERO_SESSIONS
+    || heroPriority === CLIENT_LOBBY_HERO_PRIORITY.PENDING_PAYMENT
+  ) {
+    return CLIENT_COVER_SHEET_MODE.ZERO;
+  }
+  return CLIENT_COVER_SHEET_MODE.QUIET;
+}
+
+/**
+ * @param {Array} mappings
+ * @returns {number}
+ */
+export function countPendingPaymentMappings(mappings) {
+  const list = Array.isArray(mappings) ? mappings : [];
+  return list.filter(
+    (m) => m?.status === MAPPING_STATUS.PENDING_PAYMENT || m?.paymentStatus === 'PENDING'
+  ).length;
 }
 
 /**

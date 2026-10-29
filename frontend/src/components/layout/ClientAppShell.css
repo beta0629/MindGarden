@@ -11,3 +11,8 @@
   min-height: 100vh;
   background: var(--shell-bg);
 }
+
+/* 커버 홈 full-bleed — 셸 배경이 커버 canvas 와 충돌하지 않게 */
+.client-web-page-shell.mg-app-shell--client.client-web-page-shell--full-bleed {
+  background: transparent;
+}

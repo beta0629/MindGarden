@@ -67,6 +67,7 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(panel).not.toContain('client-cover__brand-chip');
     expect(home).toContain('ClientWebTopChrome');
     expect(home).toContain('onMenuClick={openMenu}');
+    expect(home).toContain('client-cover__chrome');
     expect(home).toContain('COVER_CLINIC_SVG_VARIANT_PORTRAIT');
     expect(home).toContain('COVER_CLINIC_SVG_VARIANT_LANDSCAPE');
     expect(home).toContain("CLIENT_COVER_SPLIT_MQ = '(min-width: 64rem)'");

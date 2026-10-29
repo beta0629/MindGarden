@@ -28,8 +28,27 @@ import {
   CLIENT_LOBBY_LOGOUT_CONFIRM
 } from '../clientDashboard/constants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
+import {
+  CLIENT_WEB_PAGE_SHELL_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_TEST_ID
+} from '../../../constants/clientWebChromeConstants';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
+import ClientAppShell from '../../layout/ClientAppShell';
 import ClientDashboard from '../ClientDashboard';
+
+/**
+ * 프로덕션과 동일 — ClientAppShell( hideChrome ) + 커버 홈
+ * @param {import('react').ReactNode} ui
+ * @returns {import('@testing-library/react').RenderResult}
+ */
+const renderCoverHome = (ui = <ClientDashboard />) => render(
+  <MemoryRouter initialEntries={[CLIENT_DASHBOARD_ROUTES.DASHBOARD]}>
+    <ClientAppShell>
+      {ui}
+    </ClientAppShell>
+  </MemoryRouter>
+);
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
 const MOCK_BRAND_WORD = 'Sunshine Counseling';
@@ -179,23 +198,21 @@ describe('ClientDashboard 커버+챕터 홈', () => {
   });
 
   test('has: 커버+챕터 · 상담 일정 보기 · 직접예약 없음 · 독 라우트', async() => {
-    const { container } = render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    const { container } = renderCoverHome();
 
     expect(screen.getByTestId(CLIENT_COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
     expect(screen.queryByTestId('client-lobby')).not.toBeInTheDocument();
     expect(screen.queryByTestId('admin-common-layout')).not.toBeInTheDocument();
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
-    expect(container.querySelector('.client-web-page-shell')).toBeNull();
-    // 메뉴 진입점 1개 — 헤더 TopChrome 햄버거만 (커버 menu-btn 0)
+    // 셸은 존재하되 hideChrome+fullBleed — TopChrome은 커버 안 1개만
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toHaveAttribute('data-hide-chrome', 'true');
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toHaveAttribute('data-full-bleed', 'true');
     expect(container.querySelectorAll('.client-cover__menu-btn')).toHaveLength(0);
-    expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
-    expect(screen.getByTestId('client-web-topchrome-menu')).toBeInTheDocument();
-    expect(container.querySelectorAll('[data-testid="client-web-topchrome-menu"]')).toHaveLength(1);
+    expect(container.querySelectorAll(`[data-testid="${CLIENT_WEB_TOP_CHROME_TEST_ID}"]`)).toHaveLength(1);
+    expect(container.querySelectorAll(`[data-testid="${CLIENT_WEB_TOP_CHROME_MENU_TEST_ID}"]`)).toHaveLength(1);
+    expect(container.querySelector('.client-cover__chrome')).not.toBeNull();
     expect(container.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(0);
     expect(container.querySelector('.client-cover__brand-chip')).toBeNull();
 
@@ -258,11 +275,7 @@ describe('ClientDashboard 커버+챕터 홈', () => {
       return Promise.resolve(null);
     });
 
-    const { container } = render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    const { container } = renderCoverHome();
 
     await waitFor(() => {
       expect(screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID)).toHaveAttribute(
@@ -286,13 +299,9 @@ describe('ClientDashboard 커버+챕터 홈', () => {
   });
 
   test('커버 메뉴 · 로그아웃 ConfirmModal', async() => {
-    render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    renderCoverHome();
 
-    fireEvent.click(screen.getByTestId('client-web-topchrome-menu'));
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
     expect(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT }));
@@ -331,11 +340,7 @@ describe('ClientDashboard 커버+챕터 홈', () => {
       isLoading: false
     });
 
-    render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    renderCoverHome();
 
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
@@ -368,11 +373,7 @@ describe('ClientDashboard 커버+챕터 홈', () => {
       return Promise.resolve(null);
     });
 
-    render(
-      <MemoryRouter initialEntries={['/client/dashboard']}>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    renderCoverHome();
 
     await waitFor(() => {
       expect(screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID)).toHaveAttribute(

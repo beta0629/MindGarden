@@ -49,4 +49,11 @@ describe('AppShell sidebar on-fill CSS', () => {
       /sidebar-item:hover\s*\{[^}]*var\(--shell-primary\)/
     );
   });
+
+  it('Client shell: 커버 홈에서 hideChrome + fullBleed', () => {
+    expect(clientJs).toContain('hideChrome={coverHome}');
+    expect(clientJs).toContain('fullBleed={coverHome}');
+    expect(clientJs).toContain('CLIENT_DASHBOARD_ROUTES');
+    expect(clientJs).toContain('useLocation');
+  });
 });

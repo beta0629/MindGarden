@@ -267,7 +267,7 @@
   border-radius: var(--cch-r16);
   border: 1px solid var(--cch-line);
   box-shadow: var(--mg-v2-shadow-lg);
-  padding: 0.875rem 0.875rem var(--mg-v2-space-3);
+  padding: 0.875rem 0.875rem var(--mg-v2-space-4);
   animation: consultant-cch-sheet-rise 480ms var(--cch-ease) forwards;
 }
 
@@ -348,7 +348,7 @@
   font-weight: 600;
   color: var(--cch-ink);
   line-height: 1.4;
-  margin: 0 0 2px;
+  margin: 0 0 var(--mg-v2-space-0-5);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -358,7 +358,7 @@
   font-size: 0.8125rem;
   color: var(--cch-mute);
   line-height: 1.35;
-  margin: 0 0 10px;
+  margin: 0 0 var(--mg-v2-space-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -367,6 +367,7 @@
 .consultant-cover-chapter__cta-row {
   display: flex;
   gap: var(--mg-v2-space-2);
+  margin-top: var(--mg-v2-space-3);
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -885,7 +886,8 @@
     bottom: calc(var(--mg-v2-space-6) + var(--cch-safe-b));
     margin-top: 0;
     padding-top: var(--mg-v2-space-3);
-    padding-bottom: 0;
+    /* overflow:hidden cover 안 제목 클립 방지 — 하단 여유 */
+    padding-bottom: var(--mg-v2-space-4);
     padding-left: 0;
     padding-right: 0;
   }
@@ -914,7 +916,7 @@
     width: calc(100% - (var(--mg-v2-space-4) * 2));
     max-width: var(--cch-content-max);
     margin: var(--mg-v2-space-3) var(--mg-v2-space-4) 0;
-    padding: var(--mg-v2-space-4) var(--mg-v2-space-4) var(--mg-v2-space-3);
+    padding: var(--mg-v2-space-4) var(--mg-v2-space-4) var(--mg-v2-space-4);
     box-shadow: var(--mg-v2-shadow-md);
     min-width: 0;
     overflow: hidden;

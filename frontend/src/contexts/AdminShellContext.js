@@ -19,6 +19,7 @@ import { createContext, useContext } from 'react';
  * @property {Function} [onSearchChange]
  * @property {Function} [onBellClick]
  * @property {Function} [onLogout]
+ * @property {boolean} [hideSearch] - true면 Mobile/Desktop stage 검색 행 미렌더
  */
 
 /**

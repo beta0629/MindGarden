@@ -126,6 +126,23 @@ let mockIncompleteRecords = {
 let mockPreparation = { preparations: [] };
 let mockScheduleList = [];
 
+jest.mock('../../../../utils/serverClock', () => {
+  const actual = jest.requireActual('../../../../utils/serverClock');
+  const getNow = () => {
+    const frozen = new Date();
+    frozen.setHours(12, 0, 0, 0);
+    return frozen;
+  };
+  return {
+    ...actual,
+    getNow,
+    default: {
+      ...actual.default,
+      getNow
+    }
+  };
+});
+
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -171,6 +188,13 @@ import {
 import { fetchConsultantSessionStatistics } from '../../../../api/consultantSessionStatisticsClient';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
+
+const toLocalDateTime = (hours, minutes = 0) => {
+  const d = new Date();
+  d.setHours(hours, minutes, 0, 0);
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+};
 
 const mockApiGet = (url) => {
   const u = String(url);
@@ -288,17 +312,14 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
   test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담 열기 + 일정 CTA', async() => {
     // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
     mockPreparation = { preparations: [] };
-    const start = new Date();
-    start.setHours(start.getHours() + 2, 0, 0, 0);
-    const end = new Date(start.getTime() + 50 * 60000);
     mockScheduleList = [
       {
         id: 501,
         scheduleId: 501,
         clientId: 9,
         clientName: '남궁민서윤아림정한솔예린',
-        startTime: start.toISOString(),
-        endTime: end.toISOString(),
+        startTime: toLocalDateTime(14, 0),
+        endTime: toLocalDateTime(14, 50),
         status: 'PENDING',
         packageName: '개인상담',
         roomName: '3층 상담실 B'

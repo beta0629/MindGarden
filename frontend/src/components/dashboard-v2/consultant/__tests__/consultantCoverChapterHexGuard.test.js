@@ -124,6 +124,34 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     );
   });
 
+  test('stack density: absolute float-sheet overhang; chapter animation forwards (not both)', () => {
+    const source = fs.readFileSync(
+      path.join(DIR, 'ConsultantCoverChapterHome.css'),
+      'utf8'
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*height:\s*var\(--cch-cover-stack-ratio\)/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*position:\s*absolute/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*bottom:\s*calc\(-1\s*\*\s*var\(--cch-sheet-overhang\)\)/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__scroll\s*\{[^}]*padding-top:\s*calc\(var\(--cch-sheet-overhang\)\s*\+\s*var\(--mg-v2-space-4\)\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__chapter\s*\{[^}]*animation:[^;]*forwards/s
+    );
+    expect(source).not.toMatch(
+      /\.consultant-cover-chapter__chapter\s*\{[^}]*animation:[^;]*\bboth\b/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*position:\s*relative/s
+    );
+  });
+
   test('Cover uses CoverClinicSvg landscape/portrait; no cover hamburger', () => {
     const cover = fs.readFileSync(path.join(DIR, 'ConsultantHomeCover.js'), 'utf8');
     const home = fs.readFileSync(path.join(DIR, 'ConsultantCoverChapterHome.js'), 'utf8');

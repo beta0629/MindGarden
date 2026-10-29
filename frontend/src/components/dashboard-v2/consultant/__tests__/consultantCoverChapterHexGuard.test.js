@@ -66,12 +66,20 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       path.join(DIR, 'ConsultantCoverChapterHome.css'),
       'utf8'
     );
-    expect(source).toContain('--cch-cover-min-h: calc(var(--mg-v2-space-20) * 3)');
-    expect(source).toContain('--cch-cover-min-h-tablet: calc(var(--mg-v2-space-20) * 3.5)');
-    expect(source).toContain('--cch-cover-min-h-tablet-lg: calc(var(--mg-v2-space-20) * 4)');
+    expect(source).toMatch(
+      /--cch-cover-min-h:\s*clamp\(\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\)/
+    );
+    expect(source).toMatch(
+      /--cch-cover-min-h-tablet:\s*clamp\(\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\.5\)/
+    );
+    expect(source).toMatch(
+      /--cch-cover-min-h-tablet-lg:\s*clamp\(\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*4\)/
+    );
     expect(source).toContain('--cch-cover-stack-ratio: 34%');
     expect(source).toContain('--cch-ghost-border: var(--mg-v2-color-border-default)');
-    expect(source).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
+    expect(source).toContain('--cch-content-max: min(100%, calc(var(--mg-v2-space-20) * 16))');
+    expect(source).toMatch(/--cch-name-size:\s*clamp\(/);
+    expect(source).toMatch(/--cch-sheet-dom-size:\s*clamp\(/);
     // stage-max 고정폭 박스 금지 (셸 full-bleed)
     expect(source).not.toContain('--cch-stage-max');
     expect(source).not.toMatch(/max-width:\s*var\(--cch-stage-max\)/);
@@ -132,12 +140,19 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*var\(--mg-v2-space-3\)/s
     );
-    // split: cover fills shell height; meta absolute bottom (뷰포트 밖 잘림 방지)
+    // split: 셸 높이 채움 · 하단 빈 캔버스 최소화
     expect(source).toMatch(
-      /\[data-layout='split'\]\s*\{[^}]*min-height:\s*0/s
+      /\[data-layout='split'\]\s*\{[^}]*min-height:\s*100%/s
     );
     expect(source).toMatch(
       /\[data-layout='split'\]\s*\{[^}]*height:\s*100%/s
+    );
+    // soft-sheet stage calm kill — cover-chapter only
+    expect(source).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
+    );
+    expect(source).toMatch(
+      /orientation:\s*landscape\)[^{]*min-width:\s*768px[\s\S]*?:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
     );
     expect(source).toMatch(
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*min-height:\s*0/s

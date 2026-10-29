@@ -37,9 +37,14 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
 
   test('content-max · full-bleed split · portrait 1-col · 2-col only ≥90rem', () => {
     const css = fs.readFileSync(path.join(DIR, 'ClientCoverChapter.css'), 'utf8');
-    expect(css).toContain('--client-cover-content-max: calc(var(--mg-v2-space-20) * 14)');
+    expect(css).toContain(
+      '--client-cover-content-max: min(100%, calc(var(--mg-v2-space-20) * 16))'
+    );
     expect(css).toContain('--client-cover-stack-ratio: 34%');
-    expect(css).toContain('--client-cover-min-h: calc(var(--mg-v2-space-20) * 3)');
+    expect(css).toMatch(
+      /--client-cover-min-h:\s*clamp\(\s*calc\(var\(--mg-v2-space-20\)\s*\*\s*3\)/
+    );
+    expect(css).toMatch(/--client-cover-name-size:\s*clamp\(/);
     expect(css).toMatch(
       /\.client-cover__chapter\s*\{[^}]*animation:[^;]*forwards/s
     );
@@ -58,9 +63,12 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /@media\s*\(min-width:\s*48rem\)\s*and\s*\(orientation:\s*portrait\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*1\.25fr/s
     );
-    // 1280(80rem) 포함 2열 금지
+    // 1280(80rem) 포함 2열 금지 — 해당 MQ 블록 내부만
+    expect(css).toMatch(
+      /@media\s*\(min-width:\s*80rem\)\s*\{[^@]*\.client-cover__chapters\s*\{[^}]*flex-direction:\s*column/s
+    );
     expect(css).not.toMatch(
-      /@media\s*\(min-width:\s*80rem\)[\s\S]*?\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)/s
+      /@media\s*\(min-width:\s*80rem\)\s*\{[^@]*\.client-cover__chapters\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1\.25fr\)/s
     );
     // wide desktop 2-col only ≥1440 (90rem)
     expect(css).toMatch(

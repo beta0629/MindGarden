@@ -42,8 +42,11 @@ describe('consultant Cover+Chapter menu entry SSOT', () => {
   test('ConsultantCoverChapterHome.css: cover menu-btn 없음 · content-max · stage-max 금지', () => {
     const css = fs.readFileSync(path.join(DIR, 'ConsultantCoverChapterHome.css'), 'utf8');
     expect(css).not.toMatch(/consultant-cover-chapter__menu-btn/);
-    expect(css).toContain('--cch-content-max: calc(var(--mg-v2-space-20) * 14)');
+    expect(css).toContain('--cch-content-max: min(100%, calc(var(--mg-v2-space-20) * 16))');
     expect(css).not.toContain('--cch-stage-max');
+    expect(css).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
+    );
   });
 
   test('ConsultantHomeCover: 커버 brand 칩 렌더 없음', () => {

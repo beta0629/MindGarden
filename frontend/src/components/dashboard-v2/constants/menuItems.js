@@ -9,11 +9,18 @@ import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 const BREAKPOINT_DESKTOP = 768;
 
 /**
- * 상담사 Clinic-OS 셸: iPad(≥768)도 햄버거+soft-sheet.
- * Desktop LNB는 ≥1024만 (ConsultantScheduleRenewal DESKTOP_MEDIA_QUERY 와 정합).
- * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(768) 유지 — 회귀 금지.
+ * 상담사 Clinic-OS 셸: 태블릿(포트레이트·랜드스케이프)은 햄버거+soft-sheet only.
+ * Desktop 고정 LNB는 ≥1280(RESPONSIVE_LAYOUT_SPEC) + fine-pointer 일 때만.
+ * 터치 태블릿 landscape(1024–1600, hover:none / pointer:coarse)는 MobileLayout 유지.
+ * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(768) width-only 유지 — 회귀 금지.
  */
-const BREAKPOINT_CONSULTANT_DESKTOP = 1024;
+const BREAKPOINT_CONSULTANT_DESKTOP = 1280;
+
+/**
+ * 상담사 데스크톱 셸 fine-pointer 게이트.
+ * 터치 태블릿이 넓은 landscape여도 고정 DesktopLNB를 받지 않도록 한다.
+ */
+const MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER = '(hover: hover) and (pointer: fine)';
 
 /** LNB menuCode SSOT — STAFF ERP strip 등에서 재사용 */
 export const LNB_MENU_CODES = Object.freeze({
@@ -282,6 +289,7 @@ const ERP_MENU_ITEMS = [
 export {
   BREAKPOINT_DESKTOP,
   BREAKPOINT_CONSULTANT_DESKTOP,
+  MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER,
   DEFAULT_MENU_ITEMS,
   CLIENT_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS,

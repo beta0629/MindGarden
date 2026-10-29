@@ -41,9 +41,25 @@ describe('ConsultantSchedule tablet v2 CSS/behavior contracts', () => {
       /tablet-landscape[\s\S]*client-name[\s\S]*-webkit-line-clamp:\s*2/s
     );
     expect(calendarJs).toMatch(/CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ/);
+    expect(calendarJs).toMatch(/CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ/);
     expect(calendarJs).toMatch(/useTabletAgendaList/);
     expect(calendarJs).toMatch(/ConsultantTabletAgendaList/);
     expect(calendarJs).toMatch(/nowIndicator=\{true\}/);
+  });
+
+  it('landscape default week + portrait day; tablet MQ bounds preserve desktop month', () => {
+    const tabletConst = read('constants/consultantScheduleTablet.js');
+    expect(tabletConst).toMatch(
+      /CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ\s*=\s*\n?\s*'\(max-width: 1279px\) and \(orientation: portrait\)'/
+    );
+    expect(tabletConst).toMatch(/orientation: landscape/);
+    expect(tabletConst).toMatch(/max-width: 1279px/);
+    expect(tabletConst).toMatch(/hover: none/);
+    expect(tabletConst).toMatch(/pointer: coarse/);
+    expect(calendarJs).toMatch(/changeView\(CALENDAR_VIEW_DAY\)/);
+    expect(calendarJs).toMatch(/changeView\(CALENDAR_VIEW_WEEK\)/);
+    expect(calendarJs).toMatch(/tabletLandscapeDefaultAppliedRef/);
+    expect(calendarJs).toMatch(/tabletPortraitDefaultAppliedRef/);
   });
 
   it('does not reintroduce old 1-line density P0 schedule block', () => {

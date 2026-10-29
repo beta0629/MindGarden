@@ -25,9 +25,14 @@ describe('MobileLnbDrawer soft-sheet', () => {
     expect(js).toMatch(/variant === 'soft-sheet'/);
   });
 
-  it('상담사 셸만 BREAKPOINT_CONSULTANT_DESKTOP(1024) + soft-sheet', () => {
-    expect(menu).toMatch(/BREAKPOINT_CONSULTANT_DESKTOP\s*=\s*1024/);
+  it('상담사 셸만 BREAKPOINT_CONSULTANT_DESKTOP(1280) + fine-pointer MQ + soft-sheet', () => {
+    expect(menu).toMatch(/BREAKPOINT_CONSULTANT_DESKTOP\s*=\s*1280/);
+    expect(menu).toMatch(
+      /MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER\s*=\s*'\(hover: hover\) and \(pointer: fine\)'/
+    );
     expect(layoutJs).toMatch(/BREAKPOINT_CONSULTANT_DESKTOP/);
+    expect(layoutJs).toMatch(/MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER/);
+    expect(layoutJs).toMatch(/useMediaQuery/);
     expect(layoutJs).toMatch(/drawerVariant:\s*'soft-sheet'/);
     expect(layoutJs).toMatch(/isCounselorOnly/);
   });

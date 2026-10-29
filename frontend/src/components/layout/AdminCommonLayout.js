@@ -61,6 +61,7 @@ const AdminCommonLayoutPassthrough = ({
   onSearchChange,
   onBellClick,
   onLogout,
+  hideSearch,
   className = '',
   loading = false,
   loadingText = DEFAULT_LOADING_TEXT
@@ -79,7 +80,8 @@ const AdminCommonLayoutPassthrough = ({
       searchValue,
       onSearchChange,
       onBellClick,
-      onLogout
+      onLogout,
+      ...(hideSearch !== undefined ? { hideSearch } : {})
     });
     return undefined;
   }, [
@@ -89,7 +91,8 @@ const AdminCommonLayoutPassthrough = ({
     searchValue,
     onSearchChange,
     onBellClick,
-    onLogout
+    onLogout,
+    hideSearch
   ]);
 
   if (blockContent) {
@@ -113,6 +116,7 @@ const AdminCommonLayoutShell = ({
   onSearchChange,
   onBellClick,
   onLogout,
+  hideSearch = false,
   className = ''
   // loading / loadingText: 셸 props로 올 수 있으나 Outlet 대체에 사용하지 않음(페이지 passthrough 전용)
 }) => {
@@ -138,7 +142,13 @@ const AdminCommonLayoutShell = ({
     ? false
     : (windowSize.width >= BREAKPOINT_DESKTOP);
 
-  const [shellMeta, setShellMeta] = useState({});
+  const [shellMeta, setShellMetaState] = useState({});
+  const setShellMeta = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') {
+      return;
+    }
+    setShellMetaState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const resolvedTitle = shellMeta.title !== undefined ? shellMeta.title : title;
   // 페이지 passthrough loading 은 셸에서 무시 — Outlet(children) 항상 유지(페이지 로컬 loading만 사용)
@@ -153,11 +163,14 @@ const AdminCommonLayoutShell = ({
     ? shellMeta.onBellClick
     : onBellClick;
   const resolvedOnLogout = shellMeta.onLogout !== undefined ? shellMeta.onLogout : onLogout;
+  const resolvedHideSearch = shellMeta.hideSearch !== undefined
+    ? Boolean(shellMeta.hideSearch)
+    : Boolean(hideSearch);
 
   const shellContextValue = useMemo(() => ({
     isInsideAdminShell: true,
     setShellMeta
-  }), []);
+  }), [setShellMeta]);
 
   const getDefaultMenu = () => {
     if (isCounselorOnly) {
@@ -304,6 +317,7 @@ const AdminCommonLayoutShell = ({
     onSearchChange: resolvedOnSearchChange,
     onBellClick: handleBellClick,
     onLogout: handleLogout,
+    hideSearch: resolvedHideSearch,
     navigateQuickActionsFromLnb,
     ...(isCounselorOnly ? { drawerVariant: 'soft-sheet' } : {})
   };

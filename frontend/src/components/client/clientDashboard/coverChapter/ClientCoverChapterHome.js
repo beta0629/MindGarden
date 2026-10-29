@@ -8,6 +8,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import ConfirmModal from '../../../common/ConfirmModal';
+import { useSession } from '../../../../contexts/SessionContext';
 import { useBranding } from '../../../../hooks/useBranding';
 import { useClientWebLogoutConfirm } from '../../../../hooks/useClientWebLogoutConfirm';
 import { toDisplayString, toSafeNumber } from '../../../../utils/safeDisplay';
@@ -110,10 +111,13 @@ const ClientCoverChapterHome = ({
   hasError,
   onRetry
 }) => {
-  const { brandingInfo } = useBranding({ autoLoad: Boolean(user) });
+  const { user: sessionUser, isLoggedIn } = useSession();
+  const effectiveUser = user || sessionUser;
+  const effectiveLoggedIn = Boolean(effectiveUser) && isLoggedIn !== false;
+  const { brandingInfo } = useBranding({ autoLoad: Boolean(effectiveUser) });
   const { brandWord, brandCenter } = useMemo(
-    () => resolveClientWebBrandLabels(user, brandingInfo),
-    [user, brandingInfo]
+    () => resolveClientWebBrandLabels(effectiveUser, brandingInfo),
+    [effectiveUser, brandingInfo]
   );
   const brandLabel = brandCenter || brandWord || '';
   const {
@@ -173,7 +177,10 @@ const ClientCoverChapterHome = ({
 
   const recentPaymentLabel = paymentSummary?.recentDateLabel || null;
   const coverSub = resolveCoverSub(heroPriority, sheetMode);
-  const userName = toDisplayString(user?.name, '');
+  const userName = toDisplayString(
+    effectiveUser?.name || effectiveUser?.nickname,
+    ''
+  );
 
   return (
     <div
@@ -190,6 +197,11 @@ const ClientCoverChapterHome = ({
           onMenuClick={openMenu}
           menuAriaLabel={CLIENT_COVER_MENU_ARIA}
           className="client-cover__topchrome"
+          isLoggedIn={effectiveLoggedIn}
+          userName={effectiveLoggedIn ? userName || undefined : undefined}
+          onLogout={effectiveLoggedIn ? openConfirm : undefined}
+          logoutLabel={logoutLabel}
+          loginHref={!effectiveLoggedIn ? '/login' : undefined}
         />
       </div>
       <div className="client-cover__stage">

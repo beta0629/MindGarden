@@ -21,19 +21,22 @@ describe('consultant Cover+Chapter menu entry SSOT', () => {
     expect(source).not.toMatch(/querySelector/);
   });
 
-  test('ConsultantCoverChapterHome: onMenuClick prop 없음', () => {
+  test('ConsultantCoverChapterHome: onMenuClick prop 없음 · hideSearch shell meta', () => {
     const source = fs.readFileSync(path.join(DIR, 'ConsultantCoverChapterHome.js'), 'utf8');
     expect(source).not.toMatch(/onMenuClick/);
     expect(source).not.toMatch(/menu-btn/);
+    expect(source).toMatch(/hideSearch:\s*true/);
+    expect(source).toMatch(/useAdminShell/);
   });
 
-  test('AdminCommonLayout: 상담사는 항상 MobileLayout(isDesktop false), soft-sheet', () => {
+  test('AdminCommonLayout: 상담사는 항상 MobileLayout(isDesktop false), soft-sheet · hideSearch 전달', () => {
     const source = fs.readFileSync(LAYOUT_JS, 'utf8');
     expect(source).toMatch(/drawerVariant:\s*'soft-sheet'/);
     expect(source).toMatch(/isCounselorOnly/);
     expect(source).toMatch(
       /const isDesktop = isCounselorOnly\s*\?\s*false\s*:\s*\(windowSize\.width >= BREAKPOINT_DESKTOP\)/
     );
+    expect(source).toMatch(/hideSearch:\s*resolvedHideSearch/);
     expect(source).not.toMatch(/BREAKPOINT_CONSULTANT_DESKTOP/);
     expect(source).not.toMatch(/MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER/);
     expect(source).not.toMatch(/useMediaQuery/);

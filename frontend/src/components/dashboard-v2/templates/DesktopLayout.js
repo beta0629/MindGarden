@@ -25,6 +25,7 @@ const DesktopLayout = ({
   onBellClick,
   onMoonClick,
   onLogout,
+  hideSearch = false,
   navigateQuickActionsFromLnb
 }) => {
   return (
@@ -43,9 +44,11 @@ const DesktopLayout = ({
       <div className="mg-v2-desktop-layout__body">
         <DesktopLnb menuItems={menuItems} headerTitle={headerTitle} />
         <main className="mg-v2-desktop-layout__main" role="main">
-          <div className="mg-v2-desktop-layout__search">
-            <SearchInput value={searchValue} onChange={onSearchChange} />
-          </div>
+          {!hideSearch ? (
+            <div className="mg-v2-desktop-layout__search">
+              <SearchInput value={searchValue} onChange={onSearchChange} />
+            </div>
+          ) : null}
           {children}
         </main>
       </div>

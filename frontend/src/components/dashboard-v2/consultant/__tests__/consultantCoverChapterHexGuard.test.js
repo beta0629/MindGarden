@@ -194,6 +194,27 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__meta\s*\{[^}]*bottom:\s*calc\(\s*var\(--mg-v2-space-6\)/s
     );
     expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__meta\s*\{[^}]*padding-bottom:\s*var\(--mg-v2-space-4\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__cta-row\s*\{[^}]*margin-top:\s*var\(--mg-v2-space-3\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__sheet\s*\{[^}]*padding:[^;]*var\(--mg-v2-space-4\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__sheet-body\s*\{[^}]*margin:\s*0\s+0\s+var\(--mg-v2-space-0-5\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__sheet-meta\s*\{[^}]*margin:\s*0\s+0\s+var\(--mg-v2-space-2\)/s
+    );
+    expect(source).not.toMatch(
+      /\.consultant-cover-chapter__sheet-body\s*\{[^}]*margin:\s*0\s+0\s+2px/s
+    );
+    expect(source).not.toMatch(
+      /\.consultant-cover-chapter__sheet-meta\s*\{[^}]*margin:\s*0\s+0\s+10px/s
+    );
+    expect(source).toMatch(
       /\.consultant-cover-chapter__cover-top\s*\{/s
     );
     expect(source).not.toMatch(/consultant-cover-chapter__menu-btn/);

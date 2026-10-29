@@ -153,6 +153,7 @@ const ClientWebPageShell = ({
         <ClientWebTopChrome
           brandWord={brandWord}
           brandCenter={brandCenter}
+          isLoggedIn={effectiveLoggedIn}
           userName={effectiveLoggedIn ? user?.name : undefined}
           activeNavId={activeNavId}
           onLogout={effectiveLoggedIn ? openConfirm : undefined}

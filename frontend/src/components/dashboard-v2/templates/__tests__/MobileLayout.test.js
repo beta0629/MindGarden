@@ -70,4 +70,22 @@ describe('MobileLayout', () => {
     expect(main.className).not.toMatch(/drawer-open|pushed|shifted/);
     expect(stage.className).not.toMatch(/drawer-open|pushed|shifted/);
   });
+
+  it('기본: stage 검색 행을 렌더한다', () => {
+    const { container } = render(
+      <MobileLayout>
+        <div>content</div>
+      </MobileLayout>
+    );
+    expect(container.querySelector('.mg-v2-mobile-layout__search')).toBeTruthy();
+  });
+
+  it('hideSearch=true면 stage 검색 행을 미렌더한다', () => {
+    const { container } = render(
+      <MobileLayout hideSearch>
+        <div>content</div>
+      </MobileLayout>
+    );
+    expect(container.querySelector('.mg-v2-mobile-layout__search')).toBeNull();
+  });
 });

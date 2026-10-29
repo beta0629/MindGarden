@@ -1,42 +1,44 @@
 /**
  * Clinic-OS Cover+Chapter — 상담사 홈 (tobe-home.html SSOT)
- * Tokens scoped under .consultant-cover-chapter only.
+ * Color/radius/font aliases resolve only to --mg-v2-* (no hex literals).
  */
 
 .consultant-cover-chapter {
-  --cch-ink: #0f172a;
-  --cch-ink2: #334155;
-  --cch-sub: #475569;
-  --cch-mute: #64748b;
-  --cch-dis: #94a3b8;
-  --cch-canvas: #faf9f7;
-  --cch-white: #ffffff;
-  --cch-line: #e2e8f0;
-  --cch-line-soft: #f1f5f9;
-  --cch-primary: #0e5f5a;
-  --cch-primary-mid: #0f766e;
-  --cch-primary-hover: #0a4f4b;
-  --cch-on-primary: #faf9f7;
-  --cch-slot: #e6f2f1;
-  --cch-stone: #f5f3ef;
-  --cch-stone-line: #d4cfc8;
-  --cch-amber: #b45309;
-  --cch-amber-wash: #fef3c7;
-  --cch-ok: #0e5f5a;
-  --cch-ok-wash: #e6f2f1;
-  --cch-cover-deep: #0f172a;
-  --cch-cover-mid: #1e293b;
-  --cch-cover-floor: #0b1220;
-  --cch-r8: 8px;
-  --cch-r12: 12px;
-  --cch-r16: 16px;
-  --cch-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --cch-ease-press: cubic-bezier(0.4, 0, 0.2, 1);
+  --cch-ink: var(--mg-v2-color-neutral-900);
+  --cch-ink2: var(--mg-v2-color-secondary-dark);
+  --cch-sub: var(--mg-v2-color-text-secondary);
+  --cch-mute: var(--mg-v2-color-text-tertiary);
+  --cch-dis: var(--mg-v2-color-text-disabled);
+  --cch-canvas: var(--mg-v2-color-surface-bg);
+  --cch-white: var(--mg-v2-color-surface-card);
+  --cch-line: var(--mg-v2-border-card);
+  --cch-line-soft: var(--mg-v2-consultant-border-soft);
+  --cch-primary: var(--mg-v2-color-primary-main);
+  --cch-primary-mid: var(--mg-v2-color-primary-solid);
+  --cch-primary-hover: var(--mg-v2-color-primary-hover);
+  --cch-on-primary: var(--mg-v2-color-neutral-50);
+  --cch-slot: var(--mg-v2-color-primary-subtle);
+  --cch-stone: var(--mg-v2-color-surface-stone);
+  --cch-stone-line: var(--mg-v2-color-border-default);
+  --cch-amber: var(--mg-v2-color-semantic-warning-dark);
+  --cch-amber-wash: var(--mg-v2-color-semantic-warning-light);
+  --cch-ok: var(--mg-v2-color-primary-main);
+  --cch-ok-wash: var(--mg-v2-color-primary-subtle);
+  --cch-cover-deep: var(--mg-v2-color-neutral-900);
+  --cch-cover-mid: var(--mg-v2-color-neutral-800);
+  --cch-cover-floor: var(--mg-v2-color-neutral-900);
+  --cch-cover-fg: var(--mg-v2-color-text-on-sidebar-active);
+  --cch-hover-wash: var(--mg-v2-today-col-bg);
+  --cch-r8: var(--mg-v2-radius-lg);
+  --cch-r12: var(--mg-v2-radius-panel);
+  --cch-r16: var(--mg-v2-radius-xl);
+  --cch-ease: var(--mg-v2-transition-easing-out);
+  --cch-ease-press: var(--mg-v2-transition-easing-default);
   --cch-safe-t: env(safe-area-inset-top, 0px);
   --cch-safe-r: env(safe-area-inset-right, 0px);
   --cch-safe-b: env(safe-area-inset-bottom, 0px);
   --cch-safe-l: env(safe-area-inset-left, 0px);
-  --cch-font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --cch-font: var(--mg-v2-font-family-base);
 
   box-sizing: border-box;
   display: flex;
@@ -69,7 +71,7 @@
   height: 42%;
   min-height: 280px;
   background: var(--cch-cover-deep);
-  color: #f8fafc;
+  color: var(--cch-cover-fg);
   overflow: visible;
   z-index: 2;
 }
@@ -115,10 +117,10 @@
   height: 44px;
   min-width: 44px;
   min-height: 44px;
-  border: 1px solid rgba(248, 250, 252, 0.22);
+  border: 1px solid color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 22%, transparent);
   border-radius: var(--cch-r8);
-  background: rgba(15, 23, 42, 0.35);
-  color: #f8fafc;
+  background: color-mix(in srgb, var(--mg-v2-color-neutral-900) 35%, transparent);
+  color: var(--cch-cover-fg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -129,13 +131,13 @@
 }
 
 .consultant-cover-chapter__menu-btn:active {
-  background: rgba(15, 23, 42, 0.55);
+  background: color-mix(in srgb, var(--mg-v2-color-neutral-900) 55%, transparent);
 }
 
 .consultant-cover-chapter__brand {
   font-size: 0.75rem;
   font-weight: 700;
-  color: rgba(248, 250, 252, 0.78);
+  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 78%, transparent);
   letter-spacing: -0.01em;
   margin-left: auto;
 }
@@ -153,7 +155,7 @@
 .consultant-cover-chapter__kicker {
   font-size: 0.75rem;
   font-weight: 600;
-  color: rgba(248, 250, 252, 0.7);
+  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 70%, transparent);
   margin: 0 0 8px;
 }
 
@@ -166,13 +168,17 @@
   word-break: keep-all;
   overflow-wrap: anywhere;
   max-width: 100%;
-  color: #f8fafc;
+  color: var(--cch-cover-fg);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 .consultant-cover-chapter__sub {
   margin: 6px 0 0;
   font-size: 0.8125rem;
-  color: rgba(248, 250, 252, 0.68);
+  color: color-mix(in srgb, var(--mg-v2-color-text-on-sidebar-active) 68%, transparent);
   line-height: 1.4;
 }
 
@@ -196,7 +202,7 @@
   background: var(--cch-white);
   border-radius: var(--cch-r16);
   border: 1px solid var(--cch-line);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--mg-v2-shadow-lg);
   padding: 14px 14px 12px;
   animation: consultant-cch-sheet-rise 480ms var(--cch-ease) both;
 }
@@ -327,7 +333,7 @@
 
 .consultant-cover-chapter__cta--ghost.mg-button:hover,
 .consultant-cover-chapter__cta--ghost:hover {
-  background: #f8fafc !important;
+  background: var(--cch-hover-wash) !important;
 }
 
 .consultant-cover-chapter__cta--ghost.mg-button:active,
@@ -447,7 +453,7 @@
 }
 
 .consultant-cover-chapter__row:hover {
-  background: #f8fafc;
+  background: var(--cch-hover-wash);
 }
 
 .consultant-cover-chapter__row-time {
@@ -671,14 +677,15 @@
   }
 
   .consultant-cover-chapter__chapters {
-    display: grid;
-    grid-template-columns: 1.25fr 0.85fr;
+    display: flex;
+    flex-direction: column;
     gap: 12px;
-    align-items: start;
+    align-items: stretch;
   }
 
   .consultant-cover-chapter__chapter {
     margin-bottom: 0;
+    width: 100%;
   }
 }
 
@@ -719,7 +726,7 @@
     bottom: auto;
     margin: 12px 16px 0;
     padding: 16px 16px 14px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--mg-v2-shadow-md);
   }
 
   .consultant-cover-chapter__sheet-dom {

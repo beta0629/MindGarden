@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.MappingStatusConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import jakarta.persistence.LockModeType;
@@ -372,17 +373,24 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
      * <p>합의서: {@code docs/project-management/2026-05-28/OPTION_B_RESERVATION_FIRST_PLAN.md}.
      * 어드민이 매칭 생성 후 {@code ageHours} 시간 이상 결제가 들어오지 않은 PENDING_PAYMENT
      * 매핑을 페이지 단위로 조회한다. tenantId 격리 필수.
+     * {@code paymentStatus=REFUNDED} 는 결제대기 큐와 동일하게 제외한다.</p>
      *
      * @param tenantId  테넌트 ID (필수)
      * @param threshold 기준 시각 (LOCAL_DATE_TIME, NOW - ageHours)
      * @param pageable  페이지·정렬 정보
-     * @return PENDING_PAYMENT + createdAt &lt; threshold 페이지 (consultant/client fetch join)
+     * @return PENDING_PAYMENT + non-REFUNDED + createdAt &lt; threshold 페이지 (consultant/client fetch join)
      */
     @Query(value = "SELECT m FROM ConsultantClientMapping m LEFT JOIN FETCH m.consultant LEFT JOIN FETCH m.client "
-            + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' AND m.createdAt < :threshold "
+            + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' "
+            + "AND (m.paymentStatus IS NULL OR m.paymentStatus <> '"
+            + MappingStatusConstants.REFUNDED + "') "
+            + "AND m.createdAt < :threshold "
             + "ORDER BY m.createdAt ASC",
         countQuery = "SELECT COUNT(m) FROM ConsultantClientMapping m "
-                + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' AND m.createdAt < :threshold")
+                + "WHERE m.tenantId = :tenantId AND m.status = 'PENDING_PAYMENT' "
+                + "AND (m.paymentStatus IS NULL OR m.paymentStatus <> '"
+                + MappingStatusConstants.REFUNDED + "') "
+                + "AND m.createdAt < :threshold")
     Page<ConsultantClientMapping> findDirtyPendingPaymentMappings(
             @Param("tenantId") String tenantId,
             @Param("threshold") LocalDateTime threshold,

@@ -130,6 +130,7 @@ import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.util.CardMerchantFeeFromPaymentJsonUtil;
+import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -5049,21 +5050,26 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
-     * 입금 대기 중인 매칭 목록 조회
+     * 결제 대기(PENDING_PAYMENT) 매칭 목록 조회
      *
      * <p>트랜잭션 안에서 {@link ConsultantClientMappingResponse#fromEntity} 로 변환해
      * open-in-view=false 환경의 LazyInitializationException 을 방지한다.
-     * tenantId 없으면 {@link #getTenantId()} fail-closed 예외.</p>
+     * tenantId 없으면 {@link #getTenantId()} fail-closed 예외.
+     * {@code paymentStatus=REFUNDED} 는 pending-deposit 과 동일하게 제외한다
+     * ({@link ClientPaymentHistorySsotUtils#isRefundedOrCancelledPaymentStatus}).
+     * 매핑 status {@code PENDING_PAYMENT} 값은 변경하지 않는다.</p>
      *
      * @return DTO 목록
      */
     @Override
     @Transactional(readOnly = true)
     public List<ConsultantClientMappingResponse> getPendingPaymentMappings() {
-        String pendingPaymentStatus = getMappingStatusCode("PENDING_PAYMENT");
+        String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
         String tenantId = getTenantId();
         return mappingRepository.findByTenantId(tenantId).stream()
                 .filter(mapping -> mapping.getStatus().name().equals(pendingPaymentStatus))
+                .filter(mapping -> !ClientPaymentHistorySsotUtils
+                        .isRefundedOrCancelledPaymentStatus(mapping.getPaymentStatus()))
                 .map(ConsultantClientMappingResponse::fromEntity)
                 .collect(Collectors.toList());
     }

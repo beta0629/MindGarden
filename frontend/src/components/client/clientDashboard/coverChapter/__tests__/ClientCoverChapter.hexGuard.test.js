@@ -21,6 +21,7 @@ const FILES = [
   'GuideChapter.js',
   'SessionChapter.js',
   'ClientMinimalDock.js',
+  'ClientMinimalDock.css',
   'CoverMenuDrawer.js'
 ];
 

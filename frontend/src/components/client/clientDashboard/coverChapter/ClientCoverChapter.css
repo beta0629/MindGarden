@@ -548,79 +548,7 @@
 
 /* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 → 파일 상단 @import SSOT */
 
-/* ===== DOCK — body 패널 하단 (viewport fixed 금지 · split 커버 뒤로 가림 방지) ===== */
-.client-cover__dock {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  z-index: var(--mg-v2-z-sticky);
-  flex-shrink: 0;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  min-height: var(--client-cover-dock-h);
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-2) calc(var(--mg-v2-space-1) + var(--client-cover-safe-b));
-  background: color-mix(in srgb, var(--mg-v2-color-surface-bg) 94%, transparent);
-  backdrop-filter: blur(12px);
-  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
-  box-sizing: border-box;
-}
-
-.client-cover__dock-item {
-  appearance: none;
-  background: none;
-  border: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1875rem;
-  padding: var(--mg-v2-space-1) var(--mg-v2-space-1);
-  min-height: 2.75rem;
-  cursor: pointer;
-  user-select: none;
-  color: var(--mg-v2-color-text-tertiary);
-  font-family: var(--mg-v2-font-family-base);
-  font-size: 0.6875rem;
-  font-weight: var(--mg-v2-font-weight-semibold);
-  text-decoration: none;
-}
-
-.client-cover__dock-item--on {
-  color: var(--mg-v2-color-text-primary);
-}
-
-.client-cover__dock-dot {
-  width: 1.375rem;
-  height: 0.1875rem;
-  border-radius: var(--mg-v2-radius-sm);
-  background: transparent;
-  transition: background 280ms var(--client-cover-ease);
-  order: 2;
-}
-
-.client-cover__dock-item--on .client-cover__dock-dot {
-  background: var(--mg-v2-color-primary-main);
-}
-
-.client-cover__dock-item svg {
-  display: block;
-  width: 1.375rem;
-  height: 1.375rem;
-  min-width: 1.375rem;
-  min-height: 1.375rem;
-  flex-shrink: 0;
-  order: 1;
-  overflow: visible;
-}
-
-.client-cover__dock-label {
-  order: 3;
-}
-
-.client-cover__dock-item:hover {
-  color: var(--mg-v2-color-text-primary);
-}
+/* DOCK → ClientMinimalDock.css SSOT */
 
 /* ===== MENU ===== */
 .client-cover__menu {
@@ -796,14 +724,6 @@
     margin-right: auto;
   }
 
-  /* dock은 body absolute — split에서도 left/width 커버 % 하드코딩 금지 */
-  .client-cover[data-layout='split'] .client-cover__dock {
-    left: 0;
-    right: 0;
-    width: 100%;
-    padding-left: var(--mg-v2-space-3);
-    padding-right: var(--mg-v2-space-3);
-  }
 }
 
 /* ≥90rem(1440) split — 우 컬럼 챕터 2열 밀도 (1280 포함 1열) */
@@ -909,10 +829,6 @@
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
-  }
-
-  .client-cover__dock-dot {
-    transition: none !important;
   }
 
   .client-cover__cta {

@@ -17,6 +17,7 @@ import {
   CLIENT_COVER_DOCK_TEST_ID,
   CLIENT_COVER_DOCK_WELLNESS
 } from '../constants';
+import './ClientMinimalDock.css';
 
 const DOCK_ITEMS = Object.freeze([
   {

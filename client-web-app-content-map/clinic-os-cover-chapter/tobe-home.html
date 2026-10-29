@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Clinic-OS · 커버+챕터 — 상담사 홈</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+/*
+  Clinic-OS 커버+챕터 TO-BE · 상담사 웹·태블릿 홈
+  구조 = expo-struct-v2 IA만 이식. 색·버튼 = clinic-os SSOT.
+  Floor: mesh/gradient-text/ALL-CAPS eyebrow/3 equal tiles/Pencil bar 금지.
+  직접예약 CTA 없음. Pretendard 고딕 only.
+*/
+:root {
+  --ink: #0F172A;
+  --ink2: #334155;
+  --sub: #475569;
+  --mute: #64748B;
+  --dis: #94A3B8;
+  --canvas: #FAF9F7;
+  --white: #FFFFFF;
+  --line: #E2E8F0;
+  --line-soft: #F1F5F9;
+  --primary: #0E5F5A;
+  --primary-mid: #0F766E;
+  --primary-hover: #0A4F4B;
+  --on-primary: #FAF9F7;
+  --slot: #E6F2F1;
+  --stone: #F5F3EF;
+  --stone-line: #D4CFC8;
+  --amber: #B45309;
+  --amber-wash: #FEF3C7;
+  --ok: #0E5F5A;
+  --ok-wash: #E6F2F1;
+  --cover-deep: #0F172A;
+  --cover-mid: #1E293B;
+  --r8: 8px;
+  --r12: 12px;
+  --r16: 16px;
+  --r20: 20px;
+  --font: "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-press: cubic-bezier(0.4, 0, 0.2, 1);
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: var(--font);
+  background: #E5E7EB;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+body { min-height: 100vh; min-height: 100dvh; padding: 24px 16px 56px; }
+.board-title {
+  max-width: 1400px; margin: 0 auto 6px;
+  font-size: 1.125rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink);
+}
+.board-sub {
+  max-width: 1400px; margin: 0 auto 20px;
+  font-size: 0.8125rem; color: var(--mute); line-height: 1.45;
+}
+.section-gap { margin-top: 26px; }
+.frames {
+  display: flex; flex-wrap: wrap; gap: 28px;
+  align-items: flex-start; justify-content: center;
+}
+.frame-wrap { display: flex; flex-direction: column; gap: 8px; }
+.frame-label { font-size: 0.6875rem; font-weight: 700; color: var(--mute); padding-left: 4px; }
+
+.device {
+  background: #1e293b; border-radius: 22px; padding: 12px;
+  box-shadow: 0 12px 28px rgba(15,23,42,.18);
+}
+.device-screen {
+  position: relative; overflow: hidden; border-radius: 12px;
+  background: var(--canvas);
+}
+.device.web .device-screen { width: 1280px; height: 800px; }
+.device.ipad-p .device-screen { width: 820px; height: 1180px; }
+.device.ipad-l .device-screen { width: 1180px; height: 820px; }
+
+.app {
+  display: flex; flex-direction: column;
+  height: 100%; width: 100%; min-height: 100%;
+  background: var(--canvas); min-width: 0; position: relative;
+  overflow: hidden;
+}
+
+/* ===== COVER ===== */
+.cover {
+  position: relative;
+  flex: 0 0 auto;
+  height: 48%;
+  min-height: 300px;
+  background: var(--cover-deep);
+  color: #F8FAFC;
+  overflow: visible;
+  z-index: 2;
+}
+.cover-clip {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+}
+.web .cover { height: 100%; width: 42%; min-height: 0; flex: none; }
+.web .app { flex-direction: row; }
+.web .body-col { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; background: var(--canvas); }
+.ipad-p .cover { height: 42%; min-height: 400px; }
+.ipad-l .app { flex-direction: row; }
+.ipad-l .cover { width: 44%; height: 100%; min-height: 0; flex: none; }
+.ipad-l .body-col { flex: 1; display: flex; flex-direction: column; min-width: 0; height: 100%; background: var(--canvas); }
+
+.cover-svg {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.light-beam { animation: lightDrift 8s ease-in-out infinite alternate; }
+@keyframes lightDrift {
+  from { opacity: 0.45; }
+  to { opacity: 0.75; }
+}
+
+.cover-top {
+  position: relative; z-index: 2;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: calc(12px + var(--safe-t)) 16px 0;
+  padding-left: calc(16px + var(--safe-l));
+  padding-right: calc(16px + var(--safe-r));
+  gap: 10px;
+}
+.btn-icon {
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  border: 1px solid rgba(248,250,252,0.22);
+  border-radius: var(--r8);
+  background: rgba(15,23,42,0.35);
+  color: #F8FAFC;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; font-size: 1.125rem;
+}
+.btn-icon:active { background: rgba(15,23,42,0.55); }
+.cover-brand-chip {
+  font-size: 0.75rem; font-weight: 700; color: rgba(248,250,252,0.78);
+  letter-spacing: -0.01em;
+}
+.cover-meta {
+  position: absolute; z-index: 2;
+  left: 20px; right: 20px; bottom: 92px;
+  padding-left: var(--safe-l); padding-right: var(--safe-r);
+}
+.ipad-p .cover-meta { bottom: 168px; left: 28px; right: 28px; }
+.web .cover-meta, .ipad-l .cover-meta {
+  bottom: 28px; left: 28px; right: 28px;
+}
+.cover-kicker {
+  font-size: 0.75rem; font-weight: 600; color: rgba(248,250,252,0.7);
+  margin-bottom: 8px;
+}
+.cover-name {
+  font-size: 1.75rem; font-weight: 700; line-height: 1.25;
+  letter-spacing: -0.03em;
+  word-break: keep-all; overflow-wrap: anywhere;
+  max-width: 100%;
+}
+.ipad-p .cover-name, .web .cover-name, .ipad-l .cover-name { font-size: 2rem; }
+.cover-sub {
+  margin-top: 6px; font-size: 0.8125rem; color: rgba(248,250,252,0.68); line-height: 1.4;
+}
+
+/* Floating next-sheet */
+.float-sheet {
+  position: absolute; z-index: 3;
+  left: 16px; right: 16px; bottom: -56px;
+  background: var(--white);
+  border-radius: var(--r16);
+  border: 1px solid var(--line);
+  box-shadow: 0 10px 24px rgba(15,23,42,0.12);
+  padding: 14px 14px 12px;
+  animation: sheetRise 480ms var(--ease) both;
+}
+.ipad-p .float-sheet { left: 28px; right: 28px; bottom: -48px; padding: 16px 18px; }
+.web .float-sheet, .ipad-l .float-sheet {
+  position: relative; left: auto; right: auto; bottom: auto;
+  margin: 12px 16px 0;
+  padding: 16px 16px 14px;
+  box-shadow: 0 4px 14px rgba(15,23,42,0.08);
+}
+@keyframes sheetRise {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.sheet-kicker {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px; gap: 8px;
+}
+.sheet-kicker .lab {
+  font-size: 0.75rem; font-weight: 700; color: var(--mute);
+}
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.75rem; font-weight: 700;
+  padding: 4px 8px; border-radius: 999px;
+}
+.badge.ok { background: var(--ok-wash); color: var(--ok); }
+.badge.mute { background: var(--line-soft); color: var(--mute); }
+.sheet-dom {
+  font-size: 1.875rem; font-weight: 800; line-height: 1.15;
+  letter-spacing: -0.035em; color: var(--ink); margin: 0 0 4px;
+}
+.ipad-p .sheet-dom, .web .sheet-dom, .ipad-l .sheet-dom { font-size: 2.125rem; }
+.sheet-dom .unit {
+  font-size: 1rem; font-weight: 600; margin-left: 4px; color: var(--mute);
+}
+.sheet-body {
+  font-size: 0.9375rem; font-weight: 600; color: var(--ink); line-height: 1.4; margin: 0 0 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sheet-meta {
+  font-size: 0.8125rem; color: var(--mute); line-height: 1.35; margin: 0 0 10px;
+}
+.cta-row { display: flex; gap: 8px; }
+.mg-btn {
+  flex: 1; height: 44px; min-height: 44px; border: 0; border-radius: var(--r8);
+  font-family: var(--font); font-size: 0.9375rem; font-weight: 700;
+  cursor: pointer; user-select: none;
+  transition: transform 120ms var(--ease-press), background 120ms;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.mg-btn.primary { background: var(--primary); color: var(--on-primary); }
+.mg-btn.primary:active { background: var(--primary-hover); transform: scale(0.97); }
+.mg-btn.ghost {
+  background: var(--white); color: var(--ink);
+  border: 1px solid var(--line); flex: 0.85;
+}
+.mg-btn.ghost:active { background: var(--line-soft); transform: scale(0.97); }
+@media (hover: hover) and (pointer: fine) {
+  .mg-btn.primary:hover { background: var(--primary-hover); }
+  .mg-btn.ghost:hover { background: #F8FAFC; }
+  .row:hover { background: #F8FAFC; }
+  .chap-more:hover { color: var(--ink); }
+}
+
+/* Chapters */
+.scroll {
+  flex: 1; overflow: auto; min-height: 0;
+  padding: 72px 16px calc(16px + var(--safe-b));
+  padding-left: calc(16px + var(--safe-l));
+  padding-right: calc(16px + var(--safe-r));
+  -webkit-overflow-scrolling: touch;
+}
+.ipad-p .scroll { padding-top: 64px; padding-left: calc(28px + var(--safe-l)); padding-right: calc(28px + var(--safe-r)); }
+.web .scroll, .ipad-l .scroll { padding: 10px 16px calc(14px + var(--safe-b)); flex: 1; }
+
+.chapter { margin-bottom: 15px; animation: chapIn 420ms var(--ease) both; }
+.chapter:nth-child(1) { animation-delay: 60ms; }
+.chapter:nth-child(2) { animation-delay: 120ms; }
+@keyframes chapIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.chap-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin-bottom: 8px;
+}
+.chap-num {
+  font-size: 0.75rem; font-weight: 700; color: var(--primary); min-width: 20px;
+  letter-spacing: 0.02em;
+}
+.chap-title {
+  font-size: 1.0625rem; font-weight: 700; letter-spacing: -0.02em; color: var(--ink);
+}
+.chap-more {
+  margin-left: auto; font-size: 0.8125rem; font-weight: 700; color: var(--mute);
+  background: none; border: 0; padding: 6px 0; cursor: pointer; min-height: 44px;
+}
+
+.dense {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r12);
+  overflow: hidden;
+}
+.row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; min-height: 48px;
+  border-bottom: 1px solid var(--line);
+}
+.row:last-child { border-bottom: 0; }
+.row .time {
+  flex: none; width: 48px;
+  font-size: 0.9375rem; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--ink); letter-spacing: -0.02em;
+}
+.row .ico {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--slot); color: var(--primary);
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.row .txt { flex: 1; min-width: 0; }
+.row .txt .t {
+  font-size: 0.875rem; font-weight: 600; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.row .txt .s {
+  font-size: 0.75rem; color: var(--mute); margin-top: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.row .pill {
+  flex: none; font-size: 0.6875rem; font-weight: 700;
+  padding: 4px 8px; border-radius: 999px;
+  background: var(--slot); color: var(--primary);
+}
+.row .pill.wait { background: var(--amber-wash); color: var(--amber); }
+.row .chev { color: var(--dis); font-size: 1rem; flex-shrink: 0; }
+
+.chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 8px 12px 10px;
+  border-top: 1px solid var(--line);
+}
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--line-soft); font-size: 0.75rem; font-weight: 700; color: var(--sub);
+}
+.chip .n { font-weight: 800; color: var(--ink); }
+.chip.teal { background: var(--slot); color: var(--primary); }
+
+.guide-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--r12);
+  padding: 12px 14px;
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+  align-items: center;
+}
+.guide-card h4 { margin: 0; font-size: 0.9375rem; font-weight: 700; color: var(--ink); }
+.guide-card p {
+  margin: 0; grid-column: 1; font-size: 0.8125rem; color: var(--mute); line-height: 1.45;
+}
+.guide-card .go {
+  grid-row: 1 / span 2; grid-column: 2;
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--line-soft); border: 0; color: var(--ink);
+  font-size: 1rem; cursor: pointer;
+}
+
+.empty-invite {
+  background: var(--white);
+  border: 1px dashed var(--stone-line);
+  border-radius: var(--r12);
+  padding: 16px 14px;
+  text-align: center;
+}
+.empty-invite h4 { font-size: 0.875rem; font-weight: 700; margin-bottom: 4px; }
+.empty-invite p { font-size: 0.8125rem; color: var(--mute); line-height: 1.45; margin-bottom: 8px; }
+.empty-invite .empty-link {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 44px; padding: 0 8px;
+  font-family: var(--font); font-size: 0.8125rem; font-weight: 700;
+  color: var(--primary); background: none; border: 0; cursor: pointer;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.empty-invite .empty-link:active { color: var(--primary-hover); }
+
+.grid-2 { display: grid; grid-template-columns: 1.25fr 0.85fr; gap: 12px; align-items: start; }
+
+@media (prefers-reduced-motion: reduce) {
+  .light-beam, .float-sheet, .chapter { animation: none !important; opacity: 1 !important; transform: none !important; }
+}
+</style>
+</head>
+<body>
+
+<p class="board-title">Clinic-OS · 커버+챕터 — 상담사 홈</p>
+<p class="board-sub">슬레이트·더스티 틸·크림 · Pretendard 고딕 · MGButton primary · 풀블리드 · 직접예약 없음 · Floor 준수</p>
+
+<!-- ========== HAS ========== -->
+<p class="board-title" style="margin-top:4px">다음 상담 있음</p>
+<div class="frames">
+
+  <!-- WEB HAS -->
+  <div class="frame-wrap">
+    <div class="frame-label">web · 1280×800 · 좌커버|우시트+챕터</div>
+    <div class="device web" data-shot="home-web">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 540 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winW" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/>
+                    <stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamW" x1="0.65" y1="0" x2="0.15" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="540" height="800" fill="#0F172A"/>
+                <rect x="0" y="0" width="540" height="800" fill="#1E293B" opacity="0.55"/>
+                <rect x="260" y="90" width="200" height="260" rx="4" fill="url(#winW)" opacity="0.92"/>
+                <path d="M260 90h200v16H260z" fill="#334155"/>
+                <path d="M360 90v260" stroke="#334155" stroke-width="5"/>
+                <path d="M260 220h200" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="260,110 460,110 200,720 40,720" fill="url(#beamW)"/>
+                <!-- desk -->
+                <rect x="60" y="520" width="200" height="14" rx="2" fill="#334155"/>
+                <rect x="80" y="534" width="12" height="70" fill="#475569"/>
+                <rect x="228" y="534" width="12" height="70" fill="#475569"/>
+                <!-- chair -->
+                <path d="M90 470c0-28 22-50 50-50h14v90H90z" fill="#475569"/>
+                <path d="M100 510h90v10H100z" fill="#334155"/>
+                <!-- plant teal-ish -->
+                <rect x="400" y="560" width="28" height="36" rx="3" fill="#334155"/>
+                <ellipse cx="414" cy="544" rx="26" ry="16" fill="#0F766E"/>
+                <ellipse cx="400" cy="556" rx="14" ry="10" fill="#0E5F5A"/>
+                <rect x="0" y="640" width="540" height="160" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘 상담 3건 · 다음 14:30</p>
+            </div>
+          </div>
+          <div class="body-col">
+            <div class="float-sheet">
+              <div class="sheet-kicker">
+                <span class="lab">다음 상담</span>
+                <span class="badge ok">확정</span>
+              </div>
+              <p class="sheet-dom">오늘 14:30</p>
+              <p class="sheet-body">남궁민서윤아림정한솔예린 · 대면 50분</p>
+              <p class="sheet-meta">3층 상담실 B · 개인상담</p>
+              <div class="cta-row">
+                <button class="mg-btn primary" type="button">상담 열기</button>
+                <button class="mg-btn ghost" type="button">일정</button>
+              </div>
+            </div>
+            <div class="scroll">
+              <section class="chapter">
+                <div class="chap-head">
+                  <span class="chap-num">01</span>
+                  <h2 class="chap-title">일정</h2>
+                  <button class="chap-more" type="button">전체</button>
+                </div>
+                <div class="dense">
+                  <div class="row">
+                    <div class="time">10:00</div>
+                    <div class="txt"><div class="t">이도윤</div><div class="s">대면 · 개인상담 · 완료</div></div>
+                    <span class="pill">완료</span>
+                  </div>
+                  <div class="row">
+                    <div class="time">14:30</div>
+                    <div class="txt"><div class="t">남궁민서윤아림정한솔예린</div><div class="s">대면 · 개인상담 · 50분</div></div>
+                    <span class="pill">다음</span>
+                  </div>
+                  <div class="row">
+                    <div class="time">16:30</div>
+                    <div class="txt"><div class="t">박지후</div><div class="s">화상 · 커플상담 · 대기</div></div>
+                    <span class="pill wait">대기</span>
+                  </div>
+                  <div class="chips">
+                    <span class="chip teal">오늘 <span class="n">3</span>건</span>
+                    <span class="chip">완료 <span class="n">1</span></span>
+                    <span class="chip">남은 <span class="n">2</span></span>
+                  </div>
+                </div>
+              </section>
+              <section class="chapter">
+                <div class="chap-head">
+                  <span class="chap-num">02</span>
+                  <h2 class="chap-title">안내</h2>
+                </div>
+                <div class="guide-card">
+                  <h4>센터 공지</h4>
+                  <p>오늘 18시 이후 냉방 점검 · 일지는 당일 작성</p>
+                  <button class="go" type="button" aria-label="더보기">›</button>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLET P HAS -->
+  <div class="frame-wrap">
+    <div class="frame-label">tablet portrait · 820×1180</div>
+    <div class="device ipad-p" data-shot="home-tablet-portrait">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 820 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winP" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/><stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamP" x1="0.7" y1="0" x2="0.2" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.5"/><stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="820" height="480" fill="#0F172A"/>
+                <rect width="820" height="480" fill="#1E293B" opacity="0.5"/>
+                <rect x="460" y="48" width="240" height="220" rx="4" fill="url(#winP)"/>
+                <path d="M460 48h240v14H460z" fill="#334155"/>
+                <path d="M580 48v220" stroke="#334155" stroke-width="5"/>
+                <path d="M460 158h240" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="460,64 700,64 300,480 80,480" fill="url(#beamP)"/>
+                <rect x="100" y="300" width="180" height="12" rx="2" fill="#334155"/>
+                <path d="M120 270c0-24 20-44 46-44h12v80H120z" fill="#475569"/>
+                <rect x="640" y="320" width="26" height="32" rx="3" fill="#334155"/>
+                <ellipse cx="653" cy="306" rx="24" ry="14" fill="#0F766E"/>
+                <rect x="0" y="380" width="820" height="100" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘 상담 3건 · 다음 14:30</p>
+            </div>
+            <div class="float-sheet">
+              <div class="sheet-kicker"><span class="lab">다음 상담</span><span class="badge ok">확정</span></div>
+              <p class="sheet-dom">오늘 14:30</p>
+              <p class="sheet-body">남궁민서윤아림정한솔예린 · 대면 50분</p>
+              <p class="sheet-meta">3층 상담실 B · 개인상담</p>
+              <div class="cta-row">
+                <button class="mg-btn primary" type="button">상담 열기</button>
+                <button class="mg-btn ghost" type="button">일정</button>
+              </div>
+            </div>
+          </div>
+          <div class="scroll">
+            <div class="grid-2">
+              <section class="chapter" style="margin:0">
+                <div class="chap-head"><span class="chap-num">01</span><h2 class="chap-title">일정</h2><button class="chap-more" type="button">전체</button></div>
+                <div class="dense">
+                  <div class="row"><div class="time">10:00</div><div class="txt"><div class="t">이도윤</div><div class="s">대면 · 완료</div></div><span class="pill">완료</span></div>
+                  <div class="row"><div class="time">14:30</div><div class="txt"><div class="t">남궁민서윤아림정한솔예린</div><div class="s">대면 · 50분</div></div><span class="pill">다음</span></div>
+                  <div class="row"><div class="time">16:30</div><div class="txt"><div class="t">박지후</div><div class="s">화상 · 대기</div></div><span class="pill wait">대기</span></div>
+                  <div class="chips"><span class="chip teal">오늘 <span class="n">3</span></span><span class="chip">완료 <span class="n">1</span></span><span class="chip">남은 <span class="n">2</span></span></div>
+                </div>
+              </section>
+              <section class="chapter" style="margin:0">
+                <div class="chap-head"><span class="chap-num">02</span><h2 class="chap-title">안내</h2></div>
+                <div class="guide-card"><h4>센터 공지</h4><p>오늘 18시 이후 냉방 점검 · 일지는 당일 작성</p><button class="go" type="button">›</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLET L HAS -->
+  <div class="frame-wrap">
+    <div class="frame-label">tablet landscape · 1180×820 · 좌커버|우시트+챕터</div>
+    <div class="device ipad-l" data-shot="home-tablet-landscape">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 520 820" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winL" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/><stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamL" x1="0.6" y1="0" x2="0.1" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.5"/><stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="520" height="820" fill="#0F172A"/>
+                <rect width="520" height="820" fill="#1E293B" opacity="0.5"/>
+                <rect x="240" y="80" width="200" height="260" rx="4" fill="url(#winL)"/>
+                <path d="M240 80h200v16H240z" fill="#334155"/>
+                <path d="M340 80v260" stroke="#334155" stroke-width="5"/>
+                <path d="M240 210h200" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="240,100 440,100 180,740 40,740" fill="url(#beamL)"/>
+                <rect x="70" y="500" width="180" height="12" rx="2" fill="#334155"/>
+                <path d="M90 460c0-26 20-48 48-48h12v90H90z" fill="#475569"/>
+                <rect x="380" y="540" width="28" height="36" rx="3" fill="#334155"/>
+                <ellipse cx="394" cy="524" rx="26" ry="16" fill="#0F766E"/>
+                <rect x="0" y="660" width="520" height="160" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘 상담 3건 · 다음 14:30</p>
+            </div>
+          </div>
+          <div class="body-col">
+            <div class="float-sheet">
+              <div class="sheet-kicker"><span class="lab">다음 상담</span><span class="badge ok">확정</span></div>
+              <p class="sheet-dom">오늘 14:30</p>
+              <p class="sheet-body">남궁민서윤아림정한솔예린 · 대면 50분</p>
+              <p class="sheet-meta">3층 상담실 B · 개인상담</p>
+              <div class="cta-row">
+                <button class="mg-btn primary" type="button">상담 열기</button>
+                <button class="mg-btn ghost" type="button">일정</button>
+              </div>
+            </div>
+            <div class="scroll">
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">01</span><h2 class="chap-title">일정</h2><button class="chap-more" type="button">전체</button></div>
+                <div class="dense">
+                  <div class="row"><div class="time">10:00</div><div class="txt"><div class="t">이도윤</div><div class="s">대면 · 완료</div></div><span class="pill">완료</span></div>
+                  <div class="row"><div class="time">14:30</div><div class="txt"><div class="t">남궁민서윤아림정한솔예린</div><div class="s">대면 · 50분</div></div><span class="pill">다음</span></div>
+                  <div class="row"><div class="time">16:30</div><div class="txt"><div class="t">박지후</div><div class="s">화상 · 대기</div></div><span class="pill wait">대기</span></div>
+                  <div class="chips"><span class="chip teal">오늘 <span class="n">3</span></span><span class="chip">완료 <span class="n">1</span></span><span class="chip">남은 <span class="n">2</span></span></div>
+                </div>
+              </section>
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">02</span><h2 class="chap-title">안내</h2></div>
+                <div class="guide-card"><h4>센터 공지</h4><p>오늘 18시 이후 냉방 점검 · 일지는 당일 작성</p><button class="go" type="button">›</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ZERO ========== -->
+<p class="board-title section-gap">다음 상담 없음 (zero)</p>
+<div class="frames">
+
+  <div class="frame-wrap">
+    <div class="frame-label">web · zero</div>
+    <div class="device web" data-shot="home-web-zero">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 540 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winWz" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/><stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamWz" x1="0.65" y1="0" x2="0.15" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.45"/><stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="540" height="800" fill="#0F172A"/>
+                <rect width="540" height="800" fill="#1E293B" opacity="0.55"/>
+                <rect x="260" y="90" width="200" height="260" rx="4" fill="url(#winWz)" opacity="0.92"/>
+                <path d="M260 90h200v16H260z" fill="#334155"/>
+                <path d="M360 90v260" stroke="#334155" stroke-width="5"/>
+                <path d="M260 220h200" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="260,110 460,110 200,720 40,720" fill="url(#beamWz)"/>
+                <rect x="60" y="520" width="200" height="14" rx="2" fill="#334155"/>
+                <path d="M90 470c0-28 22-50 50-50h14v90H90z" fill="#475569"/>
+                <rect x="400" y="560" width="28" height="36" rx="3" fill="#334155"/>
+                <ellipse cx="414" cy="544" rx="26" ry="16" fill="#0F766E"/>
+                <rect x="0" y="640" width="540" height="160" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘은 예정된 상담이 없어요</p>
+            </div>
+          </div>
+          <div class="body-col">
+            <div class="float-sheet">
+              <div class="sheet-kicker"><span class="lab">다음 상담</span><span class="badge mute">없음</span></div>
+              <p class="sheet-dom">0<span class="unit">건</span></p>
+              <p class="sheet-body">오늘 일정이 비어 있어요</p>
+              <p class="sheet-meta">주간 일정에서 배정·확인을 이어가세요</p>
+              <div class="cta-row">
+                <button class="mg-btn primary" type="button">일정 열기</button>
+              </div>
+            </div>
+            <div class="scroll">
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">01</span><h2 class="chap-title">일정</h2></div>
+                <div class="empty-invite">
+                  <h4>오늘 일정이 없어요</h4>
+                  <p>다음 상담이 잡히면 여기에 시간순으로 모입니다</p>
+                  <button class="empty-link" type="button">주간 일정 보기</button>
+                </div>
+              </section>
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">02</span><h2 class="chap-title">안내</h2></div>
+                <div class="guide-card"><h4>센터 공지</h4><p>미작성 일지 2건 · 당일 작성 권장</p><button class="go" type="button">›</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <div class="frame-label">tablet portrait · zero</div>
+    <div class="device ipad-p" data-shot="home-tablet-portrait-zero">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 820 480" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winPz" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/><stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamPz" x1="0.7" y1="0" x2="0.2" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.45"/><stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="820" height="480" fill="#0F172A"/>
+                <rect width="820" height="480" fill="#1E293B" opacity="0.5"/>
+                <rect x="460" y="48" width="240" height="220" rx="4" fill="url(#winPz)"/>
+                <path d="M460 48h240v14H460z" fill="#334155"/>
+                <path d="M580 48v220" stroke="#334155" stroke-width="5"/>
+                <path d="M460 158h240" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="460,64 700,64 300,480 80,480" fill="url(#beamPz)"/>
+                <rect x="100" y="300" width="180" height="12" rx="2" fill="#334155"/>
+                <path d="M120 270c0-24 20-44 46-44h12v80H120z" fill="#475569"/>
+                <rect x="640" y="320" width="26" height="32" rx="3" fill="#334155"/>
+                <ellipse cx="653" cy="306" rx="24" ry="14" fill="#0F766E"/>
+                <rect x="0" y="380" width="820" height="100" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘은 예정된 상담이 없어요</p>
+            </div>
+            <div class="float-sheet">
+              <div class="sheet-kicker"><span class="lab">다음 상담</span><span class="badge mute">없음</span></div>
+              <p class="sheet-dom">0<span class="unit">건</span></p>
+              <p class="sheet-body">오늘 일정이 비어 있어요</p>
+              <p class="sheet-meta">주간 일정에서 배정·확인을 이어가세요</p>
+              <div class="cta-row"><button class="mg-btn primary" type="button">일정 열기</button></div>
+            </div>
+          </div>
+          <div class="scroll">
+            <section class="chapter">
+              <div class="chap-head"><span class="chap-num">01</span><h2 class="chap-title">일정</h2></div>
+              <div class="empty-invite">
+                <h4>오늘 일정이 없어요</h4>
+                <p>다음 상담이 잡히면 여기에 시간순으로 모입니다</p>
+                <button class="empty-link" type="button">주간 일정 보기</button>
+              </div>
+            </section>
+            <section class="chapter">
+              <div class="chap-head"><span class="chap-num">02</span><h2 class="chap-title">안내</h2></div>
+              <div class="guide-card"><h4>센터 공지</h4><p>미작성 일지 2건 · 당일 작성 권장</p><button class="go" type="button">›</button></div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <div class="frame-label">tablet landscape · zero</div>
+    <div class="device ipad-l" data-shot="home-tablet-landscape-zero">
+      <div class="device-screen">
+        <div class="app">
+          <div class="cover">
+            <div class="cover-clip">
+              <svg class="cover-svg" viewBox="0 0 520 820" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+                <defs>
+                  <linearGradient id="winLz" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#D8EDE9"/><stop offset="100%" stop-color="#94B8B4"/>
+                  </linearGradient>
+                  <linearGradient id="beamLz" x1="0.6" y1="0" x2="0.1" y2="1">
+                    <stop offset="0%" stop-color="#E6F2F1" stop-opacity="0.45"/><stop offset="100%" stop-color="#E6F2F1" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <rect width="520" height="820" fill="#0F172A"/>
+                <rect width="520" height="820" fill="#1E293B" opacity="0.5"/>
+                <rect x="240" y="80" width="200" height="260" rx="4" fill="url(#winLz)"/>
+                <path d="M240 80h200v16H240z" fill="#334155"/>
+                <path d="M340 80v260" stroke="#334155" stroke-width="5"/>
+                <path d="M240 210h200" stroke="#334155" stroke-width="4"/>
+                <polygon class="light-beam" points="240,100 440,100 180,740 40,740" fill="url(#beamLz)"/>
+                <rect x="70" y="500" width="180" height="12" rx="2" fill="#334155"/>
+                <path d="M90 460c0-26 20-48 48-48h12v90H90z" fill="#475569"/>
+                <rect x="380" y="540" width="28" height="36" rx="3" fill="#334155"/>
+                <ellipse cx="394" cy="524" rx="26" ry="16" fill="#0F766E"/>
+                <rect x="0" y="660" width="520" height="160" fill="#0B1220"/>
+              </svg>
+            </div>
+            <div class="cover-top">
+              <button class="btn-icon" type="button" aria-label="메뉴">☰</button>
+              <span class="cover-brand-chip">마인드가든</span>
+            </div>
+            <div class="cover-meta">
+              <div class="cover-kicker">상담실 · 오늘 10월 29일</div>
+              <h1 class="cover-name">김서연 상담사</h1>
+              <p class="cover-sub">오늘은 예정된 상담이 없어요</p>
+            </div>
+          </div>
+          <div class="body-col">
+            <div class="float-sheet">
+              <div class="sheet-kicker"><span class="lab">다음 상담</span><span class="badge mute">없음</span></div>
+              <p class="sheet-dom">0<span class="unit">건</span></p>
+              <p class="sheet-body">오늘 일정이 비어 있어요</p>
+              <p class="sheet-meta">주간 일정에서 배정·확인을 이어가세요</p>
+              <div class="cta-row"><button class="mg-btn primary" type="button">일정 열기</button></div>
+            </div>
+            <div class="scroll">
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">01</span><h2 class="chap-title">일정</h2></div>
+                <div class="empty-invite">
+                  <h4>오늘 일정이 없어요</h4>
+                  <p>다음 상담이 잡히면 여기에 시간순으로 모입니다</p>
+                  <button class="empty-link" type="button">주간 일정 보기</button>
+                </div>
+              </section>
+              <section class="chapter">
+                <div class="chap-head"><span class="chap-num">02</span><h2 class="chap-title">안내</h2></div>
+                <div class="guide-card"><h4>센터 공지</h4><p>미작성 일지 2건 · 당일 작성 권장</p><button class="go" type="button">›</button></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

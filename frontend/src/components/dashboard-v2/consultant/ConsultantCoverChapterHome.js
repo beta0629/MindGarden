@@ -9,7 +9,9 @@ import {
   COVER_CHAPTER_TEST_ID,
   COVER_CHAPTER_BRAND_FALLBACK,
   COVER_CHAPTER_DESKTOP_SHELL_MQ,
-  COVER_CHAPTER_TABLET_SPLIT_MQ
+  COVER_CHAPTER_TABLET_SPLIT_MQ,
+  COVER_CHAPTER_SVG_VARIANT_LANDSCAPE,
+  COVER_CHAPTER_SVG_VARIANT_PORTRAIT
 } from './consultantCoverChapterConstants';
 import {
   formatCoverDateLabel,
@@ -62,8 +64,7 @@ const ConsultantCoverChapterHome = ({
   onOpenConsultation,
   onOpenSchedule,
   onScheduleRowClick,
-  onOpenGuide,
-  onMenuClick
+  onOpenGuide
 }) => {
   const [isSplitLayout, setIsSplitLayout] = useState(getIsSplitLayout);
   const [clockTick, setClockTick] = useState(0);
@@ -185,7 +186,11 @@ const ConsultantCoverChapterHome = ({
         consultantName={consultantName}
         subtitle={coverSubtitle}
         titleId={titleId || CONSULTANT_DASHBOARD_TITLE_ID}
-        onMenuClick={onMenuClick}
+        variant={
+          isSplitLayout
+            ? COVER_CHAPTER_SVG_VARIANT_PORTRAIT
+            : COVER_CHAPTER_SVG_VARIANT_LANDSCAPE
+        }
       >
         {!isSplitLayout ? nextSheet : null}
       </ConsultantHomeCover>
@@ -233,8 +238,7 @@ ConsultantCoverChapterHome.propTypes = {
   onOpenConsultation: PropTypes.func.isRequired,
   onOpenSchedule: PropTypes.func.isRequired,
   onScheduleRowClick: PropTypes.func,
-  onOpenGuide: PropTypes.func,
-  onMenuClick: PropTypes.func
+  onOpenGuide: PropTypes.func
 };
 
 export default ConsultantCoverChapterHome;

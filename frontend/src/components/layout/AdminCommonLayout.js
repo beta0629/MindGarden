@@ -14,7 +14,6 @@ import { useSession } from '../../contexts/SessionContext';
 import { AdminShellContext, useAdminShell } from '../../contexts/AdminShellContext';
 import { useBranding } from '../../hooks/useBranding';
 import { useResponsive } from '../../hooks/useResponsive';
-import useMediaQuery from '../../hooks/useMediaQuery';
 import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
 import { getGnbLogoUrl } from '../../utils/brandingUtils';
 import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
@@ -22,9 +21,7 @@ import {
   DEFAULT_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS,
   CLIENT_MENU_ITEMS,
-  BREAKPOINT_DESKTOP,
-  BREAKPOINT_CONSULTANT_DESKTOP,
-  MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER
+  BREAKPOINT_DESKTOP
 } from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
@@ -131,16 +128,14 @@ const AdminCommonLayoutShell = ({
     [brandingInfo]
   );
   const { windowSize } = useResponsive();
-  // 상담사 Desktop LNB: width≥1280 AND fine-pointer. 터치 태블릿 landscape는 햄버거 유지.
-  const isFinePointerDesktop = useMediaQuery(MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER);
   const userRole = user?.role;
   const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
-  // 상담사: 태블릿(P+L)은 MobileLayout(햄버거+stone soft-sheet). Desktop LNB는 ≥1280+fine-pointer만.
+  // 상담사: 전 폭 햄버거+stone soft-sheet (Desktop LNB 게이트 폐기).
   // 운영/어드민: 기존 768 width-only 게이트 유지(데스크톱 LNB 회귀 금지).
   const isDesktop = isCounselorOnly
-    ? (windowSize.width >= BREAKPOINT_CONSULTANT_DESKTOP && isFinePointerDesktop)
+    ? false
     : (windowSize.width >= BREAKPOINT_DESKTOP);
 
   const [shellMeta, setShellMeta] = useState({});

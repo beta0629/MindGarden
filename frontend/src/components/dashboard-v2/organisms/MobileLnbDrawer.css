@@ -322,6 +322,9 @@
  */
 .mg-v2-mobile-lnb-drawer--soft-sheet {
   --mg-v2-lnb-on-fill: var(--mg-v2-color-text-on-primary, var(--mg-color-text-on-primary));
+  /* 시안 280 ≈ space-20 * 3.5 — soft-sheet만 토큰 폭 (다크 드로어 레거시 미변경) */
+  width: calc(var(--mg-v2-space-20) * 3.5);
+  max-width: min(85vw, calc(var(--mg-v2-space-20) * 3.5));
   background: var(--mg-v2-color-surface-stone);
   border-right: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   box-shadow: none;
@@ -329,6 +332,14 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   color: var(--mg-v2-color-text-primary);
+}
+
+/* 넓은 뷰포트: soft-sheet 패널만 더 얇게 (관리자 다크 드로어 비대상) */
+@media (min-width: 1280px) {
+  .mg-v2-mobile-lnb-drawer--soft-sheet {
+    width: calc(var(--mg-v2-space-20) * 3);
+    max-width: calc(var(--mg-v2-space-20) * 3);
+  }
 }
 
 .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-mobile-lnb-drawer__header {

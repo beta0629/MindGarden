@@ -17,6 +17,22 @@ import {
   COVER_CHAPTER_ZERO_META
 } from './consultantCoverChapterConstants';
 
+const EMPTY_DISPLAY_PLACEHOLDER = '—';
+
+/**
+ * 시트 행 표시 여부 — 빈값·whitespace·「—」는 행 자체 미렌더
+ *
+ * @param {*} value
+ * @returns {string|null} trim 된 표시 문자열 또는 null
+ */
+const resolveSheetLine = (value) => {
+  const label = toDisplayString(value, '').trim();
+  if (!label || label === EMPTY_DISPLAY_PLACEHOLDER) {
+    return null;
+  }
+  return label;
+};
+
 /**
  * Clinic-OS Next-Sheet — has: 상담 열기+일정 / zero: 일정 열기 only
  *
@@ -65,9 +81,9 @@ const ConsultantHomeNextSheet = ({
     );
   }
 
-  const timeLabel = toDisplayString(nextConsultation.timeLabel, '');
-  const bodyLabel = toDisplayString(nextConsultation.bodyLabel, '');
-  const metaLabel = toDisplayString(nextConsultation.metaLabel, '');
+  const timeLabel = resolveSheetLine(nextConsultation.timeLabel);
+  const bodyLabel = resolveSheetLine(nextConsultation.bodyLabel);
+  const metaLabel = resolveSheetLine(nextConsultation.metaLabel);
   const badgeLabel = toDisplayString(
     nextConsultation.badgeLabel,
     COVER_CHAPTER_BADGE_CONFIRMED
@@ -82,18 +98,24 @@ const ConsultantHomeNextSheet = ({
       <div className="consultant-cover-chapter__sheet-kicker">
         <span className="consultant-cover-chapter__sheet-lab">{COVER_CHAPTER_NEXT_LABEL}</span>
         <span className="consultant-cover-chapter__badge consultant-cover-chapter__badge--ok">
-          <SafeText tag="span">{badgeLabel}</SafeText>
+          <SafeText tag="span" fallback="">{badgeLabel}</SafeText>
         </span>
       </div>
-      <p className="consultant-cover-chapter__sheet-dom">
-        <SafeText tag="span">{timeLabel}</SafeText>
-      </p>
-      <p className="consultant-cover-chapter__sheet-body">
-        <SafeText tag="span">{bodyLabel}</SafeText>
-      </p>
-      <p className="consultant-cover-chapter__sheet-meta">
-        <SafeText tag="span">{metaLabel}</SafeText>
-      </p>
+      {timeLabel ? (
+        <p className="consultant-cover-chapter__sheet-dom">
+          <SafeText tag="span" fallback="">{timeLabel}</SafeText>
+        </p>
+      ) : null}
+      {bodyLabel ? (
+        <p className="consultant-cover-chapter__sheet-body">
+          <SafeText tag="span" fallback="">{bodyLabel}</SafeText>
+        </p>
+      ) : null}
+      {metaLabel ? (
+        <p className="consultant-cover-chapter__sheet-meta">
+          <SafeText tag="span" fallback="">{metaLabel}</SafeText>
+        </p>
+      ) : null}
       <div className="consultant-cover-chapter__cta-row">
         <MGButton
           type="button"

@@ -16,6 +16,12 @@ export const CLIENT_WEB_LOGIN = '로그인';
 /** data-testid for shared ClientWebTopChrome */
 export const CLIENT_WEB_TOP_CHROME_TEST_ID = 'client-web-top-chrome';
 
+/** data-testid for optional cover-home hamburger (ClientWebTopChrome) */
+export const CLIENT_WEB_TOP_CHROME_MENU_TEST_ID = 'client-web-topchrome-menu';
+
+/** Default aria when onMenuClick is provided */
+export const CLIENT_WEB_TOP_CHROME_MENU_ARIA = '메뉴';
+
 /** data-testid for shared ClientWebPageShell */
 export const CLIENT_WEB_PAGE_SHELL_TEST_ID = 'client-web-page-shell';
 

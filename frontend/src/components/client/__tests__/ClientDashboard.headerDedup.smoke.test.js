@@ -1,5 +1,5 @@
 /**
- * ClientDashboard — v4 상담실 로비 smoke
+ * ClientDashboard — Clinic-OS 커버+챕터 홈 smoke
  *
  * @author Core Solution
  * @since 2026-09-17
@@ -10,20 +10,47 @@ import { render, screen, waitFor, within, fireEvent } from '@testing-library/rea
 import { MemoryRouter } from 'react-router-dom';
 import StandardizedApi from '../../../utils/standardizedApi';
 import {
-  CLIENT_LOBBY_CTA_DETAILS,
-  CLIENT_LOBBY_CTA_PAYMENT,
-  CLIENT_LOBBY_CTA_PICK_SESSION,
-  CLIENT_LOBBY_FOOTER,
-  CLIENT_LOBBY_HERO_TEST_ID,
+  CLIENT_COVER_CHAPTER_TEST_ID,
+  CLIENT_COVER_CTA_PAY,
+  CLIENT_COVER_CTA_PICK_SESSION,
+  CLIENT_COVER_CTA_VIEW_SCHEDULE,
+  CLIENT_COVER_DOCK_HOME,
+  CLIENT_COVER_DOCK_ME,
+  CLIENT_COVER_DOCK_SCHEDULE,
+  CLIENT_COVER_DOCK_TEST_ID,
+  CLIENT_COVER_DOCK_WELLNESS,
+  CLIENT_COVER_MENU_LOGOUT,
+  CLIENT_COVER_MENU_TEST_ID,
+  CLIENT_COVER_NEXT_SHEET_TEST_ID,
+  CLIENT_COVER_PANEL_ARIA,
+  CLIENT_COVER_SHEET_MODE,
   CLIENT_LOBBY_LOGOUT,
   CLIENT_LOBBY_LOGOUT_CANCEL,
-  CLIENT_LOBBY_LOGOUT_CONFIRM,
-  CLIENT_LOBBY_STATUS_TEST_ID,
-  CLIENT_LOBBY_TEST_ID
+  CLIENT_LOBBY_LOGOUT_CONFIRM
 } from '../clientDashboard/constants';
-import { CLIENT_WEB_TOP_CHROME_TEST_ID, CLIENT_WEB_TOP_NAV_TEST_ID, CLIENT_WEB_NAV } from '../../../constants/clientWebChromeConstants';
+import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
+import {
+  CLIENT_WEB_LOGIN,
+  CLIENT_WEB_PAGE_SHELL_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_TEST_ID
+} from '../../../constants/clientWebChromeConstants';
 import { CLIENT_SHOP_ROUTES } from '../../../constants/clientShopConstants';
+import ClientAppShell from '../../layout/ClientAppShell';
 import ClientDashboard from '../ClientDashboard';
+
+/**
+ * 프로덕션과 동일 — ClientAppShell( hideChrome ) + 커버 홈
+ * @param {import('react').ReactNode} ui
+ * @returns {import('@testing-library/react').RenderResult}
+ */
+const renderCoverHome = (ui = <ClientDashboard />) => render(
+  <MemoryRouter initialEntries={[CLIENT_DASHBOARD_ROUTES.DASHBOARD]}>
+    <ClientAppShell>
+      {ui}
+    </ClientAppShell>
+  </MemoryRouter>
+);
 
 const MOCK_TENANT_CENTER = '햇살상담센터';
 const MOCK_BRAND_WORD = 'Sunshine Counseling';
@@ -147,7 +174,7 @@ const defaultApiImpl = (endpoint) => {
   return Promise.resolve(null);
 };
 
-describe('ClientDashboard v4 상담실 로비', () => {
+describe('ClientDashboard 커버+챕터 홈', () => {
   beforeEach(() => {
     StandardizedApi.get.mockReset();
     StandardizedApi.get.mockImplementation(defaultApiImpl);
@@ -172,140 +199,67 @@ describe('ClientDashboard v4 상담실 로비', () => {
     });
   });
 
-  test('로비 셸 · ink 이름 · 히어로 · 예약 CTA 없음 · Admin LNB 없음', async() => {
-    const { container } = render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+  test('has: 커버+챕터 · 상담 일정 보기 · 직접예약 없음 · 독 라우트', async() => {
+    const { container } = renderCoverHome();
 
-    expect(screen.getByTestId(CLIENT_LOBBY_TEST_ID)).toBeInTheDocument();
-    expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId('client-lobby')).not.toBeInTheDocument();
     expect(screen.queryByTestId('admin-common-layout')).not.toBeInTheDocument();
     expect(container.querySelector('.mg-v2-ad-b0kla')).toBeNull();
     expect(container.querySelector('.client-dashboard__kpi-row')).toBeNull();
+    // 셸은 존재하되 hideChrome+fullBleed — TopChrome은 커버 안 1개만
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toHaveAttribute('data-hide-chrome', 'true');
+    expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toHaveAttribute('data-full-bleed', 'true');
+    expect(container.querySelectorAll('.client-cover__menu-btn')).toHaveLength(0);
+    expect(container.querySelectorAll(`[data-testid="${CLIENT_WEB_TOP_CHROME_TEST_ID}"]`)).toHaveLength(1);
+    expect(container.querySelectorAll(`[data-testid="${CLIENT_WEB_TOP_CHROME_MENU_TEST_ID}"]`)).toHaveLength(1);
+    expect(container.querySelector('.client-cover__chrome')).not.toBeNull();
+    expect(container.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(0);
+    expect(container.querySelector('.client-cover__brand-chip')).toBeNull();
 
-    expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
     expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
-    const topNav = screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID);
-    CLIENT_WEB_NAV.forEach((item) => {
-      expect(within(topNav).getByRole('link', { name: item.label }))
-        .toHaveAttribute('href', item.path);
-    });
-    expect(within(topNav).getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
-      'href',
-      CLIENT_SHOP_ROUTES.CATALOG
-    );
-    expect(screen.queryByRole('link', { name: '상담' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: '후기' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
-    expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();    await waitFor(() => {
-      expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID)).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toHaveAttribute(
-      'data-priority',
-      'NEXT_APPOINTMENT'
-    );
-    expect(screen.getByText('다음 한 장')).toBeInTheDocument();
-    expect(screen.getByText('다가오는 상담')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_DETAILS })).toHaveAttribute(
-      'href',
-      '/client/schedule'
-    );
+    const sheet = screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID);
+    expect(sheet).toHaveAttribute('data-sheet-mode', CLIENT_COVER_SHEET_MODE.HAS);
+    expect(within(sheet).getByRole('button', { name: CLIENT_COVER_CTA_VIEW_SCHEDULE }))
+      .toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: CLIENT_COVER_CTA_PICK_SESSION }))
+      .not.toBeInTheDocument();
 
-    const hi = container.querySelector('.client-lobby__hi-name');
-    expect(hi).toBeTruthy();
-    expect(hi.textContent).toContain('이재학');
+    const dock = screen.getByTestId(CLIENT_COVER_DOCK_TEST_ID);
+    expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_HOME) }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.DASHBOARD);
+    expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_SCHEDULE) }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.SCHEDULE);
+    expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_WELLNESS) }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.WELLNESS);
+    expect(within(dock).getByRole('link', { name: new RegExp(CLIENT_COVER_DOCK_ME) }))
+      .toHaveAttribute('href', CLIENT_DASHBOARD_ROUTES.MYPAGE);
 
-    expect(screen.getByTestId(CLIENT_LOBBY_STATUS_TEST_ID)).toBeInTheDocument();
-    expect(screen.getByText(/남은 회기/)).toBeInTheDocument();
-    expect(screen.getByText('예정 목록')).toBeInTheDocument();
-    expect(screen.getByText('회기 잔량')).toBeInTheDocument();
-    const pickSessionLinks = screen.getAllByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION });
-    expect(pickSessionLinks.some((el) => el.getAttribute('href') === '/client/session-management'))
-      .toBe(true);
-    expect(pickSessionLinks.some((el) => el.getAttribute('href') === CLIENT_SHOP_ROUTES.CATALOG))
-      .toBe(true);
-    expect(screen.getByRole('link', { name: CLIENT_LOBBY_CTA_PAYMENT })).toHaveAttribute(
-      'href',
-      '/client/payment-history'
-    );
+    // TopChrome + CoverPanel 둘 다 userName 노출 (헤더 SSOT + 커버 인사)
+    const chrome = screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID);
+    const cover = screen.getByRole('region', { name: CLIENT_COVER_PANEL_ARIA });
+    expect(within(chrome).getByText(/이재학/)).toBeInTheDocument();
+    expect(within(cover).getByText(/이재학/)).toBeInTheDocument();
+    expect(screen.getAllByText(/이재학/).length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole('link', { name: CLIENT_WEB_LOGIN })).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '회기' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: '안내' })).toBeInTheDocument();
 
-    expect(screen.getByText(CLIENT_LOBBY_FOOTER)).toBeInTheDocument();
-
+    expect(screen.queryByRole('button', { name: /예약하기|새 예약|일정에 담기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /예약하기|새 예약|일정에 담기/ })).not.toBeInTheDocument();
     const bodyText = container.textContent || '';
-    expect(bodyText).not.toMatch(/새 예약/);
-    expect(bodyText).not.toMatch(/예약하기/);
-    expect(bodyText).not.toMatch(/일정에 담기/);
     expect(bodyText).not.toMatch(/\/client\/booking/);
   });
 
-  test('top chrome 로그아웃 → ConfirmModal → useSession.logout', async() => {
-    render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
-
-    const logoutButton = screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT });
-    expect(logoutButton).toHaveClass('client-web-topchrome__logout');
-    fireEvent.click(logoutButton);
-
-    const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
-    expect(within(dialog).getByText(CLIENT_LOBBY_LOGOUT_CONFIRM)).toBeInTheDocument();
-    expect(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT_CANCEL }))
-      .toBeInTheDocument();
-
-    fireEvent.click(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT }));
-    await waitFor(() => {
-      expect(mockLogout).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  test('브랜딩 없으면 top chrome에 MindGarden/마인드가든·플랫폼 기본 라벨 없음', () => {
-    const sessionUser = buildSessionUser({
-      tenant: { tenantId: 'tenant-empty', name: '' },
-      tenantName: '',
-      branchName: ''
-    });
-    mockUseSession.mockReturnValue({
-      user: sessionUser,
-      isLoggedIn: true,
-      isLoading: false,
-      checkSession: jest.fn(),
-      logout: mockLogout,
-      setModalOpen: jest.fn()
-    });
-    mockSessionGetUser.mockReturnValue(sessionUser);
-    mockUseBranding.mockReturnValue({
-      brandingInfo: {
-        companyName: 'CoreSolution',
-        companyNameEn: 'Core Solution'
-      },
-      isLoading: false
-    });
-
-    const { container } = render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
-
-    expect(container.querySelector('.client-web-topchrome__brand-word')).toBeNull();
-    expect(container.querySelector('.client-web-topchrome__brand-center')).toBeNull();
-    expect(container.querySelector('.client-web-topchrome__brand-sep')).toBeNull();
-    expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
-    expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
-    expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
-    expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
-    expect(container.querySelector('.client-web-topchrome__brand-mark')).toBeTruthy();
-    expect(screen.getByTestId('client-web-top-chrome')).toBeInTheDocument();
-  });
-
-  test('회기 0이면 히어로 우선순위 ZERO_SESSIONS', async() => {
+  test('zero: 회기 고르기 + 결제하기 · 직접예약 없음', async() => {
     StandardizedApi.get.mockImplementation((endpoint) => {
       if (String(endpoint).includes('schedules')) {
         return Promise.resolve([]);
@@ -329,23 +283,120 @@ describe('ClientDashboard v4 상담실 로비', () => {
       return Promise.resolve(null);
     });
 
-    render(
-      <MemoryRouter>
-        <ClientDashboard />
-      </MemoryRouter>
-    );
+    const { container } = renderCoverHome();
 
     await waitFor(() => {
-      expect(screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID)).toHaveAttribute(
-        'data-priority',
-        'ZERO_SESSIONS'
+      expect(screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID)).toHaveAttribute(
+        'data-sheet-mode',
+        CLIENT_COVER_SHEET_MODE.ZERO
       );
     });
 
-    const hero = screen.getByTestId(CLIENT_LOBBY_HERO_TEST_ID);
-    expect(within(hero).getByRole('link', { name: CLIENT_LOBBY_CTA_PICK_SESSION }))
-      .toHaveAttribute('href', '/client/session-management');
-    expect(within(hero).getByText(CLIENT_LOBBY_CTA_PICK_SESSION, { selector: '.client-lobby__hero-title' }))
+    const sheet = screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID);
+    expect(within(sheet).getByRole('button', { name: CLIENT_COVER_CTA_PICK_SESSION }))
       .toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: CLIENT_COVER_CTA_PAY }))
+      .toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: CLIENT_COVER_CTA_VIEW_SCHEDULE }))
+      .not.toBeInTheDocument();
+
+    fireEvent.click(within(sheet).getByRole('button', { name: CLIENT_COVER_CTA_PICK_SESSION }));
+    expect(screen.queryByRole('button', { name: /예약하기|새 예약|일정에 담기/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /예약하기|새 예약|일정에 담기/ })).not.toBeInTheDocument();
+    expect(container.textContent || '').not.toMatch(/\/client\/booking/);
+  });
+
+  test('커버 메뉴 · 로그아웃 ConfirmModal', async() => {
+    renderCoverHome();
+
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+    const coverMenu = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
+    expect(coverMenu).toBeInTheDocument();
+
+    // 헤더 TopChrome에도 「로그아웃」이 있으므로 커버 메뉴 경로만 스코프
+    fireEvent.click(
+      within(coverMenu).getByRole('button', { name: CLIENT_COVER_MENU_LOGOUT })
+    );
+
+    const dialog = await screen.findByRole('dialog', { name: CLIENT_LOBBY_LOGOUT });
+    expect(within(dialog).getByText(CLIENT_LOBBY_LOGOUT_CONFIRM)).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT_CANCEL }))
+      .toBeInTheDocument();
+
+    fireEvent.click(within(dialog).getByRole('button', { name: CLIENT_LOBBY_LOGOUT }));
+    await waitFor(() => {
+      expect(mockLogout).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  test('브랜딩 없으면 MindGarden/마인드가든·플랫폼 기본 라벨 없음', () => {
+    const sessionUser = buildSessionUser({
+      tenant: { tenantId: 'tenant-empty', name: '' },
+      tenantName: '',
+      branchName: ''
+    });
+    mockUseSession.mockReturnValue({
+      user: sessionUser,
+      isLoggedIn: true,
+      isLoading: false,
+      checkSession: jest.fn(),
+      logout: mockLogout,
+      setModalOpen: jest.fn()
+    });
+    mockSessionGetUser.mockReturnValue(sessionUser);
+    mockUseBranding.mockReturnValue({
+      brandingInfo: {
+        companyName: 'CoreSolution',
+        companyNameEn: 'Core Solution'
+      },
+      isLoading: false
+    });
+
+    renderCoverHome();
+
+    expect(screen.queryByText('MindGarden')).not.toBeInTheDocument();
+    expect(screen.queryByText('마인드가든')).not.toBeInTheDocument();
+    expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
+    expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
+    expect(screen.getByTestId(CLIENT_COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
+  });
+
+  test('zero CTA는 CATALOG · PAYMENT_HISTORY 로 이동', async() => {
+    StandardizedApi.get.mockImplementation((endpoint) => {
+      if (String(endpoint).includes('schedules')) {
+        return Promise.resolve([]);
+      }
+      if (String(endpoint).includes('mappings/client')) {
+        return Promise.resolve([
+          {
+            id: 10,
+            status: 'PENDING_PAYMENT',
+            totalSessions: 4,
+            usedSessions: 0,
+            remainingSessions: 0,
+            packageName: '패키지',
+            paymentStatus: 'PENDING'
+          }
+        ]);
+      }
+      if (String(endpoint).includes('unread-count')) {
+        return Promise.resolve({ unreadCount: 0 });
+      }
+      return Promise.resolve(null);
+    });
+
+    renderCoverHome();
+
+    await waitFor(() => {
+      expect(screen.getByTestId(CLIENT_COVER_NEXT_SHEET_TEST_ID)).toHaveAttribute(
+        'data-sheet-mode',
+        CLIENT_COVER_SHEET_MODE.ZERO
+      );
+    });
+
+    expect(CLIENT_SHOP_ROUTES.CATALOG).toBe('/client/shop');
+    expect(CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY).toBe('/client/payment-history');
+    expect(screen.getByRole('button', { name: CLIENT_COVER_CTA_PICK_SESSION })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: CLIENT_COVER_CTA_PAY })).toBeInTheDocument();
   });
 });

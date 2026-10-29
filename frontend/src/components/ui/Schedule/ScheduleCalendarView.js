@@ -53,9 +53,16 @@ import {
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
+import ConsultantTabletAgendaList from './ConsultantTabletAgendaList';
 import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
 import { useConsultantColorPalette } from '../../../hooks/useConsultantColorPalette';
+import useMediaQuery from '../../../hooks/useMediaQuery';
 import { USER_ROLES, mapLegacyRole } from '../../../constants/roles';
+import {
+  CONSULTANT_SCHEDULE_TABLET_CLASS,
+  CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ,
+  CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ
+} from '../../../constants/consultantScheduleTablet';
 import {
   appendScheduleMoveLockTooltip,
   getScheduleCreateInPastMessage,
@@ -190,7 +197,12 @@ const ScheduleCalendarView = ({
      * activeStart=2026-03-29 → month=3 API 호출 회귀를 유발했다.
      */
     onMonthChange,
-    scheduleStatusOptions = []
+    scheduleStatusOptions = [],
+    /**
+     * 상담사 태블릿 일정 v2 옵트인 — 어드민 UnifiedSchedule 회귀 금지.
+     * portrait: 일 아젠다·주 리스트 / landscape: 주 타임그리드·이름 2줄.
+     */
+    consultantTabletScheduleV2 = false
 }) => {
     const { t } = useTranslation();
     const { colorClassFor } = useConsultantColorPalette();
@@ -202,6 +214,16 @@ const ScheduleCalendarView = ({
     /** datesSet에서 day→month/week 이탈 시에만 줌 상태 해제 (확대 직전 헤더 갱신 레이스 방지) */
     const lastViewTypeRef = useRef(null);
     const [isDayZoomed, setIsDayZoomed] = useState(false);
+    const [activeViewType, setActiveViewType] = useState(CALENDAR_VIEW_MONTH);
+    const [visibleRange, setVisibleRange] = useState({ start: null, end: null });
+    const tabletPortraitDefaultAppliedRef = useRef(false);
+    const tabletLandscapeDefaultAppliedRef = useRef(false);
+    const isTabletPortrait = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ);
+    const isLandscape = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ);
+    const tabletV2Active = consultantTabletScheduleV2 === true;
+    const useTabletAgendaList = tabletV2Active
+        && !isLandscape
+        && (activeViewType === CALENDAR_VIEW_DAY || activeViewType === CALENDAR_VIEW_WEEK);
     useCalendarDragEscapeCancel();
     /** 주·일 시간축 — 업무 종료(20시대 포함) 기본 + 더 늦은/이른 일정까지 */
     const slotTimeRange = useMemo(() => resolveCalendarSlotTimeRange(events), [events]);
@@ -355,6 +377,14 @@ const ScheduleCalendarView = ({
             setIsDayZoomed(false);
         }
 
+        if (viewType) {
+            setActiveViewType(viewType);
+        }
+        setVisibleRange({
+            start: arg.start || null,
+            end: arg.end || null
+        });
+
         onMonthChange?.({
             start: arg.start,
             end: arg.end,
@@ -363,6 +393,51 @@ const ScheduleCalendarView = ({
             view: viewType
         });
     }, [onMonthChange]);
+
+    /**
+     * 태블릿 v2 portrait 기본 = 「일」아젠다.
+     * Compact portrait 진입 시 month에 머무르면 day로 전환(1회). landscape/데스크톱은 유지.
+     */
+    useEffect(() => {
+        if (!tabletV2Active || !isTabletPortrait) {
+            tabletPortraitDefaultAppliedRef.current = false;
+            return;
+        }
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi) {
+            return;
+        }
+        if (tabletPortraitDefaultAppliedRef.current) {
+            return;
+        }
+        if (calendarApi.view?.type === CALENDAR_VIEW_MONTH) {
+            tabletPortraitDefaultAppliedRef.current = true;
+            calendarApi.changeView(CALENDAR_VIEW_DAY);
+        }
+    }, [tabletV2Active, isTabletPortrait, events.length]);
+
+    /**
+     * 태블릿 v2 landscape 기본 = 「주」타임그리드.
+     * 태블릿 landscape에서 month에 머무르면 week로 전환(1회).
+     * landscape 이탈 시 ref 리셋 → 재진입 시 다시 적용.
+     */
+    useEffect(() => {
+        if (!tabletV2Active || !isLandscape) {
+            tabletLandscapeDefaultAppliedRef.current = false;
+            return;
+        }
+        const calendarApi = calendarRef.current?.getApi?.();
+        if (!calendarApi) {
+            return;
+        }
+        if (tabletLandscapeDefaultAppliedRef.current) {
+            return;
+        }
+        if (calendarApi.view?.type === CALENDAR_VIEW_MONTH) {
+            tabletLandscapeDefaultAppliedRef.current = true;
+            calendarApi.changeView(CALENDAR_VIEW_WEEK);
+        }
+    }, [tabletV2Active, isLandscape, events.length]);
 
     const customButtons = useMemo(() => ({
         [ZOOM_OUT_BUTTON_ID]: {
@@ -780,8 +855,21 @@ const ScheduleCalendarView = ({
         );
     };
 
+    const wrapperClassName = [
+        'mg-v2-schedule-calendar-view',
+        'mg-v2-ad-b0kla-fc-wrapper',
+        tabletV2Active ? CONSULTANT_SCHEDULE_TABLET_CLASS.VIEW_ROOT : '',
+        useTabletAgendaList ? CONSULTANT_SCHEDULE_TABLET_CLASS.VIEW_AGENDA_ACTIVE : '',
+        tabletV2Active && isLandscape ? CONSULTANT_SCHEDULE_TABLET_CLASS.VIEW_LANDSCAPE : ''
+    ].filter(Boolean).join(' ');
+
     return (
-        <div ref={calendarWrapperRef} className="mg-v2-schedule-calendar-view mg-v2-ad-b0kla-fc-wrapper">
+        <div
+            ref={calendarWrapperRef}
+            className={wrapperClassName}
+            data-consultant-tablet-schedule-v2={tabletV2Active ? 'true' : undefined}
+            data-tablet-agenda={useTabletAgendaList ? (activeViewType === CALENDAR_VIEW_WEEK ? 'week' : 'day') : undefined}
+        >
             <FullCalendar
                 ref={calendarRef}
                 plugins={SCHEDULE_CALENDAR_PLUGINS}
@@ -836,6 +924,16 @@ const ScheduleCalendarView = ({
                 windowResize={updateCalendarSize}
                 datesSet={handleDatesSet}
             />
+            {useTabletAgendaList ? (
+                <ConsultantTabletAgendaList
+                    events={calendarEvents}
+                    viewType={activeViewType}
+                    rangeStart={visibleRange.start}
+                    rangeEnd={visibleRange.end}
+                    scheduleStatusOptions={scheduleStatusOptions}
+                    onEventClick={onEventClick}
+                />
+            ) : null}
         </div>
     );
 };

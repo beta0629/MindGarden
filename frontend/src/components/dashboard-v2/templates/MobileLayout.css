@@ -35,6 +35,17 @@
     var(--mg-layout-page-padding-mobile, 16px) + env(safe-area-inset-bottom, 0px)
   );
   min-height: 0;
+  min-width: 0;
+}
+
+.mg-v2-mobile-layout__stage {
+  flex: 1 1 0%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 .mg-v2-mobile-layout__search {
@@ -45,14 +56,41 @@
 }
 
 /* 단일 자식(로딩 또는 콘텐츠)이 영역을 채우도록 */
-.mg-v2-mobile-layout__main > * {
+.mg-v2-mobile-layout__stage > *:not(.mg-v2-mobile-layout__search) {
   flex: 1 1 0%;
   min-height: 0;
+  min-width: 0;
 }
 
-.mg-v2-mobile-layout__main > .mg-v2-mobile-layout__search {
-  flex: 0 0 auto;
-  min-height: 0;
+/*
+ * 상담사 태블릿 soft-sheet 셸 — stage pad 20 / landscape 32 + max≈920
+ * overlay 드로어만: main/stage width·margin은 drawer open/closed 동일(push 금지).
+ */
+.mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
+  padding: var(--mg-v2-space-5);
+  padding-left: calc(var(--mg-v2-space-5) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--mg-v2-space-5) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--mg-v2-space-6) + env(safe-area-inset-bottom, 0px));
+  /* push-layout 방어: drawer-open 클래스·margin 축소 없음 */
+  margin-left: 0;
+  width: 100%;
+}
+
+.mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__stage {
+  margin-left: 0;
+  width: 100%;
+}
+
+@media (orientation: landscape) and (min-width: 768px) {
+  .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
+    padding-left: calc(var(--mg-v2-space-8) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--mg-v2-space-8) + env(safe-area-inset-right, 0px));
+  }
+
+  .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__stage {
+    max-width: 57.5rem; /* ≈920px stage calm */
+    margin-inline: auto;
+  }
 }
 
 .mg-v2-mobile-layout__tabbar {

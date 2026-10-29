@@ -149,7 +149,7 @@ describe('MobileGnb noOverlap (clock × menu/logo/notification)', () => {
       /\.mg-v2-mobile-gnb\s*\{[^}]*column-gap:\s*var\(--mg-v2-mobile-gnb-chip-gap-sides\)/s
     );
     expect(gnbCss).toMatch(
-      /\.mg-v2-mobile-gnb\s*\{[^}]*padding:\s*0\s+var\(--mg-v2-mobile-gnb-edge-pad\)/s
+      /\.mg-v2-mobile-gnb\s*\{[^}]*padding:\s*env\(safe-area-inset-top,\s*0px\)\s+var\(--mg-v2-mobile-gnb-edge-pad\)\s+0/s
     );
     expect(gnbCss).not.toMatch(/\.mg-v2-mobile-gnb__center\s*\{[^}]*position:\s*absolute/s);
     expect(tokens).toContain('--mg-v2-mobile-gnb-side-min');

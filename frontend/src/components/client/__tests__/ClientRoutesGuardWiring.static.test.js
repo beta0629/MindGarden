@@ -32,7 +32,7 @@ const extractGuardGroup = () => {
 };
 
 const GUARDED_ROUTE_MARKERS = [
-  'path={CLIENT_DASHBOARD_ROUTES.DASHBOARD}',
+  'path="dashboard" element={<ClientDashboard',
   'path={CLIENT_DASHBOARD_ROUTES.SCHEDULE}',
   'path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT}',
   'path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY}',

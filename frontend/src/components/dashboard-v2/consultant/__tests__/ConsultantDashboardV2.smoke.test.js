@@ -1,5 +1,5 @@
 /**
- * Consultant Dashboard V2 — G-14 header dedup · Clinic-OS · ContentHeader SSOT 스모크 (ROLE-C-02)
+ * Consultant Dashboard V2 — Clinic-OS Cover+Chapter 스모크
  *
  * @author Core Solution
  * @since 2026-07-07
@@ -10,7 +10,6 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
 const MOCK_USER_NAME = '김상담';
-const WELCOME_TITLE = `환영합니다, ${MOCK_USER_NAME} 상담사님`;
 
 const mockNavigate = jest.fn();
 
@@ -24,22 +23,7 @@ jest.mock('react-router-dom', () => {
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
-    t: (key) => {
-      const map = {
-        'common:dashboard-v2.ConsultantDashboardV2.t_808c1f0c': '상담 대시보드',
-        'common:dashboard-v2.ConsultantDashboardV2.t_484d08c9': '대시보드를 불러오는 중...',
-        'common:dashboard-v2.ConsultantDashboardV2.t_f39a6b65': '최근 일정 (오늘·어제)',
-        'common:dashboard-v2.ConsultantDashboardV2.t_1e4cd526': '다가오는 상담',
-        'common:dashboard-v2.ConsultantDashboardV2.t_74e4a0da': '최근 알림',
-        'common:dashboard-v2.ConsultantDashboardV2.t_2a22e022': '주간 상담 현황',
-        'common:dashboard-v2.ConsultantDashboardV2.t_b2218467': '오늘·어제 예정된 일정이 없습니다.',
-        'common:dashboard-v2.ConsultantDashboardV2.t_7f221836': '다가오는 상담이 없습니다.',
-        'common:dashboard-v2.ConsultantDashboardV2.t_00fa1636': '새로운 알림이 없습니다.',
-        'common:dashboard-v2.ConsultantDashboardV2.t_b283cb3a': '최근 주간 상담 추이 데이터가 없습니다.',
-        'admin.labels.client': '내담자'
-      };
-      return map[key] ?? key;
-    }
+    t: (key, opts) => opts?.defaultValue ?? key
   })
 }));
 
@@ -56,34 +40,12 @@ jest.mock('../../../layout/AdminCommonLayout', () => ({
   )
 }));
 
-jest.mock('../../../common/UnifiedLoading', () => ({
-  __esModule: true,
-  default: ({ text }) => <div data-testid="loading">{text}</div>
-}));
-
 jest.mock('../../../common/MGButton', () => ({
   __esModule: true,
   default: ({ children, onClick, 'aria-label': ariaLabel }) => (
     <button type="button" onClick={onClick} aria-label={ariaLabel}>
       {children}
     </button>
-  )
-}));
-
-jest.mock('../../../common/ListTableView', () => ({
-  __esModule: true,
-  default: ({ data, columns }) => (
-    <table data-testid="list-table-view">
-      <tbody>
-        {data.map((row) => (
-          <tr key={row.id}>
-            {columns.map((col) => (
-              <td key={col.key}>{row[col.key]}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
   )
 }));
 
@@ -95,16 +57,6 @@ jest.mock('../../../consultant/ConsultationLogModal', () => ({
         {scheduleData?.id || scheduleData?.clientName || 'open'}
       </div>
     ) : null
-  )
-}));
-jest.mock('../../ExpectedVisitsWidget', () => () => null);
-jest.mock('../../../ui/Icon/Icon', () => () => null);
-jest.mock('../../../ui/Schedule/MissingConsultationLogsList', () => ({
-  __esModule: true,
-  default: ({ items }) => (
-    <div data-testid="missing-consultation-logs-list">
-      {Array.isArray(items) ? `items:${items.length}` : 'items:null'}
-    </div>
   )
 }));
 
@@ -146,6 +98,9 @@ jest.mock('../../../../api/consultantSessionStatisticsClient', () => ({
 }));
 
 const mockStatsResponse = {
+  totalToday: 0,
+  completedToday: 0,
+  inProgressToday: 0,
   newClients: 1,
   unreadMessages: 2
 };
@@ -167,6 +122,10 @@ let mockIncompleteRecords = {
   ]
 };
 
+/** 실 API ScheduleController.getUpcomingPreparation 계약 — consultation 키 없음 */
+let mockPreparation = { preparations: [] };
+let mockScheduleList = [];
+
 jest.mock('../../../../utils/standardizedApi', () => ({
   __esModule: true,
   default: {
@@ -174,11 +133,8 @@ jest.mock('../../../../utils/standardizedApi', () => ({
       if (String(url).includes('incomplete-records')) {
         return Promise.resolve(mockIncompleteRecords);
       }
-      if (String(url).includes('high-priority-clients')) {
-        return Promise.resolve({ clients: [] });
-      }
       if (String(url).includes('upcoming-preparation')) {
-        return Promise.resolve({ consultation: null });
+        return Promise.resolve(mockPreparation);
       }
       if (String(url).includes('unread-count')) {
         return Promise.resolve({ unreadCount: 3 });
@@ -190,7 +146,7 @@ jest.mock('../../../../utils/standardizedApi', () => ({
         return Promise.resolve({ schedules: [] });
       }
       if (String(url).includes('schedules')) {
-        return Promise.resolve({ schedules: [] });
+        return Promise.resolve({ schedules: mockScheduleList });
       }
       return Promise.resolve(mockStatsResponse);
     })
@@ -204,6 +160,14 @@ import {
   CONSULTANT_DASHBOARD_QUICK_ACTIONS,
   CONSULTANT_DASHBOARD_ROUTES
 } from '../../../../constants/consultantDashboardRoutes';
+import {
+  COVER_CHAPTER_CTA_OPEN_SCHEDULE,
+  COVER_CHAPTER_CTA_OPEN_CONSULTATION,
+  COVER_CHAPTER_CTA_SCHEDULE,
+  COVER_CHAPTER_TEST_ID,
+  COVER_CHAPTER_NEXT_SHEET_TEST_ID,
+  COVER_CHAPTER_WEEKLY_SCHEDULE_LINK
+} from '../consultantCoverChapterConstants';
 import { fetchConsultantSessionStatistics } from '../../../../api/consultantSessionStatisticsClient';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
@@ -213,11 +177,9 @@ const mockApiGet = (url) => {
   if (u.includes('incomplete-records')) {
     return Promise.resolve(mockIncompleteRecords);
   }
-  if (u.includes('high-priority-clients')) {
-    return Promise.resolve({ clients: [] });
-  }
   if (u.includes('upcoming-preparation')) {
-    return Promise.resolve({ consultation: null });
+    // 대시보드는 더 이상 호출하지 않음 — 실계약 shape만 유지
+    return Promise.resolve(mockPreparation);
   }
   if (u.includes('unread-count')) {
     return Promise.resolve({ unreadCount: 3 });
@@ -229,7 +191,7 @@ const mockApiGet = (url) => {
     return Promise.resolve({ schedules: [] });
   }
   if (u.includes('schedules')) {
-    return Promise.resolve({ schedules: [] });
+    return Promise.resolve({ schedules: mockScheduleList });
   }
   return Promise.resolve(mockStatsResponse);
 };
@@ -240,7 +202,7 @@ const renderDashboard = () => render(
   </MemoryRouter>
 );
 
-describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
+describe('ConsultantDashboardV2 Cover+Chapter', () => {
   beforeEach(() => {
     mockNavigate.mockClear();
     mockResolveMissingLogSchedule.mockReset();
@@ -273,11 +235,16 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
         }
       ]
     };
+    mockPreparation = { preparations: [] };
+    mockScheduleList = [];
+    mockStatsResponse.totalToday = 0;
+    mockStatsResponse.completedToday = 0;
+    mockStatsResponse.inProgressToday = 0;
     fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
     StandardizedApi.get.mockImplementation(mockApiGet);
   });
 
-  test('G-14: ACL title 생략, ContentHeader welcome SSOT, Clinic-OS 루트', async() => {
+  test('G-14: ACL title 생략, Cover+Chapter 루트, Clinic-OS 클래스', async() => {
     renderDashboard();
 
     expect(screen.getByTestId('admin-common-layout')).toHaveAttribute('data-title', '');
@@ -286,43 +253,78 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       'mg-v2-dashboard-layout'
     );
 
-    expect(screen.getByRole('heading', { level: 1, name: WELCOME_TITLE })).toHaveAttribute(
-      'id',
-      CONSULTANT_DASHBOARD_TITLE_ID
-    );
-
     expect(screen.getByTestId('consultant-dashboard-v2-page')).toBeInTheDocument();
     expect(document.querySelector('.consultant-dashboard-v2.mg-v2-clinic-os')).toBeInTheDocument();
-    expect(document.querySelector('.mg-v2-ad-b0kla.consultant-dashboard-v2')).not.toBeInTheDocument();
+    expect(document.querySelector('.consultant-dashboard-v2--cover-chapter')).toBeInTheDocument();
+    expect(screen.getByTestId(COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
 
     await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1 })).toHaveAttribute(
+        'id',
+        CONSULTANT_DASHBOARD_TITLE_ID
+      );
     });
 
-    expect(screen.getByTestId('consultant-summary-strip')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-quick-action-bar')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-missing-logs')).toBeInTheDocument();
-    expect(screen.getByTestId('missing-consultation-logs-list')).toHaveTextContent('items:1');
-    expect(screen.getByTestId('consultant-dashboard-recent-schedules')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-upcoming-schedules')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-notifications')).toBeInTheDocument();
+    expect(screen.queryByTestId('consultant-dashboard-quick-action-bar')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('consultant-dashboard-kpi-section')).not.toBeInTheDocument();
+    expect(screen.queryByText('직접예약')).not.toBeInTheDocument();
   });
 
-  test('KPI 4종 및 ListTableView 기반 목록 섹션 렌더', async() => {
+  test('zero next-sheet: Primary 일정 열기 only, 주간 일정 보기 링크', async() => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByText('주간 상담 건수')).toBeInTheDocument();
-      expect(screen.getByText('신규 내담자')).toBeInTheDocument();
-      expect(screen.getByText('미확인 메시지')).toBeInTheDocument();
-      expect(screen.getByText('작성 대기 일지')).toBeInTheDocument();
+      expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'zero');
     });
 
-    expect(screen.queryByRole('button', { name: '일정 등록' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '일정 확인' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '내담자 메시지' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '일지 작성' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '정산 확인' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: COVER_CHAPTER_WEEKLY_SCHEDULE_LINK })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE }));
+    expect(mockNavigate).toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
+  });
+
+  test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담 열기 + 일정 CTA', async() => {
+    // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
+    mockPreparation = { preparations: [] };
+    const start = new Date();
+    start.setHours(start.getHours() + 2, 0, 0, 0);
+    const end = new Date(start.getTime() + 50 * 60000);
+    mockScheduleList = [
+      {
+        id: 501,
+        scheduleId: 501,
+        clientId: 9,
+        clientName: '남궁민서윤아림정한솔예린',
+        startTime: start.toISOString(),
+        endTime: end.toISOString(),
+        status: 'PENDING',
+        packageName: '개인상담',
+        roomName: '3층 상담실 B'
+      }
+    ];
+    mockStatsResponse.totalToday = 1;
+    mockStatsResponse.inProgressToday = 1;
+
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByTestId(COVER_CHAPTER_NEXT_SHEET_TEST_ID)).toHaveAttribute('data-state', 'has');
+    });
+
+    const preparationCalls = StandardizedApi.get.mock.calls.filter(([url]) =>
+      String(url).includes('upcoming-preparation')
+    );
+    expect(preparationCalls).toHaveLength(0);
+
+    expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: COVER_CHAPTER_CTA_SCHEDULE })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: COVER_CHAPTER_CTA_OPEN_SCHEDULE })).not.toBeInTheDocument();
+    expect(screen.queryByText('직접예약')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: COVER_CHAPTER_CTA_OPEN_CONSULTATION }));
+    expect(mockNavigate).toHaveBeenCalledWith('/consultant/consultation-record/501');
   });
 
   test('dashboard link SSOT avoids renewal and dashboard-v2 paths', () => {
@@ -334,249 +336,6 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       expect(path).not.toMatch(/dashboard-v2|\/renewal\//);
     });
     expect(quickPaths).toContain('/consultant/schedule');
-    expect(quickPaths).toContain('/consultant/dashboard');
-    expect(quickPaths).not.toContain('/consultant/consultation-records?filter=incomplete');
-    const createRecord = CONSULTANT_DASHBOARD_QUICK_ACTIONS.find((a) => a.id === 'create-record');
-    expect(createRecord?.path).toBe(CONSULTANT_DASHBOARD_ROUTES.DASHBOARD);
-    expect(CONSULTANT_DASHBOARD_QUICK_ACTIONS.map((a) => a.id)).not.toContain('create-schedule');
-  });
-
-  test('weekly chart uses session statistics buckets (not decorative empty bars)', async() => {
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(fetchConsultantSessionStatistics).toHaveBeenCalled();
-    });
-
-    expect(document.querySelector('.consultant-dashboard-v2__chart-container')).toBeInTheDocument();
-    expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
-  });
-
-  test('weekly chart empty uses Clinic-OS chart-empty (not legacy empty-state)', async() => {
-    mockSessionStats.totalCompleted = 0;
-    mockSessionStats.buckets = [];
-    fetchConsultantSessionStatistics.mockImplementation(() => Promise.resolve(mockSessionStats));
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-chart')).toBeInTheDocument();
-    });
-
-    await waitFor(() => {
-      expect(document.querySelector('.consultant-dashboard-v2__chart-empty')).toBeInTheDocument();
-    });
-    expect(document.querySelector('.consultant-dashboard-v2__chart-empty-text')).toBeInTheDocument();
-    expect(document.querySelector('.empty-state')).not.toBeInTheDocument();
-    expect(document.querySelector('.chart-container')).not.toBeInTheDocument();
-  });
-
-  test('일지 작성 opens ConsultationLogModal when incomplete schedules exist', async() => {
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-incomplete-records-alert')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      '/consultant/consultation-records?filter=incomplete'
-    );
-    expect(mockResolveMissingLogSchedule).not.toHaveBeenCalled();
-  });
-
-  test('일지 작성 uses cumulative missing when incompleteRecords empty', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('consultant-incomplete-records-alert')).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(mockResolveMissingLogSchedule).toHaveBeenCalledWith(
-        expect.objectContaining({
-          consultantId: 42,
-          date: '2026-08-18'
-        })
-      );
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      '/consultant/consultation-records?filter=incomplete'
-    );
-  });
-
-  test('일지 작성 passes scheduleId from scheduleIdsByDate and opens modal', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-    mockCumulativeMissingItems = [
-      {
-        consultantId: 42,
-        consultantName: '김상담',
-        missingDates: ['2026-08-10', '2026-08-18'],
-        scheduleIdsByDate: {
-          '2026-08-10': { scheduleId: 111, clientId: 1 },
-          '2026-08-18': { scheduleId: 555, clientId: 9 }
-        }
-      }
-    ];
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(mockResolveMissingLogSchedule).toHaveBeenCalledWith(
-        expect.objectContaining({
-          consultantId: 42,
-          date: '2026-08-18',
-          scheduleId: 555,
-          clientId: 9
-        })
-      );
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      expect.stringMatching(/consultation-records\?filter=incomplete/)
-    );
-  });
-
-  test('일지 작성 stays on dashboard when resolve returns null (no incomplete navigate)', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-    mockResolveMissingLogSchedule.mockResolvedValue(null);
-    const scrollIntoView = jest.fn();
-    const originalQuerySelector = document.querySelector.bind(document);
-    jest.spyOn(document, 'querySelector').mockImplementation((selector) => {
-      if (selector === '[data-testid="consultant-dashboard-missing-logs"]') {
-        return { scrollIntoView };
-      }
-      return originalQuerySelector(selector);
-    });
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(mockResolveMissingLogSchedule).toHaveBeenCalled();
-    });
-    await waitFor(() => {
-      expect(notificationManager.warning).toHaveBeenCalled();
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      expect.stringMatching(/consultation-records\?filter=incomplete/)
-    );
-    expect(mockNavigate).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
-    expect(scrollIntoView).toHaveBeenCalled();
-
-    document.querySelector.mockRestore();
-  });
-
-  test('일지 작성 with known scheduleId on resolve error goes to write route', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-    mockCumulativeMissingItems = [
-      {
-        consultantId: 42,
-        consultantName: '김상담',
-        missingDates: ['2026-08-18'],
-        scheduleIdsByDate: {
-          '2026-08-18': { scheduleId: 777, clientId: 3 }
-        }
-      }
-    ];
-    mockResolveMissingLogSchedule.mockRejectedValue(new Error('network'));
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith('/consultant/consultation-record/777');
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      expect.stringMatching(/consultation-records\?filter=incomplete/)
-    );
-    expect(notificationManager.error).toHaveBeenCalled();
-    expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
-  });
-
-  test('일지 작성 stays on home with info when no write target', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-    mockCumulativeMissingItems = [];
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-weekly-summary')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '일지 작성' }));
-
-    await waitFor(() => {
-      expect(notificationManager.info).toHaveBeenCalledWith('작성할 미작성 일지가 없습니다.');
-    });
-    expect(mockResolveMissingLogSchedule).not.toHaveBeenCalled();
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      '/consultant/consultation-records?filter=incomplete'
-    );
-    expect(screen.queryByTestId('consultation-log-modal')).not.toBeInTheDocument();
-  });
-
-  test('KPI 작성 대기 일지 uses create-record SSOT (not incomplete list deep-link)', async() => {
-    mockIncompleteRecords = { count: 0, records: [] };
-
-    renderDashboard();
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: '작성 대기 일지' })).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: '작성 대기 일지' }));
-
-    await waitFor(() => {
-      expect(mockResolveMissingLogSchedule).toHaveBeenCalledWith(
-        expect.objectContaining({
-          consultantId: 42,
-          date: '2026-08-18'
-        })
-      );
-    });
-    await waitFor(() => {
-      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
-    });
-    expect(mockNavigate).not.toHaveBeenCalledWith(
-      '/consultant/consultation-records?filter=incomplete'
-    );
   });
 
   test('schedules uses date-range with startDate/endDate (not full GET /schedules)', async() => {
@@ -599,7 +358,7 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
       }));
     });
 
-    const fullScheduleCalls = StandardizedApi.get.mock.calls.filter(([url, params]) => {
+    const fullScheduleCalls = StandardizedApi.get.mock.calls.filter(([url]) => {
       const u = String(url);
       if (u.includes('/date-range') || u.includes('/upcoming') || u.includes('/today')
           || u.includes('incomplete') || u.includes('high-priority')
@@ -615,7 +374,7 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     renderDashboard();
 
     await waitFor(() => {
-      expect(screen.getByTestId('consultant-dashboard-kpi-section')).toBeInTheDocument();
+      expect(screen.getByTestId(COVER_CHAPTER_TEST_ID)).toBeInTheDocument();
     });
 
     await waitFor(() => {
@@ -641,9 +400,22 @@ describe('ConsultantDashboardV2 (ROLE-C-02 PR-C2)', () => {
     );
     unreadCalls.forEach(([, params]) => {
       expect(params).not.toHaveProperty('_t');
-      if (params && Object.prototype.hasOwnProperty.call(params, '_t')) {
-        throw new Error('unread-count must not use _t=Date.now() cache buster');
-      }
     });
   });
+
+  test('guide shows incomplete hint; click opens consultation log modal', async() => {
+    renderDashboard();
+
+    await waitFor(() => {
+      expect(screen.getByText(/미작성 일지 2건/)).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByLabelText('안내 더보기'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('consultation-log-modal')).toBeInTheDocument();
+    });
+    expect(mockNavigate).not.toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.NOTIFICATIONS);
+  });
 });
+

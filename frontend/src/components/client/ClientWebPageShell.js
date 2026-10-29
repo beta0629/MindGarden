@@ -42,6 +42,8 @@ import './ClientWebPageShell.css';
  * @param {boolean} [props.cartBadgePulse]
  * @param {string} [props.cartHref]
  * @param {string} [props.designShot]
+ * @param {boolean} [props.hideChrome] - 커버 홈 등: 셸 TopChrome 미렌더 (화면당 헤더 1개)
+ * @param {boolean} [props.fullBleed] - stage max-width/padding 해제
  */
 const ClientWebPageShell = ({
   activeNavId,
@@ -61,7 +63,9 @@ const ClientWebPageShell = ({
   cartBadgeQty = null,
   cartBadgePulse = false,
   cartHref,
-  designShot
+  designShot,
+  hideChrome = false,
+  fullBleed = false
 }) => {
   const { user, isLoggedIn } = useSession();
   const effectiveLoggedIn = Boolean(user) && isLoggedIn !== false;
@@ -78,6 +82,8 @@ const ClientWebPageShell = ({
 
   const rootClass = [
     CLIENT_WEB_PAGE_SHELL_CLASS,
+    hideChrome ? 'client-web-page-shell--hide-chrome' : '',
+    fullBleed ? 'client-web-page-shell--full-bleed' : '',
     className
   ].filter(Boolean).join(' ');
 
@@ -88,6 +94,7 @@ const ClientWebPageShell = ({
     'client-web-page-shell__grid',
     showAside ? '' : 'client-web-page-shell__grid--single'
   ].filter(Boolean).join(' ');
+  const showChrome = !hideChrome;
 
   const stageInner = (
     <>
@@ -139,19 +146,24 @@ const ClientWebPageShell = ({
       className={rootClass}
       data-testid={testId}
       data-design-shot={designShot || undefined}
+      data-hide-chrome={hideChrome ? 'true' : undefined}
+      data-full-bleed={fullBleed ? 'true' : undefined}
     >
-      <ClientWebTopChrome
-        brandWord={brandWord}
-        brandCenter={brandCenter}
-        userName={effectiveLoggedIn ? user?.name : undefined}
-        activeNavId={activeNavId}
-        onLogout={effectiveLoggedIn ? openConfirm : undefined}
-        logoutLabel={logoutLabel}
-        loginHref={!effectiveLoggedIn ? loginHref : undefined}
-        cartBadgeQty={cartBadgeQty}
-        cartBadgePulse={cartBadgePulse}
-        cartHref={cartHref}
-      />
+      {showChrome ? (
+        <ClientWebTopChrome
+          brandWord={brandWord}
+          brandCenter={brandCenter}
+          isLoggedIn={effectiveLoggedIn}
+          userName={effectiveLoggedIn ? user?.name : undefined}
+          activeNavId={activeNavId}
+          onLogout={effectiveLoggedIn ? openConfirm : undefined}
+          logoutLabel={logoutLabel}
+          loginHref={!effectiveLoggedIn ? loginHref : undefined}
+          cartBadgeQty={cartBadgeQty}
+          cartBadgePulse={cartBadgePulse}
+          cartHref={cartHref}
+        />
+      ) : null}
       <div className="client-web-page-shell__body">
         {beforeStage}
         {wrapStage ? (
@@ -168,7 +180,7 @@ const ClientWebPageShell = ({
           children
         )}
       </div>
-      <ConfirmModal {...confirmProps} />
+      {showChrome ? <ConfirmModal {...confirmProps} /> : null}
     </div>
   );
 };
@@ -191,7 +203,9 @@ ClientWebPageShell.propTypes = {
   cartBadgeQty: PropTypes.number,
   cartBadgePulse: PropTypes.bool,
   cartHref: PropTypes.string,
-  designShot: PropTypes.string
+  designShot: PropTypes.string,
+  hideChrome: PropTypes.bool,
+  fullBleed: PropTypes.bool
 };
 
 export default ClientWebPageShell;

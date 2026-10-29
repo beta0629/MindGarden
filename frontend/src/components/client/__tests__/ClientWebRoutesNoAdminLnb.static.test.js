@@ -37,8 +37,8 @@ const CLIENT_ROUTE_SOURCES = [
   'components/shop/templates/ShopClientLayout.js'
 ];
 
-const SUITE_FACES = [
-  'components/client/ClientDashboard.js',
+/** ClientWebPageShell suite faces — dashboard 홈은 풀블리드 커버+챕터 (셸 제외) */
+const SUITE_FACES_WITH_SHELL = [
   'components/client/ClientSchedule.js',
   'components/client/ClientSessionManagement.js',
   'components/client/ClientPaymentHistory.js',
@@ -54,13 +54,24 @@ describe('ClientWebRoutesNoAdminLnb — static source gate', () => {
     expect(src).not.toMatch(/<AdminCommonLayout[\s>]/);
   });
 
-  test.each(SUITE_FACES)('%s has no DesktopLnb / B0KlA / ContentArea admin DNA', (rel) => {
+  test.each(SUITE_FACES_WITH_SHELL)('%s has no DesktopLnb / B0KlA / ContentArea admin DNA', (rel) => {
     const src = stripComments(read(rel));
     expect(src).not.toMatch(/mg-v2-desktop-lnb/);
     expect(src).not.toMatch(/mg-v2-ad-b0kla/);
     expect(src).not.toMatch(/AdminDashboardB0KlA/);
     expect(src).not.toMatch(/import\s+ContentArea\s+from/);
     expect(src).toMatch(/ClientWebPageShell/);
+  });
+
+  test('ClientDashboard uses cover+chapter home · no Admin LNB / card-stack shell', () => {
+    const src = stripComments(read('components/client/ClientDashboard.js'));
+    expect(src).not.toMatch(/mg-v2-desktop-lnb/);
+    expect(src).not.toMatch(/mg-v2-ad-b0kla/);
+    expect(src).not.toMatch(/AdminDashboardB0KlA/);
+    expect(src).not.toMatch(/import\s+ContentArea\s+from/);
+    expect(src).not.toMatch(/ClientWebPageShell/);
+    expect(src).not.toMatch(/ClientLobbyHero/);
+    expect(src).toMatch(/ClientCoverChapterHome/);
   });
 
   test('ClientSchedule has no UnifiedScheduleComponent / booking CTA', () => {

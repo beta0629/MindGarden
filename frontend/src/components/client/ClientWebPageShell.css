@@ -182,6 +182,34 @@
   --client-web-chrome-pad-x: var(--client-web-pad-x);
 }
 
+/* 커버 홈 — stage 고정폭·패딩 해제 (셸 full-bleed) */
+.client-web-page-shell--full-bleed .client-web-page-shell__stage {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
+.client-web-page-shell--full-bleed .client-web-page-shell__grid,
+.client-web-page-shell--full-bleed .client-web-page-shell__main {
+  gap: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/*
+ * 방어: 커버가 셸 안에 있으면 stage 제약 해제
+ * (hideChrome prop 과 병행 — chrome은 prop으로 미렌더)
+ */
+.client-web-page-shell:has(.client-cover) .client-web-page-shell__stage {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+
 @media (max-width: 768px) {
   .client-web-page-shell {
     --client-web-pad-x: var(--mg-v2-space-4, 1.25rem);

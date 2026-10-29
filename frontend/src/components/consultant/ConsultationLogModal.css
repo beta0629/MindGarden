@@ -95,6 +95,11 @@
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;
+  /* 태블릿·키보드: 저장바 sticky — 바 위 빈 띠·FAB 금지 */
+  position: sticky;
+  bottom: 0;
+  z-index: var(--mg-v2-z-sticky, 20);
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* Footer MGButton row — equal height via unified-modals cascade + flex align */
@@ -248,6 +253,29 @@
     background: var(--mg-v2-color-surface-bg);
     border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
   }
+}
+
+/* 태블릿 가로: 회기 요약 | 폼 2단 (시안 journal TO-BE) */
+@media (orientation: landscape) and (min-width: 768px) and (max-width: 1023px) {
+  .mg-v2-clinic-os .mg-v2-consultation-log__layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .mg-v2-clinic-os .mg-v2-consultation-log__sidebar {
+    flex: 0 0 min(20rem, 34%);
+    max-width: 20rem;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    max-height: min(100dvh, 100%);
+    overflow-y: auto;
+  }
+}
+
+.mg-modal.mg-v2-clinic-os .consultation-log-modal__footer-actions .mg-button {
+  min-height: var(--mg-v2-touch-target-min);
+  touch-action: manipulation;
 }
 
 /* ——— Form panel / writing stage ——— */

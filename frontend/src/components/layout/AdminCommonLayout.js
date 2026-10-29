@@ -17,7 +17,12 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { getTenantGnbLabel } from '../../utils/tenantDisplayName';
 import { getGnbLogoUrl } from '../../utils/brandingUtils';
 import { DesktopLayout, MobileLayout } from '../dashboard-v2/templates';
-import { DEFAULT_MENU_ITEMS, CONSULTANT_MENU_ITEMS, CLIENT_MENU_ITEMS, BREAKPOINT_DESKTOP } from '../dashboard-v2/constants/menuItems';
+import {
+  DEFAULT_MENU_ITEMS,
+  CONSULTANT_MENU_ITEMS,
+  CLIENT_MENU_ITEMS,
+  BREAKPOINT_DESKTOP
+} from '../dashboard-v2/constants/menuItems';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import UnifiedLoading from '../common/UnifiedLoading';
 import { getLnbMenus } from '../../utils/menuApi';
@@ -56,6 +61,7 @@ const AdminCommonLayoutPassthrough = ({
   onSearchChange,
   onBellClick,
   onLogout,
+  hideSearch,
   className = '',
   loading = false,
   loadingText = DEFAULT_LOADING_TEXT
@@ -74,7 +80,8 @@ const AdminCommonLayoutPassthrough = ({
       searchValue,
       onSearchChange,
       onBellClick,
-      onLogout
+      onLogout,
+      ...(hideSearch !== undefined ? { hideSearch } : {})
     });
     return undefined;
   }, [
@@ -84,7 +91,8 @@ const AdminCommonLayoutPassthrough = ({
     searchValue,
     onSearchChange,
     onBellClick,
-    onLogout
+    onLogout,
+    hideSearch
   ]);
 
   if (blockContent) {
@@ -108,6 +116,7 @@ const AdminCommonLayoutShell = ({
   onSearchChange,
   onBellClick,
   onLogout,
+  hideSearch = false,
   className = ''
   // loading / loadingText: 셸 props로 올 수 있으나 Outlet 대체에 사용하지 않음(페이지 passthrough 전용)
 }) => {
@@ -123,13 +132,23 @@ const AdminCommonLayoutShell = ({
     [brandingInfo]
   );
   const { windowSize } = useResponsive();
-  const isDesktop = windowSize.width >= BREAKPOINT_DESKTOP;
   const userRole = user?.role;
   const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
+  // 상담사: 전 폭 햄버거+stone soft-sheet (Desktop LNB 게이트 폐기).
+  // 운영/어드민: 기존 768 width-only 게이트 유지(데스크톱 LNB 회귀 금지).
+  const isDesktop = isCounselorOnly
+    ? false
+    : (windowSize.width >= BREAKPOINT_DESKTOP);
 
-  const [shellMeta, setShellMeta] = useState({});
+  const [shellMeta, setShellMetaState] = useState({});
+  const setShellMeta = useCallback((patch) => {
+    if (!patch || typeof patch !== 'object') {
+      return;
+    }
+    setShellMetaState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
   const resolvedTitle = shellMeta.title !== undefined ? shellMeta.title : title;
   // 페이지 passthrough loading 은 셸에서 무시 — Outlet(children) 항상 유지(페이지 로컬 loading만 사용)
@@ -144,11 +163,14 @@ const AdminCommonLayoutShell = ({
     ? shellMeta.onBellClick
     : onBellClick;
   const resolvedOnLogout = shellMeta.onLogout !== undefined ? shellMeta.onLogout : onLogout;
+  const resolvedHideSearch = shellMeta.hideSearch !== undefined
+    ? Boolean(shellMeta.hideSearch)
+    : Boolean(hideSearch);
 
   const shellContextValue = useMemo(() => ({
     isInsideAdminShell: true,
     setShellMeta
-  }), []);
+  }), [setShellMeta]);
 
   const getDefaultMenu = () => {
     if (isCounselorOnly) {
@@ -295,7 +317,9 @@ const AdminCommonLayoutShell = ({
     onSearchChange: resolvedOnSearchChange,
     onBellClick: handleBellClick,
     onLogout: handleLogout,
-    navigateQuickActionsFromLnb
+    hideSearch: resolvedHideSearch,
+    navigateQuickActionsFromLnb,
+    ...(isCounselorOnly ? { drawerVariant: 'soft-sheet' } : {})
   };
 
   // Clinic-OS chrome(GNB+LNB) 마운트 유지 — stage(Outlet/children)만 교체. 셸 레벨 loading 대체 금지.

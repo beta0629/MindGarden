@@ -27,6 +27,8 @@ import {
   CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID,
   CLIENT_WEB_PROFILE_LINK_TEST_ID,
   CLIENT_WEB_SETTINGS_ARIA,
+  CLIENT_WEB_TOP_CHROME_MENU_ARIA,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../constants/clientWebChromeConstants';
@@ -126,6 +128,7 @@ function ClientWebChromeAlerts() {
  * @param {() => void} [props.onLogout]
  * @param {string} [props.logoutLabel]
  * @param {string} [props.userName]
+ * @param {boolean} [props.isLoggedIn] - SSOT: true면 userName 없어도 로그인 CTA 숨김
  * @param {string} [props.activeNavId] - CLIENT_WEB_NAV id (home|schedule|sessions|shop|payment)
  * @param {import('react').ReactNode} [props.nav] - optional override; omit for shared CLIENT_WEB_NAV
  * @param {import('react').ReactNode} [props.endMeta]
@@ -136,6 +139,8 @@ function ClientWebChromeAlerts() {
  * @param {string} [props.loginLabel]
  * @param {string} [props.settingsHref]
  * @param {string} [props.className]
+ * @param {() => void} [props.onMenuClick] - 있으면 시 좌측 햄버거 (커버 홈 등)
+ * @param {string} [props.menuAriaLabel]
  */
 const ClientWebTopChrome = ({
   brandWord = '',
@@ -143,6 +148,7 @@ const ClientWebTopChrome = ({
   onLogout,
   logoutLabel = CLIENT_WEB_LOGOUT,
   userName,
+  isLoggedIn,
   activeNavId,
   nav,
   endMeta = null,
@@ -152,7 +158,9 @@ const ClientWebTopChrome = ({
   loginHref = '/login',
   loginLabel = CLIENT_WEB_LOGIN,
   settingsHref = CLIENT_DASHBOARD_ROUTES.MYPAGE,
-  className = ''
+  className = '',
+  onMenuClick,
+  menuAriaLabel = CLIENT_WEB_TOP_CHROME_MENU_ARIA
 }) => {
   const word = typeof brandWord === 'string' ? brandWord.trim() : '';
   const center = typeof brandCenter === 'string' ? brandCenter.trim() : '';
@@ -161,6 +169,10 @@ const ClientWebTopChrome = ({
     ? logoutLabel.trim()
     : CLIENT_WEB_LOGOUT;
   const showUserMeta = Boolean(userName);
+  // isLoggedIn prop 우선 — 없으면 기존 userName 휴리스틱(호환)
+  const effectiveLoggedIn = typeof isLoggedIn === 'boolean'
+    ? isLoggedIn
+    : showUserMeta;
   const initial = resolveNameInitial(userName);
   const rootClass = [
     'client-web-topchrome',
@@ -175,36 +187,54 @@ const ClientWebTopChrome = ({
     ? Math.max(0, Math.floor(Number(cartBadgeQty)))
     : 0;
 
+  const showMenu = typeof onMenuClick === 'function';
+  const menuLabel = typeof menuAriaLabel === 'string' && menuAriaLabel.trim()
+    ? menuAriaLabel.trim()
+    : CLIENT_WEB_TOP_CHROME_MENU_ARIA;
+
   return (
     <header
       className={rootClass}
       data-testid={CLIENT_WEB_TOP_CHROME_TEST_ID}
     >
-      <Link
-        className="client-web-topchrome__brand"
-        to={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
-      >
-        <img
-          className="client-web-topchrome__brand-mark"
-          src={butterflyLogo}
-          alt=""
-          width={28}
-          height={21}
-        />
-        {word ? (
-          <span className="client-web-topchrome__brand-word">
-            <SafeText fallback="">{word}</SafeText>
-          </span>
+      <div className="client-web-topchrome__start">
+        {showMenu ? (
+          <button
+            type="button"
+            className="client-web-topchrome__menu"
+            aria-label={menuLabel}
+            onClick={onMenuClick}
+            data-testid={CLIENT_WEB_TOP_CHROME_MENU_TEST_ID}
+          >
+            <span aria-hidden="true">☰</span>
+          </button>
         ) : null}
-        {showSep ? (
-          <span className="client-web-topchrome__brand-sep" aria-hidden="true">·</span>
-        ) : null}
-        {center ? (
-          <span className="client-web-topchrome__brand-center">
-            <SafeText fallback="">{center}</SafeText>
-          </span>
-        ) : null}
-      </Link>
+        <Link
+          className="client-web-topchrome__brand"
+          to={CLIENT_DASHBOARD_ROUTES.DASHBOARD}
+        >
+          <img
+            className="client-web-topchrome__brand-mark"
+            src={butterflyLogo}
+            alt=""
+            width={28}
+            height={21}
+          />
+          {word ? (
+            <span className="client-web-topchrome__brand-word">
+              <SafeText fallback="">{word}</SafeText>
+            </span>
+          ) : null}
+          {showSep ? (
+            <span className="client-web-topchrome__brand-sep" aria-hidden="true">·</span>
+          ) : null}
+          {center ? (
+            <span className="client-web-topchrome__brand-center">
+              <SafeText fallback="">{center}</SafeText>
+            </span>
+          ) : null}
+        </Link>
+      </div>
 
       {resolvedNav}
 
@@ -226,9 +256,9 @@ const ClientWebTopChrome = ({
             <span className="client-web-topchrome__cart-qty">{cartQtyDisplay}</span>
           </Link>
         ) : null}
-        {showUserMeta ? <ClientWebChromeAlerts /> : null}
+        {effectiveLoggedIn ? <ClientWebChromeAlerts /> : null}
         {endMeta}
-        {showUserMeta ? (
+        {effectiveLoggedIn && showUserMeta ? (
           <Link
             className="client-web-topchrome__profile"
             to={settingsHref}
@@ -243,7 +273,7 @@ const ClientWebTopChrome = ({
             </div>
           </Link>
         ) : null}
-        {!showUserMeta && loginHref ? (
+        {!effectiveLoggedIn && loginHref ? (
           <Link
             className="client-web-topchrome__login"
             to={loginHref}
@@ -251,7 +281,7 @@ const ClientWebTopChrome = ({
             {loginLabel}
           </Link>
         ) : null}
-        {showUserMeta && typeof onLogout === 'function' ? (
+        {effectiveLoggedIn && typeof onLogout === 'function' ? (
           <button
             type="button"
             className="client-web-topchrome__logout"
@@ -272,6 +302,7 @@ ClientWebTopChrome.propTypes = {
   onLogout: PropTypes.func,
   logoutLabel: PropTypes.string,
   userName: PropTypes.string,
+  isLoggedIn: PropTypes.bool,
   activeNavId: PropTypes.string,
   nav: PropTypes.node,
   endMeta: PropTypes.node,
@@ -281,7 +312,9 @@ ClientWebTopChrome.propTypes = {
   loginHref: PropTypes.string,
   loginLabel: PropTypes.string,
   settingsHref: PropTypes.string,
-  className: PropTypes.string
+  className: PropTypes.string,
+  onMenuClick: PropTypes.func,
+  menuAriaLabel: PropTypes.string
 };
 
 export default ClientWebTopChrome;

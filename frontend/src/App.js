@@ -485,6 +485,8 @@ function AppContent() {
               <Route path="/client" element={<ClientAppShell />}>
                 {/* DEC-02: 로그인 SSOT(`/client/dashboard`)와 index 정합 — ClientHomeRenewal 이중 스택 방지 */}
                 <Route index element={<Navigate to={CLIENT_DASHBOARD_ROUTES.DASHBOARD} replace />} />
+                {/* 커버 홈 — ClientAppShell 안( hideChrome+fullBleed ). 셸 TopChrome 중복 금지 */}
+                <Route path="dashboard" element={<ClientDashboard user={user} />} />
                 <Route path="consultations" element={<ClientConsultationsRenewal />} />
                 <Route path="mood-journal" element={<MoodJournal />} />
                 <Route path="self-assessment" element={<SelfAssessment />} />
@@ -519,7 +521,6 @@ function AppContent() {
                 />
               </Route>
 
-              <Route path={CLIENT_DASHBOARD_ROUTES.DASHBOARD} element={<ClientDashboard user={user} />} />
               <Route path={CLIENT_DASHBOARD_ROUTES.SCHEDULE} element={<ClientSchedule />} />
               <Route path={CLIENT_DASHBOARD_ROUTES.SESSION_MANAGEMENT} element={<ClientSessionManagement />} />
               <Route path={CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY} element={<ClientPaymentHistory />} />
@@ -626,7 +627,7 @@ function AppContent() {
             </Route>
 
             {/*
-              Shop — ClientAppShell 밖 (대시보드/스케줄과 동일).
+              Shop — ClientAppShell 밖 (스케줄·회기 등과 동일. 커버 홈 dashboard 만 셸 안).
               ShopClientLayout 만 ClientWebPageShell 담당 → 이중 크롬 제거.
               /client/shop · sku 는 공개 카탈로그; cart/checkout 등은 CLIENT 보호.
             */}

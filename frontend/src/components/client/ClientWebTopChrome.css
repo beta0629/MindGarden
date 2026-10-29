@@ -36,6 +36,38 @@
   color: var(--client-web-chrome-ink);
 }
 
+.client-web-topchrome__start {
+  display: flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2, var(--mg-spacing-xs));
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.client-web-topchrome__menu {
+  flex-shrink: 0;
+  width: var(--mg-v2-component-height-md, 2.75rem);
+  height: var(--mg-v2-component-height-md, 2.75rem);
+  min-width: var(--mg-v2-component-height-md, 2.75rem);
+  min-height: var(--mg-v2-component-height-md, 2.75rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: var(--mg-v2-border-width-thin) solid var(--client-web-chrome-hair);
+  border-radius: var(--mg-v2-radius-lg);
+  background: var(--client-web-chrome-chip-bg);
+  color: var(--client-web-chrome-ink);
+  cursor: pointer;
+  font-size: var(--mg-v2-font-size-h2);
+  line-height: 1;
+  user-select: none;
+}
+
+.client-web-topchrome__menu:active {
+  background: var(--client-web-chrome-line);
+}
+
 .client-web-topchrome__brand {
   display: flex;
   align-items: center;

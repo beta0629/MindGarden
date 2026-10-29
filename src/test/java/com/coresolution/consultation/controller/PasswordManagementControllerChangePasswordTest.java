@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -32,7 +33,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpSession;
 
 /**
- * 비밀번호 변경 — DB 재조회·trim·세션 갱신.
+ * 비밀번호 변경 — DB 재조회·trim·세션 갱신·강제 변경(currentPassword 생략).
  *
  * @author MindGarden
  * @since 2026-10-28
@@ -66,10 +67,10 @@ class PasswordManagementControllerChangePasswordTest {
     private PasswordManagementController controller;
 
     @Test
-    @DisplayName("세션 해시가 아니라 DB 사용자 해시로 matches 하고 trim 한다")
+    @DisplayName("일반 변경(isPasswordChanged=true): 세션 해시가 아니라 DB 해시로 matches 하고 trim 한다")
     void changePassword_matchesDbHash_andTrims() {
-        User sessionUser = user(SESSION_STALE_HASH, false);
-        User dbUser = user(DB_HASH, false);
+        User sessionUser = user(SESSION_STALE_HASH, true);
+        User dbUser = user(DB_HASH, true);
         User refreshed = user(DB_HASH, true);
 
         MockHttpSession session = new MockHttpSession();
@@ -113,10 +114,10 @@ class PasswordManagementControllerChangePasswordTest {
     }
 
     @Test
-    @DisplayName("DB 해시 불일치면 changePassword 를 호출하지 않는다")
+    @DisplayName("일반 변경(isPasswordChanged=true): DB 해시 불일치면 changePassword 를 호출하지 않는다")
     void changePassword_wrongCurrent_rejectsWithoutUpdate() {
-        User sessionUser = user(SESSION_STALE_HASH, false);
-        User dbUser = user(DB_HASH, false);
+        User sessionUser = user(SESSION_STALE_HASH, true);
+        User dbUser = user(DB_HASH, true);
 
         MockHttpSession session = new MockHttpSession();
         session.setAttribute(SessionConstants.USER_OBJECT, sessionUser);
@@ -138,6 +139,72 @@ class PasswordManagementControllerChangePasswordTest {
         assertThat(response.getBody()).containsEntry("success", false);
         verify(userService, never()).changePassword(any(), any(), any());
         verify(authService, never()).issueTokensForUser(any(), any());
+    }
+
+    @Test
+    @DisplayName("강제 변경(isPasswordChanged=false): currentPassword 없이도 성공하고 oldPassword=null 로 위임한다")
+    void changePassword_mustChange_withoutCurrentPassword_succeeds() {
+        User sessionUser = user(SESSION_STALE_HASH, false);
+        User dbUser = user(DB_HASH, false);
+        User refreshed = user(DB_HASH, true);
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionConstants.USER_OBJECT, sessionUser);
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+
+        when(userService.findById(42L)).thenReturn(Optional.of(dbUser), Optional.of(refreshed));
+        when(passwordValidationService.validatePassword("NewPass1@"))
+                .thenReturn(Map.of("isValid", true, "errors", Map.of()));
+        when(passwordService.matches("NewPass1@", DB_HASH)).thenReturn(false);
+        when(authService.issueTokensForUser(eq(refreshed), any()))
+                .thenReturn(AuthResponse.builder()
+                        .success(true)
+                        .token("access-must")
+                        .refreshToken("refresh-must")
+                        .requiresPasswordChange(false)
+                        .build());
+
+        PasswordChangeRequest body = new PasswordChangeRequest();
+        body.setCurrentPassword(null);
+        body.setNewPassword("NewPass1@");
+        body.setConfirmPassword("NewPass1@");
+
+        ResponseEntity<Map<String, Object>> response =
+                controller.changePassword(body, session, httpRequest);
+
+        assertThat(response.getStatusCode().value()).isEqualTo(200);
+        assertThat(response.getBody()).containsEntry("success", true);
+        assertThat(response.getBody()).containsEntry("requiresPasswordChange", false);
+
+        verify(passwordService, never()).matches(eq(""), eq(DB_HASH));
+        verify(userService).changePassword(eq(42L), isNull(), eq("NewPass1@"));
+        verify(authService).issueTokensForUser(eq(refreshed), any());
+    }
+
+    @Test
+    @DisplayName("강제 변경: 새 비밀번호가 임시 비밀번호와 같으면 거절한다")
+    void changePassword_mustChange_rejectsSameAsTemp() {
+        User sessionUser = user(DB_HASH, false);
+        User dbUser = user(DB_HASH, false);
+
+        MockHttpSession session = new MockHttpSession();
+        session.setAttribute(SessionConstants.USER_OBJECT, sessionUser);
+
+        when(userService.findById(42L)).thenReturn(Optional.of(dbUser));
+        when(passwordValidationService.validatePassword("SameTemp1@"))
+                .thenReturn(Map.of("isValid", true, "errors", Map.of()));
+        when(passwordService.matches("SameTemp1@", DB_HASH)).thenReturn(true);
+
+        PasswordChangeRequest body = new PasswordChangeRequest();
+        body.setNewPassword("SameTemp1@");
+        body.setConfirmPassword("SameTemp1@");
+
+        ResponseEntity<Map<String, Object>> response =
+                controller.changePassword(body, session, new MockHttpServletRequest());
+
+        assertThat(response.getStatusCode().value()).isEqualTo(400);
+        assertThat(response.getBody()).containsEntry("success", false);
+        verify(userService, never()).changePassword(any(), any(), any());
     }
 
     private static User user(String passwordHash, boolean passwordChanged) {

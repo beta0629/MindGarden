@@ -8,6 +8,19 @@ import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
 const BREAKPOINT_DESKTOP = 768;
 
+/**
+ * 상담사 Clinic-OS 셸: 폭·포인터와 무관하게 MobileLayout + 햄버거 1개 + soft-sheet.
+ * Desktop 고정 LNB 게이트는 폐기. (값 1280은 soft-sheet 넓은 뷰포트 얇은 패널 MQ용 참조)
+ * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(768) width-only 유지 — 회귀 금지.
+ */
+const BREAKPOINT_CONSULTANT_DESKTOP = 1280;
+
+/**
+ * @deprecated 상담사 Desktop LNB fine-pointer 게이트 폐기.
+ * soft-sheet·레거시 테스트 참조용으로만 유지. 셸 isDesktop 분기에서 사용 금지.
+ */
+const MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER = '(hover: hover) and (pointer: fine)';
+
 /** LNB menuCode SSOT — STAFF ERP strip 등에서 재사용 */
 export const LNB_MENU_CODES = Object.freeze({
   ADM_ERP: 'ADM_ERP'
@@ -274,6 +287,8 @@ const ERP_MENU_ITEMS = [
 
 export {
   BREAKPOINT_DESKTOP,
+  BREAKPOINT_CONSULTANT_DESKTOP,
+  MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER,
   DEFAULT_MENU_ITEMS,
   CLIENT_MENU_ITEMS,
   CONSULTANT_MENU_ITEMS,

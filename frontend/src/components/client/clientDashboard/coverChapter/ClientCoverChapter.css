@@ -544,12 +544,13 @@
 
 /* 챕터 02 안내 — CoverGuideDenseRow (`cover-guide-dense`) 공용 */
 
-/* ===== DOCK — 전폭 하단 고정 (cover z 아래) ===== */
+/* ===== DOCK — body 패널 하단 (viewport fixed 금지 · split 커버 뒤로 가림 방지) ===== */
 .client-cover__dock {
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
+  width: 100%;
   z-index: var(--mg-v2-z-sticky);
   flex-shrink: 0;
   display: grid;
@@ -776,7 +777,11 @@
     margin-right: auto;
   }
 
+  /* dock은 body absolute — split에서도 left/width 커버 % 하드코딩 금지 */
   .client-cover[data-layout='split'] .client-cover__dock {
+    left: 0;
+    right: 0;
+    width: 100%;
     padding-left: var(--mg-v2-space-3);
     padding-right: var(--mg-v2-space-3);
   }

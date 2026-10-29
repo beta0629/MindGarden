@@ -132,6 +132,22 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*var\(--mg-v2-space-3\)/s
     );
+    // split: cover fills shell height; meta absolute bottom (뷰포트 밖 잘림 방지)
+    expect(source).toMatch(
+      /\[data-layout='split'\]\s*\{[^}]*min-height:\s*0/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\]\s*\{[^}]*height:\s*100%/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*min-height:\s*0/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__meta\s*\{[^}]*position:\s*absolute/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__meta\s*\{[^}]*bottom:\s*calc\(\s*var\(--mg-v2-space-6\)/s
+    );
     expect(source).toMatch(
       /\.consultant-cover-chapter__cover-top\s*\{/s
     );

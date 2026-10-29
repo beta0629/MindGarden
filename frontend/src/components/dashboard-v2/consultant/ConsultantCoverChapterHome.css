@@ -810,6 +810,11 @@
     max-width: none;
     margin-left: 0;
     margin-right: 0;
+    /* 셸(GNB) 안 100vh 강제 → 커버 하단 메타 뷰포트 밖 잘림 방지 */
+    min-height: 0;
+    height: 100%;
+    max-height: 100%;
+    overflow: hidden;
     --cch-name-size: 2rem;
     --cch-sheet-dom-size: 2.125rem;
   }
@@ -819,7 +824,8 @@
     max-width: none;
     height: auto;
     align-self: stretch;
-    min-height: max(var(--cch-cover-min-h-tablet), 100%);
+    min-height: 0;
+    max-height: 100%;
     flex: 0 0 44%;
     overflow: hidden;
     background: var(--cch-cover-deep);
@@ -833,9 +839,15 @@
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__meta {
-    padding-bottom: var(--mg-v2-space-6);
-    padding-left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
-    padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
+    position: absolute;
+    left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
+    right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
+    bottom: calc(var(--mg-v2-space-6) + var(--cch-safe-b));
+    margin-top: 0;
+    padding-top: var(--mg-v2-space-3);
+    padding-bottom: 0;
+    padding-left: 0;
+    padding-right: 0;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__body {
@@ -844,8 +856,10 @@
     height: auto;
     min-height: 0;
     min-width: 0;
+    max-height: 100%;
     align-self: stretch;
     justify-content: flex-start;
+    overflow: hidden;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__sheet {
@@ -863,8 +877,9 @@
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__scroll {
     padding: var(--mg-v2-space-2) var(--mg-v2-space-4) calc(var(--mg-v2-space-3) + var(--cch-safe-b));
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-height: 0;
+    overflow: auto;
   }
 
   .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapters {

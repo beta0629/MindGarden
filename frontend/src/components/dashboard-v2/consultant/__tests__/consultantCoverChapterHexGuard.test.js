@@ -140,22 +140,34 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(source).toMatch(
       /\.consultant-cover-chapter__meta\s*\{[^}]*padding-top:\s*var\(--mg-v2-space-3\)/s
     );
-    // split: 셸 높이 채움 · 하단 빈 캔버스 최소화
+    // split: 뷰포트 높이 fill · 커버 아래 빈 캔버스 제거
     expect(source).toMatch(
-      /\[data-layout='split'\]\s*\{[^}]*min-height:\s*100%/s
+      /\[data-layout='split'\]\s*\{[^}]*min-height:\s*calc\(100dvh\s*-\s*var\(--cch-top-bar-h\)\)/s
     );
     expect(source).toMatch(
       /\[data-layout='split'\]\s*\{[^}]*height:\s*100%/s
     );
-    // soft-sheet stage calm kill — cover-chapter only
+    // soft-sheet stage calm kill — cover-chapter only · height 체인
     expect(source).toMatch(
       /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
+    );
+    expect(source).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*height:\s*100%/s
     );
     expect(source).toMatch(
       /orientation:\s*landscape\)[^{]*min-width:\s*768px[\s\S]*?:has\(\.consultant-cover-chapter\)[^{]*\.mg-v2-mobile-layout__stage\s*\{[^}]*max-width:\s*none/s
     );
     expect(source).toMatch(
-      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*min-height:\s*0/s
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*align-self:\s*stretch/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*min-height:\s*100%/s
+    );
+    expect(source).toMatch(
+      /\[data-layout='split'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*width:\s*calc\(100%\s*-\s*\(var\(--mg-v2-space-4\)\s*\*\s*2\)\)/s
+    );
+    expect(source).toMatch(
+      /\.consultant-cover-chapter__pill--wait\s*\{[^}]*semantic-warning-light/s
     );
     expect(source).toMatch(
       /\[data-layout='split'\][^{]*\.consultant-cover-chapter__meta\s*\{[^}]*position:\s*absolute/s

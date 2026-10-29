@@ -24,6 +24,7 @@ import {
   COVER_CHAPTER_PILL_NEXT,
   COVER_CHAPTER_PILL_WAIT,
   COVER_CHAPTER_PILL_JOURNAL_PENDING,
+  COVER_CHAPTER_MODE_FACE,
   COVER_CHAPTER_BADGE_IN_PROGRESS,
   COVER_CHAPTER_ZERO_BODY,
   COVER_CHAPTER_ZERO_BODY_REMAINING_EMPTY,
@@ -135,9 +136,13 @@ describe('consultantCoverChapterMappers', () => {
     expect(pastWait.pillLabel).toBe(COVER_CHAPTER_PILL_JOURNAL_PENDING);
     expect(pastWait.pillLabel).not.toBe(COVER_CHAPTER_PILL_WAIT);
     expect(pastWait.pillLabel).not.toBe(COVER_CHAPTER_PILL_NEXT);
+    expect(pastWait.pillVariant).toBe('wait');
+    expect(pastWait.subLabel).not.toContain(COVER_CHAPTER_PILL_JOURNAL_PENDING);
+    expect(pastWait.subLabel).toBe(COVER_CHAPTER_MODE_FACE);
 
     const futureWait = rows.find((row) => row.id === '4');
     expect(futureWait.pillLabel).toBe(COVER_CHAPTER_PILL_WAIT);
+    expect(futureWait.pillVariant).toBe('wait');
 
     const nextRow = rows.find((row) => row.id === '3');
     expect(nextRow.pillLabel).toBe('확정');
@@ -190,6 +195,14 @@ describe('consultantCoverChapterMappers', () => {
     });
     expect(sheet.badgeLabel).toBe(COVER_CHAPTER_BADGE_IN_PROGRESS);
     expect(sheet.timeLabel).toBe('오늘 19:00');
+
+    const rows = mapTodayScheduleRows(schedules, selection.schedule, now);
+    const inProgressRow = rows.find((row) => row.id === '2');
+    expect(inProgressRow.pillLabel).toBe(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(inProgressRow.pillVariant).toBe('default');
+    expect(inProgressRow.subLabel).not.toContain(COVER_CHAPTER_BADGE_IN_PROGRESS);
+    expect(inProgressRow.subLabel).toContain(COVER_CHAPTER_MODE_FACE);
+    expect(inProgressRow.subLabel).toContain('50분');
   });
 
   test('today 0 → true-empty sheetKind (비어 있어요)', () => {

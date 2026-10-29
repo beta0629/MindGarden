@@ -522,26 +522,26 @@ export const mapTodayScheduleRows = (
       }
     }
 
-    const isWait = statusKey === 'PENDING'
-      || statusKey === 'WAITING'
-      || statusKey === 'IN_PROGRESS'
-      || isInProgressRow
-      || isJournalPending;
-    const pillVariant = isWait ? 'wait' : 'default';
+    /* 일지 미작성·대기 → wait(경고). 진행 중은 default(연틸) 유지 */
+    const pillVariant = isJournalPending
+      || ((statusKey === 'PENDING' || statusKey === 'WAITING') && !isInProgressRow)
+      ? 'wait'
+      : 'default';
 
     const mode = resolveConsultationMode(schedule);
     const duration = computeDurationMinutes(schedule.startTime, schedule.endTime);
     const packageLabel = resolvePackageOrTypeLabel(schedule);
     const subParts = [mode];
-    if (packageLabel) {
-      subParts.push(packageLabel);
-    }
-    if (isCompleted) {
-      subParts.push(COVER_CHAPTER_PILL_DONE);
-    } else if (duration != null) {
-      subParts.push(`${duration}분`);
-    } else if (isWait) {
-      subParts.push(pillLabel);
+    /* 일지 미작성: sub는 모드만(pill에만 「일지 미작성」). pill 문구 중복 금지 */
+    if (!isJournalPending) {
+      if (packageLabel) {
+        subParts.push(packageLabel);
+      }
+      if (isCompleted) {
+        subParts.push(COVER_CHAPTER_PILL_DONE);
+      } else if (duration != null) {
+        subParts.push(`${duration}분`);
+      }
     }
 
     return {

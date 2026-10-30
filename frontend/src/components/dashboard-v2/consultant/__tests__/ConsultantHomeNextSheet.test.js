@@ -80,7 +80,7 @@ describe('ConsultantHomeNextSheet', () => {
     expect(screen.queryByText(COVER_CHAPTER_ZERO_BODY)).not.toBeInTheDocument();
   });
 
-  test('has: 상담 열기 + 일정 — long name truncate class present', () => {
+  test('has: 상담일지 열기 + 일정 — long name truncate class present', () => {
     const onOpenConsultation = jest.fn();
     const onOpenSchedule = jest.fn();
     const longName = '남궁민서윤아림정한솔예린';

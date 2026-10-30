@@ -285,7 +285,7 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     expect(mockNavigate).toHaveBeenCalledWith(CONSULTANT_DASHBOARD_ROUTES.SCHEDULE);
   });
 
-  test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담 열기 + 일정 CTA', async() => {
+  test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담일지 열기 + 일정 CTA', async() => {
     // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
     mockPreparation = { preparations: [] };
     const start = new Date();

@@ -779,3 +779,50 @@
     transition: none !important;
   }
 }
+
+/*
+ * 묶음 ③ — split 우측 칼럼 세로 채움 · 챕터 헤더 베이스라인 정렬 (상담사 커버와 동일 규칙).
+ */
+.client-cover__chap-head {
+  align-items: center;
+  min-height: var(--mg-v2-component-height-lg);
+}
+
+.client-cover__chap-more {
+  min-height: var(--mg-v2-component-height-lg);
+  padding-block: 0;
+}
+
+@media (min-width: 64rem) {
+  .client-cover[data-layout='split'] .client-cover__scroll {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapters {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__sheet {
+    max-width: none;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter > :last-child {
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 90rem) {
+  .client-cover[data-layout='split'] .client-cover__chapters {
+    align-items: stretch;
+  }
+}

@@ -3,7 +3,7 @@
  * Used by lobby · shop · cart · checkout · suite faces. No LNB/sidebar.
  *
  * Right meta order (header SSOT):
- * cart? · notifications · messages · {userName} · avatar · 로그아웃
+ * cart? · notifications · messages · session-remaining · {userName} · avatar · 로그아웃
  * Profile (userName/avatar) → /client/mypage (not a nav tab)
  *
  * @author CoreSolution
@@ -14,6 +14,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 import SafeText from '../common/SafeText';
+import SessionRemainingLabel from '../common/SessionRemainingLabel';
 import { NotificationBadge } from '../dashboard-v2/atoms';
 import { CLIENT_DASHBOARD_ROUTES } from '../../constants/clientDashboardRoutes';
 import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../constants/notificationTabs';
@@ -33,6 +34,7 @@ import {
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../constants/clientWebChromeConstants';
 import { ICONS, ICON_SIZES } from '../../constants/icons';
+import { SESSION_REMAINING_DISPLAY } from '../../constants/session';
 import { useNotification } from '../../contexts/NotificationContext';
 import butterflyLogo from '../../assets/images/auth/deprecated-mindgarden/core-logo-butterfly.png';
 import { toDisplayString } from '../../utils/safeDisplay';
@@ -258,6 +260,11 @@ const ClientWebTopChrome = ({
         ) : null}
         {effectiveLoggedIn ? <ClientWebChromeAlerts /> : null}
         {endMeta}
+        {effectiveLoggedIn ? (
+          <SessionRemainingLabel
+            className={`${SESSION_REMAINING_DISPLAY.CLASS_NAME}--client-chrome`}
+          />
+        ) : null}
         {effectiveLoggedIn && showUserMeta ? (
           <Link
             className="client-web-topchrome__profile"

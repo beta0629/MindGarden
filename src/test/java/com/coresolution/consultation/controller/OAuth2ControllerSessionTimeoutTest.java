@@ -49,8 +49,8 @@ class OAuth2ControllerSessionTimeoutTest {
 
     private static final String TENANT_ID = "tenant-oauth-session-timeout";
     private static final long USER_ID = 42L;
-    /** SessionConstants 폴백(4h)과 다른 값으로 properties 우선을 증명 */
-    private static final int CUSTOM_TIMEOUT_SECONDS = 2 * 60 * 60;
+    /** CLIENT 역할 TTL(1h) — getTimeoutSecondsForRole 경로 검증 */
+    private static final int CLIENT_TIMEOUT_SECONDS = 1 * 60 * 60;
 
     @Mock
     private OAuth2FactoryService oauth2FactoryService;
@@ -89,11 +89,12 @@ class OAuth2ControllerSessionTimeoutTest {
 
     @BeforeEach
     void setUp() {
-        when(sessionTimeoutProperties.getTimeoutSeconds()).thenReturn(CUSTOM_TIMEOUT_SECONDS);
+        when(sessionTimeoutProperties.getTimeoutSecondsForRole(UserRole.CLIENT))
+                .thenReturn(CLIENT_TIMEOUT_SECONDS);
     }
 
     @Test
-    @DisplayName("mobileOAuth2Callback: setMaxInactiveInterval은 SessionTimeoutProperties 초 값")
+    @DisplayName("mobileOAuth2Callback: setMaxInactiveInterval은 역할별 SessionTimeoutProperties 초 값")
     void mobileOAuth2Callback_usesSessionTimeoutProperties() {
         User user = new User();
         user.setId(USER_ID);
@@ -117,6 +118,6 @@ class OAuth2ControllerSessionTimeoutTest {
         ResponseEntity<?> response = controller.mobileOAuth2Callback(body, request, session);
 
         assertThat(response.getStatusCode().is2xxSuccessful()).isTrue();
-        assertThat(session.getMaxInactiveInterval()).isEqualTo(CUSTOM_TIMEOUT_SECONDS);
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(CLIENT_TIMEOUT_SECONDS);
     }
 }

@@ -1,6 +1,7 @@
 package com.coresolution.core.filter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -62,6 +63,7 @@ class SessionTenantHostBindingFilterTest {
 
         SessionTimeoutProperties timeouts = mock(SessionTimeoutProperties.class);
         when(timeouts.getTimeoutSeconds()).thenReturn(3600);
+        when(timeouts.resolveTimeoutSeconds(any())).thenReturn(3600);
 
         filter = new SessionTenantHostBindingFilter(
                 tenantRepository, new SessionCookieSupport(env), timeouts);

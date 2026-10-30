@@ -13,7 +13,7 @@ import ConsultantSuitePage from './suite/ConsultantSuitePage';
 import ConsultantFilterChips from './suite/ConsultantFilterChips';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
 import useConsultantIncompleteRecordCount from '../../hooks/useConsultantIncompleteRecordCount';
-import { buildConsultantScheduleSummary, doesRangeCoverCurrentWeek } from '../../utils/consultantScheduleSummary';
+import { buildConsultantScheduleSummary, doesRangeCoverCurrentWeek, doesRangeCoverToday } from '../../utils/consultantScheduleSummary';
 import { useSession } from '../../contexts/SessionContext';
 import { USER_ROLES } from '../../constants/roles';
 import {
@@ -47,7 +47,9 @@ const ConsultantSchedule = () => {
   const { user, isLoading: sessionLoading } = useSession();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [statusFilter, setStatusFilter] = useState(CONSULTANT_SCHEDULE_STATUS_FILTER.ALL);
-  const [scheduleEvents, setScheduleEvents] = useState([]);
+  /** 오늘·이번 주는 각각 그 기간을 덮는 마지막 로드 목록(달력과 같은 소스)으로 센다. null = 아직 미로드 */
+  const [todayEvents, setTodayEvents] = useState(null);
+  const [weekEvents, setWeekEvents] = useState(null);
   const { count: missingLogCount, reload: reloadMissingLogs } = useConsultantIncompleteRecordCount(user?.id);
 
   const handleCheckoutReload = useCallback(() => {
@@ -64,10 +66,13 @@ const ConsultantSchedule = () => {
   });
 
   const handleScheduleEventsChange = useCallback((events, loadedRange) => {
-    if (!doesRangeCoverCurrentWeek(loadedRange, new Date())) {
-      return;
+    const now = new Date();
+    if (doesRangeCoverToday(loadedRange, now)) {
+      setTodayEvents(events);
     }
-    setScheduleEvents(events);
+    if (doesRangeCoverCurrentWeek(loadedRange, now)) {
+      setWeekEvents(events);
+    }
   }, []);
 
   const handleRefresh = useCallback(() => {
@@ -76,8 +81,14 @@ const ConsultantSchedule = () => {
   }, [reloadMissingLogs]);
 
   const summary = useMemo(
-    () => buildConsultantScheduleSummary(scheduleEvents, new Date()),
-    [scheduleEvents]
+    () => {
+      const now = new Date();
+      return {
+        todayCount: todayEvents == null ? null : buildConsultantScheduleSummary(todayEvents, now).todayCount,
+        weekCount: weekEvents == null ? null : buildConsultantScheduleSummary(weekEvents, now).weekCount
+      };
+    },
+    [todayEvents, weekEvents]
   );
 
   const formatCount = (count) => (count == null ? '—' : t('schedule.countUnit', { count }));

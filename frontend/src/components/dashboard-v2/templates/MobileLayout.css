@@ -104,3 +104,8 @@
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
   border-top: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
 }
+
+/* 상담사(soft-sheet) 전 페이지+홈 ☰ 좌측 x = 서브페이지 공통 pad-x (관리자 다크 드로어 레이아웃 비대상) */
+.mg-v2-mobile-layout--soft-sheet {
+  --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-subpage-pad-x);
+}

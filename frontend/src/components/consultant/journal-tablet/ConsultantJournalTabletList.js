@@ -116,7 +116,7 @@ const ConsultantJournalTabletList = ({
     <div className={C.ROOT} data-testid={CONSULTANT_JOURNAL_TABLET_TEST_ID.LIST}>
       <div
         className={C.CHIPS}
-        role="tablist"
+        role="group"
         aria-label={t('journalTablet.statusFilterAria')}
         data-testid={CONSULTANT_JOURNAL_TABLET_TEST_ID.STATUS_CHIPS}
       >

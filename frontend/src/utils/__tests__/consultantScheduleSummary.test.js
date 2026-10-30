@@ -4,6 +4,7 @@
 import {
   buildConsultantScheduleSummary,
   doesRangeCoverCurrentWeek,
+  doesRangeCoverToday,
   startOfLocalWeekMonday
 } from '../consultantScheduleSummary';
 
@@ -53,5 +54,15 @@ describe('consultantScheduleSummary', () => {
     expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-06', endDate: '2026-10-31' }, now)).toBe(false);
     expect(doesRangeCoverCurrentWeek({ startDate: '2026-09-27', endDate: '2026-10-10' }, now)).toBe(false);
     expect(doesRangeCoverCurrentWeek({ startDate: '', endDate: '2026-10-31' }, now)).toBe(false);
+  });
+
+  it('doesRangeCoverToday: 일간 뷰(오늘만 로드)도 오늘 건수 소스로 인정 — 820 「오늘 0건 vs 목록 2건」 가드', () => {
+    const now = at(2026, 10, 30, 14);
+    expect(doesRangeCoverToday(null, now)).toBe(true);
+    expect(doesRangeCoverToday({ startDate: '2026-10-30', endDate: '2026-10-30' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-30', endDate: '2026-10-30' }, now)).toBe(false);
+    expect(doesRangeCoverToday({ startDate: '2026-10-31', endDate: '2026-11-01' }, now)).toBe(false);
+    const dayEvents = [ev(at(2026, 10, 30, 11)), ev(at(2026, 10, 30, 15))];
+    expect(buildConsultantScheduleSummary(dayEvents, now).todayCount).toBe(2);
   });
 });

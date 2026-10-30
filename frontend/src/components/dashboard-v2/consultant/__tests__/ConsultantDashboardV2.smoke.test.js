@@ -196,6 +196,27 @@ const mockApiGet = (url) => {
   return Promise.resolve(mockStatsResponse);
 };
 
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+const SESSION_DURATION_MS = 50 * 60 * 1000;
+
+/**
+ * todaySchedules SSOT — start 가 오늘이고 now 이후여야 has 시트.
+ * 자정 직전 +2h 는 다음 날이 되므로 오늘 말미로 고정한다.
+ *
+ * @returns {{ start: Date, end: Date }}
+ */
+const buildTodayUpcomingSessionBounds = () => {
+  const now = new Date();
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  let startMs = now.getTime() + TWO_HOURS_MS;
+  if (startMs > endOfToday.getTime()) {
+    startMs = endOfToday.getTime();
+  }
+  const start = new Date(startMs);
+  return { start, end: new Date(startMs + SESSION_DURATION_MS) };
+};
+
 const renderDashboard = () => render(
   <MemoryRouter>
     <ConsultantDashboardV2 user={{ id: 42, name: MOCK_USER_NAME, tenantId: 'tenant-1' }} />
@@ -288,9 +309,7 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
   test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담일지 열기 + 일정 CTA', async() => {
     // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
     mockPreparation = { preparations: [] };
-    const start = new Date();
-    start.setHours(start.getHours() + 2, 0, 0, 0);
-    const end = new Date(start.getTime() + 50 * 60000);
+    const { start, end } = buildTodayUpcomingSessionBounds();
     mockScheduleList = [
       {
         id: 501,

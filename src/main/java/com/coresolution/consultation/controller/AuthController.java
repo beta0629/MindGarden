@@ -48,6 +48,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.config.SessionCookieSupport;
+import com.coresolution.consultation.config.SessionTimeoutProperties;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
@@ -115,6 +116,7 @@ public class AuthController extends BaseApiController {
     private final SmsOtpVerificationService smsOtpVerificationService;
     private final OtpDeliveryService otpDeliveryService;
     private final SessionCookieSupport sessionCookieSupport;
+    private final SessionTimeoutProperties sessionTimeoutProperties;
     private final ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
     
     // 로컬 개발 환경용 기본 테넌트 ID (서브도메인이 없을 때 사용)
@@ -713,7 +715,7 @@ public class AuthController extends BaseApiController {
             emptySessionInfo.put("role", null);
             emptySessionInfo.put("sessionId", session.getId());
             emptySessionInfo.put("isAuthenticated", false);
-            putHttpSessionTimingFields(emptySessionInfo, session, false);
+            putHttpSessionTimingFields(emptySessionInfo, session, false, null);
             return success(emptySessionInfo);
         }
         
@@ -725,7 +727,7 @@ public class AuthController extends BaseApiController {
         sessionInfo.put("role", user.getRole());
         sessionInfo.put("sessionId", session.getId());
         sessionInfo.put("isAuthenticated", true);
-        putHttpSessionTimingFields(sessionInfo, session, true);
+        putHttpSessionTimingFields(sessionInfo, session, true, user);
         
         return success(sessionInfo);
     }
@@ -740,18 +742,30 @@ public class AuthController extends BaseApiController {
      * <p><strong>미인증 응답에는 타이밍 필드를 넣지 않는다.</strong> 넣으면 FE가 로그아웃 이후에도
      * 잔여 시간을 계속 리필해 "세션 살아 있음" 착시가 생긴다. 시계 보정용 {@code serverNow}만 유지한다.</p>
      *
+     * <p>Bearer/JWT 경로에서는 필터 이후 컨트롤러 인자 해석에서 새로 만든 컨테이너 세션
+     * (기본 TTL)이 올 수 있으므로, 역할별 TTL(+.dev override) SSOT로 정렬한 뒤 노출한다.</p>
+     *
      * @param map 응답 맵
      * @param session HTTP 세션
      * @param authenticated 인증된 세션 여부 (false면 잔여 계산 필드 제외)
+     * @param user 인증 사용자 (역할 TTL 결정용, 미인증 시 null)
      */
     private void putHttpSessionTimingFields(Map<String, Object> map, HttpSession session,
-                                            boolean authenticated) {
+                                            boolean authenticated, User user) {
         long serverNow = System.currentTimeMillis();
         map.put("serverNow", serverNow);
         if (!authenticated) {
             return;
         }
-        map.put("maxInactiveInterval", session.getMaxInactiveInterval());
+        // Bearer 경로: 필터 이후 컨트롤러 인자 해석에서 새로 만든 컨테이너 세션(기본 4h)이 올 수 있다.
+        // 역할별 TTL(+.dev override) SSOT 로 정렬한 뒤 노출한다.
+        int ttl = user != null
+                ? sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole())
+                : sessionTimeoutProperties.resolveTimeoutSeconds(session);
+        if (session.getMaxInactiveInterval() != ttl) {
+            session.setMaxInactiveInterval(ttl);
+        }
+        map.put("maxInactiveInterval", ttl);
         // Servlet getLastAccessedTime()은 previous request라 FE 잔여 리필 SSOT로 부적합.
         // session-info 호출 자체가 access이므로 serverNow를 lastAccessedTime으로 노출.
         map.put("lastAccessedTime", serverNow);

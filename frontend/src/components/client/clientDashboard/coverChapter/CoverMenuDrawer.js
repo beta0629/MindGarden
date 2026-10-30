@@ -5,7 +5,8 @@
  * @since 2026-10-29
  */
 
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import useCoverDrawerFocus from '../../../common/coverChapter/useCoverDrawerFocus';
 import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
@@ -31,7 +32,7 @@ const MENU_LINKS = Object.freeze([
 ]);
 
 const DRAWER_PHASE = Object.freeze({ OPEN: 'open', CLOSING: 'closing', CLOSED: 'closed' });
-const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled])';
+const COVER_DRAWER_TRIGGER_SELECTOR = '.client-web-topchrome__menu';
 const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
 const prefersReducedMotion = () => (
@@ -75,13 +76,9 @@ const CoverMenuDrawer = ({
   const isCurrent = (item) => (activeId ? item.id === activeId : pathname === item.to);
   const [phase, setPhase] = useState(isOpen ? DRAWER_PHASE.OPEN : DRAWER_PHASE.CLOSED);
   const panelRef = useRef(null);
-  const returnFocusRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
-      if (typeof document !== 'undefined') {
-        returnFocusRef.current = document.activeElement;
-      }
       setPhase(DRAWER_PHASE.OPEN);
       return;
     }
@@ -94,57 +91,20 @@ const CoverMenuDrawer = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (phase === DRAWER_PHASE.OPEN) {
-      const first = panelRef.current?.querySelector(FOCUSABLE_SELECTOR);
-      if (first && typeof first.focus === 'function') {
-        first.focus();
-      }
+    if (phase !== DRAWER_PHASE.CLOSING) {
       return undefined;
     }
-    if (phase === DRAWER_PHASE.CLOSED) {
-      const target = returnFocusRef.current;
-      returnFocusRef.current = null;
-      if (target && typeof target.focus === 'function' && target.isConnected) {
-        target.focus();
-      }
-      return undefined;
-    }
-    /* CLOSING: animationend가 오지 않는 환경(jsdom 등) 대비 — 계산된 duration 후 언마운트 */
-    const fallbackMs = readAnimationMs(panelRef.current);
-    const timer = setTimeout(() => setPhase(DRAWER_PHASE.CLOSED), fallbackMs);
+    /* animationend 미발생 환경(jsdom 등) 대비 — 계산된 duration 후 언마운트 */
+    const timer = setTimeout(() => setPhase(DRAWER_PHASE.CLOSED), readAnimationMs(panelRef.current));
     return () => clearTimeout(timer);
   }, [phase]);
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Escape') {
-      onClose();
-      return;
-    }
-    if (e.key !== 'Tab' || !panelRef.current) {
-      return;
-    }
-    const nodes = Array.from(panelRef.current.querySelectorAll(FOCUSABLE_SELECTOR));
-    if (nodes.length === 0) {
-      return;
-    }
-    const first = nodes[0];
-    const last = nodes[nodes.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  }, [onClose]);
-
-  useEffect(() => {
-    if (phase !== DRAWER_PHASE.OPEN) {
-      return undefined;
-    }
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [phase, handleKeyDown]);
+  useCoverDrawerFocus({
+    isOpen,
+    panelRef,
+    onClose,
+    returnFocusSelector: COVER_DRAWER_TRIGGER_SELECTOR
+  });
 
   const handlePanelAnimationEnd = (e) => {
     if (e.target === e.currentTarget && phase === DRAWER_PHASE.CLOSING) {

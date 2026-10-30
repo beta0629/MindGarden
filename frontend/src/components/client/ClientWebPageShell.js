@@ -1,18 +1,19 @@
 /**
  * ClientWebPageShell — shared client web page shell (header SSOT, no LNB)
- * Stage DNA: max-width 920 · pad 36/56/56 · optional main+aside grid
+ * Stage DNA: 전폭(고정 max-width 없음) · pad 36/56/56 · ☰ 헤더+얇은 드로어(홈 동일) · optional main+aside grid
  *
  * @author CoreSolution
  * @since 2026-09-18
  */
 
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useSession } from '../../contexts/SessionContext';
 import { useBranding } from '../../hooks/useBranding';
 import { useClientWebLogoutConfirm } from '../../hooks/useClientWebLogoutConfirm';
 import { resolveClientWebBrandLabels } from '../../utils/clientWebBrandLabels';
 import {
+  CLIENT_WEB_NAV,
   CLIENT_WEB_PAGE_SHELL_CLASS,
   CLIENT_WEB_PAGE_SHELL_TEST_ID
 } from '../../constants/clientWebChromeConstants';
@@ -20,6 +21,7 @@ import { CLIENT_WEB_SUITE_TEST_IDS } from '../../constants/clientWebSuiteConstan
 import ConfirmModal from '../common/ConfirmModal';
 import SafeText from '../common/SafeText';
 import ClientWebTopChrome from './ClientWebTopChrome';
+import CoverMenuDrawer from './clientDashboard/coverChapter/CoverMenuDrawer';
 import './ClientWebPageShell.css';
 
 /**
@@ -79,6 +81,14 @@ const ClientWebPageShell = ({
     openConfirm,
     confirmProps
   } = useClientWebLogoutConfirm();
+  // 홈과 같은 ☰ 헤더 + 얇은 드로어 (상단 탭 내비 대체)
+  const [menuOpen, setMenuOpen] = useState(false);
+  const openMenu = useCallback(() => setMenuOpen(true), []);
+  const closeMenu = useCallback(() => setMenuOpen(false), []);
+  const drawerItems = useMemo(
+    () => CLIENT_WEB_NAV.map((item) => ({ id: item.id, label: item.label, to: item.path })),
+    []
+  );
 
   const rootClass = [
     CLIENT_WEB_PAGE_SHELL_CLASS,
@@ -156,6 +166,8 @@ const ClientWebPageShell = ({
           isLoggedIn={effectiveLoggedIn}
           userName={effectiveLoggedIn ? user?.name : undefined}
           activeNavId={activeNavId}
+          nav={null}
+          onMenuClick={effectiveLoggedIn ? openMenu : undefined}
           onLogout={effectiveLoggedIn ? openConfirm : undefined}
           logoutLabel={logoutLabel}
           loginHref={!effectiveLoggedIn ? loginHref : undefined}
@@ -180,6 +192,16 @@ const ClientWebPageShell = ({
           children
         )}
       </div>
+      {showChrome && effectiveLoggedIn ? (
+        <CoverMenuDrawer
+          isOpen={menuOpen}
+          onClose={closeMenu}
+          onLogout={openConfirm}
+          logoutLabel={logoutLabel}
+          items={drawerItems}
+          activeId={activeNavId}
+        />
+      ) : null}
       {showChrome ? <ConfirmModal {...confirmProps} /> : null}
     </div>
   );

@@ -7,7 +7,7 @@
 
 import React, { useEffect } from 'react';
 import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
 import { CLIENT_SHOP_ROUTES } from '../../../../constants/clientShopConstants';
 import {
@@ -20,6 +20,7 @@ import {
   CLIENT_COVER_MENU_SHOP,
   CLIENT_COVER_MENU_TEST_ID
 } from '../constants';
+import './CoverMenuDrawer.css';
 
 const MENU_LINKS = Object.freeze([
   { id: 'schedule', label: CLIENT_COVER_MENU_SCHEDULE, to: CLIENT_DASHBOARD_ROUTES.SCHEDULE },
@@ -34,13 +35,20 @@ const MENU_LINKS = Object.freeze([
  * @param {() => void} props.onClose
  * @param {() => void} [props.onLogout]
  * @param {string} [props.logoutLabel]
+ * @param {Array<{id:string,label:string,to:string}>} [props.items] - 서브페이지: 역할별 메뉴 IA(CLIENT_WEB_NAV). 생략 시 커버 홈 기본(독 중복 제외)
+ * @param {string} [props.activeId] - aria-current 대상 id
  */
 const CoverMenuDrawer = ({
   isOpen,
   onClose,
   onLogout,
-  logoutLabel = CLIENT_COVER_MENU_LOGOUT
+  logoutLabel = CLIENT_COVER_MENU_LOGOUT,
+  items,
+  activeId
 }) => {
+  const { pathname } = useLocation();
+  const links = Array.isArray(items) && items.length > 0 ? items : MENU_LINKS;
+  const isCurrent = (item) => (activeId ? item.id === activeId : pathname === item.to);
   useEffect(() => {
     if (!isOpen) {
       return undefined;
@@ -68,11 +76,12 @@ const CoverMenuDrawer = ({
       />
       <aside className="client-cover__menu-panel" role="dialog" aria-label={CLIENT_COVER_MENU_ARIA}>
         <ul className="client-cover__menu-list">
-          {MENU_LINKS.map((item) => (
+          {links.map((item) => (
             <li key={item.id}>
               <Link
                 className="client-cover__menu-link"
                 to={item.to}
+                aria-current={isCurrent(item) ? 'page' : undefined}
                 onClick={onClose}
               >
                 {item.label}
@@ -103,7 +112,13 @@ CoverMenuDrawer.propTypes = {
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
   onLogout: PropTypes.func,
-  logoutLabel: PropTypes.string
+  logoutLabel: PropTypes.string,
+  items: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string.isRequired,
+    label: PropTypes.string.isRequired,
+    to: PropTypes.string.isRequired
+  })),
+  activeId: PropTypes.string
 };
 
 export default CoverMenuDrawer;

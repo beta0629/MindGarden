@@ -4,7 +4,10 @@ import java.time.Duration;
 
 import jakarta.servlet.http.HttpSession;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
 
 import com.coresolution.consultation.constant.SessionConstants;
@@ -40,6 +43,13 @@ public class SessionTimeoutProperties {
     private final int timeoutSeconds;
 
     /**
+     * .dev 만료 검증용 유휴 TTL 단축(초). 0=끔(기본). prod 프로필에서는 값과 무관하게 항상 끔.
+     * 설정: {@code session.idle.test-override-seconds} / env {@code SESSION_IDLE_TEST_OVERRIDE_SECONDS}.
+     * 켜지면 모든 역할 TTL·session-info maxInactiveInterval 이 이 값으로 대체된다(서버 시각 기준).
+     */
+    private int testOverrideSeconds;
+
+    /**
      * @param sessionTimeout {@code server.servlet.session.timeout} (Duration, 기본 4h)
      */
     public SessionTimeoutProperties(
@@ -66,6 +76,32 @@ public class SessionTimeoutProperties {
      *
      * @return 타임아웃 초
      */
+    /**
+     * .dev 만료 테스트 훅 주입. prod 프로필이면 무시(0 고정).
+     */
+    @Autowired(required = false)
+    public void configureTestOverride(
+            Environment environment,
+            @Value("${session.idle.test-override-seconds:0}") int overrideSeconds) {
+        if (overrideSeconds <= 0) {
+            this.testOverrideSeconds = 0;
+            return;
+        }
+        if (environment == null || environment.acceptsProfiles(Profiles.of("prod"))) {
+            this.testOverrideSeconds = 0;
+            log.warn("session.idle.test-override-seconds={} 무시 — prod 프로필(또는 환경 미확인)에서는 항상 꺼짐",
+                    overrideSeconds);
+            return;
+        }
+        this.testOverrideSeconds = overrideSeconds;
+        log.warn("세션 유휴 TTL 테스트 오버라이드 활성: 모든 역할 {}s (비운영 전용)", overrideSeconds);
+    }
+
+    /** 테스트 오버라이드(초). 0이면 꺼짐. */
+    public int getTestOverrideSeconds() {
+        return testOverrideSeconds;
+    }
+
     public int getTimeoutSeconds() {
         return timeoutSeconds;
     }
@@ -89,6 +125,9 @@ public class SessionTimeoutProperties {
      * @return 역할별 타임아웃 초
      */
     public int getTimeoutSecondsForRole(UserRole role) {
+        if (testOverrideSeconds > 0) {
+            return testOverrideSeconds;
+        }
         if (role == null) {
             return timeoutSeconds;
         }
@@ -114,6 +153,9 @@ public class SessionTimeoutProperties {
      * @return 역할별 타임아웃 초
      */
     public int getTimeoutSecondsForRole(String role) {
+        if (testOverrideSeconds > 0) {
+            return testOverrideSeconds;
+        }
         if (role == null || role.isBlank()) {
             return timeoutSeconds;
         }
@@ -140,6 +182,9 @@ public class SessionTimeoutProperties {
      * @return 적용할 타임아웃 초
      */
     public int resolveTimeoutSeconds(HttpSession session) {
+        if (testOverrideSeconds > 0) {
+            return testOverrideSeconds;
+        }
         if (session == null) {
             return timeoutSeconds;
         }

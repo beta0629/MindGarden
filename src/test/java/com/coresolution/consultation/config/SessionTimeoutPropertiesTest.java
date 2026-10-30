@@ -6,6 +6,7 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
 import org.springframework.mock.web.MockHttpSession;
 
 import com.coresolution.consultation.constant.SessionConstants;
@@ -109,5 +110,43 @@ class SessionTimeoutPropertiesTest {
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_SPRING_CEILING).isEqualTo(-1);
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_WHEN_DUPLICATE_ALLOWED)
                 .isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 비운영 프로필에서 override>0이면 전 역할 TTL 대체")
+    void testOverride_appliesOutsideProd() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CONSULTANT)).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole("ADMIN")).isEqualTo(120);
+        assertThat(properties.resolveTimeoutSeconds(new MockHttpSession())).isEqualTo(120);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — prod 프로필에서는 항상 꺼짐")
+    void testOverride_ignoredInProd() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 기본 0은 꺼짐")
+    void testOverride_offByDefault() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        properties.configureTestOverride(env, 0);
+
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CONSULTANT)).isEqualTo(TWO_HOURS_SECONDS);
     }
 }

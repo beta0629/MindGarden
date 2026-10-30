@@ -155,7 +155,51 @@
   transition: background-color var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-out);
 }
 
+/* 4b 상담사 ☰ soft-sheet (MobileLnbDrawer variant) — 내담자 드로어와 같은 토큰: 열기 dur-base·ease-out / 닫기 dur-fast·ease-in.
+   관리자 다크 드로어(기본 variant)는 비대상. */
+.mg-v2-mobile-lnb-drawer.mg-v2-mobile-lnb-drawer--soft-sheet {
+  visibility: hidden;
+  transition:
+    transform var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-in),
+    visibility 0s linear var(--mg-v2-motion-dur-fast);
+}
+
+.mg-v2-mobile-lnb-drawer.mg-v2-mobile-lnb-drawer--soft-sheet.mg-v2-mobile-lnb-drawer--open {
+  visibility: visible;
+  transition:
+    transform var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out),
+    visibility 0s linear 0s;
+}
+
+.mg-v2-mobile-lnb-overlay:has(+ .mg-v2-mobile-lnb-drawer--soft-sheet) {
+  transition:
+    opacity var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-in),
+    visibility 0s linear var(--mg-v2-motion-dur-fast);
+}
+
+.mg-v2-mobile-lnb-overlay--open:has(+ .mg-v2-mobile-lnb-drawer--soft-sheet) {
+  transition:
+    opacity var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out),
+    visibility 0s linear 0s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* 커버 진입: transform 없이 페이드만 */
+  html .consultant-cover-chapter__meta > *,
+  html .client-cover__cover .client-cover__meta > *,
+  html .consultant-cover-chapter .consultant-cover-chapter__sheet,
+  html .client-cover .client-cover__sheet,
+  html .consultant-cover-chapter .consultant-cover-chapter__chapter,
+  html .client-cover__chapters > .client-cover__chapter {
+    animation-name: mg-cc-fade;
+  }
+
+  .mg-v2-mobile-lnb-drawer.mg-v2-mobile-lnb-drawer--soft-sheet,
+  .mg-v2-mobile-lnb-drawer.mg-v2-mobile-lnb-drawer--soft-sheet.mg-v2-mobile-lnb-drawer--open,
+  .mg-v2-mobile-lnb-overlay:has(+ .mg-v2-mobile-lnb-drawer--soft-sheet) {
+    transition: none;
+  }
+
   .consultant-cover-chapter__cta,
   .client-cover__cta,
   .client-cover__menu-link {

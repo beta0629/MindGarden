@@ -821,8 +821,59 @@
   }
 }
 
+/*
+ * 하단 빈영역·빈 흰 카드 (PR 1799 재검) — 태블릿 이상 공통 틀:
+ * 스택(820 세로)도 split 과 같은 세로 채움 규칙, ≥90rem 2열 밀도는 1열로 되돌려
+ * 한쪽 칼럼만 늘어난 빈 카드가 생기지 않게 한다. 카드 꼬리(칩 줄)는 카드 바닥에 붙인다.
+ */
+@media (min-width: 48rem) {
+  .client-cover .client-cover__scroll {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-cover .client-cover__chapters {
+    flex: 1 1 auto;
+  }
+
+  .client-cover .client-cover__chapter {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* 늘어나는 건 목록 카드(dense) 챕터만 — 안내 버튼 카드는 내용 높이 */
+  .client-cover[data-layout] .client-cover__chapter {
+    flex: 0 0 auto;
+  }
+
+  .client-cover[data-layout] .client-cover__chapter > :last-child {
+    flex: 0 0 auto;
+  }
+
+  .client-cover[data-layout] .client-cover__chapter:has(> .client-cover__dense) {
+    flex: 1 1 auto;
+  }
+
+  .client-cover[data-layout] .client-cover__chapter > .client-cover__dense {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-cover .client-cover__dense > .client-cover__chips:last-child {
+    margin-top: auto;
+  }
+}
+
 @media (min-width: 90rem) {
   .client-cover[data-layout='split'] .client-cover__chapters {
-    align-items: stretch;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter {
+    margin-bottom: var(--mg-v2-space-4);
   }
 }

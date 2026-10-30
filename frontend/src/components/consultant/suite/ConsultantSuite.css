@@ -617,3 +617,9 @@
   flex: 1 1 auto;
   justify-content: center;
 }
+
+
+/* 빈 상태 + 카드 배치(예: availability 요일 카드)가 한 패널에 있을 때 간격 */
+.consultant-suite__panel > .consultant-suite-empty + .consultant-suite-card-list {
+  margin-top: var(--mg-v2-subpage-grid-gap);
+}

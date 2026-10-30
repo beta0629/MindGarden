@@ -365,15 +365,17 @@ const ConsultantAvailability = () => {
   // 4종 SSOT: CONSULTANT 또는 ADMIN(레거시 BRANCH_SUPER_ADMIN 포함)
   const hasPermission = RoleUtils.isConsultant(user) || RoleUtils.isAdmin(user);
 
+  const openAddModal = () => {
+    setSelectedDate(getMinSelectableDateYmd());
+    setShowAddModal(true);
+  };
+
   const headerActions = (
     <>
       <ConsultantSuiteButton
         variant={CONSULTANT_SUITE_BUTTON_VARIANT.PRIMARY}
         icon={<Plus size={ACTION_ICON_SIZE} aria-hidden />}
-        onClick={() => {
-          setSelectedDate(getMinSelectableDateYmd());
-          setShowAddModal(true);
-        }}
+        onClick={openAddModal}
       >
         {tSuite('actions.addAvailability')}
       </ConsultantSuiteButton>
@@ -465,6 +467,26 @@ const ConsultantAvailability = () => {
                   title={tSuite('availability.emptyTitle')}
                   description={tSuite('availability.emptyDescription')}
                 />
+                {/* 빈 상태도 요일 카드 배치로 본문을 채운다 (하단 빈영역·빈 흰 카드 방지) */}
+                <ul className={CONSULTANT_SUITE_CLASS.CARD_LIST} aria-label={tSuite('availability.dayOverviewAria')}>
+                  {DAYS_OF_WEEK.map((day) => (
+                    <li key={day.key}>
+                      <ConsultantSuiteCard
+                        variant={CONSULTANT_SUITE_CARD_VARIANT.ROW}
+                        className="consultant-availability__slot-card"
+                      >
+                        <div className="consultant-availability__slot-main">
+                          <SafeText tag="h3" className={CONSULTANT_SUITE_CLASS.CARD_TITLE}>
+                            {tSuite('availability.slotTitle', { day: day.label })}
+                          </SafeText>
+                          <SafeText tag="p" className={CONSULTANT_SUITE_CLASS.CARD_META}>
+                            {tSuite('availability.noSlots')}
+                          </SafeText>
+                        </div>
+                      </ConsultantSuiteCard>
+                    </li>
+                  ))}
+                </ul>
               </section>
             ) : (
               <ul className={CONSULTANT_SUITE_CLASS.CARD_LIST} aria-label={tSuite('availability.listAria')}>

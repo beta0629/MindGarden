@@ -1,5 +1,5 @@
 /**
- * consultantScheduleSummary — 오늘·이번 주(월~일) 건수 · 취소/휴무 제외 · 로컬 자정 경계
+ * consultantScheduleSummary — 오늘·이번 주(월~일) 건수 · 상태 제외 없음(뷰 칩 수와 동일) · 로컬 자정 경계
  */
 import {
   buildConsultantScheduleSummary,
@@ -18,7 +18,7 @@ describe('consultantScheduleSummary', () => {
     expect(startOfLocalWeekMonday(at(2026, 10, 5, 0, 0))).toEqual(new Date(2026, 9, 5));
   });
 
-  it('오늘·이번 주 건수, 취소·휴무 제외', () => {
+  it('오늘·이번 주 건수 — 취소·휴무도 뷰에 그려지므로 포함', () => {
     const now = at(2026, 10, 7, 9);
     const events = [
       ev(at(2026, 10, 7, 10)),
@@ -30,7 +30,7 @@ describe('consultantScheduleSummary', () => {
       ev(at(2026, 10, 12, 0, 0)),
       ev(at(2026, 10, 4, 23, 59))
     ];
-    expect(buildConsultantScheduleSummary(events, now)).toEqual({ todayCount: 2, weekCount: 4 });
+    expect(buildConsultantScheduleSummary(events, now)).toEqual({ todayCount: 4, weekCount: 6 });
   });
 
   it('자정 경계: 23:59 는 당일, 다음날 00:00 은 제외', () => {
@@ -60,7 +60,7 @@ describe('consultantScheduleSummary', () => {
     const weekViewRange = { startDate: '2026-10-25', endDate: '2026-10-31' };
     expect(doesRangeCoverCurrentWeek(weekViewRange, now)).toBe(true);
     const evs = [ev(at(2026, 10, 25, 10)), ev(at(2026, 10, 31, 15)), ev(at(2026, 11, 1, 10)), ev(at(2026, 10, 30, 11), 'CANCELLED')];
-    expect(buildConsultantScheduleSummary(evs, now)).toEqual({ todayCount: 0, weekCount: 2 });
+    expect(buildConsultantScheduleSummary(evs, now)).toEqual({ todayCount: 1, weekCount: 3 });
   });
 
   it('doesRangeCoverToday: 일간 뷰(오늘만 로드)도 오늘 건수 소스로 인정 — 820 「오늘 0건 vs 목록 2건」 가드', () => {

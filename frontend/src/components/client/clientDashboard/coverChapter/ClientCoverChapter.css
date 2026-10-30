@@ -8,8 +8,8 @@
 @import '../../../common/coverChapter/CoverGuideDenseRow.css';
 
 .client-cover {
-  --client-cover-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  --client-cover-ease-press: cubic-bezier(0.4, 0, 0.2, 1);
+  --client-cover-ease: var(--mg-v2-motion-ease-out);
+  --client-cover-ease-press: var(--mg-v2-motion-ease-in-out);
   --client-cover-safe-t: env(safe-area-inset-top, 0px);
   --client-cover-safe-r: env(safe-area-inset-right, 0px);
   --client-cover-safe-b: env(safe-area-inset-bottom, 0px);
@@ -114,14 +114,7 @@
   pointer-events: none;
 }
 
-.client-cover__light-beam {
-  animation: client-cover-light-drift 8s ease-in-out infinite alternate;
-}
-
-@keyframes client-cover-light-drift {
-  from { opacity: 0.45; }
-  to { opacity: 0.75; }
-}
+/* 커버·창빛·시트·챕터 진입 모션 → common/coverChapter/CoverChapterMotion.css */
 
 .client-cover__meta {
   position: absolute;
@@ -188,19 +181,7 @@
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-light);
   box-shadow: var(--mg-v2-shadow-md);
   padding: 0.875rem 0.875rem var(--mg-v2-space-3);
-  /* both=backwards → 첫 페인트 opacity:0. forwards만 (챕터·상담사 sheet와 정합) */
-  animation: client-cover-sheet-rise 480ms var(--client-cover-ease) forwards;
-}
-
-@keyframes client-cover-sheet-rise {
-  from {
-    opacity: 0;
-    transform: translateY(var(--mg-v2-space-4));
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  animation: mg-cc-sheet-seq calc(var(--mg-v2-motion-t-sheet) + var(--mg-v2-motion-dur-slow)) linear forwards;
 }
 
 .client-cover__sheet-kicker {
@@ -293,7 +274,6 @@
   font-family: var(--mg-v2-font-family-base);
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-bold);
-  transition: transform 120ms var(--client-cover-ease-press), background 120ms;
 }
 
 .client-cover__cta--primary.mg-button,
@@ -347,28 +327,7 @@
 
 .client-cover__chapter {
   margin-bottom: 0.9375rem;
-  opacity: 1;
-  /* both=backwards → delay 중 opacity:0 → 샷/첫페인트 챕터 소실. forwards만 */
-  animation: client-cover-chap-in 420ms var(--client-cover-ease) forwards;
-}
-
-.client-cover__chapters > .client-cover__chapter:nth-child(1) {
-  animation-delay: 60ms;
-}
-
-.client-cover__chapters > .client-cover__chapter:nth-child(2) {
-  animation-delay: 120ms;
-}
-
-@keyframes client-cover-chap-in {
-  from {
-    opacity: 0;
-    transform: translateY(var(--mg-v2-space-2));
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  animation: mg-cc-chap-seq calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-dur-slow)) linear forwards;
 }
 
 .client-cover__chap-head {
@@ -766,19 +725,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .client-cover__light-beam,
-  .client-cover__sheet,
-  .client-cover__chapter {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .client-cover__cta {
-    transition: none !important;
-  }
-}
 
 /*
  * 묶음 ③ — split 우측 칼럼 세로 채움 · 챕터 헤더 베이스라인 정렬 (상담사 커버와 동일 규칙).

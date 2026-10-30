@@ -1,0 +1,168 @@
+/**
+ * 커버+챕터 홈 모션 — 상담사(.consultant-cover-chapter)·내담자(.client-cover) 공통 SSOT.
+ * 시퀀스: 커버 SVG fade → 메타(센터→이름→요약) rise → 다음 상담 시트 rise → 챕터 01·02 → 행 fade.
+ * 값은 design-v2-tokens.css §6 --mg-v2-motion-* 만 사용 (ms·easing 리터럴 금지).
+ * prefers-reduced-motion: 토큰이 delay·이동 0 · opacity만 dur-fast.
+ */
+
+@keyframes mg-cc-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes mg-cc-rise {
+  from { opacity: 0; transform: translateY(var(--mg-v2-motion-rise-sm)); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes mg-cc-drawer-in {
+  from { transform: translateX(var(--mg-v2-motion-drawer-shift)); }
+  to { transform: none; }
+}
+
+@keyframes mg-cc-drawer-out {
+  from { transform: none; }
+  to { transform: translateX(var(--mg-v2-motion-drawer-shift)); }
+}
+
+@keyframes mg-cc-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* 1 커버 */
+.consultant-cover-chapter__cover-svg,
+.client-cover__svg {
+  animation: mg-cc-fade var(--mg-v2-motion-dur-cover) var(--mg-v2-motion-ease-out) both;
+}
+
+.consultant-cover-chapter__light-beam,
+.client-cover__light-beam {
+  animation: mg-cc-fade var(--mg-v2-motion-dur-cover) var(--mg-v2-motion-ease-out) var(--mg-v2-motion-t-cover-meta) both;
+}
+
+.consultant-cover-chapter__cover-top,
+.client-cover__chrome {
+  animation: mg-cc-fade var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out) var(--mg-v2-motion-t-cover-meta) both;
+}
+
+.consultant-cover-chapter__meta > *,
+.client-cover__cover .client-cover__meta > * {
+  animation: mg-cc-rise var(--mg-v2-motion-dur-slow) var(--mg-v2-motion-ease-out) var(--mg-v2-motion-t-cover-meta) both;
+}
+
+.consultant-cover-chapter__meta > :nth-child(2),
+.client-cover__cover .client-cover__meta > :nth-child(2) {
+  animation-delay: calc(var(--mg-v2-motion-t-cover-meta) + var(--mg-v2-motion-stagger-step));
+}
+
+.consultant-cover-chapter__meta > :nth-child(n + 3),
+.client-cover__cover .client-cover__meta > :nth-child(n + 3) {
+  animation-delay: calc(var(--mg-v2-motion-t-cover-meta) + var(--mg-v2-motion-stagger-step) * 2);
+}
+
+/* 2 다음 상담 시트 · 3 챕터 — 첫 페인트 공백 방지 가드(forwards만, both 금지)에 맞춰
+   delay 대신 "정지 구간 + 진입" 키프레임 · duration = 시작점 + dur-slow.
+   animation 선언은 각 화면 CSS 블록(.…__sheet / .…__chapter)에서 이 키프레임을 참조. */
+@keyframes mg-cc-sheet-seq {
+  0%, 46% {
+    opacity: 0;
+    transform: translateY(var(--mg-v2-motion-rise-md));
+    box-shadow: var(--mg-v2-shadow-sm);
+    animation-timing-function: var(--mg-v2-motion-ease-out);
+  }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes mg-cc-chap-seq {
+  0%, 53% {
+    opacity: 0;
+    transform: translateY(var(--mg-v2-motion-rise-sm));
+    animation-timing-function: var(--mg-v2-motion-ease-out);
+  }
+  100% { opacity: 1; transform: none; }
+}
+
+.consultant-cover-chapter__chapter,
+.client-cover__chapters > .client-cover__chapter {
+  --mg-cc-chap-t: var(--mg-v2-motion-t-chapters);
+}
+
+.consultant-cover-chapter__chapter:nth-child(2),
+.client-cover__chapters > .client-cover__chapter:nth-child(2) {
+  --mg-cc-chap-t: calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-stagger-step));
+  animation-duration: calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-stagger-step) + var(--mg-v2-motion-dur-slow));
+}
+
+.consultant-cover-chapter__chapter:nth-child(n + 3),
+.client-cover__chapters > .client-cover__chapter:nth-child(n + 3) {
+  --mg-cc-chap-t: calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-stagger-step) * 2);
+  animation-duration: calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-stagger-step) * 2 + var(--mg-v2-motion-dur-slow));
+}
+
+.consultant-cover-chapter__chapter :is(.consultant-cover-chapter__row, .cover-guide-dense),
+.client-cover__chapter :is(.client-cover__row, .cover-guide-dense) {
+  --mg-cc-row-t: calc(var(--mg-cc-chap-t) + var(--mg-v2-motion-dur-fast));
+  animation: mg-cc-fade var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out) var(--mg-cc-row-t) both;
+}
+
+.consultant-cover-chapter__chapter :is(.consultant-cover-chapter__row, .cover-guide-dense):nth-child(2),
+.client-cover__chapter :is(.client-cover__row, .cover-guide-dense):nth-child(2) {
+  animation-delay: calc(var(--mg-cc-row-t) + var(--mg-v2-motion-stagger-row));
+}
+
+.consultant-cover-chapter__chapter :is(.consultant-cover-chapter__row, .cover-guide-dense):nth-child(3),
+.client-cover__chapter :is(.client-cover__row, .cover-guide-dense):nth-child(3) {
+  animation-delay: calc(var(--mg-cc-row-t) + var(--mg-v2-motion-stagger-row) * 2);
+}
+
+.consultant-cover-chapter__chapter :is(.consultant-cover-chapter__row, .cover-guide-dense):nth-child(n + 4),
+.client-cover__chapter :is(.client-cover__row, .cover-guide-dense):nth-child(n + 4) {
+  animation-delay: calc(var(--mg-cc-row-t) + var(--mg-v2-motion-stagger-row) * 3);
+}
+
+/* 5 피드백 */
+.consultant-cover-chapter__cta,
+.client-cover__cta {
+  transition:
+    transform var(--mg-v2-motion-dur-instant) var(--mg-v2-motion-ease-out),
+    background-color var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-out);
+}
+
+.consultant-cover-chapter__cta:active,
+.client-cover__cta:active {
+  transform: scale(var(--mg-v2-motion-press-scale));
+}
+
+/* 4 ☰ 드로어 (CoverMenuDrawer — 내담자 홈 + 서브 8페이지 공통) */
+.client-cover__menu[data-state='open'] .client-cover__menu-backdrop {
+  animation: mg-cc-fade var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out) both;
+}
+
+.client-cover__menu[data-state='open'] .client-cover__menu-panel {
+  animation: mg-cc-drawer-in var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out) both;
+}
+
+.client-cover__menu[data-state='closing'] .client-cover__menu-backdrop {
+  animation: mg-cc-fade-out var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-in) both;
+}
+
+.client-cover__menu[data-state='closing'] .client-cover__menu-panel {
+  animation: mg-cc-drawer-out var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-in) both;
+}
+
+.client-cover__menu-link {
+  transition: background-color var(--mg-v2-motion-dur-fast) var(--mg-v2-motion-ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .consultant-cover-chapter__cta,
+  .client-cover__cta,
+  .client-cover__menu-link {
+    transition: background-color var(--mg-v2-motion-dur-fast) linear;
+  }
+
+  .client-cover__menu[data-state] .client-cover__menu-panel {
+    animation: none;
+  }
+}

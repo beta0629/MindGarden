@@ -7,6 +7,7 @@ import ConsultantHomeGuideChapter from './ConsultantHomeGuideChapter';
 import {
   COVER_CHAPTER_ROOT_CLASS,
   COVER_CHAPTER_TEST_ID,
+  COVER_CHAPTER_CHAPTERS_TEST_ID,
   COVER_CHAPTER_BRAND_FALLBACK,
   COVER_CHAPTER_TABLET_SPLIT_MQ,
   COVER_CHAPTER_SVG_VARIANT_LANDSCAPE,
@@ -208,7 +209,7 @@ const ConsultantCoverChapterHome = ({
         {isSplitLayout ? nextSheet : null}
 
         <div className="consultant-cover-chapter__scroll">
-          <div className="consultant-cover-chapter__chapters">
+          <div className="consultant-cover-chapter__chapters" data-testid={COVER_CHAPTER_CHAPTERS_TEST_ID}>
             <ConsultantHomeScheduleChapter
               rows={scheduleRows}
               chips={chips}

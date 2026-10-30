@@ -143,3 +143,8 @@
     display: none;
   }
 }
+
+/* 헤더 알림 배지: 기본 translate(35%,-35%) 가 GNB 상단(overflow hidden 레이아웃) 밖으로 나가 '99+' 상단이 잘림 — 트리거 박스 안에 둔다 */
+.mg-v2-mobile-gnb .mg-v2-notification-badge {
+  transform: none;
+}

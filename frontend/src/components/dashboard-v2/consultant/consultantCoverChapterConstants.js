@@ -9,6 +9,9 @@ export const COVER_CHAPTER_ROOT_CLASS = 'consultant-cover-chapter';
 export const COVER_CHAPTER_TEST_ID = 'consultant-cover-chapter-home';
 export const COVER_CHAPTER_NEXT_SHEET_TEST_ID = 'consultant-home-next-sheet';
 export const COVER_CHAPTER_SCHEDULE_TEST_ID = 'consultant-home-schedule-chapter';
+/** 측정용: 챕터 칼럼 컨테이너 · 일정 목록 카드 */
+export const COVER_CHAPTER_CHAPTERS_TEST_ID = 'consultant-cover-chapters';
+export const COVER_CHAPTER_SCHEDULE_DENSE_TEST_ID = 'consultant-home-schedule-dense';
 export const COVER_CHAPTER_GUIDE_TEST_ID = 'consultant-home-guide-chapter';
 
 export const COVER_CHAPTER_BRAND_FALLBACK = '마인드가든';

@@ -4,6 +4,7 @@ import SafeText from '../../common/SafeText';
 import { toDisplayString, toSafeNumber } from '../../../utils/safeDisplay';
 import {
   COVER_CHAPTER_SCHEDULE_TEST_ID,
+  COVER_CHAPTER_SCHEDULE_DENSE_TEST_ID,
   COVER_CHAPTER_CHAP_SCHEDULE_NUM,
   COVER_CHAPTER_CHAP_SCHEDULE_TITLE,
   COVER_CHAPTER_VIEW_ALL,
@@ -74,7 +75,7 @@ const ConsultantHomeScheduleChapter = ({
           </button>
         </div>
       ) : (
-        <div className="consultant-cover-chapter__dense">
+        <div className="consultant-cover-chapter__dense" data-testid={COVER_CHAPTER_SCHEDULE_DENSE_TEST_ID}>
           {rows.map((row) => {
             const pillClass = row.pillVariant === 'wait'
               ? 'consultant-cover-chapter__pill consultant-cover-chapter__pill--wait'

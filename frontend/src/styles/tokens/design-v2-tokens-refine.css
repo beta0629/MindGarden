@@ -331,6 +331,22 @@
   --mg-v2-consultant-icon-btn-size: var(--mg-v2-consultant-control-height);
   --mg-v2-consultant-content-pad: var(--mg-v2-space-2) var(--mg-v2-space-8) var(--mg-v2-space-8);
   --mg-v2-consultant-content-pad-mobile: 0;
+
+  /* ── 서브페이지 공통 셸 = 홈(커버) 기준 · 상담사·내담자 공용 (#1794 보강) ── */
+  --mg-v2-subpage-pad-x: var(--mg-v2-space-6);
+  --mg-v2-subpage-pad-x-mobile: var(--mg-v2-space-4);
+  --mg-v2-subpage-title-size: clamp(
+    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-1)),
+    2.4vw,
+    calc(var(--mg-v2-font-size-h1) + var(--mg-v2-space-3))
+  );
+  --mg-v2-subpage-chrome-h: var(--mg-v2-component-height-lg);
+  --mg-v2-subpage-card-radius: var(--mg-v2-radius-xl);
+  --mg-v2-subpage-card-shadow: var(--mg-v2-shadow-md);
+  /* 공통 카드 그리드 — 폭에 따라 칼럼 자동 증가 */
+  --mg-v2-subpage-grid-min: calc(var(--mg-v2-space-20) * 4.25);
+  --mg-v2-subpage-grid-min-sm: calc(var(--mg-v2-space-20) * 3);
+  --mg-v2-subpage-grid-gap: var(--mg-v2-space-3);
 }
 
 /* ================================================================

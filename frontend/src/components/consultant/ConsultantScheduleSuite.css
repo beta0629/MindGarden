@@ -357,3 +357,25 @@
 .consultant-schedule__panel[data-tablet-schedule-v2="true"] .consultant-schedule-tablet-agenda__item {
   min-height: max(var(--mg-v2-consultant-row-min-height), var(--mg-v2-touch-target-min));
 }
+
+/* 월뷰 셀 — 슬롯 목록 잘림 금지(상담사 패널 한정 · 공용 캘린더 JS 무변경)
+ * height=100% 고정 행 높이 대신 내용 기준으로 행이 늘어나게 한다. */
+.consultant-schedule__panel .fc .fc-view-harness:has(.fc-dayGridMonth-view) {
+  height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+.consultant-schedule__panel .fc .fc-view-harness:has(.fc-dayGridMonth-view) > .fc-dayGridMonth-view {
+  position: relative;
+  inset: auto;
+}
+
+.consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-scroller {
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-daygrid-day-events {
+  max-height: none;
+  overflow: visible;
+}

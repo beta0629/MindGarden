@@ -24,3 +24,25 @@ describe('subpage shell full-width', () => {
     expect(css).not.toMatch(/57\.5rem/);
   });
 });
+
+describe('#1794 보강 — 홈 기준 공통 토큰 · 자동 칼럼', () => {
+  it('상담사 공통 카드 그리드는 auto-fill/minmax 토큰(고정 칼럼 수 없음)', () => {
+    const css = read('consultant/suite/ConsultantSuite.css');
+    const grid = css.match(/\.consultant-suite-card-grid\s*\{[^}]*\}/g) || [];
+    expect(grid.length).toBeGreaterThan(0);
+    grid.forEach((rule) => expect(rule).not.toMatch(/repeat\(\d/));
+    expect(css).toMatch(/repeat\(auto-fill, minmax\(min\(100%, var\(--mg-v2-subpage-grid-min\)\), 1fr\)\)/);
+  });
+
+  it('샵 그리드는 auto-fit 토큰(빈 칸 없음)', () => {
+    const css = read('../styles/shop/ClientMall.css');
+    expect(css).toMatch(/\.client-mall-grid\s*\{[^}]*repeat\(auto-fit, minmax\(min\(100%, var\(--mg-v2-subpage-grid-min-sm\)\)/);
+  });
+
+  it('내담자 셸은 홈 기준 pad·타이틀·헤더 48 토큰, chrome-h 자기참조 없음', () => {
+    const css = read('client/ClientWebPageShell.css');
+    expect(css).toMatch(/--client-web-pad-x:\s*var\(--mg-v2-subpage-pad-x\)/);
+    expect(css).toMatch(/font-size:\s*var\(--mg-v2-subpage-title-size\)/);
+    expect(css).not.toMatch(/--client-web-chrome-h:\s*var\(--client-web-chrome-h\)/);
+  });
+});

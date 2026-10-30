@@ -19,16 +19,17 @@
   --client-web-teal-hover: var(--client-lobby-teal-hover, #0a4d49);
   --client-web-on: var(--client-lobby-on, #faf9f7);
   --client-web-chip-bg: var(--client-lobby-chip-bg, #f1efea);
-  --client-web-radius-card: var(--client-lobby-radius-card, 1rem);
+  --client-web-radius-card: var(--mg-v2-subpage-card-radius);
   --client-web-radius-hero: var(--client-lobby-radius-hero, 1.25rem);
   --client-web-radius-btn: var(--client-lobby-radius-btn, 0.625rem);
   /* 전폭·반응형 — 서브페이지 stage 고정폭(808px 박스) 금지 */
   --client-web-stage-max: none;
-  --client-web-pad-x: var(--client-lobby-pad-x, 3.5rem);
+  /* 좌우 여백·헤더 높이 = 홈(커버) 기준 공통 토큰 */
+  --client-web-pad-x: var(--mg-v2-subpage-pad-x);
   --client-web-pad-top: 2.25rem;
   --client-web-pad-bottom: 3.5rem;
   --client-web-aside-w: 20rem;
-  --client-web-chrome-h: var(--client-lobby-chrome-h, 4rem);
+  --client-web-chrome-h: var(--mg-v2-subpage-chrome-h);
   --client-web-font: var(--client-lobby-font, Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif);
   --client-web-shadow-soft: var(
     --client-lobby-shadow-soft,
@@ -90,7 +91,7 @@
 
 .client-web-page-shell__title {
   margin: 0;
-  font-size: clamp(1.5rem, 2.4vw, 2rem);
+  font-size: var(--mg-v2-subpage-title-size);
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--client-web-ink);
@@ -122,7 +123,7 @@
   background: var(--client-web-surface);
   border: 1px solid var(--client-web-line);
   border-radius: var(--client-web-radius-card);
-  box-shadow: var(--client-web-shadow-soft);
+  box-shadow: var(--mg-v2-subpage-card-shadow);
   padding: var(--mg-v2-space-5, 1.25rem);
   box-sizing: border-box;
 }
@@ -179,7 +180,7 @@
   --client-web-chrome-surface: var(--client-web-stage);
   --client-web-chrome-chip-bg: var(--client-web-chip-bg);
   --client-web-chrome-focus: var(--client-web-teal);
-  --client-web-chrome-h: var(--client-web-chrome-h);
+  --client-web-chrome-h: var(--mg-v2-subpage-chrome-h);
   --client-web-chrome-pad-x: var(--client-web-pad-x);
 }
 
@@ -213,7 +214,7 @@
 
 @media (max-width: 768px) {
   .client-web-page-shell {
-    --client-web-pad-x: var(--mg-v2-space-4, 1.25rem);
+    --client-web-pad-x: var(--mg-v2-subpage-pad-x-mobile);
     --client-web-pad-top: var(--mg-v2-space-5, 1.25rem);
     --client-web-pad-bottom: var(--mg-v2-space-6, 1.5rem);
   }

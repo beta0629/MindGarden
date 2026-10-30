@@ -148,7 +148,8 @@
 
 .client-mall-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  /* 폭에 따라 칼럼 자동 증가 · 빈 칸 없이 채움(auto-fit) */
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--mg-v2-subpage-grid-min-sm)), 1fr));
   gap: var(--client-mall-gap);
 }
 

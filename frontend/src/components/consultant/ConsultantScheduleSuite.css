@@ -363,3 +363,8 @@
 .consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-daygrid-day-events {
   max-height: none;
 }
+
+/* 주·일(timeGrid) 종일 행: 월간 카드 셀 min-height(공용 ScheduleB0KlA 128)를 받지 않아 시간축 셀이 잘리지 않게 한다 */
+.consultant-schedule__panel .fc .fc-timegrid .fc-daygrid-day .fc-daygrid-day-frame {
+  min-height: 0;
+}

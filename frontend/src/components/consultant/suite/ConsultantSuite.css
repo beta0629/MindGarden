@@ -606,3 +606,14 @@
 .consultant-suite.consultant-logs .mg-v2-consultation-log-calendar-popover {
   background: var(--mg-v2-consultant-surface-card);
 }
+
+/* 빈 상태가 패널의 유일한 내용이면 패널 높이를 채운다 (availability 등 하단 빈영역 0.55~0.61 방지) */
+.consultant-suite__panel:has(> .consultant-suite-empty:only-child) {
+  display: flex;
+  flex-direction: column;
+}
+
+.consultant-suite__panel > .consultant-suite-empty:only-child {
+  flex: 1 1 auto;
+  justify-content: center;
+}

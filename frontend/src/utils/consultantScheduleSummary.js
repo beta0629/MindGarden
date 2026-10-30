@@ -121,3 +121,22 @@ export const doesRangeCoverCurrentWeek = (range, now) => {
   const weekLastDay = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + DAYS_PER_WEEK - 1);
   return rangeStart <= weekStart && rangeEnd >= weekLastDay;
 };
+
+/**
+ * 로드 범위가 오늘(로컬 날짜)을 포함하는지 — 일간 뷰(오늘만 로드)에서도 「오늘 일정」을 같은 목록 소스로 센다.
+ * @param {{ startDate?: string, endDate?: string }|null|undefined} range
+ * @param {Date} now
+ * @returns {boolean}
+ */
+export const doesRangeCoverToday = (range, now) => {
+  if (range == null) {
+    return true;
+  }
+  const rangeStart = parseLocalYmd(range.startDate);
+  const rangeEnd = parseLocalYmd(range.endDate);
+  if (!rangeStart || !rangeEnd) {
+    return false;
+  }
+  const today = startOfLocalDay(now);
+  return rangeStart <= today && rangeEnd >= today;
+};

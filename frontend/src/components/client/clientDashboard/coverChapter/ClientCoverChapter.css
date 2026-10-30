@@ -833,10 +833,14 @@
   }
 
   /* 좌우 auto 마진이 flex stretch 를 끊어 칼럼이 내용폭(약 140px)으로 줄던 회귀 — 칼럼은 항상 시트 폭 */
+  /* 카드는 내용 높이로 두고, 남는 세로 공간은 챕터 사이로 나눠 마지막 챕터(안내)를 시트 바닥에 붙인다 */
   .client-cover .client-cover__chapters {
     flex: 1 1 auto;
     width: 100%;
     align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
   .client-cover .client-cover__chapter {
@@ -854,20 +858,12 @@
     flex: 0 0 auto;
   }
 
-  .client-cover[data-layout] .client-cover__chapter:has(> .client-cover__dense) {
-    flex: 1 1 auto;
-  }
-
+  /* 목록 카드(dense)·행은 내용 높이 — 카드를 늘리면 행이 늘어나거나(1180 행 ~200px) 카드 가운데가 빈다 */
   .client-cover[data-layout] .client-cover__chapter > .client-cover__dense {
-    flex: 1 1 auto;
-    display: flex;
-    flex-direction: column;
+    flex: 0 0 auto;
   }
 
-  /* 행이 늘어난 카드 높이를 나눠 채운다 — 칩 꼬리만 바닥에 붙고 가운데가 비던 빈 카드 방지 */
-  .client-cover .client-cover__dense > .client-cover__row {
-    flex: 1 1 auto;
-  }
+
 }
 
 @media (min-width: 90rem) {
@@ -876,6 +872,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    justify-content: space-between;
     gap: 0;
   }
 

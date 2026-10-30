@@ -1194,7 +1194,7 @@
   margin-top: 0;
 }
 
-/* 행이 늘어난 카드 높이를 나눠 채운다 — 칩 꼬리만 바닥에 붙고 가운데가 비던 빈 카드 방지 */
-.consultant-cover-chapter__dense > .consultant-cover-chapter__row {
-  flex: 1 1 auto;
+/* 목록 카드(dense)·행은 내용 높이 — 카드를 늘리면 행이 늘어나거나 카드 가운데가 빈다 (내담자 커버와 같은 규칙) */
+.consultant-cover-chapter[data-layout] .consultant-cover-chapter__chapter > .consultant-cover-chapter__dense {
+  flex: 0 0 auto;
 }

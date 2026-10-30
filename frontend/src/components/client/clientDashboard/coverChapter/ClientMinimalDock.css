@@ -45,7 +45,7 @@
   height: 0.1875rem;
   border-radius: var(--mg-v2-radius-sm);
   background: transparent;
-  transition: background 280ms var(--client-cover-ease);
+  transition: background var(--mg-v2-motion-dur-base) var(--mg-v2-motion-ease-out);
   order: 2;
 }
 

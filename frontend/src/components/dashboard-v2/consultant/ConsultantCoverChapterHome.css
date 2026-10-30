@@ -138,14 +138,7 @@
   pointer-events: none;
 }
 
-.consultant-cover-chapter__light-beam {
-  animation: consultant-cch-light-drift 8s ease-in-out infinite alternate;
-}
-
-@keyframes consultant-cch-light-drift {
-  from { opacity: 0.45; }
-  to { opacity: 0.75; }
-}
+/* 커버·창빛·시트·챕터 진입 모션 → common/coverChapter/CoverChapterMotion.css */
 
 /* 브랜드 칩 제거 후 스페이서만 — GNB와 중복 금지 */
 .consultant-cover-chapter__cover-top {
@@ -268,7 +261,7 @@
   border: 1px solid var(--cch-line);
   box-shadow: var(--mg-v2-shadow-lg);
   padding: 0.875rem 0.875rem var(--mg-v2-space-4);
-  animation: consultant-cch-sheet-rise 480ms var(--cch-ease) forwards;
+  animation: mg-cc-sheet-seq calc(var(--mg-v2-motion-t-sheet) + var(--mg-v2-motion-dur-slow)) linear forwards;
 }
 
 /* 시안 float-sheet: absolute · bottom overhang (phone -56 ≈ --cch-sheet-overhang) */
@@ -283,16 +276,6 @@
   z-index: 3;
 }
 
-@keyframes consultant-cch-sheet-rise {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
 .consultant-cover-chapter__sheet-kicker {
   display: flex;
@@ -383,7 +366,6 @@
   font-family: var(--cch-font);
   font-size: 0.9375rem;
   font-weight: 700;
-  transition: transform 120ms var(--cch-ease-press), background 120ms;
 }
 
 .consultant-cover-chapter__cta--primary.mg-button,
@@ -467,28 +449,7 @@
 
 .consultant-cover-chapter__chapter {
   margin-bottom: var(--cch-chapter-gap);
-  /* both=backwards → delay 동안 opacity:0 고정 → 첫 페인트에서 챕터 소실. forwards만. */
-  opacity: 1;
-  animation: consultant-cch-chap-in 420ms var(--cch-ease) forwards;
-}
-
-.consultant-cover-chapter__chapter:nth-child(1) {
-  animation-delay: 60ms;
-}
-
-.consultant-cover-chapter__chapter:nth-child(2) {
-  animation-delay: 120ms;
-}
-
-@keyframes consultant-cch-chap-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  animation: mg-cc-chap-seq calc(var(--mg-v2-motion-t-chapters) + var(--mg-v2-motion-dur-slow)) linear forwards;
 }
 
 .consultant-cover-chapter__chap-head {
@@ -1053,15 +1014,6 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .consultant-cover-chapter__light-beam,
-  .consultant-cover-chapter__sheet,
-  .consultant-cover-chapter__chapter {
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-}
 
 /* Full-bleed inside AdminCommonLayout content — kill max-width card stack */
 .consultant-dashboard-v2--cover-chapter,

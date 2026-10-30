@@ -1,6 +1,7 @@
 package com.coresolution.consultation.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -26,10 +27,12 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.utils.SessionUtils;
+import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.security.PasswordService;
 
 import jakarta.servlet.http.HttpSession;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -67,6 +70,7 @@ class UserWithdrawalControllerTest {
 
     @BeforeEach
     void setUp() {
+        TenantContextHolder.setTenantId(TENANT_ID);
         currentUser = new User();
         currentUser.setId(USER_ID);
         currentUser.setTenantId(TENANT_ID);
@@ -76,12 +80,17 @@ class UserWithdrawalControllerTest {
         currentUser.setLifecycleState(LifecycleState.ACTIVE);
     }
 
+    @AfterEach
+    void tearDown() {
+        TenantContextHolder.clear();
+    }
+
     // ---------- POST /request ----------
 
     @Test
     @DisplayName("request: 비밀번호 일치 + ACTIVE → WITHDRAWAL_PENDING 전이 + 만료 시각 노출")
     void request_success() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "이유", null);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "이유", null, null);
         TransitionResult result = TransitionResult.builder()
                 .userId(USER_ID)
                 .fromState(LifecycleState.ACTIVE)
@@ -108,7 +117,6 @@ class UserWithdrawalControllerTest {
             assertThat(body.get("graceDays"))
                     .isEqualTo(UserWithdrawalController.WITHDRAWAL_GRACE_PERIOD_DAYS);
             assertThat(body.get("withdrawalExpiresAt")).isNotNull();
-            // Q12-b — null payload default false 정합
             assertThat(body.get("deleteCommunityBody")).isEqualTo(false);
             verify(userLifecycleService, times(1))
                     .requestWithdrawal(eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class));
@@ -118,7 +126,7 @@ class UserWithdrawalControllerTest {
     @Test
     @DisplayName("request: 비밀번호 불일치 시 401 + 전이 호출 없음")
     void request_passwordMismatch_returns401() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("wrong-pw", null, null);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("wrong-pw", null, null, null);
         try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
             mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
             when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
@@ -134,9 +142,124 @@ class UserWithdrawalControllerTest {
     }
 
     @Test
+    @DisplayName("request: 소셜(appleSub) + confirmPhrase=DELETE → 비밀번호 없이 탈퇴 신청")
+    void request_socialConfirmPhrase_success() {
+        currentUser.setAppleSub("001234.apple-sub");
+        currentUser.setPassword("temp-unknown");
+        WithdrawalRequestDto req = new WithdrawalRequestDto(
+                null, "SIWA leave", null, UserWithdrawalController.SOCIAL_CONFIRM_PHRASE);
+        TransitionResult result = TransitionResult.builder()
+                .userId(USER_ID)
+                .fromState(LifecycleState.ACTIVE)
+                .toState(LifecycleState.WITHDRAWAL_PENDING)
+                .transitionedAt(LocalDateTime.now())
+                .build();
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+            when(userLifecycleService.requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class)))
+                    .thenReturn(result);
+
+            ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                    controller.requestWithdrawal(session, req);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+            verify(passwordService, never()).matches(anyString(), anyString());
+            verify(userLifecycleService).requestWithdrawal(
+                    eq(USER_ID), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request: 소셜(socialProvider) + 잘못된 confirmPhrase → 401")
+    void request_socialConfirmPhrase_mismatch_returns401() {
+        currentUser.setSocialProvider("KAKAO");
+        WithdrawalRequestDto req = new WithdrawalRequestDto(null, null, null, "delete");
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+
+            ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                    controller.requestWithdrawal(session, req);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            verify(userLifecycleService, never())
+                    .requestWithdrawal(anyLong(), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request: password·confirmPhrase 모두 공백 → 400")
+    void request_bothBlank_returns400() {
+        WithdrawalRequestDto req = new WithdrawalRequestDto("  ", null, null, "");
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+
+            ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                    controller.requestWithdrawal(session, req);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            verify(userLifecycleService, never())
+                    .requestWithdrawal(anyLong(), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request: 비소셜 + password 공백 + confirmPhrase만 → 400")
+    void request_credentialUser_confirmOnly_returns400() {
+        WithdrawalRequestDto req = new WithdrawalRequestDto(
+                null, null, null, UserWithdrawalController.SOCIAL_CONFIRM_PHRASE);
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+
+            ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                    controller.requestWithdrawal(session, req);
+
+            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+            verify(userLifecycleService, never())
+                    .requestWithdrawal(anyLong(), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request: 테넌트 컨텍스트 공백 → IllegalStateException (fail-closed)")
+    void request_blankTenantContext_throws() {
+        TenantContextHolder.clear();
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", null, null, null);
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+
+            assertThatThrownBy(() -> controller.requestWithdrawal(session, req))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("테넌트 컨텍스트");
+            verify(userLifecycleService, never())
+                    .requestWithdrawal(anyLong(), any(Actor.class), any(WithdrawalOptions.class));
+        }
+    }
+
+    @Test
+    @DisplayName("request: user.tenantId 공백 → IllegalStateException (fail-closed)")
+    void request_blankUserTenant_throws() {
+        currentUser.setTenantId("  ");
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", null, null, null);
+        try (MockedStatic<SessionUtils> mocked = mockStatic(SessionUtils.class)) {
+            mocked.when(() -> SessionUtils.getCurrentUser(session)).thenReturn(currentUser);
+            when(userService.findById(USER_ID)).thenReturn(Optional.of(currentUser));
+
+            assertThatThrownBy(() -> controller.requestWithdrawal(session, req))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("사용자 테넌트");
+        }
+    }
+
+    @Test
     @DisplayName("request Q12-b: deleteCommunityBody=true → WithdrawalOptions.of(true) 위임")
     void request_deleteCommunityBody_true_passesOption() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.TRUE);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.TRUE, null);
         TransitionResult result = TransitionResult.builder()
                 .userId(USER_ID)
                 .fromState(LifecycleState.ACTIVE)
@@ -170,7 +293,7 @@ class UserWithdrawalControllerTest {
     @Test
     @DisplayName("request Q12-b: deleteCommunityBody=false → WithdrawalOptions.defaults() 위임")
     void request_deleteCommunityBody_false_passesDefaults() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.FALSE);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", "사유", Boolean.FALSE, null);
         TransitionResult result = TransitionResult.builder()
                 .userId(USER_ID)
                 .fromState(LifecycleState.ACTIVE)
@@ -198,7 +321,7 @@ class UserWithdrawalControllerTest {
     @Test
     @DisplayName("request Q12-b: deleteCommunityBody=null (페이로드 누락) → false 기본값")
     void request_deleteCommunityBody_null_defaultsToFalse() {
-        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", null, null);
+        WithdrawalRequestDto req = new WithdrawalRequestDto("plain-pw", null, null, null);
         TransitionResult result = TransitionResult.builder()
                 .userId(USER_ID)
                 .fromState(LifecycleState.ACTIVE)

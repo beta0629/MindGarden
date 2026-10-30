@@ -75,6 +75,7 @@ class OAuthPhoneVerificationServiceImplTest {
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private com.coresolution.consultation.service.support.TemporaryPasswordGenerator temporaryPasswordGenerator;
+    @Mock private com.coresolution.consultation.service.support.AppReviewOtpSupport appReviewOtpSupport;
 
     @InjectMocks
     private OAuthPhoneVerificationServiceImpl service;

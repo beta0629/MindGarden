@@ -66,6 +66,7 @@ import com.coresolution.core.config.KiccEasypayProperties;
         AdminTestNotificationProperties.class,
         BatchNotificationProperties.class,
         NotificationRetentionProperties.class,
+        com.coresolution.consultation.config.AppReviewProperties.class,
         LifecycleCutoffProperties.class,
         PiiScrubberProperties.class,
         ScheduleChangeNotificationProperties.class,

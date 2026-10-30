@@ -1,6 +1,5 @@
 package com.coresolution.consultation.dto.lifecycle;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +7,9 @@ import lombok.NoArgsConstructor;
 /**
  * 자발 탈퇴 신청 요청 DTO — POST /api/v1/mypage/withdrawal/request.
  *
- * <p>본인 확인용 비밀번호 재확인과 함께, 사용자가 선택할 수 있는 자발 탈퇴 옵션을 받는다.
- * 필요 시 Phase 5 에서 OTP/2FA 필드 확장.</p>
+ * <p>본인 확인은 비밀번호 재확인 또는(소셜 전용) 확인 문구({@code confirmPhrase})로 한다.
+ * SIWA/소셜 사용자는 임시 비밀번호를 모를 수 있으므로 {@code password} 는 선택이며,
+ * 컨트롤러에서 경로별 필수 검증을 수행한다.</p>
  *
  * <p>옵션 필드:</p>
  * <ul>
@@ -28,7 +28,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class WithdrawalRequestDto {
 
-    @NotBlank(message = "비밀번호 재확인이 필요합니다.")
+    /**
+     * 비밀번호 재확인 (자격증명 사용자 필수. 소셜+confirmPhrase 경로에서는 생략 가능).
+     */
     private String password;
 
     /** 사유 (선택). 길이 제한은 audit_logs.metadata 적재 시점에 결정. */
@@ -42,6 +44,12 @@ public class WithdrawalRequestDto {
      * null-safe 기본값({@code false} — 본문 KEEP) 으로 해석한다.</p>
      */
     private Boolean deleteCommunityBody;
+
+    /**
+     * 소셜(Apple/Kakao 등) 전용 본인 확인 문구.
+     * 서버 상수({@code DELETE})와 대소문자 구분 일치해야 한다.
+     */
+    private String confirmPhrase;
 
     /**
      * null-safe Q12-b 옵션 해석. {@code null} 은 기본값 {@code false}.

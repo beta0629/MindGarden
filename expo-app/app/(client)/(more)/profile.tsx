@@ -12,6 +12,7 @@ export default function ClientProfile() {
       roleLabel="내담자"
       settingsHref="/(client)/(more)/settings"
       notificationSettingsHref="/(client)/(more)/notification-settings"
+      accountDeletionHref="/(client)/(more)/account-deletion"
     />
   );
 }

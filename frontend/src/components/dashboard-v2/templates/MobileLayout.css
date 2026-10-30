@@ -63,7 +63,7 @@
 }
 
 /*
- * 상담사 태블릿 soft-sheet 셸 — stage pad 20 / landscape 32 + max≈920
+ * 상담사 soft-sheet 셸 — stage pad 20 / landscape 32 / 1440 40 / 1920 48, 고정 max-width 없음(전폭)
  * overlay 드로어만: main/stage width·margin은 drawer open/closed 동일(push 금지).
  */
 .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
@@ -87,9 +87,24 @@
     padding-right: calc(var(--mg-v2-space-8) + env(safe-area-inset-right, 0px));
   }
 
+  /* 전폭·반응형 — 고정 stage max-width 금지(856px 박스 회귀 방지). 여백은 브레이크포인트 토큰 단계로만 */
   .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__stage {
-    max-width: 57.5rem; /* ≈920px stage calm */
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
+  }
+}
+
+@media (min-width: 1440px) {
+  .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
+    padding-left: calc(var(--mg-v2-space-10) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--mg-v2-space-10) + env(safe-area-inset-right, 0px));
+  }
+}
+
+@media (min-width: 1920px) {
+  .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
+    padding-left: calc(var(--mg-v2-space-12) + env(safe-area-inset-left, 0px));
+    padding-right: calc(var(--mg-v2-space-12) + env(safe-area-inset-right, 0px));
   }
 }
 

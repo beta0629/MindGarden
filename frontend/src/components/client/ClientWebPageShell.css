@@ -22,7 +22,8 @@
   --client-web-radius-card: var(--client-lobby-radius-card, 1rem);
   --client-web-radius-hero: var(--client-lobby-radius-hero, 1.25rem);
   --client-web-radius-btn: var(--client-lobby-radius-btn, 0.625rem);
-  --client-web-stage-max: var(--client-lobby-stage-max, 57.5rem);
+  /* 전폭·반응형 — 서브페이지 stage 고정폭(808px 박스) 금지 */
+  --client-web-stage-max: none;
   --client-web-pad-x: var(--client-lobby-pad-x, 3.5rem);
   --client-web-pad-top: 2.25rem;
   --client-web-pad-bottom: 3.5rem;

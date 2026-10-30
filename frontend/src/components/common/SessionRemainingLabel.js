@@ -1,5 +1,6 @@
 /**
- * 로그인 후 세션 잔여 시간 보조 텍스트 (UnifiedHeader·ProfileDropdown GNB·마이페이지용).
+ * 로그인 후 세션 잔여 시간 보조 텍스트
+ * (UnifiedHeader·ProfileDropdown GNB·ClientWebTopChrome·마이페이지용).
  * 서버 session-info(`isAuthenticated=true` + 타이밍 필드)만 사용한다.
  * 미인증·타이밍 없음이면 storage 절대 폴백(로그인 시각 + 4h)으로 가짜 잔여를 그리지 않고 숨긴다.
  * JWT·쿠키 원문 미표시. 표시 경계: SafeText / toDisplayString.

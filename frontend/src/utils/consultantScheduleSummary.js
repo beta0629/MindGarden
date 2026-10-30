@@ -1,5 +1,6 @@
 /**
- * 상담사 「내 일정」 요약 — 오늘·이번 주(달력 주간 뷰와 같은 일~토) 일정 건수 (취소·휴무 제외)
+ * 상담사 「내 일정」 요약 — 오늘·이번 주(달력 주간 뷰와 같은 일~토) 일정 건수.
+ * 건수 SSOT = 달력에 그려지는 같은 이벤트 목록(상태 제외 없음) — KPI 건수 = 뷰 칩 수
  * 입력: UnifiedScheduleComponent onScheduleEventsChange 의 FullCalendar 이벤트(숫자 id 일정만)
  * 날짜 경계는 브라우저 로컬 자정 기준(운영 단말 KST).
  *
@@ -7,13 +8,9 @@
  * @since 2026-10-07
  */
 
-import { STATUS } from '../constants/schedule';
-
 const DAYS_PER_WEEK = 7;
 const SUNDAY_INDEX = 0;
 const MONDAY_OFFSET_FROM_SUNDAY = 6;
-
-const EXCLUDED_STATUSES = new Set([STATUS.CANCELLED, STATUS.VACATION]);
 
 /**
  * @param {Date} date
@@ -55,14 +52,6 @@ const resolveEventStart = (event) => {
   return Number.isNaN(d.getTime()) ? null : d;
 };
 
-/**
- * @param {Object} event
- * @returns {boolean}
- */
-const isCountableEvent = (event) => {
-  const status = String(event?.extendedProps?.status ?? '').trim().toUpperCase();
-  return !EXCLUDED_STATUSES.has(status);
-};
 
 /**
  * @param {Array<Object>} events
@@ -81,9 +70,6 @@ export const buildConsultantScheduleSummary = (events, now) => {
   let todayCount = 0;
   let weekCount = 0;
   events.forEach((event) => {
-    if (!isCountableEvent(event)) {
-      return;
-    }
     const start = resolveEventStart(event);
     if (!start) {
       return;

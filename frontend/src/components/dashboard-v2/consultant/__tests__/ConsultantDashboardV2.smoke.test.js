@@ -289,7 +289,16 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
     // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
     mockPreparation = { preparations: [] };
     const start = new Date();
-    start.setHours(start.getHours() + 2, 0, 0, 0);
+    const plusTwoHours = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+    const endOfToday = new Date(start);
+    endOfToday.setHours(23, 59, 0, 0);
+    if (plusTwoHours.getDate() === start.getDate() && plusTwoHours.getMonth() === start.getMonth()) {
+      start.setTime(plusTwoHours.getTime());
+    } else if (endOfToday.getTime() > Date.now() + 60 * 1000) {
+      start.setTime(endOfToday.getTime());
+    } else {
+      start.setTime(Date.now() - 5 * 60 * 1000);
+    }
     const end = new Date(start.getTime() + 50 * 60000);
     mockScheduleList = [
       {

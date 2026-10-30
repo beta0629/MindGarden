@@ -39,10 +39,10 @@ const SessionRemainingLabel = ({ className, show = true }) => {
 
     const tick = () => {
       // Context가 stale여도 silent ping이 sessionManager만 갱신한 경우 GNB 잔여가 올라가도록 최신 스냅샷 사용
-      const effectiveInfo = pickFresherSessionInfo(
-        sessionInfo,
-        sessionManager.getSessionInfo()
-      );
+      const managerInfo = typeof sessionManager.getSessionInfo === 'function'
+        ? sessionManager.getSessionInfo()
+        : null;
+      const effectiveInfo = pickFresherSessionInfo(sessionInfo, managerInfo);
       if (!effectiveInfo || effectiveInfo.isAuthenticated !== true) {
         setLabel('');
         return;

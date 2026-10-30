@@ -1,9 +1,10 @@
 /**
- * consultantScheduleSummary — 오늘·이번 주(월~일) 건수 · 취소/휴무 제외 · 로컬 자정 경계
+ * consultantScheduleSummary — 오늘·이번 주(월~일) 건수 · 상태 제외 없음(뷰 칩 수와 동일) · 로컬 자정 경계
  */
 import {
   buildConsultantScheduleSummary,
   doesRangeCoverCurrentWeek,
+  doesRangeCoverToday,
   startOfLocalWeekMonday
 } from '../consultantScheduleSummary';
 
@@ -17,7 +18,7 @@ describe('consultantScheduleSummary', () => {
     expect(startOfLocalWeekMonday(at(2026, 10, 5, 0, 0))).toEqual(new Date(2026, 9, 5));
   });
 
-  it('오늘·이번 주 건수, 취소·휴무 제외', () => {
+  it('오늘·이번 주 건수 — 취소·휴무도 뷰에 그려지므로 포함', () => {
     const now = at(2026, 10, 7, 9);
     const events = [
       ev(at(2026, 10, 7, 10)),
@@ -29,7 +30,7 @@ describe('consultantScheduleSummary', () => {
       ev(at(2026, 10, 12, 0, 0)),
       ev(at(2026, 10, 4, 23, 59))
     ];
-    expect(buildConsultantScheduleSummary(events, now)).toEqual({ todayCount: 2, weekCount: 4 });
+    expect(buildConsultantScheduleSummary(events, now)).toEqual({ todayCount: 4, weekCount: 6 });
   });
 
   it('자정 경계: 23:59 는 당일, 다음날 00:00 은 제외', () => {
@@ -44,14 +45,31 @@ describe('consultantScheduleSummary', () => {
       .toEqual({ todayCount: 0, weekCount: 0 });
   });
 
-  it('doesRangeCoverCurrentWeek: 이번 주(월~일) 전체를 덮는 범위만 true, 전량(null)은 true', () => {
+  it('doesRangeCoverCurrentWeek: 이번 주(달력 주간 뷰와 같은 일~토) 전체를 덮는 범위만 true, 전량(null)은 true', () => {
     const now = at(2026, 10, 7, 9);
     expect(doesRangeCoverCurrentWeek(null, now)).toBe(true);
     expect(doesRangeCoverCurrentWeek({ startDate: '2026-09-27', endDate: '2026-11-07' }, now)).toBe(true);
-    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-05', endDate: '2026-10-11' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-04', endDate: '2026-10-10' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-05', endDate: '2026-10-11' }, now)).toBe(false);
     expect(doesRangeCoverCurrentWeek({ startDate: '2026-11-01', endDate: '2026-12-12' }, now)).toBe(false);
-    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-06', endDate: '2026-10-31' }, now)).toBe(false);
-    expect(doesRangeCoverCurrentWeek({ startDate: '2026-09-27', endDate: '2026-10-10' }, now)).toBe(false);
     expect(doesRangeCoverCurrentWeek({ startDate: '', endDate: '2026-10-31' }, now)).toBe(false);
+  });
+
+  it('주간 뷰 로드(일~토)와 「이번 주」 기간이 같다 — 1180 주간 0건 회귀 가드', () => {
+    const now = at(2026, 10, 30, 14);
+    const weekViewRange = { startDate: '2026-10-25', endDate: '2026-10-31' };
+    expect(doesRangeCoverCurrentWeek(weekViewRange, now)).toBe(true);
+    const evs = [ev(at(2026, 10, 25, 10)), ev(at(2026, 10, 31, 15)), ev(at(2026, 11, 1, 10)), ev(at(2026, 10, 30, 11), 'CANCELLED')];
+    expect(buildConsultantScheduleSummary(evs, now)).toEqual({ todayCount: 1, weekCount: 3 });
+  });
+
+  it('doesRangeCoverToday: 일간 뷰(오늘만 로드)도 오늘 건수 소스로 인정 — 820 「오늘 0건 vs 목록 2건」 가드', () => {
+    const now = at(2026, 10, 30, 14);
+    expect(doesRangeCoverToday(null, now)).toBe(true);
+    expect(doesRangeCoverToday({ startDate: '2026-10-30', endDate: '2026-10-30' }, now)).toBe(true);
+    expect(doesRangeCoverCurrentWeek({ startDate: '2026-10-30', endDate: '2026-10-30' }, now)).toBe(false);
+    expect(doesRangeCoverToday({ startDate: '2026-10-31', endDate: '2026-11-01' }, now)).toBe(false);
+    const dayEvents = [ev(at(2026, 10, 30, 11)), ev(at(2026, 10, 30, 15))];
+    expect(buildConsultantScheduleSummary(dayEvents, now).todayCount).toBe(2);
   });
 });

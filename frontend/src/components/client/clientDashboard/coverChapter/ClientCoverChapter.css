@@ -59,7 +59,7 @@
 .client-cover__chrome .client-cover__topchrome,
 .client-cover__chrome .client-web-topchrome {
   --client-web-chrome-h: var(--mg-v2-component-height-lg);
-  --client-web-chrome-pad-x: var(--mg-v2-space-4);
+  --client-web-chrome-pad-x: var(--mg-v2-subpage-pad-x);
   width: 100%;
   max-width: none;
 }
@@ -550,63 +550,7 @@
 
 /* DOCK → ClientMinimalDock.css SSOT */
 
-/* ===== MENU ===== */
-.client-cover__menu {
-  position: fixed;
-  inset: 0;
-  z-index: var(--mg-v2-z-overlay);
-  display: flex;
-}
-
-.client-cover__menu-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  padding: 0;
-  background: color-mix(in srgb, var(--mg-v2-color-neutral-900) 45%, transparent);
-  cursor: pointer;
-}
-
-.client-cover__menu-panel {
-  position: relative;
-  z-index: 1;
-  width: min(18rem, 80vw);
-  height: 100%;
-  background: var(--mg-v2-color-surface-card);
-  padding: calc(var(--mg-v2-space-6) + var(--client-cover-safe-t)) var(--mg-v2-space-4) var(--mg-v2-space-4);
-  box-shadow: var(--mg-v2-shadow-lg);
-}
-
-.client-cover__menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-}
-
-.client-cover__menu-link {
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  border-radius: var(--mg-v2-radius-lg);
-  color: var(--mg-v2-color-text-primary);
-  font-size: 0.9375rem;
-  font-weight: var(--mg-v2-font-weight-semibold);
-  text-decoration: none;
-  background: transparent;
-  border: 0;
-  width: 100%;
-  cursor: pointer;
-  font-family: var(--mg-v2-font-family-base);
-  text-align: left;
-}
-
-.client-cover__menu-link:hover {
-  background: var(--mg-v2-color-surface-hover);
-}
+/* MENU → CoverMenuDrawer.css SSOT (홈·서브페이지 공통 드로어) */
 
 .client-cover__status,
 .client-cover__error {
@@ -833,5 +777,106 @@
 
   .client-cover__cta {
     transition: none !important;
+  }
+}
+
+/*
+ * 묶음 ③ — split 우측 칼럼 세로 채움 · 챕터 헤더 베이스라인 정렬 (상담사 커버와 동일 규칙).
+ */
+.client-cover__chap-head {
+  align-items: center;
+  min-height: var(--mg-v2-component-height-lg);
+}
+
+.client-cover__chap-more {
+  min-height: var(--mg-v2-component-height-lg);
+  padding-block: 0;
+}
+
+@media (min-width: 64rem) {
+  .client-cover[data-layout='split'] .client-cover__scroll {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapters {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__sheet {
+    max-width: none;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter > :last-child {
+    flex: 1 1 auto;
+  }
+}
+
+/*
+ * 하단 빈영역·빈 흰 카드 (PR 1799 재검) — 태블릿 이상 공통 틀:
+ * 스택(820 세로)도 split 과 같은 세로 채움 규칙, ≥90rem 2열 밀도는 1열로 되돌려
+ * 한쪽 칼럼만 늘어난 빈 카드가 생기지 않게 한다. 카드 꼬리(칩 줄)는 카드 바닥에 붙인다.
+ */
+@media (min-width: 48rem) {
+  .client-cover .client-cover__scroll {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 좌우 auto 마진이 flex stretch 를 끊어 칼럼이 내용폭(약 140px)으로 줄던 회귀 — 칼럼은 항상 시트 폭 */
+  /* 카드는 내용 높이로 두고, 남는 세로 공간은 챕터 사이로 나눠 마지막 챕터(안내)를 시트 바닥에 붙인다 */
+  .client-cover .client-cover__chapters {
+    flex: 1 1 auto;
+    width: 100%;
+    align-self: stretch;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .client-cover .client-cover__chapter {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* 늘어나는 건 목록 카드(dense) 챕터만 — 안내 버튼 카드는 내용 높이 */
+  .client-cover[data-layout] .client-cover__chapter {
+    flex: 0 0 auto;
+  }
+
+  .client-cover[data-layout] .client-cover__chapter > :last-child {
+    flex: 0 0 auto;
+  }
+
+  /* 목록 카드(dense)·행은 내용 높이 — 카드를 늘리면 행이 늘어나거나(1180 행 ~200px) 카드 가운데가 빈다 */
+  .client-cover[data-layout] .client-cover__chapter > .client-cover__dense {
+    flex: 0 0 auto;
+  }
+
+
+}
+
+@media (min-width: 90rem) {
+  /* 2열 grid 의 align-items:start 가 1열 flex 에서 챕터를 내용폭(약 140~176px)으로 줄이던 원인 — stretch 로 되돌림 */
+  .client-cover[data-layout='split'] .client-cover__chapters {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+    gap: 0;
+  }
+
+  .client-cover[data-layout='split'] .client-cover__chapter {
+    margin-bottom: var(--mg-v2-space-4);
   }
 }

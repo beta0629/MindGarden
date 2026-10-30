@@ -1133,3 +1133,68 @@
     margin-inline: 0;
   }
 }
+
+/*
+ * 묶음 ③ — split 우측 칼럼 세로 채움 · 챕터 헤더 베이스라인 정렬.
+ * 우상단 몰림·하단 빈 캔버스(1180~1920) 해소: scroll·chapters·chapter가 남은 높이를 나눠 갖는다.
+ * 01/02 헤더: 같은 최소 높이·center 정렬(「전체」 44px 버튼 유무로 Δ9~10px 나던 것 제거).
+ */
+.consultant-cover-chapter__chap-head {
+  align-items: center;
+  min-height: var(--mg-v2-component-height-lg);
+  margin-bottom: var(--mg-v2-space-2);
+}
+
+.consultant-cover-chapter__chap-more {
+  min-height: var(--mg-v2-component-height-lg);
+  padding-block: 0;
+}
+
+@media (min-width: 1024px) {
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__scroll {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapters {
+    flex: 1 1 auto;
+    max-width: none;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__sheet {
+    max-width: none;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapter {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapter > :last-child {
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 1440px) {
+  .consultant-cover-chapter[data-layout='split'] .consultant-cover-chapter__chapters {
+    align-items: stretch;
+  }
+}
+
+/* 늘어난 목록 카드: 칩 꼬리를 카드 바닥에 붙여 빈 흰 카드가 되지 않게 (내담자 커버와 같은 규칙) */
+.consultant-cover-chapter__dense {
+  display: flex;
+  flex-direction: column;
+}
+
+.consultant-cover-chapter__dense > .consultant-cover-chapter__chips:last-child {
+  margin-top: 0;
+}
+
+/* 목록 카드(dense)·행은 내용 높이 — 카드를 늘리면 행이 늘어나거나 카드 가운데가 빈다 (내담자 커버와 같은 규칙) */
+.consultant-cover-chapter[data-layout] .consultant-cover-chapter__chapter > .consultant-cover-chapter__dense {
+  flex: 0 0 auto;
+}

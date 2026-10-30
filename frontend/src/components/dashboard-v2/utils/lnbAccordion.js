@@ -85,5 +85,15 @@ export const isGroupPathActive = (item, pathname) => {
  * @param {string} itemKey
  * @returns {string}
  */
-export const lnbSublistId = (prefix, itemKey) =>
-  `${prefix}-sublist-${String(itemKey).replaceAll('/', '-').replace(/^-/, '')}`;
+/**
+ * 서브리스트 DOM id — aria-controls IDREF 유효값(공백·비 ASCII 금지).
+ * itemKey 가 `라벨::경로` 형태(메뉴코드 없음)여도 공백 없는 단일 토큰을 만든다.
+ */
+export const lnbSublistId = (prefix, itemKey) => {
+  const slug = Array.from(String(itemKey))
+    .map((ch) => (/[A-Za-z0-9_-]/.test(ch) ? ch : `-${ch.codePointAt(0).toString(36)}`))
+    .join('')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+  return `${prefix}-sublist-${slug}`;
+};

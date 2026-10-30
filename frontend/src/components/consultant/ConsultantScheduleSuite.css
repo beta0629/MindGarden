@@ -357,3 +357,14 @@
 .consultant-schedule__panel[data-tablet-schedule-v2="true"] .consultant-schedule-tablet-agenda__item {
   min-height: max(var(--mg-v2-consultant-row-min-height), var(--mg-v2-touch-target-min));
 }
+
+/* 월뷰 셀 — 이벤트 목록 내부 스크롤 캡만 해제(넘침은 FullCalendar dayMaxEvents "+n" 처리).
+ * view-harness/scroller 높이 재정의 금지: liquid-absolute 스크롤러가 0 높이로 붕괴해 셀 전체가 사라짐(PR 1797 회귀). */
+.consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-daygrid-day-events {
+  max-height: none;
+}
+
+/* 주·일(timeGrid) 종일 행: 월간 카드 셀 min-height(공용 ScheduleB0KlA 128)를 받지 않아 시간축 셀이 잘리지 않게 한다 */
+.consultant-schedule__panel .fc .fc-timegrid .fc-daygrid-day .fc-daygrid-day-frame {
+  min-height: 0;
+}

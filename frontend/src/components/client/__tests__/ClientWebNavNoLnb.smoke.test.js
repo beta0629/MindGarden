@@ -8,10 +8,11 @@
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
   CLIENT_WEB_TOP_CHROME_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID,
   CLIENT_WEB_PAGE_SHELL_TEST_ID,
   CLIENT_WEB_NAV_LABELS,
@@ -62,6 +63,8 @@ const NAV_SHELLS = [
   { activeNavId: 'shop', label: '회기 고르기' }
 ];
 
+const { CLIENT_COVER_MENU_TEST_ID } = require('../clientDashboard/constants');
+
 describe('ClientWebNavNoLnb — client page shells', () => {
   beforeEach(() => {
     mockUseSession.mockReturnValue({
@@ -98,8 +101,9 @@ describe('ClientWebNavNoLnb — client page shells', () => {
 
       expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
       expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
-      expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: label })).toHaveAttribute('aria-current', 'page');
+      expect(screen.queryByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+      expect(within(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).getByRole('link', { name: label })).toHaveAttribute('aria-current', 'page');
       expect(CLIENT_WEB_NAV_LABELS).toEqual(['홈', '예정', '회기', '회기 고르기', '결제']);
       expect(screen.getByTestId(CLIENT_WEB_PROFILE_LINK_TEST_ID)).toHaveAttribute(
         'href',
@@ -124,7 +128,8 @@ describe('ClientWebNavNoLnb — client page shells', () => {
 
     expect(screen.getByTestId(CLIENT_WEB_PAGE_SHELL_TEST_ID)).toBeInTheDocument();
     expect(screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID)).toBeInTheDocument();
-    expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
     expect(container.querySelector('.mg-v2-desktop-lnb')).toBeNull();
     expect(container.querySelector('.mg-app-shell__sidebar')).toBeNull();
     expect(screen.queryByRole('link', { name: '홈' })).not.toHaveAttribute('aria-current');

@@ -630,14 +630,8 @@
   outline-offset: var(--client-pay-focus-offset);
 }
 
-/* ---------- 태블릿 768–1023 (셸 공통 값 없음 → 스펙 값) ---------- */
+/* ---------- 태블릿 768–1023 — 셸 pad·☰·타이틀 위치는 공통 셸 값 그대로(페이지 재정의 금지) ---------- */
 @media (min-width: 769px) and (max-width: 1023.98px) {
-  .client-payment-history {
-    --client-web-pad-top: 1.75rem;
-    --client-web-pad-x: var(--mg-v2-space-6);
-    --client-web-pad-bottom: var(--mg-v2-space-10);
-  }
-
   .client-payment-history__list {
     padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
   }

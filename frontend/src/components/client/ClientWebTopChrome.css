@@ -18,7 +18,8 @@
   --client-web-chrome-chip-bg: var(--cs-slate-100, var(--mg-v2-color-neutral-100));
   --client-web-chrome-focus: var(--mg-v2-color-primary-solid, var(--mg-color-primary-main));
   --client-web-chrome-h: var(--mg-v2-space-12, 4rem);
-  --client-web-chrome-pad-x: var(--mg-v2-space-11, 3.5rem);
+  /* ☰ x = 홈·서브 동일 공통 토큰 */
+  --client-web-chrome-pad-x: var(--mg-v2-subpage-pad-x);
   --client-web-chrome-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
 
   box-sizing: border-box;
@@ -62,6 +63,15 @@
   font-size: var(--mg-v2-font-size-h2);
   line-height: 1;
   user-select: none;
+}
+
+.client-web-topchrome__menu:focus {
+  outline: none;
+}
+
+.client-web-topchrome__menu:focus-visible {
+  outline: var(--mg-v2-border-width-thick) solid var(--client-web-chrome-focus);
+  outline-offset: var(--mg-v2-space-0-5);
 }
 
 .client-web-topchrome__menu:active {
@@ -148,7 +158,25 @@
   font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
   color: var(--client-web-chrome-mute);
   font-weight: var(--mg-v2-font-weight-medium, 500);
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+/* 좁은 폭(820)에서 로그아웃이 오른쪽으로 잘리지 않게 — 이름만 말줄임 */
+.client-web-topchrome__end > * {
   flex-shrink: 0;
+}
+
+.client-web-topchrome__end > .client-web-topchrome__profile {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.client-web-topchrome__profile .client-web-topchrome__user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .client-web-topchrome__cart {
@@ -213,11 +241,12 @@
   color: var(--mg-v2-tab-selected-text);
 }
 
+/* 배지는 아이콘 박스 안(상단 잘림·가로 넘침 금지) */
 .client-web-topchrome__icon-link .mg-v2-notification-badge {
   position: absolute;
   top: 0;
   right: 0;
-  transform: translate(35%, -35%);
+  transform: none;
 }
 
 .client-web-topchrome__cart-label {

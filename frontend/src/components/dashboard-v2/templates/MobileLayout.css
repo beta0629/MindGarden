@@ -63,13 +63,13 @@
 }
 
 /*
- * 상담사 태블릿 soft-sheet 셸 — stage pad 20 / landscape 32 + max≈920
+ * 상담사 soft-sheet 셸 — 좌우 여백 = 홈 기준 --mg-v2-subpage-pad-x(전 폭 동일), 고정 max-width 없음(전폭)
  * overlay 드로어만: main/stage width·margin은 drawer open/closed 동일(push 금지).
  */
 .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
   padding: var(--mg-v2-space-5);
-  padding-left: calc(var(--mg-v2-space-5) + env(safe-area-inset-left, 0px));
-  padding-right: calc(var(--mg-v2-space-5) + env(safe-area-inset-right, 0px));
+  padding-left: calc(var(--mg-v2-subpage-pad-x) + env(safe-area-inset-left, 0px));
+  padding-right: calc(var(--mg-v2-subpage-pad-x) + env(safe-area-inset-right, 0px));
   padding-bottom: calc(var(--mg-v2-space-6) + env(safe-area-inset-bottom, 0px));
   /* push-layout 방어: drawer-open 클래스·margin 축소 없음 */
   margin-left: 0;
@@ -79,19 +79,20 @@
 .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__stage {
   margin-left: 0;
   width: 100%;
+  /* 서브페이지 본문이 짧아도 하단 빈 영역 대신 스테이지를 채움 */
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 @media (orientation: landscape) and (min-width: 768px) {
-  .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__main {
-    padding-left: calc(var(--mg-v2-space-8) + env(safe-area-inset-left, 0px));
-    padding-right: calc(var(--mg-v2-space-8) + env(safe-area-inset-right, 0px));
-  }
-
+  /* 전폭·반응형 — 고정 stage max-width 금지(856px 박스 회귀 방지). 여백은 브레이크포인트 토큰 단계로만 */
   .mg-v2-mobile-layout--soft-sheet .mg-v2-mobile-layout__stage {
-    max-width: 57.5rem; /* ≈920px stage calm */
-    margin-inline: auto;
+    max-width: none;
+    margin-inline: 0;
   }
 }
+
 
 .mg-v2-mobile-layout__tabbar {
   flex-shrink: 0;
@@ -102,4 +103,9 @@
   padding-bottom: env(safe-area-inset-bottom, 0);
   background: var(--mg-layout-header-bg, var(--mg-color-background-main));
   border-top: 1px solid var(--mg-layout-header-border, var(--mg-color-border-main));
+}
+
+/* 상담사(soft-sheet) 전 페이지+홈 ☰ 좌측 x = 서브페이지 공통 pad-x (관리자 다크 드로어 레이아웃 비대상) */
+.mg-v2-mobile-layout--soft-sheet {
+  --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-subpage-pad-x);
 }

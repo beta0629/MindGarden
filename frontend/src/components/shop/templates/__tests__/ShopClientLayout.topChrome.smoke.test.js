@@ -15,9 +15,11 @@ import {
   CLIENT_WEB_MESSAGES_LINK_TEST_ID,
   CLIENT_WEB_NAV,
   CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../../constants/clientWebChromeConstants';
+import { CLIENT_COVER_MENU_TEST_ID } from '../../../client/clientDashboard/constants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
 import {
   NOTIFICATION_TABS,
@@ -114,20 +116,25 @@ describe('ShopClientLayout shared top chrome', () => {
 
     const chrome = screen.getByTestId(CLIENT_WEB_TOP_CHROME_TEST_ID);
     expect(chrome).toBeInTheDocument();
-    expect(screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).toBeInTheDocument();
+    expect(screen.queryByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).not.toBeInTheDocument();
     expect(screen.getByText(MOCK_BRAND_WORD)).toBeInTheDocument();
     expect(screen.getByText(MOCK_TENANT_CENTER)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_WEB_LOGOUT })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '장바구니' })).toBeInTheDocument();
 
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+    const drawer = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
     CLIENT_WEB_NAV.forEach((item) => {
-      expect(screen.getByRole('link', { name: item.label })).toHaveAttribute('href', item.path);
+      expect(within(drawer).getByRole('link', { name: item.label })).toHaveAttribute('href', item.path);
     });
-    expect(screen.getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
+    expect(within(drawer).getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
       'href',
       CLIENT_SHOP_ROUTES.CATALOG
     );
-    expect(screen.getByRole('link', { name: '회기 고르기' })).toHaveAttribute('aria-current', 'page');
+    expect(within(drawer).getByRole('link', { name: '회기 고르기' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
 
     expect(screen.queryByRole('link', { name: '상품' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '내 구매' })).not.toBeInTheDocument();
@@ -224,6 +231,9 @@ describe('ShopClientLayout shared top chrome', () => {
     expect(screen.queryByText('CoreSolution')).not.toBeInTheDocument();
     expect(screen.queryByText('Core Solution')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: CLIENT_WEB_LOGOUT })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '회기 고르기' })).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+    expect(
+      within(screen.getByTestId(CLIENT_COVER_MENU_TEST_ID)).getByRole('link', { name: '회기 고르기' })
+    ).toBeInTheDocument();
   });
 });

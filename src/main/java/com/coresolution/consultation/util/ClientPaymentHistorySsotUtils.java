@@ -2,6 +2,7 @@ package com.coresolution.consultation.util;
 
 import java.util.Map;
 import com.coresolution.consultation.constant.MappingStatusConstants;
+import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
 
 /**
  * 내담자 결제 내역 money-path SSOT — 페이로드 Map 기준 환불·취소 판별·금액 해석.
@@ -30,18 +31,46 @@ public final class ClientPaymentHistorySsotUtils {
         String effective = firstNonBlank(
                 payload.get("effectivePaymentStatus"),
                 payload.get("paymentStatus"));
-        if (MappingStatusConstants.REFUNDED.equals(effective)
-                || MappingStatusConstants.CANCELLED.equals(effective)) {
+        if (isRefundedOrCancelledPaymentStatus(effective)) {
             return true;
         }
         String orderStatus = normalizeUpper(payload.get("orderStatus"));
-        if (MappingStatusConstants.REFUNDED.equals(orderStatus)
-                || MappingStatusConstants.CANCELLED.equals(orderStatus)) {
+        if (isRefundedOrCancelledPaymentStatus(orderStatus)) {
             return true;
         }
         String pgPaymentStatus = normalizeUpper(payload.get("pgPaymentStatus"));
-        return MappingStatusConstants.REFUNDED.equals(pgPaymentStatus)
-                || MappingStatusConstants.CANCELLED.equals(pgPaymentStatus);
+        return isRefundedOrCancelledPaymentStatus(pgPaymentStatus);
+    }
+
+    /**
+     * paymentStatus 문자열만으로 환불·취소 여부 판별 (엔티티·DTO 필터용 얇은 오버로드).
+     *
+     * <p>{@link #isRefundedOrCancelled(Map)} 와 동일 상수 계열. CANCELLED 는 PaymentStatus enum 에
+     * 없으나 문자열·Map 경로 호환을 위해 함께 판별한다.</p>
+     *
+     * @param paymentStatus 결제 상태 문자열 (nullable)
+     * @return REFUNDED 또는 CANCELLED 이면 true
+     */
+    public static boolean isRefundedOrCancelledPaymentStatus(String paymentStatus) {
+        String normalized = normalizeUpper(paymentStatus);
+        if (normalized == null) {
+            return false;
+        }
+        return MappingStatusConstants.REFUNDED.equals(normalized)
+                || MappingStatusConstants.CANCELLED.equals(normalized);
+    }
+
+    /**
+     * 엔티티 {@link PaymentStatus} 기준 환불 여부 (REFUNDED 중심).
+     *
+     * @param paymentStatus 결제 상태 enum (nullable)
+     * @return REFUNDED 이면 true
+     */
+    public static boolean isRefundedOrCancelledPaymentStatus(PaymentStatus paymentStatus) {
+        if (paymentStatus == null) {
+            return false;
+        }
+        return isRefundedOrCancelledPaymentStatus(paymentStatus.name());
     }
 
     /**

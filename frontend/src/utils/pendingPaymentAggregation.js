@@ -15,6 +15,7 @@
 
 import { MAPPING_STATUS, MAPPING_STATUS_LABELS } from '../constants/mapping';
 import { isScheduleSoftUnpaidStatus } from '../constants/schedule';
+import { isClientPaymentHistoryRefundedOrCancelled } from './clientPaymentHistoryDisplay';
 import { toSafeNumber } from './safeDisplay';
 
 /** 사이드바 STATUS_FILTER_OPTIONS · KPI 공통 라벨 */
@@ -128,6 +129,7 @@ export function isUnpaidSoftMapping(mapping) {
  * PENDING_PAYMENT 집합만 유지.
  * status 부재 시 pending-payment API 스코프 응답으로 간주해 포함.
  * PAYMENT_CONFIRMED 등 다른 status는 제외.
+ * 환불·취소 paymentStatus 방어 제외 ({@link isClientPaymentHistoryRefundedOrCancelled}).
  *
  * @param {unknown} list
  * @returns {Array<object>}
@@ -138,6 +140,9 @@ export function selectPendingPaymentMappings(list) {
   }
   return list.filter((item) => {
     if (item == null || typeof item !== 'object') {
+      return false;
+    }
+    if (isClientPaymentHistoryRefundedOrCancelled(item)) {
       return false;
     }
     const status = item.status;

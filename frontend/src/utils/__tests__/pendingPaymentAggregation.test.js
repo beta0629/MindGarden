@@ -21,7 +21,7 @@ import {
   isUnpaidSoftMappingStatus,
   isUnpaidSoftMapping
 } from '../pendingPaymentAggregation';
-import { MAPPING_STATUS } from '../../constants/mapping';
+import { MAPPING_STATUS, PAYMENT_STATUS } from '../../constants/mapping';
 import { STATUS } from '../../constants/schedule';
 
 describe('pendingPaymentAggregation', () => {
@@ -98,6 +98,35 @@ describe('pendingPaymentAggregation', () => {
       expect.objectContaining({ id: 1 }),
       expect.objectContaining({ id: 4 })
     ]);
+    expect(countPendingPaymentMappings(list)).toBe(2);
+  });
+
+  test('select/count: PENDING_PAYMENT + paymentStatus REFUNDED 방어 제외 · PENDING 포함', () => {
+    const list = [
+      {
+        id: 1,
+        status: MAPPING_STATUS.PENDING_PAYMENT,
+        paymentStatus: PAYMENT_STATUS.REFUNDED,
+        packagePrice: 100000
+      },
+      {
+        id: 2,
+        status: MAPPING_STATUS.PENDING_PAYMENT,
+        paymentStatus: PAYMENT_STATUS.PENDING,
+        packagePrice: 50000
+      },
+      {
+        id: 3,
+        status: MAPPING_STATUS.PENDING_PAYMENT,
+        packagePrice: 30000
+      }
+    ];
+    const selected = selectPendingPaymentMappings(list);
+    expect(selected).toEqual([
+      expect.objectContaining({ id: 2 }),
+      expect.objectContaining({ id: 3 })
+    ]);
+    expect(countPendingPaymentMappings(list)).toBe(selected.length);
     expect(countPendingPaymentMappings(list)).toBe(2);
   });
 

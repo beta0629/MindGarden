@@ -2,6 +2,8 @@ package com.coresolution.consultation.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coresolution.consultation.constant.MappingStatusConstants;
+import com.coresolution.consultation.entity.ConsultantClientMapping.PaymentStatus;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -50,5 +52,29 @@ class ClientPaymentHistorySsotUtilsTest {
         row.put("effectivePaymentStatus", "PENDING");
         row.put("pgAmount", 100_000L);
         assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelled(row)).isFalse();
+    }
+
+    @Test
+    @DisplayName("isRefundedOrCancelledPaymentStatus(String) — REFUNDED/CANCELLED true · PENDING/null false")
+    void isRefundedOrCancelledPaymentStatus_string() {
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                MappingStatusConstants.REFUNDED)).isTrue();
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                MappingStatusConstants.CANCELLED)).isTrue();
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                MappingStatusConstants.PENDING)).isFalse();
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus((String) null))
+                .isFalse();
+    }
+
+    @Test
+    @DisplayName("isRefundedOrCancelledPaymentStatus(PaymentStatus) — REFUNDED true · PENDING/null false")
+    void isRefundedOrCancelledPaymentStatus_enum() {
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                PaymentStatus.REFUNDED)).isTrue();
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                PaymentStatus.PENDING)).isFalse();
+        assertThat(ClientPaymentHistorySsotUtils.isRefundedOrCancelledPaymentStatus(
+                (PaymentStatus) null)).isFalse();
     }
 }

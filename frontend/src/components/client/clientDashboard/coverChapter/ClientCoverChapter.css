@@ -59,7 +59,7 @@
 .client-cover__chrome .client-cover__topchrome,
 .client-cover__chrome .client-web-topchrome {
   --client-web-chrome-h: var(--mg-v2-component-height-lg);
-  --client-web-chrome-pad-x: var(--mg-v2-space-4);
+  --client-web-chrome-pad-x: var(--mg-v2-subpage-pad-x);
   width: 100%;
   max-width: none;
 }

@@ -288,9 +288,17 @@ describe('ConsultantDashboardV2 Cover+Chapter', () => {
   test('has next-sheet: todaySchedules SSOT only (preparation unused) → 상담일지 열기 + 일정 CTA', async() => {
     // 실계약 preparations[] 만 — consultation 키 없음. 시트는 todaySchedules SSOT.
     mockPreparation = { preparations: [] };
-    const start = new Date();
-    start.setHours(start.getHours() + 2, 0, 0, 0);
-    const end = new Date(start.getTime() + 50 * 60000);
+    const now = new Date();
+    const start = new Date(now);
+    start.setHours(23, 59, 0, 0);
+    let end;
+    if (start.getTime() <= now.getTime()) {
+      // 하루 끝(23:59)이 이미 지난 경우 — 오늘·진행 중 창으로 유지
+      start.setTime(now.getTime() - 10 * 60000);
+      end = new Date(now.getTime() + 40 * 60000);
+    } else {
+      end = new Date(start.getTime() + 50 * 60000);
+    }
     mockScheduleList = [
       {
         id: 501,

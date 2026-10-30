@@ -8,6 +8,9 @@
  */
 
 .consultant-suite {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   --button-height-default: var(--mg-v2-consultant-control-height);
   --button-height-sm: var(--mg-v2-consultant-chip-height);
   --mg-button-radius: var(--mg-v2-consultant-control-radius);
@@ -17,6 +20,9 @@
 }
 
 .consultant-suite__container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: none;
   margin: 0;
@@ -24,8 +30,18 @@
 }
 
 .consultant-suite .mg-v2-content-area {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
   background-color: var(--mg-v2-consultant-surface-stage);
   padding: var(--mg-v2-consultant-content-pad);
+  /* 좌우 여백 = 셸(--mg-v2-subpage-pad-x) 1회 — 홈 기준 */
+  padding-inline: 0;
+}
+
+/* 타이틀 = 홈(커버) 기준 토큰 */
+.consultant-suite .mg-v2-content-header__title {
+  font-size: var(--mg-v2-subpage-title-size);
 }
 
 .consultant-suite .mg-v2-content-header {
@@ -38,6 +54,7 @@
 }
 
 .consultant-suite__body {
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-4);
@@ -53,13 +70,18 @@
   padding: var(--mg-v2-space-4) var(--mg-v2-space-6) var(--mg-v2-space-6);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  border-radius: var(--mg-v2-consultant-card-radius);
-  box-shadow: none;
+  border-radius: var(--mg-v2-subpage-card-radius);
+  box-shadow: var(--mg-v2-subpage-card-shadow);
+}
+
+/* 단일 패널(빈 상태 등)은 본문 높이를 채워 하단 빈 영역을 남기지 않음 */
+.consultant-suite__body > .consultant-suite__panel:only-child {
+  flex: 1 1 auto;
 }
 
 /* ===== 요약 (ConsultantSummaryStrip 재사용 · 셀 = 개별 흰 카드) ===== */
 .consultant-suite .consultant-summary-strip.consultant-suite__summary {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--mg-v2-subpage-grid-min-sm)), 1fr));
   gap: var(--mg-v2-space-3);
   padding: 0;
   margin-bottom: 0;
@@ -72,8 +94,8 @@
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  border-radius: var(--mg-v2-consultant-card-radius);
-  box-shadow: none;
+  border-radius: var(--mg-v2-subpage-card-radius);
+  box-shadow: var(--mg-v2-subpage-card-shadow);
 }
 
 .consultant-suite .consultant-suite__summary .consultant-summary-strip__label {
@@ -267,16 +289,17 @@
 }
 
 /* ===== 카드 그리드 · 세로 리스트 ===== */
+/* 공통 카드 그리드 — 폭에 따라 칼럼 자동 증가(고정 3/2/1 금지) */
 .consultant-suite-card-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--mg-v2-subpage-grid-min)), 1fr));
   gap: var(--mg-v2-consultant-card-gap);
   min-width: 0;
 }
 
 .consultant-suite-card-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--mg-v2-subpage-grid-min)), 1fr));
   gap: var(--mg-v2-consultant-card-gap);
   margin: 0;
   padding: 0;
@@ -284,11 +307,6 @@
   min-width: 0;
 }
 
-@media (max-width: 1199px) {
-  .consultant-suite-card-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 
 /* ===== 공유 카드 (ConsultantSuiteCard) ===== */
 .consultant-suite-card {
@@ -302,8 +320,8 @@
   padding: var(--mg-v2-consultant-card-pad);
   background: var(--mg-v2-consultant-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-consultant-border-card);
-  border-radius: var(--mg-v2-consultant-card-radius);
-  box-shadow: none;
+  border-radius: var(--mg-v2-subpage-card-radius);
+  box-shadow: var(--mg-v2-subpage-card-shadow);
   text-align: left;
   color: inherit;
   font: inherit;
@@ -487,10 +505,6 @@
   .consultant-suite-search {
     flex-basis: 100%;
     max-width: none;
-  }
-
-  .consultant-suite-card-grid {
-    grid-template-columns: minmax(0, 1fr);
   }
 
   .consultant-suite .consultant-summary-strip.consultant-suite__summary {

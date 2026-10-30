@@ -65,7 +65,7 @@
    delay 대신 "정지 구간 + 진입" 키프레임 · duration = 시작점 + dur-slow.
    animation 선언은 각 화면 CSS 블록(.…__sheet / .…__chapter)에서 이 키프레임을 참조. */
 @keyframes mg-cc-sheet-seq {
-  0%, 46% {
+  0%, 43% {
     opacity: 0;
     transform: translateY(var(--mg-v2-motion-rise-md));
     box-shadow: var(--mg-v2-shadow-sm);

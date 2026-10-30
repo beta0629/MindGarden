@@ -1183,3 +1183,13 @@
     align-items: stretch;
   }
 }
+
+/* 늘어난 목록 카드: 칩 꼬리를 카드 바닥에 붙여 빈 흰 카드가 되지 않게 (내담자 커버와 같은 규칙) */
+.consultant-cover-chapter__dense {
+  display: flex;
+  flex-direction: column;
+}
+
+.consultant-cover-chapter__dense > .consultant-cover-chapter__chips:last-child {
+  margin-top: auto;
+}

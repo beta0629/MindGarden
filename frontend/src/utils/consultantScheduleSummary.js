@@ -1,5 +1,5 @@
 /**
- * 상담사 「내 일정」 요약 — 오늘·이번 주(월~일) 일정 건수 (취소·휴무 제외)
+ * 상담사 「내 일정」 요약 — 오늘·이번 주(달력 주간 뷰와 같은 일~토) 일정 건수 (취소·휴무 제외)
  * 입력: UnifiedScheduleComponent onScheduleEventsChange 의 FullCalendar 이벤트(숫자 id 일정만)
  * 날짜 경계는 브라우저 로컬 자정 기준(운영 단말 KST).
  *
@@ -25,6 +25,16 @@ const startOfLocalDay = (date) => new Date(date.getFullYear(), date.getMonth(), 
  * @param {Date} date
  * @returns {Date} 해당 주 월요일 00:00
  */
+/**
+ * 달력 주간 뷰(FullCalendar 기본 firstDay=0, 일요일)와 같은 주 시작 — 「이번 주」 요약 기간 SSOT
+ * @param {Date} date
+ * @returns {Date} 해당 주 일요일 00:00
+ */
+export const startOfLocalCalendarWeek = (date) => {
+  const day = startOfLocalDay(date);
+  return new Date(day.getFullYear(), day.getMonth(), day.getDate() - day.getDay());
+};
+
 export const startOfLocalWeekMonday = (date) => {
   const day = startOfLocalDay(date);
   const dow = day.getDay();
@@ -65,7 +75,7 @@ export const buildConsultantScheduleSummary = (events, now) => {
   }
   const todayStart = startOfLocalDay(now);
   const tomorrowStart = new Date(todayStart.getFullYear(), todayStart.getMonth(), todayStart.getDate() + 1);
-  const weekStart = startOfLocalWeekMonday(now);
+  const weekStart = startOfLocalCalendarWeek(now);
   const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + DAYS_PER_WEEK);
 
   let todayCount = 0;
@@ -117,7 +127,7 @@ export const doesRangeCoverCurrentWeek = (range, now) => {
   if (!rangeStart || !rangeEnd) {
     return false;
   }
-  const weekStart = startOfLocalWeekMonday(now);
+  const weekStart = startOfLocalCalendarWeek(now);
   const weekLastDay = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + DAYS_PER_WEEK - 1);
   return rangeStart <= weekStart && rangeEnd >= weekLastDay;
 };

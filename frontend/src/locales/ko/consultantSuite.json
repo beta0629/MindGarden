@@ -21,6 +21,7 @@
     "active": "활성",
     "inactive": "비활성",
     "noSlots": "설정된 시간이 없습니다",
+    "dayOverviewAria": "요일별 상담 가능 시간",
     "emptyTitle": "설정된 상담 가능 시간이 없습니다",
     "emptyDescription": "오른쪽 위 「상담 가능 시간 추가」로 시간을 등록해 주세요.",
     "loading": "상담 가능 시간을 불러오는 중…",

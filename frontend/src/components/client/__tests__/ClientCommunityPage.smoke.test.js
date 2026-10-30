@@ -22,6 +22,7 @@ import {
   CLIENT_WEB_NAV,
   CLIENT_WEB_NAV_LABELS,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../constants/clientWebChromeConstants';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoutes';
@@ -81,6 +82,8 @@ jest.mock(
   () => 'butterfly-logo.png'
 );
 
+const { CLIENT_COVER_MENU_TEST_ID } = require('../clientDashboard/constants');
+
 describe('ClientCommunityPage', () => {
   beforeEach(() => {
     mockLogout.mockReset();
@@ -108,7 +111,9 @@ describe('ClientCommunityPage', () => {
     expect(CLIENT_WEB_NAV_LABELS).toEqual(['홈', '예정', '회기', '회기 고르기', '결제']);
     expect(CLIENT_LOBBY_NAV.find((item) => item.id === 'community')).toBeUndefined();
 
-    const nav = screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID);
+    expect(screen.queryByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+    const nav = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
     CLIENT_WEB_NAV.forEach((item) => {
       expect(within(nav).getByRole('link', { name: item.label }))
         .toHaveAttribute('href', item.path);
@@ -120,7 +125,7 @@ describe('ClientCommunityPage', () => {
     expect(screen.queryByRole('link', { name: '상담' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: '후기' })).not.toBeInTheDocument();
 
-    expect(screen.getByRole('button', { name: CLIENT_LOBBY_LOGOUT })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: CLIENT_LOBBY_LOGOUT }).length).toBeGreaterThanOrEqual(1);
 
     const communityRoot = screen.getByTestId(CLIENT_COMMUNITY_TEST_ID);
     expect(communityRoot.querySelector('.mg-v2-desktop-lnb')).toBeNull();

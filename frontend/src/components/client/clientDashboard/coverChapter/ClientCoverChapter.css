@@ -550,63 +550,7 @@
 
 /* DOCK → ClientMinimalDock.css SSOT */
 
-/* ===== MENU ===== */
-.client-cover__menu {
-  position: fixed;
-  inset: 0;
-  z-index: var(--mg-v2-z-overlay);
-  display: flex;
-}
-
-.client-cover__menu-backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  padding: 0;
-  background: color-mix(in srgb, var(--mg-v2-color-neutral-900) 45%, transparent);
-  cursor: pointer;
-}
-
-.client-cover__menu-panel {
-  position: relative;
-  z-index: 1;
-  width: min(18rem, 80vw);
-  height: 100%;
-  background: var(--mg-v2-color-surface-card);
-  padding: calc(var(--mg-v2-space-6) + var(--client-cover-safe-t)) var(--mg-v2-space-4) var(--mg-v2-space-4);
-  box-shadow: var(--mg-v2-shadow-lg);
-}
-
-.client-cover__menu-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--mg-v2-space-1);
-}
-
-.client-cover__menu-link {
-  display: flex;
-  align-items: center;
-  min-height: 2.75rem;
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  border-radius: var(--mg-v2-radius-lg);
-  color: var(--mg-v2-color-text-primary);
-  font-size: 0.9375rem;
-  font-weight: var(--mg-v2-font-weight-semibold);
-  text-decoration: none;
-  background: transparent;
-  border: 0;
-  width: 100%;
-  cursor: pointer;
-  font-family: var(--mg-v2-font-family-base);
-  text-align: left;
-}
-
-.client-cover__menu-link:hover {
-  background: var(--mg-v2-color-surface-hover);
-}
+/* MENU → CoverMenuDrawer.css SSOT (홈·서브페이지 공통 드로어) */
 
 .client-cover__status,
 .client-cover__error {

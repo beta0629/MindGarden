@@ -64,6 +64,15 @@
   user-select: none;
 }
 
+.client-web-topchrome__menu:focus {
+  outline: none;
+}
+
+.client-web-topchrome__menu:focus-visible {
+  outline: var(--mg-v2-border-width-thick) solid var(--client-web-chrome-focus);
+  outline-offset: var(--mg-v2-space-0-5);
+}
+
 .client-web-topchrome__menu:active {
   background: var(--client-web-chrome-line);
 }

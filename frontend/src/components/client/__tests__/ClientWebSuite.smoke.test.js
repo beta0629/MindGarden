@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import {
   CLIENT_WEB_NAV,
@@ -14,6 +14,7 @@ import {
   CLIENT_WEB_PAGE_SHELL_TEST_ID,
   CLIENT_WEB_PROFILE_LINK_TEST_ID,
   CLIENT_WEB_TOP_CHROME_TEST_ID,
+  CLIENT_WEB_TOP_CHROME_MENU_TEST_ID,
   CLIENT_WEB_TOP_NAV_TEST_ID
 } from '../../../constants/clientWebChromeConstants';
 import {
@@ -72,6 +73,8 @@ const SUITE_FACES = [
   { activeNavId: undefined, label: null, title: CLIENT_WEB_SUITE_COPY.COMMUNITY_TITLE }
 ];
 
+const { CLIENT_COVER_MENU_TEST_ID } = require('../clientDashboard/constants');
+
 describe('ClientWeb suite — TopChrome · nav 5 · zero LNB', () => {
   beforeEach(() => {
     mockUseSession.mockReturnValue({
@@ -119,7 +122,9 @@ describe('ClientWeb suite — TopChrome · nav 5 · zero LNB', () => {
       expect(screen.getByTestId(CLIENT_WEB_SUITE_TEST_IDS.ASIDE)).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: title })).toBeInTheDocument();
 
-      const nav = screen.getByTestId(CLIENT_WEB_TOP_NAV_TEST_ID);
+      expect(screen.queryByTestId(CLIENT_WEB_TOP_NAV_TEST_ID)).not.toBeInTheDocument();
+      fireEvent.click(screen.getByTestId(CLIENT_WEB_TOP_CHROME_MENU_TEST_ID));
+      const nav = screen.getByTestId(CLIENT_COVER_MENU_TEST_ID);
       CLIENT_WEB_NAV.forEach((item) => {
         expect(within(nav).getByRole('link', { name: item.label }))
           .toHaveAttribute('href', item.path);

@@ -68,7 +68,7 @@ class BearerIdleSessionPostLoginGuardTest {
     @BeforeEach
     void setUp() {
         sessionTimeoutProperties = new SessionTimeoutProperties(Duration.ofHours(4));
-        service = new BearerIdleSessionServiceImpl(userSessionService, sessionTimeoutProperties);
+        service = new BearerIdleSessionServiceImpl(userSessionService, sessionTimeoutProperties, "test-server-key");
         store = new ConcurrentHashMap<>();
         stubInMemoryUserSessionService();
     }
@@ -144,7 +144,7 @@ class BearerIdleSessionPostLoginGuardTest {
         assertThat(service.isBearerSessionActive(oldSid, role)).isTrue();
         String newSid = newSessionId();
         service.ensureActiveSession(user, newSid, "127.0.0.1", "junit-agent");
-        userSessionService.deactivateSession(oldSid, SessionManagementConstants.END_REASON_LOGOUT);
+        userSessionService.deactivateSession(service.toServerSessionKey(oldSid), SessionManagementConstants.END_REASON_LOGOUT);
 
         // Then
         assertThat(service.isBearerSessionActive(newSid, role)).as("refresh 후 새 sid 활성").isTrue();

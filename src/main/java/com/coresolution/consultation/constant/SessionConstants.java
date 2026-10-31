@@ -252,4 +252,20 @@ public final class SessionConstants {
      * 세션 상태 - 일시정지
      */
     public static final String SESSION_STATUS_SUSPENDED = "SUSPENDED";
+
+    /**
+     * Bearer 서버 세션 키 접두사. {@code user_sessions.session_id} 에 Access JWT sid 대신 저장되는
+     * HMAC 키({@code bjs_} + base64url)이며 쿠키(JSESSIONID) 경로에서는 복원하지 않는다.
+     */
+    public static final String BEARER_SESSION_KEY_PREFIX = "bjs_";
+
+    /**
+     * Bearer 서버 세션 키인지 판정한다.
+     *
+     * @param sessionId 세션 ID (nullable)
+     * @return {@link #BEARER_SESSION_KEY_PREFIX} 로 시작하면 true
+     */
+    public static boolean isBearerSessionKey(String sessionId) {
+        return sessionId != null && sessionId.startsWith(BEARER_SESSION_KEY_PREFIX);
+    }
 }

@@ -115,7 +115,8 @@ class JwtAuthenticationFilterIdleTest {
         // 실구현과 동일 JSON shape 로 401 기록
         BearerIdleSessionServiceImpl realWriter = new BearerIdleSessionServiceImpl(
                 org.mockito.Mockito.mock(com.coresolution.consultation.service.UserSessionService.class),
-                new SessionTimeoutProperties(Duration.ofHours(4)));
+                new SessionTimeoutProperties(Duration.ofHours(4)),
+                "test-server-key");
         doAnswer(invocation -> {
             realWriter.writeUnauthorizedIdle(invocation.getArgument(0), invocation.getArgument(1));
             return null;

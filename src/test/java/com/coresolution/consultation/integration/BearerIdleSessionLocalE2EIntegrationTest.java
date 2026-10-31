@@ -65,6 +65,7 @@ class BearerIdleSessionLocalE2EIntegrationTest {
     @Autowired private PasswordEncoder passwordEncoder;
     @Autowired private JwtService jwtService;
     @Autowired private UserSessionService userSessionService;
+    @Autowired private com.coresolution.consultation.service.BearerIdleSessionService bearerIdleSessionService;
 
     private final String tenantId = "e2e-" + UUID.randomUUID().toString().replace("-", "").substring(0, 26);
 
@@ -92,6 +93,16 @@ class BearerIdleSessionLocalE2EIntegrationTest {
             int ttl = sessionInfoTtl(e.getValue());
             System.out.printf("[local-e2e] %s session-info maxInactiveInterval=%d%n", e.getKey(), ttl);
             assertThat(ttl).as(e.getKey()).isEqualTo(120);
+            String sid = jwtService.extractSessionId(e.getValue());
+            boolean rawStored = userSessionService.getActiveSession(sid) != null;
+            boolean keyStored = userSessionService.getActiveSession(
+                    bearerIdleSessionService.toServerSessionKey(sid)) != null;
+            int cookieStatus = sidAsJsessionIdStatus(sid);
+            System.out.printf("[local-e2e] %s rawSidStored=%s serverKeyStored=%s sidAsJSESSIONID=%d%n",
+                    e.getKey(), rawStored, keyStored, cookieStatus);
+            assertThat(rawStored).as(e.getKey() + " raw sid 미저장").isFalse();
+            assertThat(keyStored).as(e.getKey() + " 서버 키 저장").isTrue();
+            assertThat(cookieStatus).as(e.getKey() + " sid→JSESSIONID").isEqualTo(401);
         }
 
         Thread.sleep(IDLE_MILLIS);
@@ -105,7 +116,17 @@ class BearerIdleSessionLocalE2EIntegrationTest {
                     e.getKey(), r.getResponse().getStatus(), body);
             assertThat(r.getResponse().getStatus()).as(e.getKey()).isEqualTo(401);
             assertThat(objectMapper.readTree(body).path("redirectToLogin").asBoolean()).as(e.getKey()).isTrue();
+            int cookieStatus = sidAsJsessionIdStatus(jwtService.extractSessionId(e.getValue()));
+            System.out.printf("[local-e2e] %s expired sid as JSESSIONID status=%d%n", e.getKey(), cookieStatus);
+            assertThat(cookieStatus).as(e.getKey() + " 만료 sid→JSESSIONID").isEqualTo(401);
         }
+    }
+
+    /** 만료/활성 Access JWT sid 를 JSESSIONID 쿠키로만 보낸다(Bearer 없음). */
+    private int sidAsJsessionIdStatus(String sid) throws Exception {
+        return mockMvc.perform(get("/api/v1/auth/current-user")
+                .cookie(new jakarta.servlet.http.Cookie("JSESSIONID", sid))
+                .header("X-Tenant-Id", tenantId)).andReturn().getResponse().getStatus();
     }
 
     private User saveUser(UserRole role) {

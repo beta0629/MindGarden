@@ -68,10 +68,14 @@ class BearerIdleSessionServiceImplTest {
     private SessionTimeoutProperties sessionTimeoutProperties;
     private BearerIdleSessionServiceImpl service;
 
+    private String key(String sid) {
+        return service.toServerSessionKey(sid);
+    }
+
     @BeforeEach
     void setUp() {
         sessionTimeoutProperties = new SessionTimeoutProperties(Duration.ofHours(4));
-        service = new BearerIdleSessionServiceImpl(userSessionService, sessionTimeoutProperties);
+        service = new BearerIdleSessionServiceImpl(userSessionService, sessionTimeoutProperties, "test-server-key");
     }
 
     /**
@@ -148,14 +152,14 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             int ttlSeconds = expectedRoleTtlSeconds(role);
             LocalDateTime lastActivityAt = LocalDateTime.now().minusSeconds(ttlSeconds - 60L);
-            when(userSessionService.getActiveSession(sid)).thenReturn(activeSession(sid, lastActivityAt));
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(activeSession(key(sid), lastActivityAt));
 
             // When
             boolean active = service.isBearerSessionActive(sid, role);
 
             // Then
             assertThat(active).as("%s TTL=%ds 한도 내", role, ttlSeconds).isTrue();
-            verify(userSessionService, never()).deactivateSession(eq(sid), eq(SessionManagementConstants.END_REASON_EXPIRED));
+            verify(userSessionService, never()).deactivateSession(eq(key(sid)), eq(SessionManagementConstants.END_REASON_EXPIRED));
         }
 
         @ParameterizedTest(name = "{0} 한도 초과 → false")
@@ -166,14 +170,14 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             int ttlSeconds = expectedRoleTtlSeconds(role);
             LocalDateTime lastActivityAt = LocalDateTime.now().minusSeconds(ttlSeconds + 60L);
-            when(userSessionService.getActiveSession(sid)).thenReturn(activeSession(sid, lastActivityAt));
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(activeSession(key(sid), lastActivityAt));
 
             // When
             boolean active = service.isBearerSessionActive(sid, role);
 
             // Then
             assertThat(active).as("%s TTL=%ds 한도 초과", role, ttlSeconds).isFalse();
-            verify(userSessionService).deactivateSession(sid, SessionManagementConstants.END_REASON_EXPIRED);
+            verify(userSessionService).deactivateSession(key(sid), SessionManagementConstants.END_REASON_EXPIRED);
         }
 
         @ParameterizedTest(name = "{0} 역할 TTL 상수는 SessionConstants 와 일치")
@@ -208,7 +212,7 @@ class BearerIdleSessionServiceImplTest {
             int overrideTtl = sessionTimeoutProperties.getTimeoutSecondsForRole(role);
             assertThat(overrideTtl).isEqualTo(120);
             LocalDateTime lastActivityAt = LocalDateTime.now().minusSeconds(overrideTtl - 30L);
-            when(userSessionService.getActiveSession(sid)).thenReturn(activeSession(sid, lastActivityAt));
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(activeSession(key(sid), lastActivityAt));
 
             // When / Then
             assertThat(service.isBearerSessionActive(sid, role)).isTrue();
@@ -222,14 +226,14 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             int overrideTtl = sessionTimeoutProperties.getTimeoutSecondsForRole(role);
             LocalDateTime lastActivityAt = LocalDateTime.now().minusSeconds(overrideTtl + 60L);
-            when(userSessionService.getActiveSession(sid)).thenReturn(activeSession(sid, lastActivityAt));
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(activeSession(key(sid), lastActivityAt));
 
             // When
             boolean active = service.isBearerSessionActive(sid, role);
 
             // Then
             assertThat(active).isFalse();
-            verify(userSessionService).deactivateSession(sid, SessionManagementConstants.END_REASON_EXPIRED);
+            verify(userSessionService).deactivateSession(key(sid), SessionManagementConstants.END_REASON_EXPIRED);
         }
     }
 
@@ -248,7 +252,7 @@ class BearerIdleSessionServiceImplTest {
         @DisplayName("활성 세션 없으면 false")
         void missingSession_returnsFalse() {
             String sid = newSessionId();
-            when(userSessionService.getActiveSession(sid)).thenReturn(null);
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(null);
 
             assertThat(service.isBearerSessionActive(sid, UserRole.CONSULTANT)).isFalse();
         }
@@ -257,10 +261,10 @@ class BearerIdleSessionServiceImplTest {
         @DisplayName("lastActivityAt null 이면 만료 처리 후 false")
         void nullLastActivity_deactivates() {
             String sid = newSessionId();
-            when(userSessionService.getActiveSession(sid)).thenReturn(activeSession(sid, null));
+            when(userSessionService.getActiveSession(key(sid))).thenReturn(activeSession(key(sid), null));
 
             assertThat(service.isBearerSessionActive(sid, UserRole.CLIENT)).isFalse();
-            verify(userSessionService).deactivateSession(sid, SessionManagementConstants.END_REASON_EXPIRED);
+            verify(userSessionService).deactivateSession(key(sid), SessionManagementConstants.END_REASON_EXPIRED);
         }
     }
 
@@ -276,7 +280,7 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             int timeoutSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(role);
             when(userSessionService.slideActiveSession(
-                    eq(sid),
+                    eq(key(sid)),
                     eq(timeoutSeconds),
                     eq((long) SessionConstants.BEARER_ACTIVITY_THROTTLE_SECONDS)))
                     .thenReturn(true);
@@ -287,7 +291,7 @@ class BearerIdleSessionServiceImplTest {
             // Then
             assertThat(ok).isTrue();
             verify(userSessionService).slideActiveSession(
-                    sid,
+                    key(sid),
                     timeoutSeconds,
                     SessionConstants.BEARER_ACTIVITY_THROTTLE_SECONDS);
         }
@@ -331,7 +335,7 @@ class BearerIdleSessionServiceImplTest {
 
             // Then
             assertThat(service.isBearerSessionActive(sid, UserRole.CONSULTANT)).isTrue();
-            UserSession created = store.get(sid);
+            UserSession created = store.get(key(sid));
             assertThat(created).isNotNull();
             assertThat(Duration.between(LocalDateTime.now(), created.getExpiresAt()).toSeconds())
                     .as("createSession expiresAt 은 초 단위 override(120) — 분 절사(60) 금지")
@@ -345,7 +349,7 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             User user = consultantUser();
             service.ensureActiveSession(user, sid, "127.0.0.1", "junit-agent");
-            UserSession session = store.get(sid);
+            UserSession session = store.get(key(sid));
 
             // When / Then — 한도 내
             session.setLastActivityAt(LocalDateTime.now().minusSeconds(OVERRIDE_TTL_SECONDS_120 - 1L));
@@ -379,7 +383,7 @@ class BearerIdleSessionServiceImplTest {
             assertThat(sessionTimeoutProperties.getTimeoutSecondsForRole(UserRole.CONSULTANT))
                     .isEqualTo(ttl);
             service.ensureActiveSession(user, sid, "127.0.0.1", "junit-agent");
-            UserSession session = store.get(sid);
+            UserSession session = store.get(key(sid));
 
             // When / Then — 한도 내
             session.setLastActivityAt(LocalDateTime.now().minusSeconds(ttl - 60L));
@@ -414,7 +418,7 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             User user = consultantUser();
             service.ensureActiveSession(user, sid, "127.0.0.1", "junit-agent");
-            UserSession session = store.get(sid);
+            UserSession session = store.get(key(sid));
             assertThat(session).isNotNull();
             // create 직후 expiresAt ≈ now+90 — 분 절사였다면 now+60
             assertThat(Duration.between(LocalDateTime.now(), session.getExpiresAt()).toSeconds())
@@ -440,7 +444,7 @@ class BearerIdleSessionServiceImplTest {
             String sid = newSessionId();
             User user = consultantUser();
             service.ensureActiveSession(user, sid, "127.0.0.1", "junit-agent");
-            UserSession session = store.get(sid);
+            UserSession session = store.get(key(sid));
 
             // When — 91초 경과
             long elapsed = OVERRIDE_TTL_SECONDS_90 + 1L;
@@ -529,5 +533,40 @@ class BearerIdleSessionServiceImplTest {
                 .isActive(true)
                 .tenantId(user.getTenantId())
                 .build();
+    }
+
+    @Nested
+    @DisplayName("서버 세션 키 — JWT sid 를 그대로 저장하지 않음")
+    class ServerSessionKey {
+
+        @Test
+        @DisplayName("키는 sid 와 다르고 bjs_ 접두사, 같은 sid 는 같은 키, 서버 키가 다르면 다른 키")
+        void keyIsHmacOfSid() {
+            String sid = UUID.randomUUID().toString();
+            String key = service.toServerSessionKey(sid);
+            assertThat(key).isNotEqualTo(sid).startsWith(SessionConstants.BEARER_SESSION_KEY_PREFIX)
+                    .doesNotContain(sid);
+            assertThat(service.toServerSessionKey(sid)).isEqualTo(key);
+            BearerIdleSessionServiceImpl other = new BearerIdleSessionServiceImpl(
+                    userSessionService, sessionTimeoutProperties, "other-server-key");
+            assertThat(other.toServerSessionKey(sid)).isNotEqualTo(key);
+            assertThat(service.toServerSessionKey(" ")).isNull();
+        }
+
+        @Test
+        @DisplayName("ensureActiveSession 은 user_sessions 에 sid 가 아닌 서버 키로 저장")
+        void ensureStoresServerKeyNotSid() {
+            String sid = UUID.randomUUID().toString();
+            User user = User.builder().email("key@example.com").role(UserRole.CLIENT).build();
+            user.setId(9L);
+            when(userSessionService.getActiveSession(anyString())).thenReturn(null);
+
+            service.ensureActiveSession(user, sid, "127.0.0.1", "ua");
+
+            verify(userSessionService).createSession(
+                    eq(user), eq(service.toServerSessionKey(sid)), anyString(), anyString(), anyString(), any());
+            verify(userSessionService, never()).createSession(
+                    any(), eq(sid), anyString(), anyString(), anyString(), any());
+        }
     }
 }

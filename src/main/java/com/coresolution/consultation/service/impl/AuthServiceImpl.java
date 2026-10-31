@@ -344,7 +344,10 @@ public class AuthServiceImpl implements AuthService {
                     && StringUtils.hasText(newSid)
                     && !oldTokenId.equals(newSid)) {
                 userSessionService.deactivateSession(
-                        oldTokenId, SessionManagementConstants.END_REASON_EXPIRED);
+                        bearerIdleSessionService != null
+                                ? bearerIdleSessionService.toServerSessionKey(oldTokenId)
+                                : oldTokenId,
+                        SessionManagementConstants.END_REASON_EXPIRED);
             }
 
             // UserResponse 변환 (표준화된 DTO)

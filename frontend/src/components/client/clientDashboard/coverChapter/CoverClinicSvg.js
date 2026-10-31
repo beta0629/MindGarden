@@ -9,6 +9,7 @@
 
 import React, { useId } from 'react';
 import PropTypes from 'prop-types';
+import { CoverAmbientWindowWarm, CoverAmbientScene, CoverAmbientDust } from './CoverClinicAmbient';
 
 export const COVER_CLINIC_SVG_VARIANT_PORTRAIT = 'portrait';
 export const COVER_CLINIC_SVG_VARIANT_LANDSCAPE = 'landscape';
@@ -17,15 +18,20 @@ export const COVER_CLINIC_SVG_VARIANT_LANDSCAPE = 'landscape';
  * @param {object} props
  * @param {string} [props.className]
  * @param {'portrait'|'landscape'} [props.variant]
+ * @param {boolean} [props.ambient] 상담사 홈 커버 앰비언트 v3.2 (내담자 커버는 false)
  */
 const CoverClinicSvg = ({
   className = 'client-cover__svg',
-  variant = COVER_CLINIC_SVG_VARIANT_PORTRAIT
+  variant = COVER_CLINIC_SVG_VARIANT_PORTRAIT,
+  ambient = false
 }) => {
   const uid = useId().replace(/:/g, '');
   const winId = `cover-win-${uid}`;
   const beamId = `cover-beam-${uid}`;
   const isLandscape = variant === COVER_CLINIC_SVG_VARIANT_LANDSCAPE;
+  const beamClass = ambient
+    ? 'client-cover__light-beam consultant-cover-chapter__light-beam consultant-cover-ambient__beam'
+    : 'client-cover__light-beam consultant-cover-chapter__light-beam';
 
   if (isLandscape) {
     return (
@@ -61,6 +67,7 @@ const CoverClinicSvg = ({
           rx="4"
           fill={`url(#${winId})`}
         />
+        {ambient && <CoverAmbientWindowWarm variant="landscape" />}
         <path d="M460 48h240v14H460z" fill="var(--mg-v2-color-secondary-dark)" />
         <path
           d="M580 48v220"
@@ -73,10 +80,11 @@ const CoverClinicSvg = ({
           strokeWidth="4"
         />
         <polygon
-          className="client-cover__light-beam consultant-cover-chapter__light-beam"
+          className={beamClass}
           points="460,64 700,64 300,480 80,480"
           fill={`url(#${beamId})`}
         />
+        {ambient && <CoverAmbientDust variant="landscape" uid={uid} />}
         <rect
           x="100"
           y="300"
@@ -104,7 +112,8 @@ const CoverClinicSvg = ({
           ry="14"
           fill="var(--mg-v2-color-primary-solid)"
         />
-        <rect
+        {ambient && <CoverAmbientScene variant="landscape" uid={uid} />}
+      <rect
           x="0"
           y="380"
           width="820"
@@ -149,6 +158,7 @@ const CoverClinicSvg = ({
         fill={`url(#${winId})`}
         opacity="0.92"
       />
+        {ambient && <CoverAmbientWindowWarm variant="portrait" />}
       <path d="M260 90h200v16H260z" fill="var(--mg-v2-color-secondary-dark)" />
       <path
         d="M360 90v260"
@@ -161,10 +171,11 @@ const CoverClinicSvg = ({
         strokeWidth="4"
       />
       <polygon
-        className="client-cover__light-beam consultant-cover-chapter__light-beam"
+        className={beamClass}
         points="260,110 460,110 200,720 40,720"
         fill={`url(#${beamId})`}
       />
+        {ambient && <CoverAmbientDust variant="portrait" uid={uid} />}
       <rect
         x="60"
         y="520"
@@ -202,6 +213,7 @@ const CoverClinicSvg = ({
         ry="10"
         fill="var(--mg-v2-color-primary-main)"
       />
+      {ambient && <CoverAmbientScene variant="portrait" uid={uid} />}
       <rect
         x="0"
         y="640"
@@ -218,7 +230,8 @@ CoverClinicSvg.propTypes = {
   variant: PropTypes.oneOf([
     COVER_CLINIC_SVG_VARIANT_PORTRAIT,
     COVER_CLINIC_SVG_VARIANT_LANDSCAPE
-  ])
+  ]),
+  ambient: PropTypes.bool
 };
 
 export default CoverClinicSvg;

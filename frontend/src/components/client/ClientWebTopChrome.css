@@ -266,6 +266,12 @@
   font-weight: var(--mg-v2-font-weight-semibold, 600);
 }
 
+/* 세션 잔여 — alerts 다음·profile 전 (상담사 GNB TenantHeaderCluster 정합) */
+.client-web-topchrome__end .mg-header__session-remaining--client-chrome {
+  color: var(--client-web-chrome-mute);
+  font-size: var(--mg-v2-font-size-xs);
+}
+
 .client-web-topchrome__profile {
   display: inline-flex;
   align-items: center;

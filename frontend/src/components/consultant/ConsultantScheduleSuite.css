@@ -364,6 +364,18 @@
   max-height: none;
 }
 
+/* 월뷰 = FullCalendar height="auto"(ScheduleCalendarView). 주 행 표(table) 높이는 최소값으로 동작:
+ * 일정이 적은 달도 남는 세로 공간을 모든 주가 나눠 채우고, 많으면 표가 내용만큼 자라 잘리지 않는다. */
+.consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-daygrid-body > table {
+  height: var(--mg-v2-consultant-calendar-month-body-min-height);
+}
+
+@media (max-width: 767px) {
+  .consultant-schedule__panel .fc .fc-dayGridMonth-view .fc-daygrid-body > table {
+    height: var(--mg-v2-consultant-calendar-month-body-min-height-mobile);
+  }
+}
+
 /* 주·일(timeGrid) 종일 행: 월간 카드 셀 min-height(공용 ScheduleB0KlA 128)를 받지 않아 시간축 셀이 잘리지 않게 한다 */
 .consultant-schedule__panel .fc .fc-timegrid .fc-daygrid-day .fc-daygrid-day-frame {
   min-height: 0;

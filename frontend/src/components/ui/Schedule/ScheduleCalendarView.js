@@ -221,6 +221,12 @@ const ScheduleCalendarView = ({
     const isTabletPortrait = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_PORTRAIT_MQ);
     const isLandscape = useMediaQuery(CONSULTANT_SCHEDULE_TABLET_LANDSCAPE_MQ);
     const tabletV2Active = consultantTabletScheduleV2 === true;
+    /*
+     * 상담사 월뷰: 셀 높이가 일정 수(dayMaxEvents)만큼 커지므로 고정 높이(100%) 안 내부 스크롤러에
+     * 가두면 아래 주(週)가 잘린다. FullCalendar height="auto" 로 모든 주를 문서 흐름에 둔다.
+     * 남는 세로 공간 채우기는 ConsultantScheduleSuite.css 월뷰 body 최소 높이 토큰이 담당.
+     */
+    const consultantMonthAutoHeight = tabletV2Active && activeViewType === CALENDAR_VIEW_MONTH;
     const useTabletAgendaList = tabletV2Active
         && !isLandscape
         && (activeViewType === CALENDAR_VIEW_DAY || activeViewType === CALENDAR_VIEW_WEEK);
@@ -902,7 +908,7 @@ const ScheduleCalendarView = ({
                 eventReceive={acceptExternalCalendarDrops ? handleEventReceive : undefined}
                 editable={!disableCalendarEventDrag && isScheduleCalendarEditableRole(userRole)}
                 droppable={acceptExternalCalendarDrops && isScheduleDropAdminRole(userRole)}
-                height="100%"
+                height={consultantMonthAutoHeight ? 'auto' : '100%'}
                 eventMinHeight={EVENT_MIN_HEIGHT_PX}
                 slotEventOverlap={false}
                 slotMinTime={slotTimeRange.slotMinTime}

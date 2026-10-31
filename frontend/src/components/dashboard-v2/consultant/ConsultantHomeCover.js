@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../common/SafeText';
 import CoverClinicSvg, {
@@ -28,16 +28,33 @@ const ConsultantHomeCover = ({
   variant = COVER_CHAPTER_SVG_VARIANT_PORTRAIT,
   children
 }) => {
+  // 탭이 숨겨지면 앰비언트 모션 일시정지 (transform·opacity 루프 정지)
+  const [motionPaused, setMotionPaused] = useState(
+    typeof document !== 'undefined' && document.visibilityState === 'hidden'
+  );
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+    const onVisibility = () => setMotionPaused(document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
   const svgVariant = variant === COVER_CHAPTER_SVG_VARIANT_LANDSCAPE
     ? COVER_CLINIC_SVG_VARIANT_LANDSCAPE
     : COVER_CLINIC_SVG_VARIANT_PORTRAIT;
 
   return (
-    <div className="consultant-cover-chapter__cover" data-cover-variant={variant}>
+    <div
+      className="consultant-cover-chapter__cover"
+      data-cover-variant={variant}
+      data-motion-paused={motionPaused ? 'true' : 'false'}
+      data-testid="consultant-home-cover"
+    >
       <div className="consultant-cover-chapter__cover-clip" aria-hidden="true">
         <CoverClinicSvg
           className="consultant-cover-chapter__cover-svg"
           variant={svgVariant}
+          ambient
         />
       </div>
 

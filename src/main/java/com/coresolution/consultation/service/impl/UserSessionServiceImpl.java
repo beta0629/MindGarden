@@ -399,10 +399,14 @@ public class UserSessionServiceImpl implements UserSessionService {
                         sessionId, lastActivity);
                 return true;
             }
-            session.updateLastActivity();
-            session.extendExpirationSeconds(timeoutSeconds);
-            userSessionRepository.save(session);
-            log.debug("✅ 세션 슬라이딩 연장: sessionId={}, timeoutSeconds={}", sessionId, timeoutSeconds);
+            // 엔티티 save(@Version) 대신 조건부 UPDATE — 동시 요청 낙관적 락 충돌로 인한 401 방지
+            int updated = userSessionRepository.slideActiveSessionIfDue(
+                    sessionId,
+                    now,
+                    now.plusSeconds(timeoutSeconds),
+                    now.minusSeconds(Math.max(0L, throttleSeconds)));
+            log.debug("✅ 세션 슬라이딩 연장: sessionId={}, timeoutSeconds={}, updated={}",
+                    sessionId, timeoutSeconds, updated);
             return true;
         } catch (Exception e) {
             log.error("❌ 세션 슬라이딩 실패: sessionId={}, timeoutSeconds={}, error={}",

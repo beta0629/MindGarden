@@ -23,7 +23,7 @@ export const COVER_CHAPTER_BADGE_CONFIRMED = '확정';
 export const COVER_CHAPTER_BADGE_IN_PROGRESS = '진행 중';
 export const COVER_CHAPTER_BADGE_NONE = '없음';
 
-export const COVER_CHAPTER_CTA_OPEN_CONSULTATION = '상담 열기';
+export const COVER_CHAPTER_CTA_OPEN_CONSULTATION = '상담일지 열기';
 export const COVER_CHAPTER_CTA_SCHEDULE = '일정';
 export const COVER_CHAPTER_CTA_OPEN_SCHEDULE = '일정 열기';
 export const COVER_CHAPTER_WEEKLY_SCHEDULE_LINK = '주간 일정 보기';

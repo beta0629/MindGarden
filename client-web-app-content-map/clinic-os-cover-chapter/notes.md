@@ -29,7 +29,7 @@
 - **Button:** MGButton language — primary solid `#0E5F5A`, on `#FAF9F7`, hover `#0A4F4B`
 - **Shell:** full-bleed (중앙 max-width 카드스택 금지)
 - **Floor:** purple/pink/cyan mesh · gradient text · ALL-CAPS eyebrow · 3 equal icon tiles · Pencil bar = FAIL
-- **CTA:** 직접예약 없음. has=`상담 열기`+`일정` / zero=`일정 열기`
+- **CTA:** 직접예약 없음. has=`상담일지 열기`+`일정` / zero=`일정 열기`
 
 ## Motion
 | Token | Use |

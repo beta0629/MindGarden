@@ -123,7 +123,7 @@ class CurrentSessionLogoutScenarioTest {
             .thenReturn(Collections.emptyList());
 
         filter = new JwtAuthenticationFilter(jwtService, mock(UserService.class), userRepository, null,
-            revocationService);
+            revocationService, null);
 
         authService = new AuthServiceImpl();
         ReflectionTestUtils.setField(authService, "jwtService", jwtService);

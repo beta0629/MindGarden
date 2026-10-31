@@ -63,18 +63,17 @@ class UserSessionServiceImplSlideActiveSessionTest {
         UserSession session = activeSession(oldActivity, oldExpiry);
         when(userSessionRepository.findActiveSessionBySessionId(eq(SESSION_ID), any(LocalDateTime.class)))
                 .thenReturn(Optional.of(session));
-        when(userSessionRepository.save(any(UserSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userSessionRepository.slideActiveSessionIfDue(eq(SESSION_ID), any(), any(), any())).thenReturn(1);
 
         boolean ok = userSessionService.slideActiveSession(
                 SESSION_ID, TIMEOUT_SECONDS, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
 
         assertThat(ok).isTrue();
-        ArgumentCaptor<UserSession> captor = ArgumentCaptor.forClass(UserSession.class);
-        verify(userSessionRepository).save(captor.capture());
-        UserSession saved = captor.getValue();
-        assertThat(saved.getLastActivityAt()).isAfter(oldActivity);
-        assertThat(saved.getExpiresAt()).isAfter(oldExpiry);
-        assertThat(Duration.between(LocalDateTime.now(), saved.getExpiresAt()).toSeconds())
+        ArgumentCaptor<LocalDateTime> expCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(userSessionRepository).slideActiveSessionIfDue(eq(SESSION_ID), any(), expCaptor.capture(), any());
+        verify(userSessionRepository, never()).save(any());
+        assertThat(expCaptor.getValue()).isAfter(oldExpiry);
+        assertThat(Duration.between(LocalDateTime.now(), expCaptor.getValue()).toSeconds())
                 .isBetween((long) TIMEOUT_SECONDS - 5L, (long) TIMEOUT_SECONDS + 5L);
     }
 
@@ -92,6 +91,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
 
         assertThat(ok).isTrue();
         verify(userSessionRepository, never()).save(any());
+        verify(userSessionRepository, never()).slideActiveSessionIfDue(any(), any(), any(), any());
         assertThat(session.getExpiresAt()).isEqualTo(expiry);
         assertThat(session.getLastActivityAt()).isEqualTo(recent);
     }
@@ -107,6 +107,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
 
         assertThat(ok).isFalse();
         verify(userSessionRepository, never()).save(any());
+        verify(userSessionRepository, never()).slideActiveSessionIfDue(any(), any(), any(), any());
     }
 
     @Test
@@ -117,11 +118,12 @@ class UserSessionServiceImplSlideActiveSessionTest {
         UserSession session = activeSession(recent, expiry);
         when(userSessionRepository.findActiveSessionBySessionId(eq(SESSION_ID), any(LocalDateTime.class)))
                 .thenReturn(Optional.of(session));
-        when(userSessionRepository.save(any(UserSession.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userSessionRepository.slideActiveSessionIfDue(eq(SESSION_ID), any(), any(), any())).thenReturn(1);
 
         assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_SECONDS, 0)).isTrue();
         assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_SECONDS, 0)).isTrue();
-        verify(userSessionRepository, times(2)).save(any(UserSession.class));
+        verify(userSessionRepository, times(2)).slideActiveSessionIfDue(eq(SESSION_ID), any(), any(), any());
+        verify(userSessionRepository, never()).save(any());
     }
 
     private static UserSession activeSession(LocalDateTime lastActivity, LocalDateTime expiresAt) {

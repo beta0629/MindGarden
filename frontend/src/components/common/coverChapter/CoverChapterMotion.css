@@ -31,13 +31,11 @@
 }
 
 /* 1 커버 */
-.consultant-cover-chapter__cover-svg,
 .client-cover__svg {
   animation: mg-cc-fade var(--mg-v2-motion-dur-cover) var(--mg-v2-motion-ease-out) both;
 }
 
-.consultant-cover-chapter__light-beam,
-.client-cover__light-beam {
+.client-cover__light-beam:not(.consultant-cover-ambient__beam) {
   animation: mg-cc-fade var(--mg-v2-motion-dur-cover) var(--mg-v2-motion-ease-out) var(--mg-v2-motion-t-cover-meta) both;
 }
 

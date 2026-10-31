@@ -306,6 +306,9 @@
   --mg-v2-consultant-card-radius: var(--mg-v2-radius-panel);
   --mg-v2-consultant-calendar-min-height: 45rem;
   --mg-v2-consultant-calendar-min-height-mobile: 32rem;
+  /* 월뷰 주 행 영역 최소 높이 = 달력 최소 높이 − 툴바·요일 헤더 */
+  --mg-v2-consultant-calendar-month-body-min-height: calc(var(--mg-v2-consultant-calendar-min-height) - var(--mg-v2-space-20));
+  --mg-v2-consultant-calendar-month-body-min-height-mobile: calc(var(--mg-v2-consultant-calendar-min-height-mobile) - var(--mg-v2-space-20));
 
   /* ── Consultant suite card density (P1 follow-up · #1521) ── */
   --mg-v2-consultant-card-title-size: 1rem;

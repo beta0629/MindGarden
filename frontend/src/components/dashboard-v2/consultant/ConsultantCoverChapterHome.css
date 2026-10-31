@@ -140,6 +140,120 @@
 
 /* 커버·창빛·시트·챕터 진입 모션 → common/coverChapter/CoverChapterMotion.css */
 
+/* ===== 커버 모션 v3.2 (크리틱 Ship PASS) — transform·opacity만 · 토큰만 · 탭 숨김 시 정지 ===== */
+@keyframes cch-cover-enter {
+  from { opacity: 0; transform: scale(var(--mg-v2-motion-cover-enter-scale)); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes cch-cover-beam {
+  from {
+    opacity: var(--mg-v2-motion-cover-beam-opacity-from);
+    transform: skewX(var(--mg-v2-motion-cover-beam-skew)) translateX(calc(var(--mg-v2-motion-cover-beam-shift) * -1));
+  }
+  to {
+    opacity: var(--mg-v2-motion-cover-beam-opacity-to);
+    transform: skewX(calc(var(--mg-v2-motion-cover-beam-skew) * -1)) translateX(var(--mg-v2-motion-cover-beam-shift));
+  }
+}
+@keyframes cch-cover-warm { from { opacity: 0; } to { opacity: var(--mg-v2-motion-cover-warm-opacity); } }
+@keyframes cch-cover-shade {
+  from { opacity: var(--mg-v2-motion-cover-shade-opacity-from); }
+  to { opacity: var(--mg-v2-motion-cover-shade-opacity-to); }
+}
+@keyframes cch-cover-leaf {
+  from { transform: rotate(calc(var(--mg-v2-motion-cover-leaf-angle) * -1)); }
+  to { transform: rotate(var(--mg-v2-motion-cover-leaf-angle)); }
+}
+@keyframes cch-cover-tip {
+  from { transform: translate(calc(var(--mg-v2-motion-cover-tip-x) * -1), var(--mg-v2-motion-cover-tip-y-from)); }
+  to { transform: translate(var(--mg-v2-motion-cover-tip-x), var(--mg-v2-motion-cover-tip-y-to)); }
+}
+@keyframes cch-cover-dust {
+  0% { opacity: 0; transform: none; }
+  12%, 88% { opacity: var(--cch-dust-o); }
+  100% { opacity: 0; transform: translate(var(--mg-v2-motion-cover-dust-dx), var(--mg-v2-motion-cover-dust-dy)); }
+}
+@keyframes cch-cover-hl {
+  0% { transform: translateX(var(--mg-v2-motion-cover-hl-from)); }
+  60%, 100% { transform: translateX(var(--mg-v2-motion-cover-hl-to)); }
+}
+
+.consultant-cover-chapter__cover {
+  transform-origin: 50% 50%;
+  animation: cch-cover-enter var(--mg-v2-motion-cover-enter-dur) ease-out both;
+}
+.consultant-cover-ambient__beam {
+  opacity: var(--mg-v2-motion-cover-beam-opacity-from);
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  will-change: opacity, transform;
+  animation: cch-cover-beam var(--mg-v2-motion-cover-beam-dur) ease-in-out infinite alternate;
+}
+.consultant-cover-ambient__warm {
+  opacity: 0;
+  will-change: opacity;
+  animation: cch-cover-warm var(--mg-v2-motion-cover-warm-dur) ease-in-out infinite alternate;
+}
+.consultant-cover-ambient__shade {
+  opacity: var(--mg-v2-motion-cover-shade-opacity-from);
+  animation: cch-cover-shade var(--mg-v2-motion-cover-beam-dur) ease-in-out infinite alternate;
+}
+.consultant-cover-ambient__leaf {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  will-change: transform;
+  animation: cch-cover-leaf var(--mg-v2-motion-cover-leaf-dur-a) ease-in-out infinite alternate;
+}
+.consultant-cover-ambient__leaf--b { animation-duration: var(--mg-v2-motion-cover-leaf-dur-b); animation-delay: -2.3s; }
+.consultant-cover-ambient__leaf--c { animation-duration: var(--mg-v2-motion-cover-leaf-dur-c); animation-delay: -4.7s; }
+.consultant-cover-ambient__leaf--d { animation-duration: var(--mg-v2-motion-cover-leaf-dur-d); animation-delay: -6.9s; }
+.consultant-cover-ambient__tip {
+  transform-box: fill-box;
+  will-change: transform;
+  animation: cch-cover-tip var(--mg-v2-motion-cover-tip-dur-a) ease-in-out infinite alternate;
+}
+.consultant-cover-ambient__leaf--b .consultant-cover-ambient__tip { animation-duration: var(--mg-v2-motion-cover-tip-dur-b); animation-delay: -1.5s; }
+.consultant-cover-ambient__leaf--c .consultant-cover-ambient__tip { animation-duration: var(--mg-v2-motion-cover-tip-dur-c); animation-delay: -3s; }
+.consultant-cover-ambient__leaf--d .consultant-cover-ambient__tip { animation-duration: var(--mg-v2-motion-cover-tip-dur-d); animation-delay: -0.8s; }
+.consultant-cover-ambient__dust circle {
+  --cch-dust-o: 0.5;
+  opacity: 0;
+  animation: cch-cover-dust var(--mg-v2-motion-cover-dust-dur) linear infinite;
+}
+.consultant-cover-ambient__dust circle:nth-child(1) { --cch-dust-o: 0.6; animation-delay: -1s; }
+.consultant-cover-ambient__dust circle:nth-child(2) { --cch-dust-o: 0.45; animation-delay: -5s; animation-duration: 17s; }
+.consultant-cover-ambient__dust circle:nth-child(3) { --cch-dust-o: 0.35; animation-delay: -9s; animation-duration: 18s; }
+.consultant-cover-ambient__dust circle:nth-child(4) { --cch-dust-o: 0.55; animation-delay: -3s; animation-duration: 12s; }
+.consultant-cover-ambient__dust circle:nth-child(5) { --cch-dust-o: 0.4; animation-delay: -11s; animation-duration: 15s; }
+.consultant-cover-ambient__dust circle:nth-child(6) { --cch-dust-o: 0.5; animation-delay: -7s; }
+.consultant-cover-ambient__dust circle:nth-child(7) { --cch-dust-o: 0.6; animation-delay: -6s; animation-duration: 13s; }
+.consultant-cover-ambient__dust circle:nth-child(8) { --cch-dust-o: 0.38; animation-delay: -2s; animation-duration: 16s; }
+.consultant-cover-ambient__hl {
+  will-change: transform;
+  animation: cch-cover-hl var(--mg-v2-motion-cover-hl-dur) ease-in-out infinite;
+}
+.consultant-cover-chapter__cover[data-motion-paused='true'],
+.consultant-cover-chapter__cover[data-motion-paused='true'] * {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 등장 모션까지 전부 끄고 정적 — 빛줄기 고정 opacity, 먼지·하이라이트 숨김 */
+  .consultant-cover-chapter__cover,
+  .consultant-cover-chapter__cover .consultant-cover-chapter__cover-svg,
+  .consultant-cover-chapter__cover .consultant-cover-chapter__cover-svg * {
+    animation: none;
+  }
+  .consultant-cover-ambient__beam {
+    opacity: var(--mg-v2-motion-cover-beam-opacity-static);
+    transform: none;
+  }
+  .consultant-cover-ambient__dust,
+  .consultant-cover-ambient__hl {
+    display: none;
+  }
+}
+
 /* 브랜드 칩 제거 후 스페이서만 — GNB와 중복 금지 */
 .consultant-cover-chapter__cover-top {
   position: relative;

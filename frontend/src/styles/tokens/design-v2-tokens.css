@@ -893,6 +893,38 @@
   --mg-v2-motion-rise-md: var(--mg-v2-space-8);
   --mg-v2-motion-drawer-shift: -100%;
   --mg-v2-motion-press-scale: 0.98;
+  /* 상담사 홈 커버 앰비언트 v3.2 (transform·opacity만) */
+  --mg-v2-motion-cover-enter-dur: 600ms;
+  --mg-v2-motion-cover-enter-scale: 0.97;
+  --mg-v2-motion-cover-beam-dur: 15s;
+  --mg-v2-motion-cover-beam-opacity-from: 0.55;
+  --mg-v2-motion-cover-beam-opacity-to: 0.85;
+  --mg-v2-motion-cover-beam-opacity-static: 0.68;
+  --mg-v2-motion-cover-beam-skew: 3deg;
+  --mg-v2-motion-cover-beam-shift: 6px;
+  --mg-v2-motion-cover-shade-opacity-from: 0.2;
+  --mg-v2-motion-cover-shade-opacity-to: 0.45;
+  --mg-v2-motion-cover-warm-dur: 16s;
+  --mg-v2-motion-cover-warm-opacity: 0.45;
+  --mg-v2-motion-cover-leaf-angle: 5deg;
+  --mg-v2-motion-cover-leaf-dur-a: 8.5s;
+  --mg-v2-motion-cover-leaf-dur-b: 8s;
+  --mg-v2-motion-cover-leaf-dur-c: 9s;
+  --mg-v2-motion-cover-leaf-dur-d: 8.3s;
+  --mg-v2-motion-cover-tip-dur-a: 4.2s;
+  --mg-v2-motion-cover-tip-dur-b: 4.6s;
+  --mg-v2-motion-cover-tip-dur-c: 4.4s;
+  --mg-v2-motion-cover-tip-dur-d: 4.8s;
+  --mg-v2-motion-cover-tip-x: 2px;
+  --mg-v2-motion-cover-tip-y-from: 0.5px;
+  --mg-v2-motion-cover-tip-y-to: -1px;
+  --mg-v2-motion-cover-dust-dur: 14s;
+  --mg-v2-motion-cover-dust-dx: 60px;
+  --mg-v2-motion-cover-dust-dy: -300px;
+  --mg-v2-motion-cover-hl-dur: 8s;
+  --mg-v2-motion-cover-hl-from: -260px;
+  --mg-v2-motion-cover-hl-to: 420px;
+  --mg-v2-motion-cover-hl-opacity: 0.28;
 }
 
 @media (prefers-reduced-motion: reduce) {

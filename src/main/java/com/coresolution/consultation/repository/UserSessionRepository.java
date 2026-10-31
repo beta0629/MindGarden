@@ -202,4 +202,23 @@ public interface UserSessionRepository extends JpaRepository<UserSession, Long> 
     @Modifying
     @Query("DELETE FROM UserSession us WHERE us.sessionId = :sessionId")
     void deleteBySessionId(@Param("sessionId") String sessionId);
+
+    /**
+     * Bearer/세션 활동 슬라이드를 원자적 조건부 UPDATE 로 수행한다.
+     * 엔티티 save(@Version) 경로는 같은 sid 동시 요청이 스로틀 경계에서 함께 쓰면
+     * 커밋 시 낙관적 락 예외가 나 JWT 필터가 인증을 못 올리고 401 이 됐다.
+     * 조건(활성·미만료·스로틀 경과)을 WHERE 에 두어 동시 요청 중 하나만 쓰고 나머지는 0행으로 끝난다.
+     *
+     * @param sessionId      세션 ID(서버 키)
+     * @param now            현재 시각
+     * @param expiresAt      새 만료 시각
+     * @param throttleCutoff 이 시각 이하에 마지막 활동이 있었던 행만 갱신
+     * @return 갱신 행 수(0 = 스로틀 구간이거나 다른 요청이 먼저 갱신)
+     */
+    @Modifying(flushAutomatically = true)
+    @Query("UPDATE UserSession us SET us.lastActivityAt = :now, us.expiresAt = :expiresAt, us.version = us.version + 1 "
+            + "WHERE us.sessionId = :sessionId AND us.isActive = true AND us.expiresAt > :now "
+            + "AND (us.lastActivityAt IS NULL OR us.lastActivityAt <= :throttleCutoff)")
+    int slideActiveSessionIfDue(@Param("sessionId") String sessionId, @Param("now") LocalDateTime now,
+            @Param("expiresAt") LocalDateTime expiresAt, @Param("throttleCutoff") LocalDateTime throttleCutoff);
 }

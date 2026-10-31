@@ -9,7 +9,7 @@ import java.io.IOException;
 /**
  * Bearer/JWT Access 토큰의 서버 유휴 세션 강제 SSOT.
  *
- * <p>JWT {@code sid} 를 {@code user_sessions.session_id} 로 키잉하고,
+ * <p>JWT {@code sid} 의 서버 키({@link #toServerSessionKey})를 {@code user_sessions.session_id} 로 키잉하고,
  * {@link com.coresolution.consultation.config.SessionTimeoutProperties} 역할별 TTL 로
  * 유휴 만료를 판정한다. 필터·refresh 가 동일 구현을 공유한다.</p>
  *
@@ -17,6 +17,17 @@ import java.io.IOException;
  * @since 2026-10-31
  */
 public interface BearerIdleSessionService {
+
+    /**
+     * Access JWT {@code sid} 를 {@code user_sessions.session_id} 저장 키로 바꾼다.
+     *
+     * <p>{@code bjs_} + HMAC-SHA256(서버 키, sid). 클라이언트에 노출되는 sid 와 다르므로
+     * sid 를 JSESSIONID 로 보내도 쿠키 경로에서 행을 찾지 못한다.</p>
+     *
+     * @param bearerSessionId Access JWT {@code sid}
+     * @return 서버 세션 키, sid 가 비어 있으면 null
+     */
+    String toServerSessionKey(String bearerSessionId);
 
     /**
      * JWT 발급 직후 Bearer 세션을 {@code user_sessions} 에 바인딩한다.

@@ -448,7 +448,14 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             return null;
         }
         for (String candidate : SessionIdCookieCodec.lookupCandidates(sessionIdHint)) {
+            if (SessionConstants.isBearerSessionKey(candidate)) {
+                // Bearer 서버 세션 키는 쿠키 경로로 복원하지 않는다
+                continue;
+            }
             UserSession active = userSessionService.getActiveSession(candidate);
+            if (active != null && SessionConstants.isBearerSessionKey(active.getSessionId())) {
+                continue;
+            }
             if (active != null) {
                 return active;
             }

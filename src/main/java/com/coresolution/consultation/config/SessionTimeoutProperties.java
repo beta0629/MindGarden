@@ -43,7 +43,7 @@ public class SessionTimeoutProperties {
     private final int timeoutSeconds;
 
     /**
-     * .dev 만료 검증용 유휴 TTL 단축(초). 0=끔(기본). prod 프로필에서는 값과 무관하게 항상 끔.
+     * .dev 만료 검증용 유휴 TTL 단축(초). 0=끔(기본). 운영 프로필(prod·production 등)이거나 dev/local/test 가 아니면 값과 무관하게 항상 끔.
      * 설정: {@code session.idle.test-override-seconds} / env {@code SESSION_IDLE_TEST_OVERRIDE_SECONDS}.
      * 켜지면 모든 역할 TTL·session-info maxInactiveInterval 이 이 값으로 대체된다(서버 시각 기준).
      */
@@ -87,14 +87,43 @@ public class SessionTimeoutProperties {
             this.testOverrideSeconds = 0;
             return;
         }
-        if (environment == null || environment.acceptsProfiles(Profiles.of("prod"))) {
+        if (!isTestOverrideAllowed(environment)) {
             this.testOverrideSeconds = 0;
-            log.warn("session.idle.test-override-seconds={} 무시 — prod 프로필(또는 환경 미확인)에서는 항상 꺼짐",
+            log.warn("session.idle.test-override-seconds={} 무시 — 운영 프로필이거나 dev/local/test 프로필이 아님",
                     overrideSeconds);
             return;
         }
         this.testOverrideSeconds = overrideSeconds;
         log.warn("세션 유휴 TTL 테스트 오버라이드 활성: 모든 역할 {}s (비운영 전용)", overrideSeconds);
+    }
+
+    /** 운영 프로필 이름(레포 사용: prod, production). 하나라도 활성이면 오버라이드 금지. */
+    static final String[] PRODUCTION_PROFILES = {"prod", "production", "prd", "live"};
+
+    /** 오버라이드를 허용하는 비운영 프로필. 이 중 하나가 활성이어야 한다(기본·미지정 프로필은 금지). */
+    static final String[] NON_PRODUCTION_PROFILES = {"dev", "local", "test"};
+
+    /**
+     * 테스트 오버라이드 허용 여부. 운영 프로필이 하나라도 있으면 false, 비운영 프로필이 없어도 false.
+     *
+     * @param environment Spring 환경 (null 이면 false)
+     * @return 허용이면 true
+     */
+    static boolean isTestOverrideAllowed(Environment environment) {
+        if (environment == null) {
+            return false;
+        }
+        if (environment.acceptsProfiles(Profiles.of(PRODUCTION_PROFILES))) {
+            return false;
+        }
+        for (String active : environment.getActiveProfiles()) {
+            for (String allowed : NON_PRODUCTION_PROFILES) {
+                if (allowed.equalsIgnoreCase(active.trim())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** 테스트 오버라이드(초). 0이면 꺼짐. */

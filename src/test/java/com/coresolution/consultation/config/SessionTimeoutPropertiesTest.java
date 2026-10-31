@@ -139,6 +139,39 @@ class SessionTimeoutPropertiesTest {
         assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"production", "prod", "prd", "live"})
+    @DisplayName("만료 테스트 훅 — 운영 프로필 이름(production 포함)이면 항상 꺼짐")
+    void testOverride_ignoredInAllProductionProfiles(String profile) {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles(profile);
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — dev 와 production 이 같이 켜져도 꺼짐")
+    void testOverride_ignoredWhenProductionMixedWithDev() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev", "production");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 프로필 미지정(기본)이면 꺼짐")
+    void testOverride_ignoredWithoutProfile() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        properties.configureTestOverride(new MockEnvironment(), 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+    }
+
     @Test
     @DisplayName("만료 테스트 훅 — 기본 0은 꺼짐")
     void testOverride_offByDefault() {

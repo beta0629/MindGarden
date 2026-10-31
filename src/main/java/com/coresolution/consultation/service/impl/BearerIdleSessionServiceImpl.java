@@ -46,14 +46,24 @@ public class BearerIdleSessionServiceImpl implements BearerIdleSessionService {
             log.warn("Bearer 세션 바인딩 스킵: user 또는 sid 없음");
             return;
         }
+        int timeoutSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole());
         UserSession existing = userSessionService.getActiveSession(bearerSessionId);
         if (existing != null) {
-            int timeoutMinutes = sessionTimeoutProperties.getTimeoutMinutesForRole(user.getRole());
             userSessionService.slideActiveSession(
                     bearerSessionId,
-                    timeoutMinutes,
+                    timeoutSeconds,
                     SessionConstants.BEARER_ACTIVITY_THROTTLE_SECONDS);
             log.debug("Bearer 세션 유지/슬라이드: sid={}, userId={}", bearerSessionId, user.getId());
+            return;
+        }
+        // createSession 의 deleteBySessionId 레이스 완화 — create 직전 활성 세션 재확인
+        existing = userSessionService.getActiveSession(bearerSessionId);
+        if (existing != null) {
+            userSessionService.slideActiveSession(
+                    bearerSessionId,
+                    timeoutSeconds,
+                    SessionConstants.BEARER_ACTIVITY_THROTTLE_SECONDS);
+            log.debug("Bearer 세션 재확인 후 슬라이드: sid={}, userId={}", bearerSessionId, user.getId());
             return;
         }
         userSessionService.createSession(
@@ -103,10 +113,10 @@ public class BearerIdleSessionServiceImpl implements BearerIdleSessionService {
         if (!StringUtils.hasText(bearerSessionId)) {
             return false;
         }
-        int timeoutMinutes = sessionTimeoutProperties.getTimeoutMinutesForRole(role);
+        int timeoutSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(role);
         return userSessionService.slideActiveSession(
                 bearerSessionId,
-                timeoutMinutes,
+                timeoutSeconds,
                 SessionConstants.BEARER_ACTIVITY_THROTTLE_SECONDS);
     }
 

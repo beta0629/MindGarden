@@ -57,8 +57,8 @@ public class UserSessionServiceImpl implements UserSessionService {
                     .user(user)
                     .sessionId(sessionId)
                     .lastActivityAt(now)
-                    .expiresAt(now.plusMinutes(
-                            sessionTimeoutProperties.getTimeoutMinutesForRole(user.getRole())))
+                    .expiresAt(now.plusSeconds(
+                            sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole())))
                     .clientIp(clientIp)
                     .userAgent(userAgent)
                     .loginType(loginType)
@@ -345,8 +345,8 @@ public class UserSessionServiceImpl implements UserSessionService {
     }
 
     @Override
-    public boolean slideActiveSession(String sessionId, int timeoutMinutes, long throttleSeconds) {
-        if (sessionId == null || sessionId.isBlank() || timeoutMinutes <= 0) {
+    public boolean slideActiveSession(String sessionId, int timeoutSeconds, long throttleSeconds) {
+        if (sessionId == null || sessionId.isBlank() || timeoutSeconds <= 0) {
             return false;
         }
         try {
@@ -364,13 +364,13 @@ public class UserSessionServiceImpl implements UserSessionService {
                 return true;
             }
             session.updateLastActivity();
-            session.extendExpiration(timeoutMinutes);
+            session.extendExpirationSeconds(timeoutSeconds);
             userSessionRepository.save(session);
-            log.debug("✅ 세션 슬라이딩 연장: sessionId={}, timeoutMinutes={}", sessionId, timeoutMinutes);
+            log.debug("✅ 세션 슬라이딩 연장: sessionId={}, timeoutSeconds={}", sessionId, timeoutSeconds);
             return true;
         } catch (Exception e) {
-            log.error("❌ 세션 슬라이딩 실패: sessionId={}, timeoutMinutes={}, error={}",
-                    sessionId, timeoutMinutes, e.getMessage(), e);
+            log.error("❌ 세션 슬라이딩 실패: sessionId={}, timeoutSeconds={}, error={}",
+                    sessionId, timeoutSeconds, e.getMessage(), e);
             return false;
         }
     }

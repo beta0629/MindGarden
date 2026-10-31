@@ -3,8 +3,10 @@ package com.coresolution.consultation.config.filter;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -178,6 +180,37 @@ class JwtAuthenticationFilterIdleTest {
         // Then
         verify(filterChain).doFilter(request, response);
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("활성 세션 직후 doFilter 5회 연속 성공 — 매번 touchActivity 호출")
+    void activeSession_fiveConsecutiveFilters_touchEachTime() throws Exception {
+        // Given
+        UserRole role = UserRole.CONSULTANT;
+        User user = activeUser(role);
+        stubValidBearerRequest(user);
+        when(bearerIdleSessionService.isBearerSessionActive(sid, role)).thenReturn(true);
+        when(bearerIdleSessionService.touchActivity(sid, role)).thenReturn(true);
+
+        // When — 요청 단위 SecurityContext 클리어 (실제 요청 경계와 동일)
+        for (int i = 0; i < 5; i++) {
+            SecurityContextHolder.clearContext();
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilterInternal(request, response, filterChain);
+            assertThat(response.getStatus())
+                    .as("연속 요청 #%d 는 401 이 아니어야 함", i + 1)
+                    .isNotEqualTo(HttpServletResponse.SC_UNAUTHORIZED);
+            assertThat(SecurityContextHolder.getContext().getAuthentication())
+                    .as("연속 요청 #%d 인증 설정", i + 1)
+                    .isNotNull();
+        }
+
+        // Then
+        verify(bearerIdleSessionService, times(5)).isBearerSessionActive(sid, role);
+        verify(bearerIdleSessionService, times(5)).touchActivity(sid, role);
+        verify(bearerIdleSessionService, never()).writeUnauthorizedIdle(any(), any());
+        verify(filterChain, times(5)).doFilter(eq(request), any(HttpServletResponse.class));
+        verify(filterChain, atLeast(5)).doFilter(any(), any());
     }
 
     private void stubValidBearerRequest(User user) {

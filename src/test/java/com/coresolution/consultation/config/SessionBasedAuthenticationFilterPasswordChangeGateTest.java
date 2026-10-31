@@ -137,7 +137,7 @@ class SessionBasedAuthenticationFilterPasswordChangeGateTest {
         when(userSessionService.getActiveSession(SESSION_ID)).thenReturn(dbSession);
         when(userSessionService.slideActiveSession(
                 eq(SESSION_ID),
-                eq(240),
+                eq(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT),
                 eq((long) SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS)))
                 .thenReturn(true);
 

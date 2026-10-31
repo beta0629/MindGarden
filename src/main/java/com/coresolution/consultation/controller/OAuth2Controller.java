@@ -4762,6 +4762,8 @@ public class OAuth2Controller extends BaseApiController {
                         user.getId(),
                         sessionId,
                         SessionManagementConstants.END_REASON_DUPLICATE_LOGIN);
+                // 이 요청에서 먼저 발급한 Access JWT sid 는 위 정리에 포함되므로 다시 활성 등록
+                jwtService.reassertIssuedAccessSessions(user);
             }
             String clientIp = HttpRequestClientIp.resolve(request);
             String userAgent = request.getHeader("User-Agent");

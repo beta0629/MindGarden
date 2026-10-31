@@ -381,10 +381,10 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
         try {
-            int timeoutMinutes = resolveSlidingTimeoutMinutes(session);
+            int timeoutSeconds = resolveSlidingTimeoutSeconds(session);
             userSessionService.slideActiveSession(
                     dbSessionId,
-                    timeoutMinutes,
+                    timeoutSeconds,
                     SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
         } catch (Exception e) {
             log.warn("⚠️ user_sessions 슬라이딩 실패(인증 유지): sessionId={}, error={}",
@@ -393,23 +393,23 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * DB user_sessions 슬라이딩 TTL(분). 세션 역할 우선, 없으면 기존 maxInactiveInterval, 최후 ADMIN 폴백.
+     * DB user_sessions 슬라이딩 TTL(초). 세션 역할 우선, 없으면 기존 maxInactiveInterval, 최후 ADMIN 폴백.
      *
      * @param session HttpSession (nullable)
-     * @return 타임아웃 분
+     * @return 타임아웃 초
      */
-    private int resolveSlidingTimeoutMinutes(HttpSession session) {
+    private int resolveSlidingTimeoutSeconds(HttpSession session) {
         if (session != null) {
             UserRole role = sessionTimeoutProperties.resolveRoleFromSession(session);
             if (role != null) {
-                return sessionTimeoutProperties.getTimeoutMinutesForRole(role);
+                return sessionTimeoutProperties.getTimeoutSecondsForRole(role);
             }
             int existingSeconds = session.getMaxInactiveInterval();
             if (existingSeconds > 0) {
-                return Math.max(1, existingSeconds / 60);
+                return existingSeconds;
             }
         }
-        return sessionTimeoutProperties.getTimeoutMinutes();
+        return sessionTimeoutProperties.getTimeoutSeconds();
     }
 
     /**

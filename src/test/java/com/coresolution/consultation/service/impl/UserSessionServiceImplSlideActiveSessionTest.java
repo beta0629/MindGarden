@@ -38,7 +38,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 class UserSessionServiceImplSlideActiveSessionTest {
 
     private static final String SESSION_ID = "ABCDEF0123456789ABCDEF0123456789";
-    private static final int TIMEOUT_MINUTES = 240;
+    /** ADMIN/컨테이너 폴백 TTL(초) — SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN */
+    private static final int TIMEOUT_SECONDS = SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN;
 
     @Mock
     private UserSessionRepository userSessionRepository;
@@ -55,7 +56,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
     }
 
     @Test
-    @DisplayName("활동 후 expiresAt·lastActivityAt 이 timeoutMinutes 기준으로 연장된다")
+    @DisplayName("활동 후 expiresAt·lastActivityAt 이 timeoutSeconds 기준으로 연장된다")
     void slideActiveSession_extendsExpiresAt() {
         LocalDateTime oldActivity = LocalDateTime.now().minusMinutes(31);
         LocalDateTime oldExpiry = LocalDateTime.now().plusHours(1);
@@ -65,7 +66,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
         when(userSessionRepository.save(any(UserSession.class))).thenAnswer(inv -> inv.getArgument(0));
 
         boolean ok = userSessionService.slideActiveSession(
-                SESSION_ID, TIMEOUT_MINUTES, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
+                SESSION_ID, TIMEOUT_SECONDS, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
 
         assertThat(ok).isTrue();
         ArgumentCaptor<UserSession> captor = ArgumentCaptor.forClass(UserSession.class);
@@ -73,8 +74,8 @@ class UserSessionServiceImplSlideActiveSessionTest {
         UserSession saved = captor.getValue();
         assertThat(saved.getLastActivityAt()).isAfter(oldActivity);
         assertThat(saved.getExpiresAt()).isAfter(oldExpiry);
-        assertThat(Duration.between(LocalDateTime.now(), saved.getExpiresAt()).toMinutes())
-                .isBetween((long) TIMEOUT_MINUTES - 2L, (long) TIMEOUT_MINUTES + 2L);
+        assertThat(Duration.between(LocalDateTime.now(), saved.getExpiresAt()).toSeconds())
+                .isBetween((long) TIMEOUT_SECONDS - 5L, (long) TIMEOUT_SECONDS + 5L);
     }
 
     @Test
@@ -87,7 +88,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
                 .thenReturn(Optional.of(session));
 
         boolean ok = userSessionService.slideActiveSession(
-                SESSION_ID, TIMEOUT_MINUTES, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
+                SESSION_ID, TIMEOUT_SECONDS, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
 
         assertThat(ok).isTrue();
         verify(userSessionRepository, never()).save(any());
@@ -102,7 +103,7 @@ class UserSessionServiceImplSlideActiveSessionTest {
                 .thenReturn(Optional.empty());
 
         boolean ok = userSessionService.slideActiveSession(
-                SESSION_ID, TIMEOUT_MINUTES, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
+                SESSION_ID, TIMEOUT_SECONDS, SessionConstants.SESSION_SLIDING_THROTTLE_SECONDS);
 
         assertThat(ok).isFalse();
         verify(userSessionRepository, never()).save(any());
@@ -118,8 +119,8 @@ class UserSessionServiceImplSlideActiveSessionTest {
                 .thenReturn(Optional.of(session));
         when(userSessionRepository.save(any(UserSession.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_MINUTES, 0)).isTrue();
-        assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_MINUTES, 0)).isTrue();
+        assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_SECONDS, 0)).isTrue();
+        assertThat(userSessionService.slideActiveSession(SESSION_ID, TIMEOUT_SECONDS, 0)).isTrue();
         verify(userSessionRepository, times(2)).save(any(UserSession.class));
     }
 

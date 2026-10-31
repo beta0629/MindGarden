@@ -215,15 +215,6 @@ public final class SessionConstants {
     public static final int SESSION_SLIDING_THROTTLE_SECONDS = 1800; // 30분
 
     /**
-     * Bearer last-activity DB write 스로틀 (초).
-     *
-     * <p>{@link com.coresolution.consultation.service.BearerIdleSessionService} 가
-     * Access JWT {@code sid} → {@code user_sessions} 슬라이딩 시 사용한다.
-     * 요청마다 DB write 를 하지 않도록 하한 30초를 둔다.</p>
-     */
-    public static final int BEARER_ACTIVITY_THROTTLE_SECONDS = 30;
-
-    /**
      * 최대 동시 세션 수 (비운영 기본).
      * 환경별 SSOT: {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_PRODUCTION} /
      * {@link SessionManagementConstants#MAX_CONCURRENT_SESSIONS_DEVELOPMENT}.

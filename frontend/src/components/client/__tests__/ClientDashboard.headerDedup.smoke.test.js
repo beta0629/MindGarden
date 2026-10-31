@@ -102,7 +102,6 @@ jest.mock('../../../utils/sessionManager', () => ({
   sessionManager: {
     getUser: () => mockSessionGetUser(),
     isLoggedIn: () => true,
-    getSessionInfo: jest.fn(() => null),
     setUser: jest.fn(),
     addListener: jest.fn(),
     removeListener: jest.fn()

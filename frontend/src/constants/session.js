@@ -135,7 +135,7 @@ export const SESSION_DURATION_BY_ROLE = Object.freeze({
 
 /**
  * 세션 잔여/만료 시각 UI 표시 상수
- * (UnifiedHeader·ProfileDropdown GNB·ClientWebTopChrome·MyPage·SessionIdleWarningModal).
+ * (UnifiedHeader·ProfileDropdown GNB·MyPage·SessionIdleWarningModal).
  * JWT·쿠키 원문은 표시하지 않는다.
  */
 export const SESSION_REMAINING_DISPLAY = Object.freeze({

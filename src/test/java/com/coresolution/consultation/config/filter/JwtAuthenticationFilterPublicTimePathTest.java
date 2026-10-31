@@ -31,8 +31,7 @@ class JwtAuthenticationFilterPublicTimePathTest {
                 mock(UserService.class),
                 mock(UserRepository.class),
                 mock(DuplicateLoginAccessBlockRegistry.class),
-                mock(AuthTokenRevocationService.class),
-                null);
+                mock(AuthTokenRevocationService.class));
 
         MockHttpServletRequest request = new MockHttpServletRequest("GET", SystemTimeConstants.API_PATH);
         request.setRequestURI(SystemTimeConstants.API_PATH);

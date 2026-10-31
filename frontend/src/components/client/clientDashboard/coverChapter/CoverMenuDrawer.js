@@ -5,7 +5,8 @@
  * @since 2026-10-29
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import useCoverDrawerFocus from '../../../common/coverChapter/useCoverDrawerFocus';
 import PropTypes from 'prop-types';
 import { Link, useLocation } from 'react-router-dom';
 import { CLIENT_DASHBOARD_ROUTES } from '../../../../constants/clientDashboardRoutes';
@@ -20,6 +21,7 @@ import {
   CLIENT_COVER_MENU_SHOP,
   CLIENT_COVER_MENU_TEST_ID
 } from '../constants';
+import '../../../common/coverChapter/CoverChapterMotion.css';
 import './CoverMenuDrawer.css';
 
 const MENU_LINKS = Object.freeze([
@@ -28,6 +30,29 @@ const MENU_LINKS = Object.freeze([
   { id: 'payment', label: CLIENT_COVER_MENU_PAYMENT, to: CLIENT_DASHBOARD_ROUTES.PAYMENT_HISTORY },
   { id: 'shop', label: CLIENT_COVER_MENU_SHOP, to: CLIENT_SHOP_ROUTES.CATALOG }
 ]);
+
+const DRAWER_PHASE = Object.freeze({ OPEN: 'open', CLOSING: 'closing', CLOSED: 'closed' });
+const COVER_DRAWER_TRIGGER_SELECTOR = '.client-web-topchrome__menu';
+const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+const prefersReducedMotion = () => (
+  typeof window !== 'undefined'
+  && typeof window.matchMedia === 'function'
+  && window.matchMedia(REDUCED_MOTION_QUERY).matches
+);
+
+/** 닫힘 애니메이션 길이(토큰 --mg-v2-motion-dur-fast 계산값) — 리터럴 없이 computed style에서 읽음 */
+const readAnimationMs = (el) => {
+  if (!el || typeof window === 'undefined' || typeof window.getComputedStyle !== 'function') {
+    return 0;
+  }
+  const raw = String(window.getComputedStyle(el).animationDuration || '').split(',')[0].trim();
+  const n = parseFloat(raw);
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+  return raw.endsWith('ms') ? n : n * 1000;
+};
 
 /**
  * @param {object} props
@@ -49,32 +74,68 @@ const CoverMenuDrawer = ({
   const { pathname } = useLocation();
   const links = Array.isArray(items) && items.length > 0 ? items : MENU_LINKS;
   const isCurrent = (item) => (activeId ? item.id === activeId : pathname === item.to);
+  const [phase, setPhase] = useState(isOpen ? DRAWER_PHASE.OPEN : DRAWER_PHASE.CLOSED);
+  const panelRef = useRef(null);
+
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      setPhase(DRAWER_PHASE.OPEN);
+      return;
+    }
+    setPhase((prev) => {
+      if (prev === DRAWER_PHASE.CLOSED) {
+        return prev;
+      }
+      return prefersReducedMotion() ? DRAWER_PHASE.CLOSED : DRAWER_PHASE.CLOSING;
+    });
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (phase !== DRAWER_PHASE.CLOSING) {
       return undefined;
     }
-    const onKey = (e) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isOpen, onClose]);
+    /* animationend 미발생 환경(jsdom 등) 대비 — 계산된 duration 후 언마운트 */
+    const timer = setTimeout(() => setPhase(DRAWER_PHASE.CLOSED), readAnimationMs(panelRef.current));
+    return () => clearTimeout(timer);
+  }, [phase]);
 
-  if (!isOpen) {
+  useCoverDrawerFocus({
+    isOpen,
+    panelRef,
+    onClose,
+    returnFocusSelector: COVER_DRAWER_TRIGGER_SELECTOR
+  });
+
+  const handlePanelAnimationEnd = (e) => {
+    if (e.target === e.currentTarget && phase === DRAWER_PHASE.CLOSING) {
+      setPhase(DRAWER_PHASE.CLOSED);
+    }
+  };
+
+  if (phase === DRAWER_PHASE.CLOSED && !isOpen) {
     return null;
   }
 
   return (
-    <div className="client-cover__menu" data-testid={CLIENT_COVER_MENU_TEST_ID}>
+    <div
+      className="client-cover__menu"
+      data-testid={CLIENT_COVER_MENU_TEST_ID}
+      data-state={phase === DRAWER_PHASE.CLOSING ? DRAWER_PHASE.CLOSING : DRAWER_PHASE.OPEN}
+    >
       <button
         type="button"
         className="client-cover__menu-backdrop"
         aria-label={CLIENT_COVER_MENU_CLOSE_ARIA}
         onClick={onClose}
       />
-      <aside className="client-cover__menu-panel" role="dialog" aria-label={CLIENT_COVER_MENU_ARIA}>
+      <aside
+        ref={panelRef}
+        className="client-cover__menu-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={CLIENT_COVER_MENU_ARIA}
+        onAnimationEnd={handlePanelAnimationEnd}
+      >
         <ul className="client-cover__menu-list">
           {links.map((item) => (
             <li key={item.id}>

@@ -56,7 +56,7 @@ const resolveZeroBody = (sheetKind, todayCount) => {
 };
 
 /**
- * Clinic-OS Next-Sheet — has: 상담 열기+일정 / zero: 일정 열기 only
+ * Clinic-OS Next-Sheet — has: 상담일지 열기+일정 / zero: 일정 열기 only
  *
  * @author CoreSolution
  * @since 2026-10-29

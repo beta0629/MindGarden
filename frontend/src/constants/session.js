@@ -112,13 +112,30 @@ export const EXISTING_SESSION_CHECK_DELAY = 500; // OAuth2 콜백 후 세션 쿠
 // 정기 세션 확인 간격 (밀리초)
 export const PERIODIC_SESSION_CHECK_INTERVAL = 10 * 60 * 1000; // 10분
 
-// 세션 만료 시간 폴백 (밀리초) — SSOT: HTTP_SESSION_MAX_INACTIVE / server.servlet.session.timeout(기본 4h).
+// 세션 만료 시간 폴백 (밀리초) — ADMIN 4h. BE SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN 과 정합.
 // 런타임 idle 경고는 session-info.maxInactiveInterval 우선 (SessionIdleWarningModal).
+// 역할별 폴백은 SESSION_DURATION_BY_ROLE / getSessionDurationMsForRole.
 export const SESSION_DURATION = 4 * 60 * 60 * 1000; // 4시간 (14400000ms)
+
+/** 역할별 유휴 TTL(초) — BE SessionConstants SESSION_TIMEOUT_SECONDS_* 와 동일 */
+export const SESSION_TIMEOUT_SECONDS_BY_ROLE = Object.freeze({
+  CLIENT: 1 * 60 * 60, // 3600
+  CONSULTANT: 2 * 60 * 60, // 7200
+  ADMIN: 4 * 60 * 60, // 14400
+  STAFF: 4 * 60 * 60 // 14400 — 관리자 계열
+});
+
+/** 역할별 유휴 TTL(밀리초) — SESSION_TIMEOUT_SECONDS_BY_ROLE × 1000 */
+export const SESSION_DURATION_BY_ROLE = Object.freeze({
+  CLIENT: SESSION_TIMEOUT_SECONDS_BY_ROLE.CLIENT * 1000,
+  CONSULTANT: SESSION_TIMEOUT_SECONDS_BY_ROLE.CONSULTANT * 1000,
+  ADMIN: SESSION_TIMEOUT_SECONDS_BY_ROLE.ADMIN * 1000,
+  STAFF: SESSION_TIMEOUT_SECONDS_BY_ROLE.STAFF * 1000
+});
 
 /**
  * 세션 잔여/만료 시각 UI 표시 상수
- * (UnifiedHeader·ProfileDropdown GNB·MyPage·SessionIdleWarningModal).
+ * (UnifiedHeader·ProfileDropdown GNB·ClientWebTopChrome·MyPage·SessionIdleWarningModal).
  * JWT·쿠키 원문은 표시하지 않는다.
  */
 export const SESSION_REMAINING_DISPLAY = Object.freeze({
@@ -184,6 +201,28 @@ const resolveDashboardRoleKey = (role) => {
 export function getDashboardPathByRole(role) {
   const dashboardKey = resolveDashboardRoleKey(role);
   return DASHBOARD_PATHS[dashboardKey] || DASHBOARD_PATHS.CLIENT;
+}
+
+/**
+ * 역할별 세션 유휴 폴백 기간(ms). BE getTimeoutSecondsForRole 과 동일 초.
+ * 알 수 없는·빈 역할은 ADMIN(SESSION_DURATION) 폴백.
+ *
+ * @param {string|null|undefined} role
+ * @returns {number}
+ */
+export function getSessionDurationMsForRole(role) {
+  if (role == null || role === '') {
+    return SESSION_DURATION;
+  }
+  const normalized = String(role).trim().toUpperCase().replace(/^ROLE_/, '');
+  if (SESSION_DURATION_BY_ROLE[normalized] != null) {
+    return SESSION_DURATION_BY_ROLE[normalized];
+  }
+  const legacyKey = LEGACY_ROLE_TO_DASHBOARD_KEY[normalized];
+  if (legacyKey && SESSION_DURATION_BY_ROLE[legacyKey] != null) {
+    return SESSION_DURATION_BY_ROLE[legacyKey];
+  }
+  return SESSION_DURATION;
 }
 
 // 기본 대시보드 경로

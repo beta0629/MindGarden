@@ -154,6 +154,12 @@ public final class SessionManagementConstants {
     public static final String REQUEST_ATTR_PENDING_TOKEN_SESSION_IDS = "mg.auth.pending-token-session-ids";
 
     /**
+     * 동일 요청 안에서 발급한 Access JWT sid 목록(사용자별) 요청 속성 키.
+     * OAuth 웹 콜백이 mint 뒤 중복 로그인 정리를 해도 신규 sid 를 다시 활성화하기 위해 쓴다.
+     */
+    public static final String REQUEST_ATTR_ISSUED_ACCESS_SESSION_IDS = "mg.auth.issued-access-session-ids";
+
+    /**
      * 현재 세션 로그아웃으로 폐기된 Access JWT (SHA-256) Redis 키 접두사.
      */
     public static final String REVOKED_ACCESS_TOKEN_KEY_PREFIX = "auth:revoked:access:";

@@ -6,12 +6,17 @@ import java.time.Duration;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.env.MockEnvironment;
+import org.springframework.mock.web.MockHttpSession;
 
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.utils.SessionUtils;
 
 /**
- * HttpSession TTL SSOT(기본 4h) 스모크.
+ * HttpSession TTL SSOT — 컨테이너 기본 4h + 역할별 TTL.
  *
  * @author MindGarden
  * @since 2026-08-05
@@ -20,6 +25,8 @@ class SessionTimeoutPropertiesTest {
 
     private static final int FOUR_HOURS_SECONDS = 4 * 60 * 60;
     private static final int FOUR_HOURS_MINUTES = 240;
+    private static final int ONE_HOUR_SECONDS = 1 * 60 * 60;
+    private static final int TWO_HOURS_SECONDS = 2 * 60 * 60;
 
     @Test
     @DisplayName("SessionTimeoutProperties 기본 4h는 14400초·240분")
@@ -31,8 +38,29 @@ class SessionTimeoutPropertiesTest {
     }
 
     @Test
-    @DisplayName("SessionConstants·SessionManagementConstants 폴백이 4h SSOT와 정합")
-    void fallbackConstantsMatchFourHourSsot() {
+    @DisplayName("역할별 TTL — CLIENT 1h, CONSULTANT 2h, ADMIN/STAFF 4h, null→ADMIN 폴백")
+    void timeoutSecondsForRole_matchesRoleMap() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CONSULTANT)).isEqualTo(TWO_HOURS_SECONDS);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.ADMIN)).isEqualTo(FOUR_HOURS_SECONDS);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.STAFF)).isEqualTo(FOUR_HOURS_SECONDS);
+        assertThat(properties.getTimeoutSecondsForRole((UserRole) null)).isEqualTo(FOUR_HOURS_SECONDS);
+        assertThat(properties.getTimeoutSecondsForRole((String) null)).isEqualTo(FOUR_HOURS_SECONDS);
+        assertThat(properties.getTimeoutMinutesForRole(UserRole.CLIENT)).isEqualTo(60);
+        assertThat(properties.getTimeoutMinutesForRole(UserRole.CONSULTANT)).isEqualTo(120);
+        assertThat(properties.getTimeoutMinutesForRole(UserRole.ADMIN)).isEqualTo(240);
+    }
+
+    @Test
+    @DisplayName("SessionConstants 역할별 상수·폴백이 역할 맵과 정합")
+    void fallbackConstantsMatchRoleSsot() {
+        assertThat(SessionConstants.SESSION_TIMEOUT_SECONDS_CLIENT).isEqualTo(ONE_HOUR_SECONDS);
+        assertThat(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT).isEqualTo(TWO_HOURS_SECONDS);
+        assertThat(SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN).isEqualTo(FOUR_HOURS_SECONDS);
+        assertThat(SessionConstants.SESSION_TIMEOUT_SECONDS_STAFF)
+                .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN);
         assertThat(SessionConstants.SESSION_TIMEOUT_SECONDS).isEqualTo(FOUR_HOURS_SECONDS);
         assertThat(SessionConstants.BUSINESS_SESSION_TIMEOUT_SECONDS)
                 .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS);
@@ -50,6 +78,27 @@ class SessionTimeoutPropertiesTest {
     }
 
     @Test
+    @DisplayName("resolveTimeoutSeconds — 세션 User 역할 우선, 역할 없으면 기존 interval 유지")
+    void resolveTimeoutSeconds_usesRoleOrKeepsExisting() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+
+        MockHttpSession withUser = new MockHttpSession();
+        User consultant = new User();
+        consultant.setRole(UserRole.CONSULTANT);
+        SessionUtils.setCurrentUser(withUser, consultant);
+        assertThat(properties.resolveTimeoutSeconds(withUser)).isEqualTo(TWO_HOURS_SECONDS);
+
+        MockHttpSession noRole = new MockHttpSession();
+        noRole.setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS_CLIENT);
+        assertThat(properties.resolveTimeoutSeconds(noRole))
+                .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS_CLIENT);
+
+        MockHttpSession empty = new MockHttpSession();
+        empty.setMaxInactiveInterval(0);
+        assertThat(properties.resolveTimeoutSeconds(empty)).isEqualTo(FOUR_HOURS_SECONDS);
+    }
+
+    @Test
     @DisplayName("동시 세션 상수 — 레거시 운영1/개발3 + Spring CEILING(-1) SSOT")
     void maxConcurrentSessionsMatchSecuritySsot() {
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_PRODUCTION).isEqualTo(1);
@@ -61,5 +110,76 @@ class SessionTimeoutPropertiesTest {
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_SPRING_CEILING).isEqualTo(-1);
         assertThat(SessionManagementConstants.MAX_CONCURRENT_SESSIONS_WHEN_DUPLICATE_ALLOWED)
                 .isEqualTo(-1);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 비운영 프로필에서 override>0이면 전 역할 TTL 대체")
+    void testOverride_appliesOutsideProd() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CONSULTANT)).isEqualTo(120);
+        assertThat(properties.getTimeoutSecondsForRole("ADMIN")).isEqualTo(120);
+        assertThat(properties.resolveTimeoutSeconds(new MockHttpSession())).isEqualTo(120);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — prod 프로필에서는 항상 꺼짐")
+    void testOverride_ignoredInProd() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("prod");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"production", "prod", "prd", "live"})
+    @DisplayName("만료 테스트 훅 — 운영 프로필 이름(production 포함)이면 항상 꺼짐")
+    void testOverride_ignoredInAllProductionProfiles(String profile) {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles(profile);
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CLIENT)).isEqualTo(ONE_HOUR_SECONDS);
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — dev 와 production 이 같이 켜져도 꺼짐")
+    void testOverride_ignoredWhenProductionMixedWithDev() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev", "production");
+        properties.configureTestOverride(env, 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 프로필 미지정(기본)이면 꺼짐")
+    void testOverride_ignoredWithoutProfile() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        properties.configureTestOverride(new MockEnvironment(), 120);
+
+        assertThat(properties.getTestOverrideSeconds()).isZero();
+    }
+
+    @Test
+    @DisplayName("만료 테스트 훅 — 기본 0은 꺼짐")
+    void testOverride_offByDefault() {
+        SessionTimeoutProperties properties = new SessionTimeoutProperties(Duration.ofHours(4));
+        MockEnvironment env = new MockEnvironment();
+        env.setActiveProfiles("dev");
+        properties.configureTestOverride(env, 0);
+
+        assertThat(properties.getTimeoutSecondsForRole(UserRole.CONSULTANT)).isEqualTo(TWO_HOURS_SECONDS);
     }
 }

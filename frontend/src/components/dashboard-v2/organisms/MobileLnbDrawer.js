@@ -8,7 +8,9 @@
  * @since 2025-02-22
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import useCoverDrawerFocus from '../../common/coverChapter/useCoverDrawerFocus';
+import '../../common/coverChapter/CoverChapterMotion.css';
 import { useLocation } from 'react-router-dom';
 import { NavLinkWithRouter } from '../atoms';
 import Icon from '../../ui/Icon/Icon';
@@ -26,6 +28,10 @@ import {
 } from '../utils/lnbAccordion';
 import './MobileLnbDrawer.css';
 
+/** 상담사 soft-sheet ☰ 드로어 — 하네스·테스트 셀렉터 */
+export const COUNSELOR_MENU_DRAWER_TEST_ID = 'counselor-menu-drawer';
+const COUNSELOR_MENU_TRIGGER_SELECTOR = '.mg-v2-mobile-gnb__menu';
+
 const MobileLnbDrawer = ({
   isOpen,
   onClose,
@@ -37,6 +43,15 @@ const MobileLnbDrawer = ({
   const location = useLocation();
   const { pathname } = location;
   const isSoftSheet = variant === 'soft-sheet';
+  const panelRef = useRef(null);
+
+  /* 상담사 soft-sheet: 내담자 CoverMenuDrawer와 같은 공통 훅(포커스·Tab 트랩·Esc·☰ 복귀) */
+  useCoverDrawerFocus({
+    isOpen: isSoftSheet && isOpen,
+    panelRef,
+    onClose,
+    returnFocusSelector: COUNSELOR_MENU_TRIGGER_SELECTOR
+  });
 
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
     getInitialExpandedKey(menuItems, pathname)
@@ -56,7 +71,7 @@ const MobileLnbDrawer = ({
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) {
+    if (!isOpen || isSoftSheet) {
       return undefined;
     }
     const onKeyDown = (e) => {
@@ -66,7 +81,7 @@ const MobileLnbDrawer = ({
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, isSoftSheet, onClose]);
 
   const handleGroupToggle = (e, groupKey) => {
     e.preventDefault();
@@ -93,9 +108,13 @@ const MobileLnbDrawer = ({
         aria-label="메뉴 닫기"
       />
       <aside
+        ref={panelRef}
         className={drawerClassName}
         role="navigation"
         aria-label="메뉴"
+        {...(isSoftSheet
+          ? { 'data-testid': COUNSELOR_MENU_DRAWER_TEST_ID, 'aria-hidden': !isOpen }
+          : {})}
       >
         <div className="mg-v2-mobile-lnb-drawer__header">
           <span className="mg-v2-mobile-lnb-drawer__title">{headerTitle}</span>

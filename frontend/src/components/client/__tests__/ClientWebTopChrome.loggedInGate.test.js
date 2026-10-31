@@ -11,6 +11,10 @@ import { MemoryRouter } from 'react-router-dom';
 import ClientWebTopChrome from '../ClientWebTopChrome';
 import { CLIENT_WEB_LOGIN } from '../../../constants/clientWebChromeConstants';
 
+jest.mock('../../../contexts/SessionContext', () => ({
+  useSession: () => ({ user: null, sessionInfo: null })
+}));
+
 jest.mock('../../../contexts/NotificationContext', () => ({
   useNotification: () => ({ unreadMessageCount: 0, unreadSystemCount: 0 })
 }));

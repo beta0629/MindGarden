@@ -7,7 +7,7 @@
 import { storage } from './common';
 import { getLegacyDashboardPath } from './dashboardUtils';
 import { redirectToLoginPageOnce } from './sessionRedirect';
-import { SESSION_DURATION, SESSION_KEYS } from '../constants/session';
+import { SESSION_KEYS, getSessionDurationMsForRole } from '../constants/session';
 
 /**
  * 세션 초기화
@@ -41,9 +41,10 @@ export const setLoginSession = (userInfo, tokens) => {
     // 사용자 정보 저장
     storage.set(SESSION_KEYS.USER_INFO, userInfo);
     
-    // 로그인 시간 설정
+    // 로그인 시간 설정 — 역할별 폴백 TTL (런타임은 session-info.maxInactiveInterval 우선)
     const loginTime = Date.now();
-    const sessionExpiry = loginTime + SESSION_DURATION;
+    const durationMs = getSessionDurationMsForRole(userInfo && userInfo.role);
+    const sessionExpiry = loginTime + durationMs;
     storage.set(SESSION_KEYS.LOGIN_TIME, loginTime);
     storage.set(SESSION_KEYS.SESSION_EXPIRY, sessionExpiry);
     
@@ -171,9 +172,10 @@ export const refreshSession = (newTokens) => {
       storage.set(SESSION_KEYS.REFRESH_TOKEN, newTokens.refreshToken);
     }
     
-    // 세션 시간 갱신
+    // 세션 시간 갱신 — 역할별 폴백 TTL
     const loginTime = Date.now();
-    const sessionExpiry = loginTime + SESSION_DURATION;
+    const durationMs = getSessionDurationMsForRole(user && user.role);
+    const sessionExpiry = loginTime + durationMs;
     storage.set(SESSION_KEYS.LOGIN_TIME, loginTime);
     storage.set(SESSION_KEYS.SESSION_EXPIRY, sessionExpiry);
     

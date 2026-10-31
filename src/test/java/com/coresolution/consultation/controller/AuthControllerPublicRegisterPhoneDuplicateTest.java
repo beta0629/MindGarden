@@ -82,6 +82,12 @@ class AuthControllerPublicRegisterPhoneDuplicateTest {
     @Mock
     private Environment environment;
     @Mock
+    private com.coresolution.consultation.config.SessionCookieSupport sessionCookieSupport;
+    @Mock
+    private com.coresolution.consultation.config.SessionTimeoutProperties sessionTimeoutProperties;
+    @Mock
+    private com.coresolution.consultation.service.BearerIdleSessionService bearerIdleSessionService;
+    @Mock
     private com.coresolution.consultation.service.ClientProfilePhoneVerificationService
             clientProfilePhoneVerificationService;
 

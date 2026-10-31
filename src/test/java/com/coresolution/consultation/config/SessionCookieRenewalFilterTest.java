@@ -27,6 +27,9 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.coresolution.consultation.constant.SessionConstants;
+import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.utils.SessionUtils;
 
 /**
  * {@link SessionCookieRenewalFilter} — 스로틀 전후 Set-Cookie / Max-Age 검증.
@@ -160,8 +163,8 @@ class SessionCookieRenewalFilterTest {
     }
 
     @Test
-    @DisplayName("HttpSession maxInactiveInterval 이 SSOT와 다르면 SSOT로 정렬 후 동일 Max-Age 발급")
-    void misalignedSessionTimeout_isRealignedToSsot() throws Exception {
+    @DisplayName("역할 미상 + interval 불일치: 기존 maxInactiveInterval 유지(짧은/긴 TTL로 덮지 않음)")
+    void misalignedSessionTimeout_withoutRole_keepsExistingInterval() throws Exception {
         MockHttpSession session = new MockHttpSession(null, SESSION_ID);
         session.setMaxInactiveInterval(SessionConstants.SESSION_REFRESH_INTERVAL_SECONDS);
 
@@ -173,8 +176,32 @@ class SessionCookieRenewalFilterTest {
         setAuthenticated();
         filter.doFilterInternal(request, response, chain);
 
-        assertThat(session.getMaxInactiveInterval()).isEqualTo(MAX_INACTIVE);
-        assertThat(findJsessionSetCookie(response)).contains("Max-Age=" + MAX_INACTIVE);
+        assertThat(session.getMaxInactiveInterval())
+                .isEqualTo(SessionConstants.SESSION_REFRESH_INTERVAL_SECONDS);
+        assertThat(findJsessionSetCookie(response))
+                .contains("Max-Age=" + SessionConstants.SESSION_REFRESH_INTERVAL_SECONDS);
+    }
+
+    @Test
+    @DisplayName("세션 User 역할(CONSULTANT)이면 역할 TTL(2h)로 Max-Age·interval 정렬")
+    void renewWithConsultantRole_usesRoleTtl() throws Exception {
+        MockHttpSession session = new MockHttpSession(null, SESSION_ID);
+        session.setMaxInactiveInterval(MAX_INACTIVE);
+        User user = new User();
+        user.setRole(UserRole.CONSULTANT);
+        SessionUtils.setCurrentUser(session, user);
+
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", REQUEST_PATH);
+        request.setSession(session);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+
+        setAuthenticated();
+        filter.doFilterInternal(request, response, chain);
+
+        int consultantTtl = SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT;
+        assertThat(session.getMaxInactiveInterval()).isEqualTo(consultantTtl);
+        assertThat(findJsessionSetCookie(response)).contains("Max-Age=" + consultantTtl);
     }
 
     @Test

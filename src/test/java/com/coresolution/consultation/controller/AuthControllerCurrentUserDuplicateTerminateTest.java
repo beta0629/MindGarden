@@ -17,6 +17,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OtpDeliveryService;
+import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
@@ -82,9 +83,11 @@ class AuthControllerCurrentUserDuplicateTerminateTest {
     @Mock private Environment environment;
     @Mock private JwtService jwtService;
     @Mock private RefreshTokenService refreshTokenService;
+    @Mock private BearerIdleSessionService bearerIdleSessionService;
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
     @Mock private SessionCookieSupport sessionCookieSupport;
+    @Mock private com.coresolution.consultation.config.SessionTimeoutProperties sessionTimeoutProperties;
     @Mock private com.coresolution.consultation.service.ClientProfilePhoneVerificationService
             clientProfilePhoneVerificationService;
 

@@ -107,6 +107,10 @@ class OAuth2ControllerWebOAuthSessionTest {
     @BeforeEach
     void setUp() {
         when(sessionTimeoutProperties.getTimeoutSeconds()).thenReturn(TIMEOUT_SECONDS);
+        when(sessionTimeoutProperties.getTimeoutSecondsForRole(any(UserRole.class)))
+                .thenReturn(TIMEOUT_SECONDS);
+        when(sessionTimeoutProperties.getTimeoutSecondsForRole(anyString()))
+                .thenReturn(TIMEOUT_SECONDS);
         when(systemConfigService.isDuplicateLoginAllowedForTenant(any())).thenReturn(true);
         when(oauthWebSessionExchangeCodeService.isEnabled()).thenReturn(false);
         when(oauthWebSessionExchangeCodeService.issue(anyString(), anyString(), any(), any()))
@@ -355,5 +359,6 @@ class OAuth2ControllerWebOAuthSessionTest {
 
         assertThat(pair).containsExactly("access-jwt-web-oauth", "refresh-jwt-web-oauth");
         verify(refreshTokenService).createRefreshToken(eq(user), eq("refresh-jwt-web-oauth"), eq(request));
+        verify(jwtService).generateTokenForOAuth(eq(user), any());
     }
 }

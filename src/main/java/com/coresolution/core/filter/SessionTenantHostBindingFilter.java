@@ -122,7 +122,8 @@ public class SessionTenantHostBindingFilter extends OncePerRequestFilter impleme
         if (sessionCookieSupport.resolveLegacySharedDomain() == null) {
             return;
         }
-        int maxAge = sessionTimeoutProperties.getTimeoutSeconds();
+        // 역할 알면 역할 TTL, 모르면 세션에 이미 설정된 interval 유지 (짧은 TTL로 덮지 않음)
+        int maxAge = sessionTimeoutProperties.resolveTimeoutSeconds(session);
         if (maxAge <= 0) {
             return;
         }

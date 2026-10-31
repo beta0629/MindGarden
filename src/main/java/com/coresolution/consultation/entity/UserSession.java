@@ -183,8 +183,22 @@ public class UserSession {
     }
     
     /**
-     * 세션 만료 시간 연장
+     * 세션 만료 시간을 초 단위로 연장한다 (TTL SSOT).
+     *
+     * @param seconds 연장 TTL(초)
      */
+    public void extendExpirationSeconds(int seconds) {
+        this.expiresAt = LocalDateTime.now().plusSeconds(seconds);
+    }
+
+    /**
+     * 세션 만료 시간 연장 (분).
+     *
+     * @param minutes 연장 TTL(분)
+     * @deprecated 초 단위 {@link #extendExpirationSeconds(int)} 를 사용한다.
+     *             분 절사로 override&lt;60s 가 expires=0 이 되는 회귀를 피한다.
+     */
+    @Deprecated
     public void extendExpiration(int minutes) {
         this.expiresAt = LocalDateTime.now().plusMinutes(minutes);
     }

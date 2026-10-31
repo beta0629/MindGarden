@@ -161,13 +161,36 @@ public final class SessionConstants {
     // ===== 세션 관리 관련 상수 =====
     
     /**
-     * HTTP 세션 비활성 타임아웃 폴백 (초).
+     * 역할별 HTTP 세션 유휴 TTL — CLIENT (내담자) 1시간.
+     * <p>런타임 해석은 {@link com.coresolution.consultation.config.SessionTimeoutProperties#getTimeoutSecondsForRole}.</p>
+     */
+    public static final int SESSION_TIMEOUT_SECONDS_CLIENT = 1 * 60 * 60; // 3600
+
+    /**
+     * 역할별 HTTP 세션 유휴 TTL — CONSULTANT (상담사) 2시간.
+     */
+    public static final int SESSION_TIMEOUT_SECONDS_CONSULTANT = 2 * 60 * 60; // 7200
+
+    /**
+     * 역할별 HTTP 세션 유휴 TTL — ADMIN (관리자) 4시간.
+     * <p>컨테이너 기본({@code server.servlet.session.timeout})·미인증 폴백과 동일.</p>
+     */
+    public static final int SESSION_TIMEOUT_SECONDS_ADMIN = 4 * 60 * 60; // 14400
+
+    /**
+     * 역할별 HTTP 세션 유휴 TTL — STAFF (사무원). 관리자 계열로 ADMIN 과 동일(4h).
+     */
+    public static final int SESSION_TIMEOUT_SECONDS_STAFF = SESSION_TIMEOUT_SECONDS_ADMIN;
+
+    /**
+     * HTTP 세션 비활성 타임아웃 폴백 (초) — ADMIN 4h.
      * <p>SSOT: env {@code HTTP_SESSION_MAX_INACTIVE} /
      * {@code server.servlet.session.timeout} (application.yml 기본 {@code 4h}).
-     * 런타임은 {@link com.coresolution.consultation.config.SessionTimeoutProperties} 를 우선 사용한다.</p>
+     * 역할별 값은 {@link #SESSION_TIMEOUT_SECONDS_CLIENT} 등 +
+     * {@link com.coresolution.consultation.config.SessionTimeoutProperties#getTimeoutSecondsForRole}.</p>
      * <p>웹 HttpSession TTL(기본 4h) ≠ Access JWT({@code jwt.expiration}=1h) — 계층 분리.</p>
      */
-    public static final int SESSION_TIMEOUT_SECONDS = 4 * 60 * 60; // 14400 — HTTP_SESSION_MAX_INACTIVE:4h
+    public static final int SESSION_TIMEOUT_SECONDS = SESSION_TIMEOUT_SECONDS_ADMIN;
 
     /**
      * 비즈니스 세션에서 요구하는 비활성 하한(초). 로그인 세션과 동일하게 두어 {@link #SESSION_TIMEOUT_SECONDS}와 정합.
@@ -190,6 +213,15 @@ public final class SessionConstants {
      * FE session-info UI 리필(~45s)과 주기가 달라도 정상이다.</p>
      */
     public static final int SESSION_SLIDING_THROTTLE_SECONDS = 1800; // 30분
+
+    /**
+     * Bearer last-activity DB write 스로틀 (초).
+     *
+     * <p>{@link com.coresolution.consultation.service.BearerIdleSessionService} 가
+     * Access JWT {@code sid} → {@code user_sessions} 슬라이딩 시 사용한다.
+     * 요청마다 DB write 를 하지 않도록 하한 30초를 둔다.</p>
+     */
+    public static final int BEARER_ACTIVITY_THROTTLE_SECONDS = 30;
 
     /**
      * 최대 동시 세션 수 (비운영 기본).
@@ -220,4 +252,20 @@ public final class SessionConstants {
      * 세션 상태 - 일시정지
      */
     public static final String SESSION_STATUS_SUSPENDED = "SUSPENDED";
+
+    /**
+     * Bearer 서버 세션 키 접두사. {@code user_sessions.session_id} 에 Access JWT sid 대신 저장되는
+     * HMAC 키({@code bjs_} + base64url)이며 쿠키(JSESSIONID) 경로에서는 복원하지 않는다.
+     */
+    public static final String BEARER_SESSION_KEY_PREFIX = "bjs_";
+
+    /**
+     * Bearer 서버 세션 키인지 판정한다.
+     *
+     * @param sessionId 세션 ID (nullable)
+     * @return {@link #BEARER_SESSION_KEY_PREFIX} 로 시작하면 true
+     */
+    public static boolean isBearerSessionKey(String sessionId) {
+        return sessionId != null && sessionId.startsWith(BEARER_SESSION_KEY_PREFIX);
+    }
 }

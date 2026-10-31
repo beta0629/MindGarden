@@ -146,4 +146,20 @@ class JwtServiceBearerIdleHookTest {
         user.setTenantId("tenant-" + UUID.randomUUID());
         return user;
     }
+
+    @Test
+    @DisplayName("OAuth 중복 로그인 정리 뒤 reassert 가 같은 요청에서 발급한 sid 를 다시 등록")
+    void reassertIssuedAccessSessions_reRegistersMintedSid() {
+        User user = user(UserRole.CLIENT);
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader("User-Agent", "junit-hook-agent");
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+        String access = jwtService.generateTokenForOAuth(user, List.of("READ"));
+        String sid = jwtService.extractSessionId(access);
+
+        jwtService.reassertIssuedAccessSessions(user);
+
+        verify(bearerIdleSessionService, org.mockito.Mockito.times(2))
+                .ensureActiveSession(eq(user), eq(sid), any(), eq("junit-hook-agent"));
+    }
 }

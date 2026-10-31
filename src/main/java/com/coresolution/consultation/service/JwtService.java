@@ -170,8 +170,63 @@ public class JwtService {
         
         // 표준화 2025-12-08: username = userId이므로 subject에 userId 사용
         String accessToken = buildToken(claims, user.getUserId(), jwtExpiration);
+        rememberIssuedAccessSessionId(user, sessionId);
         registerBearerIdleSession(user, sessionId);
         return accessToken;
+    }
+
+    /**
+     * 현재 요청에서 이 사용자에게 발급한 Access sid 를 {@code user_sessions} 에 다시 활성 등록한다.
+     *
+     * <p>OAuth 웹 콜백처럼 Access mint 뒤에 중복 로그인 정리(다른 세션 비활성)가 실행되는 경로에서
+     * 방금 발급한 sid 가 같이 종료되지 않도록 정리 직후 호출한다.</p>
+     *
+     * @param user 로그인 사용자
+     */
+    public void reassertIssuedAccessSessions(User user) {
+        if (user == null) {
+            return;
+        }
+        Map<String, List<String>> issued = issuedAccessSessionIds(false);
+        if (issued == null) {
+            return;
+        }
+        List<String> sids = issued.get(pendingSessionKey(user));
+        if (sids == null) {
+            return;
+        }
+        for (String sid : new ArrayList<>(sids)) {
+            registerBearerIdleSession(user, sid);
+        }
+    }
+
+    private void rememberIssuedAccessSessionId(User user, String sessionId) {
+        if (user == null || !StringUtils.hasText(sessionId)) {
+            return;
+        }
+        Map<String, List<String>> issued = issuedAccessSessionIds(true);
+        if (issued != null) {
+            issued.computeIfAbsent(pendingSessionKey(user), k -> new ArrayList<>()).add(sessionId);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, List<String>> issuedAccessSessionIds(boolean create) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return null;
+        }
+        String attrName = SessionManagementConstants.REQUEST_ATTR_ISSUED_ACCESS_SESSION_IDS;
+        Object existing = attributes.getAttribute(attrName, RequestAttributes.SCOPE_REQUEST);
+        if (existing instanceof Map) {
+            return (Map<String, List<String>>) existing;
+        }
+        if (!create) {
+            return null;
+        }
+        Map<String, List<String>> created = new HashMap<>();
+        attributes.setAttribute(attrName, created, RequestAttributes.SCOPE_REQUEST);
+        return created;
     }
 
     /**

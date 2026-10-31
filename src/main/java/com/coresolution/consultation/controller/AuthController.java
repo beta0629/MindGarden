@@ -21,7 +21,6 @@ import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
-import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.JwtService;
@@ -114,7 +113,6 @@ public class AuthController extends BaseApiController {
     private final org.springframework.core.env.Environment environment;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
-    private final BearerIdleSessionService bearerIdleSessionService;
     private final SmsOtpVerificationService smsOtpVerificationService;
     private final OtpDeliveryService otpDeliveryService;
     private final SessionCookieSupport sessionCookieSupport;
@@ -901,7 +899,6 @@ public class AuthController extends BaseApiController {
                 List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
                 issuedAccessToken = jwtService.generateToken(sessionUser, permissions);
                 issuedRefreshToken = jwtService.generateRefreshToken(sessionUser);
-                bindBearerIdleSession(sessionUser, issuedAccessToken, httpRequest);
                 try {
                     // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
                     refreshTokenService.createRefreshToken(sessionUser, issuedRefreshToken, httpRequest);
@@ -1164,7 +1161,6 @@ public class AuthController extends BaseApiController {
                 List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
                 String accessToken = jwtService.generateToken(sessionUser, permissions);
                 String refreshToken = jwtService.generateRefreshToken(sessionUser);
-                bindBearerIdleSession(sessionUser, accessToken, httpRequest);
                 try {
                     // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
                     refreshTokenService.createRefreshToken(sessionUser, refreshToken, httpRequest);
@@ -1316,7 +1312,6 @@ public class AuthController extends BaseApiController {
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(sessionUser);
             String accessToken = jwtService.generateToken(sessionUser, permissions);
             String refreshToken = jwtService.generateRefreshToken(sessionUser);
-            bindBearerIdleSession(sessionUser, accessToken, httpRequest);
             try {
                 // P0-3 hotfix: refresh_token_store 메타데이터(device_id/ip/user_agent) NOT NULL 기록.
                 refreshTokenService.createRefreshToken(sessionUser, refreshToken, httpRequest);
@@ -1587,36 +1582,6 @@ public class AuthController extends BaseApiController {
         }
     }
     
-    /**
-     * Access JWT {@code sid} 를 {@code user_sessions} 에 바인딩한다 (Bearer 서버 유휴 강제).
-     *
-     * <p>웹 {@code /login} 등은 JSESSIONID 로 세션을 만든 뒤 JWT 는 새 sid 로 발급하므로,
-     * Bearer 필터가 JWT sid 로 {@code getActiveSession} 할 수 있게 여기서 바인딩한다.
-     * 실패해도 로그인 성공 응답은 유지한다 ({@code AuthServiceImpl} 과 동일 정책).</p>
-     *
-     * @param user        세션 사용자
-     * @param accessToken Access JWT
-     * @param request     HTTP 요청 (IP/UA)
-     */
-    private void bindBearerIdleSession(User user, String accessToken, HttpServletRequest request) {
-        if (bearerIdleSessionService == null || user == null || !StringUtils.hasText(accessToken)) {
-            return;
-        }
-        try {
-            String sid = jwtService.extractSessionId(accessToken);
-            if (!StringUtils.hasText(sid)) {
-                log.warn("Bearer 세션 바인딩 스킵: Access JWT 에 sid 없음 userId={}", user.getId());
-                return;
-            }
-            String clientIp = getClientIpAddress(request);
-            String userAgent = request != null ? request.getHeader("User-Agent") : null;
-            bearerIdleSessionService.ensureActiveSession(user, sid, clientIp, userAgent);
-        } catch (Exception e) {
-            log.warn("Bearer 세션 바인딩 실패(로그인/발급 유지): userId={}, error={}",
-                    user.getId(), e.getMessage());
-        }
-    }
-
     /**
      * 클라이언트 IP 주소 추출
      * @param request HTTP 요청

@@ -155,7 +155,8 @@ class AuthServiceImplRefreshIdleSessionTest {
         assertThat(response.getRefreshToken()).isNotBlank();
         verify(bearerIdleSessionService).isBearerSessionActive(oldSid, role);
         verify(refreshTokenService).revokeRefreshToken(oldSid);
-        verify(bearerIdleSessionService).ensureActiveSession(eq(user), anyString(), any(), any());
+        // 신규 Access sid 바인딩은 JwtService.generateToken 훅 — mock generateToken 이면 훅 미실행
+        verify(jwtService).generateToken(eq(user), any(), anyBoolean());
     }
 
     @Test

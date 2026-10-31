@@ -40,25 +40,61 @@ public class UserSessionServiceImpl implements UserSessionService {
         try {
             log.info("🔐 새 세션 생성 시작: userId={}, sessionId={}, loginType={}", 
                     user.getId(), sessionId, loginType);
-            
-            // 먼저 같은 sessionId를 가진 모든 세션을 삭제 (안전한 방식)
-            log.info("🧹 기존 세션 정리 시작: sessionId={}", sessionId);
+
+            LocalDateTime now = LocalDateTime.now();
+            int timeoutSeconds = sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole());
+
+            // 동일 sid 활성 세션이 있으면 삭제하지 않고 upsert(슬라이드) — 병렬 ensureActiveSession 레이스 방지
+            Optional<UserSession> activeExisting =
+                    userSessionRepository.findActiveSessionBySessionId(sessionId, now);
+            if (activeExisting.isPresent()) {
+                UserSession existing = activeExisting.get();
+                existing.setLastActivityAt(now);
+                existing.extendExpirationSeconds(timeoutSeconds);
+                if (clientIp != null) {
+                    existing.setClientIp(clientIp);
+                }
+                if (userAgent != null) {
+                    existing.setUserAgent(userAgent);
+                }
+                if (loginType != null) {
+                    existing.setLoginType(loginType);
+                }
+                if (socialProvider != null) {
+                    existing.setSocialProvider(socialProvider);
+                }
+                UserSession saved = userSessionRepository.save(existing);
+                log.info("✅ 세션 upsert(기존 활성 유지): userId={}, sessionId={}",
+                        user.getId(), sessionId);
+                return saved;
+            }
+
+            // 비활성·만료 행만 정리 후 신규 생성 (활성 행은 위 분기로 이미 return)
+            log.info("🧹 기존 비활성/만료 세션 정리 시작: sessionId={}", sessionId);
             try {
                 userSessionRepository.deleteBySessionId(sessionId);
                 log.info("🗑️ 기존 세션 삭제 완료: sessionId={}", sessionId);
             } catch (Exception e) {
                 log.warn("⚠️ 기존 세션 삭제 중 오류 (무시하고 계속): sessionId={}, error={}", sessionId, e.getMessage());
             }
-            
-            // 새 세션 생성 (중복 로그인 체크는 AuthService에서 처리)
-            LocalDateTime now = LocalDateTime.now();
+
+            // 삭제~저장 사이 병렬 create 레이스: 다시 활성 확인
+            activeExisting = userSessionRepository.findActiveSessionBySessionId(sessionId, LocalDateTime.now());
+            if (activeExisting.isPresent()) {
+                UserSession existing = activeExisting.get();
+                existing.setLastActivityAt(LocalDateTime.now());
+                existing.extendExpirationSeconds(timeoutSeconds);
+                UserSession saved = userSessionRepository.save(existing);
+                log.info("✅ 세션 upsert(레이스 재확인): userId={}, sessionId={}",
+                        user.getId(), sessionId);
+                return saved;
+            }
             
             UserSession userSession = UserSession.builder()
                     .user(user)
                     .sessionId(sessionId)
                     .lastActivityAt(now)
-                    .expiresAt(now.plusSeconds(
-                            sessionTimeoutProperties.getTimeoutSecondsForRole(user.getRole())))
+                    .expiresAt(now.plusSeconds(timeoutSeconds))
                     .clientIp(clientIp)
                     .userAgent(userAgent)
                     .loginType(loginType)

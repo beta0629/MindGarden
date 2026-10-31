@@ -80,7 +80,6 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
 
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     public SocialLoginResponse authenticateWithCode(String code) {

@@ -359,5 +359,6 @@ class OAuth2ControllerWebOAuthSessionTest {
 
         assertThat(pair).containsExactly("access-jwt-web-oauth", "refresh-jwt-web-oauth");
         verify(refreshTokenService).createRefreshToken(eq(user), eq("refresh-jwt-web-oauth"), eq(request));
+        verify(jwtService).generateTokenForOAuth(eq(user), any());
     }
 }

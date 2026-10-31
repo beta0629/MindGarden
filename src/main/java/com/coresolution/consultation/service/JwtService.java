@@ -21,17 +21,23 @@ import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
 import com.coresolution.consultation.dto.auth.OAuthPhoneOtpChallengeClaims;
 import com.coresolution.consultation.dto.auth.OAuthPhoneVerificationClaims;
 import com.coresolution.consultation.entity.auth.OAuthProvider;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.core.util.HttpRequestClientIp;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -73,6 +79,23 @@ public class JwtService {
     /** Apple SIWA OTP challenge 단기 JWT TTL (밀리초). 기본 5분 — OTP 만료(3분) + 시계 오차 여유. */
     @Value("${jwt.apple-phone-otp-challenge-ttl-ms:300000}")
     private long applePhoneOtpChallengeTtlMs;
+
+    /**
+     * Access JWT sid → {@code user_sessions} 바인딩 SSOT.
+     * {@link ObjectProvider} 로 JwtService↔BearerIdle 순환을 피한다 (단위 테스트 {@code new JwtService()} 는 null → 스킵).
+     */
+    private ObjectProvider<BearerIdleSessionService> bearerIdleSessionServiceProvider;
+
+    /**
+     * Bearer 유휴 세션 서비스 주입 (순환 의존 완화용 ObjectProvider).
+     *
+     * @param bearerIdleSessionServiceProvider Bearer idle SSOT provider
+     */
+    @Autowired
+    public void setBearerIdleSessionServiceProvider(
+            ObjectProvider<BearerIdleSessionService> bearerIdleSessionServiceProvider) {
+        this.bearerIdleSessionServiceProvider = bearerIdleSessionServiceProvider;
+    }
     
     /**
      * 사용자 이메일로부터 JWT 토큰 생성 (기본 메서드 - 하위 호환성 유지)
@@ -135,7 +158,9 @@ public class JwtService {
             claims.put("permissions", permissions);
         }
 
-        claims.put(SessionManagementConstants.JWT_CLAIM_SESSION_ID, bindPendingSessionId(user));
+        // Access sid mint — 동일 값을 JWT 클레임·user_sessions 바인딩에 사용 (재파싱 금지)
+        String sessionId = bindPendingSessionId(user);
+        claims.put(SessionManagementConstants.JWT_CLAIM_SESSION_ID, sessionId);
         putPasswordChangeClaim(claims, user, skipPasswordChangeClaim);
         
         log.debug("JWT 토큰 생성: userId={}, tenantId={}, permissions={}, skipPwdClaim={}", 
@@ -144,7 +169,47 @@ public class JwtService {
             skipPasswordChangeClaim);
         
         // 표준화 2025-12-08: username = userId이므로 subject에 userId 사용
-        return buildToken(claims, user.getUserId(), jwtExpiration);
+        String accessToken = buildToken(claims, user.getUserId(), jwtExpiration);
+        registerBearerIdleSession(user, sessionId);
+        return accessToken;
+    }
+
+    /**
+     * Access JWT mint 직후 {@code user_sessions} 에 sid 를 등록한다 (Bearer 유휴 SSOT).
+     *
+     * <p>이미 mint 한 {@code sessionId} 를 그대로 전달한다 — Access 토큰 재파싱 금지(순환·중복 방지).
+     * IP/UA 는 {@link RequestContextHolder} fail-open. 실패해도 발급은 유지.</p>
+     *
+     * @param user      로그인 사용자
+     * @param sessionId Access JWT {@code sid} (방금 mint)
+     */
+    private void registerBearerIdleSession(User user, String sessionId) {
+        if (user == null || !StringUtils.hasText(sessionId)) {
+            return;
+        }
+        if (bearerIdleSessionServiceProvider == null) {
+            return;
+        }
+        try {
+            BearerIdleSessionService idle = bearerIdleSessionServiceProvider.getIfAvailable();
+            if (idle == null) {
+                return;
+            }
+            String clientIp = null;
+            String userAgent = null;
+            RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+            if (attributes instanceof ServletRequestAttributes servletAttrs) {
+                HttpServletRequest request = servletAttrs.getRequest();
+                if (request != null) {
+                    clientIp = HttpRequestClientIp.resolve(request);
+                    userAgent = request.getHeader("User-Agent");
+                }
+            }
+            idle.ensureActiveSession(user, sessionId, clientIp, userAgent);
+        } catch (Exception e) {
+            log.warn("Bearer 세션 바인딩 실패(발급 유지): userId={}, error={}",
+                    user.getId(), e.getMessage());
+        }
     }
     
     /**

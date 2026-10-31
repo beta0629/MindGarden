@@ -26,7 +26,8 @@ import org.springframework.util.StringUtils;
  * Bearer/JWT 서버 유휴 세션 강제 구현.
  *
  * <p>{@code user_sessions.last_activity_at} / {@code expires_at} 를 재사용하며
- * TTL SSOT 는 {@link SessionTimeoutProperties} 이다.</p>
+ * TTL SSOT 는 {@link SessionTimeoutProperties} 이다.
+ * Access JWT sid 등록은 {@link com.coresolution.consultation.service.JwtService#generateToken} 훅이 담당한다.</p>
  *
  * @author MindGarden
  * @since 2026-10-31
@@ -66,6 +67,7 @@ public class BearerIdleSessionServiceImpl implements BearerIdleSessionService {
             log.debug("Bearer 세션 재확인 후 슬라이드: sid={}, userId={}", bearerSessionId, user.getId());
             return;
         }
+        // createSession 은 동일 sid 활성 세션이 있으면 upsert(삭제 없음) — 병렬 ensure 안전
         userSessionService.createSession(
                 user,
                 bearerSessionId,

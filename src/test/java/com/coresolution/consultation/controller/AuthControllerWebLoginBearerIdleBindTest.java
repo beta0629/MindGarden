@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
@@ -13,17 +12,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.AuthRequest;
 import com.coresolution.consultation.dto.AuthResponse;
+import com.coresolution.consultation.dto.SelectAccountRequest;
 import com.coresolution.consultation.dto.UserDto;
 import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
-import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
@@ -48,6 +48,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -58,17 +61,18 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 /**
- * 웹 {@code /login} JWT 발급 직후 Access {@code sid} 로
- * {@link BearerIdleSessionService#ensureActiveSession} 바인딩 회귀 고정.
+ * 웹 password 로그인·select-account·confirm-duplicate 경로 smoke.
  *
- * <p>버그: JSESSIONID 세션만 만들고 JWT sid 는 ensure 하지 않아 Bearer 즉시 401.</p>
+ * <p>JWT sid → user_sessions 등록은 {@link JwtService#generateToken} 훅 SSOT.
+ * 본 테스트는 mock JwtService 이므로 훅 미실행 — 응답 토큰 발급 유지(signed-in 응답)만 고정.
+ * 훅 호출은 {@code JwtServiceBearerIdleHookTest}.</p>
  *
  * @author MindGarden
  * @since 2026-10-31
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("AuthController — 웹 /login JWT sid Bearer idle 바인딩")
+@DisplayName("AuthController — 웹 login/select-account JWT 발급 smoke")
 class AuthControllerWebLoginBearerIdleBindTest {
 
     private String tenantId;
@@ -78,7 +82,7 @@ class AuthControllerWebLoginBearerIdleBindTest {
     private Long userPk;
     private String accessToken;
     private String refreshToken;
-    private String jwtSid;
+    private String selectionToken;
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
@@ -99,7 +103,6 @@ class AuthControllerWebLoginBearerIdleBindTest {
     @Mock private Environment environment;
     @Mock private JwtService jwtService;
     @Mock private RefreshTokenService refreshTokenService;
-    @Mock private BearerIdleSessionService bearerIdleSessionService;
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
     @Mock private com.coresolution.consultation.config.SessionCookieSupport sessionCookieSupport;
@@ -121,7 +124,7 @@ class AuthControllerWebLoginBearerIdleBindTest {
         userPk = Math.abs(UUID.randomUUID().getMostSignificantBits());
         accessToken = "access." + UUID.randomUUID() + ".jwt";
         refreshToken = "refresh." + UUID.randomUUID() + ".jwt";
-        jwtSid = UUID.randomUUID().toString().replace("-", "");
+        selectionToken = "selection." + UUID.randomUUID() + ".jwt";
 
         when(session.getId()).thenReturn(httpSessionId);
         lenient().when(httpRequest.getHeader("User-Agent")).thenReturn("Mozilla/5.0 junit");
@@ -135,7 +138,6 @@ class AuthControllerWebLoginBearerIdleBindTest {
                 .thenReturn(List.of("READ"));
         lenient().when(jwtService.generateToken(any(User.class), any())).thenReturn(accessToken);
         lenient().when(jwtService.generateRefreshToken(any(User.class))).thenReturn(refreshToken);
-        lenient().when(jwtService.extractSessionId(accessToken)).thenReturn(jwtSid);
         lenient().when(refreshTokenService.createRefreshToken(any(User.class), anyString(), any()))
                 .thenReturn(RefreshToken.builder()
                         .tokenId("rt-" + UUID.randomUUID())
@@ -150,54 +152,47 @@ class AuthControllerWebLoginBearerIdleBindTest {
                 .thenReturn(Optional.empty());
     }
 
-    @Test
-    @DisplayName("웹 /login 성공 후 accessToken sid 로 ensureActiveSession 호출")
-    void loginSuccess_bindsBearerIdleSessionWithJwtSid() {
-        // Given
-        User user = userEntity();
+    static Stream<UserRole> loginRoles() {
+        return Stream.of(UserRole.CLIENT, UserRole.CONSULTANT, UserRole.ADMIN);
+    }
+
+    @ParameterizedTest(name = "웹 /login {0} → accessToken 응답")
+    @MethodSource("loginRoles")
+    @DisplayName("웹 /login 성공 후 accessToken 유지 (JwtService 훅 SSOT)")
+    void loginSuccess_returnsAccessToken(UserRole role) {
+        User user = userEntity(role);
         UserDto userDto = UserDto.builder()
                 .id(userPk)
                 .email(loginPrincipal)
                 .name("웹로그인")
-                .role(UserRole.CONSULTANT.getValue())
+                .role(role.getValue())
                 .tenantId(tenantId)
                 .isActive(true)
                 .build();
-        AuthResponse serviceResponse = AuthResponse.builder()
-                .success(true)
-                .message("로그인 성공")
-                .token(null)
-                .refreshToken(null)
-                .user(userDto)
-                .build();
         when(authService.authenticateWithSession(
                 eq(loginPrincipal), eq(password), eq(httpSessionId), anyString(), anyString()))
-                .thenReturn(serviceResponse);
+                .thenReturn(AuthResponse.builder()
+                        .success(true)
+                        .message("로그인 성공")
+                        .token(null)
+                        .refreshToken(null)
+                        .user(userDto)
+                        .build());
         when(userService.findById(userPk)).thenReturn(Optional.of(user));
 
-        AuthRequest request = AuthRequest.builder()
-                .email(loginPrincipal)
-                .password(password)
-                .build();
-
-        // When
         ResponseEntity<ApiResponse<Map<String, Object>>> response =
-                authController.login(request, session, httpRequest);
+                authController.login(
+                        AuthRequest.builder().email(loginPrincipal).password(password).build(),
+                        session, httpRequest);
 
-        // Then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
         assertThat(response.getBody().getData().get("accessToken")).isEqualTo(accessToken);
-        verify(jwtService).extractSessionId(accessToken);
-        verify(bearerIdleSessionService).ensureActiveSession(
-                eq(user), eq(jwtSid), anyString(), anyString());
     }
 
     @Test
-    @DisplayName("confirm-duplicate-login 성공 시에도 JWT sid ensureActiveSession 호출")
-    void confirmDuplicateLogin_bindsBearerIdleSessionWithJwtSid() {
-        // Given
-        User user = userEntity();
+    @DisplayName("confirm-duplicate-login 성공 시 accessToken 유지")
+    void confirmDuplicateLogin_returnsAccessToken() {
+        User user = userEntity(UserRole.CONSULTANT);
         UserDto userDto = UserDto.builder()
                 .id(userPk)
                 .email(loginPrincipal)
@@ -207,34 +202,50 @@ class AuthControllerWebLoginBearerIdleBindTest {
                 .isActive(true)
                 .build();
         when(authService.authenticateWithSession(anyString(), anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(AuthResponse.builder()
-                        .success(true)
-                        .message("로그인 성공")
-                        .user(userDto)
-                        .build());
+                .thenReturn(AuthResponse.builder().success(true).message("로그인 성공").user(userDto).build());
         when(userService.findByLoginPrincipal(loginPrincipal)).thenReturn(Optional.of(user));
 
-        Map<String, Object> body = Map.of(
-                "email", loginPrincipal,
-                "password", password,
-                "confirmTerminate", Boolean.TRUE);
-
-        // When
-        authController.confirmDuplicateLogin(body, session, httpRequest);
-
-        // Then — confirm 경로는 DTO 로부터 new User() 를 만들므로 동일 sid 바인딩만 검증
-        verify(jwtService).extractSessionId(accessToken);
-        verify(bearerIdleSessionService).ensureActiveSession(
-                any(User.class), eq(jwtSid), anyString(), anyString());
+        authController.confirmDuplicateLogin(
+                Map.of("email", loginPrincipal, "password", password, "confirmTerminate", Boolean.TRUE),
+                session, httpRequest);
     }
 
-    private User userEntity() {
+    @ParameterizedTest(name = "select-account {0}")
+    @EnumSource(value = UserRole.class, names = {"CLIENT", "ADMIN"})
+    @DisplayName("select-account 성공 후 accessToken 유지")
+    void selectAccount_returnsAccessToken(UserRole role) {
+        User user = userEntity(role);
+        UserDto userDto = UserDto.builder()
+                .id(userPk)
+                .email(loginPrincipal)
+                .name("계정선택")
+                .role(role.getValue())
+                .tenantId(tenantId)
+                .isActive(true)
+                .build();
+        when(authService.selectAccount(
+                eq(selectionToken), eq(userPk), eq(httpSessionId), anyString(), anyString()))
+                .thenReturn(AuthResponse.builder().success(true).message("로그인 성공").user(userDto).build());
+        when(userService.findById(userPk)).thenReturn(Optional.of(user));
+
+        SelectAccountRequest body = new SelectAccountRequest();
+        body.setSelectionToken(selectionToken);
+        body.setSelectedUserId(userPk);
+
+        ResponseEntity<ApiResponse<Map<String, Object>>> response =
+                authController.selectAccount(body, session, httpRequest);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody().getData().get("accessToken")).isEqualTo(accessToken);
+    }
+
+    private User userEntity(UserRole role) {
         User user = User.builder()
                 .userId("u-" + userPk)
                 .email(loginPrincipal)
                 .password("{bcrypt}$2a$10$0123456789012345678901x")
                 .name("웹로그인")
-                .role(UserRole.CONSULTANT)
+                .role(role)
                 .isActive(true)
                 .isPasswordChanged(true)
                 .build();

@@ -30,8 +30,9 @@ import com.coresolution.consultation.service.UserSessionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -85,28 +86,26 @@ class BearerIdleSessionPostLoginGuardTest {
                     .isEqualTo(OVERRIDE_TTL_SECONDS_120);
         }
 
-        @Test
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT", "ADMIN"})
         @DisplayName("로그인 ensure 직후 활성 → 병렬 6회 유지 → refresh 새 sid 활성")
-        void postLoginParallelAndRefresh_stayActive() throws Exception {
-            runPostLoginParallelAndRefreshScenario(UserRole.CONSULTANT);
+        void postLoginParallelAndRefresh_stayActive(UserRole role) throws Exception {
+            assertThat(sessionTimeoutProperties.getTimeoutSecondsForRole(role))
+                    .isEqualTo(OVERRIDE_TTL_SECONDS_120);
+            runPostLoginParallelAndRefreshScenario(role);
         }
     }
 
     @Nested
-    @DisplayName("override 없음 — CONSULTANT 기본 7200")
+    @DisplayName("override 없음 — 역할 기본 TTL")
     class WithoutOverride {
 
-        @BeforeEach
-        void assertDefaultConsultantTtl() {
-            assertThat(sessionTimeoutProperties.getTestOverrideSeconds()).isZero();
-            assertThat(sessionTimeoutProperties.getTimeoutSecondsForRole(UserRole.CONSULTANT))
-                    .isEqualTo(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT);
-        }
-
-        @Test
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(value = UserRole.class, names = {"CLIENT", "CONSULTANT", "ADMIN"})
         @DisplayName("로그인 ensure 직후 활성 → 병렬 6회 유지 → refresh 새 sid 활성")
-        void postLoginParallelAndRefresh_stayActive() throws Exception {
-            runPostLoginParallelAndRefreshScenario(UserRole.CONSULTANT);
+        void postLoginParallelAndRefresh_stayActive(UserRole role) throws Exception {
+            assertThat(sessionTimeoutProperties.getTestOverrideSeconds()).isZero();
+            runPostLoginParallelAndRefreshScenario(role);
         }
     }
 

@@ -34,7 +34,6 @@ import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.TokenLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.util.HttpRequestClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.ArrayList;
@@ -178,8 +177,6 @@ public class AuthServiceImpl implements AuthService {
                 } catch (Exception e) {
                     log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
                 }
-
-                bindBearerIdleSession(user, token, request);
                 
                 // 마지막 로그인 시간 업데이트 (실패해도 로그인 성공 유지 — 메타 갱신)
                 try {
@@ -341,7 +338,7 @@ public class AuthServiceImpl implements AuthService {
                 newRefreshToken = jwtService.generateRefreshToken(user, null, skipPasswordChangeClaim);
             }
             
-            bindBearerIdleSession(user, newToken, request);
+            // 신규 Access sid 바인딩은 JwtService.generateToken 훅. 여기선 구 sid 만 비활성.
             String newSid = jwtService.extractSessionId(newToken);
             if (StringUtils.hasText(oldTokenId)
                     && StringUtils.hasText(newSid)
@@ -381,7 +378,6 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
         }
-        bindBearerIdleSession(user, token, request);
         return AuthResponse.builder()
             .success(true)
             .message("토큰 발급 성공")
@@ -389,32 +385,6 @@ public class AuthServiceImpl implements AuthService {
             .refreshToken(refreshToken)
             .requiresPasswordChange(requiresPasswordChange(user))
             .build();
-    }
-
-    /**
-     * Access JWT {@code sid} 를 {@code user_sessions} 에 바인딩한다 (서버 유휴 강제용).
-     *
-     * @param user        사용자
-     * @param accessToken Access JWT
-     * @param request     HTTP 요청 (IP/UA)
-     */
-    private void bindBearerIdleSession(User user, String accessToken, HttpServletRequest request) {
-        if (bearerIdleSessionService == null || user == null || !StringUtils.hasText(accessToken)) {
-            return;
-        }
-        try {
-            String sid = jwtService.extractSessionId(accessToken);
-            if (!StringUtils.hasText(sid)) {
-                log.warn("Bearer 세션 바인딩 스킵: Access JWT 에 sid 없음 userId={}", user.getId());
-                return;
-            }
-            String clientIp = HttpRequestClientIp.resolve(request);
-            String userAgent = request != null ? request.getHeader("User-Agent") : null;
-            bearerIdleSessionService.ensureActiveSession(user, sid, clientIp, userAgent);
-        } catch (Exception e) {
-            log.warn("Bearer 세션 바인딩 실패(로그인/발급 유지): userId={}, error={}",
-                    user.getId(), e.getMessage());
-        }
     }
 
     /**

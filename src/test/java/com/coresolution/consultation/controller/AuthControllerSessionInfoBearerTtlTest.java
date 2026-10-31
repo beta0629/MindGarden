@@ -22,7 +22,6 @@ import com.coresolution.consultation.service.ClientProfilePhoneVerificationServi
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OtpDeliveryService;
-import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.SessionSecurityPolicyService;
@@ -90,7 +89,6 @@ class AuthControllerSessionInfoBearerTtlTest {
     @Mock private Environment environment;
     @Mock private JwtService jwtService;
     @Mock private RefreshTokenService refreshTokenService;
-    @Mock private BearerIdleSessionService bearerIdleSessionService;
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
     @Mock private SessionCookieSupport sessionCookieSupport;
@@ -148,6 +146,25 @@ class AuthControllerSessionInfoBearerTtlTest {
         // Then
         assertSessionInfoRoleTtl(response, SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT);
         verify(session).setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS_CONSULTANT);
+    }
+
+    @Test
+    @DisplayName("Bearer 새 세션 + ADMIN — maxInactiveInterval 이 ADMIN TTL 이고 setMaxInactiveInterval 호출")
+    void getSessionInfo_bearerNewSession_admin_returnsRoleTtl() {
+        // Given — 컨테이너 기본이 ADMIN TTL 과 같으면 set 을 건너뛰므로 다른 값으로 시작
+        when(session.getMaxInactiveInterval())
+            .thenReturn(SessionConstants.SESSION_TIMEOUT_SECONDS_CLIENT);
+        User admin = userWithRole(UserRole.ADMIN);
+        when(session.getAttribute(SessionConstants.USER_OBJECT)).thenReturn(admin);
+        when(sessionTimeoutProperties.getTimeoutSecondsForRole(UserRole.ADMIN))
+            .thenReturn(SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN);
+
+        // When
+        ResponseEntity<ApiResponse<Map<String, Object>>> response = authController.getSessionInfo(session);
+
+        // Then
+        assertSessionInfoRoleTtl(response, SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN);
+        verify(session).setMaxInactiveInterval(SessionConstants.SESSION_TIMEOUT_SECONDS_ADMIN);
     }
 
     @Test

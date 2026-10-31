@@ -141,15 +141,15 @@ public interface UserSessionService {
      * 활성 세션을 슬라이딩 연장한다 ({@code lastActivityAt} + {@code expiresAt}).
      *
      * <p>마지막 활동이 {@code throttleSeconds} 이내이면 DB 쓰기를 건너뛴다.
-     * TTL은 {@link com.coresolution.consultation.config.SessionTimeoutProperties#getTimeoutMinutesForRole}
-     * 역할별 분 값과 동일하게 넘긴다 (HttpSession·쿠키와 SSOT 정합).</p>
+     * TTL은 {@link com.coresolution.consultation.config.SessionTimeoutProperties#getTimeoutSecondsForRole}
+     * 역할별 초 값과 동일하게 넘긴다 (HttpSession·쿠키·Bearer idle SSOT 정합).</p>
      *
      * @param sessionId HTTP/DB 세션 ID
-     * @param timeoutMinutes 연장 TTL(분) — SSOT timeout minutes
+     * @param timeoutSeconds 연장 TTL(초) — SSOT timeout seconds ({@code <= 0} 이면 false)
      * @param throttleSeconds 슬라이딩 스로틀(초)
      * @return 활성 세션이면 true(스로틀 스킵 포함). 없거나 실패면 false
      */
-    boolean slideActiveSession(String sessionId, int timeoutMinutes, long throttleSeconds);
+    boolean slideActiveSession(String sessionId, int timeoutSeconds, long throttleSeconds);
 
     /**
      * 중복 세션 정리 (같은 sessionId를 가진 중복 세션 삭제)

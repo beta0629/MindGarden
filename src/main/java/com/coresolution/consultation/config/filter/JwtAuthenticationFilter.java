@@ -12,7 +12,6 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
-import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.JwtTokenCutoffUtils;
@@ -48,21 +47,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
     private final DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry;
     private final AuthTokenRevocationService authTokenRevocationService;
-    private final BearerIdleSessionService bearerIdleSessionService;
 
     public JwtAuthenticationFilter(
             JwtService jwtService,
             UserService userService,
             UserRepository userRepository,
             @Nullable DuplicateLoginAccessBlockRegistry duplicateLoginAccessBlockRegistry,
-            @Nullable AuthTokenRevocationService authTokenRevocationService,
-            @Nullable BearerIdleSessionService bearerIdleSessionService) {
+            @Nullable AuthTokenRevocationService authTokenRevocationService) {
         this.jwtService = jwtService;
         this.userService = userService;
         this.userRepository = userRepository;
         this.duplicateLoginAccessBlockRegistry = duplicateLoginAccessBlockRegistry;
         this.authTokenRevocationService = authTokenRevocationService;
-        this.bearerIdleSessionService = bearerIdleSessionService;
     }
 
     @Override
@@ -160,19 +156,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                         requestPath, user.getId());
                                 filterChain.doFilter(request, response);
                                 return;
-                            }
-                            // Bearer 서버 유휴 강제 — SecurityContext 설정 직전
-                            if (bearerIdleSessionService != null) {
-                                String sid = jwtService.extractSessionId(token);
-                                if (!bearerIdleSessionService.isBearerSessionActive(sid, user.getRole())) {
-                                    log.warn(
-                                            "Bearer idle session rejected: path={}, userId={}, sidPresent={}",
-                                            requestPath, user.getId(),
-                                            sid != null && !sid.isBlank());
-                                    bearerIdleSessionService.writeUnauthorizedIdle(request, response);
-                                    return;
-                                }
-                                bearerIdleSessionService.touchActivity(sid, user.getRole());
                             }
                         }
 

@@ -64,7 +64,7 @@ class JwtAuthenticationFilterDuplicateLoginAccessTest {
     @BeforeEach
     void setUp() {
         filter = new JwtAuthenticationFilter(jwtService, userService, userRepository, blockRegistry,
-            revocationService, null);
+            revocationService);
         when(request.getRequestURI()).thenReturn(REQUEST_PATH);
         when(request.getHeader("Authorization")).thenReturn(AUTH_HEADER);
         when(jwtService.isTokenValid(TOKEN)).thenReturn(true);

@@ -10,10 +10,6 @@ import { CLIENT_DASHBOARD_ROUTES } from '../../../constants/clientDashboardRoute
 import { CLIENT_WEB_NOTIFICATIONS_LINK_TEST_ID } from '../../../constants/clientWebChromeConstants';
 import { CLIENT_NOTIFICATIONS_ENTRY_PATH } from '../../../constants/notificationTabs';
 
-jest.mock('../../../contexts/SessionContext', () => ({
-  useSession: () => ({ user: null, sessionInfo: null })
-}));
-
 jest.mock('../../../contexts/NotificationContext', () => ({
   useNotification: () => ({ unreadMessageCount: 0, unreadSystemCount: 1 })
 }));

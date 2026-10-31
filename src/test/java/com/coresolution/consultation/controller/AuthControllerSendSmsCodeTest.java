@@ -93,7 +93,6 @@ class AuthControllerSendSmsCodeTest {
     @Mock private SmsOtpVerificationService smsOtpVerificationService;
     @Mock private OtpDeliveryService otpDeliveryService;
     @Mock private SessionCookieSupport sessionCookieSupport;
-    @Mock private com.coresolution.consultation.config.SessionTimeoutProperties sessionTimeoutProperties;
     @Mock private ClientProfilePhoneVerificationService clientProfilePhoneVerificationService;
 
     @Mock private HttpSession session;

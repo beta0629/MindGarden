@@ -22,7 +22,6 @@ import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
-import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.JwtService;
@@ -34,7 +33,6 @@ import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.TokenLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.util.HttpRequestClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.ArrayList;
@@ -82,9 +80,6 @@ public class AuthServiceImpl implements AuthService {
     
     @Autowired
     private UserSessionService userSessionService;
-
-    @Autowired(required = false)
-    private BearerIdleSessionService bearerIdleSessionService;
     
     @Autowired
     private DynamicPermissionService dynamicPermissionService;
@@ -178,8 +173,6 @@ public class AuthServiceImpl implements AuthService {
                 } catch (Exception e) {
                     log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
                 }
-
-                bindBearerIdleSession(user, token, request);
                 
                 // 마지막 로그인 시간 업데이트 (실패해도 로그인 성공 유지 — 메타 갱신)
                 try {
@@ -284,17 +277,6 @@ public class AuthServiceImpl implements AuthService {
                 log.warn("Refresh denied (revoked session or account cutoff): userId={}", user.getId());
                 return AuthResponse.failure("유효하지 않은 리프레시 토큰입니다.");
             }
-
-            // Bearer 유휴 만료는 refresh 로 우회할 수 없음 — Access sid(= Refresh tokenId) 기준 판정
-            String oldTokenId = jwtService.extractTokenId(refreshToken);
-            if (bearerIdleSessionService != null) {
-                if (!StringUtils.hasText(oldTokenId)
-                        || !bearerIdleSessionService.isBearerSessionActive(oldTokenId, user.getRole())) {
-                    log.warn("Refresh denied (Bearer idle expired): userId={}, oldSidPresent={}",
-                            user.getId(), StringUtils.hasText(oldTokenId));
-                    return AuthResponse.failure(SessionManagementConstants.SESSION_EXPIRED_MESSAGE);
-                }
-            }
             
             // Phase 3: 사용자 권한 조회
             List<String> permissions = dynamicPermissionService.getUserPermissionsAsStringList(user);
@@ -306,6 +288,8 @@ public class AuthServiceImpl implements AuthService {
             String newToken = jwtService.generateToken(user, permissions, skipPasswordChangeClaim);
             
             // Phase 3: Refresh Token 로테이션 (기존 토큰 무효화 후 새 토큰 저장)
+            // 기존 refreshToken에서 tokenId 추출
+            String oldTokenId = jwtService.extractTokenId(refreshToken);
             if (oldTokenId != null && !oldTokenId.trim().isEmpty()) {
                 try {
                     // 기존 토큰 무효화
@@ -341,15 +325,6 @@ public class AuthServiceImpl implements AuthService {
                 newRefreshToken = jwtService.generateRefreshToken(user, null, skipPasswordChangeClaim);
             }
             
-            bindBearerIdleSession(user, newToken, request);
-            String newSid = jwtService.extractSessionId(newToken);
-            if (StringUtils.hasText(oldTokenId)
-                    && StringUtils.hasText(newSid)
-                    && !oldTokenId.equals(newSid)) {
-                userSessionService.deactivateSession(
-                        oldTokenId, SessionManagementConstants.END_REASON_EXPIRED);
-            }
-
             // UserResponse 변환 (표준화된 DTO)
             UserResponse userResponse = convertToUserResponse(user);
             
@@ -381,7 +356,6 @@ public class AuthServiceImpl implements AuthService {
         } catch (Exception e) {
             log.warn("Refresh Token 저장 실패 (무시): {}", e.getMessage());
         }
-        bindBearerIdleSession(user, token, request);
         return AuthResponse.builder()
             .success(true)
             .message("토큰 발급 성공")
@@ -389,32 +363,6 @@ public class AuthServiceImpl implements AuthService {
             .refreshToken(refreshToken)
             .requiresPasswordChange(requiresPasswordChange(user))
             .build();
-    }
-
-    /**
-     * Access JWT {@code sid} 를 {@code user_sessions} 에 바인딩한다 (서버 유휴 강제용).
-     *
-     * @param user        사용자
-     * @param accessToken Access JWT
-     * @param request     HTTP 요청 (IP/UA)
-     */
-    private void bindBearerIdleSession(User user, String accessToken, HttpServletRequest request) {
-        if (bearerIdleSessionService == null || user == null || !StringUtils.hasText(accessToken)) {
-            return;
-        }
-        try {
-            String sid = jwtService.extractSessionId(accessToken);
-            if (!StringUtils.hasText(sid)) {
-                log.warn("Bearer 세션 바인딩 스킵: Access JWT 에 sid 없음 userId={}", user.getId());
-                return;
-            }
-            String clientIp = HttpRequestClientIp.resolve(request);
-            String userAgent = request != null ? request.getHeader("User-Agent") : null;
-            bearerIdleSessionService.ensureActiveSession(user, sid, clientIp, userAgent);
-        } catch (Exception e) {
-            log.warn("Bearer 세션 바인딩 실패(로그인/발급 유지): userId={}, error={}",
-                    user.getId(), e.getMessage());
-        }
     }
 
     /**

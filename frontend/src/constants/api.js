@@ -130,7 +130,16 @@ export const AUTH_API = {
    */
   SMS_SEND: '/api/v1/auth/sms/send',
   /** 휴대폰 SMS 인증 코드 검증 — AuthController#verifySmsCode (일반 로그인·테블릿 흐름에서 사용). */
-  SMS_VERIFY: '/api/v1/auth/sms/verify'
+  SMS_VERIFY: '/api/v1/auth/sms/verify',
+
+  /** 비밀번호 찾기(이메일) — PasswordResetController#sendResetEmail */
+  PASSWORD_RESET_SEND_EMAIL: '/api/v1/auth/password-reset/send-email',
+  /** 비밀번호 찾기(휴대폰) — OTP 발송 */
+  PASSWORD_RESET_SMS_SEND_OTP: '/api/v1/auth/password-reset/sms/send-otp',
+  /** 비밀번호 찾기(휴대폰) — OTP 검증 */
+  PASSWORD_RESET_SMS_VERIFY_OTP: '/api/v1/auth/password-reset/sms/verify-otp',
+  /** 비밀번호 찾기(휴대폰) — 임시 비밀번호 SMS */
+  PASSWORD_RESET_SMS_SEND_TEMP_PASSWORD: '/api/v1/auth/password-reset/sms/send-temp-password'
 };
 
 // 권한 관련 API (표준 경로: /api/v1/permissions)

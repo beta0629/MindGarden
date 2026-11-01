@@ -67,6 +67,21 @@ export const AUTH_API = {
   SMS_SEND: '/api/auth/sms/send',
   SMS_VERIFY: '/api/auth/sms/verify',
   SMS_LOGIN: '/api/auth/sms-login',
+  /**
+   * 웹 ForgotPassword 휴대폰 비밀번호 찾기 — OTP 발송.
+   * 앱 화면은 웹 ForgotPassword와 별도(최소 변경 — 상수만 호환).
+   */
+  PASSWORD_RESET_SMS_SEND_OTP: '/api/v1/auth/password-reset/sms/send-otp',
+  /**
+   * 웹 ForgotPassword 휴대폰 비밀번호 찾기 — OTP 검증.
+   * 앱 화면은 웹 ForgotPassword와 별도(최소 변경 — 상수만 호환).
+   */
+  PASSWORD_RESET_SMS_VERIFY_OTP: '/api/v1/auth/password-reset/sms/verify-otp',
+  /**
+   * 웹 ForgotPassword 휴대폰 비밀번호 찾기 — 임시 비밀번호 SMS.
+   * 앱 화면은 웹 ForgotPassword와 별도(최소 변경 — 상수만 호환).
+   */
+  PASSWORD_RESET_SMS_SEND_TEMP_PASSWORD: '/api/v1/auth/password-reset/sms/send-temp-password',
 } as const;
 
 export const TENANT_API = {

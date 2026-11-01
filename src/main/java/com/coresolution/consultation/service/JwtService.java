@@ -19,6 +19,8 @@ import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.dto.auth.ApplePhoneOtpChallengeClaims;
 import com.coresolution.consultation.dto.auth.ApplePhoneVerificationClaims;
 import com.coresolution.consultation.dto.auth.OAuthPhoneOtpChallengeClaims;
+import com.coresolution.consultation.dto.auth.PasswordResetOtpChallengeClaims;
+import com.coresolution.consultation.dto.auth.PasswordResetProofClaims;
 import com.coresolution.consultation.dto.auth.OAuthPhoneVerificationClaims;
 import com.coresolution.consultation.entity.auth.OAuthProvider;
 import org.springframework.beans.factory.ObjectProvider;
@@ -79,6 +81,14 @@ public class JwtService {
     /** Apple SIWA OTP challenge 단기 JWT TTL (밀리초). 기본 5분 — OTP 만료(3분) + 시계 오차 여유. */
     @Value("${jwt.apple-phone-otp-challenge-ttl-ms:300000}")
     private long applePhoneOtpChallengeTtlMs;
+
+    /** 휴대폰 비밀번호 찾기 OTP challenge JWT TTL (밀리초). 기본 5분. */
+    @Value("${jwt.password-reset-otp-challenge-ttl-ms:300000}")
+    private long passwordResetOtpChallengeTtlMs;
+
+    /** 휴대폰 비밀번호 찾기 resetProof JWT TTL (밀리초). 기본 5분. */
+    @Value("${jwt.password-reset-proof-ttl-ms:300000}")
+    private long passwordResetProofTtlMs;
 
     /**
      * Access JWT sid → {@code user_sessions} 바인딩 SSOT.
@@ -1191,6 +1201,127 @@ public class JwtService {
             .normalizedPhone(normalizedPhone)
             .otpId(otpId)
             .build();
+    }
+
+    /**
+     * 휴대폰 비밀번호 찾기 — OTP 발송 시 challenge JWT 발급.
+     *
+     * <p>OAuth phone challenge purpose 와 분리된
+     * {@link OAuthJwtClaimValues#PURPOSE_PASSWORD_RESET_OTP_CHALLENGE} 를 사용한다.</p>
+     *
+     * @param claims otpId + phoneHash + tenant
+     * @return 서명된 JWT
+     */
+    public String generatePasswordResetOtpChallengeToken(PasswordResetOtpChallengeClaims claims) {
+        if (claims == null || claims.getTenantId() == null
+                || claims.getPhoneHash() == null || claims.getOtpId() == null) {
+            throw new IllegalArgumentException("PasswordResetOtpChallengeClaims required fields missing");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_PASSWORD_RESET_OTP_CHALLENGE);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PHONE_HASH, claims.getPhoneHash());
+        if (claims.getNormalizedPhone() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_PHONE, claims.getNormalizedPhone());
+        }
+        payload.put(OAuthJwtClaimKeys.OTP_ID, claims.getOtpId());
+        return buildToken(payload, "password-reset-otp-challenge", passwordResetOtpChallengeTtlMs);
+    }
+
+    /**
+     * 휴대폰 비밀번호 찾기 OTP challenge JWT 파싱.
+     *
+     * @param token JWT
+     * @return 클레임
+     * @throws IllegalArgumentException purpose 불일치·필수 클레임 누락·만료
+     */
+    public PasswordResetOtpChallengeClaims parsePasswordResetOtpChallengeToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_PASSWORD_RESET_OTP_CHALLENGE.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid password-reset OTP challenge token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String phoneHash = claims.get(OAuthJwtClaimKeys.PHONE_HASH, String.class);
+        String normalizedPhone = claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class);
+        Long otpId = readLongClaim(claims.get(OAuthJwtClaimKeys.OTP_ID));
+        if (tenantId == null || tenantId.isBlank()
+                || phoneHash == null || phoneHash.isBlank()
+                || otpId == null) {
+            throw new IllegalArgumentException("Missing required password-reset OTP challenge claims");
+        }
+        return PasswordResetOtpChallengeClaims.builder()
+            .tenantId(tenantId)
+            .phoneHash(phoneHash)
+            .normalizedPhone(normalizedPhone)
+            .otpId(otpId)
+            .build();
+    }
+
+    /**
+     * 휴대폰 비밀번호 찾기 — OTP 검증 후 1회용 resetProof JWT 발급.
+     *
+     * @param claims otpId + phoneHash + tenant
+     * @return 서명된 JWT
+     */
+    public String generatePasswordResetProofToken(PasswordResetProofClaims claims) {
+        if (claims == null || claims.getTenantId() == null
+                || claims.getPhoneHash() == null || claims.getOtpId() == null) {
+            throw new IllegalArgumentException("PasswordResetProofClaims required fields missing");
+        }
+        Map<String, Object> payload = new HashMap<>();
+        payload.put(OAuthJwtClaimKeys.PURPOSE, OAuthJwtClaimValues.PURPOSE_PASSWORD_RESET_PROOF);
+        payload.put(OAuthJwtClaimKeys.TENANT_ID, claims.getTenantId());
+        payload.put(OAuthJwtClaimKeys.PHONE_HASH, claims.getPhoneHash());
+        if (claims.getNormalizedPhone() != null) {
+            payload.put(OAuthJwtClaimKeys.SNS_PHONE, claims.getNormalizedPhone());
+        }
+        payload.put(OAuthJwtClaimKeys.OTP_ID, claims.getOtpId());
+        return buildToken(payload, "password-reset-proof", passwordResetProofTtlMs);
+    }
+
+    /**
+     * 휴대폰 비밀번호 찾기 resetProof JWT 파싱.
+     *
+     * @param token JWT
+     * @return 클레임
+     * @throws IllegalArgumentException purpose 불일치·필수 클레임 누락·만료
+     */
+    public PasswordResetProofClaims parsePasswordResetProofToken(String token) {
+        Claims claims = extractAllClaims(token);
+        String purpose = claims.get(OAuthJwtClaimKeys.PURPOSE, String.class);
+        if (!OAuthJwtClaimValues.PURPOSE_PASSWORD_RESET_PROOF.equals(purpose)) {
+            throw new IllegalArgumentException("Invalid password-reset proof token purpose");
+        }
+        String tenantId = claims.get(OAuthJwtClaimKeys.TENANT_ID, String.class);
+        String phoneHash = claims.get(OAuthJwtClaimKeys.PHONE_HASH, String.class);
+        String normalizedPhone = claims.get(OAuthJwtClaimKeys.SNS_PHONE, String.class);
+        Long otpId = readLongClaim(claims.get(OAuthJwtClaimKeys.OTP_ID));
+        if (tenantId == null || tenantId.isBlank()
+                || phoneHash == null || phoneHash.isBlank()
+                || otpId == null) {
+            throw new IllegalArgumentException("Missing required password-reset proof claims");
+        }
+        return PasswordResetProofClaims.builder()
+            .tenantId(tenantId)
+            .phoneHash(phoneHash)
+            .normalizedPhone(normalizedPhone)
+            .otpId(otpId)
+            .build();
+    }
+
+    private static Long readLongClaim(Object otpIdRaw) {
+        if (otpIdRaw instanceof Number) {
+            return ((Number) otpIdRaw).longValue();
+        }
+        if (otpIdRaw != null) {
+            try {
+                return Long.parseLong(otpIdRaw.toString());
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

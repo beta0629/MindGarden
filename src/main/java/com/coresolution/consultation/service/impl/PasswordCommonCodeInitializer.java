@@ -119,7 +119,7 @@ public class PasswordCommonCodeInitializer {
         createCommonCode("PASSWORD_RESET", "MAX_ATTEMPTS", "최대 시도 횟수", "재설정 요청 최대 시도 횟수", 2, "{\"value\":3}");
         createCommonCode("PASSWORD_RESET", "COOLDOWN_MINUTES", "쿨다운 시간", "재설정 요청 쿨다운 시간(분)", 3, "{\"value\":15}");
         createCommonCode("PASSWORD_RESET", "ENABLE_EMAIL_RESET", "이메일 재설정 활성화", "이메일을 통한 재설정 활성화 여부", 4, "{\"value\":true}");
-        createCommonCode("PASSWORD_RESET", "ENABLE_SMS_RESET", "SMS 재설정 활성화", "SMS를 통한 재설정 활성화 여부", 5, "{\"value\":false}");
+        createCommonCode("PASSWORD_RESET", "ENABLE_SMS_RESET", "SMS 재설정 활성화", "SMS를 통한 재설정 활성화 여부", 5, "{\"value\":true}");
     }
 
     /**

@@ -68,6 +68,42 @@
   gap: 24px;
 }
 
+/* 비밀번호 찾기 — 이메일|휴대폰 방법 탭 (기존 골격 유지, var(--mg-v2-*) 토큰만) */
+.mg-v2-auth-method-tabs {
+  display: flex;
+  gap: var(--mg-spacing-sm);
+  margin-bottom: var(--mg-spacing-md);
+}
+
+.mg-v2-auth-method-tab {
+  flex: 1;
+  min-height: var(--mg-spacing-xl);
+  padding: var(--mg-spacing-sm) var(--mg-spacing-md);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-radius-md);
+  background: var(--mg-v2-color-surface-card, var(--mg-bg-primary));
+  color: var(--mg-v2-color-text-secondary);
+  font-size: var(--mg-font-size-base);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.mg-v2-auth-method-tab:hover:not(:disabled) {
+  color: var(--mg-v2-color-text-primary);
+  border-color: var(--mg-v2-color-primary-main);
+}
+
+.mg-v2-auth-method-tab--active {
+  background: var(--mg-v2-color-primary-main);
+  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-text-on-primary, var(--mg-color-white));
+}
+
+.mg-v2-auth-method-tab:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* 타이포그래피 */
 .mg-v2-auth-title {
   font-size: 28px;

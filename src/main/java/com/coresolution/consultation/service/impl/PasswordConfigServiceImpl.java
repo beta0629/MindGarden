@@ -84,7 +84,7 @@ public class PasswordConfigServiceImpl implements PasswordConfigService {
         config.put("maxAttempts", getConfigIntValue(PASSWORD_RESET_GROUP, "MAX_ATTEMPTS", 3));
         config.put("cooldownMinutes", getConfigIntValue(PASSWORD_RESET_GROUP, "COOLDOWN_MINUTES", 15));
         config.put("enableEmailReset", getConfigBooleanValue(PASSWORD_RESET_GROUP, "ENABLE_EMAIL_RESET", true));
-        config.put("enableSmsReset", getConfigBooleanValue(PASSWORD_RESET_GROUP, "ENABLE_SMS_RESET", false));
+        config.put("enableSmsReset", getConfigBooleanValue(PASSWORD_RESET_GROUP, "ENABLE_SMS_RESET", true));
         
         return config;
     }

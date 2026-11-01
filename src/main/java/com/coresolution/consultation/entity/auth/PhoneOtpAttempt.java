@@ -75,6 +75,17 @@ public class PhoneOtpAttempt {
      */
     public static final String PROVIDER_PROFILE = "PROFILE";
 
+    /**
+     * 휴대폰 번호 비밀번호 찾기(SMS OTP → 임시 비밀번호) 흐름용 provider.
+     * OAuth/PROFILE 장부와 격리한다. provider_user_id 에는 phone_hash 를 넣어 번호 단위 한도·쿨다운을 적용한다.
+     */
+    public static final String PROVIDER_PASSWORD_RESET = "PASSWORD_RESET";
+
+    /**
+     * 비밀번호 찾기 resetProofToken 소비 후 상태 — VERIFIED 행의 1회용 증명 소진.
+     */
+    public static final String STATUS_CONSUMED = "CONSUMED";
+
     /** OTP 검증 시도 최대 횟수 (5회). */
     public static final int MAX_ATTEMPTS = 5;
 

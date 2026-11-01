@@ -15,9 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -30,7 +31,8 @@ import lombok.extern.slf4j.Slf4j;
  * 서버에만 {@code kind/tenantId/otpId/expiresAt} 을 보관한다.
  * 평문 토큰·phone·phoneHash 는 저장·로그하지 않으며, 저장 키는 토큰 SHA-256 hex 다.</p>
  *
- * <p>Redis 빈이 있으면 Redis, 없거나 장애 시 {@link ConcurrentHashMap} 로컬 폴백.</p>
+ * <p>Redis 빈({@link StringRedisTemplate})이 있으면 JSON 문자열로 저장하고,
+ * 없거나 장애 시 {@link ConcurrentHashMap} 로컬 폴백.</p>
  *
  * @author MindGarden
  * @since 2026-11-01
@@ -42,11 +44,12 @@ public class PasswordResetOpaqueTokenStore {
     private static final String REDIS_KEY_PREFIX = "password-reset:opaque:";
     private static final String HASH_ALGORITHM = "SHA-256";
     private static final int TOKEN_BYTES = 32;
+    private static final ObjectMapper JSON = new ObjectMapper();
 
     /** proof 기본 TTL(분). challenge 는 {@link PhoneOtpAttempt#EXPIRY_MINUTES}. */
     public static final long DEFAULT_PROOF_TTL_MINUTES = 5L;
 
-    private final ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider;
+    private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
     private final SecureRandom secureRandom = new SecureRandom();
     private final ConcurrentHashMap<String, TokenEntry> localStore = new ConcurrentHashMap<>();
 
@@ -59,7 +62,7 @@ public class PasswordResetOpaqueTokenStore {
      * @param proofTtlSeconds       proof TTL 초 (기본 5분)
      */
     public PasswordResetOpaqueTokenStore(
-            ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider,
+            ObjectProvider<StringRedisTemplate> redisTemplateProvider,
             @Value("${password-reset.opaque.challenge-ttl-seconds:180}") long challengeTtlSeconds,
             @Value("${password-reset.opaque.proof-ttl-seconds:300}") long proofTtlSeconds) {
         this.redisTemplateProvider = redisTemplateProvider;
@@ -115,7 +118,7 @@ public class PasswordResetOpaqueTokenStore {
             return;
         }
         String key = storageKey(rawToken.trim());
-        RedisTemplate<String, Object> redis = redisTemplateProvider.getIfAvailable();
+        StringRedisTemplate redis = redisTemplateProvider.getIfAvailable();
         if (redis != null) {
             try {
                 redis.delete(key);
@@ -158,10 +161,11 @@ public class PasswordResetOpaqueTokenStore {
         long expiresAtEpochMs = Instant.now().plusSeconds(ttlSeconds).toEpochMilli();
         TokenEntry entry = new TokenEntry(kind, tenantId.trim(), otpId, expiresAtEpochMs);
 
-        RedisTemplate<String, Object> redis = redisTemplateProvider.getIfAvailable();
+        StringRedisTemplate redis = redisTemplateProvider.getIfAvailable();
         if (redis != null) {
             try {
-                redis.opsForValue().set(key, entry, ttlSeconds, TimeUnit.SECONDS);
+                String json = JSON.writeValueAsString(entry);
+                redis.opsForValue().set(key, json, ttlSeconds, TimeUnit.SECONDS);
                 log.info("비밀번호 찾기 opaque 발급(Redis): kind={}, otpId={}, ttlSec={}",
                     kind, otpId, ttlSeconds);
                 return token;
@@ -188,23 +192,22 @@ public class PasswordResetOpaqueTokenStore {
         String key = storageKey(trimmed);
         String expectedTenant = tenantId.trim();
 
-        RedisTemplate<String, Object> redis = redisTemplateProvider.getIfAvailable();
+        StringRedisTemplate redis = redisTemplateProvider.getIfAvailable();
         if (redis != null) {
             try {
-                Object raw = redis.opsForValue().get(key);
+                String raw = consume ? getAndDeleteJson(redis, key) : redis.opsForValue().get(key);
                 TokenEntry entry = coerceEntry(raw);
-                if (entry == null || entry.isExpired() || entry.kind() != expectedKind
-                        || !expectedTenant.equals(entry.tenantId())) {
-                    if (consume && raw != null) {
-                        redis.delete(key);
+                if (entry != null) {
+                    if (entry.isExpired() || entry.kind() != expectedKind
+                            || !expectedTenant.equals(entry.tenantId())) {
+                        return Optional.empty();
                     }
-                    return Optional.empty();
+                    if (consume) {
+                        localStore.remove(key);
+                    }
+                    return Optional.of(entry);
                 }
-                if (consume) {
-                    redis.delete(key);
-                    localStore.remove(key);
-                }
-                return Optional.of(entry);
+                // Redis 미스(null) — 로컬 폴백 계속 (set 실패 후 local 발급 등)
             } catch (Exception e) {
                 log.warn("비밀번호 찾기 opaque Redis 조회 실패 — 로컬 시도: {}", e.getMessage());
             }
@@ -219,6 +222,26 @@ public class PasswordResetOpaqueTokenStore {
             return Optional.empty();
         }
         return Optional.of(local);
+    }
+
+    /**
+     * 원자적 1회 소비. {@code getAndDelete} 미지원/예외 시 get+delete 폴백.
+     *
+     * @param redis Redis
+     * @param key   저장 키
+     * @return JSON 문자열 또는 null
+     */
+    private static String getAndDeleteJson(StringRedisTemplate redis, String key) {
+        try {
+            return redis.opsForValue().getAndDelete(key);
+        } catch (Exception ex) {
+            // getAndDelete 미지원/예외 시 get+delete 폴백
+            String value = redis.opsForValue().get(key);
+            if (value != null) {
+                redis.delete(key);
+            }
+            return value;
+        }
     }
 
     private String generateOpaqueToken() {
@@ -256,6 +279,16 @@ public class PasswordResetOpaqueTokenStore {
     private static TokenEntry coerceEntry(Object raw) {
         if (raw instanceof TokenEntry entry) {
             return entry;
+        }
+        if (raw instanceof String json) {
+            if (!StringUtils.hasText(json)) {
+                return null;
+            }
+            try {
+                return JSON.readValue(json, TokenEntry.class);
+            } catch (Exception ex) {
+                return null;
+            }
         }
         if (raw instanceof Map<?, ?> map) {
             Object kindRaw = map.get("kind");

@@ -34,7 +34,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -441,8 +441,8 @@ class PasswordResetSmsServiceImplTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static ObjectProvider<RedisTemplate<String, Object>> noRedis() {
-        ObjectProvider<RedisTemplate<String, Object>> provider = mock(ObjectProvider.class);
+    private static ObjectProvider<StringRedisTemplate> noRedis() {
+        ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(null);
         return provider;
     }

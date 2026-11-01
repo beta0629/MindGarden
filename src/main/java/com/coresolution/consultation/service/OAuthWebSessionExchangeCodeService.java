@@ -9,9 +9,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -23,7 +26,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>쿠키 Domain 불일치로 HttpSession 이 비어도 SPA 가 JWT 를 수령할 수 있게 한다.
  * 코드만 쿼리에 넣고 <strong>장기 JWT 는 절대 넣지 않는다</strong>. 단일 사용·짧은 TTL.</p>
  *
- * <p>Redis 빈이 있으면 Redis, 없으면 프로세스 메모리({@link ConcurrentHashMap}).</p>
+ * <p>Redis 빈({@link StringRedisTemplate})이 있으면 JSON 문자열로 저장하고,
+ * 없으면 프로세스 메모리({@link ConcurrentHashMap}).</p>
  *
  * @author MindGarden
  * @since 2026-09-26
@@ -34,8 +38,11 @@ public class OAuthWebSessionExchangeCodeService {
 
     private static final String REDIS_KEY_PREFIX = "oauth:web-session-exchange:";
     private static final int CODE_BYTES = 32;
+    private static final ObjectMapper JSON = new ObjectMapper()
+            .registerModule(new JavaTimeModule())
+            .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 
-    private final ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider;
+    private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
     private final SecureRandom secureRandom = new SecureRandom();
     private final ConcurrentHashMap<String, StashEntry> localStore = new ConcurrentHashMap<>();
 
@@ -48,7 +55,7 @@ public class OAuthWebSessionExchangeCodeService {
      * @param ttlSeconds            {@code OAUTH_WEB_SESSION_EXCHANGE_CODE_TTL_SECONDS}
      */
     public OAuthWebSessionExchangeCodeService(
-            ObjectProvider<RedisTemplate<String, Object>> redisTemplateProvider,
+            ObjectProvider<StringRedisTemplate> redisTemplateProvider,
             @Value("${OAUTH_WEB_SESSION_EXCHANGE_CODE_ENABLED:true}") boolean enabled,
             @Value("${OAUTH_WEB_SESSION_EXCHANGE_CODE_TTL_SECONDS:90}") long ttlSeconds) {
         this.redisTemplateProvider = redisTemplateProvider;
@@ -87,10 +94,11 @@ public class OAuthWebSessionExchangeCodeService {
                 userId,
                 StringUtils.hasText(tenantId) ? tenantId.trim() : null,
                 Instant.now().plusSeconds(ttlSeconds));
-        RedisTemplate<String, Object> redis = redisTemplateProvider.getIfAvailable();
+        StringRedisTemplate redis = redisTemplateProvider.getIfAvailable();
         if (redis != null) {
             try {
-                redis.opsForValue().set(REDIS_KEY_PREFIX + code, entry, ttlSeconds, TimeUnit.SECONDS);
+                String json = JSON.writeValueAsString(entry);
+                redis.opsForValue().set(REDIS_KEY_PREFIX + code, json, ttlSeconds, TimeUnit.SECONDS);
                 log.info("웹 OAuth 교환 코드 발급(Redis): userId={}, ttlSec={}", userId, ttlSeconds);
                 return Optional.of(code);
             } catch (Exception e) {
@@ -113,17 +121,21 @@ public class OAuthWebSessionExchangeCodeService {
             return Optional.empty();
         }
         String trimmed = code.trim();
-        RedisTemplate<String, Object> redis = redisTemplateProvider.getIfAvailable();
+        StringRedisTemplate redis = redisTemplateProvider.getIfAvailable();
         if (redis != null) {
             try {
                 String key = REDIS_KEY_PREFIX + trimmed;
-                Object raw = redis.opsForValue().get(key);
-                redis.delete(key);
+                String raw = getAndDeleteJson(redis, key);
                 StashEntry entry = coerceEntry(raw);
-                if (entry != null && !entry.isExpired()) {
+                if (entry != null) {
+                    if (entry.isExpired()) {
+                        return Optional.empty();
+                    }
+                    localStore.remove(trimmed);
                     log.info("웹 OAuth 교환 코드 소비(Redis): userId={}", entry.userId());
                     return Optional.of(entry);
                 }
+                // Redis 미스(null) — 로컬 폴백 계속 (set 실패 후 local 발급 등)
             } catch (Exception e) {
                 log.warn("웹 OAuth 교환 코드 Redis 소비 실패 — 로컬 시도: {}", e.getMessage());
             }
@@ -134,6 +146,26 @@ public class OAuthWebSessionExchangeCodeService {
         }
         log.info("웹 OAuth 교환 코드 소비(local): userId={}", local.userId());
         return Optional.of(local);
+    }
+
+    /**
+     * 원자적 1회 소비. {@code getAndDelete} 미지원/예외 시 get+delete 폴백.
+     *
+     * @param redis Redis
+     * @param key   저장 키
+     * @return JSON 문자열 또는 null
+     */
+    private static String getAndDeleteJson(StringRedisTemplate redis, String key) {
+        try {
+            return redis.opsForValue().getAndDelete(key);
+        } catch (Exception ex) {
+            // getAndDelete 미지원/예외 시 get+delete 폴백
+            String value = redis.opsForValue().get(key);
+            if (value != null) {
+                redis.delete(key);
+            }
+            return value;
+        }
     }
 
     private String generateCode() {
@@ -156,6 +188,16 @@ public class OAuthWebSessionExchangeCodeService {
     private static StashEntry coerceEntry(Object raw) {
         if (raw instanceof StashEntry entry) {
             return entry;
+        }
+        if (raw instanceof String json) {
+            if (!StringUtils.hasText(json)) {
+                return null;
+            }
+            try {
+                return JSON.readValue(json, StashEntry.class);
+            } catch (Exception ex) {
+                return null;
+            }
         }
         if (raw instanceof Map<?, ?> map) {
             Object access = map.get("accessToken");

@@ -45,21 +45,6 @@ public final class OAuthJwtClaimValues {
      */
     public static final String PURPOSE_PASSWORD_LOGIN_ACCOUNT_SELECTION = "PASSWORD_LOGIN_ACCOUNT_SELECTION";
 
-    /**
-     * 휴대폰 비밀번호 찾기 — OTP 발송 성공 시 challenge 토큰 purpose.
-     * OAuth phone OTP challenge 와 충돌하지 않도록 전용 값을 쓴다.
-     *
-     * @since 2026-11-01
-     */
-    public static final String PURPOSE_PASSWORD_RESET_OTP_CHALLENGE = "PASSWORD_RESET_OTP_CHALLENGE";
-
-    /**
-     * 휴대폰 비밀번호 찾기 — OTP 검증 성공 후 임시 비밀번호 발송용 1회용 proof 토큰 purpose.
-     *
-     * @since 2026-11-01
-     */
-    public static final String PURPOSE_PASSWORD_RESET_PROOF = "PASSWORD_RESET_PROOF";
-
     private OAuthJwtClaimValues() {
     }
 }

@@ -459,6 +459,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
+    /**
+     * 동일 테넌트·상담사 활성 급여 프로필 중복 생성 — HTTP 409.
+     */
+    @ExceptionHandler(SalaryProfileConflictException.class)
+    public ResponseEntity<ErrorResponse> handleSalaryProfileConflict(
+            SalaryProfileConflictException e, HttpServletRequest request) {
+        log.info("[SALARY_PROFILE_CONFLICT] path={} message={}", request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                e.getMessage(),
+                SalaryProfileConflictException.ERROR_CODE,
+                HttpStatus.CONFLICT.value(),
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
     private static boolean isEmailUniqueConstraint(String lowerMessage) {
         if (lowerMessage == null || lowerMessage.isBlank()) {
             return false;

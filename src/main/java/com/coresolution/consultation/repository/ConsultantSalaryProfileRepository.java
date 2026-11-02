@@ -32,6 +32,15 @@ public interface ConsultantSalaryProfileRepository extends JpaRepository<Consult
      */
     Optional<ConsultantSalaryProfile> findFirstByTenantIdAndConsultantIdAndIsActiveTrueOrderByUpdatedAtDescIdDesc(
             String tenantId, Long consultantId);
+
+    /**
+     * 동일 테넌트·상담사에 활성 급여 프로필이 있는지 여부.
+     *
+     * @param tenantId 테넌트 ID
+     * @param consultantId 상담사 ID
+     * @return 활성 프로필 존재 시 true
+     */
+    boolean existsByTenantIdAndConsultantIdAndIsActiveTrue(String tenantId, Long consultantId);
     
     /**
      * 상담사 ID로 모든 급여 프로필 조회 (tenantId 필터링)

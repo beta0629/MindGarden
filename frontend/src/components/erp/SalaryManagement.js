@@ -17,7 +17,6 @@ import StandardizedApi from '../../utils/standardizedApi';
 import {
   SALARY_API_ENDPOINTS,
   SALARY_MESSAGES,
-  SALARY_PAY_DAY_FALLBACK_OPTIONS,
   SALARY_PREVIEW_SPECIAL_SUPPORT_LABEL,
   SALARY_PREVIEW_CONSULTATION_FEE_LABEL,
   SALARY_PREVIEW_PRE_TAX_TOTAL_LABEL,
@@ -75,7 +74,12 @@ import TabChipRow from '../common/TabChipRow';
 import ConsultantCard from '../ui/Card/ConsultantCard';
 import { SmallCardGrid, ListTableView } from '../common';
 import { CONSULTANT_GRADE_TO_LABEL, getAllConsultantsWithStats } from '../../utils/consultantHelper';
-import { toDisplayString, toErrorMessage } from '../../utils/safeDisplay';
+import { toDisplayString } from '../../utils/safeDisplay';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
+import {
+  buildSalaryPayDayFallbackCodes,
+  resolveTenantCodesOrFallback
+} from '../../utils/resolveTenantCodesOrFallback';
 import SafeText from '../common/SafeText';
 import { useConfirm } from '../../hooks/useConfirm';
 import './ErpCommon.css';
@@ -287,6 +291,7 @@ const SalaryManagement = () => {
     if (!periodStart || !periodEnd) return;
     try {
       if (!silent) setLoading(true);
+      // StandardizedApi: 언랩된 data 반환. 예외 없으면 성공.
       const response = await StandardizedApi.get(
         SALARY_API_ENDPOINTS.CALCULATIONS_BY_PERIOD,
         { startDate: periodStart, endDate: periodEnd }
@@ -294,8 +299,6 @@ const SalaryManagement = () => {
       let list = [];
       if (Array.isArray(response)) {
         list = response;
-      } else if (response && response.success && Array.isArray(response.data)) {
-        list = response.data;
       } else if (response && Array.isArray(response.data)) {
         list = response.data;
       }
@@ -363,6 +366,7 @@ const SalaryManagement = () => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
+      // StandardizedApi: 언랩된 data 반환. 예외 없으면 성공.
       const response = await StandardizedApi.get(SALARY_API_ENDPOINTS.PROFILES);
       if (!response) {
         setSalaryProfiles([]);
@@ -370,13 +374,10 @@ const SalaryManagement = () => {
       }
       if (Array.isArray(response)) {
         setSalaryProfiles(response);
-      } else if (response && response.success) {
-        setSalaryProfiles(response.data || []);
+      } else if (response && Array.isArray(response.data)) {
+        setSalaryProfiles(response.data);
       } else {
-        setSalaryProfiles(response?.data ?? []);
-        if (response && response.message) {
-          showNotification(response.message, 'error');
-        }
+        setSalaryProfiles([]);
       }
     } catch (error) {
       console.error('급여 프로필 로드 실패:', error);
@@ -390,11 +391,10 @@ const SalaryManagement = () => {
   const loadPayDayOptions = async() => {
     try {
       const list = await getCommonCodes('SALARY_PAY_DAY');
-      const normalized = Array.isArray(list) ? list : [];
-      setPayDayOptions(normalized.length > 0 ? normalized : SALARY_PAY_DAY_FALLBACK_OPTIONS);
+      setPayDayOptions(resolveTenantCodesOrFallback(list, buildSalaryPayDayFallbackCodes()));
     } catch (error) {
       console.error('급여일 옵션 로드 실패:', error);
-      setPayDayOptions(SALARY_PAY_DAY_FALLBACK_OPTIONS);
+      setPayDayOptions(buildSalaryPayDayFallbackCodes());
       showNotification('급여 지급일 목록을 불러오지 못해 기본 옵션을 표시합니다.', 'warning');
     }
   };
@@ -440,15 +440,20 @@ const SalaryManagement = () => {
         periodStart,
         periodEnd
       });
+      // StandardizedApi: 반환 = 성공(언랩 data). success 플래그 검사 금지.
       const response = await StandardizedApi.post(
         `${SALARY_API_ENDPOINTS.CALCULATE}?${queryParams}`,
         {}
       );
-      if (response && typeof response === 'object' && response.success === false) {
-        showNotification(response?.message || '급여 계산에 실패했습니다.', 'error');
-      } else if (response && typeof response === 'object') {
-        const data = response.data ?? response;
-        showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
+      if (response == null) {
+        showNotification('급여 계산에 실패했습니다.', 'error');
+        return;
+      }
+      const data = (response && typeof response === 'object' && response.data != null)
+        ? response.data
+        : response;
+      showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
+      if (data && typeof data === 'object') {
         const grossSalary = toSalaryNumber(data?.grossSalary);
         const specialSupportAmount = toSalaryNumber(data?.specialSupportAmount);
         const consultationGrossFromApi = data?.consultationGrossSalary;
@@ -475,16 +480,14 @@ const SalaryManagement = () => {
           taxableGrossSalary,
           calculatedAt: new Date().toISOString()
         });
-        loadSalaryCalculations(selectedConsultant.id);
-      } else if (response != null) {
-        showNotification('급여 계산 미리보기가 완료되었습니다.', 'success');
-        loadSalaryCalculations(selectedConsultant.id);
-      } else {
-        showNotification('급여 계산에 실패했습니다.', 'error');
       }
+      loadSalaryCalculations(selectedConsultant.id);
     } catch (error) {
       console.error('급여 계산 실행 실패:', error);
-      showNotification('급여 계산 실행에 실패했습니다.', 'error');
+      showNotification(
+        resolveUserFacingApiErrorMessage(error, '급여 계산 실행에 실패했습니다.'),
+        'error'
+      );
     } finally {
       setLoading(false);
     }
@@ -537,14 +540,13 @@ const SalaryManagement = () => {
     const silent = options.silent === true;
     try {
       if (!silent) setLoading(true);
+      // StandardizedApi: 언랩된 data 반환. 예외 없으면 성공.
       const response = await StandardizedApi.get(`${SALARY_API_ENDPOINTS.CALCULATIONS}/${consultantId}`);
       let list = [];
       if (Array.isArray(response)) {
         list = response;
-      } else if (response && response.success) {
-        list = response.data ?? [];
-      } else if (response && response?.data) {
-        list = Array.isArray(response.data) ? response.data : [];
+      } else if (response && Array.isArray(response.data)) {
+        list = response.data;
       }
       setSalaryCalculations(list);
       await refreshLateSessionWarnings(list);
@@ -590,23 +592,16 @@ const SalaryManagement = () => {
     }
     try {
       setApprovingCalculationId(calculation.id);
-      const res = await StandardizedApi.post(
+      await StandardizedApi.post(
         `${SALARY_API_ENDPOINTS.APPROVE}/${calculation.id}`,
         {}
       );
-      if (res && typeof res === 'object' && res.success === false) {
-        showNotification(
-          toErrorMessage(res?.message, SALARY_MESSAGES.APPROVAL_ERROR),
-          'error'
-        );
-      } else {
-        showNotification(SALARY_MESSAGES.APPROVAL_SUCCESS, 'success');
-        await refreshCalculationsList({ silent: true });
-      }
+      showNotification(SALARY_MESSAGES.APPROVAL_SUCCESS, 'success');
+      await refreshCalculationsList({ silent: true });
     } catch (err) {
       console.error('급여 승인 API 오류:', err);
       showNotification(
-        toErrorMessage(err, SALARY_MESSAGES.APPROVAL_ERROR),
+        resolveUserFacingApiErrorMessage(err, SALARY_MESSAGES.APPROVAL_ERROR),
         'error'
       );
     } finally {
@@ -627,23 +622,16 @@ const SalaryManagement = () => {
     }
     try {
       setPayingCalculationId(calculation.id);
-      const res = await StandardizedApi.post(
+      await StandardizedApi.post(
         `${SALARY_API_ENDPOINTS.PAY}/${calculation.id}`,
         {}
       );
-      if (res && typeof res === 'object' && res.success === false) {
-        showNotification(
-          toErrorMessage(res?.message, SALARY_MESSAGES.PAYMENT_ERROR),
-          'error'
-        );
-      } else {
-        showNotification(SALARY_MESSAGES.PAYMENT_SUCCESS, 'success');
-        await refreshCalculationsList({ silent: true });
-      }
+      showNotification(SALARY_MESSAGES.PAYMENT_SUCCESS, 'success');
+      await refreshCalculationsList({ silent: true });
     } catch (err) {
       console.error('급여 지급 API 오류:', err);
       showNotification(
-        toErrorMessage(err, SALARY_MESSAGES.PAYMENT_ERROR),
+        resolveUserFacingApiErrorMessage(err, SALARY_MESSAGES.PAYMENT_ERROR),
         'error'
       );
     } finally {
@@ -693,22 +681,15 @@ const SalaryManagement = () => {
     }
     try {
       setRecalcLoadingId(calculation.id);
-      const res = await StandardizedApi.post(
+      await StandardizedApi.post(
         SALARY_API_ENDPOINTS.getRecalcUrl(calculation.id),
         {}
       );
-      if (res && typeof res === 'object' && res.success === false) {
-        showNotification(
-          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.RECALC_ERROR),
-          'error'
-        );
-      } else {
-        showNotification(SALARY_LATE_NOTES_MESSAGES.RECALC_SUCCESS, 'success');
-        if (calcStageSourceCalculation?.id === calculation.id) {
-          setSavedCalcLateInfo(null);
-        }
-        await refreshCalculationsList({ silent: true });
+      showNotification(SALARY_LATE_NOTES_MESSAGES.RECALC_SUCCESS, 'success');
+      if (calcStageSourceCalculation?.id === calculation.id) {
+        setSavedCalcLateInfo(null);
       }
+      await refreshCalculationsList({ silent: true });
     } catch (err) {
       console.error('다시 계산 API 오류:', err);
       showNotification(
@@ -736,19 +717,12 @@ const SalaryManagement = () => {
     }
     try {
       setAdjustmentLoadingId(calculation.id);
-      const res = await StandardizedApi.post(
+      await StandardizedApi.post(
         SALARY_API_ENDPOINTS.getAdjustmentUrl(calculation.id),
         {}
       );
-      if (res && typeof res === 'object' && res.success === false) {
-        showNotification(
-          toSalaryLateNotesErrorMessage(res?.message, SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_ERROR),
-          'error'
-        );
-      } else {
-        showNotification(SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_SUCCESS, 'success');
-        await refreshCalculationsList({ silent: true });
-      }
+      showNotification(SALARY_LATE_NOTES_MESSAGES.ADJUSTMENT_SUCCESS, 'success');
+      await refreshCalculationsList({ silent: true });
     } catch (err) {
       console.error('추가 정산 API 오류:', err);
       showNotification(
@@ -1843,27 +1817,23 @@ const SalaryManagement = () => {
                                   periodStart: previewResult.periodStart,
                                   periodEnd: previewResult.periodEnd
                                 });
-                                const res = await StandardizedApi.post(
+                                await StandardizedApi.post(
                                   `${SALARY_API_ENDPOINTS.CONFIRM}?${confirmParams}`,
                                   {}
                                 );
-                                if (res && typeof res === 'object' && res.success === false) {
-                                  showNotification(res?.message || '확정에 실패했습니다.', 'error');
-                                } else {
-                                  showNotification('급여 계산이 확정되었습니다.', 'success');
-                                  setPreviewResult(null);
-                                  setCalcStageSourceCalculation(null);
-                                  setIsCalcStageOpen(false);
-                                  if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
-                                  /* 확정 후에만 salary_calculations·salary_tax_calculations에 반영되므로 세금 통계 갱신 */
-                                  if (previewResult.period) {
-                                    loadTaxStatistics(previewResult.period, { silent: true });
-                                  }
+                                showNotification('급여 계산이 확정되었습니다.', 'success');
+                                setPreviewResult(null);
+                                setCalcStageSourceCalculation(null);
+                                setIsCalcStageOpen(false);
+                                if (previewResult.consultantId) loadSalaryCalculations(previewResult.consultantId);
+                                /* 확정 후에만 salary_calculations·salary_tax_calculations에 반영되므로 세금 통계 갱신 */
+                                if (previewResult.period) {
+                                  loadTaxStatistics(previewResult.period, { silent: true });
                                 }
                               } catch (err) {
                                 console.error('급여 확정 API 오류:', err);
                                 showNotification(
-                                  toErrorMessage(err, '확정 처리 중 오류가 발생했습니다.'),
+                                  resolveUserFacingApiErrorMessage(err, '확정 처리 중 오류가 발생했습니다.'),
                                   'error'
                                 );
                               } finally {

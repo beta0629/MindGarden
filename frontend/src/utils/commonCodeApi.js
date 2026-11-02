@@ -119,8 +119,14 @@ export const getCommonCodes = async(codeGroup = null, forceTenant = null, option
         } else if (codeGroup && CORE_CODE_GROUPS.includes(codeGroup)) {
             // 코어 코드 전용 API
             url = `${API_BASE}/core/groups/${codeGroup}`;
+        } else if (codeGroup && HYBRID_READ_WITH_CORE_FALLBACK_GROUPS.includes(codeGroup)) {
+            // 하이브리드: BE getCodesByGroup = 테넌트 우선 + 코어 폴백
+            url = `${API_BASE}/groups/${encodeURIComponent(codeGroup)}`;
+            if (includeInactive) {
+                url = `${url}?${COMMON_CODE_INCLUDE_INACTIVE_PARAM}=true`;
+            }
         } else {
-            // 통합 조회 API (테넌트 우선 + 코어 폴백, 하이브리드 재무 그룹 등)
+            // 그 외 통합 목록(쿼리 codeGroup) — 레거시·비하이브리드
             url = buildCodeListUrl(API_BASE, codeGroup, includeInactive);
         }
         

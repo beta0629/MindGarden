@@ -2,8 +2,11 @@ package com.coresolution.consultation.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,6 +25,7 @@ import com.coresolution.consultation.repository.ConsultantSalaryProfileRepositor
 import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.repository.SalaryTaxCalculationRepository;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.SalaryProfileConflictException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SalaryManagementService;
@@ -44,7 +48,18 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Transactional
 public class SalaryManagementServiceImpl implements SalaryManagementService {
-    
+
+    /** FE salaryConstants.SALARY_TYPE 과 동일 허용값 (시드·마이그레이션 없이 검증만). */
+    private static final Set<String> ALLOWED_SALARY_TYPES = Set.of("FREELANCE", "REGULAR");
+
+    private static final String MSG_SALARY_TYPE_REQUIRED = "급여 유형은 필수입니다.";
+    private static final String MSG_SALARY_TYPE_INVALID =
+            "허용되지 않은 급여 유형입니다. FREELANCE 또는 REGULAR 만 사용할 수 있습니다.";
+    private static final String MSG_ACTIVE_PROFILE_EXISTS =
+            "해당 상담사에 이미 활성 급여 프로필이 있습니다. 기존 프로필을 수정해 주세요.";
+    private static final String MSG_DATA_INTEGRITY =
+            "급여 프로필을 저장할 수 없습니다. 입력값을 확인해 주세요.";
+
     private final ConsultantSalaryProfileRepository consultantSalaryProfileRepository;
     private final ConsultantSalaryOptionRepository consultantSalaryOptionRepository;
     private final SalaryCalculationRepository salaryCalculationRepository;
@@ -52,13 +67,16 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     private final UserRepository userRepository;
     
     @Override
+    @Transactional(readOnly = true)
     public List<ConsultantSalaryProfile> getAllSalaryProfiles() {
         String tenantId = TenantContextHolder.getRequiredTenantId();
         log.info("📋 급여 프로필 목록 조회: tenantId={}", tenantId);
         
         // 표준화 2025-12-06: deprecated 메서드 대체
-        List<ConsultantSalaryProfile> allProfiles = consultantSalaryProfileRepository.findByTenantIdAndIsActiveTrue(tenantId);
-        return allProfiles;
+        List<ConsultantSalaryProfile> allProfiles =
+                consultantSalaryProfileRepository.findByTenantIdAndIsActiveTrue(tenantId);
+        // 동일 상담사 활성 행이 복수여도 최신 1건만 노출 (기존 행 삭제·마이그레이션 없음)
+        return selectLatestActiveProfilePerConsultant(allProfiles);
     }
     
     @Override
@@ -76,16 +94,26 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         log.info("➕ 급여 프로필 생성: ConsultantID={}, SalaryType={}, tenantId(context)={}, tenantId(entity)={}",
                 salaryProfile.getConsultantId(), salaryProfile.getSalaryType(), ctxTenantId,
                 profileTenantId);
+        salaryProfile.setSalaryType(normalizeAndValidateSalaryType(salaryProfile.getSalaryType()));
+        String tenantId = profileTenantId != null && !profileTenantId.isBlank()
+                ? profileTenantId
+                : TenantContextHolder.getRequiredTenantId();
+        Long consultantId = salaryProfile.getConsultantId();
+        if (consultantId != null
+                && consultantSalaryProfileRepository.existsByTenantIdAndConsultantIdAndIsActiveTrue(
+                        tenantId, consultantId)) {
+            throw new SalaryProfileConflictException(MSG_ACTIVE_PROFILE_EXISTS);
+        }
         try {
             ConsultantSalaryProfile saved = consultantSalaryProfileRepository.save(salaryProfile);
-            syncConsultantSalaryOptions(profileTenantId, saved.getId(), optionRequests);
+            syncConsultantSalaryOptions(tenantId, saved.getId(), optionRequests);
             return saved;
         } catch (DataIntegrityViolationException e) {
             log.error(
-                    "급여 프로필 저장 실패(DataIntegrity): consultantId={}, tenantId(context)={}, tenantId(entity)={}, 원인={}",
-                    salaryProfile.getConsultantId(), ctxTenantId, profileTenantId,
-                    e.getMostSpecificCause() != null ? e.getMostSpecificCause().getMessage() : e.getMessage());
-            throw e;
+                    "급여 프로필 저장 실패(DataIntegrity): consultantId={}, tenantId(context)={}, tenantId(entity)={}",
+                    salaryProfile.getConsultantId(), ctxTenantId, profileTenantId);
+            // SQL·PII 원문 노출 금지 — 안전한 4xx 사유만 전달
+            throw new ValidationException(MSG_DATA_INTEGRITY, e);
         }
     }
     
@@ -94,10 +122,62 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             List<ConsultantSalaryOptionItemRequest> optionRequests) {
         log.info("✏️ 급여 프로필 수정: ID={}, ConsultantID={}", 
                 salaryProfile.getId(), salaryProfile.getConsultantId());
-        
-        ConsultantSalaryProfile saved = consultantSalaryProfileRepository.save(salaryProfile);
-        syncConsultantSalaryOptions(saved.getTenantId(), saved.getId(), optionRequests);
-        return saved;
+        salaryProfile.setSalaryType(normalizeAndValidateSalaryType(salaryProfile.getSalaryType()));
+        try {
+            ConsultantSalaryProfile saved = consultantSalaryProfileRepository.save(salaryProfile);
+            syncConsultantSalaryOptions(saved.getTenantId(), saved.getId(), optionRequests);
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            log.error("급여 프로필 수정 실패(DataIntegrity): profileId={}, consultantId={}",
+                    salaryProfile.getId(), salaryProfile.getConsultantId());
+            throw new ValidationException(MSG_DATA_INTEGRITY, e);
+        }
+    }
+
+    /**
+     * salaryType 빈 값·미허용 값은 400 ValidationException. 통과 시 trim 정규화 값을 반환한다.
+     *
+     * @param salaryType 요청 급여 유형
+     * @return 정규화된 급여 유형
+     */
+    private String normalizeAndValidateSalaryType(String salaryType) {
+        if (salaryType == null || salaryType.isBlank()) {
+            throw new ValidationException("salaryType", salaryType, MSG_SALARY_TYPE_REQUIRED);
+        }
+        String normalized = salaryType.trim();
+        if (!ALLOWED_SALARY_TYPES.contains(normalized)) {
+            throw new ValidationException("salaryType", salaryType, MSG_SALARY_TYPE_INVALID);
+        }
+        return normalized;
+    }
+
+    /**
+     * 상담사별 활성 프로필이 복수일 때 updatedAt·id 내림차순 최신 1건만 남긴다.
+     *
+     * @param profiles 활성 프로필 목록
+     * @return 상담사당 최신 1건
+     */
+    private List<ConsultantSalaryProfile> selectLatestActiveProfilePerConsultant(
+            List<ConsultantSalaryProfile> profiles) {
+        if (profiles == null || profiles.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, ConsultantSalaryProfile> latestByConsultant = new LinkedHashMap<>();
+        Comparator<ConsultantSalaryProfile> newestFirst = Comparator
+                .comparing(ConsultantSalaryProfile::getUpdatedAt,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(ConsultantSalaryProfile::getId,
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .reversed();
+        List<ConsultantSalaryProfile> sorted = new ArrayList<>(profiles);
+        sorted.sort(newestFirst);
+        for (ConsultantSalaryProfile profile : sorted) {
+            if (profile == null || profile.getConsultantId() == null) {
+                continue;
+            }
+            latestByConsultant.putIfAbsent(profile.getConsultantId(), profile);
+        }
+        return new ArrayList<>(latestByConsultant.values());
     }
 
     /**

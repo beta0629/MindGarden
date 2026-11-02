@@ -137,7 +137,7 @@ const AdminCommonLayoutShell = ({
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
   // 상담사: 전 폭 햄버거+stone soft-sheet (Desktop LNB 게이트 폐기).
-  // 운영/어드민: 기존 768 width-only 게이트 유지(데스크톱 LNB 회귀 금지).
+  // 운영/어드민: --mg-breakpoint-desktop(1280)부터 고정 LNB. 태블릿은 햄버거.
   const isDesktop = isCounselorOnly
     ? false
     : (windowSize.width >= BREAKPOINT_DESKTOP);

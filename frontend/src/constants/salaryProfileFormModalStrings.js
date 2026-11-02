@@ -3,15 +3,20 @@
  * (OPS-02 에픽 — 단일 파일 상수 분리)
  */
 
-/** 급여 옵션 유형 코드 → 한글 라벨 (옵션 유형 선택 드롭다운 표시용) */
-export const SPFM_OPTION_TYPE_LABELS = {
-  FAMILY_CONSULTATION: '가족상담',
-  INITIAL_CONSULTATION: '초기상담',
-  WEEKEND_CONSULTATION: '주말상담',
-  ONLINE_CONSULTATION: '온라인상담',
-  PHONE_CONSULTATION: '전화상담',
-  TRAUMA_CONSULTATION: '트라우마상담'
-};
+import { CONSULTANT_GRADE_TO_LABEL } from '../utils/consultantHelper';
+import {
+  SALARY_OPTION_TYPE_LABELS,
+  SALARY_TYPE,
+  SALARY_TYPE_LABELS
+} from './salaryConstants';
+import {
+  buildConsultantGradeFallbackCodes,
+  buildSalaryOptionTypeFallbackCodes,
+  buildSalaryTypeFallbackCodes
+} from '../utils/resolveTenantCodesOrFallback';
+
+/** 급여 옵션 유형 코드 → 한글 라벨 (salaryConstants 단일 출처) */
+export const SPFM_OPTION_TYPE_LABELS = SALARY_OPTION_TYPE_LABELS;
 
 export const SPFM = {
   OPTION_TYPE_PLACEHOLDER: '옵션 유형 선택',
@@ -75,42 +80,47 @@ export const SPFM = {
   TOAST_PROFILE_CREATED: '급여 프로필이 성공적으로 생성되었습니다.',
   TOAST_PROFILE_UPDATE_FAILED: '급여 프로필 수정에 실패했습니다.',
   TOAST_PROFILE_CREATE_FAILED: '급여 프로필 생성에 실패했습니다.',
+  TOAST_SALARY_TYPE_REQUIRED: '급여 유형을 선택해 주세요.',
+  TOAST_SALARY_TYPE_INVALID: '허용되지 않은 급여 유형입니다. 다시 선택해 주세요.',
   GRADE_OPTION_DESC_EXTRA: (additionalAmount) =>
     `등급별 추가 금액: +${additionalAmount.toLocaleString()}원 (기본 + ${additionalAmount}원)`,
   GRADE_OPTION_DESC_BASE: '기본 옵션 금액'
 };
 
-/** 등급 한글명 폴백 (공통코드 조회 실패 시 표시) */
-export const SPFM_GRADE_KO_FALLBACK = {
-  CONSULTANT_JUNIOR: '주니어 상담사',
-  CONSULTANT_SENIOR: '시니어 상담사',
-  CONSULTANT_EXPERT: '엑스퍼트 상담사',
-  CONSULTANT_MASTER: '마스터 상담사'
-};
+/** 등급 한글명 폴백 (consultantHelper.CONSULTANT_GRADE_TO_LABEL 단일 출처) */
+export const SPFM_GRADE_KO_FALLBACK = CONSULTANT_GRADE_TO_LABEL;
 
-/** 급여 유형 공통코드 없을 때 폴백 */
-export const SPFM_SALARY_TYPE_FALLBACK = [
-  { codeValue: 'FREELANCE', codeLabel: '프리랜서' },
-  { codeValue: 'REGULAR', codeLabel: '정규직' }
-];
+/** 급여 유형 공통코드 없을 때 폴백 (salaryConstants 단일 출처) */
+export const SPFM_SALARY_TYPE_FALLBACK = buildSalaryTypeFallbackCodes();
 
-/** 옵션 유형 공통코드 없을 때 폴백 */
-export const SPFM_OPTION_TYPE_FALLBACK = [
-  { codeValue: 'FAMILY_CONSULTATION', codeName: '가족상담', codeLabel: '가족상담', codeDescription: '가족상담 시 추가 급여' },
-  { codeValue: 'INITIAL_CONSULTATION', codeName: '초기상담', codeLabel: '초기상담', codeDescription: '초기상담 시 추가 급여' },
-  { codeValue: 'WEEKEND_CONSULTATION', codeName: '주말상담', codeLabel: '주말상담', codeDescription: '주말상담 시 추가 급여' },
-  { codeValue: 'ONLINE_CONSULTATION', codeName: '온라인상담', codeLabel: '온라인상담', codeDescription: '온라인상담 시 추가 급여' },
-  { codeValue: 'PHONE_CONSULTATION', codeName: '전화상담', codeLabel: '전화상담', codeDescription: '전화상담 시 추가 급여' },
-  { codeValue: 'TRAUMA_CONSULTATION', codeName: '트라우마상담', codeLabel: '트라우마상담', codeDescription: '트라우마상담 시 추가 급여' }
-];
+/** 옵션 유형 공통코드 없을 때 폴백 (salaryConstants 단일 출처) */
+export const SPFM_OPTION_TYPE_FALLBACK = buildSalaryOptionTypeFallbackCodes();
 
 const F = SPFM_OPTION_TYPE_LABELS.FAMILY_CONSULTATION;
 const I = SPFM_OPTION_TYPE_LABELS.INITIAL_CONSULTATION;
 
-/** 등급표 API 폴백 데이터 (사용자 표시용 이름·옵션명) */
-export const SPFM_GRADE_TABLE_FALLBACK_ROWS = [
-  { code: 'CONSULTANT_JUNIOR', name: '주니어', baseSalary: 30000, multiplier: 1, level: 1, options: [{ type: 'FAMILY_CONSULTATION', name: F, amount: 3000 }, { type: 'INITIAL_CONSULTATION', name: I, amount: 5000 }] },
-  { code: 'CONSULTANT_SENIOR', name: '시니어', baseSalary: 35000, multiplier: 2, level: 2, options: [{ type: 'FAMILY_CONSULTATION', name: F, amount: 3600 }, { type: 'INITIAL_CONSULTATION', name: I, amount: 6000 }] },
-  { code: 'CONSULTANT_EXPERT', name: '엑스퍼트', baseSalary: 40000, multiplier: 3, level: 3, options: [{ type: 'FAMILY_CONSULTATION', name: F, amount: 4200 }, { type: 'INITIAL_CONSULTATION', name: I, amount: 7000 }] },
-  { code: 'CONSULTANT_MASTER', name: '마스터', baseSalary: 45000, multiplier: 4, level: 4, options: [{ type: 'FAMILY_CONSULTATION', name: F, amount: 4800 }, { type: 'INITIAL_CONSULTATION', name: I, amount: 8000 }] }
-];
+/**
+ * 등급표 API 폴백 데이터.
+ * 라벨은 CONSULTANT_GRADE_TO_LABEL, 옵션명은 salaryConstants 단일 출처.
+ */
+export const SPFM_GRADE_TABLE_FALLBACK_ROWS = buildConsultantGradeFallbackCodes().map((row, index) => {
+  const level = index + 1;
+  const shortName = (row.codeLabel || row.codeValue || '').replace(/\s*상담사$/, '') || row.codeValue;
+  return {
+    code: row.codeValue,
+    name: shortName,
+    baseSalary: 30000 + (level - 1) * 5000,
+    multiplier: level,
+    level,
+    options: [
+      { type: 'FAMILY_CONSULTATION', name: F, amount: Math.round(3000 * (1 + (level - 1) * 0.2)) },
+      { type: 'INITIAL_CONSULTATION', name: I, amount: Math.round(5000 * (1 + (level - 1) * 0.2)) }
+    ]
+  };
+});
+
+/** 기본 급여 유형 (옵션에 있을 때만 사용) */
+export const SPFM_DEFAULT_SALARY_TYPE = SALARY_TYPE.FREELANCE;
+
+/** 급여 유형 라벨 맵 재수출 (폼 검증·표시) */
+export const SPFM_SALARY_TYPE_LABELS = SALARY_TYPE_LABELS;

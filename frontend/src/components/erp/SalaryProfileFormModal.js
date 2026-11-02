@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import UnifiedLoading from '../common/UnifiedLoading';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
-import { SALARY_API_ENDPOINTS, getConsultantGradeUpdateUrl } from '../../constants/salaryConstants';
+import {
+  SALARY_API_ENDPOINTS,
+  SALARY_TYPE_ALLOWED_VALUES,
+  getConsultantGradeUpdateUrl
+} from '../../constants/salaryConstants';
 import { showNotification } from '../../utils/notification';
 import { getGradeSalaryMap, getGradeKoreanName } from '../../utils/commonCodeUtils';
 import UnifiedModal from '../common/modals/UnifiedModal';
@@ -12,8 +16,15 @@ import './SalaryProfileFormModal.css';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
+import { CONSULTANT_GRADE_TO_LABEL } from '../../utils/consultantHelper';
+import {
+  isCodeValueInOptions,
+  resolveTenantCodesOrFallback
+} from '../../utils/resolveTenantCodesOrFallback';
 import {
   SPFM,
+  SPFM_DEFAULT_SALARY_TYPE,
   SPFM_GRADE_KO_FALLBACK,
   SPFM_GRADE_TABLE_FALLBACK_ROWS,
   SPFM_OPTION_TYPE_FALLBACK,
@@ -33,7 +44,7 @@ const SalaryProfileFormModal = ({
 }) => {
     const [formData, setFormData] = useState({
         consultantId: null,
-        salaryType: 'FREELANCE', // FREELANCE or REGULAR
+        salaryType: SPFM_DEFAULT_SALARY_TYPE,
         baseSalary: 0,
         contractTerms: '',
         isActive: true,
@@ -57,6 +68,8 @@ const SalaryProfileFormModal = ({
     const [displayBaseSalary, setDisplayBaseSalary] = useState(null);
     /** 기존 프로필 ID (수정 시 PUT 사용) */
     const [existingProfileId, setExistingProfileId] = useState(null);
+    /** 필드별 검증 오류 (salaryType 등) */
+    const [fieldErrors, setFieldErrors] = useState({});
 
     // 등급을 한글로 변환 (공통 코드에서 동적 조회)
     const convertGradeToKorean = async(grade) => {
@@ -64,8 +77,7 @@ const SalaryProfileFormModal = ({
             return await getGradeKoreanName(grade);
         } catch (error) {
             console.error('등급 한글명 조회 실패:', error);
-            // 기본값 반환
-            return SPFM_GRADE_KO_FALLBACK[grade] || grade;
+            return CONSULTANT_GRADE_TO_LABEL[grade] || SPFM_GRADE_KO_FALLBACK[grade] || grade;
         }
     };
 
@@ -138,9 +150,12 @@ const SalaryProfileFormModal = ({
                         ...option,
                         amount: Math.round(option.baseAmount * multiplier)
                     }));
+                    const code = grade.codeValue;
                     return {
-                        code: grade.codeValue,
-                        name: grade.codeLabel || grade.codeValue,
+                        code,
+                        name: CONSULTANT_GRADE_TO_LABEL[code]
+                          || grade.codeLabel
+                          || grade.codeValue,
                         baseSalary: 30000 + (level - 1) * 5000,
                         multiplier: level,
                         options,
@@ -177,9 +192,10 @@ const SalaryProfileFormModal = ({
                 setExistingProfileId(profile.id);
                 const baseSalary = await getGradeBaseSalary(consultant.grade || profile.grade);
                 const gradeOpts = getGradeOptions(consultant.grade || profile.grade);
+                setFieldErrors({});
                 setFormData({
                     consultantId: consultant.id,
-                    salaryType: profile.salaryType || 'FREELANCE',
+                    salaryType: profile.salaryType || SPFM_DEFAULT_SALARY_TYPE,
                     baseSalary: profile.baseSalary != null ? Number(profile.baseSalary) : (typeof baseSalary === 'number' ? baseSalary : 0),
                     contractTerms: profile.contractTerms || '',
                     isActive: profile.isActive !== false,
@@ -248,22 +264,16 @@ const SalaryProfileFormModal = ({
         try {
             setInitialLoading(true);
             console.log('🔍 급여 프로필 폼 초기 데이터 로드 시작');
-            
+
             const salaryTypeList = await getCommonCodes('SALARY_TYPE');
-            if (Array.isArray(salaryTypeList) && salaryTypeList.length > 0) {
-                setSalaryTypes(salaryTypeList);
-            } else {
-                setSalaryTypes(SPFM_SALARY_TYPE_FALLBACK);
-            }
+            setSalaryTypes(resolveTenantCodesOrFallback(salaryTypeList, SPFM_SALARY_TYPE_FALLBACK));
 
             const optionTypeList = await getCommonCodes('SALARY_OPTION_TYPE');
-            if (Array.isArray(optionTypeList) && optionTypeList.length > 0) {
-                setOptionTypes(optionTypeList);
-            } else {
-                setOptionTypes(SPFM_OPTION_TYPE_FALLBACK);
-            }
+            setOptionTypes(resolveTenantCodesOrFallback(optionTypeList, SPFM_OPTION_TYPE_FALLBACK));
         } catch (error) {
             console.error('초기 데이터 로드 실패:', error);
+            setSalaryTypes(SPFM_SALARY_TYPE_FALLBACK);
+            setOptionTypes(SPFM_OPTION_TYPE_FALLBACK);
             showNotification(SPFM.TOAST_LOAD_FAILED, 'error');
         } finally {
             setInitialLoading(false);
@@ -276,9 +286,10 @@ const SalaryProfileFormModal = ({
         const baseSalary = await getGradeBaseSalary(consultant.grade);
         const gradeOptions = getGradeOptions(consultant.grade);
 
+        setFieldErrors({});
         setFormData({
             consultantId: consultant.id,
-            salaryType: 'FREELANCE',
+            salaryType: SPFM_DEFAULT_SALARY_TYPE,
             baseSalary: typeof baseSalary === 'number' ? baseSalary : 0,
             contractTerms: '',
             isActive: true,
@@ -305,24 +316,20 @@ const SalaryProfileFormModal = ({
         if (!newGrade || String(newGrade).trim() === '') {
             return;
         }
-        // 상담사 등급 업데이트
+        // StandardizedApi: 반환되면 성공, throw면 실패
         try {
-            const response = await StandardizedApi.put(
+            await StandardizedApi.put(
               getConsultantGradeUpdateUrl(consultant.id),
               { grade: newGrade }
             );
-            const ok = response && (response.success === true || (response.data != null && response.success !== false));
-            if (ok) {
-                showNotification(SPFM.TOAST_GRADE_UPDATED, 'success');
-                consultant.grade = newGrade;
-            } else {
-                const msg = (response && response.message) ? response.message : SPFM.TOAST_GRADE_UPDATE_FAILED;
-                showNotification(msg, 'error');
-            }
+            showNotification(SPFM.TOAST_GRADE_UPDATED, 'success');
+            consultant.grade = newGrade;
         } catch (error) {
             console.error('등급 업데이트 실패:', error);
-            const msg = error?.response?.data?.message || error?.message || SPFM.TOAST_GRADE_UPDATE_FAILED;
-            showNotification(msg, 'error');
+            showNotification(
+              resolveUserFacingApiErrorMessage(error, SPFM.TOAST_GRADE_UPDATE_FAILED),
+              'error'
+            );
         }
     };
 
@@ -331,6 +338,14 @@ const SalaryProfileFormModal = ({
             ...prev,
             [field]: value
         }));
+        if (field === 'salaryType') {
+            setFieldErrors((prev) => {
+                if (!prev.salaryType) return prev;
+                const next = { ...prev };
+                delete next.salaryType;
+                return next;
+            });
+        }
     };
 
     const handleOptionChange = (index, field, value) => {
@@ -362,50 +377,73 @@ const SalaryProfileFormModal = ({
     };
 
     const handleSave = async() => {
+        if (saving) {
+            return;
+        }
+        const isUpdate = Boolean(existingProfileId);
+        const failToast = isUpdate ? SPFM.TOAST_PROFILE_UPDATE_FAILED : SPFM.TOAST_PROFILE_CREATE_FAILED;
         try {
             setSaving(true);
+
+            const trimmedSalaryType = formData.salaryType != null
+              ? String(formData.salaryType).trim()
+              : '';
+            if (!trimmedSalaryType) {
+                setFieldErrors((prev) => ({ ...prev, salaryType: SPFM.TOAST_SALARY_TYPE_REQUIRED }));
+                showNotification(SPFM.TOAST_SALARY_TYPE_REQUIRED, 'error');
+                return;
+            }
+            const salaryTypeAllowed = SALARY_TYPE_ALLOWED_VALUES.includes(trimmedSalaryType)
+              && isCodeValueInOptions(trimmedSalaryType, salaryTypes);
+            if (!salaryTypeAllowed) {
+                setFieldErrors((prev) => ({ ...prev, salaryType: SPFM.TOAST_SALARY_TYPE_INVALID }));
+                showNotification(SPFM.TOAST_SALARY_TYPE_INVALID, 'error');
+                return;
+            }
+            setFieldErrors((prev) => {
+                if (!prev.salaryType) return prev;
+                const next = { ...prev };
+                delete next.salaryType;
+                return next;
+            });
 
             // 사업자 등록 시 필수 필드 검사
             if (formData.isBusinessRegistered) {
                 if (!formData.businessRegistrationNumber) {
                     showNotification(SPFM.TOAST_BIZ_NO_REQUIRED, 'error');
-                    setSaving(false);
                     return;
                 }
-                
+
                 if (!validateBusinessRegistrationNumber(formData.businessRegistrationNumber)) {
                     showNotification(SPFM.TOAST_BIZ_NO_INVALID, 'error');
-                    setSaving(false);
                     return;
                 }
-                
+
                 if (!formData.businessName) {
                     showNotification(SPFM.TOAST_BIZ_NAME_REQUIRED, 'error');
-                    setSaving(false);
                     return;
                 }
             }
 
             const profileData = {
                 ...formData,
+                salaryType: trimmedSalaryType,
                 options: selectedOptions.filter(opt => opt.type && opt.amount > 0)
             };
 
-            const isUpdate = Boolean(existingProfileId);
-            const response = isUpdate
+            // StandardizedApi 계약: 예외 throw = 실패, 반환 = 성공(언랩된 data)
+            const saved = isUpdate
                 ? await StandardizedApi.put(SALARY_API_ENDPOINTS.getProfileUpdateUrl(existingProfileId), profileData)
                 : await StandardizedApi.post(SALARY_API_ENDPOINTS.PROFILES, profileData);
 
-            if (response && response.success) {
-                showNotification(isUpdate ? SPFM.TOAST_PROFILE_UPDATED : SPFM.TOAST_PROFILE_CREATED, 'success');
-                onSave(response.data);
-                onClose();
-            } else {
-                showNotification(response?.message || (isUpdate ? SPFM.TOAST_PROFILE_UPDATE_FAILED : SPFM.TOAST_PROFILE_CREATE_FAILED), 'error');
+            showNotification(isUpdate ? SPFM.TOAST_PROFILE_UPDATED : SPFM.TOAST_PROFILE_CREATED, 'success');
+            if (typeof onSave === 'function') {
+                onSave(saved);
             }
+            onClose();
         } catch (error) {
             console.error(existingProfileId ? '급여 프로필 수정 실패' : '급여 프로필 생성 실패', error);
-            showNotification(existingProfileId ? SPFM.TOAST_PROFILE_UPDATE_FAILED : SPFM.TOAST_PROFILE_CREATE_FAILED, 'error');
+            showNotification(resolveUserFacingApiErrorMessage(error, failToast), 'error');
         } finally {
             setSaving(false);
         }
@@ -540,7 +578,11 @@ const SalaryProfileFormModal = ({
                                 }))
                             ]}
                             placeholder={SPFM.SALARY_TYPE_PLACEHOLDER}
+                            disabled={saving}
                         />
+                        {fieldErrors.salaryType ? (
+                          <p className="mg-v2-form-error" role="alert">{fieldErrors.salaryType}</p>
+                        ) : null}
                     </div>
 
                     {/* 기본 급여 */}

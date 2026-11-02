@@ -92,14 +92,21 @@ export const CORE_CODE_GROUPS = [
 
 /**
  * 테넌트 격리 쓰기이나, 조회는 통합 API(테넌트 우선 + 코어 폴백)를 써야 하는 그룹.
- * shouldUseTenantOnlyReadPath 에서 제외 — getCommonCodes 가 /common-codes?codeGroup= 경로 사용.
+ * shouldUseTenantOnlyReadPath 에서 제외 —
+ * getCommonCodes 가 /api/v1/common-codes/groups/{codeGroup} (CommonCodeController.getCodesByGroup) 사용.
  * EXPENSE_/INCOME_ 그룹은 운영 SSOT=테넌트이므로 제외(목록·삭제 키 정합).
+ * SALARY_TYPE·SALARY_OPTION_TYPE·CONSULTANT_GRADE·SALARY_PAY_DAY 는 코어(tenant null) 시드가
+ * 주 SSOT 이므로 조회만 하이브리드(테넌트 우선+코어 폴백).
  */
 export const HYBRID_READ_WITH_CORE_FALLBACK_GROUPS = [
     'TRANSACTION_TYPE',
     'VAT_APPLICABLE',
     'TAX_TYPE',
-    'SALARY_GRADE'
+    'SALARY_GRADE',
+    'SALARY_TYPE',
+    'SALARY_OPTION_TYPE',
+    'CONSULTANT_GRADE',
+    'SALARY_PAY_DAY'
 ];
 
 /**

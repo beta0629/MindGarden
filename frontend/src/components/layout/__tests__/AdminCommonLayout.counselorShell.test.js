@@ -1,7 +1,7 @@
 /**
  * AdminCommonLayout — 상담사-only LNB·로고 랜딩 가드
  * 상담사: 전 폭 MobileLayout + 햄버거 + soft-sheet (Desktop LNB 폐기)
- * 운영/어드민: BREAKPOINT_DESKTOP(768) DesktopLayout 회귀 유지
+ * 운영/어드민: BREAKPOINT_DESKTOP(1280) DesktopLayout — 태블릿은 MobileLayout+햄버거
  */
 
 import React from 'react';
@@ -200,7 +200,7 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     await expectCounselorMobileSoftSheet();
   });
 
-  test('운영자 태블릿(820): 기존 DesktopLayout(768 게이트) 유지', async() => {
+  test('운영자 태블릿(820): SSOT 1280 미만 → MobileLayout(햄버거)', async() => {
     mockUseSession.mockReturnValue({
       user: { id: 2, role: 'ADMIN', name: '관리자' },
       logout: jest.fn()
@@ -216,9 +216,30 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
     });
-    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+  });
+
+  test('운영자 태블릿(1180): SSOT 1280 미만 → MobileLayout(햄버거)', async() => {
+    mockUseSession.mockReturnValue({
+      user: { id: 2, role: 'ADMIN', name: '관리자' },
+      logout: jest.fn()
+    });
+    mockUseResponsive.mockReturnValue({ windowSize: { width: 1180, height: 800 } });
+
+    render(
+      <MemoryRouter>
+        <AdminCommonLayout>
+          <span>본문</span>
+        </AdminCommonLayout>
+      </MemoryRouter>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
   });
 
   test('운영자 데스크톱(1280): DesktopLayout 회귀', async() => {

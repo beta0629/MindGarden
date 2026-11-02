@@ -77,6 +77,23 @@ spring:
     out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:true}
     validate-on-migrate: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE:false}
 
+  # Redis 연결 (dev): opaque 토큰 등 StringRedisTemplate용.
+  # REDIS_HOST/REDIS_PASSWORD 는 배포 env 주입. host 빈 기본값으로 placeholder 미해결 기동 실패를 막고,
+  # 미설정·연결 실패 시 PasswordResetOpaqueTokenStore 등은 메모리 폴백을 유지한다.
+  # session.store-type / cache.type 은 강제하지 않음(인프라 없을 때 세션 장애 방지).
+  data:
+    redis:
+      host: ${REDIS_HOST:}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
 # Ops Portal 관리자 (환경변수로 주입, -D 인자 제거로 ps/journalctl 노출 방지)
 ops:
   admin:

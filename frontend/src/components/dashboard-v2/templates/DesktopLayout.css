@@ -25,16 +25,16 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  /* 좌·우는 별도 토큰(--mg-layout-page-padding-x)으로 분리해 LNB 우측 콘텐츠 영역
-   * 여백을 페이지 wrapper 두께와 독립적으로 보장한다.
-   * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 부족 해소) */
+  /* 좌·우는 page padding 단일 인셋(ContentArea는 layout main 하위 padding:0).
+   * space-6(24px)×2 ≤ main 폭(1280−LNB≈1020)의 5% → 본문 폭비 ≥ 0.95 예산.
+   * (P1 2026-06-10 여백 해소 유지 · 2026-11 ContentArea 이중 인셋 제거와 정합) */
   padding-block: var(--mg-v2-space-6, var(--mg-layout-page-padding, 24px));
-  padding-inline: var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px));
+  padding-inline: var(--mg-v2-space-6, var(--mg-layout-page-padding-x, 24px));
   padding-left: calc(
-    var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px)) + env(safe-area-inset-left, 0px)
+    var(--mg-v2-space-6, var(--mg-layout-page-padding-x, 24px)) + env(safe-area-inset-left, 0px)
   );
   padding-right: calc(
-    var(--mg-v2-space-8, var(--mg-layout-page-padding-x, 32px)) + env(safe-area-inset-right, 0px)
+    var(--mg-v2-space-6, var(--mg-layout-page-padding-x, 24px)) + env(safe-area-inset-right, 0px)
   );
   min-height: 0;
 }

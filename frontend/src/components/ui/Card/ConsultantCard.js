@@ -686,15 +686,6 @@ const ConsultantCard = ({
                 }}
                 aria-label={`${toDisplayString(consultant.name)} 상담사 상세 보기`}
             >
-                {renderActions && (
-                    <div
-                        className="mg-consultant-card__corner-actions"
-                        onClick={(e) => e.stopPropagation()}
-                        onKeyDown={(e) => e.stopPropagation()}
-                    >
-                        {renderActions(consultant)}
-                    </div>
-                )}
                 <div className="mg-consultant-card__header-section">
                     <Avatar
                         profileImageUrl={consultant.profileImageUrl}
@@ -715,6 +706,15 @@ const ConsultantCard = ({
                             </span>
                         </div>
                     </div>
+                    {renderActions && (
+                        <div
+                            className="mg-consultant-card__corner-actions"
+                            onClick={(e) => e.stopPropagation()}
+                            onKeyDown={(e) => e.stopPropagation()}
+                        >
+                            {renderActions(consultant)}
+                        </div>
+                    )}
                     <div className="mg-consultant-card__badge-group">
                         <span className={`mg-v2-consultant-level-badge mg-v2-consultant-level-badge--${resolvedBadgeInfo.level}`}>
                             <SafeText>{resolvedBadgeInfo.label}</SafeText>

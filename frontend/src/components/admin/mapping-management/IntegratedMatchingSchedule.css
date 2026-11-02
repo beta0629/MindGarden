@@ -70,8 +70,11 @@
   overflow: hidden;
 }
 
+/*
+ * ContentArea SSOT: layout main 하위 padding:0 (ContentArea.css).
+ * 페이지에서 padding 재부여 금지 — gap만 shell/stage 내부 간격으로 사용.
+ */
 .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
-  padding: var(--mg-v2-space-5);
   gap: var(--mg-v2-space-4);
 }
 
@@ -510,6 +513,8 @@
   align-items: stretch;
   gap: var(--mg-v2-space-1);
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   margin-bottom: var(--mg-v2-space-1);
 }
 
@@ -566,6 +571,9 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--mg-v2-space-1);
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .integrated-schedule__status-btn {
@@ -1465,9 +1473,19 @@
 
 .integrated-schedule__filter-details {
   flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
   border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
+}
+
+/* 열림 시 카드 목록 위로 침범하지 않고 사이드바 flow 안에서 스크롤 */
+.integrated-schedule__filter-details[open] {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .integrated-schedule__filter-details-summary {
@@ -1576,19 +1594,23 @@
   min-height: var(--integrated-schedule-chrome-control-height);
 }
 
+/*
+ * ContentArea 공용 계약 유지 (layout main > .mg-v2-content-area { padding:0 }).
+ * 페이지 로컬 padding 재선언으로 폭비·이중 인셋 회귀 금지.
+ */
 .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
   padding: 0;
 }
 
+/* viewport-bound: DesktopLayout 공용 page padding에 맡김 (페이지 padding-block 예외 제거) */
 .mg-v2-desktop-layout__main:has(> .integrated-schedule--clinic-os) {
   overflow: hidden;
-  padding-block: var(--mg-v2-space-3);
 }
 
 @media (min-width: 768px) {
   .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     column-gap: var(--mg-v2-space-4);
     row-gap: var(--mg-v2-space-3);
@@ -1614,12 +1636,16 @@
     grid-row: 1 / -1;
     height: auto;
     max-height: none;
+    min-width: 0;
     min-height: 0;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .integrated-schedule--clinic-os .integrated-schedule__main-region {
     grid-column: 2;
     grid-row: 3;
+    min-width: 0;
     max-height: none;
   }
 }
@@ -1633,7 +1659,6 @@
 
 .mg-v2-mobile-layout__main:has(> .integrated-schedule--clinic-os) {
   overflow: hidden;
-  padding-block: var(--mg-v2-space-2);
 }
 
 @media (max-width: 767px) {

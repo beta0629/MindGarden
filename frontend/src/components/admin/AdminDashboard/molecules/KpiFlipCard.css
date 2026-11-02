@@ -99,6 +99,7 @@
   cursor: pointer;
   min-width: 0;
   width: 100%;
+  overflow: hidden;
   /* sparkline + meta + flip-hint 가시 — padding·콘텐츠 합산 (토큰 only) */
   --mg-kpi-flip-card-min-height: calc(
     var(--mg-v2-space-6) * 2 +
@@ -235,7 +236,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--mg-v2-space-2);
   margin-bottom: var(--mg-v2-space-4);
+  flex-shrink: 0;
+  min-width: 0;
 }
 
 .mg-v2-kpi-flip-card__back-title {
@@ -243,14 +247,19 @@
   font-weight: var(--mg-v2-font-weight-semibold);
   color: var(--mg-v2-color-text-primary);
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-kpi-flip-card__close-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  flex-shrink: 0;
+  min-width: var(--touch-target-min, var(--mg-v2-space-10));
+  min-height: var(--touch-target-min, var(--mg-v2-space-10));
   background: none;
   border: none;
   cursor: pointer;
@@ -269,7 +278,9 @@
 }
 
 .mg-v2-kpi-flip-card__back-content {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   font-size: var(--mg-v2-font-size-body-sm);
   color: var(--mg-v2-color-text-primary);
@@ -301,6 +312,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
   margin-top: var(--mg-v2-space-4);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
   background-color: var(--mg-v2-color-primary-main);
@@ -357,10 +369,39 @@
   }
 }
 
+/*
+ * 2열(768–1279): 카드 폭이 좁아 sparkline+hint가 이웃 카드로 넘치기 쉬움.
+ * sparkline 숨김·hint 축소로 front overflow 안에 유지 (1280 compact G1-02와 동일 우선순위).
+ */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .mg-v2-kpi-flip-card {
+    --mg-kpi-flip-card-min-height: calc(
+      var(--mg-v2-space-5) * 2 +
+      var(--mg-v2-space-8) +
+      var(--mg-v2-space-6) +
+      var(--mg-v2-space-5)
+    );
+  }
+
+  .mg-v2-kpi-flip-card__front > .mg-v2-kpi-sparkline {
+    display: none;
+  }
+
+  .mg-v2-kpi-flip-card__flip-hint {
+    min-height: var(--mg-v2-space-4);
+    padding-top: 0;
+  }
+
+  .mg-v2-kpi-flip-card__value {
+    font-size: var(--mg-v2-font-size-h4, 1.25rem);
+    margin-bottom: 0;
+  }
+}
+
 /* Mobile — single column stack (row grid handles width) */
 @media (max-width: 767px) {
   .mg-v2-kpi-flip-card__back-content {
-    max-height: 200px;
+    max-height: calc(var(--mg-v2-space-10) * 5);
   }
 }
 

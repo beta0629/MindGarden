@@ -18,15 +18,48 @@
 
 .mg-consultant-card--admin-compact {
   position: relative;
-  padding-right: calc(var(--mg-spacing-12, 0.75rem) + var(--touch-target-min, 2.75rem));
 }
 
+/*
+ * admin-compact: 헤더 in-flow 액션 열 (ProfileCard compact 와 동일).
+ * absolute overlay + padding-right 예약 제거 — info/name truncate 로 충돌 방지.
+ */
 .mg-consultant-card__corner-actions {
-  position: absolute;
-  top: var(--mg-spacing-8, 0.5rem);
-  right: var(--mg-spacing-8, 0.5rem);
+  position: static;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-inline-start: auto;
   z-index: 2;
   overflow: visible;
+  pointer-events: none;
+}
+
+.mg-consultant-card__corner-actions > * {
+  pointer-events: auto;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__header-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__info-group {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__badge-group {
+  flex-basis: 100%;
+  order: 1;
 }
 
 .mg-v2-consultant-card--admin-compact:has(.mg-consultant-card__corner-actions),

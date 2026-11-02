@@ -1783,7 +1783,9 @@ jobs:
 
     # ============================================================================
     # [dev Redis] 배포 후 ping + BE Redis connection status 로그 (soft-fail)
-    # redis-cli: REDISCLI_AUTH 만 사용. journalctl 에서 "Redis connection status:" grep (PR #1825).
+    # redis-cli: REDISCLI_AUTH 만 사용.
+    # 상태 로그 검색 순서(파일 1순위): coresolution.log → /var/log/mindgarden/dev.log → journalctl.
+    # (repo unit StandardOutput=append 파일; journal은 fallback unit 보조)
     # 시크릿 미등록 과도기 → notice. 시크릿·설치 후 ping 실패 → warning. 배포 fail 전파 안 함.
     # ============================================================================
     - name: 🔴 Redis 배포 후 ping·상태 로그 검증
@@ -1800,6 +1802,10 @@ jobs:
           set +e
           UNIT=mindgarden-dev.service
           DEV_ENV_FILE=/etc/mindgarden/dev.env
+          APP_DIR=/var/www/mindgarden-dev
+          CORES_LOG="${APP_DIR}/logs/coresolution.log"
+          DEV_STDOUT_LOG=/var/log/mindgarden/dev.log
+          STATUS_NEEDLE='Redis connection status:'
           echo "::group::🔴 Redis post-deploy verify (no secrets)"
 
           # Load host/port/password from env secrets first; fall back to dev.env presence only for ping target.
@@ -1834,17 +1840,81 @@ jobs:
           fi
           unset PASS_V HOST_V
 
-          # 2) BE journal: Redis connection status (PR #1825) — mask password-looking tokens
-          echo "--- journalctl Redis connection status ---"
-          JOURNAL_RAW="$(sudo journalctl -u "$UNIT" --no-pager -n 400 2>/dev/null | grep -F 'Redis connection status:' || true)"
-          if [ -z "$JOURNAL_RAW" ]; then
-            echo "(no 'Redis connection status:' lines in last 400 journal lines — PR #1825 미배포 또는 로그 회전)"
-          else
-            # Redact common secret patterns; never re-print REDIS_PASSWORD from workflow env
-            printf '%s\n' "$JOURNAL_RAW" \
-              | sed -E 's/(password|passwd|secret|token|REDIS_PASSWORD)[=:][^[:space:]]+/\1=[REDACTED]/Ig' \
+          # redact helper — never echo REDIS_PASSWORD / raw secrets
+          redact_status_lines() {
+            sed -E 's/(password|passwd|secret|token|REDIS_PASSWORD)[=:][^[:space:]]+/\1=[REDACTED]/Ig' \
               | sed -E 's/requirepass[[:space:]]+[^[:space:]]+/requirepass [REDACTED]/Ig'
+          }
+
+          # 2) BE Redis connection status — file logs first, journal auxiliary
+          STATUS_RAW=""
+          STATUS_SOURCE=none
+          echo "--- Redis connection status search (file → journal) ---"
+
+          # 2a) logback FILE: WorkingDirectory/logs/coresolution.log (+ rolling newest)
+          if [ -z "$STATUS_RAW" ]; then
+            CANDIDATES=""
+            if [ -f "$CORES_LOG" ]; then
+              CANDIDATES="$CORES_LOG"
+            fi
+            # rolling: logs/coresolution.yyyy-MM-dd.i.log — newest first
+            for f in $(ls -1t "${APP_DIR}/logs"/coresolution.*.log 2>/dev/null | head -n 5); do
+              CANDIDATES="$CANDIDATES $f"
+            done
+            for f in $CANDIDATES; do
+              [ -f "$f" ] || continue
+              HIT="$(sudo grep -F "$STATUS_NEEDLE" "$f" 2>/dev/null | tail -n 20 || true)"
+              if [ -n "$HIT" ]; then
+                STATUS_RAW="$HIT"
+                STATUS_SOURCE=coresolution.log
+                echo "(matched in $f)"
+                break
+              fi
+            done
           fi
+
+          # 2b) systemd StandardOutput append file
+          if [ -z "$STATUS_RAW" ] && [ -f "$DEV_STDOUT_LOG" ]; then
+            HIT="$(sudo grep -F "$STATUS_NEEDLE" "$DEV_STDOUT_LOG" 2>/dev/null | tail -n 20 || true)"
+            if [ -n "$HIT" ]; then
+              STATUS_RAW="$HIT"
+              STATUS_SOURCE=dev.log
+              echo "(matched in $DEV_STDOUT_LOG)"
+            fi
+          fi
+
+          # 2c) journalctl — ActiveEnterTimestamp since, else -n 5000
+          if [ -z "$STATUS_RAW" ]; then
+            SINCE_ARG=""
+            ACTIVE_ENTER="$(systemctl show -p ActiveEnterTimestamp --value "$UNIT" 2>/dev/null || true)"
+            if [ -n "$ACTIVE_ENTER" ] && [ "$ACTIVE_ENTER" != "n/a" ] && [ "$ACTIVE_ENTER" != "0" ]; then
+              SINCE_ARG="--since=$ACTIVE_ENTER"
+              HIT="$(sudo journalctl -u "$UNIT" --no-pager $SINCE_ARG 2>/dev/null | grep -F "$STATUS_NEEDLE" | tail -n 20 || true)"
+            else
+              HIT="$(sudo journalctl -u "$UNIT" --no-pager -n 5000 2>/dev/null | grep -F "$STATUS_NEEDLE" | tail -n 20 || true)"
+            fi
+            if [ -n "$HIT" ]; then
+              STATUS_RAW="$HIT"
+              STATUS_SOURCE=journal
+              echo "(matched in journalctl $UNIT)"
+            fi
+          fi
+
+          if [ -n "$STATUS_RAW" ]; then
+            printf '%s\n' "$STATUS_RAW" | redact_status_lines
+            if printf '%s\n' "$STATUS_RAW" | grep -Fq 'IN_USE'; then
+              echo "redis_be_status=IN_USE"
+            elif printf '%s\n' "$STATUS_RAW" | grep -Fq 'MEMORY_FALLBACK'; then
+              echo "redis_be_status=MEMORY_FALLBACK"
+            else
+              echo "redis_be_status=NOT_FOUND"
+            fi
+          else
+            echo "(no '$STATUS_NEEDLE' in coresolution.log / dev.log / journal — soft-fail)"
+            echo "redis_be_status=NOT_FOUND"
+            echo "::warning title=Redis BE status NOT_FOUND::파일·journal에서 Redis connection status 미발견 (배포는 계속). source=none"
+          fi
+          echo "redis_be_status_source=${STATUS_SOURCE}"
 
           # 3) Presence-only lengths from dev.env (never print values)
           if [ -f "$DEV_ENV_FILE" ]; then

@@ -39,6 +39,28 @@ class RedisConnectionStatusReporterTest {
     }
 
     @Test
+    @DisplayName("empty host + ApplicationReady 경로 → MEMORY_FALLBACK (factory 무시)")
+    @SuppressWarnings("unchecked")
+    void onApplicationReady_emptyHost_memoryFallbackWithoutPing() {
+        MockEnvironment env = new MockEnvironment()
+                .withProperty(RedisConnectionStatusReporter.ENV_REDIS_HOST, "")
+                .withProperty(RedisConnectionStatusReporter.PROP_REDIS_HOST, "");
+        ObjectProvider<RedisConnectionFactory> provider = mock(ObjectProvider.class);
+        RedisConnectionFactory factory = mock(RedisConnectionFactory.class);
+        when(provider.getIfAvailable()).thenReturn(factory);
+
+        RedisConnectionStatusReporter reporter = new RedisConnectionStatusReporter(env, provider);
+        String host = RedisConnectionStatusReporter.resolveRedisHost(env);
+        assertThat(host).isNullOrEmpty();
+        // empty host면 tryPing을 호출하지 않는 계약 — buildStatusLine만으로 MEMORY_FALLBACK
+        String line = RedisConnectionStatusReporter.buildStatusLine(host, null);
+        assertThat(line).contains(RedisConnectionStatusReporter.STATUS_MEMORY_FALLBACK)
+                .contains("REDIS_HOST unset")
+                .doesNotContain(SAMPLE_PASSWORD);
+        reporter.onApplicationReady(null);
+    }
+
+    @Test
     @DisplayName("host set + ping ok → IN_USE")
     void hostSet_pingOk_inUse() {
         String line = RedisConnectionStatusReporter.buildStatusLine(SAMPLE_HOST, "PONG");

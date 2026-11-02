@@ -78,12 +78,12 @@ spring:
     validate-on-migrate: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE:false}
 
   # Redis 연결 (dev): opaque 토큰 등 StringRedisTemplate용.
-  # REDIS_HOST/REDIS_PASSWORD 는 배포 env 주입. host 빈 기본값으로 placeholder 미해결 기동 실패를 막고,
-  # 미설정·연결 실패 시 PasswordResetOpaqueTokenStore 등은 메모리 폴백을 유지한다.
-  # session.store-type / cache.type 은 강제하지 않음(인프라 없을 때 세션 장애 방지).
+  # 빈 REDIS_HOST 기본값으로 spring.data.redis.host 를 덮지 말 것(금지).
+  # host는 RedisOptionalEnvironmentPostProcessor가 REDIS_HOST(또는 spring.data.redis.host)가
+  # non-blank일 때만 spring.data.redis.host를 설정한다. blank/미설정이면 Redis 자동구성 제외 + MEMORY_FALLBACK.
+  # port/password/timeout/pool은 유지. session.store-type / cache.type 은 강제하지 않음.
   data:
     redis:
-      host: ${REDIS_HOST:}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
       timeout: 2000ms

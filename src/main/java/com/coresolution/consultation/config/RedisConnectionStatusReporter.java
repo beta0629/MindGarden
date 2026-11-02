@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,7 +17,8 @@ import org.springframework.util.StringUtils;
  * 기동 완료 시 Redis 연결 사용 여부를 INFO 한 줄로 남긴다.
  *
  * <p>비밀번호·시크릿은 로그에 포함하지 않는다. host 미설정·ping 실패여도 기동을 중단하지 않으며,
- * opaque 토큰 스토어 등의 메모리 폴백과 정합한다.</p>
+ * opaque 토큰 스토어 등의 메모리 폴백과 정합한다.
+ * ApplicationReady 리스너 중 일찍 남겨 배포 점검이 파일 로그에서 찾을 수 있게 한다.</p>
  *
  * @author CoreSolution
  * @since 2026-11-02
@@ -39,6 +42,7 @@ public class RedisConnectionStatusReporter {
      *
      * @param event 애플리케이션 준비 이벤트
      */
+    @Order(Ordered.HIGHEST_PRECEDENCE)
     @EventListener(ApplicationReadyEvent.class)
     public void onApplicationReady(ApplicationReadyEvent event) {
         String host = resolveRedisHost(environment);

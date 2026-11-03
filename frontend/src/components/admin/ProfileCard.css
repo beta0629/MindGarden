@@ -87,9 +87,8 @@
   font-weight: var(--font-weight-semibold, 600);
   color: var(--mg-color-text-main);
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
 }
 
 .mg-v2-profile-card__contact {
@@ -104,7 +103,17 @@
 .mg-v2-profile-card__phone {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--mg-v2-space-1);
+  overflow: visible;
+  white-space: normal;
+}
+
+.mg-v2-profile-card__email {
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-profile-card__phone {
+  overflow-wrap: normal;
 }
 
 .mg-v2-profile-card__badges {
@@ -282,9 +291,9 @@
  */
 .mg-v2-profile-card--compact {
   overflow: visible;
-  padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
-  gap: var(--mg-spacing-8, 0.5rem);
-  min-width: 0;
+  padding: var(--mg-v2-space-4) var(--mg-v2-space-4) var(--mg-v2-space-3);
+  gap: var(--mg-v2-space-2);
+  min-width: min(100%, var(--mg-v2-list-card-min-width));
   /* 콘텐츠 기반 자동 높이 (공통 .mg-v2-profile-card 의 padding-lg/gap-md 오버라이드) */
 }
 
@@ -298,10 +307,21 @@
 
 .mg-v2-profile-card--compact .mg-v2-profile-card__name {
   font-size: var(--mg-font-size-sm, 0.875rem);
+  overflow: visible;
+  white-space: normal;
 }
 
 .mg-v2-profile-card--compact .mg-v2-profile-card__contact {
   font-size: var(--mg-font-size-xs, 0.75rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__email {
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__phone {
+  overflow: visible;
+  white-space: normal;
 }
 
 .mg-v2-profile-card--compact .mg-v2-profile-card__body,

@@ -94,6 +94,38 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
   });
 
+  test('sidebar width token is defined on schedule root for content-area grid inheritance', () => {
+    const rootBlock = scheduleCss.match(/\.integrated-schedule\s*\{[^}]+\}/s);
+    expect(rootBlock).not.toBeNull();
+    expect(rootBlock[0]).toMatch(/--integrated-schedule-sidebar-width:\s*380px/);
+
+    const sidebarBlock = scheduleCss.match(
+      /\.integrated-schedule__sidebar\s*\{[^}]+\}/s
+    );
+    expect(sidebarBlock).not.toBeNull();
+    expect(sidebarBlock[0]).not.toMatch(/--integrated-schedule-sidebar-width\s*:/);
+
+    expect(scheduleCss).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*var\(--integrated-schedule-sidebar-width\)\)\s*minmax\(0,\s*1fr\)/
+    );
+
+    const mainRegionClinic = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__main-region\s*\{[^}]+\}/s
+    );
+    expect(mainRegionClinic).not.toBeNull();
+    expect(mainRegionClinic[0]).toMatch(/max-width:\s*none/);
+  });
+
+  test('open filter-details does not flex-shrink over list cards', () => {
+    const openBlock = scheduleCss.match(
+      /\.integrated-schedule__filter-details\[open\]\s*\{[^}]+\}/s
+    );
+    expect(openBlock).not.toBeNull();
+    expect(openBlock[0]).toMatch(/flex-shrink:\s*0/);
+    expect(openBlock[0]).not.toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(openBlock[0]).not.toMatch(/overflow-y:\s*auto/);
+  });
+
   test('selection chrome vars are screen-local (not in global Clinic-OS / design tokens)', () => {
     const clinicOsScope = scheduleCss.match(
       /\.integrated-schedule\.integrated-schedule--clinic-os\s*\{[^}]+\}/s

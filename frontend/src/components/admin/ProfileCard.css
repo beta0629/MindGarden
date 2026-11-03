@@ -281,6 +281,7 @@
  * P1 컴팩트화 (2026-06-10): 콘텐츠 패딩 16-20px, 콘텐츠 기반 자동 높이 200-240px 목표
  */
 .mg-v2-profile-card--compact {
+  overflow: visible;
   padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
   gap: var(--mg-spacing-8, 0.5rem);
   min-width: 0;

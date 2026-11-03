@@ -183,13 +183,15 @@
   padding: var(--mg-spacing-xl, 1.5rem);
 }
 
-/* 페이지 wrapper가 Desktop/MobileLayout 메인의 직접 자식인 경우(어드민 V2 표준 구조),
+/* 페이지 wrapper가 Desktop/MobileLayout 메인·stage 하위인 경우(어드민 V2 표준 구조),
  * 가로 패딩은 메인(.mg-v2-*-layout__main: padding-inline)에서만 적용하여
  * 이중 적용(체감상 너무 좁음/너무 넓음) 방지. 세로 패딩은 그대로 유지한다.
  * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 SSOT 정정)
- * MobileLayout 대칭: 820 폭비 (820-48)/820=0.941 이중 인셋 제거 */
+ * MobileLayout: main > stage > .mg-v2-ad-b0kla — 직접 자식 선택자만으로는 stage 경유 시
+ * 이중 인셋(main 16 + b0kla 24 → 820 폭비 0.941)이 남으므로 stage 직계도 포함. */
 .mg-v2-desktop-layout__main > .mg-v2-ad-b0kla,
-.mg-v2-mobile-layout__main > .mg-v2-ad-b0kla {
+.mg-v2-mobile-layout__main > .mg-v2-ad-b0kla,
+.mg-v2-mobile-layout__stage > .mg-v2-ad-b0kla {
   padding-inline: 0;
 }
 
@@ -504,6 +506,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
  * SSOT: complete pill geometry — overflow visible so end-corner strokes/curves stay fully painted. */
 .mg-v2-ad-b0kla__pill-toggle {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   height: auto;
   width: fit-content;
@@ -755,7 +758,8 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 .mg-v2-ad-b0kla__integrated-data-period-tabs {
   display: flex;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-1);
 }
 
 .mg-v2-ad-b0kla__pill--sm {

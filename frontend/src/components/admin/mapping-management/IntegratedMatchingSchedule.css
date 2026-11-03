@@ -1,6 +1,8 @@
 /* IntegratedMatchingSchedule — Clinic-OS operator visual (SSOT: CLINIC_OS_ADMIN_VISUAL_SSOT.md) */
 
 .integrated-schedule {
+  /* 사이드바 폭 토큰 — content-area grid가 상속받도록 루트에 정의 (자식만 두면 var 무효) */
+  --integrated-schedule-sidebar-width: 380px;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -51,12 +53,15 @@
   --integrated-schedule-selection-accent: 3px;
   --integrated-schedule-status-surface: var(--mg-v2-color-surface-card);
   padding: 0;
+  width: 100%;
+  min-width: 0;
   min-height: 0;
   flex: 1 1 auto;
   height: 100%;
   max-height: 100%;
   overflow: hidden;
   background-color: transparent;
+  box-sizing: border-box;
 }
 
 .integrated-schedule.integrated-schedule--clinic-os .integrated-schedule__shell,
@@ -64,10 +69,14 @@
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  max-width: none;
   min-height: 0;
   max-height: 100%;
   height: 100%;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 /*
@@ -246,9 +255,9 @@
   border-radius: var(--mg-radius-sm);
 }
 
-/* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (사이드바 폭 토큰화, 380px ↔ 48px) */
+/* 좌측 매칭 목록 — 옵션 A: collapse 토글 지원 (사이드바 폭 토큰화, 380px ↔ 48px)
+ * --integrated-schedule-sidebar-width 는 .integrated-schedule 루트에 정의 (grid 상속) */
 .integrated-schedule__sidebar {
-  --integrated-schedule-sidebar-width: 380px;
   min-width: var(--integrated-schedule-sidebar-width);
   width: var(--integrated-schedule-sidebar-width);
   flex-shrink: 0;
@@ -1482,12 +1491,9 @@
   background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
 }
 
-/* 열림 시 카드 목록 위로 침범하지 않고 사이드바 flow 안에서 스크롤 */
+/* 열림 시 사이드바 안에서 수축 금지 — 스크롤은 list-scroll만, density/status는 카드 밖 in-flow */
 .integrated-schedule__filter-details[open] {
-  flex: 0 1 auto;
-  min-height: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .integrated-schedule__filter-details-summary {
@@ -1653,9 +1659,11 @@
   .integrated-schedule--clinic-os .integrated-schedule__main-region {
     grid-column: 2;
     grid-row: 3;
+    width: 100%;
     min-width: 0;
     max-width: none;
     max-height: none;
+    justify-self: stretch;
   }
 }
 

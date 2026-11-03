@@ -77,6 +77,10 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(b0klaCss).toMatch(
       /header-actions\s*>\s*\.mg-button[\s\S]*?flex:\s*0\s+1\s+auto/s
     );
+    /* MGButton min-width:fit-content 를 이김 — header actions 수축 */
+    expect(b0klaCss).toMatch(
+      /header-actions\s*>\s*\.mg-button(?:\.mg-button)?[\s\S]*?min-width:\s*0/s
+    );
     expect(b0klaCss).toMatch(
       /\.mg-v2-ad-b0kla__counselor-subtitle\s*\{[^}]*margin:\s*var\(--mg-v2-space-1/s
     );
@@ -88,6 +92,9 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     );
     expect(headerCss).toMatch(
       /header-actions\s*>\s*\.mg-button[\s\S]*?flex:\s*0\s+1\s+auto/s
+    );
+    expect(headerCss).toMatch(
+      /\.mg-v2-content-header__right[\s\S]*?\.mg-button[\s\S]*?min-width:\s*0/s
     );
   });
 

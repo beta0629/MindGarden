@@ -140,8 +140,41 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(openBlock).not.toBeNull();
     expect(openBlock[0]).toMatch(/flex:\s*0\s+1\s+auto/);
     expect(openBlock[0]).toMatch(/min-height:\s*0/);
+    /* 부모 대비 비율 상한 — 고정 px 아님. list 와 세로 대역 분리 */
+    expect(openBlock[0]).toMatch(/max-height:\s*50%/);
     expect(openBlock[0]).toMatch(/overflow-y:\s*auto/);
     expect(openBlock[0]).not.toMatch(/flex-shrink:\s*0/);
+    expect(openBlock[0]).not.toMatch(/position:\s*absolute/);
+  });
+
+  test('clinic-os sidebar-body keeps flex height chain for filter/list split', () => {
+    const bodyBlock = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar-body\s*\{[^}]+\}/s
+    );
+    expect(bodyBlock).not.toBeNull();
+    expect(bodyBlock[0]).toMatch(/flex:\s*1\s+1\s+auto/);
+    expect(bodyBlock[0]).toMatch(/min-height:\s*0/);
+    expect(bodyBlock[0]).toMatch(/overflow:\s*hidden/);
+  });
+
+  test('overlay sidebar stacks above FullCalendar; main-region isolates FC z-index', () => {
+    /* fallback > FC hover(10) — 토큰 미로드 시에도 padding 영역 클릭 가림 방지 */
+    expect(scheduleCss).toMatch(
+      /z-index:\s*var\(--z-sticky,\s*var\(--z-index-sticky,\s*1020\)\)/
+    );
+    expect(scheduleCss).not.toMatch(
+      /integrated-schedule__sidebar[\s\S]{0,220}z-index:\s*var\(--z-index-sticky,\s*1\)/
+    );
+    const mainRegionClinic = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__main-region\s*\{[^}]+\}/s
+    );
+    expect(mainRegionClinic).not.toBeNull();
+    expect(mainRegionClinic[0]).toMatch(/position:\s*relative/);
+    expect(mainRegionClinic[0]).toMatch(/z-index:\s*0/);
+    /*
+     * 스크롤포트(filter-details / list-scroll) 밖 컨트롤 중앙 클릭 가림은
+     * 레이아웃 게이트에서 제외한다 — overflow 스크롤로 의도적으로 가려진 경우.
+     */
   });
 
   test('selection chrome vars are screen-local (not in global Clinic-OS / design tokens)', () => {

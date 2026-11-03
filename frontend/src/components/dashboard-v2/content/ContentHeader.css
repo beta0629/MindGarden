@@ -22,10 +22,23 @@
   max-width: 100%;
 }
 
+.mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions > .mg-button,
+.mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions .mg-v2-ad-b0kla__header-primary-btn {
+  flex: 0 1 auto;
+  max-width: 100%;
+}
+
 .mg-v2-content-header__left {
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-1);
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .mg-v2-content-header__title {

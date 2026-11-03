@@ -1507,12 +1507,16 @@
 }
 
 /*
- * 열림 시 목록(min-height)과 충돌하지 않게 자체 수축·스크롤.
- * density/status 툴바는 카드 밖 in-flow 유지(absolute/negative margin 금지).
+ * 열림 시 목록과 세로 대역 분리.
+ * - flex 수축 + 부모 대비 max-height(비율, 고정 px 아님)로 filter 대역 상한
+ * - overflow-y:auto 로 칩(density/status)이 카드 AABB 로 넘치지 않게
+ * - density/status 툴바는 카드 리스트 위 in-flow 유지(absolute/negative margin 금지)
  */
 .integrated-schedule__filter-details[open] {
   flex: 0 1 auto;
   min-height: 0;
+  max-height: 50%;
+  overflow-x: hidden;
   overflow-y: auto;
 }
 
@@ -1587,13 +1591,23 @@
 }
 
 .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
-  /* ≥768 overlay 에서는 media 가 width 토큰을 강제. 여기서는 상한·패딩만 */
+  /* ≥768 overlay 에서는 media 가 width 토큰을 강제. 여기서는 상한·패딩·높이 체인만 */
+  display: flex;
+  flex-direction: column;
   max-width: var(--integrated-schedule-sidebar-width);
   min-width: 0;
+  min-height: 0;
   padding: var(--mg-v2-space-3);
 }
 
+/*
+ * sidebar-body 높이 체인 보강 — filter[open] max-height%·list-scroll flex:1 이
+ * 확정 높이를 받도록 flex:1 + min-height:0 + overflow:hidden 유지.
+ */
 .integrated-schedule--clinic-os .integrated-schedule__sidebar-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
   gap: var(--mg-v2-space-2);
 }
 
@@ -1678,12 +1692,18 @@
     display: contents;
   }
 
+  /*
+   * Overlay 사이드바 스택: FC(.mg-v2-schedule-calendar-view z-index:1,
+   * event:hover z-index:10) 보다 위. fallback 도 10 초과여야
+   * 토큰 미로드 시에도 padding-inline-start 영역 elementFromPoint 가림 방지.
+   * --z-sticky(1020) / --z-index-sticky(1010) 기존 레이아웃 토큰 사용.
+   */
   .integrated-schedule--clinic-os .integrated-schedule__sidebar,
   .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
-    z-index: var(--z-index-sticky, 1);
+    z-index: var(--z-sticky, var(--z-index-sticky, 1020));
     height: auto;
     max-height: none;
     width: var(--integrated-schedule-sidebar-width);
@@ -1697,13 +1717,20 @@
     position: absolute;
     inset-block: 0;
     inset-inline-start: 0;
-    z-index: var(--z-index-sticky, 1);
+    z-index: var(--z-sticky, var(--z-index-sticky, 1020));
     width: 48px;
     min-width: 48px;
     max-width: 48px;
   }
 
+  /*
+   * main-region 스택 격리 — position:relative + z-index:0 으로
+   * FC 자손 z-index 가 사이드바와 같은 컨텍스트에서 경쟁하지 않게 함.
+   * (스크롤포트 밖 컨트롤 클릭 가림은 게이트에서 제외 가능 — 테스트 주석 참고)
+   */
   .integrated-schedule--clinic-os .integrated-schedule__main-region {
+    position: relative;
+    z-index: 0;
     grid-column: 1;
     grid-row: 3;
     width: 100%;

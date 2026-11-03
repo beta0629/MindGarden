@@ -233,6 +233,10 @@ describe('MatchingScheduleList CSS fc-event isolation', () => {
     expect(css).toMatch(
       /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s*\{[^}]*min-height:\s*0/s
     );
+    /* clinic-os list: overflow visible 누수로 카드 rect 가 filter 와 AABB 겹치지 않게 가둠 */
+    expect(css).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s+\.integrated-schedule__list\s*\{[^}]*overflow-y:\s*auto/s
+    );
   });
 
   it('sidebar CSS blocks FC .fc-event focus/::before/::after/opacity on cards', () => {

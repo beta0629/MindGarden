@@ -241,6 +241,8 @@
   align-items: center;
   gap: var(--mg-v2-space-4, 1rem);
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ContentHeader 인라인 overflow — CORNER absolute가 GNB tenant trigger와 겹치지 않도록 */
@@ -248,6 +250,16 @@
   position: static;
   width: auto;
   flex: 0 0 auto;
+}
+
+/*
+ * 820 등 좁은 폭: MGButton min-width:fit-content 가 타이틀과 가로 경쟁하면
+ * 캘린더·새로고침 두 버튼 AABB 겹침 → 수축 허용 + 한 줄 초과 시 wrap.
+ */
+.mg-v2-ad-b0kla__header-actions > .mg-button,
+.mg-v2-ad-b0kla__header-actions .mg-v2-ad-b0kla__header-primary-btn {
+  flex: 0 1 auto;
+  max-width: 100%;
 }
 
 .mg-v2-ad-b0kla__header-primary-btn {
@@ -735,11 +747,11 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   margin: 0;
 }
 
-/* 상담사 별 통합데이터 카드 */
+/* 상담사 별 통합데이터 카드 — 음수 마진은 인접 버튼 AABB 겹침 유발 → 토큰 양수 간격 */
 .mg-v2-ad-b0kla__counselor-subtitle {
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   color: var(--ad-b0kla-text-secondary);
-  margin: -0.5rem 0 0 0;
+  margin: var(--mg-v2-space-1, 0.25rem) 0 0 0;
 }
 
 /* 상담사 통합데이터 집계 기간 선택 */
@@ -761,6 +773,16 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   display: flex;
   flex-wrap: wrap;
   gap: var(--mg-v2-space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-ad-b0kla__integrated-data-period-tabs .mg-button,
+.mg-v2-ad-b0kla__pill-toggle .mg-button,
+.mg-v2-ad-b0kla__integrated-data-month-picker .mg-button {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .mg-v2-ad-b0kla__pill--sm {

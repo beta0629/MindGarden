@@ -46,4 +46,22 @@ describe('ExpectedVisitsWidget align CSS contract', () => {
     );
     expect(css).not.toMatch(/#[0-9a-fA-F]{3,8}\b/);
   });
+
+  it('allows actions to wrap so CTA and ⋮ trigger do not share AABB', () => {
+    expect(css).toMatch(
+      /\.mg-v2-expected-visits__actions\s*\{[^}]*flex-wrap:\s*wrap/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-expected-visits__card-actions\s*\{[^}]*flex-wrap:\s*wrap/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-expected-visits__actions\s*\{[^}]*min-width:\s*0/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-expected-visits__actions\s*\{[^}]*max-width:\s*100%/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-expected-visits__actions\s*>\s*\.mg-button[\s\S]*?flex:\s*0\s+1\s+auto/
+    );
+  });
 });

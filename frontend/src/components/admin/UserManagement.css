@@ -54,7 +54,10 @@
 /* ==================== 사용자 그리드 ==================== */
 .user-mgmt-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(
+        auto-fill,
+        minmax(min(100%, var(--mg-v2-list-card-min-width)), 1fr)
+    );
     gap: var(--spacing-lg);
     padding: var(--spacing-lg);
 }
@@ -118,18 +121,17 @@
     font-weight: var(--font-weight-semibold);
     color: var(--color-text-primary);
     margin: 0 0 var(--spacing-xs) 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    white-space: normal;
 }
 
 .user-mgmt-email {
     font-size: var(--font-size-sm);
     color: var(--medium-gray);
     margin: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 /* ==================== 배지 ==================== */
@@ -204,7 +206,6 @@
     }
     
     .user-mgmt-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         gap: var(--spacing-md);
     }
 }
@@ -221,7 +222,6 @@
     }
     
     .user-mgmt-grid {
-        grid-template-columns: 1fr;
         gap: var(--spacing-md);
     }
     

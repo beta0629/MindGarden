@@ -52,9 +52,14 @@
 
 .mg-consultant-card--admin-compact .mg-consultant-card__name {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow: visible;
+  white-space: normal;
+}
+
+.mg-consultant-card--admin-compact .mg-consultant-card__contact-item {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mg-consultant-card--admin-compact .mg-consultant-card__badge-group {

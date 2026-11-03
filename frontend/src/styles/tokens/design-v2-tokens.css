@@ -229,6 +229,9 @@
   --mg-v2-grid-container-xl: 1200px;
   --mg-v2-grid-container-2xl: 1440px;
 
+  /* compact list card min track (내용 기준, --mg-card-min-width 280px ≡ 17.5rem) */
+  --mg-v2-list-card-min-width: 17.5rem;
+
   /* ----------------------------------------------------------
      5. RADIUS — quiet clinic radii
      ---------------------------------------------------------- */

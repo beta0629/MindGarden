@@ -18,6 +18,7 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/
 import { toDisplayString } from '../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { CONSULTANT_GRADE_TO_LABEL } from '../../utils/consultantHelper';
+import { buildSalaryOptionsPayload, normalizeSalaryOptionRow } from '../../utils/salaryOptionPayload';
 import {
   isCodeValueInOptions,
   resolveTenantCodesOrFallback
@@ -205,7 +206,7 @@ const SalaryProfileFormModal = ({
                     businessName: profile.businessName || ''
                 });
                 setSelectedOptions(Array.isArray(profile.optionTypes) && profile.optionTypes.length > 0
-                    ? profile.optionTypes.map(o => ({ type: o.type || o.optionType, amount: Number(o.amount || o.optionAmount) || 0, name: o.name || o.optionName || '' }))
+                    ? profile.optionTypes.map((o) => normalizeSalaryOptionRow(o) || { type: o.type || o.optionType, amount: 0, name: o.name || o.optionName || '' })
                     : gradeOpts);
             } else {
                 setExistingProfileId(null);
@@ -427,9 +428,12 @@ const SalaryProfileFormModal = ({
 
             const profileData = {
                 ...formData,
-                salaryType: trimmedSalaryType,
-                options: selectedOptions.filter(opt => opt.type && opt.amount > 0)
+                salaryType: trimmedSalaryType
             };
+            const optionsPayload = buildSalaryOptionsPayload(selectedOptions);
+            if (optionsPayload !== undefined) {
+                profileData.options = optionsPayload;
+            }
 
             // StandardizedApi 계약: 예외 throw = 실패, 반환 = 성공(언랩된 data)
             const saved = isUpdate

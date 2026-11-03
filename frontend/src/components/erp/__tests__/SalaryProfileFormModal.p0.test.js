@@ -190,6 +190,44 @@ describe('SalaryProfileFormModal P0', () => {
     });
   });
 
+  test('등급 미변경·옵션 금액만 변경 → PUT에 기존·변경 옵션 유지, 수정 성공 토스트', async() => {
+    mockGet.mockResolvedValue({
+      id: 77,
+      consultantId: 22,
+      salaryType: 'FREELANCE',
+      baseSalary: 30000,
+      grade: 'CONSULTANT_JUNIOR',
+      optionTypes: [
+        { type: 'FAMILY_CONSULTATION', amount: '3000.00', name: '가족' },
+        { type: 'INITIAL_CONSULTATION', amount: '5000.00', name: '초기' }
+      ]
+    });
+    mockPut.mockResolvedValue({ id: 77, consultantId: 22, salaryType: 'FREELANCE' });
+    const onClose = jest.fn();
+
+    render(
+      <SalaryProfileFormModal isOpen onClose={onClose} consultant={consultant} onSave={jest.fn()} />
+    );
+    await waitFor(() => {
+      expect(screen.getAllByPlaceholderText(SPFM.PLACEHOLDER_AMOUNT)).toHaveLength(2);
+    });
+    const amounts = screen.getAllByPlaceholderText(SPFM.PLACEHOLDER_AMOUNT);
+    expect(amounts[0]).toHaveValue(3000);
+    fireEvent.change(amounts[1], { target: { value: '8000' } });
+    fireEvent.click(screen.getByRole('button', { name: SPFM.BTN_SAVE }));
+
+    await waitFor(() => {
+      expect(mockPut).toHaveBeenCalled();
+    });
+    const body = mockPut.mock.calls[0][1];
+    expect(body.options).toEqual([
+      { type: 'FAMILY_CONSULTATION', amount: 3000, name: '가족' },
+      { type: 'INITIAL_CONSULTATION', amount: 8000, name: '초기' }
+    ]);
+    expect(mockShowNotification).toHaveBeenCalledWith(SPFM.TOAST_PROFILE_UPDATED, 'success');
+    expect(onClose).toHaveBeenCalled();
+  });
+
   test('salaryType 빈 값이면 저장 차단·필드 오류', async() => {
     render(
       <SalaryProfileFormModal

@@ -1,0 +1,321 @@
+# =============================================================================
+# Check .dev password-reset Redis (READ-ONLY)
+# -----------------------------------------------------------------------------
+# 근거: 비밀번호 찾기 opaque 토큰(Redis) 잔존·TTL·SMS 발송 건수·BE Redis 상태만
+#       점검. 운영/개발 서버 데이터·서비스 상태를 변경하지 않음.
+#
+# 키 패턴 출처: PR #1824 / PasswordResetOpaqueTokenStore.REDIS_KEY_PREFIX
+#               = "password-reset:opaque:"
+#
+# 금지 (절대):
+#   Redis 쓰기·관리 — SET / DEL / FLUSH / FLUSHALL / CONFIG / SAVE / BGSAVE /
+#                     KEYS(권장 금지; SCAN만) / GET·DUMP·HGETALL 등 값 조회
+#   호스트 변경     — systemctl restart / rm / kill / 파일 수정·삭제
+#   시크릿 출력     — REDIS_PASSWORD·토큰·SMS 본문·키 값 로그 출력
+# =============================================================================
+
+name: 🔎 Check .dev password-reset Redis (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: '로그 필터 시작 시각 (서버 로컬/로그 타임스탬프). 예: 2026-11-03 14:00:00'
+        required: true
+        type: string
+
+concurrency:
+  group: check-dev-pwreset-redis
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: .dev password-reset Redis (read-only)
+    # deploy-dev.yml deploy job / mindgarden-deploy 와 동일
+    runs-on: [self-hosted, linux, deploy]
+    # Redis_* 는 서버 /etc/mindgarden/dev.env 만 로드 (GitHub Environment secrets 불필요)
+    timeout-minutes: 8
+    steps:
+      - name: Validate since input (shell-injection guard)
+        env:
+          SINCE_INPUT: ${{ github.event.inputs.since }}
+        run: |
+          set -euo pipefail
+          # 따옴표·백틱·달러·개행·캐리지리턴 금지 (SSH 스크립트 인젝션 방지)
+          case "${SINCE_INPUT}" in
+            *[\`\'\"\$\\]*|*$'\n'*|*$'\r'*)
+              echo "::error title=since invalid::since 에 따옴표/백틱/\$/개행이 포함되어 있습니다."
+              exit 1
+              ;;
+          esac
+          if ! printf '%s' "${SINCE_INPUT}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
+            echo "::error title=since parse failed::형식이 올바르지 않습니다. 예: 2026-11-03 14:00:00 (got length=${#SINCE_INPUT})"
+            exit 1
+          fi
+          echo "since_input_ok=1"
+
+      - name: 🔎 Read-only SCAN + SMS count + redis_be_status
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        env:
+          SINCE_INPUT: ${{ github.event.inputs.since }}
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 8m
+          envs: SINCE_INPUT
+          script_stop: false
+          script: |
+            set +e
+            set -u
+
+            UNIT=mindgarden-dev.service
+            DEV_ENV_FILE=/etc/mindgarden/dev.env
+            APP_DIR=/var/www/mindgarden-dev
+            CORES_LOG="${APP_DIR}/logs/coresolution.log"
+            DEV_STDOUT_LOG=/var/log/mindgarden/dev.log
+            STATUS_NEEDLE='Redis connection status:'
+            KEY_PATTERN='password-reset:opaque:*'
+            SINCE="${SINCE_INPUT:-}"
+
+            echo "::group::🔎 .dev password-reset Redis check (read-only)"
+            echo "NO SET/DEL/FLUSH/CONFIG/SAVE/restart/rm/kill. Values never printed."
+            echo "key_pattern=${KEY_PATTERN}"
+
+            # ---- since re-validate on remote (defense in depth) ----
+            case "${SINCE}" in
+              *[\`\'\"\$\\]*|*$'\n'*|*$'\r'*)
+                echo "::error title=since invalid::remote since 검증 실패 (특수문자)"
+                exit 1
+                ;;
+            esac
+            if ! printf '%s' "${SINCE}" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
+              echo "::error title=since parse failed::형식이 올바르지 않습니다. 예: 2026-11-03 14:00:00"
+              exit 1
+            fi
+            echo "since=${SINCE}"
+
+            # ---- load REDIS_* from dev.env without printing values ----
+            _load_env_key_quiet() {
+              # $1=file $2=KEY $3=varname
+              local env_file="$1" key="$2" varname="$3" line raw
+              line=""
+              if command -v sudo >/dev/null 2>&1 && sudo test -f "$env_file" 2>/dev/null; then
+                line="$(sudo grep -E "^[[:space:]]*${key}=" "$env_file" 2>/dev/null | tail -n1 || true)"
+              elif [ -f "$env_file" ]; then
+                line="$(grep -E "^[[:space:]]*${key}=" "$env_file" 2>/dev/null | tail -n1 || true)"
+              fi
+              raw=""
+              if [ -n "$line" ]; then
+                raw="${line#*=}"
+                raw="$(printf '%s' "$raw" | tr -d '\r')"
+                case "$raw" in
+                  \"*\") raw="${raw#\"}"; raw="${raw%\"}" ;;
+                  \'*\') raw="${raw#\'}"; raw="${raw%\'}" ;;
+                esac
+              fi
+              eval "$varname=\"\$raw\""
+            }
+
+            HOST_V=""
+            PORT_V=""
+            PASS_V=""
+            if [ -f "$DEV_ENV_FILE" ] || (command -v sudo >/dev/null 2>&1 && sudo test -f "$DEV_ENV_FILE" 2>/dev/null); then
+              _load_env_key_quiet "$DEV_ENV_FILE" REDIS_HOST HOST_V
+              _load_env_key_quiet "$DEV_ENV_FILE" REDIS_PORT PORT_V
+              _load_env_key_quiet "$DEV_ENV_FILE" REDIS_PASSWORD PASS_V
+              if [ -n "$HOST_V" ]; then echo "dev.env REDIS_HOST=SET"; else echo "dev.env REDIS_HOST=EMPTY/MISSING"; fi
+              if [ -n "$PORT_V" ]; then echo "dev.env REDIS_PORT=SET"; else echo "dev.env REDIS_PORT=EMPTY/MISSING"; fi
+              if [ -n "$PASS_V" ]; then echo "dev.env REDIS_PASSWORD=SET"; else echo "dev.env REDIS_PASSWORD=EMPTY/MISSING"; fi
+            else
+              echo "dev.env=MISSING"
+            fi
+            if [ -z "${PORT_V}" ]; then
+              PORT_V=6379
+            fi
+
+            mask_key() {
+              # 앞 6자만, 나머지는 *** / 6자 이하면 길이만
+              local k="$1" len prefix
+              len=${#k}
+              if [ "$len" -le 6 ]; then
+                printf 'len=%s' "$len"
+              else
+                prefix="$(printf '%s' "$k" | cut -c1-6)"
+                printf '%s***' "$prefix"
+              fi
+            }
+
+            # =================================================================
+            # (1) redis-cli SCAN — 키 마스킹 + TTL only (값 조회 금지)
+            # =================================================================
+            echo "--- (1) SCAN ${KEY_PATTERN} (TTL only, no GET) ---"
+            MATCH_COUNT=0
+            if ! command -v redis-cli >/dev/null 2>&1; then
+              echo "redis_scan_status=NO_REDIS_CLI"
+              echo "::notice title=Redis SCAN::redis-cli 없음 — SCAN soft-skip"
+            elif [ -z "${HOST_V}" ]; then
+              echo "redis_scan_status=SKIP_HOST_NOT_SET"
+              echo "::notice title=Redis SCAN::REDIS_HOST EMPTY/MISSING — SCAN soft-skip"
+            else
+              if [ -n "${PASS_V}" ]; then
+                export REDISCLI_AUTH="$PASS_V"
+              else
+                unset REDISCLI_AUTH 2>/dev/null || true
+              fi
+              # 연결 점검 (값 미출력)
+              PING_OUT="$(redis-cli -h "$HOST_V" -p "$PORT_V" --no-auth-warning ping 2>/dev/null | tr -d '\r')"
+              if [ "$PING_OUT" != "PONG" ]; then
+                echo "redis_scan_status=CONNECT_FAIL"
+                echo "redis_cli_ping=FAIL"
+                echo "::notice title=Redis SCAN::연결 실패 — SCAN soft-skip (host/port 값은 미출력)"
+              else
+                echo "redis_cli_ping=PONG"
+                cursor=0
+                scan_ok=1
+                while :; do
+                  # --raw: 첫 줄 next cursor, 이후 키 (값 조회 없음)
+                  scan_out="$(redis-cli -h "$HOST_V" -p "$PORT_V" --no-auth-warning --raw SCAN "$cursor" MATCH "$KEY_PATTERN" COUNT 100 2>/dev/null)"
+                  scan_rc=$?
+                  if [ "$scan_rc" -ne 0 ]; then
+                    echo "redis_scan_status=SCAN_FAIL"
+                    echo "::notice title=Redis SCAN::SCAN 명령 실패 — soft-skip"
+                    scan_ok=0
+                    break
+                  fi
+                  next_cursor="$(printf '%s\n' "$scan_out" | head -n1 | tr -d '\r')"
+                  if [ -z "$next_cursor" ]; then
+                    echo "redis_scan_status=SCAN_FAIL"
+                    echo "::notice title=Redis SCAN::빈 cursor — soft-skip"
+                    scan_ok=0
+                    break
+                  fi
+                  # process substitution으로 키 목록 순회 (MATCH_COUNT 부모 셸 유지; bash)
+                  while IFS= read -r key || [ -n "$key" ]; do
+                    [ -z "$key" ] && continue
+                    MATCH_COUNT=$((MATCH_COUNT + 1))
+                    ttl_v="$(redis-cli -h "$HOST_V" -p "$PORT_V" --no-auth-warning TTL "$key" 2>/dev/null | tr -d '\r')"
+                    masked="$(mask_key "$key")"
+                    echo "key_masked=${masked} ttl=${ttl_v}"
+                  done < <(printf '%s\n' "$scan_out" | tail -n +2)
+                  cursor="$next_cursor"
+                  if [ "$cursor" = "0" ]; then
+                    break
+                  fi
+                done
+                if [ "$scan_ok" -eq 1 ]; then
+                  echo "redis_scan_status=OK"
+                fi
+              fi
+              unset REDISCLI_AUTH 2>/dev/null || true
+            fi
+            unset PASS_V
+            echo "password_reset_opaque_key_count=${MATCH_COUNT}"
+
+            # =================================================================
+            # (2) coresolution.log SMS 발송 라인 건수 (since 이후, count only)
+            # =================================================================
+            echo "--- (2) SMS send line count since=${SINCE} (count only) ---"
+            SMS_PATTERN='SMS 발송 성공|실제 SMS 발송 시작|Solapi SMS 발송 성공|비밀번호 찾기 OTP SMS 발송|비밀번호 찾기 임시비번 SMS|비밀번호 찾기 SMS OTP 발송 API|비밀번호 찾기 임시 비밀번호 SMS 발송 API'
+            LOG_FILES=""
+            if [ -f "$CORES_LOG" ]; then
+              LOG_FILES="$CORES_LOG"
+            fi
+            for f in $(ls -1t "${APP_DIR}/logs"/coresolution.*.log 2>/dev/null | head -n 5); do
+              case " $LOG_FILES " in
+                *" $f "*) ;;
+                *) LOG_FILES="$LOG_FILES $f" ;;
+              esac
+            done
+
+            SMS_COUNT=0
+            if [ -z "$(echo $LOG_FILES | tr -d '[:space:]')" ]; then
+              echo "::notice title=SMS count::coresolution.log 없음 — sms_send_line_count=0"
+              SMS_COUNT=0
+            else
+              # 본문·매칭 라인 전문 출력 금지 — wc/count 만
+              for f in $LOG_FILES; do
+                [ -f "$f" ] || continue
+                # 타임스탬프 앞 19자(YYYY-MM-DD HH:MM:SS) 문자열 비교로 since 필터
+                c="$(sudo grep -E "$SMS_PATTERN" "$f" 2>/dev/null \
+                  | awk -v since="$SINCE" '
+                      {
+                        ts = substr($0, 1, 19)
+                        if (ts >= since) c++
+                      }
+                      END { print c+0 }
+                    ' || echo 0)"
+                SMS_COUNT=$((SMS_COUNT + c))
+              done
+            fi
+            echo "sms_send_line_count=${SMS_COUNT}"
+
+            # =================================================================
+            # (3) redis_be_status 최신 1줄 (deploy-backend-dev 와 동일 판정)
+            # =================================================================
+            echo "--- (3) redis_be_status (latest 1 line, redacted) ---"
+            redact_status_lines() {
+              sed -E 's/(password|passwd|secret|token|REDIS_PASSWORD)[=:][^[:space:]]+/\1=[REDACTED]/Ig' \
+                | sed -E 's/requirepass[[:space:]]+[^[:space:]]+/requirepass [REDACTED]/Ig'
+            }
+
+            STATUS_RAW=""
+            STATUS_SOURCE=none
+
+            # 3a) coresolution.log (+ rolling)
+            if [ -z "$STATUS_RAW" ]; then
+              CANDIDATES=""
+              if [ -f "$CORES_LOG" ]; then
+                CANDIDATES="$CORES_LOG"
+              fi
+              for f in $(ls -1t "${APP_DIR}/logs"/coresolution.*.log 2>/dev/null | head -n 5); do
+                CANDIDATES="$CANDIDATES $f"
+              done
+              for f in $CANDIDATES; do
+                [ -f "$f" ] || continue
+                HIT="$(sudo grep -F "$STATUS_NEEDLE" "$f" 2>/dev/null | tail -n 1 || true)"
+                if [ -n "$HIT" ]; then
+                  STATUS_RAW="$HIT"
+                  STATUS_SOURCE=coresolution.log
+                  break
+                fi
+              done
+            fi
+
+            # 3b) /var/log/mindgarden/dev.log
+            if [ -z "$STATUS_RAW" ] && [ -f "$DEV_STDOUT_LOG" ]; then
+              HIT="$(sudo grep -F "$STATUS_NEEDLE" "$DEV_STDOUT_LOG" 2>/dev/null | tail -n 1 || true)"
+              if [ -n "$HIT" ]; then
+                STATUS_RAW="$HIT"
+                STATUS_SOURCE=dev.log
+              fi
+            fi
+
+            # 3c) journalctl
+            if [ -z "$STATUS_RAW" ]; then
+              HIT="$(sudo journalctl -u "$UNIT" --no-pager -n 5000 2>/dev/null | grep -F "$STATUS_NEEDLE" | tail -n 1 || true)"
+              if [ -n "$HIT" ]; then
+                STATUS_RAW="$HIT"
+                STATUS_SOURCE=journal
+              fi
+            fi
+
+            if [ -n "$STATUS_RAW" ]; then
+              printf '%s\n' "$STATUS_RAW" | redact_status_lines
+              if printf '%s\n' "$STATUS_RAW" | grep -Fq 'IN_USE'; then
+                echo "redis_be_status=IN_USE"
+              elif printf '%s\n' "$STATUS_RAW" | grep -Fq 'MEMORY_FALLBACK'; then
+                echo "redis_be_status=MEMORY_FALLBACK"
+              else
+                echo "redis_be_status=NOT_FOUND"
+              fi
+            else
+              echo "(no '$STATUS_NEEDLE' in coresolution.log / dev.log / journal)"
+              echo "redis_be_status=NOT_FOUND"
+            fi
+            echo "redis_be_status_source=${STATUS_SOURCE}"
+
+            echo "::endgroup::"
+            exit 0

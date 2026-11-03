@@ -61,11 +61,34 @@ describe('B0KlA pill-toggle shrink-to-fit', () => {
     const body = extractRuleBody(ssotCss, '.mg-v2-ad-b0kla__pill-toggle');
     expect(body).not.toBeNull();
     expect(body).toMatch(/align-items:\s*center/);
+    expect(body).toMatch(/flex-wrap:\s*wrap/);
     expect(body).toMatch(/height:\s*auto/);
     expect(body).toMatch(/padding:\s*var\(--mg-v2-space-1/);
+    expect(body).toMatch(/gap:\s*var\(--mg-v2-space-1/);
     expect(body).not.toMatch(/align-items:\s*stretch/);
     expect(body).not.toMatch(/padding:\s*6px/);
     expect(body).not.toMatch(/padding:\s*0(?!\.)/);
+  });
+
+  it('SSOT: integrated-data period-tabs wrap with token gap', () => {
+    const body = extractRuleBody(
+      ssotCss,
+      '.mg-v2-ad-b0kla__integrated-data-period-tabs'
+    );
+    expect(body).not.toBeNull();
+    expect(body).toMatch(/flex-wrap:\s*wrap/);
+    expect(body).toMatch(/gap:\s*var\(--mg-v2-space-1\)/);
+    expect(body).not.toMatch(/gap:\s*0\.25rem/);
+  });
+
+  it('SSOT: Desktop/Mobile main and Mobile stage strip b0kla padding-inline', () => {
+    const body = extractGroupedRuleBody(ssotCss, [
+      '.mg-v2-desktop-layout__main > .mg-v2-ad-b0kla',
+      '.mg-v2-mobile-layout__main > .mg-v2-ad-b0kla',
+      '.mg-v2-mobile-layout__stage > .mg-v2-ad-b0kla'
+    ]);
+    expect(body).not.toBeNull();
+    expect(body).toMatch(/padding-inline:\s*0/);
   });
 
   it('SSOT: pill-toggle uses overflow visible (no overflow-x/overflow-y pair)', () => {

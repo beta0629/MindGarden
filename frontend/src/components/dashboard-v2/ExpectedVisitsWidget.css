@@ -96,8 +96,35 @@
 /* ── 액션 셀 ── */
 .mg-v2-expected-visits__actions {
   display: flex;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-1, var(--mg-spacing-xs));
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/*
+ * 「예약 작성」 CTA 와 「더보기」 트리거 AABB 겹침 방지 (@820).
+ * CTA 는 shrink 허용, ⋮ 는 --button-height-sm 고정. 메뉴랩은 in-flow 유지.
+ */
+.mg-v2-expected-visits__actions > .mg-button,
+.mg-v2-expected-visits__card-actions > .mg-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-expected-visits__actions .mg-v2-entity-row-actions,
+.mg-v2-expected-visits__card-actions .mg-v2-entity-row-actions {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.mg-v2-expected-visits__actions .mg-v2-entity-row-actions__menu-wrap,
+.mg-v2-expected-visits__card-actions .mg-v2-entity-row-actions__menu-wrap {
+  position: relative;
+  flex-shrink: 0;
+  margin: 0;
 }
 
 /*
@@ -118,6 +145,7 @@
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
+  flex: 0 0 auto !important;
 }
 
 /* ── 모바일 카드 레이아웃 ── */
@@ -173,9 +201,12 @@
 
 .mg-v2-expected-visits__card-actions {
   display: flex;
-  gap: var(--mg-spacing-xs, 0.25rem);
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-1, var(--mg-spacing-xs));
   align-items: center;
   justify-content: flex-end;
+  min-width: 0;
+  max-width: 100%;
   padding-top: var(--mg-spacing-sm, 0.5rem);
   border-top: 1px solid var(--ad-b0kla-border);
 }

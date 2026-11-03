@@ -60,6 +60,44 @@ describe('AdminDashboard G1-02 widgets guard', () => {
     expect(source).not.toMatch(/theme_\$\{/);
   });
 
+  it('820 헤더 액션·기간 탭이 wrap/수축으로 mg-button AABB 겹침을 막는다', () => {
+    const b0klaCss = fs.readFileSync(
+      path.join(REPO_ROOT, 'frontend/src/components/admin/AdminDashboard/AdminDashboardB0KlA.css'),
+      'utf8'
+    );
+    const headerCss = fs.readFileSync(
+      path.join(REPO_ROOT, 'frontend/src/components/dashboard-v2/content/ContentHeader.css'),
+      'utf8'
+    );
+
+    const actionsBlock = b0klaCss.match(/\.mg-v2-ad-b0kla__header-actions\s*\{[^}]+\}/s);
+    expect(actionsBlock).not.toBeNull();
+    expect(actionsBlock[0]).toMatch(/flex-wrap:\s*wrap/);
+    expect(actionsBlock[0]).toMatch(/min-width:\s*0/);
+    expect(b0klaCss).toMatch(
+      /header-actions\s*>\s*\.mg-button[\s\S]*?flex:\s*0\s+1\s+auto/s
+    );
+    /* MGButton min-width:fit-content 를 이김 — header actions 수축 */
+    expect(b0klaCss).toMatch(
+      /header-actions\s*>\s*\.mg-button(?:\.mg-button)?[\s\S]*?min-width:\s*0/s
+    );
+    expect(b0klaCss).toMatch(
+      /\.mg-v2-ad-b0kla__counselor-subtitle\s*\{[^}]*margin:\s*var\(--mg-v2-space-1/s
+    );
+    expect(b0klaCss).not.toMatch(
+      /\.mg-v2-ad-b0kla__counselor-subtitle\s*\{[^}]*margin:\s*-0\.5rem/s
+    );
+    expect(headerCss).toMatch(
+      /\.mg-v2-content-header__right\s*\{[^}]*min-width:\s*0/s
+    );
+    expect(headerCss).toMatch(
+      /header-actions\s*>\s*\.mg-button[\s\S]*?flex:\s*0\s+1\s+auto/s
+    );
+    expect(headerCss).toMatch(
+      /\.mg-v2-content-header__right[\s\S]*?\.mg-button[\s\S]*?min-width:\s*0/s
+    );
+  });
+
   it('AdminDashboardV2 환불 StatCard가 toSafeNumber로 null 방어한다 (PR-DASH-04)', () => {
     const source = fs.readFileSync(DASHBOARD_PATH, 'utf8');
 

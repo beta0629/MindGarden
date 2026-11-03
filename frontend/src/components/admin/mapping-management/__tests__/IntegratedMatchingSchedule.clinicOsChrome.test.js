@@ -75,23 +75,132 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
-  test('status filter uses 2-column grid cards (ops SSOT)', () => {
+  test('status filter uses flex-wrap cards (sidebar density/overlap SSOT)', () => {
     const statusBtnsBlock = scheduleCss.match(
       /\.integrated-schedule__status-btns\s*\{[^}]+\}/s
     );
     expect(statusBtnsBlock).not.toBeNull();
-    expect(statusBtnsBlock[0]).toMatch(/display:\s*grid/);
-    expect(statusBtnsBlock[0]).toMatch(/grid-template-columns:\s*repeat\(\s*2/);
-    expect(statusBtnsBlock[0]).not.toMatch(/flex-wrap/);
+    expect(statusBtnsBlock[0]).toMatch(/display:\s*flex/);
+    expect(statusBtnsBlock[0]).toMatch(/flex-wrap:\s*wrap/);
+    expect(statusBtnsBlock[0]).not.toMatch(/grid-template-columns:\s*repeat\(\s*2/);
 
     const statusBtnBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
     );
     expect(statusBtnBlock).not.toBeNull();
-    expect(statusBtnBlock[0]).toMatch(/width:\s*100%/);
+    expect(statusBtnBlock[0]).toMatch(/flex:\s*1\s+1/);
     expect(statusBtnBlock[0]).toMatch(/justify-content:\s*space-between/);
     expect(statusBtnBlock[0]).not.toMatch(/inline-flex/);
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
+  });
+
+  test('sidebar width token is defined on schedule root for content-area overlay padding', () => {
+    const rootBlock = scheduleCss.match(/\.integrated-schedule\s*\{[^}]+\}/s);
+    expect(rootBlock).not.toBeNull();
+    expect(rootBlock[0]).toMatch(/--integrated-schedule-sidebar-width:\s*380px/);
+
+    const sidebarBlock = scheduleCss.match(
+      /\.integrated-schedule__sidebar\s*\{[^}]+\}/s
+    );
+    expect(sidebarBlock).not.toBeNull();
+    expect(sidebarBlock[0]).not.toMatch(/--integrated-schedule-sidebar-width\s*:/);
+
+    /* ≥768 clinic-os: 단일 열 + absolute sidebar overlay (본문 열 = content 전체 폭) */
+    expect(scheduleCss).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)/
+    );
+    expect(scheduleCss).not.toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*var\(--integrated-schedule-sidebar-width\)\)\s*minmax\(0,\s*1fr\)/
+    );
+    expect(scheduleCss).toMatch(
+      /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*?position:\s*absolute[\s\S]*?inset-inline-start:\s*0/
+    );
+    expect(scheduleCss).toMatch(
+      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+    );
+    expect(scheduleCss).toMatch(
+      /:has\(\.integrated-schedule__sidebar--collapsed\)[\s\S]*?padding-inline-start:\s*48px/
+    );
+
+    const mainRegionClinic = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__main-region\s*\{[^}]+\}/s
+    );
+    expect(mainRegionClinic).not.toBeNull();
+    expect(mainRegionClinic[0]).toMatch(/max-width:\s*none/);
+    expect(mainRegionClinic[0]).toMatch(/width:\s*100%/);
+    expect(mainRegionClinic[0]).toMatch(
+      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+    );
+  });
+
+  test('open filter-details can shrink and scroll to avoid card AABB overlap', () => {
+    const openBlock = scheduleCss.match(
+      /\.integrated-schedule__filter-details\[open\]\s*\{[^}]+\}/s
+    );
+    expect(openBlock).not.toBeNull();
+    expect(openBlock[0]).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(openBlock[0]).toMatch(/min-height:\s*0/);
+    /* 부모 대비 비율 상한 — 고정 px 아님. list 와 세로 대역 분리 */
+    expect(openBlock[0]).toMatch(/max-height:\s*50%/);
+    expect(openBlock[0]).toMatch(/overflow-y:\s*auto/);
+    expect(openBlock[0]).not.toMatch(/flex-shrink:\s*0/);
+    expect(openBlock[0]).not.toMatch(/position:\s*absolute/);
+
+    /* clinic-os 특이도 승격 — 닫힘 flex-shrink:0 이 열림을 이기지 않음 */
+    const clinicOpenBlock = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__filter-details\[open\]\s*\{[^}]+\}/s
+    );
+    expect(clinicOpenBlock).not.toBeNull();
+    expect(clinicOpenBlock[0]).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(clinicOpenBlock[0]).toMatch(/max-height:\s*50%/);
+    expect(clinicOpenBlock[0]).toMatch(/min-height:\s*0/);
+    expect(clinicOpenBlock[0]).toMatch(/overflow-y:\s*auto/);
+    expect(clinicOpenBlock[0]).not.toMatch(/flex-shrink:\s*0/);
+
+    /* [open]{flex-shrink:0} 승자 패턴 금지 — 열림 블록에만 검사 */
+    expect(scheduleCss).not.toMatch(
+      /\.integrated-schedule(?:--clinic-os)?\s*\.integrated-schedule__filter-details\[open\]\s*\{[^}]*flex-shrink:\s*0/s
+    );
+  });
+
+  test('clinic-os sidebar-body keeps flex height chain for filter/list split', () => {
+    const bodyBlock = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar-body\s*\{[^}]+\}/s
+    );
+    expect(bodyBlock).not.toBeNull();
+    expect(bodyBlock[0]).toMatch(/flex:\s*1\s+1\s+0%/);
+    expect(bodyBlock[0]).toMatch(/min-height:\s*0/);
+    expect(bodyBlock[0]).toMatch(/overflow:\s*hidden/);
+  });
+
+  test('overlay sidebar stacks above FullCalendar; main-region isolates FC z-index', () => {
+    /* fallback > FC hover(10) — 토큰 미로드 시에도 padding 영역 클릭 가림 방지 */
+    expect(scheduleCss).toMatch(
+      /z-index:\s*var\(--z-sticky,\s*var\(--z-index-sticky,\s*1020\)\)/
+    );
+    expect(scheduleCss).not.toMatch(
+      /integrated-schedule__sidebar[\s\S]{0,220}z-index:\s*var\(--z-index-sticky,\s*1\)/
+    );
+    /* inset-block 확정 높이 — indefinite height 선언이 % max-height 체인을 깨지 않게 */
+    const overlaySidebarDecl = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar\s*,\s*\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar:not\([^)]+\)\s*\{([^}]+)\}/s
+    );
+    expect(overlaySidebarDecl).not.toBeNull();
+    expect(overlaySidebarDecl[1]).toMatch(/inset-block:\s*0/);
+    expect(overlaySidebarDecl[1]).toMatch(
+      /z-index:\s*var\(--z-sticky,\s*var\(--z-index-sticky,\s*1020\)\)/
+    );
+    expect(overlaySidebarDecl[1]).not.toMatch(/(?:^|;)\s*height:\s*auto\s*;/m);
+    const mainRegionClinic = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__main-region\s*\{[^}]+\}/s
+    );
+    expect(mainRegionClinic).not.toBeNull();
+    expect(mainRegionClinic[0]).toMatch(/position:\s*relative/);
+    expect(mainRegionClinic[0]).toMatch(/z-index:\s*0/);
+    /*
+     * 스크롤포트(filter-details / list-scroll) 밖 컨트롤 중앙 클릭 가림은
+     * 레이아웃 게이트에서 제외한다 — overflow 스크롤로 의도적으로 가려진 경우.
+     */
   });
 
   test('selection chrome vars are screen-local (not in global Clinic-OS / design tokens)', () => {
@@ -251,6 +360,13 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(sidebarJs).toMatch(/integrated-schedule__saved-view-details/);
     expect(sidebarJs).toMatch(/integrated-schedule__saved-view-summary/);
     expect(scheduleCss).toMatch(/\.integrated-schedule__saved-view-details\s*\{/);
+
+    /* closed details content must not keep layout boxes (ghost click occlusion) */
+    const closedSavedViewBlock = scheduleCss.match(
+      /\.integrated-schedule__saved-view-details:not\(\[open\]\)\s*>\s*\*:not\(summary\)\s*\{[^}]+\}/s
+    );
+    expect(closedSavedViewBlock).not.toBeNull();
+    expect(closedSavedViewBlock[0]).toMatch(/display:\s*none/);
   });
 
   test('same-day pending calendar prefix has no emoji and no CSS content string', () => {

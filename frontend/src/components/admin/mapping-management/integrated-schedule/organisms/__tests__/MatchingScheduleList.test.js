@@ -229,6 +229,23 @@ describe('MatchingScheduleList CSS fc-event isolation', () => {
     expect(css).toMatch(
       /\.integrated-schedule__list-scroll\s*\{[\s\S]*?min-height:\s*var\(--mg-spacing-2xl\)/
     );
+    /* clinic-os: filter open 시 부모 overflow 겹침 방지 — min-height:0 */
+    expect(css).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s*\{[^}]*min-height:\s*0/s
+    );
+    /* clinic-os list: overflow visible 누수로 카드 rect 가 filter 와 AABB 겹치지 않게 가둠 */
+    const clinicListBlock = css.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s+\.integrated-schedule__list\s*\{[^}]+\}/s
+    );
+    expect(clinicListBlock).not.toBeNull();
+    expect(clinicListBlock[0]).toMatch(/overflow:\s*hidden|overflow-y:\s*auto/);
+    expect(clinicListBlock[0]).not.toMatch(/overflow:\s*visible/);
+    expect(clinicListBlock[0]).not.toMatch(/overflow-y:\s*visible/);
+    expect(clinicListBlock[0]).not.toMatch(/overflow-x:\s*visible/);
+    /* list-scroll 자체도 flex 1 1 0% + min-height:0 유지 */
+    expect(css).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s*\{[^}]*flex:\s*1\s+1\s+0%/s
+    );
   });
 
   it('sidebar CSS blocks FC .fc-event focus/::before/::after/opacity on cards', () => {

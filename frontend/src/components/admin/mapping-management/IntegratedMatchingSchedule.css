@@ -175,6 +175,11 @@
 
 .integrated-schedule-summary__label {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: 600;
   color: var(--mg-v2-color-text-secondary);
@@ -183,6 +188,8 @@
 .integrated-schedule-summary__amount {
   margin: 0;
   min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .integrated-schedule-summary__amount .mg-v2-kpi-numeral {
@@ -194,6 +201,11 @@
 
 .integrated-schedule-summary__caption {
   margin: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--mg-v2-font-size-body-sm);
   font-weight: 500;
   color: var(--mg-v2-color-text-secondary);
@@ -1213,8 +1225,11 @@
  *  CSS @media 는 var() 미지원 → 픽셀 리터럴 1024 사용 (디자인 토큰 SSOT 와 정합).
  */
 @media (max-width: 1024px) {
-  .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+  /* 루트에 두어 content-area padding/overlay 폭이 동일 토큰을 쓰도록 */
+  .integrated-schedule {
     --integrated-schedule-sidebar-width: 320px;
+  }
+  .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
     width: var(--integrated-schedule-sidebar-width);
     min-width: var(--integrated-schedule-sidebar-width);
   }
@@ -1491,9 +1506,14 @@
   background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
 }
 
-/* 열림 시 사이드바 안에서 수축 금지 — 스크롤은 list-scroll만, density/status는 카드 밖 in-flow */
+/*
+ * 열림 시 목록(min-height)과 충돌하지 않게 자체 수축·스크롤.
+ * density/status 툴바는 카드 밖 in-flow 유지(absolute/negative margin 금지).
+ */
 .integrated-schedule__filter-details[open] {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .integrated-schedule__filter-details-summary {
@@ -1567,8 +1587,7 @@
 }
 
 .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
-  /* 토큰 폭 상한만 유지 — 강제 min-width:380 해제(캘린더 잠식 방지) */
-  width: auto;
+  /* ≥768 overlay 에서는 media 가 width 토큰을 강제. 여기서는 상한·패딩만 */
   max-width: var(--integrated-schedule-sidebar-width);
   min-width: 0;
   padding: var(--mg-v2-space-3);
@@ -1620,23 +1639,38 @@
 }
 
 @media (min-width: 768px) {
+  /*
+   * 단일 열 + 사이드바 absolute overlay.
+   * main-region border-box = content-area 전체 폭 → 게이트 폭비 ≥0.95.
+   * padding-inline-start 로 사이드바 가림만 피함(border-box 폭 유지).
+   */
   .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
+    position: relative;
     display: grid;
-    /* 사이드바 상한 = 토큰 폭, 본문 1fr이 항상 남는 형태 */
-    grid-template-columns: minmax(0, var(--integrated-schedule-sidebar-width)) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
-    column-gap: var(--mg-v2-space-4);
+    column-gap: 0;
     row-gap: var(--mg-v2-space-3);
   }
 
   .integrated-schedule--clinic-os .mg-v2-content-area > .mg-v2-content-header {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 1;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    padding-inline-start: var(--integrated-schedule-sidebar-width);
   }
 
   .integrated-schedule--clinic-os .mg-v2-content-area > .integrated-schedule-summary {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 2;
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+    box-sizing: border-box;
+    padding-inline-start: var(--integrated-schedule-sidebar-width);
   }
 
   .integrated-schedule--clinic-os .integrated-schedule__stage,
@@ -1644,26 +1678,53 @@
     display: contents;
   }
 
-  .integrated-schedule--clinic-os .integrated-schedule__sidebar {
-    grid-column: 1;
-    grid-row: 1 / -1;
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar,
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-index-sticky, 1);
     height: auto;
     max-height: none;
-    width: auto;
+    width: var(--integrated-schedule-sidebar-width);
     min-width: 0;
     min-height: 0;
     max-width: var(--integrated-schedule-sidebar-width);
     overflow: hidden;
   }
 
+  .integrated-schedule--clinic-os .integrated-schedule__sidebar--collapsed {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: var(--z-index-sticky, 1);
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+  }
+
   .integrated-schedule--clinic-os .integrated-schedule__main-region {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 3;
     width: 100%;
     min-width: 0;
     max-width: none;
     max-height: none;
     justify-self: stretch;
+    box-sizing: border-box;
+    padding-inline-start: var(--integrated-schedule-sidebar-width);
+  }
+
+  .integrated-schedule--clinic-os
+    .mg-v2-content-area:has(.integrated-schedule__sidebar--collapsed)
+    > .mg-v2-content-header,
+  .integrated-schedule--clinic-os
+    .mg-v2-content-area:has(.integrated-schedule__sidebar--collapsed)
+    > .integrated-schedule-summary,
+  .integrated-schedule--clinic-os
+    .mg-v2-content-area:has(.integrated-schedule__sidebar--collapsed)
+    .integrated-schedule__main-region {
+    padding-inline-start: 48px;
   }
 }
 

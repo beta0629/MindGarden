@@ -229,6 +229,10 @@ describe('MatchingScheduleList CSS fc-event isolation', () => {
     expect(css).toMatch(
       /\.integrated-schedule__list-scroll\s*\{[\s\S]*?min-height:\s*var\(--mg-spacing-2xl\)/
     );
+    /* clinic-os: filter open 시 부모 overflow 겹침 방지 — min-height:0 */
+    expect(css).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__list-scroll\s*\{[^}]*min-height:\s*0/s
+    );
   });
 
   it('sidebar CSS blocks FC .fc-event focus/::before/::after/opacity on cards', () => {

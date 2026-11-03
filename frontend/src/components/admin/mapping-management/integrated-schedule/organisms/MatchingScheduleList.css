@@ -10,6 +10,16 @@
   -webkit-overflow-scrolling: touch;
 }
 
+/*
+ * Clinic-OS: open filter-details 와 2xl min-height 가 부모를 넘기면
+ * density/status × card AABB 겹침 → clinic-os 스코프에서만 min-height:0.
+ */
+.integrated-schedule--clinic-os .integrated-schedule__list-scroll {
+  flex: 1 1 0%;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .integrated-schedule__list-scroll .integrated-schedule__list {
   flex: none;
   min-height: 0;

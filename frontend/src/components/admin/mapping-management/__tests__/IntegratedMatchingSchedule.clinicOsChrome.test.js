@@ -94,7 +94,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);
   });
 
-  test('sidebar width token is defined on schedule root for content-area grid inheritance', () => {
+  test('sidebar width token is defined on schedule root for content-area overlay padding', () => {
     const rootBlock = scheduleCss.match(/\.integrated-schedule\s*\{[^}]+\}/s);
     expect(rootBlock).not.toBeNull();
     expect(rootBlock[0]).toMatch(/--integrated-schedule-sidebar-width:\s*380px/);
@@ -105,8 +105,21 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(sidebarBlock).not.toBeNull();
     expect(sidebarBlock[0]).not.toMatch(/--integrated-schedule-sidebar-width\s*:/);
 
+    /* ≥768 clinic-os: 단일 열 + absolute sidebar overlay (본문 열 = content 전체 폭) */
     expect(scheduleCss).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\)/
+    );
+    expect(scheduleCss).not.toMatch(
       /grid-template-columns:\s*minmax\(0,\s*var\(--integrated-schedule-sidebar-width\)\)\s*minmax\(0,\s*1fr\)/
+    );
+    expect(scheduleCss).toMatch(
+      /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*?position:\s*absolute[\s\S]*?inset-inline-start:\s*0/
+    );
+    expect(scheduleCss).toMatch(
+      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+    );
+    expect(scheduleCss).toMatch(
+      /:has\(\.integrated-schedule__sidebar--collapsed\)[\s\S]*?padding-inline-start:\s*48px/
     );
 
     const mainRegionClinic = scheduleCss.match(
@@ -114,16 +127,21 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     );
     expect(mainRegionClinic).not.toBeNull();
     expect(mainRegionClinic[0]).toMatch(/max-width:\s*none/);
+    expect(mainRegionClinic[0]).toMatch(/width:\s*100%/);
+    expect(mainRegionClinic[0]).toMatch(
+      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+    );
   });
 
-  test('open filter-details does not flex-shrink over list cards', () => {
+  test('open filter-details can shrink and scroll to avoid card AABB overlap', () => {
     const openBlock = scheduleCss.match(
       /\.integrated-schedule__filter-details\[open\]\s*\{[^}]+\}/s
     );
     expect(openBlock).not.toBeNull();
-    expect(openBlock[0]).toMatch(/flex-shrink:\s*0/);
-    expect(openBlock[0]).not.toMatch(/flex:\s*0\s+1\s+auto/);
-    expect(openBlock[0]).not.toMatch(/overflow-y:\s*auto/);
+    expect(openBlock[0]).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(openBlock[0]).toMatch(/min-height:\s*0/);
+    expect(openBlock[0]).toMatch(/overflow-y:\s*auto/);
+    expect(openBlock[0]).not.toMatch(/flex-shrink:\s*0/);
   });
 
   test('selection chrome vars are screen-local (not in global Clinic-OS / design tokens)', () => {

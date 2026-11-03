@@ -1578,12 +1578,39 @@
   flex-direction: column;
   gap: var(--mg-v2-space-2);
   padding: 0 var(--mg-v2-space-2) var(--mg-v2-space-2);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/*
+ * filter-details 내부 in-flow 스택 — saved-view 가 toolbar/filter-label 위로
+ * absolute·negative-margin 페인트하지 않게 고정. open 시 칩·save-btn 클릭
+ * 가림(elementFromPoint → filter-label) 방지.
+ */
+.integrated-schedule__filter-details-body .integrated-schedule__saved-view-details,
+.integrated-schedule__filter-details-body .integrated-schedule__saved-view-controls,
+.integrated-schedule__filter-details-body .integrated-schedule__filter-toolbar,
+.integrated-schedule__filter-details-body .integrated-schedule__filter--status {
+  position: static;
+  margin-bottom: 0;
+}
+
+.integrated-schedule__filter-details-body .integrated-schedule__filter-toolbar,
+.integrated-schedule__filter-details-body .integrated-schedule__filter--status {
+  flex-shrink: 0;
 }
 
 .integrated-schedule__filter-details-body .integrated-schedule__saved-view-details,
-.integrated-schedule__filter-details-body .integrated-schedule__filter-toolbar,
-.integrated-schedule__filter-details-body .integrated-schedule__filter--status {
-  margin-bottom: 0;
+.integrated-schedule__filter-details-body .integrated-schedule__saved-view-controls {
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.integrated-schedule__filter-details-body .integrated-schedule__saved-view-controls .mg-v2-saved-view-controls {
+  max-width: 100%;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .integrated-schedule__filter-details-body .integrated-schedule__filter--status {
@@ -1602,13 +1629,28 @@
 
 /*
  * sidebar-body 높이 체인 보강 — filter[open] max-height%·list-scroll flex:1 이
- * 확정 높이를 받도록 flex:1 + min-height:0 + overflow:hidden 유지.
+ * 확정 높이를 받도록 flex:1 1 0% + min-height:0 + overflow:hidden.
+ * % max-height 는 containing block 높이가 indefinite 이면 무시되므로
+ * flex-basis 0% + height:100% 로 체인을 확정한다.
  */
 .integrated-schedule--clinic-os .integrated-schedule__sidebar-body {
-  flex: 1 1 auto;
+  flex: 1 1 0%;
   min-height: 0;
+  height: 100%;
   overflow: hidden;
   gap: var(--mg-v2-space-2);
+}
+
+/*
+ * clinic-os filter[open] — 특이도 승격. 닫힘 상태 flex-shrink:0 이
+ * 열림 시에도 이기지 않게 flex:0 1 auto + max-height:50% 를 강제.
+ */
+.integrated-schedule--clinic-os .integrated-schedule__filter-details[open] {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 50%;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 /* 가예약 카드 — 사이드바에서는 제목·건수 | 액션 1행 */
@@ -1704,8 +1746,7 @@
     inset-block: 0;
     inset-inline-start: 0;
     z-index: var(--z-sticky, var(--z-index-sticky, 1020));
-    height: auto;
-    max-height: none;
+        /* indefinite height 선언 금지 — inset-block:0 이 확정 높이를 만듦 (% max-height 체인) */
     width: var(--integrated-schedule-sidebar-width);
     min-width: 0;
     min-height: 0;

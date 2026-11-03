@@ -254,11 +254,14 @@
 
 /*
  * 820 등 좁은 폭: MGButton min-width:fit-content 가 타이틀과 가로 경쟁하면
- * 캘린더·새로고침 두 버튼 AABB 겹침 → 수축 허용 + 한 줄 초과 시 wrap.
+ * 캘린더·새로고침 두 버튼 AABB 겹침 → 수축 허용 + min-width:0 으로
+ * .mg-button { min-width:fit-content } 를 특이도로 이김.
  */
+.mg-v2-ad-b0kla__header-actions > .mg-button.mg-button,
 .mg-v2-ad-b0kla__header-actions > .mg-button,
 .mg-v2-ad-b0kla__header-actions .mg-v2-ad-b0kla__header-primary-btn {
   flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
 }
 

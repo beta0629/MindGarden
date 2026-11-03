@@ -31,9 +31,10 @@
   padding-inline-end: var(--mg-spacing-xs);
 }
 
+/* clinic-os list: overflow:visible 누수 금지 — AABB 가 filter 와 겹치지 않게 가둠.
+ * 스크롤은 list-scroll 이 담당; list 자체는 clip. */
 .integrated-schedule--clinic-os .integrated-schedule__list-scroll .integrated-schedule__list {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 /* Paper card chrome — clinic-os-sidebar-cards-tobe / docs/design-system/clinic-os-sidebar-cards.md v2.1 */

@@ -27,9 +27,12 @@
   max-width: 100%;
 }
 
+.mg-v2-content-header__right .mg-button.mg-button,
+.mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions > .mg-button.mg-button,
 .mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions > .mg-button,
 .mg-v2-content-header__right .mg-v2-ad-b0kla__header-actions .mg-v2-ad-b0kla__header-primary-btn {
   flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
 }
 

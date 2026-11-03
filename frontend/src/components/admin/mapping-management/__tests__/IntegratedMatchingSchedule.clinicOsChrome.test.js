@@ -145,6 +145,22 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(openBlock[0]).toMatch(/overflow-y:\s*auto/);
     expect(openBlock[0]).not.toMatch(/flex-shrink:\s*0/);
     expect(openBlock[0]).not.toMatch(/position:\s*absolute/);
+
+    /* clinic-os 특이도 승격 — 닫힘 flex-shrink:0 이 열림을 이기지 않음 */
+    const clinicOpenBlock = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__filter-details\[open\]\s*\{[^}]+\}/s
+    );
+    expect(clinicOpenBlock).not.toBeNull();
+    expect(clinicOpenBlock[0]).toMatch(/flex:\s*0\s+1\s+auto/);
+    expect(clinicOpenBlock[0]).toMatch(/max-height:\s*50%/);
+    expect(clinicOpenBlock[0]).toMatch(/min-height:\s*0/);
+    expect(clinicOpenBlock[0]).toMatch(/overflow-y:\s*auto/);
+    expect(clinicOpenBlock[0]).not.toMatch(/flex-shrink:\s*0/);
+
+    /* [open]{flex-shrink:0} 승자 패턴 금지 — 열림 블록에만 검사 */
+    expect(scheduleCss).not.toMatch(
+      /\.integrated-schedule(?:--clinic-os)?\s*\.integrated-schedule__filter-details\[open\]\s*\{[^}]*flex-shrink:\s*0/s
+    );
   });
 
   test('clinic-os sidebar-body keeps flex height chain for filter/list split', () => {
@@ -152,7 +168,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
       /\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar-body\s*\{[^}]+\}/s
     );
     expect(bodyBlock).not.toBeNull();
-    expect(bodyBlock[0]).toMatch(/flex:\s*1\s+1\s+auto/);
+    expect(bodyBlock[0]).toMatch(/flex:\s*1\s+1\s+0%/);
     expect(bodyBlock[0]).toMatch(/min-height:\s*0/);
     expect(bodyBlock[0]).toMatch(/overflow:\s*hidden/);
   });
@@ -165,6 +181,16 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).not.toMatch(
       /integrated-schedule__sidebar[\s\S]{0,220}z-index:\s*var\(--z-index-sticky,\s*1\)/
     );
+    /* inset-block 확정 높이 — indefinite height 선언이 % max-height 체인을 깨지 않게 */
+    const overlaySidebarDecl = scheduleCss.match(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar\s*,\s*\.integrated-schedule--clinic-os\s+\.integrated-schedule__sidebar:not\([^)]+\)\s*\{([^}]+)\}/s
+    );
+    expect(overlaySidebarDecl).not.toBeNull();
+    expect(overlaySidebarDecl[1]).toMatch(/inset-block:\s*0/);
+    expect(overlaySidebarDecl[1]).toMatch(
+      /z-index:\s*var\(--z-sticky,\s*var\(--z-index-sticky,\s*1020\)\)/
+    );
+    expect(overlaySidebarDecl[1]).not.toMatch(/(?:^|;)\s*height:\s*auto\s*;/m);
     const mainRegionClinic = scheduleCss.match(
       /\.integrated-schedule--clinic-os\s+\.integrated-schedule__main-region\s*\{[^}]+\}/s
     );

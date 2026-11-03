@@ -360,6 +360,13 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(sidebarJs).toMatch(/integrated-schedule__saved-view-details/);
     expect(sidebarJs).toMatch(/integrated-schedule__saved-view-summary/);
     expect(scheduleCss).toMatch(/\.integrated-schedule__saved-view-details\s*\{/);
+
+    /* closed details content must not keep layout boxes (ghost click occlusion) */
+    const closedSavedViewBlock = scheduleCss.match(
+      /\.integrated-schedule__saved-view-details:not\(\[open\]\)\s*>\s*\*:not\(summary\)\s*\{[^}]+\}/s
+    );
+    expect(closedSavedViewBlock).not.toBeNull();
+    expect(closedSavedViewBlock[0]).toMatch(/display:\s*none/);
   });
 
   test('same-day pending calendar prefix has no emoji and no CSS content string', () => {

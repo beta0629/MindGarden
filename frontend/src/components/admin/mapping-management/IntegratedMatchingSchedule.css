@@ -403,6 +403,15 @@
   margin-bottom: var(--mg-v2-space-1);
 }
 
+/*
+ * closed details content must not keep layout boxes.
+ * Author display(flex/block) on .saved-view-controls / .mg-v2-saved-view-*
+ * can override UA closed-<details> hide → ghost AABB + clickBlocked on chips.
+ */
+.integrated-schedule__saved-view-details:not([open]) > *:not(summary) {
+  display: none;
+}
+
 .integrated-schedule__saved-view-summary {
   list-style: none;
   cursor: pointer;
@@ -1504,6 +1513,11 @@
   border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   background-color: var(--integrated-schedule-status-surface, var(--mg-v2-color-surface-card));
+}
+
+/* closed filter disclosure — same ghost-box guard as saved-view-details */
+.integrated-schedule__filter-details:not([open]) > *:not(summary) {
+  display: none;
 }
 
 /*

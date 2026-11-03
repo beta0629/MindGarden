@@ -227,6 +227,8 @@ public class SalaryManagementController extends BaseApiController {
         resourceOwnerAccessGuard.requireConsultantResourceAccess(session, request.getConsultantId());
         log.info("급여 프로필 수정: ID={}, 상담사 ID {}", id, request.getConsultantId());
         ConsultantSalaryProfile entity = toEntity(request, id, existing.getTenantId());
+        // 새 엔티티 merge 시 createdAt이 null로 덮어써지지 않도록 기존 값 보존
+        entity.setCreatedAt(existing.getCreatedAt());
         ConsultantSalaryProfile updated = salaryManagementService.updateSalaryProfile(entity, request.getOptions());
         return success("급여 프로필이 수정되었습니다.", updated);
     }

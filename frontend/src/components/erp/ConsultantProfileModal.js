@@ -10,6 +10,8 @@ import notificationManager from '../../utils/notification';
 import { ErpSafeText, ErpSafeNumber, ERP_NUMBER_FORMAT } from './common';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from './common/erpMgButtonProps';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { buildSalaryOptionsPayload } from '../../utils/salaryOptionPayload';
+import { resolveUserFacingApiErrorMessage } from '../../utils/userFacingApiErrorMessage';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -245,13 +247,9 @@ const ConsultantProfileModal = ({
                 getConsultantGradeUpdateUrl(consultant.id),
                 { grade: targetGrade }
             );
-            const gradeOk = gradeResponse && (gradeResponse.success === true
-                || (gradeResponse.data != null && gradeResponse.success !== false));
-            if (!gradeOk) {
-                const msg = (gradeResponse && gradeResponse.message)
-                    ? gradeResponse.message
-                    : '상담사 등급 업데이트에 실패했습니다.';
-                return { ok: false, message: msg };
+            // StandardizedApi 계약: 예외 throw = 실패, 반환 = 성공(언랩된 data, 예: {id,name,grade})
+            if (gradeResponse != null && typeof gradeResponse === 'object' && gradeResponse.success === false) {
+                return { ok: false, message: gradeResponse.message || '상담사 등급 업데이트에 실패했습니다.' };
             }
             if (consultant && typeof consultant === 'object') {
                 consultant.grade = targetGrade;
@@ -298,17 +296,8 @@ const ConsultantProfileModal = ({
                 calculatedBaseSalary = await calculateBaseSalaryByGrade(salaryFormData.grade);
             }
             
-            const optionsPayload = Array.isArray(salaryFormData.optionTypes)
-                ? salaryFormData.optionTypes
-                    .map((o) => (typeof o === 'string'
-                        ? { type: o, amount: 0, name: '' }
-                        : {
-                            type: o.type || o.optionType,
-                            amount: Number(o.amount || o.optionAmount) || 0,
-                            name: o.name || o.optionName || ''
-                        }))
-                    .filter((opt) => opt.type && opt.amount > 0)
-                : [];
+            // 해석 불가 행이 있으면 undefined → 필드 생략, 서버 기존 옵션 유지
+            const optionsPayload = buildSalaryOptionsPayload(salaryFormData.optionTypes);
 
             const gradeSync = await syncConsultantGradeIfChanged();
             if (!gradeSync.ok) {
@@ -325,7 +314,7 @@ const ConsultantProfileModal = ({
                 businessRegistrationNumber: salaryFormData.businessRegistrationNumber,
                 businessName: salaryFormData.businessName,
                 isActive: salaryProfile?.isActive !== false,
-                options: optionsPayload
+                ...(optionsPayload !== undefined ? { options: optionsPayload } : {})
             };
 
             const existingProfileId =
@@ -346,7 +335,10 @@ const ConsultantProfileModal = ({
             }
         } catch (error) {
             console.error('급여 프로필 저장 실패:', error);
-            notificationManager.show('급여 프로필 저장 중 오류가 발생했습니다.', 'info');
+            notificationManager.show(
+                resolveUserFacingApiErrorMessage(error, '급여 프로필 저장 중 오류가 발생했습니다.'),
+                'error'
+            );
         } finally {
             setSaving(false);
         }

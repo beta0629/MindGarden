@@ -6102,7 +6102,7 @@ body {
   backdrop-filter: none;
   box-shadow: none;
   min-height: auto;
-  min-width: 0;
+  min-width: min(100%, var(--mg-v2-list-card-min-width));
   overflow: visible;
 }
 
@@ -6139,6 +6139,8 @@ body {
   font-size: var(--mg-font-size-sm, 0.875rem);
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-primary, #111827);
+  overflow: visible;
+  white-space: normal;
 }
 
 .mg-consultant-card--admin-compact .mg-consultant-card__contact {
@@ -6153,6 +6155,9 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .mg-consultant-card--admin-compact .mg-consultant-card__badge-group {

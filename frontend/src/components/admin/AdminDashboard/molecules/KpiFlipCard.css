@@ -1,7 +1,6 @@
 /**
- * KpiFlipCard — 3D Flip KPI 카드 (Phase 3 · KPI_FLIP_CARD_SPEC.md)
- * perspective: 1000px, rotateY(180deg), 400ms
- * Calm Forest --mg-v2-* 토큰 전용
+ * KpiFlipCard — Flip KPI 카드 (Phase 3 · KPI_FLIP_CARD_SPEC.md)
+ * in-flow front/back display swap (absolute 겹침 금지) · Calm Forest --mg-v2-* 토큰 전용
  */
 
 /* Dashboard KPI zone — AdminDashboardV2 §3.4 */
@@ -48,7 +47,7 @@
     margin-bottom: var(--mg-v2-space-4, 1rem);
   }
 
-  /* absolute front/back → in-flow 높이 없음: min-height로 subtitle·hint 가시 영역 확보 */
+  /* in-flow front/back: min-height로 subtitle·hint 가시 영역 확보 (G1-02 compact) */
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card {
     --mg-kpi-flip-card-min-height: calc(
       var(--mg-v2-space-4) * 2 +
@@ -63,6 +62,12 @@
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__inner {
     min-height: var(--mg-kpi-flip-card-min-height);
     max-height: 120px;
+  }
+
+  /* flipped: 뒷면 list→CTA 스크롤을 위해 compact max-height 해제 (신규 px 금지) */
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card--flipped,
+  .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__inner {
+    max-height: none;
   }
 
   .mg-v2-dashboard-kpi-zone--compact .mg-v2-kpi-flip-card__front,
@@ -112,34 +117,39 @@
 
 .mg-v2-kpi-flip-card__inner {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 100%;
-  height: 100%;
   min-height: var(--mg-kpi-flip-card-min-height);
-  transition: transform 400ms var(--mg-v2-transition-easing-default, cubic-bezier(0.4, 0, 0.2, 1));
-  transform-style: preserve-3d;
 }
 
-.mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__inner {
-  transform: rotateY(180deg);
-}
-
+/*
+ * Flip UX without absolute stacking:
+ * inactive face is display:none so only the active face contributes height
+ * (gate geometry overlap cannot fire on co-located absolute faces).
+ */
 .mg-v2-kpi-flip-card__front,
 .mg-v2-kpi-flip-card__back {
-  position: absolute;
-  top: 0;
-  left: 0;
+  position: relative;
   width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
   border-radius: var(--mg-v2-radius-xl);
   background-color: var(--mg-v2-color-surface-card);
   box-shadow: var(--mg-v2-shadow-sm);
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: var(--mg-v2-space-6);
   box-sizing: border-box;
   overflow: hidden;
+}
+
+.mg-v2-kpi-flip-card:not(.mg-v2-kpi-flip-card--flipped) .mg-v2-kpi-flip-card__back {
+  display: none;
+}
+
+.mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__front {
+  display: none;
 }
 
 .mg-v2-kpi-flip-card__front-top {
@@ -177,10 +187,6 @@
 .mg-v2-kpi-flip-card__trend--gray {
   background: var(--mg-color-surface-subtle, var(--mg-v2-color-state-hover));
   color: var(--mg-v2-color-text-secondary);
-}
-
-.mg-v2-kpi-flip-card__back {
-  transform: rotateY(180deg);
 }
 
 /* Front — 요약면 */
@@ -312,7 +318,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  flex: none;
   margin-top: var(--mg-v2-space-4);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-4);
   background-color: var(--mg-v2-color-primary-main);
@@ -345,27 +351,10 @@
   border-radius: var(--mg-v2-radius-xl);
 }
 
-/* Reduced motion */
+/* Reduced motion — in-flow display swap already avoids 3D; no absolute fallback needed */
 @media (prefers-reduced-motion: reduce) {
   .mg-v2-kpi-flip-card__inner {
     transition: none;
-  }
-
-  .mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__front {
-    visibility: hidden;
-  }
-
-  .mg-v2-kpi-flip-card--flipped .mg-v2-kpi-flip-card__back {
-    transform: none;
-    position: relative;
-  }
-
-  .mg-v2-kpi-flip-card:not(.mg-v2-kpi-flip-card--flipped) .mg-v2-kpi-flip-card__back {
-    visibility: hidden;
-  }
-
-  .mg-v2-kpi-flip-card:not(.mg-v2-kpi-flip-card--flipped) .mg-v2-kpi-flip-card__front {
-    position: relative;
   }
 }
 

@@ -75,20 +75,20 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);
   });
 
-  test('status filter uses 2-column grid cards (ops SSOT)', () => {
+  test('status filter uses flex-wrap cards (sidebar density/overlap SSOT)', () => {
     const statusBtnsBlock = scheduleCss.match(
       /\.integrated-schedule__status-btns\s*\{[^}]+\}/s
     );
     expect(statusBtnsBlock).not.toBeNull();
-    expect(statusBtnsBlock[0]).toMatch(/display:\s*grid/);
-    expect(statusBtnsBlock[0]).toMatch(/grid-template-columns:\s*repeat\(\s*2/);
-    expect(statusBtnsBlock[0]).not.toMatch(/flex-wrap/);
+    expect(statusBtnsBlock[0]).toMatch(/display:\s*flex/);
+    expect(statusBtnsBlock[0]).toMatch(/flex-wrap:\s*wrap/);
+    expect(statusBtnsBlock[0]).not.toMatch(/grid-template-columns:\s*repeat\(\s*2/);
 
     const statusBtnBlock = scheduleCss.match(
       /\.integrated-schedule__status-btn\s*\{[^}]+\}/s
     );
     expect(statusBtnBlock).not.toBeNull();
-    expect(statusBtnBlock[0]).toMatch(/width:\s*100%/);
+    expect(statusBtnBlock[0]).toMatch(/flex:\s*1\s+1/);
     expect(statusBtnBlock[0]).toMatch(/justify-content:\s*space-between/);
     expect(statusBtnBlock[0]).not.toMatch(/inline-flex/);
     expect(statusBtnBlock[0]).not.toMatch(/flex:\s*0\s+0\s+auto/);

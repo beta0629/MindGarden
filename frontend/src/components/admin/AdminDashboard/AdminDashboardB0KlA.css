@@ -183,11 +183,13 @@
   padding: var(--mg-spacing-xl, 1.5rem);
 }
 
-/* 페이지 wrapper가 DesktopLayout 메인의 직접 자식인 경우(어드민 V2 표준 구조),
- * 가로 패딩은 메인(.mg-v2-desktop-layout__main: padding-inline)에서만 적용하여
+/* 페이지 wrapper가 Desktop/MobileLayout 메인의 직접 자식인 경우(어드민 V2 표준 구조),
+ * 가로 패딩은 메인(.mg-v2-*-layout__main: padding-inline)에서만 적용하여
  * 이중 적용(체감상 너무 좁음/너무 넓음) 방지. 세로 패딩은 그대로 유지한다.
- * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 SSOT 정정) */
-.mg-v2-desktop-layout__main > .mg-v2-ad-b0kla {
+ * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 SSOT 정정)
+ * MobileLayout 대칭: 820 폭비 (820-48)/820=0.941 이중 인셋 제거 */
+.mg-v2-desktop-layout__main > .mg-v2-ad-b0kla,
+.mg-v2-mobile-layout__main > .mg-v2-ad-b0kla {
   padding-inline: 0;
 }
 

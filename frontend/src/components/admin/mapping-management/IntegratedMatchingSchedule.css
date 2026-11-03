@@ -511,6 +511,7 @@
 .integrated-schedule__filter-toolbar {
   display: flex;
   align-items: stretch;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-1);
   flex-shrink: 0;
   min-width: 0;
@@ -537,7 +538,7 @@
   border: var(--mg-v2-border-width-thin, 1px) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   border-radius: var(--mg-v2-radius-sm, var(--mg-radius-sm));
   width: 100%;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .integrated-schedule__filter-legend {
@@ -568,8 +569,8 @@
 }
 
 .integrated-schedule__status-btns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--mg-v2-space-1);
   min-width: 0;
   width: 100%;
@@ -582,7 +583,8 @@
   justify-content: space-between;
   gap: var(--mg-v2-space-1);
   box-sizing: border-box;
-  width: 100%;
+  flex: 1 1 calc(50% - var(--mg-v2-space-1));
+  width: auto;
   min-width: 0;
   height: auto;
   min-height: calc(var(--mg-v2-component-height-sm) - var(--mg-v2-space-1));
@@ -1559,6 +1561,10 @@
 }
 
 .integrated-schedule--clinic-os .integrated-schedule__sidebar:not(.integrated-schedule__sidebar--collapsed) {
+  /* 토큰 폭 상한만 유지 — 강제 min-width:380 해제(캘린더 잠식 방지) */
+  width: auto;
+  max-width: var(--integrated-schedule-sidebar-width);
+  min-width: 0;
   padding: var(--mg-v2-space-3);
 }
 
@@ -1610,7 +1616,8 @@
 @media (min-width: 768px) {
   .integrated-schedule.integrated-schedule--clinic-os .mg-v2-content-area {
     display: grid;
-    grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+    /* 사이드바 상한 = 토큰 폭, 본문 1fr이 항상 남는 형태 */
+    grid-template-columns: minmax(0, var(--integrated-schedule-sidebar-width)) minmax(0, 1fr);
     grid-template-rows: auto auto minmax(0, 1fr);
     column-gap: var(--mg-v2-space-4);
     row-gap: var(--mg-v2-space-3);
@@ -1636,9 +1643,10 @@
     grid-row: 1 / -1;
     height: auto;
     max-height: none;
+    width: auto;
     min-width: 0;
     min-height: 0;
-    max-width: 100%;
+    max-width: var(--integrated-schedule-sidebar-width);
     overflow: hidden;
   }
 
@@ -1646,6 +1654,7 @@
     grid-column: 2;
     grid-row: 3;
     min-width: 0;
+    max-width: none;
     max-height: none;
   }
 }

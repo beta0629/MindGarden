@@ -18,6 +18,17 @@
   background-color: var(--mg-v2-color-surface-bg);
 }
 
+/*
+ * AdminCommonLayout(Desktop/Mobile main)이 이미 page padding을 제공하므로
+ * ContentArea 이중 인셋 제거. 단독 ContentArea(레이아웃 main 밖) 기본 padding은 유지.
+ * AdminDashboardB0KlA main > b0kla padding-inline:0 과 동일 층.
+ */
+.mg-v2-desktop-layout__main .mg-v2-content-area,
+.mg-v2-mobile-layout__main .mg-v2-content-area,
+.mg-v2-mobile-layout__stage .mg-v2-content-area {
+  padding: 0;
+}
+
 /* B0KlA growth-row: 차트 + 상담사 2fr 1fr */
 .mg-v2-content-growth-row {
   display: grid;

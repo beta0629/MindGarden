@@ -195,7 +195,7 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     );
   });
 
-  it('MappingPartiesRow CSS locks long-name truncate (min-width 0 + ellipsis)', () => {
+  it('MappingPartiesRow CSS wraps identity-name (no ellipsis clip; layout-gate scrollWidth)', () => {
     const partiesCssPath = path.join(
       __dirname,
       '../../molecules/MappingPartiesRow.css'
@@ -205,12 +205,30 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
       /\.integrated-schedule__card-identity\s*\{[\s\S]*?min-width:\s*0/
     );
     expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity\s*\{[\s\S]*?flex-wrap:\s*wrap/
+    );
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-parties-line\s*\{[\s\S]*?flex-wrap:\s*wrap/
+    );
+    expect(partiesCss).toMatch(
       /\.integrated-schedule__card-identity--consultant[\s\S]*?min-width:\s*0/
     );
-    expect(partiesCss).toMatch(/text-overflow:\s*ellipsis/);
+    /* package line may still ellipsis; identity-name must wrap for gate */
     expect(partiesCss).toMatch(
-      /\.integrated-schedule__card-identity-name[\s\S]*?overflow:\s*hidden[\s\S]*?text-overflow:\s*ellipsis[\s\S]*?white-space:\s*nowrap/
+      /\.integrated-schedule__card-package\s*\{[\s\S]*?text-overflow:\s*ellipsis/
     );
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity-name[\s\S]*?white-space:\s*normal/
+    );
+    expect(partiesCss).toMatch(
+      /\.integrated-schedule__card-identity-name[\s\S]*?overflow-wrap:\s*anywhere/
+    );
+    const identityNameBlock = partiesCss.match(
+      /\.integrated-schedule__card-identity-name,[\s\S]*?\.integrated-schedule__card-client\s*\{[^}]+\}/
+    );
+    expect(identityNameBlock).toBeTruthy();
+    expect(identityNameBlock[0]).not.toMatch(/text-overflow:\s*ellipsis/);
+    expect(identityNameBlock[0]).not.toMatch(/white-space:\s*nowrap/);
   });
 
   it('CardMeta CSS encodes amber pill via warning-100/800 tokens without hex or amber border', () => {

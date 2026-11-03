@@ -78,17 +78,16 @@ const TaxManagement = () => {
                 taxRate
             };
 
-            const response = await StandardizedApi.post(
+            // StandardizedApi: 반환 = 성공. response.success 검사 금지.
+            await StandardizedApi.post(
               SALARY_API_ENDPOINTS.TAX_CALCULATE,
               requestData
             );
-            if (response != null && (response.success === true || response.data != null)) {
-                showNotification('추가 세금이 계산되었습니다.', 'success');
-                loadTaxStatistics(selectedPeriod);
-            }
+            showNotification('추가 세금이 계산되었습니다.', 'success');
+            loadTaxStatistics(selectedPeriod);
         } catch (error) {
             console.error('추가 세금 계산 실패:', error);
-            showNotification('추가 세금 계산에 실패했습니다.', 'error');
+            showNotification(error?.message || '추가 세금 계산에 실패했습니다.', 'error');
         } finally {
             setLoading(false);
         }

@@ -78,6 +78,18 @@ const ProfileCard = React.forwardRef(({
     </span>
   );
 
+  const cornerActionsNode = isCompact && renderActions ? (
+    <div
+      className="mg-v2-profile-card__corner-actions"
+      onClick={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
+      {renderActions()}
+    </div>
+  ) : null;
+
   const headerNode = (
     <div className="mg-v2-profile-card__header">
       {avatarNode}
@@ -94,6 +106,7 @@ const ProfileCard = React.forwardRef(({
           </div>
         )}
       </div>
+      {cornerActionsNode}
       {(badgeNodes.length > 0 || riskBadgeNode) && (
         <div className="mg-v2-profile-card__badges">
           {badgeNodes}
@@ -107,17 +120,6 @@ const ProfileCard = React.forwardRef(({
     return (
       <div ref={ref} className={rootClassName} {...interactionProps} {...restProps}>
         {headerNode}
-        {renderActions && (
-          <div
-            className="mg-v2-profile-card__corner-actions"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onPointerDown={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-          >
-            {renderActions()}
-          </div>
-        )}
       </div>
     );
   }

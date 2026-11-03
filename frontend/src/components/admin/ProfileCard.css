@@ -75,6 +75,7 @@
 
 .mg-v2-profile-card__info {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -85,6 +86,10 @@
   font-size: var(--font-size-lg, 1.125rem);
   font-weight: var(--font-weight-semibold, 600);
   color: var(--mg-color-text-main);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mg-v2-profile-card__contact {
@@ -276,22 +281,14 @@
  * P1 컴팩트화 (2026-06-10): 콘텐츠 패딩 16-20px, 콘텐츠 기반 자동 높이 200-240px 목표
  */
 .mg-v2-profile-card--compact {
+  overflow: visible;
   padding: var(--mg-spacing-16, 1rem) var(--mg-spacing-16, 1rem) var(--mg-spacing-12, 0.75rem);
   gap: var(--mg-spacing-8, 0.5rem);
   min-width: 0;
   /* 콘텐츠 기반 자동 높이 (공통 .mg-v2-profile-card 의 padding-lg/gap-md 오버라이드) */
 }
 
-/* compact: 헤더 줄바꿈 허용, 배지를 두 번째 줄로 내려도 됨 */
-.mg-v2-profile-card--compact .mg-v2-profile-card__header {
-  flex-wrap: wrap;
-  gap: var(--mg-spacing-8, 0.5rem);
-}
-
-/* compact: info가 flex로 줄어들 수 있도록 (배지가 밀려 나가는 것 방지) */
-.mg-v2-profile-card--compact .mg-v2-profile-card__info {
-  min-width: 0;
-}
+/* compact 헤더·info 규칙은 corner-actions in-flow 블록에서 통합 정의 */
 
 .mg-v2-profile-card--compact .mg-v2-profile-card__avatar {
   width: 36px;
@@ -387,11 +384,14 @@
   justify-content: flex-end;
 }
 
-/* compact/smallCard: 우상단 overflow (⋮) — 인라인 버튼 스택 제거 */
+/*
+ * compact/smallCard: 헤더 in-flow 액션 열 (absolute overlay 금지).
+ * EntityRowActions --corner 이중 absolute 는 EntityRowActions.css neutralize 유지.
+ */
 .mg-v2-profile-card__corner-actions {
-  position: absolute;
-  top: var(--mg-spacing-8, 0.5rem);
-  right: var(--mg-spacing-8, 0.5rem);
+  position: static;
+  flex-shrink: 0;
+  align-self: flex-start;
   z-index: 3;
   overflow: visible;
   pointer-events: none;
@@ -406,8 +406,26 @@
   overflow: visible;
 }
 
-.mg-v2-profile-card--compact {
-  padding-right: calc(var(--mg-spacing-16, 1rem) + var(--touch-target-min, 2.75rem));
+/* compact 헤더: avatar | info(min 0) | actions 예약 열 → badges 다음 줄 */
+.mg-v2-profile-card--compact .mg-v2-profile-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--mg-spacing-8, 0.5rem);
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__info {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__corner-actions {
+  order: 0;
+  margin-inline-start: auto;
+}
+
+.mg-v2-profile-card--compact .mg-v2-profile-card__badges {
+  order: 1;
 }
 
 /* 아바타 래퍼 + 인디케이터 */

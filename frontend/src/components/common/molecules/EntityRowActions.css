@@ -29,8 +29,12 @@
   z-index: 2;
 }
 
-/* ProfileCard corner-actions 래퍼가 이미 absolute — 이중 오프셋·히트영역 축소 방지 */
-.mg-v2-profile-card__corner-actions .mg-v2-entity-row-actions--corner {
+/*
+ * ProfileCard / ConsultantCard corner-actions 는 헤더 in-flow 예약 열.
+ * EntityRowActions --corner 의 absolute 가 이중 오프셋·히트영역 축소를 만들지 않도록 neutralize.
+ */
+.mg-v2-profile-card__corner-actions .mg-v2-entity-row-actions--corner,
+.mg-consultant-card__corner-actions .mg-v2-entity-row-actions--corner {
   position: static;
   top: auto;
   right: auto;

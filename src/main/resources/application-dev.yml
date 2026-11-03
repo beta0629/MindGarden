@@ -77,6 +77,23 @@ spring:
     out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:true}
     validate-on-migrate: ${SPRING_FLYWAY_VALIDATE_ON_MIGRATE:false}
 
+  # Redis 연결 (dev): opaque 토큰 등 StringRedisTemplate용.
+  # 빈 REDIS_HOST 기본값으로 spring.data.redis.host 를 덮지 말 것(금지).
+  # host는 RedisOptionalEnvironmentPostProcessor가 REDIS_HOST(또는 spring.data.redis.host)가
+  # non-blank일 때만 spring.data.redis.host를 설정한다. blank/미설정이면 Redis 자동구성 제외 + MEMORY_FALLBACK.
+  # port/password/timeout/pool은 유지. session.store-type / cache.type 은 강제하지 않음.
+  data:
+    redis:
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
 # Ops Portal 관리자 (환경변수로 주입, -D 인자 제거로 ps/journalctl 노출 방지)
 ops:
   admin:

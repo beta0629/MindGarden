@@ -183,11 +183,15 @@
   padding: var(--mg-spacing-xl, 1.5rem);
 }
 
-/* 페이지 wrapper가 DesktopLayout 메인의 직접 자식인 경우(어드민 V2 표준 구조),
- * 가로 패딩은 메인(.mg-v2-desktop-layout__main: padding-inline)에서만 적용하여
+/* 페이지 wrapper가 Desktop/MobileLayout 메인·stage 하위인 경우(어드민 V2 표준 구조),
+ * 가로 패딩은 메인(.mg-v2-*-layout__main: padding-inline)에서만 적용하여
  * 이중 적용(체감상 너무 좁음/너무 넓음) 방지. 세로 패딩은 그대로 유지한다.
- * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 SSOT 정정) */
-.mg-v2-desktop-layout__main > .mg-v2-ad-b0kla {
+ * (P1 2026-06-10: 관리자 V2 전체 페이지 좌측 여백 SSOT 정정)
+ * MobileLayout: main > stage > .mg-v2-ad-b0kla — 직접 자식 선택자만으로는 stage 경유 시
+ * 이중 인셋(main 16 + b0kla 24 → 820 폭비 0.941)이 남으므로 stage 직계도 포함. */
+.mg-v2-desktop-layout__main > .mg-v2-ad-b0kla,
+.mg-v2-mobile-layout__main > .mg-v2-ad-b0kla,
+.mg-v2-mobile-layout__stage > .mg-v2-ad-b0kla {
   padding-inline: 0;
 }
 
@@ -227,6 +231,7 @@
 
 .mg-v2-ad-b0kla__header-right {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--mg-v2-space-6, 1.5rem);
 }
@@ -236,6 +241,8 @@
   align-items: center;
   gap: var(--mg-v2-space-4, 1rem);
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 /* ContentHeader 인라인 overflow — CORNER absolute가 GNB tenant trigger와 겹치지 않도록 */
@@ -243,6 +250,19 @@
   position: static;
   width: auto;
   flex: 0 0 auto;
+}
+
+/*
+ * 820 등 좁은 폭: MGButton min-width:fit-content 가 타이틀과 가로 경쟁하면
+ * 캘린더·새로고침 두 버튼 AABB 겹침 → 수축 허용 + min-width:0 으로
+ * .mg-button { min-width:fit-content } 를 특이도로 이김.
+ */
+.mg-v2-ad-b0kla__header-actions > .mg-button.mg-button,
+.mg-v2-ad-b0kla__header-actions > .mg-button,
+.mg-v2-ad-b0kla__header-actions .mg-v2-ad-b0kla__header-primary-btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .mg-v2-ad-b0kla__header-primary-btn {
@@ -502,6 +522,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
  * SSOT: complete pill geometry — overflow visible so end-corner strokes/curves stay fully painted. */
 .mg-v2-ad-b0kla__pill-toggle {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   height: auto;
   width: fit-content;
@@ -729,11 +750,11 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   margin: 0;
 }
 
-/* 상담사 별 통합데이터 카드 */
+/* 상담사 별 통합데이터 카드 — 음수 마진은 인접 버튼 AABB 겹침 유발 → 토큰 양수 간격 */
 .mg-v2-ad-b0kla__counselor-subtitle {
   font-size: var(--mg-v2-font-size-caption, 0.75rem);
   color: var(--ad-b0kla-text-secondary);
-  margin: -0.5rem 0 0 0;
+  margin: var(--mg-v2-space-1, 0.25rem) 0 0 0;
 }
 
 /* 상담사 통합데이터 집계 기간 선택 */
@@ -741,7 +762,7 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 1rem;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-4);
   margin-top: var(--mg-spacing-md, 1rem);
 }
 
@@ -753,7 +774,18 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 .mg-v2-ad-b0kla__integrated-data-period-tabs {
   display: flex;
-  gap: 0.25rem;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-1);
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-ad-b0kla__integrated-data-period-tabs .mg-button,
+.mg-v2-ad-b0kla__pill-toggle .mg-button,
+.mg-v2-ad-b0kla__integrated-data-month-picker .mg-button {
+  flex: 0 1 auto;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .mg-v2-ad-b0kla__pill--sm {
@@ -763,7 +795,9 @@ button.mg-v2-ad-b0kla__icon-btn--text-label.mg-button {
 
 .mg-v2-ad-b0kla__integrated-data-month-picker {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
 }
 
 .mg-v2-ad-b0kla__select {

@@ -132,6 +132,11 @@ jobs:
       DEV_DB_USER: ${{ secrets.DEV_DB_USER }}
       DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
       DEV_DB_NAME: ${{ secrets.DEV_DB_NAME }}
+      # Redis (dev) — Environment `dev` 시크릿. 권장: HOST=127.0.0.1 PORT=6379 PASSWORD=requirepass 동일 값.
+      # 미등록 시 install/inject skip → BE MEMORY_FALLBACK (PR #1825). 값 로그 출력 금지.
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
       # NCP SENS 4종 환경변수 폐기 (2026-06-12 SSOT 통합).
       # SmsGatewayServiceImpl → SolapiSmsProvider 단일 통합. 솔라피 자격 증명은
       # scripts/deployment/sync-solapi-sms-env.sh 가 운영 환경 동기화를 담당한다.
@@ -564,7 +569,7 @@ jobs:
         key: ${{ secrets.DEV_SERVER_SSH_KEY }}
         port: 22
         timeout: 60s
-        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh,scripts/deployment/verify-dev-running-build.sh,scripts/deployment/print-dev-backend-memory.sh"
+        source: "scripts/deployment/check-flyway-schema-health.sh,scripts/deployment/load-deploy-db-env.sh,scripts/deployment/mysql-deploy-client.sh,scripts/deployment/verify-dev-running-build.sh,scripts/deployment/print-dev-backend-memory.sh,scripts/deployment/ensure-dev-redis.sh"
         target: "/var/www/mindgarden-dev/"
         strip_components: 2
         overwrite: true
@@ -763,6 +768,119 @@ jobs:
           if [ "$CHANGED" -eq 1 ]; then
             sudo touch /tmp/mindgarden-dev-env-pending-restart
             echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart"
+          fi
+
+    # ============================================================================
+    # [dev Redis] 멱등 redis-server 설치·bind 127.0.0.1·requirepass (JAR 기동 전)
+    # GitHub Environment `dev` 시크릿 REDIS_* 사용. 비밀번호 argv/echo 금지 (REDISCLI_AUTH).
+    # 미준비 시 notice 후 skip — BE MEMORY_FALLBACK (PR #1825). 운영 워크플로 미수정.
+    # ============================================================================
+    - name: 🔴 Redis 설치·기동 (dev, 멱등)
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 15m
+        envs: REDIS_HOST,REDIS_PORT,REDIS_PASSWORD
+        script: |
+          # set -e 비활성 — Redis 미준비 시 전체 배포 fail 전파 방지 (Apple SIWA 패턴)
+          ENSURE_SH=/var/www/mindgarden-dev/ensure-dev-redis.sh
+          if [ ! -f "$ENSURE_SH" ]; then
+            echo "::warning title=Redis ensure script missing::$ENSURE_SH 없음 — Redis 설치 step skip (SCP 업로드 확인)"
+            exit 0
+          fi
+          chmod +x "$ENSURE_SH" || true
+          bash "$ENSURE_SH" || {
+            echo "::warning title=Redis ensure::ensure-dev-redis.sh 비정상 종료 — 배포는 계속"
+            exit 0
+          }
+
+    # ============================================================================
+    # [dev Redis] REDIS_* → /etc/mindgarden/dev.env 멱등 주입 (서비스 재시작 직전)
+    # 권장 시크릿: REDIS_HOST=127.0.0.1 REDIS_PORT=6379 REDIS_PASSWORD=requirepass 동일 값
+    # ============================================================================
+    - name: 🔴 Redis REDIS_* env 자동 주입 + 검증
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: REDIS_HOST,REDIS_PORT,REDIS_PASSWORD
+        script: |
+          # set -e 비활성 — secret 미등록 과도기에도 배포 계속
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          # HOST·PASSWORD 필수. PORT 비면 6379 기본(주입 시에도 명시 권장).
+          REDIS_KEYS="REDIS_HOST REDIS_PORT REDIS_PASSWORD"
+
+          MISSING_SECRET=0
+          for k in REDIS_HOST REDIS_PASSWORD; do
+            eval "v=\${$k}"
+            if [ -z "$v" ]; then
+              MISSING_SECRET=$((MISSING_SECRET+1))
+            fi
+          done
+          if [ "$MISSING_SECRET" -gt 0 ]; then
+            echo "::notice title=Redis env skip::GitHub Secrets 의 REDIS_HOST/REDIS_PASSWORD 중 $MISSING_SECRET 개가 비어 있어 dev.env 갱신을 skip 합니다. Environment=dev 시크릿 등록 후 재배포하세요."
+            exit 0
+          fi
+          if [ -z "${REDIS_PORT:-}" ]; then
+            REDIS_PORT=6379
+            echo "::notice title=Redis PORT default::REDIS_PORT secret 비어 있어 6379 로 주입합니다."
+          fi
+
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+
+          CHANGED=0
+          for k in $REDIS_KEYS; do
+            eval "v=\${$k}"
+            CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${k}=" "$DEV_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+            if [ "$CURRENT_VALUE" = "$v" ]; then
+              echo "✅ ${k} 변경 없음 (길이 ${#v}자)"
+              continue
+            fi
+            update_env "$k" "$v"
+            echo "✅ ${k} 갱신 완료 — 길이만 표시: (${#v} chars)"
+            CHANGED=1
+          done
+
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
+
+          echo "✅ dev.env REDIS_* 3종 갱신 완료 — 길이만 표시:"
+          sudo grep -E "^REDIS_(HOST|PORT|PASSWORD)=" "$DEV_ENV_FILE" \
+            | awk -F= '{key=$1; rest=substr($0, length(key)+2); gsub(/^"|"$/, "", rest); printf "   %s = (%d chars)\n", key, length(rest)}'
+
+          if [ "$CHANGED" -eq 1 ]; then
+            sudo touch /tmp/mindgarden-dev-env-pending-restart
+            echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 REDIS_* 일괄 반영·검증)"
           fi
 
     - name: 🔄 개발 서버 서비스 재시작
@@ -1593,7 +1711,7 @@ jobs:
             echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
           else
             echo "🔍 unit=${UNIT} / PID=${PID} 프로세스 env 일괄 확인"
-            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR TENANT_LOGO_UPLOAD_DIR MINDGARDEN_HQ_TENANT_ID DATA_GO_KR_SERVICE_KEY JUSO_CONFM_KEY"
+            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR TENANT_LOGO_UPLOAD_DIR MINDGARDEN_HQ_TENANT_ID DATA_GO_KR_SERVICE_KEY JUSO_CONFM_KEY REDIS_HOST REDIS_PORT REDIS_PASSWORD"
             MISSING_ENV=0
             CHECKED=0
             for k in $ALL_KEYS; do
@@ -1662,6 +1780,156 @@ jobs:
             [ -f "$f" ] && echo "--- $f (tail 30) ---" && sudo tail -30 "$f" 2>/dev/null || true
           done 2>/dev/null
           exit 1
+
+    # ============================================================================
+    # [dev Redis] 배포 후 ping + BE Redis connection status 로그 (soft-fail)
+    # redis-cli: REDISCLI_AUTH 만 사용.
+    # 상태 로그 검색 순서(파일 1순위): coresolution.log → /var/log/mindgarden/dev.log → journalctl.
+    # (repo unit StandardOutput=append 파일; journal은 fallback unit 보조)
+    # 시크릿 미등록 과도기 → notice. 시크릿·설치 후 ping 실패 → warning. 배포 fail 전파 안 함.
+    # ============================================================================
+    - name: 🔴 Redis 배포 후 ping·상태 로그 검증
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 5m
+        envs: REDIS_HOST,REDIS_PORT,REDIS_PASSWORD
+        script: |
+          set +e
+          UNIT=mindgarden-dev.service
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          APP_DIR=/var/www/mindgarden-dev
+          CORES_LOG="${APP_DIR}/logs/coresolution.log"
+          DEV_STDOUT_LOG=/var/log/mindgarden/dev.log
+          STATUS_NEEDLE='Redis connection status:'
+          echo "::group::🔴 Redis post-deploy verify (no secrets)"
+
+          # Load host/port/password from env secrets first; fall back to dev.env presence only for ping target.
+          HOST_V="${REDIS_HOST:-}"
+          PORT_V="${REDIS_PORT:-6379}"
+          PASS_V="${REDIS_PASSWORD:-}"
+          SECRETS_READY=1
+          if [ -z "$HOST_V" ] || [ -z "$PASS_V" ]; then
+            SECRETS_READY=0
+            echo "::notice title=Redis verify skip secrets::REDIS_HOST/REDIS_PASSWORD secret 미등록 — ping soft-skip. BE MEMORY_FALLBACK 가능."
+          fi
+
+          # 1) redis-cli ping
+          if [ "$SECRETS_READY" -eq 1 ]; then
+            if ! command -v redis-cli >/dev/null 2>&1; then
+              echo "redis_cli_ping=NO_REDIS_CLI"
+              echo "::warning title=Redis verify::redis-cli 없음"
+            else
+              export REDISCLI_AUTH="$PASS_V"
+              PING_OUT="$(redis-cli -h "$HOST_V" -p "$PORT_V" --no-auth-warning ping 2>/dev/null | tr -d '\r')"
+              unset REDISCLI_AUTH
+              # Mask: never print PASS_V / HOST if weird; only status token
+              if [ "$PING_OUT" = "PONG" ]; then
+                echo "redis_cli_ping=PONG"
+              else
+                echo "redis_cli_ping=FAIL"
+                echo "::warning title=Redis ping FAIL::시크릿 등록·설치 후 ping 실패 (배포는 계속). host_len=${#HOST_V} port=${PORT_V}"
+              fi
+            fi
+          else
+            echo "redis_cli_ping=SKIP_SECRET_MISSING"
+          fi
+          unset PASS_V HOST_V
+
+          # redact helper — never echo REDIS_PASSWORD / raw secrets
+          redact_status_lines() {
+            sed -E 's/(password|passwd|secret|token|REDIS_PASSWORD)[=:][^[:space:]]+/\1=[REDACTED]/Ig' \
+              | sed -E 's/requirepass[[:space:]]+[^[:space:]]+/requirepass [REDACTED]/Ig'
+          }
+
+          # 2) BE Redis connection status — file logs first, journal auxiliary
+          STATUS_RAW=""
+          STATUS_SOURCE=none
+          echo "--- Redis connection status search (file → journal) ---"
+
+          # 2a) logback FILE: WorkingDirectory/logs/coresolution.log (+ rolling newest)
+          if [ -z "$STATUS_RAW" ]; then
+            CANDIDATES=""
+            if [ -f "$CORES_LOG" ]; then
+              CANDIDATES="$CORES_LOG"
+            fi
+            # rolling: logs/coresolution.yyyy-MM-dd.i.log — newest first
+            for f in $(ls -1t "${APP_DIR}/logs"/coresolution.*.log 2>/dev/null | head -n 5); do
+              CANDIDATES="$CANDIDATES $f"
+            done
+            for f in $CANDIDATES; do
+              [ -f "$f" ] || continue
+              HIT="$(sudo grep -F "$STATUS_NEEDLE" "$f" 2>/dev/null | tail -n 20 || true)"
+              if [ -n "$HIT" ]; then
+                STATUS_RAW="$HIT"
+                STATUS_SOURCE=coresolution.log
+                echo "(matched in $f)"
+                break
+              fi
+            done
+          fi
+
+          # 2b) systemd StandardOutput append file
+          if [ -z "$STATUS_RAW" ] && [ -f "$DEV_STDOUT_LOG" ]; then
+            HIT="$(sudo grep -F "$STATUS_NEEDLE" "$DEV_STDOUT_LOG" 2>/dev/null | tail -n 20 || true)"
+            if [ -n "$HIT" ]; then
+              STATUS_RAW="$HIT"
+              STATUS_SOURCE=dev.log
+              echo "(matched in $DEV_STDOUT_LOG)"
+            fi
+          fi
+
+          # 2c) journalctl — ActiveEnterTimestamp since, else -n 5000
+          if [ -z "$STATUS_RAW" ]; then
+            SINCE_ARG=""
+            ACTIVE_ENTER="$(systemctl show -p ActiveEnterTimestamp --value "$UNIT" 2>/dev/null || true)"
+            if [ -n "$ACTIVE_ENTER" ] && [ "$ACTIVE_ENTER" != "n/a" ] && [ "$ACTIVE_ENTER" != "0" ]; then
+              SINCE_ARG="--since=$ACTIVE_ENTER"
+              HIT="$(sudo journalctl -u "$UNIT" --no-pager $SINCE_ARG 2>/dev/null | grep -F "$STATUS_NEEDLE" | tail -n 20 || true)"
+            else
+              HIT="$(sudo journalctl -u "$UNIT" --no-pager -n 5000 2>/dev/null | grep -F "$STATUS_NEEDLE" | tail -n 20 || true)"
+            fi
+            if [ -n "$HIT" ]; then
+              STATUS_RAW="$HIT"
+              STATUS_SOURCE=journal
+              echo "(matched in journalctl $UNIT)"
+            fi
+          fi
+
+          if [ -n "$STATUS_RAW" ]; then
+            printf '%s\n' "$STATUS_RAW" | redact_status_lines
+            if printf '%s\n' "$STATUS_RAW" | grep -Fq 'IN_USE'; then
+              echo "redis_be_status=IN_USE"
+            elif printf '%s\n' "$STATUS_RAW" | grep -Fq 'MEMORY_FALLBACK'; then
+              echo "redis_be_status=MEMORY_FALLBACK"
+            else
+              echo "redis_be_status=NOT_FOUND"
+            fi
+          else
+            echo "(no '$STATUS_NEEDLE' in coresolution.log / dev.log / journal — soft-fail)"
+            echo "redis_be_status=NOT_FOUND"
+            echo "::warning title=Redis BE status NOT_FOUND::파일·journal에서 Redis connection status 미발견 (배포는 계속). source=none"
+          fi
+          echo "redis_be_status_source=${STATUS_SOURCE}"
+
+          # 3) Presence-only lengths from dev.env (never print values)
+          if [ -f "$DEV_ENV_FILE" ]; then
+            for k in REDIS_HOST REDIS_PORT REDIS_PASSWORD; do
+              if sudo grep -qE "^[[:space:]]*${k}=" "$DEV_ENV_FILE" 2>/dev/null; then
+                len=$(sudo grep -E "^[[:space:]]*${k}=" "$DEV_ENV_FILE" | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r' | awk '{print length($0)}')
+                echo "dev.env ${k}=SET (${len} chars)"
+              else
+                echo "dev.env ${k}=EMPTY/MISSING"
+              fi
+            done
+          fi
+
+          echo "::endgroup::"
+          exit 0
 
     # 공개 URL(nginx 경유)로 헬스를 본다. 200·UP 이 아니면 배포 실패.
     - name: 🌐 공개 URL 헬스체크

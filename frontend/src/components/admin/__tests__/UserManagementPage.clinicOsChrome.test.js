@@ -43,4 +43,16 @@ describe('UserManagementPage Clinic-OS chrome', () => {
     expect(pageCss).toMatch(/user-management--clinic-os/);
     expect(pageCss).toMatch(/--mg-v2-space-/);
   });
+
+  test('stack wraps ContentSection list hosts (descendant overflow visible, not direct-child only)', () => {
+    expect(pageJs).toMatch(/mg-v2-user-management-stack/);
+    expect(pageJs).toMatch(/mg-v2-user-management__panel/);
+    const contentSectionCss = read('src/components/dashboard-v2/content/ContentSection.css');
+    expect(contentSectionCss).toMatch(
+      /\.mg-v2-user-management-stack\s+\.mg-v2-content-section[\s\S]*?overflow:\s*visible/
+    );
+    expect(contentSectionCss).not.toMatch(
+      /\.mg-v2-user-management-stack\s*>\s*\.mg-v2-content-section[\s\S]*?overflow:\s*visible/
+    );
+  });
 });

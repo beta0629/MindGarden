@@ -36,6 +36,17 @@
   min-width: 0;
 }
 
+/*
+ * user-management 목록 호스트: 전역 overflow:hidden 가로 잘림 완화.
+ * DOM: stack > panel > ContentSection(list) — 직계 자식만 잡으면 list 호스트가 누락됨.
+ * ⋮ 드롭다운도 함께 살릴 수 있도록 overflow visible (회귀 범위 = stack 하위).
+ * overflow-x만 visible로 두면 overflow-y:hidden과 충돌해 x가 auto로 계산되므로 양축 visible.
+ */
+.mg-v2-user-management-stack .mg-v2-content-section,
+.mg-v2-user-management-stack .mg-v2-content-section .mg-v2-content-section__body {
+  overflow: visible;
+}
+
 /* Pill 탭 행 — 컨테이너 상·하 여백 (pill-toggle 이 위·구분선에 붙지 않도록) */
 .mg-v2-content-section--plain:has(.mg-v2-ad-b0kla__pill-toggle) {
   padding-block-start: var(--mg-spacing-lg, 1.5rem);
@@ -89,6 +100,7 @@
 
 .mg-v2-content-section__actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--mg-spacing-sm, 0.5rem);
   align-items: center;
 }

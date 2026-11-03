@@ -6,12 +6,18 @@
 
 import { ADMIN_ROUTES } from '../../../constants/adminRoutes';
 
-const BREAKPOINT_DESKTOP = 768;
+/**
+ * 운영/어드민 Desktop 고정 LNB 게이트.
+ * SSOT: --mg-breakpoint-desktop (1280). 태블릿(820·1180)은 햄버거(MobileLayout).
+ * @see docs/design-system/RESPONSIVE_LAYOUT_SPEC.md
+ * @see frontend/src/styles/responsive-layout-tokens.css
+ */
+const BREAKPOINT_DESKTOP = 1280;
 
 /**
  * 상담사 Clinic-OS 셸: 폭·포인터와 무관하게 MobileLayout + 햄버거 1개 + soft-sheet.
  * Desktop 고정 LNB 게이트는 폐기. (값 1280은 soft-sheet 넓은 뷰포트 얇은 패널 MQ용 참조)
- * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(768) width-only 유지 — 회귀 금지.
+ * 어드민/운영자 셸은 BREAKPOINT_DESKTOP(= --mg-breakpoint-desktop 1280) width-only.
  */
 const BREAKPOINT_CONSULTANT_DESKTOP = 1280;
 

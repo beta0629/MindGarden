@@ -38,6 +38,19 @@ select option,
   isolation: isolate;
 }
 
+/*
+ * 자체 포지셔닝 드롭다운 공통 예외 (data-mg-self-positioned).
+ * 컴포넌트가 직접 fixed 좌표를 계산하는 팝오버는 위 전역 규칙의 자식 fixed 강제를 받지 않고
+ * 정상 block flow 로 쌓인다. JS 쌍: utils/unifiedLayoutSystem.js SELF_POSITIONED_DROPDOWN_ATTR
+ */
+[role][data-mg-self-positioned] > *,
+[data-mg-self-positioned] [role="option"] {
+  position: relative;
+  z-index: auto;
+  transform: none;
+  will-change: auto;
+}
+
 /* 기본 드롭다운 컨테이너 */
 .mg-dropdown {
   position: relative;

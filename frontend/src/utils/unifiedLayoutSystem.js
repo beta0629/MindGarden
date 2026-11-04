@@ -13,8 +13,18 @@ const V2_DROPDOWN_PANEL_CLASSES = [
   'mg-v2-entity-row-actions__menu--portal'
 ];
 
+/**
+ * 자체 포지셔닝(fixed 좌표 계산 등) 드롭다운 공통 예외 속성.
+ * 이 속성이 있는 요소는 전역 등록(position:relative 강제)에서 제외된다.
+ * CSS 쌍: styles/06-components/_dropdowns.css `[data-mg-self-positioned]`
+ */
+export const SELF_POSITIONED_DROPDOWN_ATTR = 'data-mg-self-positioned';
+
 const isV2DropdownPanel = (element) => {
   if (!element?.classList) return false;
+  if (typeof element.hasAttribute === 'function' && element.hasAttribute(SELF_POSITIONED_DROPDOWN_ATTR)) {
+    return true;
+  }
   return V2_DROPDOWN_PANEL_CLASSES.some((cls) => element.classList.contains(cls));
 };
 

@@ -229,6 +229,7 @@ const ConsultantFilterSelect = ({
       role="listbox"
       aria-label={ariaLabel}
       className="mg-consultant-filter__popover"
+      data-mg-self-positioned=""
       style={popoverStyle}
     >
       <ul className="mg-consultant-filter__options" role="presentation">

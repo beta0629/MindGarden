@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,7 +15,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.dto.ConsultantSalaryOptionItemRequest;
 import com.coresolution.consultation.dto.ConsultantSalaryProfileResponse;
+import com.coresolution.consultation.entity.ConsultantSalaryOption;
 import com.coresolution.consultation.entity.ConsultantSalaryProfile;
 import com.coresolution.consultation.exception.SalaryProfileConflictException;
 import com.coresolution.consultation.exception.ValidationException;
@@ -191,6 +196,64 @@ class SalaryManagementServiceImplProfileTest {
 
         assertThat(result).hasSize(2);
         assertThat(result).extracting(ConsultantSalaryProfile::getId).containsExactlyInAnyOrder(11L, 20L);
+    }
+
+    @Test
+    @DisplayName("등급 미변경·옵션만 변경 수정 → 저장 성공, 옵션 교체, createdAt 유지")
+    void update_optionsOnly_replacesOptionsAndKeepsCreatedAt() {
+        ConsultantSalaryProfile profile = baseProfile("FREELANCE");
+        profile.setId(7L);
+        LocalDateTime created = LocalDateTime.of(2026, 1, 2, 3, 4);
+        profile.setCreatedAt(created);
+        when(consultantSalaryProfileRepository.save(any(ConsultantSalaryProfile.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        List<ConsultantSalaryOptionItemRequest> opts = List.of(
+                ConsultantSalaryOptionItemRequest.builder().type("FAMILY_CONSULTATION")
+                        .amount(BigDecimal.valueOf(3000)).name("가족").build(),
+                ConsultantSalaryOptionItemRequest.builder().type("INITIAL_CONSULTATION")
+                        .amount(BigDecimal.valueOf(7000)).name("초기").build());
+
+        ConsultantSalaryProfile saved = service.updateSalaryProfile(profile, opts);
+
+        assertThat(saved.getCreatedAt()).isEqualTo(created);
+        verify(consultantSalaryOptionRepository).deleteByTenantIdAndSalaryProfileId(TENANT_ID, 7L);
+        ArgumentCaptor<ConsultantSalaryOption> cap = ArgumentCaptor.forClass(ConsultantSalaryOption.class);
+        verify(consultantSalaryOptionRepository, times(2)).save(cap.capture());
+        assertThat(cap.getAllValues()).extracting(ConsultantSalaryOption::getOptionAmount)
+                .containsExactly(BigDecimal.valueOf(3000), BigDecimal.valueOf(7000));
+    }
+
+    @Test
+    @DisplayName("빈 options 수정 → 기존 옵션 삭제 안 함(유지)")
+    void update_emptyOptions_keepsExisting() {
+        ConsultantSalaryProfile profile = baseProfile("FREELANCE");
+        profile.setId(7L);
+        when(consultantSalaryProfileRepository.save(any(ConsultantSalaryProfile.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        service.updateSalaryProfile(profile, List.of());
+
+        verify(consultantSalaryOptionRepository, never()).deleteByTenantIdAndSalaryProfileId(anyString(), anyLong());
+        verify(consultantSalaryOptionRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("유형 없는 옵션 행 → 삭제 전 400(부분 성공 없음)")
+    void update_invalidOptionRow_rejectsBeforeDelete() {
+        ConsultantSalaryProfile profile = baseProfile("FREELANCE");
+        profile.setId(7L);
+        when(consultantSalaryProfileRepository.save(any(ConsultantSalaryProfile.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+        List<ConsultantSalaryOptionItemRequest> opts = List.of(
+                ConsultantSalaryOptionItemRequest.builder().type("FAMILY_CONSULTATION")
+                        .amount(BigDecimal.valueOf(3000)).build(),
+                ConsultantSalaryOptionItemRequest.builder().type(" ").amount(BigDecimal.ONE).build());
+
+        assertThatThrownBy(() -> service.updateSalaryProfile(profile, opts))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("급여 옵션");
+        verify(consultantSalaryOptionRepository, never()).deleteByTenantIdAndSalaryProfileId(anyString(), anyLong());
+        verify(consultantSalaryOptionRepository, never()).save(any());
     }
 
     private ConsultantSalaryProfile baseProfile(String salaryType) {

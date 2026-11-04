@@ -57,6 +57,8 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             "허용되지 않은 급여 유형입니다. FREELANCE 또는 REGULAR 만 사용할 수 있습니다.";
     private static final String MSG_ACTIVE_PROFILE_EXISTS =
             "해당 상담사에 이미 활성 급여 프로필이 있습니다. 기존 프로필을 수정해 주세요.";
+    private static final String MSG_OPTION_INVALID =
+            "급여 옵션 형식이 올바르지 않습니다(유형 필수, 금액 0 이상).";
     private static final String MSG_DATA_INTEGRITY =
             "급여 프로필을 저장할 수 없습니다. 입력값을 확인해 주세요.";
 
@@ -181,16 +183,21 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
     }
 
     /**
-     * 요청에 options 필드가 있으면 consultant_salary_options를 삭제 후 재삽입한다.
-     * null이면 기존 옵션을 유지한다(레거시 API 호환).
+     * 요청에 options 행이 있으면 consultant_salary_options를 삭제 후 재삽입한다.
+     * null 또는 빈 목록이면 기존 옵션을 유지한다(빈 목록으로 인한 조용한 전삭제 방지).
+     * 타입이 없거나 금액이 음수인 행이 있으면 삭제 전에 400으로 거절한다(부분 성공 금지, 트랜잭션 롤백).
      *
      * @param tenantId 테넌트 ID
      * @param salaryProfileId 급여 프로필 ID
-     * @param optionRequests 옵션 행 목록 (null = 미동기화)
+     * @param optionRequests 옵션 행 목록 (null·빈 목록 = 미동기화)
      */
     private void syncConsultantSalaryOptions(String tenantId, Long salaryProfileId,
             List<ConsultantSalaryOptionItemRequest> optionRequests) {
         if (optionRequests == null) {
+            return;
+        }
+        if (optionRequests.isEmpty()) {
+            log.info("급여 옵션 빈 목록 수신 — 기존 옵션 유지: profileId={}", salaryProfileId);
             return;
         }
         if (tenantId == null || tenantId.isBlank()) {
@@ -199,16 +206,16 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
         if (salaryProfileId == null) {
             throw new IllegalStateException("salaryProfileId는 필수입니다.");
         }
-        consultantSalaryOptionRepository.deleteByTenantIdAndSalaryProfileId(tenantId, salaryProfileId);
+        List<ConsultantSalaryOption> toSave = new ArrayList<>();
         for (ConsultantSalaryOptionItemRequest row : optionRequests) {
-            if (row == null) {
-                continue;
-            }
-            String optionType = row.resolveOptionType();
+            String optionType = row != null ? row.resolveOptionType() : null;
             if (optionType == null) {
-                continue;
+                throw new ValidationException("options", null, MSG_OPTION_INVALID);
             }
             BigDecimal amount = row.getAmount() != null ? row.getAmount() : BigDecimal.ZERO;
+            if (amount.signum() < 0) {
+                throw new ValidationException("options", amount, MSG_OPTION_INVALID);
+            }
             ConsultantSalaryOption entity = new ConsultantSalaryOption();
             entity.setTenantId(tenantId);
             entity.setSalaryProfileId(salaryProfileId);
@@ -216,6 +223,10 @@ public class SalaryManagementServiceImpl implements SalaryManagementService {
             entity.setOptionAmount(amount);
             entity.setOptionDescription(row.getName());
             entity.setIsActive(true);
+            toSave.add(entity);
+        }
+        consultantSalaryOptionRepository.deleteByTenantIdAndSalaryProfileId(tenantId, salaryProfileId);
+        for (ConsultantSalaryOption entity : toSave) {
             consultantSalaryOptionRepository.save(entity);
         }
     }

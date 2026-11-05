@@ -106,3 +106,8 @@
   background: var(--ad-b0kla-blue-bg);
   color: var(--ad-b0kla-blue);
 }
+
+/* 배정 계약 유형 배지 — 공통 Badge 토큰만 사용 */
+.mg-engagement-type-badge {
+  flex: 0 0 auto;
+}

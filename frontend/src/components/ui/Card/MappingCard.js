@@ -14,6 +14,7 @@ import {
   CardActionGroup,
   ENTITY_ROW_ACTIONS_LAYOUT
 } from '../../common';
+import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
@@ -78,6 +79,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
           </div>
         </div>
         <StatusBadge status={mapping.status} />
+        <EngagementTypeBadge mapping={mapping} />
       </div>
 
       <div className="mg-v2-mapping-card-details">
@@ -174,6 +176,7 @@ const MappingCardDetailed = ({
           {isErpIntegrated() && (
             <StatusBadge variant="info">ERP 연동</StatusBadge>
           )}
+          <EngagementTypeBadge mapping={mapping} />
         </div>
       </div>
 

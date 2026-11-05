@@ -272,7 +272,9 @@ const ClientSelector = ({
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: data.data.mappingStatus || MAPPING_STATUS.ACTIVE,
                     lastSessionDate: data.data.lastSessionDate,
-                    totalSessions: data.data.totalSessions || 0
+                    totalSessions: data.data.totalSessions || 0,
+                    paymentTiming: data.data.paymentTiming ?? null,
+                    engagementType: data.data.engagementType ?? data.data.mappingEngagementType ?? null
                 };
             } else {
                 console.warn('매핑 정보 확인 실패:', data.message);
@@ -402,7 +404,9 @@ const ClientSelector = ({
                                 totalSessions: mappingInfo.totalSessions || 0,
                                 completedSessions: (mappingInfo.totalSessions || 0) - (mappingInfo.remainingSessions || 0),
                                 lastConsultationDate: mappingInfo.lastSessionDate,
-                                consultantName: selectedConsultant?.name
+                                consultantName: selectedConsultant?.name,
+                                paymentTiming: mappingInfo.paymentTiming ?? client.paymentTiming,
+                                engagementType: mappingInfo.engagementType ?? client.engagementType
                             }}
                             onClick={() => handleClientClick(client)}
                             selected={isSelected}

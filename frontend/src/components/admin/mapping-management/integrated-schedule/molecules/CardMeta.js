@@ -9,6 +9,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import SafeText from '../../../../common/SafeText';
+import EngagementTypeBadge from '../../../../common/EngagementTypeBadge';
 import { toDisplayString, toSafeNumber } from '../../../../../utils/safeDisplay';
 import { resolveMappingScheduleStatus } from '../utils/mappingScheduleStatusDisplay';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
@@ -35,7 +36,8 @@ const CardMeta = ({
   pendingSessionExtension,
   hasConsultationSchedule,
   nextConsultationDate,
-  paymentTiming
+  paymentTiming,
+  engagementType
 }) => {
   const scheduleStatus = resolveMappingScheduleStatus({
     hasConsultationSchedule,
@@ -56,6 +58,9 @@ const CardMeta = ({
 
   return (
     <div className="integrated-schedule__card-meta">
+      <EngagementTypeBadge
+        mapping={{ paymentTiming, engagementType }}
+      />
       {todoLabel ? (
         <span
           className="integrated-schedule__card-todo-pill"
@@ -84,7 +89,8 @@ CardMeta.propTypes = {
   }),
   hasConsultationSchedule: PropTypes.bool,
   nextConsultationDate: PropTypes.string,
-  paymentTiming: PropTypes.string
+  paymentTiming: PropTypes.string,
+  engagementType: PropTypes.string
 };
 
 CardMeta.defaultProps = {
@@ -93,7 +99,8 @@ CardMeta.defaultProps = {
   pendingSessionExtension: null,
   hasConsultationSchedule: false,
   nextConsultationDate: null,
-  paymentTiming: null
+  paymentTiming: null,
+  engagementType: null
 };
 
 export default CardMeta;

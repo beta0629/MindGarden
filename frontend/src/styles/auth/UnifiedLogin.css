@@ -534,8 +534,10 @@
   border-radius: 4px;
 }
 
-/* 버튼 */
-.mg-v2-button-primary {
+/* 버튼 — 로그인 컨테이너 스코프 필수.
+ * 전역 .mg-v2-button-primary 로 두면 MGButton primary 전부(통계 토글·집계 기간·내담자 탭 등)에
+ * width:100%·display:flex·height·font-size 가 누수되어 세로 스택 큰 알약형이 된다. */
+.mg-v2-login-container .mg-v2-button-primary {
   background-color: var(--mg-primary-color, var(--mg-color-primary-main));
   color: var(--mg-color-white, var(--mg-white));
   border-radius: var(--mg-radius-lg, 10px);
@@ -552,11 +554,11 @@
   margin-top: 8px;
 }
 
-.mg-v2-button-primary:hover:not(:disabled) {
+.mg-v2-login-container .mg-v2-button-primary:hover:not(:disabled) {
   background-color: var(--mg-color-brand-olive-muted);
 }
 
-.mg-v2-button-primary:disabled {
+.mg-v2-login-container .mg-v2-button-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

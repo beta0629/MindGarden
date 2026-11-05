@@ -11,4 +11,6 @@
 CRON_TZ=Asia/Seoul
 
 # 매일 새벽 03:30 에 실행 (전일 업무 반영·운영 부하 최소 시간대)
+# 03:30 은 운영 시간(11~20시 KST) 밖이다. 이 시각에만 동기화 직후 개발 백엔드를 재기동한다.
+# 11~20시 KST 에 같은 스크립트를 돌리면, 재기동을 켜 둔 상태에서는 덤프 전에 중단된다.
 30 3 * * * NON_INTERACTIVE=1 /opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh >> /var/log/mindgarden/prod-to-dev-cron.log 2>&1

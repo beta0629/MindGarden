@@ -65,6 +65,7 @@ DEV_MYSQL_HOST=$DB_HOST
 DEV_DB_NAME=$dev_db
 DEV_MYSQL_USER=$DB_USER
 DEV_MYSQL_PASSWORD=$DB_PASS
+SKIP_BACKEND_RESTART=1
 EOF
 }
 
@@ -109,5 +110,9 @@ done <<<"$flyway_owned"
 params=$(q -e "SELECT COUNT(*) FROM information_schema.PARAMETERS WHERE SPECIFIC_SCHEMA='${FIXTURE_DEV}' AND SPECIFIC_NAME='GetIntegratedSalaryStatistics'")
 [ "$params" = "11" ] || fail "GetIntegratedSalaryStatistics 가 저장소 정의가 아닙니다 (params=$params)."
 grep -q 'summary total=' "$WORK/sync.out" || fail "프로시저별 결과 표가 없습니다."
+grep -q 'SKIP_BACKEND_RESTART=1' "$WORK/sync.out" || fail "재기동 건너뛰기 로그가 없습니다."
+if grep -q 'systemctl restart' "$WORK/sync.out"; then
+    fail "픽스처 복사가 개발 백엔드를 재기동했습니다."
+fi
 echo "repo procedures=$(printf '%s\n' "$expected" | wc -l | tr -d ' ') (Flyway 원본 $(printf '%s\n' "$flyway_owned" | wc -l | tr -d ' ') 포함) dev procedures=$(printf '%s\n' "$actual" | wc -l | tr -d ' ')"
 echo "PASS prod-to-dev-daily.mysql"

@@ -90,13 +90,13 @@
       "krPublicHolidayDisclaimer": "표시는 참고용이며, 실제 휴무·급여 적용은 관공서·고용노동부 고시 및 내규를 확인하세요.",
       "integratedWeekendHolidayNote": "월간: 토요일은 연한 파랑·일요일은 연한 붉은 틴트, 공휴일은 붉은 계열(겹치면 공휴일 우선).",
       "sessionLabelsTitle": "회기 표기",
-      "sessionBookingSequenceMeaning": "해당 일정 시점 사용 회기",
-      "sessionRemainingMeaning": "해당 예약 직후 사용 회기 (미래 일정)"
+      "sessionBookingSequenceMeaning": "이 일정의 회차",
+      "sessionRemainingMeaning": "예정 일정의 회차"
     },
     "calendar": {
-      "sessionLabelFormat": "{{used}}/{{total}}회",
-      "sessionAriaLabelBooking": "{{sequence}}회차 · 사용 {{used}}/{{total}}",
-      "sessionAriaLabelRemaining": "사용 {{used}}/{{total}}"
+      "sessionLabelFormat": "{{sequence}}회기",
+      "sessionAriaLabelBooking": "이 일정 {{sequence}}회기",
+      "sessionAriaLabelRemaining": "매핑 잔여 {{remaining}}"
     }
   },
   "UnifiedScheduleComponent": {
@@ -217,10 +217,12 @@
     "t_b07dbada": "일정 상세 보기",
     "t_bff20dc3": "이벤트",
     "t_772af33f": "휴가 사유",
+    "sessionSequenceLabel": "회차",
+    "sessionSequenceValue": "{{sequence}}회기",
     "sessionInfoLabel": "회기",
     "sessionInfoValue": "사용 {{used}} / 총 {{total}} · 잔여 {{remaining}}",
-    "lifetimeSessionInfoLabel": "누적 상담",
-    "lifetimeSessionInfoValue": "과거 {{past}}회 + 누적 {{current}}회 = 총 {{total}}회 진행",
+    "lifetimeSessionInfoLabel": "누적 상담 (완료)",
+    "lifetimeSessionInfoValue": "과거 {{past}}회 + 완료 {{current}}회 = 총 {{total}}회",
     "sessionInfoUnknown": "회기 정보 없음",
     "sessionCancelRestoreHint": "취소 후 재예약 시, 잔여 회기가 복원된 후 다시 차감됩니다.",
     "sessionCancelRestoreHintAria": "취소 및 재예약에 따른 회기 차감 안내",

@@ -1022,9 +1022,9 @@
  */
 .integrated-schedule__event--same-day-pending,
 .fc-event.integrated-schedule__event--same-day-pending {
-  background: var(--mg-color-warning-bg);
-  color: var(--mg-color-warning-dark);
-  border: 2px dashed var(--mg-color-warning-dark);
+  background: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning);
+  border: 2px dashed var(--mg-v2-color-semantic-warning);
   font-style: italic;
 }
 
@@ -1032,23 +1032,23 @@
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event,
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--compact,
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event--integrated-month {
-  background-color: var(--mg-color-warning-bg);
-  color: var(--mg-color-warning-dark);
-  border: 2px dashed var(--mg-color-warning-dark);
-  border-left-color: var(--mg-color-warning-dark);
+  background-color: var(--mg-v2-color-semantic-warning-light);
+  color: var(--mg-v2-color-semantic-warning);
+  border: 2px dashed var(--mg-v2-color-semantic-warning);
+  border-left-color: var(--mg-v2-color-semantic-warning);
   font-style: italic;
 }
 
 /* v2.0 cascade 보강: inner 자식 텍스트 spans 색상 정합 */
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event__client,
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event__time {
-  color: var(--mg-color-warning-dark);
+  color: var(--mg-v2-color-semantic-warning);
 }
 
 /* v2.0 prefix label: compact 뷰 시각 강조 (이모지 금지 — Clinic-OS) */
 .fc-event.integrated-schedule__event--same-day-pending .mg-v2-ad-calendar-event::before {
   content: "당일";
-  margin-right: 4px;
+  margin-right: var(--mg-v2-space-1);
   font-size: var(--mg-v2-font-size-caption);
   font-weight: 600;
   flex-shrink: 0;
@@ -1056,7 +1056,7 @@
 
 .integrated-schedule__event--same-day-pending .fc-event-title,
 .fc-event.integrated-schedule__event--same-day-pending .fc-event-title {
-  color: var(--mg-color-warning-dark);
+  color: var(--mg-v2-color-semantic-warning);
   font-style: italic;
 }
 
@@ -1064,24 +1064,69 @@
 .integrated-schedule__legend--same-day {
   display: inline-flex;
   align-items: center;
-  gap: var(--mg-spacing-sm, 8px);
-  margin: 0 0 var(--mg-spacing-sm, 8px) 0;
-  padding: var(--mg-spacing-xs, 4px) var(--mg-spacing-sm, 8px);
-  font-size: var(--mg-font-size-xs, 12px);
-  color: var(--mg-color-warning-dark);
+  gap: var(--mg-v2-space-2);
+  margin: 0 0 var(--mg-v2-space-2) 0;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-semantic-warning);
 }
 
 .integrated-schedule__legend-swatch--same-day {
   display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px dashed var(--mg-color-warning-dark);
-  background: var(--mg-color-warning-bg);
-  border-radius: var(--mg-radius-xs, 2px);
+  width: var(--mg-v2-space-4);
+  height: var(--mg-v2-space-4);
+  border: 2px dashed var(--mg-v2-color-semantic-warning);
+  background: var(--mg-v2-color-semantic-warning-light);
+  border-radius: var(--mg-v2-radius-xs, var(--mg-radius-xs));
 }
 
 .integrated-schedule__legend-text {
   line-height: 1.3;
+}
+
+.integrated-schedule__event--institution-link,
+.fc-event.integrated-schedule__event--institution-link {
+  background: var(--mg-v2-color-semantic-info-light);
+  color: var(--mg-v2-color-semantic-info-dark);
+  border: 2px solid var(--mg-v2-color-semantic-info);
+  font-style: normal;
+}
+
+.fc-event.integrated-schedule__event--institution-link .mg-v2-ad-calendar-event,
+.fc-event.integrated-schedule__event--institution-link .mg-v2-ad-calendar-event--compact,
+.fc-event.integrated-schedule__event--institution-link .mg-v2-ad-calendar-event--integrated-month {
+  background-color: var(--mg-v2-color-semantic-info-light);
+  color: var(--mg-v2-color-semantic-info-dark);
+  border: 2px solid var(--mg-v2-color-semantic-info);
+  border-left-color: var(--mg-v2-color-semantic-info);
+  font-style: normal;
+}
+
+.fc-event.integrated-schedule__event--institution-link .mg-v2-ad-calendar-event__client,
+.fc-event.integrated-schedule__event--institution-link .mg-v2-ad-calendar-event__time,
+.integrated-schedule__event--institution-link .fc-event-title,
+.fc-event.integrated-schedule__event--institution-link .fc-event-title {
+  color: var(--mg-v2-color-semantic-info-dark);
+  font-style: normal;
+}
+
+.integrated-schedule__legend--institution-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  margin: 0 0 var(--mg-v2-space-2) 0;
+  padding: var(--mg-v2-space-1) var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-semantic-info-dark);
+}
+
+.integrated-schedule__legend-swatch--institution-link {
+  display: inline-block;
+  width: var(--mg-v2-space-4);
+  height: var(--mg-v2-space-4);
+  border: 2px solid var(--mg-v2-color-semantic-info);
+  background: var(--mg-v2-color-semantic-info-light);
+  border-radius: var(--mg-v2-radius-xs, var(--mg-radius-xs));
 }
 
 /* ====================================================================

@@ -40,7 +40,10 @@ export const API_ENDPOINTS = {
       WITH_MAPPING_INFO: '/api/v1/admin/clients/with-mapping-info',
       /** 내담자별 패키지 결제 이력 (TERMINATED·회기추가 포함) */
       PACKAGE_PAYMENT_HISTORY: (clientId) =>
-        `/api/v1/admin/clients/${clientId}/package-payment-history`
+        `/api/v1/admin/clients/${clientId}/package-payment-history`,
+      /** 내담자별 회기 승계·이관 이력 (표시 전용) */
+      SESSION_TRANSFER_HISTORY: (clientId) =>
+        `/api/v1/admin/clients/${clientId}/session-transfer-history`
     },
     
     MAPPINGS: {
@@ -84,7 +87,10 @@ export const API_ENDPOINTS = {
         `/api/v1/admin/mappings/${sourceMappingId}/session-succession/preview`,
       /** 회기 승계 실행 */
       SESSION_SUCCESSION: (sourceMappingId) =>
-        `/api/v1/admin/mappings/${sourceMappingId}/session-succession`
+        `/api/v1/admin/mappings/${sourceMappingId}/session-succession`,
+      /** 매핑별 회기 승계·이관 이력 (표시 전용) */
+      SESSION_TRANSFER_HISTORY: (mappingId) =>
+        `/api/v1/admin/mappings/${mappingId}/session-transfer-history`
     },
 
     /**

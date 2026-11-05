@@ -9,6 +9,7 @@ module.exports = {
     '<rootDir>/src/api/__tests__',
     '<rootDir>/src/api/auth/__tests__',
     '<rootDir>/src/api/hooks/__tests__',
+    '<rootDir>/src/components/atoms/__tests__',
     '<rootDir>/src/components/molecules/__tests__',
     '<rootDir>/src/components/organisms/login/__tests__',
     '<rootDir>/src/i18n/__tests__',

@@ -25,6 +25,7 @@ export const adminTheme: AppTheme = {
     accent: colors.admin.accent,
     accentSoft: colors.admin.accentSoft,
     ...colors.common,
+    ...colors.lobby,
     letterboxBg: colors.admin.bgMain,
     letterboxBorder: colors.common.divider,
     gray: colors.gray,

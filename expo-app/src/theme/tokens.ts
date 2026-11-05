@@ -11,18 +11,46 @@
  * 스플래시·알림용 2색은 `tokensAppConfig.cjs`에 동기화해 둔다.
  */
 
-/** 내담자 테마: 따뜻한 코랄·크림 톤 (8색) */
+/**
+ * 내담자 테마: Clinic-OS dusty teal + stage cream (상담사·웹 Lobby 정렬)
+ * SSOT: system-tobe · P1 「다음 한 장」로비 — coral `#E07A5F` 폐기
+ */
 const CLIENT_COLORS = {
-  primary: '#E07A5F',
-  primaryLight: '#F2CC8F',
-  primaryDark: '#C06A50',
-  bgMain: '#FAF9F7',
+  primary: '#0E5F5A',
+  primaryLight: '#145A55',
+  primaryDark: '#0A4F4B',
+  /** Layout phase2 locked — hover (counselor 맵 정렬) */
+  primaryHover: '#0F766E',
+  /** Layout phase2 locked — press (= primaryDark) */
+  primaryPress: '#0A4F4B',
+  /** stage cream — Clinic-OS soft desk */
+  bgMain: '#FAF7F2',
   /** 카드·칩 등 메인 배경보다 한 단 낮은 채움 (gray 100과 동일 톤) */
   bgSub: '#F0EDE8',
-  surface: '#FFFFFF',
-  surfaceAlt: '#FFF8F0',
+  surface: '#FFFEFB',
+  surfaceAlt: '#FFFFFF',
   accent: '#81B29A',
   accentSoft: '#F0EDE8',
+} as const;
+
+/**
+ * Clinic-OS Lobby 전용 파스텔·메타 토큰 (SSOT 표만 — 새 hex 금지)
+ * mint wash = NextSheet only · amber = 미결제 chip only
+ */
+const LOBBY_COLORS = {
+  mintWash: '#E3F4EF',
+  mintWashEnd: '#D5EEE7',
+  chipPeach: '#FCE8DE',
+  chipMint: '#DFF3EC',
+  chipLavender: '#EDE8F8',
+  /** cream/surface chip fill */
+  chipCream: '#FFFEFB',
+  amberUnpaid: '#D97706',
+  amberUnpaidBg: '#FFF7ED',
+  slate: '#334155',
+  mute: '#64748B',
+  /** warm line — chip/topbar 보더 */
+  lineWarm: '#E5DCCE',
 } as const;
 
 /**
@@ -134,6 +162,7 @@ export const colors = {
   client: CLIENT_COLORS,
   consultant: CONSULTANT_COLORS,
   admin: ADMIN_COLORS,
+  lobby: LOBBY_COLORS,
   common: COMMON_COLORS,
   gray: GRAY_COLORS,
 } as const;

@@ -1,54 +1,56 @@
 /**
- * 내담자 홈(피드) 화면
+ * 내담자 홈 — Clinic-OS 「다음 한 장」로비 (P1)
  *
- * - 인사 메시지 + 오늘 날짜
- * - 다가오는 상담 카운트다운 카드
- * - 오늘의 웰니스 팁
- * - 최근 활동 요약 (가로 ScrollView)
- * - Pull-to-refresh + 스켈레톤
+ * §1 한줄: Expo 내담자 홈 = 웹 Lobby 「다음 한 장」서사 · 앱 셸 유지.
+ * Floor: KPI 3열·카운트다운 주인공·팁 지배·FadeInDown 남발 금지.
+ * 정책: 직접예약 CTA 없음 · API 계약 유지 · PortOne UI 없음.
  *
  * @author MindGarden
  * @since 2026-05-12
  */
-import { useCallback, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  Platform,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Bell, Calendar, Heart, TrendingUp } from 'lucide-react-native';
-import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
 import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/app-chrome/AppTopBar';
-import { ConsultationCard } from '@/components/molecules/ConsultationCard';
-import { CountdownTimer } from '@/components/molecules/CountdownTimer';
-import { WellnessCard } from '@/components/molecules/WellnessCard';
-import { StatCard } from '@/components/atoms/StatCard';
-import { SkeletonCard, SkeletonLoader } from '@/components/atoms/SkeletonLoader';
-import { EmptyState } from '@/components/atoms/EmptyState';
+import {
+  AppTopBar,
+  AppTopBarNotificationPill,
+} from '@/components/app-chrome/AppTopBar';
+import { MGButton } from '@/components/atoms/MGButton';
+import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
+import { EmptyInvite } from '@/components/molecules/EmptyInvite';
+import { NextSheet } from '@/components/molecules/NextSheet';
+import { SoftChipRibbon } from '@/components/molecules/SoftChipRibbon';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useClientDashboard, useUpcomingConsultation } from '@/api/hooks/useConsultations';
 import { useUnreadCount } from '@/api/hooks/useNotifications';
 import { useRandomWellnessTip } from '@/api/hooks/useWellness';
 import { CLIENT_HOME_COPY, CLIENT_HOME_ROUTES } from '@/constants/clientHomeCopy';
 import { TabletContentShell } from '@/components/layout/TabletContentShell';
-
-const WARM_MESSAGES = [
-  '오늘도 따뜻한 하루 보내세요.',
-  '오늘 하루도 응원합니다.',
-  '당신의 하루가 빛나길 바랍니다.',
-  '편안한 하루 되세요.',
-  '당신은 충분히 잘하고 있어요.',
-];
-
-function getWarmMessage(): string {
-  const idx = new Date().getDate() % WARM_MESSAGES.length;
-  return WARM_MESSAGES[idx]!;
-}
+import {
+  buildLobbySoftChips,
+  formatLobbyDatetime,
+  formatLobbyGreetingSubtitle,
+  formatLobbyMeta,
+  formatLobbyTodayLabel,
+  isLobbyTabletLandscape,
+  truncateLobbyTip,
+} from '@/utils/clientHomeLobby';
 
 export default function ClientHome() {
   const theme = useTheme();
   const router = useRouter();
+  const { width, height } = useWindowDimensions();
+  const landscape = isLobbyTabletLandscape(width, height);
   const user = useAuthStore((s) => s.user);
 
   const dashboardQuery = useClientDashboard();
@@ -57,10 +59,9 @@ export default function ClientHome() {
   const unreadQuery = useUnreadCount();
   const unreadCount = unreadQuery.data?.count ?? 0;
 
-  // hang 방지는 apiClient refresh timeout 이 담당. 에러·fetched 후에는 스켈레톤 해제.
   const isUpcomingLoading =
     upcomingQuery.isLoading && !upcomingQuery.isError && !upcomingQuery.isFetched;
-  const isKpiLoading =
+  const isDashboardLoading =
     dashboardQuery.isLoading && !dashboardQuery.isError && !dashboardQuery.isFetched;
   const isTipLoading = tipQuery.isLoading && !tipQuery.isError && !tipQuery.isFetched;
 
@@ -80,202 +81,195 @@ export default function ClientHome() {
     }
   }, [dashboardQuery, upcomingQuery, tipQuery, unreadQuery]);
 
-  const today = format(new Date(), 'M월 d일 (EEEE)', { locale: ko });
   const upcoming = upcomingQuery.data;
-  const dashboard = dashboardQuery.data;
+  const remainingSessions = dashboardQuery.data?.remainingSessions ?? 0;
   const tip = tipQuery.data;
+  const displayName = user?.name?.trim() || '내담자';
+
+  const greetingSubtitle = useMemo(
+    () =>
+      formatLobbyGreetingSubtitle({
+        todayLabel: formatLobbyTodayLabel(),
+        upcoming: upcoming ?? null,
+      }),
+    [upcoming],
+  );
+
+  const softChips = useMemo(
+    () =>
+      buildLobbySoftChips({
+        remainingSessions,
+        upcoming: upcoming ?? null,
+      }),
+    [remainingSessions, upcoming],
+  );
+
+  const tipLine = useMemo(() => {
+    if (isTipLoading) return null;
+    const raw = tip?.title || tip?.description;
+    const body = truncateLobbyTip(raw);
+    if (body === CLIENT_HOME_COPY.TIP_FALLBACK) return body;
+    return `${CLIENT_HOME_COPY.TIP_PREFIX}${body}`;
+  }, [isTipLoading, tip]);
+
+  const nextSheetBlock = (() => {
+    if (isUpcomingLoading || isDashboardLoading) {
+      return <SkeletonCard style={styles.sheetSkeleton} />;
+    }
+    /** 회기 0 → EmptyInvite (회기 고르기·결제하기 · 예약하기 없음) */
+    if (remainingSessions === 0) {
+      return <EmptyInvite />;
+    }
+    if (upcoming) {
+      return (
+        <NextSheet
+          title={CLIENT_HOME_COPY.NEXT_SHEET_TITLE}
+          datetime={formatLobbyDatetime(upcoming)}
+          meta={formatLobbyMeta(upcoming)}
+          note={upcoming.notes || upcoming.memo || CLIENT_HOME_COPY.NEXT_SHEET_NOTE}
+          cta={
+            <MGButton
+              label={CLIENT_HOME_COPY.NEXT_SHEET_CTA}
+              variant="primary"
+              onPress={() => router.push(`/(client)/(sessions)/${upcoming.id}`)}
+            />
+          }
+        />
+      );
+    }
+    /** 회기 있음·예정 없음 — 입구 CTA 없이 로비만 (직접예약 금지) */
+    return (
+      <NextSheet
+        title={CLIENT_HOME_COPY.NO_UPCOMING_META}
+        meta={CLIENT_HOME_COPY.NO_UPCOMING_SHEET_META}
+      />
+    );
+  })();
+
+  const tipBlock =
+    tipLine != null ? (
+      <Text
+        style={{
+          fontFamily: theme.fontFamily.medium,
+          fontSize: theme.fontSize.sm,
+          color: theme.colors.mute,
+          paddingTop: theme.spacing.sm,
+          paddingBottom: theme.spacing.xs,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: theme.colors.lineWarm,
+        }}
+      >
+        {tipLine}
+      </Text>
+    ) : (
+      <SkeletonCard lines={1} style={styles.tipSkeleton} />
+    );
+
+  /** 결제 CTA·판매자 푸터 — 빈 슬롯만 (카피·PortOne UI 금지) */
+  const sellerSlot = (
+    <View
+      style={[
+        styles.sellerSlot,
+        {
+          borderColor: theme.colors.border,
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.borderRadius.lg,
+          minHeight: theme.spacing['3xl'],
+        },
+      ]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    />
+  );
+
+  const greetBlock = (
+    <View style={styles.greetingSection}>
+      <Text
+        style={{
+          fontFamily: theme.fontFamily.bold,
+          fontSize: theme.fontSize['2xl'],
+          color: theme.colors.textMain,
+          letterSpacing: -0.56,
+        }}
+        accessibilityRole="header"
+      >
+        {CLIENT_HOME_COPY.GREETING(displayName)}
+      </Text>
+      <Text
+        style={{
+          fontFamily: theme.fontFamily.medium,
+          fontSize: theme.fontSize.sm,
+          color: theme.colors.mute,
+          marginTop: theme.spacing.sm,
+        }}
+      >
+        {greetingSubtitle}
+      </Text>
+    </View>
+  );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
+    <SafeAreaView
+      style={[
+        styles.safe,
+        {
+          backgroundColor: theme.colors.bgMain,
+          ...(Platform.OS === 'web'
+            ? ({ minHeight: '100dvh' } as object)
+            : null),
+        },
+      ]}
+      edges={['top']}
+    >
       <AppTopBar
-        title="홈"
+        title={CLIENT_HOME_COPY.TOP_BAR_TITLE}
         rightAction={
-          <Pressable
-            onPress={() => router.push('/(client)/(more)/notifications')}
-            accessibilityRole="button"
-            accessibilityLabel="알림 센터"
-            hitSlop={8}
-            style={styles.topBarIcon}
-          >
-            <View>
-              <Bell size={22} color={theme.colors.textMain} />
-              {unreadCount > 0 ? (
-                <View style={[styles.notificationDot, { backgroundColor: theme.colors.error }]} />
-              ) : null}
-            </View>
-          </Pressable>
+          <AppTopBarNotificationPill
+            unreadCount={unreadCount}
+            onPress={() => router.push(CLIENT_HOME_ROUTES.NOTIFICATIONS)}
+          />
         }
       />
 
       <TabletContentShell>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isManualRefreshing}
-            onRefresh={onRefresh}
-            tintColor={theme.colors.primary}
-          />
-        }
-      >
-        {/* 인사 메시지 */}
-        <Animated.View entering={FadeInDown.delay(0).springify()} style={styles.greetingSection}>
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.bold,
-              fontSize: theme.fontSize['2xl'],
-              color: theme.colors.textMain,
-            }}
-            accessibilityRole="header"
-          >
-            {user?.name ?? '내담자'}님, 안녕하세요
-          </Text>
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.regular,
-              fontSize: theme.fontSize.sm,
-              color: theme.colors.textSecondary,
-              marginTop: 4,
-            }}
-          >
-            {today}
-          </Text>
-          <Text
-            style={{
-              fontFamily: theme.fontFamily.regular,
-              fontSize: theme.fontSize.sm,
-              color: theme.colors.textSecondary,
-              marginTop: 2,
-            }}
-          >
-            {getWarmMessage()}
-          </Text>
-        </Animated.View>
-
-        {/* 다가오는 상담 카운트다운 */}
-        <Animated.View entering={FadeInDown.delay(80).springify()}>
-          {isUpcomingLoading ? (
-            <SkeletonCard style={styles.section} />
-          ) : upcoming ? (
-            <View style={styles.section}>
-              <Text
-                style={[
-                  styles.sectionTitle,
-                  {
-                    fontFamily: theme.fontFamily.semibold,
-                    fontSize: theme.fontSize.base,
-                    color: theme.colors.textMain,
-                  },
-                ]}
-              >
-                다가오는 상담
-              </Text>
-              <ConsultationCard
-                schedule={upcoming}
-                onPress={() => router.push(`/(client)/(sessions)/${upcoming.id}`)}
-              />
-              <CountdownTimer targetDate={upcoming.date} targetTime={upcoming.startTime} />
-            </View>
-          ) : (
-            <View style={styles.section}>
-              <EmptyState
-                title="예정된 상담이 없어요"
-                description="관리자에게 상담 예약을 문의해주세요"
-              />
-            </View>
-          )}
-        </Animated.View>
-
-        {/* 오늘의 웰니스 팁 */}
-        <Animated.View entering={FadeInDown.delay(240).springify()} style={styles.section}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              {
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textMain,
-              },
-            ]}
-          >
-            오늘의 웰니스 팁
-          </Text>
-          {isTipLoading ? (
-            <SkeletonCard lines={2} />
-          ) : tip ? (
-            <WellnessCard
-              icon={<Heart size={24} color={theme.colors.primary} />}
-              title={tip.title}
-              description={tip.description}
-              onPress={() => router.push('/(client)/(wellness)')}
+        <ScrollView
+          contentContainerStyle={[
+            styles.scroll,
+            landscape ? styles.scrollLandscape : null,
+          ]}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isManualRefreshing}
+              onRefresh={onRefresh}
+              tintColor={theme.colors.primary}
             />
+          }
+        >
+          {landscape ? (
+            <>
+              <View style={styles.colMain}>
+                {greetBlock}
+                {nextSheetBlock}
+                {tipBlock}
+              </View>
+              <View style={styles.colSide}>
+                <SoftChipRibbon items={softChips} />
+                {sellerSlot}
+              </View>
+            </>
           ) : (
-            <WellnessCard
-              icon={<Heart size={24} color={theme.colors.primary} />}
-              title="마음 돌봄"
-              description="오늘도 잠시 마음을 챙겨보세요"
-              onPress={() => router.push('/(client)/(wellness)')}
-            />
+            <>
+              {greetBlock}
+              {nextSheetBlock}
+              <SoftChipRibbon items={softChips} />
+              {tipBlock}
+              {sellerSlot}
+            </>
           )}
-        </Animated.View>
 
-        {/* 핵심 지표 */}
-        <Animated.View entering={FadeInDown.delay(320).springify()} style={styles.section}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              {
-                fontFamily: theme.fontFamily.semibold,
-                fontSize: theme.fontSize.base,
-                color: theme.colors.textMain,
-              },
-            ]}
-          >
-            {CLIENT_HOME_COPY.KPI_SECTION_TITLE}
-          </Text>
-          {isKpiLoading ? (
-            <View style={styles.statRow}>
-              {[1, 2, 3].map((i) => (
-                <SkeletonLoader key={i} width={100} height={80} borderRadius={16} />
-              ))}
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.statRow}
-            >
-              <StatCard
-                label={CLIENT_HOME_COPY.KPI_REMAINING_SESSIONS}
-                value={dashboard?.remainingSessions ?? 0}
-                unit={CLIENT_HOME_COPY.UNIT_SESSION}
-                icon={<Calendar size={18} color={theme.colors.primary} />}
-                style={styles.statCard}
-                onPress={() => router.push(CLIENT_HOME_ROUTES.SESSIONS_PAYMENT)}
-              />
-              <StatCard
-                label={CLIENT_HOME_COPY.KPI_THIS_MONTH_SESSIONS}
-                value={dashboard?.thisMonthScheduleCount ?? 0}
-                unit={CLIENT_HOME_COPY.UNIT_SESSION}
-                icon={<TrendingUp size={18} color={theme.colors.primary} />}
-                style={styles.statCard}
-                onPress={() => router.push(CLIENT_HOME_ROUTES.SESSIONS)}
-              />
-              <StatCard
-                label={CLIENT_HOME_COPY.KPI_UNREAD_MESSAGES}
-                value={dashboard?.unreadMessageCount ?? 0}
-                unit={CLIENT_HOME_COPY.UNIT_MESSAGE}
-                icon={<Bell size={18} color={theme.colors.primary} />}
-                style={styles.statCard}
-                onPress={() => router.push(CLIENT_HOME_ROUTES.MESSAGES)}
-              />
-            </ScrollView>
-          )}
-        </Animated.View>
-
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
       </TabletContentShell>
     </SafeAreaView>
   );
@@ -284,43 +278,47 @@ export default function ClientHome() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
+    ...(Platform.OS === 'web'
+      ? ({ minHeight: '100vh' } as object)
+      : null),
   },
   scroll: {
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 10,
+  },
+  scrollLandscape: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'flex-start',
+    gap: 20,
+  },
+  colMain: {
+    flex: 1.25,
+    minWidth: 0,
+  },
+  colSide: {
+    flex: 0.9,
+    minWidth: 0,
   },
   greetingSection: {
-    paddingVertical: 16,
+    marginBottom: 18,
   },
-  section: {
-    marginBottom: 20,
+  sheetSkeleton: {
+    marginBottom: 16,
+    minHeight: 160,
   },
-  sectionTitle: {
-    marginBottom: 12,
+  tipSkeleton: {
+    marginTop: 8,
   },
-  statRow: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingRight: 16,
-  },
-  statCard: {
-    minWidth: 110,
+  sellerSlot: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
   },
   bottomSpacer: {
     height: 24,
-  },
-  topBarIcon: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notificationDot: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
 });

@@ -52,13 +52,31 @@ describe('consultant theme tokens (Clinic-OS dusty teal / cs.*)', () => {
   });
 });
 
-describe('client theme tokens (coral unchanged)', () => {
-  it('keeps client coral primary palette', () => {
-    expect(colors.client.primary).toBe('#E07A5F');
-    expect(colors.client.primaryLight).toBe('#F2CC8F');
-    expect(colors.client.primaryDark).toBe('#C06A50');
-    expect(colors.client).not.toHaveProperty('primaryHover');
-    expect(colors.client).not.toHaveProperty('primaryPress');
+describe('client theme tokens (Clinic-OS dusty teal)', () => {
+  it('aligns client primary to Clinic-OS teal (+ hover/press)', () => {
+    expect(colors.client.primary).toBe('#0E5F5A');
+    expect(colors.client.primaryLight).toBe('#145A55');
+    expect(colors.client.primaryDark).toBe('#0A4F4B');
+    expect(colors.client.primaryHover).toBe('#0F766E');
+    expect(colors.client.primaryPress).toBe('#0A4F4B');
+    expect(colors.client.bgMain).toBe('#FAF7F2');
+    expect(colors.client.surface).toBe('#FFFEFB');
+  });
+});
+
+describe('lobby colors (Clinic-OS soft desk SSOT)', () => {
+  it('defines mint wash, pastel chips, amber unpaid, slate/mute only', () => {
+    expect(colors.lobby.mintWash).toBe('#E3F4EF');
+    expect(colors.lobby.mintWashEnd).toBe('#D5EEE7');
+    expect(colors.lobby.chipPeach).toBe('#FCE8DE');
+    expect(colors.lobby.chipMint).toBe('#DFF3EC');
+    expect(colors.lobby.chipLavender).toBe('#EDE8F8');
+    expect(colors.lobby.chipCream).toBe('#FFFEFB');
+    expect(colors.lobby.amberUnpaid).toBe('#D97706');
+    expect(colors.lobby.amberUnpaidBg).toBe('#FFF7ED');
+    expect(colors.lobby.slate).toBe('#334155');
+    expect(colors.lobby.mute).toBe('#64748B');
+    expect(colors.lobby.lineWarm).toBe('#E5DCCE');
   });
 });
 

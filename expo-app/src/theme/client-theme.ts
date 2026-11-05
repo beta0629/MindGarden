@@ -13,9 +13,9 @@ export interface AppThemeColors {
   readonly primary: string;
   readonly primaryLight: string;
   readonly primaryDark: string;
-  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  /** Layout phase2 locked — hover (client·counselor·ops Clinic-OS 정렬) */
   readonly primaryHover?: string;
-  /** counselor/ops only — Layout phase2 locked; client coral에는 없음 */
+  /** Layout phase2 locked — press (client·counselor·ops Clinic-OS 정렬) */
   readonly primaryPress?: string;
   readonly bgMain: string;
   readonly bgSub: string;
@@ -49,6 +49,24 @@ export interface AppThemeColors {
   readonly loginOrbMid: string;
   /** V2 §M.1 B2 Breathing Circle — orb radial gradient 외곽 (#E0DACF, halo 페이드아웃) */
   readonly loginOrbEdge: string;
+  /** Clinic-OS Lobby — NextSheet mint wash start */
+  readonly mintWash: string;
+  /** Clinic-OS Lobby — NextSheet mint wash end */
+  readonly mintWashEnd: string;
+  readonly chipPeach: string;
+  readonly chipMint: string;
+  readonly chipLavender: string;
+  readonly chipCream: string;
+  /** 미결제 chip 텍스트만 */
+  readonly amberUnpaid: string;
+  /** 미결제 chip 배경만 */
+  readonly amberUnpaidBg: string;
+  /** 보조·메타 (Lobby slate) */
+  readonly slate: string;
+  /** 캡션·힌트 (Lobby mute) */
+  readonly mute: string;
+  /** warm line — chip/topbar */
+  readonly lineWarm: string;
   /** iPad letterbox 풀폭 배경 (= bgMain 분리 키) */
   readonly letterboxBg: string;
   /** iPad letterbox 컬럼 보더 (= divider 분리 키) */
@@ -71,6 +89,8 @@ export const clientTheme: AppTheme = {
     primary: colors.client.primary,
     primaryLight: colors.client.primaryLight,
     primaryDark: colors.client.primaryDark,
+    primaryHover: colors.client.primaryHover,
+    primaryPress: colors.client.primaryPress,
     bgMain: colors.client.bgMain,
     bgSub: colors.client.bgSub,
     surface: colors.client.surface,
@@ -78,6 +98,7 @@ export const clientTheme: AppTheme = {
     accent: colors.client.accent,
     accentSoft: colors.client.accentSoft,
     ...colors.common,
+    ...colors.lobby,
     letterboxBg: colors.client.bgMain,
     letterboxBorder: colors.common.divider,
     gray: colors.gray,

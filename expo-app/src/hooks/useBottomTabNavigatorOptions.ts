@@ -21,12 +21,13 @@ export function useBottomTabNavigatorOptions(theme: AppTheme) {
 
     return {
       headerShown: false,
-      tabBarActiveTintColor: theme.colors.primary,
-      tabBarInactiveTintColor: theme.colors.gray[400],
+      /** Clinic-OS: 선택=ink weight 감 · primary(teal)도 허용 — inactive=mute */
+      tabBarActiveTintColor: theme.colors.textMain,
+      tabBarInactiveTintColor: theme.colors.mute ?? theme.colors.gray[400],
       tabBarStyle: {
-        /** counselor/ops: white tab chrome (Layout phase2); client surface already #FFFFFF */
-        backgroundColor: '#FFFFFF',
-        borderTopColor: theme.colors.border,
+        /** inset-bottom ON the bar — FAB·바 위 빈 띠 금지 */
+        backgroundColor: theme.colors.surface,
+        borderTopColor: theme.colors.lineWarm ?? theme.colors.border,
         borderTopWidth: StyleSheet.hairlineWidth,
         height,
         paddingTop,

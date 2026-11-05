@@ -223,4 +223,63 @@ redeploy_dev_procedures_from_repo() {
 # Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 에 들어 있어 이 db-diff 로 함께 되살아난다.
 redeploy_dev_procedures_from_repo
 
+# DROP DATABASE 로 운영에 아직 없는 개발 전용 테이블·flyway_schema_history 행이 사라진다.
+# Flyway 는 앱 기동 때만 돌므로 복원 뒤 개발 앱을 재기동해 저장소 마이그레이션을 다시 적용하고,
+# 저장소 최신 버전이 히스토리에 성공으로 들어왔는지 확인한다(없으면 실패로 끝낸다).
+DEV_APP_SERVICE="${DEV_APP_SERVICE:-}"
+DEV_APP_RESTART_CMD="${DEV_APP_RESTART_CMD:-}"
+DEV_APP_HEALTH_URL="${DEV_APP_HEALTH_URL:-}"
+DEV_APP_HEALTH_TIMEOUT_SEC="${DEV_APP_HEALTH_TIMEOUT_SEC:-300}"
+DEV_APP_HEALTH_INTERVAL_SEC="${DEV_APP_HEALTH_INTERVAL_SEC:-10}"
+FLYWAY_MIGRATION_DIR="${FLYWAY_MIGRATION_DIR:-$(cd "$SCRIPT_DIR/../../.." && pwd)/src/main/resources/db/migration}"
+
+# 기대 버전: 번들이 기록한 파일(FLYWAY_EXPECTED_VERSION_FILE) → 없으면 마이그레이션 디렉터리에서 계산
+FLYWAY_EXPECTED_VERSION_FILE="${FLYWAY_EXPECTED_VERSION_FILE:-$SCRIPT_DIR/flyway-expected-version}"
+# shellcheck source=flyway-latest-version.sh
+source "$SCRIPT_DIR/flyway-latest-version.sh"
+
+expected_flyway_version() {
+  if [[ -s "$FLYWAY_EXPECTED_VERSION_FILE" ]]; then
+    tr -d '[:space:]' < "$FLYWAY_EXPECTED_VERSION_FILE"
+    return 0
+  fi
+  flyway_latest_version "$FLYWAY_MIGRATION_DIR"
+}
+
+restart_dev_app_and_wait() {
+  if [[ -z "$DEV_APP_SERVICE" && -z "$DEV_APP_RESTART_CMD" ]]; then
+    log "WARN: DEV_APP_SERVICE·DEV_APP_RESTART_CMD 미설정 — 개발 앱 재기동·Flyway 재적용 확인을 건너뜁니다. 다음 기동 전까지 개발 전용 테이블이 없을 수 있습니다."
+    return 1
+  fi
+  local cmd="${DEV_APP_RESTART_CMD:-sudo -n systemctl restart ${DEV_APP_SERVICE}}"
+  log "개발 앱 재기동 (Flyway 재적용): $cmd"
+  bash -c "$cmd" || die "개발 앱 재기동 실패: $cmd"
+  [[ -n "$DEV_APP_HEALTH_URL" ]] || die "DEV_APP_HEALTH_URL 미설정 — 재기동 후 헬스 확인을 할 수 없습니다."
+  local waited=0
+  until curl -sf -m 10 "$DEV_APP_HEALTH_URL" 2>/dev/null | grep -q '"UP"'; do
+    (( waited >= DEV_APP_HEALTH_TIMEOUT_SEC )) && die "개발 앱 헬스 UP 대기 시간 초과(${DEV_APP_HEALTH_TIMEOUT_SEC}s): $DEV_APP_HEALTH_URL"
+    sleep "$DEV_APP_HEALTH_INTERVAL_SEC"
+    waited=$(( waited + DEV_APP_HEALTH_INTERVAL_SEC ))
+  done
+  log "개발 앱 헬스 UP (${waited}s)"
+}
+
+verify_latest_flyway_version() {
+  local latest applied
+  if ! latest="$(expected_flyway_version)" || [[ -z "$latest" ]]; then
+    die "기대 Flyway 버전을 알 수 없습니다: $FLYWAY_EXPECTED_VERSION_FILE 또는 $FLYWAY_MIGRATION_DIR 확인"
+  fi
+  applied="$(mysql_dev -N --batch "$DEV_DB_NAME" -e \
+    "SELECT COUNT(*) FROM flyway_schema_history WHERE version = '${latest}' AND success = 1")" \
+    || die "flyway_schema_history 조회 실패"
+  if [[ "$applied" != "1" ]]; then
+    die "Flyway 최신 버전 ${latest} 이(가) 개발 DB flyway_schema_history 에 성공으로 없습니다. 개발 앱 Flyway 로그를 확인하세요."
+  fi
+  log "Flyway 최신 버전 ${latest} 적용 확인"
+}
+
+if restart_dev_app_and_wait; then
+  verify_latest_flyway_version
+fi
+
 log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="

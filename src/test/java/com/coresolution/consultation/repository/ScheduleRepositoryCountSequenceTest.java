@@ -19,8 +19,10 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * {@link ScheduleRepository#countSequenceUpToSchedule(String, Long, LocalDate, Long)} 가드 검증.
  *
- * <p>2026-06-05 P1 픽스: {@code session_sequence IS NOT NULL} 가드가 적용되어
- * 취소·환불·가예약(결제 전) 일정이 lifetime count 에서 제외되는지 확인한다.</p>
+     * <p>2026-06-05 P1 픽스: {@code session_sequence IS NOT NULL} 가드가 적용되어
+     * 취소·환불·가예약(결제 전) 일정이 lifetime count 에서 제외되는지 확인한다.</p>
+     *
+     * <p>2026-09-14: 취소 일정에 {@code session_sequence} 가 남아 있어도 lifetime 에서 제외한다.</p>
  *
  * @author MindGarden
  * @since 2026-06-05
@@ -141,6 +143,44 @@ class ScheduleRepositoryCountSequenceTest {
                 tenantId, clientId, pivot.getDate(), pivot.getId());
 
         assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("CANCELLED + uncleared sessionSequence 는 lifetime count 에서 제외된다")
+    void countSequenceUpToSchedule_excludesCancelledWithUnclearedSequence() {
+        String tenantId = UUID.randomUUID().toString();
+        Long clientId = randomId();
+
+        saveSchedule(tenantId, clientId, LocalDate.of(2026, 5, 8), LocalTime.of(10, 0),
+                ScheduleStatus.CANCELLED, 8);
+        Schedule confirmed = saveSchedule(
+                tenantId, clientId, LocalDate.of(2026, 6, 10), LocalTime.of(14, 0),
+                ScheduleStatus.CONFIRMED, 16);
+
+        long count = scheduleRepository.countSequenceUpToSchedule(
+                tenantId, clientId, confirmed.getDate(), confirmed.getId());
+
+        assertThat(count).isEqualTo(1L);
+    }
+
+    @Test
+    @DisplayName("완료 1건 + 취소(회차 잔존) 1건 + 확정 1건 → 카운트 = 2 (취소 제외)")
+    void countSequenceUpToSchedule_mixedWithUnclearedCancelledSequence() {
+        String tenantId = UUID.randomUUID().toString();
+        Long clientId = randomId();
+
+        saveSchedule(tenantId, clientId, LocalDate.of(2026, 5, 1), LocalTime.of(10, 0),
+                ScheduleStatus.COMPLETED, 1);
+        saveSchedule(tenantId, clientId, LocalDate.of(2026, 5, 8), LocalTime.of(10, 0),
+                ScheduleStatus.CANCELLED, 8);
+        Schedule confirmed = saveSchedule(
+                tenantId, clientId, LocalDate.of(2026, 6, 10), LocalTime.of(14, 0),
+                ScheduleStatus.CONFIRMED, 16);
+
+        long count = scheduleRepository.countSequenceUpToSchedule(
+                tenantId, clientId, confirmed.getDate(), confirmed.getId());
+
+        assertThat(count).isEqualTo(2L);
     }
 
     private Schedule saveSchedule(

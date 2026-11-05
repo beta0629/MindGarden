@@ -6,6 +6,10 @@ import {
   SESSION_CANCEL_RESTORE_HINT,
   SESSION_CANCEL_RESTORE_HINT_ARIA
 } from '../../../../constants/schedule';
+import {
+  INSTITUTION_LINK_LABEL,
+  isInstitutionLinkPaymentTiming
+} from '../constants/integratedScheduleSidebarFilterConstants';
 import './SessionProgressIndicator.css';
 
 /**
@@ -19,8 +23,23 @@ const SessionProgressIndicator = ({
   total = 0,
   remaining,
   hasCancelHistory = false,
-  className = ''
+  className = '',
+  paymentTiming
 }) => {
+  if (isInstitutionLinkPaymentTiming(paymentTiming)) {
+    const rootClassName = ['mg-v2-session-progress', 'mg-v2-session-progress--active', className]
+      .filter(Boolean)
+      .join(' ');
+    return (
+      <div
+        className={rootClassName}
+        data-testid="session-progress-indicator"
+        aria-label={INSTITUTION_LINK_LABEL}
+      >
+        <span className="mg-v2-session-progress__text">{INSTITUTION_LINK_LABEL}</span>
+      </div>
+    );
+  }
   const safeUsed = Math.max(0, Number(used) || 0);
   const safeTotal = Math.max(0, Number(total) || 0);
   const safeRemaining = remaining == null
@@ -81,7 +100,8 @@ SessionProgressIndicator.propTypes = {
   total: PropTypes.number,
   remaining: PropTypes.number,
   hasCancelHistory: PropTypes.bool,
-  className: PropTypes.string
+  className: PropTypes.string,
+  paymentTiming: PropTypes.string
 };
 
 SessionProgressIndicator.defaultProps = {
@@ -89,7 +109,8 @@ SessionProgressIndicator.defaultProps = {
   total: 0,
   remaining: undefined,
   hasCancelHistory: false,
-  className: ''
+  className: '',
+  paymentTiming: null
 };
 
 export default SessionProgressIndicator;

@@ -31,8 +31,11 @@
 
 export const SAME_DAY_PENDING_EVENT_CLASS = 'integrated-schedule__event--same-day-pending';
 export const SAME_DAY_PENDING_TITLE_PREFIX = '[당일결제] ';
+export const INSTITUTION_LINK_EVENT_CLASS = 'integrated-schedule__event--institution-link';
 const TENTATIVE_PENDING_PAYMENT_STATUS = 'TENTATIVE_PENDING_PAYMENT';
 const SAME_DAY_CARD_TIMING = 'SAME_DAY_CARD';
+const INSTITUTION_LINK_TIMING = 'INSTITUTION_LINK';
+const INSTITUTION_LINK_CALENDAR_STATUSES = new Set(['BOOKED', 'CONFIRMED', 'COMPLETED', 'IN_PROGRESS']);
 
 const ensureLookup = (input) => {
   if (input == null) {
@@ -121,6 +124,74 @@ export function isSameDayPendingEvent(event, mappingPaymentTimingByMappingId) {
  * @param {Map|object} mappingPaymentTimingByMappingId - mappingId → paymentTiming 룩업
  * @returns {Array<object>}
  */
+/**
+ * 기관연계 일정인지. 가예약(TENTATIVE)과 교차하지 않는다.
+ *
+ * @param {object} event
+ * @param {Map|object} mappingPaymentTimingByMappingId
+ * @returns {boolean}
+ */
+export function isInstitutionLinkCalendarEvent(event, mappingPaymentTimingByMappingId) {
+  const status = resolveStatusFromEvent(event);
+  if (status === TENTATIVE_PENDING_PAYMENT_STATUS) {
+    return false;
+  }
+  if (status != null && !INSTITUTION_LINK_CALENDAR_STATUSES.has(status)) {
+    return false;
+  }
+  const mappingId = resolveMappingIdFromEvent(event);
+  if (mappingId == null) {
+    return false;
+  }
+  const lookup = ensureLookup(mappingPaymentTimingByMappingId);
+  if (!lookup) {
+    return false;
+  }
+  return resolvePaymentTiming(lookup, mappingId) === INSTITUTION_LINK_TIMING;
+}
+
+const mergeEventClassName = (event, className) => {
+  const existingClassName = event.className;
+  if (Array.isArray(existingClassName)) {
+    return existingClassName.includes(className)
+      ? existingClassName
+      : [...existingClassName, className];
+  }
+  if (typeof existingClassName === 'string' && existingClassName.length > 0) {
+    const tokens = existingClassName.split(/\s+/).filter(Boolean);
+    return tokens.includes(className) ? tokens : [...tokens, className];
+  }
+  return [className];
+};
+
+/**
+ * 기관연계 일정에 실선 info 클래스를 부여한다. 가예약 점선과 섞지 않는다.
+ *
+ * @param {Array<object>} events
+ * @param {Map|object} mappingPaymentTimingByMappingId
+ * @returns {Array<object>}
+ */
+export function decorateScheduleEventsForInstitutionLink(events, mappingPaymentTimingByMappingId) {
+  if (!Array.isArray(events) || events.length === 0) {
+    return Array.isArray(events) ? events : [];
+  }
+  const lookup = ensureLookup(mappingPaymentTimingByMappingId);
+  return events.map((event) => {
+    if (!isInstitutionLinkCalendarEvent(event, lookup)) {
+      return event;
+    }
+    return {
+      ...event,
+      className: mergeEventClassName(event, INSTITUTION_LINK_EVENT_CLASS),
+      extendedProps: {
+        ...(event.extendedProps || {}),
+        mappingPaymentTiming: INSTITUTION_LINK_TIMING,
+        isInstitutionLink: true
+      }
+    };
+  });
+}
+
 export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTimingByMappingId) {
   if (!Array.isArray(events) || events.length === 0) {
     return Array.isArray(events) ? events : [];
@@ -166,11 +237,14 @@ export function decorateScheduleEventsForSameDayPending(events, mappingPaymentTi
   });
 }
 
+import { isInstitutionLinkEngagement } from '../../../constants/clientEngagementType';
+
 /**
  * `mappings` 배열에서 mappingId → paymentTiming 룩업을 만든다.
  * paymentTiming 이 null/undefined 인 매핑은 ADVANCE 동등(레거시)으로 간주하여 제외한다.
+ * 내담자 유형이 타기관이면 캘린더 데코용으로 INSTITUTION_LINK 로 정규화한다(오배정 SAME_DAY 보정).
  *
- * @param {Array<{id: number|string, paymentTiming?: string}>} mappings
+ * @param {Array<{id: number|string, paymentTiming?: string, clientEngagementType?: string, engagementType?: string}>} mappings
  * @returns {Map<string, string>}
  */
 export function buildMappingPaymentTimingLookup(mappings) {
@@ -182,10 +256,15 @@ export function buildMappingPaymentTimingLookup(mappings) {
     if (!m || m.id == null) {
       return;
     }
-    if (m.paymentTiming == null) {
+    let timing = m.paymentTiming;
+    if (isInstitutionLinkEngagement(m.clientEngagementType)
+        || isInstitutionLinkEngagement(m.engagementType)) {
+      timing = INSTITUTION_LINK_TIMING;
+    }
+    if (timing == null) {
       return;
     }
-    map.set(String(m.id), m.paymentTiming);
+    map.set(String(m.id), timing);
   });
   return map;
 }

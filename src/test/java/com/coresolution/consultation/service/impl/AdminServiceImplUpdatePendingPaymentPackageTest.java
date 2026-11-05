@@ -206,7 +206,7 @@ class AdminServiceImplUpdatePendingPaymentPackageTest {
                 refundAutoCancelNotificationService,
                 userLifecycleService,
                 adminRequestIdempotencyService,
-                salaryTaxRateLookupService);
+                salaryTaxRateLookupService, null);
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 

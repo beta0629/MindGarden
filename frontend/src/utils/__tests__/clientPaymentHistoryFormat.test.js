@@ -7,6 +7,8 @@
  */
 
 import {
+  adaptPackagePaymentHistoryItemsToMappings,
+  adaptPackagePaymentHistoryItemToMapping,
   buildClientPaymentCaption,
   buildClientPaymentRows,
   buildMappingPaymentRow,
@@ -215,6 +217,67 @@ describe('resolvePaymentMethodDisplay (§5)', () => {
   });
 });
 
+describe('adaptPackagePaymentHistoryItemToMapping', () => {
+  test('DTO 필드만 매핑 (packageName→title · amount→paymentAmount · sessions→totalSessions · mappingId→id)', () => {
+    const adapted = adaptPackagePaymentHistoryItemToMapping({
+      type: 'ADDITIONAL_PACKAGE',
+      mappingId: 55,
+      packageName: '추가 패키지',
+      amount: 77000,
+      sessions: 5,
+      paymentDate: '2026-09-01T10:00:00',
+      paymentStatus: 'APPROVED',
+      status: 'TERMINATED',
+      paymentMethod: 'CARD',
+      paymentSource: 'MANUAL',
+      paymentReference: 'REF-1'
+    });
+    expect(adapted).toMatchObject({
+      id: 55,
+      mappingId: 55,
+      packageName: '추가 패키지',
+      productTitle: '추가 패키지',
+      title: '추가 패키지',
+      paymentAmount: 77000,
+      totalSessions: 5,
+      paymentStatus: 'APPROVED',
+      status: 'TERMINATED',
+      paymentMethod: 'CARD',
+      paymentSource: 'MANUAL',
+      paymentReference: 'REF-1'
+    });
+  });
+
+  test('ONLINE · shop orderPublicId 일치 항목은 어댑터에서 제외', () => {
+    const adapted = adaptPackagePaymentHistoryItemsToMappings([
+      {
+        mappingId: 1,
+        packageName: '온라인',
+        amount: 1000,
+        paymentSource: 'ONLINE',
+        paymentReference: 'pub-keep'
+      },
+      {
+        mappingId: 2,
+        packageName: '센터',
+        amount: 2000,
+        paymentSource: 'MANUAL',
+        paymentStatus: 'APPROVED',
+        paymentReference: 'pub-dup'
+      },
+      {
+        mappingId: 3,
+        packageName: '수동',
+        amount: 3000,
+        paymentSource: 'MANUAL',
+        paymentStatus: 'APPROVED',
+        paymentReference: 'manual-1'
+      }
+    ], { shopOrderPublicIds: ['pub-dup'] });
+    expect(adapted.map((row) => row.id)).toEqual([3]);
+  });
+});
+
 describe('buildClientPaymentRows', () => {
   test('9/30 환불 행 「-1」 → 상품 폴백 · 절댓값 · 환불 배지 · 음수 없음', () => {
     const [row] = buildClientPaymentRows({ mappings: [REFUND_ROW_MINUS_ONE] });
@@ -296,7 +359,7 @@ describe('buildClientPaymentRows', () => {
     expect(rows.find((r) => r.key === 'mapping-2').productName).toBe('상품 정보 없음');
   });
 
-  test('온라인 주문: PAID·REFUNDED + cashDue>0 만 · 「카드」만 · 원주문 매핑 상품명', () => {
+  test('온라인 주문: PAID·REFUNDED + cashDue>0 만 · 「카드」만 · 원주문 매핑 상품명 · ONLINE 매핑 행 이중집계 없음', () => {
     const rows = buildClientPaymentRows({
       mappings: [{ id: 5, paymentReference: 'pub-1', productTitle: '온라인 5회기', paymentAmount: 50000, paymentStatus: 'CONFIRMED', paymentSource: 'ONLINE', paymentMethod: 'CREDIT_CARD', totalSessions: 5 }],
       shopOrders: [
@@ -306,6 +369,7 @@ describe('buildClientPaymentRows', () => {
         { orderPublicId: 'pub-4', status: 'PAID', cashDueMinor: 0, createdAt: '2026-09-23T10:00:00' }
       ]
     });
+    expect(rows.filter((r) => r.kind === CLIENT_PAYMENT_ROW_KIND.MAPPING)).toHaveLength(0);
     const shopRows = rows.filter((r) => r.kind === CLIENT_PAYMENT_ROW_KIND.SHOP_ORDER);
     expect(shopRows.map((r) => r.orderPublicId)).toEqual(['pub-2', 'pub-1']);
     const paid = shopRows.find((r) => r.orderPublicId === 'pub-1');

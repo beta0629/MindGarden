@@ -5,7 +5,10 @@
  * @since 2026-10-03
  */
 
-import { PAGED_LIST_ITEM_KEYS } from '../constants/pagedList';
+import {
+  PAGED_LIST_FIRST_PAGE,
+  PAGED_LIST_ITEM_KEYS
+} from '../constants/pagedList';
 
 /**
  * @param {unknown} value
@@ -161,8 +164,52 @@ export function clampPagedUiPage(uiPage, totalPages) {
   return Math.min(safePage, safeTotal);
 }
 
+/**
+ * page/size 목록을 normalizePagedListPayload + hasMorePagedItems 로 끝까지 모은다.
+ * 화면별 page 산술·빈 객체 silent [] 우회를 금지하고 공통 정규화만 사용한다.
+ *
+ * @param {object} params
+ * @param {(page: number, size: number) => Promise<unknown>} params.fetchPage
+ * @param {number} params.pageSize
+ * @param {number} params.maxPages
+ * @param {number} [params.firstPage]
+ * @param {{ itemKeys?: ReadonlyArray<string> }} [params.normalizeOptions]
+ * @returns {Promise<Array<unknown>>}
+ */
+export async function drainPagedList({
+  fetchPage,
+  pageSize,
+  maxPages,
+  firstPage = PAGED_LIST_FIRST_PAGE,
+  normalizeOptions
+} = {}) {
+  const size = pageSize > 0 ? pageSize : 1;
+  const limit = maxPages > 0 ? maxPages : 1;
+  const start = Number.isFinite(Number(firstPage)) ? Math.floor(Number(firstPage)) : PAGED_LIST_FIRST_PAGE;
+  const all = [];
+  for (let page = start; page < start + limit; page += 1) {
+    // eslint-disable-next-line no-await-in-loop
+    const raw = await fetchPage(page, size);
+    const normalized = normalizePagedListPayload(raw, normalizeOptions || {});
+    const chunk = normalized.items;
+    all.push(...chunk);
+    if (!hasMorePagedItems({
+      loadedCount: all.length,
+      lastPage: page,
+      lastPageCount: chunk.length,
+      pageSize: size,
+      totalElements: normalized.totalElements,
+      totalPages: normalized.totalPages
+    })) {
+      break;
+    }
+  }
+  return all;
+}
+
 export default {
   normalizePagedListPayload,
   hasMorePagedItems,
-  clampPagedUiPage
+  clampPagedUiPage,
+  drainPagedList
 };

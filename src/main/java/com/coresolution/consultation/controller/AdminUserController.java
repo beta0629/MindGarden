@@ -756,22 +756,6 @@ public class AdminUserController {
     }
     
     /**
-     * 시스템 알림 이메일 발송
-     */
-    @SuppressWarnings("unused")
-    private void sendSystemNotificationEmail(String toEmail, String toName, String message) {
-        try {
-            log.info("시스템 알림 이메일 발송: to={}, message={}", EmailLogMasking.maskForLog(toEmail), message);
-            
-            // EmailUtil을 사용하여 이메일 발송
-            EmailUtil.sendSystemNotificationEmail(emailService, toEmail, toName, message);
-            
-        } catch (Exception e) {
-            log.error("시스템 알림 이메일 발송 중 오류: to={}, error={}", EmailLogMasking.maskForLog(toEmail), e.getMessage(), e);
-        }
-    }
-    
-    /**
      * 개인정보 복호화 (안전한 복호화)
      */
     @SuppressWarnings("unused")

@@ -167,7 +167,8 @@
   min-height: 0;
   background: var(--mg-v2-color-surface-bg);
   position: relative;
-  z-index: var(--mg-v2-z-content);
+  /* cover(z-content-hover)보다 위 — 음수 margin 시트가 커버에 가려지지 않음(공통 SSOT) */
+  z-index: calc(var(--mg-v2-z-content-hover) + 1);
 }
 
 /* Floating next-sheet — portrait: overlap cover */

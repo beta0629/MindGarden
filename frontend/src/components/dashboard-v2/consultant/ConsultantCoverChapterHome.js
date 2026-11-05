@@ -202,12 +202,10 @@ const ConsultantCoverChapterHome = ({
             ? COVER_CHAPTER_SVG_VARIANT_PORTRAIT
             : COVER_CHAPTER_SVG_VARIANT_LANDSCAPE
         }
-      >
-        {!isSplitLayout ? nextSheet : null}
-      </ConsultantHomeCover>
+      />
 
       <div className="consultant-cover-chapter__body">
-        {isSplitLayout ? nextSheet : null}
+        {nextSheet}
 
         <div className="consultant-cover-chapter__scroll">
           <div className="consultant-cover-chapter__chapters" data-testid={COVER_CHAPTER_CHAPTERS_TEST_ID}>

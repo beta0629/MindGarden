@@ -5,6 +5,15 @@
  * prefers-reduced-motion: 토큰이 delay·이동 0 · opacity만 dur-fast.
  */
 
+/*
+ * Stack float-sheet SSOT (상담사·내담자 공통 의도, 화면별 좌표 핫픽스 금지):
+ * - 시트는 body in-flow + margin-top: calc(-1 * var(--*-sheet-overhang))
+ * - body z-index ≥ cover z-index + 1 (음수 margin 시트가 커버에 가려지지 않음)
+ * - absolute bottom:-overhang 금지(시트 전체 높이만큼 커버 침범 → 이름/CTA 가림)
+ * 구현 위치: ConsultantCoverChapterHome.css · ClientCoverChapter.css (토큰만)
+ */
+
+
 @keyframes mg-cc-fade {
   from { opacity: 0; }
   to { opacity: 1; }

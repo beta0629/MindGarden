@@ -54,6 +54,13 @@ describe('client Cover+Chapter hex / layout SSOT guard', () => {
     expect(css).not.toMatch(
       /\.client-cover__sheet\s*\{[^}]*animation:[^;]*\bboth\b/s
     );
+    // body stacks above cover so negative-margin sheet is not occluded
+    expect(css).toMatch(
+      /\.client-cover__body\s*\{[^}]*z-index:\s*calc\(var\(--mg-v2-z-content-hover\)\s*\+\s*1\)/s
+    );
+    expect(css).toMatch(
+      /\.client-cover__sheet\s*\{[^}]*margin:\s*calc\(-1\s*\*\s*var\(--client-cover-sheet-overhang\)\)/s
+    );
     expect(css).toMatch(
       /@import\s+['"]\.\.\/\.\.\/\.\.\/common\/coverChapter\/CoverGuideDenseRow\.css['"]/
     );

@@ -10,13 +10,17 @@ import UnifiedModal from '../common/modals/UnifiedModal';
 import ConfirmModal from '../common/ConfirmModal';
 import MGButton from '../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/common/erpMgButtonProps';
-import { CONSULTATION_LOG_AUTOSAVE_STRINGS } from '../../constants/consultationLogAutosaveStrings';
+import { CONSULTATION_LOG_AUTOSAVE_STRINGS, CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../constants/consultationLogAutosaveStrings';
 import { CONSULTATION_LOG_CLIENT_CONDITION_MAX_LENGTH } from '../../constants/consultationLogAutosaveConstants';
 import {
   removeConsultationLogLocalDraft,
   writeConsultationLogLocalDraft
 } from '../../utils/consultationLogLocalDraft';
 import { useConsultationLogLocalAutosave } from '../../hooks/useConsultationLogLocalAutosave';
+import {
+  resolveSessionNumberFromSchedule,
+  shouldBlockSaveForMissingSessionNumber
+} from '../../utils/consultationRecordSessionNumber';
 import './ConsultationLogModal.css';
 import ConsultationLogClientProfilePanel from './organisms/ConsultationLogClientProfilePanel';
 import ConsultationLogPrecautionsPanel from './organisms/ConsultationLogPrecautionsPanel';
@@ -494,16 +498,6 @@ const ConsultationLogModal = ({
     return new Date().toISOString().split('T')[0];
   };
 
-  const resolveSessionNumberFromSchedule = (data) => {
-    if (data?.sessionSequence != null && data.sessionSequence !== '') {
-      return Number(data.sessionSequence);
-    }
-    if (data?.sessionNumber != null && data.sessionNumber !== '') {
-      return Number(data.sessionNumber);
-    }
-    return null;
-  };
-
   useEffect(() => {
     if (isOpen && recordId) {
       loadDataByRecordId();
@@ -830,10 +824,9 @@ const ConsultationLogModal = ({
   const validateForm = () => {
     const errors = {};
 
-    if (formData.sessionNumber == null || formData.sessionNumber === ''
-        || Number.isNaN(Number(formData.sessionNumber))) {
+    if (shouldBlockSaveForMissingSessionNumber(formData.sessionNumber, isEditMode)) {
       errors.sessionNumber = t('common:consultant.ConsultationLogModal.t_sessionNumberRequired',
-        '회기수(sessionNumber)는 필수입니다.');
+        CONSULTATION_LOG_SESSION_NUMBER_STRINGS.REQUIRED_FOR_SAVE);
     }
     
     if (!formData.sessionDurationMinutes || formData.sessionDurationMinutes < 1) {
@@ -925,6 +918,12 @@ const ConsultationLogModal = ({
         contentDirtyRef.current = false;
         resetLocalAutosaveState();
         setConsultationRecord(record);
+        if (record.sessionNumber != null) {
+          setFormData(prev => ({
+            ...prev,
+            sessionNumber: Number(record.sessionNumber)
+          }));
+        }
         onSave && onSave(record);
         if (recordId) onClose && onClose();
       } else {

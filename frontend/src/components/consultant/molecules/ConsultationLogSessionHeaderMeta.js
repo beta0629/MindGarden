@@ -1,25 +1,35 @@
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { CONSULTATION_LOG_SESSION_NUMBER_STRINGS } from '../../../constants/consultationLogAutosaveStrings';
+import { isConsultationLogSessionNumberAssigned } from '../../../utils/consultationRecordSessionNumber';
 
 /**
- * 상담일지 모달 본문 상단 — 회기 칩(R1) + 회기/세션 일자(R2)
+ * 상담일지 모달 본문 상단 — 회기 칩(R1) + 세션 일자(R2)
+ *
+ * sessionNumber 가 없으면 1회기로 위장하지 않고 「회기 없음」을 표시한다.
  */
 const ConsultationLogSessionHeaderMeta = ({
   sessionNumber,
   sessionDateLabel
 }) => {
-  const n = sessionNumber != null ? Number(sessionNumber) : 1;
-  const safeN = Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1;
+  const assigned = isConsultationLogSessionNumberAssigned(sessionNumber);
+  const chipLabel = assigned
+    ? `${Math.floor(Number(sessionNumber))}회기`
+    : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_LABEL;
   const dateStr = toDisplayString(sessionDateLabel, '—');
+  const chipClassName = assigned
+    ? 'mg-v2-consultation-log__session-chip'
+    : 'mg-v2-consultation-log__session-chip mg-v2-consultation-log__session-chip--unassigned';
 
   return (
     <div className="mg-v2-consultation-log__header-meta mg-v2-consultation-log__summary-strip">
       <div className="mg-v2-consultation-log__header-meta-row">
         <span
-          className="mg-v2-consultation-log__session-chip"
-          title="회기 번호(시스템 부여)"
+          className={chipClassName}
+          title={assigned
+            ? CONSULTATION_LOG_SESSION_NUMBER_STRINGS.ASSIGNED_CHIP_TITLE
+            : CONSULTATION_LOG_SESSION_NUMBER_STRINGS.UNSET_CHIP_TITLE}
         >
-          {safeN}
-          회기
+          {chipLabel}
         </span>
         <dl className="mg-v2-consultation-log__session-dl">
           <div className="mg-v2-consultation-log__session-dl-row">

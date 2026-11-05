@@ -46,7 +46,16 @@ public interface ConsultationRecordService {
     ConsultationRecord getConsultationRecordById(Long recordId);
     
     /**
-     * 상담일지 작성
+     * 상담일지 작성.
+     *
+     * <p>{@code sessionNumber}는 {@code Schedule.sessionSequence} SSOT이다. 요청 값이 있으면
+     * 일정 회차와 일치해야 하고, 누락이면 일정의 회차를 사용한다. 기본값 1 폴백은 하지 않는다.</p>
+     *
+     * <p>가예약({@code PENDING_PAYMENT} + {@code SAME_DAY_CARD})은 remainingSessions=0 이어도
+     * 잔여 회기를 차감하지 않고 일정 회차를 부여한 뒤 저장한다. 일반 매핑의 rem=0·회차 없음은 차단한다.</p>
+     *
+     * @param recordData 상담일지 본문 (consultationId, clientId, consultantId 필수)
+     * @return 저장된 상담일지
      */
     ConsultationRecord createConsultationRecord(Map<String, Object> recordData);
     

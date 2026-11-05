@@ -250,7 +250,7 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
     expect(constants).toMatch(/@deprecated[\s\S]*COVER_CHAPTER_DESKTOP_SHELL_MQ/);
   });
 
-  test('stack density: absolute float-sheet overhang; chapter animation forwards (not both)', () => {
+  test('stack density: body in-flow float-sheet overhang; chapter animation forwards (not both)', () => {
     const source = fs.readFileSync(
       path.join(DIR, 'ConsultantCoverChapterHome.css'),
       'utf8'
@@ -259,13 +259,16 @@ describe('consultant Cover+Chapter hex SSOT guard', () => {
       /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__cover\s*\{[^}]*height:\s*var\(--cch-cover-stack-ratio\)/s
     );
     expect(source).toMatch(
-      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*position:\s*absolute/s
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*position:\s*relative/s
     );
     expect(source).toMatch(
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*margin:\s*calc\(-1\s*\*\s*var\(--cch-sheet-overhang\)\)/s
+    );
+    expect(source).not.toMatch(
       /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__sheet\s*\{[^}]*bottom:\s*calc\(-1\s*\*\s*var\(--cch-sheet-overhang\)\)/s
     );
     expect(source).toMatch(
-      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__scroll\s*\{[^}]*padding-top:\s*calc\(var\(--cch-sheet-overhang\)\s*\+\s*var\(--mg-v2-space-2\)\)/s
+      /\[data-layout='stack'\][^{]*\.consultant-cover-chapter__body\s*\{[^}]*z-index:\s*calc\(var\(--mg-v2-z-content-hover\)\s*\+\s*1\)/s
     );
     expect(source).toMatch(
       /\.consultant-cover-chapter__chapter\s*\{[^}]*animation:[^;]*forwards/s

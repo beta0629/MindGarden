@@ -330,8 +330,9 @@
 }
 
 /*
- * stack cover: 시안처럼 비율 박스만 차지. float-sheet는 absolute overhang
- * → 시트가 flex 높이를 키우지 않음 → body/chapters가 첫 뷰포트에 보임.
+ * stack cover: 시안처럼 비율 박스만 차지.
+ * float-sheet는 body in-flow + margin-top:-overhang (내담자 공통 SSOT).
+ * absolute bottom:-overhang 는 시트 전체 높이만큼 커버를 침범해 이름 가림 → 금지.
  */
 .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__cover {
   position: relative;
@@ -342,7 +343,7 @@
   height: var(--cch-cover-stack-ratio);
   min-height: var(--cch-cover-min-h);
   max-height: calc(var(--mg-v2-space-20) * 5.5);
-  overflow: visible;
+  overflow: hidden;
   background: var(--cch-cover-deep);
 }
 
@@ -360,10 +361,12 @@
   justify-content: flex-start;
   width: 100%;
   min-height: 0;
+  position: relative;
+  z-index: calc(var(--mg-v2-z-content-hover) + 1);
 }
 
 /* ===== NEXT SHEET ===== */
-/* 기본(split 본문): in-flow. stack은 아래 absolute overhang. */
+/* 기본(split 본문): in-flow. stack은 아래 negative-margin overhang (내담자 공통). */
 .consultant-cover-chapter__sheet {
   position: relative;
   z-index: 3;
@@ -378,15 +381,16 @@
   animation: mg-cc-sheet-seq calc(var(--mg-v2-motion-t-sheet) + var(--mg-v2-motion-dur-slow)) linear forwards;
 }
 
-/* 시안 float-sheet: absolute · bottom overhang (phone -56 ≈ --cch-sheet-overhang) */
+/* 시안 float-sheet: body in-flow · margin-top -overhang (phone -56 ≈ --cch-sheet-overhang) */
 .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: calc(-1 * var(--cch-sheet-overhang));
+  position: relative;
+  left: auto;
+  right: auto;
+  top: auto;
+  bottom: auto;
   width: calc(100% - (var(--mg-v2-space-4) * 2));
   max-width: var(--cch-content-max);
-  margin: 0 auto;
+  margin: calc(-1 * var(--cch-sheet-overhang)) auto 0;
   z-index: 3;
 }
 
@@ -544,10 +548,10 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* stack: overhang 직후 챕터 — 과도한 padding-top 금지 */
+/* stack: 시트 in-flow 직후 챕터 — overhang 패딩 불필요(시트 높이만큼 이미 확보) */
 .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__scroll {
   flex: 1 1 auto;
-  padding-top: calc(var(--cch-sheet-overhang) + var(--mg-v2-space-2));
+  padding-top: var(--mg-v2-space-2);
 }
 
 .consultant-cover-chapter__chapters {
@@ -795,7 +799,7 @@
     max-height: calc(var(--mg-v2-space-20) * 5.5);
     min-height: var(--cch-cover-min-h-tablet);
     flex: 0 0 auto;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__meta {
@@ -810,20 +814,21 @@
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(-1 * var(--cch-sheet-overhang));
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
     width: calc(100% - (var(--mg-v2-space-6) * 2));
     max-width: var(--cch-content-max);
-    margin: 0 auto;
+    margin: calc(-1 * var(--cch-sheet-overhang)) auto 0;
     padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__scroll {
     padding-left: calc(var(--mg-v2-space-6) + var(--cch-safe-l));
     padding-right: calc(var(--mg-v2-space-6) + var(--cch-safe-r));
-    padding-top: calc(var(--cch-sheet-overhang) + var(--mg-v2-space-2));
+    padding-top: var(--mg-v2-space-2);
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__chapters {
@@ -846,7 +851,7 @@
 /*
  * ≥1024: data-layout만 신뢰.
  * JS SSOT: ≥1024 → 항상 split(웹·태블릿 가로·데스크톱).
- * stack → <1024 전폭 커버 + 챕터 1열 (absolute sheet 유지).
+ * stack → <1024 전폭 커버 + 챕터 1열 (body in-flow float-sheet).
  * split → 좌커버|우시트+챕터. hover/pointer CSS 비사용.
  */
 @media (min-width: 1024px) {
@@ -864,7 +869,7 @@
     max-height: calc(var(--mg-v2-space-20) * 5.5);
     min-height: var(--cch-cover-min-h-tablet);
     align-self: stretch;
-    overflow: visible;
+    overflow: hidden;
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__body {
@@ -872,6 +877,8 @@
     justify-content: flex-start;
     width: 100%;
     min-height: 0;
+    position: relative;
+    z-index: calc(var(--mg-v2-z-content-hover) + 1);
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__chapters {
@@ -891,13 +898,14 @@
   }
 
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__sheet {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: calc(-1 * var(--cch-sheet-overhang));
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
     width: calc(100% - (var(--mg-v2-space-6) * 2));
     max-width: var(--cch-content-max);
-    margin: 0 auto;
+    margin: calc(-1 * var(--cch-sheet-overhang)) auto 0;
     padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
     box-shadow: var(--mg-v2-shadow-md);
   }
@@ -905,7 +913,7 @@
   .consultant-cover-chapter[data-layout='stack'] .consultant-cover-chapter__scroll {
     flex: 1 1 auto;
     min-height: 0;
-    padding: calc(var(--cch-sheet-overhang) + var(--mg-v2-space-2))
+    padding: var(--mg-v2-space-2)
       var(--mg-v2-space-6)
       calc(var(--mg-v2-space-4) + var(--cch-safe-b));
   }

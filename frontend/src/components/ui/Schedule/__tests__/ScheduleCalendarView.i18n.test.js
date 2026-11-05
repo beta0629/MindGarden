@@ -40,9 +40,7 @@ jest.mock('@fullcalendar/react', () => {
 jest.mock('@fullcalendar/daygrid', () => ({ __esModule: true, default: {} }));
 jest.mock('@fullcalendar/timegrid', () => ({ __esModule: true, default: {} }));
 jest.mock('@fullcalendar/interaction', () => ({ __esModule: true, default: {} }));
-jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }), {
-  virtual: true
-});
+jest.mock('@fullcalendar/luxon3', () => ({ __esModule: true, default: { id: 'luxon3' } }));
 
 // eslint-disable-next-line import/first
 import ScheduleCalendarView from '../ScheduleCalendarView';

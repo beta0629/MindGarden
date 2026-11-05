@@ -735,7 +735,8 @@ const ConsultantDashboardV2 = ({ user }) => {
       clientId: Number.isFinite(clientIdParsed) ? clientIdParsed : undefined,
       clientName: firstSchedule.clientName,
       sessionDate: sessionDateStr || firstSchedule.sessionDate || undefined,
-      sessionNumber: firstSchedule.sessionNumber
+      sessionSequence: firstSchedule.sessionSequence ?? undefined,
+      sessionNumber: firstSchedule.sessionNumber ?? firstSchedule.sessionSequence
     });
     setShowConsultationLogModal(true);
     return true;
@@ -838,7 +839,9 @@ const ConsultantDashboardV2 = ({ user }) => {
         consultantId: scopedConsultantId,
         date,
         scheduleId,
-        clientId
+        clientId,
+        userId: user?.id,
+        userRole: user?.role
       });
       if (resolved?.id != null) {
         setSelectedSchedule({
@@ -858,7 +861,7 @@ const ConsultantDashboardV2 = ({ user }) => {
     } finally {
       setMissingLogChipResolving(false);
     }
-  }, [missingLogChipResolving, navigate, scrollToMissingLogsSection, t, user?.id]);
+  }, [missingLogChipResolving, navigate, scrollToMissingLogsSection, t, user?.id, user?.role]);
 
   /**
    * 일지 작성 진입 SSOT — 빠른 액션 · KPI 「작성 대기 일지」 · IncompleteRecordsAlert 공유.

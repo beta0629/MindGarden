@@ -103,5 +103,32 @@ describe('consultationLogDraftServerAdapter', () => {
       expect(res.skipped).toBe(true);
       expect(ajax.apiPut).not.toHaveBeenCalled();
     });
+
+    test('expectedVersion 400 시 재조회 후 1회 재시도', async() => {
+      const conflict = new Error('초안 버전이 일치하지 않습니다. 새로고침 후 다시 시도해 주세요.');
+      conflict.status = 400;
+      conflict.response = { data: { field: 'expectedVersion', message: conflict.message } };
+      ajax.apiPut
+        .mockRejectedValueOnce(conflict)
+        .mockResolvedValueOnce({ version: 6 });
+      ajax.apiGet.mockResolvedValueOnce({
+        hasDraft: true,
+        version: 5,
+        payloadJson: '{}'
+      });
+
+      const res = await pushConsultationLogDraftToServer({
+        consultationId: 'schedule-386',
+        consultantId: 22,
+        formData: { a: 1 },
+        memoDraft: '',
+        expectedVersion: 3
+      });
+
+      expect(ajax.apiPut).toHaveBeenCalledTimes(2);
+      expect(ajax.apiGet).toHaveBeenCalledTimes(1);
+      expect(ajax.apiPut.mock.calls[1][1].expectedVersion).toBe(5);
+      expect(res).toEqual({ ok: true, version: 6 });
+    });
   });
 });

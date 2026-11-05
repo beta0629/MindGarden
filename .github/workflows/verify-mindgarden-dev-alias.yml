@@ -1,55 +1,236 @@
-# Read-only smoke: Cloudflare-proxied DEV alias host
-# No secrets required beyond public HTTPS. Does not restart services.
+# Read-only smoke: Cloudflare-proxied DEV alias must match .dev origin, not prod.
+# HTTP 200 alone is NOT proof (wildcard *.core-solution.co.kr can serve prod).
+# No secrets / login / write. Does not restart services.
 name: 🔎 Verify mindgarden-dev alias
 
 on:
   workflow_dispatch:
 
+env:
+  ALIAS_HOST: https://mindgarden-dev.core-solution.co.kr
+  DEV_HOST: https://mindgarden.dev.core-solution.co.kr
+  PROD_HOST: https://mindgarden.core-solution.co.kr
+
 jobs:
   verify-alias:
-    name: Curl alias health + login
+    name: Origin proof (.dev vs prod) + tenant
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
-      - name: Actuator health
+      - name: FE bundle fingerprint (/login)
         run: |
           set -euo pipefail
-          URL="https://mindgarden-dev.core-solution.co.kr/actuator/health"
-          echo "GET $URL"
-          CODE=$(curl -sS -o /tmp/mg-alias-health.json -w '%{http_code}' --max-time 30 "$URL" || true)
-          echo "HTTP $CODE"
-          head -c 500 /tmp/mg-alias-health.json || true
-          echo
-          if [ "$CODE" != "200" ]; then
-            echo "❌ expected HTTP 200 from actuator/health, got $CODE"
-            exit 1
-          fi
-          echo "✅ actuator/health 200"
 
-      - name: Login / SPA shell
-        run: |
-          set -euo pipefail
-          URL="https://mindgarden-dev.core-solution.co.kr/login"
-          echo "GET $URL"
-          CODE=$(curl -sS -o /tmp/mg-alias-login.html -w '%{http_code}' --max-time 30 -L "$URL" || true)
-          echo "HTTP $CODE"
-          head -c 300 /tmp/mg-alias-login.html || true
-          echo
-          if [ "$CODE" != "200" ]; then
-            echo "❌ expected HTTP 200 from /login, got $CODE"
+          extract_bundle() {
+            local host="$1"
+            local out="$2"
+            local hdr="$3"
+            local code
+            code=$(curl -sS -D "$hdr" -o "$out" -w '%{http_code}' --max-time 30 -L "${host}/login" || true)
+            echo "$code"
+          }
+
+          extract_hash() {
+            # First hashed CRA/Vite-style main bundle reference in HTML
+            grep -oE 'static/js/main\.[a-zA-Z0-9]+\.js' "$1" 2>/dev/null | head -1 \
+              || grep -oE 'main\.[a-zA-Z0-9]{6,}\.js' "$1" 2>/dev/null | head -1 \
+              || true
+          }
+
+          echo "=== FE bundle fingerprint (ALIAS / DEV / PROD) ==="
+          ALIAS_CODE=$(extract_bundle "$ALIAS_HOST" /tmp/alias-login.html /tmp/alias-login.hdr)
+          DEV_CODE=$(extract_bundle "$DEV_HOST" /tmp/dev-login.html /tmp/dev-login.hdr)
+          PROD_CODE=$(extract_bundle "$PROD_HOST" /tmp/prod-login.html /tmp/prod-login.hdr)
+
+          ALIAS_HASH=$(extract_hash /tmp/alias-login.html)
+          DEV_HASH=$(extract_hash /tmp/dev-login.html)
+          PROD_HASH=$(extract_hash /tmp/prod-login.html)
+
+          echo "ALIAS login HTTP=$ALIAS_CODE bundle=${ALIAS_HASH:-<empty>}"
+          grep -i '^last-modified:' /tmp/alias-login.hdr || echo "ALIAS Last-Modified: (none)"
+          grep -i '^server:' /tmp/alias-login.hdr || true
+          echo "DEV   login HTTP=$DEV_CODE bundle=${DEV_HASH:-<empty>}"
+          grep -i '^last-modified:' /tmp/dev-login.hdr || echo "DEV Last-Modified: (none)"
+          grep -i '^server:' /tmp/dev-login.hdr || true
+          echo "PROD  login HTTP=$PROD_CODE bundle=${PROD_HASH:-<empty>}"
+          grep -i '^last-modified:' /tmp/prod-login.hdr || echo "PROD Last-Modified: (none)"
+          grep -i '^server:' /tmp/prod-login.hdr || true
+
+          FAIL=0
+          if [ "$ALIAS_CODE" != "200" ]; then
+            echo "❌ ALIAS /login expected HTTP 200, got $ALIAS_CODE"
+            FAIL=1
+          fi
+          if [ "$DEV_CODE" != "200" ]; then
+            echo "❌ DEV /login baseline expected HTTP 200, got $DEV_CODE (cannot prove FE origin)"
+            FAIL=1
+          fi
+          if [ -z "$ALIAS_HASH" ]; then
+            echo "❌ ALIAS FE bundle hash empty — cannot prove origin"
+            FAIL=1
+          fi
+          if [ -z "$DEV_HASH" ]; then
+            echo "❌ DEV FE bundle hash empty — cannot prove origin against .dev baseline"
+            FAIL=1
+          fi
+          if [ -n "$ALIAS_HASH" ] && [ -n "$PROD_HASH" ] && [ "$ALIAS_HASH" = "$PROD_HASH" ]; then
+            echo "❌ ALIAS bundle == PROD bundle ($ALIAS_HASH) — still on prod wildcard / wrong origin"
+            FAIL=1
+          fi
+          if [ -n "$ALIAS_HASH" ] && [ -n "$DEV_HASH" ] && [ "$ALIAS_HASH" != "$DEV_HASH" ]; then
+            echo "❌ ALIAS bundle ($ALIAS_HASH) != DEV bundle ($DEV_HASH) — must match .dev"
+            FAIL=1
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "❌ FE origin proof FAILED (HTTP 200 alone is insufficient)"
             exit 1
           fi
-          # Soft signal only — HTML may be SPA shell without tenant string
-          if grep -qi 'mindgarden\|root\|<!DOCTYPE html' /tmp/mg-alias-login.html; then
-            echo "✅ login response looks like HTML shell"
-          else
-            echo "⚠️ login body unexpected; HTTP 200 still OK"
+          echo "✅ FE origin proof: ALIAS matches DEV ($ALIAS_HASH) and differs from PROD (${PROD_HASH:-n/a})"
+
+      - name: Backend fingerprint (/actuator/health + /actuator/info)
+        run: |
+          set -euo pipefail
+
+          fetch() {
+            local url="$1"
+            local out="$2"
+            local code
+            : > "$out"
+            code=$(curl -sS -o "$out" -w '%{http_code}' --max-time 30 \
+              -H 'Accept: application/json' "$url" || true)
+            echo "$code"
+          }
+
+          health_up() {
+            local body="$1"
+            if grep -qE '"status"[[:space:]]*:[[:space:]]*"UP"' "$body"; then
+              return 0
+            fi
+            # Tolerate whitespace variants / compact JSON without quotes edge cases
+            if grep -qiE '"status"[[:space:]]*:[[:space:]]*"?UP"?' "$body"; then
+              return 0
+            fi
+            return 1
+          }
+
+          json_git_commit() {
+            # Supports string id or object {abbrev,full}
+            local cid
+            cid=$(jq -r '(.git.commit.id | if type=="object" then (.abbrev // .full // "") else . end) // empty' "$1" 2>/dev/null || true)
+            echo "${cid}"
+          }
+
+          json_git_branch() {
+            local branch
+            branch=$(jq -r '.git.branch // empty' "$1" 2>/dev/null || true)
+            echo "${branch}"
+          }
+
+          echo "=== Backend health ==="
+          ALIAS_H=$(fetch "${ALIAS_HOST}/actuator/health" /tmp/alias-health.json)
+          DEV_H=$(fetch "${DEV_HOST}/actuator/health" /tmp/dev-health.json)
+          PROD_H=$(fetch "${PROD_HOST}/actuator/health" /tmp/prod-health.json)
+          echo "ALIAS health HTTP=$ALIAS_H body=$(head -c 200 /tmp/alias-health.json | tr '\n' ' ')"
+          echo "DEV   health HTTP=$DEV_H body=$(head -c 200 /tmp/dev-health.json | tr '\n' ' ')"
+          echo "PROD  health HTTP=$PROD_H body=$(head -c 200 /tmp/prod-health.json | tr '\n' ' ')"
+
+          if [ "$DEV_H" != "200" ] || ! health_up /tmp/dev-health.json; then
+            echo "❌ DEV /actuator/health not 200/UP (HTTP $DEV_H) — cannot prove backend origin from runner"
+            echo "   Fix DEV backend availability first; do not soft-pass on alias HTTP 200 alone."
+            exit 1
           fi
+          if [ "$ALIAS_H" != "200" ] || ! health_up /tmp/alias-health.json; then
+            echo "❌ ALIAS /actuator/health expected HTTP 200 with status UP, got HTTP $ALIAS_H"
+            exit 1
+          fi
+          echo "✅ ALIAS + DEV /actuator/health UP"
+
+          echo "=== Backend info (git fingerprint) ==="
+          ALIAS_I=$(fetch "${ALIAS_HOST}/actuator/info" /tmp/alias-info.json)
+          DEV_I=$(fetch "${DEV_HOST}/actuator/info" /tmp/dev-info.json)
+          PROD_I=$(fetch "${PROD_HOST}/actuator/info" /tmp/prod-info.json)
+          echo "ALIAS info HTTP=$ALIAS_I"
+          head -c 500 /tmp/alias-info.json; echo
+          echo "DEV   info HTTP=$DEV_I"
+          head -c 500 /tmp/dev-info.json; echo
+          echo "PROD  info HTTP=$PROD_I"
+          head -c 500 /tmp/prod-info.json; echo
+
+          if [ "$DEV_I" != "200" ]; then
+            echo "❌ DEV /actuator/info unavailable (HTTP $DEV_I) — cannot prove backend origin"
+            echo "   Refusing soft-pass: health/login 200 alone is insufficient when info baseline is missing."
+            exit 1
+          fi
+          if [ "$ALIAS_I" != "200" ]; then
+            echo "❌ ALIAS /actuator/info expected HTTP 200, got $ALIAS_I"
+            exit 1
+          fi
+
+          ALIAS_COMMIT=$(json_git_commit /tmp/alias-info.json)
+          DEV_COMMIT=$(json_git_commit /tmp/dev-info.json)
+          PROD_COMMIT=$(json_git_commit /tmp/prod-info.json)
+          ALIAS_BRANCH=$(json_git_branch /tmp/alias-info.json)
+          DEV_BRANCH=$(json_git_branch /tmp/dev-info.json)
+          PROD_BRANCH=$(json_git_branch /tmp/prod-info.json)
+
+          echo "ALIAS git.commit.id=${ALIAS_COMMIT:-<empty>} git.branch=${ALIAS_BRANCH:-<empty>}"
+          echo "DEV   git.commit.id=${DEV_COMMIT:-<empty>} git.branch=${DEV_BRANCH:-<empty>}"
+          echo "PROD  git.commit.id=${PROD_COMMIT:-<empty>} git.branch=${PROD_BRANCH:-<empty>}"
+
+          FAIL=0
+          if [ -n "$DEV_COMMIT" ]; then
+            if [ -z "$ALIAS_COMMIT" ]; then
+              echo "❌ ALIAS missing git.commit.id while DEV has $DEV_COMMIT"
+              FAIL=1
+            elif [ "$ALIAS_COMMIT" != "$DEV_COMMIT" ]; then
+              echo "❌ ALIAS commit ($ALIAS_COMMIT) != DEV commit ($DEV_COMMIT)"
+              FAIL=1
+            else
+              echo "✅ ALIAS commit matches DEV ($ALIAS_COMMIT)"
+            fi
+          else
+            # Fall back to branch when commit id absent on baseline
+            if [ -z "$DEV_BRANCH" ]; then
+              echo "❌ DEV /actuator/info has neither git.commit.id nor git.branch — cannot prove"
+              FAIL=1
+            elif [ "$ALIAS_BRANCH" != "$DEV_BRANCH" ]; then
+              echo "❌ ALIAS branch ($ALIAS_BRANCH) != DEV branch ($DEV_BRANCH) (commit id missing on baseline)"
+              FAIL=1
+            else
+              echo "✅ ALIAS branch matches DEV ($DEV_BRANCH) (commit id missing on baseline)"
+            fi
+          fi
+
+          if [ "$PROD_I" = "200" ] && [ -n "$PROD_COMMIT" ] && [ -n "$ALIAS_COMMIT" ]; then
+            if [ "$ALIAS_COMMIT" = "$PROD_COMMIT" ]; then
+              echo "❌ ALIAS commit == PROD commit ($ALIAS_COMMIT) — alias serving production backend"
+              FAIL=1
+            else
+              echo "✅ ALIAS commit differs from PROD ($PROD_COMMIT)"
+            fi
+          fi
+
+          if [ "$PROD_I" = "200" ] && echo "${PROD_BRANCH}" | grep -qiE '(^|/)prod$|release/prod'; then
+            if echo "${ALIAS_BRANCH}" | grep -qiE '(^|/)prod$|release/prod'; then
+              echo "❌ ALIAS git.branch ($ALIAS_BRANCH) looks like prod (PROD baseline=$PROD_BRANCH)"
+              FAIL=1
+            else
+              echo "✅ ALIAS branch ($ALIAS_BRANCH) is not prod-like (PROD=$PROD_BRANCH)"
+            fi
+          fi
+
+          if [ "$FAIL" -ne 0 ]; then
+            echo "❌ Backend origin proof FAILED"
+            exit 1
+          fi
+          echo "✅ Backend origin proof: ALIAS matches DEV and does not match PROD fingerprints"
 
       - name: Tenant resolution via /api/v1/tenants/current
         run: |
           set -euo pipefail
-          URL="https://mindgarden-dev.core-solution.co.kr/api/v1/tenants/current"
+          # Runs only after FE + actuator origin proof steps succeed.
+          URL="${ALIAS_HOST}/api/v1/tenants/current"
           BODY=/tmp/mg-alias-tenants-current.json
           echo "GET $URL"
           CODE=$(curl -sS -o "$BODY" -w '%{http_code}' --max-time 30 \

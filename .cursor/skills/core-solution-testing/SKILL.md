@@ -15,6 +15,7 @@ description: Core Solution(MindGarden) 테스트 표준 요약. 단위·통합·
 
 ## 공통 규칙
 
+- 버그 수정 검증 시 **원인 확정 전제**(`/core-solution-debug` 「원인 우선」). 추측 수정·싱크만으로 게이트 통과로 보지 않는다.
 - **Given-When-Then** 구조 유지
 - **@DisplayName("한글 설명")** (JUnit) / 한글 describe·test (Playwright) 사용
 - **테스트 데이터**: UUID·TestDataBuilder 등 **동적 생성**. 프로덕션 데이터·하드코딩 ID 금지

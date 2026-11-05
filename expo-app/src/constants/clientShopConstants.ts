@@ -5,8 +5,8 @@
  * @since 2026-05-19
  */
 
-/** 임시 비노출 — 더보기 메뉴·딥링크 방어. 재개 시 false */
-export const CLIENT_SHOP_MENU_TEMPORARILY_DISABLED = true;
+/** PortOne 결제 경로 연동 후 메뉴 재노출 */
+export const CLIENT_SHOP_MENU_TEMPORARILY_DISABLED = false;
 
 /**
  * 더보기 「온라인 쇼핑」 메뉴 노출 여부
@@ -32,6 +32,10 @@ export const CLIENT_SHOP_ROUTES = {
   POINTS: '/(client)/(shop)/points',
   ORDERS: '/(client)/(shop)/orders',
   SKU_DETAIL: '/(client)/(shop)/sku',
+  /** PortOne redirectUrl 복귀 → BE verify */
+  PAYMENT_RETURN: '/(client)/(shop)/payment-return',
+  /** 결제 완료 (verify 성공 후) */
+  COMPLETE: '/(client)/(shop)/complete',
 } as const;
 
 /**
@@ -41,11 +45,114 @@ export const buildShopOrderDetailPath = (orderPublicId: string): string =>
   `${CLIENT_SHOP_ROUTES.ORDERS}/${encodeURIComponent(orderPublicId)}`;
 
 /**
+ * @param orderPublicId 주문 공개 ID
+ */
+export const buildShopPaymentCompletePath = (orderPublicId: string): string =>
+  `${CLIENT_SHOP_ROUTES.COMPLETE}/${encodeURIComponent(orderPublicId)}`;
+
+/**
  * @param skuCode SKU 코드
  */
 export const buildShopSkuDetailPath = (skuCode: string): string =>
   `${CLIENT_SHOP_ROUTES.SKU_DETAIL}/${encodeURIComponent(skuCode)}`;
 
+/**
+ * PortOne redirect 복귀 시 verify 컨텍스트 MMKV 키·필드.
+ */
+export const CLIENT_SHOP_PENDING_VERIFY_STORAGE = {
+  MMKV_ID: 'client-shop',
+  KEY: 'mg.clientShop.pendingPaymentVerify',
+  FIELD_PAYMENT_ID: 'paymentId',
+  FIELD_ORDER_PUBLIC_ID: 'orderPublicId',
+  FIELD_CASH_AMOUNT: 'cashAmount',
+} as const;
+
+export type ShopPendingPaymentVerify = {
+  paymentId: string;
+  orderPublicId: string | null;
+  cashAmount: number;
+};
+
+/** PortOne 사용자 결제창 취소 코드 */
+export const PORTONE_USER_CANCEL_CODE = 'PAY_PROCESS_CANCELED';
+
+/** POST …/user-cancel 결과 — BE 와 동일 값 */
+export const SHOP_USER_CANCEL_OUTCOME = Object.freeze({
+  CANCELLED: 'CANCELLED',
+  PAID: 'PAID',
+  UNVERIFIED: 'UNVERIFIED',
+  NOT_CANCELLABLE: 'NOT_CANCELLABLE',
+  NOT_CANCELLABLE_IN_PROGRESS: 'NOT_CANCELLABLE_IN_PROGRESS',
+});
+
+/** PortOne customer.fullName soft fallback */
+export const PORTONE_CUSTOMER_DISPLAY_NAME_FALLBACK = '고객';
+
+/** prepare → PortOne 진입 UX (게이트 = 휴대폰 인증 ONLY) */
+export const SHOP_PAYMENT_LAUNCH_COPY = {
+  ORDER_NAME: '샵 주문 결제',
+  MODULE_UNAVAILABLE:
+    '결제 모듈을 열 수 없습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
+  CUSTOMER_PHONE_REQUIRED:
+    '결제하려면 휴대폰 번호가 필요합니다. 더보기 > 설정에서 휴대폰 번호를 입력해 주세요.',
+  CUSTOMER_PHONE_UNVERIFIED:
+    '결제하려면 휴대폰 인증이 필요합니다. 더보기 > 설정에서 휴대폰 번호를 인증해 주세요.',
+  ORPHAN_ORDER_CANCELLED:
+    '결제 정보를 확인할 수 없어 주문을 취소했습니다. 더보기 > 설정에서 휴대폰 인증을 확인한 뒤 다시 시도해 주세요.',
+  PAYMENT_COMPLETED: '결제가 완료되었습니다.',
+  PAYMENT_MODULE_CALLED:
+    '결제 모듈 호출이 완료되었습니다. 승인 반영까지 잠시 기다려 주세요.',
+  ORDER_ACCEPTED_FOLLOW_GUIDE:
+    '주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.',
+} as const;
+
+/**
+ * PortOne SDK 성공 직후 BE verify 재시도 (REST PAID 지연 대비).
+ */
+export const SHOP_PAYMENT_VERIFY_RETRY = {
+  MAX_ATTEMPTS: 5,
+  BASE_DELAY_MS: 400,
+  DELAY_INCREMENT_MS: 100,
+} as const;
+
+/** shopPortOneCheckout verify 최종 실패 시 에러 phase */
+export const SHOP_PAYMENT_VERIFY_ERROR_PHASE = 'VERIFY_AFTER_PORTONE';
+
+/** 체크아웃·결제 준비 API / 단계별 실패 UX */
+export const SHOP_CHECKOUT_ERROR_COPY = {
+  SESSION_EXPIRED: '세션이 만료되었습니다. 다시 로그인해 주세요.',
+  CHECKOUT_FAILED: '체크아웃에 실패했습니다.',
+  CHECKOUT_ORDER_ID_MISSING: '주문 번호를 받지 못했습니다. 다시 시도해 주세요.',
+  PREPARE_FAILED: '결제 준비에 실패했습니다.',
+  PAYMENT_LAUNCH_FAILED:
+    '결제 모듈 실행에 실패했습니다. 주문 상세에서 다시 결제를 시도해 주세요.',
+  VERIFY_FAILED: '결제 검증에 실패했습니다. 주문 상세에서 상태를 확인해 주세요.',
+  VERIFY_FAILED_USE_ORDER_CONFIRM:
+    '결제 검증에 실패했습니다. 주문 상세의 「결제 확인」으로 다시 시도해 주세요.',
+  INVALID_CASH_AMOUNT: '결제 금액이 올바르지 않습니다.',
+} as const;
+
+/** PortOne redirectUrl 복귀 페이지 UX */
+export const SHOP_PAYMENT_RETURN_COPY = {
+  TITLE: '결제 확인',
+  VERIFYING: '결제를 확인하고 있습니다…',
+  MISSING_PAYMENT_ID: '결제 식별자가 없습니다. 주문 상세에서 상태를 확인해 주세요.',
+  MISSING_AMOUNT: '결제 금액을 확인할 수 없습니다. 주문 상세에서 다시 시도해 주세요.',
+  ORDER_LINK: '주문 상세로 이동',
+  ORDERS_LINK: '내 구매 목록',
+} as const;
+
+/** 결제 완료 화면 카피 */
+export const SHOP_PAYMENT_COMPLETE_COPY = {
+  TITLE: '결제가 완료됐어요',
+  ORDERS_CTA: '내 구매 목록',
+  ORDER_DETAIL_CTA: '주문 상세',
+  LOADING: '결제 결과를 확인하고 있습니다…',
+  FAILED: '결제 정보를 불러오지 못했습니다. 주문 상세에서 확인해 주세요.',
+} as const;
+
+/** prepare 응답 paymentProvider — PortOne V2 (IAMPORT) */
+export const PG_PROVIDER_IAMPORT = 'IAMPORT';
 /**
  * @param order 주문 요약·상세
  */

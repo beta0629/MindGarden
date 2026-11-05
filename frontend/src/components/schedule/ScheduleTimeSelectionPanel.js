@@ -3,6 +3,7 @@ import BadgeSelect from '../common/BadgeSelect';
 import TimeSlotGrid from './TimeSlotGrid';
 import StandardizedApi from '../../utils/standardizedApi';
 import { toDisplayString } from '../../utils/safeDisplay';
+import { DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES } from '../../constants/schedule';
 import './ScheduleB0KlA.css';
 import '../admin/AdminDashboard/AdminDashboardB0KlA.css';
 import { useTranslation } from 'react-i18next';
@@ -25,6 +26,8 @@ const API_COMMON_CODES_GROUPS_DURATION = '/api/v1/common-codes/groups/DURATION';
  * @param {Object|null} props.selectedTimeSlot
  * @param {function(Object): void} props.onTimeSlotSelect
  * @param {string|number} [props.excludeScheduleId] — 재예약 시 본인 일정 충돌 제외
+ * @param {Array} [props.occupyingHints] — 점유 보강용 일정(동일 상담사·당일만 병합)
+ * @param {Array} [props.calendarEvents] — 월간 캘린더 이벤트(동일 상담사·당일만 병합)
  * @param {function({consultationTypeOptions: Array, durationOptions: Array}): void} [props.onCodeOptionsLoaded]
  * @author CoreSolution
  * @since 2026-04-02
@@ -40,6 +43,8 @@ const ScheduleTimeSelectionPanel = ({
   selectedTimeSlot,
   onTimeSlotSelect,
   excludeScheduleId,
+  occupyingHints,
+  calendarEvents,
   onCodeOptionsLoaded
 }) => {
   const { t } = useTranslation();
@@ -51,10 +56,10 @@ const ScheduleTimeSelectionPanel = ({
 
   const getDurationFromCode = useCallback(
     (durationCode) => {
-      if (!durationCode) return 60;
+      if (!durationCode) return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
       const durationOption = durationOptions.find((option) => option.value === durationCode);
       if (durationOption) return durationOption.durationMinutes;
-      return 60;
+      return DEFAULT_INFERRED_SCHEDULE_DURATION_MINUTES;
     },
     [durationOptions]
   );
@@ -226,6 +231,8 @@ const ScheduleTimeSelectionPanel = ({
         selectedTimeSlot={selectedTimeSlot}
         variant="b0kla"
         excludeScheduleId={excludeScheduleId}
+        occupyingHints={occupyingHints}
+        calendarEvents={calendarEvents}
       />
     </div>
   );

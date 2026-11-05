@@ -843,3 +843,81 @@
   white-space: normal;
   align-items: flex-start;
 }
+
+/*
+ * 상담사 월간 integrated 칩 — 관리자 IMS @container 단계의 공용 이식.
+ * 범위: .consultant-schedule__panel 만 (관리자 IntegratedMatchingSchedule.css 무변경).
+ * 원인: 상담사는 container·time-short 숨김이 없어 전체시간+짧은시간이 동시 표시되고
+ *       __client 가 flex 로 0폭까지 줄어 textCut(scrollWidth>clientWidth) 발생.
+ * @container 조건의 px 는 var() 불가 예외(관리자 IMS·responsive390 과 동일 SPEC).
+ */
+.consultant-schedule__panel .mg-v2-schedule-calendar-view .fc-daygrid-event-harness:has(.mg-v2-ad-calendar-event--integrated-month) {
+  container: mg-shared-month-event / inline-size;
+}
+
+.consultant-schedule__panel .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
+  flex-wrap: nowrap;
+  min-block-size: var(--mg-v2-space-6);
+  padding-block: var(--mg-v2-space-1);
+  padding-inline-start: var(--mg-v2-space-1);
+  padding-inline-end: var(--mg-v2-month-chip-padding-inline-end);
+  gap: var(--mg-v2-space-1);
+}
+
+.consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-short {
+  display: none;
+}
+
+.consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
+  flex: 1 1 auto;
+  min-inline-size: var(--mg-v2-space-5);
+  max-width: 100%;
+}
+
+/* < 166px: 회기 숨김 — 이름 폭 확보 */
+@container mg-shared-month-event (width < 166px) {
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__sessions {
+    display: none;
+  }
+}
+
+/* < 146px: 취소 배지·미해소 아이콘 숨김 */
+@container mg-shared-month-event (width < 146px) {
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__unresolved-icon,
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__badge--cancelled {
+    display: none;
+  }
+}
+
+/*
+ * < 191px: 두 줄 + 짧은 시간(HH:mm).
+ * 상담사 5폭 harness: 820→92 · 1180→143 · 1280→157 · 1440→180 · 1920→249.
+ * 191 미만에서 전체시간(오전/오후) 병기로 __client 가 0폭·ellipsis textCut 나던 구간을 해소.
+ */
+@container mg-shared-month-event (width < 191px) {
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--compact.mg-v2-ad-calendar-event--integrated-month {
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__client {
+    order: 1;
+    flex-basis: 100%;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: unset;
+    word-break: keep-all;
+    overflow-wrap: anywhere;
+  }
+
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-full {
+    display: none;
+  }
+
+  .consultant-schedule__panel .mg-v2-ad-calendar-event--integrated-month .mg-v2-ad-calendar-event__time-short {
+    display: inline;
+  }
+}

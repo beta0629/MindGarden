@@ -9,10 +9,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
-import { Bell, ChevronLeft, FileText, Info, Shield } from 'lucide-react-native';
+import { Bell, ChevronLeft, FileText, Info, Shield, UserMinus } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { toDisplayString } from '@/utils/safeDisplay';
+import { ACCOUNT_DELETION_COPY } from '@/constants/accountDeletionCopy';
 import { APP_STORE_EULA_COPY } from '@/constants/appStoreEulaCopy';
 import { LEGAL_PUBLIC_LABELS, LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
 import { buildPublicLegalWebUrl } from '@/utils/buildPublicLegalWebUrl';
@@ -22,11 +23,14 @@ import { useTenantStore } from '@/stores/useTenantStore';
 export interface MoreAccountSettingsProps {
   readonly notificationSettingsHref: Href;
   readonly profileHref: Href;
+  /** App Store 5.1.1(v) — 회원 탈퇴(계정 삭제) 전용 화면 */
+  readonly accountDeletionHref: Href;
 }
 
 export function MoreAccountSettings({
   notificationSettingsHref,
   profileHref,
+  accountDeletionHref,
 }: MoreAccountSettingsProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -280,6 +284,63 @@ export function MoreAccountSettings({
               >
                 {APP_STORE_EULA_COPY.PRIVACY_MENU_LABEL}
               </Text>
+              <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+            </Pressable>
+          </View>
+
+          <Text
+            style={[
+              styles.sectionLabel,
+              {
+                color: theme.colors.textSecondary,
+                fontFamily: theme.fontFamily.medium,
+                fontSize: theme.fontSize.xs,
+              },
+            ]}
+          >
+            {ACCOUNT_DELETION_COPY.SETTINGS_SECTION}
+          </Text>
+          <View
+            style={[
+              styles.menuCard,
+              {
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.lg,
+              },
+            ]}
+          >
+            <Pressable
+              testID="settings-account-deletion"
+              onPress={() => router.push(accountDeletionHref)}
+              style={({ pressed }) => [
+                styles.menuRow,
+                { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={ACCOUNT_DELETION_COPY.SETTINGS_ROW}
+            >
+              <UserMinus size={20} color={theme.colors.error} />
+              <View style={styles.menuTextCol}>
+                <Text
+                  style={{
+                    color: theme.colors.error,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.base,
+                  }}
+                >
+                  {ACCOUNT_DELETION_COPY.SETTINGS_ROW}
+                </Text>
+                <Text
+                  style={{
+                    marginTop: 2,
+                    color: theme.colors.textSecondary,
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.xs,
+                  }}
+                >
+                  {ACCOUNT_DELETION_COPY.SETTINGS_ROW_SUB}
+                </Text>
+              </View>
               <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
             </Pressable>
           </View>

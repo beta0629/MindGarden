@@ -31,6 +31,7 @@ import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
 import com.coresolution.consultation.service.ApplePhoneVerificationService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.service.support.AppReviewOtpSupport;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -98,6 +99,7 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
     private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
+    private final AppReviewOtpSupport appReviewOtpSupport;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -155,16 +157,20 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
             return sendFailure("오늘 인증번호 발송 한도를 초과했습니다. 내일 다시 시도해 주세요.");
         }
 
-        // 테스트모드면 SmsAuthService 가 고정 코드(mockVerificationCode)를 반환, 실제 모드면 무작위 6자리.
-        // 본 가드는 SMS 비활성/실패시 null 반환을 잡아 사용자에게 명확히 안내한다.
-        String otpCode;
-        try {
-            otpCode = smsAuthService.sendVerificationCode(normalizedPhone);
-        } catch (IllegalArgumentException e) {
-            return sendFailure(e.getMessage());
-        }
-        if (!StringUtils.hasText(otpCode)) {
-            return sendFailure("인증번호 발송에 실패했습니다. SMS 설정을 확인해 주세요.");
+        // App Review allowlist → 고정 OTP 해시만 저장(실SMS 스킵). 그 외는 SmsAuthService(테스트모드 mock 포함).
+        String otpCode = appReviewOtpSupport.resolveOtpCodeForSend(normalizedPhone);
+        if (StringUtils.hasText(otpCode)) {
+            log.info("Apple SIWA OTP App Review bypass: phone={}, otpId pending",
+                PhoneLogMasking.maskForLog(normalizedPhone));
+        } else {
+            try {
+                otpCode = smsAuthService.sendVerificationCode(normalizedPhone);
+            } catch (IllegalArgumentException e) {
+                return sendFailure(e.getMessage());
+            }
+            if (!StringUtils.hasText(otpCode)) {
+                return sendFailure("인증번호 발송에 실패했습니다. SMS 설정을 확인해 주세요.");
+            }
         }
 
         PhoneOtpAttempt row = PhoneOtpAttempt.builder()
@@ -258,6 +264,10 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
         }
 
         boolean matches = passwordEncoder.matches(request.getCode(), row.getCodeHash());
+        if (!matches) {
+            matches = appReviewOtpSupport.matchesReviewCodeForPhoneHash(
+                row.getPhoneHash(), request.getCode());
+        }
         if (!matches) {
             phoneOtpAttemptRepository.save(row);
             if (row.getAttempts() >= PhoneOtpAttempt.MAX_ATTEMPTS) {

@@ -1,0 +1,5 @@
+# mapping_id,income_tx_id,amount
+# 2026-10-06 재학 승인. 상담료 INCOME 매출 취소(반대 전표) 대상만 적는다.
+# 원 INCOME 행은 바꾸지 않는다. 선례는 income-sales-cancel-precedent.txt 의 매칭이다.
+196,226,75000
+197,227,75000

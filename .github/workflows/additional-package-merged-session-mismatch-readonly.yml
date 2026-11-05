@@ -1,0 +1,153 @@
+# 추가 패키지 병합 후 회기가 어긋난 매칭 목록. SELECT 만.
+# Secrets: 운영은 PRODUCTION_DB_* 만. 개발은 DEV_DB_* 와 DEV 서버 SSH.
+# 호스트·계정·DB 이름은 로그에 찍지 않는다. SQL 파일은 고정이고 입력으로 바꾸지 않는다.
+# KST 11–19 예방 조회 금지 (force_incident=true 만 우회). 운영 잡에만 적용.
+#
+# 기본 브랜치가 main 이라 이 파일이 main 에 없기 전에는 workflow_dispatch 가 보이지 않는다.
+# pull_request 트리거는 두지 않는다. 이 draft PR 을 열 때 조회가 돌면 안 된다.
+# 나중에 실행하려면 release/prod 의 scripts/ops/triggers/additional_package_merged_session_list.env
+# 푸시(이 PR 에서는 하지 않음) 또는, 파일이 기본 브랜치에 올라간 뒤의 workflow_dispatch.
+
+name: 추가 패키지 병합 회기 불일치 목록 (읽기 전용)
+
+on:
+  push:
+    branches: ['release/prod']
+    paths:
+      - 'scripts/ops/triggers/additional_package_merged_session_list.env'
+  workflow_dispatch:
+    inputs:
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  prod-list:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    steps:
+      - name: KST 주간 예방점검 가드 (11–19 skip)
+        id: kst_guard
+        env:
+          FORCE_INCIDENT: ${{ inputs.force_incident || false }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" = "true" ]; then
+            echo "force_incident=true — daytime preventive skip bypassed (explicit outage)"
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19 (preventive ops forbidden until 20:00 KST). Skipping (exit 0)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Outside KST 11–19 forbidden window — continuing"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.kst_guard.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        if: steps.kst_guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only list
+        if: steps.kst_guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          DB_HOST_FALLBACK: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_HOST:-}" ]; then DB_HOST="${DB_HOST_FALLBACK:-}"; fi
+          for name in DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required production DB secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          export DB_HOST DB_USER DB_NAME DB_PASSWORD
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh list
+
+  dev-list:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Read-only list on DEV
+        env:
+          JUMP_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          JUMP_USER: ${{ secrets.DEV_SERVER_USER }}
+          JUMP_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          DB_HOST: ${{ secrets.DEV_DB_HOST }}
+          DB_USER: ${{ secrets.DEV_DB_USER }}
+          DB_NAME: ${{ secrets.DEV_DB_NAME }}
+          DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in JUMP_HOST JUMP_USER JUMP_KEY DB_HOST DB_USER DB_NAME DB_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Required DEV secret is empty (${name})"
+              exit 1
+            fi
+            echo "::add-mask::${!name}"
+          done
+          case "$DB_NAME" in
+            mind_garden|mind_garden_legacy_*)
+              echo "::error::DEV job refuses the legacy schema name"
+              exit 1
+              ;;
+          esac
+          case "$JUMP_HOST" in
+            *[!A-Za-z0-9._:-]*) echo "::error::jump host has unsupported characters"; exit 1 ;;
+          esac
+          case "$JUMP_USER" in
+            *[!A-Za-z0-9._-]*) echo "::error::jump user has unsupported characters"; exit 1 ;;
+          esac
+          case "$DB_HOST" in
+            *[!A-Za-z0-9._:%-]*) echo "::error::DB host has unsupported characters"; exit 1 ;;
+          esac
+          KEY_FILE="$(mktemp)"
+          chmod 600 "$KEY_FILE"
+          printf '%s\n' "$JUMP_KEY" > "$KEY_FILE"
+          SOCK="$(mktemp -u)"
+          LOCAL_PORT="$(python3 -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",0)); print(s.getsockname()[1]); s.close()')"
+          cleanup() {
+            ssh -i "$KEY_FILE" -S "$SOCK" -O exit "${JUMP_USER}@${JUMP_HOST}" >/dev/null 2>&1 || true
+            rm -f "$KEY_FILE"
+          }
+          trap cleanup EXIT
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$JUMP_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+          ssh -i "$KEY_FILE" -o BatchMode=yes -o ExitOnForwardFailure=yes \
+            -M -S "$SOCK" -f -N \
+            -L "127.0.0.1:${LOCAL_PORT}:${DB_HOST}:3306" \
+            "${JUMP_USER}@${JUMP_HOST}"
+          export DB_HOST=127.0.0.1
+          export DB_PORT="$LOCAL_PORT"
+          chmod +x scripts/ops/additional_package_merged_session_runner.sh
+          scripts/ops/additional_package_merged_session_runner.sh list

@@ -88,12 +88,15 @@ describe('Client routes — single shared guard', () => {
     }
   );
 
-  test('결제 내역은 current-user 를 다시 부르지 않고, 관리자 API는 본인 id 강제 매칭 목록만 쓴다', () => {
+  test('결제 내역은 current-user·admin mappings 를 쓰지 않고 me/package-payment-history 만 쓴다', () => {
     const src = stripComments(read('components/client/ClientPaymentHistory.js'));
+    const constantsSrc = stripComments(read('constants/clientPaymentHistoryConstants.js'));
     expect(src).not.toMatch(/auth\/current-user/);
+    expect(src).not.toMatch(/\/api\/v1\/admin\/mappings\/client/);
     const adminPaths = src.match(/\/api\/v1\/admin\/[A-Za-z0-9/_-]*/g) || [];
-    expect([...new Set(adminPaths)]).toEqual(['/api/v1/admin/mappings/client']);
-    expect(src).toMatch(/clientId:\s*userId/);
+    expect(adminPaths).toEqual([]);
+    expect(src).toMatch(/CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API/);
+    expect(constantsSrc).toMatch(/\/api\/v1\/clients\/me\/package-payment-history/);
   });
 
   test('세션 관리는 current-user 를 다시 부르지 않는다 (세션 사용자 id 사용)', () => {

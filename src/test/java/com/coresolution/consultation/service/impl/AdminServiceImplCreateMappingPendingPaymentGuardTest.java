@@ -1,10 +1,13 @@
 package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
+import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
@@ -66,6 +69,7 @@ import org.springframework.transaction.support.AbstractPlatformTransactionManage
 import org.springframework.transaction.support.DefaultTransactionStatus;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -177,7 +181,9 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
                 refundAutoCancelNotificationService, userLifecycleService,
                 org.mockito.Mockito.mock(
                         com.coresolution.consultation.service.AdminRequestIdempotencyService.class),
-                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class));
+                org.mockito.Mockito.mock(com.coresolution.consultation.service.SalaryTaxRateLookupService.class),
+                null,
+                org.mockito.Mockito.mock(com.coresolution.consultation.repository.InstitutionLinkContractRepository.class));
         TenantContextHolder.setTenantId(TEST_TENANT_ID);
     }
 
@@ -273,6 +279,28 @@ class AdminServiceImplCreateMappingPendingPaymentGuardTest {
         assertThat(saveCaptor.getAllValues().stream()
                 .noneMatch(m -> m.getId() != null && m.getId().equals(202L)
                         && m.getStatus() != MappingStatus.ACTIVE)).isTrue();
+    }
+
+    @Test
+    @DisplayName("타기관 내담자는 가예약·회기 교차 거부, 빈 timing은 기관연계")
+    void createMapping_institutionClient_forcesInstitutionLinkTiming() {
+        Client institutionClient = new Client();
+        institutionClient.setId(CLIENT_ID);
+        institutionClient.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        stubCreateFlowWithSave(List.of());
+        when(clientRepository.findByTenantIdAndIdIncludingDeleted(TEST_TENANT_ID, CLIENT_ID))
+                .thenReturn(Optional.of(institutionClient));
+
+        ConsultantClientMappingCreateRequest advance = newRequest();
+        advance.setPaymentTiming(PaymentTimingConstants.ADVANCE);
+        assertThatThrownBy(() -> adminService.createMapping(advance))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(ClientEngagementTypeConstants.MSG_INSTITUTION_CLIENT_ONLY_INSTITUTION_ASSIGNMENT);
+
+        ConsultantClientMappingCreateRequest dto = newRequest();
+        dto.setPaymentTiming(null);
+        ConsultantClientMapping created = adminService.createMapping(dto);
+        assertThat(created.getPaymentTiming()).isEqualTo(PaymentTimingConstants.INSTITUTION_LINK);
     }
 
     private ConsultantClientMapping newExistingMapping(Long id, MappingStatus status) {

@@ -84,21 +84,27 @@ public interface AdminService {
     Set<String> getConsultantClientKeysWithOccupyingSchedulesOnOrAfter(String tenantId, LocalDate fromDate);
 
     /**
-     * mappingId 기준 점유 상담 일정이 1건 이상인 ID 집합.
-     * 점유 SSOT: BOOKED / TENTATIVE_PENDING_PAYMENT / CONFIRMED / COMPLETED / IN_PROGRESS
-     * ({@code ScheduleStatus#occupyingStatusesForProvisionalMapping}; CANCELLED 제외).
-     * 통합 스케줄 카드 {@code hasConsultationSchedule} enrich 용.
+     * mappingId 기준 상담 일정 이력(OPEN + COMPLETED)이 1건 이상인 ID 집합.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * 통합 스케줄 카드 {@code hasConsultationSchedule}(일정 이력 있음) enrich 용.
      * <p>레거시 {@code mapping_id IS NULL} 행은 포함되지 않음 —
      * {@link #getConsultantClientKeysWithOccupyingConsultationSchedules} 와 OR enrich.</p>
      */
     Set<Long> getMappingIdsWithOccupyingConsultationSchedules(String tenantId);
 
     /**
-     * 날짜 무관 점유 상담 일정이 있는 상담사·내담자 쌍 키 집합
+     * mappingId 기준 OPEN 점유(TENTATIVE/BOOKED/CONFIRMED/IN_PROGRESS, COMPLETED 제외)가 있는 ID 집합.
+     * 가예약 rem=0 일정등록 차단 {@code hasOpenOccupyingConsultationSchedule} enrich 용.
+     * 현재 매핑만 — 쌍(pair) 이력은 포함하지 않음.
+     */
+    Set<Long> getMappingIdsWithOpenOccupyingConsultationSchedules(String tenantId);
+
+    /**
+     * 날짜 무관 상담 일정 이력이 있는 상담사·내담자 쌍 키 집합
      * ({@code consultantId + "_" + clientId}).
-     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForProvisionalMapping}
-     * (COMPLETED / IN_PROGRESS 포함). 레거시 null mapping_id·다른 mappingId 점유를
-     * 카드 {@code hasConsultationSchedule} enrich 에 반영하기 위함.
+     * 점유 SSOT: {@code ScheduleStatus#occupyingStatusesForConsultationScheduleHistory}
+     * (COMPLETED 포함). 레거시 null mapping_id·다른 mappingId 이력을
+     * 카드 {@code hasConsultationSchedule} 표시에 반영하기 위함. 가예약 일정등록 차단에는 쓰지 않음.
      */
     Set<String> getConsultantClientKeysWithOccupyingConsultationSchedules(String tenantId);
 

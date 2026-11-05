@@ -14,11 +14,14 @@ import java.util.Collections;
 import java.util.Optional;
 
 import com.coresolution.consultation.constant.ClientRegistrationConstants;
+import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ClientRegistrationRequest;
 import com.coresolution.consultation.entity.Client;
+import com.coresolution.consultation.entity.PartnerInstitution;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.PartnerInstitutionRepository;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRatingRepository;
@@ -59,6 +62,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.PlatformTransactionManager;
 
@@ -139,6 +143,8 @@ class AdminServiceImplRegisterClientContactTest {
     private UserIdGenerator userIdGenerator;
     @Mock
     private UserService userService;
+    @Mock
+    private PartnerInstitutionRepository partnerInstitutionRepository;
 
     @InjectMocks
     private AdminServiceImpl adminService;
@@ -295,5 +301,55 @@ class AdminServiceImplRegisterClientContactTest {
         verify(userService).existsPhoneDuplicateForPublicSignup("01020003000", TENANT);
         verify(userIdGenerator).generateUniqueUserId(uniqueEmail, TENANT);
         verify(userIdGenerator, never()).generateUniqueUserIdFromPhone(anyString(), anyString());
+    }
+
+    @Test
+    @DisplayName("타기관 연계 등록 시 기관 필드를 저장한다")
+    void institutionLink_persistsInstitutionFields() {
+        String uniqueEmail = "inst-" + java.util.UUID.randomUUID() + "@test.com";
+        ClientRegistrationRequest request = new ClientRegistrationRequest();
+        request.setEmail(uniqueEmail);
+        request.setPassword("");
+        request.setEngagementType(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        request.setPartnerInstitutionId(91L);
+        request.setInstitutionPrepaid(Boolean.FALSE);
+
+        PartnerInstitution institution = PartnerInstitution.builder()
+                .name("연계병원")
+                .contactName("담당자")
+                .contactPhone("010-1111-3333")
+                .documentEmail("doc@inst.example")
+                .build();
+        institution.setId(91L);
+        institution.setTenantId(TENANT);
+
+        when(partnerInstitutionRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 91L))
+                .thenReturn(Optional.of(institution));
+
+        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-inst-1");
+        when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
+        when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
+        when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))
+                .thenReturn(Optional.empty());
+        when(userPersonalDataCacheService.decryptAndCacheUserPersonalData(any(User.class)))
+                .thenReturn(Collections.emptyMap());
+        doNothing().when(clientStatsService).evictAllClientStatsCache();
+        ArgumentCaptor<Client> clientCaptor = ArgumentCaptor.forClass(Client.class);
+        when(clientRepository.saveAndFlush(any(Client.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
+            User u = inv.getArgument(0);
+            u.setId(504L);
+            return u;
+        });
+
+        adminService.registerClient(request);
+
+        verify(clientRepository).saveAndFlush(clientCaptor.capture());
+        Client saved = clientCaptor.getValue();
+        assertThat(saved.getEngagementType()).isEqualTo(ClientEngagementTypeConstants.INSTITUTION_LINK);
+        assertThat(saved.getPartnerInstitutionId()).isEqualTo(91L);
+        assertThat(saved.getInstitutionName()).isEqualTo("연계병원");
+        assertThat(saved.getInstitutionPrepaid()).isFalse();
     }
 }

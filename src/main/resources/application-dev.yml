@@ -17,10 +17,8 @@ server:
   base-url: ${OAUTH2_BASE_URL:https://dev.core-solution.co.kr}
 
 # JWT/암호화 키: dev에서 미설정 시 기본값으로 기동 가능 (검증기는 dev 한정 완화)
-# OTP challenge JWT 는 OTP TTL(1200s) 이상이어야 verify 가 먼저 죽지 않음 — prod 기본 300000ms 유지.
 jwt:
   secret: ${JWT_SECRET:dev-jwt-secret-key-for-development-server-only-32chars}
-  apple-phone-otp-challenge-ttl-ms: 1260000
 
 encryption:
   personal-data:
@@ -153,10 +151,6 @@ notification:
 mindgarden:
   branch:
     enabled: ${MINDGARDEN_BRANCH_ENABLED:true}
-  # .dev ONLY — 휴대폰 OTP ≥20분. 운영(application.yml 180)과 분리. 코드 프로파일 분기 금지.
-  otp:
-    phone:
-      expiry-seconds: 1200
   # 키가 없을 때 국세청·도로명주소 조회를 성공으로 대체. dev 프로필에서만 적용된다.
   kr-public-data:
     stub:
@@ -175,4 +169,13 @@ monitoring:
 # 예: mindgarden-dev.core-solution.co.kr → mindgarden
 tenant:
   host-aliases: ${TENANT_HOST_ALIASES:mindgarden-dev.core-solution.co.kr:mindgarden}
+
+# 휴대폰 비밀번호 찾기: OTP(MySQL)+opaque challenge(Redis) TTL 연장 (.dev 재시작 후 생존 검증용).
+# proof 는 300 유지(생략 시 기본값). 코드 profile/호스트 분기 없음.
+password-reset:
+  otp-expiry-seconds: 1200
+  opaque:
+    challenge-ttl-seconds: 1200
+    proof-ttl-seconds: 300
+
 # noop trigger: retrigger Onboarding BE .dev after AdminShop duplicate fix (639203240, 2026-09-17)

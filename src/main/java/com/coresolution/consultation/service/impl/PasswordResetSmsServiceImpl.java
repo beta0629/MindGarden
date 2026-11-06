@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.config.PasswordResetSmsOtpProperties;
 import com.coresolution.consultation.dto.auth.PasswordResetSmsResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
@@ -42,6 +43,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>challengeToken·resetProofToken 은 {@link PasswordResetOpaqueTokenStore} opaque 참조이며
  * 토큰·스토어에 phone/phoneHash 를 넣지 않는다(PhoneOtpAttempt 가 SSOT).</p>
+ *
+ * <p>OTP MySQL TTL·API {@code expiresInSeconds} SSOT 는
+ * {@link PasswordResetSmsOtpProperties#getOtpExpirySeconds()} 이다.</p>
  *
  * @author MindGarden
  * @since 2026-11-01
@@ -87,6 +91,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final ClientCredentialNotificationService clientCredentialNotificationService;
+    private final PasswordResetSmsOtpProperties passwordResetSmsOtpProperties;
 
     /** IP+phoneHash 레이트리밋 버킷. */
     private final Map<String, RateBucket> ipPhoneBuckets = new ConcurrentHashMap<>();
@@ -170,7 +175,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
             .dailyCount((int) (dailyCount + 1))
             .status(PhoneOtpAttempt.STATUS_PENDING)
             .createdAt(now)
-            .expiresAt(now.plusMinutes(PhoneOtpAttempt.EXPIRY_MINUTES))
+            .expiresAt(now.plusSeconds(otpExpirySeconds()))
             .build();
         PhoneOtpAttempt saved = phoneOtpAttemptRepository.saveAndFlush(row);
 
@@ -184,7 +189,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
             .success(true)
             .message(MSG_SEND_SUCCESS)
             .challengeToken(challengeToken)
-            .expiresInSeconds(Duration.ofMinutes(PhoneOtpAttempt.EXPIRY_MINUTES).getSeconds())
+            .expiresInSeconds(otpExpirySeconds())
             .resendCooldownSeconds(PhoneOtpAttempt.RESEND_COOLDOWN_SECONDS)
             .maskedPhone(maskKoreanMobile(normalizedPhone))
             .build();
@@ -430,14 +435,26 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
             .build();
     }
 
-    private static PasswordResetSmsResponse disguiseSendSuccess(String maskedPhone) {
+    private PasswordResetSmsResponse disguiseSendSuccess(String maskedPhone) {
         return PasswordResetSmsResponse.builder()
             .success(true)
             .message(MSG_SEND_SUCCESS)
             .maskedPhone(maskedPhone)
-            .expiresInSeconds(Duration.ofMinutes(PhoneOtpAttempt.EXPIRY_MINUTES).getSeconds())
+            .expiresInSeconds(otpExpirySeconds())
             .resendCooldownSeconds(PhoneOtpAttempt.RESEND_COOLDOWN_SECONDS)
             .build();
+    }
+
+    /**
+     * MySQL OTP TTL·API expiresInSeconds SSOT.
+     *
+     * @return 만료 초
+     */
+    private long otpExpirySeconds() {
+        long configured = passwordResetSmsOtpProperties.getOtpExpirySeconds();
+        return configured > 0
+            ? configured
+            : PasswordResetSmsOtpProperties.DEFAULT_OTP_EXPIRY_SECONDS;
     }
 
     private static PasswordResetSmsResponse failure(String message, String code) {

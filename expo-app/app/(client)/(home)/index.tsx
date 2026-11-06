@@ -13,18 +13,14 @@ import { useCallback, useState, type ReactNode } from 'react';
 import { RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Bell } from 'lucide-react-native';
-import { SkeletonLoader } from '@/components/atoms/SkeletonLoader';
 import {
   CLINIC_OS,
+  ClientHeroBlock,
   ClientScheduleListRow,
   CoverBrandHeader,
   CoverChapterSplitLayout,
   CoverGreeting,
-  CoverHeroEmpty,
-  NextSessionHero,
   NotificationRows,
-  PrimaryEntryCta,
   ScheduleListSection,
   SessionProgressBlock,
   TintNewsBanner,
@@ -37,7 +33,7 @@ import { useCoverInbox } from '@/hooks/useCoverInbox';
 import { useCoverLayoutMode } from '@/hooks/useCoverLayoutMode';
 import { CLIENT_COVER_COPY, CLIENT_HOME_ROUTES } from '@/constants/clientHomeCopy';
 import { COVER_CHAPTER_COPY } from '@/constants/coverChapterCopy';
-import { borderRadius, fontFamily, fontSize, spacing } from '@/theme';
+import { fontFamily, fontSize, spacing } from '@/theme';
 import {
   buildClientNotificationRows,
   resolveBranchLabel,
@@ -46,7 +42,6 @@ import {
 
 const HOME_UPCOMING_MAX = 2;
 const HOME_PAST_MAX = 1;
-const HERO_SKELETON_HEIGHT = 160;
 
 export default function ClientHome() {
   const router = useRouter();
@@ -76,32 +71,15 @@ export default function ClientHome() {
   const goSessionDetail = (id: number) => router.push(CLIENT_HOME_ROUTES.sessionDetail(id));
   const onPressNotificationRow = (_row: CoverNotificationRow) => goNotifications();
 
-  const heroBlock = cover.isHeroLoading ? (
-    <SkeletonLoader height={HERO_SKELETON_HEIGHT} borderRadius={borderRadius.md} />
-  ) : cover.hero ? (
-    <View style={styles.heroStack}>
-      <NextSessionHero hero={cover.hero} size={mode === 'phone' ? 'phone' : 'tablet'} />
-      <PrimaryEntryCta
-        label={CLIENT_COVER_COPY.ENTRY_CTA}
-        accessibilityLabel={CLIENT_COVER_COPY.ENTRY_CTA_A11Y}
-        onPress={() => goSessionDetail(cover.hero!.scheduleId)}
-      />
-    </View>
-  ) : cover.isHeroError ? (
-    <CoverHeroEmpty
-      eyebrow={COVER_CHAPTER_COPY.NEXT_SESSION_LABEL}
-      title={CLIENT_COVER_COPY.HERO_ERROR_TITLE}
-      actionLabel={CLIENT_COVER_COPY.HERO_ERROR_ACTION}
-      onAction={onRefresh}
-    />
-  ) : (
-    <CoverHeroEmpty
-      eyebrow={COVER_CHAPTER_COPY.NEXT_SESSION_LABEL}
-      title={CLIENT_COVER_COPY.HERO_EMPTY_TITLE}
-      description={CLIENT_COVER_COPY.HERO_EMPTY_DESCRIPTION}
-      actionLabel={CLIENT_COVER_COPY.HERO_EMPTY_ACTION}
-      actionIcon={Bell}
-      onAction={goNotifications}
+  const heroBlock = (
+    <ClientHeroBlock
+      hero={cover.hero}
+      isLoading={cover.isHeroLoading}
+      isError={cover.isHeroError}
+      size={mode === 'phone' ? 'phone' : 'tablet'}
+      onEnter={goSessionDetail}
+      onRetry={onRefresh}
+      onEmptyAction={goNotifications}
     />
   );
 
@@ -222,9 +200,6 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: CLINIC_OS.cream,
-  },
-  heroStack: {
-    gap: spacing['2xl'],
   },
   coverStack: {
     gap: spacing['2xl'],

@@ -1,183 +1,195 @@
 /**
- * 내 상담 목록
- * 상단 탭: 예정 / 완료 (SegmentedControl)
- * FlashList + 무한 스크롤 + Pull-to-refresh
+ * 내담자 예약 챕터 v4 — 다음 상담 히어로 · 입장 CTA · 잔여 회기 요약 · 예정 / 지난 상담.
+ *
+ * 소식 배너·알림 행은 두지 않는다. 미결제 칩은 잔여 회기 요약 행에서만 노출한다.
+ * 예약 생성 CTA 없음 — 변경은 센터 문의 안내만.
  *
  * @author MindGarden
  * @since 2026-05-12
+ * @updated 2026-11-06 — 커버+챕터 v4 재구성 (세그먼트 탭 → 예정/지난 섹션)
  */
-import { useCallback, useMemo, useState } from 'react';
-import { Pressable, RefreshControl, StyleSheet, Text, View, Platform } from 'react-native';
+import { useCallback, useState, type ReactNode } from 'react';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { FlashList } from '@shopify/flash-list';
-import * as Haptics from 'expo-haptics';
-import { Calendar, ClipboardCheck } from 'lucide-react-native';
-import { useTheme } from '@/theme';
-import { AppTopBar } from '@/components/app-chrome/AppTopBar';
-import { ConsultationCard } from '@/components/molecules/ConsultationCard';
-import { EmptyState } from '@/components/atoms/EmptyState';
-import { SkeletonCard } from '@/components/atoms/SkeletonLoader';
 import {
-  matchesClientSessionsTab,
-  sortClientSessions,
-  useClientConsultations,
-} from '@/api/hooks/useConsultations';
-import type { Schedule } from '@/api/hooks/useSchedules';
-
-type TabKey = 'SCHEDULED' | 'COMPLETED';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: 'SCHEDULED', label: '예정' },
-  { key: 'COMPLETED', label: '완료' },
-];
+  CLINIC_OS,
+  COVER_METRICS,
+  ClientHeroBlock,
+  ClientScheduleListRow,
+  CoverBrandHeader,
+  CoverChapterSplitLayout,
+  CoverGreeting,
+  CoverInlineEmpty,
+  ScheduleListSection,
+  SessionProgressBlock,
+} from '@/components/organisms/coverChapter';
+import { useTenantStore } from '@/stores/useTenantStore';
+import { useClientCoverData } from '@/hooks/useClientCoverData';
+import { useCoverLayoutMode } from '@/hooks/useCoverLayoutMode';
+import { CLIENT_HOME_ROUTES, CLIENT_SCHEDULE_CHAPTER_COPY } from '@/constants/clientHomeCopy';
+import { COVER_CHAPTER_COPY } from '@/constants/coverChapterCopy';
+import { fontFamily, fontSize, spacing } from '@/theme';
+import { formatChapterDateHeading, resolveBranchLabel } from '@/utils/coverChapterViewModel';
 
 export default function ClientSessions() {
-  const theme = useTheme();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabKey>('SCHEDULED');
+  const tenantName = useTenantStore((s) => s.tenantName);
+  const mode = useCoverLayoutMode();
+  const isLandscape = mode === 'tabletLandscape';
 
-  const {
-    data,
-    isLoading,
-    isError,
-    isFetching,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    refetch,
-  } = useClientConsultations({
-    status: activeTab,
-  });
+  const cover = useClientCoverData();
+  const { lists } = cover;
 
-  const consultations = useMemo(() => {
-    const rows = data?.pages.flatMap((p) => p.items) ?? [];
-    const filtered = rows.filter((s) => matchesClientSessionsTab(s, activeTab));
-    return sortClientSessions(filtered, activeTab);
-  }, [data?.pages, activeTab]);
-
-  const handleTabChange = (tab: TabKey) => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await cover.refetchAll();
+    } finally {
+      setIsRefreshing(false);
     }
-    setActiveTab(tab);
-  };
+  }, [cover]);
 
-  const handleEndReached = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage();
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  const goSessionDetail = (id: number) => router.push(CLIENT_HOME_ROUTES.sessionDetail(id));
+  const goNotifications = () => router.push(CLIENT_HOME_ROUTES.NOTIFICATIONS);
 
-  const renderItem = useCallback(
-    ({ item, index }: { item: Schedule; index: number }) => (
-      <ConsultationCard
-        schedule={item}
-        index={index}
-        onPress={() => router.push(`/(client)/(sessions)/${item.id}`)}
-      />
-    ),
-    [router],
+  const heroBlock = (
+    <ClientHeroBlock
+      hero={cover.hero}
+      isLoading={cover.isHeroLoading}
+      isError={cover.isHeroError}
+      size={mode === 'phone' ? 'phone' : 'tablet'}
+      eyebrowOverride={
+        cover.heroSchedule
+          ? formatChapterDateHeading(cover.heroSchedule.date, new Date())
+          : undefined
+      }
+      onEnter={goSessionDetail}
+      onRetry={onRefresh}
+      onEmptyAction={goNotifications}
+    />
+  );
+
+  const summaryBlock = (
+    <SessionProgressBlock
+      variant="summary"
+      progress={cover.progress}
+      unpaidCount={cover.unpaidCount}
+      trailingLabel={CLIENT_SCHEDULE_CHAPTER_COPY.upcomingCount(lists.upcomingTotal)}
+      onPress={() => router.push(CLIENT_HOME_ROUTES.SESSIONS_PAYMENT)}
+    />
+  );
+
+  const footnote = <Text style={styles.footnote}>{CLIENT_SCHEDULE_CHAPTER_COPY.FOOTNOTE}</Text>;
+
+  const loadMore = cover.hasMorePast ? (
+    <Pressable
+      onPress={cover.fetchMore}
+      disabled={cover.isFetchingMore}
+      accessibilityRole="button"
+      accessibilityLabel={CLIENT_SCHEDULE_CHAPTER_COPY.LOAD_MORE}
+      accessibilityState={{ busy: cover.isFetchingMore }}
+      style={({ pressed }) => [styles.loadMore, pressed ? styles.pressed : null]}
+    >
+      {cover.isFetchingMore ? (
+        <ActivityIndicator color={CLINIC_OS.teal} />
+      ) : (
+        <Text style={styles.loadMoreText}>{CLIENT_SCHEDULE_CHAPTER_COPY.LOAD_MORE}</Text>
+      )}
+    </Pressable>
+  ) : null;
+
+  const listsBlock = cover.isListError ? (
+    <CoverInlineEmpty
+      label={CLIENT_SCHEDULE_CHAPTER_COPY.LIST_ERROR_TITLE}
+      actionLabel={CLIENT_SCHEDULE_CHAPTER_COPY.LIST_ERROR_ACTION}
+      onAction={onRefresh}
+    />
+  ) : (
+    <View style={styles.lists}>
+      <ScheduleListSection
+        title={CLIENT_SCHEDULE_CHAPTER_COPY.UPCOMING_TITLE}
+        rightLabel={lists.upcomingTotal > 1 ? CLIENT_SCHEDULE_CHAPTER_COPY.UPCOMING_SORT : null}
+        isEmpty={!cover.isListLoading && lists.upcoming.length === 0}
+        emptyLabel={CLIENT_SCHEDULE_CHAPTER_COPY.UPCOMING_EMPTY}
+      >
+        {lists.upcoming.map((s) => (
+          <ClientScheduleListRow
+            key={s.id}
+            schedule={s}
+            showInitial
+            onPress={() => goSessionDetail(s.id)}
+          />
+        ))}
+      </ScheduleListSection>
+      <ScheduleListSection
+        title={CLIENT_SCHEDULE_CHAPTER_COPY.PAST_TITLE}
+        rightLabel={lists.pastTotal > 0 ? COVER_CHAPTER_COPY.listCount(lists.pastTotal) : null}
+        isEmpty={!cover.isListLoading && lists.past.length === 0 && !cover.hasMorePast}
+        emptyLabel={CLIENT_SCHEDULE_CHAPTER_COPY.PAST_EMPTY}
+        footer={loadMore}
+      >
+        {lists.past.map((s) => (
+          <ClientScheduleListRow
+            key={s.id}
+            schedule={s}
+            past
+            showInitial
+            onPress={() => goSessionDetail(s.id)}
+          />
+        ))}
+      </ScheduleListSection>
+    </View>
+  );
+
+  const greeting = (
+    <CoverGreeting
+      title={CLIENT_SCHEDULE_CHAPTER_COPY.TITLE}
+      subtitle={CLIENT_SCHEDULE_CHAPTER_COPY.SUBTITLE}
+      size={isLandscape ? 'compact' : 'cover'}
+    />
+  );
+
+  const coverPane: ReactNode = isLandscape ? (
+    <View style={styles.pane}>
+      {greeting}
+      {heroBlock}
+      {summaryBlock}
+      {footnote}
+    </View>
+  ) : (
+    <View style={styles.pane}>
+      {greeting}
+      {heroBlock}
+    </View>
+  );
+
+  const sheetPane: ReactNode = isLandscape ? (
+    <View style={styles.pane}>{listsBlock}</View>
+  ) : (
+    <View style={styles.sheetStack}>
+      {summaryBlock}
+      {listsBlock}
+      {footnote}
+    </View>
   );
 
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: theme.colors.bgMain }]} edges={['top']}>
-      <AppTopBar title="내 상담" />
-
-      {/* Segmented Control */}
-      <View
-        style={[
-          styles.segmented,
-          {
-            backgroundColor: theme.colors.gray[100],
-            borderRadius: theme.borderRadius.lg,
-          },
-        ]}
-      >
-        {TABS.map((tab) => {
-          const active = activeTab === tab.key;
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => handleTabChange(tab.key)}
-              style={[
-                styles.segmentedTab,
-                {
-                  backgroundColor: active ? theme.colors.surface : 'transparent',
-                  borderRadius: theme.borderRadius.md,
-                  ...(active ? theme.shadows.sm : {}),
-                },
-              ]}
-              accessibilityLabel={`${tab.label} 탭`}
-              accessibilityState={{ selected: active }}
-              accessibilityRole="tab"
-            >
-              <Text
-                style={{
-                  fontFamily: active ? theme.fontFamily.semibold : theme.fontFamily.regular,
-                  fontSize: theme.fontSize.sm,
-                  color: active ? theme.colors.textMain : theme.colors.textSecondary,
-                }}
-              >
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      {/* List */}
-      <View style={styles.listContainer}>
-        {isLoading && !isError ? (
-          <View style={styles.skeletonWrap}>
-            {[0, 1, 2].map((i) => (
-              <SkeletonCard key={i} />
-            ))}
-          </View>
-        ) : isError ? (
-          <EmptyState
-            icon={<Calendar size={32} color={theme.colors.textTertiary} />}
-            title="상담 목록을 불러오지 못했어요"
-            description="네트워크 연결을 확인한 뒤 다시 시도해주세요"
-            actionLabel="다시 시도"
-            onAction={() => refetch()}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <CoverChapterSplitLayout
+        mode={mode}
+        header={<CoverBrandHeader rightLabel={resolveBranchLabel(tenantName)} />}
+        cover={coverPane}
+        sheet={sheetPane}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={CLINIC_OS.teal}
           />
-        ) : consultations.length === 0 ? (
-          <EmptyState
-            icon={
-              activeTab === 'SCHEDULED' ? (
-                <Calendar size={32} color={theme.colors.textTertiary} />
-              ) : (
-                <ClipboardCheck size={32} color={theme.colors.textTertiary} />
-              )
-            }
-            title={activeTab === 'SCHEDULED' ? '예정된 상담이 없어요' : '완료된 상담이 없어요'}
-            description={
-              activeTab === 'SCHEDULED'
-                ? '관리자에게 상담 예약을 문의해주세요'
-                : '첫 상담을 시작해보세요'
-            }
-          />
-        ) : (
-          <FlashList
-            data={consultations}
-            renderItem={renderItem}
-            keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={styles.listContent}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.5}
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl
-                refreshing={isFetching && !isFetchingNextPage}
-                onRefresh={refetch}
-                tintColor={theme.colors.primary}
-              />
-            }
-            ListFooterComponent={isFetchingNextPage ? <SkeletonCard lines={2} /> : null}
-          />
-        )}
-      </View>
+        }
+      />
     </SafeAreaView>
   );
 }
@@ -185,27 +197,34 @@ export default function ClientSessions() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
+    backgroundColor: CLINIC_OS.cream,
   },
-  segmented: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginVertical: 12,
-    padding: 4,
+  pane: {
+    gap: spacing['2xl'],
   },
-  segmentedTab: {
-    flex: 1,
+  sheetStack: {
+    gap: spacing.lg,
+    paddingTop: spacing.lg,
+  },
+  lists: {
+    gap: spacing.lg,
+  },
+  loadMore: {
+    minHeight: COVER_METRICS.touchTarget,
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
   },
-  listContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
+  pressed: {
+    opacity: COVER_METRICS.pressedOpacity,
   },
-  listContent: {
-    paddingBottom: 24,
+  loadMoreText: {
+    fontFamily: fontFamily.medium,
+    fontSize: fontSize.sm,
+    color: CLINIC_OS.teal,
   },
-  skeletonWrap: {
-    gap: 12,
-    paddingTop: 8,
+  footnote: {
+    fontFamily: fontFamily.regular,
+    fontSize: fontSize.xs,
+    color: CLINIC_OS.muted,
   },
 });

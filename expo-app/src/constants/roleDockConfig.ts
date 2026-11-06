@@ -9,12 +9,7 @@
  */
 
 export type ClientDockRoute =
-  | '(home)'
-  | '(sessions)'
-  | '(wellness)'
-  | '(more)'
-  | '(booking)'
-  | '(shop)';
+  '(home)' | '(sessions)' | '(wellness)' | '(more)' | '(booking)' | '(shop)';
 
 export type ConsultantDockRoute = '(home)' | '(schedule)' | '(records)' | '(more)' | '(clients)';
 

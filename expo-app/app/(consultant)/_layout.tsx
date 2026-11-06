@@ -12,14 +12,7 @@ import { useMemo } from 'react';
 import { Tabs, useRouter } from 'expo-router';
 import { Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import {
-  Calendar,
-  FileText,
-  House,
-  UserRound,
-  Users,
-  type LucideIcon,
-} from 'lucide-react-native';
+import { Calendar, FileText, House, UserRound, Users, type LucideIcon } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { useBottomTabNavigatorOptions } from '@/hooks/useBottomTabNavigatorOptions';
 import { useMoreTabUnreadTotal } from '@/hooks/useMoreTabUnreadTotal';

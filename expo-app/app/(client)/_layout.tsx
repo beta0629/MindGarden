@@ -32,11 +32,7 @@ import {
   RoleDockTabLabel,
 } from '@/components/organisms/coverChapter';
 import { useMeditationStore } from '@/stores/useMeditationStore';
-import {
-  CLIENT_DOCK_TABS,
-  getDockTab,
-  type ClientDockRoute,
-} from '@/constants/roleDockConfig';
+import { CLIENT_DOCK_TABS, getDockTab, type ClientDockRoute } from '@/constants/roleDockConfig';
 
 function dockOptions(route: ClientDockRoute, icon: LucideIcon, showBadge = false) {
   const tab = getDockTab(CLIENT_DOCK_TABS, route);

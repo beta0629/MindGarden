@@ -33,9 +33,7 @@ export const CLIENT_COVER_COPY = {
   PROGRESS_TITLE: '내 상담 회기',
   progressRemainingUnit: (total: string) => `/ ${total}회 남음`,
   progressDetail: (used: number, nextSessionNumber: number | null) =>
-    nextSessionNumber != null
-      ? `${used}회 완료 · 다음 ${nextSessionNumber}회차`
-      : `${used}회 완료`,
+    nextSessionNumber != null ? `${used}회 완료 · 다음 ${nextSessionNumber}회차` : `${used}회 완료`,
   PROGRESS_EMPTY: '이용 중인 회기가 없어요',
   PROGRESS_A11Y: '회기·결제 내역 보기',
   unpaidChip: (count: number) => `미결제 ${count}건`,
@@ -72,6 +70,5 @@ export const CLIENT_HOME_ROUTES = {
   SESSIONS: '/(client)/(sessions)',
   MESSAGES: '/(client)/(more)/messages',
   NOTIFICATIONS: '/(client)/(more)/notifications',
-  sessionDetail: (id: number | string) =>
-    `/(client)/(sessions)/${encodeURIComponent(String(id))}`,
+  sessionDetail: (id: number | string) => `/(client)/(sessions)/${encodeURIComponent(String(id))}`,
 } as const;

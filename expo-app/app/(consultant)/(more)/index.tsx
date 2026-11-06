@@ -1,5 +1,5 @@
 /**
- * 상담사 더보기 메뉴 화면
+ * 상담사 나 탭(메뉴) 화면
  *
  * TODO(IA): 웹 `ConsultantMoreHub`·LNB와 메뉴 항목·라벨 SSOT 통합은 별도 배치(이번 Expo 범위 밖).
  *
@@ -94,7 +94,7 @@ export default function ConsultantMore() {
           ]}
           accessibilityRole="header"
         >
-          더보기
+          나
         </Text>
       </View>
 

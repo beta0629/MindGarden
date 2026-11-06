@@ -11,6 +11,7 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import com.coresolution.consultation.config.PhoneOtpProperties;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.SocialUserInfo;
 import com.coresolution.consultation.dto.auth.OAuthPhoneOtpChallengeClaims;
@@ -61,7 +62,8 @@ import org.springframework.util.StringUtils;
  *   <li>SMS Provider = Solapi</li>
  *   <li>JWT phoneVerificationToken + DB 시도카운터 테이블 조합</li>
  *   <li>재발송 쿨다운 1분 / 일 5회 / 검증 시도 5회</li>
- *   <li>OTP TTL: 3분 (PhoneOtpAttempt.EXPIRY_MINUTES)</li>
+ *   <li>OTP TTL: {@link PhoneOtpProperties#getExpirySeconds()} (기본 180초, yml 프로파일 오버라이드)</li>
+ *   <li>저장: MySQL {@code phone_otp_attempts.expires_at} (Redis 아님; password-reset opaque 와 별개)</li>
  * </ul>
  * </p>
  *
@@ -107,6 +109,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     private final PasswordService passwordService;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final PhoneOtpProperties phoneOtpProperties;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -184,6 +187,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             return sendFailure("인증번호 발송에 실패했습니다. SMS 설정을 확인해 주세요.", CODE_SEND_FAILED);
         }
 
+        long expirySeconds = phoneOtpProperties.getExpirySeconds();
         PhoneOtpAttempt row = PhoneOtpAttempt.builder()
             .tenantId(tenantId)
             .provider(providerName)
@@ -194,7 +198,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             .dailyCount((int) (dailyCount + 1))
             .status(PhoneOtpAttempt.STATUS_PENDING)
             .createdAt(now)
-            .expiresAt(now.plusMinutes(PhoneOtpAttempt.EXPIRY_MINUTES))
+            .expiresAt(now.plusSeconds(expirySeconds))
             .build();
         PhoneOtpAttempt saved = phoneOtpAttemptRepository.saveAndFlush(row);
 
@@ -214,7 +218,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
             .success(true)
             .message("인증번호를 전송했습니다.")
             .challengeToken(challengeToken)
-            .expiresInSeconds(Duration.ofMinutes(PhoneOtpAttempt.EXPIRY_MINUTES).getSeconds())
+            .expiresInSeconds(expirySeconds)
             .resendCooldownSeconds(PhoneOtpAttempt.RESEND_COOLDOWN_SECONDS)
             .maskedPhone(maskKoreanMobile(normalizedPhone))
             .build();

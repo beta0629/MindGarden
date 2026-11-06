@@ -95,7 +95,12 @@ public class PhoneOtpAttempt {
     /** 재발송 최소 간격(초). 1분. */
     public static final long RESEND_COOLDOWN_SECONDS = 60L;
 
-    /** OTP 만료 시간(분). 3분. */
+    /**
+     * OTP 만료 시간(분). 문서·호환용 기본 3분.
+     *
+     * <p>OAuth/Apple 발급·API 응답은 {@code PhoneOtpProperties#getExpirySeconds()} 를 SSOT 로 사용한다.
+     * password-reset 등 기존 상수 소비처는 본 값을 유지한다.</p>
+     */
     public static final long EXPIRY_MINUTES = 3L;
 
     @Id

@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.config.PhoneOtpProperties;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.auth.OAuthPhoneOtpChallengeClaims;
 import com.coresolution.consultation.dto.auth.OAuthPhoneSendRequest;
@@ -28,6 +29,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -75,6 +77,7 @@ class OAuthPhoneVerificationServiceImplTest {
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private com.coresolution.consultation.service.support.TemporaryPasswordGenerator temporaryPasswordGenerator;
+    @Mock private PhoneOtpProperties phoneOtpProperties;
 
     @InjectMocks
     private OAuthPhoneVerificationServiceImpl service;
@@ -85,6 +88,7 @@ class OAuthPhoneVerificationServiceImplTest {
 
         TenantContextHolder.setTenantId(TENANT_ID);
         org.mockito.Mockito.lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
+        when(phoneOtpProperties.getExpirySeconds()).thenReturn(PhoneOtpProperties.DEFAULT_EXPIRY_SECONDS);
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(jwtService.generateOAuthPhoneOtpChallengeToken(any(OAuthPhoneOtpChallengeClaims.class)))
             .thenReturn("oauth-otp-challenge-jwt");
@@ -177,8 +181,51 @@ class OAuthPhoneVerificationServiceImplTest {
         assertThat(resp.isSuccess()).isTrue();
         assertThat(resp.getChallengeToken()).isEqualTo("oauth-otp-challenge-jwt");
         assertThat(resp.getMaskedPhone()).isEqualTo("010-****-5678");
+        assertThat(resp.getExpiresInSeconds()).isEqualTo(PhoneOtpProperties.DEFAULT_EXPIRY_SECONDS);
         assertThat(resp.getResendCooldownSeconds()).isEqualTo(PhoneOtpAttempt.RESEND_COOLDOWN_SECONDS);
         verify(smsAuthService).sendVerificationCode(PHONE_NORMALIZED);
+
+        ArgumentCaptor<PhoneOtpAttempt> rowCaptor = ArgumentCaptor.forClass(PhoneOtpAttempt.class);
+        verify(phoneOtpAttemptRepository).saveAndFlush(rowCaptor.capture());
+        PhoneOtpAttempt saved = rowCaptor.getValue();
+        assertThat(saved.getExpiresAt())
+            .isEqualTo(saved.getCreatedAt().plusSeconds(PhoneOtpProperties.DEFAULT_EXPIRY_SECONDS));
+    }
+
+    @Test
+    @DisplayName("[send] expirySeconds=1200 이면 expiresInSeconds·expiresAt 반영")
+    void sendOtp_usesConfiguredExpirySeconds1200() {
+        when(phoneOtpProperties.getExpirySeconds()).thenReturn(1200L);
+        when(jwtService.parseOAuthPhoneVerificationToken(anyString()))
+            .thenReturn(verificationClaims(OAuthProvider.KAKAO));
+        when(phoneOtpAttemptRepository
+            .findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashOrderByCreatedAtDesc(
+                anyString(), anyString(), anyString(), anyString()))
+            .thenReturn(Optional.empty());
+        when(phoneOtpAttemptRepository
+            .countByTenantIdAndProviderAndProviderUserIdAndCreatedAtGreaterThanEqual(
+                anyString(), anyString(), anyString(), any())).thenReturn(0L);
+        when(smsAuthService.sendVerificationCode(PHONE_NORMALIZED)).thenReturn(OTP_CODE);
+        when(phoneOtpAttemptRepository.saveAndFlush(any(PhoneOtpAttempt.class)))
+            .thenAnswer(inv -> {
+                PhoneOtpAttempt r = inv.getArgument(0);
+                r.setId(102L);
+                return r;
+            });
+
+        OAuthPhoneSendResponse resp = service.sendOtp(OAuthPhoneSendRequest.builder()
+            .oauthProvider(OAuthProvider.KAKAO)
+            .phoneVerificationToken("phone-verification-jwt")
+            .phone(PHONE_RAW)
+            .build());
+
+        assertThat(resp.isSuccess()).isTrue();
+        assertThat(resp.getExpiresInSeconds()).isEqualTo(1200L);
+
+        ArgumentCaptor<PhoneOtpAttempt> rowCaptor = ArgumentCaptor.forClass(PhoneOtpAttempt.class);
+        verify(phoneOtpAttemptRepository).saveAndFlush(rowCaptor.capture());
+        PhoneOtpAttempt saved = rowCaptor.getValue();
+        assertThat(saved.getExpiresAt()).isEqualTo(saved.getCreatedAt().plusSeconds(1200L));
     }
 
     @Test

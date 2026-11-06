@@ -14,10 +14,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import com.coresolution.consultation.config.PasswordResetSmsOtpProperties;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -34,6 +35,8 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Redis 빈({@link StringRedisTemplate})이 있으면 JSON 문자열로 저장하고,
  * 없거나 장애 시 {@link ConcurrentHashMap} 로컬 폴백.</p>
  *
+ * <p>TTL SSOT 는 {@link PasswordResetSmsOtpProperties} ({@code password-reset.opaque.*}).</p>
+ *
  * @author MindGarden
  * @since 2026-11-01
  */
@@ -46,7 +49,7 @@ public class PasswordResetOpaqueTokenStore {
     private static final int TOKEN_BYTES = 32;
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    /** proof 기본 TTL(분). challenge 는 {@link PhoneOtpAttempt#EXPIRY_MINUTES}. */
+    /** proof 기본 TTL(분). challenge 는 Properties otp/challenge 초 값. */
     public static final long DEFAULT_PROOF_TTL_MINUTES = 5L;
 
     private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
@@ -57,22 +60,55 @@ public class PasswordResetOpaqueTokenStore {
     private final long proofTtlSeconds;
 
     /**
+     * Spring 주입 생성자 — TTL 은 {@link PasswordResetSmsOtpProperties} 에서.
+     *
      * @param redisTemplateProvider Redis (없을 수 있음)
-     * @param challengeTtlSeconds   challenge TTL 초 (기본 OTP 만료와 동일)
-     * @param proofTtlSeconds       proof TTL 초 (기본 5분)
+     * @param properties            password-reset OTP/opaque TTL SSOT
+     */
+    @Autowired
+    public PasswordResetOpaqueTokenStore(
+            ObjectProvider<StringRedisTemplate> redisTemplateProvider,
+            PasswordResetSmsOtpProperties properties) {
+        this(
+            redisTemplateProvider,
+            resolveChallengeTtl(properties),
+            resolveProofTtl(properties));
+    }
+
+    /**
+     * 단위 테스트용 생성자.
+     *
+     * @param redisTemplateProvider Redis (없을 수 있음)
+     * @param challengeTtlSeconds   challenge TTL 초
+     * @param proofTtlSeconds       proof TTL 초
      */
     public PasswordResetOpaqueTokenStore(
             ObjectProvider<StringRedisTemplate> redisTemplateProvider,
-            @Value("${password-reset.opaque.challenge-ttl-seconds:180}") long challengeTtlSeconds,
-            @Value("${password-reset.opaque.proof-ttl-seconds:300}") long proofTtlSeconds) {
+            long challengeTtlSeconds,
+            long proofTtlSeconds) {
         this.redisTemplateProvider = redisTemplateProvider;
-        // 기본: challenge=PhoneOtpAttempt.EXPIRY_MINUTES(3분), proof=5분
         this.challengeTtlSeconds = challengeTtlSeconds > 0
             ? challengeTtlSeconds
             : Duration.ofMinutes(PhoneOtpAttempt.EXPIRY_MINUTES).getSeconds();
         this.proofTtlSeconds = proofTtlSeconds > 0
             ? proofTtlSeconds
             : Duration.ofMinutes(DEFAULT_PROOF_TTL_MINUTES).getSeconds();
+    }
+
+    private static long resolveChallengeTtl(PasswordResetSmsOtpProperties properties) {
+        if (properties == null || properties.getOpaque() == null) {
+            return PasswordResetSmsOtpProperties.DEFAULT_OTP_EXPIRY_SECONDS;
+        }
+        long ttl = properties.getOpaque().getChallengeTtlSeconds();
+        return ttl > 0 ? ttl : PasswordResetSmsOtpProperties.DEFAULT_OTP_EXPIRY_SECONDS;
+    }
+
+    private static long resolveProofTtl(PasswordResetSmsOtpProperties properties) {
+        if (properties == null || properties.getOpaque() == null) {
+            return PasswordResetSmsOtpProperties.DEFAULT_PROOF_TTL_SECONDS;
+        }
+        long ttl = properties.getOpaque().getProofTtlSeconds();
+        return ttl > 0 ? ttl : PasswordResetSmsOtpProperties.DEFAULT_PROOF_TTL_SECONDS;
     }
 
     /**

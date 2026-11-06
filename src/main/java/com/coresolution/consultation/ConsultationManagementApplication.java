@@ -21,6 +21,7 @@ import com.coresolution.consultation.config.ManualNotificationProperties;
 import com.coresolution.consultation.config.MobileAppVersionProperties;
 import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.config.NotificationRetentionProperties;
+import com.coresolution.consultation.config.PasswordResetSmsOtpProperties;
 import com.coresolution.consultation.config.PiiScrubberProperties;
 import com.coresolution.consultation.config.ScheduleChangeNotificationProperties;
 import com.coresolution.core.config.KiccEasypayProperties;
@@ -71,6 +72,7 @@ import com.coresolution.core.config.KiccEasypayProperties;
         ScheduleChangeNotificationProperties.class,
         ImmediateReservationSmsProperties.class,
         ManualNotificationProperties.class,
+        PasswordResetSmsOtpProperties.class,
         com.coresolution.core.krpublic.KrPublicDataProperties.class
 })
 public class ConsultationManagementApplication {

@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import com.coresolution.consultation.config.PasswordResetSmsOtpProperties;
 import com.coresolution.consultation.dto.CredentialSmsResult;
 import com.coresolution.consultation.dto.auth.PasswordResetSmsResponse;
 import com.coresolution.consultation.entity.User;
@@ -79,22 +80,18 @@ class PasswordResetSmsServiceImplTest {
     @Mock private ClientCredentialNotificationService clientCredentialNotificationService;
 
     private PasswordResetOpaqueTokenStore opaqueTokenStore;
+    private PasswordResetSmsOtpProperties otpProperties;
     private PasswordResetSmsServiceImpl service;
 
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_A);
-        opaqueTokenStore = new PasswordResetOpaqueTokenStore(noRedis(), 180L, 300L);
-        service = new PasswordResetSmsServiceImpl(
-            phoneOtpAttemptRepository,
-            smsAuthService,
-            opaqueTokenStore,
-            userRepository,
-            encryptionUtil,
-            passwordService,
-            passwordEncoder,
-            temporaryPasswordGenerator,
-            clientCredentialNotificationService);
+        otpProperties = defaultOtpProperties(180L, 180L, 300L);
+        opaqueTokenStore = new PasswordResetOpaqueTokenStore(
+            noRedis(),
+            otpProperties.getOpaque().getChallengeTtlSeconds(),
+            otpProperties.getOpaque().getProofTtlSeconds());
+        service = newService(opaqueTokenStore, otpProperties);
 
         when(passwordService.encodeSecret(anyString())).thenReturn("ENC(code)");
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -208,18 +205,10 @@ class PasswordResetSmsServiceImplTest {
     @Test
     @DisplayName("만료 opaque challenge → TOKEN_EXPIRED 거부")
     void verify_expiredOpaqueChallenge_rejected() throws Exception {
+        PasswordResetSmsOtpProperties shortProps = defaultOtpProperties(180L, 1L, 300L);
         PasswordResetOpaqueTokenStore shortLived =
             new PasswordResetOpaqueTokenStore(noRedis(), 1L, 300L);
-        PasswordResetSmsServiceImpl shortLivedService = new PasswordResetSmsServiceImpl(
-            phoneOtpAttemptRepository,
-            smsAuthService,
-            shortLived,
-            userRepository,
-            encryptionUtil,
-            passwordService,
-            passwordEncoder,
-            temporaryPasswordGenerator,
-            clientCredentialNotificationService);
+        PasswordResetSmsServiceImpl shortLivedService = newService(shortLived, shortProps);
 
         when(userRepository.findByTenantId(TENANT_A)).thenReturn(Collections.emptyList());
         PasswordResetSmsResponse send = shortLivedService.sendOtp(PHONE_RAW, CLIENT_IP);
@@ -230,6 +219,48 @@ class PasswordResetSmsServiceImplTest {
             PHONE_RAW, OTP_CODE, send.getChallengeToken(), CLIENT_IP);
         assertThat(res.isSuccess()).isFalse();
         assertThat(res.getCode()).isEqualTo("TOKEN_EXPIRED");
+    }
+
+    @Test
+    @DisplayName("Properties 1200 — expiresInSeconds·expiresAt·opaque challenge TTL 반영")
+    void sendOtp_properties1200_reflectsExpiryAndChallengeTtl() {
+        PasswordResetSmsOtpProperties props1200 = defaultOtpProperties(1200L, 1200L, 300L);
+        PasswordResetOpaqueTokenStore store1200 =
+            new PasswordResetOpaqueTokenStore(noRedis(), 1200L, 300L);
+        PasswordResetSmsServiceImpl service1200 = newService(store1200, props1200);
+
+        User local = localUser(11L, TENANT_A, PHONE_NORMALIZED);
+        when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(local));
+        when(smsAuthService.sendVerificationCode(PHONE_NORMALIZED)).thenReturn(OTP_CODE);
+
+        PasswordResetSmsResponse send = service1200.sendOtp(PHONE_RAW, CLIENT_IP);
+        assertThat(send.isSuccess()).isTrue();
+        assertThat(send.getExpiresInSeconds()).isEqualTo(1200L);
+        assertThat(send.getChallengeToken()).isNotBlank();
+
+        ArgumentCaptor<PhoneOtpAttempt> captor = ArgumentCaptor.forClass(PhoneOtpAttempt.class);
+        verify(phoneOtpAttemptRepository).saveAndFlush(captor.capture());
+        PhoneOtpAttempt saved = captor.getValue();
+        assertThat(saved.getExpiresAt()).isEqualTo(saved.getCreatedAt().plusSeconds(1200L));
+
+        // opaque challenge 도 동일 TTL — resolve 가능(아직 만료 전)
+        assertThat(store1200.resolveChallenge(send.getChallengeToken(), TENANT_A)).isPresent();
+
+        // dual gate 유지: MySQL OTP 만료 → OTP_EXPIRED
+        PhoneOtpAttempt expired = pendingRow(101L, LocalDateTime.now().minusMinutes(30), 0);
+        expired.setExpiresAt(LocalDateTime.now().minusSeconds(1));
+        when(phoneOtpAttemptRepository.findByIdAndTenantIdAndStatus(101L, TENANT_A, PhoneOtpAttempt.STATUS_PENDING))
+            .thenReturn(Optional.of(expired));
+        PasswordResetSmsResponse otpExpired = service1200.verifyOtp(
+            PHONE_RAW, OTP_CODE, send.getChallengeToken(), CLIENT_IP);
+        assertThat(otpExpired.isSuccess()).isFalse();
+        assertThat(otpExpired.getCode()).isEqualTo("OTP_EXPIRED");
+
+        // dual gate 유지: opaque 만료/위변조 → TOKEN_EXPIRED
+        PasswordResetSmsResponse tokenExpired = service1200.verifyOtp(
+            PHONE_RAW, OTP_CODE, "not-a-real-opaque-token-xxxxxx", CLIENT_IP);
+        assertThat(tokenExpired.isSuccess()).isFalse();
+        assertThat(tokenExpired.getCode()).isEqualTo("TOKEN_EXPIRED");
     }
 
     @Test
@@ -445,6 +476,33 @@ class PasswordResetSmsServiceImplTest {
         ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(null);
         return provider;
+    }
+
+    private PasswordResetSmsServiceImpl newService(
+            PasswordResetOpaqueTokenStore store,
+            PasswordResetSmsOtpProperties properties) {
+        return new PasswordResetSmsServiceImpl(
+            phoneOtpAttemptRepository,
+            smsAuthService,
+            store,
+            userRepository,
+            encryptionUtil,
+            passwordService,
+            passwordEncoder,
+            temporaryPasswordGenerator,
+            clientCredentialNotificationService,
+            properties);
+    }
+
+    private static PasswordResetSmsOtpProperties defaultOtpProperties(
+            long otpExpirySeconds,
+            long challengeTtlSeconds,
+            long proofTtlSeconds) {
+        PasswordResetSmsOtpProperties properties = new PasswordResetSmsOtpProperties();
+        properties.setOtpExpirySeconds(otpExpirySeconds);
+        properties.getOpaque().setChallengeTtlSeconds(challengeTtlSeconds);
+        properties.getOpaque().setProofTtlSeconds(proofTtlSeconds);
+        return properties;
     }
 
     private static User localUser(Long id, String tenantId, String phone) {

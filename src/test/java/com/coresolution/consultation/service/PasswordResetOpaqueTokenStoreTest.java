@@ -96,6 +96,92 @@ class PasswordResetOpaqueTokenStoreTest {
     }
 
     @Test
+    @DisplayName("challenge TTL 설정값으로 Redis set(..., ttl, SECONDS) 호출")
+    @SuppressWarnings("unchecked")
+    void redis_challengeUsesConfiguredTtl() {
+        ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ValueOperations<String, String> ops = mock(ValueOperations.class);
+        when(provider.getIfAvailable()).thenReturn(redis);
+        when(redis.opsForValue()).thenReturn(ops);
+        doNothing().when(ops).set(anyString(), anyString(), anyLong(), eq(TimeUnit.SECONDS));
+
+        long challengeTtl = 1200L;
+        PasswordResetOpaqueTokenStore store =
+            new PasswordResetOpaqueTokenStore(provider, challengeTtl, 300L);
+        store.issueChallenge(TENANT_A, OTP_ID);
+
+        verify(ops).set(
+            startsWith("password-reset:opaque:"),
+            anyString(),
+            eq(challengeTtl),
+            eq(TimeUnit.SECONDS));
+    }
+
+    @Test
+    @DisplayName("공유 Redis — 새 Store(빈 local)가 이전 Store challenge resolve 성공 후 consume/invalidate 단회")
+    @SuppressWarnings("unchecked")
+    void sharedRedis_survivesNewStoreInstance_thenInvalidateOnce() {
+        ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
+        StringRedisTemplate redis = mock(StringRedisTemplate.class);
+        ValueOperations<String, String> ops = mock(ValueOperations.class);
+        when(provider.getIfAvailable()).thenReturn(redis);
+        when(redis.opsForValue()).thenReturn(ops);
+
+        AtomicReference<String> storedJson = new AtomicReference<>();
+        AtomicReference<String> storedKey = new AtomicReference<>();
+        doAnswer(inv -> {
+            storedKey.set(inv.getArgument(0));
+            storedJson.set(inv.getArgument(1));
+            return null;
+        }).when(ops).set(anyString(), anyString(), anyLong(), eq(TimeUnit.SECONDS));
+        when(ops.get(anyString())).thenAnswer(inv -> {
+            if (storedKey.get() != null && storedKey.get().equals(inv.getArgument(0))) {
+                return storedJson.get();
+            }
+            return null;
+        });
+        when(redis.delete(anyString())).thenAnswer(inv -> {
+            if (storedKey.get() != null && storedKey.get().equals(inv.getArgument(0))) {
+                storedJson.set(null);
+                return Boolean.TRUE;
+            }
+            return Boolean.FALSE;
+        });
+
+        PasswordResetOpaqueTokenStore issuer =
+            new PasswordResetOpaqueTokenStore(provider, 1200L, 300L);
+        String challenge = issuer.issueChallenge(TENANT_A, OTP_ID);
+        verify(ops).set(
+            startsWith("password-reset:opaque:"),
+            anyString(),
+            eq(1200L),
+            eq(TimeUnit.SECONDS));
+
+        // 애플리케이션 재시작 시뮬레이션: 새 Store + 빈 local map, 같은 Redis mock
+        PasswordResetOpaqueTokenStore restarted =
+            new PasswordResetOpaqueTokenStore(provider, 1200L, 300L);
+        assertThat(restarted.resolveChallenge(challenge, TENANT_A)).isPresent();
+
+        restarted.invalidate(challenge);
+        assertThat(restarted.resolveChallenge(challenge, TENANT_A)).isEmpty();
+        assertThat(issuer.resolveChallenge(challenge, TENANT_A)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Redis 없음(local only) — 새 Store 인스턴스는 이전 challenge resolve 실패")
+    void localOnly_doesNotSurviveNewStoreInstance() {
+        PasswordResetOpaqueTokenStore issuer =
+            new PasswordResetOpaqueTokenStore(noRedis(), 1200L, 300L);
+        String challenge = issuer.issueChallenge(TENANT_A, OTP_ID);
+        assertThat(issuer.resolveChallenge(challenge, TENANT_A)).isPresent();
+
+        PasswordResetOpaqueTokenStore restarted =
+            new PasswordResetOpaqueTokenStore(noRedis(), 1200L, 300L);
+        assertThat(restarted.resolveChallenge(challenge, TENANT_A)).isEmpty();
+    }
+
+    @Test
     @DisplayName("Redis 장애(set throw) — local fallback 동작")
     @SuppressWarnings("unchecked")
     void redisSetFailure_fallsBackToLocal() {

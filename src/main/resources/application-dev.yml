@@ -169,4 +169,13 @@ monitoring:
 # 예: mindgarden-dev.core-solution.co.kr → mindgarden
 tenant:
   host-aliases: ${TENANT_HOST_ALIASES:mindgarden-dev.core-solution.co.kr:mindgarden}
+
+# 휴대폰 비밀번호 찾기: OTP(MySQL)+opaque challenge(Redis) TTL 연장 (.dev 재시작 후 생존 검증용).
+# proof 는 300 유지(생략 시 기본값). 코드 profile/호스트 분기 없음.
+password-reset:
+  otp-expiry-seconds: 1200
+  opaque:
+    challenge-ttl-seconds: 1200
+    proof-ttl-seconds: 300
+
 # noop trigger: retrigger Onboarding BE .dev after AdminShop duplicate fix (639203240, 2026-09-17)

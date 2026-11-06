@@ -1007,3 +1007,14 @@ security:
   audit:
     enabled: ${SECURITY_AUDIT_ENABLED:true}  # 감사 로그 활성화
     retention-days: ${SECURITY_AUDIT_RETENTION_DAYS:365}  # 로그 보관 기간 (일)
+
+# =====================================================
+# 휴대폰 비밀번호 찾기 SMS OTP + opaque Redis TTL SSOT
+# (PasswordResetSmsOtpProperties). OAuth/Apple OTP 와 무관.
+# 프로파일 분기 없이 yml 오버라이드만 사용 (예: application-dev.yml 1200).
+# =====================================================
+password-reset:
+  otp-expiry-seconds: 180
+  opaque:
+    challenge-ttl-seconds: 180
+    proof-ttl-seconds: 300

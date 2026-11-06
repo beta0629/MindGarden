@@ -17,8 +17,11 @@
 #
 # 실효 모드: systemd EnvironmentFile=dev.env 는 기동 시 주입 → Spring 은 재시작 후
 #   SMS_TEST_MODE 반영. 파일 readback 만으로 process 실효를 단정하지 말 것.
-# 생존 검증 순서: ON(+재시작 확인) → send-otp → **별도** BE restart/redeploy(ON 유지)
+#   프로세스 비비밀: GET /api/v1/auth/sms/status → testMode (OTP·env dump 금지).
+# 생존 검증 순서: ON(+실효) → send-otp → **별도** BE restart/redeploy(ON 유지)
 #   → 새 인스턴스 확인 → 동일 OTP+challenge verify 1회 → replay 거부 → OFF.
+# sync-solapi-sms-env.sh 는 deploy-backend-dev 가 자동 호출하지 않음(주석만).
+#   수동 실행 시 .dev SMS_TEST_MODE=false 강제 — ON 창에서 금지.
 #
 # 금지: 새 공개 API · OTP 반환 · 인증 우회 · prod.env · PRODUCTION_* ·
 #       mindgarden-core-blue|green · SSH 폴백

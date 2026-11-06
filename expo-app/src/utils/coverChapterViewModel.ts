@@ -880,7 +880,8 @@ export function resolveCoverLayoutMode(
   height: number,
   tabletMinWidth: number,
 ): CoverLayoutMode {
-  if (width < tabletMinWidth) {
+  // 짧은 변 기준 — 가로로 돌린 폰이 태블릿 분할로 잘못 들어가지 않게 한다.
+  if (Math.min(width, height) < tabletMinWidth) {
     return 'phone';
   }
   return width > height ? 'tabletLandscape' : 'tabletPortrait';

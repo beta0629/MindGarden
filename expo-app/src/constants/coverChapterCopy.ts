@@ -25,4 +25,8 @@ export const COVER_CHAPTER_COPY = {
   COMPLETED: '완료',
   minutes: (n: number) => `${n}분`,
   listCount: (count: number) => `${count}건`,
+  /** date-fns 패턴 — `11월 19일 (목)` */
+  DATE_SHORT_PATTERN: 'M월 d일 (EEE)',
+  /** date-fns 패턴 — `11월 19일 목요일` */
+  DATE_LONG_PATTERN: 'M월 d일 EEEE',
 } as const;

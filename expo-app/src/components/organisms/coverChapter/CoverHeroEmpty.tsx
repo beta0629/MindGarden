@@ -29,18 +29,16 @@ export function CoverHeroEmpty({
 }: CoverHeroEmptyProps) {
   return (
     <View style={styles.root}>
-      <View accessible accessibilityLabel={[eyebrow, title, description].filter(Boolean).join(', ')}>
+      <View
+        accessible
+        accessibilityLabel={[eyebrow, title, description].filter(Boolean).join(', ')}
+      >
         <Text style={styles.eyebrow}>{eyebrow}</Text>
         <Text style={styles.title}>{title}</Text>
         {description ? <Text style={styles.description}>{description}</Text> : null}
       </View>
       {actionLabel && onAction ? (
-        <PrimaryEntryCta
-          label={actionLabel}
-          onPress={onAction}
-          variant="quiet"
-          icon={actionIcon}
-        />
+        <PrimaryEntryCta label={actionLabel} onPress={onAction} variant="quiet" icon={actionIcon} />
       ) : null}
     </View>
   );

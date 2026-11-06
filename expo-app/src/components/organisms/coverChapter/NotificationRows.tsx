@@ -33,7 +33,9 @@ export function NotificationRows({
   gutter,
 }: NotificationRowsProps) {
   const rightLabel =
-    unreadCount > 0 ? COVER_CHAPTER_COPY.notifCount(unreadCount) : COVER_CHAPTER_COPY.NOTIF_VIEW_ALL;
+    unreadCount > 0
+      ? COVER_CHAPTER_COPY.notifCount(unreadCount)
+      : COVER_CHAPTER_COPY.NOTIF_VIEW_ALL;
 
   return (
     <View>

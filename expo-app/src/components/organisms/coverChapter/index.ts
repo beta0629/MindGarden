@@ -17,5 +17,7 @@ export { NotificationRows } from './NotificationRows';
 export { SessionProgressBlock } from './SessionProgressBlock';
 export { ScheduleListRow, ScheduleListSection, CoverInlineEmpty } from './ScheduleListSection';
 export { ClientScheduleListRow } from './ClientScheduleListRow';
+export { ClientHeroBlock } from './ClientHeroBlock';
+export { CounselorScheduleListRow } from './CounselorScheduleListRow';
 export { CoverChapterSplitLayout, getCoverGutter } from './CoverChapterSplitLayout';
 export { RoleDockTabIcon, RoleDockTabLabel, ROLE_DOCK_TINT } from './RoleDockTab';

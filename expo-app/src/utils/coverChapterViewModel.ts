@@ -233,7 +233,7 @@ export function formatRelativeDayLabel(dateYmd: string | null | undefined, now: 
     return COVER_CHAPTER_COPY.TOMORROW;
   }
   const d = parseYmd(dateYmd);
-  return d ? format(d, 'M월 d일 (EEE)', { locale: ko }) : '';
+  return d ? format(d, COVER_CHAPTER_COPY.DATE_SHORT_PATTERN, { locale: ko }) : '';
 }
 
 /**
@@ -252,7 +252,7 @@ export function formatChapterDateHeading(dateYmd: string | null | undefined, now
   if (!d) {
     return COVER_CHAPTER_COPY.NEXT_SESSION_LABEL;
   }
-  const body = format(d, 'M월 d일 EEEE', { locale: ko });
+  const body = format(d, COVER_CHAPTER_COPY.DATE_LONG_PATTERN, { locale: ko });
   const days = daysFromToday(dateYmd, now);
   if (days === 0) {
     return `${COVER_CHAPTER_COPY.TODAY}, ${body}`;
@@ -549,6 +549,78 @@ export function splitCounselorToday(
     })
     .sort((a, b) => scheduleSortKey(a).localeCompare(scheduleSortKey(b)));
   return { inProgress, upcoming };
+}
+
+/** `useUpcomingPreparation` 응답 중 히어로에 필요한 필드 */
+export interface CounselorHeroSource {
+  readonly scheduleId: number;
+  readonly clientName: string;
+  readonly sessionDate: string;
+  readonly startTime: string;
+  readonly sessionNumber?: number;
+  readonly consultationType?: string;
+}
+
+function counselorPersonLabel(clientName: string | null | undefined): string {
+  const name = toDisplayString(clientName, '').trim();
+  return name ? CONSULTANT_COVER_COPY.clientLabel(name) : '';
+}
+
+/**
+ * 상담사 다음 상담 히어로 — 준비 API 응답 우선, 없으면 오늘 시작 전 첫 일정.
+ * 둘 다 없으면 null (화면은 빈 상태). 금액·결제 정보는 포함하지 않는다.
+ *
+ * @param preparation 다음 상담 준비 응답
+ * @param todaySchedules 오늘 일정 (계약 유형·장소 보강용)
+ * @param now 기준 시각
+ */
+export function buildCounselorHero(
+  preparation: CounselorHeroSource | null | undefined,
+  todaySchedules: readonly Schedule[],
+  now: Date,
+): CoverHeroView | null {
+  if (preparation) {
+    const match = todaySchedules.find((s) => s.id === preparation.scheduleId);
+    return buildCoverHero(
+      {
+        scheduleId: preparation.scheduleId,
+        date: preparation.sessionDate,
+        startTime: preparation.startTime,
+        personLabel: counselorPersonLabel(preparation.clientName),
+        detail: buildHeroDetail({
+          consultationType: preparation.consultationType ?? match?.consultationType ?? '',
+          sessionNumber: preparation.sessionNumber ?? match?.sessionNumber,
+          location: match?.location,
+        }),
+        engagementSource: match ?? preparation,
+      },
+      now,
+    );
+  }
+  const next = splitCounselorToday(todaySchedules, null, now).upcoming[0];
+  if (!next) {
+    return null;
+  }
+  return buildCoverHero(
+    {
+      scheduleId: next.id,
+      date: next.date,
+      startTime: next.startTime,
+      personLabel: counselorPersonLabel(next.clientName),
+      detail: buildHeroDetail(next),
+      engagementSource: next,
+    },
+    now,
+  );
+}
+
+/**
+ * 상담사 오늘 일정 행 보조 줄 — `개인상담 · 6회차 · 대면 1상담실`
+ */
+export function buildCounselorRowDetail(
+  s: Pick<Schedule, 'consultationType' | 'sessionNumber' | 'location'>,
+): string {
+  return [buildSessionTitle(s), toDisplayString(s.location, '').trim()].filter(Boolean).join(' · ');
 }
 
 // ---------------------------------------------------------------------------

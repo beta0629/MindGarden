@@ -16,8 +16,7 @@ import { CLINIC_OS, COVER_METRICS } from './coverChapterTokens';
 const CHEVRON_SIZE = 16;
 
 export type ScheduleListTrailing =
-  | { readonly kind: 'chevron' }
-  | { readonly kind: 'initial'; readonly initial: string };
+  { readonly kind: 'chevron' } | { readonly kind: 'initial'; readonly initial: string };
 
 export interface ScheduleListRowProps {
   readonly leadPrimary: string;

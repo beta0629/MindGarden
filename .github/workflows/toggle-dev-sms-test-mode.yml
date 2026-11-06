@@ -1,0 +1,118 @@
+# =============================================================================
+# Toggle .dev SMS_TEST_MODE (ON/OFF) — workflow_dispatch only
+# -----------------------------------------------------------------------------
+# /etc/mindgarden/dev.env 의 SMS_TEST_MODE 만 true|false 로 전환하고
+# (기본) mindgarden-dev.service 를 재시작한다.
+#
+# 전제: self-hosted [linux, deploy] 러너가 .dev 호스트에 colocated 되어
+#       /etc/mindgarden/dev.env 와 systemctl 에 직접 접근 가능해야 한다.
+#       SSH / appleboy / DEV_SERVER_* / sync-solapi-sms-env.sh 사용 금지.
+#
+# 등록 참고: default branch(main) 에 워크플로가 보여야 Actions UI 에 노출된다.
+#   release/dev 머지 후 **main 에 본 워크플로 파일만** 올리는 후속 PR 로 등록.
+#   release/prod 수정으로 등록하지 말 것. push 트리거 없음(prod 사고 방지).
+#
+# 금지: 새 공개 API · OTP 반환 · 인증 우회 · prod.env · PRODUCTION_* ·
+#       mindgarden-core-blue|green · SSH 폴백
+# =============================================================================
+name: 🧪 Toggle .dev SMS_TEST_MODE
+
+on:
+  workflow_dispatch:
+    inputs:
+      sms_test_mode:
+        description: 'SMS_TEST_MODE value for /etc/mindgarden/dev.env (true|false)'
+        required: true
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+      confirm:
+        description: 'Type DEV_ONLY to confirm this is .dev only (never prod)'
+        required: true
+        type: string
+      restart:
+        description: 'Restart mindgarden-dev.service after apply'
+        required: false
+        type: boolean
+        default: true
+
+# Same queue as deploy-backend-dev / deploy-onboarding-dev / deploy-dev
+# (all restart mindgarden-dev.service). Do not cancel in-progress deploys.
+concurrency:
+  group: deploy-svc-dev-core-backend
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Guard (DEV_ONLY · release/dev ref)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate confirm · mode · ref
+        env:
+          CONFIRM: ${{ github.event.inputs.confirm }}
+          MODE: ${{ github.event.inputs.sms_test_mode }}
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "DEV_ONLY" ]; then
+            echo "::error title=confirm required::confirm must be exactly DEV_ONLY (got length=${#CONFIRM})"
+            exit 1
+          fi
+          case "$MODE" in
+            true|false) ;;
+            *)
+              echo "::error title=mode invalid::sms_test_mode must be true or false"
+              exit 1
+              ;;
+          esac
+          if [ "$REF" != "refs/heads/release/dev" ]; then
+            echo "::error title=ref refused::Dispatch only with --ref release/dev (got ${REF}). release/prod and main refs are refused."
+            exit 1
+          fi
+          echo "guard_ok mode=${MODE} ref=${REF}"
+
+  toggle:
+    name: Apply SMS_TEST_MODE on .dev (colocated)
+    needs: guard
+    runs-on: [self-hosted, linux, deploy]
+    environment: dev
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Toggle SMS_TEST_MODE (local script · no SSH)
+        env:
+          MODE: ${{ github.event.inputs.sms_test_mode }}
+          DO_RESTART: ${{ github.event.inputs.restart }}
+        run: |
+          set -euo pipefail
+          ENV_FILE="/etc/mindgarden/dev.env"
+          SCRIPT="scripts/deployment/toggle-dev-sms-test-mode.sh"
+
+          if [ ! -f "$SCRIPT" ]; then
+            echo "::error title=script missing::${SCRIPT} not found after checkout"
+            exit 1
+          fi
+
+          # Fail-closed: colocated runner must see /etc/mindgarden/dev.env.
+          # No SSH fallback by design.
+          if [ ! -f "$ENV_FILE" ] && ! sudo test -f "$ENV_FILE" 2>/dev/null; then
+            echo "::error title=dev.env missing::${ENV_FILE} not found. Runner must be colocated on the .dev host with access to this file. SSH fallback is intentionally not provided."
+            exit 1
+          fi
+
+          RESTART_ARGS=(--no-restart)
+          case "${DO_RESTART}" in
+            true|True|TRUE)
+              RESTART_ARGS=(--restart)
+              ;;
+          esac
+
+          echo "Running local toggle (MODE=${MODE}, restart=${DO_RESTART})"
+          sudo bash "$SCRIPT" --mode "$MODE" --apply "${RESTART_ARGS[@]}"

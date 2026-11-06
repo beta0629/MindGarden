@@ -111,6 +111,7 @@ Cursor 클라우드에서는 개발·운영 SSH 및 운영 DB 연동이 가능�
 | `ops-backend.yml` | Ops 백엔드 CI | push/PR `backend-ops/**` | — | — | |
 | `ssl-auto-renewal-check.yml` | SSL 갱신 점검 | `workflow_dispatch`(dev/prod 선택) | — | — | |
 | `check-dev-server-logs.yml` | 개발 서버 로그 | `workflow_dispatch` | — | — | |
+| [`toggle-dev-sms-test-mode.yml`](../../.github/workflows/toggle-dev-sms-test-mode.yml) | `.dev` `SMS_TEST_MODE` ON/OFF (`/etc/mindgarden/dev.env` · `mindgarden-dev.service`) | `workflow_dispatch`만 (`sms_test_mode`·`confirm=DEV_ONLY`·`restart`) | — | — | SSH 없음·colocated self-hosted `[linux,deploy]`. concurrency=`deploy-svc-dev-core-backend`. `release/dev` ref 가드. main 등록은 워크플로 파일만 후속 PR(release/prod로 등록 금지). |
 | `ops-health-snapshot.yml` | 운영 코어·OPS 헬스·디스크 등 읽기 전용 스냅샷 | `workflow_dispatch`, `schedule`(UTC 0·12시) | — | — | Discord 프로브는 `/etc/mindgarden/active-backend` 포트(8080/8081). CF520: [CF520_ORIGIN_HOST_ERROR_PREVENTION.md](../runbooks/CF520_ORIGIN_HOST_ERROR_PREVENTION.md) |
 | `fix-procedure-direct.yml` | 프로시저 직수정 | `workflow_dispatch` | — | — | |
 | `fix-production-db.yml` | 운영 DB 수정(확인 입력) | `workflow_dispatch` | — | — | 수동·위험 작업 |

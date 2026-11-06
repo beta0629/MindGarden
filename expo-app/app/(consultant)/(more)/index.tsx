@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   Clock,
+  Contact,
   Users as UsersIcon,
   Bell,
   MessageSquare,
@@ -38,6 +39,11 @@ import {
   useCommunityMenuAllowed,
 } from '@/components/guards/CommunityFeatureGate';
 import { TabletContentShell } from '@/components/layout/TabletContentShell';
+import { CONSULTANT_HOME_ROUTES } from '@/constants/consultantHomeCopy';
+import { CONSULTANT_DOCK_TABS, getDockTab } from '@/constants/roleDockConfig';
+
+/** 도크에서 숨긴 (clients) 진입점 — 라벨은 도크 정의와 공유 */
+const CONSULTANT_CLIENTS_MENU_TITLE = getDockTab(CONSULTANT_DOCK_TABS, '(clients)').label;
 
 export default function ConsultantMore() {
   const theme = useTheme();
@@ -122,6 +128,11 @@ export default function ConsultantMore() {
               },
             ]}
           >
+            <MenuListItem
+              icon={Contact}
+              title={CONSULTANT_CLIENTS_MENU_TITLE}
+              onPress={() => router.push(CONSULTANT_HOME_ROUTES.CLIENTS)}
+            />
             <MenuListItem
               icon={Clock}
               title="근무 가능 시간"

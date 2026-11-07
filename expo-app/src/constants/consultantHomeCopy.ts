@@ -61,6 +61,42 @@ export const CONSULTANT_HOME_COPY = {
   NOTIFICATIONS_A11Y: '알림 센터',
 } as const;
 
+/**
+ * 상담사 커버 홈 v4 — 일정·진행·기록만. 금액·결제·미결제 문구를 두지 않는다
+ * (`consultantCoverCopy.test` 로 회귀 고정).
+ */
+export const CONSULTANT_COVER_COPY = {
+  ROLE_LABEL: '상담사',
+  NAME_FALLBACK: '상담사',
+  nameLabel: (name: string) => `${name} 상담사`,
+  todaySummary: (total: number, completed: number, inProgress: number, scheduled: number) =>
+    `오늘 ${total}건 · 완료 ${completed} · 진행 ${inProgress} · 예정 ${scheduled}`,
+  TODAY_SUMMARY_ZERO: '오늘 예정된 상담이 없어요',
+  clientLabel: (name: string) => `${name} 님`,
+  ENTRY_CTA: '다음 상담 입장',
+  ENTRY_CTA_A11Y: '다음 상담 상세 보기',
+  HERO_EMPTY_TITLE: '남은 상담이 없어요',
+  HERO_EMPTY_DESCRIPTION: '새 일정이 확정되면 이곳에 표시돼요.',
+  HERO_EMPTY_ACTION: '일정 확인',
+  missingJournalRow: (count: number) => `일지 미작성 ${count}건`,
+  urgentClientRow: (name: string, riskLabel: string) => `${name} 님 확인 필요 · ${riskLabel}`,
+  IN_PROGRESS_TITLE: '지금 진행 중',
+  IN_PROGRESS_LEAD: '현재',
+  durationLabel: (minutes: number) => `${minutes}분 상담`,
+  UPCOMING_TITLE: '이후 일정',
+  upcomingCount: (count: number) => `오늘 ${count}`,
+  UPCOMING_EMPTY: '오늘 남은 일정이 없어요',
+  UPCOMING_EMPTY_ACTION: '일정 확인',
+  RECORDS_TITLE: '상담 기록',
+  recordsCount: (count: number) => `작성할 일지 ${count}건`,
+  RECORDS_PROMPT: '상담을 마친 후 일지를 기록하세요',
+  RECORDS_EMPTY: '작성할 일지가 없어요',
+  RECORDS_EMPTY_ACTION: '기록 확인',
+  RECORDS_A11Y: '상담 기록 보기',
+  TODAY_LABEL: '오늘',
+  LANDSCAPE_FOOTNOTE: '일정과 상담 기록만 표시',
+} as const;
+
 export const CONSULTANT_HOME_ROUTES = {
   NOTIFICATIONS: '/(consultant)/(more)/notifications',
   SCHEDULE: '/(consultant)/(schedule)/',
@@ -68,6 +104,11 @@ export const CONSULTANT_HOME_ROUTES = {
   RECORDS: '/(consultant)/(records)/',
   MESSAGES: '/(consultant)/(more)/messages',
   SALARY: '/(consultant)/(more)/salary-settlement',
+  CLIENTS: '/(consultant)/(clients)/',
   CLIENT_DETAIL: (clientId: number | string) =>
     `/(consultant)/(clients)/${encodeURIComponent(String(clientId))}`,
+  scheduleDetail: (scheduleId: number | string) =>
+    `/(consultant)/(schedule)/${encodeURIComponent(String(scheduleId))}`,
+  recordCreate: (scheduleId: number | string) =>
+    `/(consultant)/(records)/create/${encodeURIComponent(String(scheduleId))}`,
 } as const;

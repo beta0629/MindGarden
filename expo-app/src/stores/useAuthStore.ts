@@ -7,13 +7,13 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import * as SecureStore from 'expo-secure-store';
 import { createZustandMmkvPersistStorage } from '@/lib/getMmkv';
 import { resolveStoreRoleFromAccessToken } from '@/utils/adminRole';
 import { decodeJwtPayload, parseJwtSubAsUserId } from '@/utils/jwtPayload';
 import { syncTenantStoreFromAccessToken } from '@/utils/tenantJwtSync';
 import { clearJsessionId, hydrateJsessionCacheFromSecureStore } from '@/utils/sessionCookie';
 import { buildLoginSuccessToastPayload } from '@/utils/currentAccountDisplay';
+import { secureDeleteItem, secureGetItem, secureSetItem } from '@/utils/secureStoreAdapter';
 
 const SECURE_KEY_ACCESS_TOKEN = 'mg_access_token';
 const SECURE_KEY_REFRESH_TOKEN = 'mg_refresh_token';
@@ -80,8 +80,8 @@ async function runRestoreTokensFromSecureStore(
   set: AuthSetState,
 ): Promise<void> {
   try {
-    const accessToken = await SecureStore.getItemAsync(SECURE_KEY_ACCESS_TOKEN);
-    const refreshToken = await SecureStore.getItemAsync(SECURE_KEY_REFRESH_TOKEN);
+    const accessToken = await secureGetItem(SECURE_KEY_ACCESS_TOKEN);
+    const refreshToken = await secureGetItem(SECURE_KEY_REFRESH_TOKEN);
     if (accessToken && refreshToken) {
       const jwtTenantId = syncTenantStoreFromAccessToken(accessToken);
       const jwtPayload = decodeJwtPayload(accessToken);
@@ -161,8 +161,8 @@ export const useAuthStore = create<AuthState>()(
       _hasHydrated: false,
 
       login: async (user, tokens) => {
-        await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
-        await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
+        await secureSetItem(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
+        await secureSetItem(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
         const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
         const role = roleFromJwt ?? user.role;
         const jwtPayload = decodeJwtPayload(tokens.accessToken);
@@ -201,8 +201,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         // SecureStore·메모리 토큰만 정리. clearTenant 는 호출하지 않음(register 403 방지).
-        await SecureStore.deleteItemAsync(SECURE_KEY_ACCESS_TOKEN);
-        await SecureStore.deleteItemAsync(SECURE_KEY_REFRESH_TOKEN);
+        await secureDeleteItem(SECURE_KEY_ACCESS_TOKEN);
+        await secureDeleteItem(SECURE_KEY_REFRESH_TOKEN);
         await clearJsessionId();
         const { queryClient } = await import('../api/queryClient');
         queryClient.clear();
@@ -218,8 +218,8 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateTokens: async (tokens) => {
-        await SecureStore.setItemAsync(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
-        await SecureStore.setItemAsync(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
+        await secureSetItem(SECURE_KEY_ACCESS_TOKEN, tokens.accessToken);
+        await secureSetItem(SECURE_KEY_REFRESH_TOKEN, tokens.refreshToken);
         const jwtTenantId = syncTenantStoreFromAccessToken(tokens.accessToken);
         const roleFromJwt = resolveStoreRoleFromAccessToken(tokens.accessToken);
         const jwtPayload = decodeJwtPayload(tokens.accessToken);

@@ -118,6 +118,27 @@ const COMMON_COLORS = {
   loginOrbEdge: '#E0DACF',
 } as const;
 
+/**
+ * Clinic-OS 커버·챕터 v4 공용 팔레트 — 내담자·상담사 홈/일정 챕터·역할 도크 공통.
+ * 역할별 스킨을 두지 않는다. amber 는 내담자 미결제 칩, warn 은 상담사 일지 미작성 행 전용.
+ * SSOT: Expo 커버+챕터 v4 시안 README 「좌표·토큰」 표.
+ */
+const CLINIC_OS_COLORS = {
+  ink: '#0F172A',
+  teal: '#0E5F5A',
+  cream: '#FAF9F7',
+  sheet: '#FFFFFF',
+  muted: '#526274',
+  hairline: '#DDE5E3',
+  tint: '#EDF3F1',
+  /** 내담자 미결제 칩 전용 — 상담사 화면 사용 금지 */
+  clientAmber: '#C4892A',
+  clientAmberSoft: '#FCF6E9',
+  /** 상담사 「일지 미작성」 경고 행 전용 */
+  counselorWarnBg: '#F8EEEE',
+  counselorWarnBang: '#B42318',
+} as const;
+
 /** 그레이 스케일 (토큰화) */
 const GRAY_COLORS = {
   900: '#2C2C2C',
@@ -136,6 +157,7 @@ export const colors = {
   admin: ADMIN_COLORS,
   common: COMMON_COLORS,
   gray: GRAY_COLORS,
+  clinicOs: CLINIC_OS_COLORS,
 } as const;
 
 /** 어드민 모바일 터치 타깃 최소 높이 (pt) — DESIGN_HANDOFF §2.2 */

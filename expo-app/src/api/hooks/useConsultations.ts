@@ -18,6 +18,7 @@ import {
   normalizeScheduleListPayload,
 } from '@/utils/clientHomeKpi';
 import { parseUnreadMessageCountPayload } from '@/utils/consultationMessageUnread';
+import { countPendingPaymentMappings } from '@/utils/coverChapterViewModel';
 import { useClientScheduleApiContext } from '@/hooks/useClientScheduleApiContext';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { resolveClientScheduleUserId } from '@/utils/resolveClientScheduleUserId';
@@ -31,6 +32,7 @@ import {
   sortClientSessions as sharedSortClientSessions,
   type ClientSessionsTab,
 } from '@/utils/clientSessionsSort';
+import { pickScheduleEngagementFields } from '@/utils/scheduleEngagementFields';
 import type { Schedule, ScheduleDetail } from './useSchedules';
 
 type ConsultationStatus = 'SCHEDULED' | 'BOOKED' | 'COMPLETED' | 'ALL';
@@ -164,6 +166,7 @@ function mapClientScheduleRow(
           ? Number(row.consultationId)
           : undefined,
     ...(extractHasRating(row) !== undefined ? { hasRating: extractHasRating(row) } : {}),
+    ...pickScheduleEngagementFields(row),
   };
 }
 
@@ -314,6 +317,11 @@ export function useUpcomingConsultation(clientId?: number | string) {
 
 export interface ClientDashboardData {
   remainingSessions: number;
+  /** 잔여 집계와 같은 매핑 집합의 총·사용 회기 (커버 「내 상담 회기」 진행 바) */
+  totalSessions: number;
+  usedSessions: number;
+  /** 미결제 매핑 수 — 「내 상담 회기」 블록 전용 칩 */
+  pendingPaymentCount: number;
   thisMonthScheduleCount: number;
   unreadMessageCount: number;
 }
@@ -340,7 +348,7 @@ export function useClientDashboard(clientId?: number | string) {
       const thisMonthScheduleCount = countThisMonthSchedules(schedules);
 
       const mappings = extractMappingsFromResponse(mappingRaw);
-      const { remainingSessions } = aggregateSessionBalance(
+      const { remainingSessions, totalSessions, usedSessions } = aggregateSessionBalance(
         Number(effectiveUserId),
         mappings,
       );
@@ -350,6 +358,9 @@ export function useClientDashboard(clientId?: number | string) {
 
       return {
         remainingSessions,
+        totalSessions,
+        usedSessions,
+        pendingPaymentCount: countPendingPaymentMappings(mappings),
         thisMonthScheduleCount,
         unreadMessageCount,
       };

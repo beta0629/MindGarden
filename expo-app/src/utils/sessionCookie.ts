@@ -5,12 +5,12 @@
  * @author MindGarden
  * @since 2026-05-16
  */
-import * as SecureStore from 'expo-secure-store';
+import { secureDeleteItem, secureGetItem, secureSetItem } from '@/utils/secureStoreAdapter';
 
 const SECURE_KEY_JSESSION_ID = 'mg_jsession_id';
 
 export async function getJsessionId(): Promise<string | null> {
-  const v = await SecureStore.getItemAsync(SECURE_KEY_JSESSION_ID);
+  const v = await secureGetItem(SECURE_KEY_JSESSION_ID);
   const t = v?.trim();
   return t && t.length > 0 ? t : null;
 }
@@ -18,14 +18,14 @@ export async function getJsessionId(): Promise<string | null> {
 export async function setJsessionId(sessionId: string | null | undefined): Promise<void> {
   const t = sessionId?.trim();
   if (t && t.length > 0) {
-    await SecureStore.setItemAsync(SECURE_KEY_JSESSION_ID, t);
+    await secureSetItem(SECURE_KEY_JSESSION_ID, t);
     return;
   }
-  await SecureStore.deleteItemAsync(SECURE_KEY_JSESSION_ID);
+  await secureDeleteItem(SECURE_KEY_JSESSION_ID);
 }
 
 export async function clearJsessionId(): Promise<void> {
-  await SecureStore.deleteItemAsync(SECURE_KEY_JSESSION_ID);
+  await secureDeleteItem(SECURE_KEY_JSESSION_ID);
 }
 
 /** axios 인터셉터용 — 동기 getState 대신 SecureStore는 비동기라 미리 로드한 값을 넘긴다 */

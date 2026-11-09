@@ -2,16 +2,14 @@
  * V2 §B.2 / §I.7 — Quiet Reveal Bottom Sheet (이메일·휴대폰 + 비밀번호 폼).
  *
  * <p>V1 의 인라인 토글 방식을 폐기하고 (§A.6) 트리거 → Bottom Sheet 슬라이드 업 진입으로 변경.
- * `@gorhom/bottom-sheet` v5 가 이미 `expo-app/package.json` 에 설치되어 있어 라이브러리를 활용한다 (§I.7).</p>
+ * Native: `@gorhom/bottom-sheet` v5. Web: RN `Modal` + sibling backdrop
+ * (gorhom backdrop can intercept pointer events on web and swallow the submit CTA).</p>
  *
  * <p>SSOT: docs/design-system/EXPO_APP_LOGIN_SCREEN_REDESIGN_SPEC_20260610_V2.md
  *  - §B.2 ASCII wireframe (handle / title / 입력 2 / CTA)
  *  - §C.5 Primary CTA (`consultant.primary` 56dp 14dp radius SemiBold 16)
- *  - §D.3 Bottom Sheet 모션 (240ms 슬라이드 업, backdrop 0.18, Reduce Motion 시 fade only)
+ *  - §D.3 Bottom Sheet 모션 (240ms 슬라이드 업, Backdrop 0.18, Reduce Motion 시 fade only)
  *  - §G.1 a11y / §G.3 KeyboardAvoidingView</p>
- *
- * <p>2026-06-10 정정: 사용자 정책상 비밀번호 찾기 기능이 앱에 없으므로 V2 핸드오프 §B.2 의
- * inline "비밀번호 찾기" 링크를 제거한다. FooterLinks 의 동일 링크도 직전 핫픽스에서 제거 완료.</p>
  *
  * @author MindGarden
  * @since 2026-06-10
@@ -19,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
+  Modal,
   Platform,
   Pressable,
   StyleSheet,
@@ -67,7 +66,165 @@ export interface CredentialSheetProps {
   readonly disabled?: boolean;
 }
 
-export function CredentialSheet(props: CredentialSheetProps) {
+function CredentialSheetForm(props: {
+  readonly theme: ReturnType<typeof useTheme>;
+  readonly email: string;
+  readonly password: string;
+  readonly onEmailChange: (value: string) => void;
+  readonly onPasswordChange: (value: string) => void;
+  readonly onSubmit: () => void;
+  readonly submitting: boolean;
+  readonly disabled: boolean;
+}) {
+  const {
+    theme,
+    email,
+    password,
+    onEmailChange,
+    onPasswordChange,
+    onSubmit,
+    submitting,
+    disabled,
+  } = props;
+
+  return (
+    <View style={styles.content}>
+      <Text
+        maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+        style={[styles.title, { color: theme.colors.textMain }]}
+        accessibilityRole="header"
+      >
+        {SHEET_TITLE}
+      </Text>
+
+      <View
+        style={[
+          styles.inputContainer,
+          { borderColor: theme.colors.border, backgroundColor: theme.colors.bgSub },
+        ]}
+      >
+        <Mail size={18} color={theme.colors.textTertiary} />
+        <TextInput
+          style={[styles.input, { color: theme.colors.textMain }]}
+          placeholder={EMAIL_PLACEHOLDER}
+          placeholderTextColor={theme.colors.textTertiary}
+          value={email}
+          onChangeText={onEmailChange}
+          autoCapitalize="none"
+          keyboardType="default"
+          autoCorrect={false}
+          autoComplete="username"
+          textContentType="username"
+          accessibilityLabel={EMAIL_PLACEHOLDER}
+          maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+          testID="login-input-email"
+        />
+      </View>
+
+      <View
+        style={[
+          styles.inputContainer,
+          { borderColor: theme.colors.border, backgroundColor: theme.colors.bgSub },
+        ]}
+      >
+        <Lock size={18} color={theme.colors.textTertiary} />
+        <TextInput
+          style={[styles.input, { color: theme.colors.textMain }]}
+          placeholder={PASSWORD_PLACEHOLDER}
+          placeholderTextColor={theme.colors.textTertiary}
+          value={password}
+          onChangeText={onPasswordChange}
+          secureTextEntry
+          textContentType="password"
+          autoComplete="password"
+          returnKeyType="go"
+          onSubmitEditing={onSubmit}
+          accessibilityLabel={PASSWORD_PLACEHOLDER}
+          maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+          testID="login-input-password"
+        />
+      </View>
+
+      <Pressable
+        style={[
+          styles.submitButton,
+          {
+            backgroundColor: theme.colors.primary,
+            opacity: disabled || submitting ? 0.7 : 1,
+          },
+        ]}
+        onPress={onSubmit}
+        disabled={disabled || submitting}
+        accessibilityRole="button"
+        accessibilityLabel={SUBMIT_LABEL}
+        accessibilityState={{ disabled: disabled || submitting, busy: submitting }}
+        testID="login-credential-submit"
+      >
+        {submitting ? (
+          <ActivityIndicator color={theme.colors.textOnPrimary} />
+        ) : (
+          <Text
+            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
+            style={[styles.submitLabel, { color: theme.colors.textOnPrimary }]}
+          >
+            {SUBMIT_LABEL}
+          </Text>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * Web: Modal + absolute sibling backdrop so sheet controls receive pointer events.
+ * (Nested Pressable-wrapping-sheet patterns reintroduce the intercept bug.)
+ */
+function CredentialSheetWeb(props: CredentialSheetProps) {
+  const {
+    isOpen,
+    onClose,
+    email,
+    password,
+    onEmailChange,
+    onPasswordChange,
+    onSubmit,
+    submitting,
+    disabled = false,
+  } = props;
+  const theme = useTheme();
+
+  const handleSubmit = useCallback(() => {
+    onSubmit();
+  }, [onSubmit]);
+
+  return (
+    <Modal visible={isOpen} transparent animationType="slide" onRequestClose={onClose}>
+      <View style={styles.webRoot} accessibilityLabel="이메일·휴대폰 로그인">
+        <Pressable
+          style={[styles.webBackdrop, { backgroundColor: `rgba(0,0,0,${BACKDROP_OPACITY})` }]}
+          onPress={onClose}
+          accessibilityLabel="닫기"
+          accessibilityRole="button"
+        />
+        <View style={[styles.webSheet, { backgroundColor: theme.colors.surface }]}>
+          <View style={[styles.webHandle, { backgroundColor: theme.colors.border }]} />
+          <CredentialSheetForm
+            theme={theme}
+            email={email}
+            password={password}
+            onEmailChange={onEmailChange}
+            onPasswordChange={onPasswordChange}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            disabled={disabled}
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function CredentialSheetNative(props: CredentialSheetProps) {
   const {
     isOpen,
     onClose,
@@ -144,92 +301,27 @@ export function CredentialSheet(props: CredentialSheetProps) {
       backgroundStyle={sheetBackgroundStyle}
       accessibilityLabel="이메일·휴대폰 로그인"
     >
-      <BottomSheetView style={styles.content}>
-        <Text
-          maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-          style={[styles.title, { color: theme.colors.textMain }]}
-          accessibilityRole="header"
-        >
-          {SHEET_TITLE}
-        </Text>
-
-        <View
-          style={[
-            styles.inputContainer,
-            { borderColor: theme.colors.border, backgroundColor: theme.colors.bgSub },
-          ]}
-        >
-          <Mail size={18} color={theme.colors.textTertiary} />
-          <TextInput
-            style={[styles.input, { color: theme.colors.textMain }]}
-            placeholder={EMAIL_PLACEHOLDER}
-            placeholderTextColor={theme.colors.textTertiary}
-            value={email}
-            onChangeText={onEmailChange}
-            autoCapitalize="none"
-            keyboardType="default"
-            autoCorrect={false}
-            autoComplete="username"
-            textContentType="username"
-            accessibilityLabel={EMAIL_PLACEHOLDER}
-            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-            testID="login-input-email"
-          />
-        </View>
-
-        <View
-          style={[
-            styles.inputContainer,
-            { borderColor: theme.colors.border, backgroundColor: theme.colors.bgSub },
-          ]}
-        >
-          <Lock size={18} color={theme.colors.textTertiary} />
-          <TextInput
-            style={[styles.input, { color: theme.colors.textMain }]}
-            placeholder={PASSWORD_PLACEHOLDER}
-            placeholderTextColor={theme.colors.textTertiary}
-            value={password}
-            onChangeText={onPasswordChange}
-            secureTextEntry
-            textContentType="password"
-            autoComplete="password"
-            returnKeyType="go"
-            onSubmitEditing={handleSubmit}
-            accessibilityLabel={PASSWORD_PLACEHOLDER}
-            maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-            testID="login-input-password"
-          />
-        </View>
-
-        <Pressable
-          style={[
-            styles.submitButton,
-            {
-              backgroundColor: theme.colors.primary,
-              opacity: disabled || submitting ? 0.7 : 1,
-            },
-          ]}
-          onPress={handleSubmit}
-          disabled={disabled || submitting}
-          accessibilityRole="button"
-          accessibilityLabel={SUBMIT_LABEL}
-          accessibilityState={{ disabled: disabled || submitting, busy: submitting }}
-          testID="login-credential-submit"
-        >
-          {submitting ? (
-            <ActivityIndicator color={theme.colors.textOnPrimary} />
-          ) : (
-            <Text
-              maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-              style={[styles.submitLabel, { color: theme.colors.textOnPrimary }]}
-            >
-              {SUBMIT_LABEL}
-            </Text>
-          )}
-        </Pressable>
+      <BottomSheetView>
+        <CredentialSheetForm
+          theme={theme}
+          email={email}
+          password={password}
+          onEmailChange={onEmailChange}
+          onPasswordChange={onPasswordChange}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          disabled={disabled}
+        />
       </BottomSheetView>
     </BottomSheet>
   );
+}
+
+export function CredentialSheet(props: CredentialSheetProps) {
+  if (Platform.OS === 'web') {
+    return <CredentialSheetWeb {...props} />;
+  }
+  return <CredentialSheetNative {...props} />;
 }
 
 const styles = StyleSheet.create({
@@ -271,5 +363,28 @@ const styles = StyleSheet.create({
   submitLabel: {
     ...textStyles.button,
     textAlign: 'center',
+  },
+  webRoot: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  webBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  webSheet: {
+    zIndex: 1,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '60%',
+    paddingBottom: 8,
+  },
+  webHandle: {
+    alignSelf: 'center',
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    marginTop: 10,
+    marginBottom: 4,
   },
 });

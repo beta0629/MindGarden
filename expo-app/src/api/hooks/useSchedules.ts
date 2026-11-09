@@ -23,6 +23,7 @@ import {
   resolveClientNameForScheduleRow,
 } from '@/utils/scheduleDisplayLabels';
 import { resolveScheduleApiUserRole } from '@/utils/roleCapability';
+import { pickScheduleEngagementFields } from '@/utils/scheduleEngagementFields';
 
 export interface Schedule {
   id: number;
@@ -59,6 +60,10 @@ export interface Schedule {
   location?: string;
   contactNumber?: string;
   consultationId?: number;
+  /** BE `ScheduleResponse.engagementType` (예: INSTITUTION_LINK). 미제공 시 undefined */
+  engagementType?: string;
+  /** BE `ScheduleResponse.paymentTiming` (예: INSTITUTION_LINK). 미제공 시 undefined */
+  paymentTiming?: string;
 }
 
 export interface ScheduleDetail extends Schedule {
@@ -242,6 +247,7 @@ function mapRowToSchedule(row: Record<string, unknown>, fallbackConsultantId: nu
         : row.consultationId != null
           ? Number(row.consultationId)
           : undefined,
+    ...pickScheduleEngagementFields(row),
   };
 }
 

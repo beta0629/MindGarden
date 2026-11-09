@@ -11,23 +11,14 @@ import { queryClient } from '../api/queryClient';
 import { isOfflinePersistedQueryKey } from '../api/offlinePersistPolicy';
 import { BackgroundTaskService } from '../services/BackgroundTaskService';
 import { OfflineQueueService } from '../services/OfflineQueueService';
-
-/** Wi‑Fi 연결만 있고 실제 인터넷 없음 등 — `isInternetReachable === false`면 오프라인 취급 */
-function isOfflineFromNetState(state: NetInfoState): boolean {
-  const connected = state.isConnected ?? false;
-  if (!connected) {
-    return true;
-  }
-  if (state.isInternetReachable === false) {
-    return true;
-  }
-  return false;
-}
+import { configureWebNetInfoReachability } from '../utils/configureWebNetInfoReachability';
+import { isOfflineFromNetState } from '../utils/isOfflineFromNetState';
 
 let netInfoSubscription: (() => void) | null = null;
 let currentState: NetInfoState | null = null;
 /** 직전 이벤트까지 오프라인이었는지(복구 감지용) */
 let lastIsOffline = false;
+let configuredReachability = false;
 const listeners = new Set<() => void>();
 
 function emit(): void {
@@ -46,10 +37,19 @@ async function onNetworkRestored(): Promise<void> {
   }
 }
 
+function ensureReachabilityConfigured(): void {
+  if (configuredReachability) {
+    return;
+  }
+  configureWebNetInfoReachability();
+  configuredReachability = true;
+}
+
 function attachNetInfoListener(): void {
   if (netInfoSubscription != null) {
     return;
   }
+  ensureReachabilityConfigured();
   netInfoSubscription = NetInfo.addEventListener((state) => {
     const offline = isOfflineFromNetState(state);
     const isOnline = !offline;
@@ -112,6 +112,7 @@ export function useOffline(): OfflineState {
  * 루트에서 1회 호출: NetInfo 구독 + onlineManager + 재연결 시 큐/쿼리 갱신
  */
 export function setupOfflineNetworking(): () => void {
+  ensureReachabilityConfigured();
   attachNetInfoListener();
   return () => {
     // 앱 종료까지 유지(이중 구독 방지). 필요 시 netInfoSubscription?.() 확장 가능.

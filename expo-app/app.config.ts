@@ -224,6 +224,41 @@ function resolveGoogleIosReversedClientId(): string | undefined {
 }
 
 /**
+ * Google Sign-In Expo config plugin 항목을 만든다.
+ *
+ * <p>EAS Build 에서 iosUrlScheme 을 해석하지 못하면 throw (fail-closed).
+ * 로컬 비-EAS 평가는 빈 배열을 반환한다. 반환 타입 어노테이션은 EAS config 로더
+ * 호환을 위해 생략한다.</p>
+ *
+ * @param {string | undefined} googleIosReversedClientId reversed iOS client URL scheme
+ * @returns {unknown[]} Expo config plugin entries
+ * @author MindGarden
+ * @since 2026-11-10
+ */
+function resolveGoogleSignInPluginEntries(googleIosReversedClientId?: string) {
+  if (googleIosReversedClientId) {
+    return [
+      [
+        '@react-native-google-signin/google-signin',
+        {
+          iosUrlScheme: googleIosReversedClientId,
+        },
+      ],
+    ];
+  }
+  if (process.env.EAS_BUILD === 'true') {
+    throw new Error(
+      '[app.config] EAS Build: Google Sign-In plugin requires iosUrlScheme from ' +
+        'EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME or EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID. ' +
+        'Set them on the EAS Environment bound by eas.json ' +
+        '(development profile → environment: development). ' +
+        'Do not omit the plugin — that drops RNGoogleSignin from native builds.',
+    );
+  }
+  return [];
+}
+
+/**
  * Android applicationId (= `android.package`).
  *
  * <p>iOS 의 `bundleIdentifier`(`com.mindgarden.MindGardenMobile`) 와 의도적으로 다른 값
@@ -268,29 +303,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   /**
    * Google Sign-In config plugin entries — never silently omit on EAS Build.
    * iosUrlScheme 값은 env 에서만 파생 (하드코딩 금지).
+   *
+   * <p>복잡한 TS 타입 표기는 EAS Read app config 로더 호환을 위해 두지 않는다
+   * (#1847 후속 SyntaxError: Unexpected token '{' 방지).</p>
    */
-  const googleSignInPluginEntries: NonNullable<ExpoConfig['plugins']> = (() => {
-    if (googleIosReversedClientId) {
-      return [
-        [
-          '@react-native-google-signin/google-signin',
-          {
-            iosUrlScheme: googleIosReversedClientId,
-          },
-        ],
-      ];
-    }
-    if (process.env.EAS_BUILD === 'true') {
-      throw new Error(
-        '[app.config] EAS Build: Google Sign-In plugin requires iosUrlScheme from ' +
-          'EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME or EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID. ' +
-          'Set them on the EAS Environment bound by eas.json ' +
-          '(development profile → environment: development). ' +
-          'Do not omit the plugin — that drops RNGoogleSignin from native builds.',
-      );
-    }
-    return [];
-  })();
+  const googleSignInPluginEntries = resolveGoogleSignInPluginEntries(googleIosReversedClientId);
 
   const appPlugins: ExpoConfig['plugins'] = [
     ...(includeExpoDevClient ? (['expo-dev-client'] as const) : []),

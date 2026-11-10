@@ -97,6 +97,10 @@ jobs:
         src/components/ui/Schedule/__tests__/ScheduleCalendarView.dayZoom.test.js
         src/components/schedule/__tests__/UnifiedScheduleComponent.moveTargetPast.test.js
         src/utils/__tests__/safeHtml.test.js
+        src/api/__tests__/adminClientsWithStatsGetAll.test.js
+        src/utils/__tests__/consultantHelper.getAllClientsWithStats.test.js
+        src/components/dashboard-v2/__tests__/AdminDashboardV2.matchingQueueFullList.test.js
+        src/components/admin/__tests__/ClientComprehensiveManagement.loadMappingsFullList.test.js
     steps:
       - name: Checkout
         uses: actions/checkout@v4

@@ -16,6 +16,7 @@ import {
   adminClientsWithMappingGet,
   adminClientsWithMappingGetAll,
   adminClientsWithStatsGet,
+  adminClientsWithStatsGetAll,
   adminConsultantsWithStatsGet,
   adminMappingsListGet,
   adminMappingsListGetAll,
@@ -89,6 +90,19 @@ export function fetchAdminMappingsListAll(extra = {}) {
  */
 export function fetchAdminClientsWithStats(extra = {}) {
   return adminClientsWithStatsGet(extra);
+}
+
+/**
+ * clients with-stats 전체 페이지 drain — ALWAYS page+size per page.
+ * 단일 페이지는 {@link fetchAdminClientsWithStats} 유지.
+ *
+ * @param {Record<string, string|number|boolean|undefined|null>} [extra={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-11-10
+ */
+export function fetchAdminClientsWithStatsAll(extra = {}) {
+  return adminClientsWithStatsGetAll(extra);
 }
 
 /**

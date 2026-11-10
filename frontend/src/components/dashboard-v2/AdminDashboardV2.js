@@ -393,6 +393,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
   const isInitialized = useRef(false);
   /** 초기 로드 완료 후 loadStats는 layout blank(setLoading) 없이 silent 갱신 */
   const hasLoadedStatsOnceRef = useRef(false);
+  /** loadStats deps를 [showToast]로 유지하면서 최신 미배정 로더를 호출 */
+  const loadUnassignedClientsAndConsultantsRef = useRef(null);
 
   /** B0KlA 상태 시리즈·축 색상: CSS 변수를 resolved 값으로 읽어 Canvas에 전달 */
   useEffect(() => {
@@ -615,20 +617,14 @@ const AdminDashboardV2 = ({ user: propUser }) => {
           : (d?.data?.consultants || d?.consultants || []);
         totalConsultants = selectActiveConsultants(raw).length;
       }
-      // P0-a: with-mapping-info 응답으로 KPI count + 매칭 큐를 함께 채움 (중복 fetch 제거)
-      setMatchingQueueLoading(true);
-      try {
-        if (clientsRes.ok) {
-          const d = await clientsRes.json();
-          totalClients = d?.data?.count || d?.count || 0;
-          const clientsRaw = d?.data?.clients ?? d?.clients ?? [];
-          const clients = Array.isArray(clientsRaw) ? clientsRaw : [];
-          setUnassignedClients(filterManualMatchingQueueClients(clients));
-        } else {
-          setUnassignedClients([]);
-        }
-      } finally {
-        setMatchingQueueLoading(false);
+      // P0-a: with-mapping-info 응답의 count만 KPI. 매칭 큐는 전용 로더가 채운다.
+      if (clientsRes.ok) {
+        const d = await clientsRes.json();
+        totalClients = d?.data?.count || d?.count || 0;
+      }
+      const loadMatchingQueue = loadUnassignedClientsAndConsultantsRef.current;
+      if (typeof loadMatchingQueue === 'function') {
+        await loadMatchingQueue();
       }
       if (mappingStatsPayload != null) {
         const statsData = mappingStatsPayload?.data != null
@@ -755,6 +751,8 @@ const AdminDashboardV2 = ({ user: propUser }) => {
       setMatchingQueueLoading(false);
     }
   }, [t]);
+
+  loadUnassignedClientsAndConsultantsRef.current = loadUnassignedClientsAndConsultants;
 
   /**
    * 결제 대기 KPI — GET pending-payment only (sidebar PENDING_PAYMENT SSOT).
@@ -983,7 +981,7 @@ const AdminDashboardV2 = ({ user: propUser }) => {
     }
     loadPendingPaymentAndDepositSections();
     loadSchedulePendingList();
-    // P0-a: 매칭 큐는 loadStats의 with-mapping-info에서 채움 (중복 호출 제거)
+    // P0-a: 매칭 큐는 loadStats가 부르는 전용 로더가 채운다 (마운트에서 중복 호출 금지)
     // P0-c: today/statistics는 세션 준비 effect + refresh 핸들러에서만 호출
   }, [
     loadStats,

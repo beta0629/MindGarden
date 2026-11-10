@@ -12,6 +12,7 @@ export default function ConsultantProfile() {
       roleLabel="상담사"
       settingsHref="/(consultant)/(more)/settings"
       notificationSettingsHref="/(consultant)/(more)/notification-settings"
+      accountDeletionHref="/(consultant)/(more)/account-deletion"
     />
   );
 }

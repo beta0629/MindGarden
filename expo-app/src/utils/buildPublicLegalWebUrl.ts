@@ -6,6 +6,7 @@
  */
 import { getWebBaseUrl } from '@/config/webBaseUrl';
 
+/** 환경 마커 라벨 — tenantCode 로 교체 (prepend 금지) */
 const APEX_FIRST_LABELS = new Set(['dev', 'www', 'staging', 'app', 'api']);
 
 function stripTrailingSlash(url: string): string {
@@ -16,6 +17,12 @@ function stripTrailingSlash(url: string): string {
  * 공개 법적 경로를 HTTPS 절대 URL로 만든다.
  * tenantCode 가 있으면 `{tenant}.{apex}/legal/...` 호스트로 맞춘다
  * (웹 `fetchTenantPublicHomeMeta` 가 Host 서브도메인으로 테넌트를 읽음).
+ *
+ * 호스트 규칙:
+ * - 첫 라벨이 APEX_FIRST_LABELS(app/dev/www/staging/api) → 해당 라벨을 tenant 로 **교체**
+ *   (`app.core-solution.co.kr` + mindgarden → `mindgarden.core-solution.co.kr`)
+ * - 이미 테넌트형 호스트(라벨 ≥4, 첫 라벨이 env 마커 아님) → 첫 라벨만 교체
+ * - bare apex → tenant 를 prepend
  *
  * @param legalPath `/legal/terms` 등
  * @param tenantCode 선택 테넌트 코드(서브도메인)
@@ -35,7 +42,7 @@ export function buildPublicLegalWebUrl(
       const parts = u.hostname.split('.');
       const first = parts[0] ?? '';
       if (parts.length >= 3 && APEX_FIRST_LABELS.has(first)) {
-        u.hostname = `${code}.${u.hostname}`;
+        u.hostname = `${code}.${parts.slice(1).join('.')}`;
       } else if (parts.length >= 4) {
         parts[0] = code;
         u.hostname = parts.join('.');

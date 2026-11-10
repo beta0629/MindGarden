@@ -36,6 +36,7 @@ import { submitEulaConsent } from '@/services/eulaConsentService';
 import { AuthService } from '@/services/AuthService';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useEulaConsentStore } from '@/stores/useEulaConsentStore';
+import { useTenantStore } from '@/stores/useTenantStore';
 import { resolveLegalUrls } from '@/utils/legalUrls';
 import { navigateAfterAuthenticated } from '@/utils/navigateAfterAuth';
 import { useTheme } from '@/theme';
@@ -64,6 +65,7 @@ export default function EulaConsentScreen() {
 
   const userId = useAuthStore((s) => s.user?.id ?? null);
   const setEulaRecord = useEulaConsentStore((s) => s.setRecord);
+  const tenantCode = useTenantStore((s) => s.tenantCode);
 
   const [terms, setTerms] = useState(false);
   const [privacy, setPrivacy] = useState(false);
@@ -74,7 +76,10 @@ export default function EulaConsentScreen() {
   const [declineModalOpen, setDeclineModalOpen] = useState(false);
   const [decliningLogout, setDecliningLogout] = useState(false);
 
-  const legal = useMemo(() => resolveLegalUrls(), []);
+  const legal = useMemo(
+    () => resolveLegalUrls(tenantCode),
+    [tenantCode],
+  );
 
   const termsPanelMaxHeight = useMemo(() => {
     const ratio = isTablet ? TERMS_PANEL_RATIO_TABLET : TERMS_PANEL_RATIO_MOBILE;

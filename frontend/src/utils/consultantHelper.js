@@ -17,7 +17,7 @@
 import { apiGet } from './ajax';
 import { API_ENDPOINTS } from '../constants/apiEndpoints';
 import {
-  adminClientsWithStatsGet,
+  adminClientsWithStatsGetAll,
   adminConsultantsWithStatsGet
 } from '../api/adminListFetch';
 
@@ -402,8 +402,8 @@ export const getClientWithStats = async(clientId) => {
  */
 export const getAllClientsWithStats = async() => {
     try {
-        // adminListFetch SSOT — page/size 강제 (bare with-stats Validation FAIL 방지)
-        const response = await adminClientsWithStatsGet();
+        // adminListFetch SSOT — 전체 페이지 drain (page/size 강제, 첫 페이지만 쓰지 않음)
+        const response = await adminClientsWithStatsGetAll();
         
         // StandardizedApi가 data를 언랩하면 { clients: [...], count: N } 형태
         if (response && (response.clients || Array.isArray(response))) {

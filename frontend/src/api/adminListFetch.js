@@ -7,7 +7,7 @@
  * P0 SSOT: callers must use adminClientsWithMappingGet / adminListGet — never bare view=summary.
  * 전체 페이지 drain: {@link adminListGetAllPages} / {@link adminMappingsListGetAll}
  * / {@link adminSchedulesListGetAll} / {@link adminClientsWithMappingGetAll}
- * / {@link adminScheduleControllerListGetAll}.
+ * / {@link adminClientsWithStatsGetAll} / {@link adminScheduleControllerListGetAll}.
  * clients 키는 {@link ADMIN_LIST_ITEM_KEYS} 기본 후보에 포함 (listConfig 생략 시에도 추출).
  *
  * @author CoreSolution
@@ -570,6 +570,41 @@ export function adminClientsWithStatsGet(extra = {}, apiOptions = {}) {
     API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS,
     { ...(extra || {}) },
     apiOptions
+  );
+}
+
+/**
+ * clients with-stats 전체 페이지 drain (page/size SSOT).
+ * 단일 페이지는 {@link adminClientsWithStatsGet} 유지.
+ * listKey: clients — count 우선 total, 페이지 단위 drain.
+ *
+ * 첫 요청 size 기본값: {@link ADMIN_LIST_DRAIN_PAGE_SIZE}.
+ * caller 가 extra.size 를 명시(own property + non-null)한 경우에만 그대로 사용.
+ *
+ * @param {Object} [extra={}]
+ * @param {Object} [apiOptions={}]
+ * @returns {Promise<*>}
+ * @author CoreSolution
+ * @since 2026-11-10
+ */
+export function adminClientsWithStatsGetAll(extra = {}, apiOptions = {}) {
+  const safeExtra = extra || {};
+  const hasExplicitSize = Object.prototype.hasOwnProperty.call(safeExtra, 'size')
+    && safeExtra.size != null
+    && safeExtra.size !== '';
+  const merged = {
+    ...safeExtra,
+    ...(hasExplicitSize ? {} : { size: ADMIN_LIST_DRAIN_PAGE_SIZE })
+  };
+  return adminListGetAllPages(
+    API_ENDPOINTS.ADMIN.CLIENTS.WITH_STATS,
+    merged,
+    apiOptions,
+    {
+      listKey: 'clients',
+      getItems: (r) => extractAdminListItems(r).items,
+      getTotal: (r) => extractAdminListTotal(r)
+    }
   );
 }
 

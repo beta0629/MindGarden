@@ -1,5 +1,5 @@
 /**
- * MerchantLegalFooter 헬퍼 — 공개 /legal/* 4링크 SSOT
+ * MerchantLegalFooter 헬퍼 — 공개 /legal/* 4링크 SSOT · caption lineHeight
  *
  * @author MindGarden
  * @since 2026-09-09
@@ -7,7 +7,14 @@
 import {
   buildMerchantLegalPublicFooterLinks,
   CLOSED_GUIDE_MODAL,
+  MERCHANT_LEGAL_FOOTER_CAPTION_FONT_SIZE,
+  MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL,
+  MERCHANT_LEGAL_FOOTER_MAX_FONT_SIZE_MULTIPLIER,
+  MERCHANT_LEGAL_FOOTER_TITLE_FONT_SIZE,
   openMerchantLegalGuideModal,
+  resolveMerchantLegalFooterCaptionLineStyle,
+  resolveMerchantLegalFooterFontScale,
+  resolveMerchantLegalFooterTitleLineHeight,
 } from '@/components/molecules/merchantLegalFooterHelpers';
 import { LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
 
@@ -55,5 +62,67 @@ describe('openMerchantLegalGuideModal', () => {
       CLOSED_GUIDE_MODAL,
     );
     expect(openMerchantLegalGuideModal('환불', '')).toEqual(CLOSED_GUIDE_MODAL);
+  });
+});
+
+describe('resolveMerchantLegalFooterCaptionLineStyle', () => {
+  test('기본(scale=1) lineHeight >= fontSize × lineHeight.normal (caption 토큰)', () => {
+    const style = resolveMerchantLegalFooterCaptionLineStyle();
+    const minLineHeight =
+      MERCHANT_LEGAL_FOOTER_CAPTION_FONT_SIZE *
+      MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL;
+    expect(style.fontSize).toBe(MERCHANT_LEGAL_FOOTER_CAPTION_FONT_SIZE);
+    expect(style.lineHeight).toBeGreaterThanOrEqual(minLineHeight);
+    expect(style.lineHeight).toBe(minLineHeight);
+  });
+
+  test('fontScale 이 MAX 까지 커져도 lineHeight >= scaledFontSize × normal', () => {
+    const max = MERCHANT_LEGAL_FOOTER_MAX_FONT_SIZE_MULTIPLIER;
+    for (const scale of [1, 1.2, 1.5, max, max + 0.5, 3]) {
+      const style = resolveMerchantLegalFooterCaptionLineStyle({
+        fontScale: scale,
+        maxFontSizeMultiplier: max,
+        fontSize: MERCHANT_LEGAL_FOOTER_CAPTION_FONT_SIZE,
+        lineHeightMultiplier: MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL,
+      });
+      const capped = resolveMerchantLegalFooterFontScale(scale, max);
+      const scaledFontSize = MERCHANT_LEGAL_FOOTER_CAPTION_FONT_SIZE * capped;
+      expect(style.lineHeight).toBeGreaterThanOrEqual(
+        scaledFontSize * MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL,
+      );
+      expect(capped).toBeLessThanOrEqual(max);
+    }
+  });
+
+  test('theme.textStyles.caption 입력을 그대로 반영한다', () => {
+    const caption = {
+      fontFamily: 'Pretendard-Regular',
+      fontSize: 12,
+      lineHeight: 18,
+    };
+    const style = resolveMerchantLegalFooterCaptionLineStyle({
+      fontScale: 1,
+      fontSize: caption.fontSize,
+      lineHeightMultiplier: caption.lineHeight / caption.fontSize,
+      fontFamily: caption.fontFamily,
+    });
+    expect(style.fontFamily).toBe(caption.fontFamily);
+    expect(style.fontSize).toBe(caption.fontSize);
+    expect(style.lineHeight).toBe(caption.lineHeight);
+  });
+
+  test('title lineHeight 도 sm × normal × cappedScale 이상', () => {
+    const max = MERCHANT_LEGAL_FOOTER_MAX_FONT_SIZE_MULTIPLIER;
+    const titleLh = resolveMerchantLegalFooterTitleLineHeight({
+      fontScale: max,
+      maxFontSizeMultiplier: max,
+      fontSize: MERCHANT_LEGAL_FOOTER_TITLE_FONT_SIZE,
+      lineHeightMultiplier: MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL,
+    });
+    expect(titleLh).toBeGreaterThanOrEqual(
+      MERCHANT_LEGAL_FOOTER_TITLE_FONT_SIZE *
+        MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL *
+        max,
+    );
   });
 });

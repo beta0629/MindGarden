@@ -25,8 +25,14 @@ function isProductionApiHost(hostname: string): boolean {
   return hostname === 'app.core-solution.co.kr';
 }
 
-/** 운영 릴리스 APK에서는 상단 띠를 숨긴다(개발·Metro만 표시). */
+/**
+ * 운영 릴리스 APK에서는 상단 띠를 숨긴다(개발·Metro만 표시).
+ * `EXPO_PUBLIC_HIDE_ENV_BANNER=1` 이면 빌드 플래그로 강제 OFF.
+ */
 export function shouldShowApiEnvironmentBanner(): boolean {
+  if (process.env.EXPO_PUBLIC_HIDE_ENV_BANNER === '1') {
+    return false;
+  }
   if (__DEV__) {
     return true;
   }

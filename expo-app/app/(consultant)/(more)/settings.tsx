@@ -11,6 +11,7 @@ export default function ConsultantSettings() {
     <MoreAccountSettings
       notificationSettingsHref="/(consultant)/(more)/notification-settings"
       profileHref="/(consultant)/(more)/profile"
+      accountDeletionHref="/(consultant)/(more)/account-deletion"
     />
   );
 }

@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -57,6 +58,12 @@ public class UserWithdrawalController extends BaseApiController {
     /** Q3 결정 — 자발 탈퇴 30일 유예. */
     public static final int WITHDRAWAL_GRACE_PERIOD_DAYS = 30;
 
+    /**
+     * 소셜(SIWA 등) 사용자 본인 확인 문구 — 대소문자 구분.
+     * App Store 5.1.1(v) 계정 삭제: 임시 비밀번호를 모르는 SIWA 사용자용.
+     */
+    public static final String SOCIAL_CONFIRM_PHRASE = "DELETE";
+
     private final UserLifecycleService userLifecycleService;
     private final UserService userService;
     private final PasswordService passwordService;
@@ -65,7 +72,7 @@ public class UserWithdrawalController extends BaseApiController {
      * 자발 탈퇴 신청 — ACTIVE → WITHDRAWAL_PENDING 전이.
      *
      * @param session 세션
-     * @param request 비밀번호 재확인 + 사유
+     * @param request 비밀번호 재확인 또는 소셜 confirmPhrase + 사유
      * @return 전이 결과
      */
     @PostMapping("/request")
@@ -75,11 +82,10 @@ public class UserWithdrawalController extends BaseApiController {
         User currentUser = requireCurrentUser(session);
         ensureTenantBound(currentUser);
 
-        // 본인 확인 — 비밀번호 재확인
-        if (!passwordService.matches(request.getPassword(), currentUser.getPassword())) {
-            log.warn("Withdrawal request rejected: password mismatch userId={}", currentUser.getId());
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ApiResponse.error("비밀번호가 일치하지 않습니다."));
+        ResponseEntity<ApiResponse<Map<String, Object>>> identityRejected =
+                verifyWithdrawalIdentity(currentUser, request);
+        if (identityRejected != null) {
+            return identityRejected;
         }
 
         Actor actor = Actor.user(currentUser.getId(), currentUser.getRole().name());
@@ -162,11 +168,73 @@ public class UserWithdrawalController extends BaseApiController {
         return userService.findById(user.getId()).orElse(user);
     }
 
+    /**
+     * 테넌트 fail-closed — 컨텍스트·사용자 tenantId 공백/null 거부, 불일치 거부.
+     * AdminUserLifecycle 패턴과 동일하게 테넌트 없는 요청을 허용하지 않는다.
+     *
+     * @param user 현재 사용자
+     * @throws IllegalStateException 테넌트 바인딩 실패
+     */
     private void ensureTenantBound(User user) {
         String tenantId = TenantContextHolder.getTenantId();
-        if (tenantId != null && user.getTenantId() != null
-                && !tenantId.equals(user.getTenantId())) {
+        if (tenantId == null || tenantId.isBlank()) {
+            throw new IllegalStateException("테넌트 컨텍스트가 없습니다.");
+        }
+        if (user.getTenantId() == null || user.getTenantId().isBlank()) {
+            throw new IllegalStateException("사용자 테넌트 정보가 없습니다.");
+        }
+        if (!tenantId.equals(user.getTenantId())) {
             throw new IllegalStateException("테넌트 컨텍스트 불일치");
         }
+    }
+
+    /**
+     * 본인 확인 — 비밀번호 경로 또는 소셜 confirmPhrase 경로.
+     *
+     * @param user 현재 사용자
+     * @param request 탈퇴 요청
+     * @return 거부 시 ResponseEntity, 통과 시 null
+     */
+    private ResponseEntity<ApiResponse<Map<String, Object>>> verifyWithdrawalIdentity(
+            User user, WithdrawalRequestDto request) {
+        boolean hasPassword = StringUtils.hasText(request.getPassword());
+        boolean hasConfirm = StringUtils.hasText(request.getConfirmPhrase());
+
+        if (!hasPassword && !hasConfirm) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("비밀번호 또는 확인 문구가 필요합니다."));
+        }
+
+        if (hasPassword) {
+            if (!passwordService.matches(request.getPassword(), user.getPassword())) {
+                log.warn("Withdrawal request rejected: password mismatch userId={}", user.getId());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(ApiResponse.error("비밀번호가 일치하지 않습니다."));
+            }
+            return null;
+        }
+
+        // password blank → social confirmPhrase only
+        if (!isSocialLinked(user)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error("비밀번호 재확인이 필요합니다."));
+        }
+        if (!SOCIAL_CONFIRM_PHRASE.equals(request.getConfirmPhrase())) {
+            log.warn("Withdrawal request rejected: confirmPhrase mismatch userId={}", user.getId());
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("확인 문구가 일치하지 않습니다."));
+        }
+        return null;
+    }
+
+    /**
+     * 소셜 연동 사용자 여부 — appleSub 또는 socialProvider 비공백.
+     *
+     * @param user 사용자
+     * @return 소셜 연동이면 true
+     */
+    private boolean isSocialLinked(User user) {
+        return StringUtils.hasText(user.getAppleSub())
+                || StringUtils.hasText(user.getSocialProvider());
     }
 }

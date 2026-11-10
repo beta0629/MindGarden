@@ -21,10 +21,17 @@ describe('buildPublicLegalWebUrl', () => {
     jest.clearAllMocks();
   });
 
-  test('apex 호스트에 tenantCode 를 앞에 붙인다', () => {
+  test('app. env 마커를 tenant 로 교체한다 (prepend 금지)', () => {
+    mockedGetWebBaseUrl.mockReturnValue('https://app.core-solution.co.kr');
+    expect(buildPublicLegalWebUrl('/legal/privacy', 'mindgarden')).toBe(
+      'https://mindgarden.core-solution.co.kr/legal/privacy',
+    );
+  });
+
+  test('dev. env 마커를 tenant 로 교체한다', () => {
     mockedGetWebBaseUrl.mockReturnValue('https://dev.core-solution.co.kr');
     expect(buildPublicLegalWebUrl('/legal/refund', 'mindgarden')).toBe(
-      'https://mindgarden.dev.core-solution.co.kr/legal/refund',
+      'https://mindgarden.core-solution.co.kr/legal/refund',
     );
   });
 
@@ -37,10 +44,24 @@ describe('buildPublicLegalWebUrl', () => {
     );
   });
 
+  test('bare apex 에는 tenant 를 prepend 한다', () => {
+    mockedGetWebBaseUrl.mockReturnValue('https://example.com');
+    expect(buildPublicLegalWebUrl('/legal/terms', 'acme')).toBe(
+      'https://acme.example.com/legal/terms',
+    );
+  });
+
   test('tenantCode 없으면 base + path', () => {
-    mockedGetWebBaseUrl.mockReturnValue('https://dev.core-solution.co.kr');
+    mockedGetWebBaseUrl.mockReturnValue('https://app.core-solution.co.kr');
     expect(buildPublicLegalWebUrl('/legal/privacy')).toBe(
-      'https://dev.core-solution.co.kr/legal/privacy',
+      'https://app.core-solution.co.kr/legal/privacy',
+    );
+  });
+
+  test('getWebBaseUrl(env) 오버라이드를 그대로 따른다', () => {
+    mockedGetWebBaseUrl.mockReturnValue('https://staging.core-solution.co.kr');
+    expect(buildPublicLegalWebUrl('/legal/privacy', 'tenantx')).toBe(
+      'https://tenantx.core-solution.co.kr/legal/privacy',
     );
   });
 });

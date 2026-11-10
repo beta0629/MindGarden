@@ -1,0 +1,204 @@
+/**
+ * 생성 파일. 직접 수정하지 않는다.
+ * 원본: design-tokens/tokens.json
+ * 재생성: npm run tokens:generate
+ *
+ * light: :root
+ * dark: [data-theme="dark"]
+ * high-contrast: [data-theme="hc"]
+ * forced-colors: @media (forced-colors: active)
+ *
+ * 화면에서는 import 하지 않는다. 화면 적용은 다음 PR.
+ */
+
+:root {
+  /* color · light */
+  --mg-surface-page: #FAF9F7;
+  --mg-surface-card: #FFFFFF;
+  --mg-surface-sunken: #F3F1ED;
+  --mg-surface-overlay: rgba(20,23,26,0.40);
+  --mg-text-primary: #1B2128;
+  --mg-text-secondary: #4A5560;
+  --mg-text-tertiary: #5E6973;
+  --mg-text-disabled: #8F979E;
+  --mg-text-inverse: #FFFFFF;
+  --mg-border-subtle: #EBE6DF;
+  --mg-border-default: #D4CFC8;
+  --mg-border-strong: #86807A;
+  --mg-state-hover: #F3F1ED;
+  --mg-state-selected-bg: #EEEBE6;
+  --mg-state-selected-border: #86807A;
+  --mg-state-disabled-bg: #EFEDEA;
+  --mg-focus-ring: #1B2128;
+  --mg-danger-text: #A63B35;
+  --mg-danger-solid: #A63B35;
+  --mg-danger-subtle: #FAEDEB;
+  --mg-warning-text: #8A4A06;
+  --mg-warning-icon: #E2A33A;
+  --mg-warning-subtle: #FBF3E3;
+  --mg-success-text: #2E6A48;
+  --mg-success-subtle: #EAF3EC;
+  --mg-info-text: #2F5B86;
+  --mg-info-subtle: #EBF1F7;
+  /* brand · light */
+  --mg-brand-primary: #0E5F5A;
+  --mg-brand-primary-hover: #0A4F4B;
+  --mg-brand-on-primary: #FFFFFF;
+  --mg-brand-logo: tenant-asset;
+  /* size */
+  --mg-size-touch-min: 44px;
+  --mg-size-control-height-md: 44px;
+  --mg-size-control-height-sm: 36px (시각 높이, 누르기 영역은 44px로 확장);
+  --mg-size-icon-md: 20px;
+  --mg-size-border-thin: 1px;
+  --mg-size-focus-width: 2px;
+  --mg-size-focus-offset: 2px;
+  /* space */
+  --mg-space-1: 4px;
+  --mg-space-2: 8px;
+  --mg-space-3: 12px;
+  --mg-space-4: 16px;
+  --mg-space-5: 20px;
+  --mg-space-6: 24px;
+  --mg-space-8: 32px;
+  --mg-space-10: 40px;
+  /* radius */
+  --mg-radius-sm: 6px;
+  --mg-radius-md: 8px;
+  --mg-radius-lg: 12px;
+  --mg-radius-pill: 9999px;
+  /* font */
+  --mg-font-family: Pretendard, 'Noto Sans KR', system-ui;
+  --mg-font-size-caption: 12px/16px;
+  --mg-font-size-body-sm: 13px/20px;
+  --mg-font-size-body: 15px/22px;
+  --mg-font-size-title-sm: 17px/24px;
+  --mg-font-size-title: 20px/28px;
+  --mg-font-size-display: 24px/32px;
+  --mg-font-weight-regular: 400;
+  --mg-font-weight-medium: 500;
+  --mg-font-weight-bold: 700;
+  /* shadow */
+  --mg-shadow-card: 0 1px 2px rgba(20,23,26,0.05);
+  --mg-shadow-modal: 0 12px 32px rgba(20,23,26,0.16);
+  --mg-shadow-toast: 0 6px 16px rgba(20,23,26,0.14);
+  /* layout */
+  --mg-layout-mobile-client-content-max: 480px;
+  --mg-layout-mobile-client-gutter: 16px;
+  --mg-layout-table-collapse-breakpoint: 768px;
+  --mg-layout-toast-width: 360px;
+  --mg-layout-toast-duration-info: 4000ms;
+  --mg-layout-toast-duration-error: 고정(닫기 버튼);
+  --mg-layout-modal-width-confirm: 400px;
+}
+
+[data-theme="dark"] {
+  /* color · dark */
+  --mg-surface-page: #14171A;
+  --mg-surface-card: #1C2024;
+  --mg-surface-sunken: #181B1F;
+  --mg-surface-overlay: rgba(0,0,0,0.60);
+  --mg-text-primary: #ECEFF1;
+  --mg-text-secondary: #B6BEC5;
+  --mg-text-tertiary: #9AA4AD;
+  --mg-text-disabled: #626A72;
+  --mg-text-inverse: #14171A;
+  --mg-border-subtle: #2A2F34;
+  --mg-border-default: #3A4046;
+  --mg-border-strong: #7A838B;
+  --mg-state-hover: #22272C;
+  --mg-state-selected-bg: #272C31;
+  --mg-state-selected-border: #7A838B;
+  --mg-state-disabled-bg: #202428;
+  --mg-focus-ring: #ECEFF1;
+  --mg-danger-text: #F29A90;
+  --mg-danger-solid: #D9645A;
+  --mg-danger-subtle: #3A2422;
+  --mg-warning-text: #F0B865;
+  --mg-warning-icon: #D9A13B;
+  --mg-warning-subtle: #33291A;
+  --mg-success-text: #8FD1A8;
+  --mg-success-subtle: #1E2E24;
+  --mg-info-text: #9CC2EA;
+  --mg-info-subtle: #1E2833;
+  /* brand · dark */
+  --mg-brand-primary: #4AA99E;
+  --mg-brand-primary-hover: #5FBBB0;
+  --mg-brand-on-primary: #0B1F1D;
+  --mg-brand-logo: tenant-asset;
+}
+
+[data-theme="hc"] {
+  /* color · hc */
+  --mg-surface-page: #FFFFFF;
+  --mg-surface-card: #FFFFFF;
+  --mg-surface-sunken: #F2F2F2;
+  --mg-surface-overlay: rgba(0,0,0,0.70);
+  --mg-text-primary: #000000;
+  --mg-text-secondary: #1F1F1F;
+  --mg-text-tertiary: #333333;
+  --mg-text-disabled: #595959;
+  --mg-text-inverse: #FFFFFF;
+  --mg-border-subtle: #767676;
+  --mg-border-default: #000000;
+  --mg-border-strong: #000000;
+  --mg-state-hover: #E6E6E6;
+  --mg-state-selected-bg: #E0E0E0;
+  --mg-state-selected-border: #000000;
+  --mg-state-disabled-bg: #F2F2F2;
+  --mg-focus-ring: #000000;
+  --mg-danger-text: #8B0000;
+  --mg-danger-solid: #8B0000;
+  --mg-danger-subtle: #FFFFFF;
+  --mg-warning-text: #5C3200;
+  --mg-warning-icon: #8A4A06;
+  --mg-warning-subtle: #FFFFFF;
+  --mg-success-text: #0B4D27;
+  --mg-success-subtle: #FFFFFF;
+  --mg-info-text: #003A75;
+  --mg-info-subtle: #FFFFFF;
+  /* brand · hc */
+  --mg-brand-primary: #0A4F4B;
+  --mg-brand-primary-hover: #06302D;
+  --mg-brand-on-primary: #FFFFFF;
+  --mg-brand-logo: tenant-asset;
+}
+
+@media (forced-colors: active) {
+  :root {
+    --mg-surface-page: Canvas;
+    --mg-surface-card: Canvas;
+    --mg-surface-sunken: Canvas;
+    --mg-surface-overlay: Canvas;
+    --mg-text-primary: CanvasText;
+    --mg-text-secondary: CanvasText;
+    --mg-text-tertiary: GrayText;
+    --mg-text-disabled: GrayText;
+    --mg-text-inverse: Canvas;
+    --mg-border-subtle: GrayText;
+    --mg-border-default: CanvasText;
+    --mg-border-strong: CanvasText;
+    --mg-state-hover: transparent;
+    --mg-state-selected-bg: Highlight;
+    --mg-state-selected-border: Highlight;
+    --mg-state-disabled-bg: Canvas;
+    --mg-focus-ring: Highlight;
+    --mg-danger-text: CanvasText;
+    --mg-danger-solid: CanvasText;
+    --mg-danger-subtle: Canvas;
+    --mg-warning-text: CanvasText;
+    --mg-warning-icon: CanvasText;
+    --mg-warning-subtle: Canvas;
+    --mg-success-text: CanvasText;
+    --mg-success-subtle: Canvas;
+    --mg-info-text: CanvasText;
+    --mg-info-subtle: Canvas;
+    --mg-brand-primary: Highlight;
+    --mg-brand-primary-hover: Highlight;
+    --mg-brand-on-primary: HighlightText;
+    --mg-shadow-card: none;
+    --mg-shadow-modal: none;
+    --mg-shadow-toast: none;
+  }
+}
+

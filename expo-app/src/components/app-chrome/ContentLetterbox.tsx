@@ -7,8 +7,9 @@
  *
  * <p>SSOT: P3-D 디자인 스펙(agent-transcripts/.../386990fa-9897-408e-b9c2-9dbfd3bc1260) §7.2.
  * 본 컴포넌트는 group _layout 의 Stack 을 래핑하는 형태로 적용해 18개 화면에 일괄 letterbox 를 부여한다.
- * 탭바·MiniPlayer·OfflineBanner·InAppNotificationToast·ApiEnvironmentBanner 등 글로벌 오버레이는
- * 본 래퍼 외부에 위치하여 풀폭 유지된다 (디자이너 §4 의 의도적 예외).</p>
+ * 탭바·MiniPlayer·OfflineBanner·InAppNotificationToast 등 글로벌 오버레이는 본 래퍼 외부에 위치하여
+ * 풀폭 유지된다 (디자이너 §4 의 의도적 예외). ApiEnvironmentBanner 는 루트 ApiEnvironmentChrome
+ * 레이아웃 플로우(비오버레이)에서 Stack 을 밀며, letterbox 와 별개로 풀폭 상단 띠로 유지된다.</p>
  *
  * @author MindGarden
  * @since 2026-06-10

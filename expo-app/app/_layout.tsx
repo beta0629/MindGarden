@@ -38,7 +38,7 @@ import { NotificationService } from '../src/services/NotificationService';
 import { BackgroundTaskService } from '../src/services/BackgroundTaskService';
 import { OfflineBanner } from '../src/components/organisms/OfflineBanner';
 import { InAppNotificationToast } from '../src/components/organisms/InAppNotificationToast';
-import { ApiEnvironmentBanner } from '../src/components/atoms/ApiEnvironmentBanner';
+import { ApiEnvironmentChrome } from '../src/components/app-chrome/ApiEnvironmentChrome';
 import { ForceUpdateGate } from '../src/components/organisms/ForceUpdateGate';
 import { useTenantStore } from '../src/stores/useTenantStore';
 import { useResolveTenantIdForApi } from '../src/utils/resolveTenantIdForApi';
@@ -193,16 +193,17 @@ export default function RootLayout() {
             <DuplicateLoginVictimGuardBridge />
             <SessionIdleSignOutBridge>
               <ThemeProvider role={role ?? 'client'}>
-                <ApiEnvironmentBanner />
-                <Stack screenOptions={{ headerShown: false }}>
-                  <Stack.Screen name="index" />
-                  <Stack.Screen name="(auth)" />
-                  <Stack.Screen name="legal" />
-                  <Stack.Screen name="(admin)" />
-                  <Stack.Screen name="(consultant)" />
-                  <Stack.Screen name="(client)" />
-                  <Stack.Screen name="+not-found" />
-                </Stack>
+                <ApiEnvironmentChrome>
+                  <Stack screenOptions={{ headerShown: false }}>
+                    <Stack.Screen name="index" />
+                    <Stack.Screen name="(auth)" />
+                    <Stack.Screen name="legal" />
+                    <Stack.Screen name="(admin)" />
+                    <Stack.Screen name="(consultant)" />
+                    <Stack.Screen name="(client)" />
+                    <Stack.Screen name="+not-found" />
+                  </Stack>
+                </ApiEnvironmentChrome>
                 <OfflineBanner />
                 <InAppNotificationToast />
                 <StatusBar style="auto" />

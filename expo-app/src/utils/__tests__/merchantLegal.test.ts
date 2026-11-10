@@ -195,6 +195,13 @@ describe('MerchantLegalFooter 공개 /legal/refund 패리티 (소스 정적)', (
     expect(footerSource).not.toMatch(/UnifiedModal/);
     expect(footerSource).not.toMatch(/openMerchantLegalGuideModal/);
   });
+
+  test('하드코딩 lineHeight: 16 제거 · caption 헬퍼·토큰 lineHeight 사용', () => {
+    expect(footerSource).not.toMatch(/lineHeight:\s*16\b/);
+    expect(footerSource).toMatch(/resolveMerchantLegalFooterCaptionLineStyle/);
+    expect(footerSource).toMatch(/resolveMerchantLegalFooterTitleLineHeight/);
+    expect(footerSource).not.toMatch(/overflow:\s*['"]hidden['"]/);
+  });
 });
 
 describe('결제 표면 MerchantLegalFooter 마운트 (소스 정적)', () => {
@@ -208,8 +215,10 @@ describe('결제 표면 MerchantLegalFooter 마운트 (소스 정적)', () => {
   );
 
   test('shop checkout: useMerchantLegal + MerchantLegalFooter compact', () => {
-    expect(shopCheckoutSource).toMatch(/from '@/components\/molecules\/MerchantLegalFooter'/);
-    expect(shopCheckoutSource).toMatch(/from '@/hooks\/useMerchantLegal'/);
+    expect(shopCheckoutSource).toContain(
+      "from '@/components/molecules/MerchantLegalFooter'",
+    );
+    expect(shopCheckoutSource).toContain("from '@/hooks/useMerchantLegal'");
     expect(shopCheckoutSource).toMatch(/useMerchantLegal\(\)/);
     expect(shopCheckoutSource).toMatch(/<MerchantLegalFooter/);
     expect(shopCheckoutSource).toMatch(/compact/);
@@ -217,8 +226,10 @@ describe('결제 표면 MerchantLegalFooter 마운트 (소스 정적)', () => {
   });
 
   test('booking payment: useMerchantLegal + MerchantLegalFooter compact in ScrollView', () => {
-    expect(bookingPaymentSource).toMatch(/from '@/components\/molecules\/MerchantLegalFooter'/);
-    expect(bookingPaymentSource).toMatch(/from '@/hooks\/useMerchantLegal'/);
+    expect(bookingPaymentSource).toContain(
+      "from '@/components/molecules/MerchantLegalFooter'",
+    );
+    expect(bookingPaymentSource).toContain("from '@/hooks/useMerchantLegal'");
     expect(bookingPaymentSource).toMatch(/useMerchantLegal\(\)/);
     expect(bookingPaymentSource).toMatch(/<MerchantLegalFooter/);
     expect(bookingPaymentSource).toMatch(/compact/);

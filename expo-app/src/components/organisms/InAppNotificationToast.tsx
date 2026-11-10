@@ -140,13 +140,22 @@ export function InAppNotificationToast() {
   if (!toast) return null;
 
   const IconComponent = ICON_MAP[toast.icon ?? ''] ?? Bell;
+  const caption = theme.textStyles.caption;
 
   return (
     <GestureDetector gesture={swipeGesture}>
       <Animated.View
         entering={SlideInDown.springify().damping(18)}
         exiting={SlideOutUp.duration(200)}
-        style={[styles.wrapper, animatedStyle, { top: insets.top + 8 }]}
+        style={[
+          styles.wrapper,
+          animatedStyle,
+          {
+            left: theme.spacing.lg,
+            right: theme.spacing.lg,
+            paddingTop: insets.top + theme.spacing.sm,
+          },
+        ]}
       >
         <Pressable
           onPress={handlePress}
@@ -155,6 +164,8 @@ export function InAppNotificationToast() {
             {
               backgroundColor: theme.colors.surface,
               borderRadius: theme.borderRadius.xl,
+              paddingHorizontal: theme.spacing.md,
+              paddingVertical: theme.spacing.md,
             },
             theme.shadows.lg,
           ]}
@@ -164,29 +175,25 @@ export function InAppNotificationToast() {
           <View style={[styles.iconCircle, { backgroundColor: theme.colors.accentSoft }]}>
             <IconComponent size={20} color={theme.colors.primary} />
           </View>
-          <View style={styles.textContainer}>
+          <View style={[styles.textContainer, { marginLeft: theme.spacing.md }]}>
             <Text
-              style={[
-                styles.title,
-                {
-                  color: theme.colors.textMain,
-                  fontFamily: theme.fontFamily.semibold,
-                  fontSize: theme.fontSize.sm,
-                },
-              ]}
+              style={{
+                color: theme.colors.textMain,
+                fontFamily: theme.fontFamily.semibold,
+                fontSize: theme.fontSize.sm,
+                marginBottom: theme.spacing['2xs'],
+              }}
               numberOfLines={1}
             >
               {toast.title}
             </Text>
             <Text
-              style={[
-                styles.body,
-                {
-                  color: theme.colors.textSecondary,
-                  fontFamily: theme.fontFamily.regular,
-                  fontSize: theme.fontSize.xs,
-                },
-              ]}
+              style={{
+                color: theme.colors.textSecondary,
+                fontFamily: caption.fontFamily,
+                fontSize: caption.fontSize,
+                lineHeight: caption.lineHeight,
+              }}
               numberOfLines={2}
             >
               {toast.body}
@@ -201,15 +208,12 @@ export function InAppNotificationToast() {
 const styles = StyleSheet.create({
   wrapper: {
     position: 'absolute',
-    left: 16,
-    right: 16,
+    top: 0,
     zIndex: 10000,
   },
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
   },
   iconCircle: {
     width: 40,
@@ -220,12 +224,5 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flex: 1,
-    marginLeft: 12,
-  },
-  title: {
-    marginBottom: 2,
-  },
-  body: {
-    lineHeight: 16,
   },
 });

@@ -20,6 +20,7 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
+import com.coresolution.consultation.service.ReservationReminderRescheduleService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
 import com.coresolution.consultation.service.ScheduleCreatedNotificationHelper;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
@@ -81,12 +82,17 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
     @Mock
     private BatchNotificationDispatchService batchNotificationDispatchService;
 
+    @Mock
+    private ReservationReminderRescheduleService reservationReminderRescheduleService;
+
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
 
     @BeforeEach
     void setUp() {
         TenantContextHolder.setTenantId(TENANT_ID);
+        org.springframework.test.util.ReflectionTestUtils.setField(
+                scheduleService, "reservationReminderRescheduleService", reservationReminderRescheduleService);
         // CANCELLED 전이 시 매칭 동기 경로 — 알림 단언에만 집중하도록 매핑 없음으로 stub
         lenient().when(mappingRepository.findByTenantIdAndId(anyString(), anyLong()))
                 .thenReturn(Optional.empty());
@@ -386,5 +392,39 @@ class ScheduleServiceImplUpdateScheduleChangedNotificationTest {
                 .sendScheduleChanged(any(), any(), any(), any());
         verify(batchNotificationDispatchService, never()).dispatchReservationReminderD2(any());
         verify(batchNotificationDispatchService, never()).dispatchReservationImmediateLate(any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 드래그·수정으로 날짜 변경 → 공통 새 슬롯 D-1 리마인드 모듈 호출")
+    void slotChange_notifiesCommonRescheduleModule() {
+        Schedule existing = existingConfirmed();
+        Schedule patch = new Schedule();
+        patch.setDate(existing.getDate().plusDays(1));
+        patch.setStartTime(LocalTime.of(14, 0));
+        patch.setEndTime(LocalTime.of(15, 0));
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(existing));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.updateSchedule(SCHEDULE_ID, patch);
+
+        verify(reservationReminderRescheduleService).onSlotChanged(eq(TENANT_ID), any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 일시 그대로 재저장 → 새 슬롯 리마인드 모듈 미호출(중복 없음)")
+    void sameSlotResave_doesNotNotifyRescheduleModule() {
+        Schedule existing = existingConfirmed();
+        Schedule patch = new Schedule();
+        patch.setDate(existing.getDate());
+        patch.setStartTime(existing.getStartTime());
+        patch.setEndTime(existing.getEndTime());
+        when(scheduleRepository.findByTenantIdAndId(eq(TENANT_ID), eq(SCHEDULE_ID)))
+                .thenReturn(Optional.of(existing));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.updateSchedule(SCHEDULE_ID, patch);
+
+        verify(reservationReminderRescheduleService, never()).onSlotChanged(any(), any());
     }
 }

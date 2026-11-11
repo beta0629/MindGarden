@@ -36,6 +36,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 
 /**
  * 예약 D-2 / D-1 / D-0 안내 일괄 발송 스케줄러.
@@ -74,8 +75,11 @@ import lombok.extern.slf4j.Slf4j;
  * 당일 09:00 이후 "내일"로 이동해 D-1 배치를 지난 일정은 다음 날 09:00 D-0 배치가 새 슬롯으로 발송한다.
  * 시작 일시가 이미 지난 일정은 디스패치 단계에서 제외된다.
  *
- * <p>ShedLock 미적용 — 운영 단일 호스트 가정.
- * 멱등성은 {@link BatchNotificationDispatchService} 가 멱등 로그 테이블로 보장한다.
+ * <p>2026-11-11: 운영 blue·green 두 인스턴스가 같은 09:00 에 모두 실행되던 문제를 ShedLock
+ * ({@link #SCHEDULER_LOCK_NAME}) 으로 막는다. 한 인스턴스만 배치를 돌리고, 멱등 로그는 2차 안전망이다.
+ * 실행 요약은 종류(D-2/D-1/D-0)마다 별도 {@code execution_id} 로 저장한다
+ * ({@code scheduler_execution_summary.execution_id} UNIQUE — 같은 id 로 세 번 저장하면
+ * 두 번째부터 rollback-only 로 실패하던 문제).
  *
  * <p>참고 패턴: {@link com.coresolution.consultation.scheduler.WellnessNotificationScheduler}
  *
@@ -90,6 +94,18 @@ import lombok.extern.slf4j.Slf4j;
     matchIfMissing = true
 )
 public class ReservationReminderScheduler {
+
+    /** ShedLock 락 이름 — blue·green 중 한 인스턴스만 09:00 배치 실행. */
+    public static final String SCHEDULER_LOCK_NAME = "reservation-reminder-daily";
+
+    /** 락 최대 보유 — 배치 최대 소요보다 길게. */
+    static final String SCHEDULER_LOCK_AT_MOST_FOR = "PT30M";
+
+    /** 락 최소 보유 — 인스턴스 간 시계 차이로 뒤늦게 깨어난 쪽의 재실행 차단. */
+    static final String SCHEDULER_LOCK_AT_LEAST_FOR = "PT5M";
+
+    /** 실행 요약 {@code execution_id} 구분자 (요약은 종류별 1행). */
+    static final String SUMMARY_EXECUTION_ID_SEPARATOR = "-";
 
     private final TenantService tenantService;
     private final ScheduleRepository scheduleRepository;
@@ -201,6 +217,11 @@ public class ReservationReminderScheduler {
         cron = "${notification.batch.reservation-reminder-cron:0 0 9 * * *}",
         zone = "Asia/Seoul"
     )
+    @SchedulerLock(
+        name = SCHEDULER_LOCK_NAME,
+        lockAtMostFor = SCHEDULER_LOCK_AT_MOST_FOR,
+        lockAtLeastFor = SCHEDULER_LOCK_AT_LEAST_FOR
+    )
     public void runDailyReminder() {
         // 런타임 가드 (2026-05-25): DB SSOT 플래그가 OFF 면 즉시 return.
         // ENV `NOTIFICATION_BATCH_RESERVATION_REMINDER_ENABLED` 와 이중 가드 — 어드민/SQL 토글 즉시 반영용.
@@ -290,21 +311,29 @@ public class ReservationReminderScheduler {
                 totalD1Dispatched, totalD1Skipped, totalD1Failed,
                 totalD0Dispatched, totalD0Skipped, totalD0Failed,
                 totalD1PushAttempted);
-            logService.saveSummaryLog(executionId, "ReservationReminderD2",
-                totalTenants, totalTenants - failureTenantCount, failureTenantCount,
-                durationMs, startTime, endTime);
-            logService.saveSummaryLog(executionId, "ReservationReminderD1",
-                totalTenants, totalTenants - failureTenantCount, failureTenantCount,
-                durationMs, startTime, endTime);
-            logService.saveSummaryLog(executionId, "ReservationReminderD0",
-                totalTenants, totalTenants - failureTenantCount, failureTenantCount,
-                durationMs, startTime, endTime);
+            for (ReminderSmsKind kind : ReminderSmsKind.values()) {
+                logService.saveSummaryLog(summaryExecutionId(executionId, kind), kind.logTag(),
+                    totalTenants, totalTenants - failureTenantCount, failureTenantCount,
+                    durationMs, startTime, endTime);
+            }
         } catch (Exception fatal) {
             log.error("❌ [ReservationReminder] 스케줄러 전체 실행 실패: executionId={}, error={}",
                 executionId, fatal.getMessage(), fatal);
             alertService.sendFailureAlert("ReservationReminderD2", executionId,
                 failureTenantCount, fatal.getMessage());
         }
+    }
+
+    /**
+     * 실행 요약 {@code execution_id} — 종류별로 달라야 한다 (요약 테이블 UNIQUE).
+     * 테넌트별 실행 로그는 원래 {@code executionId} 를 그대로 쓴다(앞부분이 같아 추적 가능).
+     *
+     * @param executionId 실행 ID
+     * @param kind        D-2 / D-1 / D-0
+     * @return {@code {executionId}-{D2|D1|D0}}
+     */
+    static String summaryExecutionId(String executionId, ReminderSmsKind kind) {
+        return executionId + SUMMARY_EXECUTION_ID_SEPARATOR + kind.name();
     }
 
     /**
@@ -435,7 +464,7 @@ public class ReservationReminderScheduler {
      * <p>D-1·D-0 은 같은 {@link BatchNotificationTemplateCodes#RESERVATION_IMMEDIATE_LATE}
      * 종목을 쓴다. 발송 여부 판정은 {@link #templateCode()} 한 곳이다.
      */
-    private enum ReminderSmsKind {
+    enum ReminderSmsKind {
         D2("ReservationReminderD2",
             BatchNotificationTemplateCodes.RESERVATION_REMINDER_D2,
             BatchNotificationDispatchService::dispatchReservationReminderD2),

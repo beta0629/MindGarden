@@ -37,6 +37,7 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.NotificationService;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
+import com.coresolution.consultation.service.ReservationReminderRescheduleService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
@@ -124,6 +125,10 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
 
     @Autowired
     private SalaryLateSessionAutoSyncService salaryLateSessionAutoSyncService;
+
+    /** 일시 변경 후 새 슬롯 D-1 리마인드 대상화 (드래그·수정 모달과 공통 모듈). */
+    @Autowired(required = false)
+    private ReservationReminderRescheduleService reservationReminderRescheduleService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -2198,6 +2203,11 @@ public class ConsultationServiceImpl extends BaseTenantEntityServiceImpl<Consult
                 return;
             }
             tryCancelPendingReservationRemindersIfSlotChanged(tenantId, linked, previousDate, previousStart);
+            boolean slotChanged = !Objects.equals(previousDate, linked.getDate())
+                    || !Objects.equals(previousStart, linked.getStartTime());
+            if (slotChanged && reservationReminderRescheduleService != null) {
+                reservationReminderRescheduleService.onSlotChanged(tenantId, linked);
+            }
             scheduleChangeNotificationDebounceService.enqueueScheduleChanged(
                     tenantId, linked, previousDate, previousStart);
         } catch (Exception e) {

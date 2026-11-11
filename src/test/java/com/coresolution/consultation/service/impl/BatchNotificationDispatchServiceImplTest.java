@@ -176,9 +176,87 @@ class BatchNotificationDispatchServiceImplTest {
         assertThat(outcome.channelUsed()).isEqualTo(BatchNotificationTemplateCodes.CHANNEL_SMS);
         assertThat(outcome.fallbackToSms()).isTrue();
         verify(dispatchHelper).dispatchSms(eq(PHONE), anyString());
+        // 발송 성공 행은 error_code 를 남기지 않는다(알림톡 사유는 error_message 메모).
         verify(sendLogger).updateResult(eq(LOG_ID), eq(true),
             eq(BatchNotificationTemplateCodes.CHANNEL_SMS),
-            eq(true), anyString(), anyString(), any(), any());
+            eq(true), org.mockito.ArgumentMatchers.isNull(), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 알림톡 OFF + SMS 단독 성공 → success=true 행에 error_code 없음(TEMPLATE_NOT_MAPPED 금지)")
+    void dispatch_whenSmsOnlySucceeds_recordsNoErrorCode() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenSmsDispatchSuccess();
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+        assertThat(outcome.errorCode()).isNull();
+        verify(sendLogger).updateResult(eq(LOG_ID), eq(true),
+            eq(BatchNotificationTemplateCodes.CHANNEL_SMS),
+            eq(true), org.mockito.ArgumentMatchers.isNull(), anyString(), any(), any());
+        verify(sendLogger, never()).updateResult(anyLong(), eq(true), anyString(), anyBoolean(),
+            eq(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — SMS 테스트 모드(미발송) 결과 → FAILED 기록, 성공 아님")
+    void dispatch_whenSmsTestModeNotSent_recordsFailure() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        when(dispatchHelper.dispatchSms(eq(PHONE), anyString()))
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(false,
+                BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT,
+                "sms test mode — not sent", null, null));
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.FAILED);
+        verify(sendLogger, never()).updateResult(anyLong(), eq(true), anyString(), anyBoolean(),
+            any(), any(), any(), any());
+        verify(sendLogger).updateResult(eq(LOG_ID), eq(false), anyString(), anyBoolean(),
+            anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 오늘 일시 변경된 일정: 당일 1통 가드는 변경 시각 이후 발송만 센다(이전 슬롯 안내 무시)")
+    void dispatch_whenSlotChangedToday_sameDayGuardStartsAtSlotChange() {
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenSmsDispatchSuccess();
+        LocalDateTime dayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime changedAt = LocalDateTime.now().withNano(0);
+        scheduleRepository.findByTenantIdAndId(TENANT_ID, SCHEDULE_ID).get().setSlotChangedAt(changedAt);
+
+        service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        org.mockito.ArgumentCaptor<LocalDateTime> from = org.mockito.ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(sendLogRepository).existsByIdempotencyKeyAnyTemplateAndSentAtRange(
+            eq(TENANT_ID), eq(BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES),
+            eq(BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE), eq(SCHEDULE_ID), eq(CLIENT_ID),
+            from.capture(), any(LocalDateTime.class));
+        assertThat(from.getValue()).isEqualTo(changedAt.isAfter(dayStart) ? changedAt : dayStart);
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 당일 가드 시작: 오늘 변경이 없으면 00:00, 오늘 변경이면 변경 시각")
+    void sameDayGuardStartForCurrentSlot_rules() {
+        LocalDateTime dayStart = LocalDateTime.of(2026, 11, 11, 0, 0);
+        assertThat(BatchNotificationDispatchServiceImpl.sameDayGuardStartForCurrentSlot(dayStart, null))
+            .isEqualTo(dayStart);
+        assertThat(BatchNotificationDispatchServiceImpl.sameDayGuardStartForCurrentSlot(
+            dayStart, LocalDateTime.of(2026, 11, 10, 23, 0))).isEqualTo(dayStart);
+        assertThat(BatchNotificationDispatchServiceImpl.sameDayGuardStartForCurrentSlot(
+            dayStart, LocalDateTime.of(2026, 11, 11, 14, 27))).isEqualTo(LocalDateTime.of(2026, 11, 11, 14, 27));
     }
 
     @Test

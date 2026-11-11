@@ -84,6 +84,8 @@ class ReservationReminderRescheduleResendIntegrationTest {
     private static final Long CLIENT_ID = 92001L;
     private static final Long CONSULTANT_ID = 93001L;
     private static final String PHONE = "01012345678";
+    /** 실시간 당일 시나리오 — 자정 직전 실행 시 시작 시각이 지나지 않도록 하는 기준. */
+    private static final LocalTime LATE_NIGHT_TEST_CUTOFF = LocalTime.of(23, 50);
 
     @Autowired
     private NotificationBatchSendLogRepository sendLogRepository;
@@ -330,6 +332,43 @@ class ReservationReminderRescheduleResendIntegrationTest {
         assertThat(lateLogCount(tenantId)).isEqualTo(2);
     }
 
+    @Test
+    @DisplayName("2026-11-11 — 오늘 안내 발송 후 내일로 날짜 이동(D-1 09:00 지남) → 새 슬롯 D-1 1회, 재저장해도 1회")
+    void movedIntoTomorrowAfterD1Batch_catchUpSendsNewSlotOnce() {
+        LocalDate today = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL);
+        org.junit.jupiter.api.Assumptions.assumeTrue(
+            LocalTime.now(ReservationSmsBusinessHours.ZONE_SEOUL).isBefore(LATE_NIGHT_TEST_CUTOFF));
+        schedule.setDate(today);
+        schedule.setStartTime(LATE_NIGHT_TEST_CUTOFF.plusMinutes(5));
+        schedule.setEndTime(LATE_NIGHT_TEST_CUTOFF.plusMinutes(6));
+        assertThat(dispatchLateNow().status()).isEqualTo(DispatchOutcome.Status.SMS_ONLY_SENT);
+
+        LocalDate newDate = today.plusDays(BookingReminderPushConstants.REMINDER_D1_DAYS_AHEAD);
+        schedule.setDate(newDate);
+        schedule.setStartTime(SLOT_START);
+        schedule.setEndTime(SLOT_END);
+        schedule.setSlotChangedAt(LocalDateTime.now(ReservationSmsBusinessHours.ZONE_SEOUL).plusSeconds(1));
+        ReservationReminderRescheduleServiceImpl reschedule = newRescheduleService();
+        runInTenant(() -> reschedule.onSlotChanged(tenantId, schedule));
+        runInTenant(() -> reschedule.onSlotChanged(tenantId, schedule));
+
+        assertThat(lateSendsFor(tenantId, newDate)).isEqualTo(1);
+        assertThat(lateSendsFor(tenantId, today)).isEqualTo(1);
+        assertThat(lateLogCount(tenantId)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — D+2 이상으로 이동 → 즉시 발송 없음(다음 09:00 배치가 새 슬롯 D-1 담당)")
+    void movedTwoOrMoreDaysAhead_noCatchUp() {
+        LocalDate today = LocalDate.now(ReservationSmsBusinessHours.ZONE_SEOUL);
+        schedule.setDate(today.plusDays(BookingReminderPushConstants.REMINDER_D1_DAYS_AHEAD + 1L));
+        schedule.setSlotChangedAt(LocalDateTime.now(ReservationSmsBusinessHours.ZONE_SEOUL));
+
+        runInTenant(() -> newRescheduleService().onSlotChanged(tenantId, schedule));
+
+        assertThat(lateLogCount(tenantId)).isZero();
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /**
@@ -378,6 +417,33 @@ class ReservationReminderRescheduleResendIntegrationTest {
     private Clock clockAt(LocalDateTime at) {
         return Clock.fixed(at.atZone(ReservationSmsBusinessHours.ZONE_SEOUL).toInstant(),
             ReservationSmsBusinessHours.ZONE_SEOUL);
+    }
+
+    private ReservationReminderRescheduleServiceImpl newRescheduleService() {
+        com.coresolution.consultation.service.ImmediateReservationSmsDeferralService deferral =
+            mock(com.coresolution.consultation.service.ImmediateReservationSmsDeferralService.class);
+        when(deferral.resolveDeferredFireAt()).thenReturn(Optional.empty());
+        Clock now = Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL);
+        return new ReservationReminderRescheduleServiceImpl(newDispatchService(now), deferral, null, now);
+    }
+
+    private DispatchOutcome dispatchLateNow() {
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            return newDispatchService(Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL))
+                .dispatchReservationImmediateLate(SCHEDULE_ID);
+        } finally {
+            TenantContextHolder.clear();
+        }
+    }
+
+    private void runInTenant(Runnable action) {
+        TenantContextHolder.setTenantId(tenantId);
+        try {
+            action.run();
+        } finally {
+            TenantContextHolder.clear();
+        }
     }
 
     private BatchNotificationDispatchServiceImpl newDispatchService(Clock clock) {

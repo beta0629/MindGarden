@@ -16,6 +16,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.ImmediateReservationSmsDeferralService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleChangeNotificationDebounceService;
+import com.coresolution.consultation.service.ReservationReminderRescheduleService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -76,6 +77,8 @@ class ConsultationServiceImplRescheduleReminderTest {
     private EmailService emailService;
     @Mock
     private ScheduleService scheduleService;
+    @Mock
+    private ReservationReminderRescheduleService reservationReminderRescheduleService;
 
     private ConsultationServiceImpl service;
     private Consultation consultation;
@@ -91,6 +94,8 @@ class ConsultationServiceImplRescheduleReminderTest {
         ReflectionTestUtils.setField(service, "mobilePushDispatchService", mobilePushDispatchService);
         ReflectionTestUtils.setField(service, "emailService", emailService);
         ReflectionTestUtils.setField(service, "scheduleService", scheduleService);
+        ReflectionTestUtils.setField(service, "reservationReminderRescheduleService",
+            reservationReminderRescheduleService);
 
         TenantContextHolder.setTenantId(TENANT_ID);
         when(emailService.sendTemplateEmail(anyString(), anyString(), anyString(), any()))
@@ -179,5 +184,21 @@ class ConsultationServiceImplRescheduleReminderTest {
         assertThat(result.getConsultationDate()).isEqualTo(OLD_DATE.plusDays(2));
         verify(scheduleChangeNotificationDebounceService).enqueueScheduleChanged(
             eq(TENANT_ID), any(Schedule.class), eq(OLD_DATE), eq(OLD_START));
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 다른 날로 재예약 → 공통 새 슬롯 D-1 리마인드 모듈 호출(테넌트·연결 일정)")
+    void reschedule_toAnotherDay_notifiesCommonRescheduleModule() {
+        service.rescheduleConsultation(CONSULTATION_ID, OLD_DATE.plusDays(1).atTime(LocalTime.of(10, 0)));
+
+        verify(reservationReminderRescheduleService).onSlotChanged(TENANT_ID, linkedSchedule);
+    }
+
+    @Test
+    @DisplayName("2026-11-11 — 일시가 같은 재예약(재저장) → 새 슬롯 리마인드 모듈 미호출")
+    void reschedule_sameSlot_doesNotNotifyRescheduleModule() {
+        service.rescheduleConsultation(CONSULTATION_ID, OLD_DATE.atTime(OLD_START));
+
+        verify(reservationReminderRescheduleService, never()).onSlotChanged(anyString(), any());
     }
 }

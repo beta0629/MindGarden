@@ -559,15 +559,19 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
 
         // 당일(Asia/Seoul) 교차 템플릿 1통 가드 — SINGLE/LATE/D2 중 이미 발송된 건이 있으면 skip.
         // 템플릿별 lifetime UNIQUE 와 별개로, 지연 즉시문자 + D-n 09:00 배치 충돌을 막는다.
+        // 슬롯 리마인드(D-2/D-1)는 일정 일시가 바뀐 뒤의 발송만 센다 — 바뀌기 전 슬롯 안내는 무시.
         LocalDateTime dayStart = ReservationSmsBusinessHours.startOfToday(reservationSmsClock);
         LocalDateTime dayEnd = ReservationSmsBusinessHours.startOfTomorrow(reservationSmsClock);
+        LocalDateTime guardFrom = slotScopedReminder
+            ? sameDayGuardStartForCurrentSlot(dayStart, schedule.getSlotChangedAt())
+            : dayStart;
         if (sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
                 tenantId,
                 BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES,
                 BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
                 scheduleId,
                 client.getId(),
-                dayStart,
+                guardFrom,
                 dayEnd)) {
             log.info(
                     "예약 SMS 당일 1통 skip: tenantId={}, templateCode={}, scheduleId={}, recipientUserId={}, dayStart={}",
@@ -585,6 +589,20 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         return dispatchInternal(tenantId, templateCode,
             BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
             scheduleId, client.getId(), decryptedPhone, params, smsBody);
+    }
+
+    /**
+     * 당일 1통 가드 시작 시각 — 오늘 일시가 바뀌었으면 그 시각부터(이전 슬롯 안내는 새 슬롯을 막지 않음).
+     *
+     * @param dayStart      오늘 00:00 (Asia/Seoul)
+     * @param slotChangedAt 일정 일시 마지막 변경 시각 ({@code null} 이면 추적 전)
+     * @return 가드 조회 시작 시각 (inclusive)
+     */
+    static LocalDateTime sameDayGuardStartForCurrentSlot(LocalDateTime dayStart, LocalDateTime slotChangedAt) {
+        if (slotChangedAt == null || !slotChangedAt.isAfter(dayStart)) {
+            return dayStart;
+        }
+        return slotChangedAt;
     }
 
     /**
@@ -962,12 +980,12 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             String fallbackNote = alimtalkAttempted && alimtalkResult != null
                 ? "alimtalk failed, sms fallback ok: " + alimtalkResult.errorMessage()
                 : "alimtalk mapping absent, sms only ok";
+            // 발송 성공 행에는 error_code 를 남기지 않는다(성공·실패 판정 모순 방지).
+            // 알림톡 미매핑·실패 사유는 error_message 메모로만 보존한다.
             sendLogger.updateResult(logEntry.getId(), true,
                 BatchNotificationTemplateCodes.CHANNEL_SMS,
                 fallbackToSms,
-                alimtalkAttempted
-                    ? (alimtalkResult != null ? alimtalkResult.errorCode() : null)
-                    : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED,
+                null,
                 NotificationDispatchHelper.truncate(fallbackNote),
                 alimtalkResult != null ? alimtalkResult.solapiGroupId() : null,
                 alimtalkResult != null ? alimtalkResult.solapiMessageId() : null);

@@ -699,7 +699,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
             }
             if (!validateRemainingSessions(consultantId, clientId)) {
-                throw new RuntimeException("사용 가능한 회기가 없습니다.");
+                throw new IllegalStateException(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
             }
         }
 
@@ -808,7 +808,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 throw new RuntimeException("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
             }
             if (!validateRemainingSessions(consultantId, clientId)) {
-                throw new RuntimeException("사용 가능한 회기가 없습니다.");
+                throw new IllegalStateException(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
             }
         }
 
@@ -878,7 +878,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         
         if (!validateRemainingSessions(consultantId, clientId)) {
-            throw new RuntimeException("사용 가능한 회기가 없습니다.");
+            throw new IllegalStateException(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
         }
         
         rejectIfTimeSlotOccupied(
@@ -2488,17 +2488,18 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             tenantId, ConsultantClientMapping.MappingStatus.ACTIVE);
         
         for (ConsultantClientMapping mapping : activeMappings) {
-            if (mapping.getConsultant().getId().equals(consultantId) && 
-                mapping.getClient().getId().equals(clientId)) {
-                
-                if (isInstitutionLinkPaymentTiming(mapping)) {
-                    log.debug("타기관 연계 매핑 — 회기 잔여 게이트 생략: mappingId={}", mapping.getId());
-                    return true;
-                }
-                Integer remainingSessions = mapping.getRemainingSessions();
-                log.debug("남은 회기 수: {}", remainingSessions);
-                
-                return remainingSessions != null && remainingSessions > 0;
+            if (!mappingMatchesConsultantClientPair(mapping, consultantId, clientId)) {
+                continue;
+            }
+
+            if (isInstitutionLinkPaymentTiming(mapping)) {
+                log.debug("타기관 연계 매핑 — 회기 잔여 게이트 생략: mappingId={}", mapping.getId());
+                return true;
+            }
+            Integer remainingSessions = mapping.getRemainingSessions();
+            log.debug("남은 회기 수: mappingId={}, remaining={}", mapping.getId(), remainingSessions);
+            if (remainingSessions != null && remainingSessions > 0) {
+                return true;
             }
         }
 
@@ -3616,7 +3617,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
                             tenantId, consultantId, clientId);
             mappingOpt = ScheduleMappingContextResolver
-                    .selectLatestActiveOrExhaustedMapping(mappingCandidates);
+                    .selectLatestActiveWithRemainingSessions(mappingCandidates);
         }
         if (mappingOpt.isEmpty()) {
             log.warn("회기 차감 대상 매핑 없음: consultantId={}, clientId={}", consultantId, clientId);

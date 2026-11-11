@@ -168,29 +168,20 @@ describe('adminShopSuite products — validity & server rows', () => {
     expect(validateAdminShopProductForm({ ...base, validityMonths: '0' }).errors.validityMonths).toBe(true);
   });
 
-  test('event fields: price must be lower; eventOnly needs both dates', () => {
+  test('eventOnly·sessionMinutes flags validate without single event price fields', () => {
     expect(validateAdminShopProductForm({
       ...base,
-      eventPriceMinor: '500',
-      eventStartDate: '2026-11-01',
-      eventEndDate: '2026-12-31',
       eventOnly: true,
       sessionMinutes: '30'
     })).toMatchObject({
       valid: true,
-      eventPriceMinor: 500,
       eventOnly: true,
       sessionMinutes: 30
     });
     expect(validateAdminShopProductForm({
       ...base,
-      eventPriceMinor: '2000'
-    }).errors.eventPriceMinor).toBe(true);
-    expect(validateAdminShopProductForm({
-      ...base,
-      eventOnly: true,
-      eventStartDate: '2026-11-01'
-    }).errors.eventDates).toBe(true);
+      sessionMinutes: 'abc'
+    }).errors.sessionMinutes).toBe(true);
   });
 
   test('server product rows map to table rows (package + legacy)', () => {

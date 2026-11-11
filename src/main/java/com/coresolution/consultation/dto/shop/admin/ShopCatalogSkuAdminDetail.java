@@ -1,9 +1,8 @@
 package com.coresolution.consultation.dto.shop.admin;
 
-import java.time.LocalDate;
-
 /**
  * 어드민 SKU 상세.
+ * <p>이벤트 단가·기간은 {@code /event-prices} 목록으로 조회한다.</p>
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -24,9 +23,6 @@ public record ShopCatalogSkuAdminDetail(
         String packageType,
         String fieldCode,
         Long consultantId,
-        Long eventPriceMinor,
-        LocalDate eventStartDate,
-        LocalDate eventEndDate,
         boolean eventOnly,
         Integer sessionMinutes
 ) {

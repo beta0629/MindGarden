@@ -18,6 +18,7 @@ import {
   emptyAdminShopCatalogForm,
   mapAdminShopPackageFeeToForm,
   mapTenantConsultantSelectOptions,
+  parseAdminShopEventPricePeriod,
   resolveAdminShopFieldCodeGroup,
   validateAdminShopCatalogConsultant,
   validateAdminShopCatalogFieldCode,
@@ -146,14 +147,14 @@ describe('buildAdminShopPackageContentBody', () => {
       fieldCode: 'SPEECH',
       consultantId: 15,
       validityMonths: null,
-      eventPriceMinor: null,
-      eventStartDate: null,
-      eventEndDate: null,
       eventOnly: false,
       sessionMinutes: null
     });
     expect(body).not.toHaveProperty('title');
     expect(body).not.toHaveProperty('sessionCount');
+    expect(body).not.toHaveProperty('eventPriceMinor');
+    expect(body).not.toHaveProperty('eventStartDate');
+    expect(body).not.toHaveProperty('eventEndDate');
   });
 
   test('분야 미선택이면 throw', () => {
@@ -226,7 +227,7 @@ describe('buildAdminShopPackageContentBody', () => {
     expect(mapAdminShopPackageFeeToForm({ packageCode: 'P1' }).validityMonths).toBeNull();
   });
 
-  test('이벤트·회기 분 필드를 본문에 포함하고 검증한다', () => {
+  test('이벤트 전용·회기 분 플래그만 본문에 포함한다', () => {
     const base = {
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: 'SPEECH',
@@ -235,28 +236,41 @@ describe('buildAdminShopPackageContentBody', () => {
     };
     const body = buildAdminShopPackageContentBody({
       ...base,
-      eventPriceMinor: '45000',
-      eventStartDate: '2026-11-01',
-      eventEndDate: '2026-12-31',
       eventOnly: true,
       sessionMinutes: '30'
     });
     expect(body).toMatchObject({
-      eventPriceMinor: 45000,
-      eventStartDate: '2026-11-01',
-      eventEndDate: '2026-12-31',
       eventOnly: true,
       sessionMinutes: 30
     });
-    expect(() => buildAdminShopPackageContentBody({
-      ...base,
-      eventPriceMinor: '70000'
-    })).toThrow('이벤트 가격은 정상 가격보다 낮아야 합니다');
-    expect(() => buildAdminShopPackageContentBody({
-      ...base,
-      eventOnly: true,
-      eventStartDate: '2026-11-01'
-    })).toThrow('이벤트 전용 상품은 이벤트 시작일과 종료일이 모두 필요합니다');
+    expect(body).not.toHaveProperty('eventPriceMinor');
+    expect(body).not.toHaveProperty('eventStartDate');
+    expect(body).not.toHaveProperty('eventEndDate');
+  });
+});
+
+describe('parseAdminShopEventPricePeriod', () => {
+  test('시작≤종료·정상가보다 낮은 단가만 통과', () => {
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '45000',
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    }, 60000)).toMatchObject({
+      valid: true,
+      eventPriceMinor: 45000,
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    });
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '70000',
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    }, 60000).valid).toBe(false);
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '45000',
+      startDate: '2026-12-31',
+      endDate: '2026-11-01'
+    }, 60000).valid).toBe(false);
   });
 });
 

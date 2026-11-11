@@ -1,7 +1,5 @@
 package com.coresolution.consultation.dto.shop.admin;
 
-import java.time.LocalDate;
-
 /**
  * 온라인 상품 화면의 패키지 요금 행.
  * <p>상품명·단가·회기는 요금 관리 값이고,
@@ -23,9 +21,6 @@ import java.time.LocalDate;
  * @param fieldCode 분야 공통코드. 없으면 null
  * @param consultantId 상담사 users.id. 없으면 null
  * @param validityMonths 사용 기한(개월). 없으면 null
- * @param eventPriceMinor 이벤트 단가(원). 없으면 null
- * @param eventStartDate 이벤트 시작일. 없으면 null
- * @param eventEndDate 이벤트 종료일. 없으면 null
  * @param eventOnly 이벤트 기간에만 공개
  * @param sessionMinutes 회기당 분. 없으면 null
  * @author MindGarden
@@ -48,9 +43,6 @@ public record ShopCatalogPackageFeeItem(
         String fieldCode,
         Long consultantId,
         Integer validityMonths,
-        Long eventPriceMinor,
-        LocalDate eventStartDate,
-        LocalDate eventEndDate,
         boolean eventOnly,
         Integer sessionMinutes
 ) {

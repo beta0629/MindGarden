@@ -107,8 +107,8 @@ public final class ShopCatalogSkuConstants {
     public static final String EVENT_DATE_RANGE_INVALID_MESSAGE =
             "이벤트 시작일은 종료일보다 늦을 수 없습니다.";
 
-    public static final String EVENT_ONLY_REQUIRES_DATES_MESSAGE =
-            "이벤트 전용 상품은 이벤트 시작일과 종료일이 모두 필요합니다.";
+    public static final String EVENT_PRICE_PERIOD_OVERLAP_MESSAGE =
+            "같은 상품의 이벤트 기간이 겹칩니다. 기간을 조정해 주세요.";
 
     private ShopCatalogSkuConstants() {
     }

@@ -6,11 +6,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
-import java.time.LocalDate;
 
 /**
  * 어드민 SKU 생성·수정 요청.
  * <p>신규 생성 시 {@code skuCode} 생략 가능(서버 자동 발급). 수정 시 skuCode는 변경되지 않습니다.</p>
+ * <p>이벤트 단가·기간은 {@code /event-prices} API 로 관리한다.</p>
  *
  * @author MindGarden
  * @since 2026-05-19
@@ -29,9 +29,6 @@ public record ShopCatalogSkuUpsertRequest(
         @NotNull @Min(ShopSessionCountConstants.MIN_SESSION_COUNT) Integer sessionCount,
         @Size(max = 50) String fieldCode,
         Long consultantId,
-        Long eventPriceMinor,
-        LocalDate eventStartDate,
-        LocalDate eventEndDate,
         boolean eventOnly,
         Integer sessionMinutes
 ) {

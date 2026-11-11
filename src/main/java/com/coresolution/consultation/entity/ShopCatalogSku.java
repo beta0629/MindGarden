@@ -1,6 +1,5 @@
 package com.coresolution.consultation.entity;
 
-import java.time.LocalDate;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -102,25 +101,8 @@ public class ShopCatalogSku extends BaseEntity {
     private Long consultantId;
 
     /**
-     * 홈페이지 이벤트 단가(원, minor=won). null 이면 이벤트 가격 없음.
-     */
-    @Column(name = "event_price_minor")
-    private Long eventPriceMinor;
-
-    /**
-     * 이벤트 시작일(Asia/Seoul LocalDate, 당일 포함).
-     */
-    @Column(name = "event_start_date")
-    private LocalDate eventStartDate;
-
-    /**
-     * 이벤트 종료일(Asia/Seoul LocalDate, 당일 포함).
-     */
-    @Column(name = "event_end_date")
-    private LocalDate eventEndDate;
-
-    /**
-     * true 이면 이벤트 기간에만 공개 목록에 포함한다.
+     * true 이면 활성 이벤트 기간에만 공개 목록에 포함한다.
+     * <p>기간·단가는 {@code shop_catalog_sku_event_prices} 에 둔다.</p>
      */
     @Column(name = "event_only", nullable = false)
     @Builder.Default

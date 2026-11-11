@@ -878,9 +878,6 @@ export function emptyAdminShopProductForm() {
     thumbnailUrl: '',
     sortOrder: '0',
     validityMonths: '',
-    eventPriceMinor: '',
-    eventStartDate: '',
-    eventEndDate: '',
     eventOnly: false,
     sessionMinutes: ''
   };
@@ -919,9 +916,6 @@ export function mapAdminShopProductToForm(product) {
     thumbnailUrl: toDisplayString(fee.thumbnailUrl, ''),
     sortOrder: fee.sortOrder != null ? String(fee.sortOrder) : '0',
     validityMonths: fee.validityMonths != null ? String(fee.validityMonths) : '',
-    eventPriceMinor: fee.eventPriceMinor != null ? String(fee.eventPriceMinor) : '',
-    eventStartDate: toDisplayString(fee.eventStartDate, ''),
-    eventEndDate: toDisplayString(fee.eventEndDate, ''),
     eventOnly: fee.eventOnly === true,
     sessionMinutes: fee.sessionMinutes != null ? String(fee.sessionMinutes) : ''
   };
@@ -996,23 +990,10 @@ export function validateAdminShopProductForm(form) {
     errors.price = true;
   }
   const eventOnly = form?.eventOnly === true;
-  const eventStartDate = toDisplayString(form?.eventStartDate, '').trim() || null;
-  const eventEndDate = toDisplayString(form?.eventEndDate, '').trim() || null;
-  const eventPriceRaw = toDisplayString(form?.eventPriceMinor, '').replace(/\D/g, '');
-  const eventPriceMinor = eventPriceRaw === '' ? null : parseWholeNumber(eventPriceRaw);
   const sessionMinutesRaw = toDisplayString(form?.sessionMinutes, '').trim();
   const sessionMinutes = sessionMinutesRaw === '' ? null : parseWholeNumber(sessionMinutesRaw);
   if (sessionMinutesRaw !== '' && sessionMinutes == null) {
     errors.sessionMinutes = true;
-  }
-  if (eventOnly && (!eventStartDate || !eventEndDate)) {
-    errors.eventDates = true;
-  }
-  if (eventStartDate && eventEndDate && eventStartDate > eventEndDate) {
-    errors.eventDates = true;
-  }
-  if (eventPriceMinor != null && (price == null || eventPriceMinor >= price)) {
-    errors.eventPriceMinor = true;
   }
   return {
     valid: Object.keys(errors).length === 0,
@@ -1020,9 +1001,6 @@ export function validateAdminShopProductForm(form) {
     sessions,
     price,
     validityMonths,
-    eventPriceMinor,
-    eventStartDate,
-    eventEndDate,
     eventOnly,
     sessionMinutes
   };

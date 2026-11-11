@@ -60,7 +60,8 @@ npm run build
 
 ## 레거시
 
-- `/api/consultation` 은 당분간 유지합니다. 신규 문의는 `/api/inquiries` → Clinic-OS 입니다.
+- 신규 문의는 `/api/inquiries` → Clinic-OS 입니다.
+- 레거시 `POST /api/consultation`(MySQL)은 당분간 유지하되, 관리자용 `GET`/`PATCH`는 제거했습니다(공개 홈에서 PII 목록·상태 변경 불가).
 - PM2 `:4000` Node 배포는 이전 운영 경로이며, 새 기본 경로는 Cloudflare Workers 입니다.
 
 ## 카피·시안

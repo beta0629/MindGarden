@@ -25,7 +25,7 @@ These are set automatically by `npm run deploy:staging` for the build, and mirro
 
 `NEXT_PUBLIC_*` must be present at **build** time (inlined by Next). Staging builds also emit `X-Robots-Tag: noindex, nofollow` via `next.config.ts` when `NEXT_PUBLIC_SITE_INDEXABLE` is not `true`.
 
-Legacy `/api/consultation` (MySQL / SMTP) is unused for the Clinic-OS inquiry path. If you still need it on staging, set those as Wrangler secrets yourself — they are not part of the default staging deploy.
+Legacy `POST /api/consultation` (MySQL / SMTP) is unused for the Clinic-OS inquiry path; admin `GET`/`PATCH` return 404. If you still need the legacy POST on staging, set DB/SMTP as Wrangler secrets yourself — they are not part of the default staging deploy.
 
 ## Deploy commands
 

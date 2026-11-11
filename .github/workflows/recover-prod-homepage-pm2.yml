@@ -1,0 +1,96 @@
+# P0 RECOVERY — 센터 홈페이지 m-garden.co.kr PM2 앱(homepage) 재기동 + pm2 startup 등록
+# 승인: 재학 2026-11-11 12:05 KST 「홈페이지 앱 재시작하고 pm2 startup 자동 시작도 등록해줘」(리더0629 전달)
+# 트리거: workflow_dispatch 전용. push/PR 트리거 없음.
+# SSH 시크릿 패턴: check-prod-homepage-readonly / check-redis-env-presence(check-prod) 와 동일.
+# 범위: /var/www/homepage PM2 앱만. nginx reload·Clinic-OS BE·DB·기타 설정 변경 금지.
+# 출력 규칙: env/시크릿 미출력. ecosystem 은 name/script/args/cwd/port 만.
+
+name: 🛠️ Recover prod homepage (PM2 homepage + startup)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: recover-prod-homepage-pm2
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  recover-homepage:
+    name: production homepage PM2 recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Recover homepage via PM2 (production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 6m
+          script_stop: false
+          script: |
+            set +e
+            set -u
+            [ -f /etc/profile ] && . /etc/profile >/dev/null 2>&1
+            [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
+            export PATH="$PATH:/usr/local/bin:/usr/bin"
+            mask() { awk '{ l=tolower($0); if (l ~ /(key|auth|password|passwd|token|secret|credential|dsn)/) { print "***MASKED_LINE***" } else print }'; }
+            sec() { echo; echo "=================== $1"; }
+            HP=/var/www/homepage
+            ECO=$HP/ecosystem.homepage.config.cjs
+            if [ "$(id -u)" = "0" ]; then SU=""; else SU="sudo -n env PATH=$PATH HOME=/root"; fi
+
+            sec "① preflight"
+            ls -la --time-style=full-iso "$HP" 2>&1 | head -50
+            FAIL=0
+            [ -f "$ECO" ] && echo "ecosystem: PRESENT" || { echo "ecosystem: MISSING"; FAIL=1; }
+            command -v pm2 >/dev/null 2>&1 && echo "pm2: $(command -v pm2) v$(pm2 -v 2>/dev/null | tail -1)" || { echo "pm2: NOT_IN_PATH"; FAIL=1; }
+            command -v node >/dev/null 2>&1 && echo "node: $(node -v)" || { echo "node: NOT_IN_PATH"; FAIL=1; }
+            APPCWD="$HP"
+            if [ -f "$ECO" ] && command -v node >/dev/null 2>&1; then
+              node -e '
+                const c=require(process.argv[1]); const apps=(c&&c.apps)||[];
+                for (const a of apps) { const e=a.env||{}; const ep=a.env_production||{};
+                  console.log("app name="+a.name+" script="+a.script+" args="+JSON.stringify(a.args||null)+" cwd="+(a.cwd||"(unset)")+" port="+(e.PORT||ep.PORT||"(unset)")+" exec_mode="+(a.exec_mode||"fork")+" instances="+(a.instances||1)); }
+                const a0=apps.find(a=>a.name==="homepage")||apps[0]; if (a0&&a0.cwd) console.log("APPCWD="+a0.cwd);
+              ' "$ECO" 2>&1 | tee /tmp/.hp_eco_$$ | grep -v '^APPCWD='
+              C=$(grep '^APPCWD=' /tmp/.hp_eco_$$ | head -1 | cut -d= -f2-); rm -f /tmp/.hp_eco_$$
+              [ -n "$C" ] && APPCWD="$C"
+            fi
+            echo "app cwd: $APPCWD"
+            if [ -f "$APPCWD/.next/BUILD_ID" ]; then echo "build: .next/BUILD_ID=$(cat "$APPCWD/.next/BUILD_ID") mtime=$(stat -c %y "$APPCWD/.next/BUILD_ID")"
+            elif [ -d "$APPCWD/.next/standalone" ]; then echo "build: .next/standalone PRESENT"
+            elif [ -f "$HP/.next/BUILD_ID" ]; then echo "build: $HP/.next/BUILD_ID=$(cat "$HP/.next/BUILD_ID")"
+            else echo "build: MISSING (.next/BUILD_ID / standalone)"; FAIL=1; fi
+            echo "--- homepage-error.log tail 30"
+            $SU tail -n 30 /root/.pm2/logs/homepage-error.log 2>&1 | mask | cut -c1-300
+            if [ "$FAIL" != 0 ]; then echo "::error::① preflight FAIL — 시작하지 않음"; exit 1; fi
+
+            sec "② pm2 start (root)"
+            if $SU pm2 describe homepage >/dev/null 2>&1; then
+              echo "homepage 프로세스 이미 존재 — 중복 시작 안 함 (상태만)"
+            else
+              ( cd "$HP" && $SU pm2 start "$ECO" ) 2>&1 | grep -viE 'env|token|secret|password|key' | tail -20
+              $SU pm2 save 2>&1 | tail -3
+            fi
+
+            sec "③ wait for 127.0.0.1:4000 (max 60s)"
+            CODE=000
+            for i in $(seq 1 30); do CODE=$(curl -s -o /dev/null -m 3 -w '%{http_code}' http://127.0.0.1:4000/); [ "$CODE" = "200" ] && break; sleep 2; done
+            echo "local :4000 http_code=$CODE (after ~$((i*2))s)"
+            curl -sI -m 5 http://127.0.0.1:4000/ 2>&1 | head -5
+            $SU pm2 jlist 2>/dev/null | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{for(const x of JSON.parse(s)){const e=x.pm2_env||{};console.log("pm2 name="+x.name+" status="+e.status+" restarts="+e.restart_time+" pid="+x.pid);}}catch(err){console.log("PM2_JLIST_PARSE_FAIL")}})'
+            if [ "$CODE" != "200" ]; then echo "::error::③ :4000 not 200 — startup 등록 생략, 추가 조치 없음"; $SU tail -n 20 /root/.pm2/logs/homepage-error.log 2>&1 | mask | cut -c1-300; exit 1; fi
+
+            sec "④ pm2 startup systemd"
+            $SU pm2 startup systemd -u root --hp /root 2>&1 | grep -viE 'token|secret|password' | tail -12
+            $SU pm2 save 2>&1 | tail -3
+            echo "pm2-root is-enabled: $(systemctl is-enabled pm2-root 2>&1)"
+            echo "pm2-root is-active: $(systemctl is-active pm2-root 2>&1)"
+            echo; echo "=== DONE"
+            exit 0

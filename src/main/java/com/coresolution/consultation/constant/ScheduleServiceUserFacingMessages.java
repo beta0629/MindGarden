@@ -73,6 +73,14 @@ public final class ScheduleServiceUserFacingMessages {
     /** ACTIVE 매핑에 소비 가능한 잔여 회기가 없을 때 일정 생성 거부. */
     public static final String MSG_NO_REMAINING_SESSIONS = "사용 가능한 회기가 없습니다.";
 
+    /** 상담사·내담자 쌍에 일정 생성에 쓸 유효 매핑이 없을 때. */
+    public static final String MSG_NO_VALID_MAPPING =
+            "상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.";
+
+    /** 가예약 경로에서 ACTIVE 또는 당일카드 입금 대기 매핑이 없을 때. */
+    public static final String MSG_NO_TENTATIVE_MAPPING =
+            "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

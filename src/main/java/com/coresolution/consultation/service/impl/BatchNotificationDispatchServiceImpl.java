@@ -559,15 +559,19 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
 
         // 당일(Asia/Seoul) 교차 템플릿 1통 가드 — SINGLE/LATE/D2 중 이미 발송된 건이 있으면 skip.
         // 템플릿별 lifetime UNIQUE 와 별개로, 지연 즉시문자 + D-n 09:00 배치 충돌을 막는다.
+        // 슬롯 리마인드(D-2/D-1)는 일정 일시가 바뀐 뒤의 발송만 센다 — 바뀌기 전 슬롯 안내는 무시.
         LocalDateTime dayStart = ReservationSmsBusinessHours.startOfToday(reservationSmsClock);
         LocalDateTime dayEnd = ReservationSmsBusinessHours.startOfTomorrow(reservationSmsClock);
+        LocalDateTime guardFrom = slotScopedReminder
+            ? sameDayGuardStartForCurrentSlot(dayStart, schedule.getSlotChangedAt())
+            : dayStart;
         if (sendLogRepository.existsByIdempotencyKeyAnyTemplateAndSentAtRange(
                 tenantId,
                 BatchNotificationTemplateCodes.RESERVATION_SCHEDULE_SMS_CODES,
                 BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
                 scheduleId,
                 client.getId(),
-                dayStart,
+                guardFrom,
                 dayEnd)) {
             log.info(
                     "예약 SMS 당일 1통 skip: tenantId={}, templateCode={}, scheduleId={}, recipientUserId={}, dayStart={}",
@@ -585,6 +589,20 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         return dispatchInternal(tenantId, templateCode,
             BatchNotificationTemplateCodes.TARGET_TYPE_SCHEDULE,
             scheduleId, client.getId(), decryptedPhone, params, smsBody);
+    }
+
+    /**
+     * 당일 1통 가드 시작 시각 — 오늘 일시가 바뀌었으면 그 시각부터(이전 슬롯 안내는 새 슬롯을 막지 않음).
+     *
+     * @param dayStart      오늘 00:00 (Asia/Seoul)
+     * @param slotChangedAt 일정 일시 마지막 변경 시각 ({@code null} 이면 추적 전)
+     * @return 가드 조회 시작 시각 (inclusive)
+     */
+    static LocalDateTime sameDayGuardStartForCurrentSlot(LocalDateTime dayStart, LocalDateTime slotChangedAt) {
+        if (slotChangedAt == null || !slotChangedAt.isAfter(dayStart)) {
+            return dayStart;
+        }
+        return slotChangedAt;
     }
 
     /**
@@ -962,12 +980,12 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             String fallbackNote = alimtalkAttempted && alimtalkResult != null
                 ? "alimtalk failed, sms fallback ok: " + alimtalkResult.errorMessage()
                 : "alimtalk mapping absent, sms only ok";
+            // 발송 성공 행에는 error_code 를 남기지 않는다(성공·실패 판정 모순 방지).
+            // 알림톡 미매핑·실패 사유는 error_message 메모로만 보존한다.
             sendLogger.updateResult(logEntry.getId(), true,
                 BatchNotificationTemplateCodes.CHANNEL_SMS,
                 fallbackToSms,
-                alimtalkAttempted
-                    ? (alimtalkResult != null ? alimtalkResult.errorCode() : null)
-                    : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED,
+                null,
                 NotificationDispatchHelper.truncate(fallbackNote),
                 alimtalkResult != null ? alimtalkResult.solapiGroupId() : null,
                 alimtalkResult != null ? alimtalkResult.solapiMessageId() : null);
@@ -978,9 +996,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
 
         // 알림톡(시도 시) + SMS 모두 실패 → channel_used 는 마지막 시도 채널(SMS)을 보존하지 않고,
         // 멱등 로그 정책 §11 에 따라 "최종 성공 채널 없음 = ALIMTALK 보존" 으로 기록한다.
-        String errorCode = alimtalkAttempted
-            ? BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED
-            : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED;
+        String errorCode = resolveFailureErrorCode(alimtalkAttempted, smsResult);
         String errorMessage = buildAggregateErrorMessage(alimtalkResult, smsResult, alimtalkAttempted);
         sendLogger.updateResult(logEntry.getId(), false,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
@@ -992,6 +1008,27 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         return new DispatchOutcome(DispatchOutcome.Status.FAILED,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
             fallbackToSms, errorCode, errorMessage, logEntry.getId());
+    }
+
+    /**
+     * 알림톡(미시도·실패) + SMS 실패 행의 error_code 를 한 곳에서 정한다.
+     *
+     * <p>마지막으로 실제 시도한 채널인 SMS 의 결과 코드(예: {@code SMS_TEST_MODE_NOT_SENT},
+     * {@code SEND_FAILED})가 우선이다. 알림톡 미시도({@code TEMPLATE_NOT_MAPPED})·실패({@code SEND_FAILED})
+     * 는 SMS 결과에 코드가 없을 때만 쓴다 — 미시도 메모가 SMS 실패 사유를 덮지 않게 한다.
+     *
+     * @param alimtalkAttempted 알림톡 시도 여부
+     * @param smsResult         SMS 발송 결과 (실패)
+     * @return 로그·결과에 기록할 error_code
+     */
+    static String resolveFailureErrorCode(boolean alimtalkAttempted,
+            NotificationDispatchHelper.DispatchResult smsResult) {
+        if (smsResult != null && smsResult.errorCode() != null && !smsResult.errorCode().isBlank()) {
+            return smsResult.errorCode();
+        }
+        return alimtalkAttempted
+            ? BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED
+            : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED;
     }
 
     /**

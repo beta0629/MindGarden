@@ -1,5 +1,5 @@
 /**
- * 내담자 더보기 메뉴 화면
+ * 내담자 나 탭(메뉴) 화면
  *
  * @author MindGarden
  * @since 2026-05-12
@@ -85,7 +85,7 @@ export default function ClientMore() {
           ]}
           accessibilityRole="header"
         >
-          더보기
+          나
         </Text>
       </View>
 

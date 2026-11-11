@@ -432,6 +432,12 @@ jobs:
       - name: Frontend build:ci
         run: npm run build:ci
 
+      - name: Design tokens (source check and tests)
+        working-directory: ${{ github.workspace }}
+        run: |
+          npm run tokens:check
+          npm run test:tokens
+
   prod-gate-fe-build:
     name: Prod gate · FE build
     if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && github.base_ref == 'release/prod'

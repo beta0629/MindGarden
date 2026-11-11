@@ -2,6 +2,7 @@
 module.exports = {
   testEnvironment: 'node',
   roots: [
+    '<rootDir>/src/config/__tests__',
     '<rootDir>/src/utils/__tests__',
     '<rootDir>/src/services/auth/__tests__',
     '<rootDir>/src/services/__tests__',

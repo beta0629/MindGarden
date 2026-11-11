@@ -128,7 +128,9 @@ class AdminShopCatalogSkuServiceImplTest {
                 0,
                 sessionCount,
                 FIELD_CODE,
-                CONSULTANT_ID);
+                CONSULTANT_ID,
+                false,
+                null);
     }
 
     private static ShopCatalogSku existingSku(Long id) {
@@ -244,7 +246,8 @@ class AdminShopCatalogSkuServiceImplTest {
 
         ShopCatalogSkuUpsertRequest request = new ShopCatalogSkuUpsertRequest(
                 "PKG-99", "패키지", null, 10000L, "KRW", ShopCatalogCategory.CONSULTATION,
-                null, false, true, 0, 5, FIELD_CODE, CONSULTANT_ID);
+                null, false, true, 0, 5, FIELD_CODE, CONSULTANT_ID,
+                false, null);
 
         ShopCatalogSkuAdminDetail detail = adminShopCatalogSkuService.create(TENANT, request);
 
@@ -393,7 +396,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, 3));
+                        "상담 안내", false, 2, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, 3,
+                        false, null));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
@@ -425,7 +429,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null)));
+                        "상담 안내", true, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null,
+                        false, null)));
         verify(shopCatalogSkuRepository, never()).save(any());
     }
 
@@ -445,7 +450,8 @@ class AdminShopCatalogSkuServiceImplTest {
                         TENANT,
                         "PACKAGE_001",
                         new ShopCatalogPackageContentRequest(
-                                "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, null, null)));
+                                "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, null, null,
+                                false, null)));
         assertEquals(ShopCatalogSkuConstants.CONSULTANT_REQUIRED_MESSAGE, ex.getMessage());
         verify(shopCatalogSkuRepository, never()).save(any());
     }
@@ -466,7 +472,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_001",
                 new ShopCatalogPackageContentRequest(
-                        "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null));
+                        "상담 안내", false, 0, ShopCatalogCategory.CONSULTATION, FIELD_CODE, CONSULTANT_ID, null,
+                        false, null));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());
@@ -498,7 +505,8 @@ class AdminShopCatalogSkuServiceImplTest {
                 TENANT,
                 "PACKAGE_EXAM",
                 new ShopCatalogPackageContentRequest(
-                        "검사 안내", false, 0, ShopCatalogCategory.ASSESSMENT, "MMPI", CONSULTANT_ID, null));
+                        "검사 안내", false, 0, ShopCatalogCategory.ASSESSMENT, "MMPI", CONSULTANT_ID, null,
+                        false, null));
 
         ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
         verify(shopCatalogSkuRepository).save(captor.capture());

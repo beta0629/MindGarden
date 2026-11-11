@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
+
 import java.util.Map;
 import com.coresolution.consultation.integration.solapi.SolapiSendIds;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
@@ -37,6 +39,9 @@ public class NotificationDispatchHelper {
      */
     private static final int ERROR_MESSAGE_LOG_LIMIT = 900;
 
+    /** SMS 테스트 모드 미발송 메모. */
+    static final String SMS_TEST_MODE_NOT_SENT_MESSAGE = "sms test mode — not sent";
+
     private final SmsAuthService smsAuthService;
     private final KakaoAlimTalkService kakaoAlimTalkService;
 
@@ -48,6 +53,12 @@ public class NotificationDispatchHelper {
      * @return 결과(성공·errorCode·errorMessage). solapi IDs 는 SMS 경로에서 비어 있다
      */
     public DispatchResult dispatchSms(String phone, String content) {
+        // 테스트 모드는 실제 발송이 없으므로 성공으로 돌려주지 않는다(미발송을 성공으로 기록 금지).
+        if (smsAuthService.isTestMode()) {
+            return new DispatchResult(false,
+                BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT,
+                SMS_TEST_MODE_NOT_SENT_MESSAGE, null, null);
+        }
         boolean success;
         String errorCode = null;
         String errorMessage = null;

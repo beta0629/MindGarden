@@ -40,6 +40,7 @@ public final class PublicApiPathPolicy {
             "/api/v1/mobile/app-version",
             "/api/v1/onboarding",
             "/api/v1/public/kr-public-data",
+            "/api/v1/public/tenants",
             "/api/v1/ops",
             "/api/v1/ops/plans/active",
             "/api/v1/ops/plans/code",

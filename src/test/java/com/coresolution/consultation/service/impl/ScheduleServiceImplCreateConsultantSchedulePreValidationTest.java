@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.PaymentTimingConstants;
+import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -28,9 +30,11 @@ import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.DashboardIntegrationService;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,6 +49,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -64,6 +69,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
     private static final String TENANT_ID = "tenant-preval-1";
     private static final Long CONSULTANT_ID = 101L;
     private static final Long CLIENT_ID = 202L;
+    private static final Long EXHAUSTED_MAPPING_ID = 501L;
+    private static final Long REMAINING_MAPPING_ID = 502L;
 
     @Mock
     private ScheduleRepository scheduleRepository;
@@ -121,6 +128,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
         // 기존 테스트는 SAME_DAY_CARD 시나리오가 아니므로 빈 리스트 lenient 스텁으로 통과시킨다.
         lenient().when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.PENDING_PAYMENT))
                 .thenReturn(Collections.emptyList());
+        lenient().when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.CANCELLED))
+                .thenReturn(Collections.emptyList());
     }
 
     @AfterEach
@@ -137,6 +146,40 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
                 .thenReturn(Collections.emptyList());
     }
 
+    private void stubAutoCompleteQueries() {
+        lenient().when(scheduleRepository.findExpiredConfirmedSchedules(
+                anyString(), any(LocalDate.class), any(LocalTime.class)))
+                .thenReturn(Collections.emptyList());
+        lenient().when(scheduleRepository.findByDateBeforeAndStatus(anyString(), any(LocalDate.class), any()))
+                .thenReturn(Collections.emptyList());
+    }
+
+    private ConsultantClientMapping buildActiveMapping(
+            Long id,
+            String paymentTiming,
+            Integer remainingSessions,
+            Integer totalSessions,
+            Integer usedSessions,
+            LocalDateTime updatedAt) {
+        User consultant = new User();
+        consultant.setId(CONSULTANT_ID);
+        User client = new User();
+        client.setId(CLIENT_ID);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(id);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setConsultant(consultant);
+        mapping.setClient(client);
+        mapping.setStatus(MappingStatus.ACTIVE);
+        mapping.setPaymentTiming(paymentTiming);
+        mapping.setRemainingSessions(remainingSessions);
+        mapping.setTotalSessions(totalSessions);
+        mapping.setUsedSessions(usedSessions);
+        mapping.setUpdatedAt(updatedAt);
+        mapping.setCreatedAt(updatedAt);
+        return mapping;
+    }
+
     @Test
     @DisplayName("매칭 없음 시 createConsultantSchedule은 저장하지 않고 WithType과 동일 메시지로 실패")
     void createConsultantSchedule_noMapping_doesNotSave() {
@@ -150,8 +193,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명", "VIDEO", null))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_VALID_MAPPING);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -180,8 +223,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명", "PHONE", "ignored-branch"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("사용 가능한 회기가 없습니다.");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -199,8 +242,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("유효한 매칭");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_VALID_MAPPING);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -229,10 +272,150 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("사용 가능한 회기");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("소진 ACTIVE가 먼저 나열돼도 rem>0 ACTIVE가 있으면 생성 성공·mappingId는 rem>0 매핑")
+    void createConsultantSchedule_exhaustedFirstPlusRemaining_succeedsAndWiresRemainingMapping() {
+        stubConflictCheck();
+        stubAutoCompleteQueries();
+
+        ConsultantClientMapping exhausted = buildActiveMapping(
+                EXHAUSTED_MAPPING_ID,
+                PaymentTimingConstants.SAME_DAY_CARD,
+                0,
+                1,
+                1,
+                LocalDateTime.of(2026, 11, 10, 18, 0));
+        ConsultantClientMapping remaining = buildActiveMapping(
+                REMAINING_MAPPING_ID,
+                PaymentTimingConstants.ADVANCE,
+                10,
+                10,
+                0,
+                LocalDateTime.of(2026, 11, 1, 10, 0));
+
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(List.of(exhausted, remaining));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                TENANT_ID, CONSULTANT_ID, CLIENT_ID))
+                .thenReturn(List.of(exhausted, remaining));
+
+        ConsultantClientMapping freshRemaining = buildActiveMapping(
+                REMAINING_MAPPING_ID,
+                PaymentTimingConstants.ADVANCE,
+                10,
+                10,
+                0,
+                LocalDateTime.of(2026, 11, 1, 10, 0));
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, REMAINING_MAPPING_ID))
+                .thenReturn(Optional.of(freshRemaining));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(REMAINING_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(Collections.emptyList());
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(invocation -> {
+            Schedule s = invocation.getArgument(0);
+            if (s.getId() == null) {
+                s.setId(888L);
+            }
+            return s;
+        });
+
+        Schedule saved = scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 11, 20),
+                LocalTime.of(10, 0), LocalTime.of(11, 0),
+                "제목", "설명", "VIDEO", null, false);
+
+        assertThat(saved.getId()).isEqualTo(888L);
+        assertThat(saved.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        assertThat(saved.getMappingId()).isEqualTo(REMAINING_MAPPING_ID);
+        verify(sessionSyncService).syncAfterSessionUsage(
+                eq(REMAINING_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID));
+        assertThat(freshRemaining.getRemainingSessions()).isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("소진 ACTIVE만 있으면 IllegalStateException·저장 없음")
+    void createConsultantSchedule_onlyExhaustedActive_throwsIllegalStateAndDoesNotSave() {
+        stubConflictCheck();
+
+        ConsultantClientMapping exhausted = buildActiveMapping(
+                EXHAUSTED_MAPPING_ID,
+                PaymentTimingConstants.SAME_DAY_CARD,
+                0,
+                1,
+                1,
+                LocalDateTime.of(2026, 11, 10, 18, 0));
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(List.of(exhausted));
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 11, 21),
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "제목", "설명", "PHONE", null, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("SESSIONS_EXHAUSTED만 있으면 IllegalStateException(회기 없음)·저장 없음")
+    void createConsultantSchedule_onlySessionsExhausted_throwsNoRemainingAndDoesNotSave() {
+        stubConflictCheck();
+
+        ConsultantClientMapping exhausted = buildActiveMapping(
+                EXHAUSTED_MAPPING_ID,
+                PaymentTimingConstants.SAME_DAY_CARD,
+                0,
+                1,
+                1,
+                LocalDateTime.of(2026, 11, 10, 18, 0));
+        exhausted.setStatus(MappingStatus.SESSIONS_EXHAUSTED);
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.SESSIONS_EXHAUSTED))
+                .thenReturn(List.of(exhausted));
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 11, 22),
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "제목", "설명", "PHONE", null, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("validateRemainingSessions: 소진 ACTIVE 먼저 + rem>0 ACTIVE → true")
+    void validateRemainingSessions_exhaustedFirstPlusRemaining_returnsTrue() {
+        ConsultantClientMapping exhausted = buildActiveMapping(
+                EXHAUSTED_MAPPING_ID,
+                PaymentTimingConstants.SAME_DAY_CARD,
+                0,
+                1,
+                1,
+                LocalDateTime.of(2026, 11, 10, 18, 0));
+        ConsultantClientMapping remaining = buildActiveMapping(
+                REMAINING_MAPPING_ID,
+                PaymentTimingConstants.ADVANCE,
+                10,
+                10,
+                0,
+                LocalDateTime.of(2026, 11, 1, 10, 0));
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(List.of(exhausted, remaining));
+
+        assertThat(scheduleService.validateRemainingSessions(CONSULTANT_ID, CLIENT_ID)).isTrue();
     }
 
     @Test

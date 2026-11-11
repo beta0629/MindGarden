@@ -237,6 +237,43 @@ public final class ScheduleMappingContextResolver {
     }
 
     /**
+     * 회기 소비에 쓸 ACTIVE 매핑 선택 — 잔여 회기·기관연계를 우선한다.
+     *
+     * <ol>
+     *   <li>{@code remainingSessions &gt; 0} 인 ACTIVE 중 최신</li>
+     *   <li>없으면 INSTITUTION_LINK ACTIVE 중 최신</li>
+     *   <li>없으면 {@link #selectLatestActiveOrExhaustedMapping} fallback</li>
+     * </ol>
+     *
+     * @param candidates ACTIVE/SESSIONS_EXHAUSTED 후보
+     * @return 선택된 매핑
+     * @author CoreSolution
+     * @since 2026-11-11
+     */
+    public static java.util.Optional<ConsultantClientMapping> selectLatestActiveWithRemainingSessions(
+            List<ConsultantClientMapping> candidates) {
+        if (candidates == null || candidates.isEmpty()) {
+            return java.util.Optional.empty();
+        }
+        Comparator<ConsultantClientMapping> recency = mappingRecencyComparator();
+        java.util.Optional<ConsultantClientMapping> withRemaining = candidates.stream()
+                .filter(m -> m.getStatus() == MappingStatus.ACTIVE)
+                .filter(m -> m.getRemainingSessions() != null && m.getRemainingSessions() > 0)
+                .max(recency);
+        if (withRemaining.isPresent()) {
+            return withRemaining;
+        }
+        java.util.Optional<ConsultantClientMapping> institutionLink = candidates.stream()
+                .filter(m -> m.getStatus() == MappingStatus.ACTIVE)
+                .filter(m -> PaymentTimingConstants.isInstitutionLink(m.getPaymentTiming()))
+                .max(recency);
+        if (institutionLink.isPresent()) {
+            return institutionLink;
+        }
+        return selectLatestActiveOrExhaustedMapping(candidates);
+    }
+
+    /**
      * 예약 즉시/리마인더 SMS 전용 매핑 선택.
      *
      * <p>우선순위: ACTIVE → SESSIONS_EXHAUSTED → PENDING_PAYMENT (현장결제 가예약).

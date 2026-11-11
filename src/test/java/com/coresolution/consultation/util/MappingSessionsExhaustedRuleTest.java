@@ -54,7 +54,9 @@ class MappingSessionsExhaustedRuleTest {
     }
 
     @ParameterizedTest(name = "{0} 매핑 마지막 회기 사용 → 상태 유지")
-    @EnumSource(value = MappingStatus.class, names = {"CANCELLED", "TERMINATED", "PENDING_PAYMENT", "PAYMENT_CONFIRMED"})
+    @EnumSource(value = MappingStatus.class, names = {
+            "CANCELLED", "TERMINATED", "PENDING_PAYMENT", "PAYMENT_CONFIRMED", "DEPOSIT_PENDING"
+    })
     @DisplayName("엔티티 useSession·승계 차감·leftover 소진 — 활성이 아니면 상태 유지")
     void entityMethods_nonActive_keepStatus(MappingStatus status) {
         ConsultantClientMapping used = mapping(status, 1, 0, 1);

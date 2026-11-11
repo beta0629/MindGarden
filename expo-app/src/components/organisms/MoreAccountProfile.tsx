@@ -19,7 +19,7 @@ import type { Href } from 'expo-router';
 import { useRouter } from 'expo-router';
 import Constants from 'expo-constants';
 import type { ImagePickerOptions } from 'expo-image-picker';
-import { Bell, ChevronLeft, LogOut, Settings } from 'lucide-react-native';
+import { Bell, ChevronLeft, LogOut, Settings, UserMinus } from 'lucide-react-native';
 import { useTheme } from '@/theme';
 import { Avatar } from '@/components/atoms/Avatar';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -29,6 +29,7 @@ import { toDisplayString } from '@/utils/safeDisplay';
 import { maskKoreanMobileForDisplay } from '@/utils/phoneNormalize';
 import { useProfileImageUpload } from '@/api/hooks/useProfileImageUpload';
 import { useProfileRemoteSync } from '@/api/hooks/useProfileRemoteSync';
+import { ACCOUNT_DELETION_COPY } from '@/constants/accountDeletionCopy';
 
 // P0 영구 대책 Phase 2 (2026-06-09): base64 옵션 제거 — multipart 업로드는 file URI 만 사용.
 const PROFILE_IMAGE_PICK_OPTIONS: ImagePickerOptions = {
@@ -56,12 +57,15 @@ export interface MoreAccountProfileProps {
   readonly settingsHref: Href;
   readonly notificationSettingsHref: Href;
   readonly roleLabel: string;
+  /** App Store 5.1.1(v) — 선택적 보조 진입 */
+  readonly accountDeletionHref?: Href;
 }
 
 export function MoreAccountProfile({
   settingsHref,
   notificationSettingsHref,
   roleLabel,
+  accountDeletionHref,
 }: MoreAccountProfileProps) {
   const theme = useTheme();
   const router = useRouter();
@@ -392,6 +396,35 @@ export function MoreAccountProfile({
             </Text>
             <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
           </Pressable>
+          {accountDeletionHref ? (
+            <>
+              <View style={[styles.divider, { backgroundColor: theme.colors.divider }]} />
+              <Pressable
+                testID="profile-account-deletion"
+                onPress={() => router.push(accountDeletionHref)}
+                style={({ pressed }) => [
+                  styles.menuRow,
+                  { backgroundColor: pressed ? theme.colors.accentSoft : 'transparent' },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={ACCOUNT_DELETION_COPY.SETTINGS_ROW}
+              >
+                <UserMinus size={20} color={theme.colors.error} />
+                <Text
+                  style={{
+                    flex: 1,
+                    marginLeft: 12,
+                    color: theme.colors.error,
+                    fontFamily: theme.fontFamily.medium,
+                    fontSize: theme.fontSize.base,
+                  }}
+                >
+                  {ACCOUNT_DELETION_COPY.SETTINGS_ROW}
+                </Text>
+                <Text style={{ color: theme.colors.textTertiary, fontSize: theme.fontSize.lg }}>›</Text>
+              </Pressable>
+            </>
+          ) : null}
         </View>
 
         <Text

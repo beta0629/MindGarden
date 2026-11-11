@@ -39,6 +39,14 @@ import {
 } from '@/utils/adminRole';
 import { requestOsNotificationPermission } from '@/utils/notificationPermissionFlow';
 import { PUSH_PERMISSION_COPY } from '@/constants/pushPermissionCopy';
+import {
+  PUSH_REGISTER_FAILURE_NOT_A_DEVICE,
+  PUSH_REGISTER_FAILURE_PERMISSION_DENIED,
+  shouldNotifyUserForPushRegisterFailure,
+} from '@/constants/pushPermissionNotify';
+
+/** 최근 registerToken 실패 reason — claim-retry 토스트 게이트용 (boolean 반환 API 유지) */
+let lastRegisterTokenFailureReason: string | null = null;
 
 /**
  * 백엔드가 푸시 발송 시 `system_notifications` 인박스에 row 를 적재한다(2026-05-26).
@@ -294,14 +302,22 @@ export const NotificationService = {
    */
   async registerToken(): Promise<boolean> {
     let resolvedToken: string | null = null;
+    lastRegisterTokenFailureReason = null;
     const logFailure = (reason: string) => {
+      lastRegisterTokenFailureReason = reason;
       logRegisterTokenOutcome('failed', { reason, token: resolvedToken });
     };
 
     try {
+      // 시뮬레이터 등은 권한 거부와 구분 — 서버 호출 없이 not_a_device 로 종료
+      if (!Device.isDevice) {
+        logFailure(PUSH_REGISTER_FAILURE_NOT_A_DEVICE);
+        return false;
+      }
+
       const hasPermission = await this.requestPermission();
       if (!hasPermission) {
-        logFailure('notification_permission_denied');
+        logFailure(PUSH_REGISTER_FAILURE_PERMISSION_DENIED);
         return false;
       }
 
@@ -332,6 +348,7 @@ export const NotificationService = {
         },
       });
 
+      lastRegisterTokenFailureReason = null;
       logRegisterTokenOutcome('ok', { token: resolvedToken });
       return true;
     } catch (err) {
@@ -342,10 +359,10 @@ export const NotificationService = {
   },
 
   /**
-   * 로그인 claim — register 1회 + 실패 시 토스트 후 재시도 1회.
+   * 로그인 claim — register 1회 + 실패 시(조치 가능 reason만) 토스트 후 재시도 1회.
    * 계정 전환 후 이전 상담사 active 토큰 잔존을 막기 위한 필수 경로.
    *
-   * @param options.notifyUser 실패 안내 토스트 표시(기본 true)
+   * @param options.notifyUser 실패 안내 토스트 표시(기본 true). 시뮬레이터·API 오류 등은 로그만.
    * @returns 최종 등록 성공 여부
    */
   async registerTokenWithClaimRetry(options?: { notifyUser?: boolean }): Promise<boolean> {
@@ -354,7 +371,8 @@ export const NotificationService = {
     if (firstOk) {
       return true;
     }
-    if (notifyUser) {
+    const firstReason = lastRegisterTokenFailureReason ?? '';
+    if (notifyUser && shouldNotifyUserForPushRegisterFailure(firstReason)) {
       showInAppToast({
         id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-claim-${Date.now()}`,
         title: PUSH_PERMISSION_COPY.registerFailedTitle,
@@ -364,13 +382,16 @@ export const NotificationService = {
     }
     console.warn('[NotificationService] registerToken claim retry', { attempt: 2 });
     const retryOk = await this.registerToken();
-    if (!retryOk && notifyUser) {
-      showInAppToast({
-        id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-claim-final-${Date.now()}`,
-        title: PUSH_PERMISSION_COPY.registerFailedTitle,
-        body: PUSH_PERMISSION_COPY.registerFailedBody,
-        icon: 'AlertTriangle',
-      });
+    if (!retryOk) {
+      const retryReason = lastRegisterTokenFailureReason ?? '';
+      if (notifyUser && shouldNotifyUserForPushRegisterFailure(retryReason)) {
+        showInAppToast({
+          id: `${PUSH_PERMISSION_COPY.registerRetryToastId}-claim-final-${Date.now()}`,
+          title: PUSH_PERMISSION_COPY.registerFailedTitle,
+          body: PUSH_PERMISSION_COPY.registerFailedBody,
+          icon: 'AlertTriangle',
+        });
+      }
     }
     return retryOk;
   },

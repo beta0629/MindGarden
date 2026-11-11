@@ -20,6 +20,9 @@ package com.coresolution.consultation.dto.shop.admin;
  * @param catalogCategory CONSULTATION 또는 ASSESSMENT
  * @param fieldCode 분야 공통코드. 없으면 null
  * @param consultantId 상담사 users.id. 없으면 null
+ * @param validityMonths 사용 기한(개월). 없으면 null
+ * @param eventOnly 이벤트 기간에만 공개
+ * @param sessionMinutes 회기당 분. 없으면 null
  * @author MindGarden
  * @since 2026-09-24
  */
@@ -39,6 +42,8 @@ public record ShopCatalogPackageFeeItem(
         String catalogCategory,
         String fieldCode,
         Long consultantId,
-        Integer validityMonths
+        Integer validityMonths,
+        boolean eventOnly,
+        Integer sessionMinutes
 ) {
 }

@@ -144,6 +144,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
         row.setConsultantId(resolveBoundConsultantId(tid, category, request.consultantId()));
         row.setValidityMonths(request.validityMonths());
+        applySkuEventFlags(row, request.eventOnly(), request.sessionMinutes());
         if (request.catalogVisible()) {
             requireThumbnailUrl(row);
         }
@@ -395,7 +396,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                         : ShopCatalogCategory.CONSULTATION,
                 row != null ? row.getFieldCode() : null,
                 row != null ? row.getConsultantId() : null,
-                row != null ? row.getValidityMonths() : null);
+                row != null ? row.getValidityMonths() : null,
+                row != null && Boolean.TRUE.equals(row.getEventOnly()),
+                row != null ? row.getSessionMinutes() : null);
     }
 
     private static String requireTenant(String tenantId) {
@@ -426,6 +429,20 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
             row.setThumbnailUrl(request.thumbnailUrl().trim());
         }
         row.setSessionCount(requirePositiveSessionCount(request.sessionCount()));
+        applySkuEventFlags(row, request.eventOnly(), request.sessionMinutes());
+    }
+
+    /**
+     * SKU 단위 이벤트 전용·회기 분 플래그를 저장한다.
+     * <p>이벤트 단가·기간은 {@code shop_catalog_sku_event_prices} 에서 관리한다.</p>
+     *
+     * @param row SKU
+     * @param eventOnly 이벤트 전용 여부
+     * @param sessionMinutes 회기당 분
+     */
+    static void applySkuEventFlags(ShopCatalogSku row, boolean eventOnly, Integer sessionMinutes) {
+        row.setEventOnly(eventOnly);
+        row.setSessionMinutes(sessionMinutes);
     }
 
     private static int requirePositiveSessionCount(Integer sessionCount) {
@@ -504,7 +521,9 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
                 row.getFieldCode(),
-                row.getConsultantId());
+                row.getConsultantId(),
+                Boolean.TRUE.equals(row.getEventOnly()),
+                row.getSessionMinutes());
     }
 
     /**

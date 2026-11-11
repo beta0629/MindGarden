@@ -13,6 +13,7 @@
 import * as BackgroundFetch from 'expo-background-fetch';
 import * as TaskManager from 'expo-task-manager';
 import NetInfo from '@react-native-community/netinfo';
+import { isOfflineFromNetState } from '../utils/isOfflineFromNetState';
 import { getMmkv } from '@/lib/getMmkv';
 import { pruneInactivePersistedQueries } from '../api/queryClient';
 import { NotificationService } from './NotificationService';
@@ -63,14 +64,7 @@ function markCachePruneDone(): void {
 
 /** `useOffline`과 동일 기준 — 캡티브 포털 등 `isInternetReachable === false`면 작업 스킵 */
 function hasUsableInternet(state: Awaited<ReturnType<typeof NetInfo.fetch>>): boolean {
-  const connected = state.isConnected ?? false;
-  if (!connected) {
-    return false;
-  }
-  if (state.isInternetReachable === false) {
-    return false;
-  }
-  return true;
+  return !isOfflineFromNetState(state);
 }
 
 TaskManager.defineTask(BACKGROUND_TASK_NAME, async () => {

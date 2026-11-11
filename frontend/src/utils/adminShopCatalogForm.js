@@ -36,7 +36,9 @@ export const emptyAdminShopCatalogForm = () => ({
   skuCode: '',
   sessionCount: String(SHOP_SESSION_COUNT_MIN),
   fieldCode: '',
-  consultantId: ''
+  consultantId: '',
+  eventOnly: false,
+  sessionMinutes: ''
 });
 
 /**
@@ -65,7 +67,9 @@ export function mapAdminShopCatalogRowToForm(row) {
     thumbnailUrl: toDisplayString(row.thumbnailUrl || row.heroImageUrl, ''),
     sessionCount: String(normalizeShopSessionCount(row.sessionCount)),
     fieldCode: toDisplayString(row.fieldCode, ''),
-    consultantId: row.consultantId != null ? String(row.consultantId) : ''
+    consultantId: row.consultantId != null ? String(row.consultantId) : '',
+    eventOnly: row.eventOnly === true,
+    sessionMinutes: row.sessionMinutes != null ? String(row.sessionMinutes) : ''
   };
 }
 
@@ -205,6 +209,10 @@ export function buildAdminShopCatalogUpsertBody(form) {
   if (!consultantParsed.valid) {
     throw new Error(ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE);
   }
+  const eventFlags = parseAdminShopSkuEventFlags(form);
+  if (!eventFlags.valid) {
+    throw new Error(eventFlags.message);
+  }
   return {
     title: form.title.trim(),
     descriptionText: form.descriptionText.trim() || null,
@@ -216,7 +224,9 @@ export function buildAdminShopCatalogUpsertBody(form) {
     sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
     sessionCount: sessionParsed.sessionCount,
     fieldCode: fieldParsed.fieldCode,
-    consultantId: consultantParsed.consultantId
+    consultantId: consultantParsed.consultantId,
+    eventOnly: eventFlags.eventOnly,
+    sessionMinutes: eventFlags.sessionMinutes
   };
 }
 
@@ -250,7 +260,9 @@ export function mapAdminShopPackageFeeToForm(row) {
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: '',
       consultantId: '',
-      validityMonths: null
+      validityMonths: null,
+      eventOnly: false,
+      sessionMinutes: ''
     };
   }
   const categoryRaw = toDisplayString(row.catalogCategory, '').toUpperCase();
@@ -274,7 +286,9 @@ export function mapAdminShopPackageFeeToForm(row) {
     consultantId: catalogCategory === SHOP_CATALOG_CATEGORY.ASSESSMENT || row.consultantId == null
       ? ''
       : String(row.consultantId),
-    validityMonths: row.validityMonths != null ? Number(row.validityMonths) : null
+    validityMonths: row.validityMonths != null ? Number(row.validityMonths) : null,
+    eventOnly: row.eventOnly === true,
+    sessionMinutes: row.sessionMinutes != null ? String(row.sessionMinutes) : ''
   };
 }
 
@@ -301,6 +315,93 @@ export function parseAdminShopValidityMonths(raw) {
   return months >= 1 ? months : null;
 }
 
+/**
+ * SKU 단위 이벤트 전용·회기 분 파싱·검증.
+ *
+ * @param {object|null|undefined} form
+ * @returns {{ valid: boolean, message?: string, eventOnly: boolean, sessionMinutes: number|null }}
+ */
+export function parseAdminShopSkuEventFlags(form) {
+  const eventOnly = form?.eventOnly === true;
+  const sessionMinutesRaw = toDisplayString(form?.sessionMinutes, '').trim();
+  let sessionMinutes = null;
+  if (sessionMinutesRaw !== '') {
+    if (!/^\d+$/.test(sessionMinutesRaw)) {
+      return {
+        valid: false,
+        message: '회기 분은 0 이상의 정수로 입력해 주세요.',
+        eventOnly: false,
+        sessionMinutes: null
+      };
+    }
+    sessionMinutes = Number.parseInt(sessionMinutesRaw, 10);
+  }
+  return {
+    valid: true,
+    eventOnly,
+    sessionMinutes
+  };
+}
+
+/**
+ * 이벤트 가격 기간 폼 검증(시작≤종료, 단가 &lt; 정상가).
+ *
+ * @param {object|null|undefined} form
+ * @param {number|null|undefined} unitPriceMinor 정상 가격
+ * @returns {{ valid: boolean, message?: string, eventPriceMinor: number|null, startDate: string|null, endDate: string|null }}
+ */
+export function parseAdminShopEventPricePeriod(form, unitPriceMinor) {
+  const startDate = toDisplayString(form?.startDate, '').trim() || null;
+  const endDate = toDisplayString(form?.endDate, '').trim() || null;
+  const eventPriceRaw = toDisplayString(form?.eventPriceMinor, '').replace(/\D/g, '');
+  const eventPriceMinor = eventPriceRaw === '' ? null : Number.parseInt(eventPriceRaw, 10);
+  if (!startDate || !endDate) {
+    return {
+      valid: false,
+      message: '이벤트 시작일과 종료일이 모두 필요합니다.',
+      eventPriceMinor: null,
+      startDate: null,
+      endDate: null
+    };
+  }
+  if (startDate > endDate) {
+    return {
+      valid: false,
+      message: '이벤트 시작일은 종료일보다 늦을 수 없습니다.',
+      eventPriceMinor: null,
+      startDate: null,
+      endDate: null
+    };
+  }
+  if (eventPriceMinor == null || !Number.isFinite(eventPriceMinor)) {
+    return {
+      valid: false,
+      message: '이벤트 가격을 입력해 주세요.',
+      eventPriceMinor: null,
+      startDate: null,
+      endDate: null
+    };
+  }
+  const price = unitPriceMinor != null && Number.isFinite(Number(unitPriceMinor))
+    ? Number(unitPriceMinor)
+    : null;
+  if (price == null || eventPriceMinor >= price) {
+    return {
+      valid: false,
+      message: '이벤트 가격은 정상 가격보다 낮아야 합니다.',
+      eventPriceMinor: null,
+      startDate: null,
+      endDate: null
+    };
+  }
+  return {
+    valid: true,
+    eventPriceMinor,
+    startDate,
+    endDate
+  };
+}
+
 export function buildAdminShopPackageContentBody(form) {
   const fieldParsed = validateAdminShopCatalogFieldCode(form);
   if (!fieldParsed.valid) {
@@ -320,6 +421,10 @@ export function buildAdminShopPackageContentBody(form) {
   }
   const sortOrder = Number.parseInt(String(form?.sortOrder ?? ''), 10);
   const description = String(form?.descriptionText ?? '').trim();
+  const eventFlags = parseAdminShopSkuEventFlags(form);
+  if (!eventFlags.valid) {
+    throw new Error(eventFlags.message);
+  }
   return {
     descriptionText: description
       ? description.slice(0, ADMIN_SHOP_DESCRIPTION_MAX_LENGTH)
@@ -329,6 +434,8 @@ export function buildAdminShopPackageContentBody(form) {
     catalogCategory,
     fieldCode: fieldParsed.fieldCode,
     consultantId: consultantParsed.consultantId,
-    validityMonths: parseAdminShopValidityMonths(form?.validityMonths)
+    validityMonths: parseAdminShopValidityMonths(form?.validityMonths),
+    eventOnly: eventFlags.eventOnly,
+    sessionMinutes: eventFlags.sessionMinutes
   };
 }

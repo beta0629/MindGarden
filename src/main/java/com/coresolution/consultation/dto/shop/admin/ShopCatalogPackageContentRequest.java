@@ -14,6 +14,8 @@ import jakarta.validation.constraints.Size;
  * @param fieldCode 분야 공통코드. CONSULTATION 은 SPECIALTY, ASSESSMENT 는 ASSESSMENT_TYPE
  * @param consultantId 상담사 users.id. CONSULTATION 필수, ASSESSMENT 는 무시
  * @param validityMonths 사용 기한(개월). 1 이상 정수, 상한 없음, null 이면 기한 없음
+ * @param eventOnly 이벤트 기간에만 공개
+ * @param sessionMinutes 회기당 분. null 이면 미지정
  * @author MindGarden
  * @since 2026-09-24
  */
@@ -24,6 +26,8 @@ public record ShopCatalogPackageContentRequest(
         @Size(max = 32) String catalogCategory,
         @Size(max = 50) String fieldCode,
         Long consultantId,
-        @Positive Integer validityMonths
+        @Positive Integer validityMonths,
+        boolean eventOnly,
+        Integer sessionMinutes
 ) {
 }

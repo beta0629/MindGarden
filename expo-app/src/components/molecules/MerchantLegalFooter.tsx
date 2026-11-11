@@ -7,6 +7,7 @@
  */
 import { useCallback, useMemo } from 'react';
 import {
+  PixelRatio,
   Pressable,
   StyleSheet,
   Text,
@@ -23,6 +24,10 @@ import { buildPublicLegalWebUrl } from '@/utils/buildPublicLegalWebUrl';
 import { LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
 import {
   buildMerchantLegalPublicFooterLinks,
+  MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL,
+  MERCHANT_LEGAL_FOOTER_MAX_FONT_SIZE_MULTIPLIER,
+  resolveMerchantLegalFooterCaptionLineStyle,
+  resolveMerchantLegalFooterTitleLineHeight,
   type MerchantLegalPublicLinkItem,
 } from '@/components/molecules/merchantLegalFooterHelpers';
 
@@ -36,7 +41,7 @@ const I18N_KEYS = Object.freeze({
   FALLBACK_CENTER: 'auth.merchantLegal.fallbackCenterName',
 } as const);
 
-const MAX_FONT_SIZE_MULTIPLIER = 1.6;
+const MAX_FONT_SIZE_MULTIPLIER = MERCHANT_LEGAL_FOOTER_MAX_FONT_SIZE_MULTIPLIER;
 
 export type MerchantLegalFooterProps = {
   readonly centerName?: string;
@@ -76,6 +81,35 @@ export function MerchantLegalFooter({
     safeLegal?.mailOrderReportNumber?.trim() || t(I18N_KEYS.PLACEHOLDER_MAIL_ORDER);
 
   const links = useMemo(() => buildMerchantLegalPublicFooterLinks(), []);
+
+  const captionLineStyle = useMemo(() => {
+    const caption = theme.textStyles.caption;
+    const lineHeightMultiplier =
+      caption.fontSize > 0
+        ? caption.lineHeight / caption.fontSize
+        : MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL;
+    return resolveMerchantLegalFooterCaptionLineStyle({
+      fontScale: PixelRatio.getFontScale(),
+      maxFontSizeMultiplier: MAX_FONT_SIZE_MULTIPLIER,
+      fontSize: caption.fontSize,
+      lineHeightMultiplier,
+      fontFamily: caption.fontFamily,
+    });
+  }, [theme.textStyles.caption]);
+
+  const titleLineHeight = useMemo(() => {
+    const caption = theme.textStyles.caption;
+    const lineHeightMultiplier =
+      caption.fontSize > 0
+        ? caption.lineHeight / caption.fontSize
+        : MERCHANT_LEGAL_FOOTER_LINE_HEIGHT_NORMAL;
+    return resolveMerchantLegalFooterTitleLineHeight({
+      fontScale: PixelRatio.getFontScale(),
+      maxFontSizeMultiplier: MAX_FONT_SIZE_MULTIPLIER,
+      fontSize: theme.fontSize.sm,
+      lineHeightMultiplier,
+    });
+  }, [theme.fontSize.sm, theme.textStyles.caption]);
 
   const openPublicLink = useCallback(
     (item: MerchantLegalPublicLinkItem) => {
@@ -117,6 +151,7 @@ export function MerchantLegalFooter({
             color: theme.colors.textMain,
             fontFamily: theme.fontFamily.semibold,
             fontSize: theme.fontSize.sm,
+            lineHeight: titleLineHeight,
             marginBottom: theme.spacing.xs,
           },
         ]}
@@ -128,10 +163,10 @@ export function MerchantLegalFooter({
         maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
         style={[
           styles.line,
+          captionLineStyle,
           {
             color: theme.colors.textSecondary,
-            fontFamily: theme.fontFamily.regular,
-            fontSize: theme.fontSize.xs,
+            marginBottom: theme.spacing['2xs'],
           },
         ]}
       >
@@ -145,10 +180,10 @@ export function MerchantLegalFooter({
         maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
         style={[
           styles.line,
+          captionLineStyle,
           {
             color: theme.colors.textSecondary,
-            fontFamily: theme.fontFamily.regular,
-            fontSize: theme.fontSize.xs,
+            marginBottom: theme.spacing['2xs'],
           },
         ]}
       >
@@ -158,10 +193,9 @@ export function MerchantLegalFooter({
         maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
         style={[
           styles.line,
+          captionLineStyle,
           {
             color: theme.colors.textSecondary,
-            fontFamily: theme.fontFamily.regular,
-            fontSize: theme.fontSize.xs,
             marginBottom: theme.spacing.sm,
           },
         ]}
@@ -169,15 +203,15 @@ export function MerchantLegalFooter({
         {mailOrder}
       </Text>
 
-      <View style={styles.guidesBlock}>
+      <View style={[styles.guidesBlock, { marginTop: theme.spacing.xs }]}>
         <Text
           maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
           style={[
             styles.guidesTitle,
+            captionLineStyle,
             {
               color: theme.colors.textMain,
               fontFamily: theme.fontFamily.semibold,
-              fontSize: theme.fontSize.xs,
               marginBottom: theme.spacing.xs,
             },
           ]}
@@ -190,18 +224,23 @@ export function MerchantLegalFooter({
             onPress={() => openPublicLink(item)}
             accessibilityRole="link"
             accessibilityLabel={item.label}
-            hitSlop={8}
+            hitSlop={theme.spacing.sm}
             testID={item.testID}
-            style={styles.guideBtn}
+            style={[
+              styles.guideBtn,
+              { paddingVertical: theme.spacing.xs },
+            ]}
           >
             <Text
               maxFontSizeMultiplier={MAX_FONT_SIZE_MULTIPLIER}
-              style={{
-                color: theme.colors.textMain,
-                fontFamily: theme.fontFamily.medium,
-                fontSize: theme.fontSize.xs,
-                flexShrink: 0,
-              }}
+              style={[
+                captionLineStyle,
+                {
+                  color: theme.colors.textMain,
+                  fontFamily: theme.fontFamily.medium,
+                  flexShrink: 0,
+                },
+              ]}
               numberOfLines={1}
               ellipsizeMode="clip"
             >
@@ -223,16 +262,10 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   title: {},
-  line: {
-    lineHeight: 16,
-    marginBottom: 2,
-  },
-  guidesBlock: {
-    marginTop: 4,
-  },
+  line: {},
+  guidesBlock: {},
   guidesTitle: {},
   guideBtn: {
-    paddingVertical: 4,
     alignSelf: 'flex-start',
     maxWidth: '100%',
     flexWrap: 'nowrap',

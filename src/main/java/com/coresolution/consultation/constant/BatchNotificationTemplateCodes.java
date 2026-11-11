@@ -190,6 +190,13 @@ public final class BatchNotificationTemplateCodes {
     /** 멱등성 로그 error_code — SMS 폴백까지 모두 실패. */
     public static final String ERROR_CODE_SEND_FAILED = "SEND_FAILED";
 
+    /**
+     * 멱등성 로그 error_code — SMS 테스트 모드라 실제로 보내지 않음(성공으로 기록하지 않는다).
+     *
+     * @since 2026-11-11
+     */
+    public static final String ERROR_CODE_SMS_TEST_MODE_NOT_SENT = "SMS_TEST_MODE_NOT_SENT";
+
     /** 멱등성 로그 error_code — 수신자 전화번호 없음 (검증 실패). */
     public static final String ERROR_CODE_RECIPIENT_PHONE_MISSING = "RECIPIENT_PHONE_MISSING";
 

@@ -46,7 +46,7 @@ import './ClientManagementPage.css';
 import { maskEncryptedDisplay } from '../../utils/codeHelper';
 import { tempPasswordSmsNotice } from '../../utils/tempPasswordSmsNotice';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
-import { adminMappingsListGet } from '../../api/adminListFetch';
+import { adminMappingsListGetAll } from '../../api/adminListFetch';
 import { useTranslation } from 'react-i18next';
 import i18n from '../../i18n';
 import {
@@ -354,7 +354,7 @@ const ClientComprehensiveManagement = ({ embedded = false, initialOpenUserId = n
 
     const loadMappings = useCallback(async() => {
         try {
-            const response = await adminMappingsListGet();
+            const response = await adminMappingsListGetAll();
             logger.debug('📊 매칭 정보 응답:', response);
             // apiGet이 401/404 시 null 반환 → 총 매칭 0건으로 표시됨. 원인 추적용 로그.
             if (response == null) {

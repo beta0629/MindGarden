@@ -197,7 +197,8 @@ function resolveApiBaseUrlExtra(): string | undefined {
  *  1. `EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME` env (사용자 직접 지정)
  *  2. `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` 에서 reversed scheme 파생 (`<id>.apps.googleusercontent.com` → `com.googleusercontent.apps.<id>`).</p>
  *
- * <p>둘 다 비면 `undefined` 반환 → plugin 미설정 (Native SDK iOS 콜백 미동작).</p>
+ * <p>둘 다 비면 `undefined` 반환. EAS Build 에서는 caller 가 plugin 등록을 실패 처리한다
+ * (silent omit 금지 — developmentClient 에서 RNGoogleSignin 누락 방지).</p>
  *
  * @author MindGarden
  * @since 2026-06-10
@@ -220,6 +221,41 @@ function resolveGoogleIosReversedClientId(): string | undefined {
     return undefined;
   }
   return `com.googleusercontent.apps.${id}`;
+}
+
+/**
+ * Google Sign-In Expo config plugin 항목을 만든다.
+ *
+ * <p>EAS Build 에서 iosUrlScheme 을 해석하지 못하면 throw (fail-closed).
+ * 로컬 비-EAS 평가는 빈 배열을 반환한다. 반환 타입 어노테이션은 EAS config 로더
+ * 호환을 위해 생략한다.</p>
+ *
+ * @param {string | undefined} googleIosReversedClientId reversed iOS client URL scheme
+ * @returns {unknown[]} Expo config plugin entries
+ * @author MindGarden
+ * @since 2026-11-10
+ */
+function resolveGoogleSignInPluginEntries(googleIosReversedClientId?: string) {
+  if (googleIosReversedClientId) {
+    return [
+      [
+        '@react-native-google-signin/google-signin',
+        {
+          iosUrlScheme: googleIosReversedClientId,
+        },
+      ],
+    ];
+  }
+  if (process.env.EAS_BUILD === 'true') {
+    throw new Error(
+      '[app.config] EAS Build: Google Sign-In plugin requires iosUrlScheme from ' +
+        'EXPO_PUBLIC_GOOGLE_IOS_URL_SCHEME or EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID. ' +
+        'Set them on the EAS Environment bound by eas.json ' +
+        '(development profile → environment: development). ' +
+        'Do not omit the plugin — that drops RNGoogleSignin from native builds.',
+    );
+  }
+  return [];
 }
 
 /**
@@ -263,6 +299,15 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   const includeExpoDevClient = !['0', 'false'].includes(
     (process.env.EXPO_USE_DEV_CLIENT ?? '').trim().toLowerCase(),
   );
+
+  /**
+   * Google Sign-In config plugin entries — never silently omit on EAS Build.
+   * iosUrlScheme 값은 env 에서만 파생 (하드코딩 금지).
+   *
+   * <p>복잡한 TS 타입 표기는 EAS Read app config 로더 호환을 위해 두지 않는다
+   * (#1847 후속 SyntaxError: Unexpected token '{' 방지).</p>
+   */
+  const googleSignInPluginEntries = resolveGoogleSignInPluginEntries(googleIosReversedClientId);
 
   const appPlugins: ExpoConfig['plugins'] = [
     ...(includeExpoDevClient ? (['expo-dev-client'] as const) : []),
@@ -352,21 +397,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
      *  - 토큰: `signIn()` → `idToken/serverAuthCode` 직접 반환, `getTokens()` 로 accessToken 취득
      *
      * <p>Plugin 의 `iosUrlScheme` 은 iOS reversed client ID 형식 (`com.googleusercontent.apps.<id>`)
-     * 이며 Info.plist 의 `CFBundleURLTypes` 에 자동 등록된다. 본 파일에서는 별도로 추가하지 않는다.
-     * env 미주입 시 plugin 자체를 omit 해 빌드 실패를 막는다.</p>
+     * 이며 Info.plist 의 `CFBundleURLTypes` 에 자동 등록된다. 본 파일에서는 별도로 추가하지 않는다.</p>
      *
      * <p>SHA-1 등록은 사용자 액션 — `docs/project-management/2026-06-10/GOOGLE_ANDROID_OAUTH_SETUP.md`</p>
      */
-    ...(googleIosReversedClientId
-      ? ([
-          [
-            '@react-native-google-signin/google-signin',
-            {
-              iosUrlScheme: googleIosReversedClientId,
-            },
-          ],
-        ] as const)
-      : []),
+    ...googleSignInPluginEntries,
     withAndroidKakaoMaven,
     /**
      * Play Console Android 15+ FGS + BOOT_COMPLETED 공존 경고 완화.

@@ -309,6 +309,27 @@ export function buildAdminShopCatalogPriceHistoryPath(
 }
 
 /**
+ * SKU 이벤트 가격 기간 목록·생성 경로.
+ *
+ * @param {string|number} skuId
+ * @returns {string}
+ */
+export function buildAdminShopCatalogSkuEventPricesPath(skuId) {
+  return `${buildAdminShopCatalogSkuPath(skuId)}/event-prices`;
+}
+
+/**
+ * SKU 이벤트 가격 기간 단건 경로.
+ *
+ * @param {string|number} skuId
+ * @param {string|number} eventPriceId
+ * @returns {string}
+ */
+export function buildAdminShopCatalogSkuEventPricePath(skuId, eventPriceId) {
+  return `${buildAdminShopCatalogSkuEventPricesPath(skuId)}/${encodeURIComponent(String(eventPriceId))}`;
+}
+
+/**
  * @param {boolean} catalogVisible
  * @returns {Readonly<{ catalogVisible: boolean }>}
  */

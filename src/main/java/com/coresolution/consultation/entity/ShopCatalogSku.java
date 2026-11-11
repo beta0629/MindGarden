@@ -99,5 +99,19 @@ public class ShopCatalogSku extends BaseEntity {
      */
     @Column(name = "consultant_id")
     private Long consultantId;
+
+    /**
+     * true 이면 활성 이벤트 기간에만 공개 목록에 포함한다.
+     * <p>기간·단가는 {@code shop_catalog_sku_event_prices} 에 둔다.</p>
+     */
+    @Column(name = "event_only", nullable = false)
+    @Builder.Default
+    private Boolean eventOnly = false;
+
+    /**
+     * 회기당 분(홈페이지 안내용). null 이면 미지정.
+     */
+    @Column(name = "session_minutes")
+    private Integer sessionMinutes;
 }
 

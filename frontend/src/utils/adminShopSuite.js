@@ -877,7 +877,9 @@ export function emptyAdminShopProductForm() {
     descriptionText: '',
     thumbnailUrl: '',
     sortOrder: '0',
-    validityMonths: ''
+    validityMonths: '',
+    eventOnly: false,
+    sessionMinutes: ''
   };
 }
 
@@ -913,7 +915,9 @@ export function mapAdminShopProductToForm(product) {
     descriptionText: toDisplayString(fee.descriptionText, ''),
     thumbnailUrl: toDisplayString(fee.thumbnailUrl, ''),
     sortOrder: fee.sortOrder != null ? String(fee.sortOrder) : '0',
-    validityMonths: fee.validityMonths != null ? String(fee.validityMonths) : ''
+    validityMonths: fee.validityMonths != null ? String(fee.validityMonths) : '',
+    eventOnly: fee.eventOnly === true,
+    sessionMinutes: fee.sessionMinutes != null ? String(fee.sessionMinutes) : ''
   };
 }
 
@@ -985,7 +989,21 @@ export function validateAdminShopProductForm(form) {
   if (price == null) {
     errors.price = true;
   }
-  return { valid: Object.keys(errors).length === 0, errors, sessions, price, validityMonths };
+  const eventOnly = form?.eventOnly === true;
+  const sessionMinutesRaw = toDisplayString(form?.sessionMinutes, '').trim();
+  const sessionMinutes = sessionMinutesRaw === '' ? null : parseWholeNumber(sessionMinutesRaw);
+  if (sessionMinutesRaw !== '' && sessionMinutes == null) {
+    errors.sessionMinutes = true;
+  }
+  return {
+    valid: Object.keys(errors).length === 0,
+    errors,
+    sessions,
+    price,
+    validityMonths,
+    eventOnly,
+    sessionMinutes
+  };
 }
 
 /**

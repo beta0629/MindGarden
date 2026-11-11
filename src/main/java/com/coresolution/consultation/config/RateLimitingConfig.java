@@ -62,6 +62,7 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_ONBOARDING_CREATE = "_onboarding_create";
         private static final String RATE_KEY_SUFFIX_ONBOARDING_PUBLIC = "_onboarding_public";
         private static final String RATE_KEY_SUFFIX_KR_PUBLIC_DATA = "_kr_public_data";
+        private static final String RATE_KEY_SUFFIX_PUBLIC_TENANTS = "_public_tenants";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
@@ -70,6 +71,7 @@ public class RateLimitingConfig {
         private static final String REASON_ONBOARDING_CREATE = "onboarding_create";
         private static final String REASON_ONBOARDING_PUBLIC = "onboarding_public";
         private static final String REASON_KR_PUBLIC_DATA = "kr_public_data";
+        private static final String REASON_PUBLIC_TENANTS = "public_tenants";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
@@ -114,7 +116,8 @@ public class RateLimitingConfig {
                 || isAccountIntegrationPublicPath(requestPath)
                 || isOnboardingCreatePublicRequest(request)
                 || isOnboardingPublicRateLimitRequest(request)
-                || isKrPublicDataRateLimitRequest(request);
+                || isKrPublicDataRateLimitRequest(request)
+                || isPublicTenantsRateLimitRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -162,6 +165,11 @@ public class RateLimitingConfig {
             return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
         }
 
+        private boolean isPublicTenantsRateLimitRequest(HttpServletRequest request) {
+            String prefix = properties.getRateLimit().getPublicTenantsPathPrefix();
+            return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -178,6 +186,9 @@ public class RateLimitingConfig {
             }
             if (isKrPublicDataRateLimitRequest(request)) {
                 return isKrPublicDataAllowed(clientIp);
+            }
+            if (isPublicTenantsRateLimitRequest(request)) {
+                return isPublicTenantsAllowed(clientIp);
             }
             return true;
         }
@@ -231,6 +242,13 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isPublicTenantsAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_PUBLIC_TENANTS;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getPublicTenantsRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -277,6 +295,15 @@ public class RateLimitingConfig {
                 } else {
                     publicDataInfo.increment();
                 }
+            } else if (isPublicTenantsRateLimitRequest(request)) {
+                String key = clientIp + RATE_KEY_SUFFIX_PUBLIC_TENANTS;
+                RequestInfo tenantsInfo = requestCounts.get(key);
+                if (tenantsInfo == null) {
+                    tenantsInfo = new RequestInfo();
+                    requestCounts.put(key, tenantsInfo);
+                } else {
+                    tenantsInfo.increment();
+                }
             }
         }
 
@@ -317,6 +344,9 @@ public class RateLimitingConfig {
                 errorResponse.put("retryAfter", 60);
             } else if (isKrPublicDataRateLimitRequest(request)) {
                 errorResponse.put("message", "공공데이터 조회 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
+            } else if (isPublicTenantsRateLimitRequest(request)) {
+                errorResponse.put("message", "공개 테넌트 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
@@ -363,6 +393,9 @@ public class RateLimitingConfig {
             }
             if (isKrPublicDataRateLimitRequest(request)) {
                 return REASON_KR_PUBLIC_DATA;
+            }
+            if (isPublicTenantsRateLimitRequest(request)) {
+                return REASON_PUBLIC_TENANTS;
             }
             return REASON_UNKNOWN;
         }

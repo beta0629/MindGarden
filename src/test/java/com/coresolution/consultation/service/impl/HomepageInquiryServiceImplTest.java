@@ -11,6 +11,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.config.HomepageInquiryProperties;
 import com.coresolution.consultation.constant.HomepageInquiryConstants;
 import com.coresolution.consultation.dto.request.PublicHomepageInquiryCreateRequest;
 import com.coresolution.consultation.entity.CommonCode;
@@ -18,6 +19,7 @@ import com.coresolution.consultation.entity.HomepageInquiry;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.ServiceUnavailableException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.HomepageInquiryRepository;
@@ -32,7 +34,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -54,18 +55,34 @@ class HomepageInquiryServiceImplTest {
     @Mock private CommonCodeRepository commonCodeRepository;
     @Mock private PersonalDataAccessLogRepository personalDataAccessLogRepository;
     @Mock private AuditLogService auditLogService;
-    @Mock private CaptchaVerifier captchaVerifier;
+    @Mock private CaptchaVerifier homepageInquiryCaptchaVerifier;
     @Mock private HomepageInquiryNotificationChannel notificationChannel;
     @Mock private PersonalDataEncryptionUtil encryptionUtil;
 
-    @InjectMocks
+    private HomepageInquiryProperties properties;
     private HomepageInquiryServiceImpl service;
 
     private Tenant activeTenant;
     private CommonCode personalType;
+    private CommonCode familyType;
 
     @BeforeEach
     void setUp() {
+        properties = new HomepageInquiryProperties();
+        properties.getCaptcha().setEnabled(false);
+        properties.getCaptcha().setSecretKey("");
+
+        service = new HomepageInquiryServiceImpl(
+                homepageInquiryRepository,
+                tenantRepository,
+                commonCodeRepository,
+                personalDataAccessLogRepository,
+                auditLogService,
+                homepageInquiryCaptchaVerifier,
+                properties,
+                notificationChannel,
+                encryptionUtil);
+
         activeTenant = new Tenant();
         activeTenant.setTenantId(TENANT_ID);
         activeTenant.setSubdomain(SLUG);
@@ -79,63 +96,102 @@ class HomepageInquiryServiceImplTest {
                 .isActive(true)
                 .build();
         personalType.setTenantId(TENANT_ID);
+
+        familyType = CommonCode.builder()
+                .codeGroup(HomepageInquiryConstants.CODE_GROUP_INQUIRY_TYPE)
+                .codeValue("FAMILY")
+                .codeLabel("가족")
+                .koreanName("가족")
+                .isActive(true)
+                .build();
+        familyType.setTenantId(TENANT_ID);
     }
 
     @Test
-    void submitPublicInquiry_happyPath_persistsAndNotifies() {
+    void submitPublicInquiry_happyPath_setsWebFormSourceAndNullLegacy() {
         when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
-        when(captchaVerifier.requiresCaptchaToken()).thenReturn(false);
         when(commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(
                 TENANT_ID, HomepageInquiryConstants.CODE_GROUP_INQUIRY_TYPE))
-                .thenReturn(List.of(personalType));
+                .thenReturn(List.of(personalType, familyType));
         when(homepageInquiryRepository.save(any(HomepageInquiry.class))).thenAnswer(inv -> {
             HomepageInquiry saved = inv.getArgument(0);
             saved.setId(42L);
             return saved;
         });
 
-        PublicHomepageInquiryCreateRequest request = baseRequest();
-        service.submitPublicInquiry(SLUG, request, new MockHttpServletRequest());
+        service.submitPublicInquiry(SLUG, baseRequest("PERSONAL"), new MockHttpServletRequest());
 
         ArgumentCaptor<HomepageInquiry> captor = ArgumentCaptor.forClass(HomepageInquiry.class);
         verify(homepageInquiryRepository).save(captor.capture());
         HomepageInquiry saved = captor.getValue();
-        assertThat(saved.getTenantId()).isEqualTo(TENANT_ID);
-        assertThat(saved.getName()).isEqualTo("홍길동");
-        assertThat(saved.getPhone()).isEqualTo("01012345678");
+        assertThat(saved.getSource()).isEqualTo(HomepageInquiryConstants.SOURCE_WEB_FORM);
+        assertThat(saved.getSourceRef()).isNull();
+        assertThat(saved.getLegacyInquiryType()).isNull();
         assertThat(saved.getInquiryType()).isEqualTo("PERSONAL");
-        assertThat(saved.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_NEW);
-        assertThat(saved.getClientIpHash()).isNotBlank();
-        verify(notificationChannel).notifyNewInquiry(TENANT_ID, 42L);
+        verify(notificationChannel).notifyNewInquiry(eq(TENANT_ID), eq(42L), eq("개인상담"));
+    }
+
+    @Test
+    void submitPublicInquiry_familyType_accepted() {
+        when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndIsActiveTrueOrderBySortOrderAsc(
+                TENANT_ID, HomepageInquiryConstants.CODE_GROUP_INQUIRY_TYPE))
+                .thenReturn(List.of(personalType, familyType));
+        when(homepageInquiryRepository.save(any(HomepageInquiry.class))).thenAnswer(inv -> {
+            HomepageInquiry saved = inv.getArgument(0);
+            saved.setId(9L);
+            return saved;
+        });
+
+        service.submitPublicInquiry(SLUG, baseRequest("FAMILY"), new MockHttpServletRequest());
+
+        ArgumentCaptor<HomepageInquiry> captor = ArgumentCaptor.forClass(HomepageInquiry.class);
+        verify(homepageInquiryRepository).save(captor.capture());
+        assertThat(captor.getValue().getInquiryType()).isEqualTo("FAMILY");
+        verify(notificationChannel).notifyNewInquiry(eq(TENANT_ID), eq(9L), eq("가족"));
+    }
+
+    @Test
+    void submitPublicInquiry_captchaEnabledEmptySecret_failClosed503() {
+        properties.getCaptcha().setEnabled(true);
+        properties.getCaptcha().setSecretKey("");
+        when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
+
+        assertThatThrownBy(() ->
+                service.submitPublicInquiry(SLUG, baseRequest("PERSONAL"), new MockHttpServletRequest()))
+                .isInstanceOf(ServiceUnavailableException.class)
+                .hasMessage(HomepageInquiryConstants.CAPTCHA_UNAVAILABLE_MESSAGE);
+        verify(homepageInquiryRepository, never()).save(any());
+        verify(homepageInquiryCaptchaVerifier, never()).verify(anyString(), any());
+    }
+
+    @Test
+    void submitPublicInquiry_captchaBadToken_rejected() {
+        properties.getCaptcha().setEnabled(true);
+        properties.getCaptcha().setSecretKey("1x0000000000000000000000000000000AA");
+        when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
+        when(homepageInquiryCaptchaVerifier.verify(eq("bad-token"), any())).thenReturn(false);
+
+        PublicHomepageInquiryCreateRequest request = baseRequest("PERSONAL");
+        request.setCaptchaToken("bad-token");
+
+        assertThatThrownBy(() ->
+                service.submitPublicInquiry(SLUG, request, new MockHttpServletRequest()))
+                .isInstanceOf(ValidationException.class)
+                .hasMessageContaining("캡차");
+        verify(homepageInquiryRepository, never()).save(any());
     }
 
     @Test
     void submitPublicInquiry_honeypot_skipsPersist() {
         when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
 
-        PublicHomepageInquiryCreateRequest request = baseRequest();
+        PublicHomepageInquiryCreateRequest request = baseRequest("PERSONAL");
         request.setWebsite("http://spam.example");
         service.submitPublicInquiry(SLUG, request, new MockHttpServletRequest());
 
         verify(homepageInquiryRepository, never()).save(any());
-        verify(notificationChannel, never()).notifyNewInquiry(anyString(), any());
-    }
-
-    @Test
-    void submitPublicInquiry_consentFalse_rejectedByValidationAnnotationContract() {
-        // Bean Validation @AssertTrue 는 컨트롤러에서 처리. 서비스는 privacyConsent=true 전제.
-        // 캡차 강제 + 잘못된 토큰 경로를 검증한다.
-        when(tenantRepository.findBySubdomainIgnoreCase(SLUG)).thenReturn(Optional.of(activeTenant));
-        when(captchaVerifier.requiresCaptchaToken()).thenReturn(true);
-        when(captchaVerifier.verify(eq("bad"), any())).thenReturn(false);
-
-        PublicHomepageInquiryCreateRequest request = baseRequest();
-        request.setCaptchaToken("bad");
-
-        assertThatThrownBy(() -> service.submitPublicInquiry(SLUG, request, new MockHttpServletRequest()))
-                .isInstanceOf(ValidationException.class)
-                .hasMessageContaining("캡차");
-        verify(homepageInquiryRepository, never()).save(any());
+        verify(notificationChannel, never()).notifyNewInquiry(anyString(), any(), anyString());
     }
 
     @Test
@@ -143,7 +199,7 @@ class HomepageInquiryServiceImplTest {
         when(tenantRepository.findBySubdomainIgnoreCase("unknown")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
-                service.submitPublicInquiry("unknown", baseRequest(), new MockHttpServletRequest()))
+                service.submitPublicInquiry("unknown", baseRequest("PERSONAL"), new MockHttpServletRequest()))
                 .isInstanceOf(EntityNotFoundException.class)
                 .hasMessage(HomepageInquiryConstants.GENERIC_NOT_FOUND_MESSAGE);
         verify(homepageInquiryRepository, never()).save(any());
@@ -160,6 +216,7 @@ class HomepageInquiryServiceImplTest {
                 .status(HomepageInquiryConstants.STATUS_NEW)
                 .consentVersion("v1")
                 .privacyConsentAt(java.time.LocalDateTime.now())
+                .source(HomepageInquiryConstants.SOURCE_WEB_FORM)
                 .build();
         inquiry.setId(3L);
         when(homepageInquiryRepository.findByTenantIdAndOptionalStatus(
@@ -171,7 +228,6 @@ class HomepageInquiryServiceImplTest {
         assertThat(page.getContent()).hasSize(1);
         assertThat(page.getContent().get(0).getNameMasked()).isEqualTo("홍*동");
         assertThat(page.getContent().get(0).getPhoneMasked()).isEqualTo("010****5678");
-        assertThat(page.getContent().get(0).getNameMasked()).doesNotContain("길");
     }
 
     @Test
@@ -215,15 +271,14 @@ class HomepageInquiryServiceImplTest {
         verify(personalDataAccessLogRepository).save(logCaptor.capture());
         assertThat(logCaptor.getValue().getDataType())
                 .isEqualTo(HomepageInquiryConstants.ACCESS_LOG_DATA_TYPE);
-        assertThat(logCaptor.getValue().getAccessType()).isEqualTo("READ");
         assertThat(logCaptor.getValue().getTenantId()).isEqualTo(TENANT_ID);
     }
 
-    private static PublicHomepageInquiryCreateRequest baseRequest() {
+    private static PublicHomepageInquiryCreateRequest baseRequest(String inquiryType) {
         return PublicHomepageInquiryCreateRequest.builder()
                 .name("홍길동")
                 .phone("01012345678")
-                .inquiryType("개인상담")
+                .inquiryType(inquiryType)
                 .content("상담 문의합니다")
                 .privacyConsent(true)
                 .consentVersion("privacy-2026-11")

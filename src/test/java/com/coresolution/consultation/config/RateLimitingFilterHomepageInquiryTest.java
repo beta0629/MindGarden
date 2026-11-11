@@ -52,6 +52,31 @@ class RateLimitingFilterHomepageInquiryTest {
     }
 
     @Test
+    void homepageInquiryPostPassesWhenWithinMinuteAndDayLimits() throws Exception {
+        MindgardenSecurityProperties properties = new MindgardenSecurityProperties();
+        properties.getRateLimit().setHomepageInquiryRequestsPerMinute(5);
+        properties.getRateLimit().setHomepageInquiryRequestsPerDay(30);
+
+        @SuppressWarnings("unchecked")
+        ObjectProvider<MeterRegistry> meterRegistryProvider = mock(ObjectProvider.class);
+        RateLimitingConfig.RateLimitingFilter filter =
+                new RateLimitingConfig.RateLimitingFilter(properties, meterRegistryProvider);
+        FilterChain chain = mock(FilterChain.class);
+        String uri = "/api/v1/public/tenants/mindgarden/inquiries";
+        String ip = "192.0.2.30";
+
+        for (int i = 0; i < 3; i++) {
+            MockHttpServletRequest req = new MockHttpServletRequest("POST", uri);
+            req.setRemoteAddr(ip);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            filter.doFilterInternal(req, response, chain);
+            assertThat(response.getStatus()).isNotEqualTo(429);
+        }
+        verify(chain, times(3)).doFilter(org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
     void homepageInquiryPostReturns429WhenPerDayExceeded() throws Exception {
         MindgardenSecurityProperties properties = new MindgardenSecurityProperties();
         properties.getRateLimit().setHomepageInquiryRequestsPerMinute(100);

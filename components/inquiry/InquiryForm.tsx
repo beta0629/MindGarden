@@ -37,7 +37,7 @@ export function InquiryForm({ collapsedOnMobile = false }: InquiryFormProps) {
       return;
     }
 
-    if (siteKey && !turnstileToken) {
+    if (!turnstileToken) {
       setStatus('error');
       setMessage('보안 확인을 완료해 주세요.');
       return;
@@ -53,7 +53,7 @@ export function InquiryForm({ collapsedOnMobile = false }: InquiryFormProps) {
           inquiryType,
           content,
           privacyConsent,
-          turnstileToken: turnstileToken || 'dev-bypass',
+          turnstileToken,
           website,
         }),
       });
@@ -158,9 +158,14 @@ export function InquiryForm({ collapsedOnMobile = false }: InquiryFormProps) {
           siteKey={siteKey}
           onSuccess={setTurnstileToken}
           onExpire={() => setTurnstileToken('')}
+          onError={() => setTurnstileToken('')}
           options={{ theme: 'light' }}
         />
-      ) : null}
+      ) : (
+        <p className="muted" style={{ margin: 0, fontSize: '0.875rem' }}>
+          보안 확인 설정이 없어 문의를 보낼 수 없습니다.
+        </p>
+      )}
 
       <button
         className="btn btn--block"

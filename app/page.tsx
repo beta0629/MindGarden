@@ -8,7 +8,7 @@ import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
 import { DividerSprig } from '@/components/ui/DividerSprig';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FaqList } from '@/components/ui/FaqList';
-import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
+import { MapLinkCard } from '@/components/ui/MapLinkCard';
 import { ResponsiveImage } from '@/components/ui/ResponsiveImage';
 import {
   clinicOsClient,
@@ -42,9 +42,12 @@ export default async function HomePage() {
   const eventPrice = eventProduct
     ? resolveProductDisplayPrice(eventProduct)
     : null;
-  const noticeBanner = homepage.banners.find((b) =>
-    b.title.includes('공지'),
-  );
+  const noticeBanner = homepage.banners.find((b) => {
+    const title = b.title.trim();
+    if (!title) return false;
+    if (title === '공지 자리' || title.includes('배너 슬롯')) return false;
+    return title.includes('공지');
+  });
 
   return (
     <SiteShell noticeText={noticeBanner?.title ?? null}>
@@ -108,12 +111,7 @@ export default async function HomePage() {
       </section>
 
       <section className="section" data-reveal>
-        <div className="container counselor">
-          <PlaceholderMedia
-            label="김선희 대표원장 사진"
-            aspectRatio="3 / 4"
-            className="counselor__photo"
-          />
+        <div className="container counselor counselor--text-only">
           <div>
             <div className="section__eyebrow">03</div>
             <h2 className="section__title">
@@ -356,10 +354,14 @@ export default async function HomePage() {
                           height={66}
                         />
                       ) : (
-                        <div
-                          className="placeholder-media"
-                          style={{ minHeight: '4rem' }}
-                        />
+                        <span className="blog-thumb-fallback" aria-hidden="true">
+                          <img
+                            src="/brand/logo.svg"
+                            alt=""
+                            width={40}
+                            height={40}
+                          />
+                        </span>
                       )}
                       <div>
                         <strong>{post.title}</strong>
@@ -407,10 +409,10 @@ export default async function HomePage() {
               <p>
                 {SITE.address}, {SITE.addressLandmark}
               </p>
-              <PlaceholderMedia label="지도 미리보기" aspectRatio="16 / 9" />
+              <MapLinkCard />
               <p>
                 <Link className="text-link" href="/location">
-                  지도 보기 →
+                  오시는 길 안내 →
                 </Link>
                 {' · '}
                 <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>

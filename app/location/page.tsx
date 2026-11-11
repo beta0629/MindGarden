@@ -2,7 +2,7 @@ import Image from 'next/image';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
-import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
+import { MapLinkCard } from '@/components/ui/MapLinkCard';
 import { locationCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -28,19 +28,8 @@ export default function LocationPage() {
 
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container stack-md">
-          <h2 className="section__title">
-            지도
-            <ConfirmNeeded />
-          </h2>
-          <PlaceholderMedia label="지도 미리보기" aspectRatio="16 / 9" />
-          <a
-            className="text-link"
-            href={`https://map.naver.com/p/entry/place/${SITE.naverPlaceId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            네이버 지도에서 보기 ↗
-          </a>
+          <h2 className="section__title">지도</h2>
+          <MapLinkCard />
         </div>
       </section>
 
@@ -84,13 +73,25 @@ export default function LocationPage() {
             <ConfirmNeeded />
           </h2>
           <div className="media-grid">
-            <PlaceholderMedia label="건물 외관" aspectRatio="16 / 9" />
-            <PlaceholderMedia label="입구·간판" aspectRatio="4 / 3" />
+            <figure>
+              <Image
+                src="/images/location-lobby-c148-16x9.jpg"
+                alt="센터 로비"
+                width={960}
+                height={540}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </figure>
+            <figure>
+              <Image
+                src="/images/location-entrance-c149-4x3.jpg"
+                alt="센터 입구"
+                width={800}
+                height={600}
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+            </figure>
           </div>
-          <p className="muted">
-            건물 외관·거리 간판 컷은 실사 제공 후 교체합니다.
-            <ConfirmNeeded />
-          </p>
           <div style={{ marginTop: '1.5rem' }}>
             <BookingCta />
           </div>

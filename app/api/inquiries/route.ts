@@ -49,6 +49,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!turnstileToken || turnstileToken === 'dev-bypass') {
+      return NextResponse.json(
+        { error: '보안 확인을 완료해 주세요.' },
+        { status: 400 },
+      );
+    }
+
     // Turnstile secret verification is Clinic-OS responsibility.
     // Homepage only forwards the widget token in the typed inquiries body.
     const result = await clinicOsClient.submitInquiry({

@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
-import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
 import { aboutCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -105,8 +104,7 @@ export default function AboutPage() {
       </section>
 
       <section className="section section--sand">
-        <div className="container counselor">
-          <PlaceholderMedia label="김선희 대표원장 사진" aspectRatio="3 / 4" />
+        <div className="container counselor counselor--text-only">
           <div>
             <h2 className="section__title">상담사</h2>
             <h3 style={{ fontFamily: 'var(--font-sans)' }}>김선희</h3>

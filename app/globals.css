@@ -209,15 +209,63 @@ p {
   align-items: center;
   gap: 0.25rem;
   margin-left: 0.4rem;
-  padding: 0.15rem 0.45rem;
+  padding: 0.1rem 0.35rem;
   border-radius: 2px;
-  background: var(--confirm-bg);
+  background: rgba(154, 91, 22, 0.08);
   color: var(--confirm);
   font-family: var(--font-sans);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.6875rem;
+  font-weight: 600;
   line-height: 1.2;
   vertical-align: middle;
+  letter-spacing: 0;
+}
+
+.map-link-card {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--sand);
+  text-decoration: none;
+  color: inherit;
+}
+
+.map-link-card img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.map-link-card__label {
+  position: absolute;
+  left: 0.85rem;
+  bottom: 0.85rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius);
+  background: rgba(28, 36, 48, 0.82);
+  color: var(--white);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.blog-thumb-fallback {
+  width: 88px;
+  height: 66px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--sand);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.blog-thumb-fallback img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
 .placeholder-media {
@@ -241,9 +289,22 @@ p {
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(245, 240, 230, 0.94);
-  backdrop-filter: blur(10px);
+  background: rgba(245, 240, 230, 0.97);
+  backdrop-filter: blur(14px) saturate(1.05);
   border-bottom: 1px solid var(--line);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .site-header {
+    background: var(--cream);
+  }
+}
+
+@media (min-width: 1024px) {
+  .site-header {
+    background: var(--cream);
+    backdrop-filter: none;
+  }
 }
 
 .notice-bar {
@@ -549,6 +610,11 @@ p {
 .counselor {
   display: grid;
   gap: 1.5rem;
+}
+
+.counselor--text-only {
+  grid-template-columns: 1fr;
+  max-width: 42rem;
 }
 
 .counselor__photo {
@@ -931,10 +997,14 @@ p {
   transform: translateY(0);
 }
 
-/* Keep section titles clear of the mobile sticky booking band. */
-@media (max-width: 767px) {
+/* Keep content clear of the sticky booking bar (mobile + tablet). */
+@media (max-width: 1023px) {
   #main {
-    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(5.25rem + env(safe-area-inset-bottom));
+  }
+
+  .site-footer {
+    padding-bottom: calc(1.5rem + 5.25rem + env(safe-area-inset-bottom));
   }
 }
 

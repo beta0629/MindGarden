@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
-import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
 import { counselorsCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 
@@ -16,8 +15,7 @@ export default function CounselorsPage() {
   return (
     <SiteShell>
       <section className="container page-hero">
-        <div className="counselor">
-          <PlaceholderMedia label="김선희 대표원장 사진" aspectRatio="3 / 4" />
+        <div className="counselor counselor--text-only">
           <div>
             <h1>
               {counselorsCopy.title}

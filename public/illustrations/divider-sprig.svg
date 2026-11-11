@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="240" height="32" viewBox="0 0 240 32">
+  <title>divider-sprig</title>
+  <g id="빈_상태_장식___120_그리드___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="빈 상태·장식 · 120 그리드 · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="divider-sprig___구분_장식___가지" data-name="divider-sprig · 구분 장식 · 가지">
+      <path id="구분_장식___가지___포인트_1" data-name="구분 장식 · 가지 · 포인트 1" d="M120 15 C117 11 117 7 120 4 C123 7 123 11 120 15 Z" fill="none" stroke="#2f5b45" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="구분_장식___가지___포인트_2" data-name="구분 장식 · 가지 · 포인트 2" d="M114 18 C109 17 106 14 106 10 C110 10 113 13 114 18 Z" fill="none" stroke="#2f5b45" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="구분_장식___가지___포인트_3" data-name="구분 장식 · 가지 · 포인트 3" d="M126 18 C131 17 134 14 134 10 C130 10 127 13 126 18 Z" fill="none" stroke="#2f5b45" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="구분_장식___가지___포인트_4" data-name="구분 장식 · 가지 · 포인트 4" d="M110 21 C116 23.5 124 23.5 130 21" fill="none" stroke="#2f5b45" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="구분_장식___가지___헤어라인_1" data-name="구분 장식 · 가지 · 헤어라인 1" x1="8" y1="21" x2="98" y2="21" fill="none" stroke="#cfc4ae" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="구분_장식___가지___헤어라인_2" data-name="구분 장식 · 가지 · 헤어라인 2" x1="142" y1="21" x2="232" y2="21" fill="none" stroke="#cfc4ae" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

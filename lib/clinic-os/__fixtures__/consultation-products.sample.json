@@ -1,0 +1,36 @@
+{
+  "success": true,
+  "message": null,
+  "data": [
+    {
+      "skuCode": "SAMPLE-B",
+      "name": "Sample B",
+      "price": 120000,
+      "eventPrice": 90000,
+      "eventStartDate": "2026-01-01",
+      "eventEndDate": "2026-12-31",
+      "sessionCount": 1,
+      "sessionMinutes": 50,
+      "displayOrder": 20,
+      "updatedAt": "2026-11-01T00:00:00"
+    },
+    {
+      "skuCode": "SAMPLE-A",
+      "name": "Sample A",
+      "price": 100000,
+      "eventPrice": null,
+      "eventStartDate": null,
+      "eventEndDate": null,
+      "sessionCount": 1,
+      "sessionMinutes": null,
+      "displayOrder": 5,
+      "updatedAt": "2026-11-01T00:00:00"
+    },
+    {
+      "skuCode": "BAD-ITEM",
+      "name": "Broken",
+      "price": "not-a-number"
+    }
+  ],
+  "timestamp": "2026-11-11T00:00:00"
+}

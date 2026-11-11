@@ -1,39 +1,59 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
+import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
+import { SITE } from '@/lib/site';
 import './globals.css';
-import PopupBannerProvider from '@/components/PopupBannerProvider';
-import ConsultationBottomSheet from '@/components/ConsultationBottomSheet';
+
+const baseMetadata = buildMetadata({
+  title: SITE.name,
+  description:
+    '아이부터 어른까지, 마음과 관계를 함께 살펴보는 심리상담센터. 인천 연수구 마인드가든.',
+  path: '/',
+});
 
 export const metadata: Metadata = {
-  title: '마인드가든 심리상담센터',
-  description: '마인드가든 심리상담센터와 함께, 새로운 희망이 시작되는 곳',
+  ...baseMetadata,
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.png', type: 'image/png', sizes: '32x32' },
+      { url: '/brand/logo.svg', type: 'image/svg+xml' },
+    ],
+    apple: [{ url: '/brand/apple-touch-icon.png', sizes: '180x180' }],
+  },
+  openGraph: {
+    ...baseMetadata.openGraph,
+    images: [
+      {
+        url: '/brand/og-default.png',
+        width: 1200,
+        height: 630,
+        alt: SITE.name,
+      },
+    ],
+  },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#F5F0E6',
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
+  const jsonLd = localBusinessJsonLd();
   return (
     <html lang="ko">
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          rel="stylesheet"
-          crossOrigin="anonymous"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body>
-        <PopupBannerProvider />
-        {children}
-        <ConsultationBottomSheet />
-      </body>
+      <body>{children}</body>
     </html>
   );
 }
-

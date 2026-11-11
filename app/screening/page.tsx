@@ -1,71 +1,59 @@
 import Link from 'next/link';
-import ChecklistDisclaimerParagraphs from '@/components/ChecklistDisclaimerParagraphs';
-import CopyGuard from '@/components/CopyGuard';
-import { screeningData, SCREENING_TOPIC_ORDER } from '@/lib/screening-data';
+import { SiteShell } from '@/components/layout/SiteShell';
+import { BookingCta } from '@/components/ui/BookingCta';
+import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { screeningCopy } from '@/lib/content/subpages';
+import { buildMetadata } from '@/lib/seo';
 
-export const metadata = {
-  title: '주제별 간이 체크리스트 | 마인드가든',
-  description:
-    '간이 체크리스트는 아동·청소년과 성인이 일상에서 겪을 수 있는 패턴을 기준으로 스스로 살펴볼 수 있도록 구성했습니다. ADHD·우울·공황 등 주제별 점검(의학적 평가 대체 아님).',
-};
+export const metadata = buildMetadata({
+  title: '주제별 간이 점검',
+  description: screeningCopy.lead,
+  path: '/screening',
+});
 
-export default function ScreeningHubPage() {
-  const topics = SCREENING_TOPIC_ORDER.map((key) => screeningData[key]);
-
+export default function ScreeningPage() {
   return (
-    <main className="content-shell screening-layout">
-      <CopyGuard as="div" className="screening-hub">
-        <h1 className="screening-hub-title">주제별 간이 체크리스트</h1>
-        <p className="screening-hub-desc" style={{ marginBottom: '1rem' }}>
-          현재 겪고 있는 어려움을 간단히 점검해 보세요.
-        </p>
-        <div
-          className="screening-disclaimer"
-          role="note"
+    <SiteShell>
+      <section className="container page-hero">
+        <h1>
+          {screeningCopy.title}
+          <ConfirmNeeded />
+        </h1>
+        <p>{screeningCopy.lead}</p>
+        <p
           style={{
-            marginTop: 0,
-            marginBottom: '3rem',
-            maxWidth: '720px',
-            marginLeft: 'auto',
-            marginRight: 'auto',
+            background: 'var(--sand)',
+            padding: '1rem',
+            border: '1px solid var(--line)',
           }}
         >
-          <ChecklistDisclaimerParagraphs />
-        </div>
+          {screeningCopy.disclaimer}
+        </p>
+      </section>
 
-        <div className="screening-grid">
-          {topics.map((topic) => (
-            <Link
-              key={topic.topic}
-              href={`/screening/${topic.topic}`}
-              className="screening-card-link"
-            >
-              <div className="screening-card-flip">
-                <div className="screening-card-inner">
-                  <div className="screening-card-face screening-card-front">
-                    <div className="screening-card-icon" aria-hidden>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                      </svg>
-                    </div>
-                    <h2 className="screening-card-title">{topic.title}</h2>
-                    <p className="screening-card-desc">{topic.description}</p>
-                  </div>
-                  <div className="screening-card-face screening-card-back" aria-hidden>
-                    <span className="screening-card-back-label">간이 점검</span>
-                    <p className="screening-card-back-title">{topic.title}</p>
-                    <p className="screening-card-back-hint">클릭하면 해당 주제로 이동합니다.</p>
-                  </div>
-                </div>
-              </div>
-            </Link>
+      <section className="section" style={{ paddingTop: 0 }}>
+        <div className="container card-grid">
+          {screeningCopy.topics.map((topic) => (
+            <article key={topic.slug} className="area-card" style={{ display: 'block' }}>
+              <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: '1.1rem' }}>
+                {topic.title}
+                {screeningCopy.topicTitleConfirmNeeded ? <ConfirmNeeded /> : null}
+              </h2>
+              <p>{topic.desc}</p>
+              <p className="muted" style={{ marginBottom: '0.75rem' }}>
+                문항·결과 자리 (참고용, 진단명 단정 없음)
+                <ConfirmNeeded />
+              </p>
+              <Link className="btn btn--ghost" href="/contact">
+                문의하기
+              </Link>
+            </article>
           ))}
         </div>
-      </CopyGuard>
-    </main>
+        <div className="container" style={{ marginTop: '2rem' }}>
+          <BookingCta showHint />
+        </div>
+      </section>
+    </SiteShell>
   );
 }

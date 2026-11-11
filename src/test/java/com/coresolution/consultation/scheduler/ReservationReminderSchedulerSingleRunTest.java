@@ -53,7 +53,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
@@ -206,8 +205,11 @@ class ReservationReminderSchedulerSingleRunTest {
         return mapping;
     }
 
-    /** 두 인스턴스가 공유하는 운영 DB 의 {@code shedlock} 테이블을 H2 로 재현. */
-    @Configuration
+    /**
+     * 두 인스턴스가 공유하는 운영 DB 의 {@code shedlock} 테이블을 H2 로 재현.
+     * {@code @Configuration} 을 붙이지 않는다 — 붙이면 다른 {@code @SpringBootTest} 컴포넌트 스캔에 잡혀
+     * 앱 DataSource 를 덮는다(직접 register 할 때만 lite 설정으로 처리).
+     */
     @EnableSchedulerLock(defaultLockAtMostFor = "PT30M")
     static class LockConfig {
 

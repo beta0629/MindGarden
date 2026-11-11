@@ -8,6 +8,8 @@
     "start": "next start -p 4000",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy:staging": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
@@ -19,7 +21,8 @@
     "nodemailer": "^8.0.7",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.20.16",
@@ -30,6 +33,7 @@
     "eslint": "^9.28.0",
     "eslint-config-next": "16.4.6",
     "typescript": "^5.8.3",
+    "vitest": "^5.1.0",
     "wrangler": "^4.160.0"
   }
 }

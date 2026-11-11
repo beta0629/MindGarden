@@ -873,6 +873,18 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.price-cell {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+
+.price-cell__struck {
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
 .price-table {
   width: 100%;
   border-collapse: collapse;

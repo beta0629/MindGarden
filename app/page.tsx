@@ -11,7 +11,8 @@ import { FaqList } from '@/components/ui/FaqList';
 import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
 import {
   clinicOsClient,
-  getActiveFirstMindWalk,
+  getActiveEventProduct,
+  resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
 import { homeCopy } from '@/lib/content/home';
 import { formatKstDateRange, formatWon } from '@/lib/format';
@@ -36,7 +37,10 @@ export default async function HomePage() {
     getLatestBlogPosts(3),
   ]);
 
-  const eventProduct = getActiveFirstMindWalk(products);
+  const eventProduct = getActiveEventProduct(products);
+  const eventPrice = eventProduct
+    ? resolveProductDisplayPrice(eventProduct)
+    : null;
   const noticeBanner = homepage.banners.find((b) =>
     b.title.includes('공지'),
   );
@@ -133,7 +137,13 @@ export default async function HomePage() {
               <div>
                 <div className="section__eyebrow">이벤트</div>
                 <h2 className="section__title" style={{ fontSize: '1.5rem' }}>
-                  {eventProduct.name} {formatWon(eventProduct.eventPrice!)}
+                  {eventProduct.name}{' '}
+                  {eventPrice?.struckThroughPrice != null ? (
+                    <s className="price-cell__struck">
+                      {formatWon(eventPrice.struckThroughPrice)}
+                    </s>
+                  ) : null}{' '}
+                  {eventPrice ? formatWon(eventPrice.amount) : null}
                 </h2>
                 {eventProduct.eventStartDate && eventProduct.eventEndDate ? (
                   <p className="muted">
@@ -165,7 +175,19 @@ export default async function HomePage() {
               title="지금은 진행 중인 이벤트가 없습니다"
               body={homeCopy.booking.offEventLine}
             >
-              <Link className="text-link" href="/guide">
+              <p>
+                <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+                {' · '}
+                <a
+                  className="text-link"
+                  href={SITE.bookingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  네이버 플레이스 예약 ↗
+                </a>
+              </p>
+              <Link className="text-link" href="/guide#pricing">
                 이용 안내 →
               </Link>
             </EmptyState>
@@ -345,9 +367,15 @@ export default async function HomePage() {
             <p className="muted">{homeCopy.booking.support}</p>
             <BookingCta showHint />
             <p style={{ marginTop: '1rem' }}>{SITE.hours}</p>
-            {eventProduct ? (
+            {eventProduct && eventPrice ? (
               <p>
-                {eventProduct.name} {formatWon(eventProduct.eventPrice!)}.
+                {eventProduct.name}{' '}
+                {eventPrice.struckThroughPrice != null ? (
+                  <s className="price-cell__struck">
+                    {formatWon(eventPrice.struckThroughPrice)}
+                  </s>
+                ) : null}{' '}
+                {formatWon(eventPrice.amount)}.
                 {eventProduct.eventStartDate && eventProduct.eventEndDate
                   ? ` ${formatKstDateRange(
                       eventProduct.eventStartDate,

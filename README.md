@@ -26,7 +26,7 @@ http://localhost:4000
 |---|---|
 | `NEXT_PUBLIC_SITE_URL` | 사이트 절대 URL (OG/sitemap). 스테이징 예: `https://staging.m-garden.co.kr` |
 | `NEXT_PUBLIC_SITE_INDEXABLE` | `true`일 때만 검색 노출. 스테이징은 `false`/미설정(noindex) |
-| `CLINIC_OS_API_BASE_URL` | Clinic-OS API base (예: `https://api.example.com`). 비어 있으면 fallback |
+| `CLINIC_OS_API_BASE_URL` | Clinic-OS API base (예: `https://mindgarden.dev.core-solution.co.kr`). 서버에서만 fetch·`revalidate=300`. 비어 있거나 실패/빈 배열이면 가격 empty 상태(가격 하드코딩 없음) |
 | `CLINIC_OS_TENANT_SLUG` | 테넌트 슬러그 (기본 `mindgarden`) |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (기본 `0x4AAAAAAF8rDKpWUewMGRcN`, m-garden.co.kr/www/staging 위젯). Secret 검증은 Clinic-OS |
 | `DB_*` / `SMTP_*` / `CONSULTATION_NOTIFY_*` | 레거시 `/api/consultation` 전용 (추후 제거) |

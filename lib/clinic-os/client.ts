@@ -2,6 +2,7 @@ import {
   FALLBACK_CONSULTATION_PRODUCTS,
   FALLBACK_HOMEPAGE_CONTENT,
 } from './fallback';
+import { parseConsultationProductsResponse } from './schemas';
 import type {
   ConsultationProduct,
   HomepageContent,
@@ -28,7 +29,7 @@ function publicPath(suffix: string): string {
   return `${base}/api/v1/public/tenants/${getTenantSlug()}${suffix}`;
 }
 
-async function fetchJson<T>(url: string): Promise<T> {
+async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
     next: { revalidate: REVALIDATE_SECONDS },
@@ -36,12 +37,12 @@ async function fetchJson<T>(url: string): Promise<T> {
   if (!res.ok) {
     throw new Error(`Clinic-OS ${res.status} for ${url}`);
   }
-  return res.json() as Promise<T>;
+  return res.json() as Promise<unknown>;
 }
 
 /**
- * Thin typed Clinic-OS public client.
- * Field-name mapping lives only in this file.
+ * Thin typed Clinic-OS public client (server-side only — no CORS).
+ * Field-name mapping / validation lives in this module + schemas.ts.
  */
 export const clinicOsClient = {
   async getConsultationProducts(): Promise<ConsultationProduct[]> {
@@ -49,9 +50,8 @@ export const clinicOsClient = {
       return FALLBACK_CONSULTATION_PRODUCTS;
     }
     try {
-      return await fetchJson<ConsultationProduct[]>(
-        publicPath('/consultation-products'),
-      );
+      const raw = await fetchJson(publicPath('/consultation-products'));
+      return parseConsultationProductsResponse(raw);
     } catch {
       return FALLBACK_CONSULTATION_PRODUCTS;
     }
@@ -62,7 +62,10 @@ export const clinicOsClient = {
       return FALLBACK_HOMEPAGE_CONTENT;
     }
     try {
-      return await fetchJson<HomepageContent>(publicPath('/homepage-content'));
+      const raw = (await fetchJson(
+        publicPath('/homepage-content'),
+      )) as HomepageContent;
+      return raw;
     } catch {
       return FALLBACK_HOMEPAGE_CONTENT;
     }
@@ -70,7 +73,6 @@ export const clinicOsClient = {
 
   async submitInquiry(payload: InquiryPayload): Promise<{ status: number }> {
     if (!getBaseUrl()) {
-      // Dev / unset API: accept locally so UI can be tested.
       if (payload.website) {
         return { status: 202 };
       }
@@ -96,55 +98,45 @@ export const clinicOsClient = {
   },
 };
 
-/** KST calendar date YYYY-MM-DD */
-export function kstToday(): string {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Asia/Seoul',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(new Date());
-}
-
-export function isWithinEventWindow(
-  start: string | null,
-  end: string | null,
-  today = kstToday(),
-): boolean {
-  if (!start || !end) return false;
-  return today >= start && today <= end;
-}
-
-export function resolveProductDisplayPrice(product: ConsultationProduct): {
-  amount: number | null;
+export type ProductPriceView = {
+  /** Amount to emphasize (eventPrice when set, else price). */
+  amount: number;
+  /** When set, show struck-through alongside amount. */
+  struckThroughPrice: number | null;
   isEvent: boolean;
-  needsConfirm: boolean;
-} {
-  const inWindow = isWithinEventWindow(
-    product.eventStartDate,
-    product.eventEndDate,
-  );
-  if (inWindow && product.eventPrice != null) {
-    return { amount: product.eventPrice, isEvent: true, needsConfirm: false };
+};
+
+/**
+ * Show eventPrice when it isn't null (API already drops out-of-window
+ * event-only products). Otherwise show price.
+ */
+export function resolveProductDisplayPrice(
+  product: ConsultationProduct,
+): ProductPriceView {
+  if (product.eventPrice != null) {
+    return {
+      amount: product.eventPrice,
+      struckThroughPrice: product.price,
+      isEvent: true,
+    };
   }
-  if (product.price > 0) {
-    return { amount: product.price, isEvent: false, needsConfirm: false };
-  }
-  return { amount: null, isEvent: false, needsConfirm: true };
+  return {
+    amount: product.price,
+    struckThroughPrice: null,
+    isEvent: false,
+  };
 }
 
+/** First product that currently carries an event price (already sorted). */
+export function getActiveEventProduct(
+  products: ConsultationProduct[],
+): ConsultationProduct | null {
+  return products.find((p) => p.eventPrice != null) ?? null;
+}
+
+/** @deprecated Use getActiveEventProduct */
 export function getActiveFirstMindWalk(
   products: ConsultationProduct[],
 ): ConsultationProduct | null {
-  const found = products.find((p) =>
-    p.name.includes('첫 마음산책'),
-  );
-  if (!found) return null;
-  if (
-    !isWithinEventWindow(found.eventStartDate, found.eventEndDate) ||
-    found.eventPrice == null
-  ) {
-    return null;
-  }
-  return found;
+  return getActiveEventProduct(products);
 }

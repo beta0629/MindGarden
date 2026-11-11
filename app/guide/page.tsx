@@ -3,9 +3,12 @@ import Link from 'next/link';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { ProductPriceList } from '@/components/ui/ProductPriceList';
 import {
   clinicOsClient,
-  getActiveFirstMindWalk,
+  getActiveEventProduct,
+  resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
 import { guideCopy } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
@@ -22,7 +25,10 @@ export const metadata = buildMetadata({
 
 export default async function GuidePage() {
   const products = await clinicOsClient.getConsultationProducts();
-  const eventProduct = getActiveFirstMindWalk(products);
+  const eventProduct = getActiveEventProduct(products);
+  const eventPrice = eventProduct
+    ? resolveProductDisplayPrice(eventProduct)
+    : null;
 
   return (
     <SiteShell>
@@ -49,7 +55,11 @@ export default async function GuidePage() {
           <h2 className="section__title">상담 절차</h2>
           <div className="process-grid" style={{ marginTop: '1.25rem' }}>
             {guideCopy.steps.map((step) => (
-              <article key={step.title} className="process-item" style={{ textAlign: 'left' }}>
+              <article
+                key={step.title}
+                className="process-item"
+                style={{ textAlign: 'left' }}
+              >
                 <Image src={step.icon} alt="" width={64} height={64} />
                 <h3>{step.title}</h3>
                 <p>{step.body}</p>
@@ -82,39 +92,31 @@ export default async function GuidePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" id="pricing">
         <div className="container">
           <h2 className="section__title">
             상담 비용
             <ConfirmNeeded />
           </h2>
-          <p>{guideCopy.pricesLead}</p>
-          <table className="price-table">
-            <thead>
-              <tr>
-                <th>항목명</th>
-                <th>금액</th>
-              </tr>
-            </thead>
-            <tbody>
-              {guideCopy.fixedPrices.map((row) => (
-                <tr key={row.name}>
-                  <td>{row.name}</td>
-                  <td>{row.amount}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <ProductPriceList products={products} lead={guideCopy.pricesLead} />
         </div>
       </section>
 
       <section className="section section--sand">
         <div className="container stack-md">
           <h2 className="section__title">이벤트 가격</h2>
-          {eventProduct ? (
+          {eventProduct && eventPrice ? (
             <>
               <p>
-                {eventProduct.name} {formatWon(eventProduct.eventPrice!)}
+                {eventProduct.name}{' '}
+                {eventPrice.struckThroughPrice != null ? (
+                  <>
+                    <s className="price-cell__struck">
+                      {formatWon(eventPrice.struckThroughPrice)}
+                    </s>{' '}
+                  </>
+                ) : null}
+                <strong>{formatWon(eventPrice.amount)}</strong>
               </p>
               {eventProduct.eventStartDate && eventProduct.eventEndDate ? (
                 <p className="muted">
@@ -133,7 +135,25 @@ export default async function GuidePage() {
               <BookingCta />
             </>
           ) : (
-            <p>{guideCopy.offEventLine}</p>
+            <EmptyState
+              kind="event"
+              title="지금은 진행 중인 이벤트가 없습니다"
+              body={guideCopy.offEventLine}
+            >
+              <p>
+                <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+                {' · '}
+                <a
+                  className="text-link"
+                  href={SITE.bookingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  네이버 플레이스 예약 ↗
+                </a>
+              </p>
+              <BookingCta />
+            </EmptyState>
           )}
         </div>
       </section>

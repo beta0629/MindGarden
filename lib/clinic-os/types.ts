@@ -5,7 +5,7 @@ export type ConsultationProduct = {
   eventPrice: number | null;
   eventStartDate: string | null;
   eventEndDate: string | null;
-  sessionCount: number | null;
+  sessionCount: number;
   sessionMinutes: number | null;
   displayOrder: number;
   updatedAt: string;

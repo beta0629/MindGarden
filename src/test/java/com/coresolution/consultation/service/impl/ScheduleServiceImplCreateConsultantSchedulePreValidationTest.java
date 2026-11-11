@@ -193,8 +193,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명", "VIDEO", null))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("상담사와 내담자 간의 유효한 매칭이 없거나 승인되지 않았습니다.");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_VALID_MAPPING);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -242,8 +242,8 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
 
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID, date, start, end, "제목", "설명"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("유효한 매칭");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_VALID_MAPPING);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }
@@ -358,6 +358,35 @@ class ScheduleServiceImplCreateConsultantSchedulePreValidationTest {
         assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
                 CONSULTANT_ID, CLIENT_ID,
                 LocalDate.of(2026, 11, 21),
+                LocalTime.of(14, 0), LocalTime.of(15, 0),
+                "제목", "설명", "PHONE", null, false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
+
+        verify(scheduleRepository, never()).save(any(Schedule.class));
+    }
+
+    @Test
+    @DisplayName("SESSIONS_EXHAUSTED만 있으면 IllegalStateException(회기 없음)·저장 없음")
+    void createConsultantSchedule_onlySessionsExhausted_throwsNoRemainingAndDoesNotSave() {
+        stubConflictCheck();
+
+        ConsultantClientMapping exhausted = buildActiveMapping(
+                EXHAUSTED_MAPPING_ID,
+                PaymentTimingConstants.SAME_DAY_CARD,
+                0,
+                1,
+                1,
+                LocalDateTime.of(2026, 11, 10, 18, 0));
+        exhausted.setStatus(MappingStatus.SESSIONS_EXHAUSTED);
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.ACTIVE))
+                .thenReturn(Collections.emptyList());
+        when(mappingRepository.findByTenantIdAndStatus(TENANT_ID, MappingStatus.SESSIONS_EXHAUSTED))
+                .thenReturn(List.of(exhausted));
+
+        assertThatThrownBy(() -> scheduleService.createConsultantSchedule(
+                CONSULTANT_ID, CLIENT_ID,
+                LocalDate.of(2026, 11, 22),
                 LocalTime.of(14, 0), LocalTime.of(15, 0),
                 "제목", "설명", "PHONE", null, false))
                 .isInstanceOf(IllegalStateException.class)

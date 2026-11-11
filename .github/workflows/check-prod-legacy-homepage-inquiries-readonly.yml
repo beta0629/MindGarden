@@ -1,0 +1,144 @@
+# Legacy homepage consultation_inquiries — production survey (순수 읽기 전용)
+# 트리거: workflow_dispatch 전용. push/PR/schedule 트리거 없음. 배포 워크플로 호출 없음.
+# DB: scripts/ops/readonly/prod_legacy_homepage_inquiries_survey.sql 를 READ ONLY 세션으로 실행
+#     (SELECT / SHOW / information_schema 만). 쓰기·heal·재시작·설정 변경 금지.
+# PII 금지: name / phone / email / message / tags / referral_source 행 값 미출력 (집계·구조만).
+# confirm_readonly=true 필수 (SELECT-only 명시 확인). force_incident=true 만 KST 11–19 스킵 우회.
+# Secrets: PRODUCTION_DB_HOST|PRODUCTION_HOST, PRODUCTION_DB_USER, PRODUCTION_DB_NAME, PRODUCTION_DB_PASSWORD.
+# SSH 시크릿(PRODUCTION_HOST/USER/SSH_KEY)은 홈페이지 진단 워크플로 패턴용 — 본 잡은 DB 클라이언트만 사용.
+# SSOT 2026-09-22: KST 11–19 예방성 prod DB 점검 금지 → force_incident=true(명시 장애) 일 때만 주간 실행.
+# 후보 스키마: mindgarden_homepage / core_solution. 없는 테이블 구간은 mysql --force 로 이후 섹션 계속.
+name: 🔎 Check prod legacy homepage inquiries (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_readonly:
+        description: 'SELECT/SHOW/information_schema only — 읽기 전용 확인 (반드시 true)'
+        type: boolean
+        default: false
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: check-prod-legacy-homepage-inquiries-readonly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  db-readonly:
+    name: prod DB read-only survey
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 10
+    steps:
+      - name: Validate confirm_readonly + KST guard
+        id: guard
+        env:
+          CONFIRM_READONLY: ${{ inputs.confirm_readonly }}
+          FORCE_INCIDENT: ${{ inputs.force_incident }}
+        run: |
+          set -euo pipefail
+          if [ "${CONFIRM_READONLY}" != "true" ]; then
+            echo "::error::confirm_readonly must be true (explicit SELECT-only acknowledgement)"
+            exit 1
+          fi
+          HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST 11–19 preventive window — skip (exit 0)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Guard SQL is read-only
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          F=scripts/ops/readonly/prod_legacy_homepage_inquiries_survey.sql
+          # SHOW CREATE TABLE 은 구조 전용으로 허용. 그 외 쓰기/DDL 키워드 거부. SET 은 --init-command 로만.
+          if grep -v '^[[:space:]]*--' "$F" \
+            | sed -E 's/SHOW[[:space:]]+CREATE[[:space:]]+TABLE/SHOW__DDL__/Ig' \
+            | grep -wiE 'INSERT|UPDATE|DELETE|REPLACE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|RENAME|LOAD|CALL|HANDLER|LOCK|SET'; then
+            echo "::error::write/DDL keyword found in read-only SQL"
+            exit 1
+          fi
+          echo "read-only keyword guard: PASS"
+
+      - name: Setup MySQL client
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Resolve DB host
+        if: steps.guard.outputs.skip != 'true'
+        id: db
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        run: |
+          set -euo pipefail
+          HOST="${PRODUCTION_DB_HOST:-}"
+          if [ -z "$HOST" ]; then HOST="${PRODUCTION_HOST:-}"; fi
+          USER="${PRODUCTION_DB_USER:-}"
+          NAME="${PRODUCTION_DB_NAME:-}"
+          MISSING=""
+          [ -n "$HOST" ] || MISSING="$MISSING PRODUCTION_DB_HOST|PRODUCTION_HOST"
+          [ -n "$USER" ] || MISSING="$MISSING PRODUCTION_DB_USER"
+          [ -n "$NAME" ] || MISSING="$MISSING PRODUCTION_DB_NAME"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Required secrets missing:$MISSING"
+            exit 1
+          fi
+          echo "::add-mask::$HOST"
+          echo "::add-mask::$USER"
+          {
+            echo "host=$HOST"
+            echo "user=$USER"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+          echo "DB target resolved (host/user masked) db=$NAME"
+
+      - name: Run read-only survey
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${MYSQL_PWD:-}" ]; then
+            echo "::error::secrets.PRODUCTION_DB_PASSWORD is not set"
+            exit 1
+          fi
+          echo "::add-mask::$DB_HOST"
+          echo "::add-mask::$DB_USER"
+          # --force: 후보 스키마에 테이블이 없으면 해당 문만 에러하고 이후 섹션 계속.
+          # READ ONLY 는 세션 init-command. SQL 파일에는 SET 키워드 없음(가드 통과).
+          OUT=/tmp/legacy_homepage_inquiries_survey.out
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 --force -t \
+            < scripts/ops/readonly/prod_legacy_homepage_inquiries_survey.sql \
+            > "$OUT" 2>&1 || true
+          cat "$OUT"
+          {
+            echo "## Legacy homepage consultation_inquiries (read-only survey)"
+            echo
+            echo '```'
+            cat "$OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

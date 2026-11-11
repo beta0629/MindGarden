@@ -197,8 +197,8 @@ class ScheduleServiceImplInstitutionLinkMonthlyTest {
                 LocalDate.of(2026, 9, 21),
                 LocalTime.of(14, 0), LocalTime.of(15, 0),
                 "제목", "설명", "VIDEO", null, false))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("사용 가능한 회기가 없습니다.");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }

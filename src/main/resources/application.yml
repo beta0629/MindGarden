@@ -314,16 +314,20 @@ mindgarden:
             - "2405:8100::/32"
             - "2a06:98c0::/29"
             - "2c0f:f248::/32"
-  # 센터 홈페이지 공개 문의 접수
+  # 센터 홈페이지 공개 문의 접수 (로그인 captcha 와 분리)
   homepage-inquiry:
-    # retention-days: 미설정 시 무기한 보관. 퍼지는 purge-enabled=true 일 때만.
     purge-enabled: false
-    notification-channel: ${HOMEPAGE_INQUIRY_NOTIFICATION_CHANNEL:badge}
+    purge-after-contacted-days: ${HOMEPAGE_INQUIRY_PURGE_AFTER_CONTACTED_DAYS:365}
+    notification-channels: ${HOMEPAGE_INQUIRY_NOTIFICATION_CHANNELS:badge,push}
+    captcha:
+      enabled: ${MINDGARDEN_HOMEPAGE_CAPTCHA_ENABLED:true}
+      secret-key: ${MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY:}
     cors:
-      # staging 등은 HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS(콤마 구분)로 SecurityConfig 가 추가 병합
+      # HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS(콤마 구분)로 SecurityConfig 가 추가 병합
       allowed-origins:
         - https://m-garden.co.kr
         - https://www.m-garden.co.kr
+        - https://staging.m-garden.co.kr
   kr-public-data:
     zone-id: Asia/Seoul
     min-opening-year: 1900

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import com.coresolution.consultation.config.HomepageInquiryProperties;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.HomepageInquiryConstants;
 import com.coresolution.consultation.dto.AdminListPageResult;
@@ -18,6 +19,7 @@ import com.coresolution.consultation.entity.HomepageInquiry;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
+import com.coresolution.consultation.exception.ServiceUnavailableException;
 import com.coresolution.consultation.exception.ValidationException;
 import com.coresolution.consultation.repository.CommonCodeRepository;
 import com.coresolution.consultation.repository.HomepageInquiryRepository;
@@ -33,13 +35,13 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.security.CaptchaVerifier;
 import com.coresolution.core.util.HttpRequestClientIp;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -50,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 @Transactional
 public class HomepageInquiryServiceImpl implements HomepageInquiryService {
 
@@ -61,9 +62,34 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
     private final CommonCodeRepository commonCodeRepository;
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
     private final AuditLogService auditLogService;
-    private final CaptchaVerifier captchaVerifier;
+    private final CaptchaVerifier homepageInquiryCaptchaVerifier;
+    private final HomepageInquiryProperties homepageInquiryProperties;
     private final HomepageInquiryNotificationChannel notificationChannel;
     private final PersonalDataEncryptionUtil encryptionUtil;
+
+    /**
+     * @param homepageInquiryCaptchaVerifier 전용 Turnstile 빈({@code homepageInquiryCaptchaVerifier})
+     */
+    public HomepageInquiryServiceImpl(
+            HomepageInquiryRepository homepageInquiryRepository,
+            TenantRepository tenantRepository,
+            CommonCodeRepository commonCodeRepository,
+            PersonalDataAccessLogRepository personalDataAccessLogRepository,
+            AuditLogService auditLogService,
+            @Qualifier("homepageInquiryCaptchaVerifier") CaptchaVerifier homepageInquiryCaptchaVerifier,
+            HomepageInquiryProperties homepageInquiryProperties,
+            HomepageInquiryNotificationChannel notificationChannel,
+            PersonalDataEncryptionUtil encryptionUtil) {
+        this.homepageInquiryRepository = homepageInquiryRepository;
+        this.tenantRepository = tenantRepository;
+        this.commonCodeRepository = commonCodeRepository;
+        this.personalDataAccessLogRepository = personalDataAccessLogRepository;
+        this.auditLogService = auditLogService;
+        this.homepageInquiryCaptchaVerifier = homepageInquiryCaptchaVerifier;
+        this.homepageInquiryProperties = homepageInquiryProperties;
+        this.notificationChannel = notificationChannel;
+        this.encryptionUtil = encryptionUtil;
+    }
 
     @Override
     public void submitPublicInquiry(String tenantSlug, PublicHomepageInquiryCreateRequest request,
@@ -75,27 +101,31 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
             return;
         }
 
-        verifyCaptchaIfRequired(request, httpRequest);
+        verifyHomepageCaptcha(request, httpRequest);
 
-        String resolvedType = resolveInquiryTypeCode(tenant.getTenantId(), request.getInquiryType());
+        CommonCode typeCode = resolveInquiryType(tenant.getTenantId(), request.getInquiryType());
         String clientIp = HttpRequestClientIp.resolve(httpRequest);
 
         HomepageInquiry entity = HomepageInquiry.builder()
                 .tenantId(tenant.getTenantId())
                 .name(request.getName().trim())
                 .phone(request.getPhone().trim())
-                .inquiryType(resolvedType)
+                .inquiryType(typeCode.getCodeValue())
                 .content(request.getContent().trim())
                 .privacyConsentAt(LocalDateTime.now())
                 .consentVersion(request.getConsentVersion().trim())
                 .status(HomepageInquiryConstants.STATUS_NEW)
+                .source(HomepageInquiryConstants.SOURCE_WEB_FORM)
+                .sourceRef(null)
+                .legacyInquiryType(null)
                 .clientIpHash(ClientIpHashUtils.sha256Hex(clientIp))
                 .isDeleted(false)
                 .version(0L)
                 .build();
 
         HomepageInquiry saved = homepageInquiryRepository.save(entity);
-        notificationChannel.notifyNewInquiry(tenant.getTenantId(), saved.getId());
+        String typeLabel = firstNonBlank(typeCode.getKoreanName(), typeCode.getCodeLabel(), typeCode.getCodeValue());
+        notificationChannel.notifyNewInquiry(tenant.getTenantId(), saved.getId(), typeLabel);
         log.info("homepage-inquiry accepted: tenantId={} inquiryId={}", tenant.getTenantId(), saved.getId());
     }
 
@@ -169,6 +199,26 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
         return AdminHomepageInquiryNewCountResponse.builder().newCount(count).build();
     }
 
+    private void verifyHomepageCaptcha(PublicHomepageInquiryCreateRequest request,
+            HttpServletRequest httpRequest) {
+        HomepageInquiryProperties.Captcha captcha = homepageInquiryProperties.getCaptcha();
+        if (captcha == null || !captcha.isEnabled()) {
+            return;
+        }
+        if (!StringUtils.hasText(captcha.getSecretKey())) {
+            log.warn("homepage-inquiry captcha enabled but secret missing — fail closed");
+            throw new ServiceUnavailableException(HomepageInquiryConstants.CAPTCHA_UNAVAILABLE_MESSAGE);
+        }
+        String token = request.getCaptchaToken();
+        if (!StringUtils.hasText(token)) {
+            throw new ValidationException("캡차 토큰이 필요합니다.");
+        }
+        String remoteIp = HttpRequestClientIp.resolve(httpRequest);
+        if (!homepageInquiryCaptchaVerifier.verify(token.trim(), remoteIp)) {
+            throw new ValidationException("캡차 검증에 실패했습니다.");
+        }
+    }
+
     private Tenant resolveActiveTenantOrNotFound(String tenantSlug) {
         if (!StringUtils.hasText(tenantSlug)) {
             throw new EntityNotFoundException(HomepageInquiryConstants.GENERIC_NOT_FOUND_MESSAGE);
@@ -188,22 +238,7 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
         return request.getWebsite() != null && !request.getWebsite().isBlank();
     }
 
-    private void verifyCaptchaIfRequired(PublicHomepageInquiryCreateRequest request,
-            HttpServletRequest httpRequest) {
-        if (!captchaVerifier.requiresCaptchaToken()) {
-            return;
-        }
-        String token = request.getCaptchaToken();
-        if (!StringUtils.hasText(token)) {
-            throw new ValidationException("캡차 토큰이 필요합니다.");
-        }
-        String remoteIp = HttpRequestClientIp.resolve(httpRequest);
-        if (!captchaVerifier.verify(token.trim(), remoteIp)) {
-            throw new ValidationException("캡차 검증에 실패했습니다.");
-        }
-    }
-
-    private String resolveInquiryTypeCode(String tenantId, String rawType) {
+    private CommonCode resolveInquiryType(String tenantId, String rawType) {
         if (!StringUtils.hasText(rawType)) {
             throw new ValidationException("문의 유형이 필요합니다.");
         }
@@ -215,7 +250,7 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
             if (equalsIgnoreCase(code.getCodeValue(), normalized)
                     || equalsIgnoreCase(code.getCodeLabel(), normalized)
                     || equalsIgnoreCase(code.getKoreanName(), normalized)) {
-                return code.getCodeValue();
+                return code;
             }
         }
         throw new ValidationException("허용되지 않는 문의 유형입니다.");
@@ -226,6 +261,18 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
             return false;
         }
         return left.trim().equalsIgnoreCase(right.trim());
+    }
+
+    private static String firstNonBlank(String... values) {
+        if (values == null) {
+            return "";
+        }
+        for (String value : values) {
+            if (StringUtils.hasText(value)) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 
     private String normalizeStatusFilter(String status) {

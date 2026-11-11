@@ -369,6 +369,31 @@ class ReservationReminderRescheduleResendIntegrationTest {
         assertThat(lateLogCount(tenantId)).isZero();
     }
 
+    @Test
+    @DisplayName("2026-11-11 ⑤ — 실 send_log 행: 테스트모드 미발송=success false·SMS_TEST_MODE_NOT_SENT, 성공=error_code null, 시드 없음 케이스는 단위 테스트")
+    void sendLogRow_errorCodeReflectsSmsResult() {
+        LocalDate date = schedule.getDate();
+        when(dispatchHelper.dispatchSms(anyString(), anyString()))
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(false,
+                BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT,
+                "sms test mode — not sent", null, null));
+        dispatchLateAt(date.minusDays(1).atTime(BATCH_RUN_TIME));
+
+        NotificationBatchSendLog testModeRow = findLateLogs(tenantId, date).get(0);
+        assertThat(testModeRow.getSuccess()).isFalse();
+        assertThat(testModeRow.getErrorCode())
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT);
+
+        when(dispatchHelper.dispatchSms(anyString(), anyString()))
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(true, null, null, null, null));
+        dispatchLateAt(date.atTime(BATCH_RUN_TIME));
+
+        NotificationBatchSendLog successRow = findLateLogs(tenantId, date).stream()
+            .filter(l -> Boolean.TRUE.equals(l.getSuccess())).findFirst().orElseThrow();
+        assertThat(successRow.getErrorCode()).isNull();
+        assertThat(lateLogCount(tenantId)).isEqualTo(2);
+    }
+
     // ------------------------------------------------------------------ helpers
 
     /**

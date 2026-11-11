@@ -219,10 +219,50 @@ class BatchNotificationDispatchServiceImplTest {
         DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
 
         assertThat(outcome.status()).isEqualTo(DispatchOutcome.Status.FAILED);
+        assertThat(outcome.errorCode()).isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT);
         verify(sendLogger, never()).updateResult(anyLong(), eq(true), anyString(), anyBoolean(),
             any(), any(), any(), any());
         verify(sendLogger).updateResult(eq(LOG_ID), eq(false), anyString(), anyBoolean(),
-            anyString(), anyString(), any(), any());
+            eq(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 ⑤ — 알림톡 미시도 + SMS 발송 실패(SEND_FAILED) → error_code 는 SMS 결과(SEND_FAILED), TEMPLATE_NOT_MAPPED 로 덮지 않음")
+    void dispatch_whenAlimtalkNotAttemptedAndSmsFails_keepsSmsErrorCode() {
+        properties.setAlimtalkEnabled(false);
+        givenScheduleAndUsers(SCHEDULE_ID, 1);
+        givenMappingForSchedule(MAPPING_ID, 10, 7);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        when(dispatchHelper.dispatchSms(eq(PHONE), anyString()))
+            .thenReturn(new NotificationDispatchHelper.DispatchResult(false,
+                NotificationDispatchHelper.ERROR_CODE_SEND_FAILED, "provider 5xx", null, null));
+
+        DispatchOutcome outcome = service.dispatchReservationImmediateLate(SCHEDULE_ID);
+
+        assertThat(outcome.errorCode()).isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED);
+        verify(sendLogger).updateResult(eq(LOG_ID), eq(false), anyString(), anyBoolean(),
+            eq(BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("2026-11-11 ⑤ — 실패 error_code 규칙: SMS 결과 코드 우선, 없을 때만 알림톡 미시도=TEMPLATE_NOT_MAPPED / 실패=SEND_FAILED")
+    void resolveFailureErrorCode_rules() {
+        NotificationDispatchHelper.DispatchResult testMode = new NotificationDispatchHelper.DispatchResult(false,
+            BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT, "m", null, null);
+        NotificationDispatchHelper.DispatchResult noCode =
+            new NotificationDispatchHelper.DispatchResult(false, " ", "m", null, null);
+
+        assertThat(BatchNotificationDispatchServiceImpl.resolveFailureErrorCode(false, testMode))
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT);
+        assertThat(BatchNotificationDispatchServiceImpl.resolveFailureErrorCode(true, testMode))
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT);
+        assertThat(BatchNotificationDispatchServiceImpl.resolveFailureErrorCode(false, noCode))
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED);
+        assertThat(BatchNotificationDispatchServiceImpl.resolveFailureErrorCode(true, noCode))
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED);
+        assertThat(BatchNotificationDispatchServiceImpl.resolveFailureErrorCode(false, null))
+            .isEqualTo(BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED);
     }
 
     @Test

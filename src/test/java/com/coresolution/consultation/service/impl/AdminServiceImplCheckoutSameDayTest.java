@@ -89,7 +89,7 @@ import static org.mockito.Mockito.when;
  *
  * <p>매트릭스:
  * <ul>
- *   <li>단회기 (totalSessions=1, 가예약 1건): 잔여 0 + SESSIONS_EXHAUSTED, approveMapping 호출 0회</li>
+ *   <li>단회기 (totalSessions=1, 가예약 1건): 입금 후 DEPOSIT_PENDING+rem=0 → approveMapping 1회 → SESSIONS_EXHAUSTED</li>
  *   <li>n회 패키지 (totalSessions=10, 가예약 1건): 잔여 9 + ACTIVE, approveMapping 호출 1회</li>
  *   <li>가예약 없음 (totalSessions=10, finalize에서 차감 0회): 회기 부여만 + ACTIVE</li>
  *   <li>OCC: useSession 차감 경합 시 OptimisticLockingFailureException 전파</li>
@@ -244,8 +244,8 @@ class AdminServiceImplCheckoutSameDayTest {
     }
 
     @Test
-    @DisplayName("단회기 (totalSessions=1, 가예약 1건): 차감 후 SESSIONS_EXHAUSTED → approveMapping 호출 0회")
-    void checkoutSameDayCard_singleSessionPackage_skipsApproveAfterExhaustion() {
+    @DisplayName("단회기 (totalSessions=1, 가예약 1건): DEPOSIT_PENDING+rem=0 → approveMapping 1회 → SESSIONS_EXHAUSTED")
+    void checkoutSameDayCard_singleSessionPackage_approvesThenExhausts() {
         ConsultantClientMapping initial = newPendingPaymentMapping(1, 0, 0);
         when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
                 .thenReturn(Optional.of(initial));
@@ -254,10 +254,15 @@ class AdminServiceImplCheckoutSameDayTest {
         doReturn(afterPayment).when(spyService).confirmPayment(
                 eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
 
-        // confirmDeposit 모의: 단회기 + 가예약 1건 차감 후 잔여 0 + SESSIONS_EXHAUSTED
+        // 입금 단계 useSession 은 DEPOSIT_PENDING 이라 소진되지 않음 → rem=0 이어도 DEPOSIT_PENDING
         ConsultantClientMapping afterDeposit = newMapping(
-                MappingStatus.SESSIONS_EXHAUSTED, PaymentStatus.APPROVED, 1, 1, 0);
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 1, 1, 0);
         doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+
+        // approveByAdmin 이 ACTIVE 직후 rem=0 이면 MappingSessionsExhaustedRule 로 SESSIONS_EXHAUSTED
+        ConsultantClientMapping afterApprove = newMapping(
+                MappingStatus.SESSIONS_EXHAUSTED, PaymentStatus.APPROVED, 1, 1, 0);
+        doReturn(afterApprove).when(spyService).approveMapping(eq(MAPPING_ID), eq("SYSTEM_AUTO_OPTION_B"));
 
         ConsultantClientMapping result = spyService.checkoutSameDayCard(
                 MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null);
@@ -268,7 +273,9 @@ class AdminServiceImplCheckoutSameDayTest {
 
         verify(spyService).confirmPayment(MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT);
         verify(spyService).confirmDeposit(MAPPING_ID, PAYMENT_REFERENCE);
-        verify(spyService, never()).approveMapping(anyLong(), anyString());
+        verify(spyService, times(1)).approveMapping(MAPPING_ID, "SYSTEM_AUTO_OPTION_B");
+        // 이 경로에서 환불 ERP·partialRefund·미래일정 취소는 호출되지 않음 (spy 공개 API 기준)
+        verify(spyService, never()).partialRefundMapping(anyLong(), org.mockito.ArgumentMatchers.anyInt(), anyString());
     }
 
     @Test

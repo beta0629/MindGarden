@@ -254,6 +254,11 @@ public class ConsultantClientMapping extends BaseEntity {
         this.adminApprovalDate = LocalDateTime.now();
         this.approvedBy = adminName;
         this.startDate = LocalDateTime.now();
+        // 입금 단계에서 DEPOSIT_PENDING 중 차감된 rem=0 은 규칙상 소진되지 않음 → 승인 직후 ACTIVE에서 소진 전이
+        if (MappingSessionsExhaustedRule.shouldMarkExhausted(this.status, this.remainingSessions)) {
+            this.status = MappingStatus.SESSIONS_EXHAUSTED;
+            this.endDate = LocalDateTime.now();
+        }
     }
 
      /**

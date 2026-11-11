@@ -4725,8 +4725,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
      * confirmDeposit 내부의 finalizeTentativeBookingsAfterDepositPhase4b()가 TENTATIVE_PENDING_PAYMENT
      * 가예약 일정 중 첫 1건을 BOOKED로 전환하고 매핑에서 회기 1회를 즉시 차감한다.
      * <p>
-     * 단회기(totalSessions=1): 잔여 1 → 차감 → 잔여 0 → entity `useSession` 가드가 자동 SESSIONS_EXHAUSTED 전이.
-     * n회 패키지: 잔여 n → 차감 → 잔여 n-1 → approveMapping 호출 후 ACTIVE 도달.
+     * 단회기(totalSessions=1): 잔여 1 → 차감 → 잔여 0 이어도 DEPOSIT_PENDING 유지
+     * ({@link com.coresolution.consultation.util.MappingSessionsExhaustedRule} 은 ACTIVE→SESSIONS_EXHAUSTED 만 허용).
+     * approveMapping → approveByAdmin 이 ACTIVE 직후 rem=0 이면 SESSIONS_EXHAUSTED 로 전이.
+     * n회 패키지: 잔여 n → 차감 → 잔여 n-1 → approveMapping 후 ACTIVE 도달.
      * 가예약이 없는 경우: 회기 부여만 수행되고 차감은 0회.
      * <p>
      * 클래스 레벨 {@code @Transactional} 안에서 모두 실행되며, 상담료 INCOME 은 confirmDeposit 이 이 트랜잭션에서
@@ -4874,12 +4876,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
 
             // Step 3: 회기 차감 결과에 따른 분기.
-            //   단회기 (totalSessions=1): entity useSession 가드가 이미 SESSIONS_EXHAUSTED로 전이 →
-            //     approveMapping 게이트 (DEPOSIT_PENDING 요구)에 어긋나므로 호출하지 않고 그대로 반환.
-            //   n회 패키지 또는 가예약 없음: status가 여전히 DEPOSIT_PENDING → approveMapping으로 ACTIVE 전이.
+            //   입금 단계 useSession 은 DEPOSIT_PENDING 이라 MappingSessionsExhaustedRule 로 소진되지 않음.
+            //   rem=0 이어도 보통 DEPOSIT_PENDING → approveMapping → approveByAdmin 이 ACTIVE 직후
+            //   rem=0 이면 SESSIONS_EXHAUSTED 로 전이 (ERP/환불/미래일정 취소는 이 경로에서 하지 않음).
+            //   방어: 이미 SESSIONS_EXHAUSTED 이면 approveMapping(DEPOSIT_PENDING 게이트)을 건너뛰고 반환.
             ConsultantClientMapping.MappingStatus statusAfterDeposit = statusSource.getStatus();
             if (statusAfterDeposit == ConsultantClientMapping.MappingStatus.SESSIONS_EXHAUSTED) {
-                log.info("✅ 원샷 결제+활성화 완료 (단회기 소진): mappingId={}, status={}, operation={}",
+                log.info("✅ 원샷 결제+활성화 완료 (이미 회기 소진): mappingId={}, status={}, operation={}",
                         mappingId, statusAfterDeposit, operation);
                 adminRequestIdempotencyService.markResult(idempotencyReservation, "SUCCESS");
                 return statusSource;

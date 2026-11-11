@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>area-overlap</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_area-overlap___함께_살펴보는_어려움" data-name="illust/area-overlap · 함께 살펴보는 어려움">
+      <path id="함께_살펴보는_어려움___바탕_블롭" data-name="함께 살펴보는 어려움 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <circle id="함께_살펴보는_어려움___선_1" data-name="함께 살펴보는 어려움 · 선 1" cx="26" cy="26" r="11" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="함께_살펴보는_어려움___선_2" data-name="함께 살펴보는 어려움 · 선 2" cx="38" cy="26" r="11" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="함께_살펴보는_어려움___선_3" data-name="함께 살펴보는 어려움 · 선 3" cx="32" cy="37" r="11" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="함께_살펴보는_어려움___포인트_1" data-name="함께 살펴보는 어려움 · 포인트 1" d="M28 30 C29.5 28 34.5 28 36 30" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="함께_살펴보는_어려움___포인트_2" data-name="함께 살펴보는 어려움 · 포인트 2" x1="32" y1="30" x2="32" y2="34" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

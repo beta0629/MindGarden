@@ -1,193 +1,350 @@
-import Navigation from '@/components/Navigation';
-import HeroSection from '@/components/HeroSection';
-import MindgardenLandingSections from '@/components/about/MindgardenLandingSections';
-import HomeSectionVisual from '@/components/HomeSectionVisual';
-import GalleryMarquee from '@/components/GalleryMarquee';
-import ReviewsList from '@/components/ReviewsList';
-import Footer from '@/components/Footer';
-import HomeScreeningPromo from '@/components/HomeScreeningPromo';
-import SectionTabs from '@/components/SectionTabs';
-import HashScroll from '@/components/HashScroll';
-import HomeProgramPagesFlipGrid from '@/components/HomeProgramPagesFlipGrid';
-import { getApiService } from '@/lib/api';
-import { getDbConnection } from '@/lib/db';
-import { homeSectionImages } from '@/lib/home-section-images';
-import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
+import Image from 'next/image';
+import Link from 'next/link';
+import { HeroSection } from '@/components/home/HeroSection';
+import { InquiryForm } from '@/components/inquiry/InquiryForm';
+import { SiteShell } from '@/components/layout/SiteShell';
+import { BookingCta } from '@/components/ui/BookingCta';
+import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { FaqList } from '@/components/ui/FaqList';
+import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
+import {
+  clinicOsClient,
+  getActiveFirstMindWalk,
+} from '@/lib/clinic-os/client';
+import { homeCopy } from '@/lib/content/home';
+import { formatKstDateRange, formatWon } from '@/lib/format';
+import { getLatestBlogPosts, getLatestVideos } from '@/lib/feeds';
+import { buildMetadata } from '@/lib/seo';
+import { SITE } from '@/lib/site';
 
-// 갤러리·후기 등 DB 기반 블록이 있어 요청 시 최신 데이터를 쓰도록 동적 렌더링 유지
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300;
 
-// 갤러리 이미지 조회 (서버 사이드에서 직접 DB 조회)
-async function getGalleryImages() {
-  let connection;
-  try {
-    connection = await getDbConnection();
-    
-    const [rows] = await connection.execute(
-      `SELECT id, image_url, alt_text, category 
-       FROM gallery_images
-       WHERE is_active = 1
-       ORDER BY display_order ASC, created_at ASC`
-    );
+export const metadata = buildMetadata({
+  title: SITE.name,
+  description:
+    '나를 소중히 돌보고 가꾸는 시간, 당신의 마음이 정원이 되는 곳. 인천 연수구 심리상담센터 마인드가든.',
+  path: '/',
+});
 
-    const images = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      url: row.image_url,
-      alt: row.alt_text || '갤러리 이미지',
-      category: row.category || '기타',
-    }));
+export default async function HomePage() {
+  const [products, homepage, videos, posts] = await Promise.all([
+    clinicOsClient.getConsultationProducts(),
+    clinicOsClient.getHomepageContent(),
+    getLatestVideos(3),
+    getLatestBlogPosts(3),
+  ]);
 
-    return images.length > 0 ? images : null;
-  } catch (error) {
-    console.error('Failed to load gallery images:', error);
-    return null;
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
-}
-
-// 후기 목록 조회 (전체 후기)
-async function getReviews() {
-  let connection;
-  try {
-    connection = await getDbConnection();
-    const [rows] = await connection.execute(
-      `SELECT id, author_name, content, tags, ratings, like_count, created_at, updated_at
-       FROM homepage_reviews
-       WHERE is_approved = 1
-       ORDER BY created_at DESC
-       LIMIT 20`
-    );
-
-    const reviews = (rows as any[]).map((row: any) => {
-      let tags = [];
-      let ratings = null;
-      
-      try {
-        tags = row.tags ? JSON.parse(row.tags) : [];
-      } catch (e) {
-        tags = [];
-      }
-      
-      try {
-        ratings = row.ratings ? JSON.parse(row.ratings) : null;
-      } catch (e) {
-        ratings = null;
-      }
-      
-      return {
-        id: row.id,
-        authorName: row.author_name,
-        content: row.content,
-        tags,
-        ratings,
-        likeCount: row.like_count || 0,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
-      };
-    });
-
-    return reviews;
-  } catch (error) {
-    console.error('Failed to load reviews:', error);
-    return [];
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
-}
-
-// 서버 컴포넌트에서 데이터 가져오기
-async function getHomeData() {
-  try {
-    const apiService = getApiService();
-    const homeData = await apiService.getHomeData();
-
-    // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
-    const galleryImages = await getGalleryImages();
-
-    // 후기 목록 조회
-    const reviews = await getReviews();
-
-    const defaultGallery = [...FALLBACK_GALLERY_IMAGES];
-
-    const finalGallery = galleryImages || defaultGallery;
-    
-    return {
-      slogan: (homeData && homeData.slogan) || {
-        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
-        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
-        tagline: '— 마인드가든이 함께 합니다 —',
-      },
-      gallery: finalGallery,
-      reviews: reviews,
-    };
-  } catch (error) {
-    console.error('Failed to load home data:', error);
-    return {
-      slogan: {
-        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
-        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
-        tagline: '— 마인드가든이 함께 합니다 —',
-      },
-      gallery: [...FALLBACK_GALLERY_IMAGES],
-      reviews: [],
-    };
-  }
-}
-
-export default async function Home() {
-  const homeData = await getHomeData();
+  const eventProduct = getActiveFirstMindWalk(products);
+  const noticeBanner = homepage.banners.find((b) =>
+    b.title.includes('공지'),
+  );
 
   return (
-    <main id="top">
-      <HashScroll />
-      <Navigation />
-      <HeroSection slogan={homeData.slogan} />
+    <SiteShell noticeText={noticeBanner?.title ?? null}>
+      <HeroSection />
 
-      <HomeScreeningPromo />
-
-      <SectionTabs />
-
-      <MindgardenLandingSections showHero={false} />
-
-      <section className="content-shell" aria-label="프로그램, 갤러리, 후기">
-        <div className="content-main">
-          <section id="program-pages" className="content-section">
-            <div className="section-intro-row section-intro-row--media-first">
-              <HomeSectionVisual
-                src={homeSectionImages.programs.src}
-                alt={homeSectionImages.programs.alt}
-              />
-              <div className="section-intro-copy">
-                <h2 className="section-title">프로그램</h2>
-                <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
-                <p className="mg-prog-flip-hint mg-prog-flip-hint--home" role="note">
-                  터치로 보실 때는 카드를 탭하면 뒷면 설명이 열립니다. 한 번 더 탭하면 앞면으로 돌아갑니다.
-                </p>
-              </div>
-            </div>
-            <HomeProgramPagesFlipGrid />
-          </section>
-
-          <section id="gallery" className="content-section content-section-full">
-            <GalleryMarquee images={homeData.gallery} />
-          </section>
-
-          <section id="reviews" className="content-section">
-            <ReviewsList reviews={homeData.reviews} />
-          </section>
-
-          {/* 문의/예약 섹션은 바텀시트로 이동 - 섹션 제거 */}
-
-          <Footer />
+      <section className="section">
+        <div className="container">
+          <div className="section__eyebrow">01</div>
+          <h2 className="section__title">
+            {homeCopy.areas.title}
+            {homeCopy.areas.titleConfirmNeeded ? <ConfirmNeeded /> : null}
+          </h2>
+          <p className="section__lead">{homeCopy.areas.lead}</p>
+          <div className="area-list">
+            {homeCopy.areas.items.map((item) => (
+              <Link
+                key={item.slug}
+                className="area-card"
+                href={`/counseling/${item.slug}`}
+              >
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.line}</p>
+                </div>
+                <Image src={item.icon} alt="" width={96} height={96} />
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
-    </main>
+
+      <section className="section section--sand">
+        <div className="container">
+          <div className="section__eyebrow">02</div>
+          <h2 className="section__title">
+            {homeCopy.process.title}
+            {homeCopy.process.confirmNeeded ? <ConfirmNeeded /> : null}
+          </h2>
+          <div className="process-grid" style={{ marginTop: '1.5rem' }}>
+            {homeCopy.process.steps.map((step) => (
+              <div className="process-item" key={step.title}>
+                <Image src={step.icon} alt="" width={72} height={72} />
+                <h3>{step.title}</h3>
+                <p>{step.line}</p>
+              </div>
+            ))}
+          </div>
+          <p style={{ marginTop: '1.25rem' }}>
+            <Link className="text-link" href="/guide">
+              {homeCopy.process.guideLinkLabel} →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container counselor">
+          <PlaceholderMedia
+            label="김선희 대표원장 사진"
+            aspectRatio="3 / 4"
+            className="counselor__photo"
+          />
+          <div>
+            <div className="section__eyebrow">03</div>
+            <h2 className="section__title">
+              {homeCopy.counselor.title}
+              {homeCopy.counselor.confirmNeeded ? <ConfirmNeeded /> : null}
+            </h2>
+            <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: '1.5rem' }}>
+              {homeCopy.counselor.name}
+            </h3>
+            <p className="muted">{homeCopy.counselor.role}</p>
+            {homeCopy.counselor.lines.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <Link className="btn btn--ghost" href="/counselors">
+              자세히 보기 →
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {eventProduct ? (
+        <section className="section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="event-banner">
+              <div>
+                <div className="section__eyebrow">이벤트</div>
+                <h2 className="section__title" style={{ fontSize: '1.5rem' }}>
+                  {eventProduct.name} {formatWon(eventProduct.eventPrice!)}
+                </h2>
+                {eventProduct.eventStartDate && eventProduct.eventEndDate ? (
+                  <p className="muted">
+                    {formatKstDateRange(
+                      eventProduct.eventStartDate,
+                      eventProduct.eventEndDate,
+                    )}
+                  </p>
+                ) : null}
+                <BookingCta />
+              </div>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="section section--sand">
+        <div className="container">
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              alignItems: 'end',
+            }}
+          >
+            <div>
+              <div className="section__eyebrow">04</div>
+              <h2 className="section__title">{homeCopy.spaces.title}</h2>
+              <p className="section__lead">{homeCopy.spaces.lead}</p>
+            </div>
+            <Link className="text-link" href="/gallery">
+              공간 더 보기 →
+            </Link>
+          </div>
+          <div className="space-grid">
+            {homeCopy.spaces.items.map((item) => (
+              <figure
+                key={item.caption + item.src}
+                className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
+              >
+                <Image
+                  src={item.src}
+                  alt={item.caption}
+                  width={item.wide ? 1440 : 800}
+                  height={item.wide ? 810 : 600}
+                  sizes={
+                    item.wide
+                      ? '(max-width: 768px) 100vw, 1200px'
+                      : '(max-width: 768px) 50vw, 600px'
+                  }
+                />
+                <figcaption>
+                  {item.caption}
+                  {item.confirmNeeded ? <ConfirmNeeded /> : null}
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container">
+          <div className="section__eyebrow">05</div>
+          <h2 className="section__title">{homeCopy.news.title}</h2>
+          <p className="section__lead">{homeCopy.news.lead}</p>
+          <div className="news-desktop">
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
+                  영상
+                </h3>
+                <a
+                  className="text-link"
+                  href={SITE.youtubeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  채널에서 더 보기
+                </a>
+              </div>
+              <div className="news-row">
+                {videos.map((video) => (
+                  <a
+                    key={video.id}
+                    className="news-card"
+                    href={video.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <div className="news-card__media">
+                      <Image
+                        src={video.thumb}
+                        alt=""
+                        fill
+                        sizes="280px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                      <span className="news-card__play" aria-hidden="true">
+                        ▶
+                      </span>
+                    </div>
+                    <strong>{video.title}</strong>
+                  </a>
+                ))}
+              </div>
+            </div>
+            <div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
+                  블로그
+                </h3>
+                <a
+                  className="text-link"
+                  href={SITE.blogUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  블로그 전체 보기
+                </a>
+              </div>
+              <div className="blog-list">
+                {posts.map((post) => (
+                  <a
+                    key={post.url}
+                    className="blog-item"
+                    href={post.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {post.thumb ? (
+                      <Image
+                        src={post.thumb}
+                        alt=""
+                        width={88}
+                        height={66}
+                      />
+                    ) : (
+                      <div className="placeholder-media" style={{ minHeight: '4rem' }} />
+                    )}
+                    <div>
+                      <strong>{post.title}</strong>
+                      <time dateTime={post.date}>{post.date}</time>
+                    </div>
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section section--sand" id="contact">
+        <div className="container booking-layout">
+          <div>
+            <div className="section__eyebrow">06</div>
+            <h2 className="section__title">{homeCopy.booking.title}</h2>
+            <p>{homeCopy.booking.body}</p>
+            <p className="muted">{homeCopy.booking.support}</p>
+            <BookingCta showHint />
+            <p style={{ marginTop: '1rem' }}>{SITE.hours}</p>
+            {eventProduct ? (
+              <p>
+                {eventProduct.name} {formatWon(eventProduct.eventPrice!)}.
+                {eventProduct.eventStartDate && eventProduct.eventEndDate
+                  ? ` ${formatKstDateRange(
+                      eventProduct.eventStartDate,
+                      eventProduct.eventEndDate,
+                    )}.`
+                  : null}
+              </p>
+            ) : (
+              <p>{homeCopy.booking.offEventLine}</p>
+            )}
+            <div style={{ marginTop: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'var(--font-sans)' }}>오시는 길</h3>
+              <p>
+                {SITE.address}, {SITE.addressLandmark}
+              </p>
+              <PlaceholderMedia label="지도 미리보기" aspectRatio="16 / 9" />
+              <p>
+                <Link className="text-link" href="/location">
+                  지도 보기 →
+                </Link>
+                {' · '}
+                <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+              </p>
+            </div>
+            <div style={{ marginTop: '1.5rem' }}>
+              <h3 style={{ fontFamily: 'var(--font-sans)' }}>자주 묻는 질문</h3>
+              <FaqList items={homeCopy.faqHome} />
+              <p>
+                <Link className="text-link" href="/faq">
+                  질문 더 보기 →
+                </Link>
+              </p>
+            </div>
+          </div>
+          <div>
+            <h3 style={{ fontFamily: 'var(--font-sans)' }}>문의 폼</h3>
+            <InquiryForm collapsedOnMobile />
+          </div>
+        </div>
+      </section>
+    </SiteShell>
   );
 }
-

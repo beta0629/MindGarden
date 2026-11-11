@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       preferredDate,
       preferredTime,
       tags = [],
-      tenantId = null,
+      _tenantId = null,
     } = body;
 
     // 필수 필드 검증
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       let tags = [];
       try {
         tags = row.tags ? JSON.parse(row.tags) : [];
-      } catch (e) {
+      } catch {
         // JSON 파싱 실패 시 빈 배열
         tags = [];
       }

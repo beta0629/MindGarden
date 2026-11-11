@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>step-first</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_step-first___초기_면담" data-name="illust/step-first · 초기 면담">
+      <path id="초기_면담___바탕_블롭" data-name="초기 면담 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <path id="초기_면담___선_1" data-name="초기 면담 · 선 1" d="M12 14 L36 14 C38.761 14 41 16.239 41 19 L41 30 C41 32.761 38.761 35 36 35 L21 35 L14 41 L14 35 L12 35 C9.239 35 7 32.761 7 30 L7 19 C7 16.239 9.239 14 12 14 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="초기_면담___포인트_1" data-name="초기 면담 · 포인트 1" d="M47 26 L52 26 C54.761 26 57 28.239 57 31 L57 40 C57 42.761 54.761 45 52 45 L51 45 L51 51 L45 45 L37 45 C34.239 45 32 42.761 32 40 L32 39" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="초기_면담___포인트_2" data-name="초기 면담 · 포인트 2" x1="15" y1="24.5" x2="33" y2="24.5" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="초기_면담___포인트_3" data-name="초기 면담 · 포인트 3" x1="15" y1="29" x2="26" y2="29" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

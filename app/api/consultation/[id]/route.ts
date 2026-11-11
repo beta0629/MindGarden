@@ -10,8 +10,9 @@ function checkAuth(request: NextRequest) {
 // 상담 문의 상태 업데이트
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const resolved = await params;
   if (!checkAuth(request)) {
     return NextResponse.json(
       { success: false, error: '인증이 필요합니다.' },
@@ -24,7 +25,7 @@ export async function PATCH(
   try {
     const body = await request.json();
     const { status } = body;
-    const id = parseInt(params.id);
+    const id = parseInt(resolved.id, 10);
 
     if (!status || !['pending', 'contacted', 'completed', 'cancelled'].includes(status)) {
       return NextResponse.json(

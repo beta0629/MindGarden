@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>loc-bus</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_loc-bus___버스" data-name="illust/loc-bus · 버스">
+      <path id="버스___바탕_블롭" data-name="버스 · 바탕 블롭" d="M11 31 C11 17 21 8 34 9 C47 10 56 21 55 34 C54 47 43 55 30 55 C17 55 11 45 11 31 Z" fill="#eae2d2"/>
+      <path id="버스___선_1" data-name="버스 · 선 1" d="M17 10 L47 10 C49.761 10 52 12.239 52 15 L52 46 C52 47.657 50.657 49 49 49 L15 49 C13.343 49 12 47.657 12 46 L12 15 C12 12.239 14.239 10 17 10 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___선_2" data-name="버스 · 선 2" x1="12" y1="34" x2="52" y2="34" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___선_3" data-name="버스 · 선 3" x1="20" y1="49" x2="20" y2="54" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___선_4" data-name="버스 · 선 4" x1="44" y1="49" x2="44" y2="54" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___포인트_1" data-name="버스 · 포인트 1" x1="21" y1="41" x2="21.5" y2="41" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___포인트_2" data-name="버스 · 포인트 2" x1="42.5" y1="41" x2="43" y2="41" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="버스___포인트_3" data-name="버스 · 포인트 3" x1="20" y1="18" x2="44" y2="18" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

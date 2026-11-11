@@ -1,0 +1,15 @@
+name = "mindgarden-homepage"
+main = ".open-next/worker.js"
+compatibility_date = "2025-10-01"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Staging worker. Map staging.m-garden.co.kr in Cloudflare dashboard (do not change DNS from this agent).
+[env.staging]
+name = "mindgarden-homepage-staging"
+
+[env.production]
+name = "mindgarden-homepage"

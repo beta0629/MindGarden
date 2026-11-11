@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>loc-subway</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_loc-subway___지하철" data-name="illust/loc-subway · 지하철">
+      <path id="지하철___바탕_블롭" data-name="지하철 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <path id="지하철___선_1" data-name="지하철 · 선 1" d="M20 12 L44 12 C47.314 12 50 14.686 50 18 L50 40 C50 43.314 47.314 46 44 46 L20 46 C16.686 46 14 43.314 14 40 L14 18 C14 14.686 16.686 12 20 12 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___선_2" data-name="지하철 · 선 2" x1="14" y1="30" x2="50" y2="30" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___선_3" data-name="지하철 · 선 3" x1="22" y1="46" x2="17" y2="53" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___선_4" data-name="지하철 · 선 4" x1="42" y1="46" x2="47" y2="53" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___포인트_1" data-name="지하철 · 포인트 1" x1="23" y1="39" x2="23.5" y2="39" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___포인트_2" data-name="지하철 · 포인트 2" x1="40.5" y1="39" x2="41" y2="39" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="지하철___포인트_3" data-name="지하철 · 포인트 3" x1="24" y1="20" x2="40" y2="20" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

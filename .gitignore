@@ -1,42 +1,35 @@
 # dependencies
-/node_modules
-/.pnp
+node_modules
+frontend/node_modules
+.pnp
 .pnp.js
 
-# testing
-/coverage
+# next / opennext / wrangler
+.next
+.open-next
+.wrangler
+out
+dist
+cloudflare-env.d.ts
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
+# env / secrets / keys
+.env
+.env.local
+.env.*.local
 *.pem
-# 로컬에서 만든 GitHub Actions 배포용 키(실수 커밋 방지)
-github-actions-homepage-deploy
-github-actions-homepage-deploy.pub
+*id_rsa*
+*deploy*key*
 
-# debug
+# debug / os
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-
-# local env files
-.env*.local
-.env
-.env.production
-
-# vercel
-.vercel
-
-# typescript
+.DS_Store
 *.tsbuildinfo
 next-env.d.ts
 
-# uploads (개발 환경에서 생성된 파일)
-/public/uploads/
-
+# local tooling
+.vercel
+coverage
+playwright-report
+test-results

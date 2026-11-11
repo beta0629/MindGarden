@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { clinicOsClient } from '@/lib/clinic-os/client';
 import { reviewsCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
@@ -39,7 +40,7 @@ export default async function ReviewsPage() {
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container prose">
           {reviews.length === 0 ? (
-            <p>{reviewsCopy.empty}</p>
+            <EmptyState kind="reviews" title={reviewsCopy.empty} />
           ) : (
             <div className="stack-md">
               {reviews.map((review) => (

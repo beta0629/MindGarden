@@ -46,3 +46,19 @@ Placeholders (no raster): 대표원장 사진, 지도 미리보기.
 
 - `/brand/logo-mark.svg`, `/brand/logo.png`
 - `/icons/area-*.svg`, `/icons/step-*.svg`, `/icons/loc-*.svg` (v2-home VectorCraft)
+
+## assets-v1 (앱웹 디자인 팩, self-made)
+
+Source pack: `uploads/assets-v1-web.tar.gz` → `public/illustrations/*` (+ icon SVGs mirrored to `public/icons/`).  
+Provenance: **self-made, 앱웹 디자인 assets-v1**. Docs: `design-refs/assets-v1/`.
+
+| Public path | Role | Notes |
+|---|---|---|
+| `/icons/{area,step,loc,contact-*}*.svg` | Area×4, step×4, location×3, phone×1 | Pack SVG (byte-identical re-export) |
+| `/illustrations/icon-*@2x.{webp,avif}` | Icon raster fallbacks | Not required when SVG is used |
+| `/illustrations/not-found-4x3@2x.{webp,avif}` | 404 desktop 480×360 | Cream only |
+| `/illustrations/not-found-1x1@2x.{webp,avif}` | 404 mobile 280×280 | Cream only |
+| `/illustrations/empty-{reviews,event-off,generic}.{svg,+@2x webp/avif}` | Empty states 160×160 | Cream only; Clinic-OS empty |
+| `/illustrations/divider-sprig.{svg,+@2x webp/avif}` | Section divider 240×32 | Cream only |
+| `event-visual-*` | — | **Excluded from build** (keep lobby flower photo) |
+

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="120" viewBox="0 0 120 120">
+  <title>empty-reviews</title>
+  <g id="빈_상태_장식___120_그리드___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="빈 상태·장식 · 120 그리드 · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="empty-reviews___빈_상태___아직_후기가_없어요" data-name="empty-reviews · 빈 상태 · 아직 후기가 없어요">
+      <path id="빈_상태___아직_후기가_없어요___바탕_블롭" data-name="빈 상태 · 아직 후기가 없어요 · 바탕 블롭" d="M16.88 65.62 C13.12 39.38 31.88 16.88 60 16.88 C88.12 16.88 106.88 35.63 105 61.88 C103.12 88.13 84.38 105 58.12 105 C31.86 105 20.62 91.88 16.88 65.62 Z" fill="#eae2d2"/>
+      <path id="빈_상태___아직_후기가_없어요___선_1" data-name="빈 상태 · 아직 후기가 없어요 · 선 1" d="M36 30 L84 30 C87.314 30 90 32.686 90 36 L90 70 C90 73.314 87.314 76 84 76 L58 76 L48 85 L48 76 L36 76 C32.686 76 30 73.314 30 70 L30 36 C30 32.686 32.686 30 36 30 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_후기가_없어요___선_2" data-name="빈 상태 · 아직 후기가 없어요 · 선 2" x1="42" y1="46" x2="72" y2="46" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_후기가_없어요___선_3" data-name="빈 상태 · 아직 후기가 없어요 · 선 3" x1="42" y1="56" x2="60" y2="56" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_후기가_없어요___선_4" data-name="빈 상태 · 아직 후기가 없어요 · 선 4" x1="18" y1="98" x2="102" y2="98" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_후기가_없어요___포인트_1" data-name="빈 상태 · 아직 후기가 없어요 · 포인트 1" x1="90" y1="98" x2="90" y2="84" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="빈_상태___아직_후기가_없어요___포인트_2" data-name="빈 상태 · 아직 후기가 없어요 · 포인트 2" d="M90 88 C89 81 93 76 100 75 C101 82 97 87 90 88 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="빈_상태___아직_후기가_없어요___포인트_3" data-name="빈 상태 · 아직 후기가 없어요 · 포인트 3" d="M90 92 C91 86 88 82 82 81 C81 87 84 91 90 92 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

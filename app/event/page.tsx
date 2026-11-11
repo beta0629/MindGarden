@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   clinicOsClient,
   getActiveFirstMindWalk,
@@ -28,13 +29,14 @@ export default async function EventPage() {
       <SiteShell>
         <section className="container page-hero">
           <h1>{eventCopy.offTitle}</h1>
-          <p>{eventCopy.offBody}</p>
-          <BookingCta />
-          <p>
-            <Link className="text-link" href="/guide">
-              이용 안내 →
-            </Link>
-          </p>
+          <EmptyState kind="event" title={eventCopy.offTitle} body={eventCopy.offBody}>
+            <BookingCta />
+            <p>
+              <Link className="text-link" href="/guide">
+                이용 안내 →
+              </Link>
+            </p>
+          </EmptyState>
         </section>
       </SiteShell>
     );
@@ -60,16 +62,16 @@ export default async function EventPage() {
           </p>
         ) : null}
         <BookingCta showHint />
-        <div style={{ marginTop: '1.25rem' }}>
+        <figure className="event-banner__media" style={{ marginTop: '1.25rem' }}>
           <Image
-            src="/images/event-hero-flowers-c64-16x9.jpg"
-            alt="센터 꽃 디테일"
+            src="/images/banner-flowers-c64-3x2.jpg"
+            alt="센터 로비 꽃"
             width={1440}
-            height={810}
+            height={960}
             sizes="100vw"
             priority
           />
-        </div>
+        </figure>
       </section>
 
       <section className="section section--sand">

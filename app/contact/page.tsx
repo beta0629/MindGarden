@@ -31,7 +31,19 @@ export default function ContactPage() {
           <div className="stack-md">
             <div>
               <h2 className="section__title">전화·운영</h2>
-              <p>
+              <p
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                }}
+              >
+                <Image
+                  src="/icons/contact-phone.svg"
+                  alt=""
+                  width={56}
+                  height={56}
+                />
                 <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
               </p>
               <p className="muted">{SITE.hours}</p>

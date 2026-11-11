@@ -5,6 +5,8 @@ import { InquiryForm } from '@/components/inquiry/InquiryForm';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { DividerSprig } from '@/components/ui/DividerSprig';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { FaqList } from '@/components/ui/FaqList';
 import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
 import {
@@ -69,6 +71,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <DividerSprig />
+
       <section className="section section--sand">
         <div className="container">
           <div className="section__eyebrow">02</div>
@@ -120,6 +124,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <DividerSprig />
+
       {eventProduct ? (
         <section className="section" style={{ paddingTop: 0 }}>
           <div className="container">
@@ -139,10 +145,33 @@ export default async function HomePage() {
                 ) : null}
                 <BookingCta />
               </div>
+              <figure className="event-banner__media">
+                <Image
+                  src="/images/banner-flowers-c64-3x2.jpg"
+                  alt="센터 로비 꽃"
+                  width={900}
+                  height={600}
+                  sizes="(max-width: 768px) 100vw, 420px"
+                />
+              </figure>
             </div>
           </div>
         </section>
-      ) : null}
+      ) : (
+        <section className="section" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <EmptyState
+              kind="event"
+              title="지금은 진행 중인 이벤트가 없습니다"
+              body={homeCopy.booking.offEventLine}
+            >
+              <Link className="text-link" href="/guide">
+                이용 안내 →
+              </Link>
+            </EmptyState>
+          </div>
+        </section>
+      )}
 
       <section className="section section--sand">
         <div className="container">
@@ -191,106 +220,119 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <DividerSprig />
+
       <section className="section">
         <div className="container">
           <div className="section__eyebrow">05</div>
           <h2 className="section__title">{homeCopy.news.title}</h2>
           <p className="section__lead">{homeCopy.news.lead}</p>
-          <div className="news-desktop">
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem',
-                }}
-              >
-                <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
-                  영상
-                </h3>
-                <a
-                  className="text-link"
-                  href={SITE.youtubeUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+          {videos.length === 0 && posts.length === 0 ? (
+            <EmptyState
+              kind="generic"
+              title="표시할 소식이 없습니다"
+              body="잠시 후 다시 확인해 주세요."
+            />
+          ) : (
+            <div className="news-desktop">
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.75rem',
+                  }}
                 >
-                  채널에서 더 보기
-                </a>
-              </div>
-              <div className="news-row">
-                {videos.map((video) => (
+                  <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
+                    영상
+                  </h3>
                   <a
-                    key={video.id}
-                    className="news-card"
-                    href={video.url}
+                    className="text-link"
+                    href={SITE.youtubeUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <div className="news-card__media">
-                      <Image
-                        src={video.thumb}
-                        alt=""
-                        fill
-                        sizes="280px"
-                        style={{ objectFit: 'cover' }}
-                      />
-                      <span className="news-card__play" aria-hidden="true">
-                        ▶
-                      </span>
-                    </div>
-                    <strong>{video.title}</strong>
+                    채널에서 더 보기
                   </a>
-                ))}
+                </div>
+                <div className="news-row">
+                  {videos.map((video) => (
+                    <a
+                      key={video.id}
+                      className="news-card"
+                      href={video.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <div className="news-card__media">
+                        <Image
+                          src={video.thumb}
+                          alt=""
+                          fill
+                          sizes="280px"
+                          style={{ objectFit: 'cover' }}
+                        />
+                        <span className="news-card__play" aria-hidden="true">
+                          ▶
+                        </span>
+                      </div>
+                      <strong>{video.title}</strong>
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  marginBottom: '0.75rem',
-                }}
-              >
-                <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
-                  블로그
-                </h3>
-                <a
-                  className="text-link"
-                  href={SITE.blogUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              <div>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    marginBottom: '0.75rem',
+                  }}
                 >
-                  블로그 전체 보기
-                </a>
-              </div>
-              <div className="blog-list">
-                {posts.map((post) => (
+                  <h3 style={{ fontFamily: 'var(--font-sans)', margin: 0 }}>
+                    블로그
+                  </h3>
                   <a
-                    key={post.url}
-                    className="blog-item"
-                    href={post.url}
+                    className="text-link"
+                    href={SITE.blogUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {post.thumb ? (
-                      <Image
-                        src={post.thumb}
-                        alt=""
-                        width={88}
-                        height={66}
-                      />
-                    ) : (
-                      <div className="placeholder-media" style={{ minHeight: '4rem' }} />
-                    )}
-                    <div>
-                      <strong>{post.title}</strong>
-                      <time dateTime={post.date}>{post.date}</time>
-                    </div>
+                    블로그 전체 보기
                   </a>
-                ))}
+                </div>
+                <div className="blog-list">
+                  {posts.map((post) => (
+                    <a
+                      key={post.url}
+                      className="blog-item"
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {post.thumb ? (
+                        <Image
+                          src={post.thumb}
+                          alt=""
+                          width={88}
+                          height={66}
+                        />
+                      ) : (
+                        <div
+                          className="placeholder-media"
+                          style={{ minHeight: '4rem' }}
+                        />
+                      )}
+                      <div>
+                        <strong>{post.title}</strong>
+                        <time dateTime={post.date}>{post.date}</time>
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 

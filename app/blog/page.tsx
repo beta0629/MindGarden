@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { getLatestBlogPosts } from '@/lib/feeds';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -34,36 +35,49 @@ export default async function BlogPage() {
         </a>
       </section>
       <section className="section" style={{ paddingTop: 0 }}>
-        <div className="container media-grid">
-          {posts.map((post) => (
-            <a
-              key={post.url}
-              className="news-card"
-              href={post.url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <div className="news-card__media">
-                {post.thumb ? (
-                  <Image
-                    src={post.thumb}
-                    alt=""
-                    fill
-                    sizes="(max-width: 768px) 50vw, 33vw"
-                    style={{ objectFit: 'cover' }}
-                  />
-                ) : (
-                  <div className="placeholder-media" style={{ minHeight: '100%' }}>
-                    <div className="placeholder-media__label">제목 카드</div>
+        <div className="container">
+          {posts.length === 0 ? (
+            <EmptyState
+              kind="generic"
+              title="표시할 글이 없습니다"
+              body="잠시 후 다시 확인해 주세요."
+            />
+          ) : (
+            <div className="media-grid">
+              {posts.map((post) => (
+                <a
+                  key={post.url}
+                  className="news-card"
+                  href={post.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="news-card__media">
+                    {post.thumb ? (
+                      <Image
+                        src={post.thumb}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ) : (
+                      <div
+                        className="placeholder-media"
+                        style={{ minHeight: '100%' }}
+                      >
+                        <div className="placeholder-media__label">제목 카드</div>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-              <strong>{post.title}</strong>
-              <time className="muted" dateTime={post.date}>
-                {post.date}
-              </time>
-            </a>
-          ))}
+                  <strong>{post.title}</strong>
+                  <time className="muted" dateTime={post.date}>
+                    {post.date}
+                  </time>
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </SiteShell>

@@ -581,10 +581,91 @@ p {
   gap: 1rem;
   align-items: center;
   padding: 1.25rem;
-  background:
-    linear-gradient(90deg, rgba(245, 240, 230, 0.92), rgba(245, 240, 230, 0.78)),
-    url('/images/banner-flowers-c64-3x2.jpg') center / cover;
+  background: var(--cream);
   border: 1px solid var(--line);
+}
+
+.event-banner__media {
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--radius);
+  aspect-ratio: 3 / 2;
+}
+
+.event-banner__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.divider-sprig {
+  display: flex;
+  justify-content: center;
+  padding: 0.25rem 0 0.5rem;
+  background: var(--cream);
+}
+
+.divider-sprig picture,
+.divider-sprig img {
+  width: 240px;
+  height: 32px;
+}
+
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: var(--cream);
+}
+
+.empty-state__art,
+.empty-state__art img {
+  width: 160px;
+  height: 160px;
+}
+
+.empty-state__title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+.not-found__art {
+  margin: 1.25rem 0;
+}
+
+.not-found__art--desktop {
+  display: none;
+}
+
+.not-found__art--mobile,
+.not-found__art--mobile img {
+  width: 280px;
+  height: 280px;
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .not-found__art--mobile {
+    display: none;
+  }
+
+  .not-found__art--desktop {
+    display: block;
+  }
+
+  .not-found__art--desktop,
+  .not-found__art--desktop img {
+    width: 480px;
+    height: 360px;
+    margin-inline: auto;
+  }
+
+  .event-banner {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
 }
 
 .booking-layout {

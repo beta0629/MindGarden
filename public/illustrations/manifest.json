@@ -1,0 +1,632 @@
+[
+ {
+  "name": "event-visual-16x9",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/event-visual-16x9.png",
+  "slot_css": [
+   708,
+   398
+  ],
+  "px": [
+   1416,
+   796
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-16x9@2x.webp",
+    "bytes": 16676,
+    "sha256_16": "7f11f90513f3018b"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-16x9@2x.avif",
+    "bytes": 12313,
+    "sha256_16": "e5404f23a7b5c6e7"
+   }
+  ]
+ },
+ {
+  "name": "event-visual-4x3",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/event-visual-4x3.png",
+  "slot_css": [
+   390,
+   292
+  ],
+  "px": [
+   780,
+   584
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-4x3@2x.webp",
+    "bytes": 9712,
+    "sha256_16": "b95da5f1c091d9e7"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-4x3@2x.avif",
+    "bytes": 7998,
+    "sha256_16": "170251e652620a70"
+   }
+  ]
+ },
+ {
+  "name": "event-visual-3x2",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/event-visual-3x2.png",
+  "slot_css": [
+   300,
+   200
+  ],
+  "px": [
+   600,
+   400
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-3x2@2x.webp",
+    "bytes": 6244,
+    "sha256_16": "fc4e57b9ccdb6734"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-3x2@2x.avif",
+    "bytes": 5584,
+    "sha256_16": "b94033df0ca0fae6"
+   }
+  ]
+ },
+ {
+  "name": "event-visual-1x1",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/event-visual-1x1.png",
+  "slot_css": [
+   117,
+   117
+  ],
+  "px": [
+   234,
+   234
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-1x1@2x.webp",
+    "bytes": 4002,
+    "sha256_16": "872aac16d8d80a38"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/event-visual-1x1@2x.avif",
+    "bytes": 3964,
+    "sha256_16": "dbf7f003d060b5a4"
+   }
+  ]
+ },
+ {
+  "name": "not-found-4x3",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/not-found-4x3.png",
+  "slot_css": [
+   480,
+   360
+  ],
+  "px": [
+   960,
+   720
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/not-found-4x3@2x.webp",
+    "bytes": 4530,
+    "sha256_16": "04a950e96117be63"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/not-found-4x3@2x.avif",
+    "bytes": 3660,
+    "sha256_16": "b45101dff95d2ccf"
+   }
+  ]
+ },
+ {
+  "name": "not-found-1x1",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/not-found-1x1.png",
+  "slot_css": [
+   280,
+   280
+  ],
+  "px": [
+   560,
+   560
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/not-found-1x1@2x.webp",
+    "bytes": 2414,
+    "sha256_16": "2552bd67daa17c32"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/not-found-1x1@2x.avif",
+    "bytes": 2663,
+    "sha256_16": "14e494185bf12bd3"
+   }
+  ]
+ },
+ {
+  "name": "empty-reviews",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/vector/empty-reviews.svg",
+  "slot_css": [
+   160,
+   160
+  ],
+  "px": [
+   320,
+   320
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-reviews.svg",
+    "bytes": 2884,
+    "sha256_16": "dfb166c704ad269b"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-reviews@2x.webp",
+    "bytes": 3744,
+    "sha256_16": "27570b665e7c550f"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-reviews@2x.avif",
+    "bytes": 3346,
+    "sha256_16": "5e5b4e6e6008b6e7"
+   }
+  ]
+ },
+ {
+  "name": "empty-event-off",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/vector/empty-event-off.svg",
+  "slot_css": [
+   160,
+   160
+  ],
+  "px": [
+   320,
+   320
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-event-off.svg",
+    "bytes": 3082,
+    "sha256_16": "7ebdba0216c89653"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-event-off@2x.webp",
+    "bytes": 3532,
+    "sha256_16": "be535440a64a63b9"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-event-off@2x.avif",
+    "bytes": 2917,
+    "sha256_16": "0a54369560768d6f"
+   }
+  ]
+ },
+ {
+  "name": "empty-generic",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/vector/empty-generic.svg",
+  "slot_css": [
+   160,
+   160
+  ],
+  "px": [
+   320,
+   320
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-generic.svg",
+    "bytes": 2327,
+    "sha256_16": "888154fe46ee9ad3"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-generic@2x.webp",
+    "bytes": 3400,
+    "sha256_16": "7d0ca5ac3cefc5fa"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/empty-generic@2x.avif",
+    "bytes": 3011,
+    "sha256_16": "027aaee461e73c30"
+   }
+  ]
+ },
+ {
+  "name": "divider-sprig",
+  "src": "/workspace/design-work/homepage-renewal/assets-v1/masters/vector/divider-sprig.svg",
+  "slot_css": [
+   240,
+   32
+  ],
+  "px": [
+   480,
+   64
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/divider-sprig.svg",
+    "bytes": 1997,
+    "sha256_16": "2640ebc34da7e318"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/divider-sprig@2x.webp",
+    "bytes": 976,
+    "sha256_16": "4f1790d8e3b4957d"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/divider-sprig@2x.avif",
+    "bytes": 1242,
+    "sha256_16": "cb11c4117a021f13"
+   }
+  ]
+ },
+ {
+  "name": "icon-area-child",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/area-child.svg",
+  "slot_css": [
+   260,
+   260
+  ],
+  "px": [
+   520,
+   520
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-child.svg",
+    "bytes": 2488,
+    "sha256_16": "c78d9389d4ab5978"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-child@2x.webp",
+    "bytes": 9526,
+    "sha256_16": "371c4b6d55a09d0b"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-child@2x.avif",
+    "bytes": 7089,
+    "sha256_16": "0bcd1ba524423cfe"
+   }
+  ]
+ },
+ {
+  "name": "icon-area-adult",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/area-adult.svg",
+  "slot_css": [
+   260,
+   260
+  ],
+  "px": [
+   520,
+   520
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-adult.svg",
+    "bytes": 1779,
+    "sha256_16": "ba8053f1f3b301fe"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-adult@2x.webp",
+    "bytes": 8864,
+    "sha256_16": "8f4bd32494f0233c"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-adult@2x.avif",
+    "bytes": 6580,
+    "sha256_16": "6d6a9435624ebdd8"
+   }
+  ]
+ },
+ {
+  "name": "icon-area-overlap",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/area-overlap.svg",
+  "slot_css": [
+   260,
+   260
+  ],
+  "px": [
+   520,
+   520
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-overlap.svg",
+    "bytes": 1942,
+    "sha256_16": "53d4bc43babad249"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-overlap@2x.webp",
+    "bytes": 10386,
+    "sha256_16": "566ddc790113f1a8"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-overlap@2x.avif",
+    "bytes": 6999,
+    "sha256_16": "7d759818447792d8"
+   }
+  ]
+ },
+ {
+  "name": "icon-area-family",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/area-family.svg",
+  "slot_css": [
+   260,
+   260
+  ],
+  "px": [
+   520,
+   520
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-family.svg",
+    "bytes": 1905,
+    "sha256_16": "e450090a93fba5b2"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-family@2x.webp",
+    "bytes": 8018,
+    "sha256_16": "f66964a37982fd4f"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-area-family@2x.avif",
+    "bytes": 5479,
+    "sha256_16": "bbfed0779d450a28"
+   }
+  ]
+ },
+ {
+  "name": "icon-step-book",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/step-book.svg",
+  "slot_css": [
+   88,
+   88
+  ],
+  "px": [
+   176,
+   176
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-book.svg",
+    "bytes": 1818,
+    "sha256_16": "8b377fa95e128ae4"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-book@2x.webp",
+    "bytes": 2214,
+    "sha256_16": "125aa6e90aa72d97"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-book@2x.avif",
+    "bytes": 2085,
+    "sha256_16": "b288a692b2514934"
+   }
+  ]
+ },
+ {
+  "name": "icon-step-visit",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/step-visit.svg",
+  "slot_css": [
+   88,
+   88
+  ],
+  "px": [
+   176,
+   176
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-visit.svg",
+    "bytes": 1626,
+    "sha256_16": "e6ff30150e7206a4"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-visit@2x.webp",
+    "bytes": 3202,
+    "sha256_16": "2738f8f4885b9634"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-visit@2x.avif",
+    "bytes": 2493,
+    "sha256_16": "358b340c8e59cf1b"
+   }
+  ]
+ },
+ {
+  "name": "icon-step-first",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/step-first.svg",
+  "slot_css": [
+   88,
+   88
+  ],
+  "px": [
+   176,
+   176
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-first.svg",
+    "bytes": 1787,
+    "sha256_16": "9503ebd505238de9"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-first@2x.webp",
+    "bytes": 2446,
+    "sha256_16": "de94f04e0e5b66f6"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-first@2x.avif",
+    "bytes": 2310,
+    "sha256_16": "503165abece5e157"
+   }
+  ]
+ },
+ {
+  "name": "icon-step-next",
+  "src": "/workspace/design-work/homepage-renewal/v2-home/icons/svg/step-next.svg",
+  "slot_css": [
+   88,
+   88
+  ],
+  "px": [
+   176,
+   176
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-next.svg",
+    "bytes": 1454,
+    "sha256_16": "d5460c3f9ed06c22"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-next@2x.webp",
+    "bytes": 2648,
+    "sha256_16": "857f992ffc0c1efb"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-step-next@2x.avif",
+    "bytes": 2334,
+    "sha256_16": "58e7b4be39401833"
+   }
+  ]
+ },
+ {
+  "name": "icon-loc-subway",
+  "src": "/workspace/design-work/homepage-renewal/subpages-v1.1/_shared/icons/svg/loc-subway.svg",
+  "slot_css": [
+   64,
+   64
+  ],
+  "px": [
+   128,
+   128
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-subway.svg",
+    "bytes": 2194,
+    "sha256_16": "75aaaa57ba54a496"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-subway@2x.webp",
+    "bytes": 1646,
+    "sha256_16": "faa9580b497ddb4f"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-subway@2x.avif",
+    "bytes": 1520,
+    "sha256_16": "36efd86c17db39dc"
+   }
+  ]
+ },
+ {
+  "name": "icon-loc-bus",
+  "src": "/workspace/design-work/homepage-renewal/subpages-v1.1/_shared/icons/svg/loc-bus.svg",
+  "slot_css": [
+   64,
+   64
+  ],
+  "px": [
+   128,
+   128
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-bus.svg",
+    "bytes": 2135,
+    "sha256_16": "5bc880849bf9fdf6"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-bus@2x.webp",
+    "bytes": 1356,
+    "sha256_16": "ba529a086348662d"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-bus@2x.avif",
+    "bytes": 1363,
+    "sha256_16": "0728f472f29135be"
+   }
+  ]
+ },
+ {
+  "name": "icon-loc-parking",
+  "src": "/workspace/design-work/homepage-renewal/subpages-v1.1/_shared/icons/svg/loc-parking.svg",
+  "slot_css": [
+   64,
+   64
+  ],
+  "px": [
+   128,
+   128
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-parking.svg",
+    "bytes": 1234,
+    "sha256_16": "4a1daa936dc49113"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-parking@2x.webp",
+    "bytes": 1428,
+    "sha256_16": "629e3c75c41e03a1"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-loc-parking@2x.avif",
+    "bytes": 1483,
+    "sha256_16": "954243984362938f"
+   }
+  ]
+ },
+ {
+  "name": "icon-contact-phone",
+  "src": "/workspace/design-work/homepage-renewal/subpages-v1.1/_shared/icons/svg/contact-phone.svg",
+  "slot_css": [
+   56,
+   56
+  ],
+  "px": [
+   112,
+   112
+  ],
+  "warning": null,
+  "files": [
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-contact-phone.svg",
+    "bytes": 1628,
+    "sha256_16": "bbb7705f3605dca4"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-contact-phone@2x.webp",
+    "bytes": 1410,
+    "sha256_16": "2fac68ca3f6308d1"
+   },
+   {
+    "path": "/workspace/design-work/homepage-renewal/assets-v1/web/icon-contact-phone@2x.avif",
+    "bytes": 1447,
+    "sha256_16": "1ba2913829e1a8d1"
+   }
+  ]
+ }
+]

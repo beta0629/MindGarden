@@ -45,7 +45,7 @@ export const FALLBACK_HOMEPAGE_CONTENT: HomepageContent = {
     {
       title: '첫 마음산책 (검사 1종 + 상담 30분) 60,000원',
       imageDesktopUrl: '/images/banner-flowers-c64-3x2.jpg',
-      imageMobileUrl: '/images/banner-flowers-c64-1x1.jpg',
+      imageMobileUrl: '/images/banner-flowers-c64-3x2.jpg',
       linkUrl: 'https://pcmap.place.naver.com/place/2007327238/home',
       altText: '센터 로비 꽃 디테일',
       startsAt: '2026-11-01T00:00:00+09:00',

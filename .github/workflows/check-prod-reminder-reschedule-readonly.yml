@@ -21,6 +21,10 @@ on:
         description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
         type: boolean
         default: false
+      sms_mode_only:
+        description: 'SMS 테스트모드 플래그만 실측 (env/설정 grep + 로컬 status GET + 로그 흔적, 비밀값 미출력)'
+        type: boolean
+        default: false
 
 concurrency:
   group: check-prod-reminder-reschedule-readonly
@@ -32,6 +36,7 @@ permissions:
 jobs:
   db-readonly:
     name: prod DB read-only SELECT
+    if: ${{ !inputs.sms_mode_only }}
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 8
@@ -99,6 +104,7 @@ jobs:
 
   logs-readonly:
     name: prod app log grep (read-only)
+    if: ${{ !inputs.sms_mode_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
@@ -136,3 +142,111 @@ jobs:
               sec "journalctl $u ($TARGET_DATE, pattern)"
               sudo -n journalctl -u "$u" --since "$TARGET_DATE 00:00" --until "$TARGET_DATE 23:59:59" --no-pager 2>/dev/null | grep -aE "$PAT" | mask | tail -n 200
             done
+
+  # SMS 테스트모드 실측 — 코드 SSOT: SmsProperties(prefix sms.auth).testMode ← application.yml
+  # `sms.auth.test-mode: ${SMS_TEST_MODE:true}` (미설정 시 true). 테넌트별 테스트모드 키는 코드에 없음.
+  # 출력은 SMS_TEST_MODE / SMS_AUTH_ENABLED / SMS_PROVIDER / SPRING_PROFILES_ACTIVE / test-mode 라인만 (비밀 키 미출력).
+  sms-mode-readonly:
+    name: prod SMS test-mode flag (read-only)
+    if: ${{ inputs.sms_mode_only }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Read SMS flags on production host (no writes)
+        uses: appleboy/ssh-action@master
+        env:
+          SINCE: ${{ inputs.since }}
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 4m
+          script_stop: false
+          envs: SINCE
+          script: |
+            set +e
+            KEYS='^[[:space:]]*(export[[:space:]]+)?(SMS_TEST_MODE|SMS_AUTH_ENABLED|SMS_PROVIDER|SPRING_PROFILES_ACTIVE)='
+            sec() { echo; echo "=================== $1"; }
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              sec "$u systemd (state / env files / workdir)"
+              sudo -n systemctl show "$u" -p ActiveState -p SubState -p MainPID -p EnvironmentFiles -p WorkingDirectory --no-pager 2>/dev/null
+              sec "$u unit Environment= (SMS 키만)"
+              sudo -n systemctl show "$u" -p Environment --no-pager 2>/dev/null | tr ' ' '\n' | grep -E '(SMS_TEST_MODE|SMS_AUTH_ENABLED|SMS_PROVIDER|SPRING_PROFILES_ACTIVE)=' || echo "(none)"
+              for f in $(sudo -n systemctl show "$u" -p EnvironmentFiles --value 2>/dev/null | grep -oE '/[^ ]+' ); do
+                sec "$u EnvironmentFile $f (SMS 키만)"
+                sudo -n test -f "$f" && { sudo -n grep -nE "$KEYS" "$f" || echo "(SMS_TEST_MODE 미정의 → 기본값 true 적용 대상)"; } || echo "(file missing)"
+              done
+              PID=$(sudo -n systemctl show "$u" -p MainPID --value 2>/dev/null)
+              sec "$u 실행 프로세스 env (PID=$PID, SMS 키만)"
+              if [ -n "$PID" ] && [ "$PID" != "0" ]; then
+                sudo -n cat /proc/$PID/environ 2>/dev/null | tr '\0' '\n' | grep -E '^(SMS_TEST_MODE|SMS_AUTH_ENABLED|SMS_PROVIDER|SPRING_PROFILES_ACTIVE)=' || echo "(SMS 키 없음)"
+                sec "$u cmdline 의 test-mode / profile 인자"
+                sudo -n cat /proc/$PID/cmdline 2>/dev/null | tr '\0' '\n' | grep -iE 'test-mode|SMS_TEST|spring.profiles|spring.config' || echo "(없음)"
+              fi
+            done
+            sec "외부 설정 파일의 sms test-mode 라인 (/etc/mindgarden, /opt/mindgarden)"
+            sudo -n grep -rnE 'test-mode|SMS_TEST_MODE' /etc/mindgarden /opt/mindgarden --include='*.yml' --include='*.yaml' --include='*.properties' --include='*.env' 2>/dev/null | grep -iE 'sms|SMS_TEST' | cut -c1-200 || echo "(없음)"
+            for port in 8080 8081; do
+              sec "localhost:$port GET /api/v1/auth/sms/status (읽기 전용)"
+              curl -s -m 8 "http://127.0.0.1:$port/api/v1/auth/sms/status" | head -c 300; echo
+            done
+            sec "앱 로그 테스트모드 흔적 (since $SINCE, 건수·최근 3줄 본문 제외)"
+            for c in blue green; do
+              for f in /var/log/mindgarden/core-$c.log /var/log/mindgarden/core-$c-error.log; do
+                n=$(sudo -n grep -acE 'SMS 테스트 모드|testMode=true' "$f" 2>/dev/null); echo "$f count=${n:-0}"
+              done
+              u=mindgarden-core-$c.service
+              n=$(sudo -n journalctl -u "$u" --since "$SINCE 00:00" --no-pager 2>/dev/null | grep -acE 'SMS 테스트 모드|testMode=true'); echo "journal $u since $SINCE count=${n:-0}"
+              sudo -n journalctl -u "$u" --since "$SINCE 00:00" --no-pager 2>/dev/null | grep -aE 'SMS 테스트 모드' | grep -v '발송 메시지' | cut -c1-160 | tail -n 3
+            done
+
+  sms-mode-db-readonly:
+    name: prod DB SMS test-mode keys (read-only SELECT)
+    if: ${{ inputs.sms_mode_only }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 6
+    steps:
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+      - name: SELECT only (READ ONLY session)
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          set -euo pipefail
+          [[ "$SINCE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::invalid since"; exit 1; }
+          DB_HOST="${PRODUCTION_DB_HOST:-${PRODUCTION_HOST:-}}"
+          echo "::add-mask::$DB_HOST"; echo "::add-mask::$DB_USER"
+          cat > /tmp/sms.sql <<SQL
+          SELECT '1) test_mode 성격 컬럼 (스키마)' AS section;
+          SELECT table_name, column_name FROM information_schema.columns
+           WHERE table_schema = DATABASE() AND (column_name LIKE '%test_mode%' OR column_name LIKE '%testmode%')
+           ORDER BY table_name;
+          SELECT '2) 설정 테이블의 SMS 테스트모드 키' AS section;
+          SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE()
+           AND table_name IN ('system_config','system_configs','tenant_sms_settings','sms_templates');
+          SELECT '3) 최근 배치 발송 로그 SMS 결과 분포 (since)' AS section;
+          SELECT DATE(sent_at) d, channel_used, success, IFNULL(error_code,'-') error_code, COUNT(*) n
+            FROM notification_batch_send_log
+           WHERE sent_at >= '${SINCE}' AND channel_used = 'SMS'
+           GROUP BY DATE(sent_at), channel_used, success, IFNULL(error_code,'-')
+           ORDER BY d DESC LIMIT 60;
+          SQL
+          if grep -wiE 'INSERT|UPDATE|DELETE|REPLACE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|RENAME|LOAD|CALL|HANDLER|LOCK' /tmp/sms.sql; then echo "::error::write keyword"; exit 1; fi
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 --force -t < /tmp/sms.sql 2>&1
+          for t in system_config system_configs; do
+            mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --init-command="SET SESSION TRANSACTION READ ONLY" -t \
+              -e "SELECT '$t' src, config_key, config_value FROM $t WHERE LOWER(config_key) LIKE '%sms%' AND (LOWER(config_key) LIKE '%test%' OR LOWER(config_key) LIKE '%mode%')" 2>/dev/null || true
+          done
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --init-command="SET SESSION TRANSACTION READ ONLY" -t \
+            -e "SELECT column_name FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='tenant_sms_settings'" 2>/dev/null || true

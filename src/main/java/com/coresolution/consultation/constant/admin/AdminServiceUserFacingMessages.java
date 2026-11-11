@@ -523,6 +523,17 @@ public final class AdminServiceUserFacingMessages {
             NOTES_ADDITIONAL_MAPPING_MERGED_MARKER + " targetActiveMappingId=%d sessions=%d";
 
     /**
+     * 0원 일반 배정을 결제·입금·승인 없이 활성화했을 때 notes 에 남기는 감사 한 줄.
+     */
+    public static final String NOTES_ZERO_CHARGE_ACTIVATED =
+            "[0원 배정] 결제 없이 회기 부여 후 활성화";
+
+    /**
+     * 0원 배정 자동 활성화 시 approveBy/병합 처리자 표기.
+     */
+    public static final String ZERO_CHARGE_ACTIVATION_ACTOR = "ZERO_CHARGE_ACTIVATION";
+
+    /**
      * 추가 패키지 확정 시 notes에서 타깃 ACTIVE ID를 파싱할 수 없을 때.
      */
     public static final String MSG_ADDITIONAL_MAPPING_TARGET_ID_MISSING =

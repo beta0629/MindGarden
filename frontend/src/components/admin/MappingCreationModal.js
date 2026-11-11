@@ -50,6 +50,7 @@ import {
 } from '../../constants/clientEngagementType';
 import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import { API_ENDPOINTS } from '../../constants/apiEndpoints';
+import { isSelectableAssignmentPackagePrice } from '../../constants/paymentAmountConstants';
 import {
   adminClientsWithMappingGetAll,
   adminMappingsListGetAll
@@ -855,7 +856,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
               <div className="mg-v2-mapping-creation-modal__loading">
                 <UnifiedLoading type="inline" />
               </div>
-            ) : !packageOptions.length || packageOptions.every(p => !p.price || p.price <= 0) ? (
+            ) : !packageOptions.length || packageOptions.every(p => !isSelectableAssignmentPackagePrice(p.price)) ? (
               <div className="mg-v2-mapping-creation-modal__missing-pkg">
                 <AlertCircle size={40} />
                 <h4>{t('admin:mappingCreation.noPackageData')}</h4>
@@ -926,7 +927,7 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                     multiple={true}
                     value={paymentInfo.selectedPackages?.map(p => p.value) || []}
                     onChange={handlePackageSelection}
-                    options={packageOptions.filter(p => p.price >= 0).map(p => ({
+                    options={packageOptions.filter(p => isSelectableAssignmentPackagePrice(p.price)).map(p => ({
                       value: p.value,
                       label: `${p.label} (${p.sessions}회, ${p.price.toLocaleString()}원)`
                     }))}

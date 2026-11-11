@@ -1033,4 +1033,80 @@ describe('MappingCreationModal — 다중 상품 선택 등록 전 확인 모달
     expect(postedBody.packageName).toBe('표준 패키지');
     expect(postedBody.totalSessions).toBe(5);
   });
+
+  test('0원 패키지만 있어도 목록에 보이고 배정 생성 payload 가격이 0이다', async () => {
+    getTenantCodes.mockImplementation((group) => {
+      if (group === 'CONSULTATION_PACKAGE') {
+        return Promise.resolve([
+          {
+            codeValue: 'FREE_PKG',
+            codeLabel: '무료 회기',
+            koreanName: '무료 회기',
+            extraData: JSON.stringify({ price: 0, sessions: 5 })
+          }
+        ]);
+      }
+      return Promise.resolve([]);
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByText('무료 회기 (5회, 0원)')).toBeInTheDocument());
+    expect(screen.queryByText('admin:mappingCreation.noPackageData')).toBeNull();
+    fireEvent.click(screen.getByText('무료 회기 (5회, 0원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('admin:mappingCreation.createMapping')).toBeInTheDocument());
+    await act(async () => {
+      fireEvent.click(screen.getByText('admin:mappingCreation.createMapping'));
+    });
+
+    await waitFor(() => expect(apiPost).toHaveBeenCalledTimes(1));
+    const [, postedBody] = apiPost.mock.calls[0];
+    expect(postedBody).toHaveProperty('packagePrice', 0);
+    expect(postedBody).toHaveProperty('paymentAmount', 0);
+    expect(postedBody).toHaveProperty('totalSessions', 5);
+    expect(postedBody).toHaveProperty('packageName', '무료 회기');
+  });
+
+  test('타기관 고정 금액 0원이면 다음으로 진행하지 않고 API를 호출하지 않는다', async () => {
+    adminClientsWithMappingGetAll.mockResolvedValue({
+      clients: [{
+        id: 33,
+        name: '타기관내담자',
+        email: 'inst@example.com',
+        profileImageUrl: null,
+        engagementType: 'INSTITUTION_LINK'
+      }]
+    });
+
+    renderModal();
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('타기관내담자')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('타기관내담자'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByLabelText(/고정 금액/)).toBeInTheDocument());
+    fireEvent.change(screen.getByLabelText(/고정 금액/), { target: { value: '0' } });
+
+    const nextButton = screen.getByText('common:action.next');
+    expect(nextButton).toBeDisabled();
+    expect(apiPost).not.toHaveBeenCalled();
+  });
 });

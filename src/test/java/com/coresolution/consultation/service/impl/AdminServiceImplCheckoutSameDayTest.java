@@ -279,6 +279,68 @@ class AdminServiceImplCheckoutSameDayTest {
     }
 
     @Test
+    @DisplayName("단회기 실경로: DEPOSIT_PENDING+rem=0 → 실제 approveMapping → SESSIONS_EXHAUSTED (환불·ERP·일정취소 없음)")
+    void checkoutSameDayCard_singleSession_realApproveMapping_exhaustsWithoutRefund() {
+        ConsultantClientMapping initial = newPendingPaymentMapping(1, 0, 0);
+        ConsultantClientMapping afterDeposit = newMapping(
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 1, 1, 0);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial), Optional.of(afterDeposit));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        doReturn(newPaymentConfirmedMapping(1, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+        doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+        // approveMapping 은 stub 하지 않음 — 실제 approveByAdmin rem=0 소진 전이 검증
+
+        ConsultantClientMapping result = spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null);
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(result.getRemainingSessions()).isZero();
+        assertThat(result.getUsedSessions()).isEqualTo(1);
+        assertThat(result.getEndDate()).isNotNull();
+        assertThat(result.getApprovedBy()).isEqualTo("SYSTEM_AUTO_OPTION_B");
+
+        verify(spyService, times(1)).approveMapping(MAPPING_ID, "SYSTEM_AUTO_OPTION_B");
+        verify(spyService, never()).partialRefundMapping(anyLong(), org.mockito.ArgumentMatchers.anyInt(), anyString());
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        verify(scheduleRepository, never()).findByTenantIdAndConsultantIdAndClientIdAndDateGreaterThanEqual(
+                anyString(), anyLong(), anyLong(), any());
+        Mockito.verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
+    @DisplayName("n회 실경로: DEPOSIT_PENDING+rem=9 → 실제 approveMapping → ACTIVE 유지 (소진·환불 없음)")
+    void checkoutSameDayCard_multiSession_realApproveMapping_staysActive() {
+        ConsultantClientMapping initial = newPendingPaymentMapping(10, 0, 0);
+        ConsultantClientMapping afterDeposit = newMapping(
+                MappingStatus.DEPOSIT_PENDING, PaymentStatus.APPROVED, 10, 1, 9);
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(initial), Optional.of(afterDeposit));
+        when(mappingRepository.save(any(ConsultantClientMapping.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        doReturn(newPaymentConfirmedMapping(10, 0, 0)).when(spyService).confirmPayment(
+                eq(MAPPING_ID), eq(PAYMENT_METHOD), eq(PAYMENT_REFERENCE), eq(PAYMENT_AMOUNT));
+        doReturn(afterDeposit).when(spyService).confirmDeposit(eq(MAPPING_ID), eq(PAYMENT_REFERENCE));
+
+        ConsultantClientMapping result = spyService.checkoutSameDayCard(
+                MAPPING_ID, PAYMENT_METHOD, PAYMENT_REFERENCE, PAYMENT_AMOUNT, null);
+
+        assertThat(result.getStatus()).isEqualTo(MappingStatus.ACTIVE);
+        assertThat(result.getRemainingSessions()).isEqualTo(9);
+        assertThat(result.getEndDate()).isNull();
+        assertThat(result.getApprovedBy()).isEqualTo("SYSTEM_AUTO_OPTION_B");
+
+        verify(spyService, times(1)).approveMapping(MAPPING_ID, "SYSTEM_AUTO_OPTION_B");
+        verify(spyService, never()).partialRefundMapping(anyLong(), org.mockito.ArgumentMatchers.anyInt(), anyString());
+        verify(financialTransactionService, never()).createTransaction(any(), any());
+        Mockito.verifyNoInteractions(refundAutoCancelNotificationService);
+    }
+
+    @Test
     @DisplayName("n회 패키지 (totalSessions=10, 가예약 1건): 잔여 9 + ACTIVE → approveMapping 호출 1회")
     void checkoutSameDayCard_multiSessionPackage_callsApproveAfterDeduction() {
         ConsultantClientMapping initial = newPendingPaymentMapping(10, 0, 0);

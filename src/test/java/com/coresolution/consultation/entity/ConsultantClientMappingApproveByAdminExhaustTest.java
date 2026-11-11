@@ -67,4 +67,35 @@ class ConsultantClientMappingApproveByAdminExhaustTest {
         assertThat(mapping.getAdminApprovalDate()).isNotNull();
         assertThat(mapping.getStartDate()).isNotNull();
     }
+
+    @Test
+    @DisplayName("Given DEPOSIT_PENDING rem=1 → useSession으로 rem=0 유지 → approveByAdmin → SESSIONS_EXHAUSTED")
+    void depositPending_useSessionThenApprove_exhausts() {
+        // Given — 당일카드 입금 단계와 동일: DEPOSIT_PENDING 중 차감해도 소진 전이 없음
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setStatus(MappingStatus.DEPOSIT_PENDING);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+        mapping.setTotalSessions(1);
+        mapping.setUsedSessions(0);
+        mapping.setRemainingSessions(1);
+        mapping.setEndDate(null);
+
+        // When — 가예약 확정 차감
+        mapping.useSession();
+
+        // Then — rem=0 이어도 DEPOSIT_PENDING 유지 (MappingSessionsExhaustedRule)
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.DEPOSIT_PENDING);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getUsedSessions()).isEqualTo(1);
+        assertThat(mapping.getEndDate()).isNull();
+
+        // When — 승인 (checkoutSameDayCard Step 3)
+        mapping.approveByAdmin("SYSTEM_AUTO_OPTION_B");
+
+        // Then — ACTIVE 직후 rem=0 → SESSIONS_EXHAUSTED (환불/heal 아님)
+        assertThat(mapping.getStatus()).isEqualTo(MappingStatus.SESSIONS_EXHAUSTED);
+        assertThat(mapping.getRemainingSessions()).isZero();
+        assertThat(mapping.getEndDate()).isNotNull();
+        assertThat(mapping.getApprovedBy()).isEqualTo("SYSTEM_AUTO_OPTION_B");
+    }
 }

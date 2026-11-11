@@ -45,23 +45,10 @@ http://localhost:4000
 
 ## Cloudflare 배포 (스테이징)
 
-배포는 이 저장소에서 실행하되, **이 에이전트 작업에서는 배포하지 않습니다.**
+자세한 명령·변수 목록은 [`STAGING.md`](./STAGING.md).  
+**이 에이전트 작업에서는 배포하지 않습니다.** 배포는 Cloudflare 권한이 있는 사람이 `npm run deploy:staging`으로 실행합니다.
 
-1. Cloudflare 계정에 Workers 권한·도메인 `staging.m-garden.co.kr` 라우팅 준비
-2. Wrangler 로그인: `npx wrangler login`
-3. 환경 변수/시크릿을 Workers에 설정 (`CLINIC_OS_*`, Turnstile, `NEXT_PUBLIC_*`)
-4. 빌드·배포:
-
-```bash
-npm run deploy:staging
-# 내부적으로: opennextjs-cloudflare build && opennextjs-cloudflare deploy
-```
-
-5. `wrangler.toml`의 `[env.staging]` worker를 `staging.m-garden.co.kr`에 연결  
-6. `NEXT_PUBLIC_SITE_INDEXABLE=false` 유지 (스테이징 noindex)
-
-프로덕션(`m-garden.co.kr`)은 `NEXT_PUBLIC_SITE_INDEXABLE=true`와 `[env.production]`을 사용합니다.  
-DNS/라이브 서버 변경은 별도 승인 후에만 진행합니다.
+프로덕션(`m-garden.co.kr`)은 `NEXT_PUBLIC_SITE_INDEXABLE=true`와 `[env.production]`을 사용합니다. 스테이징 작업에서 production 설정을 바꾸지 마세요.
 
 ## 스크립트
 

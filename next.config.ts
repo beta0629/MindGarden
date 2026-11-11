@@ -25,6 +25,24 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    // Staging (and any non-indexable build) must send X-Robots-Tag.
+    // Production sets NEXT_PUBLIC_SITE_INDEXABLE=true and skips this header.
+    if (process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true') {
+      return [];
+    }
+    return [
+      {
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-Robots-Tag',
+            value: 'noindex, nofollow',
+          },
+        ],
+      },
+    ];
+  },
   async redirects() {
     return [
       {

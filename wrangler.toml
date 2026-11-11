@@ -7,9 +7,22 @@ compatibility_flags = ["nodejs_compat"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
-# Staging worker. Map staging.m-garden.co.kr in Cloudflare dashboard (do not change DNS from this agent).
+# Staging worker for staging.m-garden.co.kr.
+# Do not deploy from the agent — a person with Cloudflare access runs `npm run deploy:staging`.
+# Custom domain attaches on deploy when the zone is in the same Cloudflare account.
 [env.staging]
 name = "mindgarden-homepage-staging"
+routes = [
+  { pattern = "staging.m-garden.co.kr", custom_domain = true }
+]
 
+[env.staging.vars]
+NEXT_PUBLIC_SITE_URL = "https://staging.m-garden.co.kr"
+NEXT_PUBLIC_SITE_INDEXABLE = "false"
+CLINIC_OS_API_BASE_URL = "https://mindgarden.dev.core-solution.co.kr"
+CLINIC_OS_TENANT_SLUG = "mindgarden"
+NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAAF8rDKpWUewMGRcN"
+
+# Production worker name only. Do not change production routes/vars from staging work.
 [env.production]
 name = "mindgarden-homepage"

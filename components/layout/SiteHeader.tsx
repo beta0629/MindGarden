@@ -101,7 +101,39 @@ export function SiteHeader({ noticeText = null }: SiteHeaderProps) {
           onClick={() => setMenuOpen((v) => !v)}
         >
           <span className="sr-only">메뉴</span>
-          <span aria-hidden="true">{menuOpen ? '✕' : '☰'}</span>
+          {menuOpen ? (
+            <svg
+              aria-hidden="true"
+              className="menu-toggle__icon"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+            >
+              <path
+                d="M5 5l10 10M15 5L5 15"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+              />
+            </svg>
+          ) : (
+            <svg
+              aria-hidden="true"
+              className="menu-toggle__icon"
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+            >
+              <path
+                d="M4 6h12M4 10h12M4 14h12"
+                stroke="currentColor"
+                strokeWidth="1.75"
+                strokeLinecap="round"
+              />
+            </svg>
+          )}
         </button>
       </div>
 

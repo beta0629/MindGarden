@@ -323,7 +323,9 @@ mindgarden:
       enabled: ${MINDGARDEN_HOMEPAGE_CAPTCHA_ENABLED:true}
       secret-key: ${MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY:}
     cors:
-      # HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS(콤마 구분)로 SecurityConfig 가 추가 병합
+      # /api/v1/public/tenants/** path-scoped CORS 전용(credentials=false).
+      # HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS(콤마 구분)로 SecurityConfig 가 추가 병합.
+      # 전역 /**(allowCredentials=true) 에는 합치지 않는다.
       allowed-origins:
         - https://m-garden.co.kr
         - https://www.m-garden.co.kr

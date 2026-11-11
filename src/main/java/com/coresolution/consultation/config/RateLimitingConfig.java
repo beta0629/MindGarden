@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
@@ -79,8 +80,11 @@ public class RateLimitingConfig {
         private static final long LOGIN_COOLDOWN_MINUTES = 0L;
         private static final long MINUTE_WINDOW_MS = 60_000L;
         private static final long DAY_WINDOW_MS = 24L * 60L * 60L * 1000L;
+        /** 전역 map 스캔 cleanup 최소 간격 — 매 요청 O(n) 방지 */
+        private static final long CLEANUP_INTERVAL_MS = 60_000L;
 
         private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+        private final AtomicLong lastCleanupEpochMs = new AtomicLong(0L);
 
         /**
          * @param properties 보안·레이트리밋 설정
@@ -99,7 +103,12 @@ public class RateLimitingConfig {
 
             String clientIp = getClientIpAddress(request);
 
-            cleanupOldRequests();
+            // 전역 ConcurrentHashMap 전체 스캔은 매 요청이 아니라 ~60초 스로틀.
+            // 홈페이지 문의 경로에서는 해당 IP 의 day/min 키만 만료 시 즉시 제거한다.
+            maybeCleanupOldRequests();
+            if (isHomepageInquiryPublicRequest(request)) {
+                purgeExpiredHomepageInquiryKeysForIp(clientIp);
+            }
 
             if (shouldApplyRateLimit(request)) {
                 if (!isAllowed(clientIp, request)) {
@@ -169,9 +178,10 @@ public class RateLimitingConfig {
         }
 
         /**
-         * 홈페이지 공개 문의: {@code POST} 이고 URI 가
+         * 홈페이지 공개 문의: {@code POST} 이고 정규화 URI 가
          * {@link MindgardenSecurityProperties.RateLimit#getHomepageInquiryPathPrefix()} 로 시작하며
          * {@code /inquiries} 로 끝날 때. 익명 IP 기준 분·일 버킷을 함께 적용한다.
+         * matrix/semicolon({@code /inquiries;bypass=1}) 우회를 막기 위해 {@link #normalizeRequestPath(String)} 사용.
          * {@link com.coresolution.consultation.service.impl.AdminTestNotificationRateLimiter} 와는 무관하다.
          */
         private boolean isHomepageInquiryPublicRequest(HttpServletRequest request) {
@@ -182,8 +192,51 @@ public class RateLimitingConfig {
             if (prefix == null || prefix.isEmpty()) {
                 return false;
             }
-            String path = request.getRequestURI();
-            return path.startsWith(prefix) && path.endsWith("/inquiries");
+            String path = normalizeRequestPath(request.getRequestURI());
+            if (!path.startsWith(prefix)) {
+                return false;
+            }
+            return path.endsWith("/inquiries")
+                || path.matches("^/api/v1/public/tenants/[^/]+/inquiries$");
+        }
+
+        /**
+         * 레이트리밋 path 매칭용 URI 정규화.
+         * query 제거 후 각 path segment 의 matrix/semicolon({@code ;...}) 을 제거한다.
+         * 예: {@code /api/v1/public/tenants/x/inquiries;bypass=1} → {@code .../inquiries}
+         *
+         * @param uri raw request URI (nullable)
+         * @return 정규화된 path (never null)
+         */
+        static String normalizeRequestPath(String uri) {
+            if (uri == null || uri.isEmpty()) {
+                return "";
+            }
+            String path = uri;
+            int queryIdx = path.indexOf('?');
+            if (queryIdx >= 0) {
+                path = path.substring(0, queryIdx);
+            }
+            if (path.indexOf(';') < 0) {
+                return path;
+            }
+            StringBuilder normalized = new StringBuilder(path.length());
+            int start = 0;
+            for (int i = 0; i <= path.length(); i++) {
+                if (i == path.length() || path.charAt(i) == '/') {
+                    String segment = path.substring(start, i);
+                    int semi = segment.indexOf(';');
+                    if (semi >= 0) {
+                        segment = segment.substring(0, semi);
+                    }
+                    normalized.append(segment);
+                    if (i < path.length()) {
+                        normalized.append('/');
+                    }
+                    start = i + 1;
+                }
+            }
+            return normalized.toString();
         }
 
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
@@ -342,6 +395,22 @@ public class RateLimitingConfig {
             }
         }
 
+        /**
+         * 전역 map 만료 스캔을 {@link #CLEANUP_INTERVAL_MS} 간격으로만 수행한다.
+         * 매 HTTP 요청마다 O(n) 스캔하면 unique-IP junk POST 로 day 키가 쌓일 때 전 API 가 비용 부담한다.
+         */
+        private void maybeCleanupOldRequests() {
+            long now = System.currentTimeMillis();
+            long last = lastCleanupEpochMs.get();
+            if (now - last < CLEANUP_INTERVAL_MS) {
+                return;
+            }
+            if (!lastCleanupEpochMs.compareAndSet(last, now)) {
+                return;
+            }
+            cleanupOldRequests();
+        }
+
         private void cleanupOldRequests() {
             long currentTime = System.currentTimeMillis();
 
@@ -351,6 +420,25 @@ public class RateLimitingConfig {
                     : MINUTE_WINDOW_MS;
                 return (currentTime - entry.getValue().getLastRequestTime()) > windowMs;
             });
+        }
+
+        /**
+         * 홈페이지 문의 요청 시 해당 IP 의 min/day 버킷만 만료됐으면 즉시 제거한다.
+         */
+        private void purgeExpiredHomepageInquiryKeysForIp(String clientIp) {
+            long now = System.currentTimeMillis();
+            purgeKeyIfExpired(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE, MINUTE_WINDOW_MS, now);
+            purgeKeyIfExpired(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY, DAY_WINDOW_MS, now);
+        }
+
+        private void purgeKeyIfExpired(String key, long windowMs, long now) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                return;
+            }
+            if ((now - info.getLastRequestTime()) > windowMs) {
+                requestCounts.remove(key, info);
+            }
         }
 
         private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request)

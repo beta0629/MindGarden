@@ -50,6 +50,12 @@ public final class HomepageInquiryConstants {
     /** 개인정보 접근 로그 dataType. */
     public static final String ACCESS_LOG_DATA_TYPE = "HOMEPAGE_INQUIRY";
 
+    /**
+     * 상세 열람 시 NEW→IN_PROGRESS 자동 전환 감사 메타데이터.
+     */
+    public static final String AUDIT_METADATA_AUTO_FROM_DETAIL_VIEW =
+            "{\"source\":\"homepage-inquiry-admin\",\"autoFromDetailView\":true}";
+
     /** 이름 최대 길이(평문). */
     public static final int MAX_NAME_LENGTH = 50;
 

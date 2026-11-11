@@ -145,6 +145,12 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
         return new AdminListPageResult<>(items, result.getTotalElements());
     }
 
+    /**
+     * 관리자 상세 조회. {@code NEW} 이면 동일 트랜잭션에서 {@code IN_PROGRESS} 로 전환·감사로그 후
+     * 개인정보 접근 로그를 남긴다. 접근 로그 또는 상태 저장 실패 시 전체 롤백.
+     *
+     * <p>클래스 기본 {@code @Transactional} 을 쓰며 readOnly 가 아니다.
+     */
     @Override
     public AdminHomepageInquiryDetailResponse getDetailForAdmin(
             String tenantId, Long id, User viewer, HttpServletRequest httpRequest) {
@@ -153,6 +159,24 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
                 .findByTenantIdAndIdAndNotDeleted(tenantId, id)
                 .orElseThrow(() -> new EntityNotFoundException(
                         HomepageInquiryConstants.GENERIC_NOT_FOUND_MESSAGE));
+
+        if (HomepageInquiryConstants.STATUS_NEW.equals(inquiry.getStatus())) {
+            String previous = HomepageInquiryConstants.STATUS_NEW;
+            String next = HomepageInquiryConstants.STATUS_IN_PROGRESS;
+            inquiry.setStatus(next);
+            homepageInquiryRepository.save(inquiry);
+            auditLogService.record(AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(viewer != null ? viewer.getId() : null)
+                    .actorRole(viewer != null && viewer.getRole() != null ? viewer.getRole().name() : null)
+                    .action(AuditAction.LIFECYCLE_STATE_CHANGE)
+                    .entityType(ENTITY_TYPE)
+                    .entityId(id)
+                    .beforeJson("{\"status\":\"" + previous + "\"}")
+                    .afterJson("{\"status\":\"" + next + "\"}")
+                    .metadataJson(HomepageInquiryConstants.AUDIT_METADATA_AUTO_FROM_DETAIL_VIEW)
+                    .build());
+        }
 
         recordPersonalDataAccess(viewer, inquiry, httpRequest);
         return toDetail(inquiry);

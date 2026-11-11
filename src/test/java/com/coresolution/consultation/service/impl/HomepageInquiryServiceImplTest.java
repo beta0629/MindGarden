@@ -14,6 +14,8 @@ import java.util.Optional;
 import com.coresolution.consultation.config.HomepageInquiryProperties;
 import com.coresolution.consultation.constant.HomepageInquiryConstants;
 import com.coresolution.consultation.dto.request.PublicHomepageInquiryCreateRequest;
+import com.coresolution.consultation.dto.response.AdminHomepageInquiryDetailResponse;
+import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.CommonCode;
 import com.coresolution.consultation.entity.HomepageInquiry;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
@@ -243,35 +245,89 @@ class HomepageInquiryServiceImplTest {
     }
 
     @Test
-    void getDetailForAdmin_writesAccessLog() {
-        HomepageInquiry inquiry = HomepageInquiry.builder()
-                .tenantId(TENANT_ID)
-                .name("홍길동")
-                .phone("01012345678")
-                .inquiryType("PERSONAL")
-                .content("문의")
-                .status(HomepageInquiryConstants.STATUS_NEW)
-                .consentVersion("v1")
-                .privacyConsentAt(java.time.LocalDateTime.now())
-                .build();
-        inquiry.setId(7L);
-
+    void getDetailForAdmin_whenNew_setsInProgressAndWritesAccessLog() {
+        HomepageInquiry inquiry = detailInquiry(HomepageInquiryConstants.STATUS_NEW, 7L);
         when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted(TENANT_ID, 7L))
                 .thenReturn(Optional.of(inquiry));
+        when(homepageInquiryRepository.save(any(HomepageInquiry.class))).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
 
-        User viewer = new User();
-        viewer.setId(99L);
-        viewer.setName("관리자");
-        viewer.setTenantId(TENANT_ID);
+        User viewer = adminViewer();
+        AdminHomepageInquiryDetailResponse detail =
+                service.getDetailForAdmin(TENANT_ID, 7L, viewer, new MockHttpServletRequest());
 
-        service.getDetailForAdmin(TENANT_ID, 7L, viewer, new MockHttpServletRequest());
+        assertThat(detail.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_IN_PROGRESS);
+        assertThat(inquiry.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_IN_PROGRESS);
+        verify(homepageInquiryRepository).save(inquiry);
+
+        ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).record(auditCaptor.capture());
+        assertThat(auditCaptor.getValue().getBeforeJson()).contains(HomepageInquiryConstants.STATUS_NEW);
+        assertThat(auditCaptor.getValue().getAfterJson())
+                .contains(HomepageInquiryConstants.STATUS_IN_PROGRESS);
+        assertThat(auditCaptor.getValue().getMetadataJson())
+                .isEqualTo(HomepageInquiryConstants.AUDIT_METADATA_AUTO_FROM_DETAIL_VIEW);
 
         ArgumentCaptor<PersonalDataAccessLog> logCaptor = ArgumentCaptor.forClass(PersonalDataAccessLog.class);
         verify(personalDataAccessLogRepository).save(logCaptor.capture());
         assertThat(logCaptor.getValue().getDataType())
                 .isEqualTo(HomepageInquiryConstants.ACCESS_LOG_DATA_TYPE);
         assertThat(logCaptor.getValue().getTenantId()).isEqualTo(TENANT_ID);
+    }
+
+    @Test
+    void getDetailForAdmin_whenInProgress_leavesStatus() {
+        HomepageInquiry inquiry = detailInquiry(HomepageInquiryConstants.STATUS_IN_PROGRESS, 8L);
+        when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted(TENANT_ID, 8L))
+                .thenReturn(Optional.of(inquiry));
+        when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
+
+        AdminHomepageInquiryDetailResponse detail =
+                service.getDetailForAdmin(TENANT_ID, 8L, adminViewer(), new MockHttpServletRequest());
+
+        assertThat(detail.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_IN_PROGRESS);
+        verify(homepageInquiryRepository, never()).save(any());
+        verify(auditLogService, never()).record(any());
+        verify(personalDataAccessLogRepository).save(any(PersonalDataAccessLog.class));
+    }
+
+    @Test
+    void getDetailForAdmin_whenContacted_leavesStatus() {
+        HomepageInquiry inquiry = detailInquiry(HomepageInquiryConstants.STATUS_CONTACTED, 9L);
+        when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted(TENANT_ID, 9L))
+                .thenReturn(Optional.of(inquiry));
+        when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
+
+        AdminHomepageInquiryDetailResponse detail =
+                service.getDetailForAdmin(TENANT_ID, 9L, adminViewer(), new MockHttpServletRequest());
+
+        assertThat(detail.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_CONTACTED);
+        verify(homepageInquiryRepository, never()).save(any());
+        verify(auditLogService, never()).record(any());
+        verify(personalDataAccessLogRepository).save(any(PersonalDataAccessLog.class));
+    }
+
+    private static HomepageInquiry detailInquiry(String status, long id) {
+        HomepageInquiry inquiry = HomepageInquiry.builder()
+                .tenantId(TENANT_ID)
+                .name("홍길동")
+                .phone("01012345678")
+                .inquiryType("PERSONAL")
+                .content("문의")
+                .status(status)
+                .consentVersion("v1")
+                .privacyConsentAt(java.time.LocalDateTime.now())
+                .build();
+        inquiry.setId(id);
+        return inquiry;
+    }
+
+    private static User adminViewer() {
+        User viewer = new User();
+        viewer.setId(99L);
+        viewer.setName("관리자");
+        viewer.setTenantId(TENANT_ID);
+        return viewer;
     }
 
     private static PublicHomepageInquiryCreateRequest baseRequest(String inquiryType) {

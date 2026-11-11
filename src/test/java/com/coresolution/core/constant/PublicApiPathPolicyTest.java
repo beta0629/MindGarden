@@ -36,6 +36,7 @@ class PublicApiPathPolicyTest {
         assertThat(PublicApiPathPolicy.isPublicApi("/login")).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi(SystemTimeConstants.API_PATH)).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi(SystemTimeConstants.API_PATH + "?x=1")).isTrue();
+        assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/public/tenants/mindgarden/inquiries")).isTrue();
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/timeline")).isFalse();
         assertThat(PublicApiPathPolicy.isStrictHostPath(SystemTimeConstants.API_PATH)).isFalse();
         assertThat(PublicApiPathPolicy.isPublicApi("/api/v1/admin/users")).isFalse();

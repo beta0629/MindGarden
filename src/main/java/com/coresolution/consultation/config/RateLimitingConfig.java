@@ -62,6 +62,8 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_ONBOARDING_CREATE = "_onboarding_create";
         private static final String RATE_KEY_SUFFIX_ONBOARDING_PUBLIC = "_onboarding_public";
         private static final String RATE_KEY_SUFFIX_KR_PUBLIC_DATA = "_kr_public_data";
+        private static final String RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE = "_homepage_inquiry_min";
+        private static final String RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY = "_homepage_inquiry_day";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
@@ -70,10 +72,13 @@ public class RateLimitingConfig {
         private static final String REASON_ONBOARDING_CREATE = "onboarding_create";
         private static final String REASON_ONBOARDING_PUBLIC = "onboarding_public";
         private static final String REASON_KR_PUBLIC_DATA = "kr_public_data";
+        private static final String REASON_HOMEPAGE_INQUIRY = "homepage_inquiry";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
         private static final long LOGIN_COOLDOWN_MINUTES = 0L;
+        private static final long MINUTE_WINDOW_MS = 60_000L;
+        private static final long DAY_WINDOW_MS = 24L * 60L * 60L * 1000L;
 
         private final ObjectProvider<MeterRegistry> meterRegistryProvider;
 
@@ -114,7 +119,8 @@ public class RateLimitingConfig {
                 || isAccountIntegrationPublicPath(requestPath)
                 || isOnboardingCreatePublicRequest(request)
                 || isOnboardingPublicRateLimitRequest(request)
-                || isKrPublicDataRateLimitRequest(request);
+                || isKrPublicDataRateLimitRequest(request)
+                || isHomepageInquiryPublicRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -162,6 +168,24 @@ public class RateLimitingConfig {
             return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
         }
 
+        /**
+         * 홈페이지 공개 문의: {@code POST} 이고 URI 가
+         * {@link MindgardenSecurityProperties.RateLimit#getHomepageInquiryPathPrefix()} 로 시작하며
+         * {@code /inquiries} 로 끝날 때. 익명 IP 기준 분·일 버킷을 함께 적용한다.
+         * {@link com.coresolution.consultation.service.impl.AdminTestNotificationRateLimiter} 와는 무관하다.
+         */
+        private boolean isHomepageInquiryPublicRequest(HttpServletRequest request) {
+            if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                return false;
+            }
+            String prefix = properties.getRateLimit().getHomepageInquiryPathPrefix();
+            if (prefix == null || prefix.isEmpty()) {
+                return false;
+            }
+            String path = request.getRequestURI();
+            return path.startsWith(prefix) && path.endsWith("/inquiries");
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -178,6 +202,9 @@ public class RateLimitingConfig {
             }
             if (isKrPublicDataRateLimitRequest(request)) {
                 return isKrPublicDataAllowed(clientIp);
+            }
+            if (isHomepageInquiryPublicRequest(request)) {
+                return isHomepageInquiryAllowed(clientIp);
             }
             return true;
         }
@@ -231,6 +258,29 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isHomepageInquiryAllowed(String clientIp) {
+            int maxPerMinute = properties.getRateLimit().getHomepageInquiryRequestsPerMinute();
+            int maxPerDay = properties.getRateLimit().getHomepageInquiryRequestsPerDay();
+            return isWindowAllowed(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE, maxPerMinute, MINUTE_WINDOW_MS)
+                && isWindowAllowed(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY, maxPerDay, DAY_WINDOW_MS);
+        }
+
+        /**
+         * 고정 윈도우: 최초 요청 시각 기준 {@code windowMs} 경과 시 버킷을 폐기하고 허용한다.
+         */
+        private boolean isWindowAllowed(String key, int max, long windowMs) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                return true;
+            }
+            long now = System.currentTimeMillis();
+            if ((now - info.getWindowStartTime()) > windowMs) {
+                requestCounts.remove(key);
+                return true;
+            }
+            return info.getCount() < max;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -277,15 +327,30 @@ public class RateLimitingConfig {
                 } else {
                     publicDataInfo.increment();
                 }
+            } else if (isHomepageInquiryPublicRequest(request)) {
+                incrementKeyedCount(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE);
+                incrementKeyedCount(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY);
+            }
+        }
+
+        private void incrementKeyedCount(String key) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                requestCounts.put(key, new RequestInfo());
+            } else {
+                info.increment();
             }
         }
 
         private void cleanupOldRequests() {
             long currentTime = System.currentTimeMillis();
-            long expireTime = 60 * 1000L;
 
-            requestCounts.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue().getLastRequestTime()) > expireTime);
+            requestCounts.entrySet().removeIf(entry -> {
+                long windowMs = entry.getKey().endsWith(RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY)
+                    ? DAY_WINDOW_MS
+                    : MINUTE_WINDOW_MS;
+                return (currentTime - entry.getValue().getLastRequestTime()) > windowMs;
+            });
         }
 
         private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request)
@@ -318,6 +383,14 @@ public class RateLimitingConfig {
             } else if (isKrPublicDataRateLimitRequest(request)) {
                 errorResponse.put("message", "공공데이터 조회 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
+            } else if (isHomepageInquiryPublicRequest(request)) {
+                errorResponse.put("message", "문의 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                String clientIp = getClientIpAddress(request);
+                RequestInfo minuteInfo =
+                    requestCounts.get(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE);
+                int maxPerMinute = properties.getRateLimit().getHomepageInquiryRequestsPerMinute();
+                boolean minuteExceeded = minuteInfo != null && minuteInfo.getCount() >= maxPerMinute;
+                errorResponse.put("retryAfter", minuteExceeded ? 60 : 3600);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
@@ -364,6 +437,9 @@ public class RateLimitingConfig {
             if (isKrPublicDataRateLimitRequest(request)) {
                 return REASON_KR_PUBLIC_DATA;
             }
+            if (isHomepageInquiryPublicRequest(request)) {
+                return REASON_HOMEPAGE_INQUIRY;
+            }
             return REASON_UNKNOWN;
         }
 
@@ -378,10 +454,13 @@ public class RateLimitingConfig {
     private static class RequestInfo {
         private int count;
         private long lastRequestTime;
+        private final long windowStartTime;
 
         RequestInfo() {
+            long now = System.currentTimeMillis();
             this.count = 1;
-            this.lastRequestTime = System.currentTimeMillis();
+            this.lastRequestTime = now;
+            this.windowStartTime = now;
         }
 
         void increment() {
@@ -395,6 +474,10 @@ public class RateLimitingConfig {
 
         long getLastRequestTime() {
             return lastRequestTime;
+        }
+
+        long getWindowStartTime() {
+            return windowStartTime;
         }
     }
 }

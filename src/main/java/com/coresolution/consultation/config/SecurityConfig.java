@@ -56,6 +56,9 @@ public class SecurityConfig {
     private final SessionCookieRenewalFilter sessionCookieRenewalFilter;
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private HomepageInquiryProperties homepageInquiryProperties;
     
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -159,6 +162,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 API (문의 접수 등)
+                    .requestMatchers("/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -305,6 +310,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 API (문의 접수 등)
+                    .requestMatchers("/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -409,6 +416,7 @@ public class SecurityConfig {
             new AntPathRequestMatcher(AccountIntegrationApiPaths.BASE + "/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
+            new AntPathRequestMatcher("/api/v1/public/tenants/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/ops/auth/**"),
             new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
@@ -466,7 +474,7 @@ public class SecurityConfig {
             // TenantHostSubdomainUtil 로 비운영 Origin 을 checkOrigin 단계에서 거부한다.
             // (Spring OriginPattern 만으로는 부정 매칭이 어렵다.)
             configuration = createProductionCorsConfiguration();
-            configuration.setAllowedOriginPatterns(Arrays.asList(
+            List<String> prodOriginPatterns = new ArrayList<>(Arrays.asList(
                 "https://*.core-solution.co.kr",  // 서브도메인 패턴 (비운영은 checkOrigin 에서 제외)
                 "http://*.core-solution.co.kr",
                 "https://core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
@@ -480,6 +488,9 @@ public class SecurityConfig {
                 "https://ops.e-trinity.co.kr",
                 "http://ops.e-trinity.co.kr"
             ));
+            mergeHomepagePublicCorsOrigins(prodOriginPatterns);
+            mergeCorsAllowedOriginsFromEnv(prodOriginPatterns);
+            configuration.setAllowedOriginPatterns(prodOriginPatterns);
         } else if (isDev) {
             log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
             // 개발: 실제 개발 도메인들 + 서브도메인 패턴 + localhost
@@ -505,6 +516,7 @@ public class SecurityConfig {
             // — CORS_ALLOWED_ORIGINS 가 비어 있어도 별칭 호스트를 exact origin 으로 합류.
             // Spring Environment 프로퍼티를 직접 읽어 TenantHostAliasesInitializer PostConstruct 레이스를 피한다.
             mergeTenantHostAliasOriginsFromEnvironment(devOriginPatterns);
+            mergeHomepagePublicCorsOrigins(devOriginPatterns);
             // 선택적 추가 exact origin (CORS_ALLOWED_ORIGINS)
             mergeCorsAllowedOriginsFromEnv(devOriginPatterns);
             configuration.setAllowedOriginPatterns(devOriginPatterns);
@@ -512,14 +524,15 @@ public class SecurityConfig {
         } else {
             // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
             log.info("🌐 CORS 설정: 로컬 환경 - localhost 허용");
-            List<String> allowedOrigins = Arrays.asList(
+            List<String> allowedOrigins = new ArrayList<>(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:4300",  // Ops Portal 프론트엔드
                 "http://127.0.0.1:3000",
                 "http://127.0.0.1:3001",
                 "http://127.0.0.1:4300"   // Ops Portal 프론트엔드
-            );
+            ));
+            mergeHomepagePublicCorsOrigins(allowedOrigins);
             configuration.setAllowedOrigins(allowedOrigins);
             log.info("🌐 CORS 허용 Origins: {}", allowedOrigins);
         }
@@ -692,6 +705,48 @@ public class SecurityConfig {
         String raw = environment.getProperty("CORS_ALLOWED_ORIGINS");
         if (raw == null || raw.isBlank()) {
             raw = System.getenv("CORS_ALLOWED_ORIGINS");
+        }
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String part : raw.split(",")) {
+            if (part == null) {
+                continue;
+            }
+            String origin = part.trim();
+            if (origin.isEmpty() || target.contains(origin)) {
+                continue;
+            }
+            target.add(origin);
+        }
+    }
+
+    /**
+     * 공개 홈페이지 CORS({@code mindgarden.homepage-inquiry.cors.allowed-origins})와
+     * {@code HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS} 를 허용 목록에 합친다.
+     *
+     * @param target 기존 허용 origin/pattern 목록 (변경됨)
+     */
+    private void mergeHomepagePublicCorsOrigins(List<String> target) {
+        if (target == null) {
+            return;
+        }
+        if (homepageInquiryProperties != null
+                && homepageInquiryProperties.getCors() != null
+                && homepageInquiryProperties.getCors().getAllowedOrigins() != null) {
+            for (String origin : homepageInquiryProperties.getCors().getAllowedOrigins()) {
+                if (origin == null) {
+                    continue;
+                }
+                String trimmed = origin.trim();
+                if (!trimmed.isEmpty() && !target.contains(trimmed)) {
+                    target.add(trimmed);
+                }
+            }
+        }
+        String raw = environment.getProperty("HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS");
+        if (raw == null || raw.isBlank()) {
+            raw = System.getenv("HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS");
         }
         if (raw == null || raw.isBlank()) {
             return;

@@ -4,6 +4,8 @@
 # 금지: 재시작·설정 변경·파일 쓰기·heal. 서버에 파일 업로드 없음(인라인 스크립트).
 # 출력 규칙: nginx 설정은 m-garden 매칭 파일만, key/auth/password/token/secret 라인 값 마스킹.
 #           프로세스는 comm(실행파일명)만 출력(cmdline/env 미출력). sudo 는 -n(비대화)·읽기 명령만.
+# 추가(읽기 전용): /var/www/homepage 소스에서 DB/consultation 식별자 grep.
+#           .env 는 키 이름만. 비밀번호·토큰·키·DATABASE_URL 값은 마스킹. node_modules/.next 제외.
 
 name: 🔎 Check prod homepage m-garden (read-only)
 
@@ -21,7 +23,7 @@ jobs:
   check-prod-homepage:
     name: production host m-garden homepage (read-only)
     runs-on: ubuntu-latest
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
       - name: Read-only homepage diagnostics (production)
         uses: appleboy/ssh-action@master
@@ -31,7 +33,7 @@ jobs:
           key: ${{ secrets.PRODUCTION_SSH_KEY }}
           port: 22
           timeout: 60s
-          command_timeout: 4m
+          command_timeout: 6m
           script_stop: false
           script: |
             set +e
@@ -90,5 +92,74 @@ jobs:
             sudo -n find / -maxdepth 4 \( -path /proc -o -path /sys -o -path /dev \) -prune -o \( -iname '*homepage*' -o -iname '*m-garden*' \) -print 2>/dev/null | head -40
             sec "certs from m-garden files"
             for c in $(for f in $FILES; do sudo -n grep -hoE '^[[:space:]]*ssl_certificate[[:space:]]+[^;]+' "$f"; done | awk '{print $2}' | sort -u); do echo "-- $c"; sudo -n openssl x509 -noout -subject -enddate -in "$c" 2>&1; done
+            sec "homepage inquiry source grep (read-only; values never printed)"
+            HP=/var/www/homepage
+            maskvals() {
+              sed -E \
+                -e 's#(://[^:/@[:space:]]+):[^@/#[:space:]]+@#\1:***@#g' \
+                -e 's/((password|passwd|pwd|token|secret|credential|api[_-]?key|private[_-]?key|DATABASE_URL|MYSQL_URL|MONGO_URL|REDIS_URL)[^=:[:space:]]*[:=][[:space:]]*["'"'"']?)[^[:space:]"'"'"']+/\1***/Ig'
+            }
+            echo "HP exists: $( [ -d "$HP" ] && echo YES || echo NO )"
+            echo "---- $HP top"
+            sudo -n ls -la --time-style=full-iso "$HP" 2>&1 | head -60
+            echo "---- package.json name + db-related deps"
+            if [ -f "$HP/package.json" ]; then
+              sudo -n cat "$HP/package.json" 2>/dev/null | python3 -c '
+            import json,sys
+            try:
+              p=json.load(sys.stdin)
+            except Exception as e:
+              print("PARSE_FAIL",e); raise SystemExit(0)
+            deps={}
+            keys=("mysql","prisma","sequelize","knex","drizzle","typeorm","postgres","mongo","redis","mariadb","planetscale","supabase")
+            for k in ("dependencies","devDependencies"):
+              for n,v in (p.get(k) or {}).items():
+                nl=n.lower()
+                if any(s in nl for s in keys) or nl in ("pg","mysql2","mysql"):
+                  deps[k+"/"+n]=v
+            print("name=", p.get("name"))
+            print("deps=", deps or "NONE_DB_RELATED")
+            '
+            else echo "NO package.json"; fi
+            echo "---- prisma/schema paths"
+            sudo -n find "$HP" \( -path "*/node_modules/*" -o -path "*/.next/*" -o -path "*/.git/*" \) -prune -o \( -iname "schema.prisma" -o -path "*/prisma/*" \) -print 2>/dev/null | head -40
+            echo "---- api/consultation and *consultation* paths"
+            sudo -n find "$HP" \( -path "*/node_modules/*" -o -path "*/.next/*" -o -path "*/.git/*" \) -prune -o \( -ipath "*/api/consultation*" -o -ipath "*/app/api/*" -o -ipath "*/pages/api/*" -o -iname "*consultation*" \) -print 2>/dev/null | head -100
+            echo "---- .env* key names only (values never printed)"
+            envfiles=$(sudo -n find "$HP" -maxdepth 4 \( -path "*/node_modules/*" -o -path "*/.next/*" -o -path "*/.git/*" \) -prune -o \( -name ".env" -o -name ".env.*" \) -print 2>/dev/null)
+            if [ -z "$envfiles" ]; then echo "NO_ENV_FILES"; fi
+            for f in $envfiles; do
+              echo "keys in $f:"
+              sudo -n grep -oE '^[A-Za-z_][A-Za-z0-9_]*=' "$f" 2>/dev/null || echo "(unreadable)"
+            done
+            echo "---- ecosystem name/script/cwd/port + env key names only"
+            ECO="$HP/ecosystem.homepage.config.cjs"
+            if [ -f "$ECO" ]; then
+              sudo -n node -e '
+                const c=require(process.argv[1]); const apps=(c&&c.apps)||[];
+                for (const a of apps) {
+                  const e=a.env||{}; const ep=a.env_production||{};
+                  console.log("app name="+a.name+" script="+a.script+" cwd="+(a.cwd||"(unset)")+" port="+(e.PORT||ep.PORT||"(unset)"));
+                  const keys=Object.keys(Object.assign({}, e, ep));
+                  console.log("env_keys="+(keys.join(",")||"(none)"));
+                }
+              ' "$ECO" 2>&1
+            else echo "NO_ECOSYSTEM"; fi
+            echo "---- grep source DB/consultation (exclude node_modules/.next/.git/.env; values masked)"
+            sudo -n grep -RIn --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude-dir=.pm2 \
+              --exclude='.env' --exclude='.env.*' --exclude='*.map' --exclude='*.lock' \
+              --include='*.js' --include='*.ts' --include='*.tsx' --include='*.jsx' --include='*.mjs' --include='*.cjs' --include='*.json' --include='*.prisma' --include='*.sql' \
+              -E 'DB_HOST|DB_NAME|DB_USER|DB_DATABASE|DATABASE_URL|MYSQL_|maria|mysql2?|createPool|createConnection|PrismaClient|prisma\.|sequelize|consultation[_A-Za-z0-9]*|INSERT[[:space:]]+INTO|FROM[[:space:]]+[`'"'"'"]?[A-Za-z0-9_.]+|UPDATE[[:space:]]+[`'"'"'"]?[A-Za-z0-9_.]+' \
+              "$HP" 2>/dev/null | maskvals | cut -c1-300 | head -200
+            echo "---- /api/consultation file bodies (values masked, cap 200 lines)"
+            for f in $(sudo -n find "$HP" \( -path "*/node_modules/*" -o -path "*/.next/*" -o -path "*/.git/*" \) -prune -o \( -ipath "*/api/consultation*" -o -ipath "*consultation*route*" \) -type f -print 2>/dev/null | head -20); do
+              echo "===== FILE $f ====="
+              sudo -n cat "$f" 2>/dev/null | maskvals | cut -c1-300 | head -200
+            done
+            echo "---- table/schema identifiers (unique, values masked)"
+            sudo -n grep -Roh --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=.git --exclude='.env' --exclude='.env.*' \
+              --include='*.js' --include='*.ts' --include='*.tsx' --include='*.mjs' --include='*.cjs' --include='*.prisma' --include='*.sql' \
+              -E '(FROM|INTO|UPDATE|JOIN)[[:space:]]+[`'"'"'"]?[A-Za-z0-9_]+([.][A-Za-z0-9_]+)?|prisma\.[A-Za-z0-9_]+|consultation_[A-Za-z0-9_]+|[A-Za-z0-9_]*_homepage[A-Za-z0-9_]*' \
+              "$HP" 2>/dev/null | sort -u | maskvals | head -80
             echo; echo "=== DONE (read-only)"
             exit 0

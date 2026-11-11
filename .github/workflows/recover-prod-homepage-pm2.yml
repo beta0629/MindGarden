@@ -35,7 +35,8 @@ jobs:
           script_stop: false
           script: |
             set +e
-            set -u
+            set +u
+            echo "start: $(date '+%F %T %Z')"
             [ -f /etc/profile ] && . /etc/profile >/dev/null 2>&1
             [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
             export PATH="$PATH:/usr/local/bin:/usr/bin"

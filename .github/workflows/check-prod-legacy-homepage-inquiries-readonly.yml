@@ -126,6 +126,15 @@ jobs:
           fi
           echo "::add-mask::$DB_HOST"
           echo "::add-mask::$DB_USER"
+          echo "=== SELECT 1 ==="
+          if mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 -N -B -e "SELECT 1;" >/dev/null 2>&1; then
+            echo "CONNECT: OK"
+          else
+            echo "::error::CONNECT: FAIL"
+            exit 1
+          fi
           # --force: 후보 스키마에 테이블이 없으면 해당 문만 에러하고 이후 섹션 계속.
           # READ ONLY 는 세션 init-command. SQL 파일에는 SET 키워드 없음(가드 통과).
           OUT=/tmp/legacy_homepage_inquiries_survey.out
@@ -134,6 +143,18 @@ jobs:
             --default-character-set=utf8mb4 --force -t \
             < scripts/ops/readonly/prod_legacy_homepage_inquiries_survey.sql \
             > "$OUT" 2>&1 || true
+          if [ ! -s "$OUT" ]; then
+            echo "::error::survey output empty"
+            exit 1
+          fi
+          if ! grep -qE '==[[:space:]]*[0-9]' "$OUT"; then
+            if grep -qiE 'access denied|can.t connect|unknown database|using password|connection refused|error[[:space:]]+[0-9]+[[:space:]]*\([0-9]+\)' "$OUT"; then
+              echo "::error::survey failed (auth/connect only; no section labels)"
+              exit 1
+            fi
+            echo "::error::survey output missing section labels"
+            exit 1
+          fi
           cat "$OUT"
           {
             echo "## Legacy homepage consultation_inquiries (read-only survey)"

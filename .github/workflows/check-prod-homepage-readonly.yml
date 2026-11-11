@@ -69,6 +69,25 @@ jobs:
             sec "journalctl nginx (since 10:30 today)"; sudo -n journalctl -u nginx --since "today 10:30" --no-pager 2>/dev/null | tail -n 60
             for u in $(systemctl list-units --all --no-pager --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -iE 'garden|home|php|wordpress|node|pm2|apache|httpd' | grep -viE '^mindgarden'); do sec "journalctl $u (last 40)"; sudo -n journalctl -u "$u" --no-pager -n 40 2>/dev/null | mask | cut -c1-300; done
             sec "kernel OOM since yesterday"; sudo -n journalctl -k --since yesterday --no-pager 2>/dev/null | grep -iE 'oom|killed process' | tail -n 20
+            sec "root/alias paths from m-garden files (ls -la, mtime)"
+            for d in $(for f in $FILES; do sudo -n grep -hoE '^[[:space:]]*(root|alias)[[:space:]]+[^;]+' "$f"; done | awk '{print $2}' | sort -u); do echo "-- $d"; sudo -n ls -la --time-style=full-iso "$d" 2>&1 | head -30; done
+            sec "listener pid -> cwd for upstream ports"
+            for p in $PORTS; do for pid in $(sudo -n ss -ltnpH "sport = :$p" 2>/dev/null | grep -oE 'pid=[0-9]+' | cut -d= -f2 | sort -u); do echo "port=$p pid=$pid user=$(ps -o user= -p $pid) etime=$(ps -o etime= -p $pid | tr -d ' ') comm=$(ps -o comm= -p $pid) cwd=$(sudo -n readlink /proc/$pid/cwd)"; done; done
+            sec "pm2 jlist (name/status/cwd/restarts/uptime only; only if daemon already running)"
+            PJ='import sys,json,time
+            try: d=json.load(sys.stdin)
+            except Exception as e: print("PARSE_FAIL",e); sys.exit(0)
+            for x in d:
+              e=x.get("pm2_env",{}); u=e.get("pm_uptime")
+              print(x.get("name"),e.get("status"),e.get("pm_cwd"),"restarts=%s"%e.get("restart_time"),"unstable=%s"%e.get("unstable_restarts"),"uptime_start=%s"%(time.strftime("%Y-%m-%d %H:%M:%S",time.localtime(u/1000)) if u else None),"pid=%s"%x.get("pid"))'
+            ME=$(id -un)
+            if pgrep -u "$ME" -f 'PM2 v' >/dev/null 2>&1; then echo "[user $ME]"; bash -lc 'pm2 jlist' 2>/dev/null | python3 -c "$PJ"; else echo "[user $ME] no pm2 daemon"; fi
+            if sudo -n pgrep -u root -f 'PM2 v' >/dev/null 2>&1; then echo "[root]"; sudo -n bash -lc 'pm2 jlist' 2>/dev/null | python3 -c "$PJ"; else echo "[root] no pm2 daemon"; fi
+            for pu in $(ps -eo user=,args= | grep 'PM2 v' | grep -v grep | awk '{print $1}' | sort -u); do echo "pm2 daemon owner: $pu"; done
+            sec "ps next|node|garden|homepage (secrets masked)"
+            ps -eo pid,user,etime,cmd 2>/dev/null | grep -iE 'next|node|garden|homepage' | grep -v grep | sed -E 's/((password|passwd|token|secret|key)[^=[:space:]]*[=[:space:]])[^[:space:]]+/\1***/Ig' | cut -c1-250 | head -30
+            sec "find homepage / m-garden dirs (maxdepth 4)"
+            sudo -n find / -maxdepth 4 \( -path /proc -o -path /sys -o -path /dev \) -prune -o \( -iname '*homepage*' -o -iname '*m-garden*' \) -print 2>/dev/null | head -40
             sec "certs from m-garden files"
             for c in $(for f in $FILES; do sudo -n grep -hoE '^[[:space:]]*ssl_certificate[[:space:]]+[^;]+' "$f"; done | awk '{print $2}' | sort -u); do echo "-- $c"; sudo -n openssl x509 -noout -subject -enddate -in "$c" 2>&1; done
             echo; echo "=== DONE (read-only)"

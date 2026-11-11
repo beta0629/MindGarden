@@ -204,7 +204,7 @@ class ScheduleServiceImplInstitutionLinkMonthlyTest {
     }
 
     @Test
-    @DisplayName("일반 회기 SESSIONS_EXHAUSTED → 저장하지 않고 유효한 매칭 없음")
+    @DisplayName("일반 회기 SESSIONS_EXHAUSTED → 저장하지 않고 사용 가능한 회기 메시지")
     void sessionPack_sessionsExhausted_stillBlocked() {
         ConsultantClientMapping mapping = buildMapping(
                 MappingStatus.SESSIONS_EXHAUSTED, PaymentTimingConstants.ADVANCE, 0);
@@ -218,8 +218,8 @@ class ScheduleServiceImplInstitutionLinkMonthlyTest {
                 LocalDate.of(2026, 9, 22),
                 LocalTime.of(11, 0), LocalTime.of(12, 0),
                 "제목", "설명"))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("유효한 매칭");
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining(ScheduleServiceUserFacingMessages.MSG_NO_REMAINING_SESSIONS);
 
         verify(scheduleRepository, never()).save(any(Schedule.class));
     }

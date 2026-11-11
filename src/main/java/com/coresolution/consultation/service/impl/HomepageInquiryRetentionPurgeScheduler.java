@@ -7,10 +7,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * 홈페이지 문의 보관기간 초과 행 퍼지 훅.
+ * CONTACTED 이후 보관기간 초과 행 퍼지 훅.
  *
- * <p>기본 비활성({@code mindgarden.homepage-inquiry.purge-enabled=false}).
- * retentionDays 미설정 시에도 실행하지 않는다. 실삭제 로직은 후속 활성화 시 추가.
+ * <p>기본 {@code purge-enabled=false}. 활성화·보관일수가 있어도 본 PR 에서는 실삭제하지 않는다.
  *
  * @author CoreSolution
  * @since 2026-11-11
@@ -23,14 +22,16 @@ public class HomepageInquiryRetentionPurgeScheduler {
     private final HomepageInquiryProperties properties;
 
     /**
-     * 매일 03:40 — 활성화·보관일수가 있을 때만 로그(실삭제 없음).
+     * 매일 03:40 — 게이트만 확인(실삭제 없음).
      */
     @Scheduled(cron = "${mindgarden.homepage-inquiry.purge-cron:0 40 3 * * *}")
     public void purgeExpiredIfEnabled() {
-        if (!properties.isPurgeEnabled() || properties.getRetentionDays() == null) {
+        if (!properties.isPurgeEnabled()) {
             return;
         }
-        log.info("homepage-inquiry purge hook armed but delete is disabled until explicitly implemented: retentionDays={}",
-                properties.getRetentionDays());
+        log.info(
+                "homepage-inquiry purge hook armed but delete is disabled until explicitly implemented: "
+                        + "purgeAfterContactedDays={}",
+                properties.getPurgeAfterContactedDays());
     }
 }

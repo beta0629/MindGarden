@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import com.coresolution.consultation.constant.HomepageInquiryConstants;
 import com.coresolution.consultation.dto.request.PublicHomepageInquiryCreateRequest;
 import com.coresolution.consultation.service.HomepageInquiryService;
+import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
@@ -47,7 +48,8 @@ public class PublicHomepageInquiryController extends BaseApiController {
             @PathVariable("tenantSlug") String tenantSlug,
             @Valid @RequestBody PublicHomepageInquiryCreateRequest request,
             HttpServletRequest httpRequest) {
-        homepageInquiryService.submitPublicInquiry(tenantSlug, request, httpRequest);
+        DeferredExternalCalls.run(
+                () -> homepageInquiryService.submitPublicInquiry(tenantSlug, request, httpRequest));
         return accepted(HomepageInquiryConstants.PUBLIC_ACCEPTED_MESSAGE);
     }
 

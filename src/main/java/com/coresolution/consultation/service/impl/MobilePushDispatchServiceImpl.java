@@ -5,10 +5,13 @@ import com.coresolution.consultation.constant.BookingReminderPushConstants;
 import com.coresolution.consultation.constant.MobilePushAllowedEvents;
 import com.coresolution.consultation.constant.MobilePushCanonicalTypes;
 import com.coresolution.consultation.constant.MobilePushDispatchConstants;
+import com.coresolution.consultation.constant.HomepageInquiryConstants;
 import com.coresolution.consultation.constant.MobilePushNotificationCategory;
 import com.coresolution.consultation.constant.ShopNotificationCopy;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.MobilePushBroadcastResult;
 import com.coresolution.consultation.entity.MobilePushToken;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.repository.MobilePushSettingsRepository;
@@ -1403,6 +1406,81 @@ public class MobilePushDispatchServiceImpl implements MobilePushDispatchService 
                     .errorMessage(ex.getClass().getSimpleName()
                             + (ex.getMessage() != null ? ": " + ex.getMessage() : ""))
                     .build();
+        }
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void dispatchHomepageInquiry(String tenantId, Long inquiryId, String inquiryTypeLabel) {
+        if (inquiryId == null) {
+            return;
+        }
+        String tid = requireTenantId(tenantId, null);
+        if (tid == null) {
+            log.warn("homepage-inquiry push skip: tenantId 없음 inquiryId={}", inquiryId);
+            return;
+        }
+        if (expoPushProperties.getAccessToken() == null || expoPushProperties.getAccessToken().isBlank()) {
+            log.warn("homepage-inquiry push skip: Expo access token 미설정 tenantId={} inquiryId={}",
+                    tid, inquiryId);
+            return;
+        }
+        List<User> admins = userRepository.findByTenantIdAndRole(tid, UserRole.ADMIN);
+        if (admins == null || admins.isEmpty()) {
+            log.debug("homepage-inquiry push skip: ADMIN 없음 tenantId={}", tid);
+            return;
+        }
+        String safeTitle = truncate(HomepageInquiryConstants.PUSH_TITLE_NEW_INQUIRY,
+                MobilePushDispatchConstants.TITLE_MAX_LENGTH);
+        String label = inquiryTypeLabel != null && !inquiryTypeLabel.isBlank()
+                ? inquiryTypeLabel.trim() : safeTitle;
+        String safeBody = truncate(label, MobilePushDispatchConstants.BODY_MAX_LENGTH);
+        // inquiry 단위 멱등: 동일 문의 재시도 시 userId 별로만 중복 차단(모든 ADMIN 에게 1회씩)
+        String dedupeBucket = "inquiry-" + inquiryId;
+
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("type", MobilePushCanonicalTypes.HOMEPAGE_INQUIRY);
+        data.put("tenantId", tid);
+        data.put("inquiryId", String.valueOf(inquiryId));
+        data.put("title", safeTitle);
+        sanitizeDataStrings(data);
+
+        for (User admin : admins) {
+            if (admin == null || admin.getId() == null) {
+                continue;
+            }
+            if (Boolean.FALSE.equals(admin.getIsActive())) {
+                continue;
+            }
+            Long userId = admin.getId();
+            if (!isCategoryEnabledForUser(tid, userId, MobilePushNotificationCategory.SYSTEM)) {
+                continue;
+            }
+            List<MobilePushToken> tokens =
+                    mobilePushTokenRepository.findByTenantIdAndUserIdInAndActiveTrueAndIsDeletedFalse(
+                            tid, List.of(userId));
+            if (tokens.isEmpty()) {
+                continue;
+            }
+            if (!mobilePushDispatchDedupService.tryClaim(tid,
+                    MobilePushCanonicalTypes.HOMEPAGE_INQUIRY, String.valueOf(userId), dedupeBucket)) {
+                continue;
+            }
+            MobilePushBroadcastResult outcome = postAdminAnnouncementToExpo(
+                    tid, userId, tokens, safeTitle, safeBody, data);
+            if (outcome != null && outcome.getStatus() == MobilePushBroadcastResult.Status.SENT) {
+                try {
+                    mobilePushInboxPersister.persistForRecipient(
+                            tid,
+                            userId,
+                            MobilePushCanonicalTypes.HOMEPAGE_INQUIRY,
+                            safeTitle,
+                            safeBody);
+                } catch (Exception ex) {
+                    log.warn("homepage-inquiry 인박스 persist 실패(무시): tenantId={} userId={} reason={}",
+                            tid, userId, ex.getMessage());
+                }
+            }
         }
     }
 }

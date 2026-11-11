@@ -71,7 +71,8 @@ import com.coresolution.core.config.KiccEasypayProperties;
         ScheduleChangeNotificationProperties.class,
         ImmediateReservationSmsProperties.class,
         ManualNotificationProperties.class,
-        com.coresolution.core.krpublic.KrPublicDataProperties.class
+        com.coresolution.core.krpublic.KrPublicDataProperties.class,
+        com.coresolution.consultation.config.HomepagePublicApiProperties.class
 })
 public class ConsultationManagementApplication {
 

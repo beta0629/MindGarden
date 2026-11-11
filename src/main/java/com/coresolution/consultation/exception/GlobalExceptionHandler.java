@@ -673,6 +673,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * SKU 이벤트 가격 기간 겹침 — HTTP 409. 사유 문구는 응답 {@code message} 에 싣는다.
+     */
+    @ExceptionHandler(ShopCatalogSkuEventPriceConflictException.class)
+    public ResponseEntity<ErrorResponse> handleShopCatalogSkuEventPriceConflict(
+            ShopCatalogSkuEventPriceConflictException e, HttpServletRequest request) {
+        log.info("[SHOP_CATALOG_SKU_EVENT_PRICE_CONFLICT] path={} message={}",
+                request.getRequestURI(), e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+            e.getMessage(),
+            ShopCatalogSkuEventPriceConflictException.ERROR_CODE,
+            HttpStatus.CONFLICT.value(),
+            request.getRequestURI(),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
      * lifecycle §3.6 전이 그래프 위반 — HTTP 409 (시스템 오류 아님).
      */
     @ExceptionHandler(IllegalStateTransitionException.class)

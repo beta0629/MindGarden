@@ -168,6 +168,22 @@ describe('adminShopSuite products — validity & server rows', () => {
     expect(validateAdminShopProductForm({ ...base, validityMonths: '0' }).errors.validityMonths).toBe(true);
   });
 
+  test('eventOnly·sessionMinutes flags validate without single event price fields', () => {
+    expect(validateAdminShopProductForm({
+      ...base,
+      eventOnly: true,
+      sessionMinutes: '30'
+    })).toMatchObject({
+      valid: true,
+      eventOnly: true,
+      sessionMinutes: 30
+    });
+    expect(validateAdminShopProductForm({
+      ...base,
+      sessionMinutes: 'abc'
+    }).errors.sessionMinutes).toBe(true);
+  });
+
   test('server product rows map to table rows (package + legacy)', () => {
     const pkg = mapAdminShopServerProduct({
       kind: ADMIN_SHOP_PRODUCT_KIND.PACKAGE,

@@ -10,6 +10,8 @@ import {
   ADMIN_SHOP_API,
   ADMIN_SHOP_PRICE_HISTORY_DEFAULT_LIMIT,
   buildAdminShopCatalogPriceHistoryPath,
+  buildAdminShopCatalogSkuEventPricePath,
+  buildAdminShopCatalogSkuEventPricesPath,
   buildAdminShopCatalogSkuPath,
   buildAdminShopCatalogSkuThumbnailPath,
   buildAdminShopCatalogVisiblePath,
@@ -143,4 +145,55 @@ export async function uploadAdminShopCatalogSkuThumbnail(skuId, file) {
     form
   );
   return unwrapData(raw);
+}
+
+/**
+ * SKU 이벤트 가격 기간 목록.
+ *
+ * @param {string|number} skuId
+ * @returns {Promise<Array>}
+ */
+export async function listAdminShopCatalogSkuEventPrices(skuId) {
+  const raw = await StandardizedApi.get(buildAdminShopCatalogSkuEventPricesPath(skuId));
+  const data = unwrapData(raw);
+  return Array.isArray(data) ? data : [];
+}
+
+/**
+ * SKU 이벤트 가격 기간 생성.
+ *
+ * @param {string|number} skuId
+ * @param {{ eventPriceMinor: number, startDate: string, endDate: string }} body
+ * @returns {Promise<object|null>}
+ */
+export async function createAdminShopCatalogSkuEventPrice(skuId, body) {
+  const raw = await StandardizedApi.post(buildAdminShopCatalogSkuEventPricesPath(skuId), body);
+  return unwrapData(raw);
+}
+
+/**
+ * SKU 이벤트 가격 기간 수정.
+ *
+ * @param {string|number} skuId
+ * @param {string|number} eventPriceId
+ * @param {{ eventPriceMinor: number, startDate: string, endDate: string }} body
+ * @returns {Promise<object|null>}
+ */
+export async function updateAdminShopCatalogSkuEventPrice(skuId, eventPriceId, body) {
+  const raw = await StandardizedApi.put(
+    buildAdminShopCatalogSkuEventPricePath(skuId, eventPriceId),
+    body
+  );
+  return unwrapData(raw);
+}
+
+/**
+ * SKU 이벤트 가격 기간 soft-delete.
+ *
+ * @param {string|number} skuId
+ * @param {string|number} eventPriceId
+ * @returns {Promise<unknown>}
+ */
+export async function deleteAdminShopCatalogSkuEventPrice(skuId, eventPriceId) {
+  return StandardizedApi.delete(buildAdminShopCatalogSkuEventPricePath(skuId, eventPriceId));
 }

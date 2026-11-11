@@ -64,6 +64,7 @@ import { getAllConsultantsWithStats } from '../../utils/consultantHelper';
 import {
   buildAdminShopPackageContentBody,
   mapTenantConsultantSelectOptions,
+  parseAdminShopEventPricePeriod,
   resolveAdminShopFieldCodeGroup,
   validateAdminShopCatalogConsultant,
   validateAdminShopCatalogFieldCode
@@ -86,6 +87,10 @@ import {
   updateAdminShopProductCode
 } from '../../services/adminShopProductService';
 import {
+  createAdminShopCatalogSkuEventPrice,
+  deleteAdminShopCatalogSkuEventPrice,
+  listAdminShopCatalogSkuEventPrices,
+  updateAdminShopCatalogSkuEventPrice,
   updateAdminShopPackageFeeContent,
   uploadAdminShopCatalogSkuThumbnail
 } from '../../services/adminShopCatalogService';
@@ -145,7 +150,18 @@ function AdminShopProductEditorPage({ isNew }) {
   const [brokenPreviewUrl, setBrokenPreviewUrl] = useState('');
   const [fieldOptions, setFieldOptions] = useState([]);
   const [consultantOptions, setConsultantOptions] = useState([]);
+  const [eventPrices, setEventPrices] = useState([]);
+  const [eventPriceForm, setEventPriceForm] = useState({
+    eventPriceMinor: '',
+    startDate: '',
+    endDate: ''
+  });
+  const [editingEventPriceId, setEditingEventPriceId] = useState(null);
+  const [eventPriceSaving, setEventPriceSaving] = useState(false);
+  const [eventPriceError, setEventPriceError] = useState('');
   const savedRef = useRef(false);
+
+  const skuId = product?.skuId != null ? product.skuId : null;
 
   const loadProduct = useCallback(async() => {
     setLoading(true);
@@ -158,6 +174,9 @@ function AdminShopProductEditorPage({ isNew }) {
         setProduct(null);
         setForm(next);
         setInitialForm(next);
+        setEventPrices([]);
+        setEditingEventPriceId(null);
+        setEventPriceForm({ eventPriceMinor: '', startDate: '', endDate: '' });
         return;
       }
       const found = findProduct(merged, id);
@@ -174,6 +193,15 @@ function AdminShopProductEditorPage({ isNew }) {
       setProduct(found);
       setForm(next);
       setInitialForm(next);
+      if (found.skuId != null) {
+        const periods = await listAdminShopCatalogSkuEventPrices(found.skuId).catch(() => []);
+        setEventPrices(Array.isArray(periods) ? periods : []);
+      } else {
+        setEventPrices([]);
+      }
+      setEditingEventPriceId(null);
+      setEventPriceForm({ eventPriceMinor: '', startDate: '', endDate: '' });
+      setEventPriceError('');
     } catch (e) {
       notificationManager.error(e?.message != null ? String(e.message) : ADMIN_SHOP_PRODUCT_EDITOR_COPY.NOT_FOUND);
       navigate(ADMIN_SHOP_PRODUCT_ROUTES.LIST, { replace: true });
@@ -395,7 +423,10 @@ function AdminShopProductEditorPage({ isNew }) {
     }
     const validityChanged = toDisplayString(form.validityMonths, '').trim()
       !== toDisplayString(initialForm.validityMonths, '').trim();
-    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged;
+    const eventChanged = Boolean(form.eventOnly) !== Boolean(initialForm.eventOnly)
+      || toDisplayString(form.sessionMinutes, '').trim()
+        !== toDisplayString(initialForm.sessionMinutes, '').trim();
+    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged || eventChanged;
     if (needsContent) {
       const fieldParsed = validateAdminShopCatalogFieldCode(form);
       if (!fieldParsed.valid) {
@@ -459,7 +490,11 @@ function AdminShopProductEditorPage({ isNew }) {
           ...form,
           descriptionText: form.descriptionText.slice(0, ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX),
           catalogVisible: visibleOnFirstPut,
-          validityMonths: validation.validityMonths
+          validityMonths: validation.validityMonths,
+          price: validation.price,
+          unitPriceMinor: validation.price,
+          eventOnly: validation.eventOnly === true,
+          sessionMinutes: validation.sessionMinutes != null ? String(validation.sessionMinutes) : ''
         }));
         if (pendingImageFile && saved?.skuId != null) {
           await uploadAdminShopCatalogSkuThumbnail(saved.skuId, pendingImageFile);
@@ -486,8 +521,92 @@ function AdminShopProductEditorPage({ isNew }) {
     : ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.ASSESSMENT;
   const sessionsInvalid = showErrors && validation.errors.sessions;
   const saveDisabled = saving || loading || Boolean(validation.errors.sessions)
-    || Boolean(validation.errors.validityMonths);
+    || Boolean(validation.errors.validityMonths)
+    || Boolean(validation.errors.sessionMinutes);
   const validityInvalid = Boolean(validation.errors.validityMonths);
+  const sessionMinutesInvalid = Boolean(validation.errors.sessionMinutes);
+
+  const resetEventPriceForm = () => {
+    setEditingEventPriceId(null);
+    setEventPriceForm({ eventPriceMinor: '', startDate: '', endDate: '' });
+    setEventPriceError('');
+  };
+
+  const handleSaveEventPrice = async() => {
+    if (skuId == null) {
+      return;
+    }
+    const parsed = parseAdminShopEventPricePeriod(eventPriceForm, validation.price);
+    if (!parsed.valid) {
+      setEventPriceError(parsed.message || ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_ERROR);
+      return;
+    }
+    setEventPriceSaving(true);
+    setEventPriceError('');
+    try {
+      const body = {
+        eventPriceMinor: parsed.eventPriceMinor,
+        startDate: parsed.startDate,
+        endDate: parsed.endDate
+      };
+      if (editingEventPriceId != null) {
+        await updateAdminShopCatalogSkuEventPrice(skuId, editingEventPriceId, body);
+      } else {
+        await createAdminShopCatalogSkuEventPrice(skuId, body);
+      }
+      const periods = await listAdminShopCatalogSkuEventPrices(skuId);
+      setEventPrices(Array.isArray(periods) ? periods : []);
+      resetEventPriceForm();
+      notificationManager.success(ADMIN_SHOP_PRODUCT_EDITOR_COPY.SAVED);
+    } catch (e) {
+      const message = e?.message != null
+        ? String(e.message)
+        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_OVERLAP_FALLBACK;
+      setEventPriceError(message);
+      notificationManager.error(message);
+    } finally {
+      setEventPriceSaving(false);
+    }
+  };
+
+  const handleEditEventPrice = (row) => {
+    setEditingEventPriceId(row?.id ?? null);
+    setEventPriceForm({
+      eventPriceMinor: row?.eventPriceMinor != null ? String(row.eventPriceMinor) : '',
+      startDate: toDisplayString(row?.startDate, ''),
+      endDate: toDisplayString(row?.endDate, '')
+    });
+    setEventPriceError('');
+  };
+
+  const handleDeleteEventPrice = async(row) => {
+    if (skuId == null || row?.id == null) {
+      return;
+    }
+    const ok = await confirm({
+      title: ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_DELETE,
+      message: ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_DELETE_CONFIRM,
+      confirmLabel: ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_DELETE,
+      cancelLabel: ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_CANCEL,
+      variant: 'danger'
+    });
+    if (!ok) {
+      return;
+    }
+    setEventPriceSaving(true);
+    try {
+      await deleteAdminShopCatalogSkuEventPrice(skuId, row.id);
+      const periods = await listAdminShopCatalogSkuEventPrices(skuId);
+      setEventPrices(Array.isArray(periods) ? periods : []);
+      if (editingEventPriceId === row.id) {
+        resetEventPriceForm();
+      }
+    } catch (e) {
+      notificationManager.error(e?.message != null ? String(e.message) : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SAVE_FAILED);
+    } finally {
+      setEventPriceSaving(false);
+    }
+  };
   const priceText = validation.price != null ? formatShopMoney(validation.price) : '—';
   const sessionsText = validation.sessions != null && validation.sessions >= ADMIN_SHOP_PRODUCT_SESSION_MIN
     ? `${validation.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`
@@ -711,6 +830,187 @@ function AdminShopProductEditorPage({ isNew }) {
                       ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_ERROR
                       : ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_HINT}
                   </span>
+                </div>
+                <div className="admin-shop-suite__grid-3">
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-session-minutes`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES}
+                    </label>
+                    <input
+                      id={`${baseId}-session-minutes`}
+                      className={`admin-shop-suite__input admin-shop-suite__num${sessionMinutesInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      inputMode="numeric"
+                      value={form.sessionMinutes}
+                      disabled={saving}
+                      aria-invalid={sessionMinutesInvalid ? true : undefined}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_SESSION_MINUTES}
+                      onChange={(e) => setField('sessionMinutes', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <span className={`admin-shop-suite__hint${sessionMinutesInvalid ? ' admin-shop-suite__hint--error' : ''}`}>
+                      {sessionMinutesInvalid
+                        ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES_ERROR
+                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES_HINT}
+                    </span>
+                  </div>
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-only`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_ONLY}
+                    </label>
+                    <label className="admin-shop-suite__check" htmlFor={`${baseId}-event-only`}>
+                      <input
+                        id={`${baseId}-event-only`}
+                        type="checkbox"
+                        checked={form.eventOnly === true}
+                        disabled={saving}
+                        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_ONLY}
+                        onChange={(e) => setField('eventOnly', e.target.checked)}
+                      />
+                      <span>{ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_ONLY_HINT}</span>
+                    </label>
+                  </div>
+                </div>
+                <div
+                  className="admin-shop-suite__field"
+                  data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_PRICES}
+                >
+                  <span className="admin-shop-suite__label">
+                    {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICES_SECTION}
+                  </span>
+                  <span className="admin-shop-suite__hint">
+                    {skuId == null
+                      ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICES_NEED_SKU
+                      : ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICES_HINT}
+                  </span>
+                  {skuId != null ? (
+                    <>
+                      <div
+                        className="admin-shop-suite__form-stack"
+                        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_PRICE_LIST}
+                      >
+                        {eventPrices.length === 0 ? (
+                          <p className="admin-shop-suite__muted">
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICES_EMPTY}
+                          </p>
+                        ) : eventPrices.map((row) => (
+                          <div key={row.id} className="admin-shop-suite__header-actions">
+                            <span className="admin-shop-suite__cell-title">
+                              <SafeText>
+                                {`${formatShopMoney(row.eventPriceMinor)} · ${toDisplayString(row.startDate, '')} ~ ${toDisplayString(row.endDate, '')}`}
+                              </SafeText>
+                            </span>
+                            <MGButton
+                              type="button"
+                              variant="secondary"
+                              className={buildErpMgButtonClassName('secondary')}
+                              disabled={saving || eventPriceSaving}
+                              onClick={() => handleEditEventPrice(row)}
+                            >
+                              {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_EDIT}
+                            </MGButton>
+                            <MGButton
+                              type="button"
+                              variant="secondary"
+                              className={buildErpMgButtonClassName('secondary')}
+                              disabled={saving || eventPriceSaving}
+                              onClick={() => handleDeleteEventPrice(row)}
+                            >
+                              {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_DELETE}
+                            </MGButton>
+                          </div>
+                        ))}
+                      </div>
+                      <div
+                        className="admin-shop-suite__grid-3"
+                        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_PRICE_FORM}
+                      >
+                        <div className="admin-shop-suite__field">
+                          <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-price`}>
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE}
+                          </label>
+                          <input
+                            id={`${baseId}-event-price`}
+                            className="admin-shop-suite__input admin-shop-suite__num"
+                            inputMode="numeric"
+                            value={eventPriceForm.eventPriceMinor}
+                            disabled={saving || eventPriceSaving}
+                            onChange={(e) => setEventPriceForm((prev) => ({
+                              ...prev,
+                              eventPriceMinor: e.target.value.replace(/\D/g, '')
+                            }))}
+                          />
+                          <span className="admin-shop-suite__hint">
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_HINT}
+                          </span>
+                        </div>
+                        <div className="admin-shop-suite__field">
+                          <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-start`}>
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_START}
+                          </label>
+                          <input
+                            id={`${baseId}-event-start`}
+                            type="date"
+                            className="admin-shop-suite__input"
+                            value={eventPriceForm.startDate}
+                            disabled={saving || eventPriceSaving}
+                            onChange={(e) => setEventPriceForm((prev) => ({
+                              ...prev,
+                              startDate: e.target.value
+                            }))}
+                          />
+                        </div>
+                        <div className="admin-shop-suite__field">
+                          <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-end`}>
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_END}
+                          </label>
+                          <input
+                            id={`${baseId}-event-end`}
+                            type="date"
+                            className="admin-shop-suite__input"
+                            value={eventPriceForm.endDate}
+                            disabled={saving || eventPriceSaving}
+                            onChange={(e) => setEventPriceForm((prev) => ({
+                              ...prev,
+                              endDate: e.target.value
+                            }))}
+                          />
+                          <span className="admin-shop-suite__hint">
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_DATES_HINT}
+                          </span>
+                        </div>
+                      </div>
+                      {eventPriceError ? (
+                        <span className="admin-shop-suite__hint admin-shop-suite__hint--error">
+                          {eventPriceError}
+                        </span>
+                      ) : null}
+                      <div className="admin-shop-suite__header-actions">
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          className={buildErpMgButtonClassName('primary')}
+                          disabled={saving || eventPriceSaving}
+                          loading={eventPriceSaving}
+                          loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                          onClick={handleSaveEventPrice}
+                        >
+                          {editingEventPriceId != null
+                            ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_SAVE
+                            : ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_ADD}
+                        </MGButton>
+                        {editingEventPriceId != null ? (
+                          <MGButton
+                            type="button"
+                            variant="secondary"
+                            className={buildErpMgButtonClassName('secondary')}
+                            disabled={saving || eventPriceSaving}
+                            onClick={resetEventPriceForm}
+                          >
+                            {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_CANCEL}
+                          </MGButton>
+                        ) : null}
+                      </div>
+                    </>
+                  ) : null}
                 </div>
                 <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
                   <p>{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_NOTICE}</p>

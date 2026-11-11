@@ -18,6 +18,7 @@ import {
   emptyAdminShopCatalogForm,
   mapAdminShopPackageFeeToForm,
   mapTenantConsultantSelectOptions,
+  parseAdminShopEventPricePeriod,
   resolveAdminShopFieldCodeGroup,
   validateAdminShopCatalogConsultant,
   validateAdminShopCatalogFieldCode,
@@ -145,11 +146,15 @@ describe('buildAdminShopPackageContentBody', () => {
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: 'SPEECH',
       consultantId: 15,
-      validityMonths: null
+      validityMonths: null,
+      eventOnly: false,
+      sessionMinutes: null
     });
     expect(body).not.toHaveProperty('title');
-    expect(body).not.toHaveProperty('unitPriceMinor');
     expect(body).not.toHaveProperty('sessionCount');
+    expect(body).not.toHaveProperty('eventPriceMinor');
+    expect(body).not.toHaveProperty('eventStartDate');
+    expect(body).not.toHaveProperty('eventEndDate');
   });
 
   test('분야 미선택이면 throw', () => {
@@ -220,6 +225,52 @@ describe('buildAdminShopPackageContentBody', () => {
     const form = mapAdminShopPackageFeeToForm({ packageCode: 'P1', validityMonths: 3 });
     expect(form.validityMonths).toBe(3);
     expect(mapAdminShopPackageFeeToForm({ packageCode: 'P1' }).validityMonths).toBeNull();
+  });
+
+  test('이벤트 전용·회기 분 플래그만 본문에 포함한다', () => {
+    const base = {
+      catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
+      fieldCode: 'SPEECH',
+      consultantId: '15',
+      unitPriceMinor: 60000
+    };
+    const body = buildAdminShopPackageContentBody({
+      ...base,
+      eventOnly: true,
+      sessionMinutes: '30'
+    });
+    expect(body).toMatchObject({
+      eventOnly: true,
+      sessionMinutes: 30
+    });
+    expect(body).not.toHaveProperty('eventPriceMinor');
+    expect(body).not.toHaveProperty('eventStartDate');
+    expect(body).not.toHaveProperty('eventEndDate');
+  });
+});
+
+describe('parseAdminShopEventPricePeriod', () => {
+  test('시작≤종료·정상가보다 낮은 단가만 통과', () => {
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '45000',
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    }, 60000)).toMatchObject({
+      valid: true,
+      eventPriceMinor: 45000,
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    });
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '70000',
+      startDate: '2026-11-01',
+      endDate: '2026-12-31'
+    }, 60000).valid).toBe(false);
+    expect(parseAdminShopEventPricePeriod({
+      eventPriceMinor: '45000',
+      startDate: '2026-12-31',
+      endDate: '2026-11-01'
+    }, 60000).valid).toBe(false);
   });
 });
 

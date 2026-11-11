@@ -25,6 +25,10 @@ on:
         description: 'SMS 테스트모드 플래그만 실측 (env/설정 grep + 로컬 status GET + 로그 흔적, 비밀값 미출력)'
         type: boolean
         default: false
+      payment_inflight_only:
+        description: '운영 결제 진행 중 주문 건수만 (READ ONLY SELECT, 어드민 주문 세그먼트 기준)'
+        type: boolean
+        default: false
       dev_scheduler_only:
         description: '.dev 전용 — 리마인드 배치 ShedLock 행·실행/요약 로그 읽기 (READ ONLY SELECT + 로그 grep, 운영 미접속)'
         type: boolean
@@ -40,7 +44,7 @@ permissions:
 jobs:
   db-readonly:
     name: prod DB read-only SELECT
-    if: ${{ !inputs.sms_mode_only && !inputs.dev_scheduler_only }}
+    if: ${{ !inputs.sms_mode_only && !inputs.dev_scheduler_only && !inputs.payment_inflight_only }}
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 8
@@ -108,7 +112,7 @@ jobs:
 
   logs-readonly:
     name: prod app log grep (read-only)
-    if: ${{ !inputs.sms_mode_only && !inputs.dev_scheduler_only }}
+    if: ${{ !inputs.sms_mode_only && !inputs.dev_scheduler_only && !inputs.payment_inflight_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
@@ -152,7 +156,7 @@ jobs:
   # 출력은 SMS_TEST_MODE / SMS_AUTH_ENABLED / SMS_PROVIDER / SPRING_PROFILES_ACTIVE / test-mode 라인만 (비밀 키 미출력).
   sms-mode-readonly:
     name: prod SMS test-mode flag (read-only)
-    if: ${{ inputs.sms_mode_only && !inputs.dev_scheduler_only }}
+    if: ${{ inputs.sms_mode_only && !inputs.dev_scheduler_only && !inputs.payment_inflight_only }}
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
@@ -208,7 +212,7 @@ jobs:
 
   sms-mode-db-readonly:
     name: prod DB SMS test-mode keys (read-only SELECT)
-    if: ${{ inputs.sms_mode_only && !inputs.dev_scheduler_only }}
+    if: ${{ inputs.sms_mode_only && !inputs.dev_scheduler_only && !inputs.payment_inflight_only }}
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 6
@@ -324,3 +328,55 @@ jobs:
             sudo -n journalctl -u mindgarden-dev.service --since "$(date -d "$TARGET_DATE -1 day" +%F) 00:00" --no-pager 2>/dev/null \
               | grep -aE 'ReservationReminder|스케줄러 실행 요약 저장 실패|전체 실행 실패|rollback-only' \
               | sed -E 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' | cut -c1-260 | tail -n 60
+
+  # 운영 릴리스 머지 게이트 참고값 — 결제 진행 중 주문 (AdminShopOrderLedgerServiceImpl.resolveLedgerState 기준).
+  # PENDING 세그먼트 = shop_client_orders.status ∉ {PAID, REFUNDED, EXPIRED, CANCELLED} (CREATED·PENDING_PAYMENT·CANCEL_FAILED)
+  # RECONCILE 세그먼트 = PAID + 이행 이벤트 FAILED 이면서 message 에 'retryable'
+  # 쓰기 없음. 금액·이름·전화 미출력 (건수만).
+  payment-inflight-readonly:
+    name: prod payment in-flight orders (read-only SELECT)
+    if: ${{ inputs.payment_inflight_only }}
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 6
+    steps:
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+      - name: SELECT only (READ ONLY session)
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          DB_HOST="${PRODUCTION_DB_HOST:-${PRODUCTION_HOST:-}}"
+          echo "::add-mask::$DB_HOST"; echo "::add-mask::$DB_USER"
+          echo "measured_at_kst=$(TZ=Asia/Seoul date '+%F %T')"
+          cat > /tmp/pay.sql <<'SQL'
+          SELECT 'A) shop_client_orders 상태별 (전체, 삭제 제외)' AS section;
+          SELECT tenant_id, status, COUNT(*) n, MAX(created_at) latest_created
+            FROM shop_client_orders WHERE IFNULL(is_deleted,0) = 0
+           GROUP BY tenant_id, status ORDER BY tenant_id, status;
+          SELECT 'B) PENDING 세그먼트 (생성·결제대기·취소실패)' AS section;
+          SELECT tenant_id, status, COUNT(*) n, MIN(created_at) oldest, MAX(created_at) latest
+            FROM shop_client_orders
+           WHERE IFNULL(is_deleted,0) = 0 AND status IN ('CREATED','PENDING_PAYMENT','CANCEL_FAILED')
+           GROUP BY tenant_id, status;
+          SELECT 'C) RECONCILE 세그먼트 = PAID + 이행 FAILED(retryable)' AS section;
+          SELECT o.tenant_id, COUNT(DISTINCT o.public_id) n
+            FROM shop_client_orders o JOIN shop_order_fulfillment_events e ON e.order_public_id = o.public_id
+           WHERE IFNULL(o.is_deleted,0) = 0 AND o.status = 'PAID' AND e.status = 'FAILED'
+             AND LOWER(IFNULL(e.message,'')) LIKE '%retryable%'
+           GROUP BY o.tenant_id;
+          SELECT 'D) payments PENDING/PROCESSING (최근 7일)' AS section;
+          SELECT tenant_id, status, COUNT(*) n, MAX(created_at) latest
+            FROM payments WHERE status IN ('PENDING','PROCESSING') AND created_at >= NOW() - INTERVAL 7 DAY
+           GROUP BY tenant_id, status;
+          SQL
+          if grep -wiE 'INSERT|UPDATE|DELETE|REPLACE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|RENAME|LOAD|CALL|HANDLER|LOCK' /tmp/pay.sql | grep -v "'CREATED'"; then echo "::error::write keyword"; exit 1; fi
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 --force -t < /tmp/pay.sql 2>&1

@@ -49,24 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const secret = process.env.TURNSTILE_SECRET_KEY;
-    if (secret) {
-      const form = new URLSearchParams();
-      form.set('secret', secret);
-      form.set('response', turnstileToken);
-      const verifyRes = await fetch(
-        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-        { method: 'POST', body: form },
-      );
-      const verify = (await verifyRes.json()) as { success?: boolean };
-      if (!verify.success) {
-        return NextResponse.json(
-          { error: '보안 확인에 실패했습니다.' },
-          { status: 400 },
-        );
-      }
-    }
-
+    // Turnstile secret verification is Clinic-OS responsibility.
+    // Homepage only forwards the widget token in the typed inquiries body.
     const result = await clinicOsClient.submitInquiry({
       name,
       phone,

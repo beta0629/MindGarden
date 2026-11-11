@@ -28,8 +28,7 @@ http://localhost:4000
 | `NEXT_PUBLIC_SITE_INDEXABLE` | `true`일 때만 검색 노출. 스테이징은 `false`/미설정(noindex) |
 | `CLINIC_OS_API_BASE_URL` | Clinic-OS API base (예: `https://api.example.com`). 비어 있으면 fallback |
 | `CLINIC_OS_TENANT_SLUG` | 테넌트 슬러그 (기본 `mindgarden`) |
-| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key |
-| `TURNSTILE_SECRET_KEY` | Turnstile secret (서버). 비어 있으면 검증 생략(로컬) |
+| `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Cloudflare Turnstile site key (기본 `0x4AAAAAAF8rDKpWUewMGRcN`, m-garden.co.kr/www/staging 위젯). Secret 검증은 Clinic-OS |
 | `DB_*` / `SMTP_*` / `CONSULTATION_NOTIFY_*` | 레거시 `/api/consultation` 전용 (추후 제거) |
 
 ## Clinic-OS 계약

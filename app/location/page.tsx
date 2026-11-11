@@ -84,18 +84,8 @@ export default function LocationPage() {
             <ConfirmNeeded />
           </h2>
           <div className="media-grid">
-            <Image
-              src="/images/location-lobby-c148-16x9.jpg"
-              alt="센터 로비"
-              width={900}
-              height={506}
-            />
-            <Image
-              src="/images/location-entrance-c149-4x3.jpg"
-              alt="센터 출입 공간"
-              width={800}
-              height={600}
-            />
+            <PlaceholderMedia label="건물 외관" aspectRatio="16 / 9" />
+            <PlaceholderMedia label="입구·간판" aspectRatio="4 / 3" />
           </div>
           <p className="muted">
             건물 외관·거리 간판 컷은 실사 제공 후 교체합니다.

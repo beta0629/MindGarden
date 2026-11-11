@@ -164,7 +164,7 @@ export default async function HomePage() {
             </Link>
           </div>
           <div className="space-grid">
-            {homeCopy.spaces.items.map((item) => (
+            {homeCopy.spaces.items.map((item, index) => (
               <figure
                 key={item.caption + item.src}
                 className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
@@ -179,6 +179,7 @@ export default async function HomePage() {
                       ? '(max-width: 768px) 100vw, 1200px'
                       : '(max-width: 768px) 50vw, 600px'
                   }
+                  priority={index === 0}
                 />
                 <figcaption>
                   {item.caption}

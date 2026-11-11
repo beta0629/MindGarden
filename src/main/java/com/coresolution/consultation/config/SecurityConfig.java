@@ -618,7 +618,7 @@ public class SecurityConfig {
     /**
      * 센터 홈페이지 공개 tenants 경로 CORS.
      * <p>{@link HomepagePublicApiProperties#getAllowedOrigins()} exact origin 만 허용.
-     * GET·OPTIONS, credentials 비허용.</p>
+     * GET·POST·OPTIONS, credentials 비허용.</p>
      *
      * @return 경로 전용 CorsConfiguration
      */
@@ -631,7 +631,7 @@ public class SecurityConfig {
                 ? props.getAllowedOrigins()
                 : List.of();
         homepageCors.setAllowedOrigins(new ArrayList<>(origins));
-        homepageCors.setAllowedMethods(Arrays.asList("GET", "OPTIONS"));
+        homepageCors.setAllowedMethods(Arrays.asList("GET", "POST", "OPTIONS"));
         homepageCors.setAllowedHeaders(Arrays.asList(
                 "Content-Type",
                 "Accept",

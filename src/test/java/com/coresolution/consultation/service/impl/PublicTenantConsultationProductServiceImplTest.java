@@ -89,6 +89,18 @@ class PublicTenantConsultationProductServiceImplTest {
     }
 
     @Test
+    @DisplayName("event-only SKU — 기간 전이면 제외")
+    void eventOnly_beforePeriod_excluded() {
+        stubActiveTenant();
+        when(shopCatalogSkuRepository.findCatalogForTenant(TENANT_ID))
+                .thenReturn(List.of(eventOnlyFixture()));
+        // 2026-10-31 KST = 2026-10-30T15:00:00Z
+        service.useClock(fixedKst("2026-10-30T15:00:00Z"));
+
+        assertThat(service.listByTenantSlug(SLUG)).isEmpty();
+    }
+
+    @Test
     @DisplayName("일반 SKU — 종료된 이벤트는 정상가만, 이벤트 필드는 null")
     void normalSku_endedEvent_listsAtNormalPrice() {
         stubActiveTenant();

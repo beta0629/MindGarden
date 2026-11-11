@@ -49,7 +49,7 @@ class HomepagePublicApiCorsTest {
         assertThat(configuration).isNotNull();
         assertThat(configuration.checkOrigin(ALLOWED)).isEqualTo(ALLOWED);
         assertThat(configuration.checkOrigin(DENIED)).isNull();
-        assertThat(configuration.getAllowedMethods()).containsExactlyInAnyOrder("GET", "OPTIONS");
+        assertThat(configuration.getAllowedMethods()).containsExactlyInAnyOrder("GET", "POST", "OPTIONS");
         assertThat(configuration.getAllowCredentials()).isFalse();
     }
 }

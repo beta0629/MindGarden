@@ -337,7 +337,7 @@ class ScheduleServiceImplCreateConsultantScheduleSameDayCardTest {
         stubMappingsByStatus(List.of(mapping), Collections.emptyList());
 
         assertThatThrownBy(() -> callCreate(false))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("회기");
 
         verify(scheduleRepository, never()).save(any(Schedule.class));

@@ -70,6 +70,9 @@ public final class ScheduleServiceUserFacingMessages {
     /** 같은 테넌트에 없는 일정 id로 확정·당일 결제 대상을 지정한 경우. */
     public static final String MSG_SCHEDULE_NOT_FOUND = "일정을 찾을 수 없습니다.";
 
+    /** ACTIVE 매핑에 소비 가능한 잔여 회기가 없을 때 일정 생성 거부. */
+    public static final String MSG_NO_REMAINING_SESSIONS = "사용 가능한 회기가 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

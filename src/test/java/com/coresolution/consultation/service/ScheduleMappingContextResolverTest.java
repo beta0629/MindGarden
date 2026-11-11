@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service;
 
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
@@ -142,6 +143,46 @@ class ScheduleMappingContextResolverTest {
 
         assertThat(selected).isPresent();
         assertThat(selected.get().getId()).isEqualTo(11L);
+    }
+
+    @Test
+    @DisplayName("selectLatestActiveWithRemainingSessions — 최신 소진 ACTIVE보다 rem>0 ACTIVE 우선")
+    void selectLatestActiveWithRemainingSessions_prefersRemainingOverNewerExhausted() {
+        ConsultantClientMapping remaining = mapping(32L, 10, 10, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 11, 1, 10, 0), null);
+        remaining.setUpdatedAt(LocalDateTime.of(2026, 11, 1, 10, 0));
+        remaining.setPaymentTiming(PaymentTimingConstants.ADVANCE);
+
+        ConsultantClientMapping exhaustedNewer = mapping(11L, 1, 0, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 11, 10, 18, 0), null);
+        exhaustedNewer.setUpdatedAt(LocalDateTime.of(2026, 11, 10, 18, 0));
+        exhaustedNewer.setPaymentTiming(PaymentTimingConstants.SAME_DAY_CARD);
+
+        var selected = ScheduleMappingContextResolver.selectLatestActiveWithRemainingSessions(
+                List.of(exhaustedNewer, remaining));
+
+        assertThat(selected).isPresent();
+        assertThat(selected.get().getId()).isEqualTo(32L);
+    }
+
+    @Test
+    @DisplayName("selectLatestActiveWithRemainingSessions — rem=0이면 INSTITUTION_LINK ACTIVE 우선")
+    void selectLatestActiveWithRemainingSessions_prefersInstitutionLinkWhenNoRemaining() {
+        ConsultantClientMapping exhausted = mapping(11L, 1, 0, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 11, 10, 18, 0), null);
+        exhausted.setUpdatedAt(LocalDateTime.of(2026, 11, 10, 18, 0));
+        exhausted.setPaymentTiming(PaymentTimingConstants.ADVANCE);
+
+        ConsultantClientMapping institutionLink = mapping(44L, 0, 0, MappingStatus.ACTIVE,
+                LocalDateTime.of(2026, 11, 5, 9, 0), null);
+        institutionLink.setUpdatedAt(LocalDateTime.of(2026, 11, 5, 9, 0));
+        institutionLink.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+
+        var selected = ScheduleMappingContextResolver.selectLatestActiveWithRemainingSessions(
+                List.of(exhausted, institutionLink));
+
+        assertThat(selected).isPresent();
+        assertThat(selected.get().getId()).isEqualTo(44L);
     }
 
     @Test

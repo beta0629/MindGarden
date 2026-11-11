@@ -98,7 +98,7 @@ export default async function GuidePage() {
             상담 비용
             <ConfirmNeeded />
           </h2>
-          <ProductPriceList products={products} lead={guideCopy.pricesLead} />
+          <ProductPriceList products={products} />
         </div>
       </section>
 

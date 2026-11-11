@@ -64,8 +64,7 @@ export const guideCopy = {
   ] as const,
   disclaimer:
     '이 안내는 일반적인 절차이며, 개인 상황에 따라 달라질 수 있습니다. 의학적 진단이나 처방을 대신하지 않습니다.',
-  pricesLead:
-    '상담 비용은 Clinic-OS에 등록된 안내와 같습니다. 금액은 바뀔 수 있으니, 예약 전에 네이버 플레이스를 확인해 주세요.',
+  pricesLead: '상담 비용은 Clinic-OS에 등록된 안내와 같습니다.',
   offEventLine:
     '예약과 비용 안내는 네이버 플레이스 또는 대표전화로 확인해 주세요.',
 };

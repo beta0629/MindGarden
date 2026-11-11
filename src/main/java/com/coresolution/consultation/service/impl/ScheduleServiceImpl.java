@@ -74,6 +74,7 @@ import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.SalaryLateSessionAutoSyncService;
 import com.coresolution.consultation.service.ConsultationLogExistenceSsot;
+import com.coresolution.consultation.service.ReservationReminderRescheduleService;
 import com.coresolution.consultation.service.ScheduleService;
 import com.coresolution.consultation.service.ScheduleListBatchLoader;
 import com.coresolution.consultation.service.SessionSyncService;
@@ -162,6 +163,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     @Autowired(required = false)
     private ConsultationRecordRepository consultationRecordRepository;
+
+    /**
+     * 일시 변경 후 새 슬롯 D-1 리마인드 대상화 (드래그·수정 모달·상담 재예약 공통 모듈).
+     * 기존 {@code @InjectMocks} 단위 테스트 생성자를 유지하려고 필드 주입한다.
+     */
+    @Autowired(required = false)
+    private ReservationReminderRescheduleService reservationReminderRescheduleService;
 
     /**
      * 옵션 B 결제 의도 코드 — 매핑 {@code payment_timing} 컬럼 값.
@@ -451,6 +459,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 실제 발송은 ScheduleChangeNotificationScheduler 가 fire_at 경과 후 수행.
             tryEnqueueScheduleChangedExternalChannels(saved, previousDate, previousStartTime);
             cancelPendingReservationRemindersIfSlotChanged(saved);
+            if (chronologyChanged && reservationReminderRescheduleService != null) {
+                reservationReminderRescheduleService.onSlotChanged(
+                        tenantId != null ? tenantId : saved.getTenantId(), saved);
+            }
         }
 
         // 날짜·시작 시각이 바뀐 점유 일정만 회차를 다시 매긴다.

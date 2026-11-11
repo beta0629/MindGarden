@@ -26,6 +26,7 @@ public final class ClientReminderSmsFailureReasonLabels {
         map.put(BatchNotificationTemplateCodes.ERROR_CODE_MARKETING_CONSENT_REQUIRED, "동의 필요");
         map.put(BatchNotificationTemplateCodes.ERROR_CODE_DEPLOY_CUTOFF_BEFORE, "발송 제외");
         map.put(BatchNotificationTemplateCodes.ERROR_CODE_MARKETING_NO_FALLBACK, "폴백 없음");
+        map.put(BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT, "테스트 모드(미발송)");
         BY_ERROR_CODE = Collections.unmodifiableMap(map);
     }
 

@@ -6,6 +6,7 @@
 #           프로세스는 comm(실행파일명)만 출력(cmdline/env 미출력). sudo 는 -n(비대화)·읽기 명령만.
 # 추가(읽기 전용): /var/www/homepage 소스에서 DB/consultation 식별자 grep.
 #           .env 는 키 이름만. 비밀번호·토큰·키·DATABASE_URL 값은 마스킹. node_modules/.next 제외.
+# 추가(읽기 전용): 런타임 .env·PM2 env의 DB_NAME 존재/일치만 YES/NO. 값·HOST·USER·PASSWORD 미출력.
 
 name: 🔎 Check prod homepage m-garden (read-only)
 
@@ -162,4 +163,114 @@ jobs:
               -E '(FROM|INTO|UPDATE|JOIN)[[:space:]]+[`'"'"'"]?[A-Za-z0-9_]+([.][A-Za-z0-9_]+)?|prisma\.[A-Za-z0-9_]+|consultation_[A-Za-z0-9_]+|[A-Za-z0-9_]*_homepage[A-Za-z0-9_]*' \
               "$HP" 2>/dev/null | sort -u | maskvals | head -80
             echo; echo "=== DONE (read-only)"
+            exit 0
+
+      - name: Mask prod schema name on runner
+        env:
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        run: |
+          set -euo pipefail
+          if [ -n "${PRODUCTION_DB_NAME:-}" ]; then
+            echo "::add-mask::$PRODUCTION_DB_NAME"
+            echo "prod schema secret present: YES"
+          else
+            echo "prod schema secret present: NO"
+          fi
+
+      - name: Compare runtime DB_NAME (YES/NO only)
+        uses: appleboy/ssh-action@master
+        env:
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 2m
+          envs: PRODUCTION_DB_NAME
+          script: |
+            set +ex
+            echo "=================== runtime DB_NAME compare (values never printed)"
+            report() {
+              src="$1"
+              val="$2"
+              if [ -z "$val" ]; then
+                echo "$src: present=NO match_mindgarden_homepage=NO"
+                return
+              fi
+              if [ "$val" = "mindgarden_homepage" ]; then
+                echo "$src: present=YES match_mindgarden_homepage=YES"
+                return
+              fi
+              if [ -n "${PRODUCTION_DB_NAME:-}" ] && [ "$val" = "$PRODUCTION_DB_NAME" ]; then
+                echo "$src: present=YES match_mindgarden_homepage=NO match_prod_schema=YES"
+              else
+                echo "$src: present=YES match_mindgarden_homepage=NO match_prod_schema=NO"
+              fi
+            }
+            extract_dbname() {
+              sudo -n awk -F= '
+                $1 ~ /^[ \t]*(export[ \t]+)?DB_NAME[ \t]*$/ {
+                  v=$0
+                  sub(/^[^=]*=/, "", v)
+                  gsub(/^[ \t\x27"]+|[ \t\x27"]+$/, "", v)
+                  print v
+                  exit
+                }
+              ' "$1" 2>/dev/null
+            }
+            HP=/var/www/homepage
+            for f in .env .env.production .env.local .env.production.local .env.local.production; do
+              path="$HP/$f"
+              if sudo -n test -f "$path"; then
+                val=$(extract_dbname "$path")
+                report "$path" "$val"
+              else
+                echo "$path: FILE_ABSENT"
+              fi
+            done
+            echo "---- pm2 process env DB_NAME (homepage only; values never printed)"
+            PJ="import json,sys,os
+            prod=os.environ.get('PRODUCTION_DB_NAME') or ''
+            target='mindgarden_homepage'
+            def report(src, val):
+                if not val:
+                    print('%s: present=NO match_mindgarden_homepage=NO' % src)
+                    return
+                if val==target:
+                    print('%s: present=YES match_mindgarden_homepage=YES' % src)
+                    return
+                if prod and val==prod:
+                    print('%s: present=YES match_mindgarden_homepage=NO match_prod_schema=YES' % src)
+                else:
+                    print('%s: present=YES match_mindgarden_homepage=NO match_prod_schema=NO' % src)
+            try:
+                d=json.load(sys.stdin)
+            except Exception:
+                print('pm2 jlist: PARSE_FAIL'); raise SystemExit(0)
+            found=False
+            for x in (d if isinstance(d,list) else []):
+                if x.get('name')!='homepage':
+                    continue
+                found=True
+                env=x.get('pm2_env') or {}
+                val=env.get('DB_NAME')
+                if val is None and isinstance(env.get('env'), dict):
+                    val=env['env'].get('DB_NAME')
+                report('pm2 process env name=homepage', val if val is not None else '')
+            if not found:
+                print('pm2 process env name=homepage: PROCESS_ABSENT')
+            "
+            GOT=0
+            if sudo -n pgrep -u root -f 'PM2 v' >/dev/null 2>&1; then
+              sudo -n bash -lc 'pm2 jlist' 2>/dev/null | python3 -c "$PJ" && GOT=1
+            fi
+            if [ "$GOT" != 1 ] && command -v pm2 >/dev/null 2>&1 && pgrep -u "$(id -un)" -f 'PM2 v' >/dev/null 2>&1; then
+              bash -lc 'pm2 jlist' 2>/dev/null | python3 -c "$PJ" && GOT=1
+            fi
+            if [ "$GOT" != 1 ]; then
+              echo "pm2 process env name=homepage: PROCESS_ABSENT_OR_UNREADABLE"
+            fi
+            echo "=== DONE (dbname compare, read-only)"
             exit 0

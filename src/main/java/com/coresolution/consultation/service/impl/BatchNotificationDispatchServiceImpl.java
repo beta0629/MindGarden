@@ -996,9 +996,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
 
         // 알림톡(시도 시) + SMS 모두 실패 → channel_used 는 마지막 시도 채널(SMS)을 보존하지 않고,
         // 멱등 로그 정책 §11 에 따라 "최종 성공 채널 없음 = ALIMTALK 보존" 으로 기록한다.
-        String errorCode = alimtalkAttempted
-            ? BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED
-            : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED;
+        String errorCode = resolveFailureErrorCode(alimtalkAttempted, smsResult);
         String errorMessage = buildAggregateErrorMessage(alimtalkResult, smsResult, alimtalkAttempted);
         sendLogger.updateResult(logEntry.getId(), false,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
@@ -1010,6 +1008,27 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         return new DispatchOutcome(DispatchOutcome.Status.FAILED,
             BatchNotificationTemplateCodes.CHANNEL_ALIMTALK,
             fallbackToSms, errorCode, errorMessage, logEntry.getId());
+    }
+
+    /**
+     * 알림톡(미시도·실패) + SMS 실패 행의 error_code 를 한 곳에서 정한다.
+     *
+     * <p>마지막으로 실제 시도한 채널인 SMS 의 결과 코드(예: {@code SMS_TEST_MODE_NOT_SENT},
+     * {@code SEND_FAILED})가 우선이다. 알림톡 미시도({@code TEMPLATE_NOT_MAPPED})·실패({@code SEND_FAILED})
+     * 는 SMS 결과에 코드가 없을 때만 쓴다 — 미시도 메모가 SMS 실패 사유를 덮지 않게 한다.
+     *
+     * @param alimtalkAttempted 알림톡 시도 여부
+     * @param smsResult         SMS 발송 결과 (실패)
+     * @return 로그·결과에 기록할 error_code
+     */
+    static String resolveFailureErrorCode(boolean alimtalkAttempted,
+            NotificationDispatchHelper.DispatchResult smsResult) {
+        if (smsResult != null && smsResult.errorCode() != null && !smsResult.errorCode().isBlank()) {
+            return smsResult.errorCode();
+        }
+        return alimtalkAttempted
+            ? BatchNotificationTemplateCodes.ERROR_CODE_SEND_FAILED
+            : BatchNotificationTemplateCodes.ERROR_CODE_TEMPLATE_NOT_MAPPED;
     }
 
     /**

@@ -124,6 +124,8 @@ jobs:
       # DATA_GO_KR_SERVICE_KEY 는 data.go.kr 디코딩된 일반 인증키. 클라이언트 쿼리 인코딩을 한 번만 한다.
       DATA_GO_KR_SERVICE_KEY: ${{ secrets.DATA_GO_KR_SERVICE_KEY }}
       JUSO_CONFM_KEY: ${{ secrets.JUSO_CONFM_KEY }}
+      # 홈페이지 공개 문의 전용 Turnstile. 비어 있으면 배포는 계속·POST 는 fail-closed(503).
+      MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY: ${{ secrets.MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY }}
       # OPS_ADMIN_PASSWORD: 개발 전용 GitHub Secret OPS_ADMIN_PASSWORD_DEV.
       # 런타임 키 이름은 OPS_ADMIN_PASSWORD. application-dev.yml ops.admin.password 는 기본값 없음.
       OPS_ADMIN_PASSWORD: ${{ secrets.OPS_ADMIN_PASSWORD_DEV }}
@@ -700,6 +702,48 @@ jobs:
     # ============================================================================
     # [/ops-portal-migration Phase 1 fix 2026-06-15]
     # ============================================================================
+
+    # 홈페이지 문의 Turnstile. 비면 notice 후 skip(배포 실패 없음). 값은 echo 하지 않는다.
+    - name: 홈페이지 문의 CAPTCHA 키 dev.env 주입
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        envs: MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          if [ -z "${MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY}" ]; then
+            echo "::notice title=홈페이지 문의 CAPTCHA skip::MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY 가 비어 있어 dev.env 갱신을 skip 합니다. 공개 문의 POST 는 fail-closed(503) 됩니다."
+            exit 0
+          fi
+
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 새로 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+
+          update_env() {
+            local key="$1"
+            local value="$2"
+            local escaped_value
+            escaped_value=$(printf '%s' "$value" | sed -e 's/[\\&|]/\\&/g')
+            if sudo grep -qE "^[[:space:]]*${key}=" "$DEV_ENV_FILE" 2>/dev/null; then
+              sudo sed -i "s|^[[:space:]]*${key}=.*|${key}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+            else
+              printf '%s="%s"\n' "$key" "$value" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+            fi
+          }
+
+          update_env "MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY" "$MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY"
+          KEY_LEN=$(printf '%s' "$MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY" | wc -c | tr -d ' ')
+          echo "✅ MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY 주입 완료 (len=${KEY_LEN})"
 
     # 공공데이터 키. 둘 다 비면 skip. 값·URL 은 echo 하지 않고 길이만 남긴다.
     - name: 공공데이터 키 dev.env 주입
@@ -1711,7 +1755,7 @@ jobs:
             echo "::warning::${UNIT} MainPID 조회 실패 (PID='$PID') — 프로세스 env 검증 skip"
           else
             echo "🔍 unit=${UNIT} / PID=${PID} 프로세스 env 일괄 확인"
-            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR TENANT_LOGO_UPLOAD_DIR MINDGARDEN_HQ_TENANT_ID DATA_GO_KR_SERVICE_KEY JUSO_CONFM_KEY REDIS_HOST REDIS_PORT REDIS_PASSWORD"
+            ALL_KEYS="APPLE_CLIENT_ID APPLE_TEAM_ID APPLE_KEY_ID APPLE_PRIVATE_KEY APPLE_REDIRECT_URI APPLE_ALLOWED_AUDIENCES GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET GOOGLE_REDIRECT_URI KAKAO_REGISTERED_URLS NAVER_REGISTERED_URLS GOOGLE_REGISTERED_URLS APPLE_REGISTERED_URLS PROFILE_IMAGE_UPLOAD_DIR SHOP_CATALOG_THUMBNAIL_UPLOAD_DIR TENANT_LOGO_UPLOAD_DIR MINDGARDEN_HQ_TENANT_ID DATA_GO_KR_SERVICE_KEY JUSO_CONFM_KEY MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY REDIS_HOST REDIS_PORT REDIS_PASSWORD"
             MISSING_ENV=0
             CHECKED=0
             for k in $ALL_KEYS; do

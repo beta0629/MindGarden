@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -13,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.config.HomepageInquiryProperties;
 import com.coresolution.consultation.constant.HomepageInquiryConstants;
+import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.request.PublicHomepageInquiryCreateRequest;
 import com.coresolution.consultation.dto.response.AdminHomepageInquiryDetailResponse;
 import com.coresolution.consultation.entity.AuditLog;
@@ -33,6 +35,7 @@ import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.security.CaptchaVerifier;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -233,6 +236,7 @@ class HomepageInquiryServiceImplTest {
     }
 
     @Test
+    @DisplayName("다른 테넌트 상세 조회 → 미발견(격리), 접근 로그 없음")
     void getDetailForAdmin_otherTenant_notFound() {
         when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted("other-tenant", 7L))
                 .thenReturn(Optional.empty());
@@ -245,6 +249,68 @@ class HomepageInquiryServiceImplTest {
     }
 
     @Test
+    @DisplayName("동일 테넌트 어느 ADMIN 이든 상세(복호화) 허용 — 서비스는 tenantId만 검사")
+    void getDetailForAdmin_anyTenantAdmin_returnsDecryptedWithoutRoleMatrix() {
+        HomepageInquiry inquiry = detailInquiry(HomepageInquiryConstants.STATUS_IN_PROGRESS, 11L);
+        when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted(TENANT_ID, 11L))
+                .thenReturn(Optional.of(inquiry));
+        when(encryptionUtil.maskName(anyString())).thenReturn("관*자");
+
+        User firstAdmin = adminViewer(101L, "관리자1");
+        User secondAdmin = adminViewer(202L, "관리자2");
+
+        AdminHomepageInquiryDetailResponse first =
+                service.getDetailForAdmin(TENANT_ID, 11L, firstAdmin, new MockHttpServletRequest());
+        AdminHomepageInquiryDetailResponse second =
+                service.getDetailForAdmin(TENANT_ID, 11L, secondAdmin, new MockHttpServletRequest());
+
+        assertThat(first.getName()).isEqualTo("홍길동");
+        assertThat(first.getPhone()).isEqualTo("01012345678");
+        assertThat(second.getName()).isEqualTo("홍길동");
+        assertThat(second.getPhone()).isEqualTo("01012345678");
+
+        ArgumentCaptor<PersonalDataAccessLog> logCaptor = ArgumentCaptor.forClass(PersonalDataAccessLog.class);
+        verify(personalDataAccessLogRepository, times(2)).save(logCaptor.capture());
+        assertThat(logCaptor.getAllValues())
+                .extracting(PersonalDataAccessLog::getAccessorId)
+                .containsExactly("101", "202");
+        assertThat(logCaptor.getAllValues())
+                .allSatisfy(log -> {
+                    assertThat(log.getTenantId()).isEqualTo(TENANT_ID);
+                    assertThat(log.getDataType()).isEqualTo(HomepageInquiryConstants.ACCESS_LOG_DATA_TYPE);
+                });
+    }
+
+    @Test
+    @DisplayName("동일 테넌트 어느 ADMIN 이든 목록 허용 — 역할 매트릭스 없음")
+    void listForAdmin_anyTenantAdmin_ok() {
+        HomepageInquiry inquiry = HomepageInquiry.builder()
+                .tenantId(TENANT_ID)
+                .name("홍길동")
+                .phone("01012345678")
+                .inquiryType("PERSONAL")
+                .content("문의")
+                .status(HomepageInquiryConstants.STATUS_NEW)
+                .consentVersion("v1")
+                .privacyConsentAt(java.time.LocalDateTime.now())
+                .source(HomepageInquiryConstants.SOURCE_WEB_FORM)
+                .build();
+        inquiry.setId(12L);
+        when(homepageInquiryRepository.findByTenantIdAndOptionalStatus(
+                eq(TENANT_ID), eq(null), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(inquiry)));
+        when(encryptionUtil.maskName("홍길동")).thenReturn("홍*동");
+
+        var pageOne = service.listForAdmin(TENANT_ID, null, 0, 20);
+        var pageTwo = service.listForAdmin(TENANT_ID, null, 0, 20);
+
+        assertThat(pageOne.getContent()).hasSize(1);
+        assertThat(pageTwo.getContent()).hasSize(1);
+        assertThat(pageOne.getContent().get(0).getNameMasked()).isEqualTo("홍*동");
+        assertThat(pageTwo.getContent().get(0).getPhoneMasked()).isEqualTo("010****5678");
+    }
+
+    @Test
     void getDetailForAdmin_whenNew_setsInProgressAndWritesAccessLog() {
         HomepageInquiry inquiry = detailInquiry(HomepageInquiryConstants.STATUS_NEW, 7L);
         when(homepageInquiryRepository.findByTenantIdAndIdAndNotDeleted(TENANT_ID, 7L))
@@ -252,7 +318,7 @@ class HomepageInquiryServiceImplTest {
         when(homepageInquiryRepository.save(any(HomepageInquiry.class))).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
 
-        User viewer = adminViewer();
+        User viewer = adminViewer(99L, "관리자");
         AdminHomepageInquiryDetailResponse detail =
                 service.getDetailForAdmin(TENANT_ID, 7L, viewer, new MockHttpServletRequest());
 
@@ -283,7 +349,8 @@ class HomepageInquiryServiceImplTest {
         when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
 
         AdminHomepageInquiryDetailResponse detail =
-                service.getDetailForAdmin(TENANT_ID, 8L, adminViewer(), new MockHttpServletRequest());
+                service.getDetailForAdmin(TENANT_ID, 8L, adminViewer(99L, "관리자"),
+                        new MockHttpServletRequest());
 
         assertThat(detail.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_IN_PROGRESS);
         verify(homepageInquiryRepository, never()).save(any());
@@ -299,7 +366,8 @@ class HomepageInquiryServiceImplTest {
         when(encryptionUtil.maskName(anyString())).thenReturn("홍*동");
 
         AdminHomepageInquiryDetailResponse detail =
-                service.getDetailForAdmin(TENANT_ID, 9L, adminViewer(), new MockHttpServletRequest());
+                service.getDetailForAdmin(TENANT_ID, 9L, adminViewer(99L, "관리자"),
+                        new MockHttpServletRequest());
 
         assertThat(detail.getStatus()).isEqualTo(HomepageInquiryConstants.STATUS_CONTACTED);
         verify(homepageInquiryRepository, never()).save(any());
@@ -322,11 +390,12 @@ class HomepageInquiryServiceImplTest {
         return inquiry;
     }
 
-    private static User adminViewer() {
+    private static User adminViewer(Long id, String name) {
         User viewer = new User();
-        viewer.setId(99L);
-        viewer.setName("관리자");
+        viewer.setId(id);
+        viewer.setName(name);
         viewer.setTenantId(TENANT_ID);
+        viewer.setRole(UserRole.ADMIN);
         return viewer;
     }
 

@@ -47,7 +47,17 @@ public final class HomepageInquiryConstants {
     /** 관리자 API 기본 경로. */
     public static final String ADMIN_API_BASE = "/api/v1/admin/homepage/inquiries";
 
-    /** 개인정보 접근 로그 dataType. */
+    /**
+     * 개인정보 접근 로그 {@code dataType}.
+     *
+     * <p>보존·파기는 홈페이지 전용 상수가 아니라 공통 설정
+     * {@code mindgarden.lifecycle.cutoff.access-logs-years}(기본 1년) →
+     * {@code LifecycleCutoffProperties#accessLogsYears} /
+     * {@code LifecycleDataCategory#ACCESS_LOGS} 를 따른다.
+     * {@code PersonalDataDestructionService#destroyExpiredAccessLogs} 가
+     * {@code deleteByTenantIdAndAccessTimeBefore}(dataType 필터 없음)로 삭제하므로
+     * {@code HOMEPAGE_INQUIRY} 행도 동일 경로에 포함된다.
+     */
     public static final String ACCESS_LOG_DATA_TYPE = "HOMEPAGE_INQUIRY";
 
     /**

@@ -15,6 +15,7 @@ import java.util.List;
 import com.coresolution.consultation.config.LifecycleCutoffProperties;
 import com.coresolution.consultation.entity.PersonalDataAccessLog;
 import com.coresolution.consultation.lifecycle.BusinessMode;
+import com.coresolution.consultation.lifecycle.LifecycleDataCategory;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
@@ -152,6 +153,34 @@ class PersonalDataDestructionServiceCutoffTest {
         verify(personalDataAccessLogRepository).deleteByTenantIdAndAccessTimeBefore(eq(TENANT_ID), captor.capture());
         LocalDateTime expected = LocalDateTime.now().minusYears(1);
         assertThat(captor.getValue()).isCloseTo(expected, within(5, ChronoUnit.SECONDS));
+    }
+
+    @Test
+    @DisplayName("HOMEPAGE_INQUIRY 접근 로그도 ACCESS_LOGS cutoff 경로로 삭제(dataType 필터 없음)")
+    void homepageInquiryAccessLogsPurgedByAccessLogsCutoffWithoutDataTypeFilter()
+            throws NoSuchMethodException {
+        // mindgarden.lifecycle.cutoff.access-logs-years (default 1) — 365 하드코딩 금지
+        cutoffProperties.setAccessLogsYears(1);
+        when(personalDataAccessLogRepository.deleteByTenantIdAndAccessTimeBefore(eq(TENANT_ID), any()))
+            .thenReturn(3);
+
+        ArgumentCaptor<LocalDateTime> cutoffCaptor = ArgumentCaptor.forClass(LocalDateTime.class);
+
+        int deleted = service.destroyExpiredAccessLogs();
+
+        assertThat(deleted).isEqualTo(3);
+        verify(personalDataAccessLogRepository)
+            .deleteByTenantIdAndAccessTimeBefore(eq(TENANT_ID), cutoffCaptor.capture());
+        assertThat(cutoffCaptor.getValue())
+            .isCloseTo(LocalDateTime.now().minusYears(
+                cutoffProperties.getRetentionYears(LifecycleDataCategory.ACCESS_LOGS)),
+                within(5, ChronoUnit.SECONDS));
+
+        // tenantId + cutoff 만 — dataType 필터 없음 → HOMEPAGE_INQUIRY 포함
+        var method = PersonalDataAccessLogRepository.class.getMethod(
+            "deleteByTenantIdAndAccessTimeBefore", String.class, LocalDateTime.class);
+        assertThat(method.getParameterTypes())
+            .containsExactly(String.class, LocalDateTime.class);
     }
 
     @Test

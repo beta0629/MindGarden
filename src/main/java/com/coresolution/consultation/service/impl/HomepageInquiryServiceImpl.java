@@ -342,6 +342,18 @@ public class HomepageInquiryServiceImpl implements HomepageInquiryService {
                 .build();
     }
 
+    /**
+     * 상세 열람 접근 로그 기록.
+     *
+     * <p>{@code dataType} 은 {@link HomepageInquiryConstants#ACCESS_LOG_DATA_TYPE}.
+     * 보존 기간·파기는 {@code mindgarden.lifecycle.cutoff.access-logs-years}(기본 1) 및
+     * {@code PersonalDataDestructionService#destroyExpiredAccessLogs} 가 담당하며,
+     * 홈페이지 전용 보존 상수·purge 경로는 두지 않는다.
+     *
+     * @param viewer 열람 관리자
+     * @param inquiry 문의
+     * @param request HTTP 요청(IP·세션·UA)
+     */
     private void recordPersonalDataAccess(User viewer, HomepageInquiry inquiry,
             HttpServletRequest request) {
         String accessorId = viewer != null && viewer.getId() != null

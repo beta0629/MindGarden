@@ -7,9 +7,12 @@
 
 import {
   MIN_PAYMENT_AMOUNT,
+  ZERO_PAYMENT_AMOUNT,
   formatPaymentAmountForDisplay,
   isBelowMinPaymentAmount,
-  isBelowMinCardCashDue
+  isBelowMinCardCashDue,
+  isZeroPaymentAmount,
+  isSelectableAssignmentPackagePrice
 } from '../paymentAmountConstants';
 import {
   buildMinCardPaymentAmountMessage,
@@ -40,6 +43,20 @@ describe('paymentAmountConstants', () => {
   test('isBelowMinCardCashDue mirrors isBelowMinPaymentAmount', () => {
     expect(isBelowMinCardCashDue(500)).toBe(true);
     expect(isBelowMinCardCashDue(1000)).toBe(false);
+  });
+
+  test('isZeroPaymentAmount: only exact 0 is true', () => {
+    expect(isZeroPaymentAmount(ZERO_PAYMENT_AMOUNT)).toBe(true);
+    expect(isZeroPaymentAmount('0')).toBe(true);
+    expect(isZeroPaymentAmount(null)).toBe(false);
+    expect(isZeroPaymentAmount(MIN_PAYMENT_AMOUNT)).toBe(false);
+  });
+
+  test('isSelectableAssignmentPackagePrice: 0 is selectable, negative is not', () => {
+    expect(isSelectableAssignmentPackagePrice(ZERO_PAYMENT_AMOUNT)).toBe(true);
+    expect(isSelectableAssignmentPackagePrice(MIN_PAYMENT_AMOUNT)).toBe(true);
+    expect(isSelectableAssignmentPackagePrice(-1)).toBe(false);
+    expect(isSelectableAssignmentPackagePrice(undefined)).toBe(false);
   });
 });
 

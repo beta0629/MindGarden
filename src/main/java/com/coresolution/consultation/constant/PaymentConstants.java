@@ -40,6 +40,33 @@ public final class PaymentConstants {
     // 결제 금액 제한
     public static final long MIN_PAYMENT_AMOUNT = 1000L; // 최소 결제 금액 (원)
     public static final long MAX_PAYMENT_AMOUNT = 10000000L; // 최대 결제 금액 (원)
+    /** 무료(결제 없음) 청구 금액. PG 최소 금액과 별개이며 리터럴 0 산재를 막는다. */
+    public static final long ZERO_PAYMENT_AMOUNT = 0L;
+
+    /**
+     * 금액이 무료 청구(0원)인지. null 은 0이 아니다 (fail-closed).
+     *
+     * @param amount 금액(원)
+     * @return 0원이면 true
+     */
+    public static boolean isZeroPaymentAmount(Long amount) {
+        return amount != null && amount.longValue() == ZERO_PAYMENT_AMOUNT;
+    }
+
+    /**
+     * 패키지 가격이 0원이고 결제 금액이 없거나 0원이면 결제 없는 무료 청구.
+     * 패키지 가격이 null 이거나 0이 아니면 false. 결제 금액이 양수면 false.
+     *
+     * @param packagePrice 패키지 가격
+     * @param paymentAmount 결제 금액 (없으면 null)
+     * @return 무료 청구이면 true
+     */
+    public static boolean isZeroCharge(Long packagePrice, Long paymentAmount) {
+        if (!isZeroPaymentAmount(packagePrice)) {
+            return false;
+        }
+        return paymentAmount == null || isZeroPaymentAmount(paymentAmount);
+    }
     
     // 환불 관련
     public static final int REFUND_DEADLINE_DAYS = 7; // 환불 가능 기간 (일)

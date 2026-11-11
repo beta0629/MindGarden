@@ -447,6 +447,39 @@ public class OnboardingConstants {
 
     public static final String TENANT_COMMON_CODE_GROUP_ROLE = "ROLE";
 
+    /** 홈페이지 공개 문의 유형 공통코드 그룹. */
+    public static final String TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE = "HOMEPAGE_INQUIRY_TYPE";
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_PERSONAL = "PERSONAL";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_PERSONAL = "개인상담";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_PERSONAL = "개인 상담 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_PERSONAL = 0;
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_COUPLE = "COUPLE";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_COUPLE = "부부";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_COUPLE = "부부 상담 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_COUPLE = 10;
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_FAMILY = "FAMILY";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_FAMILY = "가족";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_FAMILY = "가족 상담 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_FAMILY = 20;
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_CHILD = "CHILD";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_CHILD = "아동";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_CHILD = "아동 상담 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_CHILD = 30;
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_ASSESSMENT = "ASSESSMENT";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_ASSESSMENT = "검사";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_ASSESSMENT = "심리검사 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_ASSESSMENT = 40;
+
+    public static final String TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_OTHER = "OTHER";
+    public static final String TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_OTHER = "기타";
+    public static final String TENANT_SEED_DESC_HOMEPAGE_INQUIRY_OTHER = "기타 문의";
+    public static final int TENANT_SEED_SORT_HOMEPAGE_INQUIRY_OTHER = 50;
+
     /** 테넌트 전문가 표시·분류용 공통코드 그룹 (유형별 extra_data.systemAuthorityRole 로 JWT 묶음 결정). */
     public static final String TENANT_COMMON_CODE_GROUP_PROFESSIONAL_PROVIDER_TYPE = "PROFESSIONAL_PROVIDER_TYPE";
 

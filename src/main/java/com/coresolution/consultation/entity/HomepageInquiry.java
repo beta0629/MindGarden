@@ -58,6 +58,15 @@ public class HomepageInquiry extends BaseEntity {
     @Column(name = "status", nullable = false, length = 32)
     private String status;
 
+    @Column(name = "source", length = 32)
+    private String source;
+
+    @Column(name = "source_ref", length = 128)
+    private String sourceRef;
+
+    @Column(name = "legacy_inquiry_type", length = 128)
+    private String legacyInquiryType;
+
     @Column(name = "client_ip_hash", length = 64)
     private String clientIpHash;
 }

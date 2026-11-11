@@ -13,6 +13,12 @@ public final class HomepageInquiryConstants {
     /** 테넌트 공통코드 그룹 — 문의 유형. */
     public static final String CODE_GROUP_INQUIRY_TYPE = "HOMEPAGE_INQUIRY_TYPE";
 
+    /** 접수 출처: 공개 웹 폼. */
+    public static final String SOURCE_WEB_FORM = "WEB_FORM";
+
+    /** 접수 출처: 홈페이지 레거시 임포트(예약). */
+    public static final String SOURCE_HOMEPAGE_LEGACY = "HOMEPAGE_LEGACY";
+
     /** 상태: 신규. */
     public static final String STATUS_NEW = "NEW";
 
@@ -25,6 +31,12 @@ public final class HomepageInquiryConstants {
     /** 허용 상태 집합. */
     public static final Set<String> ALLOWED_STATUSES =
             Set.of(STATUS_NEW, STATUS_IN_PROGRESS, STATUS_CONTACTED);
+
+    /** 푸시 제목(개인정보 미포함). */
+    public static final String PUSH_TITLE_NEW_INQUIRY = "새 문의가 들어왔습니다";
+
+    /** 캡차 미구성 fail-closed 클라이언트 메시지. */
+    public static final String CAPTCHA_UNAVAILABLE_MESSAGE = "일시적으로 문의를 접수할 수 없습니다.";
 
     /** 공개 POST 경로 접두 ({@code /api/v1/public/tenants/{slug}/inquiries}). */
     public static final String PUBLIC_TENANTS_PATH_PREFIX = "/api/v1/public/tenants/";

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.ObjectProvider;
@@ -62,6 +63,8 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_ONBOARDING_CREATE = "_onboarding_create";
         private static final String RATE_KEY_SUFFIX_ONBOARDING_PUBLIC = "_onboarding_public";
         private static final String RATE_KEY_SUFFIX_KR_PUBLIC_DATA = "_kr_public_data";
+        private static final String RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE = "_homepage_inquiry_min";
+        private static final String RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY = "_homepage_inquiry_day";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
@@ -70,12 +73,18 @@ public class RateLimitingConfig {
         private static final String REASON_ONBOARDING_CREATE = "onboarding_create";
         private static final String REASON_ONBOARDING_PUBLIC = "onboarding_public";
         private static final String REASON_KR_PUBLIC_DATA = "kr_public_data";
+        private static final String REASON_HOMEPAGE_INQUIRY = "homepage_inquiry";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
         private static final long LOGIN_COOLDOWN_MINUTES = 0L;
+        private static final long MINUTE_WINDOW_MS = 60_000L;
+        private static final long DAY_WINDOW_MS = 24L * 60L * 60L * 1000L;
+        /** 전역 map 스캔 cleanup 최소 간격 — 매 요청 O(n) 방지 */
+        private static final long CLEANUP_INTERVAL_MS = 60_000L;
 
         private final ObjectProvider<MeterRegistry> meterRegistryProvider;
+        private final AtomicLong lastCleanupEpochMs = new AtomicLong(0L);
 
         /**
          * @param properties 보안·레이트리밋 설정
@@ -94,7 +103,12 @@ public class RateLimitingConfig {
 
             String clientIp = getClientIpAddress(request);
 
-            cleanupOldRequests();
+            // 전역 ConcurrentHashMap 전체 스캔은 매 요청이 아니라 ~60초 스로틀.
+            // 홈페이지 문의 경로에서는 해당 IP 의 day/min 키만 만료 시 즉시 제거한다.
+            maybeCleanupOldRequests();
+            if (isHomepageInquiryPublicRequest(request)) {
+                purgeExpiredHomepageInquiryKeysForIp(clientIp);
+            }
 
             if (shouldApplyRateLimit(request)) {
                 if (!isAllowed(clientIp, request)) {
@@ -114,7 +128,8 @@ public class RateLimitingConfig {
                 || isAccountIntegrationPublicPath(requestPath)
                 || isOnboardingCreatePublicRequest(request)
                 || isOnboardingPublicRateLimitRequest(request)
-                || isKrPublicDataRateLimitRequest(request);
+                || isKrPublicDataRateLimitRequest(request)
+                || isHomepageInquiryPublicRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -162,6 +177,68 @@ public class RateLimitingConfig {
             return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
         }
 
+        /**
+         * 홈페이지 공개 문의: {@code POST} 이고 정규화 URI 가
+         * {@link MindgardenSecurityProperties.RateLimit#getHomepageInquiryPathPrefix()} 로 시작하며
+         * {@code /inquiries} 로 끝날 때. 익명 IP 기준 분·일 버킷을 함께 적용한다.
+         * matrix/semicolon({@code /inquiries;bypass=1}) 우회를 막기 위해 {@link #normalizeRequestPath(String)} 사용.
+         * {@link com.coresolution.consultation.service.impl.AdminTestNotificationRateLimiter} 와는 무관하다.
+         */
+        private boolean isHomepageInquiryPublicRequest(HttpServletRequest request) {
+            if (!"POST".equalsIgnoreCase(request.getMethod())) {
+                return false;
+            }
+            String prefix = properties.getRateLimit().getHomepageInquiryPathPrefix();
+            if (prefix == null || prefix.isEmpty()) {
+                return false;
+            }
+            String path = normalizeRequestPath(request.getRequestURI());
+            if (!path.startsWith(prefix)) {
+                return false;
+            }
+            return path.endsWith("/inquiries")
+                || path.matches("^/api/v1/public/tenants/[^/]+/inquiries$");
+        }
+
+        /**
+         * 레이트리밋 path 매칭용 URI 정규화.
+         * query 제거 후 각 path segment 의 matrix/semicolon({@code ;...}) 을 제거한다.
+         * 예: {@code /api/v1/public/tenants/x/inquiries;bypass=1} → {@code .../inquiries}
+         *
+         * @param uri raw request URI (nullable)
+         * @return 정규화된 path (never null)
+         */
+        static String normalizeRequestPath(String uri) {
+            if (uri == null || uri.isEmpty()) {
+                return "";
+            }
+            String path = uri;
+            int queryIdx = path.indexOf('?');
+            if (queryIdx >= 0) {
+                path = path.substring(0, queryIdx);
+            }
+            if (path.indexOf(';') < 0) {
+                return path;
+            }
+            StringBuilder normalized = new StringBuilder(path.length());
+            int start = 0;
+            for (int i = 0; i <= path.length(); i++) {
+                if (i == path.length() || path.charAt(i) == '/') {
+                    String segment = path.substring(start, i);
+                    int semi = segment.indexOf(';');
+                    if (semi >= 0) {
+                        segment = segment.substring(0, semi);
+                    }
+                    normalized.append(segment);
+                    if (i < path.length()) {
+                        normalized.append('/');
+                    }
+                    start = i + 1;
+                }
+            }
+            return normalized.toString();
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -178,6 +255,9 @@ public class RateLimitingConfig {
             }
             if (isKrPublicDataRateLimitRequest(request)) {
                 return isKrPublicDataAllowed(clientIp);
+            }
+            if (isHomepageInquiryPublicRequest(request)) {
+                return isHomepageInquiryAllowed(clientIp);
             }
             return true;
         }
@@ -231,6 +311,29 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isHomepageInquiryAllowed(String clientIp) {
+            int maxPerMinute = properties.getRateLimit().getHomepageInquiryRequestsPerMinute();
+            int maxPerDay = properties.getRateLimit().getHomepageInquiryRequestsPerDay();
+            return isWindowAllowed(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE, maxPerMinute, MINUTE_WINDOW_MS)
+                && isWindowAllowed(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY, maxPerDay, DAY_WINDOW_MS);
+        }
+
+        /**
+         * 고정 윈도우: 최초 요청 시각 기준 {@code windowMs} 경과 시 버킷을 폐기하고 허용한다.
+         */
+        private boolean isWindowAllowed(String key, int max, long windowMs) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                return true;
+            }
+            long now = System.currentTimeMillis();
+            if ((now - info.getWindowStartTime()) > windowMs) {
+                requestCounts.remove(key);
+                return true;
+            }
+            return info.getCount() < max;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -277,15 +380,65 @@ public class RateLimitingConfig {
                 } else {
                     publicDataInfo.increment();
                 }
+            } else if (isHomepageInquiryPublicRequest(request)) {
+                incrementKeyedCount(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE);
+                incrementKeyedCount(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY);
             }
+        }
+
+        private void incrementKeyedCount(String key) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                requestCounts.put(key, new RequestInfo());
+            } else {
+                info.increment();
+            }
+        }
+
+        /**
+         * 전역 map 만료 스캔을 {@link #CLEANUP_INTERVAL_MS} 간격으로만 수행한다.
+         * 매 HTTP 요청마다 O(n) 스캔하면 unique-IP junk POST 로 day 키가 쌓일 때 전 API 가 비용 부담한다.
+         */
+        private void maybeCleanupOldRequests() {
+            long now = System.currentTimeMillis();
+            long last = lastCleanupEpochMs.get();
+            if (now - last < CLEANUP_INTERVAL_MS) {
+                return;
+            }
+            if (!lastCleanupEpochMs.compareAndSet(last, now)) {
+                return;
+            }
+            cleanupOldRequests();
         }
 
         private void cleanupOldRequests() {
             long currentTime = System.currentTimeMillis();
-            long expireTime = 60 * 1000L;
 
-            requestCounts.entrySet().removeIf(entry ->
-                (currentTime - entry.getValue().getLastRequestTime()) > expireTime);
+            requestCounts.entrySet().removeIf(entry -> {
+                long windowMs = entry.getKey().endsWith(RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY)
+                    ? DAY_WINDOW_MS
+                    : MINUTE_WINDOW_MS;
+                return (currentTime - entry.getValue().getLastRequestTime()) > windowMs;
+            });
+        }
+
+        /**
+         * 홈페이지 문의 요청 시 해당 IP 의 min/day 버킷만 만료됐으면 즉시 제거한다.
+         */
+        private void purgeExpiredHomepageInquiryKeysForIp(String clientIp) {
+            long now = System.currentTimeMillis();
+            purgeKeyIfExpired(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE, MINUTE_WINDOW_MS, now);
+            purgeKeyIfExpired(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_DAY, DAY_WINDOW_MS, now);
+        }
+
+        private void purgeKeyIfExpired(String key, long windowMs, long now) {
+            RequestInfo info = requestCounts.get(key);
+            if (info == null) {
+                return;
+            }
+            if ((now - info.getLastRequestTime()) > windowMs) {
+                requestCounts.remove(key, info);
+            }
         }
 
         private void handleRateLimitExceeded(HttpServletResponse response, HttpServletRequest request)
@@ -318,6 +471,14 @@ public class RateLimitingConfig {
             } else if (isKrPublicDataRateLimitRequest(request)) {
                 errorResponse.put("message", "공공데이터 조회 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
+            } else if (isHomepageInquiryPublicRequest(request)) {
+                errorResponse.put("message", "문의 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                String clientIp = getClientIpAddress(request);
+                RequestInfo minuteInfo =
+                    requestCounts.get(clientIp + RATE_KEY_SUFFIX_HOMEPAGE_INQUIRY_MINUTE);
+                int maxPerMinute = properties.getRateLimit().getHomepageInquiryRequestsPerMinute();
+                boolean minuteExceeded = minuteInfo != null && minuteInfo.getCount() >= maxPerMinute;
+                errorResponse.put("retryAfter", minuteExceeded ? 60 : 3600);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
@@ -364,6 +525,9 @@ public class RateLimitingConfig {
             if (isKrPublicDataRateLimitRequest(request)) {
                 return REASON_KR_PUBLIC_DATA;
             }
+            if (isHomepageInquiryPublicRequest(request)) {
+                return REASON_HOMEPAGE_INQUIRY;
+            }
             return REASON_UNKNOWN;
         }
 
@@ -378,10 +542,13 @@ public class RateLimitingConfig {
     private static class RequestInfo {
         private int count;
         private long lastRequestTime;
+        private final long windowStartTime;
 
         RequestInfo() {
+            long now = System.currentTimeMillis();
             this.count = 1;
-            this.lastRequestTime = System.currentTimeMillis();
+            this.lastRequestTime = now;
+            this.windowStartTime = now;
         }
 
         void increment() {
@@ -395,6 +562,10 @@ public class RateLimitingConfig {
 
         long getLastRequestTime() {
             return lastRequestTime;
+        }
+
+        long getWindowStartTime() {
+            return windowStartTime;
         }
     }
 }

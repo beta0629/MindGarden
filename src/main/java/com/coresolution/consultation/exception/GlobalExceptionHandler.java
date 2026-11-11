@@ -73,6 +73,22 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * ServiceUnavailableException 처리 — HTTP 503.
+     */
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<ErrorResponse> handleServiceUnavailable(
+            ServiceUnavailableException e, HttpServletRequest request) {
+        log.warn("Service unavailable: {}", e.getMessage());
+        ErrorResponse error = ErrorResponse.of(
+                clientSafeMessage(e.getMessage(), "일시적으로 서비스를 이용할 수 없습니다."),
+                "SERVICE_UNAVAILABLE",
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                request.getRequestURI(),
+                request.getMethod());
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(error);
+    }
+
+    /**
      * UnauthorizedException 처리 (인증 필요)
      * HTTP 401 Unauthorized
      */

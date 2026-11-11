@@ -2313,6 +2313,9 @@ public class OnboardingServiceImpl implements OnboardingService {
                     OnboardingConstants.TENANT_SEED_DESC_MS_SESSIONS_EXHAUSTED, null,
                     OnboardingConstants.TENANT_SEED_SORT_MAPPING_STATUS_7, createdByValue);
 
+            // 홈페이지 문의 유형 6종
+            addHomepageInquiryTypeSeeds(codesToInsert, existingCodeKeys, tenantId, createdByValue);
+
             // 전문가 유형 기본 시드 10종. 시스템 권한은 CONSULTANT, 전문화는 code_value.
             addProfessionalProviderTypeSeeds(codesToInsert, existingCodeKeys, tenantId, createdByValue);
 
@@ -2341,6 +2344,55 @@ public class OnboardingServiceImpl implements OnboardingService {
                     e.getMessage(), e);
             throw e;
         }
+    }
+
+    /**
+     * 홈페이지 공개 문의 유형 시드 6종.
+     */
+    private void addHomepageInquiryTypeSeeds(List<CommonCode> codesToInsert, Set<String> existingCodeKeys,
+            String tenantId, String createdByValue) {
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_PERSONAL,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_PERSONAL,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_PERSONAL,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_PERSONAL,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_PERSONAL, createdByValue);
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_COUPLE,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_COUPLE,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_COUPLE,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_COUPLE,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_COUPLE, createdByValue);
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_FAMILY,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_FAMILY,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_FAMILY,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_FAMILY,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_FAMILY, createdByValue);
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_CHILD,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_CHILD,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_CHILD,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_CHILD,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_CHILD, createdByValue);
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_ASSESSMENT,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_ASSESSMENT,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_ASSESSMENT,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_ASSESSMENT,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_ASSESSMENT, createdByValue);
+        addCodeIfNotExists(codesToInsert, existingCodeKeys, tenantId,
+                OnboardingConstants.TENANT_COMMON_CODE_GROUP_HOMEPAGE_INQUIRY_TYPE,
+                OnboardingConstants.TENANT_SEED_CODE_VALUE_HOMEPAGE_INQUIRY_OTHER,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_OTHER,
+                OnboardingConstants.TENANT_SEED_LABEL_HOMEPAGE_INQUIRY_OTHER,
+                OnboardingConstants.TENANT_SEED_DESC_HOMEPAGE_INQUIRY_OTHER,
+                null, OnboardingConstants.TENANT_SEED_SORT_HOMEPAGE_INQUIRY_OTHER, createdByValue);
     }
 
     /**

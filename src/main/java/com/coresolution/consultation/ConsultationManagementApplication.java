@@ -61,6 +61,7 @@ import com.coresolution.core.config.KiccEasypayProperties;
 @EnableScheduling
 @EnableConfigurationProperties({
         MindgardenSecurityProperties.class,
+        com.coresolution.consultation.config.HomepageInquiryProperties.class,
         KiccEasypayProperties.class,
         ExpoPushProperties.class,
         MobileAppVersionProperties.class,

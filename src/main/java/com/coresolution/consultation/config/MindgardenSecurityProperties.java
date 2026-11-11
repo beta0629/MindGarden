@@ -123,6 +123,22 @@ public class MindgardenSecurityProperties {
          * 비로그인 공공데이터 프록시 URI 접두.
          */
         private String krPublicDataPathPrefix = "/api/v1/public/kr-public-data/";
+
+        /**
+         * 홈페이지 공개 문의 POST({@code /api/v1/public/tenants/{slug}/inquiries}) IP당 분당 허용 수.
+         */
+        private int homepageInquiryRequestsPerMinute = 5;
+
+        /**
+         * 홈페이지 공개 문의 POST IP당 일(24h 슬라이딩) 허용 수.
+         */
+        private int homepageInquiryRequestsPerDay = 30;
+
+        /**
+         * 홈페이지 공개 테넌트 API URI 접두.
+         * {@code POST} 이고 URI 가 {@code .../inquiries} 로 끝날 때만 문의 버킷을 적용한다.
+         */
+        private String homepageInquiryPathPrefix = "/api/v1/public/tenants/";
     }
 
     @Data

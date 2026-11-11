@@ -72,4 +72,11 @@ public final class MobilePushCanonicalTypes {
      * {@code MobilePushDispatchService.dispatchAutoCancellation(...)} 1종만 사용한다.
      */
     public static final String REFUND_AUTO_CANCEL = "refund_auto_cancel";
+
+    /**
+     * 홈페이지 공개 문의 신규 접수 — 센터 ADMIN 디바이스 전용 경로
+     * ({@code MobilePushDispatchService#dispatchHomepageInquiry}).
+     * fanout 화이트리스트와 분리한다.
+     */
+    public static final String HOMEPAGE_INQUIRY = "HOMEPAGE_INQUIRY";
 }

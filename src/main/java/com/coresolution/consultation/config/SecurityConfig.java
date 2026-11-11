@@ -56,6 +56,9 @@ public class SecurityConfig {
     private final SessionCookieRenewalFilter sessionCookieRenewalFilter;
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private HomepageInquiryProperties homepageInquiryProperties;
     
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -159,6 +162,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 API (문의 접수 등)
+                    .requestMatchers("/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -305,6 +310,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 API (문의 접수 등)
+                    .requestMatchers("/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -409,6 +416,7 @@ public class SecurityConfig {
             new AntPathRequestMatcher(AccountIntegrationApiPaths.BASE + "/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
+            new AntPathRequestMatcher("/api/v1/public/tenants/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/ops/auth/**"),
             new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
@@ -466,7 +474,7 @@ public class SecurityConfig {
             // TenantHostSubdomainUtil 로 비운영 Origin 을 checkOrigin 단계에서 거부한다.
             // (Spring OriginPattern 만으로는 부정 매칭이 어렵다.)
             configuration = createProductionCorsConfiguration();
-            configuration.setAllowedOriginPatterns(Arrays.asList(
+            List<String> prodOriginPatterns = new ArrayList<>(Arrays.asList(
                 "https://*.core-solution.co.kr",  // 서브도메인 패턴 (비운영은 checkOrigin 에서 제외)
                 "http://*.core-solution.co.kr",
                 "https://core-solution.co.kr",    // 기본 도메인도 명시적으로 허용
@@ -480,6 +488,9 @@ public class SecurityConfig {
                 "https://ops.e-trinity.co.kr",
                 "http://ops.e-trinity.co.kr"
             ));
+            // 홈페이지 공개 Origin 은 전역 /** 에 넣지 않는다 — path-scoped 등록만 (credentialed leak 방지)
+            mergeCorsAllowedOriginsFromEnv(prodOriginPatterns);
+            configuration.setAllowedOriginPatterns(prodOriginPatterns);
         } else if (isDev) {
             log.info("🌐 CORS 설정: 개발 환경 - 개발 도메인 + 서브도메인 + localhost 허용");
             // 개발: 실제 개발 도메인들 + 서브도메인 패턴 + localhost
@@ -505,6 +516,7 @@ public class SecurityConfig {
             // — CORS_ALLOWED_ORIGINS 가 비어 있어도 별칭 호스트를 exact origin 으로 합류.
             // Spring Environment 프로퍼티를 직접 읽어 TenantHostAliasesInitializer PostConstruct 레이스를 피한다.
             mergeTenantHostAliasOriginsFromEnvironment(devOriginPatterns);
+            // 홈페이지 공개 Origin 은 전역 /** 에 넣지 않는다 — path-scoped 등록만 (credentialed leak 방지)
             // 선택적 추가 exact origin (CORS_ALLOWED_ORIGINS)
             mergeCorsAllowedOriginsFromEnv(devOriginPatterns);
             configuration.setAllowedOriginPatterns(devOriginPatterns);
@@ -512,14 +524,15 @@ public class SecurityConfig {
         } else {
             // 로컬: localhost 명시적으로 허용 (와일드카드와 credentials 충돌 방지)
             log.info("🌐 CORS 설정: 로컬 환경 - localhost 허용");
-            List<String> allowedOrigins = Arrays.asList(
+            List<String> allowedOrigins = new ArrayList<>(Arrays.asList(
                 "http://localhost:3000",
                 "http://localhost:3001",
                 "http://localhost:4300",  // Ops Portal 프론트엔드
                 "http://127.0.0.1:3000",
                 "http://127.0.0.1:3001",
                 "http://127.0.0.1:4300"   // Ops Portal 프론트엔드
-            );
+            ));
+            // 홈페이지 공개 Origin 은 전역 /** 에 넣지 않는다 — path-scoped 등록만 (credentialed leak 방지)
             configuration.setAllowedOrigins(allowedOrigins);
             log.info("🌐 CORS 허용 Origins: {}", allowedOrigins);
         }
@@ -597,10 +610,43 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/v1/auth/oauth2/callback", callbackConfig);
         log.info("✅ OAuth callback CORS 우회 등록: /api/(v1/)?auth/*/callback, /api/v1/auth/oauth(2)?/callback");
 
+        // 홈페이지 공개 문의 CORS — /api/v1/public/tenants/** 전용 (credentials=false).
+        // m-garden / www / staging 을 전역 /**(allowCredentials=true) 에 넣으면
+        // 홈 Origin 이 Clinic-OS 세션 쿠키를 credentialed 요청으로 보낼 수 있으므로 path-scoped 만 허용한다.
+        // OAuth callback 과 같이 구체 path 를 /** 보다 먼저 등록한다.
+        CorsConfiguration homepagePublicConfig = createHomepagePublicCorsConfiguration();
+        source.registerCorsConfiguration("/api/v1/public/tenants/**", homepagePublicConfig);
+        log.info("✅ 홈페이지 공개 CORS 등록: /api/v1/public/tenants/** origins={}, allowCredentials=false",
+                homepagePublicConfig.getAllowedOrigins());
+
         source.registerCorsConfiguration("/**", configuration);
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
+    }
+
+    /**
+     * 공개 홈페이지 문의 path 전용 CORS.
+     * exact origin(m-garden·www·staging + {@code HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS})만 허용하고
+     * 세션 쿠키 동봉을 막는다({@code allowCredentials=false}).
+     *
+     * @return path-scoped CorsConfiguration
+     */
+    private CorsConfiguration createHomepagePublicCorsConfiguration() {
+        CorsConfiguration homepagePublicConfig = new CorsConfiguration();
+        List<String> homepageOrigins = new ArrayList<>();
+        mergeHomepagePublicCorsOrigins(homepageOrigins);
+        homepagePublicConfig.setAllowedOrigins(homepageOrigins);
+        homepagePublicConfig.setAllowedMethods(Arrays.asList("POST", "OPTIONS"));
+        homepagePublicConfig.setAllowedHeaders(Arrays.asList(
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers"));
+        homepagePublicConfig.setAllowCredentials(false);
+        homepagePublicConfig.setMaxAge(3600L);
+        return homepagePublicConfig;
     }
 
     /**
@@ -692,6 +738,55 @@ public class SecurityConfig {
         String raw = environment.getProperty("CORS_ALLOWED_ORIGINS");
         if (raw == null || raw.isBlank()) {
             raw = System.getenv("CORS_ALLOWED_ORIGINS");
+        }
+        if (raw == null || raw.isBlank()) {
+            return;
+        }
+        for (String part : raw.split(",")) {
+            if (part == null) {
+                continue;
+            }
+            String origin = part.trim();
+            if (origin.isEmpty() || target.contains(origin)) {
+                continue;
+            }
+            target.add(origin);
+        }
+    }
+
+    /**
+     * 공개 홈페이지 문의 path CORS 전용 origin 목록.
+     * {@code mindgarden.homepage-inquiry.cors.allowed-origins} 기본값(m-garden·www·staging)과
+     * {@code HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS} 를 합친다.
+     * 전역 {@code /**} 화이트리스트에는 사용하지 않는다.
+     *
+     * @param target 허용 origin 목록 (변경됨)
+     */
+    private void mergeHomepagePublicCorsOrigins(List<String> target) {
+        if (target == null) {
+            return;
+        }
+        List<String> fromProps;
+        if (homepageInquiryProperties != null
+                && homepageInquiryProperties.getCors() != null
+                && homepageInquiryProperties.getCors().getAllowedOrigins() != null) {
+            fromProps = homepageInquiryProperties.getCors().getAllowedOrigins();
+        } else {
+            // 단위 테스트 등 빈 미주입 시에도 path-scoped 기본 3종을 유지
+            fromProps = new HomepageInquiryProperties().getCors().getAllowedOrigins();
+        }
+        for (String origin : fromProps) {
+            if (origin == null) {
+                continue;
+            }
+            String trimmed = origin.trim();
+            if (!trimmed.isEmpty() && !target.contains(trimmed)) {
+                target.add(trimmed);
+            }
+        }
+        String raw = environment.getProperty("HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS");
+        if (raw == null || raw.isBlank()) {
+            raw = System.getenv("HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS");
         }
         if (raw == null || raw.isBlank()) {
             return;

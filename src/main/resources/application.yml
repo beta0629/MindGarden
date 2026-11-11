@@ -275,6 +275,10 @@ mindgarden:
       onboarding-public-requests-per-minute: 30
       kr-public-data-path-prefix: /api/v1/public/kr-public-data/
       kr-public-data-requests-per-minute: 20
+      # 홈페이지 공개 문의 POST /api/v1/public/tenants/{slug}/inquiries — 익명 IP 분·일 한도
+      homepage-inquiry-path-prefix: /api/v1/public/tenants/
+      homepage-inquiry-requests-per-minute: ${HOMEPAGE_INQUIRY_RATE_PER_MINUTE:5}
+      homepage-inquiry-requests-per-day: ${HOMEPAGE_INQUIRY_RATE_PER_DAY:30}
     # 클라이언트 IP. 바로 앞 TCP 피어가 cidrs 에 있을 때만 header 를 읽는다.
     # X-Forwarded-For 는 클라이언트가 넣을 수 있어 여기 두지 않는다.
     # server.forward-headers-strategy 는 켜지 않는다. 켜면 원격 주소가 X-Forwarded-For 로 바뀐다.
@@ -310,6 +314,22 @@ mindgarden:
             - "2405:8100::/32"
             - "2a06:98c0::/29"
             - "2c0f:f248::/32"
+  # 센터 홈페이지 공개 문의 접수 (로그인 captcha 와 분리)
+  homepage-inquiry:
+    purge-enabled: false
+    purge-after-contacted-days: ${HOMEPAGE_INQUIRY_PURGE_AFTER_CONTACTED_DAYS:365}
+    notification-channels: ${HOMEPAGE_INQUIRY_NOTIFICATION_CHANNELS:badge,push}
+    captcha:
+      enabled: ${MINDGARDEN_HOMEPAGE_CAPTCHA_ENABLED:true}
+      secret-key: ${MINDGARDEN_HOMEPAGE_CAPTCHA_SECRET_KEY:}
+    cors:
+      # /api/v1/public/tenants/** path-scoped CORS 전용(credentials=false).
+      # HOMEPAGE_PUBLIC_CORS_ALLOWED_ORIGINS(콤마 구분)로 SecurityConfig 가 추가 병합.
+      # 전역 /**(allowCredentials=true) 에는 합치지 않는다.
+      allowed-origins:
+        - https://m-garden.co.kr
+        - https://www.m-garden.co.kr
+        - https://staging.m-garden.co.kr
   kr-public-data:
     zone-id: Asia/Seoul
     min-opening-year: 1900

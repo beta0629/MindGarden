@@ -6,6 +6,7 @@ import com.coresolution.core.security.TurnstileCaptchaVerifier;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,11 +23,15 @@ public class CaptchaConfiguration {
     /**
      * 기본 CAPTCHA 검증기. 비활성화이거나 시크릿이 비어 있으면 no-op.
      *
+     * <p>{@code @Primary}: 홈페이지 문의 전용 {@code homepageInquiryCaptchaVerifier} 와 공존한다.
+     * 온보딩·로그인 등 기본 주입은 이 빈을 사용한다.
+     *
      * @param securityProperties 보안 설정
      * @param restTemplate 공용 HTTP 클라이언트
      * @return 검증기 구현
      */
     @Bean
+    @Primary
     public CaptchaVerifier captchaVerifier(
             MindgardenSecurityProperties securityProperties,
             RestTemplate restTemplate) {

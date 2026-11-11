@@ -291,6 +291,19 @@ public interface MobilePushDispatchService {
             String otpToken);
 
     /**
+     * 홈페이지 신규 문의 푸시 — 테넌트 {@code ADMIN} 디바이스 대상.
+     *
+     * <p>{@link com.coresolution.consultation.constant.MobilePushAllowedEvents} fanout 과 분리된
+     * 전용 경로. data.type={@link com.coresolution.consultation.constant.MobilePushCanonicalTypes#HOMEPAGE_INQUIRY}.
+     * 제목은 「새 문의가 들어왔습니다」, 본문은 유형 라벨만. 개인정보 금지. 멱등 키는 inquiryId.
+     *
+     * @param tenantId         테넌트 ID
+     * @param inquiryId        문의 PK
+     * @param inquiryTypeLabel 문의 유형 표시명(PII 아님)
+     */
+    void dispatchHomepageInquiry(String tenantId, Long inquiryId, String inquiryTypeLabel);
+
+    /**
      * 후방 호환 alias — {@code otpToken} 없이 호출. 기존 호출자(테스트 mocks 등) 가 시그니처를
      * 변경하지 않아도 컴파일 가능하도록 default 메서드로 제공한다.
      *

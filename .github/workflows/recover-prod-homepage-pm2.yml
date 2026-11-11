@@ -37,9 +37,11 @@ jobs:
             set +e
             set +u
             echo "start: $(date '+%F %T %Z')"
-            [ -f /etc/profile ] && . /etc/profile >/dev/null 2>&1
-            [ -s "$HOME/.nvm/nvm.sh" ] && . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
-            export PATH="$PATH:/usr/local/bin:/usr/bin"
+            export PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin:$PATH"
+            for d in /root/.nvm/versions/node/*/bin "$HOME"/.nvm/versions/node/*/bin /usr/lib/node_modules/.bin; do [ -d "$d" ] && PATH="$PATH:$d"; done
+            export PATH
+            echo "pm2 path: $(command -v pm2 || echo NONE) | node path: $(command -v node || echo NONE)"
+            command -v pm2 >/dev/null 2>&1 || ls /usr/lib/node_modules/.bin /root/.nvm 2>/dev/null | head -20
             mask() { awk '{ l=tolower($0); if (l ~ /(key|auth|password|passwd|token|secret|credential|dsn)/) { print "***MASKED_LINE***" } else print }'; }
             sec() { echo; echo "=================== $1"; }
             HP=/var/www/homepage

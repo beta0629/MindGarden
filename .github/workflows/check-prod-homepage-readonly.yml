@@ -1,0 +1,75 @@
+# P0 INCIDENT — 센터 홈페이지 m-garden.co.kr(www) Cloudflare 502 원인 확인 (순수 읽기 전용)
+# 트리거: workflow_dispatch 전용. 머지 후 수동 dispatch. push/PR 트리거 없음.
+# SSH 시크릿 패턴: check-redis-env-presence(check-prod) / ops-health-snapshot 과 동일.
+# 금지: 재시작·설정 변경·파일 쓰기·heal. 서버에 파일 업로드 없음(인라인 스크립트).
+# 출력 규칙: nginx 설정은 m-garden 매칭 파일만, key/auth/password/token/secret 라인 값 마스킹.
+#           프로세스는 comm(실행파일명)만 출력(cmdline/env 미출력). sudo 는 -n(비대화)·읽기 명령만.
+
+name: 🔎 Check prod homepage m-garden (read-only)
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: check-prod-homepage-readonly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  check-prod-homepage:
+    name: production host m-garden homepage (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Read-only homepage diagnostics (production)
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 4m
+          script_stop: false
+          script: |
+            set +e
+            mask() { awk '{ l=tolower($0); if (l ~ /(key|auth|password|passwd|token|secret|credential)/) { match($0,/^[[:space:]]*[^[:space:]]+/); print substr($0,RSTART,RLENGTH) " ***MASKED***;" } else print }'; }
+            sec() { echo; echo "=================== $1"; }
+            sec "date / uptime / boot"; date; uptime; who -b
+            sec "df -h"; df -h
+            sec "free -m"; free -m
+            sec "nginx files matching m-garden"
+            FILES=$(sudo -n grep -rlE 'm-garden' /etc/nginx 2>/dev/null | sort -u)
+            echo "${FILES:-NONE}"
+            for f in $FILES; do echo "----- $f"; sudo -n cat "$f" 2>/dev/null | grep -vE '^[[:space:]]*#' | grep -vE '^[[:space:]]*$' | mask; done
+            sec "nginx -t"; sudo -n nginx -t 2>&1
+            sec "systemctl status nginx"; systemctl --no-pager status nginx 2>&1 | head -25
+            sec "upstreams from m-garden files"
+            UP=$(for f in $FILES; do sudo -n grep -hoE '(proxy_pass|fastcgi_pass|uwsgi_pass)[[:space:]]+[^;]+|^[[:space:]]*server[[:space:]]+[0-9a-zA-Z_.\-]+:[0-9]+' "$f"; done | sort -u)
+            echo "${UP:-NONE}"
+            PORTS=$(echo "$UP" | grep -oE ':[0-9]+' | tr -d ':' | sort -u)
+            sec "ss -ltnp"; sudo -n ss -ltnp 2>/dev/null || ss -ltn
+            for p in $PORTS; do sec "curl 127.0.0.1:$p"; curl -sS -m 8 -o /dev/null -w "http_code=%{http_code} time=%{time_total}\n" "http://127.0.0.1:$p/" 2>&1; curl -sSI -m 8 "http://127.0.0.1:$p/" 2>&1 | head -12; done
+            for h in m-garden.co.kr www.m-garden.co.kr; do
+              sec "local curl https://$h (resolve 127.0.0.1)"; curl -skSI -m 10 --resolve "$h:443:127.0.0.1" "https://$h/" 2>&1 | head -12
+              sec "local curl http://$h (resolve 127.0.0.1)"; curl -sSI -m 10 --resolve "$h:80:127.0.0.1" "http://$h/" 2>&1 | head -12
+            done
+            sec "systemd units (garden|home|php|wordpress|node|pm2|docker|apache|httpd)"
+            systemctl list-units --all --no-pager --no-legend 2>/dev/null | grep -iE 'garden|home|php|wordpress|node|pm2|docker|apache|httpd'
+            sec "failed units"; systemctl --failed --no-pager --no-legend 2>/dev/null
+            sec "processes (comm only)"; ps -eo pid,user,etimes,pcpu,pmem,comm --sort=-pmem 2>/dev/null | grep -iE 'PID|node|php|pm2|nginx|docker|containerd|python|java|httpd|apache|mysql|maria' | head -40
+            sec "docker ps -a"; if command -v docker >/dev/null 2>&1; then sudo -n docker ps -a --format '{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}' 2>&1; else echo NO_DOCKER; fi
+            sec "pm2 homes (no pm2 cli invoked)"; ls -d /root/.pm2 /home/*/.pm2 2>/dev/null; for d in $(sudo -n ls -d /root/.pm2 /home/*/.pm2 2>/dev/null); do sudo -n ls -la "$d/logs" 2>/dev/null | tail -10; sudo -n bash -c "tail -n 30 $d/pm2.log" 2>/dev/null | mask; done
+            sec "nginx logs list"; sudo -n ls -la /var/log/nginx/ 2>/dev/null | head -40
+            sec "nginx error.log: m-garden (last 60)"; sudo -n tail -n 5000 /var/log/nginx/error.log 2>/dev/null | grep -i 'm-garden' | tail -n 60
+            sec "nginx error.log: last 80 lines"; sudo -n tail -n 80 /var/log/nginx/error.log 2>/dev/null
+            for lf in $(sudo -n ls /var/log/nginx/ 2>/dev/null | grep -iE 'm-garden|garden|home' | grep -vE '\.gz$'); do sec "tail /var/log/nginx/$lf"; sudo -n tail -n 40 "/var/log/nginx/$lf" 2>/dev/null | cut -c1-300; done
+            sec "journalctl nginx (since 10:30 today)"; sudo -n journalctl -u nginx --since "today 10:30" --no-pager 2>/dev/null | tail -n 60
+            for u in $(systemctl list-units --all --no-pager --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -iE 'garden|home|php|wordpress|node|pm2|apache|httpd' | grep -viE '^mindgarden'); do sec "journalctl $u (last 40)"; sudo -n journalctl -u "$u" --no-pager -n 40 2>/dev/null | mask | cut -c1-300; done
+            sec "kernel OOM since yesterday"; sudo -n journalctl -k --since yesterday --no-pager 2>/dev/null | grep -iE 'oom|killed process' | tail -n 20
+            sec "certs from m-garden files"
+            for c in $(for f in $FILES; do sudo -n grep -hoE '^[[:space:]]*ssl_certificate[[:space:]]+[^;]+' "$f"; done | awk '{print $2}' | sort -u); do echo "-- $c"; sudo -n openssl x509 -noout -subject -enddate -in "$c" 2>&1; done
+            echo; echo "=== DONE (read-only)"
+            exit 0

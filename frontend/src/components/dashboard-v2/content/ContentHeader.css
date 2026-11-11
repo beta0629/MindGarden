@@ -39,7 +39,7 @@
 .mg-v2-content-header__left {
   display: flex;
   flex-direction: column;
-  gap: var(--mg-v2-space-1);
+  gap: var(--mg-v2-space-3);
   min-width: 0;
   flex: 1 1 auto;
 }

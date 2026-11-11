@@ -1,0 +1,64 @@
+package com.coresolution.consultation.constant;
+
+import java.util.Set;
+
+/**
+ * 홈페이지 공개 문의 상수 SSOT.
+ *
+ * @author CoreSolution
+ * @since 2026-11-11
+ */
+public final class HomepageInquiryConstants {
+
+    /** 테넌트 공통코드 그룹 — 문의 유형. */
+    public static final String CODE_GROUP_INQUIRY_TYPE = "HOMEPAGE_INQUIRY_TYPE";
+
+    /** 상태: 신규. */
+    public static final String STATUS_NEW = "NEW";
+
+    /** 상태: 처리중. */
+    public static final String STATUS_IN_PROGRESS = "IN_PROGRESS";
+
+    /** 상태: 연락완료. */
+    public static final String STATUS_CONTACTED = "CONTACTED";
+
+    /** 허용 상태 집합. */
+    public static final Set<String> ALLOWED_STATUSES =
+            Set.of(STATUS_NEW, STATUS_IN_PROGRESS, STATUS_CONTACTED);
+
+    /** 공개 POST 경로 접두 ({@code /api/v1/public/tenants/{slug}/inquiries}). */
+    public static final String PUBLIC_TENANTS_PATH_PREFIX = "/api/v1/public/tenants/";
+
+    /** 공개 문의 POST 경로 접미. */
+    public static final String PUBLIC_INQUIRIES_PATH_SUFFIX = "/inquiries";
+
+    /** 관리자 API 기본 경로. */
+    public static final String ADMIN_API_BASE = "/api/v1/admin/homepage/inquiries";
+
+    /** 개인정보 접근 로그 dataType. */
+    public static final String ACCESS_LOG_DATA_TYPE = "HOMEPAGE_INQUIRY";
+
+    /** 이름 최대 길이(평문). */
+    public static final int MAX_NAME_LENGTH = 50;
+
+    /** 전화 최대 길이(평문). */
+    public static final int MAX_PHONE_LENGTH = 30;
+
+    /** 문의 내용 최대 길이. */
+    public static final int MAX_CONTENT_LENGTH = 2000;
+
+    /** 동의 버전 최대 길이. */
+    public static final int MAX_CONSENT_VERSION_LENGTH = 64;
+
+    /** 허니팟 필드 JSON 이름(봇 채움 시 조용히 폐기). */
+    public static final String HONEYPOT_FIELD = "website";
+
+    /** 알 수 없는 테넌트·리소스에 대한 일반 클라이언트 메시지(존재 여부 미노출). */
+    public static final String GENERIC_NOT_FOUND_MESSAGE = "요청을 처리할 수 없습니다.";
+
+    /** 공개 접수 성공 메시지(식별자·개인정보 미포함). */
+    public static final String PUBLIC_ACCEPTED_MESSAGE = "문의가 접수되었습니다.";
+
+    private HomepageInquiryConstants() {
+    }
+}

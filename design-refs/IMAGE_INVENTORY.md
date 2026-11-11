@@ -44,7 +44,8 @@ Placeholders (no raster): 대표원장 사진, 지도 미리보기.
 
 ## Brand / icons (not photo rasters)
 
-- `/brand/logo-mark.svg`, `/brand/logo.png`
+- `/brand/logo.svg` (butterfly master, trimmed viewBox), `/brand/logo.png`, `/brand/og-default.png`, `/favicon.png`
+- Hero motion: `/assets/hero/hero-butterfly.glb`, `hero-orbit-loop.{webm,mp4}`, `hero-poster.webp` (+ width variants)
 - `/icons/area-*.svg`, `/icons/step-*.svg`, `/icons/loc-*.svg` (v2-home VectorCraft)
 
 ## assets-v1 (앱웹 디자인 팩, self-made)

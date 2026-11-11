@@ -33,9 +33,9 @@ export function buildMetadata({
       description,
       images: [
         {
-          url: `${siteUrl}/images/banner-flowers-c64-3x2.jpg`,
+          url: `${siteUrl}/brand/og-default.png`,
           width: 1200,
-          height: 800,
+          height: 630,
           alt: SITE.name,
         },
       ],

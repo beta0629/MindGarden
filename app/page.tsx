@@ -9,6 +9,7 @@ import { DividerSprig } from '@/components/ui/DividerSprig';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FaqList } from '@/components/ui/FaqList';
 import { PlaceholderMedia } from '@/components/ui/PlaceholderMedia';
+import { ResponsiveImage } from '@/components/ui/ResponsiveImage';
 import {
   clinicOsClient,
   getActiveEventProduct,
@@ -49,7 +50,7 @@ export default async function HomePage() {
     <SiteShell noticeText={noticeBanner?.title ?? null}>
       <HeroSection />
 
-      <section className="section">
+      <section className="section" data-reveal>
         <div className="container">
           <div className="section__eyebrow">01</div>
           <h2 className="section__title">
@@ -57,12 +58,13 @@ export default async function HomePage() {
             {homeCopy.areas.titleConfirmNeeded ? <ConfirmNeeded /> : null}
           </h2>
           <p className="section__lead">{homeCopy.areas.lead}</p>
-          <div className="area-list">
+          <div className="area-list" data-reveal-stagger>
             {homeCopy.areas.items.map((item) => (
               <Link
                 key={item.slug}
                 className="area-card"
                 href={`/counseling/${item.slug}`}
+                data-reveal
               >
                 <div>
                   <h3>{item.title}</h3>
@@ -77,16 +79,20 @@ export default async function HomePage() {
 
       <DividerSprig />
 
-      <section className="section section--sand">
+      <section className="section section--sand" data-reveal>
         <div className="container">
           <div className="section__eyebrow">02</div>
           <h2 className="section__title">
             {homeCopy.process.title}
             {homeCopy.process.confirmNeeded ? <ConfirmNeeded /> : null}
           </h2>
-          <div className="process-grid" style={{ marginTop: '1.5rem' }}>
+          <div
+            className="process-grid"
+            style={{ marginTop: '1.5rem' }}
+            data-reveal-stagger
+          >
             {homeCopy.process.steps.map((step) => (
-              <div className="process-item" key={step.title}>
+              <div className="process-item" key={step.title} data-reveal>
                 <Image src={step.icon} alt="" width={72} height={72} />
                 <h3>{step.title}</h3>
                 <p>{step.line}</p>
@@ -101,7 +107,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section" data-reveal>
         <div className="container counselor">
           <PlaceholderMedia
             label="김선희 대표원장 사진"
@@ -156,12 +162,14 @@ export default async function HomePage() {
                 <BookingCta />
               </div>
               <figure className="event-banner__media">
-                <Image
-                  src="/images/banner-flowers-c64-3x2.jpg"
+                <ResponsiveImage
+                  baseName="banner-flowers-c64-3x2"
+                  widths={[640, 1050]}
+                  width={1050}
+                  height={700}
                   alt="센터 로비 꽃"
-                  width={900}
-                  height={600}
-                  sizes="(max-width: 768px) 100vw, 420px"
+                  sizes="(max-width: 768px) 100vw, min(42vw, 1050px)"
+                  fallbackSrc="/images/banner-flowers-c64-3x2.jpg"
                 />
               </figure>
             </div>
@@ -195,7 +203,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      <section className="section section--sand">
+      <section className="section section--sand" data-reveal>
         <div className="container">
           <div
             style={{
@@ -214,37 +222,45 @@ export default async function HomePage() {
               공간 더 보기 →
             </Link>
           </div>
-          <div className="space-grid">
-            {homeCopy.spaces.items.map((item, index) => (
-              <figure
-                key={item.caption + item.src}
-                className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
-              >
-                <Image
-                  src={item.src}
-                  alt={item.caption}
-                  width={item.wide ? 1440 : 800}
-                  height={item.wide ? 810 : 600}
-                  sizes={
-                    item.wide
-                      ? '(max-width: 768px) 100vw, 1200px'
-                      : '(max-width: 768px) 50vw, 600px'
-                  }
-                  priority={index === 0}
-                />
-                <figcaption>
-                  {item.caption}
-                  {item.confirmNeeded ? <ConfirmNeeded /> : null}
-                </figcaption>
-              </figure>
-            ))}
+          <div className="space-grid" data-reveal-stagger>
+            {homeCopy.spaces.items.map((item, index) => {
+              const baseName = item.src
+                .replace('/images/', '')
+                .replace(/\.(jpg|jpeg|png|webp)$/i, '');
+              return (
+                <figure
+                  key={item.caption + item.src}
+                  className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
+                  data-reveal
+                >
+                  <ResponsiveImage
+                    baseName={baseName}
+                    widths={[640, 1050]}
+                    width={1050}
+                    height={item.wide ? 591 : 788}
+                    alt={item.caption}
+                    sizes={
+                      item.wide
+                        ? '(max-width: 768px) 100vw, min(100vw, 1050px)'
+                        : '(max-width: 768px) 50vw, min(50vw, 1050px)'
+                    }
+                    priority={index === 0}
+                    fallbackSrc={item.src}
+                  />
+                  <figcaption>
+                    {item.caption}
+                    {item.confirmNeeded ? <ConfirmNeeded /> : null}
+                  </figcaption>
+                </figure>
+              );
+            })}
           </div>
         </div>
       </section>
 
       <DividerSprig />
 
-      <section className="section">
+      <section className="section" data-reveal>
         <div className="container">
           <div className="section__eyebrow">05</div>
           <h2 className="section__title">{homeCopy.news.title}</h2>
@@ -358,7 +374,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section section--sand" id="contact">
+      <section className="section section--sand" id="contact" data-reveal>
         <div className="container booking-layout">
           <div>
             <div className="section__eyebrow">06</div>

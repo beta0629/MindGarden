@@ -1,8 +1,8 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { SITE } from '@/lib/site';
 
 const MAIN_NAV = [
@@ -55,16 +55,7 @@ export function SiteHeader({ noticeText = null }: SiteHeaderProps) {
     <header className="site-header">
       <NoticeBar text={noticeText} />
       <div className="container header__inner">
-        <Link className="brand" href="/" onClick={() => setMenuOpen(false)}>
-          <Image
-            src="/brand/logo-mark.svg"
-            alt=""
-            width={32}
-            height={32}
-            priority
-          />
-          <span>마인드가든</span>
-        </Link>
+        <BrandLockup onNavigate={() => setMenuOpen(false)} />
 
         <nav className="nav-desktop" aria-label="본메뉴">
           {MAIN_NAV.map((item) => (

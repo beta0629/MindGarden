@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BrandLockup } from '@/components/brand/BrandLockup';
 import { SITE } from '@/lib/site';
 
 export function SiteFooter() {
@@ -6,7 +7,7 @@ export function SiteFooter() {
     <footer className="site-footer">
       <div className="container site-footer__grid">
         <div>
-          <strong>{SITE.name}</strong>
+          <BrandLockup href="/" />
           <div className="site-footer__meta" style={{ marginTop: '0.75rem' }}>
             <span>대표 {SITE.representative}</span>
             <span>{SITE.address}</span>

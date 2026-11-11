@@ -1,3 +1,4 @@
+import { RevealBoot } from '@/components/motion/Reveal';
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
 import { StickyBookingBar } from './StickyBookingBar';
@@ -17,6 +18,7 @@ export function SiteShell({ children, noticeText = null }: SiteShellProps) {
       <main id="main">{children}</main>
       <SiteFooter />
       <StickyBookingBar />
+      <RevealBoot />
     </>
   );
 }

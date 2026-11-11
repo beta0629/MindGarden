@@ -36,7 +36,12 @@ export const emptyAdminShopCatalogForm = () => ({
   skuCode: '',
   sessionCount: String(SHOP_SESSION_COUNT_MIN),
   fieldCode: '',
-  consultantId: ''
+  consultantId: '',
+  eventPriceMinor: '',
+  eventStartDate: '',
+  eventEndDate: '',
+  eventOnly: false,
+  sessionMinutes: ''
 });
 
 /**
@@ -65,7 +70,12 @@ export function mapAdminShopCatalogRowToForm(row) {
     thumbnailUrl: toDisplayString(row.thumbnailUrl || row.heroImageUrl, ''),
     sessionCount: String(normalizeShopSessionCount(row.sessionCount)),
     fieldCode: toDisplayString(row.fieldCode, ''),
-    consultantId: row.consultantId != null ? String(row.consultantId) : ''
+    consultantId: row.consultantId != null ? String(row.consultantId) : '',
+    eventPriceMinor: row.eventPriceMinor != null ? String(row.eventPriceMinor) : '',
+    eventStartDate: toDisplayString(row.eventStartDate, ''),
+    eventEndDate: toDisplayString(row.eventEndDate, ''),
+    eventOnly: row.eventOnly === true,
+    sessionMinutes: row.sessionMinutes != null ? String(row.sessionMinutes) : ''
   };
 }
 
@@ -205,6 +215,10 @@ export function buildAdminShopCatalogUpsertBody(form) {
   if (!consultantParsed.valid) {
     throw new Error(ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE);
   }
+  const eventFields = parseAdminShopEventFields(form, Number.isFinite(price) ? price : 0);
+  if (!eventFields.valid) {
+    throw new Error(eventFields.message);
+  }
   return {
     title: form.title.trim(),
     descriptionText: form.descriptionText.trim() || null,
@@ -216,7 +230,12 @@ export function buildAdminShopCatalogUpsertBody(form) {
     sortOrder: Number.isFinite(sortOrder) ? sortOrder : 0,
     sessionCount: sessionParsed.sessionCount,
     fieldCode: fieldParsed.fieldCode,
-    consultantId: consultantParsed.consultantId
+    consultantId: consultantParsed.consultantId,
+    eventPriceMinor: eventFields.eventPriceMinor,
+    eventStartDate: eventFields.eventStartDate,
+    eventEndDate: eventFields.eventEndDate,
+    eventOnly: eventFields.eventOnly,
+    sessionMinutes: eventFields.sessionMinutes
   };
 }
 
@@ -250,7 +269,12 @@ export function mapAdminShopPackageFeeToForm(row) {
       catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION,
       fieldCode: '',
       consultantId: '',
-      validityMonths: null
+      validityMonths: null,
+      eventPriceMinor: '',
+      eventStartDate: '',
+      eventEndDate: '',
+      eventOnly: false,
+      sessionMinutes: ''
     };
   }
   const categoryRaw = toDisplayString(row.catalogCategory, '').toUpperCase();
@@ -274,7 +298,12 @@ export function mapAdminShopPackageFeeToForm(row) {
     consultantId: catalogCategory === SHOP_CATALOG_CATEGORY.ASSESSMENT || row.consultantId == null
       ? ''
       : String(row.consultantId),
-    validityMonths: row.validityMonths != null ? Number(row.validityMonths) : null
+    validityMonths: row.validityMonths != null ? Number(row.validityMonths) : null,
+    eventPriceMinor: row.eventPriceMinor != null ? String(row.eventPriceMinor) : '',
+    eventStartDate: toDisplayString(row.eventStartDate, ''),
+    eventEndDate: toDisplayString(row.eventEndDate, ''),
+    eventOnly: row.eventOnly === true,
+    sessionMinutes: row.sessionMinutes != null ? String(row.sessionMinutes) : ''
   };
 }
 
@@ -301,6 +330,84 @@ export function parseAdminShopValidityMonths(raw) {
   return months >= 1 ? months : null;
 }
 
+/**
+ * 이벤트·회기 분 필드 파싱·검증.
+ *
+ * @param {object|null|undefined} form
+ * @param {number|null|undefined} unitPriceMinor 정상 가격(이벤트 가격 비교용)
+ * @returns {{ valid: boolean, message?: string, eventPriceMinor: number|null, eventStartDate: string|null,
+ *   eventEndDate: string|null, eventOnly: boolean, sessionMinutes: number|null }}
+ */
+export function parseAdminShopEventFields(form, unitPriceMinor) {
+  const eventOnly = form?.eventOnly === true;
+  const eventStartDate = toDisplayString(form?.eventStartDate, '').trim() || null;
+  const eventEndDate = toDisplayString(form?.eventEndDate, '').trim() || null;
+  const eventPriceRaw = toDisplayString(form?.eventPriceMinor, '').replace(/\D/g, '');
+  const eventPriceMinor = eventPriceRaw === '' ? null : Number.parseInt(eventPriceRaw, 10);
+  const sessionMinutesRaw = toDisplayString(form?.sessionMinutes, '').trim();
+  let sessionMinutes = null;
+  if (sessionMinutesRaw !== '') {
+    if (!/^\d+$/.test(sessionMinutesRaw)) {
+      return {
+        valid: false,
+        message: '회기 분은 0 이상의 정수로 입력해 주세요.',
+        eventPriceMinor: null,
+        eventStartDate: null,
+        eventEndDate: null,
+        eventOnly: false,
+        sessionMinutes: null
+      };
+    }
+    sessionMinutes = Number.parseInt(sessionMinutesRaw, 10);
+  }
+  if (eventOnly && (!eventStartDate || !eventEndDate)) {
+    return {
+      valid: false,
+      message: '이벤트 전용 상품은 이벤트 시작일과 종료일이 모두 필요합니다.',
+      eventPriceMinor: null,
+      eventStartDate: null,
+      eventEndDate: null,
+      eventOnly,
+      sessionMinutes: null
+    };
+  }
+  if (eventStartDate && eventEndDate && eventStartDate > eventEndDate) {
+    return {
+      valid: false,
+      message: '이벤트 시작일은 종료일보다 늦을 수 없습니다.',
+      eventPriceMinor: null,
+      eventStartDate: null,
+      eventEndDate: null,
+      eventOnly,
+      sessionMinutes: null
+    };
+  }
+  if (eventPriceMinor != null) {
+    const price = unitPriceMinor != null && Number.isFinite(Number(unitPriceMinor))
+      ? Number(unitPriceMinor)
+      : null;
+    if (price == null || eventPriceMinor >= price) {
+      return {
+        valid: false,
+        message: '이벤트 가격은 정상 가격보다 낮아야 합니다.',
+        eventPriceMinor: null,
+        eventStartDate: null,
+        eventEndDate: null,
+        eventOnly,
+        sessionMinutes: null
+      };
+    }
+  }
+  return {
+    valid: true,
+    eventPriceMinor: Number.isFinite(eventPriceMinor) ? eventPriceMinor : null,
+    eventStartDate,
+    eventEndDate,
+    eventOnly,
+    sessionMinutes
+  };
+}
+
 export function buildAdminShopPackageContentBody(form) {
   const fieldParsed = validateAdminShopCatalogFieldCode(form);
   if (!fieldParsed.valid) {
@@ -320,6 +427,13 @@ export function buildAdminShopPackageContentBody(form) {
   }
   const sortOrder = Number.parseInt(String(form?.sortOrder ?? ''), 10);
   const description = String(form?.descriptionText ?? '').trim();
+  const unitPrice = form?.unitPriceMinor != null && form.unitPriceMinor !== ''
+    ? Number(form.unitPriceMinor)
+    : (form?.price != null && form.price !== '' ? Number(form.price) : null);
+  const eventFields = parseAdminShopEventFields(form, unitPrice);
+  if (!eventFields.valid) {
+    throw new Error(eventFields.message);
+  }
   return {
     descriptionText: description
       ? description.slice(0, ADMIN_SHOP_DESCRIPTION_MAX_LENGTH)
@@ -329,6 +443,11 @@ export function buildAdminShopPackageContentBody(form) {
     catalogCategory,
     fieldCode: fieldParsed.fieldCode,
     consultantId: consultantParsed.consultantId,
-    validityMonths: parseAdminShopValidityMonths(form?.validityMonths)
+    validityMonths: parseAdminShopValidityMonths(form?.validityMonths),
+    eventPriceMinor: eventFields.eventPriceMinor,
+    eventStartDate: eventFields.eventStartDate,
+    eventEndDate: eventFields.eventEndDate,
+    eventOnly: eventFields.eventOnly,
+    sessionMinutes: eventFields.sessionMinutes
   };
 }

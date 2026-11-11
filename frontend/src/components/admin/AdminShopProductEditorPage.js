@@ -395,7 +395,16 @@ function AdminShopProductEditorPage({ isNew }) {
     }
     const validityChanged = toDisplayString(form.validityMonths, '').trim()
       !== toDisplayString(initialForm.validityMonths, '').trim();
-    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged;
+    const eventChanged = toDisplayString(form.eventPriceMinor, '').trim()
+        !== toDisplayString(initialForm.eventPriceMinor, '').trim()
+      || toDisplayString(form.eventStartDate, '').trim()
+        !== toDisplayString(initialForm.eventStartDate, '').trim()
+      || toDisplayString(form.eventEndDate, '').trim()
+        !== toDisplayString(initialForm.eventEndDate, '').trim()
+      || Boolean(form.eventOnly) !== Boolean(initialForm.eventOnly)
+      || toDisplayString(form.sessionMinutes, '').trim()
+        !== toDisplayString(initialForm.sessionMinutes, '').trim();
+    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged || eventChanged;
     if (needsContent) {
       const fieldParsed = validateAdminShopCatalogFieldCode(form);
       if (!fieldParsed.valid) {
@@ -459,7 +468,14 @@ function AdminShopProductEditorPage({ isNew }) {
           ...form,
           descriptionText: form.descriptionText.slice(0, ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX),
           catalogVisible: visibleOnFirstPut,
-          validityMonths: validation.validityMonths
+          validityMonths: validation.validityMonths,
+          price: validation.price,
+          unitPriceMinor: validation.price,
+          eventPriceMinor: validation.eventPriceMinor != null ? String(validation.eventPriceMinor) : '',
+          eventStartDate: validation.eventStartDate || '',
+          eventEndDate: validation.eventEndDate || '',
+          eventOnly: validation.eventOnly === true,
+          sessionMinutes: validation.sessionMinutes != null ? String(validation.sessionMinutes) : ''
         }));
         if (pendingImageFile && saved?.skuId != null) {
           await uploadAdminShopCatalogSkuThumbnail(saved.skuId, pendingImageFile);
@@ -486,8 +502,14 @@ function AdminShopProductEditorPage({ isNew }) {
     : ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL.ASSESSMENT;
   const sessionsInvalid = showErrors && validation.errors.sessions;
   const saveDisabled = saving || loading || Boolean(validation.errors.sessions)
-    || Boolean(validation.errors.validityMonths);
+    || Boolean(validation.errors.validityMonths)
+    || Boolean(validation.errors.eventPriceMinor)
+    || Boolean(validation.errors.eventDates)
+    || Boolean(validation.errors.sessionMinutes);
   const validityInvalid = Boolean(validation.errors.validityMonths);
+  const eventPriceInvalid = Boolean(validation.errors.eventPriceMinor);
+  const eventDatesInvalid = Boolean(validation.errors.eventDates);
+  const sessionMinutesInvalid = Boolean(validation.errors.sessionMinutes);
   const priceText = validation.price != null ? formatShopMoney(validation.price) : '—';
   const sessionsText = validation.sessions != null && validation.sessions >= ADMIN_SHOP_PRODUCT_SESSION_MIN
     ? `${validation.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`
@@ -711,6 +733,101 @@ function AdminShopProductEditorPage({ isNew }) {
                       ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_ERROR
                       : ADMIN_SHOP_PRODUCT_EDITOR_COPY.VALIDITY_HINT}
                   </span>
+                </div>
+                <div className="admin-shop-suite__grid-3">
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-price`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE}
+                    </label>
+                    <input
+                      id={`${baseId}-event-price`}
+                      className={`admin-shop-suite__input admin-shop-suite__num${eventPriceInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      inputMode="numeric"
+                      value={form.eventPriceMinor}
+                      disabled={saving}
+                      aria-invalid={eventPriceInvalid ? true : undefined}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_PRICE}
+                      onChange={(e) => setField('eventPriceMinor', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <span className={`admin-shop-suite__hint${eventPriceInvalid ? ' admin-shop-suite__hint--error' : ''}`}>
+                      {eventPriceInvalid
+                        ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_ERROR
+                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_PRICE_HINT}
+                    </span>
+                  </div>
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-start`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_START}
+                    </label>
+                    <input
+                      id={`${baseId}-event-start`}
+                      type="date"
+                      className={`admin-shop-suite__input${eventDatesInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      value={form.eventStartDate}
+                      disabled={saving}
+                      aria-invalid={eventDatesInvalid ? true : undefined}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_START}
+                      onChange={(e) => setField('eventStartDate', e.target.value)}
+                    />
+                  </div>
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-end`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_END}
+                    </label>
+                    <input
+                      id={`${baseId}-event-end`}
+                      type="date"
+                      className={`admin-shop-suite__input${eventDatesInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      value={form.eventEndDate}
+                      disabled={saving}
+                      aria-invalid={eventDatesInvalid ? true : undefined}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_END}
+                      onChange={(e) => setField('eventEndDate', e.target.value)}
+                    />
+                    <span className={`admin-shop-suite__hint${eventDatesInvalid ? ' admin-shop-suite__hint--error' : ''}`}>
+                      {eventDatesInvalid
+                        ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_DATES_ERROR
+                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_DATES_HINT}
+                    </span>
+                  </div>
+                </div>
+                <div className="admin-shop-suite__grid-3">
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-session-minutes`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES}
+                    </label>
+                    <input
+                      id={`${baseId}-session-minutes`}
+                      className={`admin-shop-suite__input admin-shop-suite__num${sessionMinutesInvalid ? ' admin-shop-suite__input--error' : ''}`}
+                      inputMode="numeric"
+                      value={form.sessionMinutes}
+                      disabled={saving}
+                      aria-invalid={sessionMinutesInvalid ? true : undefined}
+                      data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_SESSION_MINUTES}
+                      onChange={(e) => setField('sessionMinutes', e.target.value.replace(/\D/g, ''))}
+                    />
+                    <span className={`admin-shop-suite__hint${sessionMinutesInvalid ? ' admin-shop-suite__hint--error' : ''}`}>
+                      {sessionMinutesInvalid
+                        ? ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES_ERROR
+                        : ADMIN_SHOP_PRODUCT_EDITOR_COPY.SESSION_MINUTES_HINT}
+                    </span>
+                  </div>
+                  <div className="admin-shop-suite__field">
+                    <label className="admin-shop-suite__label" htmlFor={`${baseId}-event-only`}>
+                      {ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_ONLY}
+                    </label>
+                    <label className="admin-shop-suite__check" htmlFor={`${baseId}-event-only`}>
+                      <input
+                        id={`${baseId}-event-only`}
+                        type="checkbox"
+                        checked={form.eventOnly === true}
+                        disabled={saving}
+                        data-testid={ADMIN_SHOP_SUITE_TEST_IDS.PRODUCT_EDITOR_EVENT_ONLY}
+                        onChange={(e) => setField('eventOnly', e.target.checked)}
+                      />
+                      <span>{ADMIN_SHOP_PRODUCT_EDITOR_COPY.EVENT_ONLY_HINT}</span>
+                    </label>
+                  </div>
                 </div>
                 <AdminShopNotice icon={<Info size={14} aria-hidden="true" />}>
                   <p>{ADMIN_SHOP_PRODUCTS_COPY.USAGE_PERIOD_NOTICE}</p>

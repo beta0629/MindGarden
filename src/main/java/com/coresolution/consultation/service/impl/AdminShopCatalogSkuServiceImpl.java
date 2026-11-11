@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.AdminShopCatalogSkuService;
 import com.coresolution.consultation.service.ShopCatalogPackageOfferResolver;
 import com.coresolution.consultation.service.ShopCatalogSkuCodeGenerator;
 import com.coresolution.consultation.service.ShopCatalogSkuThumbnailService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -144,6 +145,14 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
         row.setConsultantId(resolveBoundConsultantId(tid, category, request.consultantId()));
         row.setValidityMonths(request.validityMonths());
+        applyEventFields(
+                row,
+                row.getUnitPriceMinor(),
+                request.eventPriceMinor(),
+                request.eventStartDate(),
+                request.eventEndDate(),
+                request.eventOnly(),
+                request.sessionMinutes());
         if (request.catalogVisible()) {
             requireThumbnailUrl(row);
         }
@@ -395,7 +404,12 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                         : ShopCatalogCategory.CONSULTATION,
                 row != null ? row.getFieldCode() : null,
                 row != null ? row.getConsultantId() : null,
-                row != null ? row.getValidityMonths() : null);
+                row != null ? row.getValidityMonths() : null,
+                row != null ? row.getEventPriceMinor() : null,
+                row != null ? row.getEventStartDate() : null,
+                row != null ? row.getEventEndDate() : null,
+                row != null && Boolean.TRUE.equals(row.getEventOnly()),
+                row != null ? row.getSessionMinutes() : null);
     }
 
     private static String requireTenant(String tenantId) {
@@ -426,6 +440,72 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
             row.setThumbnailUrl(request.thumbnailUrl().trim());
         }
         row.setSessionCount(requirePositiveSessionCount(request.sessionCount()));
+        applyEventFields(
+                row,
+                request.unitPriceMinor(),
+                request.eventPriceMinor(),
+                request.eventStartDate(),
+                request.eventEndDate(),
+                request.eventOnly(),
+                request.sessionMinutes());
+    }
+
+    /**
+     * 홈페이지 이벤트·회기 분 필드를 검증 후 저장한다.
+     *
+     * @param row SKU
+     * @param unitPriceMinor 정상 단가
+     * @param eventPriceMinor 이벤트 단가
+     * @param eventStartDate 시작일
+     * @param eventEndDate 종료일
+     * @param eventOnly 이벤트 전용 여부
+     * @param sessionMinutes 회기당 분
+     */
+    static void applyEventFields(
+            ShopCatalogSku row,
+            Long unitPriceMinor,
+            Long eventPriceMinor,
+            LocalDate eventStartDate,
+            LocalDate eventEndDate,
+            boolean eventOnly,
+            Integer sessionMinutes) {
+        validateEventFields(unitPriceMinor, eventPriceMinor, eventStartDate, eventEndDate, eventOnly);
+        row.setEventPriceMinor(eventPriceMinor);
+        row.setEventStartDate(eventStartDate);
+        row.setEventEndDate(eventEndDate);
+        row.setEventOnly(eventOnly);
+        row.setSessionMinutes(sessionMinutes);
+    }
+
+    /**
+     * 이벤트 가격·기간·전용 플래그 검증.
+     *
+     * @param unitPriceMinor 정상 단가
+     * @param eventPriceMinor 이벤트 단가
+     * @param eventStartDate 시작일
+     * @param eventEndDate 종료일
+     * @param eventOnly 이벤트 전용 여부
+     * @throws IllegalArgumentException 검증 실패
+     */
+    static void validateEventFields(
+            Long unitPriceMinor,
+            Long eventPriceMinor,
+            LocalDate eventStartDate,
+            LocalDate eventEndDate,
+            boolean eventOnly) {
+        if (eventOnly && (eventStartDate == null || eventEndDate == null)) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.EVENT_ONLY_REQUIRES_DATES_MESSAGE);
+        }
+        if (eventStartDate != null && eventEndDate != null && eventStartDate.isAfter(eventEndDate)) {
+            throw new IllegalArgumentException(ShopCatalogSkuConstants.EVENT_DATE_RANGE_INVALID_MESSAGE);
+        }
+        if (eventPriceMinor != null) {
+            long price = unitPriceMinor != null ? unitPriceMinor : 0L;
+            if (eventPriceMinor >= price) {
+                throw new IllegalArgumentException(
+                        ShopCatalogSkuConstants.EVENT_PRICE_MUST_BE_LESS_THAN_PRICE_MESSAGE);
+            }
+        }
     }
 
     private static int requirePositiveSessionCount(Integer sessionCount) {
@@ -504,7 +584,12 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 sessionCount,
                 ShopSessionCountConstants.resolvePackageType(sessionCount),
                 row.getFieldCode(),
-                row.getConsultantId());
+                row.getConsultantId(),
+                row.getEventPriceMinor(),
+                row.getEventStartDate(),
+                row.getEventEndDate(),
+                Boolean.TRUE.equals(row.getEventOnly()),
+                row.getSessionMinutes());
     }
 
     /**

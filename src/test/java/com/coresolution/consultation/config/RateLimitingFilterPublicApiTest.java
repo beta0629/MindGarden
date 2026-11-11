@@ -93,4 +93,41 @@ class RateLimitingFilterPublicApiTest {
         assertThat(registry.counter("mindgarden.rate_limit.blocked", "reason", "onboarding_public").count())
             .isEqualTo(1.0);
     }
+
+    @Test
+    void publicTenantsPrefixGetReturns429AndRecordsPublicTenantsMetric() throws Exception {
+        MindgardenSecurityProperties properties = new MindgardenSecurityProperties();
+        properties.getRateLimit().setPublicTenantsRequestsPerMinute(1);
+
+        SimpleMeterRegistry registry = new SimpleMeterRegistry();
+        @SuppressWarnings("unchecked")
+        ObjectProvider<MeterRegistry> meterRegistryProvider = mock(ObjectProvider.class);
+        when(meterRegistryProvider.getIfAvailable()).thenReturn(registry);
+
+        RateLimitingConfig.RateLimitingFilter filter =
+            new RateLimitingConfig.RateLimitingFilter(properties, meterRegistryProvider);
+
+        FilterChain chain = mock(FilterChain.class);
+        String testIp = DocumentationIpConstants.RFC5737_TEST_NET_1_EXAMPLE;
+        String uri = "/api/v1/public/tenants/mindgarden/consultation-products";
+
+        MockHttpServletRequest first = new MockHttpServletRequest("GET", uri);
+        first.setRemoteAddr(testIp);
+        MockHttpServletResponse firstResponse = new MockHttpServletResponse();
+        filter.doFilterInternal(first, firstResponse, chain);
+        verify(chain).doFilter(first, firstResponse);
+        assertThat(firstResponse.getStatus()).isNotEqualTo(429);
+
+        MockHttpServletRequest second = new MockHttpServletRequest("GET", uri);
+        second.setRemoteAddr(testIp);
+        MockHttpServletResponse secondResponse = new MockHttpServletResponse();
+        filter.doFilterInternal(second, secondResponse, chain);
+
+        verify(chain, times(1)).doFilter(first, firstResponse);
+        assertThat(secondResponse.getStatus()).isEqualTo(429);
+        assertThat(secondResponse.getContentAsString())
+            .contains("공개 테넌트 API 요청이 너무 많습니다");
+        assertThat(registry.counter("mindgarden.rate_limit.blocked", "reason", "public_tenants").count())
+            .isEqualTo(1.0);
+    }
 }

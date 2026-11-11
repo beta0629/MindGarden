@@ -59,6 +59,9 @@ public class SecurityConfig {
     
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Autowired(required = false)
+    private HomepagePublicApiProperties homepagePublicApiProperties;
     
     public SecurityConfig(
             SessionBasedAuthenticationFilter sessionBasedAuthenticationFilter,
@@ -159,6 +162,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 테넌트 API (상담 상품·문의 등)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -305,6 +310,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/onboarding/**").permitAll()
                     // 비로그인 온보딩 신청자용 공공데이터 프록시. 인증 경로는 /api/v1/kr-public-data/**
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
+                    // 센터 홈페이지 공개 테넌트 API (상담 상품·문의 등)
+                    .requestMatchers(HttpMethod.GET, "/api/v1/public/tenants/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -409,6 +416,7 @@ public class SecurityConfig {
             new AntPathRequestMatcher(AccountIntegrationApiPaths.BASE + "/**"),
             new AntPathRequestMatcher("/api/v1/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/public/kr-public-data/**"),
+            new AntPathRequestMatcher("/api/v1/public/tenants/**"),
             new AntPathRequestMatcher("/api/v1/ops/onboarding/**"),
             new AntPathRequestMatcher("/api/v1/ops/auth/**"),
             new AntPathRequestMatcher("/api/v1/payments/webhooks/**")
@@ -597,10 +605,43 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/api/v1/auth/oauth2/callback", callbackConfig);
         log.info("✅ OAuth callback CORS 우회 등록: /api/(v1/)?auth/*/callback, /api/v1/auth/oauth(2)?/callback");
 
+        // 센터 홈페이지 공개 API — HomepagePublicApiProperties exact origins (/** 보다 먼저 등록)
+        source.registerCorsConfiguration("/api/v1/public/tenants/**", createHomepagePublicTenantsCorsConfiguration());
+        log.info("✅ 홈페이지 공개 tenants CORS 등록: /api/v1/public/tenants/**");
+
         source.registerCorsConfiguration("/**", configuration);
         log.info("✅ CORS 설정 완료: 모든 경로(/**)에 적용됨");
         
         return source;
+    }
+
+    /**
+     * 센터 홈페이지 공개 tenants 경로 CORS.
+     * <p>{@link HomepagePublicApiProperties#getAllowedOrigins()} exact origin 만 허용.
+     * GET·OPTIONS, credentials 비허용.</p>
+     *
+     * @return 경로 전용 CorsConfiguration
+     */
+    CorsConfiguration createHomepagePublicTenantsCorsConfiguration() {
+        CorsConfiguration homepageCors = new CorsConfiguration();
+        HomepagePublicApiProperties props = homepagePublicApiProperties != null
+                ? homepagePublicApiProperties
+                : new HomepagePublicApiProperties();
+        List<String> origins = props.getAllowedOrigins() != null
+                ? props.getAllowedOrigins()
+                : List.of();
+        homepageCors.setAllowedOrigins(new ArrayList<>(origins));
+        homepageCors.setAllowedMethods(Arrays.asList("GET", "OPTIONS"));
+        homepageCors.setAllowedHeaders(Arrays.asList(
+                "Content-Type",
+                "Accept",
+                "Origin",
+                "Access-Control-Request-Method",
+                "Access-Control-Request-Headers",
+                "Cache-Control"));
+        homepageCors.setAllowCredentials(false);
+        homepageCors.setMaxAge(300L);
+        return homepageCors;
     }
 
     /**

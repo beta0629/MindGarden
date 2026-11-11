@@ -123,6 +123,16 @@ public class MindgardenSecurityProperties {
          * 비로그인 공공데이터 프록시 URI 접두.
          */
         private String krPublicDataPathPrefix = "/api/v1/public/kr-public-data/";
+
+        /**
+         * 센터 홈페이지 공개 테넌트 API({@code /api/v1/public/tenants/}) IP당 분당 허용 수.
+         */
+        private int publicTenantsRequestsPerMinute = 60;
+
+        /**
+         * 센터 홈페이지 공개 테넌트 API URI 접두.
+         */
+        private String publicTenantsPathPrefix = "/api/v1/public/tenants/";
     }
 
     @Data

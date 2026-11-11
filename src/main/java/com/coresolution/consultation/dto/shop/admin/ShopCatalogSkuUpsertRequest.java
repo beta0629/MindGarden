@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import java.time.LocalDate;
 
 /**
  * 어드민 SKU 생성·수정 요청.
@@ -27,6 +28,11 @@ public record ShopCatalogSkuUpsertRequest(
         @PositiveOrZero int sortOrder,
         @NotNull @Min(ShopSessionCountConstants.MIN_SESSION_COUNT) Integer sessionCount,
         @Size(max = 50) String fieldCode,
-        Long consultantId
+        Long consultantId,
+        Long eventPriceMinor,
+        LocalDate eventStartDate,
+        LocalDate eventEndDate,
+        boolean eventOnly,
+        Integer sessionMinutes
 ) {
 }

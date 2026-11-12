@@ -10,7 +10,19 @@ import { SHOP_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import { SHOP_CART_QUERY_KEYS } from '@/api/hooks/useClientShopCart';
+import {
+  postPrepareShopPayment,
+  type ShopPreparePaymentResult,
+} from '@/api/hooks/useClientShopOrders';
+import {
+  cancelShopOrder,
+  cancelShopPaymentByUser,
+} from '@/api/shopPayment';
 import { createShopIdempotencyKey } from '@/utils/clientShopCart';
+import { runShopCheckoutWithPortOneGuard } from '@/utils/shopCheckoutPortOneGuard';
+import { runShopPortOnePaymentIfReady } from '@/utils/shopPortOneCheckout';
+import type { PortOneCustomerSessionUser } from '@/utils/clientShopPaymentCustomer';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export interface ShopPointBalance {
   availableMinor: number;
@@ -72,14 +84,6 @@ async function postShopCheckout(
   return data;
 }
 
-async function prepareShopPayment(orderPublicId: string): Promise<unknown> {
-  const raw = await apiPost<unknown>(SHOP_API.preparePayment(orderPublicId), {});
-  if (raw != null && typeof raw === 'object' && (raw as { success?: boolean }).success === false) {
-    throw new Error((raw as { message?: string }).message || '결제 준비에 실패했습니다.');
-  }
-  return unwrapApiResponse(raw);
-}
-
 export function useClientShopPointBalance() {
   const { ready, tenantId } = useApiQueryReady();
 
@@ -94,6 +98,7 @@ export function useClientShopPointBalance() {
 
 export function useClientShopCheckout() {
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
 
   const checkoutMutation = useMutation({
     mutationFn: async ({
@@ -105,17 +110,32 @@ export function useClientShopCheckout() {
       idempotencyKey?: string;
       consultantClientMappingId?: number | string | null;
     }) => {
-      const key = idempotencyKey ?? createShopIdempotencyKey();
-      const result = await postShopCheckout(key, pointsToRedeemMinor, consultantClientMappingId);
-      if (result.nextStep === 'PAYMENT' && result.orderPublicId) {
-        await prepareShopPayment(result.orderPublicId);
-      }
-      return result;
+      const sessionUser = user as PortOneCustomerSessionUser | null;
+      return runShopCheckoutWithPortOneGuard({
+        user: sessionUser,
+        pointsRedeemMinor: pointsToRedeemMinor,
+        mappingIdForCheckout: consultantClientMappingId,
+        createIdempotencyKey: () => idempotencyKey ?? createShopIdempotencyKey(),
+        postShopCheckout: async (key, points, mappingId) =>
+          postShopCheckout(key, points, mappingId),
+        prepareShopPayment: (orderPublicId) => postPrepareShopPayment(orderPublicId),
+        runShopPortOnePaymentIfReady: (prepared, options) =>
+          runShopPortOnePaymentIfReady(
+            prepared as ShopPreparePaymentResult,
+            options as {
+              orderName?: string;
+              customer?: PortOneCustomerSessionUser | null;
+            },
+          ),
+        cancelShopOrder,
+        cancelShopPaymentByUser,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SHOP_CART_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: SHOP_CHECKOUT_QUERY_KEYS.all });
       queryClient.invalidateQueries({ queryKey: ['clientShop', 'points'] });
+      queryClient.invalidateQueries({ queryKey: ['clientShop', 'orders'] });
     },
   });
 
@@ -130,3 +150,5 @@ export function useClientShopCheckout() {
 
 /** @deprecated use useClientShopPointBalance */
 export const useClientShopCheckoutBalance = useClientShopPointBalance;
+
+export { postShopCheckout, postPrepareShopPayment };

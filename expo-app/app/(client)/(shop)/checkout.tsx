@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
@@ -33,8 +34,10 @@ import {
 import { useMerchantLegal } from '@/hooks/useMerchantLegal';
 import { formatShopMoney, formatShopPoints } from '@/utils/clientShopFormat';
 import {
+  buildShopPaymentCompletePath,
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
+  SHOP_PAYMENT_LAUNCH_COPY,
 } from '@/constants/clientShopConstants';
 import {
   buildConsultantPickerOptions,
@@ -48,10 +51,12 @@ import {
   shouldShowConsultantMappingPicker,
   validateCheckoutMapping,
 } from '@/utils/clientShopCheckout';
+import { clearShopPendingPaymentVerify } from '@/utils/shopPendingPaymentVerify';
 import { toDisplayString } from '@/utils/toDisplayString';
 
 export default function ShopCheckoutScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
   const [selectedMappingId, setSelectedMappingId] = useState('');
@@ -186,11 +191,42 @@ export default function ShopCheckoutScreen() {
     );
     try {
       setMessage('');
-      await checkout({
+      const result = await checkout({
         pointsToRedeemMinor: pointsRedeemMinor,
         consultantClientMappingId: mappingIdForCheckout,
       });
-      setMessage('주문이 접수되었습니다. 결제 안내에 따라 진행해 주세요.');
+      const status = result?.status;
+      if (status === 'BLOCKED_CUSTOMER') {
+        setMessage(result.message || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+        return;
+      }
+      if (status === 'USER_CANCELLED') {
+        setMessage('결제가 취소되었습니다.');
+        await handleRefresh();
+        return;
+      }
+      if (status === 'ORPHAN_CANCELLED') {
+        setMessage(result.message || SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
+        await handleRefresh();
+        return;
+      }
+      if (status === 'PAYMENT_VERIFIED' || status === 'PAID_AFTER_CANCEL') {
+        clearShopPendingPaymentVerify();
+        const orderId = result.checkoutResult?.orderPublicId;
+        if (orderId) {
+          router.replace(buildShopPaymentCompletePath(orderId));
+          return;
+        }
+        setMessage(SHOP_PAYMENT_LAUNCH_COPY.PAYMENT_COMPLETED);
+        await handleRefresh();
+        return;
+      }
+      if (status === 'NON_PAYMENT') {
+        setMessage(result.message || SHOP_PAYMENT_LAUNCH_COPY.ORDER_ACCEPTED_FOLLOW_GUIDE);
+        await handleRefresh();
+        return;
+      }
+      setMessage(result?.message || SHOP_PAYMENT_LAUNCH_COPY.ORDER_ACCEPTED_FOLLOW_GUIDE);
       await handleRefresh();
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : '체크아웃에 실패했습니다.';
@@ -498,7 +534,10 @@ export default function ShopCheckoutScreen() {
               style={[
                 styles.message,
                 {
-                  color: message.includes('접수') ? theme.colors.success : theme.colors.error,
+                  color:
+                    message.includes('접수') || message.includes('완료')
+                      ? theme.colors.success
+                      : theme.colors.error,
                   fontFamily: theme.fontFamily.regular,
                 },
               ]}

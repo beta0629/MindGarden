@@ -7,15 +7,23 @@
  */
 
 import { CLIENT_SHOP_ROUTES } from './clientShopConstants';
+import {
+  CLIENT_PAYMENT_HISTORY_PAGE_SIZE as PAGED_CLIENT_PAYMENT_HISTORY_PAGE_SIZE,
+  CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE as PAGED_CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE,
+  CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES as PAGED_CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES
+} from './pagedList';
 
-/** 공통 리스트 모듈(MGPagination) 한 페이지 행 수 */
-export const CLIENT_PAYMENT_HISTORY_PAGE_SIZE = 10;
+/** 본인 패키지 결제 이력 SSOT (TERMINATED·회기추가 포함) */
+export const CLIENT_ME_PACKAGE_PAYMENT_HISTORY_API = '/api/v1/clients/me/package-payment-history';
 
-/** 온라인 주문 목록 서버 page size 상한(백엔드 listMyOrders 최대 50) */
-export const CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE = 50;
+/** 공통 리스트 모듈(MGPagination) 한 페이지 행 수 — pagedList SSOT re-export */
+export const CLIENT_PAYMENT_HISTORY_PAGE_SIZE = PAGED_CLIENT_PAYMENT_HISTORY_PAGE_SIZE;
 
-/** 온라인 주문 끝까지 읽기 안전 상한 (무한 루프 방지) */
-export const CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES = 20;
+/** 온라인 주문 목록 서버 page size 상한 — pagedList SSOT re-export */
+export const CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE = PAGED_CLIENT_PAYMENT_SHOP_ORDERS_FETCH_SIZE;
+
+/** 온라인 주문 끝까지 읽기 안전 상한 — pagedList SSOT re-export */
+export const CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES = PAGED_CLIENT_PAYMENT_SHOP_ORDERS_MAX_PAGES;
 
 /** 표/카드 전환 폭 (≥ 이 값 = 표) */
 export const CLIENT_PAYMENT_TABLE_MIN_WIDTH_PX = 768;

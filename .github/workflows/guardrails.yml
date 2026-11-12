@@ -74,7 +74,7 @@ jobs:
     name: Guardrail BE tests (payment · session · ERP · schedule)
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4

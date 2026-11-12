@@ -12,6 +12,9 @@ export const MIN_PAYMENT_AMOUNT = 1000;
 /** BE PaymentConstants.MAX_PAYMENT_AMOUNT 와 동기 */
 export const MAX_PAYMENT_AMOUNT = 10000000;
 
+/** BE PaymentConstants.ZERO_PAYMENT_AMOUNT 와 동기. 무료(결제 없음) 청구. */
+export const ZERO_PAYMENT_AMOUNT = 0;
+
 /** i18n 기본 locale (금액 표시) */
 export const PAYMENT_AMOUNT_DISPLAY_LOCALE = 'ko-KR';
 
@@ -45,3 +48,29 @@ export const isBelowMinPaymentAmount = (amount) => {
  * @returns {boolean}
  */
 export const isBelowMinCardCashDue = (cashDueMinor) => isBelowMinPaymentAmount(cashDueMinor);
+
+/**
+ * 금액이 무료 청구(0원)인지. null/비숫자는 false (fail-closed).
+ * BE {@code PaymentConstants.isZeroPaymentAmount} 와 동기.
+ *
+ * @param {number|string|null|undefined} amount
+ * @returns {boolean}
+ */
+export const isZeroPaymentAmount = (amount) => {
+  if (amount === null || amount === undefined || amount === '') {
+    return false;
+  }
+  const n = Number(amount);
+  return Number.isFinite(n) && n === ZERO_PAYMENT_AMOUNT;
+};
+
+/**
+ * 배정 패키지 가격으로 선택 가능한지(0원 포함, 음수·비숫자 제외).
+ *
+ * @param {number|string|null|undefined} price
+ * @returns {boolean}
+ */
+export const isSelectableAssignmentPackagePrice = (price) => {
+  const n = Number(price);
+  return Number.isFinite(n) && n >= ZERO_PAYMENT_AMOUNT;
+};

@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import com.coresolution.consultation.util.DashboardTrendPeriodUtils;
+import com.coresolution.consultation.util.MappingZeroChargeActivation;
 import com.coresolution.consultation.util.ConsultationsByDayOfWeekUtils;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -1074,7 +1075,38 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 welcomeNotice.run();
             }
         }
+        if (applyDuplicateWindowGuard) {
+            savedMapping = activateZeroChargeRegularAssignmentIfEligible(savedMapping);
+        }
         return savedMapping;
+    }
+
+    /**
+     * 관리자 일반 회기 0원 배정: 결제확인·입금·승인·PG·ERP 없이 회기를 충전하고 ACTIVE 로 전환한다.
+     * 기관연계·당일카드는 건너뛴다. 추가 패키지 행은 기존 ACTIVE 에 회기를 합산한 뒤 TERMINATED 한다.
+     *
+     * @param mapping 방금 저장된 매핑
+     * @return 활성화(또는 병합)된 매핑
+     */
+    private ConsultantClientMapping activateZeroChargeRegularAssignmentIfEligible(
+            ConsultantClientMapping mapping) {
+        if (!MappingZeroChargeActivation.isEligibleRegularAssignment(mapping)) {
+            return mapping;
+        }
+        mapping.setNotes(appendMappingNoteLine(
+                mapping.getNotes(), AdminServiceUserFacingMessages.NOTES_ZERO_CHARGE_ACTIVATED));
+        if (isAdditionalPackageMappingNotes(mapping.getNotes())) {
+            mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+            mapping.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+            mapping = mappingRepository.save(mapping);
+            return mergeAdditionalPackageIntoActiveAndTerminate(
+                    mapping, AdminServiceUserFacingMessages.ZERO_CHARGE_ACTIVATION_ACTOR);
+        }
+        MappingZeroChargeActivation.activateWithoutPayment(mapping);
+        ConsultantClientMapping activated = mappingRepository.save(mapping);
+        log.info("0원 일반 배정 결제 없이 활성화: MappingID={}, remaining={}, status={}",
+                activated.getId(), activated.getRemainingSessions(), activated.getStatus());
+        return activated;
     }
 
     /**
@@ -8111,7 +8143,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             refundAmount = ledgerRefundAmount;
         }
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
-        if (unusedFullVoid || refundAmount > 0L) {
+        // 0원 배정은 입금 INCOME·PG 가 없으므로 전표·PG 취소 없이 매핑만 종료한다.
+        boolean zeroCharge = PaymentConstants.isZeroCharge(mapping.getPackagePrice(), mapping.getPaymentAmount());
+        if (zeroCharge) {
+            log.info("0원 배정 종료 — 환불 전표·PG 취소 생략: MappingID={}, remaining={}",
+                    id, refundedSessions);
+        } else if (unusedFullVoid || refundAmount > 0L) {
             sendRefundToErp(mapping, refundedSessions, refundAmount, ledgerRefundAmount, reason, unusedFullVoid,
                     addonRefund);
         } else {

@@ -20,6 +20,8 @@ Group=mindgarden
 WorkingDirectory=/var/www/mindgarden/releases/blue
 EnvironmentFile=/etc/mindgarden/prod.env
 Environment=SERVER_PORT=8080
+# ShedLock locked_by + ActiveBackendSlotGuard self-slot (app.instance.id). 포트 매핑 폴백보다 우선.
+Environment=APP_INSTANCE_ID=blue
 # prod.env에 SERVER_PORT가 있으면 본 줄이 우선(슬롯 고정). 블루그린 시 prod.env의 SERVER_PORT는 비우는 것을 권장.
 ExecStart=/usr/bin/java -Xms1g -Xmx4g -XX:+UseG1GC -jar app.jar
 Restart=on-failure

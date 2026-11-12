@@ -1,0 +1,243 @@
+# P1 INCIDENT RCA (2026-11-11 재학 제보) — 일정 날짜 변경 후 D-1 리마인드 재발송 여부 (순수 읽기 전용)
+# 트리거: workflow_dispatch 전용. push/PR/schedule 트리거 없음. 배포 워크플로 호출 없음.
+# DB: scripts/ops/readonly/prod_reminder_reschedule_rca.sql 를 READ ONLY 세션으로 실행 (SELECT 만, 쓰기 키워드 가드).
+# 로그: appleboy/ssh-action + PRODUCTION_* 시크릿, grep/tail 만. 재시작·설정 변경·파일 쓰기·heal 금지.
+# 출력: 전화번호는 뒤 4자리만(마스킹), 이름·본문·토큰 미출력.
+# SSOT 2026-09-22: KST 11–19 예방성 prod DB/SSH 점검 금지 → force_incident=true(명시 장애) 일 때만 주간 실행.
+#
+# 추가 진단 출력 (기본 dispatch, KST 가드 통과 시):
+#   logs-readonly:
+#     - sudo cat /etc/mindgarden/active-backend  (트래픽 슬롯 blue|green)
+#     - curl localhost:8080·8081 /actuator/health + /actuator/info
+#       → 슬롯별 process_up(HTTP 200), git.commit.id, git.branch (JSON head -c truncate, 비밀값 미출력)
+#   shedlock-readonly:
+#     - SELECT name, lock_until, locked_at, locked_by FROM shedlock (최근 30행 + reservation-reminder-daily)
+#     - mysql --init-command="SET SESSION TRANSACTION READ ONLY" + PRODUCTION_DB_*
+#       (인라인 -e SELECT — lock_until/locked_at 가 SQL 파일 LOCK 키워드 가드에 오탐되므로 파일 가드 경로 미사용)
+# 쓰기·재시작·배포·SMS·heal 없음. deploy-production.yml 미수정.
+name: 🔎 Check prod reminder reschedule (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_date:
+        description: '조회일 (KST, yyyy-MM-dd)'
+        required: true
+        default: '2026-11-11'
+      since:
+        description: '영향 집계 시작일 (yyyy-MM-dd)'
+        required: true
+        default: '2026-10-01'
+      force_incident:
+        description: 'KST 11–19 주간 스킵 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
+
+concurrency:
+  group: check-prod-reminder-reschedule-readonly
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  db-readonly:
+    name: prod DB read-only SELECT
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 8
+    steps:
+      - name: Validate inputs + KST guard
+        id: guard
+        env:
+          TARGET_DATE: ${{ inputs.target_date }}
+          SINCE: ${{ inputs.since }}
+          FORCE_INCIDENT: ${{ inputs.force_incident }}
+        run: |
+          set -euo pipefail
+          for v in "$TARGET_DATE" "$SINCE"; do
+            [[ "$v" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::invalid date input"; exit 1; }
+          done
+          HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "$FORCE_INCIDENT" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST 11–19 preventive window — skip (exit 0)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Guard SQL is read-only
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          F=scripts/ops/readonly/prod_reminder_reschedule_rca.sql
+          if grep -v '^[[:space:]]*--' "$F" | grep -wiE 'INSERT|UPDATE|DELETE|REPLACE|ALTER|DROP|CREATE|TRUNCATE|GRANT|REVOKE|RENAME|LOAD|CALL|HANDLER|LOCK|SET'; then
+            echo "::error::write/DDL keyword found in read-only SQL"; exit 1
+          fi
+          echo "read-only keyword guard: PASS"
+
+      - name: Setup MySQL client
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Run read-only SELECT
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          TARGET_DATE: ${{ inputs.target_date }}
+          SINCE: ${{ inputs.since }}
+        run: |
+          set -euo pipefail
+          DB_HOST="${PRODUCTION_DB_HOST:-${PRODUCTION_HOST:-}}"
+          [ -n "$DB_HOST" ] && [ -n "${DB_USER:-}" ] && [ -n "${DB_NAME:-}" ] && [ -n "${MYSQL_PWD:-}" ] || { echo "::error::DB secrets missing"; exit 1; }
+          echo "::add-mask::$DB_HOST"; echo "::add-mask::$DB_USER"
+          sed -e "s/__TARGET_DATE__/${TARGET_DATE}/g" -e "s/__SINCE__/${SINCE}/g" \
+            scripts/ops/readonly/prod_reminder_reschedule_rca.sql > /tmp/rca.sql
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 --force -t < /tmp/rca.sql 2>&1 \
+            | sed -E 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g'
+
+  logs-readonly:
+    name: prod app log grep + slot/actuator (read-only)
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Validate input + KST guard
+        id: guard
+        env:
+          TARGET_DATE: ${{ inputs.target_date }}
+          FORCE_INCIDENT: ${{ inputs.force_incident }}
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::invalid date"; exit 1; }
+          HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "$FORCE_INCIDENT" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST 11–19 preventive window — skip (exit 0)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Grep reminder/reschedule logs + slot/actuator (production)
+        if: steps.guard.outputs.skip != 'true'
+        uses: appleboy/ssh-action@master
+        env:
+          TARGET_DATE: ${{ inputs.target_date }}
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 4m
+          script_stop: false
+          envs: TARGET_DATE
+          script: |
+            set +e
+            mask() { sed -E 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' | cut -c1-420; }
+            sec() { echo; echo "=================== $1"; }
+            PAT='ReservationReminder|멱등성 검사 skip|당일 1통 skip|슬롯 재시도 한도|SCHEDULE_SLOT_PAST|SMS_GATE|스케줄 수정 요청|스케줄 날짜 변경|스케줄 시작 시간 변경|일정 변경 디바운스|ScheduleChangeNotification|PENDING 취소|reminder pending'
+
+            sec "active-backend (traffic slot)"
+            sudo -n cat /etc/mindgarden/active-backend 2>/dev/null || echo "(missing)"
+            ACTIVE=$(sudo -n cat /etc/mindgarden/active-backend 2>/dev/null | tr -d '\r\n' | awk '{print tolower($0)}')
+            echo "resolved_active=${ACTIVE:-unknown} (blue→8080 / green→8081)"
+
+            print_actuator() {
+              local port="$1" label="$2"
+              sec "actuator $label port=$port"
+              code=$(curl -sS -o /dev/null -w '%{http_code}' --connect-timeout 3 --max-time 8 \
+                "http://127.0.0.1:${port}/actuator/health" 2>/dev/null || echo "000")
+              if [ "$code" = "200" ]; then up=yes; else up=no; fi
+              echo "health_http=${code} process_up=${up}"
+              curl -sS --connect-timeout 3 --max-time 8 \
+                "http://127.0.0.1:${port}/actuator/health" 2>/dev/null | head -c 400; echo
+              info=$(curl -sS --connect-timeout 3 --max-time 8 \
+                "http://127.0.0.1:${port}/actuator/info" 2>/dev/null || true)
+              echo "info_raw (truncated):"
+              printf '%s' "$info" | head -c 800; echo
+              # git.commit.id / branch — python one-liner (YAML block indent safe)
+              printf '%s' "$info" | python3 -c "import sys,json; raw=sys.stdin.read(); d=json.loads(raw) if raw.strip() else {}; g=d.get('git') or {}; c=g.get('commit') or {}; cid=c.get('id'); cid=(cid.get('full') or cid.get('abbrev')) if isinstance(cid,dict) else cid; print('git.commit.id=%s'%(cid or '(missing)')); print('git.branch=%s'%(g.get('branch') or '(missing)'))" 2>/dev/null \
+                || { echo "git.commit.id=$(printf '%s' "$info" | grep -oE '"id"[[:space:]]*:[[:space:]]*"[a-f0-9]+"' | head -1 | grep -oE '[a-f0-9]{7,}' | head -1)"; \
+                     echo "git.branch=$(printf '%s' "$info" | grep -oE '"branch"[[:space:]]*:[[:space:]]*"[^"]+"' | head -1 | sed -E 's/.*"([^"]+)"/\1/')"; }
+            }
+            print_actuator 8080 "blue"
+            print_actuator 8081 "green"
+
+            sec "log files"; sudo -n ls -la --time-style=full-iso /var/log/mindgarden/ 2>/dev/null | grep -E 'core-' | head -20
+            for c in blue green; do
+              for f in /var/log/mindgarden/core-$c.log /var/log/mindgarden/core-$c-error.log; do
+                sec "$f ($TARGET_DATE, pattern)"
+                sudo -n grep -aE "$PAT" "$f" 2>/dev/null | grep -a "$TARGET_DATE" | mask | tail -n 200
+              done
+            done
+            for u in mindgarden-core-blue.service mindgarden-core-green.service; do
+              sec "journalctl $u ($TARGET_DATE, pattern)"
+              sudo -n journalctl -u "$u" --since "$TARGET_DATE 00:00" --until "$TARGET_DATE 23:59:59" --no-pager 2>/dev/null | grep -aE "$PAT" | mask | tail -n 200
+            done
+
+  # ShedLock 진단 — 인라인 SELECT (lock_until/locked_at 가 LOCK 키워드 가드에 오탐되므로 SQL 파일 가드 경로 미사용)
+  shedlock-readonly:
+    name: prod ShedLock read-only SELECT
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 6
+    steps:
+      - name: Validate inputs + KST guard
+        id: guard
+        env:
+          TARGET_DATE: ${{ inputs.target_date }}
+          FORCE_INCIDENT: ${{ inputs.force_incident }}
+        run: |
+          set -euo pipefail
+          [[ "$TARGET_DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "::error::invalid date input"; exit 1; }
+          HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "$FORCE_INCIDENT" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST 11–19 preventive window — skip (exit 0)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Setup MySQL client
+        if: steps.guard.outputs.skip != 'true'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: SELECT ShedLock rows (READ ONLY session)
+        if: steps.guard.outputs.skip != 'true'
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          DB_HOST="${PRODUCTION_DB_HOST:-${PRODUCTION_HOST:-}}"
+          [ -n "$DB_HOST" ] && [ -n "${DB_USER:-}" ] && [ -n "${DB_NAME:-}" ] && [ -n "${MYSQL_PWD:-}" ] || { echo "::error::DB secrets missing"; exit 1; }
+          echo "::add-mask::$DB_HOST"; echo "::add-mask::$DB_USER"
+          echo "measured_at_kst=$(TZ=Asia/Seoul date '+%F %T')"
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 --force -t \
+            -e "SELECT 'A) shedlock recent (limit 30)' AS section;
+                SELECT name, lock_until, locked_at, locked_by FROM shedlock ORDER BY locked_at DESC LIMIT 30;
+                SELECT 'B) reservation-reminder-daily' AS section;
+                SELECT name, lock_until, locked_at, locked_by FROM shedlock WHERE name = 'reservation-reminder-daily';
+                SELECT 'C) reminder-related locks' AS section;
+                SELECT name, lock_until, locked_at, locked_by FROM shedlock
+                 WHERE name LIKE '%reminder%' OR name LIKE '%ReservationReminder%'
+                 ORDER BY locked_at DESC LIMIT 20;" 2>&1

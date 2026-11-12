@@ -18,6 +18,8 @@ Group=mindgarden
 WorkingDirectory=/var/www/mindgarden/releases/green
 EnvironmentFile=/etc/mindgarden/prod.env
 Environment=SERVER_PORT=8081
+# ShedLock locked_by + ActiveBackendSlotGuard self-slot (app.instance.id). 포트 매핑 폴백보다 우선.
+Environment=APP_INSTANCE_ID=green
 ExecStart=/usr/bin/java -Xms1g -Xmx4g -XX:+UseG1GC -jar app.jar
 Restart=on-failure
 RestartSec=10

@@ -72,6 +72,9 @@ describe('WeeklyReservationsWidget refresh', () => {
     await waitFor(() => {
       expect(StandardizedApi.get).toHaveBeenCalledTimes(1);
     });
+    await waitFor(() => {
+      expect(screen.getByTestId('weekly-reservations-refresh')).not.toBeDisabled();
+    });
 
     fireEvent.click(screen.getByTestId('weekly-reservations-refresh'));
 

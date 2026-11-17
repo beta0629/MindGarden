@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { HeroSection } from '@/components/home/HeroSection';
+import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
 import { InquiryForm } from '@/components/inquiry/InquiryForm';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
@@ -16,6 +17,7 @@ import {
   resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
 import { homeCopy } from '@/lib/content/home';
+import { reviewsCopy } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
 import { getLatestBlogPosts, getLatestVideos } from '@/lib/feeds';
 import { buildMetadata } from '@/lib/seo';
@@ -42,6 +44,7 @@ export default async function HomePage() {
   const eventPrice = eventProduct
     ? resolveProductDisplayPrice(eventProduct)
     : null;
+  const homeReviews = homepage.reviews.slice(0, 3);
   const noticeBanner = homepage.banners.find((b) => {
     const title = b.title.trim();
     if (!title) return false;
@@ -202,56 +205,61 @@ export default async function HomePage() {
       )}
 
       <section className="section section--sand" data-reveal>
-        <div className="container">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              gap: '1rem',
-              alignItems: 'end',
-            }}
-          >
-            <div>
-              <div className="section__eyebrow">04</div>
-              <h2 className="section__title">{homeCopy.spaces.title}</h2>
-              <p className="section__lead">{homeCopy.spaces.lead}</p>
+        <div className="container spaces-with-gate">
+          <div className="spaces-with-gate__main">
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                alignItems: 'end',
+              }}
+            >
+              <div>
+                <div className="section__eyebrow">04</div>
+                <h2 className="section__title">{homeCopy.spaces.title}</h2>
+                <p className="section__lead">{homeCopy.spaces.lead}</p>
+              </div>
+              <Link className="text-link" href="/gallery">
+                공간 더 보기 →
+              </Link>
             </div>
-            <Link className="text-link" href="/gallery">
-              공간 더 보기 →
-            </Link>
+            <div className="space-grid" data-reveal-stagger>
+              {homeCopy.spaces.items.map((item, index) => {
+                const baseName = item.src
+                  .replace('/images/', '')
+                  .replace(/\.(jpg|jpeg|png|webp)$/i, '');
+                return (
+                  <figure
+                    key={item.caption + item.src}
+                    className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
+                    data-reveal
+                  >
+                    <ResponsiveImage
+                      baseName={baseName}
+                      widths={[640, 1050]}
+                      width={1050}
+                      height={item.wide ? 591 : 788}
+                      alt={item.caption}
+                      sizes={
+                        item.wide
+                          ? '(max-width: 768px) 100vw, min(100vw, 1050px)'
+                          : '(max-width: 768px) 50vw, min(50vw, 1050px)'
+                      }
+                      priority={index === 0}
+                      fallbackSrc={item.src}
+                    />
+                    <figcaption>
+                      {item.caption}
+                      {item.confirmNeeded ? <ConfirmNeeded /> : null}
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
           </div>
-          <div className="space-grid" data-reveal-stagger>
-            {homeCopy.spaces.items.map((item, index) => {
-              const baseName = item.src
-                .replace('/images/', '')
-                .replace(/\.(jpg|jpeg|png|webp)$/i, '');
-              return (
-                <figure
-                  key={item.caption + item.src}
-                  className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
-                  data-reveal
-                >
-                  <ResponsiveImage
-                    baseName={baseName}
-                    widths={[640, 1050]}
-                    width={1050}
-                    height={item.wide ? 591 : 788}
-                    alt={item.caption}
-                    sizes={
-                      item.wide
-                        ? '(max-width: 768px) 100vw, min(100vw, 1050px)'
-                        : '(max-width: 768px) 50vw, min(50vw, 1050px)'
-                    }
-                    priority={index === 0}
-                    fallbackSrc={item.src}
-                  />
-                  <figcaption>
-                    {item.caption}
-                    {item.confirmNeeded ? <ConfirmNeeded /> : null}
-                  </figcaption>
-                </figure>
-              );
-            })}
+          <div className="spaces-with-gate__scene">
+            <GateScene />
           </div>
         </div>
       </section>
@@ -259,8 +267,51 @@ export default async function HomePage() {
       <DividerSprig />
 
       <section className="section" data-reveal>
+        <div className="container reviews-with-bench">
+          <div className="reviews-with-bench__header">
+            <div>
+              <div className="section__eyebrow">05</div>
+              <h2 className="section__title">{reviewsCopy.title}</h2>
+              <p className="section__lead">{reviewsCopy.lead}</p>
+              <p style={{ marginTop: '0.75rem' }}>
+                <Link className="text-link" href="/reviews">
+                  이용 후기 더 보기 →
+                </Link>
+              </p>
+            </div>
+            <div className="reviews-with-bench__scene">
+              <BenchScene />
+            </div>
+          </div>
+          {homeReviews.length > 0 ? (
+            <div className="reviews-home-grid" data-reveal-stagger>
+              {homeReviews.map((review, index) => (
+                <article
+                  key={`${review.publishedAt}-${review.displayName ?? 'anon'}-${review.body.slice(0, 12)}`}
+                  className={`reviews-home-card${
+                    homeReviews.length >= 3 && index === 1
+                      ? ' reviews-home-card--accent'
+                      : ''
+                  }`}
+                  data-reveal
+                >
+                  <p style={{ marginBottom: '0.35rem' }}>{review.body}</p>
+                  <p className="muted" style={{ margin: 0, fontSize: '0.875rem' }}>
+                    {review.displayName || '익명'} ·{' '}
+                    {review.publishedAt.slice(0, 10)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <DividerSprig />
+
+      <section className="section" data-reveal>
         <div className="container">
-          <div className="section__eyebrow">05</div>
+          <div className="section__eyebrow">06</div>
           <h2 className="section__title">{homeCopy.news.title}</h2>
           <p className="section__lead">{homeCopy.news.lead}</p>
           {videos.length === 0 && posts.length === 0 ? (
@@ -379,11 +430,18 @@ export default async function HomePage() {
       <section className="section section--sand" id="contact" data-reveal>
         <div className="container booking-layout">
           <div>
-            <div className="section__eyebrow">06</div>
+            <div className="section__eyebrow">07</div>
             <h2 className="section__title">{homeCopy.booking.title}</h2>
             <p>{homeCopy.booking.body}</p>
             <p className="muted">{homeCopy.booking.support}</p>
-            <BookingCta showHint />
+            <div className="booking-cta-with-scene">
+              <div className="booking-cta-with-scene__scene">
+                <BookingScene />
+              </div>
+              <div className="booking-cta-with-scene__cta">
+                <BookingCta showHint />
+              </div>
+            </div>
             <p style={{ marginTop: '1rem' }}>{SITE.hours}</p>
             {eventProduct && eventPrice ? (
               <p>

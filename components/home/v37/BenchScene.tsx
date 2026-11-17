@@ -1,0 +1,330 @@
+'use client';
+
+import { useEffect, useRef, useState, type RefObject } from 'react';
+import {
+  drawAtlasFrame,
+  drawCoverImage,
+  loadJson,
+  loadSheet,
+  preloadAtlasSheets,
+  resizeCanvas,
+  type DecodedImage,
+} from './atlas';
+import { readScrollMetrics, ScrollClock } from './scrollClock';
+import {
+  SETTLE_RISE_PX,
+  settleFromWalkDelta,
+  settleTranslateY,
+} from './settle';
+import type {
+  AmbientButterfly,
+  BenchJson,
+  PackId,
+  PerchShadowTrackPoint,
+} from './types';
+import { TRIGGER_P, TRIGGER_WALK_F } from './types';
+import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
+
+type Props = {
+  sectionRef?: RefObject<HTMLElement | null>;
+};
+
+type Runtime = {
+  json: BenchJson;
+  body: DecodedImage;
+  shadow: DecodedImage;
+  poster: DecodedImage;
+  ambientSheets: Record<string, DecodedImage[]>;
+  perchShadow: DecodedImage | null;
+};
+
+type Pad = { left: number; top: number; right: number; bottom: number };
+
+function computePad(json: BenchJson): Pad {
+  let minX = 0;
+  let minY = 0;
+  let maxX = json.place.css_w;
+  let maxY = json.place.css_h;
+
+  for (const key of Object.keys(json.ambient)) {
+    const amb = json.ambient[key];
+    for (const pt of amb.track) {
+      minX = Math.min(minX, pt.x);
+      minY = Math.min(minY, pt.y);
+      maxX = Math.max(maxX, pt.x + amb.css_w);
+      maxY = Math.max(maxY, pt.y + amb.css_h);
+    }
+  }
+  for (const pt of json.perch_shadow.track) {
+    minX = Math.min(minX, pt.x);
+    minY = Math.min(minY, pt.y);
+    maxX = Math.max(maxX, pt.x + json.perch_shadow.css_w);
+    maxY = Math.max(maxY, pt.y + json.perch_shadow.css_h);
+  }
+
+  const pad = 8;
+  return {
+    left: Math.max(0, -minX) + pad,
+    top: Math.max(0, -minY) + pad,
+    right: Math.max(0, maxX - json.place.css_w) + pad,
+    bottom: Math.max(0, maxY - json.place.css_h) + pad,
+  };
+}
+
+async function loadBenchRuntime(pack: PackId): Promise<Runtime> {
+  const json = await loadJson<BenchJson>(`bench/${pack}/bench-${pack}.json`);
+  const ambientSheets: Record<string, DecodedImage[]> = {};
+  await Promise.all(
+    Object.entries(json.ambient).map(async ([key, amb]) => {
+      ambientSheets[key] = await preloadAtlasSheets(amb.atlas);
+    }),
+  );
+  const [body, shadow, poster, perchShadow] = await Promise.all([
+    loadSheet(json.body.file),
+    loadSheet(json.shadow.file),
+    loadSheet(json.poster_reduced_motion.file),
+    loadSheet(json.perch_shadow.file.file),
+  ]);
+  return { json, body, shadow, poster, ambientSheets, perchShadow };
+}
+
+function trackAt(
+  track: AmbientButterfly['track'],
+  walkF: number,
+): AmbientButterfly['track'][number] | null {
+  if (track.length === 0) return null;
+  if (walkF < track[0].f || walkF > track[track.length - 1].f) return null;
+  const idx = Math.round(walkF - track[0].f);
+  return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
+}
+
+function perchAt(
+  track: PerchShadowTrackPoint[],
+  walkF: number,
+): PerchShadowTrackPoint | null {
+  if (track.length === 0) return null;
+  if (walkF < track[0].f || walkF > track[track.length - 1].f) return null;
+  const idx = Math.round(walkF - track[0].f);
+  return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
+}
+
+export function BenchScene({ sectionRef }: Props) {
+  const pack = useBreakpointPack();
+  const reduced = usePrefersReducedMotion();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [placeStyle, setPlaceStyle] = useState<{
+    width: string;
+    aspectRatio: string;
+  }>({
+    width: pack === '1440' ? '28.115vw' : '57.274vw',
+    aspectRatio: '405 / 350',
+  });
+  const runtimeRef = useRef<Runtime | null>(null);
+  const padRef = useRef<Pad>({ left: 0, top: 0, right: 0, bottom: 0 });
+  const clockRef = useRef<ScrollClock | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReady(false);
+    setFailed(false);
+    runtimeRef.current = null;
+
+    loadBenchRuntime(pack)
+      .then((rt) => {
+        if (cancelled) return;
+        runtimeRef.current = rt;
+        padRef.current = computePad(rt.json);
+        clockRef.current = new ScrollClock({
+          triggerP: TRIGGER_P[pack].bench,
+          triggerWalkF: TRIGGER_WALK_F.bench,
+        });
+        const { css_w, css_h, w_pct_of_viewport } = rt.json.place;
+        setPlaceStyle({
+          width: `${w_pct_of_viewport}vw`,
+          aspectRatio: `${css_w} / ${css_h}`,
+        });
+        setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pack]);
+
+  useEffect(() => {
+    if (!ready || reduced || failed) return;
+    const canvas = canvasRef.current;
+    const wrap = wrapRef.current;
+    if (!canvas || !wrap) return;
+
+    let raf = 0;
+    let alive = true;
+
+    const tick = (now: number) => {
+      if (!alive) return;
+      const rt = runtimeRef.current;
+      const clock = clockRef.current;
+      const pad = padRef.current;
+      if (!rt || !clock) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      const sectionEl =
+        sectionRef?.current ??
+        (wrap.closest('section') as HTMLElement | null) ??
+        wrap;
+      const metrics = readScrollMetrics(sectionEl);
+      const walkF = clock.update(now, metrics);
+      const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
+      const risePx = SETTLE_RISE_PX[pack];
+      const ty = settleTranslateY(settle.rise, risePx);
+
+      const boxW = rt.json.place.css_w;
+      const boxH = rt.json.place.css_h;
+      const cssW = boxW + pad.left + pad.right;
+      const cssH = boxH + pad.top + pad.bottom;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
+      if (!ctx) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      const ox = pad.left;
+      const oy = pad.top;
+      const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
+
+      // Layer: shadow(settle) < back butterflies < body(settle) < perch < front
+      // Butterflies use box coords — not affected by §1 translateY.
+
+      ctx.save();
+      ctx.globalAlpha = settle.opacity;
+      ctx.translate(0, ty);
+      ctx.save();
+      ctx.globalAlpha *= settle.shadowOpacity;
+      ctx.translate(ox + boxW / 2, groundY);
+      ctx.scale(settle.shadowScaleX, 1);
+      ctx.translate(-(ox + boxW / 2), -groundY);
+      drawCoverImage(ctx, rt.shadow, ox, oy, boxW, boxH);
+      ctx.restore();
+      ctx.restore();
+
+      drawButterflies(ctx, rt, walkF, ox, oy, 'back');
+
+      ctx.save();
+      ctx.globalAlpha = settle.opacity;
+      ctx.translate(0, ty);
+      drawCoverImage(ctx, rt.body, ox, oy, boxW, boxH);
+      ctx.restore();
+
+      const perch = perchAt(rt.json.perch_shadow.track, walkF);
+      if (perch && rt.perchShadow) {
+        ctx.save();
+        ctx.globalAlpha = perch.opacity;
+        drawCoverImage(
+          ctx,
+          rt.perchShadow,
+          ox + perch.x,
+          oy + perch.y,
+          rt.json.perch_shadow.css_w,
+          rt.json.perch_shadow.css_h,
+        );
+        ctx.restore();
+      }
+
+      drawButterflies(ctx, rt, walkF, ox, oy, 'front');
+
+      canvas.style.left = `${-pad.left}px`;
+      canvas.style.top = `${-pad.top}px`;
+      canvas.style.width = `${cssW}px`;
+      canvas.style.height = `${cssH}px`;
+
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(raf);
+    };
+  }, [ready, reduced, failed, pack, sectionRef]);
+
+  const showPoster = failed || reduced || !ready;
+  const posterSrc = `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`;
+
+  return (
+    <div
+      ref={wrapRef}
+      className="v37-scene v37-scene--bench"
+      style={{
+        width: placeStyle.width,
+        maxWidth: '100%',
+        aspectRatio: placeStyle.aspectRatio,
+      }}
+      aria-hidden="true"
+    >
+      {showPoster ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          className="v37-scene__poster"
+          src={posterSrc}
+          alt=""
+          decoding="async"
+        />
+      ) : (
+        <canvas ref={canvasRef} className="v37-scene__canvas v37-scene__canvas--overflow" />
+      )}
+    </div>
+  );
+}
+
+function drawButterflies(
+  ctx: CanvasRenderingContext2D,
+  rt: Runtime,
+  walkF: number,
+  ox: number,
+  oy: number,
+  layer: 'front' | 'back',
+): void {
+  for (const key of Object.keys(rt.json.ambient)) {
+    const amb = rt.json.ambient[key];
+    const pt = trackAt(amb.track, walkF);
+    if (!pt || pt.layer !== layer) continue;
+    const sheets = rt.ambientSheets[key];
+    if (!sheets) continue;
+    const entry = amb.atlas.index[pt.cell];
+    if (!entry) continue;
+    const sheet = sheets[entry[0]];
+    if (!sheet) continue;
+
+    ctx.save();
+    if (amb.front_blur && layer === 'front') {
+      ctx.filter = 'blur(0.6px)';
+    }
+    if (amb.mirror) {
+      const cx = ox + pt.x + amb.css_w / 2;
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-cx, 0);
+    }
+    drawAtlasFrame(
+      ctx,
+      sheet,
+      amb.atlas,
+      pt.cell,
+      ox + pt.x,
+      oy + pt.y,
+      2,
+    );
+    ctx.restore();
+  }
+}

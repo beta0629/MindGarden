@@ -169,7 +169,8 @@ export const homeCopy = {
         title: '본상담',
         amount: 90_000,
         note: '개인상담 1회',
-        match: [/본상담/, /개인/, /회기/, /1회/],
+        // Avoid /회기/ — it steals 「…10회기…」 packages before pack10.
+        match: [/본상담/, /개인/, /1회/],
       },
       {
         key: 'pack10',

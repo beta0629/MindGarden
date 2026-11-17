@@ -35,11 +35,38 @@ type PriceCardView = {
   fromLive: boolean;
 };
 
+/** Live card subtitle from the matched product — never from static guide.note. */
+function liveProductNote(
+  guideKey: string,
+  product: ConsultationProduct,
+): string {
+  if (guideKey === 'event') {
+    if (product.eventStartDate && product.eventEndDate) {
+      return `${product.eventStartDate.replace(/-/g, '.')} – ${product.eventEndDate.slice(5).replace(/-/g, '.')}`;
+    }
+    return '';
+  }
+  if (product.sessionCount > 0) {
+    return `${product.sessionCount}회`;
+  }
+  return '';
+}
+
+const pack10Match =
+  homeCopy.pricing.cards.find((card) => card.key === 'pack10')?.match ?? [];
+
 function buildPriceCards(products: ConsultationProduct[]): PriceCardView[] {
   const used = new Set<string>();
   return homeCopy.pricing.cards.map((guide) => {
     const match = products.find((product) => {
       if (used.has(product.skuCode)) return false;
+      // Prefer pack10 over broad session patterns (e.g. /개인/, leftover /회기/).
+      if (
+        guide.key === 'session' &&
+        pack10Match.some((re) => re.test(product.name))
+      ) {
+        return false;
+      }
       return guide.match.some((re) => re.test(product.name));
     });
     if (!match) {
@@ -54,15 +81,11 @@ function buildPriceCards(products: ConsultationProduct[]): PriceCardView[] {
     }
     used.add(match.skuCode);
     const view = resolveProductDisplayPrice(match);
-    const note =
-      guide.key === 'event' && match.eventStartDate && match.eventEndDate
-        ? `${match.eventStartDate.replace(/-/g, '.')} – ${match.eventEndDate.slice(5).replace(/-/g, '.')}`
-        : guide.note;
     return {
       key: guide.key,
       title: match.name || guide.title,
       amount: view.amount,
-      note,
+      note: liveProductNote(guide.key, match),
       struckThrough: view.struckThroughPrice,
       fromLive: true,
     };
@@ -87,10 +110,7 @@ export default async function HomePage() {
         key: 'event',
         title: eventProduct.name,
         amount: eventView.amount,
-        note:
-          eventProduct.eventStartDate && eventProduct.eventEndDate
-            ? `${eventProduct.eventStartDate.replace(/-/g, '.')} – ${eventProduct.eventEndDate.slice(5).replace(/-/g, '.')}`
-            : homeCopy.pricing.cards[3].note,
+        note: liveProductNote('event', eventProduct),
         struckThrough: eventView.struckThroughPrice,
         fromLive: true,
       };
@@ -340,7 +360,9 @@ export default async function HomePage() {
                   ) : null}{' '}
                   {formatWon(card.amount)}
                 </p>
-                <p className="home-price-card__note">{card.note}</p>
+                {card.note ? (
+                  <p className="home-price-card__note">{card.note}</p>
+                ) : null}
               </article>
             ))}
           </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
 import { homeCopy } from '@/lib/content/home';
@@ -14,7 +15,13 @@ export function HeroSection() {
           {homeCopy.hero.subtitle}
           {homeCopy.hero.subtitleConfirmNeeded ? <ConfirmNeeded /> : null}
         </p>
-        <BookingCta showHint />
+        <div className="hero__actions">
+          <BookingCta label={homeCopy.hero.primaryCta} />
+          <Link className="text-link hero__secondary" href={homeCopy.hero.secondaryHref}>
+            {homeCopy.hero.secondaryCta}
+            <span aria-hidden="true"> →</span>
+          </Link>
+        </div>
       </div>
       <HeroMedia />
     </section>

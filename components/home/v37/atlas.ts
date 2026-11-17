@@ -48,17 +48,6 @@ export async function loadJson<T>(relativePath: string): Promise<T> {
   return (await res.json()) as T;
 }
 
-export async function preloadAtlasSheets(
-  atlas: AtlasMeta,
-  sheetIndexes?: number[],
-): Promise<DecodedImage[]> {
-  const wanted =
-    sheetIndexes && sheetIndexes.length > 0
-      ? [...new Set(sheetIndexes)]
-      : atlas.sheets.map((_, i) => i);
-  return Promise.all(wanted.map((i) => loadSheet(atlas.sheets[i].file)));
-}
-
 /** Unique sheet indices referenced by frame range [from, to] inclusive. */
 export function sheetIndexesForFrames(
   atlas: AtlasMeta,
@@ -73,6 +62,78 @@ export function sheetIndexesForFrames(
     if (entry) out.add(entry[0]);
   }
   return [...out];
+}
+
+/**
+ * Sparse atlas sheet bank — decode only requested sheet indexes (current + next).
+ */
+export class AtlasSheetBank {
+  private readonly slots: Array<DecodedImage | null | undefined>;
+  private readonly inflight = new Map<number, Promise<DecodedImage>>();
+
+  constructor(private readonly atlas: AtlasMeta) {
+    this.slots = new Array(atlas.sheets.length);
+  }
+
+  get atlasMeta(): AtlasMeta {
+    return this.atlas;
+  }
+
+  get(sheetIndex: number): DecodedImage | null {
+    return this.slots[sheetIndex] ?? null;
+  }
+
+  has(sheetIndex: number): boolean {
+    return this.slots[sheetIndex] != null;
+  }
+
+  /** Kick off decode for sheet indexes; no-op if already loaded/in-flight. */
+  ensure(sheetIndexes: number[]): Promise<void> {
+    const jobs: Promise<DecodedImage>[] = [];
+    for (const raw of sheetIndexes) {
+      const i = raw;
+      if (i < 0 || i >= this.atlas.sheets.length) continue;
+      if (this.slots[i]) continue;
+      let pending = this.inflight.get(i);
+      if (!pending) {
+        pending = loadSheet(this.atlas.sheets[i].file).then((img) => {
+          this.slots[i] = img;
+          this.inflight.delete(i);
+          return img;
+        });
+        this.inflight.set(i, pending);
+      }
+      jobs.push(pending);
+    }
+    return jobs.length === 0 ? Promise.resolve() : Promise.all(jobs).then(() => undefined);
+  }
+
+  /** Ensure sheets covering frame range [from, to]. */
+  ensureFrames(from: number, to: number): Promise<void> {
+    return this.ensure(sheetIndexesForFrames(this.atlas, from, to));
+  }
+
+  /**
+   * Ensure sheet for `frameIndex` and the next distinct sheet (spec: current + next).
+   */
+  ensureCurrentAndNext(frameIndex: number): Promise<void> {
+    const idx = Math.min(
+      this.atlas.index.length - 1,
+      Math.max(0, Math.round(frameIndex)),
+    );
+    const wanted = new Set<number>();
+    const cur = this.atlas.index[idx];
+    if (cur) wanted.add(cur[0]);
+    for (let i = idx + 1; i < this.atlas.index.length; i += 1) {
+      const entry = this.atlas.index[i];
+      if (!entry) continue;
+      if (!wanted.has(entry[0])) {
+        wanted.add(entry[0]);
+        break;
+      }
+    }
+    return this.ensure([...wanted]);
+  }
 }
 
 /**
@@ -139,3 +200,6 @@ export function smoothstep(t: number): number {
   const x = Math.min(1, Math.max(0, t));
   return x * x * (3 - 2 * x);
 }
+
+/** Near-viewport rootMargin (~1.5× vh). */
+export const NEAR_ROOT_MARGIN = '150% 0px';

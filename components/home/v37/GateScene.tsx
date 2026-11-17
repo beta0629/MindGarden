@@ -2,13 +2,13 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  AtlasSheetBank,
   drawAtlasFrame,
   drawCoverImage,
   loadJson,
   loadSheet,
-  preloadAtlasSheets,
+  NEAR_ROOT_MARGIN,
   resizeCanvas,
-  sheetIndexesForFrames,
   smoothstep,
   type DecodedImage,
 } from './atlas';
@@ -18,7 +18,7 @@ import {
   settleFromWalkDelta,
   settleTranslateY,
 } from './settle';
-import type { GateJson, PackId } from './types';
+import type { GateJson } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 
@@ -28,25 +28,11 @@ type Props = {
 
 type Runtime = {
   json: GateJson;
-  bodySheets: DecodedImage[];
-  shadowSheets: DecodedImage[];
-  staticBody: DecodedImage;
-  staticShadow: DecodedImage;
-  poster: DecodedImage;
+  bodyBank: AtlasSheetBank;
+  shadowBank: AtlasSheetBank;
+  staticBody: DecodedImage | null;
+  staticShadow: DecodedImage | null;
 };
-
-async function loadGateRuntime(pack: PackId): Promise<Runtime> {
-  const json = await loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`);
-  const [bodySheets, shadowSheets, staticBody, staticShadow, poster] =
-    await Promise.all([
-      preloadAtlasSheets(json.door.body_atlas),
-      preloadAtlasSheets(json.door.shadow_atlas),
-      loadSheet(json.static.body.file),
-      loadSheet(json.static.shadow.file),
-      loadSheet(json.poster_reduced_motion.file),
-    ]);
-  return { json, bodySheets, shadowSheets, staticBody, staticShadow, poster };
-}
 
 function doorIndexForWalk(json: GateJson, walkF: number): {
   index: number;
@@ -71,13 +57,39 @@ function doorIndexForWalk(json: GateJson, walkF: number): {
   return { index: lastIdx, crossfade: 1, useStatic: true };
 }
 
+async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
+  const door = doorIndexForWalk(rt.json, walkF);
+  const jobs: Promise<void>[] = [
+    rt.bodyBank.ensureCurrentAndNext(door.index),
+    rt.shadowBank.ensureCurrentAndNext(door.index),
+  ];
+  if (door.crossfade > 0 || door.useStatic) {
+    if (!rt.staticBody) {
+      jobs.push(
+        loadSheet(rt.json.static.body.file).then((img) => {
+          rt.staticBody = img;
+        }),
+      );
+    }
+    if (!rt.staticShadow) {
+      jobs.push(
+        loadSheet(rt.json.static.shadow.file).then((img) => {
+          rt.staticShadow = img;
+        }),
+      );
+    }
+  }
+  await Promise.all(jobs);
+}
+
 export function GateScene({ sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [metaReady, setMetaReady] = useState(false);
+  const [canvasActive, setCanvasActive] = useState(false);
   const [placeStyle, setPlaceStyle] = useState<{
     width: string;
     aspectRatio: string;
@@ -88,26 +100,34 @@ export function GateScene({ sectionRef }: Props) {
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
 
+  // Mount: JSON only (poster is <img>)
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
+    setMetaReady(false);
+    setCanvasActive(false);
     setFailed(false);
     runtimeRef.current = null;
 
-    loadGateRuntime(pack)
-      .then((rt) => {
+    loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`)
+      .then((json) => {
         if (cancelled) return;
-        runtimeRef.current = rt;
+        runtimeRef.current = {
+          json,
+          bodyBank: new AtlasSheetBank(json.door.body_atlas),
+          shadowBank: new AtlasSheetBank(json.door.shadow_atlas),
+          staticBody: null,
+          staticShadow: null,
+        };
         clockRef.current = new ScrollClock({
           triggerP: TRIGGER_P[pack].gate,
           triggerWalkF: TRIGGER_WALK_F.gate,
         });
-        const { css_w, css_h, w_pct_of_viewport } = rt.json.place;
+        const { css_w, css_h, w_pct_of_viewport } = json.place;
         setPlaceStyle({
           width: `${w_pct_of_viewport}vw`,
           aspectRatio: `${css_w} / ${css_h}`,
         });
-        setReady(true);
+        setMetaReady(true);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -118,34 +138,25 @@ export function GateScene({ sectionRef }: Props) {
     };
   }, [pack]);
 
+  // Near-viewport decode + visible rAF
   useEffect(() => {
-    if (!ready || !runtimeRef.current) return;
+    if (!metaReady || reduced || failed) return;
     const wrap = wrapRef.current;
     if (!wrap) return;
-    const rt = runtimeRef.current;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        const atlas = rt.json.door.body_atlas;
-        void preloadAtlasSheets(
-          atlas,
-          sheetIndexesForFrames(atlas, 0, Math.min(8, atlas.frames - 1)),
-        );
-      },
-      { rootMargin: '200% 0px' },
-    );
-    io.observe(wrap);
-    return () => io.disconnect();
-  }, [ready]);
 
-  useEffect(() => {
-    if (!ready || reduced || failed) return;
-    const canvas = canvasRef.current;
-    const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
-
-    let raf = 0;
     let alive = true;
+    let near = false;
+    let visible = false;
+    let warming = false;
+    let assetsReady = false;
+    let raf = 0;
+
+    const stopRaf = () => {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
 
     const paintPair = (
       ctx: CanvasRenderingContext2D,
@@ -175,10 +186,11 @@ export function GateScene({ sectionRef }: Props) {
       ctx.translate(-cssW / 2, -groundY);
       if (mode === 'atlas') {
         const entry = rt.json.door.shadow_atlas.index[frameIndex];
-        if (entry) {
+        const sheet = entry ? rt.shadowBank.get(entry[0]) : null;
+        if (sheet) {
           drawAtlasFrame(
             ctx,
-            rt.shadowSheets[entry[0]],
+            sheet,
             rt.json.door.shadow_atlas,
             frameIndex,
             0,
@@ -186,17 +198,18 @@ export function GateScene({ sectionRef }: Props) {
             shadowScale,
           );
         }
-      } else {
+      } else if (rt.staticShadow) {
         drawCoverImage(ctx, rt.staticShadow, 0, 0, cssW, cssH);
       }
       ctx.restore();
 
       if (mode === 'atlas') {
         const entry = rt.json.door.body_atlas.index[frameIndex];
-        if (entry) {
+        const sheet = entry ? rt.bodyBank.get(entry[0]) : null;
+        if (sheet) {
           drawAtlasFrame(
             ctx,
-            rt.bodySheets[entry[0]],
+            sheet,
             rt.json.door.body_atlas,
             frameIndex,
             0,
@@ -204,17 +217,21 @@ export function GateScene({ sectionRef }: Props) {
             bodyScale,
           );
         }
-      } else {
+      } else if (rt.staticBody) {
         drawCoverImage(ctx, rt.staticBody, 0, 0, cssW, cssH);
       }
       ctx.restore();
     };
 
     const tick = (now: number) => {
-      if (!alive) return;
+      if (!alive || !visible) {
+        raf = 0;
+        return;
+      }
       const rt = runtimeRef.current;
       const clock = clockRef.current;
-      if (!rt || !clock) {
+      const canvas = canvasRef.current;
+      if (!rt || !clock || !canvas || !assetsReady) {
         raf = requestAnimationFrame(tick);
         return;
       }
@@ -225,6 +242,8 @@ export function GateScene({ sectionRef }: Props) {
         wrap;
       const metrics = readScrollMetrics(sectionEl);
       const walkF = clock.update(now, metrics);
+      void ensureGateForWalk(rt, walkF);
+
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
@@ -300,14 +319,64 @@ export function GateScene({ sectionRef }: Props) {
       raf = requestAnimationFrame(tick);
     };
 
-    raf = requestAnimationFrame(tick);
+    const startRaf = () => {
+      if (!alive || !visible || !assetsReady || raf) return;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const warmInitial = async () => {
+      if (warming || assetsReady) return;
+      warming = true;
+      const rt = runtimeRef.current;
+      if (!rt) return;
+      try {
+        await Promise.all([
+          rt.bodyBank.ensureCurrentAndNext(0),
+          rt.shadowBank.ensureCurrentAndNext(0),
+        ]);
+        if (!alive) return;
+        assetsReady = true;
+        setCanvasActive(true);
+        startRaf();
+      } catch {
+        if (alive) setFailed(true);
+      } finally {
+        warming = false;
+      }
+    };
+
+    const nearIO = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (hit && !near) {
+          near = true;
+          void warmInitial();
+        }
+      },
+      { rootMargin: NEAR_ROOT_MARGIN },
+    );
+
+    const visIO = new IntersectionObserver(
+      (entries) => {
+        visible = entries.some((e) => e.isIntersecting);
+        if (visible) startRaf();
+        else stopRaf();
+      },
+      { rootMargin: '0px' },
+    );
+
+    nearIO.observe(wrap);
+    visIO.observe(wrap);
+
     return () => {
       alive = false;
-      cancelAnimationFrame(raf);
+      stopRaf();
+      nearIO.disconnect();
+      visIO.disconnect();
     };
-  }, [ready, reduced, failed, pack, sectionRef]);
+  }, [metaReady, reduced, failed, pack, sectionRef]);
 
-  const showPoster = failed || reduced || !ready;
+  const showPoster = failed || reduced || !canvasActive;
   const posterSrc = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
 
   return (

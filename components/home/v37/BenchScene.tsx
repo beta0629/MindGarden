@@ -2,11 +2,12 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  AtlasSheetBank,
   drawAtlasFrame,
   drawCoverImage,
   loadJson,
   loadSheet,
-  preloadAtlasSheets,
+  NEAR_ROOT_MARGIN,
   resizeCanvas,
   type DecodedImage,
 } from './atlas';
@@ -19,7 +20,6 @@ import {
 import type {
   AmbientButterfly,
   BenchJson,
-  PackId,
   PerchShadowTrackPoint,
 } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
@@ -31,11 +31,10 @@ type Props = {
 
 type Runtime = {
   json: BenchJson;
-  body: DecodedImage;
-  shadow: DecodedImage;
-  poster: DecodedImage;
-  ambientSheets: Record<string, DecodedImage[]>;
+  body: DecodedImage | null;
+  shadow: DecodedImage | null;
   perchShadow: DecodedImage | null;
+  ambientBanks: Record<string, AtlasSheetBank>;
 };
 
 type Pad = { left: number; top: number; right: number; bottom: number };
@@ -71,23 +70,6 @@ function computePad(json: BenchJson): Pad {
   };
 }
 
-async function loadBenchRuntime(pack: PackId): Promise<Runtime> {
-  const json = await loadJson<BenchJson>(`bench/${pack}/bench-${pack}.json`);
-  const ambientSheets: Record<string, DecodedImage[]> = {};
-  await Promise.all(
-    Object.entries(json.ambient).map(async ([key, amb]) => {
-      ambientSheets[key] = await preloadAtlasSheets(amb.atlas);
-    }),
-  );
-  const [body, shadow, poster, perchShadow] = await Promise.all([
-    loadSheet(json.body.file),
-    loadSheet(json.shadow.file),
-    loadSheet(json.poster_reduced_motion.file),
-    loadSheet(json.perch_shadow.file.file),
-  ]);
-  return { json, body, shadow, poster, ambientSheets, perchShadow };
-}
-
 function trackAt(
   track: AmbientButterfly['track'],
   walkF: number,
@@ -108,13 +90,25 @@ function perchAt(
   return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
 }
 
+function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
+  for (const key of Object.keys(rt.json.ambient)) {
+    const amb = rt.json.ambient[key];
+    const bank = rt.ambientBanks[key];
+    if (!bank) continue;
+    const pt = trackAt(amb.track, walkF);
+    const cell = pt ? pt.cell : 0;
+    void bank.ensureCurrentAndNext(cell);
+  }
+}
+
 export function BenchScene({ sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
-  const [ready, setReady] = useState(false);
+  const [metaReady, setMetaReady] = useState(false);
+  const [canvasActive, setCanvasActive] = useState(false);
   const [placeStyle, setPlaceStyle] = useState<{
     width: string;
     aspectRatio: string;
@@ -128,25 +122,36 @@ export function BenchScene({ sectionRef }: Props) {
 
   useEffect(() => {
     let cancelled = false;
-    setReady(false);
+    setMetaReady(false);
+    setCanvasActive(false);
     setFailed(false);
     runtimeRef.current = null;
 
-    loadBenchRuntime(pack)
-      .then((rt) => {
+    loadJson<BenchJson>(`bench/${pack}/bench-${pack}.json`)
+      .then((json) => {
         if (cancelled) return;
-        runtimeRef.current = rt;
-        padRef.current = computePad(rt.json);
+        const ambientBanks: Record<string, AtlasSheetBank> = {};
+        for (const key of Object.keys(json.ambient)) {
+          ambientBanks[key] = new AtlasSheetBank(json.ambient[key].atlas);
+        }
+        runtimeRef.current = {
+          json,
+          body: null,
+          shadow: null,
+          perchShadow: null,
+          ambientBanks,
+        };
+        padRef.current = computePad(json);
         clockRef.current = new ScrollClock({
           triggerP: TRIGGER_P[pack].bench,
           triggerWalkF: TRIGGER_WALK_F.bench,
         });
-        const { css_w, css_h, w_pct_of_viewport } = rt.json.place;
+        const { css_w, css_h, w_pct_of_viewport } = json.place;
         setPlaceStyle({
           width: `${w_pct_of_viewport}vw`,
           aspectRatio: `${css_w} / ${css_h}`,
         });
-        setReady(true);
+        setMetaReady(true);
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -158,20 +163,34 @@ export function BenchScene({ sectionRef }: Props) {
   }, [pack]);
 
   useEffect(() => {
-    if (!ready || reduced || failed) return;
-    const canvas = canvasRef.current;
+    if (!metaReady || reduced || failed) return;
     const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
+    if (!wrap) return;
 
-    let raf = 0;
     let alive = true;
+    let near = false;
+    let visible = false;
+    let warming = false;
+    let assetsReady = false;
+    let raf = 0;
+
+    const stopRaf = () => {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+    };
 
     const tick = (now: number) => {
-      if (!alive) return;
+      if (!alive || !visible) {
+        raf = 0;
+        return;
+      }
       const rt = runtimeRef.current;
       const clock = clockRef.current;
+      const canvas = canvasRef.current;
       const pad = padRef.current;
-      if (!rt || !clock) {
+      if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
         raf = requestAnimationFrame(tick);
         return;
       }
@@ -182,6 +201,8 @@ export function BenchScene({ sectionRef }: Props) {
         wrap;
       const metrics = readScrollMetrics(sectionEl);
       const walkF = clock.update(now, metrics);
+      ensureAmbientForWalk(rt, walkF);
+
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
@@ -202,9 +223,6 @@ export function BenchScene({ sectionRef }: Props) {
       const ox = pad.left;
       const oy = pad.top;
       const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
-
-      // Layer: shadow(settle) < back butterflies < body(settle) < perch < front
-      // Butterflies use box coords — not affected by §1 translateY.
 
       ctx.save();
       ctx.globalAlpha = settle.opacity;
@@ -251,14 +269,74 @@ export function BenchScene({ sectionRef }: Props) {
       raf = requestAnimationFrame(tick);
     };
 
-    raf = requestAnimationFrame(tick);
+    const startRaf = () => {
+      if (!alive || !visible || !assetsReady || raf) return;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const warmInitial = async () => {
+      if (warming || assetsReady) return;
+      warming = true;
+      const rt = runtimeRef.current;
+      if (!rt) return;
+      try {
+        const [body, shadow, perchShadow] = await Promise.all([
+          loadSheet(rt.json.body.file),
+          loadSheet(rt.json.shadow.file),
+          loadSheet(rt.json.perch_shadow.file.file),
+        ]);
+        rt.body = body;
+        rt.shadow = shadow;
+        rt.perchShadow = perchShadow;
+        // First ambient cells (current + next) only
+        await Promise.all(
+          Object.keys(rt.ambientBanks).map((key) =>
+            rt.ambientBanks[key].ensureCurrentAndNext(0),
+          ),
+        );
+        if (!alive) return;
+        assetsReady = true;
+        setCanvasActive(true);
+        startRaf();
+      } catch {
+        if (alive) setFailed(true);
+      } finally {
+        warming = false;
+      }
+    };
+
+    const nearIO = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (hit && !near) {
+          near = true;
+          void warmInitial();
+        }
+      },
+      { rootMargin: NEAR_ROOT_MARGIN },
+    );
+
+    const visIO = new IntersectionObserver(
+      (entries) => {
+        visible = entries.some((e) => e.isIntersecting);
+        if (visible) startRaf();
+        else stopRaf();
+      },
+      { rootMargin: '0px' },
+    );
+
+    nearIO.observe(wrap);
+    visIO.observe(wrap);
+
     return () => {
       alive = false;
-      cancelAnimationFrame(raf);
+      stopRaf();
+      nearIO.disconnect();
+      visIO.disconnect();
     };
-  }, [ready, reduced, failed, pack, sectionRef]);
+  }, [metaReady, reduced, failed, pack, sectionRef]);
 
-  const showPoster = failed || reduced || !ready;
+  const showPoster = failed || reduced || !canvasActive;
   const posterSrc = `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`;
 
   return (
@@ -281,7 +359,10 @@ export function BenchScene({ sectionRef }: Props) {
           decoding="async"
         />
       ) : (
-        <canvas ref={canvasRef} className="v37-scene__canvas v37-scene__canvas--overflow" />
+        <canvas
+          ref={canvasRef}
+          className="v37-scene__canvas v37-scene__canvas--overflow"
+        />
       )}
     </div>
   );
@@ -299,11 +380,11 @@ function drawButterflies(
     const amb = rt.json.ambient[key];
     const pt = trackAt(amb.track, walkF);
     if (!pt || pt.layer !== layer) continue;
-    const sheets = rt.ambientSheets[key];
-    if (!sheets) continue;
+    const bank = rt.ambientBanks[key];
+    if (!bank) continue;
     const entry = amb.atlas.index[pt.cell];
     if (!entry) continue;
-    const sheet = sheets[entry[0]];
+    const sheet = bank.get(entry[0]);
     if (!sheet) continue;
 
     ctx.save();
@@ -316,15 +397,7 @@ function drawButterflies(
       ctx.scale(-1, 1);
       ctx.translate(-cx, 0);
     }
-    drawAtlasFrame(
-      ctx,
-      sheet,
-      amb.atlas,
-      pt.cell,
-      ox + pt.x,
-      oy + pt.y,
-      2,
-    );
+    drawAtlasFrame(ctx, sheet, amb.atlas, pt.cell, ox + pt.x, oy + pt.y, 2);
     ctx.restore();
   }
 }

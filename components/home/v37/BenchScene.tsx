@@ -38,42 +38,21 @@ type Runtime = {
   ambientBanks: Record<string, AtlasSheetBank>;
 };
 
-type Pad = { left: number; top: number; right: number; bottom: number };
-
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '1440': { wPct: 28.115, aspect: '405 / 350' },
   '390': { wPct: 57.274, aspect: '223 / 193' },
 };
 
-function computePad(json: BenchJson): Pad {
-  let minX = 0;
-  let minY = 0;
-  let maxX = json.place.css_w;
-  let maxY = json.place.css_h;
-
-  for (const key of Object.keys(json.ambient)) {
-    const amb = json.ambient[key];
-    for (const pt of amb.track) {
-      minX = Math.min(minX, pt.x);
-      minY = Math.min(minY, pt.y);
-      maxX = Math.max(maxX, pt.x + amb.css_w);
-      maxY = Math.max(maxY, pt.y + amb.css_h);
-    }
-  }
-  for (const pt of json.perch_shadow.track) {
-    minX = Math.min(minX, pt.x);
-    minY = Math.min(minY, pt.y);
-    maxX = Math.max(maxX, pt.x + json.perch_shadow.css_w);
-    maxY = Math.max(maxY, pt.y + json.perch_shadow.css_h);
-  }
-
-  const pad = 8;
-  return {
-    left: Math.max(0, -minX) + pad,
-    top: Math.max(0, -minY) + pad,
-    right: Math.max(0, maxX - json.place.css_w) + pad,
-    bottom: Math.max(0, maxY - json.place.css_h) + pad,
-  };
+/** True when the ambient sprite CSS box intersects the bench place box. */
+function intersectsPlace(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  boxW: number,
+  boxH: number,
+): boolean {
+  return x < boxW && y < boxH && x + w > 0 && y + h > 0;
 }
 
 function trackAt(
@@ -120,7 +99,6 @@ export function BenchScene({ sectionRef }: Props) {
     aspectRatio: DEFAULT_PLACE[pack].aspect,
   }));
   const runtimeRef = useRef<Runtime | null>(null);
-  const padRef = useRef<Pad>({ left: 0, top: 0, right: 0, bottom: 0 });
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
 
@@ -165,7 +143,6 @@ export function BenchScene({ sectionRef }: Props) {
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
-      const pad = padRef.current;
       if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
         raf = requestAnimationFrame(tick);
         return;
@@ -188,21 +165,24 @@ export function BenchScene({ sectionRef }: Props) {
       const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
       const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
 
+      // Canvas == place box only — never expand document width via overflow canvas.
       const boxW = rt.json.place.css_w;
       const boxH = rt.json.place.css_h;
-      const cssW = boxW + pad.left + pad.right;
-      const cssH = boxH + pad.top + pad.bottom;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
-      const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
+      const ctx = resizeCanvas(canvas, boxW, boxH, dpr);
       if (!ctx) {
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      ctx.clearRect(0, 0, cssW, cssH);
+      ctx.clearRect(0, 0, boxW, boxH);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, boxW, boxH);
+      ctx.clip();
 
-      const ox = pad.left;
-      const oy = pad.top;
+      const ox = 0;
+      const oy = 0;
       const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
 
       ctx.save();
@@ -217,7 +197,7 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.restore();
       ctx.restore();
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'back');
+      drawButterflies(ctx, rt, walkF, ox, oy, 'back', boxW, boxH);
 
       ctx.save();
       ctx.globalAlpha = drawOpacity;
@@ -226,7 +206,18 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.restore();
 
       const perch = perchAt(rt.json.perch_shadow.track, walkF);
-      if (perch && rt.perchShadow) {
+      if (
+        perch &&
+        rt.perchShadow &&
+        intersectsPlace(
+          perch.x,
+          perch.y,
+          rt.json.perch_shadow.css_w,
+          rt.json.perch_shadow.css_h,
+          boxW,
+          boxH,
+        )
+      ) {
         ctx.save();
         ctx.globalAlpha = perch.opacity;
         drawCoverImage(
@@ -240,12 +231,8 @@ export function BenchScene({ sectionRef }: Props) {
         ctx.restore();
       }
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'front');
-
-      canvas.style.left = `${-pad.left}px`;
-      canvas.style.top = `${-pad.top}px`;
-      canvas.style.width = `${cssW}px`;
-      canvas.style.height = `${cssH}px`;
+      drawButterflies(ctx, rt, walkF, ox, oy, 'front', boxW, boxH);
+      ctx.restore();
 
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
@@ -309,7 +296,6 @@ export function BenchScene({ sectionRef }: Props) {
           perchShadow: null,
           ambientBanks,
         };
-        padRef.current = computePad(json);
         clockRef.current = new ScrollClock({
           triggerP: TRIGGER_P[pack].bench,
           triggerWalkF: TRIGGER_WALK_F.bench,
@@ -381,8 +367,8 @@ export function BenchScene({ sectionRef }: Props) {
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}
-          className="v37-scene__canvas v37-scene__canvas--overflow"
-          style={showPoster ? { opacity: 0 } : undefined}
+          className="v37-scene__canvas"
+          style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
         />
       ) : null}
     </div>
@@ -396,11 +382,14 @@ function drawButterflies(
   ox: number,
   oy: number,
   layer: 'front' | 'back',
+  boxW: number,
+  boxH: number,
 ): void {
   for (const key of Object.keys(rt.json.ambient)) {
     const amb = rt.json.ambient[key];
     const pt = trackAt(amb.track, walkF);
     if (!pt || pt.layer !== layer) continue;
+    if (!intersectsPlace(pt.x, pt.y, amb.css_w, amb.css_h, boxW, boxH)) continue;
     const bank = rt.ambientBanks[key];
     if (!bank) continue;
     const entry = amb.atlas.index[pt.cell];

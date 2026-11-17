@@ -41,6 +41,8 @@ h3 {
 
 html {
   scroll-behavior: smooth;
+  overflow-x: clip;
+  max-width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -64,7 +66,13 @@ body {
   font-size: 1.0625rem;
   line-height: 1.65;
   word-break: keep-all;
-  overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+#main {
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 img,
@@ -1341,13 +1349,16 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   position: relative;
   flex-shrink: 0;
   margin-inline: auto;
-  overflow: visible;
+  overflow: clip;
   pointer-events: none;
   width: min(var(--v37-w, 100%), 100%);
+  max-width: 100%;
 }
 
-.v37-scene--booking {
-  pointer-events: auto;
+.v37-scene--bench,
+.v37-scene--booking,
+.v37-scene--gate {
+  overflow: clip;
 }
 
 .v37-scene__canvas,
@@ -1356,11 +1367,26 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   width: 100%;
   height: 100%;
   object-fit: contain;
+  max-width: 100%;
+}
+
+.v37-scene__hit {
+  position: absolute;
+  inset: 18% 12% 28% 12%;
+  z-index: 2;
+  pointer-events: auto;
+  background: transparent;
 }
 
 .v37-scene__canvas--overflow {
+  /* Legacy class kept for safety — must never expand document width */
   position: absolute;
-  max-width: none;
+  inset: 0;
+  max-width: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  left: 0 !important;
+  top: 0 !important;
   pointer-events: none;
 }
 
@@ -1476,6 +1502,7 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   grid-area: thumbs;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(2, auto);
   gap: 0.75rem;
 }
 
@@ -1589,6 +1616,11 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   max-width: none;
 }
 
+.home-reviews {
+  overflow: clip;
+  max-width: 100%;
+}
+
 .home-reviews__header {
   display: flex;
   flex-direction: column;
@@ -1600,6 +1632,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   display: flex;
   justify-content: center;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: clip;
 }
 
 .home-reviews__grid {
@@ -1766,10 +1801,23 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   font-size: 0.8125rem;
 }
 
-/* Booking: butterfly to the RIGHT of CTA (still), never inside a form */
+/* Booking: butterfly RIGHT of CTA in free cream — never over text/visit */
+.home-booking {
+  overflow: clip;
+  max-width: 100%;
+}
+
 .home-booking__layout {
   display: grid;
   gap: 2rem;
+  min-width: 0;
+}
+
+.home-booking__main {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  overflow: clip;
 }
 
 .home-booking__cta-row {
@@ -1779,10 +1827,10 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   flex-direction: column;
   align-items: flex-start;
   gap: 0.85rem;
-  min-height: 8.5rem;
+  min-height: 0;
   margin-top: 0.5rem;
-  /* 390: room for absolute butterfly under/beside CTA (IMPLEMENTATION §4) */
-  padding-bottom: clamp(4.5rem, 22vw, 7.5rem);
+  padding-bottom: 0;
+  max-width: 100%;
 }
 
 .home-booking__primary {
@@ -1793,11 +1841,13 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   align-items: flex-start;
   gap: 0.85rem;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .home-booking__actions {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1806,6 +1856,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 .home-booking__phone {
+  position: relative;
+  z-index: 2;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -1824,25 +1876,37 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-booking__contact-link {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   margin: 0;
 }
 
+/* 390: scene below CTA/phone in free cream — phone digits stay readable */
 .home-booking__scene {
-  position: absolute;
+  position: relative;
   z-index: 0;
-  right: 0;
-  top: 0.5rem;
-  width: auto;
+  display: flex;
+  justify-content: center;
+  align-self: center;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-top: 0.35rem;
+  overflow: clip;
   pointer-events: none;
 }
 
 .home-booking__scene .v37-scene--booking {
-  width: min(var(--v37-booking-w, 50vw), 13rem);
-  min-width: 9.5rem;
-  max-width: none;
-  margin-inline: 0;
-  pointer-events: auto;
+  width: min(var(--v37-booking-w, 50vw), 12.2rem);
+  min-width: 0;
+  max-width: 100%;
+  margin-inline: auto;
+  pointer-events: none;
+}
+
+.home-booking__visit {
+  position: relative;
+  z-index: 2;
+  min-width: 0;
 }
 
 .home-booking__visit h3 {
@@ -1906,6 +1970,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
   .home-spaces__thumbs {
     max-width: 22rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, auto);
   }
 
   .home-experts__grid {
@@ -1927,7 +1993,10 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
   .home-reviews__scene {
     justify-content: flex-end;
-    min-width: min(28.115vw, 26rem);
+    min-width: 0;
+    width: min(28.115vw, 26rem);
+    max-width: 100%;
+    overflow: clip;
   }
 
   .home-reviews__grid {
@@ -1949,33 +2018,42 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
   .home-booking__layout {
     grid-template-columns: minmax(0, 1.35fr) minmax(14rem, 0.75fr);
-    gap: 2rem 3rem;
+    gap: 2rem clamp(1.5rem, 3vw, 3rem);
     align-items: start;
   }
 
-  /* Desktop: button + phone one row; butterfly RIGHT of that row, level with it */
+  /* Desktop: button + phone one row; butterfly RIGHT of that row inside left column */
   .home-booking__cta-row {
     min-height: 0;
     padding-bottom: 0;
     gap: 0.85rem;
+    max-width: 100%;
   }
 
+  /*
+   * Desktop: compact CTA stack (button + phone) on the left, butterfly in the
+   * free cream to its right — never shrink the phone into the scene.
+   */
   .home-booking__primary {
     flex-direction: row;
     flex-wrap: nowrap;
     align-items: center;
     justify-content: flex-start;
-    gap: clamp(1.25rem, 3vw, 2.75rem);
+    gap: clamp(1rem, 2.5vw, 2.25rem);
     width: auto;
     max-width: 100%;
+    min-width: 0;
   }
 
   .home-booking__actions {
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: nowrap;
-    align-items: center;
-    gap: 1rem 1.25rem;
+    align-items: flex-start;
+    gap: 0.75rem;
     max-width: none;
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 0;
   }
 
   .home-booking__scene {
@@ -1986,11 +2064,17 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
     bottom: auto;
     flex: 0 0 auto;
     align-self: center;
+    width: auto;
+    max-width: min(var(--v37-booking-w, 20.208vw), 14.5rem);
+    margin-top: 0;
+    justify-content: flex-start;
   }
 
   .home-booking__scene .v37-scene--booking {
-    width: min(var(--v37-booking-w, 20.208vw), 18.2rem);
-    min-width: 11rem;
+    width: min(var(--v37-booking-w, 20.208vw), 14.5rem);
+    min-width: 0;
+    max-width: 100%;
+    margin-inline: 0;
   }
 }
 

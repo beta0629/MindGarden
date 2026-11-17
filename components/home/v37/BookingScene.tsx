@@ -214,6 +214,7 @@ export function BookingScene({ sectionRef }: Props) {
 
     const onEnter = () => {
       const rt = runtimeRef.current;
+      // Hover only after landing settles into breathe — never on first paint / mid-landing.
       if (!rt || !landingDoneRef.current) return;
       warmHover();
       const phase = hoverRef.current;
@@ -244,10 +245,11 @@ export function BookingScene({ sectionRef }: Props) {
       };
     };
 
-    wrap.addEventListener('pointerenter', onEnter);
-    wrap.addEventListener('pointerleave', onLeave);
-    wrap.addEventListener('touchstart', onEnter, { passive: true });
-    wrap.addEventListener('touchend', onLeave);
+    const hit = wrap.querySelector('.v37-scene__hit') ?? wrap;
+    hit.addEventListener('pointerenter', onEnter);
+    hit.addEventListener('pointerleave', onLeave);
+    hit.addEventListener('touchstart', onEnter, { passive: true });
+    hit.addEventListener('touchend', onLeave);
 
     const tick = (now: number) => {
       if (!alive || !visible) {
@@ -454,8 +456,13 @@ export function BookingScene({ sectionRef }: Props) {
     const visIO = new IntersectionObserver(
       (entries) => {
         visible = entries.some((e) => e.isIntersecting);
-        if (visible) startRaf();
-        else stopRaf();
+        if (visible) {
+          startRaf();
+        } else {
+          stopRaf();
+          // Leaving the viewport cancels hover so idle settles at folded 85°.
+          hoverRef.current = { kind: 'idle' };
+        }
       },
       { rootMargin: '0px' },
     );
@@ -468,13 +475,14 @@ export function BookingScene({ sectionRef }: Props) {
       stopRaf();
       nearIO.disconnect();
       visIO.disconnect();
-      wrap.removeEventListener('pointerenter', onEnter);
-      wrap.removeEventListener('pointerleave', onLeave);
-      wrap.removeEventListener('touchstart', onEnter);
-      wrap.removeEventListener('touchend', onLeave);
+      hit.removeEventListener('pointerenter', onEnter);
+      hit.removeEventListener('pointerleave', onLeave);
+      hit.removeEventListener('touchstart', onEnter);
+      hit.removeEventListener('touchend', onLeave);
     };
   }, [pack, reduced, failed, sectionRef]);
 
+  // Poster (folded 85° + flowers) until live landing/breathe paints — never hover-first.
   const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`;
 
@@ -502,6 +510,8 @@ export function BookingScene({ sectionRef }: Props) {
           style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
         />
       ) : null}
+      {/* Hover hit target only — wrapper stays pointer-events: none via CSS. */}
+      <span className="v37-scene__hit" />
     </div>
   );
 }

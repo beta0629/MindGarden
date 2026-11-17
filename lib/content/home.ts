@@ -91,12 +91,20 @@ export const homeCopy = {
     moreHref: '/gallery',
     thumbs: [
       {
-        caption: '대기 공간',
-        src: '/images/gallery-waiting-c152-3x4.jpg',
+        caption: '모래놀이',
+        src: '/images/gallery-sandplay-c133-3x4.jpg',
       },
       {
-        caption: '복도',
-        src: '/images/gallery-lobby-c148-3x4.jpg',
+        caption: '미술·표현',
+        src: '/images/gallery-play-c174-3x4.jpg',
+      },
+      {
+        caption: '놀이 치료실',
+        src: '/images/gallery-play-c122-3x4.jpg',
+      },
+      {
+        caption: '상담실',
+        src: '/images/gallery-room-c163-3x4.jpg',
       },
     ] as const,
   },

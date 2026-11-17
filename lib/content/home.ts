@@ -99,7 +99,7 @@ export const homeCopy = {
         src: '/images/gallery-play-c174-3x4.jpg',
       },
       {
-        caption: '놀이 치료실',
+        caption: '놀이실',
         src: '/images/gallery-play-c122-3x4.jpg',
       },
       {

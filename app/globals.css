@@ -1291,6 +1291,7 @@ p {
   margin-inline: auto;
   overflow: visible;
   pointer-events: none;
+  width: min(var(--v37-w, 100%), 100%);
 }
 
 .v37-scene--booking {
@@ -1317,10 +1318,21 @@ p {
   gap: 1.5rem;
 }
 
-.spaces-with-gate__main {
+.spaces-with-gate__intro {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: end;
+}
+
+.spaces-with-gate__stage {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+.spaces-with-gate__thumbs {
   min-width: 0;
 }
 
@@ -1332,8 +1344,10 @@ p {
   width: 100%;
 }
 
-.spaces-with-gate .v37-scene--gate {
-  margin-top: 0.5rem;
+/* Mobile: gate under thumbs, ~93vw from pack JSON */
+.spaces-with-gate__scene .v37-scene--gate {
+  width: min(var(--v37-w, 93.113vw), 100%);
+  margin-inline: auto;
 }
 
 .reviews-with-bench {
@@ -1377,28 +1391,34 @@ p {
   color: rgba(255, 255, 255, 0.78);
 }
 
+/* Booking: CTA above scene in z-order; scene sized independently (no grid squash) */
 .booking-cta-with-scene {
   position: relative;
+  isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.5rem;
+  /* Room for absolute butterfly so following copy isn't covered */
+  padding-bottom: clamp(5.5rem, 28vw, 9rem);
   min-height: 0;
 }
 
 .booking-cta-with-scene__scene {
-  position: relative;
-  width: 100%;
-  display: flex;
-  justify-content: flex-end;
+  position: absolute;
   z-index: 0;
-  margin-bottom: -1.5rem;
+  right: 0;
+  top: 2.5rem;
+  width: auto;
   pointer-events: none;
 }
 
 .booking-cta-with-scene__scene .v37-scene--booking {
-  pointer-events: auto;
+  width: min(var(--v37-booking-w, 50vw), 13rem);
+  min-width: 9.5rem;
+  max-width: none;
   margin-inline: 0;
+  pointer-events: auto;
 }
 
 .booking-cta-with-scene__cta {
@@ -1407,20 +1427,28 @@ p {
 }
 
 @media (min-width: 768px) {
-  .spaces-with-gate {
+  /* form10c: thumbs left | gate right (~37vw), sticky so gate stays in view */
+  .spaces-with-gate__stage {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    gap: 1.5rem 2rem;
+    grid-template-columns: minmax(0, 1.1fr) minmax(16rem, 0.9fr);
+    gap: 1.5rem clamp(1.25rem, 3vw, 2.5rem);
     align-items: start;
   }
 
   .spaces-with-gate__scene {
     justify-content: flex-end;
-    padding-top: 1rem;
+    position: sticky;
+    top: calc(var(--header-h) + 1rem);
+    padding-top: 0.25rem;
   }
 
-  .spaces-with-gate .v37-scene--gate {
-    margin-inline: 0 0;
+  .spaces-with-gate__scene .v37-scene--gate {
+    width: min(var(--v37-w, 37.027vw), 100%);
+    margin-inline: 0;
+  }
+
+  .spaces-with-gate__thumbs .space-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .reviews-with-bench__header {
@@ -1440,20 +1468,20 @@ p {
   }
 
   .booking-cta-with-scene {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: end;
-    gap: 0.75rem 1rem;
+    padding-bottom: clamp(6rem, 16vw, 11rem);
+    min-height: 11rem;
   }
 
   .booking-cta-with-scene__scene {
-    order: 2;
-    margin-bottom: 0;
-    justify-content: flex-start;
-    align-self: end;
+    left: clamp(11.5rem, 22vw, 16rem);
+    right: auto;
+    top: auto;
+    bottom: 0.25rem;
   }
 
-  .booking-cta-with-scene__cta {
-    order: 1;
+  .booking-cta-with-scene__scene .v37-scene--booking {
+    /* ≥768 uses 1440 pack (~20vw); min-width prevents ~80px squash in half-column */
+    width: min(var(--v37-booking-w, 20.208vw), 18.2rem);
+    min-width: 11rem;
   }
 }

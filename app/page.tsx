@@ -206,60 +206,54 @@ export default async function HomePage() {
 
       <section className="section section--sand" data-reveal>
         <div className="container spaces-with-gate">
-          <div className="spaces-with-gate__main">
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                gap: '1rem',
-                alignItems: 'end',
-              }}
-            >
-              <div>
-                <div className="section__eyebrow">04</div>
-                <h2 className="section__title">{homeCopy.spaces.title}</h2>
-                <p className="section__lead">{homeCopy.spaces.lead}</p>
-              </div>
-              <Link className="text-link" href="/gallery">
-                공간 더 보기 →
-              </Link>
+          <div className="spaces-with-gate__intro">
+            <div>
+              <div className="section__eyebrow">04</div>
+              <h2 className="section__title">{homeCopy.spaces.title}</h2>
+              <p className="section__lead">{homeCopy.spaces.lead}</p>
             </div>
-            <div className="space-grid" data-reveal-stagger>
-              {homeCopy.spaces.items.map((item, index) => {
-                const baseName = item.src
-                  .replace('/images/', '')
-                  .replace(/\.(jpg|jpeg|png|webp)$/i, '');
-                return (
-                  <figure
-                    key={item.caption + item.src}
-                    className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
-                    data-reveal
-                  >
-                    <ResponsiveImage
-                      baseName={baseName}
-                      widths={[640, 1050]}
-                      width={1050}
-                      height={item.wide ? 591 : 788}
-                      alt={item.caption}
-                      sizes={
-                        item.wide
-                          ? '(max-width: 768px) 100vw, min(100vw, 1050px)'
-                          : '(max-width: 768px) 50vw, min(50vw, 1050px)'
-                      }
-                      priority={index === 0}
-                      fallbackSrc={item.src}
-                    />
-                    <figcaption>
-                      {item.caption}
-                      {item.confirmNeeded ? <ConfirmNeeded /> : null}
-                    </figcaption>
-                  </figure>
-                );
-              })}
-            </div>
+            <Link className="text-link" href="/gallery">
+              공간 더 보기 →
+            </Link>
           </div>
-          <div className="spaces-with-gate__scene">
-            <GateScene />
+          <div className="spaces-with-gate__stage">
+            <div className="spaces-with-gate__thumbs">
+              <div className="space-grid" data-reveal-stagger>
+                {homeCopy.spaces.items.map((item) => {
+                  const baseName = item.src
+                    .replace('/images/', '')
+                    .replace(/\.(jpg|jpeg|png|webp)$/i, '');
+                  return (
+                    <figure
+                      key={item.caption + item.src}
+                      className={`space-card ${item.wide ? 'space-card--wide' : ''}`}
+                      data-reveal
+                    >
+                      <ResponsiveImage
+                        baseName={baseName}
+                        widths={[640, 1050]}
+                        width={1050}
+                        height={item.wide ? 591 : 788}
+                        alt={item.caption}
+                        sizes={
+                          item.wide
+                            ? '(max-width: 768px) 100vw, min(52vw, 640px)'
+                            : '(max-width: 768px) 50vw, min(26vw, 480px)'
+                        }
+                        fallbackSrc={item.src}
+                      />
+                      <figcaption>
+                        {item.caption}
+                        {item.confirmNeeded ? <ConfirmNeeded /> : null}
+                      </figcaption>
+                    </figure>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="spaces-with-gate__scene">
+              <GateScene />
+            </div>
           </div>
         </div>
       </section>

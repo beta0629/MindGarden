@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
   AtlasSheetBank,
   drawAtlasFrame,
@@ -18,7 +18,7 @@ import {
   settleFromWalkDelta,
   settleTranslateY,
 } from './settle';
-import type { GateJson } from './types';
+import type { GateJson, PackId } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 
@@ -32,6 +32,14 @@ type Runtime = {
   shadowBank: AtlasSheetBank;
   staticBody: DecodedImage | null;
   staticShadow: DecodedImage | null;
+};
+
+const DEFAULT_PLACE: Record<
+  PackId,
+  { wPct: number; aspect: string }
+> = {
+  '1440': { wPct: 37.027, aspect: '533 / 523' },
+  '390': { wPct: 93.113, aspect: '363 / 356' },
 };
 
 function doorIndexForWalk(json: GateJson, walkF: number): {
@@ -88,59 +96,32 @@ export function GateScene({ sectionRef }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
-  const [metaReady, setMetaReady] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
-  const [placeStyle, setPlaceStyle] = useState<{
-    width: string;
-    aspectRatio: string;
-  }>({
-    width: pack === '1440' ? '37.027vw' : '93.113vw',
-    aspectRatio: '533 / 523',
-  });
+  /** Keep poster until settle paints so layout never shows a blank hole */
+  const [paintLive, setPaintLive] = useState(false);
+  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() => ({
+    ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
+    aspectRatio: DEFAULT_PLACE[pack].aspect,
+  }));
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
+  const paintLiveRef = useRef(false);
 
-  // Mount: JSON only (poster is <img>)
   useEffect(() => {
-    let cancelled = false;
-    setMetaReady(false);
+    setPlaceStyle({
+      ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
+      aspectRatio: DEFAULT_PLACE[pack].aspect,
+    });
     setCanvasActive(false);
+    setPaintLive(false);
+    paintLiveRef.current = false;
     setFailed(false);
     runtimeRef.current = null;
-
-    loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`)
-      .then((json) => {
-        if (cancelled) return;
-        runtimeRef.current = {
-          json,
-          bodyBank: new AtlasSheetBank(json.door.body_atlas),
-          shadowBank: new AtlasSheetBank(json.door.shadow_atlas),
-          staticBody: null,
-          staticShadow: null,
-        };
-        clockRef.current = new ScrollClock({
-          triggerP: TRIGGER_P[pack].gate,
-          triggerWalkF: TRIGGER_WALK_F.gate,
-        });
-        const { css_w, css_h, w_pct_of_viewport } = json.place;
-        setPlaceStyle({
-          width: `${w_pct_of_viewport}vw`,
-          aspectRatio: `${css_w} / ${css_h}`,
-        });
-        setMetaReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
-
-    return () => {
-      cancelled = true;
-    };
+    clockRef.current = null;
   }, [pack]);
 
-  // Near-viewport decode + visible rAF
   useEffect(() => {
-    if (!metaReady || reduced || failed) return;
+    if (reduced || failed) return;
     const wrap = wrapRef.current;
     if (!wrap) return;
 
@@ -150,6 +131,7 @@ export function GateScene({ sectionRef }: Props) {
     let warming = false;
     let assetsReady = false;
     let raf = 0;
+    let loadingMeta = false;
 
     const stopRaf = () => {
       if (raf) {
@@ -247,6 +229,12 @@ export function GateScene({ sectionRef }: Props) {
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
+      // Idle before settle: paint closed door at full opacity (layout-visible)
+      const preSettle = settle.opacity <= 0;
+      const drawOpacity = preSettle ? 1 : settle.opacity;
+      const drawTy = preSettle ? 0 : ty;
+      const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
+      const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
 
       const { css_w: cssW, css_h: cssH } = rt.json.place;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -265,10 +253,10 @@ export function GateScene({ sectionRef }: Props) {
           rt,
           cssW,
           cssH,
-          ty,
-          settle.opacity,
-          settle.shadowScaleX,
-          settle.shadowOpacity,
+          drawTy,
+          drawOpacity,
+          drawShadowScale,
+          drawShadowOpacity,
           'static',
           0,
           1,
@@ -279,10 +267,10 @@ export function GateScene({ sectionRef }: Props) {
           rt,
           cssW,
           cssH,
-          ty,
-          settle.opacity,
-          settle.shadowScaleX,
-          settle.shadowOpacity,
+          drawTy,
+          drawOpacity,
+          drawShadowScale,
+          drawShadowOpacity,
           'atlas',
           door.index,
           1 - door.crossfade,
@@ -292,10 +280,10 @@ export function GateScene({ sectionRef }: Props) {
           rt,
           cssW,
           cssH,
-          ty,
-          settle.opacity,
-          settle.shadowScaleX,
-          settle.shadowOpacity,
+          drawTy,
+          drawOpacity,
+          drawShadowScale,
+          drawShadowOpacity,
           'static',
           0,
           door.crossfade,
@@ -306,16 +294,20 @@ export function GateScene({ sectionRef }: Props) {
           rt,
           cssW,
           cssH,
-          ty,
-          settle.opacity,
-          settle.shadowScaleX,
-          settle.shadowOpacity,
+          drawTy,
+          drawOpacity,
+          drawShadowScale,
+          drawShadowOpacity,
           'atlas',
           door.index,
           1,
         );
       }
 
+      if (!paintLiveRef.current) {
+        paintLiveRef.current = true;
+        setPaintLive(true);
+      }
       raf = requestAnimationFrame(tick);
     };
 
@@ -324,11 +316,11 @@ export function GateScene({ sectionRef }: Props) {
       raf = requestAnimationFrame(tick);
     };
 
-    const warmInitial = async () => {
+    const warmAssets = async () => {
       if (warming || assetsReady) return;
-      warming = true;
       const rt = runtimeRef.current;
       if (!rt) return;
+      warming = true;
       try {
         await Promise.all([
           rt.bodyBank.ensureCurrentAndNext(0),
@@ -345,12 +337,45 @@ export function GateScene({ sectionRef }: Props) {
       }
     };
 
+    const loadMetaAndWarm = async () => {
+      if (loadingMeta || runtimeRef.current) {
+        void warmAssets();
+        return;
+      }
+      loadingMeta = true;
+      try {
+        const json = await loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`);
+        if (!alive) return;
+        runtimeRef.current = {
+          json,
+          bodyBank: new AtlasSheetBank(json.door.body_atlas),
+          shadowBank: new AtlasSheetBank(json.door.shadow_atlas),
+          staticBody: null,
+          staticShadow: null,
+        };
+        clockRef.current = new ScrollClock({
+          triggerP: TRIGGER_P[pack].gate,
+          triggerWalkF: TRIGGER_WALK_F.gate,
+        });
+        const { css_w, css_h, w_pct_of_viewport } = json.place;
+        setPlaceStyle({
+          ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
+          aspectRatio: `${css_w} / ${css_h}`,
+        });
+        await warmAssets();
+      } catch {
+        if (alive) setFailed(true);
+      } finally {
+        loadingMeta = false;
+      }
+    };
+
     const nearIO = new IntersectionObserver(
       (entries) => {
         const hit = entries.some((e) => e.isIntersecting);
         if (hit && !near) {
           near = true;
-          void warmInitial();
+          void loadMetaAndWarm();
         }
       },
       { rootMargin: NEAR_ROOT_MARGIN },
@@ -374,20 +399,16 @@ export function GateScene({ sectionRef }: Props) {
       nearIO.disconnect();
       visIO.disconnect();
     };
-  }, [metaReady, reduced, failed, pack, sectionRef]);
+  }, [pack, reduced, failed, sectionRef]);
 
-  const showPoster = failed || reduced || !canvasActive;
+  const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
 
   return (
     <div
       ref={wrapRef}
       className="v37-scene v37-scene--gate"
-      style={{
-        width: placeStyle.width,
-        maxWidth: '100%',
-        aspectRatio: placeStyle.aspectRatio,
-      }}
+      style={placeStyle}
       aria-hidden="true"
     >
       {showPoster ? (
@@ -397,10 +418,16 @@ export function GateScene({ sectionRef }: Props) {
           src={posterSrc}
           alt=""
           decoding="async"
+          fetchPriority="low"
         />
-      ) : (
-        <canvas ref={canvasRef} className="v37-scene__canvas" />
-      )}
+      ) : null}
+      {canvasActive && !failed && !reduced ? (
+        <canvas
+          ref={canvasRef}
+          className="v37-scene__canvas"
+          style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
+        />
+      ) : null}
     </div>
   );
 }

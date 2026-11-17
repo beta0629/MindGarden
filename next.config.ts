@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Playwright and local agents often open http://127.0.0.1:4000 while
+  // `next dev` treats localhost as the origin; without this, /_next/hmr (and
+  // client hydration) is blocked and v3.7 scenes stay on SSR posters forever.
+  allowedDevOrigins: ['127.0.0.1'],
   images: {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [390, 640, 768, 1024, 1280, 1440, 1920, 2560, 3840],

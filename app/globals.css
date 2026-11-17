@@ -13,6 +13,7 @@
   --footer: #1a2330;
   --card-soft: #e8eef2;
   --radius: 4px;
+  --radius-btn: 12px;
   --radius-card: 1rem;
   --max-text: 42rem;
   --max-page: clamp(72rem, 72rem + (100vw - 90rem) * 0.35, 110rem);
@@ -155,7 +156,7 @@ p {
   gap: 0.5rem;
   min-height: 44px;
   padding: 0.75rem 1.35rem;
-  border-radius: var(--radius);
+  border-radius: var(--radius-btn);
   border: 1px solid transparent;
   background: var(--garden);
   color: var(--white);
@@ -485,8 +486,14 @@ p {
 
 .hero .btn,
 .home-booking .btn {
-  border-radius: 999px;
+  border-radius: var(--radius-btn);
   padding-inline: 1.5rem;
+  white-space: nowrap;
+}
+
+.hero [data-booking-cta],
+.home-booking [data-booking-cta] {
+  white-space: nowrap;
 }
 
 .hero-media {
@@ -1253,8 +1260,11 @@ p {
   }
 }
 
-/* Calm scroll reveal — CSS + IntersectionObserver only */
-[data-reveal] {
+/*
+ * Progressive reveal: visible by default (SSR / no-JS / full-page capture).
+ * JS adds html.reveal-js and .reveal-pending only on below-fold nodes.
+ */
+html.reveal-js [data-reveal].reveal-pending:not(.is-revealed) {
   opacity: 0;
   transform: translateY(14px);
   transition:
@@ -1263,24 +1273,24 @@ p {
   will-change: opacity, transform;
 }
 
-[data-reveal].is-revealed {
+html.reveal-js [data-reveal].is-revealed {
   opacity: 1;
   transform: none;
 }
 
-[data-reveal-stagger] > [data-reveal]:nth-child(1) {
+html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(1) {
   transition-delay: 0ms;
 }
-[data-reveal-stagger] > [data-reveal]:nth-child(2) {
+html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(2) {
   transition-delay: 70ms;
 }
-[data-reveal-stagger] > [data-reveal]:nth-child(3) {
+html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(3) {
   transition-delay: 140ms;
 }
-[data-reveal-stagger] > [data-reveal]:nth-child(4) {
+html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(4) {
   transition-delay: 210ms;
 }
-[data-reveal-stagger] > [data-reveal]:nth-child(5) {
+html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5) {
   transition-delay: 280ms;
 }
 
@@ -1309,7 +1319,9 @@ p {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-reveal] {
+  [data-reveal],
+  html.reveal-js [data-reveal].reveal-pending:not(.is-revealed),
+  html.reveal-js [data-reveal].is-revealed {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
@@ -1434,11 +1446,12 @@ p {
   margin-top: 0.5rem;
   min-height: 44px;
   padding: 0.55rem 1rem;
-  border-radius: 999px;
+  border-radius: var(--radius-btn);
   background: var(--white);
   color: var(--garden);
   font-weight: 600;
   font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .home-spaces__layout {
@@ -1763,22 +1776,33 @@ p {
   position: relative;
   isolation: isolate;
   display: flex;
+  flex-direction: column;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.85rem;
   min-height: 8.5rem;
   margin-top: 0.5rem;
+  /* 390: room for absolute butterfly under/beside CTA (IMPLEMENTATION §4) */
   padding-bottom: clamp(4.5rem, 22vw, 7.5rem);
 }
 
-.home-booking__cta {
+.home-booking__primary {
   position: relative;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 0.85rem;
-  max-width: min(100%, 16rem);
+  width: 100%;
+}
+
+.home-booking__actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.85rem;
+  max-width: min(100%, 18rem);
 }
 
 .home-booking__phone {
@@ -1789,14 +1813,18 @@ p {
   text-decoration: none;
   font-weight: 600;
   color: var(--ink);
+  white-space: nowrap;
 }
 
 .home-booking__phone img {
   width: 1.25rem;
   height: 1.25rem;
+  flex-shrink: 0;
 }
 
 .home-booking__contact-link {
+  position: relative;
+  z-index: 1;
   margin: 0;
 }
 
@@ -1925,16 +1953,39 @@ p {
     align-items: start;
   }
 
+  /* Desktop: button + phone one row; butterfly RIGHT of that row, level with it */
   .home-booking__cta-row {
-    padding-bottom: clamp(5.5rem, 14vw, 10rem);
-    min-height: 12rem;
+    min-height: 0;
+    padding-bottom: 0;
+    gap: 0.85rem;
+  }
+
+  .home-booking__primary {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: clamp(1.25rem, 3vw, 2.75rem);
+    width: auto;
+    max-width: 100%;
+  }
+
+  .home-booking__actions {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 1rem 1.25rem;
+    max-width: none;
   }
 
   .home-booking__scene {
-    left: clamp(12rem, 24vw, 17rem);
+    position: relative;
+    left: auto;
     right: auto;
     top: auto;
-    bottom: 0.15rem;
+    bottom: auto;
+    flex: 0 0 auto;
+    align-self: center;
   }
 
   .home-booking__scene .v37-scene--booking {

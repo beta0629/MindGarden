@@ -6,7 +6,7 @@ import { homeCopy } from '@/lib/content/home';
 import { HeroMedia } from './HeroMedia';
 
 /**
- * Above-the-fold: no data-reveal (opacity:0 until JS would delay LCP).
+ * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
  */
 export function HeroSection() {
   return (

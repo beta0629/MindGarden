@@ -466,29 +466,31 @@ export default async function HomePage() {
             <p className="section__lead">{homeCopy.booking.body}</p>
 
             <div className="home-booking__cta-row">
-              <div className="home-booking__cta">
-                <BookingCta label={homeCopy.booking.primaryCta} />
-                <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
-                  <Image
-                    src="/icons/contact-phone.svg"
-                    alt=""
-                    width={20}
-                    height={20}
-                  />
-                  <span>
-                    {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
-                  </span>
-                </a>
-                <p className="home-booking__contact-link">
-                  <Link className="text-link" href={homeCopy.booking.contactHref}>
-                    {homeCopy.booking.contactLinkLabel}
-                    <span aria-hidden="true"> →</span>
-                  </Link>
-                </p>
+              <div className="home-booking__primary">
+                <div className="home-booking__actions">
+                  <BookingCta label={homeCopy.booking.primaryCta} />
+                  <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
+                    <Image
+                      src="/icons/contact-phone.svg"
+                      alt=""
+                      width={20}
+                      height={20}
+                    />
+                    <span>
+                      {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
+                    </span>
+                  </a>
+                </div>
+                <div className="home-booking__scene" aria-hidden="true">
+                  <BookingScene />
+                </div>
               </div>
-              <div className="home-booking__scene" aria-hidden="true">
-                <BookingScene />
-              </div>
+              <p className="home-booking__contact-link">
+                <Link className="text-link" href={homeCopy.booking.contactHref}>
+                  {homeCopy.booking.contactLinkLabel}
+                  <span aria-hidden="true"> →</span>
+                </Link>
+              </p>
             </div>
           </div>
 

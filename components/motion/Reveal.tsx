@@ -25,7 +25,10 @@ export function RevealBoot() {
           io.unobserve(el);
         }
       },
-      { rootMargin: '0px 0px -8% 0px', threshold: 0.12 },
+      // Slight positive top margin so below-fold sections near the fold
+      // reveal without waiting for a deep scroll, without hiding the hero
+      // (hero must not use data-reveal — opacity:0 delays LCP).
+      { rootMargin: '0px 0px -4% 0px', threshold: 0.08 },
     );
 
     document.querySelectorAll('[data-reveal]').forEach((el) => io.observe(el));

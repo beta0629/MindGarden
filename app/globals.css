@@ -497,9 +497,19 @@ p {
   aspect-ratio: 81 / 47;
 }
 
+.hero-media > picture,
 .hero-media > * {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+.hero-media > picture img,
+.hero-media > .hero-still,
+.hero-media > .hero-loop,
+.hero-media > .hero-3d {
   width: 100%;
   height: 100%;
   max-width: none;

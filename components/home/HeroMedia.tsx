@@ -10,7 +10,7 @@ import {
 
 /**
  * Hero media panel per v1.3-home/web/IMPLEMENTATION.md:
- * poster LCP → mobile/tablet orbit video → desktop three.js WingFold + tilt.
+ * poster LCP → (idle) mobile/tablet orbit video → desktop three.js WingFold + tilt.
  */
 export function HeroMedia() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -18,7 +18,10 @@ export function HeroMedia() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [paused, setPaused] = useState(false);
   const [posterReady, setPosterReady] = useState(false);
+  /** Desired capability from viewport/motion prefs (still | video | 3d). */
   const [mode, setMode] = useState<'still' | 'video' | '3d'>('still');
+  /** Mobile/tablet video mounts only after idle so it never races the LCP poster. */
+  const [videoAllowed, setVideoAllowed] = useState(false);
 
   const resolveMode = useCallback(() => {
     if (typeof window === 'undefined') return 'still' as const;
@@ -62,32 +65,58 @@ export function HeroMedia() {
   }, []);
 
   useEffect(() => {
+    const img = panelRef.current?.querySelector<HTMLImageElement>('.hero-still');
+    if (img?.complete) {
+      setPosterReady(true);
+    }
+  }, []);
+
+  // Defer orbit video until after first paint / idle — keeps LCP on the poster.
+  useEffect(() => {
+    if (mode !== 'video' || !posterReady) {
+      setVideoAllowed(false);
+      return;
+    }
+    let cancelled = false;
+    const enable = () => {
+      if (!cancelled) setVideoAllowed(true);
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(enable, { timeout: 1800 });
+      return () => {
+        cancelled = true;
+        window.cancelIdleCallback(id);
+      };
+    }
+    const t = window.setTimeout(enable, 1200);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(t);
+    };
+  }, [mode, posterReady]);
+
+  const showVideo = mode === 'video' && videoAllowed;
+
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    if (mode !== 'video' || paused) {
+    if (!showVideo || paused) {
       video.pause();
       return;
     }
     void video.play().catch(() => undefined);
-  }, [mode, paused]);
+  }, [showVideo, paused]);
 
   useEffect(() => {
-    if (mode !== 'still') return;
+    if (showVideo) return;
     const video = videoRef.current;
     if (!video) return;
     video.pause();
     video.removeAttribute('src');
     video.querySelectorAll('source').forEach((s) => s.remove());
     video.load();
-  }, [mode]);
-
-  useEffect(() => {
-    const img = panelRef.current?.querySelector<HTMLImageElement>('.hero-still');
-    if (img?.complete) {
-      setPosterReady(true);
-    }
-  }, []);
+  }, [showVideo]);
 
   useEffect(() => {
     if (mode !== '3d' || !posterReady) return;
@@ -97,24 +126,37 @@ export function HeroMedia() {
 
     const ac = new AbortController();
     let cleanup: (() => void) | undefined;
+    let idleId = 0;
+    let timeoutId = 0;
 
-    void (async () => {
-      try {
-        const { mountHero3D } = await import('./mountHero3D');
-        if (ac.signal.aborted) return;
-        cleanup = await mountHero3D({
-          panel,
-          canvas,
-          signal: ac.signal,
-        });
-      } catch (err) {
-        console.error('[hero-3d] mount failed', err);
-      }
-    })();
+    const start = () => {
+      void (async () => {
+        try {
+          const { mountHero3D } = await import('./mountHero3D');
+          if (ac.signal.aborted) return;
+          cleanup = await mountHero3D({
+            panel,
+            canvas,
+            signal: ac.signal,
+          });
+        } catch (err) {
+          console.error('[hero-3d] mount failed', err);
+        }
+      })();
+    };
+
+    // Let the LCP poster paint before pulling three.js / GLB.
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(start, { timeout: 2000 });
+    } else {
+      timeoutId = window.setTimeout(start, 800);
+    }
 
     return () => {
       ac.abort();
       cleanup?.();
+      if (idleId) window.cancelIdleCallback(idleId);
+      if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, [mode, posterReady]);
 
@@ -134,23 +176,33 @@ export function HeroMedia() {
   return (
     <div
       ref={panelRef}
-      className={`hero-media${mode === '3d' ? '' : ''}${paused ? ' is-paused' : ''}`}
+      className={`hero-media${paused ? ' is-paused' : ''}`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js */}
-      <img
-        className="hero-still"
-        src="/assets/hero/hero-poster.webp"
-        srcSet="/assets/hero/hero-poster-640.webp 640w, /assets/hero/hero-poster-1080.webp 1080w, /assets/hero/hero-poster.webp 1620w"
-        sizes="(max-width: 1023px) 100vw, 50vw"
-        alt=""
-        width={1620}
-        height={940}
-        decoding="async"
-        fetchPriority="high"
-        onLoad={() => setPosterReady(true)}
-      />
+      <picture>
+        <source
+          type="image/avif"
+          srcSet="/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w"
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 50vw"
+        />
+        <source
+          type="image/webp"
+          srcSet="/assets/hero/hero-poster-640.webp 640w, /assets/hero/hero-poster-1080.webp 1080w, /assets/hero/hero-poster.webp 1620w"
+          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 50vw"
+        />
+        {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js / video */}
+        <img
+          className="hero-still"
+          src="/assets/hero/hero-poster-1080.webp"
+          alt=""
+          width={1620}
+          height={940}
+          decoding="sync"
+          fetchPriority="high"
+          onLoad={() => setPosterReady(true)}
+        />
+      </picture>
 
-      {mode === 'video' ? (
+      {showVideo ? (
         <video
           ref={videoRef}
           className="hero-loop"
@@ -158,8 +210,8 @@ export function HeroMedia() {
           muted
           loop
           playsInline
-          preload="metadata"
-          poster="/assets/hero/hero-poster.webp"
+          preload="none"
+          poster="/assets/hero/hero-poster-1080.webp"
           aria-hidden="true"
         >
           <source
@@ -172,7 +224,7 @@ export function HeroMedia() {
 
       <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
 
-      {mode !== 'still' ? (
+      {mode !== 'still' && (mode === '3d' || showVideo) ? (
         <button
           type="button"
           className="hero__pause"

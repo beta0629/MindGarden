@@ -6,7 +6,6 @@ export const homeCopy = {
   hero: {
     title: '마음이 쉬어 가는 정원 같은 상담센터',
     subtitle: '지친 현대의 마음, 도심 속 정원에서 함께 걸어가요.',
-    subtitleConfirmNeeded: false,
     primaryCta: '네이버 플레이스로 예약',
     secondaryCta: '상담 문의하기',
     secondaryHref: '/contact',

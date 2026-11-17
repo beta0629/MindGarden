@@ -201,5 +201,9 @@ export function smoothstep(t: number): number {
   return x * x * (3 - 2 * x);
 }
 
-/** Near-viewport rootMargin (~1.5× vh). */
-export const NEAR_ROOT_MARGIN = '150% 0px';
+/**
+ * Near-viewport rootMargin for atlas warm-up.
+ * Keep modest so Gate/Bench/Booking do not compete with hero LCP on first paint
+ * (150% previously warmed Gate while the hero was still the only visible section).
+ */
+export const NEAR_ROOT_MARGIN = '200px 0px';

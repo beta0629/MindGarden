@@ -8,16 +8,17 @@ type MountHeroOptions = {
 
 /** Addendum B: one full azimuth orbit + radius zoom cycle (seconds). */
 const ORBIT_PERIOD_S = 30;
-/** Peak zoom amp — kept modest; orbit radius accounts for it so the sphere still fits. */
+/** Peak zoom amp — orbit radius accounts for it so the sphere still fits. */
 const ZOOM_AMP = 0.08;
-/** Extra sphere radius margin so wings/flowers never touch the frustum edge. */
+/** Extra sphere/mesh margin so wings/flowers never touch the frustum edge. */
 const SPHERE_FIT_MARGIN = 1.08;
 /** Samples across WingFold to capture max wing extent. */
 const BOUNDS_SAMPLE_STEPS = 24;
-/** Visible pad above painted mesh top inside the cropped panel (fraction of GL H). */
-const STAGE_TOP_PAD = 0.005;
-/** Visible pad below painted mesh bottom inside the cropped panel (fraction of GL H). */
-const STAGE_BOTTOM_PAD = 0.035;
+/**
+ * Top-pack target: projected mesh maxY (NDC +1 = top) after fit.
+ * (1 - TARGET) / 2 ≈ 8% cream at panel top through orbit (incl. zoom amp).
+ */
+const SUBJECT_TOP_NDC = 1 / SPHERE_FIT_MARGIN;
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3 + Addendum B).
@@ -66,7 +67,6 @@ export async function mountHero3D({
   renderer.setClearColor(0x000000, 0);
   renderer.setClearAlpha(0);
   renderer.toneMapping = THREE.NeutralToneMapping;
-  // Punchier than the 0.95 design note — env wash is dialed down separately.
   renderer.toneMappingExposure = 1.55;
   renderer.shadowMap.enabled = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -75,7 +75,6 @@ export async function mountHero3D({
   scene.background = null;
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  // Low env intensity — RoomEnvironment otherwise flattens pastel wing color.
   scene.environmentIntensity = 0.35;
 
   scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.28));
@@ -83,7 +82,6 @@ export async function mountHero3D({
   key.position.set(-1.0, 3.6, 1.0);
   key.castShadow = false;
   scene.add(key);
-  // Small warm fill opposite the key — keeps underside from going muddy grey.
   const fill = new THREE.DirectionalLight(0xffe8d6, 0.45);
   fill.position.set(1.4, 1.2, -0.8);
   scene.add(fill);
@@ -92,6 +90,7 @@ export async function mountHero3D({
 
   const draco = new DRACOLoader().setDecoderPath('/vendor/draco/gltf/');
   const loader = new GLTFLoader().setDRACOLoader(draco);
+
   let gltf;
   try {
     gltf = await loader.loadAsync('/assets/hero/hero-butterfly.glb');
@@ -109,8 +108,6 @@ export async function mountHero3D({
     return () => undefined;
   }
 
-  // No realtime shadows and no ground/contact disc — transparent clear + page cream only.
-  // Slightly lower roughness / envMap so pastel albedos stay punchy under NeutralToneMapping.
   gltf.scene.traverse((obj) => {
     if (!(obj as { isMesh?: boolean }).isMesh) return;
     const mesh = obj as unknown as {
@@ -141,13 +138,11 @@ export async function mountHero3D({
       if (color && typeof color.getHSL === 'function') {
         const hsl = { h: 0, s: 0, l: 0 };
         color.getHSL(hsl);
-        // Punch pastel albedos without shifting hue.
         color.setHSL(hsl.h, Math.min(1, hsl.s * 1.35), hsl.l);
       }
     }
   });
 
-  // Model stays put; camera orbits (Addendum B). Pointer tilt rides on a local group.
   const tilt = new THREE.Group();
   tilt.add(gltf.scene);
   scene.add(tilt);
@@ -199,10 +194,40 @@ export async function mountHero3D({
     if (sampleBox.isEmpty()) return;
     sampleBox.getCenter(sampleCenter);
     sampleBox.getSize(sampleSize);
-    // Silhouette sphere (height × dominant horizontal) — tighter than AABB diagonal.
-    const radius =
-      0.5 *
-      Math.hypot(Math.max(sampleSize.x, sampleSize.z), sampleSize.y);
+    // Tight radius: max vertex distance to center (not inflated AABB sphere).
+    let radius = 0;
+    gltf.scene.traverse((obj) => {
+      if (_skipBoundsName.test(obj.name || '')) return;
+      const mesh = obj as unknown as {
+        isMesh?: boolean;
+        geometry?: {
+          attributes?: {
+            position?: {
+              count: number;
+              getX: (i: number) => number;
+              getY: (i: number) => number;
+              getZ: (i: number) => number;
+            };
+          };
+        };
+        matrixWorld: InstanceType<typeof THREE.Matrix4>;
+      };
+      if (!mesh.isMesh || !mesh.geometry?.attributes?.position) return;
+      const pos = mesh.geometry.attributes.position;
+      const step = Math.max(1, Math.floor(pos.count / 2000));
+      const v = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i += step) {
+        v.set(pos.getX(i), pos.getY(i), pos.getZ(i)).applyMatrix4(
+          mesh.matrixWorld,
+        );
+        radius = Math.max(radius, v.distanceTo(sampleCenter));
+      }
+    });
+    if (radius <= 0) {
+      radius =
+        0.5 *
+        Math.hypot(Math.max(sampleSize.x, sampleSize.z), sampleSize.y);
+    }
     frameCenters.push(sampleCenter.clone());
     frameRadii.push(radius);
   };
@@ -236,47 +261,31 @@ export async function mountHero3D({
   }
 
   const lookAt = sphere.center.clone();
-  /** GL buffer height (px) — may be taller than the cropped panel. */
-  let glH = 0;
-  let glAspect = 0;
-  /** Visible band inside the GL buffer (fractions of glH). */
-  let cropTopFrac = 0;
-  let cropFrac = 1;
 
   const size = () => {
     const width = panel.getBoundingClientRect().width;
-    if (glAspect > 0) {
-      glH = width / glAspect;
-      panel.style.setProperty('--hero-gl-h', `${Math.round(glH)}px`);
-      panel.style.setProperty(
-        '--hero-gl-offset-y',
-        `${Math.round(-glH * cropTopFrac)}px`,
-      );
-      panel.style.setProperty(
-        '--hero-crop-h',
-        `${Math.round(glH * cropFrac)}px`,
-      );
-    }
-    const height =
-      glH > 0 ? glH : panel.getBoundingClientRect().height || width * 0.5;
+    const height = panel.getBoundingClientRect().height || width * 0.55;
     renderer.setSize(width, Math.max(height, 1), false);
     cam.aspect = width / Math.max(height, 1);
     cam.updateProjectionMatrix();
   };
-  // is-3d activates the subject-hugging aspect before the first measure/fit.
+  // is-3d activates the short/wide aspect before the first measure/fit.
   panel.classList.add('is-3d');
+  // Drop any leftover crop state from prior mounts.
+  panel.classList.remove('is-cropped');
+  panel.style.removeProperty('--hero-gl-h');
+  panel.style.removeProperty('--hero-gl-offset-y');
+  panel.style.removeProperty('--hero-crop-h');
   size();
-  glH = panel.getBoundingClientRect().height;
-  glAspect = panel.getBoundingClientRect().width / Math.max(glH, 1);
 
   const fitDist =
     (sphere.radius * SPHERE_FIT_MARGIN) /
     Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
-  // Keep the sphere inside the frustum at peak zoom (orbitRadius / zoomMin).
   let orbitRadius = fitDist * (1 + ZOOM_AMP);
-  // Near-equatorial orbit — a large Y offset bobbed the silhouette and
-  // left a cream band above the subject at some orbit phases.
-  let cameraY = lookAt.y + orbitRadius * 0.03;
+  /** Fixed orbit pivot Y (sphere/mesh center) — lookAt.y may diverge for top-pack. */
+  const orbitCenterY = lookAt.y;
+  // Near-equatorial orbit around the pivot (not around a shifted lookAt).
+  let cameraY = orbitCenterY + orbitRadius * 0.03;
 
   const proj = new THREE.Vector3();
   type NdcExtents = { halfX: number; halfY: number; minY: number; maxY: number };
@@ -298,16 +307,12 @@ export async function mountHero3D({
     into.any = true;
   };
 
-  /** Conservative hull (sphere extremities) — used only to zoom OUT safely. */
+  /** Conservative hull (sphere extremities) — zoom-OUT safety. */
   const measureNdcHull = (): NdcExtents => {
     tilt.updateMatrixWorld(true);
     const into = { halfX: 0, halfY: 0, minY: 1, maxY: -1, any: false };
-    const centers =
-      frameCenters.length > 0
-        ? frameCenters
-        : [sphere.center];
-    const radii =
-      frameRadii.length > 0 ? frameRadii : [sphere.radius];
+    const centers = frameCenters.length > 0 ? frameCenters : [sphere.center];
+    const radii = frameRadii.length > 0 ? frameRadii : [sphere.radius];
     for (let i = 0; i < centers.length; i += 1) {
       const c = centers[i];
       const r = radii[i] ?? sphere.radius;
@@ -332,10 +337,7 @@ export async function mountHero3D({
     };
   };
 
-  /**
-   * Tight painted-mesh silhouette via dense verts — drives top-pack + CSS crop
-   * so cream above the butterfly is not mistaken for subject extent.
-   */
+  /** Painted-mesh silhouette (dense verts) — top-pack + pause AABB. */
   const measureNdcMesh = (): NdcExtents => {
     tilt.updateMatrixWorld(true);
     const into = { halfX: 0, halfY: 0, minY: 1, maxY: -1, any: false };
@@ -357,7 +359,6 @@ export async function mountHero3D({
       };
       if (!mesh.isMesh || !mesh.geometry?.attributes?.position) return;
       const pos = mesh.geometry.attributes.position;
-      // ≤4k samples/mesh — dense enough for silhouette, cheap enough for fit.
       const step = Math.max(1, Math.floor(pos.count / 4000));
       for (let i = 0; i < pos.count; i += step) {
         proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
@@ -375,8 +376,9 @@ export async function mountHero3D({
   };
 
   const placeAt = (radius: number, lookY: number, camY: number, theta: number) => {
+    // Orbit in XZ around the fixed pivot; camY is relative to orbitCenterY.
     const horizontal = Math.sqrt(
-      Math.max(radius * radius - (camY - lookY) ** 2, 0.01),
+      Math.max(radius * radius - (camY - orbitCenterY) ** 2, 0.01),
     );
     cam.position.set(
       lookAt.x + Math.sin(theta) * horizontal,
@@ -388,17 +390,23 @@ export async function mountHero3D({
     cam.updateMatrixWorld(true);
   };
 
+  const syncCamY = () => {
+    cameraY = orbitCenterY + orbitRadius * 0.03;
+  };
+
   /*
-   * 1) Iterative mesh size-fit (WingFold × orbit) with 8% margin. Damped steps
-   *    avoid overshoot when the painted mesh is off the loose sphere center.
-   * 2) Nudge lookAt so the mesh mid-Y sits on the optical axis (less one-sided
-   *    clip risk), without a vertical “sky pack” that fights the margin.
-   * 3) CSS crop to the mesh silhouette — CTA→paint ≈ hero gap only.
+   * Camera-only framing (no CSS crop / offset):
+   * 1) Start from tight vertex sphere distance (+ zoom amp).
+   * 2) Zoom IN/OUT across orbit×WingFold so max projected half == 1/1.08.
+   * 3) Top-pack: lower lookAt.y below the pivot so mesh maxY → SUBJECT_TOP_NDC
+   *    (lookAt is the NDC origin — it must leave the mesh mid for packing).
+   * 4) Re-check orbit; zoom OUT only if top-pack caused edge overflow.
    */
   {
     const angles = 8;
     const animSteps = clip ? 6 : 0;
     const duration = clip ? Math.max(clip.duration, 0.001) : 1;
+    const fitTarget = 1 / SPHERE_FIT_MARGIN;
 
     const measureOrbitMesh = (): NdcExtents => {
       let halfX = 0;
@@ -422,100 +430,77 @@ export async function mountHero3D({
       return { halfX, halfY, minY, maxY };
     };
 
-    const fitTarget = 1 / SPHERE_FIT_MARGIN;
-    let lastHalf = 0;
-    for (let iter = 0; iter < 8; iter += 1) {
-      const ext = measureOrbitMesh();
-      const half = Math.max(ext.halfX, ext.halfY);
-      lastHalf = half;
-      if (half < 1e-4) break;
+    const worldPerNdcY = () => {
+      const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
+      return dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
+    };
 
-      // Recenter lookAt toward mesh mid-Y in world units (small nudge).
-      const midNdcY = (ext.minY + ext.maxY) * 0.5;
-      if (Math.abs(midNdcY) > 0.02) {
-        const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
-        const worldPerNdc =
-          dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
-        lookAt.y += midNdcY * worldPerNdc * 0.5;
-        cameraY = lookAt.y + orbitRadius * 0.03;
-      }
+    // Fit at the CLOSEST zoom (orbitRadius / (1+ZOOM_AMP)) so peak zoom keeps margin.
+    const fitWithZoomHeadroom = () => {
+      const closest = orbitRadius / (1 + ZOOM_AMP);
+      const saved = orbitRadius;
+      orbitRadius = closest;
+      syncCamY();
+      const orbitExt = measureOrbitMesh();
+      const orbitHalf = Math.max(orbitExt.halfX, orbitExt.halfY, 0.05);
+      // Scale the resting orbitRadius so closest pose hits fitTarget.
+      orbitRadius = saved * (orbitHalf / fitTarget);
+      const minDist = sphere.radius * 1.15 * (1 + ZOOM_AMP);
+      orbitRadius = Math.max(orbitRadius, minDist);
+      syncCamY();
+      return orbitExt;
+    };
 
-      const factor = half / fitTarget;
-      if (Math.abs(factor - 1) < 0.02) break;
-      // Dampen zoom-in (factor>1 means subject too big → zoom out fully;
-      // factor<1 means too small → ease in to avoid one-sided overshoot).
-      const applied = factor >= 1 ? factor : 1 - (1 - factor) * 0.65;
-      orbitRadius *= applied;
-      cameraY = lookAt.y + orbitRadius * 0.03;
-    }
-
-    // Final safety: if anything still breaches the margin, zoom out once.
-    {
-      const ext = measureOrbitMesh();
-      const half = Math.max(ext.halfX, ext.halfY);
-      lastHalf = half;
-      if (half > fitTarget) {
-        orbitRadius *= half * SPHERE_FIT_MARGIN;
-        cameraY = lookAt.y + orbitRadius * 0.03;
-      }
-    }
-
-    const packed = measureOrbitMesh();
     placeAt(orbitRadius, lookAt.y, cameraY, 0);
-    const minTopFrac = -packed.maxY * 0.5 + 0.5;
-    const maxBottomFrac = -packed.minY * 0.5 + 0.5;
+    if (clip && wingAction) mixer.setTime(0);
+    fitWithZoomHeadroom();
 
-    /*
-     * Fixed crop height = max mesh span + pads across orbit. Per-frame we slide
-     * --hero-gl-offset-y so the painted top stays pinned (no cream band as the
-     * silhouette bobs during orbit).
-     */
-    const span = Math.max(0.3, maxBottomFrac - minTopFrac);
-    cropFrac = Math.min(1, Math.max(0.42, span + STAGE_TOP_PAD + STAGE_BOTTOM_PAD));
-    cropTopFrac = Math.max(0, minTopFrac - STAGE_TOP_PAD);
-
-    panel.dataset.heroCrop = [
-      minTopFrac.toFixed(3),
-      maxBottomFrac.toFixed(3),
-      cropTopFrac.toFixed(3),
-      cropFrac.toFixed(3),
-      orbitRadius.toFixed(2),
-      lastHalf.toFixed(3),
-    ].join(',');
-
-    /**
-     * Slide GL offset so live mesh top sits at the panel top.
-     * cropFrac ≥ union span + pads, so pin-top never clips the live bottom.
-     */
-    const applyCropOffset = (topFrac: number, _bottomFrac: number) => {
-      const desired = Math.max(0, topFrac - STAGE_TOP_PAD);
-      cropTopFrac = Math.min(desired, Math.max(0, 1 - cropFrac));
-      panel.style.setProperty(
-        '--hero-gl-offset-y',
-        `${Math.round(-glH * cropTopFrac)}px`,
+    // Top-pack: look BELOW the pivot so the subject rises in NDC.
+    const clampLookY = () => {
+      const maxShift = orbitRadius * 0.65;
+      lookAt.y = Math.max(
+        orbitCenterY - maxShift,
+        Math.min(orbitCenterY + maxShift, lookAt.y),
       );
     };
+    {
+      // Measure at closest zoom for the true peak silhouette.
+      const closest = orbitRadius / (1 + ZOOM_AMP);
+      const saved = orbitRadius;
+      orbitRadius = closest;
+      syncCamY();
+      const packed = measureOrbitMesh();
+      lookAt.y -= (SUBJECT_TOP_NDC - packed.maxY) * worldPerNdcY();
+      clampLookY();
+      orbitRadius = saved;
+      syncCamY();
+    }
 
-    const width = panel.getBoundingClientRect().width;
-    glH = Math.max(panel.getBoundingClientRect().height, width * 0.4);
-    glAspect = width / Math.max(glH, 1);
-    panel.style.setProperty('--hero-gl-h', `${Math.round(glH)}px`);
-    applyCropOffset(minTopFrac, maxBottomFrac);
-    panel.style.setProperty(
-      '--hero-crop-h',
-      `${Math.round(glH * cropFrac)}px`,
-    );
-    panel.classList.add('is-cropped');
-    size();
+    // Top-pack can push past the margin — zoom OUT at closest pose if needed.
+    {
+      fitWithZoomHeadroom();
+      const closest = orbitRadius / (1 + ZOOM_AMP);
+      const saved = orbitRadius;
+      orbitRadius = closest;
+      syncCamY();
+      const again = measureOrbitMesh();
+      lookAt.y -= (SUBJECT_TOP_NDC - again.maxY) * worldPerNdcY();
+      clampLookY();
+      orbitRadius = saved;
+      syncCamY();
+      // Final safety zoom-out if still over.
+      fitWithZoomHeadroom();
+    }
 
-    (
-      panel as HTMLElement & {
-        __heroApplyCrop?: (top: number, bottom: number) => void;
-      }
-    ).__heroApplyCrop = (topFrac: number, bottomFrac: number) => {
-      if (glH < 1) return;
-      applyCropOffset(topFrac, bottomFrac);
-    };
+    placeAt(orbitRadius, lookAt.y, cameraY, 0);
+    if (clip && wingAction) mixer.setTime(0);
+    const packed = measureNdcMesh();
+    panel.dataset.heroFit = [
+      packed.minY.toFixed(3),
+      packed.maxY.toFixed(3),
+      orbitRadius.toFixed(2),
+      Math.max(packed.halfX, packed.halfY).toFixed(3),
+    ].join(',');
   }
 
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -562,16 +547,20 @@ export async function mountHero3D({
   };
   reduce.addEventListener('change', onReduce);
 
-  /** Project painted mesh verts to the *cropped* panel % — pause sits on subject BR. */
+  /**
+   * Project painted mesh to panel % for pause placement.
+   * Pause sits in the BR quadrant but inset toward the body so the control
+   * lands on cream/body, not flower petals (bottom ~40% is the ring).
+   */
   const updateSubjectCssVars = () => {
     const { width, height } = panel.getBoundingClientRect();
-    if (width < 1 || height < 1 || glH < 1 || cropFrac < 1e-4) return;
+    if (width < 1 || height < 1) return;
 
-    const mesh = measureNdcMesh();
-    // Also need X extents — sample verts once more for left/right.
     tilt.updateMatrixWorld(true);
     let minX = 1;
     let maxX = 0;
+    let minY = 1;
+    let maxY = 0;
     let any = false;
     tilt.traverse((obj) => {
       if (_skipBoundsName.test(obj.name || '')) return;
@@ -595,26 +584,34 @@ export async function mountHero3D({
       for (let i = 0; i < pos.count; i += step) {
         proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
         proj.applyMatrix4(m.matrixWorld).project(cam);
-        minX = Math.min(minX, proj.x * 0.5 + 0.5);
-        maxX = Math.max(maxX, proj.x * 0.5 + 0.5);
+        const px = proj.x * 0.5 + 0.5;
+        const py = -proj.y * 0.5 + 0.5;
+        minX = Math.min(minX, px);
+        maxX = Math.max(maxX, px);
+        minY = Math.min(minY, py);
+        maxY = Math.max(maxY, py);
         any = true;
       }
     });
     if (!any) return;
-    const minY = (-mesh.maxY * 0.5 + 0.5 - cropTopFrac) / cropFrac;
-    const maxY = (-mesh.minY * 0.5 + 0.5 - cropTopFrac) / cropFrac;
     minX = Math.min(1, Math.max(0, minX));
     maxX = Math.min(1, Math.max(0, maxX));
-    const top = Math.min(1, Math.max(0, minY));
-    const bottom = Math.min(1, Math.max(0, maxY));
+    minY = Math.min(1, Math.max(0, minY));
+    maxY = Math.min(1, Math.max(0, maxY));
 
     panel.style.setProperty('--hero-subj-left', `${(minX * 100).toFixed(2)}%`);
-    panel.style.setProperty('--hero-subj-top', `${(top * 100).toFixed(2)}%`);
+    panel.style.setProperty('--hero-subj-top', `${(minY * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-right', `${(maxX * 100).toFixed(2)}%`);
-    panel.style.setProperty(
-      '--hero-subj-bottom',
-      `${(bottom * 100).toFixed(2)}%`,
-    );
+    panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
+
+    /*
+     * Pause on cream at subject BR — midway from AABB corner toward panel
+     * corner so the 44px hit lands on page cream, not flower petals.
+     */
+    const pauseX = Math.min(0.96, maxX + Math.max(0.055, (1 - maxX) * 0.4));
+    const pauseY = Math.min(0.96, maxY + Math.max(0.055, (1 - maxY) * 0.4));
+    panel.style.setProperty('--hero-pause-x', `${(pauseX * 100).toFixed(2)}%`);
+    panel.style.setProperty('--hero-pause-y', `${(pauseY * 100).toFixed(2)}%`);
   };
 
   const placeCamera = (t: number) => {
@@ -623,12 +620,13 @@ export async function mountHero3D({
     const zoom =
       1 + (ZOOM_AMP * (1 - Math.cos(phase * Math.PI * 2))) / 2;
     const radius = orbitRadius / zoom;
+    const camY = orbitCenterY + radius * 0.03;
     const horizontal = Math.sqrt(
-      Math.max(radius * radius - (cameraY - lookAt.y) ** 2, 0.01),
+      Math.max(radius * radius - (camY - orbitCenterY) ** 2, 0.01),
     );
     cam.position.set(
       lookAt.x + Math.sin(theta) * horizontal,
-      cameraY,
+      camY,
       lookAt.z + Math.cos(theta) * horizontal,
     );
     cam.lookAt(lookAt);
@@ -660,16 +658,6 @@ export async function mountHero3D({
       tilt.rotation.set(0, 0, 0);
     }
     mixer.update(dt);
-    // Pin painted subject top to the crop window as the silhouette bobs.
-    const pin = (
-      panel as HTMLElement & {
-        __heroApplyCrop?: (top: number, bottom: number) => void;
-      }
-    ).__heroApplyCrop;
-    if (pin) {
-      const live = measureNdcMesh();
-      pin(-live.maxY * 0.5 + 0.5, -live.minY * 0.5 + 0.5);
-    }
     updateSubjectCssVars();
     renderer.render(scene, cam);
   });
@@ -690,10 +678,13 @@ export async function mountHero3D({
     panel.style.removeProperty('--hero-subj-top');
     panel.style.removeProperty('--hero-subj-right');
     panel.style.removeProperty('--hero-subj-bottom');
+    panel.style.removeProperty('--hero-pause-x');
+    panel.style.removeProperty('--hero-pause-y');
     panel.style.removeProperty('--hero-gl-h');
     panel.style.removeProperty('--hero-gl-offset-y');
     panel.style.removeProperty('--hero-crop-h');
-    delete (panel as HTMLElement & { __heroApplyCrop?: unknown }).__heroApplyCrop;
+    delete panel.dataset.heroFit;
+    delete panel.dataset.heroFitLog;
     draco.dispose();
     pmrem.dispose();
     renderer.dispose();

@@ -43,9 +43,8 @@ type Pad = { left: number; top: number; right: number; bottom: number };
 
 /** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
 const BENCH_MIN_OPACITY = 0.92;
-/** Peak ambient tips sit ~SAFETY_PAD px below canvas top; keep that clear of sticky header. */
+/** Keep painted ambient tips ≥ this many px below the sticky header bottom. */
 const STICKY_BUTTERFLY_CLEAR_PX = 16;
-const CANVAS_TOP_SUBJECT_INSET_PX = 8;
 const STICKY_CLEAR_MIN_WIDTH = 1024;
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
@@ -112,7 +111,11 @@ function trackAt(
   walkF: number,
 ): AmbientButterfly['track'][number] | null {
   if (track.length === 0) return null;
-  if (walkF < track[0].f || walkF > track[track.length - 1].f) return null;
+  // Hold the final peak pose after the track ends so high flight stays visible.
+  if (walkF < track[0].f) return null;
+  if (walkF > track[track.length - 1].f) {
+    return track[track.length - 1] ?? null;
+  }
   const idx = Math.round(walkF - track[0].f);
   return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
 }
@@ -194,17 +197,32 @@ function layoutOverflowCanvas(
   return { scale, cssW, cssH };
 }
 
+function clearStickyShift(wrap: HTMLDivElement): void {
+  // Prefer transform — the CSS `translate` property is missing in some WebKit builds.
+  wrap.style.translate = '';
+  if (/translateY\(/.test(wrap.style.transform || '')) {
+    wrap.style.transform = '';
+  }
+}
+
+function applyStickyShift(wrap: HTMLDivElement, need: number): void {
+  wrap.style.translate = '';
+  wrap.style.transform = `translateY(${need}px)`;
+}
+
 /**
  * Keep the highest ambient butterfly (≥16px) below the sticky header bottom.
- * Desktop sticky `top` handles the common case; this only applies a residual
- * translate when sticky has released (no horizontal layout change).
+ * Caller sets dataset.ambientTop to the natural (unshifted) top first.
  */
-function applyStickyHeaderClearance(
-  wrap: HTMLDivElement,
-  canvas: HTMLCanvasElement,
-): void {
+function applyStickyHeaderClearance(wrap: HTMLDivElement): void {
   if (window.innerWidth < STICKY_CLEAR_MIN_WIDTH) {
-    wrap.style.translate = '';
+    clearStickyShift(wrap);
+    return;
+  }
+  const painted = Number(wrap.dataset.ambientPainted || 0);
+  const naturalTop = Number(wrap.dataset.ambientTop || '');
+  if (painted < 1 || !Number.isFinite(naturalTop)) {
+    clearStickyShift(wrap);
     return;
   }
   const header = document.querySelector('.site-header');
@@ -212,13 +230,10 @@ function applyStickyHeaderClearance(
     ? header.getBoundingClientRect().bottom
     : 0;
   const minTop = headerBottom + STICKY_BUTTERFLY_CLEAR_PX;
-  // Measure natural sticky position without our residual translate.
-  wrap.style.translate = '';
-  const canvasTop = canvas.getBoundingClientRect().top;
-  const highestButterflyY = canvasTop + CANVAS_TOP_SUBJECT_INSET_PX;
-  const need = minTop - highestButterflyY;
+  const need = minTop - naturalTop;
+  clearStickyShift(wrap);
   if (need > 0.5) {
-    wrap.style.translate = `0 ${need}px`;
+    applyStickyShift(wrap, need);
   }
 }
 
@@ -330,7 +345,45 @@ export function BenchScene({ sectionRef }: Props) {
         boxW,
         boxH,
       );
-      applyStickyHeaderClearance(wrap, canvas);
+      const ox = pad.left;
+      const oy = pad.top;
+
+      // Resolve ambient tops before sticky so clearance matches this frame's peak.
+      let minLocalY = Number.POSITIVE_INFINITY;
+      let painted = 0;
+      for (const key of Object.keys(rt.json.ambient)) {
+        const amb = rt.json.ambient[key];
+        const pt = trackAt(amb.track, walkF);
+        if (!pt) continue;
+        const entry = amb.atlas.index[pt.cell];
+        if (!entry) continue;
+        const sheet = rt.ambientBanks[key]?.get(entry[0]);
+        if (!sheet) continue;
+        painted += 1;
+        minLocalY = Math.min(minLocalY, oy + pt.y);
+      }
+      wrap.dataset.ambientPainted = String(painted);
+      if (painted > 0 && Number.isFinite(minLocalY)) {
+        // Natural (unshifted) butterfly top → sticky clearance for THIS frame.
+        clearStickyShift(wrap);
+        const naturalCanvasTop = canvas.getBoundingClientRect().top;
+        const naturalTop =
+          naturalCanvasTop +
+          (minLocalY / Math.max(cssH, 1)) *
+            canvas.getBoundingClientRect().height;
+        wrap.dataset.ambientTop = naturalTop.toFixed(1);
+        applyStickyHeaderClearance(wrap);
+        // Re-record top after shift for QA / next-frame consumers.
+        const shifted = canvas.getBoundingClientRect();
+        wrap.dataset.ambientTop = (
+          shifted.top +
+          (minLocalY / Math.max(cssH, 1)) * shifted.height
+        ).toFixed(1);
+      } else {
+        wrap.dataset.ambientTop = '';
+        clearStickyShift(wrap);
+      }
+
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) {
@@ -342,8 +395,6 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.save();
       ctx.scale(scale, scale);
 
-      const ox = pad.left;
-      const oy = pad.top;
       const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
 
       ctx.save();
@@ -411,9 +462,15 @@ export function BenchScene({ sectionRef }: Props) {
         rt.shadow = shadow;
         rt.perchShadow = perchShadow;
         await Promise.all(
-          Object.keys(rt.ambientBanks).map((key) =>
-            rt.ambientBanks[key].ensureCurrentAndNext(0),
-          ),
+          Object.keys(rt.ambientBanks).map((key) => {
+            const amb = rt.json.ambient[key];
+            const last = amb.track[amb.track.length - 1];
+            const peakCell = last ? last.cell : 0;
+            return Promise.all([
+              rt.ambientBanks[key].ensureCurrentAndNext(0),
+              rt.ambientBanks[key].ensureCurrentAndNext(peakCell),
+            ]);
+          }),
         );
         if (!alive) return;
         assetsReady = true;

@@ -1,3 +1,4 @@
+import { unstable_cache } from 'next/cache';
 import {
   FALLBACK_CONSULTATION_PRODUCTS,
   FALLBACK_HOMEPAGE_CONTENT,
@@ -10,6 +11,8 @@ import type {
 } from './types';
 
 const REVALIDATE_SECONDS = 300;
+/** Never let a cold Clinic-OS round-trip stall HTML for seconds. */
+const FETCH_TIMEOUT_MS = 1200;
 
 function getBaseUrl(): string | null {
   const raw = process.env.CLINIC_OS_API_BASE_URL?.trim();
@@ -33,6 +36,7 @@ async function fetchJson(url: string): Promise<unknown> {
   const res = await fetch(url, {
     headers: { Accept: 'application/json' },
     next: { revalidate: REVALIDATE_SECONDS },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!res.ok) {
     throw new Error(`Clinic-OS ${res.status} for ${url}`);
@@ -40,35 +44,54 @@ async function fetchJson(url: string): Promise<unknown> {
   return res.json() as Promise<unknown>;
 }
 
+async function loadConsultationProducts(): Promise<ConsultationProduct[]> {
+  if (!getBaseUrl()) {
+    return FALLBACK_CONSULTATION_PRODUCTS;
+  }
+  try {
+    const raw = await fetchJson(publicPath('/consultation-products'));
+    return parseConsultationProductsResponse(raw);
+  } catch {
+    return FALLBACK_CONSULTATION_PRODUCTS;
+  }
+}
+
+async function loadHomepageContent(): Promise<HomepageContent> {
+  if (!getBaseUrl()) {
+    return FALLBACK_HOMEPAGE_CONTENT;
+  }
+  try {
+    const raw = (await fetchJson(
+      publicPath('/homepage-content'),
+    )) as HomepageContent;
+    return raw;
+  } catch {
+    return FALLBACK_HOMEPAGE_CONTENT;
+  }
+}
+
 /**
  * Thin typed Clinic-OS public client (server-side only — no CORS).
  * Field-name mapping / validation lives in this module + schemas.ts.
+ * Cached + short timeout so homepage TTFB never waits on a cold upstream.
  */
 export const clinicOsClient = {
   async getConsultationProducts(): Promise<ConsultationProduct[]> {
-    if (!getBaseUrl()) {
-      return FALLBACK_CONSULTATION_PRODUCTS;
-    }
-    try {
-      const raw = await fetchJson(publicPath('/consultation-products'));
-      return parseConsultationProductsResponse(raw);
-    } catch {
-      return FALLBACK_CONSULTATION_PRODUCTS;
-    }
+    const slug = getTenantSlug();
+    return unstable_cache(
+      loadConsultationProducts,
+      ['clinic-os-consultation-products', slug],
+      { revalidate: REVALIDATE_SECONDS },
+    )();
   },
 
   async getHomepageContent(): Promise<HomepageContent> {
-    if (!getBaseUrl()) {
-      return FALLBACK_HOMEPAGE_CONTENT;
-    }
-    try {
-      const raw = (await fetchJson(
-        publicPath('/homepage-content'),
-      )) as HomepageContent;
-      return raw;
-    } catch {
-      return FALLBACK_HOMEPAGE_CONTENT;
-    }
+    const slug = getTenantSlug();
+    return unstable_cache(
+      loadHomepageContent,
+      ['clinic-os-homepage-content', slug],
+      { revalidate: REVALIDATE_SECONDS },
+    )();
   },
 
   async submitInquiry(payload: InquiryPayload): Promise<{ status: number }> {
@@ -93,6 +116,7 @@ export const clinicOsClient = {
         turnstileToken: payload.turnstileToken,
         website: payload.website ?? '',
       }),
+      signal: AbortSignal.timeout(8000),
     });
     return { status: res.status };
   },

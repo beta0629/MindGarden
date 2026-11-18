@@ -31,12 +31,25 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // CDN-friendly HTML for the homepage (ISR revalidate=300).
+    // Safe with Cloudflare OpenNext — s-maxage + SWR, no immutable.
+    const htmlCache = {
+      source: '/',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+      ],
+    };
+
     // Staging (and any non-indexable build) must send X-Robots-Tag.
     // Production sets NEXT_PUBLIC_SITE_INDEXABLE=true and skips this header.
     if (process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true') {
-      return [];
+      return [htmlCache];
     }
     return [
+      htmlCache,
       {
         source: '/:path*',
         headers: [

@@ -6,6 +6,12 @@ export const SITE = {
   address: '인천 연수구 해돋이로120번길 23 아크리아2 2층 204호',
   addressLandmark: '해양경찰청 인근',
   hours: '주중 10:00–20:00 · 토요일 10:00–17:00 · 일요일 정기휴무',
+  /** One entry per line on narrow layouts — never wrap a line starting with a separator. */
+  hoursLines: [
+    '주중 10:00–20:00',
+    '토요일 10:00–17:00',
+    '일요일 정기휴무',
+  ],
   representative: '김선희',
   businessNumber: '855-49-01086',
   mailOrderNumber: '제 2026-3520233-30-2-02729 호',
@@ -29,4 +35,12 @@ export function getSiteUrl(): string {
 
 export function isSiteIndexable(): boolean {
   return process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true';
+}
+
+/**
+ * Draft-review badges (「확인 필요」) are opt-in only.
+ * Set NEXT_PUBLIC_SHOW_CONFIRM_NEEDED=true on internal review builds; default hidden for visitors.
+ */
+export function shouldShowConfirmNeeded(): boolean {
+  return process.env.NEXT_PUBLIC_SHOW_CONFIRM_NEEDED === 'true';
 }

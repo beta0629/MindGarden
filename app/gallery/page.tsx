@@ -32,7 +32,8 @@ export default function GalleryPage() {
                   alt={item.caption}
                   width={800}
                   height={1066}
-                  sizes="(max-width: 768px) 50vw, 33vw"
+                  sizes="(max-width: 767px) 46vw, 31vw"
+                  quality={72}
                 />
                 <figcaption>
                   {item.caption}

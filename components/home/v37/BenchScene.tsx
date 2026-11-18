@@ -7,6 +7,7 @@ import {
   drawCoverImage,
   loadJson,
   loadSheet,
+  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   type DecodedImage,
@@ -37,6 +38,9 @@ type Runtime = {
   perchShadow: DecodedImage | null;
   ambientBanks: Record<string, AtlasSheetBank>;
 };
+
+/** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
+const BENCH_MIN_OPACITY = 0.92;
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '1440': { wPct: 28.115, aspect: '405 / 350' },
@@ -160,15 +164,20 @@ export function BenchScene({ sectionRef }: Props) {
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
       const preSettle = settle.opacity <= 0;
-      const drawOpacity = preSettle ? 1 : settle.opacity;
+      // Never dip to near-transparent when settle starts (washed-out flash).
+      const drawOpacity = preSettle
+        ? 1
+        : Math.max(BENCH_MIN_OPACITY, settle.opacity);
       const drawTy = preSettle ? 0 : ty;
       const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
-      const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
+      const drawShadowOpacity = preSettle
+        ? 1
+        : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
 
       // Canvas == place box only — never expand document width via overflow canvas.
       const boxW = rt.json.place.css_w;
       const boxH = rt.json.place.css_h;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, boxW, boxH, dpr);
       if (!ctx) {
         raf = requestAnimationFrame(tick);
@@ -361,6 +370,7 @@ export function BenchScene({ sectionRef }: Props) {
           src={posterSrc}
           alt=""
           decoding="async"
+          loading="lazy"
           fetchPriority="low"
         />
       ) : null}

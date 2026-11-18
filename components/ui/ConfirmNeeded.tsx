@@ -1,14 +1,15 @@
-import { isSiteIndexable } from '@/lib/site';
+import { shouldShowConfirmNeeded } from '@/lib/site';
 
 type ConfirmNeededProps = {
   label?: string;
 };
 
 /**
- * Staging/draft marker only. Hidden when NEXT_PUBLIC_SITE_INDEXABLE=true.
+ * Internal review marker only. Renders nothing unless
+ * NEXT_PUBLIC_SHOW_CONFIRM_NEEDED=true (visitors never see it).
  */
 export function ConfirmNeeded({ label = '확인 필요' }: ConfirmNeededProps) {
-  if (isSiteIndexable()) {
+  if (!shouldShowConfirmNeeded()) {
     return null;
   }
 

@@ -4,10 +4,9 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
-import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 import {
   clinicOsClient,
-  getActiveEventProduct,
   resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
 import type { ConsultationProduct } from '@/lib/clinic-os/types';
@@ -32,90 +31,61 @@ type PriceCardView = {
   amount: number;
   note: string;
   struckThrough: number | null;
-  fromLive: boolean;
 };
 
-/** Live card subtitle from the matched product — never from static guide.note. */
-function liveProductNote(
-  guideKey: string,
-  product: ConsultationProduct,
-): string {
-  if (guideKey === 'event') {
-    if (product.eventStartDate && product.eventEndDate) {
-      return `${product.eventStartDate.replace(/-/g, '.')} – ${product.eventEndDate.slice(5).replace(/-/g, '.')}`;
-    }
-    return '';
-  }
-  if (product.sessionCount > 0) {
-    return `${product.sessionCount}회`;
-  }
-  return '';
+type PriceCardGuide = (typeof homeCopy.pricing.cards)[number];
+
+/** Today in KST as YYYY-MM-DD (event window is defined in Korea time). */
+function todayKst(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
 }
 
-const pack10Match =
-  homeCopy.pricing.cards.find((card) => card.key === 'pack10')?.match ?? [];
+function isCardActive(guide: PriceCardGuide, today: string): boolean {
+  if ('dateStart' in guide && today < guide.dateStart) return false;
+  if ('dateEnd' in guide && today > guide.dateEnd) return false;
+  return true;
+}
 
+/**
+ * Display title/note always come from approved copy. Live Clinic-OS data may only
+ * refine the amount, and only through an explicit skuCode mapping (never by name).
+ */
 function buildPriceCards(products: ConsultationProduct[]): PriceCardView[] {
-  const used = new Set<string>();
-  return homeCopy.pricing.cards.map((guide) => {
-    const match = products.find((product) => {
-      if (used.has(product.skuCode)) return false;
-      // Prefer pack10 over broad session patterns (e.g. /개인/, leftover /회기/).
-      if (
-        guide.key === 'session' &&
-        pack10Match.some((re) => re.test(product.name))
-      ) {
-        return false;
-      }
-      return guide.match.some((re) => re.test(product.name));
-    });
-    if (!match) {
+  const today = todayKst();
+  return homeCopy.pricing.cards
+    .filter((guide) => isCardActive(guide, today))
+    .map((guide) => {
+      const live = products.find(
+        (product) =>
+          guide.skuCodes.includes(product.skuCode) &&
+          !product.name.includes('치료'),
+      );
+      const view = live ? resolveProductDisplayPrice(live) : null;
       return {
         key: guide.key,
         title: guide.title,
-        amount: guide.amount,
+        amount: view?.amount ?? guide.amount,
         note: guide.note,
-        struckThrough: null,
-        fromLive: false,
+        struckThrough: view?.struckThroughPrice ?? null,
       };
-    }
-    used.add(match.skuCode);
-    const view = resolveProductDisplayPrice(match);
-    return {
-      key: guide.key,
-      title: match.name || guide.title,
-      amount: view.amount,
-      note: liveProductNote(guide.key, match),
-      struckThrough: view.struckThroughPrice,
-      fromLive: true,
-    };
-  });
+    });
 }
+
+const HAS_LIVE_PRICE_SKUS = homeCopy.pricing.cards.some(
+  (card) => card.skuCodes.length > 0,
+);
 
 export default async function HomePage() {
   const [products, homepage, videos, posts] = await Promise.all([
-    clinicOsClient.getConsultationProducts(),
+    HAS_LIVE_PRICE_SKUS
+      ? clinicOsClient.getConsultationProducts()
+      : Promise.resolve<ConsultationProduct[]>([]),
     clinicOsClient.getHomepageContent(),
     getLatestVideos(4),
     getLatestBlogPosts(3),
   ]);
 
-  const eventProduct = getActiveEventProduct(products);
   const priceCards = buildPriceCards(products);
-  if (eventProduct) {
-    const eventView = resolveProductDisplayPrice(eventProduct);
-    const eventIdx = priceCards.findIndex((c) => c.key === 'event');
-    if (eventIdx >= 0) {
-      priceCards[eventIdx] = {
-        key: 'event',
-        title: eventProduct.name,
-        amount: eventView.amount,
-        note: liveProductNote('event', eventProduct),
-        struckThrough: eventView.struckThroughPrice,
-        fromLive: true,
-      };
-    }
-  }
 
   const homeReviews = homepage.reviews.slice(0, 3);
   const noticeBanner = homepage.banners.find((b) => {
@@ -214,7 +184,8 @@ export default async function HomePage() {
                   alt={thumb.caption}
                   width={480}
                   height={640}
-                  sizes="(max-width: 767px) 42vw, 12rem"
+                  sizes="(max-width: 767px) 44vw, 12rem"
+                  quality={72}
                 />
                 <figcaption>{thumb.caption}</figcaption>
               </figure>
@@ -243,9 +214,9 @@ export default async function HomePage() {
                 <Image
                   src={homeCopy.experts.primary.photo}
                   alt=""
-                  width={312}
-                  height={312}
-                  sizes="(max-width: 767px) 45vw, 16rem"
+                  width={156}
+                  height={156}
+                  sizes="(max-width: 767px) 40vw, 10rem"
                 />
               </div>
               <p className="home-expert-card__label">
@@ -254,41 +225,25 @@ export default async function HomePage() {
                 {homeCopy.experts.primary.role}
               </p>
             </article>
-            {Array.from({ length: homeCopy.experts.emptySlots }).map((_, i) => (
-              <article
-                key={`expert-empty-${i}`}
-                className="home-expert-card home-expert-card--empty"
-                data-reveal
-              >
-                <div
-                  className="home-expert-card__media home-expert-card__media--watermark"
-                  aria-hidden="true"
-                >
-                  <img src="/brand/logo.svg" alt="" width={72} height={72} />
-                </div>
-                <p className="home-expert-card__label">
-                  {homeCopy.experts.emptyLabel}
-                  <ConfirmNeeded />
-                </p>
-              </article>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* 4. Dark stats band */}
-      <section className="section home-stats" aria-label="센터 현황" data-reveal>
-        <div className="container">
-          <div className="home-stats__band">
-            {homeCopy.stats.items.map((item) => (
-              <div className="home-stats__item" key={item.label}>
-                <p className="home-stats__value">[확인 필요]</p>
-                <p className="home-stats__label">{item.label}</p>
-              </div>
-            ))}
+      {/* 4. Dark stats band — hidden until numbers are confirmed (homeCopy.stats.enabled) */}
+      {homeCopy.stats.enabled ? (
+        <section className="section home-stats" aria-label="센터 현황" data-reveal>
+          <div className="container">
+            <div className="home-stats__band">
+              {homeCopy.stats.items.map((item) => (
+                <div className="home-stats__item" key={item.label}>
+                  <p className="home-stats__value">{item.value}</p>
+                  <p className="home-stats__label">{item.label}</p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* 5. 후기 / Bench */}
       <section className="section home-reviews" data-reveal>
@@ -348,7 +303,12 @@ export default async function HomePage() {
             <p className="section__eyebrow">{homeCopy.pricing.eyebrow}</p>
             <h2 className="section__title">{homeCopy.pricing.title}</h2>
           </header>
-          <div className="home-pricing__grid" data-reveal-stagger>
+          <div
+            className={`home-pricing__grid${
+              priceCards.length < 4 ? ' home-pricing__grid--compact' : ''
+            }`}
+            data-reveal-stagger
+          >
             {priceCards.map((card) => (
               <article className="home-price-card" key={card.key} data-reveal>
                 <h3>{card.title}</h3>
@@ -402,38 +362,45 @@ export default async function HomePage() {
                 {featuredReadings.map((item) => (
                   <a
                     key={item.key}
-                    className="home-reading-feature"
+                    className={`home-reading-feature${
+                      item.thumb ? '' : ' home-reading-feature--text'
+                    }`}
                     href={item.href}
                     target="_blank"
                     rel="noopener noreferrer"
                     data-reveal
                   >
-                    <span className="home-reading-feature__media">
-                      {item.thumb ? (
-                        <Image
-                          src={item.thumb}
-                          alt=""
-                          fill
-                          sizes="(max-width: 767px) 45vw, 22vw"
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <span className="home-reading-feature__fallback">
-                          <img
-                            src="/brand/logo.svg"
+                    {item.thumb ? (
+                      <>
+                        <span className="home-reading-feature__media">
+                          <Image
+                            src={item.thumb}
                             alt=""
-                            width={48}
-                            height={48}
+                            fill
+                            sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
+                            quality={80}
                           />
+                          {item.kind === 'video' ? (
+                            <span
+                              className="home-reading-feature__play"
+                              aria-hidden="true"
+                            >
+                              ▶
+                            </span>
+                          ) : null}
                         </span>
-                      )}
-                      {item.kind === 'video' ? (
-                        <span className="home-reading-feature__play" aria-hidden="true">
-                          ▶
+                        <strong>{item.title}</strong>
+                      </>
+                    ) : (
+                      <>
+                        <span className="home-reading-feature__kind">
+                          {item.kind === 'video' ? '영상' : '칼럼'}
                         </span>
-                      ) : null}
-                    </span>
-                    <strong>{item.title}</strong>
+                        <strong className="home-reading-feature__headline">
+                          {item.title}
+                        </strong>
+                      </>
+                    )}
                   </a>
                 ))}
               </div>
@@ -442,7 +409,9 @@ export default async function HomePage() {
                   {listReadings.map((post) => (
                     <a
                       key={`list-${post.url}`}
-                      className="home-reading-row"
+                      className={`home-reading-row${
+                        post.thumb ? '' : ' home-reading-row--text'
+                      }`}
                       href={post.url}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -453,17 +422,9 @@ export default async function HomePage() {
                           alt=""
                           width={96}
                           height={72}
+                          sizes="5.5rem"
                         />
-                      ) : (
-                        <span className="blog-thumb-fallback" aria-hidden="true">
-                          <img
-                            src="/brand/logo.svg"
-                            alt=""
-                            width={40}
-                            height={40}
-                          />
-                        </span>
-                      )}
+                      ) : null}
                       <span>
                         <strong>{post.title}</strong>
                         {post.date ? (
@@ -479,7 +440,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 8. 예약 — butterfly RIGHT of CTA; no inquiry form */}
+      {/* 8. 예약 — butterfly scene sits after all text (DOM + mobile order); no inquiry form */}
       <section className="section section--sand home-booking" id="contact" data-reveal>
         <div className="container home-booking__layout">
           <div className="home-booking__main">
@@ -487,26 +448,19 @@ export default async function HomePage() {
             <h2 className="section__title">{homeCopy.booking.title}</h2>
             <p className="section__lead">{homeCopy.booking.body}</p>
 
-            <div className="home-booking__cta-row">
-              <div className="home-booking__primary">
-                <div className="home-booking__actions">
-                  <BookingCta label={homeCopy.booking.primaryCta} />
-                  <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
-                    <Image
-                      src="/icons/contact-phone.svg"
-                      alt=""
-                      width={20}
-                      height={20}
-                    />
-                    <span>
-                      {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
-                    </span>
-                  </a>
-                </div>
-                <div className="home-booking__scene" aria-hidden="true">
-                  <BookingScene />
-                </div>
-              </div>
+            <div className="home-booking__actions">
+              <BookingCta label={homeCopy.booking.primaryCta} />
+              <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
+                <Image
+                  src="/icons/contact-phone.svg"
+                  alt=""
+                  width={20}
+                  height={20}
+                />
+                <span>
+                  {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
+                </span>
+              </a>
               <p className="home-booking__contact-link">
                 <Link className="text-link" href={homeCopy.booking.contactHref}>
                   {homeCopy.booking.contactLinkLabel}
@@ -528,9 +482,11 @@ export default async function HomePage() {
               </div>
               <div>
                 <dt>운영 시간</dt>
-                <dd>{SITE.hours}</dd>
+                <dd>
+                  <BusinessHours layout="stack" />
+                </dd>
               </div>
-              <div>
+              <div className="home-booking__fact--phone">
                 <dt>전화</dt>
                 <dd>
                   <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
@@ -544,6 +500,10 @@ export default async function HomePage() {
               </Link>
             </p>
           </aside>
+
+          <div className="home-booking__scene" aria-hidden="true">
+            <BookingScene />
+          </div>
         </div>
       </section>
     </SiteShell>

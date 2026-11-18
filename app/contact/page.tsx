@@ -7,6 +7,7 @@ import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
 import { contactCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export const metadata = buildMetadata({
   title: '상담 문의',
@@ -46,7 +47,7 @@ export default function ContactPage() {
                 />
                 <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
               </p>
-              <p className="muted">{SITE.hours}</p>
+              <p className="muted"><BusinessHours /></p>
             </div>
             <Image
               src="/images/contact-corner-c161-4x3.jpg"

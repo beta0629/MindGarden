@@ -3,6 +3,9 @@ import { assetUrl } from './types';
 
 export type DecodedImage = ImageBitmap | HTMLImageElement;
 
+/** Cap canvas backing-store DPR (sharp on DPR 3 phones without unbounded memory). */
+export const MAX_CANVAS_DPR = 3;
+
 const sheetCache = new Map<string, Promise<DecodedImage>>();
 
 async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {

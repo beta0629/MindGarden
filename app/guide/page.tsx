@@ -14,6 +14,7 @@ import { guideCopy } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export const revalidate = 300;
 
@@ -84,7 +85,7 @@ export default async function GuidePage() {
       <section className="section section--sand">
         <div className="container">
           <h2 className="section__title">운영 시간</h2>
-          <p>{SITE.hours}</p>
+          <p><BusinessHours /></p>
           <p>
             대표번호{' '}
             <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>

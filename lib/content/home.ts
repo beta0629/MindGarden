@@ -119,14 +119,14 @@ export const homeCopy = {
       role: '대표원장',
       photo: '/assets/images/counselors/kim-sunhee-director.png',
     },
-    emptyLabel: '이름 · 분야',
-    emptySlots: 3,
   },
   stats: {
+    /** Hidden until real numbers are confirmed — set true and fill `value` per item. */
+    enabled: false,
     items: [
-      { label: '실제 상담 횟수' },
-      { label: '누적 상담 예약자' },
-      { label: '함께하는 선생님' },
+      { label: '실제 상담 횟수', value: '' },
+      { label: '누적 상담 예약자', value: '' },
+      { label: '함께하는 선생님', value: '' },
     ] as const,
   },
   reviews: {
@@ -155,40 +155,42 @@ export const homeCopy = {
     title: '처음 오시는 분께 드리는 안내',
     moreLabel: '가격 상세정보 보기',
     moreHref: '/guide#pricing',
-    /** Still guide amounts — overridden when Clinic-OS products match. */
+    /**
+     * Approved display values only — never raw Clinic-OS product names.
+     * `skuCodes`: optional live-price mapping by skuCode only (none known yet → static cards).
+     */
     cards: [
       {
         key: 'initial',
         title: '초기상담',
         amount: 100_000,
-        note: '첫 방문 면담',
-        match: [/초기/, /첫\s*상/, /초기\s*면담/],
+        note: '첫 상담 1시간',
+        skuCodes: [] as readonly string[],
       },
       {
         key: 'session',
-        title: '본상담',
+        title: '단회기',
         amount: 90_000,
-        note: '개인상담 1회',
-        // Avoid /회기/ — it steals 「…10회기…」 packages before pack10.
-        match: [/본상담/, /개인/, /1회/],
+        note: '회기당 50분',
+        skuCodes: [] as readonly string[],
       },
       {
         key: 'pack10',
-        title: '10회 패키지',
+        title: '10회기',
         amount: 850_000,
-        note: '패키지 안내',
-        match: [/10회/, /패키지/],
+        note: '10회기 패키지',
+        skuCodes: [] as readonly string[],
       },
       {
         key: 'event',
-        title: '이벤트 · 추가상담',
+        title: '이벤트',
         amount: 60_000,
         note: '2026.11.01 – 12.31',
-        match: [/이벤트/, /첫\s*마음/, /추가/],
+        skuCodes: [] as readonly string[],
         dateStart: '2026-11-01',
         dateEnd: '2026-12-31',
       },
-    ] as const,
+    ],
   },
   readings: {
     eyebrow: '읽을거리',

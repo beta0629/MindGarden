@@ -5,6 +5,7 @@ import {
   AtlasSheetBank,
   drawAtlasFrame,
   loadJson,
+  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   smoothstep,
@@ -287,7 +288,7 @@ export function BookingScene({ sectionRef }: Props) {
       ensureBookingSheets(rt, walkF, landingDoneRef.current);
 
       const { css_w: cssW, css_h: cssH } = rt.booking.place;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) {
         raf = requestAnimationFrame(tick);
@@ -500,6 +501,7 @@ export function BookingScene({ sectionRef }: Props) {
           src={posterSrc}
           alt=""
           decoding="async"
+          loading="lazy"
           fetchPriority="low"
         />
       ) : null}

@@ -6,6 +6,7 @@ import { MapLinkCard } from '@/components/ui/MapLinkCard';
 import { locationCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export const metadata = buildMetadata({
   title: '오시는 길',
@@ -20,7 +21,7 @@ export default function LocationPage() {
         <h1>{locationCopy.title}</h1>
         <p>{SITE.address}</p>
         <p className="muted">{SITE.addressLandmark}</p>
-        <p>{SITE.hours}</p>
+        <p><BusinessHours /></p>
         <p>
           <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
         </p>

@@ -6,6 +6,7 @@ import { ConfirmNeeded } from '@/components/ui/ConfirmNeeded';
 import { aboutCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export const metadata = buildMetadata({
   title: '센터 소개',
@@ -155,7 +156,7 @@ export default function AboutPage() {
           <p>
             <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
           </p>
-          <p className="muted">{SITE.hours}</p>
+          <p className="muted"><BusinessHours /></p>
         </div>
       </section>
     </SiteShell>

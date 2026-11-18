@@ -8,6 +8,10 @@ import {
   useEffectEvent,
 } from 'react';
 
+const SLOW_CONNECTION_TYPES = ['slow-2g', '2g', '3g'];
+/** Mobile orbit video starts only after the page has settled (LCP + load). */
+const VIDEO_IDLE_TIMEOUT_MS = 3500;
+
 /**
  * Hero media panel per v1.3-home/web/IMPLEMENTATION.md:
  * poster LCP → (idle) mobile/tablet orbit video → desktop three.js WingFold + tilt.
@@ -42,6 +46,13 @@ export function HeroMedia() {
     ) {
       return '3d' as const;
     }
+    // Orbit video is ~0.5MB — keep the poster on constrained connections.
+    const effectiveType = (
+      navigator as Navigator & { connection?: { effectiveType?: string } }
+    ).connection?.effectiveType;
+    if (effectiveType && SLOW_CONNECTION_TYPES.includes(effectiveType)) {
+      return 'still' as const;
+    }
     return 'video' as const;
   }, []);
 
@@ -71,27 +82,37 @@ export function HeroMedia() {
     }
   }, []);
 
-  // Defer orbit video until after first paint / idle — keeps LCP on the poster.
+  // Defer orbit video until the load event + idle — keeps LCP and first load on the poster.
   useEffect(() => {
     if (mode !== 'video' || !posterReady) {
       setVideoAllowed(false);
       return;
     }
     let cancelled = false;
+    let idleId = 0;
+    let timeoutId = 0;
     const enable = () => {
       if (!cancelled) setVideoAllowed(true);
     };
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(enable, { timeout: 1800 });
-      return () => {
-        cancelled = true;
-        window.cancelIdleCallback(id);
-      };
+    const schedule = () => {
+      if (typeof window.requestIdleCallback === 'function') {
+        idleId = window.requestIdleCallback(enable, {
+          timeout: VIDEO_IDLE_TIMEOUT_MS,
+        });
+      } else {
+        timeoutId = window.setTimeout(enable, VIDEO_IDLE_TIMEOUT_MS);
+      }
+    };
+    if (document.readyState === 'complete') {
+      schedule();
+    } else {
+      window.addEventListener('load', schedule, { once: true });
     }
-    const t = window.setTimeout(enable, 1200);
     return () => {
       cancelled = true;
-      window.clearTimeout(t);
+      window.removeEventListener('load', schedule);
+      if (idleId) window.cancelIdleCallback(idleId);
+      if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, [mode, posterReady]);
 

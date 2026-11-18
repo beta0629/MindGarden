@@ -7,6 +7,7 @@ import {
   drawCoverImage,
   loadJson,
   loadSheet,
+  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   smoothstep,
@@ -237,7 +238,7 @@ export function GateScene({ sectionRef }: Props) {
       const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
 
       const { css_w: cssW, css_h: cssH } = rt.json.place;
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) {
         raf = requestAnimationFrame(tick);
@@ -418,6 +419,7 @@ export function GateScene({ sectionRef }: Props) {
           src={posterSrc}
           alt=""
           decoding="async"
+          loading="lazy"
           fetchPriority="low"
         />
       ) : null}

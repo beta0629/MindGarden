@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { BrandLockup } from '@/components/brand/BrandLockup';
 import { SITE } from '@/lib/site';
+import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export function SiteFooter() {
   return (
@@ -12,7 +13,7 @@ export function SiteFooter() {
             <span>대표 {SITE.representative}</span>
             <span>{SITE.address}</span>
             <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
-            <span>{SITE.hours}</span>
+            <span><BusinessHours layout="stack" /></span>
             <span>사업자등록번호 {SITE.businessNumber}</span>
             <span>통신판매업 {SITE.mailOrderNumber}</span>
           </div>

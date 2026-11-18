@@ -1,7 +1,6 @@
 'use client';
 
-import Image from 'next/image';
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type SyntheticEvent } from 'react';
 
 const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{6,20}$/;
 
@@ -26,6 +25,19 @@ export function extractYoutubeId(url: string): string | null {
   }
 }
 
+/** Quality ladder: maxres is missing for many videos, so fall through to smaller sizes. */
+const THUMB_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault'] as const;
+/** YouTube serves a 120px-wide grey placeholder (sometimes with HTTP 200) when a size does not exist. */
+const THUMB_PLACEHOLDER_MAX_WIDTH = 120;
+const THUMB_SIZE = {
+  feature: { width: 1280, height: 720 },
+  card: { width: 480, height: 854 },
+} as const;
+
+function thumbUrl(id: string, qualityIndex: number): string {
+  return `https://i.ytimg.com/vi/${encodeURIComponent(id)}/${THUMB_QUALITIES[qualityIndex]}.jpg`;
+}
+
 function embedUrl(id: string): string {
   return `https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?autoplay=1&playsinline=1&rel=0`;
 }
@@ -34,12 +46,12 @@ type YoutubeThumbPlayProps = {
   /** YouTube watch URL; the video id is extracted from it. */
   url: string;
   title: string;
+  /** Fallback thumbnail used only when the video id cannot be extracted. */
   thumb: string;
   /** feature = home readings overlay card, card = /videos grid card. */
   variant: 'feature' | 'card';
   /** Rendered after the title (e.g. internal review markers). */
   titleSuffix?: ReactNode;
-  sizes?: string;
   /** Opts into the home scroll-reveal animation. */
   reveal?: boolean;
 };
@@ -54,11 +66,25 @@ export function YoutubeThumbPlay({
   thumb,
   variant,
   titleSuffix,
-  sizes,
   reveal = false,
 }: YoutubeThumbPlayProps) {
   const [playing, setPlaying] = useState(false);
+  const [qualityIndex, setQualityIndex] = useState(0);
   const id = extractYoutubeId(url);
+  const { width, height } = THUMB_SIZE[variant];
+  const imgSrc = id ? thumbUrl(id, qualityIndex) : thumb;
+
+  const stepDownQuality = () => {
+    if (id && qualityIndex < THUMB_QUALITIES.length - 1) {
+      setQualityIndex((i) => i + 1);
+    }
+  };
+
+  const handleThumbLoad = (event: SyntheticEvent<HTMLImageElement>) => {
+    if (event.currentTarget.naturalWidth <= THUMB_PLACEHOLDER_MAX_WIDTH) {
+      stepDownQuality();
+    }
+  };
 
   const media = playing && id ? (
     <iframe
@@ -82,7 +108,18 @@ export function YoutubeThumbPlay({
         }
       }}
     >
-      <Image src={thumb} alt="" fill sizes={sizes} quality={80} />
+      {/* eslint-disable-next-line @next/next/no-img-element -- ytimg direct; /_next/image 400s on CF/OpenNext */}
+      <img
+        key={imgSrc}
+        src={imgSrc}
+        alt=""
+        width={width}
+        height={height}
+        loading="lazy"
+        decoding="async"
+        onError={stepDownQuality}
+        onLoad={handleThumbLoad}
+      />
       <span className="yt-thumb__play" aria-hidden="true">
         ▶
       </span>

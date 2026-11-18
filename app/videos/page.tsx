@@ -48,7 +48,6 @@ export default async function VideosPage() {
                   url={video.url}
                   title={video.title}
                   thumb={video.thumb}
-                  sizes="(max-width: 768px) 50vw, 25vw"
                   titleSuffix={<ConfirmNeeded />}
                 />
               ))}

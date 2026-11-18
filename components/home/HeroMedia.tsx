@@ -6,6 +6,7 @@ import {
   useRef,
   useState,
   useEffectEvent,
+  type SyntheticEvent,
 } from 'react';
 
 const SLOW_CONNECTION_TYPES = ['slow-2g', '2g', '3g'];
@@ -26,6 +27,8 @@ const HERO_VIDEO_SOURCES = {
     { src: '/assets/hero/hero-orbit-loop.desktop.webm', type: 'video/webm' },
   ],
 } as const;
+/** If no frame has played this long after load()+play(), show the tap-to-play fallback. */
+const VIDEO_START_TIMEOUT_MS = 4000;
 const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
 
 /**
@@ -151,6 +154,16 @@ export function HeroMedia() {
 
   const showVideo = mode === 'video' && videoAllowed;
 
+  /** Late-mounted <video><source> can stay at readyState 0 / networkState NO_SOURCE in WebKit until load(). */
+  const ensureLoaded = useCallback((video: HTMLVideoElement) => {
+    if (
+      video.networkState === HTMLMediaElement.NETWORK_NO_SOURCE ||
+      !video.currentSrc
+    ) {
+      video.load();
+    }
+  }, []);
+
   const tryPlay = useCallback(async (video: HTMLVideoElement) => {
     // React only sets the muted *property*; iOS Safari autoplay needs the attribute too.
     video.muted = true;
@@ -168,6 +181,22 @@ export function HeroMedia() {
     }
   }, []);
 
+  // Sources change with the viewport (mount / isDesktop): force the browser to pick one.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!showVideo || !video) return;
+    const sources = HERO_VIDEO_SOURCES[isDesktop ? 'desktop' : 'mobile'];
+    const playable = sources.some(
+      (source) => video.canPlayType(source.type) !== '',
+    );
+    if (!playable) {
+      // e.g. Linux WebKit without H.264/VP9: never leave a silent still.
+      setNeedsGesture(true);
+      return;
+    }
+    video.load();
+  }, [showVideo, isDesktop]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!showVideo || !video) {
@@ -180,16 +209,30 @@ export function HeroMedia() {
       return;
     }
     void tryPlay(video);
+    const watchdog = window.setTimeout(() => {
+      const progressing =
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA &&
+        !video.paused &&
+        video.currentTime > 0;
+      if (!progressing) setNeedsGesture(true);
+    }, VIDEO_START_TIMEOUT_MS);
     return () => {
+      window.clearTimeout(watchdog);
       // The <video> unmounts with React; pausing is enough and keeps <source> children intact.
       video.pause();
     };
   }, [showVideo, paused, inView, isDesktop, tryPlay]);
 
+  /** Source errors don't bubble: when the last candidate fails, no source is playable. */
+  const handleSourceError = (event: SyntheticEvent<HTMLSourceElement>) => {
+    if (event.currentTarget.nextElementSibling === null) setNeedsGesture(true);
+  };
+
   const handleGesturePlay = () => {
     const video = videoRef.current;
     if (!video) return;
     setPaused(false);
+    ensureLoaded(video);
     void tryPlay(video);
   };
 
@@ -292,6 +335,7 @@ export function HeroMedia() {
             preload="metadata"
             poster="/assets/hero/hero-poster-1080.webp"
             aria-hidden="true"
+            onError={() => setNeedsGesture(true)}
             onPlaying={() => {
               setNeedsGesture(false);
               setVideoPlaying(true);
@@ -299,7 +343,12 @@ export function HeroMedia() {
           >
             {HERO_VIDEO_SOURCES[isDesktop ? 'desktop' : 'mobile'].map(
               (source) => (
-                <source key={source.src} src={source.src} type={source.type} />
+                <source
+                  key={source.src}
+                  src={source.src}
+                  type={source.type}
+                  onError={handleSourceError}
+                />
               ),
             )}
           </video>

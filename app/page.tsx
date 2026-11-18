@@ -202,31 +202,30 @@ export default async function HomePage() {
             <div>
               <p className="section__eyebrow">{homeCopy.experts.eyebrow}</p>
               <h2 className="section__title">{homeCopy.experts.title}</h2>
-              <p className="section__lead">{homeCopy.experts.lead}</p>
             </div>
-            <Link className="text-link" href={homeCopy.experts.moreHref}>
-              {homeCopy.experts.moreLabel}
-              <span aria-hidden="true"> →</span>
-            </Link>
           </header>
-          <div className="home-experts__grid" data-reveal-stagger>
-            <article className="home-expert-card" data-reveal>
-              <div className="home-expert-card__media">
-                <Image
-                  src={homeCopy.experts.primary.photo}
-                  alt=""
-                  width={156}
-                  height={156}
-                  sizes="(max-width: 767px) 40vw, 10rem"
-                />
-              </div>
-              <p className="home-expert-card__label">
+          <article className="home-expert-profile" data-reveal>
+            <div className="home-expert-profile__media">
+              <Image
+                src={homeCopy.experts.primary.photo}
+                alt=""
+                width={156}
+                height={156}
+                sizes="(max-width: 767px) 40vw, 10rem"
+              />
+            </div>
+            <div className="home-expert-profile__body">
+              <h3 className="home-expert-profile__name">
                 {homeCopy.experts.primary.name}
-                <span aria-hidden="true"> · </span>
+              </h3>
+              <p className="home-expert-profile__role">
                 {homeCopy.experts.primary.role}
               </p>
-            </article>
-          </div>
+              <p className="home-expert-profile__lead">
+                {homeCopy.experts.lead}
+              </p>
+            </div>
+          </article>
         </div>
       </section>
 
@@ -368,7 +367,6 @@ export default async function HomePage() {
                       url={item.href}
                       title={item.title}
                       thumb={item.thumb}
-                      sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
                       reveal
                     />
                   ) : (
@@ -490,10 +488,6 @@ export default async function HomePage() {
                 <dd>
                   <BusinessHours layout="stack" />
                 </dd>
-              </div>
-              <div className="home-booking__fact--phone">
-                <dt>전화</dt>
-                <dd>{SITE.phoneDisplay}</dd>
               </div>
             </dl>
             <p>

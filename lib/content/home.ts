@@ -111,8 +111,6 @@ export const homeCopy = {
   experts: {
     eyebrow: '전문가',
     title: '곁에서 듣는 사람들',
-    moreLabel: '전체 전문가 보기',
-    moreHref: '/counselors',
     lead: '따뜻한 경청과 확인된 안내로 함께합니다.',
     primary: {
       name: '김선희',

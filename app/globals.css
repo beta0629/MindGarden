@@ -679,9 +679,9 @@ p {
 
 .hero-media.is-3d .hero-3d {
   display: block;
-  /* Slight scale + upper origin: collapses remaining empty cream above the subject. */
-  transform: scale(1.2);
-  transform-origin: 50% 28%;
+  /* Upper-biased crop so wings meet the top of the media box (CTA→subject ≤40px). */
+  transform: scale(1.26);
+  transform-origin: 50% 24%;
 }
 
 .hero-media.is-3d .hero-still {

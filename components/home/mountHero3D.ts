@@ -8,13 +8,66 @@ type MountHeroOptions = {
 
 /** Addendum B: one full azimuth orbit + radius zoom cycle (seconds). */
 const ORBIT_PERIOD_S = 30;
-/** Peak zoom: radius shrinks by 15% via sine ease-in-out. */
-const ZOOM_AMP = 0.15;
+/** Peak zoom amp — kept modest so the subject never leaves a tight fill. */
+const ZOOM_AMP = 0.08;
 /**
- * Framing scale around the GLB bounds.
- * Flower bed is wider than tall — use a tight pad so vertical empty cream collapses.
+ * Framing pad around the GLB bounds (lower = tighter crop).
+ * Target: subject fills ~80–90% of the square stage with wings near the top.
  */
-const FRAME_PAD = 0.42;
+const FRAME_PAD = 0.4;
+/** Soft contact blob radius — keep tiny; tight framing magnifies it into a plate. */
+const CONTACT_RADIUS = 0.22;
+/** Contact blob center opacity → 0 at edge (#3a342c). */
+const CONTACT_OPACITY = 0.15;
+
+/**
+ * Tiny radial soft-contact disc — no rectangular ShadowMaterial plate.
+ */
+function makeContactBlob(THREE: typeof import('three')) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    throw new Error('2D canvas unavailable for contact shadow');
+  }
+  const g = ctx.createRadialGradient(
+    size / 2,
+    size / 2,
+    0,
+    size / 2,
+    size / 2,
+    size / 2,
+  );
+  // #3a342c at center → fully transparent at edge
+  g.addColorStop(0, `rgba(58, 52, 44, ${CONTACT_OPACITY})`);
+  g.addColorStop(0.35, `rgba(58, 52, 44, ${CONTACT_OPACITY * 0.4})`);
+  g.addColorStop(1, 'rgba(58, 52, 44, 0)');
+  // Clip to a circle so the texture never carries a square alpha footprint.
+  ctx.clearRect(0, 0, size, size);
+  ctx.beginPath();
+  ctx.arc(size / 2, size / 2, size / 2 - 0.5, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.fillStyle = g;
+  ctx.fill();
+
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.MeshBasicMaterial({
+    map: tex,
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const mesh = new THREE.Mesh(
+    new THREE.CircleGeometry(CONTACT_RADIUS, 48),
+    mat,
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  mesh.renderOrder = -1;
+  return { mesh, tex, mat };
+}
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3 + Addendum B).
@@ -61,40 +114,31 @@ export async function mountHero3D({
 
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
+  renderer.setClearAlpha(0);
   renderer.toneMapping = THREE.NeutralToneMapping;
-  // Above the 0.95 design note so pastel materials stay vivid on page cream.
-  renderer.toneMappingExposure = 1.2;
-  renderer.shadowMap.enabled = true;
+  // Punchier than the 0.95 design note — env wash is dialed down separately.
+  renderer.toneMappingExposure = 1.55;
+  renderer.shadowMap.enabled = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
 
   const scene = new THREE.Scene();
+  scene.background = null;
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 1.0;
+  // Low env intensity — RoomEnvironment otherwise flattens pastel wing color.
+  scene.environmentIntensity = 0.35;
 
-  scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.55));
-  const key = new THREE.DirectionalLight(0xfff3e6, 1.85);
-  key.position.set(-1.2, 3.4, 0.6);
-  key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
-  Object.assign(key.shadow.camera, {
-    left: -1.5,
-    right: 1.5,
-    top: 1.5,
-    bottom: -1.5,
-  });
+  scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.28));
+  const key = new THREE.DirectionalLight(0xfff8f0, 2.4);
+  key.position.set(-1.0, 3.6, 1.0);
+  key.castShadow = false;
   scene.add(key);
+  // Small warm fill opposite the key — keeps underside from going muddy grey.
+  const fill = new THREE.DirectionalLight(0xffe8d6, 0.45);
+  fill.position.set(1.4, 1.2, -0.8);
+  scene.add(fill);
 
-  // Soft contact shadow under flowers only — small plane + low opacity, no grey disc.
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.4, 2.4),
-    new THREE.ShadowMaterial({ opacity: 0.12 }),
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
-
-  const cam = new THREE.PerspectiveCamera(40, 1, 0.1, 50);
+  const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
 
   const draco = new DRACOLoader().setDecoderPath('/vendor/draco/gltf/');
   const loader = new GLTFLoader().setDRACOLoader(draco);
@@ -115,9 +159,34 @@ export async function mountHero3D({
     return () => undefined;
   }
 
+  // No realtime shadows — contact is the radial blob below.
+  // Slightly lower roughness / envMap so pastel albedos stay punchy under NeutralToneMapping.
   gltf.scene.traverse((obj) => {
-    if ((obj as { isMesh?: boolean }).isMesh) {
-      (obj as { castShadow: boolean }).castShadow = true;
+    if (!(obj as { isMesh?: boolean }).isMesh) return;
+    const mesh = obj as unknown as {
+      castShadow: boolean;
+      receiveShadow: boolean;
+      material: unknown;
+    };
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    const mats = (
+      Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+    ) as Array<{ roughness?: number; envMapIntensity?: number }>;
+    for (const mat of mats) {
+      if (typeof mat.roughness === 'number') {
+        mat.roughness = Math.min(mat.roughness, 0.5);
+      }
+      if (typeof mat.envMapIntensity === 'number') {
+        mat.envMapIntensity = 0.25;
+      }
+      const color = (mat as { color?: { getHSL: (t: { h: number; s: number; l: number }) => void; setHSL: (h: number, s: number, l: number) => void } }).color;
+      if (color && typeof color.getHSL === 'function') {
+        const hsl = { h: 0, s: 0, l: 0 };
+        color.getHSL(hsl);
+        // Punch pastel albedos without shifting hue.
+        color.setHSL(hsl.h, Math.min(1, hsl.s * 1.35), hsl.l);
+      }
     }
   });
 
@@ -126,19 +195,28 @@ export async function mountHero3D({
   tilt.add(gltf.scene);
   scene.add(tilt);
 
-  // Fit orbit to the GLB bounds so the subject fills a square stage (top-weighted).
   const box = new THREE.Box3().setFromObject(gltf.scene);
   const bounds = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-  // Strong downward lookAt bias → subject rides the top of the square stage.
-  const lookAt = new THREE.Vector3(center.x, center.y - bounds.y * 0.55, center.z);
-  // Prefer height fit on a square stage; width may crop outer flowers slightly.
+
+  // Soft oval under the flower-bed center only — transparent elsewhere (page cream).
+  const contact = makeContactBlob(THREE);
+  contact.mesh.position.set(center.x, box.min.y + 0.002, center.z);
+  scene.add(contact.mesh);
+
+  // Bias lookAt below center so wings sit near the top without hard-cropping.
+  const lookAt = new THREE.Vector3(
+    center.x,
+    center.y - bounds.y * 0.32,
+    center.z,
+  );
+  // Height-led fit: ~85% stage fill; modest width crop at orbit extremes only.
   const fitDim = Math.max(bounds.y * 1.05, Math.max(bounds.x, bounds.z) * 0.58);
   const fitDist =
     (fitDim * 0.5 * FRAME_PAD) /
     Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
   const orbitRadius = Math.max(fitDist, fitDim * 0.7);
-  const cameraY = lookAt.y + orbitRadius * 0.38;
+  const cameraY = lookAt.y + orbitRadius * 0.4;
 
   const mixer = new THREE.AnimationMixer(gltf.scene);
   const clip = THREE.AnimationClip.findByName(gltf.animations, 'WingFold');
@@ -171,8 +249,7 @@ export async function mountHero3D({
   const size = () => {
     const { width, height } = panel.getBoundingClientRect();
     renderer.setSize(width, height, false);
-    const aspect = width / Math.max(height, 1);
-    cam.aspect = aspect;
+    cam.aspect = width / Math.max(height, 1);
     cam.updateProjectionMatrix();
   };
   size();
@@ -200,11 +277,13 @@ export async function mountHero3D({
   const placeCamera = (t: number) => {
     const phase = (t % ORBIT_PERIOD_S) / ORBIT_PERIOD_S;
     const theta = phase * Math.PI * 2;
-    // r(t) = R / (1 + 0.15·(1−cos(2πt/T))/2) — closest at mid-orbit (Addendum B).
+    // Modest zoom so framing stays tight through the full 30s orbit.
     const zoom =
       1 + (ZOOM_AMP * (1 - Math.cos(phase * Math.PI * 2))) / 2;
     const radius = orbitRadius / zoom;
-    const horizontal = Math.sqrt(Math.max(radius * radius - (cameraY - lookAt.y) ** 2, 0.01));
+    const horizontal = Math.sqrt(
+      Math.max(radius * radius - (cameraY - lookAt.y) ** 2, 0.01),
+    );
     cam.position.set(
       lookAt.x + Math.sin(theta) * horizontal,
       cameraY,
@@ -252,6 +331,9 @@ export async function mountHero3D({
     io.disconnect();
     renderer.setAnimationLoop(null);
     panel.classList.remove('is-3d');
+    contact.tex.dispose();
+    contact.mat.dispose();
+    contact.mesh.geometry.dispose();
     draco.dispose();
     pmrem.dispose();
     renderer.dispose();

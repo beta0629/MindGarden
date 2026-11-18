@@ -583,7 +583,10 @@ p {
   border: 0;
   box-shadow: none;
   background: var(--cream);
-  min-height: clamp(26rem, calc(100svh - var(--header-h) - 6rem), 40rem);
+  /* Explicit box: absolute stage/video/poster children must never size the panel. */
+  min-height: 0;
+  height: min(70svh, 40rem);
+  max-height: 70svh;
 }
 
 .hero-media__stage {
@@ -767,6 +770,7 @@ p {
     margin-top: -1.5rem;
     min-height: 0;
     height: clamp(18rem, 58svh, 36rem);
+    max-height: none;
   }
 }
 
@@ -782,7 +786,9 @@ p {
   .hero-media {
     --hero-zoom: 1.2;
     margin-right: calc((var(--hero-container) - 100vw) / 2);
-    min-height: clamp(24rem, 46vw, 34rem);
+    min-height: 0;
+    height: min(70svh, clamp(20rem, 46vw, 34rem));
+    max-height: 70svh;
   }
 }
 
@@ -793,7 +799,9 @@ p {
 
   .hero-media {
     --hero-zoom: 1.15;
-    min-height: clamp(28rem, calc(100svh - var(--header-h) - 6rem), 40rem);
+    min-height: 0;
+    height: min(70svh, 40rem);
+    max-height: 70svh;
   }
 }
 

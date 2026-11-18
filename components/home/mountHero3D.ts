@@ -24,6 +24,14 @@ const POSTER_CAM = { x: 0.12, y: 1.5, z: 1.95 } as const;
  */
 const YAW_SWAY_DEG = 0;
 const YAW_SWAY_PERIOD_S = 30;
+/**
+ * Pause at dense-subject BR: 82nd percentile of projected verts (not AABB max,
+ * which parks the control on the canvas corner when a few petals spike maxX).
+ */
+const PAUSE_PCT = 0.82;
+/** Mobile top-pack: push painted mesh maxY toward this NDC (less cream under CTA). */
+const MOBILE_TOP_NDC = 0.9;
+const MOBILE_TOP_MAX_WIDTH = 1023;
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3).
@@ -275,6 +283,31 @@ export async function mountHero3D({
     }
     placePosterCam(camDist);
     if (clip && wingAction) mixer.setTime(0);
+
+    /*
+     * Mobile only: slight lookAt drop so mesh rises in NDC (less empty cream
+     * under the CTA). Re-dolly if horizontal half exceeds fitTarget so width %
+     * does not shrink.
+     */
+    if (window.innerWidth <= MOBILE_TOP_MAX_WIDTH) {
+      const worldPerNdcY = () => {
+        const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
+        return dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
+      };
+      const before = measureNdcMesh();
+      const shift = (MOBILE_TOP_NDC - before.maxY) * worldPerNdcY();
+      // Cap shift so we keep poster-ish framing (no extreme pitch change).
+      lookAt.y -= Math.max(-camDist * 0.12, Math.min(camDist * 0.22, shift));
+      placePosterCam(camDist);
+      const after = measureNdcMesh();
+      const half = Math.max(after.halfX, after.halfY, 0.05);
+      if (half > fitTarget) {
+        camDist = Math.max(0.4, camDist * (half / fitTarget));
+        placePosterCam(camDist);
+      }
+      if (clip && wingAction) mixer.setTime(0);
+    }
+
     const packed = measureNdcMesh();
     panel.dataset.heroFit = [
       packed.minY.toFixed(3),
@@ -329,16 +362,22 @@ export async function mountHero3D({
   };
   reduce.addEventListener('change', onReduce);
 
+  const percentile = (sorted: number[], p: number): number => {
+    if (sorted.length === 0) return 0.5;
+    const i = Math.min(
+      sorted.length - 1,
+      Math.max(0, Math.floor(p * (sorted.length - 1))),
+    );
+    return sorted[i];
+  };
+
   const updateSubjectCssVars = () => {
     const { width, height } = panel.getBoundingClientRect();
     if (width < 1 || height < 1) return;
 
     tilt.updateMatrixWorld(true);
-    let minX = 1;
-    let maxX = 0;
-    let minY = 1;
-    let maxY = 0;
-    let any = false;
+    const xs: number[] = [];
+    const ys: number[] = [];
     tilt.traverse((obj) => {
       if (_skipBoundsName.test(obj.name || '')) return;
       const m = obj as unknown as {
@@ -372,27 +411,49 @@ export async function mountHero3D({
         if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
         const px = proj.x * 0.5 + 0.5;
         const py = -proj.y * 0.5 + 0.5;
-        minX = Math.min(minX, px);
-        maxX = Math.max(maxX, px);
-        minY = Math.min(minY, py);
-        maxY = Math.max(maxY, py);
-        any = true;
+        if (px < -0.05 || px > 1.05 || py < -0.05 || py > 1.05) continue;
+        xs.push(Math.min(1, Math.max(0, px)));
+        ys.push(Math.min(1, Math.max(0, py)));
       }
     });
-    if (!any) return;
-    minX = Math.min(1, Math.max(0, minX));
-    maxX = Math.min(1, Math.max(0, maxX));
-    minY = Math.min(1, Math.max(0, minY));
-    maxY = Math.min(1, Math.max(0, maxY));
+    if (xs.length < 8) return;
+
+    xs.sort((a, b) => a - b);
+    ys.sort((a, b) => a - b);
+    const minX = xs[0];
+    const maxX = xs[xs.length - 1];
+    const minY = ys[0];
+    const maxY = ys[ys.length - 1];
+    // Dense core (ignore petal/wing tip outliers).
+    const denseL = percentile(xs, 1 - PAUSE_PCT);
+    const denseR = percentile(xs, PAUSE_PCT);
+    const denseT = percentile(ys, 1 - PAUSE_PCT);
+    const denseB = percentile(ys, PAUSE_PCT);
+    const comX = percentile(xs, 0.5);
+    const comY = percentile(ys, 0.5);
 
     panel.style.setProperty('--hero-subj-left', `${(minX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-top', `${(minY * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-right', `${(maxX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
 
-    // 44px hit at subject BR on cream (not on petals).
-    const pauseX = Math.min(0.96, Math.max(0.62, maxX + 0.02));
-    const pauseY = Math.min(0.96, Math.max(0.55, maxY + 0.02));
+    /*
+     * 44px hit at dense-subject BR on cream (not petals): sit outside the
+     * percentile core toward the panel BR, but never beyond COM+dense half
+     * (AABB max spikes used to park this on the canvas corner).
+     */
+    const halfDenseX = Math.max(0.1, denseR - comX);
+    const halfDenseY = Math.max(0.1, denseB - comY);
+    let pauseX = Math.min(denseR + 0.06, comX + halfDenseX + 0.1);
+    let pauseY = Math.min(denseB + 0.055, comY + halfDenseY + 0.09);
+    // Prefer cream just outside the flower ring — if still inside dense core, push out.
+    if (pauseX < denseR + 0.02) pauseX = denseR + 0.05;
+    if (pauseY < denseB + 0.02) pauseY = denseB + 0.045;
+    pauseX = Math.min(0.9, Math.max(0.58, pauseX));
+    pauseY = Math.min(0.88, Math.max(0.5, pauseY));
+    const edgePad = 30 / Math.max(width, 1);
+    pauseX = Math.min(pauseX, 1 - edgePad);
+    pauseY = Math.min(pauseY, 1 - edgePad);
     panel.style.setProperty('--hero-pause-x', `${(pauseX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-pause-y', `${(pauseY * 100).toFixed(2)}%`);
   };

@@ -256,10 +256,8 @@ export function HeroMedia() {
             cleanup?.();
             return;
           }
-          // Mount returned without adding is-3d (e.g. reduced-motion flipped mid-load).
-          if (!panel.classList.contains('is-3d')) {
-            setThreeFailed(true);
-          }
+          // is-3d is added asynchronously after the first painted frame + boot gate.
+          // A successful mount must not be treated as failure while that reveal is pending.
         } catch (err) {
           console.error('[hero-3d] mount failed', err);
           if (!ac.signal.aborted) setThreeFailed(true);
@@ -267,11 +265,11 @@ export function HeroMedia() {
       })();
     };
 
-    // Let the LCP poster paint before pulling three.js / GLB.
+    // Let the LCP poster paint; boot progress may already be warming the GLB.
     if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(start, { timeout: 2000 });
+      idleId = window.requestIdleCallback(start, { timeout: 1200 });
     } else {
-      timeoutId = window.setTimeout(start, 800);
+      timeoutId = window.setTimeout(start, 400);
     }
 
     return () => {

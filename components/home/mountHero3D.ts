@@ -1,4 +1,5 @@
 import type { RefObject } from 'react';
+import { whenHomeBootReady } from '@/components/home/homeBoot';
 
 type MountHeroOptions = {
   panel: HTMLElement;
@@ -243,7 +244,7 @@ export async function mountHero3D({
     cam.aspect = width / height;
     cam.updateProjectionMatrix();
   };
-  panel.classList.add('is-3d');
+  // Hold is-3d until the first painted frame so the poster never pops to a blank GL canvas.
   panel.classList.remove('is-cropped');
   panel.style.removeProperty('--hero-gl-h');
   panel.style.removeProperty('--hero-gl-offset-y');
@@ -465,6 +466,7 @@ export async function mountHero3D({
   const yawMax = THREE.MathUtils.degToRad(YAW_SWAY_DEG);
   placePosterCam(camDist, 0);
   updateSubjectCssVars();
+  // First frame into the backing store before revealing (poster stays until is-3d).
   renderer.render(scene, cam);
 
   renderer.setAnimationLoop(() => {
@@ -497,7 +499,11 @@ export async function mountHero3D({
     renderer.render(scene, cam);
   });
 
-  panel.classList.add('is-3d');
+  // Reveal only after boot gate (fonts/poster/glb/atlases) or its timeout.
+  void whenHomeBootReady().then(() => {
+    if (!running || signal?.aborted || reduce.matches) return;
+    panel.classList.add('is-3d');
+  });
 
   return () => {
     running = false;

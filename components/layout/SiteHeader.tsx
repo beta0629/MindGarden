@@ -66,6 +66,12 @@ export function SiteHeader({ noticeText = null }: SiteHeaderProps) {
     if (!el) return;
     const publish = () => {
       const h = Math.ceil(el.getBoundingClientRect().height);
+      const cur = getComputedStyle(document.documentElement)
+        .getPropertyValue('--header-sticky-h')
+        .trim();
+      const curPx = cur.endsWith('px') ? Number.parseFloat(cur) : Number.NaN;
+      // Skip no-op writes — prevents body/scroll-padding CLS thrash.
+      if (Number.isFinite(curPx) && Math.abs(curPx - h) < 1) return;
       document.documentElement.style.setProperty(
         '--header-sticky-h',
         `${h}px`,

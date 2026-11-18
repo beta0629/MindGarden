@@ -4,6 +4,7 @@
   --ink: #1c2430;
   --ink-soft: #4a5261;
   --garden: #2f5b45;
+  --green: var(--garden);
   --garden-dark: #244836;
   --line: #cfc4ae;
   --white: #ffffff;
@@ -703,6 +704,7 @@ p {
 .hero-still {
   display: block;
   z-index: 1;
+  transition: opacity 400ms ease;
 }
 
 .hero-loop,
@@ -736,10 +738,47 @@ p {
   /* Camera fit owns framing — no CSS scale / offset crop. */
   transform: none;
   height: 100%;
+  opacity: 1;
 }
 
 .hero-media.is-3d .hero-still {
   opacity: 0;
+}
+
+/* —— homepage first-entry boot progress (cream track / brand-green fill) —— */
+.home-boot-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  height: 3px;
+  pointer-events: none;
+  background: var(--cream);
+  opacity: 1;
+  transition: opacity 400ms ease;
+}
+
+.home-boot-progress.is-done {
+  opacity: 0;
+}
+
+.home-boot-progress__bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: var(--green);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-boot-progress,
+  .home-boot-progress.is-done,
+  .hero-media.is-3d .hero-still,
+  .hero-media.is-3d .hero-3d {
+    transition: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -829,6 +868,8 @@ p {
   .hero__copy {
     position: relative;
     z-index: 2;
+    /* Absorb Pretendard swap vs fallback metrics — prevents ~60px CLS under throttle. */
+    min-height: 16.5rem;
   }
 
   .hero-media {

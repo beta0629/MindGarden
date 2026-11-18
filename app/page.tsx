@@ -1,11 +1,9 @@
-import Image from 'next/image';
-import Link from 'next/link';
 import { HeroSection } from '@/components/home/HeroSection';
 import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { BusinessHours } from '@/components/ui/BusinessHours';
-import { YoutubeThumbPlay } from '@/components/ui/YoutubeThumbPlay';
+import { YoutubeThumbPlayLazy } from '@/components/ui/YoutubeThumbPlayLazy';
 import {
   clinicOsClient,
   resolveProductDisplayPrice,
@@ -118,7 +116,7 @@ export default async function HomePage() {
   const listReadings = posts.slice(0, 3);
 
   return (
-    <SiteShell noticeText={noticeBanner?.title ?? null}>
+    <SiteShell noticeText={noticeBanner?.title ?? null} deferChrome>
       <HeroSection />
 
       {/* 1. 상담 분야 */}
@@ -128,25 +126,25 @@ export default async function HomePage() {
             <p className="section__eyebrow">{homeCopy.areas.eyebrow}</p>
             <h2 className="section__title">{homeCopy.areas.title}</h2>
             <p className="section__lead">{homeCopy.areas.lead}</p>
-            <Link className="text-link" href={homeCopy.areas.moreHref}>
+            <a className="text-link" href={homeCopy.areas.moreHref}>
               {homeCopy.areas.moreLabel}
               <span aria-hidden="true"> →</span>
-            </Link>
+            </a>
           </header>
           <div className="home-areas__grid" data-reveal-stagger>
             {homeCopy.areas.homeCards.map((card) => (
-              <Link
+              <a
                 key={card.title}
                 className="home-area-card"
                 href={card.href}
                 data-reveal
               >
-                <Image src={card.icon} alt="" width={48} height={48} />
+                <img src={card.icon} alt="" width={48} height={48} loading="lazy" decoding="async" />
                 <h3>{card.title}</h3>
                 <p>{card.line}</p>
-              </Link>
+              </a>
             ))}
-            <Link
+            <a
               className="home-area-card home-area-card--accent"
               href={homeCopy.areas.firstVisit.href}
               data-reveal
@@ -157,7 +155,7 @@ export default async function HomePage() {
                 {homeCopy.areas.firstVisit.cta}
                 <span aria-hidden="true"> →</span>
               </span>
-            </Link>
+            </a>
           </div>
         </div>
       </section>
@@ -169,10 +167,10 @@ export default async function HomePage() {
             <p className="section__eyebrow">{homeCopy.spaces.eyebrow}</p>
             <h2 className="section__title">{homeCopy.spaces.title}</h2>
             <p className="section__lead">{homeCopy.spaces.lead}</p>
-            <Link className="text-link" href={homeCopy.spaces.moreHref}>
+            <a className="text-link" href={homeCopy.spaces.moreHref}>
               {homeCopy.spaces.moreLabel}
               <span aria-hidden="true"> →</span>
-            </Link>
+            </a>
           </div>
           <div className="home-spaces__scene">
             <GateScene />
@@ -180,13 +178,13 @@ export default async function HomePage() {
           <div className="home-spaces__thumbs">
             {homeCopy.spaces.thumbs.map((thumb) => (
               <figure key={thumb.src} className="home-spaces__thumb">
-                <Image
+                <img
                   src={thumb.src}
                   alt={thumb.caption}
                   width={480}
                   height={640}
-                  sizes="(max-width: 767px) 44vw, 12rem"
-                  quality={72}
+                  loading="lazy"
+                  decoding="async"
                 />
                 <figcaption>{thumb.caption}</figcaption>
               </figure>
@@ -206,12 +204,13 @@ export default async function HomePage() {
           </header>
           <article className="home-expert-profile" data-reveal>
             <div className="home-expert-profile__media">
-              <Image
+              <img
                 src={homeCopy.experts.primary.photo}
                 alt=""
                 width={156}
                 height={156}
-                sizes="(max-width: 767px) 40vw, 10rem"
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="home-expert-profile__body">
@@ -258,10 +257,10 @@ export default async function HomePage() {
               <p className="section__eyebrow">{homeCopy.reviews.eyebrow}</p>
               <h2 className="section__title">{homeCopy.reviews.title}</h2>
               {homeReviews.length > 0 ? (
-                <Link className="text-link" href={homeCopy.reviews.moreHref}>
+                <a className="text-link" href={homeCopy.reviews.moreHref}>
                   {homeCopy.reviews.moreLabel}
                   <span aria-hidden="true"> →</span>
-                </Link>
+                </a>
               ) : null}
             </div>
             <div className="home-reviews__scene">
@@ -323,10 +322,10 @@ export default async function HomePage() {
             ))}
           </div>
           <p className="home-pricing__more">
-            <Link className="text-link" href={homeCopy.pricing.moreHref}>
+            <a className="text-link" href={homeCopy.pricing.moreHref}>
               {homeCopy.pricing.moreLabel}
               <span aria-hidden="true"> →</span>
-            </Link>
+            </a>
           </p>
         </div>
       </section>
@@ -357,7 +356,7 @@ export default async function HomePage() {
               <div className="home-readings__featured" data-reveal-stagger>
                 {featuredReadings.map((item) =>
                   item.kind === 'video' && item.thumb ? (
-                    <YoutubeThumbPlay
+                    <YoutubeThumbPlayLazy
                       key={item.key}
                       variant="feature"
                       url={item.href}
@@ -379,12 +378,11 @@ export default async function HomePage() {
                       {item.thumb ? (
                         <>
                           <span className="home-reading-feature__media">
-                            <Image
+                            <img
                               src={item.thumb}
                               alt=""
-                              fill
-                              sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
-                              quality={80}
+                              loading="lazy"
+                              decoding="async"
                             />
                           </span>
                           <strong>{item.title}</strong>
@@ -416,12 +414,13 @@ export default async function HomePage() {
                       rel="noopener noreferrer"
                     >
                       {post.thumb ? (
-                        <Image
+                        <img
                           src={post.thumb}
                           alt=""
                           width={96}
                           height={72}
-                          sizes="5.5rem"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ) : null}
                       <span>
@@ -450,21 +449,24 @@ export default async function HomePage() {
             <div className="home-booking__actions">
               <BookingCta label={homeCopy.booking.primaryCta} />
               <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
-                <Image
+                <img
                   src="/icons/contact-phone.svg"
                   alt=""
                   width={20}
                   height={20}
+                  decoding="async"
+                  loading="lazy"
+                  fetchPriority="low"
                 />
                 <span>
                   {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
                 </span>
               </a>
               <p className="home-booking__contact-link">
-                <Link className="text-link" href={homeCopy.booking.contactHref}>
+                <a className="text-link" href={homeCopy.booking.contactHref}>
                   {homeCopy.booking.contactLinkLabel}
                   <span aria-hidden="true"> →</span>
-                </Link>
+                </a>
               </p>
             </div>
           </div>
@@ -487,10 +489,10 @@ export default async function HomePage() {
               </div>
             </dl>
             <p>
-              <Link className="text-link" href="/location">
+              <a className="text-link" href="/location">
                 오시는 길 안내
                 <span aria-hidden="true"> →</span>
-              </Link>
+              </a>
             </p>
           </aside>
 

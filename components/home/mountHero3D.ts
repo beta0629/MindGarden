@@ -51,27 +51,11 @@ const SUBJECT_CSS_MIN_MS = 500;
 /** Skip render when tilt / yaw have settled within this epsilon. */
 const POSE_EPS = 0.0004;
 
-function isSoftwareWebGLRenderer(
-  gl: WebGLRenderingContext | WebGL2RenderingContext,
-): boolean {
-  try {
-    const info = gl.getExtension('WEBGL_debug_renderer_info');
-    if (!info) return false;
-    const name = String(
-      gl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '',
-    ).toLowerCase();
-    return /swiftshader|llvmpipe|softpipe|microsoft basic render|cpu rasterizer/.test(
-      name,
-    );
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3).
  * Locked poster camera + pointer tilt (±7°). Lazy-imported after poster LCP.
  * Software GL (SwiftShader/llvmpipe): keep the poster still — no forever rAF.
+ * Caller should {@link probeSoftwareGpu} before importing this module.
  */
 export async function mountHero3D({
   panel,
@@ -87,18 +71,10 @@ export async function mountHero3D({
     return () => undefined;
   }
 
-  // Probe before importing three — software GL keeps the CSS poster (no GLB/rAF).
-  {
-    const probeCanvas = document.createElement('canvas');
-    const probe =
-      probeCanvas.getContext('webgl') ||
-      probeCanvas.getContext('experimental-webgl');
-    if (
-      probe &&
-      isSoftwareWebGLRenderer(probe as WebGLRenderingContext)
-    ) {
-      return () => undefined;
-    }
+  // Safety net if a caller skipped the shared probe (cached — no second GL ctx).
+  const { probeSoftwareGpu } = await import('@/components/home/v37/atlas');
+  if (probeSoftwareGpu()) {
+    return () => undefined;
   }
 
   const THREE = await import('three');

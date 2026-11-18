@@ -26,29 +26,67 @@ function enqueueDecode<T>(job: () => Promise<T>): Promise<T> {
 let softwareGpuCache: boolean | null = null;
 
 /**
+ * Peek cached software-GPU result without creating a WebGL context.
+ * `null` means not probed yet — callers must not treat that as "real GPU".
+ */
+export function peekSoftwareGpu(): boolean | null {
+  return softwareGpuCache;
+}
+
+/**
  * Detect SwiftShader / llvmpipe (and similar) via WEBGL_debug_renderer_info.
+ * Creates a short-lived WebGL context on first call — defer until after LCP.
  * Cached for the page lifetime.
  */
-export function isSoftwareGpu(): boolean {
+export function probeSoftwareGpu(): boolean {
   if (softwareGpuCache != null) return softwareGpuCache;
   if (typeof document === 'undefined') {
     softwareGpuCache = false;
     return false;
   }
   try {
-    const probe = document.createElement('canvas');
-    const gl =
-      probe.getContext('webgl') ||
-      probe.getContext('experimental-webgl');
-    if (!gl || typeof (gl as WebGLRenderingContext).getExtension !== 'function') {
+    // Prefer the performance-caveat gate — on SwiftShader this often returns
+    // null without spinning up a full software GL pipeline.
+    const fast = document.createElement('canvas');
+    const accelerated = fast.getContext('webgl', {
+      alpha: false,
+      antialias: false,
+      depth: false,
+      stencil: false,
+      failIfMajorPerformanceCaveat: true,
+    });
+    if (accelerated) {
+      const lose = (accelerated as WebGLRenderingContext).getExtension(
+        'WEBGL_lose_context',
+      );
+      lose?.loseContext();
       softwareGpuCache = false;
       return false;
+    }
+
+    const probe = document.createElement('canvas');
+    const gl =
+      probe.getContext('webgl', {
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        failIfMajorPerformanceCaveat: false,
+      }) ||
+      probe.getContext('experimental-webgl');
+    if (!gl || typeof (gl as WebGLRenderingContext).getExtension !== 'function') {
+      // No WebGL at all — treat as software / skip 3D.
+      softwareGpuCache = true;
+      return true;
     }
     const wgl = gl as WebGLRenderingContext;
     const info = wgl.getExtension('WEBGL_debug_renderer_info');
     if (!info) {
-      softwareGpuCache = false;
-      return false;
+      // Caveat failed and no renderer info — assume software.
+      softwareGpuCache = true;
+      const lose = wgl.getExtension('WEBGL_lose_context');
+      lose?.loseContext();
+      return true;
     }
     const name = String(
       wgl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '',
@@ -57,11 +95,21 @@ export function isSoftwareGpu(): boolean {
       /swiftshader|llvmpipe|softpipe|microsoft basic render|cpu rasterizer/.test(
         name,
       );
+    const lose = wgl.getExtension('WEBGL_lose_context');
+    lose?.loseContext();
     return softwareGpuCache;
   } catch {
-    softwareGpuCache = false;
-    return false;
+    softwareGpuCache = true;
+    return true;
   }
+}
+
+/**
+ * Cached software-GPU flag. Probes on first use — prefer calling
+ * {@link probeSoftwareGpu} only after LCP / `whenHomeBootReady`.
+ */
+export function isSoftwareGpu(): boolean {
+  return probeSoftwareGpu();
 }
 
 /** DPR for 2d scene canvases — software=1, mobile overflow ≤1.5. */

@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
 import { SITE } from '@/lib/site';
-import './pretendard.css';
+import './pretendard-critical.css';
 import './globals.css';
 
 const baseMetadata = buildMetadata({
@@ -40,8 +40,12 @@ export const viewport: Viewport = {
   themeColor: '#F5F0E6',
 };
 
-/** Latin + most frequent Hangul slices — preloaded so first paint avoids a font swap flash. */
+/** Latin + frequent Hangul — preload keeps CLS down (font-display:swap). */
 const PRELOAD_FONT_SLICES = [91, 90] as const;
+
+const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
+const HERO_POSTER_SRCSET_AVIF =
+  '/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w';
 
 export default function RootLayout({
   children,
@@ -52,6 +56,17 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* LCP candidate first — before font preloads — under LH mobile simulate. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/hero/hero-poster-640.avif"
+          {...({
+            imageSrcSet: HERO_POSTER_SRCSET_AVIF,
+            imageSizes: HERO_POSTER_SIZES,
+          } as React.LinkHTMLAttributes<HTMLLinkElement>)}
+          fetchPriority="high"
+        />
         {PRELOAD_FONT_SLICES.map((slice) => (
           <link
             key={slice}
@@ -60,8 +75,26 @@ export default function RootLayout({
             type="font/woff2"
             href={`/fonts/pretendard/PretendardVariable.subset.${slice}.woff2`}
             crossOrigin="anonymous"
+            fetchPriority="low"
           />
         ))}
+        {/* Remaining unicode-range faces — print→all so parse/download stay off LCP. */}
+        <link
+          rel="stylesheet"
+          href="/fonts/pretendard-rest.css"
+          media="print"
+          // Applied immediately after parse via the classic script below.
+          data-mg-font-rest=""
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){function go(){var l=document.querySelector('link[data-mg-font-rest]');if(l)l.media='all';}if(document.readyState==='complete')go();else window.addEventListener('load',go);})();",
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href="/fonts/pretendard-rest.css" />
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

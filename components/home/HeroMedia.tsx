@@ -8,10 +8,15 @@ import {
   useEffectEvent,
   type SyntheticEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
+import { whenHomeBootReady } from '@/components/home/homeBoot';
+import { HeroPoster } from './HeroPoster';
 
 const SLOW_CONNECTION_TYPES = ['slow-2g', '2g'];
 /** Orbit video starts only after the page has settled (LCP + load) — fallback path. */
 const VIDEO_IDLE_TIMEOUT_MS = 3500;
+/** Live three.js starts only after boot + idle — never during LCP contention. */
+const THREE_IDLE_TIMEOUT_MS = 4000;
 const DESKTOP_VIDEO_QUERY = '(min-width: 1024px)';
 const HERO_VIDEO_SOURCES = {
   mobile: [
@@ -25,14 +30,32 @@ const HERO_VIDEO_SOURCES = {
 } as const;
 /** If no frame has played this long after load()+play(), show the tap-to-play fallback. */
 const VIDEO_START_TIMEOUT_MS = 4000;
-const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
+
+function waitIdle(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => resolve(), { timeout: timeoutMs });
+    } else {
+      window.setTimeout(resolve, Math.min(1200, timeoutMs));
+    }
+  });
+}
+
+type Props = {
+  /**
+   * When true, enhance an existing SSR `.hero-media` shell (poster already in DOM).
+   * Used by HeroMediaLazy so the LCP poster is not owned by this client chunk.
+   */
+  enhanceOnly?: boolean;
+};
 
 /**
  * Hero media panel: poster LCP → live three.js WingFold (default) →
  * vivid orbit video / still as fallback (reduced-motion, saveData, WebGL failure).
  */
-export function HeroMedia() {
+export function HeroMedia({ enhanceOnly = false }: Props) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [paused, setPaused] = useState(false);
@@ -49,6 +72,10 @@ export function HeroMedia() {
   const [threeFailed, setThreeFailed] = useState(false);
   /** Video mounts only after idle so it never races the LCP poster. */
   const [videoAllowed, setVideoAllowed] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<{
+    panel: HTMLElement;
+    stage: HTMLElement;
+  } | null>(null);
 
   const resolveMode = useCallback((): 'still' | 'video' | '3d' => {
     if (typeof window === 'undefined') return 'still';
@@ -82,6 +109,17 @@ export function HeroMedia() {
   });
 
   useEffect(() => {
+    if (!enhanceOnly) return;
+    const panel = document.querySelector<HTMLElement>('.hero .hero-media');
+    const stage = panel?.querySelector<HTMLElement>('.hero-media__stage');
+    if (panel && stage) {
+      panelRef.current = panel as HTMLDivElement;
+      stageRef.current = stage as HTMLDivElement;
+      setPortalTarget({ panel, stage });
+    }
+  }, [enhanceOnly]);
+
+  useEffect(() => {
     syncMode();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     const wide = window.matchMedia(DESKTOP_VIDEO_QUERY);
@@ -103,15 +141,29 @@ export function HeroMedia() {
     );
     io.observe(panel);
     return () => io.disconnect();
-  }, []);
+  }, [portalTarget, enhanceOnly]);
 
   useEffect(() => {
-    const img =
-      panelRef.current?.querySelector<HTMLImageElement>('.hero-still');
-    if (img?.complete) {
+    const root = enhanceOnly
+      ? document.querySelector('.hero .hero-media')
+      : panelRef.current;
+    const img = root?.querySelector<HTMLImageElement>('.hero-still');
+    if (img?.complete && img.naturalWidth > 0) {
       setPosterReady(true);
+      return;
     }
-  }, []);
+    if (!img) {
+      setPosterReady(true);
+      return;
+    }
+    const onLoad = () => setPosterReady(true);
+    img.addEventListener('load', onLoad, { once: true });
+    img.addEventListener('error', onLoad, { once: true });
+    return () => {
+      img.removeEventListener('load', onLoad);
+      img.removeEventListener('error', onLoad);
+    };
+  }, [enhanceOnly, portalTarget]);
 
   // Defer orbit video until the load event + idle — fallback path only.
   useEffect(() => {
@@ -239,46 +291,43 @@ export function HeroMedia() {
 
     const ac = new AbortController();
     let cleanup: (() => void) | undefined;
-    let idleId = 0;
-    let timeoutId = 0;
 
-    const start = () => {
-      void (async () => {
-        try {
-          const { mountHero3D } = await import('./mountHero3D');
-          if (ac.signal.aborted) return;
-          cleanup = await mountHero3D({
-            panel,
-            canvas,
-            signal: ac.signal,
-          });
-          if (ac.signal.aborted) {
-            cleanup?.();
-            return;
-          }
-          // is-3d is added asynchronously after the first painted frame + boot gate.
-          // A successful mount must not be treated as failure while that reveal is pending.
-        } catch (err) {
-          console.error('[hero-3d] mount failed', err);
-          if (!ac.signal.aborted) setThreeFailed(true);
+    void (async () => {
+      try {
+        // Poster LCP + boot bar first — no three import / WebGL probe yet.
+        await whenHomeBootReady();
+        if (ac.signal.aborted) return;
+        await waitIdle(THREE_IDLE_TIMEOUT_MS);
+        if (ac.signal.aborted) return;
+
+        const { probeSoftwareGpu } = await import('./v37/atlas');
+        if (probeSoftwareGpu()) {
+          // Soft GL keeps the CSS poster — never import three.js.
+          return;
         }
-      })();
-    };
+        if (ac.signal.aborted) return;
 
-    // Let the LCP poster paint; boot progress may already be warming the GLB.
-    if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(start, { timeout: 2500 });
-    } else {
-      timeoutId = window.setTimeout(start, 1200);
-    }
+        const { mountHero3D } = await import('./mountHero3D');
+        if (ac.signal.aborted) return;
+        cleanup = await mountHero3D({
+          panel,
+          canvas,
+          signal: ac.signal,
+        });
+        if (ac.signal.aborted) {
+          cleanup?.();
+        }
+      } catch (err) {
+        console.error('[hero-3d] mount failed', err);
+        if (!ac.signal.aborted) setThreeFailed(true);
+      }
+    })();
 
     return () => {
       ac.abort();
       cleanup?.();
-      if (idleId) window.cancelIdleCallback(idleId);
-      if (timeoutId) window.clearTimeout(timeoutId);
     };
-  }, [mode, posterReady]);
+  }, [mode, posterReady, portalTarget]);
 
   const togglePause = () => {
     setPaused((v) => !v);
@@ -293,72 +342,52 @@ export function HeroMedia() {
     }
   };
 
-  return (
-    <div
-      ref={panelRef}
-      className={`hero-media${paused ? ' is-paused' : ''}${
-        videoPlaying ? ' is-video-playing' : ''
-      }`}
-    >
-      <div className="hero-media__stage">
-        <picture>
-          <source
-            type="image/avif"
-            srcSet="/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w"
-            sizes={HERO_POSTER_SIZES}
-          />
-          <source
-            type="image/webp"
-            srcSet="/assets/hero/hero-poster-640.webp 640w, /assets/hero/hero-poster-1080.webp 1080w, /assets/hero/hero-poster.webp 1620w"
-            sizes={HERO_POSTER_SIZES}
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js / video */}
-          <img
-            className="hero-still"
-            src="/assets/hero/hero-poster-1080.webp"
-            alt=""
-            width={1620}
-            height={940}
-            decoding="async"
-            fetchPriority="high"
-            onLoad={() => setPosterReady(true)}
-          />
-        </picture>
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    panel.classList.toggle('is-paused', paused);
+    panel.classList.toggle('is-video-playing', videoPlaying);
+  }, [paused, videoPlaying, portalTarget]);
 
-        {showVideo ? (
-          <video
-            key={isDesktop ? 'desktop' : 'mobile'}
-            ref={videoRef}
-            className="hero-loop"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/assets/hero/hero-poster-1080.webp"
-            aria-hidden="true"
-            onError={() => setNeedsGesture(true)}
-            onPlaying={() => {
-              setNeedsGesture(false);
-              setVideoPlaying(true);
-            }}
-          >
-            {HERO_VIDEO_SOURCES[isDesktop ? 'desktop' : 'mobile'].map(
-              (source) => (
-                <source
-                  key={source.src}
-                  src={source.src}
-                  type={source.type}
-                  onError={handleSourceError}
-                />
-              ),
-            )}
-          </video>
-        ) : null}
+  const stageExtras = (
+    <>
+      {showVideo ? (
+        <video
+          key={isDesktop ? 'desktop' : 'mobile'}
+          ref={videoRef}
+          className="hero-loop"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster="/assets/hero/hero-poster-1080.webp"
+          aria-hidden="true"
+          onError={() => setNeedsGesture(true)}
+          onPlaying={() => {
+            setNeedsGesture(false);
+            setVideoPlaying(true);
+          }}
+        >
+          {HERO_VIDEO_SOURCES[isDesktop ? 'desktop' : 'mobile'].map(
+            (source) => (
+              <source
+                key={source.src}
+                src={source.src}
+                type={source.type}
+                onError={handleSourceError}
+              />
+            ),
+          )}
+        </video>
+      ) : null}
 
-        <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
-      </div>
+      <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
+    </>
+  );
 
+  const controls = (
+    <>
       {showVideo && needsGesture ? (
         <button
           type="button"
@@ -380,6 +409,31 @@ export function HeroMedia() {
           {paused ? '▶' : '❚❚'}
         </button>
       ) : null}
+    </>
+  );
+
+  if (enhanceOnly) {
+    if (!portalTarget) return null;
+    return (
+      <>
+        {createPortal(stageExtras, portalTarget.stage)}
+        {createPortal(controls, portalTarget.panel)}
+      </>
+    );
+  }
+
+  return (
+    <div
+      ref={panelRef}
+      className={`hero-media${paused ? ' is-paused' : ''}${
+        videoPlaying ? ' is-video-playing' : ''
+      }`}
+    >
+      <div className="hero-media__stage" ref={stageRef}>
+        <HeroPoster />
+        {stageExtras}
+      </div>
+      {controls}
     </div>
   );
 }

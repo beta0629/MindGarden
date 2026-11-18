@@ -1,12 +1,13 @@
-'use client';
-
-import Link from 'next/link';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { homeCopy } from '@/lib/content/home';
-import { HeroMedia } from './HeroMedia';
+import { HomeBootInline } from './HomeBootInline';
+import { HeroPoster } from './HeroPoster';
+import { HeroMediaLazy } from './HeroMediaLazy';
 
 /**
  * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
+ * Poster is RSC HTML; three/video enhance is a deferred client island.
+ * Plain &lt;a&gt; for secondary CTA — avoids App Router client on LCP path.
  */
 export function HeroSection() {
   return (
@@ -20,13 +21,20 @@ export function HeroSection() {
         <p className="hero__subtitle">{homeCopy.hero.subtitle}</p>
         <div className="hero__actions">
           <BookingCta label={homeCopy.hero.primaryCta} />
-          <Link className="text-link hero__secondary" href={homeCopy.hero.secondaryHref}>
+          <a className="text-link hero__secondary" href={homeCopy.hero.secondaryHref}>
             {homeCopy.hero.secondaryCta}
             <span aria-hidden="true"> →</span>
-          </Link>
+          </a>
         </div>
       </div>
-      <HeroMedia />
+      <div className="hero-media">
+        <div className="hero-media__stage">
+          <HeroPoster />
+        </div>
+        <HeroMediaLazy />
+      </div>
+      {/* After poster markup so the classic script can find `.hero-still`. */}
+      <HomeBootInline />
     </section>
   );
 }

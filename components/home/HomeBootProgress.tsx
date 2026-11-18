@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AtlasSheetBank, loadJson } from '@/components/home/v37/atlas';
+import { AtlasSheetBank, loadJson, loadSheet } from '@/components/home/v37/atlas';
 import type { BenchJson, GateJson, PackId } from '@/components/home/v37/types';
 import {
   dispatchHomeBootProgress,
@@ -99,6 +99,12 @@ function observeHeroPoster(onReady: () => void, signal?: AbortSignal): void {
   );
 }
 
+/** Low-priority fetch opts so boot warm does not fight the LCP poster. */
+const LOW_FETCH = {
+  cache: 'force-cache' as RequestCache,
+  ...({ priority: 'low' } as RequestInit),
+};
+
 async function warmFirstAtlases(
   pack: PackId,
   onRatio: (ratio: number) => void,
@@ -107,13 +113,20 @@ async function warmFirstAtlases(
   let gateDone = 0;
   let benchDone = 0;
   const report = () => onRatio((gateDone + benchDone) / 2);
+  const init = { ...LOW_FETCH, signal };
 
   const gateJob = (async () => {
     try {
-      const json = await loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`);
+      const json = await loadJson<GateJson>(
+        `gate/${pack}/gate-${pack}.json`,
+        init,
+      );
       if (signal?.aborted) return;
       gateDone = 0.4;
       report();
+      const sheet0 = json.door.body_atlas.sheets[0]?.file;
+      if (sheet0) await loadSheet(sheet0, init);
+      if (signal?.aborted) return;
       const body = new AtlasSheetBank(json.door.body_atlas);
       await body.ensureCurrentAndNext(0);
       gateDone = 1;
@@ -126,12 +139,18 @@ async function warmFirstAtlases(
 
   const benchJob = (async () => {
     try {
-      const json = await loadJson<BenchJson>(`bench/${pack}/bench-${pack}.json`);
+      const json = await loadJson<BenchJson>(
+        `bench/${pack}/bench-${pack}.json`,
+        init,
+      );
       if (signal?.aborted) return;
       benchDone = 0.4;
       report();
       const first = Object.keys(json.ambient)[0];
       if (first) {
+        const sheet0 = json.ambient[first].atlas.sheets[0]?.file;
+        if (sheet0) await loadSheet(sheet0, init);
+        if (signal?.aborted) return;
         const bank = new AtlasSheetBank(json.ambient[first].atlas);
         await bank.ensureCurrentAndNext(0);
       }
@@ -229,8 +248,8 @@ export function HomeBootProgress({ force = false }: Props) {
       if (ac.signal.aborted || finishedRef.current) return;
 
       const fontsJob = (async () => {
-        // Only wait for the preloaded Pretendard slices — full fonts.ready pulls
-        // every unicode-range file at VeryHigh and delays LCP render.
+        // Preloaded Pretendard only — full fonts.ready pulls every unicode-range
+        // file at VeryHigh and delays LCP render.
         try {
           if (document.fonts?.load) {
             await Promise.race([
@@ -256,74 +275,47 @@ export function HomeBootProgress({ force = false }: Props) {
         }, ac.signal);
       });
 
-      // Do not block LCP text on assets — race poster observe so copy stays visible.
-      await Promise.race([
-        posterJob,
-        new Promise<void>((r) => window.setTimeout(r, 1200)),
+      // LCP path first: fonts + poster (text stays visible; no GLB/atlas yet).
+      await Promise.all([
+        fontsJob,
+        Promise.race([
+          posterJob,
+          new Promise<void>((r) => window.setTimeout(r, 1500)),
+        ]),
       ]);
       if (ac.signal.aborted || finishedRef.current) return;
 
       const pack = packFromViewport();
 
-      // Defer GLB/atlas until idle so the LCP poster keeps the network.
-      const deferIdle = () =>
-        Promise.all([
-          new Promise<void>((resolve) => window.setTimeout(resolve, 1600)),
-          new Promise<void>((resolve) => {
-            if (typeof window.requestIdleCallback === 'function') {
-              window.requestIdleCallback(() => resolve(), { timeout: 2800 });
-            } else {
-              window.setTimeout(resolve, 400);
-            }
-          }),
-        ]).then(() => undefined);
-
-      const glbJob = (async () => {
-        await deferIdle();
-        if (ac.signal.aborted || finishedRef.current) return;
-        await fetchWithProgress(
-          HERO_GLB,
-          (r) => {
-            parts.glb = r;
-            publish();
-          },
-          ac.signal,
-        );
+      // Then low-priority GLB + first atlases; ready gate waits (or 6s timeout).
+      const glbJob = fetchWithProgress(
+        HERO_GLB,
+        (r) => {
+          parts.glb = r;
+          publish();
+        },
+        ac.signal,
+      ).then(() => {
         parts.glb = 1;
         publish();
-      })();
+      });
 
-      const atlasJob = (async () => {
-        await deferIdle();
-        if (ac.signal.aborted || finishedRef.current) return;
-        await warmFirstAtlases(
-          pack,
-          (r) => {
-            parts.atlas = r;
-            publish();
-          },
-          ac.signal,
-        );
+      const atlasJob = warmFirstAtlases(
+        pack,
+        (r) => {
+          parts.atlas = r;
+          publish();
+        },
+        ac.signal,
+      ).then(() => {
         parts.atlas = 1;
         publish();
-      })();
+      });
 
-      // Ready gate: fonts + poster (and GLB if it finishes soon). Do not wait on atlases.
-      await Promise.all([fontsJob, posterJob]);
-      await Promise.race([
-        glbJob,
-        new Promise<void>((r) => window.setTimeout(r, 2800)),
-      ]);
+      await Promise.all([glbJob, atlasJob]);
       if (!ac.signal.aborted && !finishedRef.current) {
-        if (parts.glb < 1) {
-          parts.glb = Math.max(parts.glb, 0.85);
-          publish();
-        }
-        parts.atlas = Math.max(parts.atlas, 0.5);
-        publish();
         finish();
       }
-      void Promise.all([glbJob, atlasJob]);
     };
 
     void run();

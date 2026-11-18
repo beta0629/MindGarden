@@ -20,15 +20,19 @@ async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {
 
 /**
  * Decode a sheet URL once; prefers ImageBitmap when available.
+ * Optional `init` (e.g. `{ priority: 'low' }` for boot warm) is used on first fetch.
  */
-export function loadSheet(relativePath: string): Promise<DecodedImage> {
+export function loadSheet(
+  relativePath: string,
+  init?: RequestInit,
+): Promise<DecodedImage> {
   const url = assetUrl(relativePath);
   let pending = sheetCache.get(url);
   if (pending) return pending;
 
   pending = (async () => {
     try {
-      const res = await fetch(url);
+      const res = await fetch(url, init);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
       const blob = await res.blob();
       if (typeof createImageBitmap === 'function') {
@@ -44,9 +48,12 @@ export function loadSheet(relativePath: string): Promise<DecodedImage> {
   return pending;
 }
 
-export async function loadJson<T>(relativePath: string): Promise<T> {
+export async function loadJson<T>(
+  relativePath: string,
+  init?: RequestInit,
+): Promise<T> {
   const url = assetUrl(relativePath);
-  const res = await fetch(url);
+  const res = await fetch(url, init);
   if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
   return (await res.json()) as T;
 }

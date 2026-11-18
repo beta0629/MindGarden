@@ -1,4 +1,4 @@
-import { HomeBootProgressLazy } from '@/components/home/HomeBootProgressLazy';
+import { HomeBootProgress } from '@/components/home/HomeBootProgress';
 import { DeferredChrome } from '@/components/motion/DeferredChrome';
 import { SiteFooter } from './SiteFooter';
 import { SiteHeader } from './SiteHeader';
@@ -20,7 +20,7 @@ export function SiteShell({
       <a className="skip-link" href="#main">
         본문으로 건너뛰기
       </a>
-      {deferChrome ? <HomeBootProgressLazy /> : null}
+      {deferChrome ? <HomeBootProgress /> : null}
       <SiteHeader noticeText={noticeText} />
       <main id="main">{children}</main>
       <SiteFooter />

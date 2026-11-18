@@ -3,6 +3,7 @@
 import { useEffect, useState, type ComponentType } from 'react';
 import {
   dispatchHomeBootReady,
+  whenHomeBootBarShown,
   whenHomeBootReady,
 } from '@/components/home/homeBoot';
 
@@ -25,7 +26,8 @@ type MediaProps = { enhanceOnly?: boolean };
  * Defers the HeroMedia client chunk (video / three.js path) until after
  * `home-boot-ready` + idle. Probes software GL immediately after the poster
  * gate so the boot bar can dismiss without waiting on idle; soft-GL keeps the
- * poster and never imports three.
+ * poster and never imports three. Soft-GL finish waits until the bar has been
+ * shown so session-once cannot skip the first-entry bar.
  */
 export function HeroMediaLazy() {
   const [Media, setMedia] = useState<ComponentType<MediaProps> | null>(null);
@@ -38,7 +40,9 @@ export function HeroMediaLazy() {
       try {
         const { probeSoftwareGpu } = await import('./v37/atlas');
         if (probeSoftwareGpu()) {
-          // Soft-GL poster fallback decided — finish visual boot bar / session.
+          // Belt: bar must paint before hero-ready dismiss (effect order: this
+          // child often runs before SiteShell's HomeBootProgress).
+          await whenHomeBootBarShown();
           if (!cancelled) dispatchHomeBootReady();
           return;
         }
@@ -48,6 +52,7 @@ export function HeroMediaLazy() {
         const mod = await import('./HeroMedia');
         if (!cancelled) setMedia(() => mod.HeroMedia);
       } catch {
+        await whenHomeBootBarShown();
         if (!cancelled) dispatchHomeBootReady();
       }
     })();

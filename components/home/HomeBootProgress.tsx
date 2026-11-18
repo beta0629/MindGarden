@@ -1,14 +1,16 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   dispatchHomeBootProgress,
   hasHomeBootCompleted,
+  isHomeBootHeroDecided,
+  markHomeBootCompleted,
+  notifyHomeBootBarShown,
   HOME_BOOT_BAR_TIMEOUT_MS,
   HOME_BOOT_FADE_MS,
   HOME_BOOT_MIN_VISIBLE_MS,
   HOME_BOOT_PROGRESS_EVENT,
-  markHomeBootCompleted,
   type HomeBootProgressDetail,
 } from '@/components/home/homeBoot';
 
@@ -16,12 +18,29 @@ import {
  * Visual-only cream/green boot bar.
  * Poster gate (`home-boot-ready`) unblocks deferred work but must NOT dismiss
  * this bar — wait for hero progress `done` (GLB / soft-GL / mount fail).
+ * Session-once skip is applied only after this bar has been shown + finished.
  */
 export function HomeBootProgress({ force = false }: { force?: boolean }) {
   const [visible, setVisible] = useState(false);
   const [ratio, setRatio] = useState(0);
   const [fading, setFading] = useState(false);
   const finishedRef = useRef(false);
+  const startedAtRef = useRef(0);
+
+  // Paint before paint when possible so soft-GL (child useEffect) cannot
+  // finish the session before the bar ever appears.
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname !== '/') return;
+    if (!force && hasHomeBootCompleted()) {
+      document.getElementById('mg-home-boot-progress-inline')?.remove();
+      return;
+    }
+    startedAtRef.current = performance.now();
+    setVisible(true);
+    notifyHomeBootBarShown();
+    document.getElementById('mg-home-boot-progress-inline')?.remove();
+  }, [force]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -31,15 +50,14 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       return;
     }
 
-    const startedAt = performance.now();
+    if (!startedAtRef.current) {
+      startedAtRef.current = performance.now();
+    }
+
     const ac = new AbortController();
     let minTimer = 0;
     let fadeTimer = 0;
     let safetyTimer = 0;
-
-    requestAnimationFrame(() => {
-      if (!ac.signal.aborted) setVisible(true);
-    });
 
     const finish = () => {
       if (finishedRef.current || ac.signal.aborted) return;
@@ -47,7 +65,7 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       markHomeBootCompleted();
       const wait = Math.max(
         0,
-        HOME_BOOT_MIN_VISIBLE_MS - (performance.now() - startedAt),
+        HOME_BOOT_MIN_VISIBLE_MS - (performance.now() - startedAtRef.current),
       );
       minTimer = window.setTimeout(() => {
         if (ac.signal.aborted) return;
@@ -68,10 +86,17 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
 
     // Approximate progress while waiting for the hero decision — never treat
     // the poster `home-boot-ready` class/event as bar-complete (flash/miss bug).
+    setVisible(true);
+    notifyHomeBootBarShown();
     setRatio(0.35);
     dispatchHomeBootProgress(0.35, false);
     window.addEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
     safetyTimer = window.setTimeout(finish, HOME_BOOT_BAR_TIMEOUT_MS);
+
+    // Soft-GL / fail may have dispatched before this listener attached.
+    if (isHomeBootHeroDecided()) {
+      finish();
+    }
 
     return () => {
       ac.abort();

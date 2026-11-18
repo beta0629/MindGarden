@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import './pretendard.css';
 import './globals.css';
 
 const baseMetadata = buildMetadata({
@@ -39,6 +40,9 @@ export const viewport: Viewport = {
   themeColor: '#F5F0E6',
 };
 
+/** Latin + most frequent Hangul slices — preloaded so first paint avoids a font swap flash. */
+const PRELOAD_FONT_SLICES = [91, 90] as const;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -48,6 +52,16 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {PRELOAD_FONT_SLICES.map((slice) => (
+          <link
+            key={slice}
+            rel="preload"
+            as="font"
+            type="font/woff2"
+            href={`/fonts/pretendard/PretendardVariable.subset.${slice}.woff2`}
+            crossOrigin="anonymous"
+          />
+        ))}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

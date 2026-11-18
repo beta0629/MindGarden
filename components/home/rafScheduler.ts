@@ -59,7 +59,10 @@ function needsPump(): boolean {
 
 function pump(now: number): void {
   rafId = 0;
-  if (docHidden) return;
+  if (docHidden) {
+    // Stay cancelled while hidden — visibilitychange will kick() on resume.
+    return;
+  }
   debugPumpCount += 1;
   for (const e of entries.values()) {
     if (e.paused) continue;
@@ -67,6 +70,7 @@ function pump(now: number): void {
     e.dirty = false;
     e.fn(now);
   }
+  // Cancel when nothing is continuous/dirty after this frame.
   if (needsPump()) {
     rafId = requestAnimationFrame(pump);
   }

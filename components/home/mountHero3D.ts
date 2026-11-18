@@ -42,14 +42,36 @@ const MOBILE_TOP_MAX_WIDTH = 1023;
 const HERO_RAF_ID = 'hero-3d';
 /** Mobile ≤30fps — min interval between rendered frames. */
 const MOBILE_MIN_FRAME_MS = 1000 / 30;
-/** Pause WingFold after this long with no pointer/scroll (resume on input). */
+/** Desktop WingFold sample when not continuous (dirty marks, not forever rAF). */
+const DESKTOP_WING_SAMPLE_MS = 1000 / 30;
+/** Pause WingFold after this long with no pointer activity (scroll does NOT count). */
 const IDLE_PAUSE_MS = 8000;
 /** Throttle subject CSS var mesh projection off the hot path. */
 const SUBJECT_CSS_MIN_MS = 500;
+/** Skip render when tilt / yaw have settled within this epsilon. */
+const POSE_EPS = 0.0004;
+
+function isSoftwareWebGLRenderer(
+  gl: WebGLRenderingContext | WebGL2RenderingContext,
+): boolean {
+  try {
+    const info = gl.getExtension('WEBGL_debug_renderer_info');
+    if (!info) return false;
+    const name = String(
+      gl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '',
+    ).toLowerCase();
+    return /swiftshader|llvmpipe|softpipe|microsoft basic render|cpu rasterizer/.test(
+      name,
+    );
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3).
  * Locked poster camera + pointer tilt (±7°). Lazy-imported after poster LCP.
+ * Software GL (SwiftShader/llvmpipe): keep the poster still — no forever rAF.
  */
 export async function mountHero3D({
   panel,
@@ -59,6 +81,24 @@ export async function mountHero3D({
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   if (reduce.matches) {
     return () => undefined;
+  }
+
+  if (signal?.aborted) {
+    return () => undefined;
+  }
+
+  // Probe before importing three — software GL keeps the CSS poster (no GLB/rAF).
+  {
+    const probeCanvas = document.createElement('canvas');
+    const probe =
+      probeCanvas.getContext('webgl') ||
+      probeCanvas.getContext('experimental-webgl');
+    if (
+      probe &&
+      isSoftwareWebGLRenderer(probe as WebGLRenderingContext)
+    ) {
+      return () => undefined;
+    }
   }
 
   const THREE = await import('three');
@@ -89,7 +129,8 @@ export async function mountHero3D({
   }
 
   // Spec lighting (IMPLEMENTATION.md §3) — punchy enough without muddy edges.
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  const heroDpr = Math.min(window.devicePixelRatio || 1, 2);
+  renderer.setPixelRatio(heroDpr);
   renderer.setClearColor(0x000000, 0);
   renderer.setClearAlpha(0);
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -268,7 +309,7 @@ export async function mountHero3D({
   const size = () => {
     refreshPanelRect();
     const { width, height } = panelRect;
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, heroDpr));
     renderer.setSize(width, height, false);
     cam.aspect = width / height;
     cam.updateProjectionMatrix();
@@ -363,10 +404,14 @@ export async function mountHero3D({
     tx = ((e.clientY - r.top) / r.height) * 2 - 1;
     ty *= MAX;
     tx *= MAX * 0.6;
+    setContinuous(HERO_RAF_ID, true);
+    markDirty(HERO_RAF_ID);
   };
   const onLeave = () => {
     tx = 0;
     ty = 0;
+    setContinuous(HERO_RAF_ID, true);
+    markDirty(HERO_RAF_ID);
   };
   panel.addEventListener('pointermove', onMove);
   panel.addEventListener('pointerleave', onLeave);
@@ -393,6 +438,7 @@ export async function mountHero3D({
   let running = true;
   let idlePaused = false;
   let lastActivityAt = performance.now();
+  let wingSampleTimer: number | null = null;
 
   const noteUserActivity = () => {
     lastActivityAt = performance.now();
@@ -402,18 +448,18 @@ export async function mountHero3D({
     }
   };
 
-  const onScrollActivity = () => {
-    noteUserActivity();
-    // Panel may have moved with scroll — refresh cached rect for pointer tilt.
+  // Scroll must NOT count as user activity — it was resetting the 8s idle pause.
+  const onScrollLayout = () => {
     refreshPanelRect();
   };
 
-  window.addEventListener('scroll', onScrollActivity, { passive: true });
+  window.addEventListener('scroll', onScrollLayout, { passive: true });
   window.addEventListener('pointerdown', noteUserActivity, { passive: true });
 
   const onReduce = (e: MediaQueryListEvent) => {
     if (e.matches) {
       running = false;
+      stopWingSample();
       renderer.setAnimationLoop(null);
       unsubscribe(HERO_RAF_ID);
       panel.classList.remove('is-3d');
@@ -527,6 +573,53 @@ export async function mountHero3D({
   // First frame into the backing store before revealing (poster stays until is-3d).
   renderer.render(scene, cam);
 
+  const tiltBusy = (): boolean => {
+    if (!finePointer.matches) return false;
+    return (
+      Math.abs(tx - cx) > POSE_EPS ||
+      Math.abs(ty - cy) > POSE_EPS ||
+      Math.abs(tx) > POSE_EPS ||
+      Math.abs(ty) > POSE_EPS
+    );
+  };
+
+  const stopWingSample = () => {
+    if (wingSampleTimer != null) {
+      window.clearInterval(wingSampleTimer);
+      wingSampleTimer = null;
+    }
+  };
+
+  const syncWingSample = () => {
+    if (!running) {
+      stopWingSample();
+      return;
+    }
+    const pausedUi = panel.classList.contains('is-paused');
+    const shouldSample =
+      visible &&
+      !document.hidden &&
+      !pausedUi &&
+      !idlePaused &&
+      !reduce.matches;
+    if (!shouldSample) {
+      stopWingSample();
+      setContinuous(HERO_RAF_ID, false);
+      return;
+    }
+    // Continuous only while pointer tilt is easing — WingFold uses dirty samples.
+    setContinuous(HERO_RAF_ID, tiltBusy());
+    if (wingSampleTimer == null) {
+      const interval = isMobileViewport
+        ? MOBILE_MIN_FRAME_MS
+        : DESKTOP_WING_SAMPLE_MS;
+      wingSampleTimer = window.setInterval(() => {
+        if (!running || idlePaused) return;
+        markDirty(HERO_RAF_ID);
+      }, interval);
+    }
+  };
+
   const syncHeroPlayback = () => {
     if (!running) return;
     const pausedUi = panel.classList.contains('is-paused');
@@ -536,13 +629,16 @@ export async function mountHero3D({
     renderer.setAnimationLoop(null);
     setPaused(HERO_RAF_ID, !shouldRun);
     if (shouldRun) {
-      setContinuous(HERO_RAF_ID, true);
       markDirty(HERO_RAF_ID);
+    } else {
+      setContinuous(HERO_RAF_ID, false);
     }
+    syncWingSample();
   };
 
   const onVis = () => {
     if (!document.hidden) {
+      // Tab return is intentional resume — not the same as scroll.
       noteUserActivity();
       refreshPanelRect();
     }
@@ -560,8 +656,6 @@ export async function mountHero3D({
     }
 
     if (isMobileViewport && now - lastRenderAt < MOBILE_MIN_FRAME_MS) {
-      // Stay continuous but skip work this pump — next frame will retry.
-      markDirty(HERO_RAF_ID);
       return;
     }
 
@@ -593,10 +687,15 @@ export async function mountHero3D({
       updateSubjectCssVars();
     }
 
+    // Tick only runs when dirty (WingFold sample) or continuous (tilt ease).
     renderer.render(scene, cam);
+
+    // Drop continuous once tilt has settled; WingFold interval keeps dirty marks.
+    syncWingSample();
   };
 
-  subscribe(HERO_RAF_ID, tick, { continuous: true });
+  // Dirty-driven by default — continuous only while tilt eases (see syncWingSample).
+  subscribe(HERO_RAF_ID, tick, { continuous: false });
   syncHeroPlayback();
 
   // Reveal only after boot gate (fonts/poster/glb/atlases) or its timeout.
@@ -613,10 +712,11 @@ export async function mountHero3D({
 
   return () => {
     running = false;
+    stopWingSample();
     reduce.removeEventListener('change', onReduce);
     panel.removeEventListener('pointermove', onMove);
     panel.removeEventListener('pointerleave', onLeave);
-    window.removeEventListener('scroll', onScrollActivity);
+    window.removeEventListener('scroll', onScrollLayout);
     window.removeEventListener('pointerdown', noteUserActivity);
     document.removeEventListener('visibilitychange', onVis);
     mo.disconnect();

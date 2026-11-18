@@ -488,9 +488,7 @@ export default async function HomePage() {
               </div>
               <div className="home-booking__fact--phone">
                 <dt>전화</dt>
-                <dd>
-                  <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
-                </dd>
+                <dd>{SITE.phoneDisplay}</dd>
               </div>
             </dl>
             <p>

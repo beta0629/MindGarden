@@ -355,7 +355,8 @@ p {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  min-height: var(--header-h);
+  /* Header border-bottom is 1px; keep total height equal to --header-h. */
+  min-height: calc(var(--header-h) - 1px);
 }
 
 .brand {

@@ -5,8 +5,77 @@ export type DecodedImage = ImageBitmap | HTMLImageElement;
 
 /** Cap canvas backing-store DPR (sharp on DPR 3 phones without unbounded memory). */
 export const MAX_CANVAS_DPR = 3;
+/** Overflow / flight canvases — keep mobile + software GL cheaper. */
+export const MOBILE_OVERFLOW_DPR_CAP = 1.5;
+const MOBILE_TOP_MAX_WIDTH = 1023;
 
 const sheetCache = new Map<string, Promise<DecodedImage>>();
+
+/** Serialize ImageBitmap / decode work — never stampede the main thread. */
+let decodeTail: Promise<void> = Promise.resolve();
+
+function enqueueDecode<T>(job: () => Promise<T>): Promise<T> {
+  const run = decodeTail.then(job, job);
+  decodeTail = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+let softwareGpuCache: boolean | null = null;
+
+/**
+ * Detect SwiftShader / llvmpipe (and similar) via WEBGL_debug_renderer_info.
+ * Cached for the page lifetime.
+ */
+export function isSoftwareGpu(): boolean {
+  if (softwareGpuCache != null) return softwareGpuCache;
+  if (typeof document === 'undefined') {
+    softwareGpuCache = false;
+    return false;
+  }
+  try {
+    const probe = document.createElement('canvas');
+    const gl =
+      probe.getContext('webgl') ||
+      probe.getContext('experimental-webgl');
+    if (!gl || typeof (gl as WebGLRenderingContext).getExtension !== 'function') {
+      softwareGpuCache = false;
+      return false;
+    }
+    const wgl = gl as WebGLRenderingContext;
+    const info = wgl.getExtension('WEBGL_debug_renderer_info');
+    if (!info) {
+      softwareGpuCache = false;
+      return false;
+    }
+    const name = String(
+      wgl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '',
+    ).toLowerCase();
+    softwareGpuCache =
+      /swiftshader|llvmpipe|softpipe|microsoft basic render|cpu rasterizer/.test(
+        name,
+      );
+    return softwareGpuCache;
+  } catch {
+    softwareGpuCache = false;
+    return false;
+  }
+}
+
+/** DPR for 2d scene canvases — software=1, mobile overflow ≤1.5. */
+export function effectiveCanvasDpr(
+  deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
+  opts?: { overflow?: boolean },
+): number {
+  if (isSoftwareGpu()) return 1;
+  const mobile =
+    typeof window !== 'undefined' && window.innerWidth <= MOBILE_TOP_MAX_WIDTH;
+  const cap =
+    opts?.overflow && mobile ? MOBILE_OVERFLOW_DPR_CAP : MAX_CANVAS_DPR;
+  return Math.min(cap, Math.max(1, deviceDpr));
+}
 
 async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -21,6 +90,7 @@ async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {
 /**
  * Decode a sheet URL once; prefers ImageBitmap when available.
  * Optional `init` (e.g. `{ priority: 'low' }` for boot warm) is used on first fetch.
+ * Decodes are serialized (concurrency 1) to protect TBT under LH / software GL.
  */
 export function loadSheet(
   relativePath: string,
@@ -30,19 +100,23 @@ export function loadSheet(
   let pending = sheetCache.get(url);
   if (pending) return pending;
 
-  pending = (async () => {
+  pending = enqueueDecode(async () => {
     try {
       const res = await fetch(url, init);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
       const blob = await res.blob();
       if (typeof createImageBitmap === 'function') {
-        return await createImageBitmap(blob);
+        try {
+          return await createImageBitmap(blob, { imageOrientation: 'none' });
+        } catch {
+          return await createImageBitmap(blob);
+        }
       }
       return await decodeViaImageElement(url);
     } catch {
       return decodeViaImageElement(url);
     }
-  })();
+  });
 
   sheetCache.set(url, pending);
   return pending;
@@ -261,4 +335,4 @@ export function smoothstep(t: number): number {
  * Keep modest so Gate/Bench/Booking do not compete with hero LCP on first paint
  * (150% previously warmed Gate while the hero was still the only visible section).
  */
-export const NEAR_ROOT_MARGIN = '200px 0px';
+export const NEAR_ROOT_MARGIN = '120px 0px';

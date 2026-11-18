@@ -12,9 +12,9 @@ import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
   drawCoverImage,
+  effectiveCanvasDpr,
   loadJson,
   loadSheet,
-  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   type DecodedImage,
@@ -77,13 +77,13 @@ const DEFAULT_PAD_FRACS: Record<
     place: 404.857 / 903.085,
     padRRatio: 350.163 / 404.857,
     padTOverW: 456.571 / 404.857,
-    padBOverW: 8 / 404.857,
+    padBOverW: 4 / 404.857,
   },
   '390': {
     place: 223.37 / 638.84,
     padRRatio: 191.79 / 223.37,
     padTOverW: 206.662 / 223.37,
-    padBOverW: 8 / 223.37,
+    padBOverW: 4 / 223.37,
   },
 };
 
@@ -113,7 +113,8 @@ export function computePad(json: BenchJson): Pad {
     maxY = Math.max(maxY, pt.y + json.perch_shadow.css_h);
   }
 
-  const pad = 8;
+  // Tight safety pad — large overflow + high DPR was a software-GL jam source.
+  const pad = 4;
   return {
     left: Math.max(0, -minX) + pad,
     top: Math.max(0, -minY) + pad,
@@ -213,10 +214,7 @@ function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
     const bank = rt.ambientBanks[key];
     if (!bank) continue;
     const pt = trackSample(amb.track, walkF);
-    if (!pt) {
-      void bank.ensureCurrentAndNext(0);
-      continue;
-    }
+    if (!pt) continue;
     void bank.ensureCurrentAndNext(pt.cellA);
     if (pt.cellB !== pt.cellA) void bank.ensureCurrentAndNext(pt.cellB);
   }
@@ -378,6 +376,8 @@ export function BenchScene({ sectionRef }: Props) {
     let overflowLayout: OverflowLayout | null = null;
     let layoutScrollY = 0;
     let motionEnd = TRIGGER_WALK_F.bench + 48;
+    /** After peaks settle — paint once then freeze until section remount / re-trigger. */
+    let frozen = false;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -419,6 +419,12 @@ export function BenchScene({ sectionRef }: Props) {
       const canvas = canvasRef.current;
       const pad = padRef.current;
       if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
+        return;
+      }
+
+      if (frozen) {
+        setContinuous(RAF_ID, false);
+        clock.syncTime(now);
         return;
       }
 
@@ -476,11 +482,16 @@ export function BenchScene({ sectionRef }: Props) {
         clearStickyShift(wrap);
       }
 
-      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
+      // Overflow canvas is large — cap DPR (mobile ≤1.5, software GL = 1).
+      const dpr = effectiveCanvasDpr(window.devicePixelRatio || 1, {
+        overflow: true,
+      });
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) return;
 
       ctx.clearRect(0, 0, cssW, cssH);
+      // Never set ctx.filter blur during flight — per-frame blur jams software GL.
+      ctx.filter = 'none';
       ctx.save();
       ctx.scale(scale, scale);
 
@@ -532,6 +543,13 @@ export function BenchScene({ sectionRef }: Props) {
       }
 
       const motionBusy = walkF < motionEnd || settleBusy(walkF);
+      if (!motionBusy) {
+        // Final peak pose painted above — freeze until remount.
+        frozen = true;
+        setContinuous(RAF_ID, false);
+        clock.syncTime(now);
+        return;
+      }
       const advancing = clock.wouldAdvanceWithTime(metrics) && motionBusy;
       setContinuous(RAF_ID, advancing);
       if (!advancing) clock.syncTime(now);
@@ -558,17 +576,14 @@ export function BenchScene({ sectionRef }: Props) {
         rt.body = body;
         rt.shadow = shadow;
         rt.perchShadow = perchShadow;
-        await Promise.all(
-          Object.keys(rt.ambientBanks).map((key) => {
-            const amb = rt.json.ambient[key];
-            const last = amb.track[amb.track.length - 1];
-            const peakCell = last ? last.cell : 0;
-            return Promise.all([
-              rt.ambientBanks[key].ensureCurrentAndNext(0),
-              rt.ambientBanks[key].ensureCurrentAndNext(peakCell),
-            ]);
-          }),
-        );
+        // Decode only the first ambient strip sheet 0 — further sheets on demand
+        // via ensureAmbientForWalk (never stampede all ambient atlases at warm).
+        {
+          const firstKey = Object.keys(rt.ambientBanks)[0];
+          if (firstKey) {
+            await rt.ambientBanks[firstKey].ensureCurrentAndNext(0);
+          }
+        }
         if (!alive) return;
         assetsReady = true;
         setCanvasActive(true);
@@ -771,9 +786,7 @@ function drawButterflies(
     }
 
     ctx.save();
-    if (amb.front_blur && layer === 'front') {
-      ctx.filter = 'blur(0.6px)';
-    }
+    // front_blur baked out of the hot path — per-frame canvas blur jammed TBT.
     if (amb.mirror) {
       const cx = ox + pt.x + amb.css_w / 2;
       ctx.translate(cx, 0);

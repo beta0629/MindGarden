@@ -11,8 +11,8 @@ import {
 import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
+  effectiveCanvasDpr,
   loadJson,
-  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   smoothstep,
@@ -43,6 +43,8 @@ const LANDING_START = 470;
 const LANDING_END = 508;
 const BREATHE_COUNT = 34;
 const BREATHE_PERIOD_S = 2.2;
+/** Idle breathe via dirty marks (~10fps) — never continuous forever. */
+const BREATHE_DIRTY_MS = 100;
 const HOVER_BLEND_S = 0.3;
 const HOVER_LEAVE_HOLD_MS = 3200;
 const HOVER_LEAVE_EASE_MS = 600;
@@ -169,6 +171,7 @@ export function BookingScene({ sectionRef }: Props) {
     let loadingMeta = false;
     let subscribed = false;
     let metricsCache: SectionMetricsCache | null = null;
+    let breatheTimer: number | null = null;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -182,11 +185,40 @@ export function BookingScene({ sectionRef }: Props) {
       return metricsCache;
     };
 
+    const stopBreatheTimer = () => {
+      if (breatheTimer != null) {
+        window.clearInterval(breatheTimer);
+        breatheTimer = null;
+      }
+    };
+
+    const syncBreatheTimer = () => {
+      const hoverBusy =
+        hoverRef.current.kind === 'hover' ||
+        hoverRef.current.kind === 'leaveHold' ||
+        hoverRef.current.kind === 'leaveEase';
+      const need =
+        subscribed &&
+        visible &&
+        !document.hidden &&
+        assetsReady &&
+        landingDoneRef.current &&
+        !hoverBusy;
+      if (need && breatheTimer == null) {
+        breatheTimer = window.setInterval(() => {
+          markDirty(RAF_ID);
+        }, BREATHE_DIRTY_MS);
+      } else if (!need) {
+        stopBreatheTimer();
+      }
+    };
+
     const syncPause = () => {
       if (!subscribed) return;
       const shouldRun = visible && !document.hidden && assetsReady;
       setPaused(RAF_ID, !shouldRun);
       if (shouldRun) markDirty(RAF_ID);
+      syncBreatheTimer();
     };
 
     const ensureHoverMeta = async () => {
@@ -312,7 +344,7 @@ export function BookingScene({ sectionRef }: Props) {
       ensureBookingSheets(rt, walkF, landingDoneRef.current);
 
       const { css_w: cssW, css_h: cssH } = rt.booking.place;
-      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
+      const dpr = effectiveCanvasDpr();
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) return;
       ctx.clearRect(0, 0, cssW, cssH);
@@ -408,9 +440,8 @@ export function BookingScene({ sectionRef }: Props) {
       }
 
       /*
-       * Continuous only for breathe / hover after landing.
-       * Landing walk advances with time while in-flight — keep continuous then.
-       * Pre-landing scrub is scroll-dirty only.
+       * Continuous only during landing flight + hover ease.
+       * Idle breathe uses dirty marks (~10fps) via syncBreatheTimer — never forever rAF.
        */
       const hoverBusy =
         hoverRef.current.kind === 'hover' ||
@@ -420,10 +451,10 @@ export function BookingScene({ sectionRef }: Props) {
         !landingDoneRef.current &&
         clock.wouldAdvanceWithTime(metrics) &&
         walkF >= LANDING_START;
-      const continuous =
-        landingDoneRef.current || landingInFlight || hoverBusy;
+      const continuous = landingInFlight || hoverBusy;
       setContinuous(RAF_ID, continuous);
       if (!continuous) clock.syncTime(now);
+      syncBreatheTimer();
     };
 
     const ensureSubscribed = () => {
@@ -536,6 +567,7 @@ export function BookingScene({ sectionRef }: Props) {
 
     return () => {
       alive = false;
+      stopBreatheTimer();
       nearIO.disconnect();
       visIO.disconnect();
       window.removeEventListener('scroll', onScrollOrResize);

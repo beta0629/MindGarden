@@ -12,9 +12,9 @@ import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
   drawCoverImage,
+  effectiveCanvasDpr,
   loadJson,
   loadSheet,
-  MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
   smoothstep,
@@ -275,7 +275,7 @@ export function GateScene({ sectionRef }: Props) {
       const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
 
       const { css_w: cssW, css_h: cssH } = rt.json.place;
-      const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
+      const dpr = effectiveCanvasDpr();
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) return;
 
@@ -344,9 +344,9 @@ export function GateScene({ sectionRef }: Props) {
         setPaintLive(true);
       }
 
-      const advancing =
-        clock.wouldAdvanceWithTime(metrics) &&
-        (settleBusy(walkF) || doorBusy(rt.json, walkF));
+      const busy = settleBusy(walkF) || doorBusy(rt.json, walkF);
+      const advancing = clock.wouldAdvanceWithTime(metrics) && busy;
+      // After settle + door static: never leave continuous true.
       setContinuous(RAF_ID, advancing);
       if (!advancing) {
         clock.syncTime(now);

@@ -576,7 +576,7 @@ p {
 
 .hero-media {
   --hero-zoom: 1.15;
-  --hero-fade-edge: 58%;
+  --hero-fade-edge: 72%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -633,12 +633,12 @@ p {
   /* Soft-fade the frame's own edges so its baked sand tone never shows a rectangle. */
   -webkit-mask-image: radial-gradient(
     ellipse closest-side at 50% 50%,
-    black 78%,
+    black 88%,
     transparent 100%
   );
   mask-image: radial-gradient(
     ellipse closest-side at 50% 50%,
-    black 78%,
+    black 88%,
     transparent 100%
   );
 }

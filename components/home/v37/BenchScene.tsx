@@ -303,6 +303,8 @@ export function BenchScene({ sectionRef }: Props) {
         wrap;
       const metrics = readScrollMetrics(sectionEl);
       const walkF = clock.update(now, metrics);
+      // Expose for peak-flight QA (walkF≈431 ≈ 3700ms after trigger @ 30fps).
+      wrap.dataset.walkF = walkF.toFixed(2);
       ensureAmbientForWalk(rt, walkF);
 
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);

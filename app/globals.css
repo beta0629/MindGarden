@@ -618,13 +618,26 @@ p {
   max-height: min(56svh, 32rem);
 }
 
-/* Live GLB: camera frustum fits the subject — no CSS hard-crop / overflow clip.
-   Wider-than-square stage: the GLB silhouette is wide/flat, so a square box
-   left a tall empty cream band after width-fit. */
+/*
+ * Live GLB: fit in a short/wide buffer, then JS adds .is-cropped + --hero-crop-h
+ * so CTA→paint ≈ grid gap. GL buffer stays --hero-gl-h (top-aligned).
+ */
 .hero-media.is-3d {
-  overflow: visible;
-  aspect-ratio: 3 / 2;
-  max-height: min(48svh, 28rem);
+  overflow: hidden;
+  /*
+   * Wide pre-crop buffer: mesh size-fit fills HEIGHT (subject is wider than
+   * tall). JS then crops via --hero-crop-h / offset so CTA→paint ≈ gap.
+   */
+  aspect-ratio: 12 / 5;
+  width: min(100%, 36rem);
+  height: auto;
+  max-height: min(42svh, 22rem);
+}
+
+.hero-media.is-3d.is-cropped {
+  aspect-ratio: auto;
+  height: var(--hero-crop-h, 12rem);
+  max-height: none;
 }
 
 .hero-media__stage {
@@ -707,10 +720,20 @@ p {
   display: none;
 }
 
+.hero-media.is-3d .hero-media__stage {
+  /* May be negative: shift GL buffer so subject top sits at the panel top. */
+  top: var(--hero-gl-offset-y, 0px);
+  left: 0;
+  right: 0;
+  bottom: auto;
+  height: var(--hero-gl-h, 100%);
+}
+
 .hero-media.is-3d .hero-3d {
   display: block;
   /* Camera fit owns framing — no CSS scale crop. */
   transform: none;
+  height: 100%;
 }
 
 .hero-media.is-3d .hero-still {
@@ -733,14 +756,17 @@ p {
   position: absolute;
   z-index: 5;
   /*
-   * Bottom-right of the projected subject AABB (CSS vars from mountHero3D).
-   * `top` anchors to subject bottom, then lifts above the flower bed.
+   * Subject AABB bottom-right, inset 12px. Extra left/up nudge (~16px) keeps
+   * the control off flower petals while staying in the BR quadrant.
    */
   left: auto;
-  /* Nudge inward from subject right so the control prefers cream, not petals. */
-  right: max(0px, calc(100% - var(--hero-subj-right) + 0.85rem));
-  top: max(0px, calc(var(--hero-subj-bottom) - 2.25rem));
-  bottom: auto;
+  /*
+   * AABB BR inset (~12px) + modest left/up nudge off flower petals,
+   * kept inside the subject bottom-right quadrant.
+   */
+  right: max(0px, calc(100% - var(--hero-subj-right) + 22px));
+  bottom: max(0px, calc(100% - var(--hero-subj-bottom) + 28px));
+  top: auto;
   width: 1.625rem;
   height: 1.625rem;
   border: 0;
@@ -819,8 +845,9 @@ p {
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 5 / 4;
-    max-height: min(46svh, 18rem);
+    /* Initial pre-crop buffer aspect (JS then sets --hero-crop-h). */
+    width: calc(100% + var(--pad) * 2);
+    margin-inline: calc(var(--pad) * -1);
   }
 
   .hero-media__stage {
@@ -860,9 +887,8 @@ p {
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 3 / 2;
-    width: min(100%, min(62svh, 36rem));
-    max-height: min(48svh, 30rem);
+    width: min(100%, min(64svh, 38rem));
+    margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
   .hero-media.is-3d .hero-3d {

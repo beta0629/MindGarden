@@ -9,14 +9,10 @@ import {
   type SyntheticEvent,
 } from 'react';
 
-const SLOW_CONNECTION_TYPES = ['slow-2g', '2g', '3g'];
-/** Orbit video starts only after the page has settled (LCP + load). */
+const SLOW_CONNECTION_TYPES = ['slow-2g', '2g'];
+/** Orbit video starts only after the page has settled (LCP + load) — fallback path. */
 const VIDEO_IDLE_TIMEOUT_MS = 3500;
 const DESKTOP_VIDEO_QUERY = '(min-width: 1024px)';
-const DESKTOP_3D_QUERY =
-  '(min-width: 1024px) and (hover: hover) and (pointer: fine)';
-/** three.js WingFold is opt-in (NEXT_PUBLIC_HERO_3D=1); the orbit video is the default on every viewport. */
-const HERO_3D_ENABLED = process.env.NEXT_PUBLIC_HERO_3D === '1';
 const HERO_VIDEO_SOURCES = {
   mobile: [
     { src: '/assets/hero/hero-orbit-loop.mp4', type: 'video/mp4' },
@@ -32,9 +28,8 @@ const VIDEO_START_TIMEOUT_MS = 4000;
 const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
 
 /**
- * Hero media panel per v1.3-home/web/IMPLEMENTATION.md:
- * poster LCP → (idle) orbit video (mobile + desktop sources) → optional three.js WingFold.
- * Video is paused off-screen and the poster stays underneath as the loop-restart underlay.
+ * Hero media panel: poster LCP → live three.js WingFold (default) →
+ * vivid orbit video / still as fallback (reduced-motion, saveData, WebGL failure).
  */
 export function HeroMedia() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -50,33 +45,36 @@ export function HeroMedia() {
   const [isDesktop, setIsDesktop] = useState(false);
   /** Desired capability from viewport/motion prefs (still | video | 3d). */
   const [mode, setMode] = useState<'still' | 'video' | '3d'>('still');
-  /** Mobile/tablet video mounts only after idle so it never races the LCP poster. */
+  /** WebGL/GLB mount failed — prefer vivid orbit video over a washed still. */
+  const [threeFailed, setThreeFailed] = useState(false);
+  /** Video mounts only after idle so it never races the LCP poster. */
   const [videoAllowed, setVideoAllowed] = useState(false);
 
-  const resolveMode = useCallback(() => {
-    if (typeof window === 'undefined') return 'still' as const;
+  const resolveMode = useCallback((): 'still' | 'video' | '3d' => {
+    if (typeof window === 'undefined') return 'still';
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return 'still' as const;
+      return 'still';
     }
     if (
       'connection' in navigator &&
       (navigator as Navigator & { connection?: { saveData?: boolean } })
         .connection?.saveData
     ) {
-      return 'still' as const;
+      return 'still';
     }
-    if (HERO_3D_ENABLED && window.matchMedia(DESKTOP_3D_QUERY).matches) {
-      return '3d' as const;
-    }
-    // Orbit video is ~0.3–0.4MB — keep the poster on constrained connections.
     const effectiveType = (
       navigator as Navigator & { connection?: { effectiveType?: string } }
     ).connection?.effectiveType;
+    // Keep poster on very constrained links; 3g is fine for a ~200KB Draco GLB.
     if (effectiveType && SLOW_CONNECTION_TYPES.includes(effectiveType)) {
-      return 'still' as const;
+      return 'still';
     }
-    return 'video' as const;
-  }, []);
+    if (threeFailed) {
+      return 'video';
+    }
+    // Live GLB is the default on every viewport (NEXT_PUBLIC_HERO_3D=1 no longer required).
+    return '3d';
+  }, [threeFailed]);
 
   const syncMode = useEffectEvent(() => {
     setMode(resolveMode());
@@ -86,18 +84,15 @@ export function HeroMedia() {
   useEffect(() => {
     syncMode();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const desktop = window.matchMedia(DESKTOP_3D_QUERY);
     const wide = window.matchMedia(DESKTOP_VIDEO_QUERY);
     const onChange = () => syncMode();
     reduce.addEventListener('change', onChange);
-    desktop.addEventListener('change', onChange);
     wide.addEventListener('change', onChange);
     return () => {
       reduce.removeEventListener('change', onChange);
-      desktop.removeEventListener('change', onChange);
       wide.removeEventListener('change', onChange);
     };
-  }, []);
+  }, [threeFailed]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -118,7 +113,7 @@ export function HeroMedia() {
     }
   }, []);
 
-  // Defer orbit video until the load event + idle — keeps LCP and first load on the poster.
+  // Defer orbit video until the load event + idle — fallback path only.
   useEffect(() => {
     if (mode !== 'video' || !posterReady) {
       setVideoAllowed(false);
@@ -257,8 +252,17 @@ export function HeroMedia() {
             canvas,
             signal: ac.signal,
           });
+          if (ac.signal.aborted) {
+            cleanup?.();
+            return;
+          }
+          // Mount returned without adding is-3d (e.g. reduced-motion flipped mid-load).
+          if (!panel.classList.contains('is-3d')) {
+            setThreeFailed(true);
+          }
         } catch (err) {
           console.error('[hero-3d] mount failed', err);
+          if (!ac.signal.aborted) setThreeFailed(true);
         }
       })();
     };

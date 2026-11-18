@@ -577,59 +577,29 @@ p {
 }
 
 .hero-media {
-  --hero-zoom: 1.4;
-  /*
-   * Graded frames are already cream past ~r=0.45. A tight CSS fade over midtones
-   * composites to a grey smudge — keep a wide opaque core and only soft-edge the rim.
-   */
-  --hero-fade-edge: 72%;
-  --hero-fade-end: 96%;
-  --hero-media-fade-edge: 82%;
-  --hero-media-fade-end: 98%;
+  --hero-zoom: 1.15;
+  /* Soft rim only for poster/video fallback — never a midtone cream wash. */
+  --hero-media-fade-edge: 88%;
+  --hero-media-fade-end: 100%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
   border: 0;
   box-shadow: none;
-  background: var(--cream);
-  /* Explicit box: absolute stage/video/poster children must never size the panel. */
+  background: transparent;
+  /* Explicit box: absolute stage children must never size the panel. */
   min-height: 0;
-  height: min(70svh, 40rem);
-  max-height: 70svh;
+  /* Square-ish stage the GLB composition fills (page cream shows through). */
+  width: min(100%, 32rem);
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  height: auto;
+  max-height: min(56svh, 32rem);
 }
 
 .hero-media__stage {
   position: absolute;
   inset: 0;
-  -webkit-mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-fade-edge),
-    transparent var(--hero-fade-end)
-  );
-  mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-fade-edge),
-    transparent var(--hero-fade-end)
-  );
-}
-
-/*
- * Cream veil: transparent over the subject core, opaque cream by ~70%.
- * Forces “butterfly on page cream” even when the encode retains soft mud.
- * Above video (z-index 2); pause/play sit higher on .hero-media.
- */
-.hero-media__stage::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse closest-side at 50% 48%,
-    transparent 28%,
-    color-mix(in srgb, var(--cream) 55%, transparent) 48%,
-    var(--cream) 68%
-  );
 }
 
 .hero-media__stage > picture {
@@ -647,8 +617,7 @@ p {
   max-width: none;
 }
 
-/* Poster and video share one aspect ratio and are zoomed from the centre, so
-   the cream-softlight frame blends into the page instead of cropping the subject. */
+/* Poster/video fallback: cover the stage; soft-fade baked sand edges only. */
 .hero-media__stage picture img,
 .hero-media__stage > .hero-loop {
   position: absolute;
@@ -661,7 +630,6 @@ p {
   aspect-ratio: 1620 / 939;
   object-fit: cover;
   transform: translate(-50%, -50%);
-  /* Soft-fade the frame's own edges so its baked sand tone never shows a rectangle. */
   -webkit-mask-image: radial-gradient(
     ellipse closest-side at 50% 50%,
     black var(--hero-media-fade-edge),
@@ -679,6 +647,8 @@ p {
   height: 100%;
   max-width: none;
   object-fit: cover;
+  /* Transparent WebGL — page cream shows through; no CSS veil on the subject. */
+  background: transparent;
 }
 
 .hero-still {
@@ -709,6 +679,9 @@ p {
 
 .hero-media.is-3d .hero-3d {
   display: block;
+  /* Slight scale + upper origin: collapses remaining empty cream above the subject. */
+  transform: scale(1.2);
+  transform-origin: 50% 28%;
 }
 
 .hero-media.is-3d .hero-still {
@@ -730,8 +703,8 @@ p {
 .hero__pause {
   position: absolute;
   z-index: 5;
-  /* Bottom-right inside .hero-media on every breakpoint. */
-  inset: auto 0.75rem 0.75rem auto;
+  /* Bottom-right of the visible subject area (media box hugs the GLB). */
+  inset: auto 12px 12px auto;
   width: 1.625rem;
   height: 1.625rem;
   border: 0;
@@ -793,23 +766,19 @@ p {
   }
 
   .hero-media {
-    /* Zoom + cream veil: subject fills the media box (less empty cream above). */
-    --hero-zoom: 1.68;
-    --hero-fade-edge: 74%;
-    --hero-fade-end: 97%;
-    --hero-media-fade-edge: 84%;
-    --hero-media-fade-end: 99%;
+    /* Square-ish box hugging the GLB; CTA→subject ≈ hero gap (1.5rem) + little empty pad. */
+    --hero-zoom: 1.2;
+    --hero-media-fade-edge: 90%;
+    --hero-media-fade-end: 100%;
     width: calc(100% + var(--pad) * 2);
     margin-inline: calc(var(--pad) * -1);
     margin-top: 0;
     min-height: 0;
-    /* Content-fitting height from orbit aspect; zoom fills top-to-bottom. */
     height: auto;
-    aspect-ratio: 1080 / 626;
-    max-height: none;
+    aspect-ratio: 1 / 1;
+    max-height: min(52svh, 20rem);
   }
 
-  /* Grade+mask already clears corners to cream; no 2px stage inset. */
   .hero-media__stage {
     inset: 0;
   }
@@ -817,7 +786,9 @@ p {
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-media {
-    --hero-zoom: 1.55;
+    --hero-zoom: 1.15;
+    aspect-ratio: 1 / 1;
+    max-height: min(64svh, 30rem);
   }
 }
 
@@ -830,17 +801,23 @@ p {
     padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
   }
 
-  /* Media column bleeds past the container toward the viewport's right edge (~55–60%). */
+  /* Media column: square stage hugs the subject; bleeds toward the right edge. */
   .hero-media {
-    --hero-zoom: 1.42;
-    --hero-fade-edge: 74%;
-    --hero-fade-end: 97%;
-    --hero-media-fade-edge: 84%;
-    --hero-media-fade-end: 99%;
+    --hero-zoom: 1.12;
+    --hero-media-fade-edge: 90%;
+    --hero-media-fade-end: 100%;
+    justify-self: end;
+    width: min(100%, min(58svh, 34rem));
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    max-height: min(58svh, 34rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
-    min-height: 0;
-    height: min(62svh, 34rem);
-    max-height: 62svh;
+  }
+
+  .hero-media.is-3d .hero-3d {
+    transform: scale(1.08);
+    transform-origin: 50% 40%;
   }
 }
 

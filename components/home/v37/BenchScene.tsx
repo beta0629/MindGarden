@@ -39,6 +39,8 @@ type Runtime = {
   ambientBanks: Record<string, AtlasSheetBank>;
 };
 
+type Pad = { left: number; top: number; right: number; bottom: number };
+
 /** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
 const BENCH_MIN_OPACITY = 0.92;
 
@@ -47,16 +49,48 @@ const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '390': { wPct: 57.274, aspect: '223 / 193' },
 };
 
-/** True when the ambient sprite CSS box intersects the bench place box. */
-function intersectsPlace(
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  boxW: number,
-  boxH: number,
-): boolean {
-  return x < boxW && y < boxH && x + w > 0 && y + h > 0;
+const DEFAULT_PAD_FRACS: Record<
+  PackId,
+  { place: number; padRRatio: number }
+> = {
+  // Approximate until JSON loads — 1440 / 390 pack track bounds + 8px safety.
+  '1440': { place: 404.857 / 903.085, padRRatio: 350.163 / 404.857 },
+  '390': { place: 223.37 / 638.84, padRRatio: 191.79 / 223.37 },
+};
+
+/**
+ * Pad so the overflow canvas covers every ambient / perch track CSS box.
+ * Exported for alpha-bbox verification.
+ */
+export function computePad(json: BenchJson): Pad {
+  let minX = 0;
+  let minY = 0;
+  let maxX = json.place.css_w;
+  let maxY = json.place.css_h;
+
+  for (const key of Object.keys(json.ambient)) {
+    const amb = json.ambient[key];
+    for (const pt of amb.track) {
+      minX = Math.min(minX, pt.x);
+      minY = Math.min(minY, pt.y);
+      maxX = Math.max(maxX, pt.x + amb.css_w);
+      maxY = Math.max(maxY, pt.y + amb.css_h);
+    }
+  }
+  for (const pt of json.perch_shadow.track) {
+    minX = Math.min(minX, pt.x);
+    minY = Math.min(minY, pt.y);
+    maxX = Math.max(maxX, pt.x + json.perch_shadow.css_w);
+    maxY = Math.max(maxY, pt.y + json.perch_shadow.css_h);
+  }
+
+  const pad = 8;
+  return {
+    left: Math.max(0, -minX) + pad,
+    top: Math.max(0, -minY) + pad,
+    right: Math.max(0, maxX - json.place.css_w) + pad,
+    bottom: Math.max(0, maxY - json.place.css_h) + pad,
+  };
 }
 
 function trackAt(
@@ -90,6 +124,56 @@ function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
   }
 }
 
+function placeStyleFromPad(
+  pack: PackId,
+  wPct: number,
+  aspect: string,
+  pad: Pad | null,
+  placeW: number,
+): CSSProperties {
+  const fracs = pad
+    ? {
+        place: placeW / (placeW + pad.left + pad.right),
+        padRRatio: pad.right / placeW,
+      }
+    : DEFAULT_PAD_FRACS[pack];
+  return {
+    ['--v37-w' as string]: `${wPct}vw`,
+    ['--bench-place-frac' as string]: String(fracs.place),
+    ['--bench-pad-r-ratio' as string]: String(fracs.padRRatio),
+    aspectRatio: aspect,
+  };
+}
+
+/**
+ * Position the overflow canvas from the displayed place box so track pads
+ * stay inside `.home-reviews__scene` (no horizontal document growth).
+ */
+function layoutOverflowCanvas(
+  wrap: HTMLDivElement,
+  canvas: HTMLCanvasElement,
+  pad: Pad,
+  boxW: number,
+  boxH: number,
+): { scale: number; cssW: number; cssH: number } {
+  const placeW = Math.max(1, wrap.clientWidth);
+  const scale = placeW / boxW;
+  const padL = pad.left * scale;
+  const padT = pad.top * scale;
+  const cssW = (boxW + pad.left + pad.right) * scale;
+  const cssH = (boxH + pad.top + pad.bottom) * scale;
+
+  canvas.style.position = 'absolute';
+  canvas.style.left = `${-padL}px`;
+  canvas.style.top = `${-padT}px`;
+  canvas.style.width = `${cssW}px`;
+  canvas.style.height = `${cssH}px`;
+  canvas.style.maxWidth = 'none';
+  canvas.style.opacity = canvas.dataset.posterHidden === '1' ? '0' : '1';
+
+  return { scale, cssW, cssH };
+}
+
 export function BenchScene({ sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
@@ -98,25 +182,37 @@ export function BenchScene({ sectionRef }: Props) {
   const [failed, setFailed] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
-  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() => ({
-    ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-    aspectRatio: DEFAULT_PLACE[pack].aspect,
-  }));
+  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() =>
+    placeStyleFromPad(
+      pack,
+      DEFAULT_PLACE[pack].wPct,
+      DEFAULT_PLACE[pack].aspect,
+      null,
+      pack === '1440' ? 404.857 : 223.37,
+    ),
+  );
   const runtimeRef = useRef<Runtime | null>(null);
+  const padRef = useRef<Pad>({ left: 0, top: 0, right: 0, bottom: 0 });
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
 
   useEffect(() => {
-    setPlaceStyle({
-      ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-      aspectRatio: DEFAULT_PLACE[pack].aspect,
-    });
+    setPlaceStyle(
+      placeStyleFromPad(
+        pack,
+        DEFAULT_PLACE[pack].wPct,
+        DEFAULT_PLACE[pack].aspect,
+        null,
+        pack === '1440' ? 404.857 : 223.37,
+      ),
+    );
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
     setFailed(false);
     runtimeRef.current = null;
     clockRef.current = null;
+    padRef.current = { left: 0, top: 0, right: 0, bottom: 0 };
   }, [pack]);
 
   useEffect(() => {
@@ -147,6 +243,7 @@ export function BenchScene({ sectionRef }: Props) {
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
+      const pad = padRef.current;
       if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
         raf = requestAnimationFrame(tick);
         return;
@@ -174,24 +271,28 @@ export function BenchScene({ sectionRef }: Props) {
         ? 1
         : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
 
-      // Canvas == place box only — never expand document width via overflow canvas.
       const boxW = rt.json.place.css_w;
       const boxH = rt.json.place.css_h;
+      const { scale, cssW, cssH } = layoutOverflowCanvas(
+        wrap,
+        canvas,
+        pad,
+        boxW,
+        boxH,
+      );
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
-      const ctx = resizeCanvas(canvas, boxW, boxH, dpr);
+      const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) {
         raf = requestAnimationFrame(tick);
         return;
       }
 
-      ctx.clearRect(0, 0, boxW, boxH);
+      ctx.clearRect(0, 0, cssW, cssH);
       ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, boxW, boxH);
-      ctx.clip();
+      ctx.scale(scale, scale);
 
-      const ox = 0;
-      const oy = 0;
+      const ox = pad.left;
+      const oy = pad.top;
       const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
 
       ctx.save();
@@ -206,7 +307,7 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.restore();
       ctx.restore();
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'back', boxW, boxH);
+      drawButterflies(ctx, rt, walkF, ox, oy, 'back');
 
       ctx.save();
       ctx.globalAlpha = drawOpacity;
@@ -215,18 +316,7 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.restore();
 
       const perch = perchAt(rt.json.perch_shadow.track, walkF);
-      if (
-        perch &&
-        rt.perchShadow &&
-        intersectsPlace(
-          perch.x,
-          perch.y,
-          rt.json.perch_shadow.css_w,
-          rt.json.perch_shadow.css_h,
-          boxW,
-          boxH,
-        )
-      ) {
+      if (perch && rt.perchShadow) {
         ctx.save();
         ctx.globalAlpha = perch.opacity;
         drawCoverImage(
@@ -240,7 +330,7 @@ export function BenchScene({ sectionRef }: Props) {
         ctx.restore();
       }
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'front', boxW, boxH);
+      drawButterflies(ctx, rt, walkF, ox, oy, 'front');
       ctx.restore();
 
       if (!paintLiveRef.current) {
@@ -298,6 +388,8 @@ export function BenchScene({ sectionRef }: Props) {
         for (const key of Object.keys(json.ambient)) {
           ambientBanks[key] = new AtlasSheetBank(json.ambient[key].atlas);
         }
+        const pad = computePad(json);
+        padRef.current = pad;
         runtimeRef.current = {
           json,
           body: null,
@@ -310,10 +402,15 @@ export function BenchScene({ sectionRef }: Props) {
           triggerWalkF: TRIGGER_WALK_F.bench,
         });
         const { css_w, css_h, w_pct_of_viewport } = json.place;
-        setPlaceStyle({
-          ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
-          aspectRatio: `${css_w} / ${css_h}`,
-        });
+        setPlaceStyle(
+          placeStyleFromPad(
+            pack,
+            w_pct_of_viewport,
+            `${css_w} / ${css_h}`,
+            pad,
+            css_w,
+          ),
+        );
         await warmAssets();
       } catch {
         if (alive) setFailed(true);
@@ -353,6 +450,18 @@ export function BenchScene({ sectionRef }: Props) {
     };
   }, [pack, reduced, failed, sectionRef]);
 
+  // Keep poster-hidden flag on the canvas DOM node so layoutOverflowCanvas can
+  // set opacity without React wiping left/top/width/height each render.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const hide = failed || reduced || !paintLive;
+    canvas.dataset.posterHidden = hide ? '1' : '0';
+    if (canvas.style.position === 'absolute') {
+      canvas.style.opacity = hide ? '0' : '1';
+    }
+  }, [failed, reduced, paintLive, canvasActive]);
+
   const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`;
 
@@ -377,8 +486,7 @@ export function BenchScene({ sectionRef }: Props) {
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}
-          className="v37-scene__canvas"
-          style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
+          className="v37-scene__canvas v37-scene__canvas--overflow"
         />
       ) : null}
     </div>
@@ -392,14 +500,11 @@ function drawButterflies(
   ox: number,
   oy: number,
   layer: 'front' | 'back',
-  boxW: number,
-  boxH: number,
 ): void {
   for (const key of Object.keys(rt.json.ambient)) {
     const amb = rt.json.ambient[key];
     const pt = trackAt(amb.track, walkF);
     if (!pt || pt.layer !== layer) continue;
-    if (!intersectsPlace(pt.x, pt.y, amb.css_w, amb.css_h, boxW, boxH)) continue;
     const bank = rt.ambientBanks[key];
     if (!bank) continue;
     const entry = amb.atlas.index[pt.cell];

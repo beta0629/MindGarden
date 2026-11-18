@@ -1622,19 +1622,20 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 /* Bench: overflow canvas paints ambient tracks outside the place box.
    Horizontal fit is enforced by --bench-place-frac inside .home-reviews__scene. */
 .v37-scene--bench {
+  --bench-place-w: min(
+    var(--v37-w, 100%),
+    calc(100% * var(--bench-place-frac, 1)),
+    100%
+  );
   overflow: visible;
-  width: min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%);
+  width: var(--bench-place-w);
   max-width: 100%;
-  /* Right-align padded canvas inside host: reserve right pad, shift place left. */
+  /* Override .v37-scene margin-inline:auto, then right-align with right-pad reserved. */
+  margin-inline: 0;
   margin-left: max(
     0px,
-    calc(
-      100% - min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%) -
-        min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%) *
-          var(--bench-pad-r-ratio, 0)
-    )
+    calc(100% - var(--bench-place-w) - var(--bench-place-w) * var(--bench-pad-r-ratio, 0))
   );
-  margin-inline: unset;
   margin-right: 0;
 }
 

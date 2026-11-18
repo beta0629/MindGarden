@@ -612,25 +612,24 @@ p {
   background: transparent;
   /* Explicit box: absolute stage children must never size the panel. */
   min-height: 0;
-  /* Square-ish stage the GLB composition fills (page cream shows through). */
-  width: min(100%, 32rem);
+  /* Poster-like stage (1620×940) — large canvas, not a short strip. */
+  width: min(100%, 36rem);
   max-width: 100%;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1620 / 940;
   height: auto;
-  max-height: min(56svh, 32rem);
+  max-height: min(56svh, 34rem);
 }
 
 /*
- * Live GLB: short/wide stage so mesh size-fit fills HEIGHT with ~8% margin.
- * Camera top-packs in NDC — no CSS crop/offset (those sliced wings/flowers).
+ * Live GLB: same poster aspect as the approved still. Camera fit keeps ~4–8%
+ * margin inside a LARGE buffer (never ultra-wide 7/2 + tiny max-height).
  */
 .hero-media.is-3d {
   overflow: hidden;
-  /* Very wide: height-limits the sphere fit so the subject fills the stage. */
-  aspect-ratio: 7 / 2;
+  aspect-ratio: 1620 / 940;
   width: min(100%, 36rem);
   height: auto;
-  max-height: min(36svh, 18rem);
+  max-height: min(56svh, 34rem);
 }
 
 .hero-media__stage {
@@ -819,7 +818,7 @@ p {
   }
 
   .hero-media {
-    /* Square-ish box hugging the GLB; CTA→subject ≈ hero gap (1.5rem) + little empty pad. */
+    /* Near full-bleed; subject ≈ 90% of viewport width after pad bleed. */
     --hero-zoom: 1.2;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
@@ -828,15 +827,15 @@ p {
     margin-top: 0;
     min-height: 0;
     height: auto;
-    aspect-ratio: 1 / 1;
-    max-height: min(52svh, 20rem);
+    aspect-ratio: 1620 / 940;
+    max-height: min(52svh, 28rem);
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 7 / 2;
+    aspect-ratio: 1620 / 940;
     width: calc(100% + var(--pad) * 2);
     margin-inline: calc(var(--pad) * -1);
-    max-height: min(36svh, 18rem);
+    max-height: min(52svh, 28rem);
   }
 
   .hero-media__stage {
@@ -847,38 +846,40 @@ p {
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-media {
     --hero-zoom: 1.15;
-    aspect-ratio: 1 / 1;
-    max-height: min(64svh, 30rem);
+    aspect-ratio: 1620 / 940;
+    max-height: min(56svh, 32rem);
   }
 }
 
 @media (min-width: 1024px) {
   .hero {
     --hero-container: min(100vw - var(--pad) * 2, var(--max-page));
-    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    /* Media track wide enough that a ~90%-fitted subject ≈ 45–55vw. */
+    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
     gap: clamp(1rem, 2vw, 2rem);
     /* Tighter block padding: less empty cream under the hero before 상담 분야. */
     padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
   }
 
-  /* Media column: square stage hugs the subject; bleeds toward the right edge. */
+  /* Media column: fill the 3fr track so fitted subject ≈ 45–55% viewport. */
   .hero-media {
     --hero-zoom: 1.12;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
-    justify-self: end;
-    width: min(100%, min(58svh, 34rem));
-    max-width: 100%;
-    aspect-ratio: 1 / 1;
+    justify-self: stretch;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 1620 / 940;
     height: auto;
-    max-height: min(58svh, 34rem);
+    max-height: min(58svh, 40rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 7 / 2;
-    width: min(100%, min(64svh, 38rem));
-    max-height: min(40svh, 22rem);
+    aspect-ratio: 1620 / 940;
+    width: 100%;
+    max-width: none;
+    max-height: min(58svh, 40rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
@@ -1711,13 +1712,11 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   margin-right: 0;
 }
 
-/* Desktop: keep high ambient flight clear of the sticky header (≥16px). */
-@media (min-width: 1024px) {
-  .v37-scene--bench {
-    position: sticky;
-    top: calc(var(--header-sticky-h) + 1rem);
-  }
-}
+/*
+ * Bench stays in-flow beside the reviews title (fix10c). Do NOT sticky +
+ * translateY — that shoved the padded canvas onto .home-reviews__grid and
+ * covered card text. Ambient may pass under the header; cards never covered.
+ */
 
 .v37-scene__canvas,
 .v37-scene__poster {

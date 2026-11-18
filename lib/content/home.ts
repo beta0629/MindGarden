@@ -132,21 +132,7 @@ export const homeCopy = {
     title: '쉬어 간 분들의 이야기',
     moreLabel: '후기 더보기',
     moreHref: '/reviews',
-    /** Clearly marked examples — never present as real reviews. */
-    examples: [
-      {
-        body: '처음 문을 열 때의 긴장도, 차분한 안내 덕분에 조금 누그러졌습니다.',
-        meta: '방문 · 이*은 (예시)',
-      },
-      {
-        body: '기대도 하지 못했던 위로를 진심으로 받게 되었습니다.',
-        meta: '방문 · 김*정 (예시)',
-      },
-      {
-        body: '예약과 안내가 친절해서, 다음 일정을 정하기가 수월했습니다.',
-        meta: '방문 · 박*서 (예시)',
-      },
-    ] as const,
+    /** Public home uses Clinic-OS `homepage.reviews` only — never ship examples. */
   },
   pricing: {
     eyebrow: '비용',

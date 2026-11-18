@@ -157,14 +157,9 @@ export type HoverJson = {
 export const ASSET_BASE = '/assets/home-v3.7';
 
 export const TRIGGER_P: Record<PackId, { gate: number; bench: number; booking: number }> = {
-  /*
-   * Bench fires earlier (lower P) so peak ambient flight (~3700ms) starts while
-   * the padded canvas top is still below the sticky header. Sticky `top` on
-   * `.v37-scene--bench` clamps further scroll. Do not raise these without
-   * re-checking clearance at 1024–1920.
-   */
-  '1440': { gate: 0.5291, bench: 0.42, booking: 0.5612 },
-  '390': { gate: 0.4365, bench: 0.42, booking: 0.5659 },
+  /* Design-spec trigger p from IMPLEMENTATION-v3.7.md §0 (fix10c). */
+  '1440': { gate: 0.5291, bench: 0.5082, booking: 0.5612 },
+  '390': { gate: 0.4365, bench: 0.5057, booking: 0.5659 },
 };
 
 export const TRIGGER_WALK_F = {

@@ -43,9 +43,6 @@ type Pad = { left: number; top: number; right: number; bottom: number };
 
 /** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
 const BENCH_MIN_OPACITY = 0.92;
-/** Keep painted ambient tips ≥ this many px below the sticky header bottom. */
-const STICKY_BUTTERFLY_CLEAR_PX = 16;
-const STICKY_CLEAR_MIN_WIDTH = 1024;
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '1440': { wPct: 28.115, aspect: '405 / 350' },
@@ -205,36 +202,13 @@ function clearStickyShift(wrap: HTMLDivElement): void {
   }
 }
 
-function applyStickyShift(wrap: HTMLDivElement, need: number): void {
-  wrap.style.translate = '';
-  wrap.style.transform = `translateY(${need}px)`;
-}
-
 /**
- * Keep the highest ambient butterfly (≥16px) below the sticky header bottom.
- * Caller sets dataset.ambientTop to the natural (unshifted) top first.
+ * Sticky translateY used to clear the header for high ambient flight, but at
+ * 1280–1920 it shoved the padded canvas onto .home-reviews__grid and covered
+ * card text. Prefer card∩bench = 0 over header clearance — never shift.
  */
 function applyStickyHeaderClearance(wrap: HTMLDivElement): void {
-  if (window.innerWidth < STICKY_CLEAR_MIN_WIDTH) {
-    clearStickyShift(wrap);
-    return;
-  }
-  const painted = Number(wrap.dataset.ambientPainted || 0);
-  const naturalTop = Number(wrap.dataset.ambientTop || '');
-  if (painted < 1 || !Number.isFinite(naturalTop)) {
-    clearStickyShift(wrap);
-    return;
-  }
-  const header = document.querySelector('.site-header');
-  const headerBottom = header
-    ? header.getBoundingClientRect().bottom
-    : 0;
-  const minTop = headerBottom + STICKY_BUTTERFLY_CLEAR_PX;
-  const need = minTop - naturalTop;
   clearStickyShift(wrap);
-  if (need > 0.5) {
-    applyStickyShift(wrap, need);
-  }
 }
 
 export function BenchScene({ sectionRef }: Props) {

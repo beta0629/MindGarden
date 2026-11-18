@@ -8,17 +8,31 @@ type MountHeroOptions = {
 
 /** Addendum B: one full azimuth orbit + radius zoom cycle (seconds). */
 const ORBIT_PERIOD_S = 30;
-/** Peak zoom amp — orbit radius accounts for it so the sphere still fits. */
-const ZOOM_AMP = 0.08;
-/** Extra sphere/mesh margin so wings/flowers never touch the frustum edge. */
-const SPHERE_FIT_MARGIN = 1.08;
+/** Peak zoom amp — modest so resting fit stays large. */
+const ZOOM_AMP = 0.05;
+/**
+ * Frustum margin around the painted mesh (~6% → 4–8% band).
+ * Keep modest — over-shrink made a ~100px smudge in a huge cream field.
+ */
+const SPHERE_FIT_MARGIN = 1.03;
 /** Samples across WingFold to capture max wing extent. */
 const BOUNDS_SAMPLE_STEPS = 24;
+/** Spec FOV from hero-IMPLEMENTATION.md §3 (poster match). */
+const HERO_FOV_DEG = 30;
 /**
- * Top-pack target: projected mesh maxY (NDC +1 = top) after fit.
- * (1 - TARGET) / 2 ≈ 8% cream at panel top through orbit (incl. zoom amp).
+ * Poster elevation: cam (0.12, 1.5, 1.95) → lookAt (0, 0.15, 0.06)
+ * ⇒ vertical/horizontal ≈ 1.35/1.89 ≈ tan(35.5°). Orbit keeps this angle
+ * so the flower ring retains depth (near-equatorial orbits flatten it).
  */
-const SUBJECT_TOP_NDC = 1 / SPHERE_FIT_MARGIN;
+const ORBIT_ELEVATION_RAD = Math.atan(1.35 / 1.894);
+/** Spec lookAt / camera from hero-IMPLEMENTATION.md §3. */
+const POSTER_LOOK_AT = { x: 0, y: 0.15, z: 0.06 } as const;
+const POSTER_CAM = { x: 0.12, y: 1.5, z: 1.95 } as const;
+const POSTER_RADIUS = Math.hypot(
+  POSTER_CAM.x - POSTER_LOOK_AT.x,
+  POSTER_CAM.y - POSTER_LOOK_AT.y,
+  POSTER_CAM.z - POSTER_LOOK_AT.z,
+);
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3 + Addendum B).
@@ -86,7 +100,7 @@ export async function mountHero3D({
   fill.position.set(1.4, 1.2, -0.8);
   scene.add(fill);
 
-  const cam = new THREE.PerspectiveCamera(38, 1, 0.1, 50);
+  const cam = new THREE.PerspectiveCamera(HERO_FOV_DEG, 81 / 47, 0.1, 50);
 
   const draco = new DRACOLoader().setDecoderPath('/vendor/draco/gltf/');
   const loader = new GLTFLoader().setDRACOLoader(draco);
@@ -260,16 +274,24 @@ export async function mountHero3D({
     sampleBox.getBoundingSphere(sphere);
   }
 
-  const lookAt = sphere.center.clone();
+  // Approved poster pivot — not the inflated vertex sphere center.
+  const lookAt = new THREE.Vector3(
+    POSTER_LOOK_AT.x,
+    POSTER_LOOK_AT.y,
+    POSTER_LOOK_AT.z,
+  );
 
   const size = () => {
-    const width = panel.getBoundingClientRect().width;
-    const height = panel.getBoundingClientRect().height || width * 0.55;
-    renderer.setSize(width, Math.max(height, 1), false);
-    cam.aspect = width / Math.max(height, 1);
+    const rect = panel.getBoundingClientRect();
+    const width = Math.max(rect.width, 1);
+    const height = Math.max(rect.height || width * (940 / 1620), 1);
+    // Full CSS box × dpr (setPixelRatio already capped at 2) — never a tiny buffer.
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(width, height, false);
+    cam.aspect = width / height;
     cam.updateProjectionMatrix();
   };
-  // is-3d activates the short/wide aspect before the first measure/fit.
+  // is-3d activates poster aspect before the first measure/fit.
   panel.classList.add('is-3d');
   // Drop any leftover crop state from prior mounts.
   panel.classList.remove('is-cropped');
@@ -278,14 +300,13 @@ export async function mountHero3D({
   panel.style.removeProperty('--hero-crop-h');
   size();
 
-  const fitDist =
-    (sphere.radius * SPHERE_FIT_MARGIN) /
-    Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
-  let orbitRadius = fitDist * (1 + ZOOM_AMP);
-  /** Fixed orbit pivot Y (sphere/mesh center) — lookAt.y may diverge for top-pack. */
+  // Start from the approved poster distance, then project-fit (no sphere minDist clamp).
+  let orbitRadius = POSTER_RADIUS * (1 + ZOOM_AMP);
+  /** Fixed orbit pivot — lookAt stays on the flower bed center (poster). */
   const orbitCenterY = lookAt.y;
-  // Near-equatorial orbit around the pivot (not around a shifted lookAt).
-  let cameraY = orbitCenterY + orbitRadius * 0.03;
+  const elevSin = Math.sin(ORBIT_ELEVATION_RAD);
+  const elevCos = Math.cos(ORBIT_ELEVATION_RAD);
+  let cameraY = orbitCenterY + orbitRadius * elevSin;
 
   const proj = new THREE.Vector3();
   type NdcExtents = { halfX: number; halfY: number; minY: number; maxY: number };
@@ -325,6 +346,11 @@ export async function mountHero3D({
         [0, 0, -r],
       ] as const) {
         proj.set(c.x + dx, c.y + dy, c.z + dz).project(cam);
+        if (!Number.isFinite(proj.x) || !Number.isFinite(proj.y) || !Number.isFinite(proj.z)) {
+          continue;
+        }
+        if (proj.z < -1.05 || proj.z > 1.05) continue;
+        if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
         absorbNdc(into, proj.x, proj.y);
       }
     }
@@ -363,6 +389,13 @@ export async function mountHero3D({
       for (let i = 0; i < pos.count; i += step) {
         proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
         proj.applyMatrix4(mesh.matrixWorld).project(cam);
+        // Skip behind-camera / non-finite projections — they explode NDC and
+        // force a catastrophic zoom-out (tiny subject in empty cream).
+        if (!Number.isFinite(proj.x) || !Number.isFinite(proj.y) || !Number.isFinite(proj.z)) {
+          continue;
+        }
+        if (proj.z < -1.05 || proj.z > 1.05) continue;
+        if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
         absorbNdc(into, proj.x, proj.y);
       }
     });
@@ -376,7 +409,7 @@ export async function mountHero3D({
   };
 
   const placeAt = (radius: number, lookY: number, camY: number, theta: number) => {
-    // Orbit in XZ around the fixed pivot; camY is relative to orbitCenterY.
+    // Elevated orbit around the flower-bed pivot (poster-like depth).
     const horizontal = Math.sqrt(
       Math.max(radius * radius - (camY - orbitCenterY) ** 2, 0.01),
     );
@@ -391,108 +424,64 @@ export async function mountHero3D({
   };
 
   const syncCamY = () => {
-    cameraY = orbitCenterY + orbitRadius * 0.03;
+    cameraY = orbitCenterY + orbitRadius * elevSin;
   };
 
   /*
    * Camera-only framing (no CSS crop / offset):
-   * 1) Start from tight vertex sphere distance (+ zoom amp).
-   * 2) Zoom IN/OUT across orbit×WingFold so max projected half == 1/1.08.
-   * 3) Top-pack: lower lookAt.y below the pivot so mesh maxY → SUBJECT_TOP_NDC
-   *    (lookAt is the NDC origin — it must leave the mesh mid for packing).
-   * 4) Re-check orbit; zoom OUT only if top-pack caused edge overflow.
+   * Fit the POSTER angle (+ WingFold samples) so projected half ≈ 1/1.06.
+   * Do NOT clamp to the inflated vertex sphere — that left a tiny subject.
+   * Mild zoom-out only if other orbit angles exceed NDC ±1.02.
    */
   {
-    const angles = 8;
     const animSteps = clip ? 6 : 0;
     const duration = clip ? Math.max(clip.duration, 0.001) : 1;
     const fitTarget = 1 / SPHERE_FIT_MARGIN;
+    // Poster azimuth ≈ atan2(0.12, 1.89) — near +Z.
+    const posterTheta = Math.atan2(
+      POSTER_CAM.x - POSTER_LOOK_AT.x,
+      POSTER_CAM.z - POSTER_LOOK_AT.z,
+    );
 
-    const measureOrbitMesh = (): NdcExtents => {
+    const measureAtTheta = (theta: number): NdcExtents => {
       let halfX = 0;
       let halfY = 0;
       let minY = 1;
       let maxY = -1;
-      for (let a = 0; a < angles; a += 1) {
-        placeAt(orbitRadius, lookAt.y, cameraY, (a / angles) * Math.PI * 2);
-        for (let s = 0; s <= animSteps; s += 1) {
-          if (clip && wingAction) {
-            mixer.setTime((duration * s) / Math.max(animSteps, 1));
-          }
-          const ext = measureNdcMesh();
-          halfX = Math.max(halfX, ext.halfX);
-          halfY = Math.max(halfY, ext.halfY);
-          minY = Math.min(minY, ext.minY);
-          maxY = Math.max(maxY, ext.maxY);
+      placeAt(orbitRadius, lookAt.y, cameraY, theta);
+      for (let s = 0; s <= animSteps; s += 1) {
+        if (clip && wingAction) {
+          mixer.setTime((duration * s) / Math.max(animSteps, 1));
         }
+        const ext = measureNdcMesh();
+        halfX = Math.max(halfX, ext.halfX);
+        halfY = Math.max(halfY, ext.halfY);
+        minY = Math.min(minY, ext.minY);
+        maxY = Math.max(maxY, ext.maxY);
       }
       if (clip && wingAction) mixer.setTime(0);
       return { halfX, halfY, minY, maxY };
     };
 
-    const worldPerNdcY = () => {
-      const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
-      return dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
+    /*
+     * Fit RESTING radius at the poster azimuth so projected half ≈ fitTarget.
+     * Per-frame radius compensation (below) keeps fill stable through orbit.
+     */
+    const fitPoster = () => {
+      syncCamY();
+      const ext = measureAtTheta(posterTheta);
+      const half = Math.max(ext.halfX, ext.halfY, 0.05);
+      orbitRadius = Math.max(0.35, orbitRadius * (half / fitTarget));
+      syncCamY();
     };
 
-    // Fit at the CLOSEST zoom (orbitRadius / (1+ZOOM_AMP)) so peak zoom keeps margin.
-    const fitWithZoomHeadroom = () => {
-      const closest = orbitRadius / (1 + ZOOM_AMP);
-      const saved = orbitRadius;
-      orbitRadius = closest;
-      syncCamY();
-      const orbitExt = measureOrbitMesh();
-      const orbitHalf = Math.max(orbitExt.halfX, orbitExt.halfY, 0.05);
-      // Scale the resting orbitRadius so closest pose hits fitTarget.
-      orbitRadius = saved * (orbitHalf / fitTarget);
-      const minDist = sphere.radius * 1.15 * (1 + ZOOM_AMP);
-      orbitRadius = Math.max(orbitRadius, minDist);
-      syncCamY();
-      return orbitExt;
-    };
-
-    placeAt(orbitRadius, lookAt.y, cameraY, 0);
+    placeAt(orbitRadius, lookAt.y, cameraY, posterTheta);
     if (clip && wingAction) mixer.setTime(0);
-    fitWithZoomHeadroom();
+    fitPoster();
+    fitPoster();
+    fitPoster();
 
-    // Top-pack: look BELOW the pivot so the subject rises in NDC.
-    const clampLookY = () => {
-      const maxShift = orbitRadius * 0.65;
-      lookAt.y = Math.max(
-        orbitCenterY - maxShift,
-        Math.min(orbitCenterY + maxShift, lookAt.y),
-      );
-    };
-    {
-      // Measure at closest zoom for the true peak silhouette.
-      const closest = orbitRadius / (1 + ZOOM_AMP);
-      const saved = orbitRadius;
-      orbitRadius = closest;
-      syncCamY();
-      const packed = measureOrbitMesh();
-      lookAt.y -= (SUBJECT_TOP_NDC - packed.maxY) * worldPerNdcY();
-      clampLookY();
-      orbitRadius = saved;
-      syncCamY();
-    }
-
-    // Top-pack can push past the margin — zoom OUT at closest pose if needed.
-    {
-      fitWithZoomHeadroom();
-      const closest = orbitRadius / (1 + ZOOM_AMP);
-      const saved = orbitRadius;
-      orbitRadius = closest;
-      syncCamY();
-      const again = measureOrbitMesh();
-      lookAt.y -= (SUBJECT_TOP_NDC - again.maxY) * worldPerNdcY();
-      clampLookY();
-      orbitRadius = saved;
-      syncCamY();
-      // Final safety zoom-out if still over.
-      fitWithZoomHeadroom();
-    }
-
-    placeAt(orbitRadius, lookAt.y, cameraY, 0);
+    placeAt(orbitRadius, lookAt.y, cameraY, posterTheta);
     if (clip && wingAction) mixer.setTime(0);
     const packed = measureNdcMesh();
     panel.dataset.heroFit = [
@@ -549,8 +538,7 @@ export async function mountHero3D({
 
   /**
    * Project painted mesh to panel % for pause placement.
-   * Pause sits in the BR quadrant but inset toward the body so the control
-   * lands on cream/body, not flower petals (bottom ~40% is the ring).
+   * 44px hit sits at subject bottom-right on cream — not on flower petals.
    */
   const updateSubjectCssVars = () => {
     const { width, height } = panel.getBoundingClientRect();
@@ -584,6 +572,11 @@ export async function mountHero3D({
       for (let i = 0; i < pos.count; i += step) {
         proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
         proj.applyMatrix4(m.matrixWorld).project(cam);
+        if (!Number.isFinite(proj.x) || !Number.isFinite(proj.y) || !Number.isFinite(proj.z)) {
+          continue;
+        }
+        if (proj.z < -1.05 || proj.z > 1.05) continue;
+        if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
         const px = proj.x * 0.5 + 0.5;
         const py = -proj.y * 0.5 + 0.5;
         minX = Math.min(minX, px);
@@ -605,25 +598,30 @@ export async function mountHero3D({
     panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
 
     /*
-     * Pause on cream at subject BR — midway from AABB corner toward panel
-     * corner so the 44px hit lands on page cream, not flower petals.
+     * Pause at subject bottom-right on cream — just outside the AABB so the
+     * 44px hit is not on flower petals. Clamp inside the panel.
      */
-    const pauseX = Math.min(0.96, maxX + Math.max(0.055, (1 - maxX) * 0.4));
-    const pauseY = Math.min(0.96, maxY + Math.max(0.055, (1 - maxY) * 0.4));
+    const pauseX = Math.min(0.96, Math.max(0.62, maxX + 0.02));
+    const pauseY = Math.min(0.96, Math.max(0.55, maxY + 0.02));
     panel.style.setProperty('--hero-pause-x', `${(pauseX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-pause-y', `${(pauseY * 100).toFixed(2)}%`);
   };
 
+  const posterTheta = Math.atan2(
+    POSTER_CAM.x - POSTER_LOOK_AT.x,
+    POSTER_CAM.z - POSTER_LOOK_AT.z,
+  );
+  /** Keep framing near the approved poster — full 360° foreshortening shrank the subject. */
+  const ORBIT_SWAY_RAD = THREE.MathUtils.degToRad(28);
   const placeCamera = (t: number) => {
     const phase = (t % ORBIT_PERIOD_S) / ORBIT_PERIOD_S;
-    const theta = phase * Math.PI * 2;
+    // Gentle azimuth sway around the poster pose (not a full turntable).
+    const theta = posterTheta + Math.sin(phase * Math.PI * 2) * ORBIT_SWAY_RAD;
     const zoom =
       1 + (ZOOM_AMP * (1 - Math.cos(phase * Math.PI * 2))) / 2;
     const radius = orbitRadius / zoom;
-    const camY = orbitCenterY + radius * 0.03;
-    const horizontal = Math.sqrt(
-      Math.max(radius * radius - (camY - orbitCenterY) ** 2, 0.01),
-    );
+    const camY = orbitCenterY + radius * elevSin;
+    const horizontal = Math.max(radius * elevCos, 0.01);
     cam.position.set(
       lookAt.x + Math.sin(theta) * horizontal,
       camY,

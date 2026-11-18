@@ -261,38 +261,27 @@ export default async function HomePage() {
               <BenchScene />
             </div>
           </header>
-          <div className="home-reviews__grid" data-reveal-stagger>
-            {homeReviews.length > 0
-              ? homeReviews.map((review, index) => (
-                  <article
-                    key={`${review.publishedAt}-${review.displayName ?? 'anon'}-${review.body.slice(0, 12)}`}
-                    className={`home-review-card${
-                      homeReviews.length >= 3 && index === 1
-                        ? ' home-review-card--accent'
-                        : ''
-                    }`}
-                    data-reveal
-                  >
-                    <p>{review.body}</p>
-                    <p className="home-review-card__meta">
-                      {review.displayName || '익명'} ·{' '}
-                      {review.publishedAt.slice(0, 10)}
-                    </p>
-                  </article>
-                ))
-              : homeCopy.reviews.examples.map((review, index) => (
-                  <article
-                    key={review.meta}
-                    className={`home-review-card${
-                      index === 1 ? ' home-review-card--accent' : ''
-                    }`}
-                    data-reveal
-                  >
-                    <p>{review.body}</p>
-                    <p className="home-review-card__meta">{review.meta}</p>
-                  </article>
-                ))}
-          </div>
+          {homeReviews.length > 0 ? (
+            <div className="home-reviews__grid" data-reveal-stagger>
+              {homeReviews.map((review, index) => (
+                <article
+                  key={`${review.publishedAt}-${review.displayName ?? 'anon'}-${review.body.slice(0, 12)}`}
+                  className={`home-review-card${
+                    homeReviews.length >= 3 && index === 1
+                      ? ' home-review-card--accent'
+                      : ''
+                  }`}
+                  data-reveal
+                >
+                  <p>{review.body}</p>
+                  <p className="home-review-card__meta">
+                    {review.displayName || '익명'} ·{' '}
+                    {review.publishedAt.slice(0, 10)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : null}
         </div>
       </section>
 

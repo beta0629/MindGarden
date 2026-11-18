@@ -2053,9 +2053,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 /*
- * Empty Clinic-OS reviews: host height hugs title+bench only (~80–96px section
- * pad). Zero flight top-pad in flow and crop place-box sky so the ambient
- * reservation does not leave a blank upper half.
+ * Empty Clinic-OS reviews: no card grid — only remove the former card band.
+ * Keep natural BenchScene flight pads (seat/legs/grass/butterflies unclipped).
  */
 .home-reviews--empty {
   padding-block: clamp(5rem, 5.75vw, 6rem);
@@ -2063,37 +2062,16 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-reviews--empty .home-reviews__header {
   margin-bottom: 0;
-  /* Top of the compact band — section pad is the only cream above. */
-  align-items: start;
+  /* Title left, full bench right — vertically centered in the header row. */
+  align-items: center;
   gap: 0.75rem 1.5rem;
 }
 
 .home-reviews--empty .home-reviews__scene {
-  /* Clip place-box sky + ambient; layout height = bench band only. */
-  overflow: hidden;
+  /* Same as default: x fit via place-frac; y visible for flight pad. */
+  overflow-x: clip;
+  overflow-y: visible;
   max-width: 100%;
-}
-
-.home-reviews--empty .v37-scene--bench {
-  --bench-pad-t-over-w: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-  /*
-   * Place aspect (~350/405 ≈ 0.86) still includes sky above the seat.
-   * Pull layout up by ~55% of place height so the host hugs the bench;
-   * .home-reviews__scene overflow:hidden clips the sky.
-   */
-  margin-top: calc(var(--bench-place-w) * -0.48);
-}
-
-.home-reviews--empty .v37-scene__canvas--overflow {
-  /* JS sets top:0 assuming pad reserves space — shift track up into prior band. */
-  top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0) * -1) !important;
-}
-
-.home-reviews--empty .v37-scene__poster {
-  /* Poster follows the same crop as the live canvas host. */
-  margin-top: 0;
 }
 
 .home-reviews__header {
@@ -2664,13 +2642,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
     overflow-y: visible;
   }
 
-  /* Empty: override end-align + clip so the compact band hugs title+bench. */
+  /* Empty: title + full bench scene vertically centered (no sky crop). */
   .home-reviews--empty .home-reviews__header {
-    align-items: start;
-  }
-
-  .home-reviews--empty .home-reviews__scene {
-    overflow: hidden;
+    align-items: center;
   }
 
   .home-reviews__grid {

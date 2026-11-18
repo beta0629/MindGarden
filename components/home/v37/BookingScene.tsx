@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
   AtlasSheetBank,
-  drawAtlasFrame,
+  drawAtlasFrameBlend,
   loadJson,
   MAX_CANVAS_DPR,
   NEAR_ROOT_MARGIN,
@@ -92,11 +92,12 @@ type HoverPhase =
 
 function ensureBookingSheets(rt: Runtime, walkF: number, landingDone: boolean): void {
   if (!landingDone && walkF < LANDING_END + 2) {
-    const idx = Math.min(
-      rt.booking.landing.atlas.frames - 1,
-      Math.max(0, Math.round(walkF - LANDING_START)),
-    );
-    void rt.landingBank.ensureCurrentAndNext(idx);
+    const raw = walkF - LANDING_START;
+    const last = rt.booking.landing.atlas.frames - 1;
+    const i0 = Math.min(last, Math.max(0, Math.floor(raw)));
+    const i1 = Math.min(last, Math.ceil(raw));
+    void rt.landingBank.ensureCurrentAndNext(i0);
+    if (i1 !== i0) void rt.landingBank.ensureCurrentAndNext(i1);
   }
   if (landingDone || walkF >= LANDING_END - 2) {
     void rt.breatheBank.ensureCurrentAndNext(0);
@@ -301,11 +302,18 @@ export function BookingScene({ sectionRef }: Props) {
         atlas: BookingJson['landing']['atlas'],
         index: number,
       ) => {
-        const entry = atlas.index[index];
-        if (!entry) return;
-        const sheet = bank.get(entry[0]);
-        if (!sheet) return;
-        drawAtlasFrame(ctx, sheet, atlas, index, 0, 0, 2);
+        drawAtlasFrameBlend(
+          ctx,
+          (frameIndex) => {
+            const entry = atlas.index[frameIndex];
+            return entry ? bank.get(entry[0]) : null;
+          },
+          atlas,
+          index,
+          0,
+          0,
+          2,
+        );
       };
 
       let phase = hoverRef.current;
@@ -325,7 +333,7 @@ export function BookingScene({ sectionRef }: Props) {
       } else if (walkF <= LANDING_END && !landingDoneRef.current) {
         const idx = Math.min(
           rt.booking.landing.atlas.frames - 1,
-          Math.max(0, Math.round(walkF - LANDING_START)),
+          Math.max(0, walkF - LANDING_START),
         );
         drawBankFrame(rt.landingBank, rt.booking.landing.atlas, idx);
         if (!paintLiveRef.current) {

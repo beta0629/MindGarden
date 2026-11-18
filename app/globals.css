@@ -1696,10 +1696,10 @@ p {
  */
 html.reveal-js [data-reveal].reveal-pending:not(.is-revealed) {
   opacity: 0;
-  transform: translateY(14px);
+  transform: translateY(10px);
   transition:
-    opacity 520ms ease-out,
-    transform 520ms ease-out;
+    opacity 400ms ease-out,
+    transform 400ms ease-out;
   will-change: opacity, transform;
 }
 

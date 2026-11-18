@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
   AtlasSheetBank,
-  drawAtlasFrame,
+  drawAtlasFrameBlend,
   drawCoverImage,
   loadJson,
   loadSheet,
@@ -103,28 +103,89 @@ export function computePad(json: BenchJson): Pad {
   };
 }
 
-function trackAt(
+type TrackSample = {
+  x: number;
+  y: number;
+  layer: AmbientButterfly['track'][number]['layer'];
+  cellA: number;
+  cellB: number;
+  blend: number;
+};
+
+/**
+ * Lerp position between adjacent walk frames; crossfade atlas cells on the frac.
+ */
+function trackSample(
   track: AmbientButterfly['track'],
   walkF: number,
-): AmbientButterfly['track'][number] | null {
+): TrackSample | null {
   if (track.length === 0) return null;
   // Hold the final peak pose after the track ends so high flight stays visible.
   if (walkF < track[0].f) return null;
-  if (walkF > track[track.length - 1].f) {
-    return track[track.length - 1] ?? null;
+  if (walkF >= track[track.length - 1].f) {
+    const p = track[track.length - 1];
+    if (!p) return null;
+    return {
+      x: p.x,
+      y: p.y,
+      layer: p.layer,
+      cellA: p.cell,
+      cellB: p.cell,
+      blend: 0,
+    };
   }
-  const idx = Math.round(walkF - track[0].f);
-  return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
+  const f = walkF - track[0].f;
+  const i0 = Math.min(track.length - 1, Math.max(0, Math.floor(f)));
+  const i1 = Math.min(track.length - 1, i0 + 1);
+  const t = f - i0;
+  const a = track[i0];
+  const b = track[i1];
+  if (!a) return null;
+  if (!b || i0 === i1) {
+    return {
+      x: a.x,
+      y: a.y,
+      layer: a.layer,
+      cellA: a.cell,
+      cellB: a.cell,
+      blend: 0,
+    };
+  }
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    layer: t < 0.5 ? a.layer : b.layer,
+    cellA: a.cell,
+    cellB: b.cell,
+    blend: t,
+  };
 }
 
-function perchAt(
+function perchSample(
   track: PerchShadowTrackPoint[],
   walkF: number,
-): PerchShadowTrackPoint | null {
+): { x: number; y: number; opacity: number } | null {
   if (track.length === 0) return null;
   if (walkF < track[0].f || walkF > track[track.length - 1].f) return null;
-  const idx = Math.round(walkF - track[0].f);
-  return track[Math.min(track.length - 1, Math.max(0, idx))] ?? null;
+  if (walkF >= track[track.length - 1].f) {
+    const p = track[track.length - 1];
+    return p ? { x: p.x, y: p.y, opacity: p.opacity } : null;
+  }
+  const f = walkF - track[0].f;
+  const i0 = Math.min(track.length - 1, Math.max(0, Math.floor(f)));
+  const i1 = Math.min(track.length - 1, i0 + 1);
+  const t = f - i0;
+  const a = track[i0];
+  const b = track[i1];
+  if (!a) return null;
+  if (!b || i0 === i1) {
+    return { x: a.x, y: a.y, opacity: a.opacity };
+  }
+  return {
+    x: a.x + (b.x - a.x) * t,
+    y: a.y + (b.y - a.y) * t,
+    opacity: a.opacity + (b.opacity - a.opacity) * t,
+  };
 }
 
 function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
@@ -132,9 +193,13 @@ function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
     const amb = rt.json.ambient[key];
     const bank = rt.ambientBanks[key];
     if (!bank) continue;
-    const pt = trackAt(amb.track, walkF);
-    const cell = pt ? pt.cell : 0;
-    void bank.ensureCurrentAndNext(cell);
+    const pt = trackSample(amb.track, walkF);
+    if (!pt) {
+      void bank.ensureCurrentAndNext(0);
+      continue;
+    }
+    void bank.ensureCurrentAndNext(pt.cellA);
+    if (pt.cellB !== pt.cellA) void bank.ensureCurrentAndNext(pt.cellB);
   }
 }
 
@@ -334,9 +399,9 @@ export function BenchScene({ sectionRef }: Props) {
       let painted = 0;
       for (const key of Object.keys(rt.json.ambient)) {
         const amb = rt.json.ambient[key];
-        const pt = trackAt(amb.track, walkF);
+        const pt = trackSample(amb.track, walkF);
         if (!pt) continue;
-        const entry = amb.atlas.index[pt.cell];
+        const entry = amb.atlas.index[pt.cellA];
         if (!entry) continue;
         const sheet = rt.ambientBanks[key]?.get(entry[0]);
         if (!sheet) continue;
@@ -398,7 +463,7 @@ export function BenchScene({ sectionRef }: Props) {
       drawCoverImage(ctx, rt.body, ox, oy, boxW, boxH);
       ctx.restore();
 
-      const perch = perchAt(rt.json.perch_shadow.track, walkF);
+      const perch = perchSample(rt.json.perch_shadow.track, walkF);
       if (perch && rt.perchShadow) {
         ctx.save();
         ctx.globalAlpha = perch.opacity;
@@ -592,14 +657,17 @@ function drawButterflies(
 ): void {
   for (const key of Object.keys(rt.json.ambient)) {
     const amb = rt.json.ambient[key];
-    const pt = trackAt(amb.track, walkF);
+    const pt = trackSample(amb.track, walkF);
     if (!pt || pt.layer !== layer) continue;
     const bank = rt.ambientBanks[key];
     if (!bank) continue;
-    const entry = amb.atlas.index[pt.cell];
+    const frameFloat =
+      pt.cellA === pt.cellB ? pt.cellA : pt.cellA + (pt.cellB - pt.cellA) * pt.blend;
+    const entry = amb.atlas.index[pt.cellA];
     if (!entry) continue;
-    const sheet = bank.get(entry[0]);
-    if (!sheet) continue;
+    if (!bank.get(entry[0]) && !bank.get(amb.atlas.index[pt.cellB]?.[0] ?? -1)) {
+      continue;
+    }
 
     ctx.save();
     if (amb.front_blur && layer === 'front') {
@@ -611,7 +679,18 @@ function drawButterflies(
       ctx.scale(-1, 1);
       ctx.translate(-cx, 0);
     }
-    drawAtlasFrame(ctx, sheet, amb.atlas, pt.cell, ox + pt.x, oy + pt.y, 2);
+    drawAtlasFrameBlend(
+      ctx,
+      (frameIndex) => {
+        const e = amb.atlas.index[frameIndex];
+        return e ? bank.get(e[0]) : null;
+      },
+      amb.atlas,
+      frameFloat,
+      ox + pt.x,
+      oy + pt.y,
+      2,
+    );
     ctx.restore();
   }
 }

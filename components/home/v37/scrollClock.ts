@@ -127,10 +127,37 @@ export class ScrollClock {
   }
 }
 
+/** Stable visual viewport height — prefer visualViewport; avoid RO feedback. */
+let cachedVh = 0;
+let vhListenersBound = false;
+
+function readStableVh(): number {
+  const vv = window.visualViewport?.height;
+  const next =
+    typeof vv === 'number' && vv > 0
+      ? vv
+      : window.innerHeight || cachedVh || 1;
+  cachedVh = next;
+  return next;
+}
+
+function bindVhCache(): void {
+  if (vhListenersBound || typeof window === 'undefined') return;
+  vhListenersBound = true;
+  const refresh = () => {
+    cachedVh = readStableVh();
+  };
+  window.addEventListener('resize', refresh, { passive: true });
+  window.visualViewport?.addEventListener('resize', refresh);
+  window.visualViewport?.addEventListener('scroll', refresh);
+  refresh();
+}
+
 export function readScrollMetrics(sectionEl: HTMLElement): ScrollMetrics {
+  bindVhCache();
   const rect = sectionEl.getBoundingClientRect();
   const scrollY = window.scrollY || window.pageYOffset || 0;
-  const vh = window.innerHeight || 1;
+  const vh = cachedVh > 0 ? cachedVh : readStableVh();
   const sectionTop = scrollY + rect.top;
   const sectionHeight = Math.max(1, rect.height);
   const docH = Math.max(

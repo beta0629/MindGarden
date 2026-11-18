@@ -170,6 +170,51 @@ export function drawAtlasFrame(
   );
 }
 
+/**
+ * Sub-frame blend between adjacent atlas cells (opacity crossfade).
+ * Prefer this over Math.round(walkF) hard steps.
+ */
+export function drawAtlasFrameBlend(
+  ctx: CanvasRenderingContext2D,
+  getSheet: (frameIndex: number) => DecodedImage | null,
+  atlas: AtlasMeta,
+  frameFloat: number,
+  dx: number,
+  dy: number,
+  sourceScale = 2,
+): void {
+  const last = atlas.index.length - 1;
+  if (last < 0) return;
+  const clamped = Math.min(last, Math.max(0, frameFloat));
+  const i0 = Math.floor(clamped);
+  const i1 = Math.min(last, i0 + 1);
+  const t = clamped - i0;
+  if (i0 === i1 || t < 0.001) {
+    const sheet = getSheet(i0);
+    if (sheet) drawAtlasFrame(ctx, sheet, atlas, i0, dx, dy, sourceScale);
+    return;
+  }
+  if (t > 0.999) {
+    const sheet = getSheet(i1);
+    if (sheet) drawAtlasFrame(ctx, sheet, atlas, i1, dx, dy, sourceScale);
+    return;
+  }
+  const sheet0 = getSheet(i0);
+  const sheet1 = getSheet(i1);
+  if (sheet0) {
+    ctx.save();
+    ctx.globalAlpha *= 1 - t;
+    drawAtlasFrame(ctx, sheet0, atlas, i0, dx, dy, sourceScale);
+    ctx.restore();
+  }
+  if (sheet1) {
+    ctx.save();
+    ctx.globalAlpha *= t;
+    drawAtlasFrame(ctx, sheet1, atlas, i1, dx, dy, sourceScale);
+    ctx.restore();
+  }
+}
+
 export function drawCoverImage(
   ctx: CanvasRenderingContext2D,
   img: DecodedImage,

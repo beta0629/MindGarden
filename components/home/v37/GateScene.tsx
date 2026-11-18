@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
   AtlasSheetBank,
-  drawAtlasFrame,
+  drawAtlasFrameBlend,
   drawCoverImage,
   loadJson,
   loadSheet,
@@ -44,7 +44,8 @@ const DEFAULT_PLACE: Record<
 };
 
 function doorIndexForWalk(json: GateJson, walkF: number): {
-  index: number;
+  /** Fractional atlas frame for sub-frame blend. */
+  frame: number;
   crossfade: number;
   useStatic: boolean;
 } {
@@ -52,26 +53,38 @@ function doorIndexForWalk(json: GateJson, walkF: number): {
   const lastIdx = json.door.body_atlas.frames - 1;
 
   if (walkF < startF) {
-    return { index: 0, crossfade: 0, useStatic: false };
+    return { frame: 0, crossfade: 0, useStatic: false };
   }
   if (walkF <= endF) {
-    const idx = Math.min(lastIdx, Math.max(0, Math.round(walkF - startF)));
-    return { index: idx, crossfade: 0, useStatic: false };
+    const raw = walkF - startF;
+    const frame = Math.min(lastIdx, Math.max(0, raw));
+    return { frame, crossfade: 0, useStatic: false };
   }
   const [, cf1] = json.static.crossfade_walk_frames;
   if (walkF <= cf1) {
     const w = smoothstep((walkF - endF) / 11);
-    return { index: lastIdx, crossfade: w, useStatic: false };
+    return { frame: lastIdx, crossfade: w, useStatic: false };
   }
-  return { index: lastIdx, crossfade: 1, useStatic: true };
+  return { frame: lastIdx, crossfade: 1, useStatic: true };
 }
 
 async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
   const door = doorIndexForWalk(rt.json, walkF);
+  const i0 = Math.floor(door.frame);
+  const i1 = Math.min(
+    rt.json.door.body_atlas.frames - 1,
+    Math.ceil(door.frame),
+  );
   const jobs: Promise<void>[] = [
-    rt.bodyBank.ensureCurrentAndNext(door.index),
-    rt.shadowBank.ensureCurrentAndNext(door.index),
+    rt.bodyBank.ensureCurrentAndNext(i0),
+    rt.shadowBank.ensureCurrentAndNext(i0),
   ];
+  if (i1 !== i0) {
+    jobs.push(
+      rt.bodyBank.ensureCurrentAndNext(i1),
+      rt.shadowBank.ensureCurrentAndNext(i1),
+    );
+  }
   if (door.crossfade > 0 || door.useStatic) {
     if (!rt.staticBody) {
       jobs.push(
@@ -151,7 +164,7 @@ export function GateScene({ sectionRef }: Props) {
       shadowScaleX: number,
       shadowOpacity: number,
       mode: 'atlas' | 'static',
-      frameIndex: number,
+      frameFloat: number,
       alpha: number,
     ) => {
       const bodyScale = rt.json.body_scale || 2;
@@ -168,38 +181,36 @@ export function GateScene({ sectionRef }: Props) {
       ctx.scale(shadowScaleX, 1);
       ctx.translate(-cssW / 2, -groundY);
       if (mode === 'atlas') {
-        const entry = rt.json.door.shadow_atlas.index[frameIndex];
-        const sheet = entry ? rt.shadowBank.get(entry[0]) : null;
-        if (sheet) {
-          drawAtlasFrame(
-            ctx,
-            sheet,
-            rt.json.door.shadow_atlas,
-            frameIndex,
-            0,
-            0,
-            shadowScale,
-          );
-        }
+        drawAtlasFrameBlend(
+          ctx,
+          (frameIndex) => {
+            const entry = rt.json.door.shadow_atlas.index[frameIndex];
+            return entry ? rt.shadowBank.get(entry[0]) : null;
+          },
+          rt.json.door.shadow_atlas,
+          frameFloat,
+          0,
+          0,
+          shadowScale,
+        );
       } else if (rt.staticShadow) {
         drawCoverImage(ctx, rt.staticShadow, 0, 0, cssW, cssH);
       }
       ctx.restore();
 
       if (mode === 'atlas') {
-        const entry = rt.json.door.body_atlas.index[frameIndex];
-        const sheet = entry ? rt.bodyBank.get(entry[0]) : null;
-        if (sheet) {
-          drawAtlasFrame(
-            ctx,
-            sheet,
-            rt.json.door.body_atlas,
-            frameIndex,
-            0,
-            0,
-            bodyScale,
-          );
-        }
+        drawAtlasFrameBlend(
+          ctx,
+          (frameIndex) => {
+            const entry = rt.json.door.body_atlas.index[frameIndex];
+            return entry ? rt.bodyBank.get(entry[0]) : null;
+          },
+          rt.json.door.body_atlas,
+          frameFloat,
+          0,
+          0,
+          bodyScale,
+        );
       } else if (rt.staticBody) {
         drawCoverImage(ctx, rt.staticBody, 0, 0, cssW, cssH);
       }
@@ -273,7 +284,7 @@ export function GateScene({ sectionRef }: Props) {
           drawShadowScale,
           drawShadowOpacity,
           'atlas',
-          door.index,
+          door.frame,
           1 - door.crossfade,
         );
         paintPair(
@@ -300,7 +311,7 @@ export function GateScene({ sectionRef }: Props) {
           drawShadowScale,
           drawShadowOpacity,
           'atlas',
-          door.index,
+          door.frame,
           1,
         );
       }

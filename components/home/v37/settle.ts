@@ -1,7 +1,7 @@
 import { smoothstep } from './atlas';
 
-/** Rise distance in CSS px — §1 IMPLEMENTATION-v3.7.md */
-export const SETTLE_RISE_PX = { '1440': 36, '390': 28 } as const;
+/** Rise distance in CSS px — calm settle (≤16px; was 36/28). */
+export const SETTLE_RISE_PX = { '1440': 16, '390': 14 } as const;
 
 const PHASE1_MS = 300;
 const TOTAL_MS = 1200;

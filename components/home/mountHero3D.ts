@@ -434,16 +434,30 @@ export async function mountHero3D({
     panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
 
     /*
-     * 44px hit in the panel’s bottom-right cream gutter (off the flower ring).
-     * Floor near the BR corner so pastel petals that pass a loose “cream”
-     * delta never sit under the control center. Keep a 28px edge pad for hit.
+     * Pause OUTSIDE the subject AABB — prefer BELOW the painted subject
+     * (y ≥ maxY + 12–20px). Media often bleeds past .hero, so AABB-right can
+     * sit off-container; keep X inside the visible hero overlap (~≤88%) and
+     * put Y just under the panel when the mesh owns the lower edge.
      */
-    // ~16px from panel edge — 44px hit may overhang slightly into cream outside.
-    const edgePad = 16 / Math.max(Math.min(width, height), 1);
-    let pauseX = Math.max(denseR + 0.18, 0.92);
-    let pauseY = Math.max(denseB + 0.22, 0.92);
-    pauseX = Math.min(1 - edgePad, pauseX);
-    pauseY = Math.min(1 - edgePad, pauseY);
+    const gapY = 18 / Math.max(height, 1);
+    // Visible BR of the panel inside .hero (media may bleed past container).
+    const visibleRight = 0.88;
+    let pauseX = Math.min(visibleRight, Math.max(0.78, denseR + 0.06));
+    /*
+     * Desktop (viewport ≥1024): sit just below the media box — subject fills
+     * the stage BR so in-panel corners still hit petals.
+     * Mobile: media margin-bottom collapses hero height — keep the control
+     * inside the panel, below AABB on the in-panel cream under the subject.
+     */
+    const mobile = window.innerWidth <= 1023;
+    let pauseY = mobile
+      ? Math.min(0.95, Math.max(maxY + gapY * 1.35, maxY + 20 / Math.max(height, 1)))
+      : Math.max(1 + gapY, maxY + 14 / Math.max(height, 1));
+    if (!mobile) {
+      pauseY = Math.min(1 + 28 / Math.max(height, 1), pauseY);
+    } else {
+      pauseY = Math.min(0.96, pauseY);
+    }
     panel.style.setProperty('--hero-pause-x', `${(pauseX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-pause-y', `${(pauseY * 100).toFixed(2)}%`);
   };

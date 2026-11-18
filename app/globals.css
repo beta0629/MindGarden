@@ -548,6 +548,8 @@ p {
   gap: 1.5rem;
   align-items: center;
   padding: clamp(2.5rem, 6vw, 4.5rem) 0;
+  /* Pause may sit just below .hero-media on cream. */
+  overflow: visible;
 }
 
 .hero__copy h1 {
@@ -603,10 +605,11 @@ p {
   --hero-subj-top: 6%;
   --hero-subj-right: 92%;
   --hero-subj-bottom: 94%;
-  --hero-pause-x: 84%;
-  --hero-pause-y: 82%;
+  --hero-pause-x: 88%;
+  --hero-pause-y: 104%;
   position: relative;
-  overflow: hidden;
+  /* Visible: pause may sit just below the panel on hero cream (off GLB). */
+  overflow: visible;
   border-radius: 0;
   border: 0;
   box-shadow: none;
@@ -625,7 +628,7 @@ p {
  * Live GLB: locked poster camera inside the 81:47 stage (IMPLEMENTATION §3).
  */
 .hero-media.is-3d {
-  overflow: hidden;
+  overflow: visible;
   aspect-ratio: 81 / 47;
   width: min(100%, 50.625rem);
   height: auto;
@@ -635,6 +638,8 @@ p {
 .hero-media__stage {
   position: absolute;
   inset: 0;
+  /* Clip GLB/poster to the stage; pause lives on the panel (may be outside). */
+  overflow: hidden;
 }
 
 .hero-media__stage > picture {
@@ -744,11 +749,11 @@ p {
   position: absolute;
   z-index: 5;
   /*
-   * JS sets --hero-pause-x/y below dense-subject BR on cream (not petals).
-   * Fallback ≈ panel BR cream under the flower ring.
+   * JS sets --hero-pause-x/y outside the subject AABB (often just below the
+   * media panel on hero cream). Fallback ≈ under the panel BR.
    */
-  left: var(--hero-pause-x, 84%);
-  top: var(--hero-pause-y, 82%);
+  left: var(--hero-pause-x, 88%);
+  top: var(--hero-pause-y, 104%);
   right: auto;
   bottom: auto;
   transform: translate(-50%, -50%);
@@ -807,7 +812,7 @@ p {
 /* Stacked, near full-bleed media through tablet (≤1023): copy + CTA first, media below. */
 @media (max-width: 1023px) {
   .hero {
-    /* Tight bottom: subject→상담 분야 ≈40px with .home-areas pull-up. */
+    /* Pause stays in-panel on mobile; media margin pulls areas up for ~40px gap. */
     gap: 1rem;
     padding: 1.5rem 0 0;
   }
@@ -867,8 +872,9 @@ p {
     grid-template-rows: auto;
     gap: 0;
     align-items: center;
-    /* Tighter block padding: less empty cream under the hero before 상담 분야. */
-    padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
+    /* Top tight; bottom leaves room for pause under the media panel. */
+    padding-top: clamp(0.75rem, 1.75vw, 1.75rem);
+    padding-bottom: clamp(1.75rem, 2.5vw, 2.5rem);
   }
 
   .hero__copy {
@@ -2047,9 +2053,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 /*
- * Empty Clinic-OS reviews: no card grid — collapse flight top-pad space so
- * title + bench fill the section (~80–96px section pad). Ambient can still
- * paint upward into the previous band (overflow-y: visible + canvas top shift).
+ * Empty Clinic-OS reviews: host height hugs title+bench only (~80–96px section
+ * pad). Zero flight top-pad in flow and crop place-box sky so the ambient
+ * reservation does not leave a blank upper half.
  */
 .home-reviews--empty {
   padding-block: clamp(5rem, 5.75vw, 6rem);
@@ -2057,18 +2063,37 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-reviews--empty .home-reviews__header {
   margin-bottom: 0;
-  /* End-align: place box keeps sky above the bench — match title to bench. */
-  align-items: end;
+  /* Top of the compact band — section pad is the only cream above. */
+  align-items: start;
+  gap: 0.75rem 1.5rem;
+}
+
+.home-reviews--empty .home-reviews__scene {
+  /* Clip place-box sky + ambient; layout height = bench band only. */
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .home-reviews--empty .v37-scene--bench {
-  /* Collapse in-flow pad (negative margin fails under overflow-x:clip in WebKit). */
+  --bench-pad-t-over-w: 0;
   padding-top: 0;
+  padding-bottom: 0;
+  /*
+   * Place aspect (~350/405 ≈ 0.86) still includes sky above the seat.
+   * Pull layout up by ~55% of place height so the host hugs the bench;
+   * .home-reviews__scene overflow:hidden clips the sky.
+   */
+  margin-top: calc(var(--bench-place-w) * -0.48);
 }
 
 .home-reviews--empty .v37-scene__canvas--overflow {
   /* JS sets top:0 assuming pad reserves space — shift track up into prior band. */
   top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0) * -1) !important;
+}
+
+.home-reviews--empty .v37-scene__poster {
+  /* Poster follows the same crop as the live canvas host. */
+  margin-top: 0;
 }
 
 .home-reviews__header {
@@ -2637,6 +2662,15 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
     max-width: 100%;
     overflow-x: clip;
     overflow-y: visible;
+  }
+
+  /* Empty: override end-align + clip so the compact band hugs title+bench. */
+  .home-reviews--empty .home-reviews__header {
+    align-items: start;
+  }
+
+  .home-reviews--empty .home-reviews__scene {
+    overflow: hidden;
   }
 
   .home-reviews__grid {

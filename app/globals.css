@@ -14,7 +14,7 @@
   --card-soft: #e8eef2;
   --radius: 4px;
   --radius-btn: 12px;
-  --radius-card: 1rem;
+  --radius-card: 1.25rem;
   --max-text: 42rem;
   --max-page: clamp(72rem, 72rem + (100vw - 90rem) * 0.35, 110rem);
   --pad: clamp(1.25rem, 2.2vw, 3rem);
@@ -828,20 +828,29 @@ p {
 
 .area-card {
   display: grid;
-  grid-template-columns: 64px 1fr;
-  gap: 1rem;
-  align-items: center;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: 0.85rem;
+  align-items: start;
   padding: 1rem;
-  border: 1px solid var(--line);
-  background: var(--white);
+  border: none;
+  border-radius: var(--radius-card);
+  background: var(--card-soft);
   text-decoration: none;
+  color: inherit;
 }
 
-.area-card img {
-  width: 64px;
-  height: 64px;
+/* Icon-first DOM: fixed track + text in remaining width. */
+.area-card > img,
+.area-card > :first-child img {
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
+.area-card > :last-child:not(img) {
+  min-width: 0;
+}
+
+.area-card h2,
 .area-card h3 {
   font-family: var(--font-sans);
   font-size: 1.05rem;
@@ -1458,18 +1467,9 @@ p {
 
   .area-card {
     min-height: 10rem;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 2.75rem minmax(0, 1fr);
     padding: 1.35rem;
-  }
-
-  .area-card:nth-child(2),
-  .area-card:nth-child(3) {
-    grid-template-columns: 1fr 72px;
-  }
-
-  .area-card img {
-    width: 96px;
-    height: 96px;
+    align-items: start;
   }
 
   .news-desktop {
@@ -1614,10 +1614,28 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   max-width: 100%;
 }
 
-.v37-scene--bench,
 .v37-scene--booking,
 .v37-scene--gate {
   overflow: clip;
+}
+
+/* Bench: overflow canvas paints ambient tracks outside the place box.
+   Horizontal fit is enforced by --bench-place-frac inside .home-reviews__scene. */
+.v37-scene--bench {
+  overflow: visible;
+  width: min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%);
+  max-width: 100%;
+  /* Right-align padded canvas inside host: reserve right pad, shift place left. */
+  margin-left: max(
+    0px,
+    calc(
+      100% - min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%) -
+        min(var(--v37-w, 100%), calc(100% * var(--bench-place-frac, 1)), 100%) *
+          var(--bench-pad-r-ratio, 0)
+    )
+  );
+  margin-inline: unset;
+  margin-right: 0;
 }
 
 .v37-scene__canvas,
@@ -1638,14 +1656,10 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 .v37-scene__canvas--overflow {
-  /* Legacy class kept for safety — must never expand document width */
   position: absolute;
-  inset: 0;
-  max-width: 100%;
-  width: 100% !important;
-  height: 100% !important;
-  left: 0 !important;
-  top: 0 !important;
+  max-width: none;
+  width: auto;
+  height: auto;
   pointer-events: none;
 }
 
@@ -1722,9 +1736,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   grid-column: 1 / -1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 2.75rem 1fr;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
   column-gap: 0.85rem;
-  align-items: center;
+  align-items: start;
 }
 
 .home-areas__grid > .home-area-card:nth-last-child(2) img {
@@ -1894,7 +1908,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 .home-reviews {
-  overflow: clip;
+  /* Allow bench butterflies to rise into cream; html/body keep overflow-x: clip. */
+  overflow: visible;
   max-width: 100%;
 }
 
@@ -1903,15 +1918,16 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.25rem;
+  overflow: visible;
 }
 
 .home-reviews__scene {
-  display: flex;
-  justify-content: center;
+  display: block;
+  position: relative;
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: clip;
+  overflow: visible;
 }
 
 .home-reviews__grid {
@@ -2445,17 +2461,18 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
   .home-reviews__header {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    /* Wide right column so padded bench canvas (place + flight pads) can fit. */
+    grid-template-columns: minmax(12rem, 0.28fr) minmax(0, 1fr);
     gap: 1rem 2rem;
     align-items: start;
+    overflow: visible;
   }
 
   .home-reviews__scene {
-    justify-content: flex-end;
     min-width: 0;
-    width: min(28.115vw, 26rem);
+    width: 100%;
     max-width: 100%;
-    overflow: clip;
+    overflow: visible;
   }
 
   .home-reviews__grid {

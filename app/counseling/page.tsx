@@ -30,6 +30,7 @@ export default function CounselingIndexPage() {
               className="area-card"
               href={`/counseling/${item.slug}`}
             >
+              <Image src={item.icon} alt="" width={44} height={44} />
               <div>
                 <h2 style={{ fontFamily: 'var(--font-sans)', fontSize: '1.2rem' }}>
                   {item.title}
@@ -37,7 +38,6 @@ export default function CounselingIndexPage() {
                 <p>{item.line}</p>
                 <span className="text-link">자세히 보기 →</span>
               </div>
-              <Image src={item.icon} alt="" width={96} height={96} />
             </Link>
           ))}
         </div>

@@ -128,11 +128,11 @@ export default function AboutPage() {
                 className="area-card"
                 href={`/counseling/${item.slug}`}
               >
+                <Image src={item.icon} alt="" width={44} height={44} />
                 <div>
                   <h3>{item.title}</h3>
                   <p>{item.line}</p>
                 </div>
-                <Image src={item.icon} alt="" width={72} height={72} />
               </Link>
             ))}
           </div>

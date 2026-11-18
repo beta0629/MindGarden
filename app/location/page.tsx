@@ -40,7 +40,7 @@ export default function LocationPage() {
           <div className="card-grid" style={{ marginTop: '1rem' }}>
             {locationCopy.transit.map((item) => (
               <article key={item.body} className="area-card">
-                <Image src={item.icon} alt="" width={48} height={48} />
+                <Image src={item.icon} alt="" width={44} height={44} />
                 <div>
                   <h3 style={{ fontFamily: 'var(--font-sans)' }}>{item.label}</h3>
                   <p>{item.body}</p>

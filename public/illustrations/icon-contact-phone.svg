@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>contact-phone</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_contact-phone___전화" data-name="illust/contact-phone · 전화">
+      <path id="전화___바탕_블롭" data-name="전화 · 바탕 블롭" d="M11 31 C11 17 21 8 34 9 C47 10 56 21 55 34 C54 47 43 55 30 55 C17 55 11 45 11 31 Z" fill="#eae2d2"/>
+      <path id="전화___선_1" data-name="전화 · 선 1" d="M20 10 L44 10 C46.209 10 48 11.791 48 14 L48 50 C48 52.209 46.209 54 44 54 L20 54 C17.791 54 16 52.209 16 50 L16 14 C16 11.791 17.791 10 20 10 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="전화___선_2" data-name="전화 · 선 2" x1="28" y1="47" x2="36" y2="47" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="전화___포인트_1" data-name="전화 · 포인트 1" d="M24 26 C26 22 30 20 32 20 C34 20 38 22 40 26" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="전화___포인트_2" data-name="전화 · 포인트 2" d="M27 31 C28.5 28.5 30.5 27.5 32 27.5 C33.5 27.5 35.5 28.5 37 31" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

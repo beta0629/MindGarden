@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="120" viewBox="0 0 120 120">
+  <title>empty-event-off</title>
+  <g id="빈_상태_장식___120_그리드___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="빈 상태·장식 · 120 그리드 · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="empty-event-off___빈_상태___진행_중인_이벤트가_없어요" data-name="empty-event-off · 빈 상태 · 진행 중인 이벤트가 없어요">
+      <path id="빈_상태___진행_중인_이벤트가_없어요___바탕_블롭" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 바탕 블롭" d="M20.62 58.12 C20.62 31.88 39.38 15 63.75 16.88 C88.12 18.76 105 39.38 103.13 63.76 C101.26 88.14 80.63 103.14 56.25 103.14 C31.87 103.14 20.62 84.38 20.62 58.12 Z" fill="#eae2d2"/>
+      <path id="빈_상태___진행_중인_이벤트가_없어요___선_1" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 선 1" d="M32 34 L88 34 C91.314 34 94 36.686 94 40 L94 84 C94 87.314 91.314 90 88 90 L32 90 C28.686 90 26 87.314 26 84 L26 40 C26 36.686 28.686 34 32 34 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___진행_중인_이벤트가_없어요___선_2" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 선 2" x1="42" y1="27" x2="42" y2="40" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___진행_중인_이벤트가_없어요___선_3" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 선 3" x1="78" y1="27" x2="78" y2="40" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___진행_중인_이벤트가_없어요___선_4" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 선 4" x1="26" y1="50" x2="94" y2="50" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___진행_중인_이벤트가_없어요___포인트_1" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 포인트 1" x1="60" y1="82" x2="60" y2="69" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="빈_상태___진행_중인_이벤트가_없어요___포인트_2" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 포인트 2" d="M60 69 C55 66 53 61 55 56 C57.5 57 59.5 59 60 61.5 C60.5 59 62.5 57 65 56 C67 61 65 66 60 69 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="빈_상태___진행_중인_이벤트가_없어요___포인트_3" data-name="빈 상태 · 진행 중인 이벤트가 없어요 · 포인트 3" d="M60 77 C63 76 66 74 67 71" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

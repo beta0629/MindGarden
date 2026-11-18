@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>step-book</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_step-book___예약하기" data-name="illust/step-book · 예약하기">
+      <path id="예약하기___바탕_블롭" data-name="예약하기 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <path id="예약하기___선_1" data-name="예약하기 · 선 1" d="M15 17 L49 17 C51.761 17 54 19.239 54 22 L54 48 C54 50.761 51.761 53 49 53 L15 53 C12.239 53 10 50.761 10 48 L10 22 C10 19.239 12.239 17 15 17 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="예약하기___선_2" data-name="예약하기 · 선 2" x1="22" y1="12" x2="22" y2="21" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="예약하기___선_3" data-name="예약하기 · 선 3" x1="42" y1="12" x2="42" y2="21" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="예약하기___선_4" data-name="예약하기 · 선 4" x1="10" y1="28" x2="54" y2="28" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline id="예약하기___포인트_1" data-name="예약하기 · 포인트 1" points="24,40 30,46 41,35" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

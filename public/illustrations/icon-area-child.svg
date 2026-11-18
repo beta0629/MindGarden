@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>area-child</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_area-child___아이_청소년과_보호자" data-name="illust/area-child · 아이·청소년과 보호자">
+      <path id="아이_청소년과_보호자___바탕_블롭" data-name="아이·청소년과 보호자 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <circle id="아이_청소년과_보호자___선_1" data-name="아이·청소년과 보호자 · 선 1" cx="22" cy="19" r="6" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="아이_청소년과_보호자___선_2" data-name="아이·청소년과 보호자 · 선 2" d="M10 47 C10 38 15 32 22 32 C29 32 34 38 34 47" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle id="아이_청소년과_보호자___선_3" data-name="아이·청소년과 보호자 · 선 3" cx="42.5" cy="29" r="4.5" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="아이_청소년과_보호자___선_4" data-name="아이·청소년과 보호자 · 선 4" d="M36 47 C36 41 39 37 42.5 37 C46 37 49 41 49 47" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="아이_청소년과_보호자___선_5" data-name="아이·청소년과 보호자 · 선 5" x1="8" y1="51" x2="56" y2="51" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="아이_청소년과_보호자___포인트_1" data-name="아이·청소년과 보호자 · 포인트 1" d="M42.5 20 C42 15.5 44.5 12 49 11 C49.5 15.5 47 19 42.5 20 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="아이_청소년과_보호자___포인트_2" data-name="아이·청소년과 보호자 · 포인트 2" x1="42.5" y1="20" x2="42.5" y2="24" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

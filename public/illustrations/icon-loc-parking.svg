@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>loc-parking</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_loc-parking___주차" data-name="illust/loc-parking · 주차">
+      <path id="주차___바탕_블롭" data-name="주차 · 바탕 블롭" d="M9 35 C7 21 17 9 32 9 C47 9 57 19 56 33 C55 47 45 56 31 56 C17 56 11 49 9 35 Z" fill="#eae2d2"/>
+      <path id="주차___선_1" data-name="주차 · 선 1" d="M14 10 L50 10 C52.209 10 54 11.791 54 14 L54 50 C54 52.209 52.209 54 50 54 L14 54 C11.791 54 10 52.209 10 50 L10 14 C10 11.791 11.791 10 14 10 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="주차___포인트_1" data-name="주차 · 포인트 1" d="M26 44 L26 20 L34 20 C37.866 20 41 23.134 41 27 C41 30.866 37.866 34 34 34 L26 34" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

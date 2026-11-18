@@ -1,193 +1,504 @@
-import Navigation from '@/components/Navigation';
-import HeroSection from '@/components/HeroSection';
-import MindgardenLandingSections from '@/components/about/MindgardenLandingSections';
-import HomeSectionVisual from '@/components/HomeSectionVisual';
-import GalleryMarquee from '@/components/GalleryMarquee';
-import ReviewsList from '@/components/ReviewsList';
-import Footer from '@/components/Footer';
-import HomeScreeningPromo from '@/components/HomeScreeningPromo';
-import SectionTabs from '@/components/SectionTabs';
-import HashScroll from '@/components/HashScroll';
-import HomeProgramPagesFlipGrid from '@/components/HomeProgramPagesFlipGrid';
-import { getApiService } from '@/lib/api';
-import { getDbConnection } from '@/lib/db';
-import { homeSectionImages } from '@/lib/home-section-images';
-import { FALLBACK_GALLERY_IMAGES } from '@/lib/site-fallback-visuals';
+import Image from 'next/image';
+import Link from 'next/link';
+import { HeroSection } from '@/components/home/HeroSection';
+import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
+import { SiteShell } from '@/components/layout/SiteShell';
+import { BookingCta } from '@/components/ui/BookingCta';
+import { BusinessHours } from '@/components/ui/BusinessHours';
+import { YoutubeThumbPlay } from '@/components/ui/YoutubeThumbPlay';
+import {
+  clinicOsClient,
+  resolveProductDisplayPrice,
+} from '@/lib/clinic-os/client';
+import type { ConsultationProduct } from '@/lib/clinic-os/types';
+import { homeCopy } from '@/lib/content/home';
+import { formatWon } from '@/lib/format';
+import { getLatestBlogPosts, getLatestVideos } from '@/lib/feeds';
+import { buildMetadata } from '@/lib/seo';
+import { SITE } from '@/lib/site';
 
-// 갤러리·후기 등 DB 기반 블록이 있어 요청 시 최신 데이터를 쓰도록 동적 렌더링 유지
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 300;
 
-// 갤러리 이미지 조회 (서버 사이드에서 직접 DB 조회)
-async function getGalleryImages() {
-  let connection;
-  try {
-    connection = await getDbConnection();
-    
-    const [rows] = await connection.execute(
-      `SELECT id, image_url, alt_text, category 
-       FROM gallery_images
-       WHERE is_active = 1
-       ORDER BY display_order ASC, created_at ASC`
-    );
+export const metadata = buildMetadata({
+  title: SITE.name,
+  description:
+    '마음이 쉬어 가는 정원 같은 상담센터. 인천 연수구 심리상담센터 마인드가든.',
+  path: '/',
+});
 
-    const images = (rows as any[]).map((row: any) => ({
-      id: row.id,
-      url: row.image_url,
-      alt: row.alt_text || '갤러리 이미지',
-      category: row.category || '기타',
-    }));
+type PriceCardView = {
+  key: string;
+  title: string;
+  amount: number;
+  note: string;
+  struckThrough: number | null;
+};
 
-    return images.length > 0 ? images : null;
-  } catch (error) {
-    console.error('Failed to load gallery images:', error);
-    return null;
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
+type PriceCardGuide = (typeof homeCopy.pricing.cards)[number];
+
+/** Today in KST as YYYY-MM-DD (event window is defined in Korea time). */
+function todayKst(): string {
+  return new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });
 }
 
-// 후기 목록 조회 (전체 후기)
-async function getReviews() {
-  let connection;
-  try {
-    connection = await getDbConnection();
-    const [rows] = await connection.execute(
-      `SELECT id, author_name, content, tags, ratings, like_count, created_at, updated_at
-       FROM homepage_reviews
-       WHERE is_approved = 1
-       ORDER BY created_at DESC
-       LIMIT 20`
-    );
+function isCardActive(guide: PriceCardGuide, today: string): boolean {
+  if ('dateStart' in guide && today < guide.dateStart) return false;
+  if ('dateEnd' in guide && today > guide.dateEnd) return false;
+  return true;
+}
 
-    const reviews = (rows as any[]).map((row: any) => {
-      let tags = [];
-      let ratings = null;
-      
-      try {
-        tags = row.tags ? JSON.parse(row.tags) : [];
-      } catch (e) {
-        tags = [];
-      }
-      
-      try {
-        ratings = row.ratings ? JSON.parse(row.ratings) : null;
-      } catch (e) {
-        ratings = null;
-      }
-      
+/**
+ * Display title/note always come from approved copy. Live Clinic-OS data may only
+ * refine the amount, and only through an explicit skuCode mapping (never by name).
+ */
+function buildPriceCards(products: ConsultationProduct[]): PriceCardView[] {
+  const today = todayKst();
+  return homeCopy.pricing.cards
+    .filter((guide) => isCardActive(guide, today))
+    .map((guide) => {
+      const live = products.find(
+        (product) =>
+          guide.skuCodes.includes(product.skuCode) &&
+          !product.name.includes('치료'),
+      );
+      const view = live ? resolveProductDisplayPrice(live) : null;
       return {
-        id: row.id,
-        authorName: row.author_name,
-        content: row.content,
-        tags,
-        ratings,
-        likeCount: row.like_count || 0,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+        key: guide.key,
+        title: guide.title,
+        amount: view?.amount ?? guide.amount,
+        note: guide.note,
+        struckThrough: view?.struckThroughPrice ?? null,
       };
     });
-
-    return reviews;
-  } catch (error) {
-    console.error('Failed to load reviews:', error);
-    return [];
-  } finally {
-    if (connection) {
-      connection.release();
-    }
-  }
 }
 
-// 서버 컴포넌트에서 데이터 가져오기
-async function getHomeData() {
-  try {
-    const apiService = getApiService();
-    const homeData = await apiService.getHomeData();
+const HAS_LIVE_PRICE_SKUS = homeCopy.pricing.cards.some(
+  (card) => card.skuCodes.length > 0,
+);
 
-    // 갤러리 이미지 조회 (DB에서 관리자가 등록한 이미지)
-    const galleryImages = await getGalleryImages();
+export default async function HomePage() {
+  const [products, homepage, videos, posts] = await Promise.all([
+    HAS_LIVE_PRICE_SKUS
+      ? clinicOsClient.getConsultationProducts()
+      : Promise.resolve<ConsultationProduct[]>([]),
+    clinicOsClient.getHomepageContent(),
+    getLatestVideos(4),
+    getLatestBlogPosts(3),
+  ]);
 
-    // 후기 목록 조회
-    const reviews = await getReviews();
+  const priceCards = buildPriceCards(products);
 
-    const defaultGallery = [...FALLBACK_GALLERY_IMAGES];
+  const homeReviews = homepage.reviews.slice(0, 3);
+  const noticeBanner = homepage.banners.find((b) => {
+    const title = b.title.trim();
+    if (!title) return false;
+    if (title === '공지 자리' || title.includes('배너 슬롯')) return false;
+    return title.includes('공지');
+  });
 
-    const finalGallery = galleryImages || defaultGallery;
-    
-    return {
-      slogan: (homeData && homeData.slogan) || {
-        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
-        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
-        tagline: '— 마인드가든이 함께 합니다 —',
-      },
-      gallery: finalGallery,
-      reviews: reviews,
-    };
-  } catch (error) {
-    console.error('Failed to load home data:', error);
-    return {
-      slogan: {
-        sub: '전 연령 ADHD 및 동반질환 전문 특화. 부부가족상담 전문',
-        main: '나를 소중히 돌보고 가꾸는 시간,\n당신의 마음이 정원이 되는 곳',
-        tagline: '— 마인드가든이 함께 합니다 —',
-      },
-      gallery: [...FALLBACK_GALLERY_IMAGES],
-      reviews: [],
-    };
-  }
-}
+  const featuredReadings = [
+    ...videos.map((v) => ({
+      kind: 'video' as const,
+      key: v.id,
+      title: v.title,
+      href: v.url,
+      thumb: v.thumb,
+      external: true,
+    })),
+    ...posts.map((p) => ({
+      kind: 'blog' as const,
+      key: p.url,
+      title: p.title,
+      href: p.url,
+      thumb: p.thumb,
+      external: true,
+    })),
+  ].slice(0, 4);
 
-export default async function Home() {
-  const homeData = await getHomeData();
+  const listReadings = posts.slice(0, 3);
 
   return (
-    <main id="top">
-      <HashScroll />
-      <Navigation />
-      <HeroSection slogan={homeData.slogan} />
+    <SiteShell noticeText={noticeBanner?.title ?? null}>
+      <HeroSection />
 
-      <HomeScreeningPromo />
-
-      <SectionTabs />
-
-      <MindgardenLandingSections showHero={false} />
-
-      <section className="content-shell" aria-label="프로그램, 갤러리, 후기">
-        <div className="content-main">
-          <section id="program-pages" className="content-section">
-            <div className="section-intro-row section-intro-row--media-first">
-              <HomeSectionVisual
-                src={homeSectionImages.programs.src}
-                alt={homeSectionImages.programs.alt}
-              />
-              <div className="section-intro-copy">
-                <h2 className="section-title">프로그램</h2>
-                <p className="section-desc">개인 특성에 따라 아래 프로그램을 조합해 진행할 수 있어요.</p>
-                <p className="mg-prog-flip-hint mg-prog-flip-hint--home" role="note">
-                  터치로 보실 때는 카드를 탭하면 뒷면 설명이 열립니다. 한 번 더 탭하면 앞면으로 돌아갑니다.
-                </p>
-              </div>
-            </div>
-            <HomeProgramPagesFlipGrid />
-          </section>
-
-          <section id="gallery" className="content-section content-section-full">
-            <GalleryMarquee images={homeData.gallery} />
-          </section>
-
-          <section id="reviews" className="content-section">
-            <ReviewsList reviews={homeData.reviews} />
-          </section>
-
-          {/* 문의/예약 섹션은 바텀시트로 이동 - 섹션 제거 */}
-
-          <Footer />
+      {/* 1. 상담 분야 */}
+      <section className="section home-areas" data-reveal>
+        <div className="container home-areas__layout">
+          <header className="home-areas__intro">
+            <p className="section__eyebrow">{homeCopy.areas.eyebrow}</p>
+            <h2 className="section__title">{homeCopy.areas.title}</h2>
+            <p className="section__lead">{homeCopy.areas.lead}</p>
+            <Link className="text-link" href={homeCopy.areas.moreHref}>
+              {homeCopy.areas.moreLabel}
+              <span aria-hidden="true"> →</span>
+            </Link>
+          </header>
+          <div className="home-areas__grid" data-reveal-stagger>
+            {homeCopy.areas.homeCards.map((card) => (
+              <Link
+                key={card.title}
+                className="home-area-card"
+                href={card.href}
+                data-reveal
+              >
+                <Image src={card.icon} alt="" width={48} height={48} />
+                <h3>{card.title}</h3>
+                <p>{card.line}</p>
+              </Link>
+            ))}
+            <Link
+              className="home-area-card home-area-card--accent"
+              href={homeCopy.areas.firstVisit.href}
+              data-reveal
+            >
+              <h3>{homeCopy.areas.firstVisit.title}</h3>
+              <p>{homeCopy.areas.firstVisit.body}</p>
+              <span className="home-area-card__cta">
+                {homeCopy.areas.firstVisit.cta}
+                <span aria-hidden="true"> →</span>
+              </span>
+            </Link>
+          </div>
         </div>
       </section>
-    </main>
+
+      {/* 2. 공간 / Gate */}
+      <section className="section section--sand home-spaces" data-reveal>
+        <div className="container home-spaces__layout">
+          <div className="home-spaces__copy">
+            <p className="section__eyebrow">{homeCopy.spaces.eyebrow}</p>
+            <h2 className="section__title">{homeCopy.spaces.title}</h2>
+            <p className="section__lead">{homeCopy.spaces.lead}</p>
+            <Link className="text-link" href={homeCopy.spaces.moreHref}>
+              {homeCopy.spaces.moreLabel}
+              <span aria-hidden="true"> →</span>
+            </Link>
+          </div>
+          <div className="home-spaces__scene">
+            <GateScene />
+          </div>
+          <div className="home-spaces__thumbs">
+            {homeCopy.spaces.thumbs.map((thumb) => (
+              <figure key={thumb.src} className="home-spaces__thumb">
+                <Image
+                  src={thumb.src}
+                  alt={thumb.caption}
+                  width={480}
+                  height={640}
+                  sizes="(max-width: 767px) 44vw, 12rem"
+                  quality={72}
+                />
+                <figcaption>{thumb.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 3. 전문가 */}
+      <section className="section home-experts" data-reveal>
+        <div className="container">
+          <header className="home-section-head">
+            <div>
+              <p className="section__eyebrow">{homeCopy.experts.eyebrow}</p>
+              <h2 className="section__title">{homeCopy.experts.title}</h2>
+            </div>
+          </header>
+          <article className="home-expert-profile" data-reveal>
+            <div className="home-expert-profile__media">
+              <Image
+                src={homeCopy.experts.primary.photo}
+                alt=""
+                width={156}
+                height={156}
+                sizes="(max-width: 767px) 40vw, 10rem"
+              />
+            </div>
+            <div className="home-expert-profile__body">
+              <h3 className="home-expert-profile__name">
+                {homeCopy.experts.primary.name}
+              </h3>
+              <p className="home-expert-profile__role">
+                {homeCopy.experts.primary.role}
+              </p>
+              <p className="home-expert-profile__lead">
+                {homeCopy.experts.lead}
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      {/* 4. Dark stats band — hidden until numbers are confirmed (homeCopy.stats.enabled) */}
+      {homeCopy.stats.enabled ? (
+        <section className="section home-stats" aria-label="센터 현황" data-reveal>
+          <div className="container">
+            <div className="home-stats__band">
+              {homeCopy.stats.items.map((item) => (
+                <div className="home-stats__item" key={item.label}>
+                  <p className="home-stats__value">{item.value}</p>
+                  <p className="home-stats__label">{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 5. 후기 / Bench */}
+      <section
+        className={`section home-reviews${
+          homeReviews.length === 0 ? ' home-reviews--empty' : ''
+        }`}
+        data-reveal
+      >
+        <div className="container">
+          <header className="home-reviews__header">
+            <div>
+              <p className="section__eyebrow">{homeCopy.reviews.eyebrow}</p>
+              <h2 className="section__title">{homeCopy.reviews.title}</h2>
+              {homeReviews.length > 0 ? (
+                <Link className="text-link" href={homeCopy.reviews.moreHref}>
+                  {homeCopy.reviews.moreLabel}
+                  <span aria-hidden="true"> →</span>
+                </Link>
+              ) : null}
+            </div>
+            <div className="home-reviews__scene">
+              <BenchScene />
+            </div>
+          </header>
+          {homeReviews.length > 0 ? (
+            <div className="home-reviews__grid" data-reveal-stagger>
+              {homeReviews.map((review, index) => (
+                <article
+                  key={`${review.publishedAt}-${review.displayName ?? 'anon'}-${review.body.slice(0, 12)}`}
+                  className={`home-review-card${
+                    homeReviews.length >= 3 && index === 1
+                      ? ' home-review-card--accent'
+                      : ''
+                  }`}
+                  data-reveal
+                >
+                  <p>{review.body}</p>
+                  <p className="home-review-card__meta">
+                    {review.displayName || '익명'} ·{' '}
+                    {review.publishedAt.slice(0, 10)}
+                  </p>
+                </article>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      {/* 6. 비용 */}
+      <section className="section section--sand home-pricing" data-reveal>
+        <div className="container">
+          <header className="home-section-head home-section-head--stack">
+            <p className="section__eyebrow">{homeCopy.pricing.eyebrow}</p>
+            <h2 className="section__title">{homeCopy.pricing.title}</h2>
+          </header>
+          <div
+            className={`home-pricing__grid${
+              priceCards.length < 4 ? ' home-pricing__grid--compact' : ''
+            }`}
+            data-reveal-stagger
+          >
+            {priceCards.map((card) => (
+              <article className="home-price-card" key={card.key} data-reveal>
+                <h3>{card.title}</h3>
+                <p className="home-price-card__amount">
+                  {card.struckThrough != null ? (
+                    <s className="price-cell__struck">
+                      {formatWon(card.struckThrough)}
+                    </s>
+                  ) : null}{' '}
+                  {formatWon(card.amount)}
+                </p>
+                {card.note ? (
+                  <p className="home-price-card__note">{card.note}</p>
+                ) : null}
+              </article>
+            ))}
+          </div>
+          <p className="home-pricing__more">
+            <Link className="text-link" href={homeCopy.pricing.moreHref}>
+              {homeCopy.pricing.moreLabel}
+              <span aria-hidden="true"> →</span>
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* 7. 읽을거리 */}
+      <section className="section home-readings" data-reveal>
+        <div className="container">
+          <header className="home-section-head">
+            <div>
+              <p className="section__eyebrow">{homeCopy.readings.eyebrow}</p>
+              <h2 className="section__title">{homeCopy.readings.title}</h2>
+            </div>
+            <a
+              className="text-link"
+              href={SITE.blogUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {homeCopy.readings.moreLabel}
+              <span aria-hidden="true"> →</span>
+            </a>
+          </header>
+
+          {featuredReadings.length === 0 && listReadings.length === 0 ? (
+            <p className="muted">표시할 소식이 없습니다. 잠시 후 다시 확인해 주세요.</p>
+          ) : (
+            <>
+              <div className="home-readings__featured" data-reveal-stagger>
+                {featuredReadings.map((item) =>
+                  item.kind === 'video' && item.thumb ? (
+                    <YoutubeThumbPlay
+                      key={item.key}
+                      variant="feature"
+                      url={item.href}
+                      title={item.title}
+                      thumb={item.thumb}
+                      reveal
+                    />
+                  ) : (
+                    <a
+                      key={item.key}
+                      className={`home-reading-feature${
+                        item.thumb ? '' : ' home-reading-feature--text'
+                      }`}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-reveal
+                    >
+                      {item.thumb ? (
+                        <>
+                          <span className="home-reading-feature__media">
+                            <Image
+                              src={item.thumb}
+                              alt=""
+                              fill
+                              sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
+                              quality={80}
+                            />
+                          </span>
+                          <strong>{item.title}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span className="home-reading-feature__kind">
+                            {item.kind === 'video' ? '영상' : '칼럼'}
+                          </span>
+                          <strong className="home-reading-feature__headline">
+                            {item.title}
+                          </strong>
+                        </>
+                      )}
+                    </a>
+                  ),
+                )}
+              </div>
+              {listReadings.length > 0 ? (
+                <div className="home-readings__list">
+                  {listReadings.map((post) => (
+                    <a
+                      key={`list-${post.url}`}
+                      className={`home-reading-row${
+                        post.thumb ? '' : ' home-reading-row--text'
+                      }`}
+                      href={post.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {post.thumb ? (
+                        <Image
+                          src={post.thumb}
+                          alt=""
+                          width={96}
+                          height={72}
+                          sizes="5.5rem"
+                        />
+                      ) : null}
+                      <span>
+                        <strong>{post.title}</strong>
+                        {post.date ? (
+                          <time dateTime={post.date}>{post.date}</time>
+                        ) : null}
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
+      </section>
+
+      {/* 8. 예약 — butterfly scene sits after all text (DOM + mobile order); no inquiry form */}
+      <section className="section section--sand home-booking" id="contact" data-reveal>
+        <div className="container home-booking__layout">
+          <div className="home-booking__main">
+            <p className="section__eyebrow">{homeCopy.booking.eyebrow}</p>
+            <h2 className="section__title">{homeCopy.booking.title}</h2>
+            <p className="section__lead">{homeCopy.booking.body}</p>
+
+            <div className="home-booking__actions">
+              <BookingCta label={homeCopy.booking.primaryCta} />
+              <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
+                <Image
+                  src="/icons/contact-phone.svg"
+                  alt=""
+                  width={20}
+                  height={20}
+                />
+                <span>
+                  {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
+                </span>
+              </a>
+              <p className="home-booking__contact-link">
+                <Link className="text-link" href={homeCopy.booking.contactHref}>
+                  {homeCopy.booking.contactLinkLabel}
+                  <span aria-hidden="true"> →</span>
+                </Link>
+              </p>
+            </div>
+          </div>
+
+          <aside className="home-booking__visit" aria-label={homeCopy.booking.visitTitle}>
+            <h3>{homeCopy.booking.visitTitle}</h3>
+            <dl className="home-booking__facts">
+              <div>
+                <dt>주소</dt>
+                <dd>
+                  {SITE.address}
+                  <span className="muted"> ({SITE.addressLandmark})</span>
+                </dd>
+              </div>
+              <div>
+                <dt>운영 시간</dt>
+                <dd>
+                  <BusinessHours layout="stack" />
+                </dd>
+              </div>
+            </dl>
+            <p>
+              <Link className="text-link" href="/location">
+                오시는 길 안내
+                <span aria-hidden="true"> →</span>
+              </Link>
+            </p>
+          </aside>
+
+          <div className="home-booking__scene" aria-hidden="true">
+            <BookingScene />
+          </div>
+        </div>
+      </section>
+    </SiteShell>
   );
 }
-

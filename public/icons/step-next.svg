@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>step-next</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_step-next___다음_일정" data-name="illust/step-next · 다음 일정">
+      <path id="다음_일정___바탕_블롭" data-name="다음 일정 · 바탕 블롭" d="M11 31 C11 17 21 8 34 9 C47 10 56 21 55 34 C54 47 43 55 30 55 C17 55 11 45 11 31 Z" fill="#eae2d2"/>
+      <path id="다음_일정___선_1" data-name="다음 일정 · 선 1" d="M50 32 C50.027 40.589 43.981 48 35.562 49.7 C27.144 51.4 18.696 46.915 15.389 38.988 C12.081 31.062 14.834 21.903 21.964 17.114 C29.093 12.325 38.613 13.24 44.7 19.3" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline id="다음_일정___선_2" data-name="다음 일정 · 선 2" points="46,11 46,20 37,20" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline id="다음_일정___포인트_1" data-name="다음 일정 · 포인트 1" points="32,22 32,32 39,37" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

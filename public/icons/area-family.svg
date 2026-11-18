@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>area-family</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_area-family___부부_가족_상담" data-name="illust/area-family · 부부·가족 상담">
+      <path id="부부_가족_상담___바탕_블롭" data-name="부부·가족 상담 · 바탕 블롭" d="M11 31 C11 17 21 8 34 9 C47 10 56 21 55 34 C54 47 43 55 30 55 C17 55 11 45 11 31 Z" fill="#eae2d2"/>
+      <polyline id="부부_가족_상담___선_1" data-name="부부·가족 상담 · 선 1" points="10,30 32,13 54,30" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline id="부부_가족_상담___선_2" data-name="부부·가족 상담 · 선 2" points="15,26 15,51 49,51 49,26" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="부부_가족_상담___포인트_1" data-name="부부·가족 상담 · 포인트 1" x1="32" y1="50" x2="32" y2="38" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="부부_가족_상담___포인트_2" data-name="부부·가족 상담 · 포인트 2" d="M32 39 C25.5 39 22 35 22 29 C28.5 29 32 33 32 39 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="부부_가족_상담___포인트_3" data-name="부부·가족 상담 · 포인트 3" d="M32 39 C38.5 39 42 35 42 29 C35.5 29 32 33 32 39 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

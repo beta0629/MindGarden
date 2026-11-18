@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="64" height="64" viewBox="0 0 64 64">
+  <title>step-visit</title>
+  <g id="일러스트_아이콘___64px___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="일러스트 아이콘 · 64px · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="illust_step-visit___방문하기" data-name="illust/step-visit · 방문하기">
+      <path id="방문하기___바탕_블롭" data-name="방문하기 · 바탕 블롭" d="M11 31 C11 17 21 8 34 9 C47 10 56 21 55 34 C54 47 43 55 30 55 C17 55 11 45 11 31 Z" fill="#eae2d2"/>
+      <path id="방문하기___선_1" data-name="방문하기 · 선 1" d="M32 55 C32 55 16 41 16 28 C16 19.163 23.163 12 32 12 C40.837 12 48 19.163 48 28 C48 41 32 55 32 55 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="방문하기___선_2" data-name="방문하기 · 선 2" x1="10" y1="56" x2="54" y2="56" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="방문하기___포인트_1" data-name="방문하기 · 포인트 1" d="M27 32 C26.5 26 30 21.5 36.5 21 C37 27 33.5 31.5 27 32 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="방문하기___포인트_2" data-name="방문하기 · 포인트 2" x1="27" y1="32" x2="31" y2="27.5" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

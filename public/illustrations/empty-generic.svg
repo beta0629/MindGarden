@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="120" height="120" viewBox="0 0 120 120">
+  <title>empty-generic</title>
+  <g id="빈_상태_장식___120_그리드___잉크_2pt_라운드___garden_포인트___샌드_블롭" data-name="빈 상태·장식 · 120 그리드 · 잉크 2pt 라운드 + garden 포인트 + 샌드 블롭">
+    <g id="empty-generic___빈_상태___아직_내용이_없어요" data-name="empty-generic · 빈 상태 · 아직 내용이 없어요">
+      <path id="빈_상태___아직_내용이_없어요___바탕_블롭" data-name="빈 상태 · 아직 내용이 없어요 · 바탕 블롭" d="M16.88 65.62 C13.12 39.38 31.88 16.88 60 16.88 C88.12 16.88 106.88 35.63 105 61.88 C103.12 88.13 84.38 105 58.12 105 C31.86 105 20.62 91.88 16.88 65.62 Z" fill="#eae2d2"/>
+      <path id="빈_상태___아직_내용이_없어요___선_1" data-name="빈 상태 · 아직 내용이 없어요 · 선 1" d="M38 56 L82 56 C83.657 56 85 57.343 85 59 L85 62 C85 63.657 83.657 65 82 65 L38 65 C36.343 65 35 63.657 35 62 L35 59 C35 57.343 36.343 56 38 56 Z" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <polyline id="빈_상태___아직_내용이_없어요___선_2" data-name="빈 상태 · 아직 내용이 없어요 · 선 2" points="40,65 45,92 75,92 80,65" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_내용이_없어요___선_3" data-name="빈 상태 · 아직 내용이 없어요 · 선 3" x1="20" y1="92" x2="100" y2="92" fill="none" stroke="#1c2430" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <line id="빈_상태___아직_내용이_없어요___포인트_1" data-name="빈 상태 · 아직 내용이 없어요 · 포인트 1" x1="60" y1="56" x2="60" y2="45" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path id="빈_상태___아직_내용이_없어요___포인트_2" data-name="빈 상태 · 아직 내용이 없어요 · 포인트 2" d="M60 48 C59 42 63 38 69 37 C70 43 66 47 60 48 Z" fill="none" stroke="#2f5b45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

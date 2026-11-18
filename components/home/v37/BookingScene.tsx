@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
+  markDirty,
+  setContinuous,
+  setPaused,
+  subscribe,
+  unsubscribe,
+} from '@/components/home/rafScheduler';
+import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
   loadJson,
@@ -10,7 +17,11 @@ import {
   resizeCanvas,
   smoothstep,
 } from './atlas';
-import { readScrollMetrics, ScrollClock } from './scrollClock';
+import {
+  createSectionMetricsCache,
+  ScrollClock,
+  type SectionMetricsCache,
+} from './scrollClock';
 import type { BookingJson, HoverJson, PackId } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
@@ -27,6 +38,7 @@ type Runtime = {
   hoverBank: AtlasSheetBank | null;
 };
 
+const RAF_ID = 'v37-booking';
 const LANDING_START = 470;
 const LANDING_END = 508;
 const BREATHE_COUNT = 34;
@@ -154,14 +166,27 @@ export function BookingScene({ sectionRef }: Props) {
     let visible = false;
     let warming = false;
     let assetsReady = false;
-    let raf = 0;
     let loadingMeta = false;
+    let subscribed = false;
+    let metricsCache: SectionMetricsCache | null = null;
 
-    const stopRaf = () => {
-      if (raf) {
-        cancelAnimationFrame(raf);
-        raf = 0;
+    const resolveSection = (): HTMLElement =>
+      sectionRef?.current ??
+      (wrap.closest('section') as HTMLElement | null) ??
+      wrap;
+
+    const ensureMetrics = (): SectionMetricsCache => {
+      if (!metricsCache) {
+        metricsCache = createSectionMetricsCache(resolveSection());
       }
+      return metricsCache;
+    };
+
+    const syncPause = () => {
+      if (!subscribed) return;
+      const shouldRun = visible && !document.hidden && assetsReady;
+      setPaused(RAF_ID, !shouldRun);
+      if (shouldRun) markDirty(RAF_ID);
     };
 
     const ensureHoverMeta = async () => {
@@ -214,6 +239,12 @@ export function BookingScene({ sectionRef }: Props) {
       return 85;
     };
 
+    const bumpContinuousForInteraction = () => {
+      if (!subscribed || !visible || document.hidden) return;
+      setContinuous(RAF_ID, true);
+      markDirty(RAF_ID);
+    };
+
     const onEnter = () => {
       const rt = runtimeRef.current;
       // Hover only after landing settles into breathe — never on first paint / mid-landing.
@@ -231,6 +262,7 @@ export function BookingScene({ sectionRef }: Props) {
         start: now,
         blendFromAngle: blendFrom,
       };
+      bumpContinuousForInteraction();
     };
 
     const onLeave = () => {
@@ -245,6 +277,7 @@ export function BookingScene({ sectionRef }: Props) {
         enterStart: phase.start,
         blendFromAngle: phase.blendFromAngle,
       };
+      bumpContinuousForInteraction();
     };
 
     const hit = wrap.querySelector('.v37-scene__hit') ?? wrap;
@@ -254,23 +287,13 @@ export function BookingScene({ sectionRef }: Props) {
     hit.addEventListener('touchend', onLeave);
 
     const tick = (now: number) => {
-      if (!alive || !visible) {
-        raf = 0;
-        return;
-      }
+      if (!alive || !visible || document.hidden) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
-      if (!rt || !clock || !canvas || !assetsReady) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (!rt || !clock || !canvas || !assetsReady) return;
 
-      const sectionEl =
-        sectionRef?.current ??
-        (wrap.closest('section') as HTMLElement | null) ??
-        wrap;
-      const metrics = readScrollMetrics(sectionEl);
+      const metrics = ensureMetrics().read();
       let walkF = clock.update(now, metrics);
 
       if (!landingDoneRef.current && walkF >= LANDING_END) {
@@ -291,10 +314,7 @@ export function BookingScene({ sectionRef }: Props) {
       const { css_w: cssW, css_h: cssH } = rt.booking.place;
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
-      if (!ctx) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (!ctx) return;
       ctx.clearRect(0, 0, cssW, cssH);
 
       const drawBankFrame = (
@@ -387,12 +407,30 @@ export function BookingScene({ sectionRef }: Props) {
         }
       }
 
-      raf = requestAnimationFrame(tick);
+      /*
+       * Continuous only for breathe / hover after landing.
+       * Landing walk advances with time while in-flight — keep continuous then.
+       * Pre-landing scrub is scroll-dirty only.
+       */
+      const hoverBusy =
+        hoverRef.current.kind === 'hover' ||
+        hoverRef.current.kind === 'leaveHold' ||
+        hoverRef.current.kind === 'leaveEase';
+      const landingInFlight =
+        !landingDoneRef.current &&
+        clock.wouldAdvanceWithTime(metrics) &&
+        walkF >= LANDING_START;
+      const continuous =
+        landingDoneRef.current || landingInFlight || hoverBusy;
+      setContinuous(RAF_ID, continuous);
+      if (!continuous) clock.syncTime(now);
     };
 
-    const startRaf = () => {
-      if (!alive || !visible || !assetsReady || raf) return;
-      raf = requestAnimationFrame(tick);
+    const ensureSubscribed = () => {
+      if (subscribed || !alive) return;
+      subscribe(RAF_ID, tick, { continuous: false });
+      subscribed = true;
+      syncPause();
     };
 
     const warmAssets = async () => {
@@ -405,7 +443,8 @@ export function BookingScene({ sectionRef }: Props) {
         if (!alive) return;
         assetsReady = true;
         setCanvasActive(true);
-        startRaf();
+        ensureSubscribed();
+        markDirty(RAF_ID);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -443,11 +482,19 @@ export function BookingScene({ sectionRef }: Props) {
           ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
           aspectRatio: `${css_w} / ${css_h}`,
         });
+        ensureMetrics().refresh();
         await warmAssets();
       } catch {
         if (alive) setFailed(true);
       } finally {
         loadingMeta = false;
+      }
+    };
+
+    const onScrollOrResize = () => {
+      ensureMetrics().refresh();
+      if (subscribed && visible && !document.hidden) {
+        markDirty(RAF_ID);
       }
     };
 
@@ -465,29 +512,40 @@ export function BookingScene({ sectionRef }: Props) {
     const visIO = new IntersectionObserver(
       (entries) => {
         visible = entries.some((e) => e.isIntersecting);
-        if (visible) {
-          startRaf();
-        } else {
-          stopRaf();
+        ensureMetrics().refresh();
+        if (!visible) {
           // Leaving the viewport cancels hover so idle settles at folded 85°.
           hoverRef.current = { kind: 'idle' };
         }
+        syncPause();
+        if (visible && assetsReady) markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
 
+    const onVisibility = () => {
+      syncPause();
+      if (!document.hidden && visible) markDirty(RAF_ID);
+    };
+
     nearIO.observe(wrap);
     visIO.observe(wrap);
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
-      stopRaf();
       nearIO.disconnect();
       visIO.disconnect();
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      document.removeEventListener('visibilitychange', onVisibility);
       hit.removeEventListener('pointerenter', onEnter);
       hit.removeEventListener('pointerleave', onLeave);
       hit.removeEventListener('touchstart', onEnter);
       hit.removeEventListener('touchend', onLeave);
+      if (subscribed) unsubscribe(RAF_ID);
     };
   }, [pack, reduced, failed, sectionRef]);
 

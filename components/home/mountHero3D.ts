@@ -1,5 +1,12 @@
 import type { RefObject } from 'react';
 import { whenHomeBootReady } from '@/components/home/homeBoot';
+import {
+  markDirty,
+  setContinuous,
+  setPaused,
+  subscribe,
+  unsubscribe,
+} from '@/components/home/rafScheduler';
 
 type MountHeroOptions = {
   panel: HTMLElement;
@@ -12,8 +19,6 @@ type MountHeroOptions = {
  * Dolly along the poster ray only — never change the approved angle.
  */
 const SPHERE_FIT_MARGIN = 1.04;
-/** Samples across WingFold to capture max wing extent. */
-const BOUNDS_SAMPLE_STEPS = 24;
 /** Spec FOV from hero-IMPLEMENTATION.md §3. */
 const HERO_FOV_DEG = 30;
 /** Spec camera / lookAt — lock this pose (tilt only). */
@@ -33,6 +38,14 @@ const PAUSE_PCT = 0.82;
 /** Mobile top-pack: push painted mesh maxY toward this NDC (less cream under CTA). */
 const MOBILE_TOP_NDC = 0.9;
 const MOBILE_TOP_MAX_WIDTH = 1023;
+
+const HERO_RAF_ID = 'hero-3d';
+/** Mobile ≤30fps — min interval between rendered frames. */
+const MOBILE_MIN_FRAME_MS = 1000 / 30;
+/** Pause WingFold after this long with no pointer/scroll (resume on input). */
+const IDLE_PAUSE_MS = 8000;
+/** Throttle subject CSS var mesh projection off the hot path. */
+const SUBJECT_CSS_MIN_MS = 500;
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3).
@@ -83,6 +96,8 @@ export async function mountHero3D({
   renderer.toneMappingExposure = 0.95;
   renderer.shadowMap.enabled = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  // Shared rafScheduler owns the frame pump — never leave three's loop registered.
+  renderer.setAnimationLoop(null);
 
   const scene = new THREE.Scene();
   scene.background = null;
@@ -235,10 +250,24 @@ export async function mountHero3D({
     };
   };
 
-  const size = () => {
+  /** Cached panel box — refreshed on resize only (no per-frame layout reads). */
+  let panelRect = { left: 0, top: 0, width: 1, height: 1 };
+  let isMobileViewport = window.innerWidth <= MOBILE_TOP_MAX_WIDTH;
+
+  const refreshPanelRect = () => {
     const rect = panel.getBoundingClientRect();
-    const width = Math.max(rect.width, 1);
-    const height = Math.max(rect.height || width * (47 / 81), 1);
+    panelRect = {
+      left: rect.left,
+      top: rect.top,
+      width: Math.max(rect.width, 1),
+      height: Math.max(rect.height || rect.width * (47 / 81), 1),
+    };
+    isMobileViewport = window.innerWidth <= MOBILE_TOP_MAX_WIDTH;
+  };
+
+  const size = () => {
+    refreshPanelRect();
+    const { width, height } = panelRect;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(width, height, false);
     cam.aspect = width / height;
@@ -327,8 +356,9 @@ export async function mountHero3D({
   let cy = 0;
 
   const onMove = (e: PointerEvent) => {
+    noteUserActivity();
     if (!finePointer.matches) return;
-    const r = panel.getBoundingClientRect();
+    const r = panelRect;
     ty = ((e.clientX - r.left) / r.width) * 2 - 1;
     tx = ((e.clientY - r.top) / r.height) * 2 - 1;
     ty *= MAX;
@@ -342,22 +372,50 @@ export async function mountHero3D({
   panel.addEventListener('pointerleave', onLeave);
 
   size();
-  const ro = new ResizeObserver(size);
+  const ro = new ResizeObserver(() => {
+    size();
+    updateSubjectCssVars();
+    markDirty(HERO_RAF_ID);
+  });
   ro.observe(panel);
 
   let visible = true;
   const io = new IntersectionObserver(([entry]) => {
     visible = Boolean(entry?.isIntersecting);
+    syncHeroPlayback();
   });
   io.observe(panel);
 
   let last = performance.now();
+  let lastRenderAt = 0;
+  let lastSubjectCssAt = 0;
   let swayT = 0;
   let running = true;
+  let idlePaused = false;
+  let lastActivityAt = performance.now();
+
+  const noteUserActivity = () => {
+    lastActivityAt = performance.now();
+    if (idlePaused) {
+      idlePaused = false;
+      syncHeroPlayback();
+    }
+  };
+
+  const onScrollActivity = () => {
+    noteUserActivity();
+    // Panel may have moved with scroll — refresh cached rect for pointer tilt.
+    refreshPanelRect();
+  };
+
+  window.addEventListener('scroll', onScrollActivity, { passive: true });
+  window.addEventListener('pointerdown', noteUserActivity, { passive: true });
+
   const onReduce = (e: MediaQueryListEvent) => {
     if (e.matches) {
       running = false;
       renderer.setAnimationLoop(null);
+      unsubscribe(HERO_RAF_ID);
       panel.classList.remove('is-3d');
     }
   };
@@ -373,7 +431,7 @@ export async function mountHero3D({
   };
 
   const updateSubjectCssVars = () => {
-    const { width, height } = panel.getBoundingClientRect();
+    const { width, height } = panelRect;
     if (width < 1 || height < 1) return;
 
     tilt.updateMatrixWorld(true);
@@ -427,7 +485,6 @@ export async function mountHero3D({
     const maxY = ys[ys.length - 1];
     // Dense core (ignore petal/wing tip outliers).
     const denseR = percentile(xs, PAUSE_PCT);
-    const denseB = percentile(ys, PAUSE_PCT);
 
     panel.style.setProperty('--hero-subj-left', `${(minX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-top', `${(minY * 100).toFixed(2)}%`);
@@ -443,14 +500,14 @@ export async function mountHero3D({
     const gapY = 18 / Math.max(height, 1);
     // Visible BR of the panel inside .hero (media may bleed past container).
     const visibleRight = 0.88;
-    let pauseX = Math.min(visibleRight, Math.max(0.78, denseR + 0.06));
+    const pauseX = Math.min(visibleRight, Math.max(0.78, denseR + 0.06));
     /*
      * Desktop (viewport ≥1024): sit just below the media box — subject fills
      * the stage BR so in-panel corners still hit petals.
      * Mobile: media margin-bottom collapses hero height — keep the control
      * inside the panel, below AABB on the in-panel cream under the subject.
      */
-    const mobile = window.innerWidth <= 1023;
+    const mobile = isMobileViewport;
     let pauseY = mobile
       ? Math.min(0.95, Math.max(maxY + gapY * 1.35, maxY + 20 / Math.max(height, 1)))
       : Math.max(1 + gapY, maxY + 14 / Math.max(height, 1));
@@ -466,17 +523,52 @@ export async function mountHero3D({
   const yawMax = THREE.MathUtils.degToRad(YAW_SWAY_DEG);
   placePosterCam(camDist, 0);
   updateSubjectCssVars();
+  lastSubjectCssAt = performance.now();
   // First frame into the backing store before revealing (poster stays until is-3d).
   renderer.render(scene, cam);
 
-  renderer.setAnimationLoop(() => {
+  const syncHeroPlayback = () => {
     if (!running) return;
-    const now = performance.now();
-    const dt = Math.min((now - last) / 1000, 0.1);
-    last = now;
-    if (!visible || document.hidden || panel.classList.contains('is-paused')) {
+    const pausedUi = panel.classList.contains('is-paused');
+    const shouldRun =
+      visible && !document.hidden && !pausedUi && !idlePaused && !reduce.matches;
+    // Tear down three's loop entirely when not painting — no early-return stubs.
+    renderer.setAnimationLoop(null);
+    setPaused(HERO_RAF_ID, !shouldRun);
+    if (shouldRun) {
+      setContinuous(HERO_RAF_ID, true);
+      markDirty(HERO_RAF_ID);
+    }
+  };
+
+  const onVis = () => {
+    if (!document.hidden) {
+      noteUserActivity();
+      refreshPanelRect();
+    }
+    syncHeroPlayback();
+  };
+  document.addEventListener('visibilitychange', onVis);
+
+  const tick = (now: number) => {
+    if (!running) return;
+
+    if (now - lastActivityAt >= IDLE_PAUSE_MS) {
+      idlePaused = true;
+      syncHeroPlayback();
       return;
     }
+
+    if (isMobileViewport && now - lastRenderAt < MOBILE_MIN_FRAME_MS) {
+      // Stay continuous but skip work this pump — next frame will retry.
+      markDirty(HERO_RAF_ID);
+      return;
+    }
+
+    const dt = Math.min((now - last) / 1000, 0.1);
+    last = now;
+    lastRenderAt = now;
+
     swayT += dt;
     const phase = (swayT % YAW_SWAY_PERIOD_S) / YAW_SWAY_PERIOD_S;
     const yaw = Math.sin(phase * Math.PI * 2) * yawMax;
@@ -495,9 +587,17 @@ export async function mountHero3D({
       tilt.rotation.set(0, 0, 0);
     }
     mixer.update(dt);
-    updateSubjectCssVars();
+
+    if (now - lastSubjectCssAt >= SUBJECT_CSS_MIN_MS) {
+      lastSubjectCssAt = now;
+      updateSubjectCssVars();
+    }
+
     renderer.render(scene, cam);
-  });
+  };
+
+  subscribe(HERO_RAF_ID, tick, { continuous: true });
+  syncHeroPlayback();
 
   // Reveal only after boot gate (fonts/poster/glb/atlases) or its timeout.
   void whenHomeBootReady().then(() => {
@@ -505,13 +605,24 @@ export async function mountHero3D({
     panel.classList.add('is-3d');
   });
 
+  // React to class toggles (pause control) without polling every frame.
+  const mo = new MutationObserver(() => {
+    syncHeroPlayback();
+  });
+  mo.observe(panel, { attributes: true, attributeFilter: ['class'] });
+
   return () => {
     running = false;
     reduce.removeEventListener('change', onReduce);
     panel.removeEventListener('pointermove', onMove);
     panel.removeEventListener('pointerleave', onLeave);
+    window.removeEventListener('scroll', onScrollActivity);
+    window.removeEventListener('pointerdown', noteUserActivity);
+    document.removeEventListener('visibilitychange', onVis);
+    mo.disconnect();
     ro.disconnect();
     io.disconnect();
+    unsubscribe(HERO_RAF_ID);
     renderer.setAnimationLoop(null);
     panel.classList.remove('is-3d');
     panel.classList.remove('is-cropped');

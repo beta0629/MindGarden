@@ -54,10 +54,33 @@ export class ScrollClock {
     this.lockFloor = walkF;
   }
 
+  /** Prevent a large dt jump after a long idle freeze. */
+  syncTime(now: number): void {
+    this.lastNow = now;
+  }
+
   triggerScrollY(m: ScrollMetrics): number {
     return (
       this.triggerP * (m.sectionHeight + m.vh) - m.vh + m.sectionTop
     );
+  }
+
+  /**
+   * True when the clock will consume wall-clock dt on the next update
+   * (forward walk or reverse) — used to decide continuous rAF.
+   */
+  wouldAdvanceWithTime(m: ScrollMetrics): boolean {
+    const triggerY = this.triggerScrollY(m);
+    const past =
+      m.scrollY >= triggerY - 1 ||
+      (this.nearMaxScroll && m.scrollY >= m.maxScroll - 2);
+    const below = m.scrollY < triggerY - 1;
+    if (past && this.armed) return true;
+    if (below && this.armed) {
+      if (this.lockFloor != null && this.walkF >= this.lockFloor) return false;
+      return true;
+    }
+    return false;
   }
 
   update(now: number, m: ScrollMetrics): number {
@@ -129,6 +152,7 @@ export class ScrollClock {
 
 /** Stable visual viewport height — prefer visualViewport; avoid RO feedback. */
 let cachedVh = 0;
+let cachedDocH = 0;
 let vhListenersBound = false;
 
 function readStableVh(): number {
@@ -141,11 +165,21 @@ function readStableVh(): number {
   return next;
 }
 
+function readDocHeight(): number {
+  const next = Math.max(
+    document.documentElement.scrollHeight,
+    document.body.scrollHeight,
+  );
+  cachedDocH = next;
+  return next;
+}
+
 function bindVhCache(): void {
   if (vhListenersBound || typeof window === 'undefined') return;
   vhListenersBound = true;
   const refresh = () => {
     cachedVh = readStableVh();
+    cachedDocH = readDocHeight();
   };
   window.addEventListener('resize', refresh, { passive: true });
   window.visualViewport?.addEventListener('resize', refresh);
@@ -153,6 +187,10 @@ function bindVhCache(): void {
   refresh();
 }
 
+/**
+ * One-shot metrics read (layout). Prefer {@link createSectionMetricsCache}
+ * inside rAF ticks so getBoundingClientRect is not called every frame.
+ */
 export function readScrollMetrics(sectionEl: HTMLElement): ScrollMetrics {
   bindVhCache();
   const rect = sectionEl.getBoundingClientRect();
@@ -160,10 +198,53 @@ export function readScrollMetrics(sectionEl: HTMLElement): ScrollMetrics {
   const vh = cachedVh > 0 ? cachedVh : readStableVh();
   const sectionTop = scrollY + rect.top;
   const sectionHeight = Math.max(1, rect.height);
-  const docH = Math.max(
-    document.documentElement.scrollHeight,
-    document.body.scrollHeight,
-  );
+  const docH = cachedDocH > 0 ? cachedDocH : readDocHeight();
   const maxScroll = Math.max(0, docH - vh);
   return { scrollY, vh, sectionTop, sectionHeight, maxScroll };
+}
+
+export type SectionMetricsCache = {
+  /** Re-read section rect + doc height (call on resize / IO / pack change). */
+  refresh: () => void;
+  /** ScrollY + cached section geometry — no getBoundingClientRect. */
+  read: () => ScrollMetrics;
+};
+
+/**
+ * Cache section top/height from resize / IntersectionObserver / pack changes.
+ * Tick paths must use `read()` — never call getBoundingClientRect per frame.
+ */
+export function createSectionMetricsCache(
+  sectionEl: HTMLElement,
+): SectionMetricsCache {
+  bindVhCache();
+  let sectionTop = 0;
+  let sectionHeight = 1;
+
+  const refresh = () => {
+    const rect = sectionEl.getBoundingClientRect();
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    sectionTop = scrollY + rect.top;
+    sectionHeight = Math.max(1, rect.height);
+    cachedVh = readStableVh();
+    cachedDocH = readDocHeight();
+  };
+
+  refresh();
+
+  return {
+    refresh,
+    read: () => {
+      const scrollY = window.scrollY || window.pageYOffset || 0;
+      const vh = cachedVh > 0 ? cachedVh : readStableVh();
+      const docH = cachedDocH > 0 ? cachedDocH : readDocHeight();
+      return {
+        scrollY,
+        vh,
+        sectionTop,
+        sectionHeight,
+        maxScroll: Math.max(0, docH - vh),
+      };
+    },
+  };
 }

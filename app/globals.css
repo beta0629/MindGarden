@@ -575,15 +575,40 @@ p {
 }
 
 .hero-media {
+  --hero-zoom: 1.15;
+  --hero-fade-edge: 58%;
   position: relative;
   overflow: hidden;
-  border-radius: var(--radius);
-  background: var(--hero-sand);
-  aspect-ratio: 81 / 47;
+  border-radius: 0;
+  border: 0;
+  box-shadow: none;
+  background: var(--cream);
+  min-height: clamp(26rem, calc(100svh - var(--header-h) - 6rem), 40rem);
 }
 
-.hero-media > picture,
-.hero-media > * {
+.hero-media__stage {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-image: radial-gradient(
+    ellipse closest-side at 50% 50%,
+    black var(--hero-fade-edge),
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse closest-side at 50% 50%,
+    black var(--hero-fade-edge),
+    transparent 100%
+  );
+}
+
+.hero-media__stage > picture {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.hero-media__stage > * {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -591,15 +616,38 @@ p {
   max-width: none;
 }
 
-.hero-media > picture img,
-.hero-media > .hero-still,
-.hero-media > .hero-loop,
-.hero-media > .hero-3d {
+/* Poster and video share one aspect ratio and are zoomed from the centre, so
+   the cream-softlight frame blends into the page instead of cropping the subject. */
+.hero-media__stage picture img,
+.hero-media__stage > .hero-loop {
+  position: absolute;
+  inset: auto;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--hero-zoom) * 100%);
+  height: auto;
+  max-width: none;
+  aspect-ratio: 1620 / 939;
+  object-fit: cover;
+  transform: translate(-50%, -50%);
+  /* Soft-fade the frame's own edges so its baked sand tone never shows a rectangle. */
+  -webkit-mask-image: radial-gradient(
+    ellipse closest-side at 50% 50%,
+    black 78%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse closest-side at 50% 50%,
+    black 78%,
+    transparent 100%
+  );
+}
+
+.hero-media__stage > .hero-3d {
   width: 100%;
   height: 100%;
   max-width: none;
   object-fit: cover;
-  object-position: 50% 60%;
 }
 
 .hero-still {
@@ -613,12 +661,15 @@ p {
   z-index: 2;
 }
 
+/* Poster stays underneath as the loop-restart underlay; video fades in once frames play. */
 .hero-media:has(.hero-loop) .hero-loop {
   display: block;
+  opacity: 0;
+  transition: opacity 0.45s ease;
 }
 
-.hero-media:has(.hero-loop) .hero-still {
-  opacity: 0;
+.hero-media.is-video-playing .hero-loop {
+  opacity: 1;
 }
 
 .hero-media.is-3d .hero-loop {
@@ -703,19 +754,46 @@ p {
     padding: 1.5rem 0 0;
   }
 
-  /* Near full-bleed media: break out of the container padding, taller crop. */
-  .hero-media {
-    width: calc(100% + var(--pad) * 2);
-    margin-inline: calc(var(--pad) * -1);
-    border-radius: 0;
-    aspect-ratio: 5 / 4;
+  /* Near full-bleed media: break out of the container padding. */
+  .hero__copy {
+    position: relative;
+    z-index: 2;
   }
 
-  .hero-media > picture img,
-  .hero-media > .hero-still,
-  .hero-media > .hero-loop,
-  .hero-media > .hero-3d {
-    object-position: 58% 50%;
+  .hero-media {
+    --hero-zoom: 1.45;
+    width: calc(100% + var(--pad) * 2);
+    margin-inline: calc(var(--pad) * -1);
+    margin-top: -1.5rem;
+    min-height: 0;
+    height: clamp(18rem, 58svh, 36rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .hero {
+    --hero-container: min(100vw - var(--pad) * 2, var(--max-page));
+    grid-template-columns: minmax(0, 9fr) minmax(0, 11fr);
+    gap: clamp(1rem, 2vw, 2rem);
+    padding-block: clamp(1rem, 2.5vw, 2.5rem);
+  }
+
+  /* Media column bleeds past the container toward the viewport's right edge. */
+  .hero-media {
+    --hero-zoom: 1.2;
+    margin-right: calc((var(--hero-container) - 100vw) / 2);
+    min-height: clamp(24rem, 46vw, 34rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .hero {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  }
+
+  .hero-media {
+    --hero-zoom: 1.15;
+    min-height: clamp(28rem, calc(100svh - var(--header-h) - 6rem), 40rem);
   }
 }
 
@@ -1302,10 +1380,6 @@ p {
 }
 
 @media (min-width: 768px) {
-  .hero {
-    grid-template-columns: 1.05fr 0.95fr;
-  }
-
   .process-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }

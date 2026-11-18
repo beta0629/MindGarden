@@ -9,12 +9,29 @@ import {
 } from 'react';
 
 const SLOW_CONNECTION_TYPES = ['slow-2g', '2g', '3g'];
-/** Mobile orbit video starts only after the page has settled (LCP + load). */
+/** Orbit video starts only after the page has settled (LCP + load). */
 const VIDEO_IDLE_TIMEOUT_MS = 3500;
+const DESKTOP_VIDEO_QUERY = '(min-width: 1024px)';
+const DESKTOP_3D_QUERY =
+  '(min-width: 1024px) and (hover: hover) and (pointer: fine)';
+/** three.js WingFold is opt-in (NEXT_PUBLIC_HERO_3D=1); the orbit video is the default on every viewport. */
+const HERO_3D_ENABLED = process.env.NEXT_PUBLIC_HERO_3D === '1';
+const HERO_VIDEO_SOURCES = {
+  mobile: [
+    { src: '/assets/hero/hero-orbit-loop.mp4', type: 'video/mp4' },
+    { src: '/assets/hero/hero-orbit-loop.webm', type: 'video/webm' },
+  ],
+  desktop: [
+    { src: '/assets/hero/hero-orbit-loop.desktop.mp4', type: 'video/mp4' },
+    { src: '/assets/hero/hero-orbit-loop.desktop.webm', type: 'video/webm' },
+  ],
+} as const;
+const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
 
 /**
  * Hero media panel per v1.3-home/web/IMPLEMENTATION.md:
- * poster LCP → (idle) mobile/tablet orbit video → desktop three.js WingFold + tilt.
+ * poster LCP → (idle) orbit video (mobile + desktop sources) → optional three.js WingFold.
+ * Video is paused off-screen and the poster stays underneath as the loop-restart underlay.
  */
 export function HeroMedia() {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -24,6 +41,10 @@ export function HeroMedia() {
   /** play() was rejected (iOS Low Power Mode / autoplay policy): show a tap-to-play control. */
   const [needsGesture, setNeedsGesture] = useState(false);
   const [posterReady, setPosterReady] = useState(false);
+  /** First video frame is on screen; until then the poster stays visible (no black frame). */
+  const [videoPlaying, setVideoPlaying] = useState(false);
+  const [inView, setInView] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
   /** Desired capability from viewport/motion prefs (still | video | 3d). */
   const [mode, setMode] = useState<'still' | 'video' | '3d'>('still');
   /** Mobile/tablet video mounts only after idle so it never races the LCP poster. */
@@ -41,14 +62,10 @@ export function HeroMedia() {
     ) {
       return 'still' as const;
     }
-    if (
-      window.matchMedia(
-        '(min-width: 1024px) and (hover: hover) and (pointer: fine)',
-      ).matches
-    ) {
+    if (HERO_3D_ENABLED && window.matchMedia(DESKTOP_3D_QUERY).matches) {
       return '3d' as const;
     }
-    // Orbit video is ~0.5MB — keep the poster on constrained connections.
+    // Orbit video is ~0.3–0.4MB — keep the poster on constrained connections.
     const effectiveType = (
       navigator as Navigator & { connection?: { effectiveType?: string } }
     ).connection?.effectiveType;
@@ -60,25 +77,39 @@ export function HeroMedia() {
 
   const syncMode = useEffectEvent(() => {
     setMode(resolveMode());
+    setIsDesktop(window.matchMedia(DESKTOP_VIDEO_QUERY).matches);
   });
 
   useEffect(() => {
     syncMode();
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const desktop = window.matchMedia(
-      '(min-width: 1024px) and (hover: hover) and (pointer: fine)',
-    );
+    const desktop = window.matchMedia(DESKTOP_3D_QUERY);
+    const wide = window.matchMedia(DESKTOP_VIDEO_QUERY);
     const onChange = () => syncMode();
     reduce.addEventListener('change', onChange);
     desktop.addEventListener('change', onChange);
+    wide.addEventListener('change', onChange);
     return () => {
       reduce.removeEventListener('change', onChange);
       desktop.removeEventListener('change', onChange);
+      wide.removeEventListener('change', onChange);
     };
   }, []);
 
   useEffect(() => {
-    const img = panelRef.current?.querySelector<HTMLImageElement>('.hero-still');
+    const panel = panelRef.current;
+    if (!panel || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      ([entry]) => setInView(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    io.observe(panel);
+    return () => io.disconnect();
+  }, []);
+
+  useEffect(() => {
+    const img =
+      panelRef.current?.querySelector<HTMLImageElement>('.hero-still');
     if (img?.complete) {
       setPosterReady(true);
     }
@@ -141,9 +172,10 @@ export function HeroMedia() {
     const video = videoRef.current;
     if (!showVideo || !video) {
       setNeedsGesture(false);
+      setVideoPlaying(false);
       return;
     }
-    if (paused) {
+    if (paused || !inView) {
       video.pause();
       return;
     }
@@ -152,7 +184,7 @@ export function HeroMedia() {
       // The <video> unmounts with React; pausing is enough and keeps <source> children intact.
       video.pause();
     };
-  }, [showVideo, paused, tryPlay]);
+  }, [showVideo, paused, inView, isDesktop, tryPlay]);
 
   const handleGesturePlay = () => {
     const video = videoRef.current;
@@ -219,54 +251,62 @@ export function HeroMedia() {
   return (
     <div
       ref={panelRef}
-      className={`hero-media${paused ? ' is-paused' : ''}`}
+      className={`hero-media${paused ? ' is-paused' : ''}${
+        videoPlaying ? ' is-video-playing' : ''
+      }`}
     >
-      <picture>
-        <source
-          type="image/avif"
-          srcSet="/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w"
-          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 50vw"
-        />
-        <source
-          type="image/webp"
-          srcSet="/assets/hero/hero-poster-640.webp 640w, /assets/hero/hero-poster-1080.webp 1080w, /assets/hero/hero-poster.webp 1620w"
-          sizes="(max-width: 767px) 100vw, (max-width: 1023px) 100vw, 50vw"
-        />
-        {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js / video */}
-        <img
-          className="hero-still"
-          src="/assets/hero/hero-poster-1080.webp"
-          alt=""
-          width={1620}
-          height={940}
-          decoding="sync"
-          fetchPriority="high"
-          onLoad={() => setPosterReady(true)}
-        />
-      </picture>
-
-      {showVideo ? (
-        <video
-          ref={videoRef}
-          className="hero-loop"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          poster="/assets/hero/hero-poster-1080.webp"
-          aria-hidden="true"
-          onPlaying={() => setNeedsGesture(false)}
-        >
-          <source src="/assets/hero/hero-orbit-loop.mp4" type="video/mp4" />
+      <div className="hero-media__stage">
+        <picture>
           <source
-            src="/assets/hero/hero-orbit-loop.webm"
-            type="video/webm"
+            type="image/avif"
+            srcSet="/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w"
+            sizes={HERO_POSTER_SIZES}
           />
-        </video>
-      ) : null}
+          <source
+            type="image/webp"
+            srcSet="/assets/hero/hero-poster-640.webp 640w, /assets/hero/hero-poster-1080.webp 1080w, /assets/hero/hero-poster.webp 1620w"
+            sizes={HERO_POSTER_SIZES}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js / video */}
+          <img
+            className="hero-still"
+            src="/assets/hero/hero-poster-1080.webp"
+            alt=""
+            width={1620}
+            height={940}
+            decoding="sync"
+            fetchPriority="high"
+            onLoad={() => setPosterReady(true)}
+          />
+        </picture>
 
-      <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
+        {showVideo ? (
+          <video
+            key={isDesktop ? 'desktop' : 'mobile'}
+            ref={videoRef}
+            className="hero-loop"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/assets/hero/hero-poster-1080.webp"
+            aria-hidden="true"
+            onPlaying={() => {
+              setNeedsGesture(false);
+              setVideoPlaying(true);
+            }}
+          >
+            {HERO_VIDEO_SOURCES[isDesktop ? 'desktop' : 'mobile'].map(
+              (source) => (
+                <source key={source.src} src={source.src} type={source.type} />
+              ),
+            )}
+          </video>
+        ) : null}
+
+        <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
+      </div>
 
       {showVideo && needsGesture ? (
         <button

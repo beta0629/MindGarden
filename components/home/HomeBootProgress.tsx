@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { AtlasSheetBank, loadJson, loadSheet } from '@/components/home/v37/atlas';
-import type { BenchJson, GateJson, PackId } from '@/components/home/v37/types';
+import { loadJson } from '@/components/home/v37/atlas';
+import { assetUrl, type BenchJson, type GateJson, type PackId } from '@/components/home/v37/types';
 import {
   dispatchHomeBootProgress,
   dispatchHomeBootReady,
@@ -105,6 +105,11 @@ const LOW_FETCH = {
   ...({ priority: 'low' } as RequestInit),
 };
 
+/**
+ * Network-warm first gate/bench atlas JSON + sheet 0 into the HTTP cache.
+ * Avoid createImageBitmap here — decoding on the main thread was ~70% of LCP
+ * render-delay under LH 4× CPU throttle. Scenes decode from cache on mount.
+ */
 async function warmFirstAtlases(
   pack: PackId,
   onRatio: (ratio: number) => void,
@@ -114,6 +119,11 @@ async function warmFirstAtlases(
   let benchDone = 0;
   const report = () => onRatio((gateDone + benchDone) / 2);
   const init = { ...LOW_FETCH, signal };
+
+  const prefetchSheet = async (relativePath: string) => {
+    const res = await fetch(assetUrl(relativePath), init);
+    if (res.ok) await res.arrayBuffer();
+  };
 
   const gateJob = (async () => {
     try {
@@ -125,10 +135,7 @@ async function warmFirstAtlases(
       gateDone = 0.4;
       report();
       const sheet0 = json.door.body_atlas.sheets[0]?.file;
-      if (sheet0) await loadSheet(sheet0, init);
-      if (signal?.aborted) return;
-      const body = new AtlasSheetBank(json.door.body_atlas);
-      await body.ensureCurrentAndNext(0);
+      if (sheet0) await prefetchSheet(sheet0);
       gateDone = 1;
       report();
     } catch {
@@ -149,10 +156,7 @@ async function warmFirstAtlases(
       const first = Object.keys(json.ambient)[0];
       if (first) {
         const sheet0 = json.ambient[first].atlas.sheets[0]?.file;
-        if (sheet0) await loadSheet(sheet0, init);
-        if (signal?.aborted) return;
-        const bank = new AtlasSheetBank(json.ambient[first].atlas);
-        await bank.ensureCurrentAndNext(0);
+        if (sheet0) await prefetchSheet(sheet0);
       }
       benchDone = 1;
       report();

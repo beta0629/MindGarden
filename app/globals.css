@@ -529,7 +529,7 @@ p {
 
 .hero {
   display: grid;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
   padding: clamp(2.5rem, 6vw, 4.5rem) 0;
 }
@@ -578,12 +578,12 @@ p {
 
 .hero-media {
   --hero-zoom: 1.15;
-  /* Radial feather: leave the panel's extreme L/R (and outer ring) fully transparent → page cream. */
-  --hero-fade-edge: 64%;
-  --hero-fade-end: 92%;
-  /* Inner poster/video mask: kill baked softlight sand before the CSS box edge. */
-  --hero-media-fade-edge: 85%;
-  --hero-media-fade-end: 98%;
+  /* Tighter radial feather: opaque core stays on the subject; cream earlier at the rim. */
+  --hero-fade-edge: 52%;
+  --hero-fade-end: 84%;
+  /* Inner poster/video mask: baked periphery already graded to cream; keep a soft CSS assist. */
+  --hero-media-fade-edge: 72%;
+  --hero-media-fade-end: 96%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -709,27 +709,28 @@ p {
 .hero__pause {
   position: absolute;
   z-index: 3;
+  /* Bottom-right inside .hero-media on every breakpoint. */
   inset: auto 0.75rem 0.75rem auto;
-  width: 2rem;
-  height: 2rem;
+  width: 1.625rem;
+  height: 1.625rem;
   border: 0;
   border-radius: 999px;
-  background: rgba(28, 36, 48, 0.55);
-  color: var(--white);
+  background: color-mix(in srgb, var(--ink) 35%, transparent);
+  color: color-mix(in srgb, var(--ink) 60%, var(--cream));
   cursor: pointer;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   line-height: 1;
 }
 
-/* Visual stays 32px; hit target is 48px (≥44px) and stays inside the media panel. */
+/* Visual ~26px; hit target expands to ≥44px and stays inside the media panel. */
 .hero__pause::after {
   content: '';
   position: absolute;
-  inset: -0.5rem;
+  inset: -0.625rem;
 }
 
 .hero__pause:focus-visible {
-  outline: 2px solid var(--white);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -761,8 +762,8 @@ p {
 /* Stacked, near full-bleed media through tablet (≤1023): copy + CTA first, media below. */
 @media (max-width: 1023px) {
   .hero {
-    gap: 1.25rem;
-    padding: 1.5rem 0 0;
+    gap: 1.5rem;
+    padding: 1.5rem 0 0.75rem;
   }
 
   .hero__copy {
@@ -771,36 +772,32 @@ p {
   }
 
   .hero-media {
-    --hero-zoom: 1.45;
-    /* Wider feather at 390: edge vs cream max-channel Δ ≤ 2 (no sand strip). */
-    --hero-fade-edge: 58%;
-    --hero-fade-end: 90%;
-    --hero-media-fade-edge: 82%;
-    --hero-media-fade-end: 96%;
+    /* Mild zoom: keep the full butterfly+flowers in the opaque core. */
+    --hero-zoom: 1.22;
+    /* Fade to cream earlier so graded periphery never shows a sand plate. */
+    --hero-fade-edge: 56%;
+    --hero-fade-end: 88%;
+    --hero-media-fade-edge: 78%;
+    --hero-media-fade-end: 97%;
     width: calc(100% + var(--pad) * 2);
     margin-inline: calc(var(--pad) * -1);
-    margin-top: -1.5rem;
+    margin-top: 0;
     min-height: 0;
-    height: clamp(18rem, 58svh, 36rem);
+    /* Content-fitting height from orbit aspect — no tall empty cream band under the subject. */
+    height: auto;
+    aspect-ratio: 1080 / 626;
     max-height: none;
   }
 
-  /* Radial ellipse never fully clears rectangular corners; pull stage in so
-     parent --cream shows in the 1–2 CSS px rim (esp. top L/R at DPR3). */
+  /* Grade+mask already clears corners to cream; no 2px stage inset. */
   .hero-media__stage {
-    inset: 2px;
-  }
-
-  /* Top-right, below the copy overlap: never under the sticky bar or below the fold. */
-  .hero__pause {
-    inset: 2.5rem 0.75rem auto auto;
+    inset: 0;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-media {
-    --hero-zoom: 1.2;
-    height: clamp(22rem, 52svh, 34rem);
+    --hero-zoom: 1.18;
   }
 }
 
@@ -809,16 +806,21 @@ p {
     --hero-container: min(100vw - var(--pad) * 2, var(--max-page));
     grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
     gap: clamp(1rem, 2vw, 2rem);
-    padding-block: clamp(1rem, 2.5vw, 2.5rem);
+    /* Tighter block padding: less empty cream under the hero before 상담 분야. */
+    padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
   }
 
-  /* Media column bleeds past the container toward the viewport's right edge. */
+  /* Media column bleeds past the container toward the viewport's right edge (~55–60%). */
   .hero-media {
-    --hero-zoom: 1.15;
+    --hero-zoom: 1.08;
+    --hero-fade-edge: 56%;
+    --hero-fade-end: 88%;
+    --hero-media-fade-edge: 78%;
+    --hero-media-fade-end: 97%;
     margin-right: calc((var(--hero-container) - 100vw) / 2);
     min-height: 0;
-    height: min(70svh, 40rem);
-    max-height: 70svh;
+    height: min(62svh, 34rem);
+    max-height: 62svh;
   }
 }
 
@@ -1669,6 +1671,11 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   margin-bottom: 0;
 }
 
+/* First band after hero: less empty cream before 상담 분야. */
+.home-areas.section {
+  padding-top: clamp(2rem, 4.5vw, 3.5rem);
+}
+
 .home-areas__layout {
   display: grid;
   gap: 1.75rem;
@@ -2010,6 +2017,32 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   object-fit: cover;
 }
 
+/* Video Shorts: stacked portrait card — media on top, title below (ink on cream). */
+.home-reading-feature--video {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--ink);
+  background: var(--cream);
+  border: 1px solid var(--line);
+}
+
+.home-reading-feature--video .home-reading-feature__media {
+  position: relative;
+  inset: auto;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--ink);
+}
+
+.home-reading-feature--video .home-reading-feature__media img,
+.home-reading-feature--video .yt-thumb__trigger img {
+  object-fit: cover;
+  object-position: center;
+}
+
 /* No thumbnail: title-led typographic card (no repeated logo watermark). */
 .home-reading-feature--text {
   display: flex;
@@ -2065,6 +2098,29 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   font-weight: 600;
 }
 
+/*
+ * Video Shorts title sits below the media (not over it).
+ * Use position:relative (not static) so LightningCSS cannot drop it as a default
+ * and let the absolute overlay rule above win.
+ */
+.home-reading-feature--video > strong {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  padding: 0.65rem 0.7rem 0.75rem;
+  background: transparent;
+  background-image: none;
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 /* YoutubeThumbPlay: thumbnail button → nocookie iframe on tap. */
 .yt-thumb__trigger {
   position: absolute;
@@ -2096,17 +2152,24 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 1.875rem;
+  height: 1.875rem;
   min-width: 44px;
   min-height: 44px;
   display: grid;
   place-items: center;
   border-radius: 999px;
-  background: rgba(28, 36, 48, 0.72);
-  color: var(--white);
-  font-size: 0.875rem;
+  background: color-mix(in srgb, var(--ink) 55%, transparent);
+  color: var(--cream);
+  font-size: 0.75rem;
   pointer-events: none;
+}
+
+.home-reading-feature--video .yt-thumb__play {
+  width: 1.875rem;
+  height: 1.875rem;
+  /* Visual ~1.875rem; hit area stays ≥44px via min-width/height. */
+  box-shadow: none;
 }
 
 .yt-thumb__frame {
@@ -2117,6 +2180,12 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   border: 0;
 }
 
+.home-reading-feature--video .yt-thumb__trigger,
+.home-reading-feature--video .yt-thumb__frame {
+  position: absolute;
+  inset: 0;
+}
+
 .home-reading-feature--video strong {
   pointer-events: none;
 }
@@ -2124,13 +2193,14 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 .home-reading-feature--video.is-playing {
   grid-column: 1 / -1;
   min-height: 0;
+}
+
+.home-reading-feature--video.is-playing .home-reading-feature__media {
   aspect-ratio: 16 / 9;
 }
 
 .home-reading-feature--video.is-playing strong {
-  left: auto;
-  right: auto;
-  bottom: auto;
+  position: absolute;
   width: 1px;
   height: 1px;
   padding: 0;
@@ -2138,6 +2208,7 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+  border: 0;
   background: none;
 }
 

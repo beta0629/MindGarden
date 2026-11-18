@@ -612,24 +612,23 @@ p {
   background: transparent;
   /* Explicit box: absolute stage children must never size the panel. */
   min-height: 0;
-  /* Poster-like stage (1620×940) — large canvas, not a short strip. */
-  width: min(100%, 36rem);
+  /* Spec panel 81:47 (1440 → 810×470). */
+  width: min(100%, 50.625rem);
   max-width: 100%;
-  aspect-ratio: 1620 / 940;
+  aspect-ratio: 81 / 47;
   height: auto;
-  max-height: min(56svh, 34rem);
+  max-height: min(58svh, 29.375rem);
 }
 
 /*
- * Live GLB: same poster aspect as the approved still. Camera fit keeps ~4–8%
- * margin inside a LARGE buffer (never ultra-wide 7/2 + tiny max-height).
+ * Live GLB: locked poster camera inside the 81:47 stage (IMPLEMENTATION §3).
  */
 .hero-media.is-3d {
   overflow: hidden;
-  aspect-ratio: 1620 / 940;
-  width: min(100%, 36rem);
+  aspect-ratio: 81 / 47;
+  width: min(100%, 50.625rem);
   height: auto;
-  max-height: min(56svh, 34rem);
+  max-height: min(58svh, 29.375rem);
 }
 
 .hero-media__stage {
@@ -818,22 +817,24 @@ p {
   }
 
   .hero-media {
-    /* Near full-bleed; subject ≈ 90% of viewport width after pad bleed. */
+    /* Full-bleed ≈ 100vw; fitted subject fills most → ~90% vw. */
     --hero-zoom: 1.2;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
     width: calc(100% + var(--pad) * 2);
+    max-width: none;
     margin-inline: calc(var(--pad) * -1);
     margin-top: 0;
     min-height: 0;
     height: auto;
-    aspect-ratio: 1620 / 940;
+    aspect-ratio: 81 / 47;
     max-height: min(52svh, 28rem);
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 1620 / 940;
+    aspect-ratio: 81 / 47;
     width: calc(100% + var(--pad) * 2);
+    max-width: none;
     margin-inline: calc(var(--pad) * -1);
     max-height: min(52svh, 28rem);
   }
@@ -846,7 +847,7 @@ p {
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-media {
     --hero-zoom: 1.15;
-    aspect-ratio: 1620 / 940;
+    aspect-ratio: 81 / 47;
     max-height: min(56svh, 32rem);
   }
 }
@@ -854,32 +855,35 @@ p {
 @media (min-width: 1024px) {
   .hero {
     --hero-container: min(100vw - var(--pad) * 2, var(--max-page));
-    /* Media track wide enough that a ~90%-fitted subject ≈ 45–55vw. */
-    grid-template-columns: minmax(0, 4fr) minmax(0, 7fr);
+    /*
+     * Spec panel 810×470 @1440 (≈56vw). Media track must hold ≥810px:
+     * hero content ≈1152 → 2.5fr/7.5fr ≈ 864px for media.
+     */
+    grid-template-columns: minmax(0, 2.5fr) minmax(0, 7.5fr);
     gap: clamp(1rem, 2vw, 2rem);
     /* Tighter block padding: less empty cream under the hero before 상담 분야. */
     padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
   }
 
-  /* Media column: fill the 3fr track so fitted subject ≈ 45–55% viewport. */
+  /* Spec 81:47 → 810×470 @1440 (50.625rem × 29.375rem); bleed right. */
   .hero-media {
     --hero-zoom: 1.12;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
-    justify-self: stretch;
-    width: 100%;
-    max-width: none;
-    aspect-ratio: 1620 / 940;
+    justify-self: end;
+    width: min(100%, 50.625rem);
+    max-width: 50.625rem;
+    aspect-ratio: 81 / 47;
     height: auto;
-    max-height: min(58svh, 40rem);
+    max-height: min(58svh, 29.375rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
   .hero-media.is-3d {
-    aspect-ratio: 1620 / 940;
-    width: 100%;
-    max-width: none;
-    max-height: min(58svh, 40rem);
+    aspect-ratio: 81 / 47;
+    width: min(100%, 50.625rem);
+    max-width: 50.625rem;
+    max-height: min(58svh, 29.375rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 

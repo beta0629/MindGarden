@@ -4,15 +4,18 @@ import { useEffect, useRef, useState } from 'react';
 import {
   dispatchHomeBootProgress,
   hasHomeBootCompleted,
+  HOME_BOOT_BAR_TIMEOUT_MS,
   HOME_BOOT_FADE_MS,
+  HOME_BOOT_MIN_VISIBLE_MS,
   HOME_BOOT_PROGRESS_EVENT,
-  HOME_BOOT_READY_EVENT,
+  markHomeBootCompleted,
   type HomeBootProgressDetail,
 } from '@/components/home/homeBoot';
 
 /**
- * Visual-only cream/green boot bar. Ready gate is owned by HomeBootInline
- * (classic script) so this chunk can load after LCP without blocking.
+ * Visual-only cream/green boot bar.
+ * Poster gate (`home-boot-ready`) unblocks deferred work but must NOT dismiss
+ * this bar — wait for hero progress `done` (GLB / soft-GL / mount fail).
  */
 export function HomeBootProgress({ force = false }: { force?: boolean }) {
   const [visible, setVisible] = useState(false);
@@ -28,45 +31,54 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       return;
     }
 
+    const startedAt = performance.now();
     const ac = new AbortController();
+    let minTimer = 0;
+    let fadeTimer = 0;
+    let safetyTimer = 0;
+
     requestAnimationFrame(() => {
       if (!ac.signal.aborted) setVisible(true);
     });
+
+    const finish = () => {
+      if (finishedRef.current || ac.signal.aborted) return;
+      finishedRef.current = true;
+      markHomeBootCompleted();
+      const wait = Math.max(
+        0,
+        HOME_BOOT_MIN_VISIBLE_MS - (performance.now() - startedAt),
+      );
+      minTimer = window.setTimeout(() => {
+        if (ac.signal.aborted) return;
+        setRatio(1);
+        setFading(true);
+        fadeTimer = window.setTimeout(() => {
+          if (!ac.signal.aborted) setVisible(false);
+        }, HOME_BOOT_FADE_MS);
+      }, wait);
+    };
 
     const onProgress = (event: Event) => {
       const detail = (event as CustomEvent<HomeBootProgressDetail>).detail;
       if (!detail) return;
       setRatio(detail.ratio);
-      if (detail.done) {
-        finishedRef.current = true;
-        setFading(true);
-        window.setTimeout(() => setVisible(false), HOME_BOOT_FADE_MS);
-      }
+      if (detail.done) finish();
     };
 
-    const onReady = () => {
-      if (finishedRef.current) return;
-      finishedRef.current = true;
-      setRatio(1);
-      setFading(true);
-      window.setTimeout(() => setVisible(false), HOME_BOOT_FADE_MS);
-    };
-
-    // If inline script already finished before this chunk loaded, fade immediately.
-    if (document.documentElement.classList.contains('home-boot-ready')) {
-      onReady();
-    } else {
-      // Approximate progress while waiting for the inline gate.
-      setRatio(0.35);
-      dispatchHomeBootProgress(0.35, false);
-      window.addEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
-      window.addEventListener(HOME_BOOT_READY_EVENT, onReady);
-    }
+    // Approximate progress while waiting for the hero decision — never treat
+    // the poster `home-boot-ready` class/event as bar-complete (flash/miss bug).
+    setRatio(0.35);
+    dispatchHomeBootProgress(0.35, false);
+    window.addEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
+    safetyTimer = window.setTimeout(finish, HOME_BOOT_BAR_TIMEOUT_MS);
 
     return () => {
       ac.abort();
       window.removeEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
-      window.removeEventListener(HOME_BOOT_READY_EVENT, onReady);
+      window.clearTimeout(minTimer);
+      window.clearTimeout(fadeTimer);
+      window.clearTimeout(safetyTimer);
     };
   }, [force]);
 

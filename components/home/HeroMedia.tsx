@@ -9,7 +9,10 @@ import {
   type SyntheticEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { whenHomeBootReady } from '@/components/home/homeBoot';
+import {
+  dispatchHomeBootReady,
+  whenHomeBootReady,
+} from '@/components/home/homeBoot';
 import { HeroPoster } from './HeroPoster';
 
 const SLOW_CONNECTION_TYPES = ['slow-2g', '2g'];
@@ -68,6 +71,8 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
   const [isDesktop, setIsDesktop] = useState(false);
   /** Desired capability from viewport/motion prefs (still | video | 3d). */
   const [mode, setMode] = useState<'still' | 'video' | '3d'>('still');
+  /** True after the first client capability sync (avoids treating initial still as final). */
+  const [modeResolved, setModeResolved] = useState(false);
   /** WebGL/GLB mount failed — prefer vivid orbit video over a washed still. */
   const [threeFailed, setThreeFailed] = useState(false);
   /** Video mounts only after idle so it never races the LCP poster. */
@@ -121,6 +126,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
 
   useEffect(() => {
     syncMode();
+    setModeResolved(true);
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     const wide = window.matchMedia(DESKTOP_VIDEO_QUERY);
     const onChange = () => syncMode();
@@ -131,6 +137,13 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
       wide.removeEventListener('change', onChange);
     };
   }, [threeFailed]);
+
+  // Still / video paths never enter the 3D mount effect — finish the boot bar here.
+  useEffect(() => {
+    if (!modeResolved || !posterReady) return;
+    if (mode === '3d') return;
+    dispatchHomeBootReady();
+  }, [modeResolved, posterReady, mode]);
 
   useEffect(() => {
     const panel = panelRef.current;
@@ -294,7 +307,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
 
     void (async () => {
       try {
-        // Poster LCP + boot bar first — no three import / WebGL probe yet.
+        // Poster LCP first — no three import / WebGL probe yet.
         await whenHomeBootReady();
         if (ac.signal.aborted) return;
         await waitIdle(THREE_IDLE_TIMEOUT_MS);
@@ -303,6 +316,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         const { probeSoftwareGpu } = await import('./v37/atlas');
         if (probeSoftwareGpu()) {
           // Soft GL keeps the CSS poster — never import three.js.
+          if (!ac.signal.aborted) dispatchHomeBootReady();
           return;
         }
         if (ac.signal.aborted) return;
@@ -316,10 +330,16 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         });
         if (ac.signal.aborted) {
           cleanup?.();
+          return;
         }
+        // GLB mounted (or reduced-motion / soft-GL safety no-op) — dismiss bar.
+        dispatchHomeBootReady();
       } catch (err) {
         console.error('[hero-3d] mount failed', err);
-        if (!ac.signal.aborted) setThreeFailed(true);
+        if (!ac.signal.aborted) {
+          setThreeFailed(true);
+          dispatchHomeBootReady();
+        }
       }
     })();
 

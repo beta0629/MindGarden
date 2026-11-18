@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState, type ComponentType } from 'react';
-import { whenHomeBootReady } from '@/components/home/homeBoot';
+import {
+  dispatchHomeBootReady,
+  whenHomeBootReady,
+} from '@/components/home/homeBoot';
 
 /** After LCP poster + boot gate — then idle before downloading HeroMedia. */
 const HERO_MEDIA_IDLE_TIMEOUT_MS = 6000;
@@ -20,8 +23,9 @@ type MediaProps = { enhanceOnly?: boolean };
 
 /**
  * Defers the HeroMedia client chunk (video / three.js path) until after
- * `home-boot-ready` + idle. Skips entirely on software GL so LH / SwiftShader
- * never imports three or creates a heavy WebGL context during the audit window.
+ * `home-boot-ready` + idle. Probes software GL immediately after the poster
+ * gate so the boot bar can dismiss without waiting on idle; soft-GL keeps the
+ * poster and never imports three.
  */
 export function HeroMediaLazy() {
   const [Media, setMedia] = useState<ComponentType<MediaProps> | null>(null);
@@ -31,16 +35,20 @@ export function HeroMediaLazy() {
     void (async () => {
       await whenHomeBootReady();
       if (cancelled) return;
-      await waitIdle(HERO_MEDIA_IDLE_TIMEOUT_MS);
-      if (cancelled) return;
       try {
         const { probeSoftwareGpu } = await import('./v37/atlas');
-        if (probeSoftwareGpu()) return;
+        if (probeSoftwareGpu()) {
+          // Soft-GL poster fallback decided — finish visual boot bar / session.
+          if (!cancelled) dispatchHomeBootReady();
+          return;
+        }
+        if (cancelled) return;
+        await waitIdle(HERO_MEDIA_IDLE_TIMEOUT_MS);
         if (cancelled) return;
         const mod = await import('./HeroMedia');
         if (!cancelled) setMedia(() => mod.HeroMedia);
       } catch {
-        /* poster-only fallback */
+        if (!cancelled) dispatchHomeBootReady();
       }
     })();
     return () => {

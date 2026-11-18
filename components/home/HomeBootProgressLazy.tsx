@@ -2,9 +2,11 @@
 
 import { useEffect, useState, type ComponentType } from 'react';
 
-/** Visual boot bar only — ready gate is HomeBootInline (no React). */
-const BOOT_BAR_IDLE_MS = 2000;
-
+/**
+ * Visual boot bar — load immediately on first homepage entry.
+ * Do not idle-defer: poster gate can finish ≤1.5s and a late bar never appears.
+ * Ready/session gate remains HomeBootInline (poster) + HeroMedia (hero decision).
+ */
 export function HomeBootProgressLazy() {
   const [Bar, setBar] = useState<ComponentType | null>(null);
 
@@ -12,22 +14,11 @@ export function HomeBootProgressLazy() {
     if (typeof window === 'undefined') return;
     if (window.location.pathname !== '/') return;
     let cancelled = false;
-    const start = () => {
-      void import('./HomeBootProgress').then((m) => {
-        if (!cancelled) setBar(() => m.HomeBootProgress);
-      });
-    };
-    let idleId = 0;
-    let timeoutId = 0;
-    if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(start, { timeout: BOOT_BAR_IDLE_MS });
-    } else {
-      timeoutId = window.setTimeout(start, 600);
-    }
+    void import('./HomeBootProgress').then((m) => {
+      if (!cancelled) setBar(() => m.HomeBootProgress);
+    });
     return () => {
       cancelled = true;
-      if (idleId) window.cancelIdleCallback(idleId);
-      if (timeoutId) window.clearTimeout(timeoutId);
     };
   }, []);
 

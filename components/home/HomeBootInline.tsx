@@ -1,10 +1,12 @@
 /**
- * Inline boot gate — marks `home-boot-ready` when the LCP poster is loaded
+ * Inline poster gate — marks `home-boot-ready` when the LCP poster is loaded
  * without waiting on React hydration / HomeBootProgress JS.
+ * Does NOT write `mg-home-boot-done-v1` (session-once is owned by the hero
+ * decision / visual bar via `dispatchHomeBootReady`).
  * Keep this tiny: it runs as a classic script after the poster markup.
  */
 export function HomeBootInline() {
-  const js = `(function(){try{if(sessionStorage.getItem('mg-home-boot-done-v1')==='1'){document.documentElement.classList.add('home-boot-ready');return;}var done=false;function ready(){if(done)return;done=true;try{sessionStorage.setItem('mg-home-boot-done-v1','1');}catch(e){}document.documentElement.classList.add('home-boot-ready');try{window.dispatchEvent(new CustomEvent('mg-home-boot-ready'));}catch(e){}}var img=document.querySelector('.hero-still');if(!img){ready();return;}if(img.complete&&img.naturalWidth>0){ready();return;}img.addEventListener('load',ready,{once:true});img.addEventListener('error',ready,{once:true});setTimeout(ready,1500);}catch(e){document.documentElement.classList.add('home-boot-ready');}})();`;
+  const js = `(function(){try{if(sessionStorage.getItem('mg-home-boot-done-v1')==='1'){document.documentElement.classList.add('home-boot-ready');return;}var done=false;function ready(){if(done)return;done=true;document.documentElement.classList.add('home-boot-ready');try{window.dispatchEvent(new CustomEvent('mg-home-boot-ready'));}catch(e){}}var img=document.querySelector('.hero-still');if(!img){ready();return;}if(img.complete&&img.naturalWidth>0){ready();return;}img.addEventListener('load',ready,{once:true});img.addEventListener('error',ready,{once:true});setTimeout(ready,1500);}catch(e){document.documentElement.classList.add('home-boot-ready');}})();`;
 
   return (
     <script

@@ -577,7 +577,7 @@ p {
 }
 
 .hero-media {
-  --hero-zoom: 1.35;
+  --hero-zoom: 1.4;
   /*
    * Graded frames are already cream past ~r=0.45. A tight CSS fade over midtones
    * composites to a grey smudge — keep a wide opaque core and only soft-edge the rim.
@@ -610,6 +610,25 @@ p {
     ellipse closest-side at 50% 50%,
     black var(--hero-fade-edge),
     transparent var(--hero-fade-end)
+  );
+}
+
+/*
+ * Cream veil: transparent over the subject core, opaque cream by ~70%.
+ * Forces “butterfly on page cream” even when the encode retains soft mud.
+ * Above video (z-index 2); pause/play sit higher on .hero-media.
+ */
+.hero-media__stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse closest-side at 50% 48%,
+    transparent 28%,
+    color-mix(in srgb, var(--cream) 55%, transparent) 48%,
+    var(--cream) 68%
   );
 }
 
@@ -710,7 +729,7 @@ p {
 
 .hero__pause {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   /* Bottom-right inside .hero-media on every breakpoint. */
   inset: auto 0.75rem 0.75rem auto;
   width: 1.625rem;
@@ -738,7 +757,7 @@ p {
 
 .hero__play {
   position: absolute;
-  z-index: 3;
+  z-index: 5;
   inset: 0;
   margin: auto;
   width: 3.5rem;
@@ -774,8 +793,8 @@ p {
   }
 
   .hero-media {
-    /* Zoom crops remaining soft contact so the subject fills the box. */
-    --hero-zoom: 1.58;
+    /* Zoom + cream veil: subject fills the media box (less empty cream above). */
+    --hero-zoom: 1.68;
     --hero-fade-edge: 74%;
     --hero-fade-end: 97%;
     --hero-media-fade-edge: 84%;
@@ -798,7 +817,7 @@ p {
 
 @media (min-width: 768px) and (max-width: 1023px) {
   .hero-media {
-    --hero-zoom: 1.45;
+    --hero-zoom: 1.55;
   }
 }
 
@@ -813,7 +832,7 @@ p {
 
   /* Media column bleeds past the container toward the viewport's right edge (~55–60%). */
   .hero-media {
-    --hero-zoom: 1.35;
+    --hero-zoom: 1.42;
     --hero-fade-edge: 74%;
     --hero-fade-end: 97%;
     --hero-media-fade-edge: 84%;
@@ -2033,7 +2052,7 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   inset: auto;
   display: block;
   width: 100%;
-  /* 9:16 crops maxres 16:9 side pillars (content ~500/1280); 4:5 left them visible. */
+  /* True Shorts portrait sources (oar2 1080×1920) — no letterbox crop hack. */
   aspect-ratio: 9 / 16;
   overflow: hidden;
   background: var(--ink);
@@ -2041,21 +2060,14 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-reading-feature--video .home-reading-feature__media img,
 .home-reading-feature--video .yt-thumb__trigger img {
-  /*
-   * 9:16 object-fit:cover of 16:9 maxres always shows ~405px of source width.
-   * Shorts content bands are ~404–503px — equal % width/height zoom keeps 9:16
-   * and does NOT narrow the crop. Scale after cover to kill side pillars.
-   */
   position: absolute;
-  inset: auto;
-  left: 50%;
-  top: 50%;
+  inset: 0;
   width: 100%;
   height: 100%;
   max-width: none;
   object-fit: cover;
   object-position: center;
-  transform: translate(-50%, -50%) scale(1.7);
+  transform: none;
 }
 
 /* No thumbnail: title-led typographic card (no repeated logo watermark). */

@@ -25,14 +25,17 @@ export function extractYoutubeId(url: string): string | null {
   }
 }
 
-/** Quality ladder: maxres is missing for many videos, so fall through to smaller sizes. */
-const THUMB_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault'] as const;
+/**
+ * Shorts portrait frames (oar2/oardefault are 1080×1920 — no 16:9 letterbox).
+ * Fall through to hqdefault when oar* is missing.
+ */
+const THUMB_QUALITIES = ['oar2', 'oardefault', 'hqdefault'] as const;
 /** YouTube serves a 120px-wide grey placeholder (sometimes with HTTP 200) when a size does not exist. */
 const THUMB_PLACEHOLDER_MAX_WIDTH = 120;
 const THUMB_SIZE = {
-  /** Portrait hint for Shorts feature cards (9:16); maxres 16:9 is center-cropped+zoomed in CSS. */
-  feature: { width: 720, height: 1280 },
-  card: { width: 480, height: 854 },
+  /** Intrinsic hint for true Shorts portrait (9:16). */
+  feature: { width: 1080, height: 1920 },
+  card: { width: 1080, height: 1920 },
 } as const;
 
 function thumbUrl(id: string, qualityIndex: number): string {

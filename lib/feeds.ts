@@ -19,12 +19,11 @@ function stripCdata(value: string): string {
   return value.replace(/^<!\[CDATA\[/, '').replace(/\]\]>$/, '').trim();
 }
 
-/** Highest-res first; each step falls back when the file is missing (404). */
-const YOUTUBE_THUMB_VARIANTS = [
-  'maxresdefault',
-  'sddefault',
-  'hqdefault',
-] as const;
+/**
+ * Prefer true Shorts portrait frames (oar2/oardefault = 1080×1920).
+ * Each step falls back when the file is missing (404). hqdefault always exists.
+ */
+const YOUTUBE_THUMB_VARIANTS = ['oar2', 'oardefault', 'hqdefault'] as const;
 const THUMB_PROBE_TIMEOUT_MS = 2500;
 
 async function resolveYoutubeThumb(id: string): Promise<string> {

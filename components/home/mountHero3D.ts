@@ -15,59 +15,6 @@ const ZOOM_AMP = 0.08;
  * Target: subject fills ~80–90% of the square stage with wings near the top.
  */
 const FRAME_PAD = 0.4;
-/** Soft contact blob radius — keep tiny; tight framing magnifies it into a plate. */
-const CONTACT_RADIUS = 0.22;
-/** Contact blob center opacity → 0 at edge (#3a342c). */
-const CONTACT_OPACITY = 0.15;
-
-/**
- * Tiny radial soft-contact disc — no rectangular ShadowMaterial plate.
- */
-function makeContactBlob(THREE: typeof import('three')) {
-  const size = 128;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    throw new Error('2D canvas unavailable for contact shadow');
-  }
-  const g = ctx.createRadialGradient(
-    size / 2,
-    size / 2,
-    0,
-    size / 2,
-    size / 2,
-    size / 2,
-  );
-  // #3a342c at center → fully transparent at edge
-  g.addColorStop(0, `rgba(58, 52, 44, ${CONTACT_OPACITY})`);
-  g.addColorStop(0.35, `rgba(58, 52, 44, ${CONTACT_OPACITY * 0.4})`);
-  g.addColorStop(1, 'rgba(58, 52, 44, 0)');
-  // Clip to a circle so the texture never carries a square alpha footprint.
-  ctx.clearRect(0, 0, size, size);
-  ctx.beginPath();
-  ctx.arc(size / 2, size / 2, size / 2 - 0.5, 0, Math.PI * 2);
-  ctx.closePath();
-  ctx.fillStyle = g;
-  ctx.fill();
-
-  const tex = new THREE.CanvasTexture(canvas);
-  tex.colorSpace = THREE.SRGBColorSpace;
-  const mat = new THREE.MeshBasicMaterial({
-    map: tex,
-    transparent: true,
-    depthWrite: false,
-    toneMapped: false,
-  });
-  const mesh = new THREE.Mesh(
-    new THREE.CircleGeometry(CONTACT_RADIUS, 48),
-    mat,
-  );
-  mesh.rotation.x = -Math.PI / 2;
-  mesh.renderOrder = -1;
-  return { mesh, tex, mat };
-}
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3 + Addendum B).
@@ -159,7 +106,7 @@ export async function mountHero3D({
     return () => undefined;
   }
 
-  // No realtime shadows — contact is the radial blob below.
+  // No realtime shadows and no ground/contact disc — transparent clear + page cream only.
   // Slightly lower roughness / envMap so pastel albedos stay punchy under NeutralToneMapping.
   gltf.scene.traverse((obj) => {
     if (!(obj as { isMesh?: boolean }).isMesh) return;
@@ -198,11 +145,6 @@ export async function mountHero3D({
   const box = new THREE.Box3().setFromObject(gltf.scene);
   const bounds = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-
-  // Soft oval under the flower-bed center only — transparent elsewhere (page cream).
-  const contact = makeContactBlob(THREE);
-  contact.mesh.position.set(center.x, box.min.y + 0.002, center.z);
-  scene.add(contact.mesh);
 
   // Bias lookAt below center so wings sit near the top without hard-cropping.
   const lookAt = new THREE.Vector3(
@@ -331,9 +273,6 @@ export async function mountHero3D({
     io.disconnect();
     renderer.setAnimationLoop(null);
     panel.classList.remove('is-3d');
-    contact.tex.dispose();
-    contact.mat.dispose();
-    contact.mesh.geometry.dispose();
     draco.dispose();
     pmrem.dispose();
     renderer.dispose();

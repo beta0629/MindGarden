@@ -785,6 +785,12 @@ p {
     max-height: none;
   }
 
+  /* Radial ellipse never fully clears rectangular corners; pull stage in so
+     parent --cream shows in the 1–2 CSS px rim (esp. top L/R at DPR3). */
+  .hero-media__stage {
+    inset: 2px;
+  }
+
   /* Top-right, below the copy overlap: never under the sticky bar or below the fold. */
   .hero__pause {
     inset: 2.5rem 0.75rem auto auto;

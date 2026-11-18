@@ -177,8 +177,11 @@ export function HomeBootProgress({ force = false }: Props) {
       return;
     }
 
-    setVisible(true);
     const ac = new AbortController();
+    // Defer painting the bar one frame so LCP poster can claim first paint.
+    requestAnimationFrame(() => {
+      if (!ac.signal.aborted) setVisible(true);
+    });
     const parts = { fonts: 0, poster: 0, glb: 0, atlas: 0 };
 
     const publish = () => {
@@ -226,8 +229,18 @@ export function HomeBootProgress({ force = false }: Props) {
       if (ac.signal.aborted || finishedRef.current) return;
 
       const fontsJob = (async () => {
+        // Only wait for the preloaded Pretendard slices — full fonts.ready pulls
+        // every unicode-range file at VeryHigh and delays LCP render.
         try {
-          if (document.fonts?.ready) await document.fonts.ready;
+          if (document.fonts?.load) {
+            await Promise.race([
+              Promise.all([
+                document.fonts.load('600 1em Pretendard'),
+                document.fonts.load('400 1em Pretendard'),
+              ]),
+              new Promise<void>((r) => window.setTimeout(r, 600)),
+            ]);
+          }
         } catch {
           /* ignore */
         }
@@ -252,34 +265,65 @@ export function HomeBootProgress({ force = false }: Props) {
 
       const pack = packFromViewport();
 
-      const glbJob = fetchWithProgress(
-        HERO_GLB,
-        (r) => {
-          parts.glb = r;
-          publish();
-        },
-        ac.signal,
-      ).then(() => {
+      // Defer GLB/atlas until idle so the LCP poster keeps the network.
+      const deferIdle = () =>
+        Promise.all([
+          new Promise<void>((resolve) => window.setTimeout(resolve, 1600)),
+          new Promise<void>((resolve) => {
+            if (typeof window.requestIdleCallback === 'function') {
+              window.requestIdleCallback(() => resolve(), { timeout: 2800 });
+            } else {
+              window.setTimeout(resolve, 400);
+            }
+          }),
+        ]).then(() => undefined);
+
+      const glbJob = (async () => {
+        await deferIdle();
+        if (ac.signal.aborted || finishedRef.current) return;
+        await fetchWithProgress(
+          HERO_GLB,
+          (r) => {
+            parts.glb = r;
+            publish();
+          },
+          ac.signal,
+        );
         parts.glb = 1;
         publish();
-      });
+      })();
 
-      const atlasJob = warmFirstAtlases(
-        pack,
-        (r) => {
-          parts.atlas = r;
-          publish();
-        },
-        ac.signal,
-      ).then(() => {
+      const atlasJob = (async () => {
+        await deferIdle();
+        if (ac.signal.aborted || finishedRef.current) return;
+        await warmFirstAtlases(
+          pack,
+          (r) => {
+            parts.atlas = r;
+            publish();
+          },
+          ac.signal,
+        );
         parts.atlas = 1;
         publish();
-      });
+      })();
 
-      await Promise.all([fontsJob, posterJob, glbJob, atlasJob]);
+      // Ready gate: fonts + poster (and GLB if it finishes soon). Do not wait on atlases.
+      await Promise.all([fontsJob, posterJob]);
+      await Promise.race([
+        glbJob,
+        new Promise<void>((r) => window.setTimeout(r, 2800)),
+      ]);
       if (!ac.signal.aborted && !finishedRef.current) {
+        if (parts.glb < 1) {
+          parts.glb = Math.max(parts.glb, 0.85);
+          publish();
+        }
+        parts.atlas = Math.max(parts.atlas, 0.5);
+        publish();
         finish();
       }
+      void Promise.all([glbJob, atlasJob]);
     };
 
     void run();

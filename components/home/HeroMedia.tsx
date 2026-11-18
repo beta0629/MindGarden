@@ -267,9 +267,9 @@ export function HeroMedia() {
 
     // Let the LCP poster paint; boot progress may already be warming the GLB.
     if (typeof window.requestIdleCallback === 'function') {
-      idleId = window.requestIdleCallback(start, { timeout: 1200 });
+      idleId = window.requestIdleCallback(start, { timeout: 2500 });
     } else {
-      timeoutId = window.setTimeout(start, 400);
+      timeoutId = window.setTimeout(start, 1200);
     }
 
     return () => {

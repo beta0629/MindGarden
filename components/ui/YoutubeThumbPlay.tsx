@@ -30,8 +30,8 @@ const THUMB_QUALITIES = ['maxresdefault', 'sddefault', 'hqdefault'] as const;
 /** YouTube serves a 120px-wide grey placeholder (sometimes with HTTP 200) when a size does not exist. */
 const THUMB_PLACEHOLDER_MAX_WIDTH = 120;
 const THUMB_SIZE = {
-  /** Portrait hint for Shorts feature cards (4:5); maxres 16:9 is center-cropped in CSS. */
-  feature: { width: 720, height: 900 },
+  /** Portrait hint for Shorts feature cards (9:16); maxres 16:9 is center-cropped+zoomed in CSS. */
+  feature: { width: 720, height: 1280 },
   card: { width: 480, height: 854 },
 } as const;
 

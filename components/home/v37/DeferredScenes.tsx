@@ -87,7 +87,8 @@ function placeStyleFor(kind: SceneKind, pack: PackId): CSSProperties {
 /**
  * Keep layout + static poster until near-viewport AND home-boot poster gate,
  * then idle-load the real scene module so Gate/Bench/Booking JS never contends
- * with hero LCP (especially under SwiftShader / 4× CPU throttle).
+ * with hero LCP. On software GPU (SwiftShader / llvmpipe), never import scene
+ * chunks — atlas decode + canvas work would spike mid-scroll; poster stays forever.
  */
 function DeferredV37Scene({
   kind,
@@ -113,6 +114,10 @@ function DeferredV37Scene({
         await waitIdle(SCENE_IDLE_TIMEOUT_MS);
         if (cancelled) return;
         try {
+          // Dynamic atlas import — keep this file free of eager WebGL.
+          const { probeSoftwareGpu } = await import('./atlas');
+          if (probeSoftwareGpu()) return;
+          if (cancelled) return;
           const mod = await LOADERS[kind]();
           if (!cancelled) setScene(() => mod.default);
         } catch {

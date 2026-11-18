@@ -578,9 +578,12 @@ p {
 
 .hero-media {
   --hero-zoom: 1.15;
-  --hero-fade-edge: 68%;
-  /* Last band of the panel is fully transparent so its edge is exactly the page cream. */
-  --hero-fade-end: 96%;
+  /* Radial feather: leave the panel's extreme L/R (and outer ring) fully transparent → page cream. */
+  --hero-fade-edge: 64%;
+  --hero-fade-end: 92%;
+  /* Inner poster/video mask: kill baked softlight sand before the CSS box edge. */
+  --hero-media-fade-edge: 85%;
+  --hero-media-fade-end: 98%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -640,13 +643,13 @@ p {
   /* Soft-fade the frame's own edges so its baked sand tone never shows a rectangle. */
   -webkit-mask-image: radial-gradient(
     ellipse closest-side at 50% 50%,
-    black 88%,
-    transparent 100%
+    black var(--hero-media-fade-edge),
+    transparent var(--hero-media-fade-end)
   );
   mask-image: radial-gradient(
     ellipse closest-side at 50% 50%,
-    black 88%,
-    transparent 100%
+    black var(--hero-media-fade-edge),
+    transparent var(--hero-media-fade-end)
   );
 }
 
@@ -769,6 +772,11 @@ p {
 
   .hero-media {
     --hero-zoom: 1.45;
+    /* Wider feather at 390: edge vs cream max-channel Δ ≤ 2 (no sand strip). */
+    --hero-fade-edge: 58%;
+    --hero-fade-end: 90%;
+    --hero-media-fade-edge: 82%;
+    --hero-media-fade-end: 96%;
     width: calc(100% + var(--pad) * 2);
     margin-inline: calc(var(--pad) * -1);
     margin-top: -1.5rem;

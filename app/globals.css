@@ -106,6 +106,8 @@ body {
   word-break: keep-all;
   overflow-x: clip;
   max-width: 100%;
+  /* Fixed .site-header is out of flow — reserve measured stack height (no CLS). */
+  padding-top: var(--header-sticky-h);
 }
 
 #main {
@@ -338,8 +340,15 @@ p {
 }
 
 .site-header {
-  position: sticky;
+  /*
+   * Fixed (not sticky): html/body/#main use overflow-x:clip, which makes
+   * overflow-y compute to auto and creates a scrollport that traps sticky —
+   * header sat mid-viewport with cream above near hero/bench overflow pads.
+   */
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
   background: var(--cream);
   border-bottom: 1px solid var(--line);
@@ -2053,25 +2062,34 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 /*
- * Empty Clinic-OS reviews: no card grid — only remove the former card band.
- * Keep natural BenchScene flight pads (seat/legs/grass/butterflies unclipped).
+ * Empty Clinic-OS reviews: no card grid. Flight pad is out of flow so ambient
+ * overlaps the prior section / title area — no tall in-flow cream above the
+ * title — while butterflies stay unclipped (#main still clips horizontal).
  */
 .home-reviews--empty {
+  overflow: visible;
   padding-block: clamp(5rem, 5.75vw, 6rem);
 }
 
 .home-reviews--empty .home-reviews__header {
   margin-bottom: 0;
-  /* Title left, full bench right — vertically centered in the header row. */
-  align-items: center;
+  /* Mobile column: start. Desktop keeps start so title isn’t under empty sky. */
+  align-items: start;
   gap: 0.75rem 1.5rem;
+  overflow: visible;
 }
 
 .home-reviews--empty .home-reviews__scene {
-  /* Same as default: x fit via place-frac; y visible for flight pad. */
-  overflow-x: clip;
-  overflow-y: visible;
+  overflow: visible;
   max-width: 100%;
+}
+
+.home-reviews--empty .v37-scene--bench {
+  /* Drop in-flow top pad; keep small bottom pad for grass/legs clearance.
+   * BenchScene.layoutOverflowCanvas shifts the overflow canvas up in px when
+   * padding-top is 0 (avoids % resolution bugs with --bench-place-w). */
+  padding-top: 0;
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
 }
 
 .home-reviews__header {
@@ -2642,9 +2660,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
     overflow-y: visible;
   }
 
-  /* Empty: title + full bench scene vertically centered (no sky crop). */
+  /* Empty: title at top of row — place box sits beside it (flight pad out of flow). */
   .home-reviews--empty .home-reviews__header {
-    align-items: center;
+    align-items: start;
   }
 
   .home-reviews__grid {

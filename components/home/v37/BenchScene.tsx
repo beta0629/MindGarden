@@ -183,9 +183,16 @@ function layoutOverflowCanvas(
   const cssW = (boxW + pad.left + pad.right) * scale;
   const cssH = (boxH + pad.top + pad.bottom) * scale;
 
+  const padTCss = pad.top * scale;
+  // When the host keeps in-flow top pad, paint from padding edge (top: 0).
+  // When empty-reviews collapses that pad (padding-top: 0), shift up in px so
+  // ambient overlaps the prior band. Do not use CSS calc with --bench-place-w
+  // here — its `100%` resolves against the canvas containing block and under-shifts.
+  const hostPadT = parseFloat(getComputedStyle(wrap).paddingTop) || 0;
+
   canvas.style.position = 'absolute';
   canvas.style.left = `${-padL}px`;
-  canvas.style.top = '0px';
+  canvas.style.top = hostPadT > 0.5 ? '0px' : `${-padTCss}px`;
   canvas.style.width = `${cssW}px`;
   canvas.style.height = `${cssH}px`;
   canvas.style.maxWidth = 'none';

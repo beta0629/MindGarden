@@ -704,7 +704,6 @@ p {
 .hero-still {
   display: block;
   z-index: 1;
-  transition: opacity 400ms ease;
 }
 
 .hero-loop,
@@ -743,6 +742,7 @@ p {
 
 .hero-media.is-3d .hero-still {
   opacity: 0;
+  transition: opacity 400ms ease;
 }
 
 /* —— homepage first-entry boot progress (cream track / brand-green fill) —— */

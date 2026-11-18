@@ -285,9 +285,15 @@ export function HomeBootProgress({ force = false }: Props) {
       ]);
       if (ac.signal.aborted || finishedRef.current) return;
 
+      // Commit the poster LCP paint before createImageBitmap / GLB work steals the
+      // main thread (LH render-delay was ~77% of LCP under 4× CPU throttle).
+      await afterPaint();
+      await new Promise<void>((r) => window.setTimeout(r, 0));
+      if (ac.signal.aborted || finishedRef.current) return;
+
       const pack = packFromViewport();
 
-      // Then low-priority GLB + first atlases; ready gate waits (or 6s timeout).
+      // Network-first GLB (low priority). Atlas decode waits for idle so LCP sticks.
       const glbJob = fetchWithProgress(
         HERO_GLB,
         (r) => {
@@ -300,17 +306,26 @@ export function HomeBootProgress({ force = false }: Props) {
         publish();
       });
 
-      const atlasJob = warmFirstAtlases(
-        pack,
-        (r) => {
-          parts.atlas = r;
-          publish();
-        },
-        ac.signal,
-      ).then(() => {
+      const atlasJob = (async () => {
+        await new Promise<void>((resolve) => {
+          if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => resolve(), { timeout: 2000 });
+          } else {
+            window.setTimeout(resolve, 400);
+          }
+        });
+        if (ac.signal.aborted || finishedRef.current) return;
+        await warmFirstAtlases(
+          pack,
+          (r) => {
+            parts.atlas = r;
+            publish();
+          },
+          ac.signal,
+        );
         parts.atlas = 1;
         publish();
-      });
+      })();
 
       await Promise.all([glbJob, atlasJob]);
       if (!ac.signal.aborted && !finishedRef.current) {

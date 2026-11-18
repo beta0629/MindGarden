@@ -319,7 +319,7 @@ export function HeroMedia() {
             alt=""
             width={1620}
             height={940}
-            decoding="sync"
+            decoding="async"
             fetchPriority="high"
             onLoad={() => setPosterReady(true)}
           />

@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
+  markDirty,
+  setContinuous,
+  setPaused,
+  subscribe,
+  unsubscribe,
+} from '@/components/home/rafScheduler';
+import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
   drawCoverImage,
@@ -13,7 +20,11 @@ import {
   smoothstep,
   type DecodedImage,
 } from './atlas';
-import { readScrollMetrics, ScrollClock } from './scrollClock';
+import {
+  createSectionMetricsCache,
+  ScrollClock,
+  type SectionMetricsCache,
+} from './scrollClock';
 import {
   SETTLE_RISE_PX,
   settleFromWalkDelta,
@@ -34,6 +45,8 @@ type Runtime = {
   staticBody: DecodedImage | null;
   staticShadow: DecodedImage | null;
 };
+
+const RAF_ID = 'v37-gate';
 
 const DEFAULT_PLACE: Record<
   PackId,
@@ -66,6 +79,16 @@ function doorIndexForWalk(json: GateJson, walkF: number): {
     return { frame: lastIdx, crossfade: w, useStatic: false };
   }
   return { frame: lastIdx, crossfade: 1, useStatic: true };
+}
+
+function settleBusy(walkF: number): boolean {
+  const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
+  return settle.opacity < 1 || settle.rise < 1;
+}
+
+function doorBusy(json: GateJson, walkF: number): boolean {
+  const door = doorIndexForWalk(json, walkF);
+  return !(door.useStatic || door.crossfade >= 1);
 }
 
 async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
@@ -144,14 +167,27 @@ export function GateScene({ sectionRef }: Props) {
     let visible = false;
     let warming = false;
     let assetsReady = false;
-    let raf = 0;
     let loadingMeta = false;
+    let metricsCache: SectionMetricsCache | null = null;
+    let subscribed = false;
 
-    const stopRaf = () => {
-      if (raf) {
-        cancelAnimationFrame(raf);
-        raf = 0;
+    const resolveSection = (): HTMLElement =>
+      sectionRef?.current ??
+      (wrap.closest('section') as HTMLElement | null) ??
+      wrap;
+
+    const ensureMetrics = (): SectionMetricsCache => {
+      if (!metricsCache) {
+        metricsCache = createSectionMetricsCache(resolveSection());
       }
+      return metricsCache;
+    };
+
+    const syncPause = () => {
+      if (!subscribed) return;
+      const shouldRun = visible && !document.hidden && assetsReady;
+      setPaused(RAF_ID, !shouldRun);
+      if (shouldRun) markDirty(RAF_ID);
     };
 
     const paintPair = (
@@ -218,23 +254,13 @@ export function GateScene({ sectionRef }: Props) {
     };
 
     const tick = (now: number) => {
-      if (!alive || !visible) {
-        raf = 0;
-        return;
-      }
+      if (!alive || !visible || document.hidden) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
-      if (!rt || !clock || !canvas || !assetsReady) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (!rt || !clock || !canvas || !assetsReady) return;
 
-      const sectionEl =
-        sectionRef?.current ??
-        (wrap.closest('section') as HTMLElement | null) ??
-        wrap;
-      const metrics = readScrollMetrics(sectionEl);
+      const metrics = ensureMetrics().read();
       const walkF = clock.update(now, metrics);
       void ensureGateForWalk(rt, walkF);
 
@@ -251,10 +277,7 @@ export function GateScene({ sectionRef }: Props) {
       const { css_w: cssW, css_h: cssH } = rt.json.place;
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
-      if (!ctx) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (!ctx) return;
 
       ctx.clearRect(0, 0, cssW, cssH);
       const door = doorIndexForWalk(rt.json, walkF);
@@ -320,12 +343,21 @@ export function GateScene({ sectionRef }: Props) {
         paintLiveRef.current = true;
         setPaintLive(true);
       }
-      raf = requestAnimationFrame(tick);
+
+      const advancing =
+        clock.wouldAdvanceWithTime(metrics) &&
+        (settleBusy(walkF) || doorBusy(rt.json, walkF));
+      setContinuous(RAF_ID, advancing);
+      if (!advancing) {
+        clock.syncTime(now);
+      }
     };
 
-    const startRaf = () => {
-      if (!alive || !visible || !assetsReady || raf) return;
-      raf = requestAnimationFrame(tick);
+    const ensureSubscribed = () => {
+      if (subscribed || !alive) return;
+      subscribe(RAF_ID, tick, { continuous: false });
+      subscribed = true;
+      syncPause();
     };
 
     const warmAssets = async () => {
@@ -341,7 +373,8 @@ export function GateScene({ sectionRef }: Props) {
         if (!alive) return;
         assetsReady = true;
         setCanvasActive(true);
-        startRaf();
+        ensureSubscribed();
+        markDirty(RAF_ID);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -374,11 +407,19 @@ export function GateScene({ sectionRef }: Props) {
           ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
           aspectRatio: `${css_w} / ${css_h}`,
         });
+        ensureMetrics().refresh();
         await warmAssets();
       } catch {
         if (alive) setFailed(true);
       } finally {
         loadingMeta = false;
+      }
+    };
+
+    const onScrollOrResize = () => {
+      ensureMetrics().refresh();
+      if (subscribed && visible && !document.hidden) {
+        markDirty(RAF_ID);
       }
     };
 
@@ -396,20 +437,32 @@ export function GateScene({ sectionRef }: Props) {
     const visIO = new IntersectionObserver(
       (entries) => {
         visible = entries.some((e) => e.isIntersecting);
-        if (visible) startRaf();
-        else stopRaf();
+        ensureMetrics().refresh();
+        syncPause();
+        if (visible && assetsReady) markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
 
+    const onVisibility = () => {
+      syncPause();
+      if (!document.hidden && visible) markDirty(RAF_ID);
+    };
+
     nearIO.observe(wrap);
     visIO.observe(wrap);
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
-      stopRaf();
       nearIO.disconnect();
       visIO.disconnect();
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (subscribed) unsubscribe(RAF_ID);
     };
   }, [pack, reduced, failed, sectionRef]);
 

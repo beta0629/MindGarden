@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import {
+  markDirty,
+  setContinuous,
+  setPaused,
+  subscribe,
+  unsubscribe,
+} from '@/components/home/rafScheduler';
+import {
   AtlasSheetBank,
   drawAtlasFrameBlend,
   drawCoverImage,
@@ -12,7 +19,11 @@ import {
   resizeCanvas,
   type DecodedImage,
 } from './atlas';
-import { readScrollMetrics, ScrollClock } from './scrollClock';
+import {
+  createSectionMetricsCache,
+  ScrollClock,
+  type SectionMetricsCache,
+} from './scrollClock';
 import {
   SETTLE_RISE_PX,
   settleFromWalkDelta,
@@ -41,8 +52,16 @@ type Runtime = {
 
 type Pad = { left: number; top: number; right: number; bottom: number };
 
+type OverflowLayout = {
+  scale: number;
+  cssW: number;
+  cssH: number;
+  canvasTop: number;
+};
+
 /** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
 const BENCH_MIN_OPACITY = 0.92;
+const RAF_ID = 'v37-bench';
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '1440': { wPct: 28.115, aspect: '405 / 350' },
@@ -203,6 +222,23 @@ function ensureAmbientForWalk(rt: Runtime, walkF: number): void {
   }
 }
 
+/** Last walk frame that still changes ambient / perch / settle visuals. */
+function motionEndWalkF(json: BenchJson): number {
+  let end = TRIGGER_WALK_F.bench + 48;
+  for (const key of Object.keys(json.ambient)) {
+    const track = json.ambient[key].track;
+    if (track.length) end = Math.max(end, track[track.length - 1].f);
+  }
+  const perch = json.perch_shadow.track;
+  if (perch.length) end = Math.max(end, perch[perch.length - 1].f);
+  return end;
+}
+
+function settleBusy(walkF: number): boolean {
+  const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
+  return settle.opacity < 1 || settle.rise < 1;
+}
+
 function placeStyleFromPad(
   pack: PackId,
   wPct: number,
@@ -234,6 +270,7 @@ function placeStyleFromPad(
  * stay inside `.home-reviews__scene` (no horizontal document growth).
  * Top/bottom pads are laid out via host padding — canvas origin is the
  * padding edge (top: 0), not a negative offset that parents can clip.
+ * Call from ResizeObserver / pack change only — never inside the rAF tick.
  */
 function layoutOverflowCanvas(
   wrap: HTMLDivElement,
@@ -241,7 +278,7 @@ function layoutOverflowCanvas(
   pad: Pad,
   boxW: number,
   boxH: number,
-): { scale: number; cssW: number; cssH: number } {
+): OverflowLayout {
   const placeW = Math.max(1, wrap.clientWidth);
   const scale = placeW / boxW;
   const padL = pad.left * scale;
@@ -263,7 +300,8 @@ function layoutOverflowCanvas(
   canvas.style.maxWidth = 'none';
   canvas.style.opacity = canvas.dataset.posterHidden === '1' ? '0' : '1';
 
-  return { scale, cssW, cssH };
+  const canvasTop = canvas.getBoundingClientRect().top;
+  return { scale, cssW, cssH, canvasTop };
 }
 
 function clearStickyShift(wrap: HTMLDivElement): void {
@@ -334,35 +372,57 @@ export function BenchScene({ sectionRef }: Props) {
     let visible = false;
     let warming = false;
     let assetsReady = false;
-    let raf = 0;
     let loadingMeta = false;
+    let subscribed = false;
+    let metricsCache: SectionMetricsCache | null = null;
+    let overflowLayout: OverflowLayout | null = null;
+    let layoutScrollY = 0;
+    let motionEnd = TRIGGER_WALK_F.bench + 48;
 
-    const stopRaf = () => {
-      if (raf) {
-        cancelAnimationFrame(raf);
-        raf = 0;
+    const resolveSection = (): HTMLElement =>
+      sectionRef?.current ??
+      (wrap.closest('section') as HTMLElement | null) ??
+      wrap;
+
+    const ensureMetrics = (): SectionMetricsCache => {
+      if (!metricsCache) {
+        metricsCache = createSectionMetricsCache(resolveSection());
       }
+      return metricsCache;
+    };
+
+    const refreshOverflowLayout = () => {
+      const rt = runtimeRef.current;
+      const canvas = canvasRef.current;
+      if (!rt || !canvas || !assetsReady) return;
+      overflowLayout = layoutOverflowCanvas(
+        wrap,
+        canvas,
+        padRef.current,
+        rt.json.place.css_w,
+        rt.json.place.css_h,
+      );
+      layoutScrollY = window.scrollY || window.pageYOffset || 0;
+    };
+
+    const syncPause = () => {
+      if (!subscribed) return;
+      const shouldRun = visible && !document.hidden && assetsReady;
+      setPaused(RAF_ID, !shouldRun);
+      if (shouldRun) markDirty(RAF_ID);
     };
 
     const tick = (now: number) => {
-      if (!alive || !visible) {
-        raf = 0;
-        return;
-      }
+      if (!alive || !visible || document.hidden) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
       const pad = padRef.current;
       if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
-        raf = requestAnimationFrame(tick);
         return;
       }
 
-      const sectionEl =
-        sectionRef?.current ??
-        (wrap.closest('section') as HTMLElement | null) ??
-        wrap;
-      const metrics = readScrollMetrics(sectionEl);
+      const metrics = ensureMetrics().read();
       const walkF = clock.update(now, metrics);
       // Expose for peak-flight QA (walkF≈431 ≈ 3700ms after trigger @ 30fps).
       wrap.dataset.walkF = walkF.toFixed(2);
@@ -382,19 +442,14 @@ export function BenchScene({ sectionRef }: Props) {
         ? 1
         : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
 
-      const boxW = rt.json.place.css_w;
-      const boxH = rt.json.place.css_h;
-      const { scale, cssW, cssH } = layoutOverflowCanvas(
-        wrap,
-        canvas,
-        pad,
-        boxW,
-        boxH,
-      );
+      if (!overflowLayout) refreshOverflowLayout();
+      const layout = overflowLayout;
+      if (!layout) return;
+      const { scale, cssW, cssH } = layout;
       const ox = pad.left;
       const oy = pad.top;
 
-      // Resolve ambient tops before sticky so clearance matches this frame's peak.
+      // Resolve ambient tops from cached canvas geometry (no per-frame layout reads).
       let minLocalY = Number.POSITIVE_INFINITY;
       let painted = 0;
       for (const key of Object.keys(rt.json.ambient)) {
@@ -410,21 +465,12 @@ export function BenchScene({ sectionRef }: Props) {
       }
       wrap.dataset.ambientPainted = String(painted);
       if (painted > 0 && Number.isFinite(minLocalY)) {
-        // Natural (unshifted) butterfly top → sticky clearance for THIS frame.
         clearStickyShift(wrap);
-        const naturalCanvasTop = canvas.getBoundingClientRect().top;
         const naturalTop =
-          naturalCanvasTop +
-          (minLocalY / Math.max(cssH, 1)) *
-            canvas.getBoundingClientRect().height;
+          layout.canvasTop +
+          (minLocalY / Math.max(cssH, 1)) * cssH;
         wrap.dataset.ambientTop = naturalTop.toFixed(1);
         applyStickyHeaderClearance(wrap);
-        // Re-record top after shift for QA / next-frame consumers.
-        const shifted = canvas.getBoundingClientRect();
-        wrap.dataset.ambientTop = (
-          shifted.top +
-          (minLocalY / Math.max(cssH, 1)) * shifted.height
-        ).toFixed(1);
       } else {
         wrap.dataset.ambientTop = '';
         clearStickyShift(wrap);
@@ -432,15 +478,14 @@ export function BenchScene({ sectionRef }: Props) {
 
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
-      if (!ctx) {
-        raf = requestAnimationFrame(tick);
-        return;
-      }
+      if (!ctx) return;
 
       ctx.clearRect(0, 0, cssW, cssH);
       ctx.save();
       ctx.scale(scale, scale);
 
+      const boxW = rt.json.place.css_w;
+      const boxH = rt.json.place.css_h;
       const groundY = oy + (rt.json.place.ground_y_in_box ?? boxH);
 
       ctx.save();
@@ -485,12 +530,18 @@ export function BenchScene({ sectionRef }: Props) {
         paintLiveRef.current = true;
         setPaintLive(true);
       }
-      raf = requestAnimationFrame(tick);
+
+      const motionBusy = walkF < motionEnd || settleBusy(walkF);
+      const advancing = clock.wouldAdvanceWithTime(metrics) && motionBusy;
+      setContinuous(RAF_ID, advancing);
+      if (!advancing) clock.syncTime(now);
     };
 
-    const startRaf = () => {
-      if (!alive || !visible || !assetsReady || raf) return;
-      raf = requestAnimationFrame(tick);
+    const ensureSubscribed = () => {
+      if (subscribed || !alive) return;
+      subscribe(RAF_ID, tick, { continuous: false });
+      subscribed = true;
+      syncPause();
     };
 
     const warmAssets = async () => {
@@ -521,7 +572,13 @@ export function BenchScene({ sectionRef }: Props) {
         if (!alive) return;
         assetsReady = true;
         setCanvasActive(true);
-        startRaf();
+        // Canvas mounts after setState — layout on next frame.
+        requestAnimationFrame(() => {
+          if (!alive) return;
+          refreshOverflowLayout();
+          ensureSubscribed();
+          markDirty(RAF_ID);
+        });
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -544,6 +601,7 @@ export function BenchScene({ sectionRef }: Props) {
         }
         const pad = computePad(json);
         padRef.current = pad;
+        motionEnd = motionEndWalkF(json);
         runtimeRef.current = {
           json,
           body: null,
@@ -565,11 +623,35 @@ export function BenchScene({ sectionRef }: Props) {
             css_w,
           ),
         );
+        ensureMetrics().refresh();
         await warmAssets();
       } catch {
         if (alive) setFailed(true);
       } finally {
         loadingMeta = false;
+      }
+    };
+
+    const onScroll = () => {
+      // Derive canvasTop from scroll delta — no getBoundingClientRect on the scroll path.
+      if (overflowLayout) {
+        const sy = window.scrollY || window.pageYOffset || 0;
+        overflowLayout = {
+          ...overflowLayout,
+          canvasTop: overflowLayout.canvasTop + (layoutScrollY - sy),
+        };
+        layoutScrollY = sy;
+      }
+      if (subscribed && visible && !document.hidden) {
+        markDirty(RAF_ID);
+      }
+    };
+
+    const onResize = () => {
+      ensureMetrics().refresh();
+      refreshOverflowLayout();
+      if (subscribed && visible && !document.hidden) {
+        markDirty(RAF_ID);
       }
     };
 
@@ -587,20 +669,39 @@ export function BenchScene({ sectionRef }: Props) {
     const visIO = new IntersectionObserver(
       (entries) => {
         visible = entries.some((e) => e.isIntersecting);
-        if (visible) startRaf();
-        else stopRaf();
+        ensureMetrics().refresh();
+        if (visible) refreshOverflowLayout();
+        syncPause();
+        if (visible && assetsReady) markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
 
+    const onVisibility = () => {
+      syncPause();
+      if (!document.hidden && visible) markDirty(RAF_ID);
+    };
+
+    const ro = new ResizeObserver(() => {
+      onResize();
+    });
+    ro.observe(wrap);
+
     nearIO.observe(wrap);
     visIO.observe(wrap);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
-      stopRaf();
       nearIO.disconnect();
       visIO.disconnect();
+      ro.disconnect();
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('visibilitychange', onVisibility);
+      if (subscribed) unsubscribe(RAF_ID);
     };
   }, [pack, reduced, failed, sectionRef]);
 

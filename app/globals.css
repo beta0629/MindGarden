@@ -552,7 +552,8 @@ p {
 
 .hero__copy h1 {
   font-size: clamp(1.85rem, 4.4vw, 3.1rem);
-  max-width: 18ch;
+  /* ~2 lines once the copy column is wide enough (desktop min-width). */
+  max-width: 11em;
 }
 
 .hero__subtitle {
@@ -602,8 +603,8 @@ p {
   --hero-subj-top: 6%;
   --hero-subj-right: 92%;
   --hero-subj-bottom: 94%;
-  --hero-pause-x: 78%;
-  --hero-pause-y: 62%;
+  --hero-pause-x: 84%;
+  --hero-pause-y: 82%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -743,11 +744,11 @@ p {
   position: absolute;
   z-index: 5;
   /*
-   * JS sets --hero-pause-x/y inside the subject BR quadrant, lifted above the
-   * flower ring onto cream/body. Fallback ≈ lower-right of a centered fit.
+   * JS sets --hero-pause-x/y below dense-subject BR on cream (not petals).
+   * Fallback ≈ panel BR cream under the flower ring.
    */
-  left: var(--hero-pause-x, 78%);
-  top: var(--hero-pause-y, 62%);
+  left: var(--hero-pause-x, 84%);
+  top: var(--hero-pause-y, 82%);
   right: auto;
   bottom: auto;
   transform: translate(-50%, -50%);
@@ -806,9 +807,9 @@ p {
 /* Stacked, near full-bleed media through tablet (≤1023): copy + CTA first, media below. */
 @media (max-width: 1023px) {
   .hero {
-    /* 1rem = 16px: with ~5–10px top-pack cream → CTA→paint lands in 20–28px. */
+    /* Tight bottom: subject→상담 분야 ≈40px with .home-areas pull-up. */
     gap: 1rem;
-    padding: 1.5rem 0 0.75rem;
+    padding: 1.5rem 0 0;
   }
 
   .hero__copy {
@@ -825,10 +826,12 @@ p {
     max-width: none;
     margin-inline: calc(var(--pad) * -1);
     margin-top: 0;
+    /* Pull next section into bottom cream under the subject (~stage empty). */
+    margin-bottom: -3.25rem;
     min-height: 0;
     height: auto;
     aspect-ratio: 81 / 47;
-    max-height: min(52svh, 28rem);
+    max-height: min(48svh, 24rem);
   }
 
   .hero-media.is-3d {
@@ -836,7 +839,8 @@ p {
     width: calc(100% + var(--pad) * 2);
     max-width: none;
     margin-inline: calc(var(--pad) * -1);
-    max-height: min(52svh, 28rem);
+    margin-bottom: -3.25rem;
+    max-height: min(48svh, 24rem);
   }
 
   .hero-media__stage {
@@ -856,21 +860,43 @@ p {
   .hero {
     --hero-container: min(100vw - var(--pad) * 2, var(--max-page));
     /*
-     * Spec panel 810×470 @1440 (≈56vw). Media track must hold ≥810px:
-     * hero content ≈1152 → 2.5fr/7.5fr ≈ 864px for media.
+     * Single overlapping track: copy keeps ≥520px; media bleeds behind copy
+     * from the right so the headline is never crushed into 4 lines.
      */
-    grid-template-columns: minmax(0, 2.5fr) minmax(0, 7.5fr);
-    gap: clamp(1rem, 2vw, 2rem);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    gap: 0;
+    align-items: center;
     /* Tighter block padding: less empty cream under the hero before 상담 분야. */
     padding-block: clamp(0.75rem, 1.75vw, 1.75rem);
   }
 
-  /* Spec 81:47 → 810×470 @1440 (50.625rem × 29.375rem); bleed right. */
+  .hero__copy {
+    position: relative;
+    z-index: 2;
+    grid-area: 1 / 1;
+    justify-self: start;
+    align-self: center;
+    /* ≈520px — wide enough for 「마음이 쉬어 가는」 on one line. */
+    min-width: min(32.5rem, 100%);
+    max-width: min(36rem, 100%);
+  }
+
+  .hero__subtitle {
+    max-width: none;
+    white-space: nowrap;
+  }
+
+  /* Spec 81:47 → 810×470 @1440 (50.625rem × 29.375rem); bleed right under copy. */
   .hero-media {
     --hero-zoom: 1.12;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
+    grid-area: 1 / 1;
     justify-self: end;
+    align-self: center;
+    z-index: 1;
+    pointer-events: none;
     width: min(100%, 50.625rem);
     max-width: 50.625rem;
     aspect-ratio: 81 / 47;
@@ -885,6 +911,16 @@ p {
     max-width: 50.625rem;
     max-height: min(58svh, 29.375rem);
     margin-right: calc((var(--hero-container) - 100vw) / 2);
+  }
+
+  .hero-media.is-3d .hero-3d,
+  .hero-media__stage {
+    pointer-events: none;
+  }
+
+  .hero-media .hero__pause,
+  .hero-media .hero__play {
+    pointer-events: auto;
   }
 
   .hero-media.is-3d .hero-3d {
@@ -1766,9 +1802,21 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   margin-bottom: 0;
 }
 
-/* First band after hero: less empty cream before 상담 분야. */
+/* First band after hero: subject→「상담 분야」 ≈40px on mobile. */
 .home-areas.section {
-  padding-top: clamp(2rem, 4.5vw, 3.5rem);
+  padding-top: clamp(1.5rem, 3.5vw, 2.5rem);
+}
+
+@media (max-width: 1023px) {
+  .home-areas.section {
+    /*
+     * Hero media margin-bottom:-2.75rem eats stage-bottom cream;
+     * 2.5rem pad → net ~40px from painted subject to 「상담 분야」.
+     */
+    position: relative;
+    z-index: 1;
+    padding-top: 2.5rem;
+  }
 }
 
 .home-areas__layout {
@@ -1996,6 +2044,31 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   overflow-x: clip;
   overflow-y: visible;
   max-width: 100%;
+}
+
+/*
+ * Empty Clinic-OS reviews: no card grid — collapse flight top-pad space so
+ * title + bench fill the section (~80–96px section pad). Ambient can still
+ * paint upward into the previous band (overflow-y: visible + canvas top shift).
+ */
+.home-reviews--empty {
+  padding-block: clamp(5rem, 5.75vw, 6rem);
+}
+
+.home-reviews--empty .home-reviews__header {
+  margin-bottom: 0;
+  /* End-align: place box keeps sky above the bench — match title to bench. */
+  align-items: end;
+}
+
+.home-reviews--empty .v37-scene--bench {
+  /* Collapse in-flow pad (negative margin fails under overflow-x:clip in WebKit). */
+  padding-top: 0;
+}
+
+.home-reviews--empty .v37-scene__canvas--overflow {
+  /* JS sets top:0 assuming pad reserves space — shift track up into prior band. */
+  top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0) * -1) !important;
 }
 
 .home-reviews__header {

@@ -12,7 +12,11 @@ export function HeroSection() {
   return (
     <section className="container hero">
       <div className="hero__copy">
-        <h1>{homeCopy.hero.title}</h1>
+        <h1>
+          마음이 쉬어 가는
+          <br />
+          정원 같은 상담센터
+        </h1>
         <p className="hero__subtitle">{homeCopy.hero.subtitle}</p>
         <div className="hero__actions">
           <BookingCta label={homeCopy.hero.primaryCta} />

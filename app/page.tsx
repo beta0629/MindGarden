@@ -246,16 +246,23 @@ export default async function HomePage() {
       ) : null}
 
       {/* 5. 후기 / Bench */}
-      <section className="section home-reviews" data-reveal>
+      <section
+        className={`section home-reviews${
+          homeReviews.length === 0 ? ' home-reviews--empty' : ''
+        }`}
+        data-reveal
+      >
         <div className="container">
           <header className="home-reviews__header">
             <div>
               <p className="section__eyebrow">{homeCopy.reviews.eyebrow}</p>
               <h2 className="section__title">{homeCopy.reviews.title}</h2>
-              <Link className="text-link" href={homeCopy.reviews.moreHref}>
-                {homeCopy.reviews.moreLabel}
-                <span aria-hidden="true"> →</span>
-              </Link>
+              {homeReviews.length > 0 ? (
+                <Link className="text-link" href={homeCopy.reviews.moreHref}>
+                  {homeCopy.reviews.moreLabel}
+                  <span aria-hidden="true"> →</span>
+                </Link>
+              ) : null}
             </div>
             <div className="home-reviews__scene">
               <BenchScene />

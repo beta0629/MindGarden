@@ -425,12 +425,8 @@ export async function mountHero3D({
     const minY = ys[0];
     const maxY = ys[ys.length - 1];
     // Dense core (ignore petal/wing tip outliers).
-    const denseL = percentile(xs, 1 - PAUSE_PCT);
     const denseR = percentile(xs, PAUSE_PCT);
-    const denseT = percentile(ys, 1 - PAUSE_PCT);
     const denseB = percentile(ys, PAUSE_PCT);
-    const comX = percentile(xs, 0.5);
-    const comY = percentile(ys, 0.5);
 
     panel.style.setProperty('--hero-subj-left', `${(minX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-subj-top', `${(minY * 100).toFixed(2)}%`);
@@ -438,22 +434,16 @@ export async function mountHero3D({
     panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
 
     /*
-     * 44px hit at dense-subject BR on cream (not petals): sit outside the
-     * percentile core toward the panel BR, but never beyond COM+dense half
-     * (AABB max spikes used to park this on the canvas corner).
+     * 44px hit in the panel’s bottom-right cream gutter (off the flower ring).
+     * Floor near the BR corner so pastel petals that pass a loose “cream”
+     * delta never sit under the control center. Keep a 28px edge pad for hit.
      */
-    const halfDenseX = Math.max(0.1, denseR - comX);
-    const halfDenseY = Math.max(0.1, denseB - comY);
-    let pauseX = Math.min(denseR + 0.06, comX + halfDenseX + 0.1);
-    let pauseY = Math.min(denseB + 0.055, comY + halfDenseY + 0.09);
-    // Prefer cream just outside the flower ring — if still inside dense core, push out.
-    if (pauseX < denseR + 0.02) pauseX = denseR + 0.05;
-    if (pauseY < denseB + 0.02) pauseY = denseB + 0.045;
-    pauseX = Math.min(0.9, Math.max(0.58, pauseX));
-    pauseY = Math.min(0.88, Math.max(0.5, pauseY));
-    const edgePad = 30 / Math.max(width, 1);
-    pauseX = Math.min(pauseX, 1 - edgePad);
-    pauseY = Math.min(pauseY, 1 - edgePad);
+    // ~16px from panel edge — 44px hit may overhang slightly into cream outside.
+    const edgePad = 16 / Math.max(Math.min(width, height), 1);
+    let pauseX = Math.max(denseR + 0.18, 0.92);
+    let pauseY = Math.max(denseB + 0.22, 0.92);
+    pauseX = Math.min(1 - edgePad, pauseX);
+    pauseY = Math.min(1 - edgePad, pauseY);
     panel.style.setProperty('--hero-pause-x', `${(pauseX * 100).toFixed(2)}%`);
     panel.style.setProperty('--hero-pause-y', `${(pauseY * 100).toFixed(2)}%`);
   };

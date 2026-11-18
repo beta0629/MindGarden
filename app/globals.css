@@ -672,6 +672,31 @@ p {
   outline-offset: 2px;
 }
 
+.hero__play {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  margin: auto;
+  width: 3.5rem;
+  height: 3.5rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(28, 36, 48, 0.62);
+  color: var(--white);
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hero__play:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: 2px;
+}
+
 @media (max-width: 767px) {
   .hero {
     gap: 1.25rem;
@@ -1927,6 +1952,82 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   background: linear-gradient(transparent, rgba(28, 36, 48, 0.88));
   font-size: 0.9375rem;
   font-weight: 600;
+}
+
+/* YoutubeThumbPlay: thumbnail button → nocookie iframe on tap. */
+.yt-thumb__trigger {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.yt-thumb__trigger:focus-visible {
+  outline: 2px solid var(--white);
+  outline-offset: -4px;
+}
+
+.yt-thumb__trigger img {
+  object-fit: cover;
+}
+
+.yt-thumb__play {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(28, 36, 48, 0.72);
+  color: var(--white);
+  font-size: 0.875rem;
+  pointer-events: none;
+}
+
+.yt-thumb__frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.home-reading-feature--video strong {
+  pointer-events: none;
+}
+
+.home-reading-feature--video.is-playing {
+  grid-column: 1 / -1;
+  min-height: 0;
+  aspect-ratio: 16 / 9;
+}
+
+.home-reading-feature--video.is-playing strong {
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  background: none;
+}
+
+.news-card__media--portrait {
+  aspect-ratio: 9 / 16;
 }
 
 .home-readings__list {

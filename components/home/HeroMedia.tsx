@@ -21,6 +21,8 @@ export function HeroMedia() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [paused, setPaused] = useState(false);
+  /** play() was rejected (iOS Low Power Mode / autoplay policy): show a tap-to-play control. */
+  const [needsGesture, setNeedsGesture] = useState(false);
   const [posterReady, setPosterReady] = useState(false);
   /** Desired capability from viewport/motion prefs (still | video | 3d). */
   const [mode, setMode] = useState<'still' | 'video' | '3d'>('still');
@@ -118,26 +120,46 @@ export function HeroMedia() {
 
   const showVideo = mode === 'video' && videoAllowed;
 
+  const tryPlay = useCallback(async (video: HTMLVideoElement) => {
+    // React only sets the muted *property*; iOS Safari autoplay needs the attribute too.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
+    try {
+      await video.play();
+      setNeedsGesture(false);
+    } catch (err) {
+      // AbortError = play() interrupted by pause()/load(); not an autoplay block.
+      if (err instanceof DOMException && err.name === 'AbortError') return;
+      setNeedsGesture(true);
+    }
+  }, []);
+
   useEffect(() => {
     const video = videoRef.current;
-    if (!video) return;
-
-    if (!showVideo || paused) {
+    if (!showVideo || !video) {
+      setNeedsGesture(false);
+      return;
+    }
+    if (paused) {
       video.pause();
       return;
     }
-    void video.play().catch(() => undefined);
-  }, [showVideo, paused]);
+    void tryPlay(video);
+    return () => {
+      // The <video> unmounts with React; pausing is enough and keeps <source> children intact.
+      video.pause();
+    };
+  }, [showVideo, paused, tryPlay]);
 
-  useEffect(() => {
-    if (showVideo) return;
+  const handleGesturePlay = () => {
     const video = videoRef.current;
     if (!video) return;
-    video.pause();
-    video.removeAttribute('src');
-    video.querySelectorAll('source').forEach((s) => s.remove());
-    video.load();
-  }, [showVideo]);
+    setPaused(false);
+    void tryPlay(video);
+  };
 
   useEffect(() => {
     if (mode !== '3d' || !posterReady) return;
@@ -231,21 +253,33 @@ export function HeroMedia() {
           muted
           loop
           playsInline
-          preload="none"
+          preload="metadata"
           poster="/assets/hero/hero-poster-1080.webp"
           aria-hidden="true"
+          onPlaying={() => setNeedsGesture(false)}
         >
+          <source src="/assets/hero/hero-orbit-loop.mp4" type="video/mp4" />
           <source
             src="/assets/hero/hero-orbit-loop.webm"
             type="video/webm"
           />
-          <source src="/assets/hero/hero-orbit-loop.mp4" type="video/mp4" />
         </video>
       ) : null}
 
       <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
 
-      {mode !== 'still' && (mode === '3d' || showVideo) ? (
+      {showVideo && needsGesture ? (
+        <button
+          type="button"
+          className="hero__play"
+          aria-label="영상 재생"
+          onClick={handleGesturePlay}
+        >
+          <span aria-hidden="true">▶</span>
+        </button>
+      ) : null}
+
+      {mode !== 'still' && (mode === '3d' || showVideo) && !needsGesture ? (
         <button
           type="button"
           className="hero__pause"

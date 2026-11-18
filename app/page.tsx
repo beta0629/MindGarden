@@ -5,6 +5,7 @@ import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { BusinessHours } from '@/components/ui/BusinessHours';
+import { YoutubeThumbPlay } from '@/components/ui/YoutubeThumbPlay';
 import {
   clinicOsClient,
   resolveProductDisplayPrice,
@@ -359,50 +360,54 @@ export default async function HomePage() {
           ) : (
             <>
               <div className="home-readings__featured" data-reveal-stagger>
-                {featuredReadings.map((item) => (
-                  <a
-                    key={item.key}
-                    className={`home-reading-feature${
-                      item.thumb ? '' : ' home-reading-feature--text'
-                    }`}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-reveal
-                  >
-                    {item.thumb ? (
-                      <>
-                        <span className="home-reading-feature__media">
-                          <Image
-                            src={item.thumb}
-                            alt=""
-                            fill
-                            sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
-                            quality={80}
-                          />
-                          {item.kind === 'video' ? (
-                            <span
-                              className="home-reading-feature__play"
-                              aria-hidden="true"
-                            >
-                              ▶
-                            </span>
-                          ) : null}
-                        </span>
-                        <strong>{item.title}</strong>
-                      </>
-                    ) : (
-                      <>
-                        <span className="home-reading-feature__kind">
-                          {item.kind === 'video' ? '영상' : '칼럼'}
-                        </span>
-                        <strong className="home-reading-feature__headline">
-                          {item.title}
-                        </strong>
-                      </>
-                    )}
-                  </a>
-                ))}
+                {featuredReadings.map((item) =>
+                  item.kind === 'video' && item.thumb ? (
+                    <YoutubeThumbPlay
+                      key={item.key}
+                      variant="feature"
+                      url={item.href}
+                      title={item.title}
+                      thumb={item.thumb}
+                      sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
+                      reveal
+                    />
+                  ) : (
+                    <a
+                      key={item.key}
+                      className={`home-reading-feature${
+                        item.thumb ? '' : ' home-reading-feature--text'
+                      }`}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-reveal
+                    >
+                      {item.thumb ? (
+                        <>
+                          <span className="home-reading-feature__media">
+                            <Image
+                              src={item.thumb}
+                              alt=""
+                              fill
+                              sizes="(max-width: 767px) 46vw, (max-width: 1279px) 23vw, 18rem"
+                              quality={80}
+                            />
+                          </span>
+                          <strong>{item.title}</strong>
+                        </>
+                      ) : (
+                        <>
+                          <span className="home-reading-feature__kind">
+                            {item.kind === 'video' ? '영상' : '칼럼'}
+                          </span>
+                          <strong className="home-reading-feature__headline">
+                            {item.title}
+                          </strong>
+                        </>
+                      )}
+                    </a>
+                  ),
+                )}
               </div>
               {listReadings.length > 0 ? (
                 <div className="home-readings__list">

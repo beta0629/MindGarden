@@ -18,7 +18,10 @@
   --max-text: 42rem;
   --max-page: clamp(72rem, 72rem + (100vw - 90rem) * 0.35, 110rem);
   --pad: clamp(1.25rem, 2.2vw, 3rem);
+  /* Nav row height (header__inner). Full sticky stack may be taller with notice. */
   --header-h: 3.5rem;
+  /* Measured sticky header bottom offset; falls back to --header-h until JS runs. */
+  --header-sticky-h: var(--header-h);
   --sticky-h: 3.9rem;
   /* Space the fixed booking bar occupies (≤1023): bar + iOS home indicator + breathing room. */
   --sticky-clear: calc(var(--sticky-h) + env(safe-area-inset-bottom) + 1rem);
@@ -49,12 +52,25 @@ html {
 }
 
 html {
-  scroll-padding-top: calc(var(--header-h) + 0.5rem);
+  scroll-padding-top: calc(var(--header-sticky-h) + 0.5rem);
   scroll-padding-bottom: var(--sticky-clear);
 }
 
 [id] {
-  scroll-margin-top: calc(var(--header-h) + 0.5rem);
+  scroll-margin-top: calc(var(--header-sticky-h) + 0.5rem);
+}
+
+/* Sections without [id] still clear the sticky header when scrolled into view. */
+.section,
+.section__title,
+.home-areas,
+.home-spaces,
+.home-experts,
+.home-reviews,
+.home-pricing,
+.home-readings,
+.home-booking {
+  scroll-margin-top: calc(var(--header-sticky-h) + 0.5rem);
 }
 
 @media (min-width: 1024px) {
@@ -581,6 +597,11 @@ p {
   /* Soft rim only for poster/video fallback — never a midtone cream wash. */
   --hero-media-fade-edge: 88%;
   --hero-media-fade-end: 100%;
+  /* Subject projected AABB from mountHero3D (fallbacks ≈ centered fit sphere). */
+  --hero-subj-left: 8%;
+  --hero-subj-top: 6%;
+  --hero-subj-right: 92%;
+  --hero-subj-bottom: 94%;
   position: relative;
   overflow: hidden;
   border-radius: 0;
@@ -595,6 +616,15 @@ p {
   aspect-ratio: 1 / 1;
   height: auto;
   max-height: min(56svh, 32rem);
+}
+
+/* Live GLB: camera frustum fits the subject — no CSS hard-crop / overflow clip.
+   Wider-than-square stage: the GLB silhouette is wide/flat, so a square box
+   left a tall empty cream band after width-fit. */
+.hero-media.is-3d {
+  overflow: visible;
+  aspect-ratio: 3 / 2;
+  max-height: min(48svh, 28rem);
 }
 
 .hero-media__stage {
@@ -679,9 +709,8 @@ p {
 
 .hero-media.is-3d .hero-3d {
   display: block;
-  /* Upper-biased crop so wings meet the top of the media box (CTA→subject ≤40px). */
-  transform: scale(1.26);
-  transform-origin: 50% 24%;
+  /* Camera fit owns framing — no CSS scale crop. */
+  transform: none;
 }
 
 .hero-media.is-3d .hero-still {
@@ -703,8 +732,15 @@ p {
 .hero__pause {
   position: absolute;
   z-index: 5;
-  /* Bottom-right of the visible subject area (media box hugs the GLB). */
-  inset: auto 12px 12px auto;
+  /*
+   * Bottom-right of the projected subject AABB (CSS vars from mountHero3D).
+   * `top` anchors to subject bottom, then lifts above the flower bed.
+   */
+  left: auto;
+  /* Nudge inward from subject right so the control prefers cream, not petals. */
+  right: max(0px, calc(100% - var(--hero-subj-right) + 0.85rem));
+  top: max(0px, calc(var(--hero-subj-bottom) - 2.25rem));
+  bottom: auto;
   width: 1.625rem;
   height: 1.625rem;
   border: 0;
@@ -716,11 +752,14 @@ p {
   line-height: 1;
 }
 
-/* Visual ~26px; hit target expands to ≥44px and stays inside the media panel. */
+/* Visual ~26px; hit target expands to ≥44px. */
 .hero__pause::after {
   content: '';
   position: absolute;
-  inset: -0.625rem;
+  inset: 50% auto auto 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
 }
 
 .hero__pause:focus-visible {
@@ -779,6 +818,11 @@ p {
     max-height: min(52svh, 20rem);
   }
 
+  .hero-media.is-3d {
+    aspect-ratio: 5 / 4;
+    max-height: min(46svh, 18rem);
+  }
+
   .hero-media__stage {
     inset: 0;
   }
@@ -815,9 +859,14 @@ p {
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
+  .hero-media.is-3d {
+    aspect-ratio: 3 / 2;
+    width: min(100%, min(62svh, 36rem));
+    max-height: min(48svh, 30rem);
+  }
+
   .hero-media.is-3d .hero-3d {
-    transform: scale(1.08);
-    transform-origin: 50% 40%;
+    transform: none;
   }
 }
 
@@ -1645,6 +1694,14 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   margin-right: 0;
 }
 
+/* Desktop: keep high ambient flight clear of the sticky header (≥16px). */
+@media (min-width: 1024px) {
+  .v37-scene--bench {
+    position: sticky;
+    top: calc(var(--header-sticky-h) + 1rem);
+  }
+}
+
 .v37-scene__canvas,
 .v37-scene__poster {
   display: block;
@@ -2450,7 +2507,7 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   .home-spaces__scene {
     justify-content: flex-end;
     position: sticky;
-    top: calc(var(--header-h) + 1rem);
+    top: calc(var(--header-sticky-h) + 1rem);
   }
 
   .home-spaces__scene .v37-scene--gate {

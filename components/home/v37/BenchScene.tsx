@@ -43,6 +43,10 @@ type Pad = { left: number; top: number; right: number; bottom: number };
 
 /** Floor for body/shadow opacity during settle phase 1 — avoids a faded bench. */
 const BENCH_MIN_OPACITY = 0.92;
+/** Peak ambient tips sit ~SAFETY_PAD px below canvas top; keep that clear of sticky header. */
+const STICKY_BUTTERFLY_CLEAR_PX = 16;
+const CANVAS_TOP_SUBJECT_INSET_PX = 8;
+const STICKY_CLEAR_MIN_WIDTH = 1024;
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
   '1440': { wPct: 28.115, aspect: '405 / 350' },
@@ -190,6 +194,34 @@ function layoutOverflowCanvas(
   return { scale, cssW, cssH };
 }
 
+/**
+ * Keep the highest ambient butterfly (≥16px) below the sticky header bottom.
+ * Desktop sticky `top` handles the common case; this only applies a residual
+ * translate when sticky has released (no horizontal layout change).
+ */
+function applyStickyHeaderClearance(
+  wrap: HTMLDivElement,
+  canvas: HTMLCanvasElement,
+): void {
+  if (window.innerWidth < STICKY_CLEAR_MIN_WIDTH) {
+    wrap.style.translate = '';
+    return;
+  }
+  const header = document.querySelector('.site-header');
+  const headerBottom = header
+    ? header.getBoundingClientRect().bottom
+    : 0;
+  const minTop = headerBottom + STICKY_BUTTERFLY_CLEAR_PX;
+  // Measure natural sticky position without our residual translate.
+  wrap.style.translate = '';
+  const canvasTop = canvas.getBoundingClientRect().top;
+  const highestButterflyY = canvasTop + CANVAS_TOP_SUBJECT_INSET_PX;
+  const need = minTop - highestButterflyY;
+  if (need > 0.5) {
+    wrap.style.translate = `0 ${need}px`;
+  }
+}
+
 export function BenchScene({ sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
@@ -296,6 +328,7 @@ export function BenchScene({ sectionRef }: Props) {
         boxW,
         boxH,
       );
+      applyStickyHeaderClearance(wrap, canvas);
       const dpr = Math.min(MAX_CANVAS_DPR, window.devicePixelRatio || 1);
       const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
       if (!ctx) {

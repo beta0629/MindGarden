@@ -53,11 +53,33 @@ const FOCUSABLE_SELECTOR =
 
 export function SiteHeader({ noticeText = null }: SiteHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   /** Keyboard users get focus back on the toggle; pointer users must not keep a ring. */
   const restoreFocusRef = useRef(false);
+
+  /** Publish full sticky header height (nav + notice) for scroll-padding / clearance. */
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const publish = () => {
+      const h = Math.ceil(el.getBoundingClientRect().height);
+      document.documentElement.style.setProperty(
+        '--header-sticky-h',
+        `${h}px`,
+      );
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    window.addEventListener('resize', publish);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', publish);
+    };
+  }, [noticeText]);
 
   const closeMenu = useCallback((restoreFocus = false) => {
     restoreFocusRef.current = restoreFocus;
@@ -116,7 +138,7 @@ export function SiteHeader({ noticeText = null }: SiteHeaderProps) {
   }, [menuOpen, closeMenu]);
 
   return (
-    <header className="site-header">
+    <header ref={headerRef} className="site-header">
       <NoticeBar text={noticeText} />
       <div className="container header__inner">
         <BrandLockup onNavigate={() => closeMenu()} />

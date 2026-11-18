@@ -1620,16 +1620,22 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 /* Bench: overflow canvas paints ambient tracks outside the place box.
-   Horizontal fit is enforced by --bench-place-frac inside .home-reviews__scene. */
+   Horizontal fit: --bench-place-frac inside .home-reviews__scene.
+   Vertical fit: content-box padding reserves top/bottom pad so parents
+   (html/body/#main overflow-x:clip → used overflow-y) cannot crop wings. */
 .v37-scene--bench {
   --bench-place-w: min(
     var(--v37-w, 100%),
     calc(100% * var(--bench-place-frac, 1)),
     100%
   );
+  box-sizing: content-box;
+  /* Visible: horizontal pads still hang into .home-reviews__scene (place-frac). */
   overflow: visible;
   width: var(--bench-place-w);
   max-width: 100%;
+  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0));
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
   /* Override .v37-scene margin-inline:auto, then right-align with right-pad reserved. */
   margin-inline: 0;
   margin-left: max(
@@ -1909,8 +1915,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 }
 
 .home-reviews {
-  /* Allow bench butterflies to rise into cream; html/body keep overflow-x: clip. */
-  overflow: visible;
+  /* Top pad is now in-flow on .v37-scene--bench; keep x clipped, y paintable. */
+  overflow-x: clip;
+  overflow-y: visible;
   max-width: 100%;
 }
 
@@ -1919,7 +1926,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   flex-direction: column;
   gap: 1rem;
   margin-bottom: 1.25rem;
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .home-reviews__scene {
@@ -1928,7 +1936,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: visible;
+  /* Canvas fits horizontally via place-frac; vertical pad is host padding. */
+  overflow-x: clip;
+  overflow-y: visible;
 }
 
 .home-reviews__grid {
@@ -2465,15 +2475,18 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
     /* Wide right column so padded bench canvas (place + flight pads) can fit. */
     grid-template-columns: minmax(12rem, 0.28fr) minmax(0, 1fr);
     gap: 1rem 2rem;
-    align-items: start;
-    overflow: visible;
+    /* Place box sits under top pad — align copy with the bench, not the sky. */
+    align-items: end;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .home-reviews__scene {
     min-width: 0;
     width: 100%;
     max-width: 100%;
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .home-reviews__grid {

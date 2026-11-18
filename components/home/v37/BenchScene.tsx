@@ -51,11 +51,21 @@ const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
 
 const DEFAULT_PAD_FRACS: Record<
   PackId,
-  { place: number; padRRatio: number }
+  { place: number; padRRatio: number; padTOverW: number; padBOverW: number }
 > = {
   // Approximate until JSON loads — 1440 / 390 pack track bounds + 8px safety.
-  '1440': { place: 404.857 / 903.085, padRRatio: 350.163 / 404.857 },
-  '390': { place: 223.37 / 638.84, padRRatio: 191.79 / 223.37 },
+  '1440': {
+    place: 404.857 / 903.085,
+    padRRatio: 350.163 / 404.857,
+    padTOverW: 456.571 / 404.857,
+    padBOverW: 8 / 404.857,
+  },
+  '390': {
+    place: 223.37 / 638.84,
+    padRRatio: 191.79 / 223.37,
+    padTOverW: 206.662 / 223.37,
+    padBOverW: 8 / 223.37,
+  },
 };
 
 /**
@@ -135,12 +145,17 @@ function placeStyleFromPad(
     ? {
         place: placeW / (placeW + pad.left + pad.right),
         padRRatio: pad.right / placeW,
+        padTOverW: pad.top / placeW,
+        padBOverW: pad.bottom / placeW,
       }
     : DEFAULT_PAD_FRACS[pack];
   return {
     ['--v37-w' as string]: `${wPct}vw`,
     ['--bench-place-frac' as string]: String(fracs.place),
     ['--bench-pad-r-ratio' as string]: String(fracs.padRRatio),
+    // Vertical pads reserved as content-box padding so ancestors cannot clip them.
+    ['--bench-pad-t-over-w' as string]: String(fracs.padTOverW),
+    ['--bench-pad-b-over-w' as string]: String(fracs.padBOverW),
     aspectRatio: aspect,
   };
 }
@@ -148,6 +163,8 @@ function placeStyleFromPad(
 /**
  * Position the overflow canvas from the displayed place box so track pads
  * stay inside `.home-reviews__scene` (no horizontal document growth).
+ * Top/bottom pads are laid out via host padding — canvas origin is the
+ * padding edge (top: 0), not a negative offset that parents can clip.
  */
 function layoutOverflowCanvas(
   wrap: HTMLDivElement,
@@ -159,13 +176,12 @@ function layoutOverflowCanvas(
   const placeW = Math.max(1, wrap.clientWidth);
   const scale = placeW / boxW;
   const padL = pad.left * scale;
-  const padT = pad.top * scale;
   const cssW = (boxW + pad.left + pad.right) * scale;
   const cssH = (boxH + pad.top + pad.bottom) * scale;
 
   canvas.style.position = 'absolute';
   canvas.style.left = `${-padL}px`;
-  canvas.style.top = `${-padT}px`;
+  canvas.style.top = '0px';
   canvas.style.width = `${cssW}px`;
   canvas.style.height = `${cssH}px`;
   canvas.style.maxWidth = 'none';

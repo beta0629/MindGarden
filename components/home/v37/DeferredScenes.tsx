@@ -11,8 +11,8 @@ import { whenHomeBootReady } from '@/components/home/homeBoot';
 import type { PackId } from './types';
 import { useBreakpointPack } from './useBreakpointPack';
 
-/** Match atlas.NEAR_ROOT_MARGIN — keep this file free of atlas/WebGL imports. */
-const NEAR_ROOT_MARGIN = '120px 0px';
+/** Match atlas.NEAR_ROOT_MARGIN (~1.5 viewports) — keep this file free of atlas/WebGL imports. */
+const NEAR_ROOT_MARGIN = '150% 0px';
 
 type SceneProps = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -66,7 +66,8 @@ function waitIdle(timeoutMs: number): Promise<void> {
  * chunks — atlas decode + canvas work would spike mid-scroll; poster stays forever.
  *
  * Place size / aspect / bench pads come from CSS media queries only (globals.css).
- * Pack is used solely for poster atlas paths.
+ * Pack is used solely for poster atlas paths — gated to client mount so desktop
+ * never flashes the SSR/hydration `'390'` pack.
  */
 function DeferredV37Scene({
   kind,
@@ -75,6 +76,12 @@ function DeferredV37Scene({
   const pack = useBreakpointPack();
   const wrapRef = useRef<HTMLDivElement>(null);
   const [Scene, setScene] = useState<ComponentType<SceneProps> | null>(null);
+  /** Client-only: avoid painting pack `'390'` poster on desktop before matchMedia. */
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -131,15 +138,23 @@ function DeferredV37Scene({
       className={SCENE_CLASS[kind]}
       aria-hidden="true"
     >
-      {/* eslint-disable-next-line @next/next/no-img-element -- static stand-in until scene chunk loads */}
-      <img
-        className="v37-scene__poster"
-        src={POSTER[kind](pack)}
-        alt=""
-        decoding="async"
-        loading="lazy"
-        fetchPriority="low"
-      />
+      {/*
+       * Layout spacer always (CSS aspect). Poster `src` only after mount so
+       * desktop uses the live pack — never SSR `'390'` → `'1440'` hop.
+       */}
+      {mounted ? (
+        // eslint-disable-next-line @next/next/no-img-element -- static stand-in until scene chunk loads
+        <img
+          className="v37-scene__poster"
+          src={POSTER[kind](pack)}
+          alt=""
+          decoding="async"
+          loading="lazy"
+          fetchPriority="low"
+        />
+      ) : (
+        <div className="v37-scene__poster" />
+      )}
     </div>
   );
 }

@@ -15,6 +15,7 @@ import {
   loadJson,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
+  sheetsReadyForFrame,
   smoothstep,
 } from './atlas';
 import {
@@ -174,16 +175,44 @@ export function BookingScene({ sectionRef }: Props) {
       phase.kind === 'leaveHold' ||
       phase.kind === 'leaveEase';
 
+    /**
+     * WebKit IO race: instant / nearMaxScroll to page end can flip IntersectionObserver
+     * `visible=false` before ScrollClock arms and landing paints. Chromium often keeps
+     * a few "visible" ticks past the trigger; WebKit 390 consistently loses the race
+     * (canvas stays 300×150, never is-live). Landing + first live paint must still run.
+     */
+    const landingMustRun = (): boolean => {
+      if (!assetsReady || landingDoneRef.current) return false;
+      const clock = clockRef.current;
+      if (!clock) return false;
+      const metrics = ensureMetrics().read();
+      const triggerY = clock.triggerScrollY(metrics);
+      // past covers pre-arm jump-to-bottom; wouldAdvance covers armed forward/reverse.
+      const past =
+        metrics.scrollY >= triggerY - 1 ||
+        metrics.scrollY >= metrics.maxScroll - 2;
+      return past || clock.wouldAdvanceWithTime(metrics);
+    };
+
+    const firstPaintOwed = (): boolean => {
+      if (paintLiveRef.current) return false;
+      return landingMustRun() || Boolean(clockRef.current?.isArmed());
+    };
+
     const syncPause = () => {
       if (!subscribed) return;
       const hoverBusy = hoverBusyPhase(hoverRef.current);
       const landingPending = !landingDoneRef.current;
-      // Offscreen / hidden: no dirty marks, no continuous, no breathe interval.
+      const mustLand = landingMustRun();
+      const paintOwed = firstPaintOwed();
+      // Offscreen idle freeze still applies after landing+paintLive — only carve
+      // the exception while landing / first live paint is still owed.
       const shouldRun =
-        visible &&
         !document.hidden &&
         assetsReady &&
-        (landingPending || hoverBusy);
+        (mustLand ||
+          paintOwed ||
+          (visible && (landingPending || hoverBusy)));
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
         setContinuous(RAF_ID, false);
@@ -300,26 +329,44 @@ export function BookingScene({ sectionRef }: Props) {
       walkF: number,
     ) => {
       const hoverBusy = hoverBusyPhase(hoverRef.current);
+      // Arm continuous ticks at ScrollClock's booking trigger (468), not LANDING_START
+      // (470). A first tick can leave walkF in [468, 470); requiring >= 470 then drops
+      // continuous → no further ticks → paintMode stays blank (seen on WebKit 390).
       const landingInFlight =
         !landingDoneRef.current &&
         clock.wouldAdvanceWithTime(metrics) &&
-        walkF >= LANDING_START;
-      const continuous = landingInFlight || hoverBusy;
+        walkF >= TRIGGER_WALK_F.booking - 0.5;
+      // Keep continuous through first live paint (landing→breathe) even offscreen.
+      const continuous = landingInFlight || hoverBusy || firstPaintOwed();
       setContinuous(RAF_ID, continuous);
       if (!continuous) {
         clock.syncTime(now);
-        if (landingDoneRef.current && !hoverBusy) {
+        // Idle freeze only after landing + first live paint (no forever breathe rAF).
+        if (landingDoneRef.current && paintLiveRef.current && !hoverBusy) {
           setPaused(RAF_ID, true);
         }
       }
     };
 
     const tick = (now: number) => {
-      if (!alive || !visible || document.hidden) return;
+      if (!alive || document.hidden) return;
+      // Do not early-return on !visible while landing / first live paint is owed
+      // (WebKit IO can clear visible before the booking trigger paints).
+      if (!visible && !landingMustRun() && !firstPaintOwed()) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
-      if (!rt || !clock || !canvas || !assetsReady) return;
+      if (!rt || !clock || !assetsReady) return;
+      // setCanvasActive commits the <canvas> on the next React paint — if we
+      // subscribed immediately, ticks can run before canvasRef is set. Keep
+      // continuous while landing is owed so offscreen WebKit does not stall
+      // forever on a single dirty pulse (no IO re-dirty when already offscreen).
+      if (!canvas) {
+        if (landingMustRun() || firstPaintOwed()) {
+          setContinuous(RAF_ID, true);
+        }
+        return;
+      }
 
       const metrics = ensureMetrics().read();
       let walkF = clock.update(now, metrics);
@@ -415,9 +462,47 @@ export function BookingScene({ sectionRef }: Props) {
         finishTick(now, clock, metrics, walkF);
         return;
       }
-      lastDrawKey = drawKey;
 
       if (paintMode === 'blank') {
+        lastDrawKey = drawKey;
+        finishTick(now, clock, metrics, walkF);
+        return;
+      }
+
+      // Never blank-draw: missing breathe/landing sheet must not clear + stick key.
+      let sheetsReady = false;
+      if (paintMode === 'landing') {
+        sheetsReady = sheetsReadyForFrame(
+          rt.landingBank,
+          rt.booking.landing.atlas,
+          landingIdx,
+        );
+        if (!sheetsReady) {
+          void rt.landingBank.ensureCurrentAndNext(Math.floor(landingIdx)).then(() => {
+            if (alive) markDirty(RAF_ID);
+          });
+        }
+      } else if (paintMode === 'hover' && rt.hover && rt.hoverBank) {
+        sheetsReady = sheetsReadyForFrame(rt.hoverBank, rt.hover.atlas, hoverIdx);
+        if (!sheetsReady) {
+          void rt.hoverBank.ensureCurrentAndNext(hoverIdx).then(() => {
+            if (alive) markDirty(RAF_ID);
+          });
+        }
+      } else if (paintMode === 'breathe') {
+        sheetsReady = sheetsReadyForFrame(
+          rt.breatheBank,
+          rt.booking.breathe.atlas,
+          bIdx,
+        );
+        if (!sheetsReady) {
+          void rt.breatheBank.ensureCurrentAndNext(bIdx).then(() => {
+            if (alive) markDirty(RAF_ID);
+          });
+        }
+      }
+
+      if (!sheetsReady) {
         finishTick(now, clock, metrics, walkF);
         return;
       }
@@ -444,6 +529,10 @@ export function BookingScene({ sectionRef }: Props) {
           0,
           0,
           2,
+          (frameIndex) => {
+            const entry = atlas.index[frameIndex];
+            return entry ? bank.getScale(entry[0]) : 1;
+          },
         );
       };
 
@@ -454,6 +543,8 @@ export function BookingScene({ sectionRef }: Props) {
       } else if (paintMode === 'breathe') {
         drawBankFrame(rt.breatheBank, rt.booking.breathe.atlas, bIdx);
       }
+
+      lastDrawKey = drawKey;
 
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
@@ -481,12 +572,30 @@ export function BookingScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
-        await rt.landingBank.ensureCurrentAndNext(0);
+        // Landing + breathe both ready before first paint — prevents vanish on landing→breathe.
+        await Promise.all([
+          rt.landingBank.ensureAll(),
+          rt.breatheBank.ensureAll(),
+        ]);
         if (!alive) return;
+        // Sync GPU upload before first visible tick (WebKit first-drawImage cost).
+        rt.landingBank.warmAllGpu();
+        rt.breatheBank.warmAllGpu();
         assetsReady = true;
         setCanvasActive(true);
         ensureSubscribed();
         markDirty(RAF_ID);
+        // Canvas ref attaches after commit — re-arm dirty/continuous then.
+        const armWhenCanvasReady = () => {
+          if (!alive || !assetsReady) return;
+          if (canvasRef.current) {
+            syncPause();
+            markDirty(RAF_ID);
+            return;
+          }
+          requestAnimationFrame(armWhenCanvasReady);
+        };
+        requestAnimationFrame(armWhenCanvasReady);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -531,8 +640,17 @@ export function BookingScene({ sectionRef }: Props) {
 
     const onScroll = () => {
       // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
-      if (!subscribed || !visible || document.hidden) return;
-      if (!landingDoneRef.current || hoverBusyPhase(hoverRef.current)) {
+      if (!subscribed || document.hidden) return;
+      // Jump-to-bottom must dirty even when IO already says !visible so continuous arms.
+      const landingPending =
+        !landingDoneRef.current || !paintLiveRef.current;
+      if (!visible && !landingPending) return;
+      if (
+        landingPending ||
+        hoverBusyPhase(hoverRef.current)
+      ) {
+        // Unpause if scroll crossed trigger while wrap is already offscreen.
+        if (!visible && landingPending) syncPause();
         markDirty(RAF_ID);
       }
     };
@@ -540,8 +658,15 @@ export function BookingScene({ sectionRef }: Props) {
     const onResize = () => {
       ensureMetrics().refresh();
       lastDrawKey = '';
-      if (!subscribed || !visible || document.hidden) return;
-      if (!landingDoneRef.current || hoverBusyPhase(hoverRef.current)) {
+      if (!subscribed || document.hidden) return;
+      const landingPending =
+        !landingDoneRef.current || !paintLiveRef.current;
+      if (!visible && !landingPending) return;
+      if (
+        landingPending ||
+        hoverBusyPhase(hoverRef.current)
+      ) {
+        if (!visible && landingPending) syncPause();
         markDirty(RAF_ID);
       }
     };
@@ -566,10 +691,12 @@ export function BookingScene({ sectionRef }: Props) {
           hoverRef.current = { kind: 'idle' };
         }
         syncPause();
+        const landingPending =
+          !landingDoneRef.current || !paintLiveRef.current;
         if (
-          visible &&
           assetsReady &&
-          (!landingDoneRef.current || hoverBusyPhase(hoverRef.current))
+          (landingPending ||
+            (visible && hoverBusyPhase(hoverRef.current)))
         ) {
           markDirty(RAF_ID);
         }
@@ -579,10 +706,13 @@ export function BookingScene({ sectionRef }: Props) {
 
     const onVisibility = () => {
       syncPause();
+      const landingPending =
+        !landingDoneRef.current || !paintLiveRef.current;
       if (
         !document.hidden &&
-        visible &&
-        (!landingDoneRef.current || hoverBusyPhase(hoverRef.current))
+        assetsReady &&
+        (landingPending ||
+          (visible && hoverBusyPhase(hoverRef.current)))
       ) {
         markDirty(RAF_ID);
       }
@@ -606,17 +736,25 @@ export function BookingScene({ sectionRef }: Props) {
       hit.removeEventListener('touchstart', onEnter);
       hit.removeEventListener('touchend', onLeave);
       if (subscribed) unsubscribe(RAF_ID);
+      const rt = runtimeRef.current;
+      if (rt) {
+        rt.landingBank.dispose();
+        rt.breatheBank.dispose();
+        rt.hoverBank?.dispose();
+      }
+      runtimeRef.current = null;
     };
   }, [pack, reduced, failed, sectionRef]);
 
   // Poster (folded 85° + flowers) until live landing/breathe paints — never hover-first.
   const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`;
+  const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
     <div
       ref={wrapRef}
-      className="v37-scene v37-scene--booking"
+      className={`v37-scene v37-scene--booking${liveClass}`}
       aria-hidden="true"
     >
       {/*
@@ -645,7 +783,6 @@ export function BookingScene({ sectionRef }: Props) {
             inset: 0,
             width: '100%',
             height: '100%',
-            opacity: showPoster ? 0 : 1,
             pointerEvents: 'none',
           }}
         />

@@ -19,10 +19,12 @@ import {
   drawAtlasFrameBlend,
   drawCoverImage,
   effectiveCanvasDpr,
+  closeSheet,
   loadJson,
   loadSheet,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
+  warmSheetGpu,
   type DecodedImage,
 } from './atlas';
 import {
@@ -253,7 +255,12 @@ function layoutOverflowCanvas(
   canvas.style.width = `${cssW}px`;
   canvas.style.height = `${cssH}px`;
   canvas.style.maxWidth = 'none';
-  canvas.style.opacity = canvas.dataset.posterHidden === '1' ? '0' : '1';
+  // Opacity owned by .v37-scene.is-live / dataset — avoid inline snaps.
+  if (canvas.dataset.posterHidden === '1') {
+    canvas.style.opacity = '0';
+  } else {
+    canvas.style.removeProperty('opacity');
+  }
 
   const canvasTop = canvas.getBoundingClientRect().top;
   return { scale, cssW, cssH, canvasTop };
@@ -346,6 +353,8 @@ export function BenchScene({ sectionRef }: Props) {
     let frozen = false;
     /** Skip clearRect+paint when quantized walk/settle key is unchanged. */
     let lastDrawKey = '';
+    /** Once a full-alpha frame painted, never restart settle fade from ~0. */
+    let heldOpaque = false;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -373,9 +382,28 @@ export function BenchScene({ sectionRef }: Props) {
       layoutScrollYRef.current = window.scrollY || window.pageYOffset || 0;
     };
 
+    /**
+     * Same WebKit IO race as Booking: fast scroll can clear `visible` before the
+     * first live paint while ScrollClock is already past the bench trigger.
+     */
+    const firstPaintMustRun = (): boolean => {
+      if (!assetsReady || frozen || paintLiveRef.current) return false;
+      const clock = clockRef.current;
+      if (!clock) return false;
+      const metrics = ensureMetrics().read();
+      const triggerY = clock.triggerScrollY(metrics);
+      const past = metrics.scrollY >= triggerY - 1;
+      return past || clock.wouldAdvanceWithTime(metrics) || clock.isArmed();
+    };
+
     const syncPause = () => {
       if (!subscribed) return;
-      const shouldRun = visible && !document.hidden && assetsReady && !frozen;
+      const paintOwed = firstPaintMustRun();
+      const shouldRun =
+        !document.hidden &&
+        assetsReady &&
+        !frozen &&
+        (visible || paintOwed);
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
         setContinuous(RAF_ID, false);
@@ -385,12 +413,18 @@ export function BenchScene({ sectionRef }: Props) {
     };
 
     const tick = (now: number) => {
-      if (!alive || !visible || document.hidden) return;
+      if (!alive || document.hidden) return;
+      if (!visible && !firstPaintMustRun()) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
       const pad = padRef.current;
-      if (!rt || !clock || !canvas || !assetsReady || !rt.body || !rt.shadow) {
+      if (!rt || !clock || !assetsReady || !rt.body || !rt.shadow) {
+        return;
+      }
+      // Canvas mounts after setCanvasActive commit — keep continuous while paint owed.
+      if (!canvas) {
+        if (firstPaintMustRun()) setContinuous(RAF_ID, true);
         return;
       }
 
@@ -410,15 +444,19 @@ export function BenchScene({ sectionRef }: Props) {
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
       const preSettle = settle.opacity <= 0;
-      // Never dip to near-transparent when settle starts (washed-out flash).
-      const drawOpacity = preSettle
-        ? 1
-        : Math.max(BENCH_MIN_OPACITY, settle.opacity);
+      const rawOpacity = preSettle ? 1 : settle.opacity;
+      // Never dip to near-transparent when settle starts / reverse-scroll returns.
+      const drawOpacity = Math.max(
+        heldOpaque || paintLiveRef.current ? 1 : BENCH_MIN_OPACITY,
+        rawOpacity,
+      );
       const drawTy = preSettle ? 0 : ty;
       const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
-      const drawShadowOpacity = preSettle
-        ? 1
-        : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
+      const rawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
+      const drawShadowOpacity = Math.max(
+        heldOpaque || paintLiveRef.current ? 1 : BENCH_MIN_OPACITY,
+        rawShadowOpacity,
+      );
 
       const settling = settleBusy(walkF);
       const settleKey = settling
@@ -444,7 +482,12 @@ export function BenchScene({ sectionRef }: Props) {
         finishTick();
         return;
       }
-      lastDrawKey = drawKey;
+
+      // Body/shadow required — never clearRect into an empty subject.
+      if (!rt.body || !rt.shadow) {
+        finishTick();
+        return;
+      }
 
       if (!overflowLayoutRef.current) refreshOverflowLayout();
       const layout = overflowLayoutRef.current;
@@ -535,6 +578,9 @@ export function BenchScene({ sectionRef }: Props) {
       drawButterflies(ctx, rt, walkF, ox, oy, 'front');
       ctx.restore();
 
+      lastDrawKey = drawKey;
+      if (drawOpacity >= 1) heldOpaque = true;
+
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
         setPaintLive(true);
@@ -556,20 +602,29 @@ export function BenchScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
+        const coverHint = {
+          displayW: rt.json.place.css_w,
+          displayH: rt.json.place.css_h,
+        };
         const [body, shadow, perchShadow] = await Promise.all([
-          loadSheet(rt.json.body.file),
-          loadSheet(rt.json.shadow.file),
-          loadSheet(rt.json.perch_shadow.file.file),
+          // Single cover images — decode-resize OK (no atlas UVs).
+          loadSheet(rt.json.body.file, undefined, coverHint),
+          loadSheet(rt.json.shadow.file, undefined, coverHint),
+          loadSheet(rt.json.perch_shadow.file.file, undefined, coverHint),
         ]);
         rt.body = body;
         rt.shadow = shadow;
         rt.perchShadow = perchShadow;
-        // Decode only the first ambient strip sheet 0 — further sheets on demand
-        // via ensureAmbientForWalk (never stampede all ambient atlases at warm).
+        warmSheetGpu(body);
+        warmSheetGpu(shadow);
+        warmSheetGpu(perchShadow);
+        // Prefetch first ambient atlas fully; further banks on demand via ensureAmbientForWalk.
         {
           const firstKey = Object.keys(rt.ambientBanks)[0];
           if (firstKey) {
-            await rt.ambientBanks[firstKey].ensureCurrentAndNext(0);
+            await rt.ambientBanks[firstKey].ensureAll();
+            // Sync GPU warm before first flight paint (WebKit drawImage upload).
+            rt.ambientBanks[firstKey].warmAllGpu();
           }
         }
         if (!alive) return;
@@ -578,6 +633,16 @@ export function BenchScene({ sectionRef }: Props) {
         setCanvasActive(true);
         ensureSubscribed();
         markDirty(RAF_ID);
+        const armWhenCanvasReady = () => {
+          if (!alive || !assetsReady) return;
+          if (canvasRef.current) {
+            syncPause();
+            markDirty(RAF_ID);
+            return;
+          }
+          requestAnimationFrame(armWhenCanvasReady);
+        };
+        requestAnimationFrame(armWhenCanvasReady);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -614,6 +679,7 @@ export function BenchScene({ sectionRef }: Props) {
         });
         // Place/pad CSS vars owned by globals.css — padRef is canvas math only.
         lastDrawKey = '';
+        heldOpaque = false;
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -634,18 +700,20 @@ export function BenchScene({ sectionRef }: Props) {
         };
         layoutScrollYRef.current = sy;
       }
-      if (subscribed && visible && !document.hidden && !frozen) {
-        markDirty(RAF_ID);
-      }
+      if (!subscribed || document.hidden || frozen) return;
+      if (!visible && !firstPaintMustRun()) return;
+      if (!visible) syncPause();
+      markDirty(RAF_ID);
     };
 
     const onResize = () => {
       ensureMetrics().refresh();
       lastDrawKey = '';
       refreshOverflowLayout();
-      if (subscribed && visible && !document.hidden && !frozen) {
-        markDirty(RAF_ID);
-      }
+      if (!subscribed || document.hidden || frozen) return;
+      if (!visible && !firstPaintMustRun()) return;
+      if (!visible) syncPause();
+      markDirty(RAF_ID);
     };
 
     const nearIO = new IntersectionObserver(
@@ -665,14 +733,23 @@ export function BenchScene({ sectionRef }: Props) {
         ensureMetrics().refresh();
         if (visible) refreshOverflowLayout();
         syncPause();
-        if (visible && assetsReady && !frozen) markDirty(RAF_ID);
+        if (assetsReady && !frozen && (visible || firstPaintMustRun())) {
+          markDirty(RAF_ID);
+        }
       },
       { rootMargin: '0px' },
     );
 
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && visible && !frozen) markDirty(RAF_ID);
+      if (
+        !document.hidden &&
+        assetsReady &&
+        !frozen &&
+        (visible || firstPaintMustRun())
+      ) {
+        markDirty(RAF_ID);
+      }
     };
 
     const ro = new ResizeObserver(() => {
@@ -695,28 +772,40 @@ export function BenchScene({ sectionRef }: Props) {
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);
+      const rt = runtimeRef.current;
+      if (rt) {
+        for (const key of Object.keys(rt.ambientBanks)) {
+          rt.ambientBanks[key]?.dispose();
+        }
+        closeSheet(rt.json.body.file);
+        closeSheet(rt.json.shadow.file);
+        closeSheet(rt.json.perch_shadow.file.file);
+      }
+      runtimeRef.current = null;
     };
   }, [pack, reduced, failed, sectionRef]);
 
   // Keep poster-hidden flag on the canvas DOM node so layoutOverflowCanvas can
-  // set opacity without React wiping left/top/width/height each render.
+  // sync opacity without React wiping left/top/width/height each render.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const hide = failed || reduced || !paintLive;
     canvas.dataset.posterHidden = hide ? '1' : '0';
     if (canvas.style.position === 'absolute') {
-      canvas.style.opacity = hide ? '0' : '1';
+      if (hide) canvas.style.opacity = '0';
+      else canvas.style.removeProperty('opacity');
     }
   }, [failed, reduced, paintLive, canvasActive]);
 
   const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`;
+  const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
     <div
       ref={wrapRef}
-      className="v37-scene v37-scene--bench"
+      className={`v37-scene v37-scene--bench${liveClass}`}
       aria-hidden="true"
     >
       {/*
@@ -803,6 +892,10 @@ function drawButterflies(
       ox + pt.x,
       oy + pt.y,
       2,
+      (frameIndex) => {
+        const e = amb.atlas.index[frameIndex];
+        return e ? bank.getScale(e[0]) : 1;
+      },
     );
     ctx.restore();
   }

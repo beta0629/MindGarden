@@ -46,10 +46,20 @@ const MOBILE_MIN_FRAME_MS = 1000 / 30;
 const DESKTOP_WING_SAMPLE_MS = 1000 / 30;
 /** Pause WingFold after this long with no pointer activity (scroll does NOT count). */
 const IDLE_PAUSE_MS = 8000;
-/** Throttle subject CSS var mesh projection off the hot path. */
-const SUBJECT_CSS_MIN_MS = 500;
+/** Canvas fade-in before poster fade-out (matches globals.css hero reveal). */
+const HERO_CANVAS_FADE_MS = 300;
 /** Skip render when tilt / yaw have settled within this epsilon. */
 const POSE_EPS = 0.0004;
+
+function waitIdle(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window.requestIdleCallback === 'function') {
+      window.requestIdleCallback(() => resolve(), { timeout: timeoutMs });
+    } else {
+      window.setTimeout(resolve, Math.min(400, timeoutMs));
+    }
+  });
+}
 
 /**
  * Live three.js hero mount (IMPLEMENTATION.md §3).
@@ -409,12 +419,12 @@ export async function mountHero3D({
 
   let last = performance.now();
   let lastRenderAt = 0;
-  let lastSubjectCssAt = 0;
   let swayT = 0;
   let running = true;
   let idlePaused = false;
   let lastActivityAt = performance.now();
   let wingSampleTimer: number | null = null;
+  let revealed = false;
 
   const noteUserActivity = () => {
     lastActivityAt = performance.now();
@@ -438,7 +448,7 @@ export async function mountHero3D({
       stopWingSample();
       renderer.setAnimationLoop(null);
       unsubscribe(HERO_RAF_ID);
-      panel.classList.remove('is-3d');
+      panel.classList.remove('is-3d', 'is-3d-canvas-in', 'is-3d-poster-out');
     }
   };
   reduce.addEventListener('change', onReduce);
@@ -544,10 +554,32 @@ export async function mountHero3D({
 
   const yawMax = THREE.MathUtils.degToRad(YAW_SWAY_DEG);
   placePosterCam(camDist, 0);
+  // Subject CSS vars once after first fit — resize observer handles later updates.
   updateSubjectCssVars();
-  lastSubjectCssAt = performance.now();
-  // First frame into the backing store before revealing (poster stays until is-3d).
-  renderer.render(scene, cam);
+
+  // Compile programs off the reveal path when KHR_parallel_shader_compile is available.
+  const compileAndPaintFirst = async () => {
+    await waitIdle(1500);
+    if (!running || signal?.aborted || reduce.matches) return;
+    const compileAsync = (
+      renderer as unknown as {
+        compileAsync?: (
+          s: typeof scene,
+          c: typeof cam,
+        ) => Promise<unknown>;
+      }
+    ).compileAsync;
+    if (typeof compileAsync === 'function') {
+      try {
+        await compileAsync.call(renderer, scene, cam);
+      } catch {
+        /* fall through to first render */
+      }
+    }
+    if (!running || signal?.aborted) return;
+    // First real frame into the backing store before staged reveal.
+    renderer.render(scene, cam);
+  };
 
   const tiltBusy = (): boolean => {
     if (!finePointer.matches) return false;
@@ -658,11 +690,6 @@ export async function mountHero3D({
     }
     mixer.update(dt);
 
-    if (now - lastSubjectCssAt >= SUBJECT_CSS_MIN_MS) {
-      lastSubjectCssAt = now;
-      updateSubjectCssVars();
-    }
-
     // Tick only runs when dirty (WingFold sample) or continuous (tilt ease).
     renderer.render(scene, cam);
 
@@ -674,11 +701,26 @@ export async function mountHero3D({
   subscribe(HERO_RAF_ID, tick, { continuous: false });
   syncHeroPlayback();
 
-  // Reveal only after boot gate (fonts/poster/glb/atlases) or its timeout.
-  void whenHomeBootReady().then(() => {
+  /*
+   * Staged reveal: keep .hero-still at opacity 1 until a real frame is painted,
+   * fade .hero-3d in (~300ms), then fade the poster out (not the reverse).
+   */
+  void (async () => {
+    await compileAndPaintFirst();
     if (!running || signal?.aborted || reduce.matches) return;
+    await whenHomeBootReady();
+    if (!running || signal?.aborted || reduce.matches || revealed) return;
+    revealed = true;
     panel.classList.add('is-3d');
-  });
+    requestAnimationFrame(() => {
+      if (!running || signal?.aborted) return;
+      panel.classList.add('is-3d-canvas-in');
+      window.setTimeout(() => {
+        if (!running || signal?.aborted) return;
+        panel.classList.add('is-3d-poster-out');
+      }, HERO_CANVAS_FADE_MS);
+    });
+  })();
 
   // React to class toggles (pause control) without polling every frame.
   const mo = new MutationObserver(() => {
@@ -700,7 +742,7 @@ export async function mountHero3D({
     io.disconnect();
     unsubscribe(HERO_RAF_ID);
     renderer.setAnimationLoop(null);
-    panel.classList.remove('is-3d');
+    panel.classList.remove('is-3d', 'is-3d-canvas-in', 'is-3d-poster-out');
     panel.classList.remove('is-cropped');
     panel.style.removeProperty('--hero-subj-left');
     panel.style.removeProperty('--hero-subj-top');

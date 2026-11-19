@@ -737,12 +737,23 @@ p {
   /* Camera fit owns framing — no CSS scale / offset crop. */
   transform: none;
   height: 100%;
+  /* Hold transparent until is-3d-canvas-in — poster stays fully visible. */
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.hero-media.is-3d.is-3d-canvas-in .hero-3d {
   opacity: 1;
 }
 
 .hero-media.is-3d .hero-still {
+  /* Poster stays at 1 until canvas has faded in, then is-3d-poster-out. */
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+.hero-media.is-3d.is-3d-poster-out .hero-still {
   opacity: 0;
-  transition: opacity 400ms ease;
 }
 
 /* —— homepage first-entry boot progress (cream track / brand-green fill) —— */
@@ -789,7 +800,9 @@ p {
   .home-boot-progress,
   .home-boot-progress.is-done,
   .hero-media.is-3d .hero-still,
-  .hero-media.is-3d .hero-3d {
+  .hero-media.is-3d .hero-3d,
+  .hero-media.is-3d.is-3d-canvas-in .hero-3d,
+  .hero-media.is-3d.is-3d-poster-out .hero-still {
     transition: none;
   }
 
@@ -1900,10 +1913,37 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   max-width: 100%;
 }
 
+.v37-scene__poster {
+  transition: opacity 180ms ease;
+}
+
+.v37-scene__canvas {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+/* Motion: crossfade after first complete canvas frame (paintLive → is-live). */
+.v37-scene.is-live .v37-scene__canvas {
+  opacity: 1;
+}
+
+.v37-scene.is-live .v37-scene__poster--layout {
+  opacity: 0;
+}
+
 /* In-flow aspect lock after bench overflow canvas paints (absolute). */
 .v37-scene__poster--layout {
   opacity: 0;
   pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v37-scene__poster,
+  .v37-scene__canvas,
+  .v37-scene.is-live .v37-scene__canvas,
+  .v37-scene.is-live .v37-scene__poster--layout {
+    transition: none;
+  }
 }
 
 .v37-scene__hit {

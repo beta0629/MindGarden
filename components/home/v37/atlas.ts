@@ -9,7 +9,19 @@ export const MAX_CANVAS_DPR = 2;
 export const MOBILE_OVERFLOW_DPR_CAP = 1.5;
 const MOBILE_TOP_MAX_WIDTH = 1023;
 
+/** Optional decode resize — CSS display size of the full sheet (pre-DPR). */
+export type SheetDecodeHint = {
+  /** Full-sheet CSS width (usually sheet.w / sourceScale). */
+  displayW: number;
+  /** Full-sheet CSS height (usually sheet.h / sourceScale). */
+  displayH: number;
+};
+
 const sheetCache = new Map<string, Promise<DecodedImage>>();
+/** Resolved bitmaps keyed by absolute URL — for close/dispose. */
+const sheetResolved = new Map<string, DecodedImage>();
+/** Decode scale (resized/natural) keyed by absolute URL — default 1. */
+const sheetScales = new Map<string, number>();
 
 /** Serialize ImageBitmap / decode work — never stampede the main thread. */
 let decodeTail: Promise<void> = Promise.resolve();
@@ -120,6 +132,16 @@ export function effectiveCanvasDpr(
   return Math.min(cap, Math.max(1, deviceDpr));
 }
 
+function closeDecoded(img: DecodedImage): void {
+  if (typeof ImageBitmap !== 'undefined' && img instanceof ImageBitmap) {
+    try {
+      img.close();
+    } catch {
+      /* already closed */
+    }
+  }
+}
+
 async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -130,39 +152,140 @@ async function decodeViaImageElement(url: string): Promise<HTMLImageElement> {
   });
 }
 
+function targetDecodeSize(
+  naturalW: number,
+  naturalH: number,
+  hint?: SheetDecodeHint,
+): { w: number; h: number } | null {
+  if (!hint || hint.displayW < 1 || hint.displayH < 1) return null;
+  const dpr = effectiveCanvasDpr();
+  const tw = Math.max(1, Math.round(hint.displayW * dpr));
+  const th = Math.max(1, Math.round(hint.displayH * dpr));
+  // Never upscale past source; skip resize when already near native.
+  if (tw >= naturalW * 0.95 && th >= naturalH * 0.95) return null;
+  return { w: Math.min(naturalW, tw), h: Math.min(naturalH, th) };
+}
+
+/** Result of decode — `scale` is resizedW/naturalW (and H); 1 when not resized. */
+export type DecodedSheet = {
+  image: DecodedImage;
+  /** Uniform bitmap scale vs atlas/natural pixels (`resized / natural`). */
+  scale: number;
+};
+
+async function decodeBlob(
+  blob: Blob,
+  url: string,
+  hint?: SheetDecodeHint,
+): Promise<DecodedSheet> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      let full: ImageBitmap;
+      try {
+        full = await createImageBitmap(blob, { imageOrientation: 'none' });
+      } catch {
+        full = await createImageBitmap(blob);
+      }
+      const naturalW = full.width;
+      const naturalH = full.height;
+      const target = targetDecodeSize(naturalW, naturalH, hint);
+      if (!target) return { image: full, scale: 1 };
+      try {
+        const resized = await createImageBitmap(full, {
+          resizeWidth: target.w,
+          resizeHeight: target.h,
+          resizeQuality: 'high',
+        } as ImageBitmapOptions);
+        full.close();
+        // Width ratio; cover images ignore scale. Atlas sheets must not resize.
+        const scale = naturalW > 0 ? resized.width / naturalW : 1;
+        return { image: resized, scale };
+      } catch {
+        return { image: full, scale: 1 };
+      }
+    } catch {
+      /* fall through to <img> */
+    }
+  }
+  const image = await decodeViaImageElement(url);
+  return { image, scale: 1 };
+}
+
 /**
  * Decode a sheet URL once; prefers ImageBitmap when available.
  * Optional `init` (e.g. `{ priority: 'low' }` for boot warm) is used on first fetch.
- * Decodes are serialized (concurrency 1) to protect TBT under LH / software GL.
+ * Fetches may run in parallel; decodes are serialized (concurrency 1) for TBT.
+ * Optional `hint` downscales to DPR-aware display size (cap via {@link effectiveCanvasDpr}).
+ *
+ * **Atlas sheets must not pass `hint`** — frame `sx,sy,frame_w,frame_h` are in
+ * natural sheet pixels; resizing the whole sheet breaks UVs unless every draw
+ * multiplies by the recorded scale (see {@link AtlasSheetBank} / draw helpers).
+ * Single cover images (`drawCoverImage`) may pass `hint` safely.
  */
 export function loadSheet(
   relativePath: string,
   init?: RequestInit,
+  hint?: SheetDecodeHint,
 ): Promise<DecodedImage> {
+  return loadSheetDecoded(relativePath, init, hint).then((d) => d.image);
+}
+
+/**
+ * Like {@link loadSheet} but also returns the decode scale (`resized/natural`).
+ */
+export function loadSheetDecoded(
+  relativePath: string,
+  init?: RequestInit,
+  hint?: SheetDecodeHint,
+): Promise<DecodedSheet> {
   const url = assetUrl(relativePath);
   let pending = sheetCache.get(url);
-  if (pending) return pending;
+  if (pending) {
+    return pending.then((image) => ({
+      image,
+      scale: sheetScales.get(url) ?? 1,
+    }));
+  }
 
-  pending = enqueueDecode(async () => {
+  pending = (async () => {
     try {
       const res = await fetch(url, init);
       if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
       const blob = await res.blob();
-      if (typeof createImageBitmap === 'function') {
-        try {
-          return await createImageBitmap(blob, { imageOrientation: 'none' });
-        } catch {
-          return await createImageBitmap(blob);
-        }
-      }
-      return await decodeViaImageElement(url);
+      const decoded = await enqueueDecode(() => decodeBlob(blob, url, hint));
+      sheetResolved.set(url, decoded.image);
+      sheetScales.set(url, decoded.scale);
+      return decoded.image;
     } catch {
-      return decodeViaImageElement(url);
+      const image = await enqueueDecode(() => decodeViaImageElement(url));
+      sheetResolved.set(url, image);
+      sheetScales.set(url, 1);
+      return image;
     }
-  });
+  })();
 
   sheetCache.set(url, pending);
-  return pending;
+  return pending.then((image) => ({
+    image,
+    scale: sheetScales.get(url) ?? 1,
+  }));
+}
+
+/**
+ * Release a cached sheet (ImageBitmap.close when applicable).
+ * Accepts a relative atlas path (preferred) or absolute `/assets/...` URL.
+ */
+export function closeSheet(pathOrUrl: string): void {
+  const url = pathOrUrl.startsWith('/assets/')
+    ? pathOrUrl
+    : assetUrl(pathOrUrl);
+  sheetCache.delete(url);
+  sheetScales.delete(url);
+  const img = sheetResolved.get(url);
+  if (img) {
+    closeDecoded(img);
+    sheetResolved.delete(url);
+  }
 }
 
 export async function loadJson<T>(
@@ -192,14 +315,76 @@ export function sheetIndexesForFrames(
 }
 
 /**
+ * True when every sheet needed to blend/draw `frame` is already in the bank.
+ */
+export function sheetsReadyForFrame(
+  bank: AtlasSheetBank,
+  atlas: AtlasMeta,
+  frame: number,
+): boolean {
+  const last = atlas.index.length - 1;
+  if (last < 0) return false;
+  const clamped = Math.min(last, Math.max(0, frame));
+  const i0 = Math.floor(clamped);
+  const i1 = Math.min(last, Math.ceil(clamped));
+  for (const i of i0 === i1 ? [i0] : [i0, i1]) {
+    const entry = atlas.index[i];
+    if (!entry || !bank.has(entry[0])) return false;
+  }
+  return true;
+}
+
+/**
+ * Draw once into a tiny canvas so the first visible drawImage is cheap (WebKit).
+ * Prefer calling during idle after decode.
+ */
+export function warmSheetGpu(img: DecodedImage): void {
+  if (typeof document === 'undefined') return;
+  try {
+    const c = document.createElement('canvas');
+    c.width = 2;
+    c.height = 2;
+    const ctx = c.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(img, 0, 0, 2, 2);
+  } catch {
+    /* ignore — warm is best-effort */
+  }
+}
+
+function scheduleGpuWarm(img: DecodedImage): void {
+  if (typeof window === 'undefined') return;
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(() => warmSheetGpu(img), { timeout: 1200 });
+  } else {
+    window.setTimeout(() => warmSheetGpu(img), 0);
+  }
+}
+
+/**
  * Sparse atlas sheet bank — decode only requested sheet indexes (current + next).
+ *
+ * Atlas sheets are decoded at **natural** resolution (no createImageBitmap resize).
+ * Frame UVs (`sx,sy,frame_w,frame_h`) are authored in natural sheet pixels; resizing
+ * the whole sheet without scaling those rects paints empty (luma=0). Per-sheet
+ * {@link getScale} stays 1 for the no-resize path; if a future path resizes, draw
+ * helpers multiply source rects by that scale.
  */
 export class AtlasSheetBank {
   private readonly slots: Array<DecodedImage | null | undefined>;
+  /** Per-sheet bitmap scale vs atlas natural pixels (default 1). */
+  private readonly scales: number[];
   private readonly inflight = new Map<number, Promise<DecodedImage>>();
+  private disposed = false;
 
-  constructor(private readonly atlas: AtlasMeta) {
+  constructor(
+    private readonly atlas: AtlasMeta,
+    /** Call-site compat (gate body/shadow); atlases never decode-resize. */
+    _sourceScale = 2,
+  ) {
+    void _sourceScale;
     this.slots = new Array(atlas.sheets.length);
+    this.scales = new Array(atlas.sheets.length).fill(1);
   }
 
   get atlasMeta(): AtlasMeta {
@@ -210,12 +395,18 @@ export class AtlasSheetBank {
     return this.slots[sheetIndex] ?? null;
   }
 
+  /** Bitmap scale for sheet index (`resized/natural`); 1 when full-res. */
+  getScale(sheetIndex: number): number {
+    return this.scales[sheetIndex] ?? 1;
+  }
+
   has(sheetIndex: number): boolean {
     return this.slots[sheetIndex] != null;
   }
 
   /** Kick off decode for sheet indexes; no-op if already loaded/in-flight. */
   ensure(sheetIndexes: number[]): Promise<void> {
+    if (this.disposed) return Promise.resolve();
     const jobs: Promise<DecodedImage>[] = [];
     for (const raw of sheetIndexes) {
       const i = raw;
@@ -223,10 +414,18 @@ export class AtlasSheetBank {
       if (this.slots[i]) continue;
       let pending = this.inflight.get(i);
       if (!pending) {
-        pending = loadSheet(this.atlas.sheets[i].file).then((img) => {
-          this.slots[i] = img;
+        // Intentionally no SheetDecodeHint — keep natural pixels for atlas UVs.
+        const file = this.atlas.sheets[i].file;
+        pending = loadSheetDecoded(file).then(({ image, scale }) => {
           this.inflight.delete(i);
-          return img;
+          if (this.disposed) {
+            closeSheet(file);
+            return image;
+          }
+          this.slots[i] = image;
+          this.scales[i] = scale > 0 ? scale : 1;
+          scheduleGpuWarm(image);
+          return image;
         });
         this.inflight.set(i, pending);
       }
@@ -261,11 +460,60 @@ export class AtlasSheetBank {
     }
     return this.ensure([...wanted]);
   }
+
+  /** Wait until every sheet index is decoded (fetches parallel, decode queue = 1). */
+  ensureAll(): Promise<void> {
+    const all = this.atlas.sheets.map((_, i) => i);
+    return this.ensure(all);
+  }
+
+  /**
+   * Invoke `cb` for every currently decoded sheet (skips empty slots).
+   * Used after {@link ensureAll} to sync GPU-warm before first visible paint.
+   */
+  forEachSheet(cb: (img: DecodedImage, sheetIndex: number) => void): void {
+    for (let i = 0; i < this.slots.length; i += 1) {
+      const img = this.slots[i];
+      if (img) cb(img, i);
+    }
+  }
+
+  /**
+   * Synchronously upload every decoded sheet via {@link warmSheetGpu}.
+   * Call after `ensureAll()` — idle `scheduleGpuWarm` is too late for WebKit’s
+   * first visible drawImage (can spike first-pass rAF to ~60ms).
+   */
+  warmAllGpu(): void {
+    this.forEachSheet((img) => warmSheetGpu(img));
+  }
+
+  /**
+   * Release bank slots and close cached ImageBitmaps for this atlas.
+   * Call from scene unmount so decoded sheets do not linger forever.
+   */
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.inflight.clear();
+    for (let i = 0; i < this.atlas.sheets.length; i += 1) {
+      this.slots[i] = null;
+      this.scales[i] = 1;
+      const file = this.atlas.sheets[i]?.file;
+      if (file) closeSheet(file);
+    }
+  }
+}
+
+/** Prefetch every sheet in a bank (alias of {@link AtlasSheetBank.ensureAll}). */
+export function prefetchAllSheets(bank: AtlasSheetBank): Promise<void> {
+  return bank.ensureAll();
 }
 
 /**
  * Draw one atlas cell. Source is 2x unless `sourceScale` is 1 (gate shadow).
  * Dest size in CSS px = frame_w / sourceScale.
+ * `bitmapScale` multiplies source rects when the sheet was decode-resized
+ * (`resized/natural`); AtlasSheetBank keeps this at 1 (full sheet).
  */
 export function drawAtlasFrame(
   ctx: CanvasRenderingContext2D,
@@ -275,18 +523,20 @@ export function drawAtlasFrame(
   dx: number,
   dy: number,
   sourceScale = 2,
+  bitmapScale = 1,
 ): void {
   const entry = atlas.index[frameIndex];
   if (!entry) return;
   const [, sx, sy] = entry;
+  const bs = bitmapScale > 0 ? bitmapScale : 1;
   const dw = atlas.frame_w / sourceScale;
   const dh = atlas.frame_h / sourceScale;
   ctx.drawImage(
     sheet,
-    sx,
-    sy,
-    atlas.frame_w,
-    atlas.frame_h,
+    sx * bs,
+    sy * bs,
+    atlas.frame_w * bs,
+    atlas.frame_h * bs,
     dx,
     dy,
     dw,
@@ -297,6 +547,7 @@ export function drawAtlasFrame(
 /**
  * Sub-frame blend between adjacent atlas cells (opacity crossfade).
  * Prefer this over Math.round(walkF) hard steps.
+ * Optional `getBitmapScale` supplies per-frame sheet scale (default 1).
  */
 export function drawAtlasFrameBlend(
   ctx: CanvasRenderingContext2D,
@@ -306,6 +557,7 @@ export function drawAtlasFrameBlend(
   dx: number,
   dy: number,
   sourceScale = 2,
+  getBitmapScale?: (frameIndex: number) => number,
 ): void {
   const last = atlas.index.length - 1;
   if (last < 0) return;
@@ -313,14 +565,20 @@ export function drawAtlasFrameBlend(
   const i0 = Math.floor(clamped);
   const i1 = Math.min(last, i0 + 1);
   const t = clamped - i0;
+  const scaleOf = (fi: number) =>
+    getBitmapScale ? getBitmapScale(fi) : 1;
   if (i0 === i1 || t < 0.001) {
     const sheet = getSheet(i0);
-    if (sheet) drawAtlasFrame(ctx, sheet, atlas, i0, dx, dy, sourceScale);
+    if (sheet) {
+      drawAtlasFrame(ctx, sheet, atlas, i0, dx, dy, sourceScale, scaleOf(i0));
+    }
     return;
   }
   if (t > 0.999) {
     const sheet = getSheet(i1);
-    if (sheet) drawAtlasFrame(ctx, sheet, atlas, i1, dx, dy, sourceScale);
+    if (sheet) {
+      drawAtlasFrame(ctx, sheet, atlas, i1, dx, dy, sourceScale, scaleOf(i1));
+    }
     return;
   }
   const sheet0 = getSheet(i0);
@@ -328,13 +586,13 @@ export function drawAtlasFrameBlend(
   if (sheet0) {
     ctx.save();
     ctx.globalAlpha *= 1 - t;
-    drawAtlasFrame(ctx, sheet0, atlas, i0, dx, dy, sourceScale);
+    drawAtlasFrame(ctx, sheet0, atlas, i0, dx, dy, sourceScale, scaleOf(i0));
     ctx.restore();
   }
   if (sheet1) {
     ctx.save();
     ctx.globalAlpha *= t;
-    drawAtlasFrame(ctx, sheet1, atlas, i1, dx, dy, sourceScale);
+    drawAtlasFrame(ctx, sheet1, atlas, i1, dx, dy, sourceScale, scaleOf(i1));
     ctx.restore();
   }
 }
@@ -374,8 +632,7 @@ export function smoothstep(t: number): number {
 }
 
 /**
- * Near-viewport rootMargin for atlas warm-up.
- * Keep modest so Gate/Bench/Booking do not compete with hero LCP on first paint
- * (150% previously warmed Gate while the hero was still the only visible section).
+ * Near-viewport rootMargin for atlas warm-up (~1.5 viewports).
+ * Match DeferredScenes duplicate constant when changing.
  */
-export const NEAR_ROOT_MARGIN = '120px 0px';
+export const NEAR_ROOT_MARGIN = '150% 0px';

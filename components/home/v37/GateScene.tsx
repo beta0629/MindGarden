@@ -17,7 +17,10 @@ import {
   loadSheet,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
+  closeSheet,
+  sheetsReadyForFrame,
   smoothstep,
+  warmSheetGpu,
   type DecodedImage,
 } from './atlas';
 import {
@@ -47,6 +50,8 @@ type Runtime = {
 };
 
 const RAF_ID = 'v37-gate';
+/** Floor once a full-alpha frame has painted — never restart settle from ~0. */
+const GATE_MIN_OPACITY = 0.92;
 
 function doorIndexForWalk(json: GateJson, walkF: number): {
   /** Fractional atlas frame for sub-frame blend. */
@@ -83,6 +88,27 @@ function doorBusy(json: GateJson, walkF: number): boolean {
   return !(door.useStatic || door.crossfade >= 1);
 }
 
+function gateFrameReady(rt: Runtime, door: ReturnType<typeof doorIndexForWalk>): boolean {
+  if (door.useStatic || door.crossfade >= 1) {
+    return !!(rt.staticBody && rt.staticShadow);
+  }
+  const bodyOk = sheetsReadyForFrame(
+    rt.bodyBank,
+    rt.json.door.body_atlas,
+    door.frame,
+  );
+  const shadowOk = sheetsReadyForFrame(
+    rt.shadowBank,
+    rt.json.door.shadow_atlas,
+    door.frame,
+  );
+  if (!bodyOk || !shadowOk) return false;
+  if (door.crossfade > 0) {
+    return !!(rt.staticBody && rt.staticShadow);
+  }
+  return true;
+}
+
 async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
   const door = doorIndexForWalk(rt.json, walkF);
   const i0 = Math.floor(door.frame);
@@ -101,18 +127,27 @@ async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
     );
   }
   if (door.crossfade > 0 || door.useStatic) {
+    const coverHint = {
+      displayW: rt.json.place.css_w,
+      displayH: rt.json.place.css_h,
+    };
     if (!rt.staticBody) {
       jobs.push(
-        loadSheet(rt.json.static.body.file).then((img) => {
+        // Single cover images — decode-resize OK (no atlas UVs).
+        loadSheet(rt.json.static.body.file, undefined, coverHint).then((img) => {
           rt.staticBody = img;
+          warmSheetGpu(img);
         }),
       );
     }
     if (!rt.staticShadow) {
       jobs.push(
-        loadSheet(rt.json.static.shadow.file).then((img) => {
-          rt.staticShadow = img;
-        }),
+        loadSheet(rt.json.static.shadow.file, undefined, coverHint).then(
+          (img) => {
+            rt.staticShadow = img;
+            warmSheetGpu(img);
+          },
+        ),
       );
     }
   }
@@ -156,6 +191,8 @@ export function GateScene({ sectionRef }: Props) {
     let subscribed = false;
     /** Skip clearRect+paint when quantized door/settle key is unchanged. */
     let lastDrawKey = '';
+    /** Once a full-alpha frame painted, never fade settle back through ~0. */
+    let heldOpaque = false;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -171,10 +208,28 @@ export function GateScene({ sectionRef }: Props) {
 
     let motionComplete = false;
 
+    /**
+     * Same WebKit IO race as Booking: fast scroll can clear `visible` before the
+     * first live paint while ScrollClock is already past the gate trigger.
+     */
+    const firstPaintMustRun = (): boolean => {
+      if (!assetsReady || motionComplete || paintLiveRef.current) return false;
+      const clock = clockRef.current;
+      if (!clock) return false;
+      const metrics = ensureMetrics().read();
+      const triggerY = clock.triggerScrollY(metrics);
+      const past = metrics.scrollY >= triggerY - 1;
+      return past || clock.wouldAdvanceWithTime(metrics) || clock.isArmed();
+    };
+
     const syncPause = () => {
       if (!subscribed) return;
+      const paintOwed = firstPaintMustRun();
       const shouldRun =
-        visible && !document.hidden && assetsReady && !motionComplete;
+        !document.hidden &&
+        assetsReady &&
+        !motionComplete &&
+        (visible || paintOwed);
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
         setContinuous(RAF_ID, false);
@@ -221,6 +276,10 @@ export function GateScene({ sectionRef }: Props) {
           0,
           0,
           shadowScale,
+          (frameIndex) => {
+            const entry = rt.json.door.shadow_atlas.index[frameIndex];
+            return entry ? rt.shadowBank.getScale(entry[0]) : 1;
+          },
         );
       } else if (rt.staticShadow) {
         drawCoverImage(ctx, rt.staticShadow, 0, 0, cssW, cssH);
@@ -239,6 +298,10 @@ export function GateScene({ sectionRef }: Props) {
           0,
           0,
           bodyScale,
+          (frameIndex) => {
+            const entry = rt.json.door.body_atlas.index[frameIndex];
+            return entry ? rt.bodyBank.getScale(entry[0]) : 1;
+          },
         );
       } else if (rt.staticBody) {
         drawCoverImage(ctx, rt.staticBody, 0, 0, cssW, cssH);
@@ -269,11 +332,17 @@ export function GateScene({ sectionRef }: Props) {
     };
 
     const tick = (now: number) => {
-      if (!alive || !visible || document.hidden) return;
+      if (!alive || document.hidden) return;
+      if (!visible && !firstPaintMustRun()) return;
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
-      if (!rt || !clock || !canvas || !assetsReady) return;
+      if (!rt || !clock || !assetsReady) return;
+      // Canvas mounts after setCanvasActive commit — keep continuous while paint owed.
+      if (!canvas) {
+        if (firstPaintMustRun()) setContinuous(RAF_ID, true);
+        return;
+      }
 
       const metrics = ensureMetrics().read();
       const walkF = clock.update(now, metrics);
@@ -283,10 +352,19 @@ export function GateScene({ sectionRef }: Props) {
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
       const preSettle = settle.opacity <= 0;
-      const drawOpacity = preSettle ? 1 : settle.opacity;
+      const rawOpacity = preSettle ? 1 : settle.opacity;
+      // Keep prior full-alpha pose — reverse scroll / settle phase1 must not flash.
+      const drawOpacity = Math.max(
+        heldOpaque || paintLiveRef.current ? 1 : GATE_MIN_OPACITY,
+        rawOpacity,
+      );
       const drawTy = preSettle ? 0 : ty;
       const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
-      const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
+      const rawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
+      const drawShadowOpacity = Math.max(
+        heldOpaque || paintLiveRef.current ? 1 : GATE_MIN_OPACITY,
+        rawShadowOpacity,
+      );
       const door = doorIndexForWalk(rt.json, walkF);
       const settling = settleBusy(walkF);
 
@@ -302,7 +380,15 @@ export function GateScene({ sectionRef }: Props) {
         finishTick(now, clock, metrics, walkF, rt);
         return;
       }
-      lastDrawKey = drawKey;
+
+      // Never blank-draw: missing sheets → keep prior pixels + poster, retry.
+      if (!gateFrameReady(rt, door)) {
+        void ensureGateForWalk(rt, walkF).then(() => {
+          if (alive) markDirty(RAF_ID);
+        });
+        finishTick(now, clock, metrics, walkF, rt);
+        return;
+      }
 
       const { css_w: cssW, css_h: cssH } = rt.json.place;
       const dpr = effectiveCanvasDpr();
@@ -368,6 +454,9 @@ export function GateScene({ sectionRef }: Props) {
         );
       }
 
+      lastDrawKey = drawKey;
+      if (drawOpacity >= 1) heldOpaque = true;
+
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
         setPaintLive(true);
@@ -389,15 +478,45 @@ export function GateScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
+        const coverHint = {
+          displayW: rt.json.place.css_w,
+          displayH: rt.json.place.css_h,
+        };
         await Promise.all([
-          rt.bodyBank.ensureCurrentAndNext(0),
-          rt.shadowBank.ensureCurrentAndNext(0),
+          rt.bodyBank.ensureAll(),
+          rt.shadowBank.ensureAll(),
+          // Single cover images — decode-resize OK (no atlas UVs).
+          loadSheet(rt.json.static.body.file, undefined, coverHint).then(
+            (img) => {
+              rt.staticBody = img;
+              warmSheetGpu(img);
+            },
+          ),
+          loadSheet(rt.json.static.shadow.file, undefined, coverHint).then(
+            (img) => {
+              rt.staticShadow = img;
+              warmSheetGpu(img);
+            },
+          ),
         ]);
         if (!alive) return;
+        // Sync atlas GPU upload — idle scheduleGpuWarm is too late for first paint.
+        rt.bodyBank.warmAllGpu();
+        rt.shadowBank.warmAllGpu();
         assetsReady = true;
         setCanvasActive(true);
         ensureSubscribed();
         markDirty(RAF_ID);
+        const armWhenCanvasReady = () => {
+          if (!alive || !assetsReady) return;
+          if (canvasRef.current) {
+            syncPause();
+            markDirty(RAF_ID);
+            return;
+          }
+          requestAnimationFrame(armWhenCanvasReady);
+        };
+        requestAnimationFrame(armWhenCanvasReady);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -416,8 +535,11 @@ export function GateScene({ sectionRef }: Props) {
         if (!alive) return;
         runtimeRef.current = {
           json,
-          bodyBank: new AtlasSheetBank(json.door.body_atlas),
-          shadowBank: new AtlasSheetBank(json.door.shadow_atlas),
+          bodyBank: new AtlasSheetBank(json.door.body_atlas, json.body_scale || 2),
+          shadowBank: new AtlasSheetBank(
+            json.door.shadow_atlas,
+            json.shadow_scale || 1,
+          ),
           staticBody: null,
           staticShadow: null,
         };
@@ -427,6 +549,7 @@ export function GateScene({ sectionRef }: Props) {
         });
         // Place width/aspect owned by CSS media queries — pack only for assets.
         lastDrawKey = '';
+        heldOpaque = false;
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -438,17 +561,19 @@ export function GateScene({ sectionRef }: Props) {
 
     const onScroll = () => {
       // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
-      if (subscribed && visible && !document.hidden && !motionComplete) {
-        markDirty(RAF_ID);
-      }
+      if (!subscribed || document.hidden || motionComplete) return;
+      if (!visible && !firstPaintMustRun()) return;
+      if (!visible) syncPause();
+      markDirty(RAF_ID);
     };
 
     const onResize = () => {
       ensureMetrics().refresh();
       lastDrawKey = '';
-      if (subscribed && visible && !document.hidden && !motionComplete) {
-        markDirty(RAF_ID);
-      }
+      if (!subscribed || document.hidden || motionComplete) return;
+      if (!visible && !firstPaintMustRun()) return;
+      if (!visible) syncPause();
+      markDirty(RAF_ID);
     };
 
     const nearIO = new IntersectionObserver(
@@ -467,14 +592,27 @@ export function GateScene({ sectionRef }: Props) {
         visible = entries.some((e) => e.isIntersecting);
         ensureMetrics().refresh();
         syncPause();
-        if (visible && assetsReady && !motionComplete) markDirty(RAF_ID);
+        if (
+          assetsReady &&
+          !motionComplete &&
+          (visible || firstPaintMustRun())
+        ) {
+          markDirty(RAF_ID);
+        }
       },
       { rootMargin: '0px' },
     );
 
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && visible && !motionComplete) markDirty(RAF_ID);
+      if (
+        !document.hidden &&
+        assetsReady &&
+        !motionComplete &&
+        (visible || firstPaintMustRun())
+      ) {
+        markDirty(RAF_ID);
+      }
     };
 
     nearIO.observe(wrap);
@@ -491,16 +629,27 @@ export function GateScene({ sectionRef }: Props) {
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);
+      const rt = runtimeRef.current;
+      if (rt) {
+        rt.bodyBank.dispose();
+        rt.shadowBank.dispose();
+        closeSheet(rt.json.static.body.file);
+        closeSheet(rt.json.static.shadow.file);
+        rt.staticBody = null;
+        rt.staticShadow = null;
+      }
+      runtimeRef.current = null;
     };
   }, [pack, reduced, failed, sectionRef]);
 
   const showPoster = failed || reduced || !paintLive;
   const posterSrc = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
+  const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
     <div
       ref={wrapRef}
-      className="v37-scene v37-scene--gate"
+      className={`v37-scene v37-scene--gate${liveClass}`}
       aria-hidden="true"
     >
       {/*
@@ -529,7 +678,6 @@ export function GateScene({ sectionRef }: Props) {
             inset: 0,
             width: '100%',
             height: '100%',
-            opacity: showPoster ? 0 : 1,
             pointerEvents: 'none',
           }}
         />

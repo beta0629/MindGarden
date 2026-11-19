@@ -8,24 +8,51 @@ import {
   markHomeBootCompleted,
   notifyHomeBootBarShown,
   HOME_BOOT_BAR_TIMEOUT_MS,
+  HOME_BOOT_EASE_CEILING,
   HOME_BOOT_FADE_MS,
   HOME_BOOT_MIN_VISIBLE_MS,
   HOME_BOOT_PROGRESS_EVENT,
   type HomeBootProgressDetail,
 } from '@/components/home/homeBoot';
 
+/** Matches inline boot bar (`HomeBootInline`) until React takeover. */
+const HOME_BOOT_START_RATIO = 0.35;
+
+/**
+ * Read live scaleX from a CSS transform matrix (interpolated during transition).
+ */
+function readScaleX(el: HTMLElement): number | null {
+  const raw = getComputedStyle(el).transform;
+  if (!raw || raw === 'none') return null;
+  if (raw.startsWith('matrix3d(')) {
+    const a = Number(raw.slice(9, -1).split(',')[0]);
+    return Number.isFinite(a) ? a : null;
+  }
+  if (raw.startsWith('matrix(')) {
+    const a = Number(raw.slice(7, -1).split(',')[0]);
+    return Number.isFinite(a) ? a : null;
+  }
+  return null;
+}
+
 /**
  * Visual-only cream/green boot bar.
  * Poster gate (`home-boot-ready`) unblocks deferred work but must NOT dismiss
  * this bar — wait for hero progress `done` (GLB / soft-GL / mount fail).
  * Session-once skip is applied only after this bar has been shown + finished.
+ * Wait-phase motion is CSS `transform` on `.home-boot-progress__bar` (compositor)
+ * toward {@link HOME_BOOT_EASE_CEILING}; JS only syncs aria and snaps to complete.
  */
 export function HomeBootProgress({ force = false }: { force?: boolean }) {
   const [visible, setVisible] = useState(false);
   const [ratio, setRatio] = useState(0);
   const [fading, setFading] = useState(false);
+  const [barEasing, setBarEasing] = useState(false);
+  const [barComplete, setBarComplete] = useState(false);
   const finishedRef = useRef(false);
   const startedAtRef = useRef(0);
+  const ratioRef = useRef(0);
+  const barRef = useRef<HTMLDivElement | null>(null);
 
   // Paint before paint when possible so soft-GL (child useEffect) cannot
   // finish the session before the bar ever appears.
@@ -58,10 +85,34 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
     let minTimer = 0;
     let fadeTimer = 0;
     let safetyTimer = 0;
+    let ariaRaf = 0;
+    let startEaseRaf = 0;
+
+    const stopAriaSync = () => {
+      if (ariaRaf) {
+        window.cancelAnimationFrame(ariaRaf);
+        ariaRaf = 0;
+      }
+    };
+
+    const applyRatio = (next: number) => {
+      // Never decrease — progress events / aria sync only move forward.
+      const clamped = Math.min(1, Math.max(ratioRef.current, next));
+      if (clamped === ratioRef.current) return;
+      ratioRef.current = clamped;
+      setRatio(clamped);
+    };
 
     const finish = () => {
       if (finishedRef.current || ac.signal.aborted) return;
       finishedRef.current = true;
+      stopAriaSync();
+      if (startEaseRaf) {
+        window.cancelAnimationFrame(startEaseRaf);
+        startEaseRaf = 0;
+      }
+      setBarComplete(true);
+      applyRatio(1);
       markHomeBootCompleted();
       const wait = Math.max(
         0,
@@ -69,7 +120,6 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       );
       minTimer = window.setTimeout(() => {
         if (ac.signal.aborted) return;
-        setRatio(1);
         setFading(true);
         fadeTimer = window.setTimeout(() => {
           if (!ac.signal.aborted) setVisible(false);
@@ -80,17 +130,40 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
     const onProgress = (event: Event) => {
       const detail = (event as CustomEvent<HomeBootProgressDetail>).detail;
       if (!detail) return;
-      setRatio(detail.ratio);
+      applyRatio(detail.ratio);
       if (detail.done) finish();
+    };
+
+    const tickAria = () => {
+      if (finishedRef.current || ac.signal.aborted) return;
+      const el = barRef.current;
+      if (el) {
+        const scale = readScaleX(el);
+        if (scale != null) {
+          // Cap at ease ceiling until finish() snaps to 1.
+          applyRatio(Math.min(HOME_BOOT_EASE_CEILING, Math.max(0, scale)));
+        }
+      }
+      ariaRaf = window.requestAnimationFrame(tickAria);
     };
 
     // Approximate progress while waiting for the hero decision — never treat
     // the poster `home-boot-ready` class/event as bar-complete (flash/miss bug).
     setVisible(true);
     notifyHomeBootBarShown();
-    setRatio(0.35);
-    dispatchHomeBootProgress(0.35, false);
+    // Start from current (inline ~0.35) — CSS default; do not reset backwards.
+    applyRatio(HOME_BOOT_START_RATIO);
+    dispatchHomeBootProgress(Math.max(HOME_BOOT_START_RATIO, ratioRef.current), false);
     window.addEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
+
+    // Paint start scale, then add is-easing so CSS transitions 0.35 → ceiling.
+    startEaseRaf = window.requestAnimationFrame(() => {
+      startEaseRaf = 0;
+      if (finishedRef.current || ac.signal.aborted) return;
+      setBarEasing(true);
+      ariaRaf = window.requestAnimationFrame(tickAria);
+    });
+
     safetyTimer = window.setTimeout(finish, HOME_BOOT_BAR_TIMEOUT_MS);
 
     // Soft-GL / fail may have dispatched before this listener attached.
@@ -100,6 +173,8 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
 
     return () => {
       ac.abort();
+      stopAriaSync();
+      if (startEaseRaf) window.cancelAnimationFrame(startEaseRaf);
       window.removeEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
       window.clearTimeout(minTimer);
       window.clearTimeout(fadeTimer);
@@ -110,6 +185,13 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
   if (!visible) return null;
 
   const pct = Math.round(ratio * 1000) / 10;
+  const barClass = [
+    'home-boot-progress__bar',
+    barEasing ? 'is-easing' : '',
+    barComplete ? 'is-complete' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   return (
     <div
@@ -120,10 +202,7 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       aria-valuenow={Math.round(pct)}
       aria-label="페이지 준비 중"
     >
-      <div
-        className="home-boot-progress__bar"
-        style={{ transform: `scaleX(${Math.min(1, Math.max(0, ratio))})` }}
-      />
+      <div ref={barRef} className={barClass} />
     </div>
   );
 }

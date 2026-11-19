@@ -767,9 +767,22 @@ p {
   height: 100%;
   width: 100%;
   transform-origin: left center;
-  transform: scaleX(0);
+  /* Start ~inline takeover; wait phase is CSS-driven (compositor) so the bar
+     keeps moving when the main thread blocks on hero GLB. Duration must match
+     HOME_BOOT_EASE_DURATION_MS in homeBoot.ts; ceiling matches HOME_BOOT_EASE_CEILING. */
+  transform: scaleX(0.35);
   background: var(--green);
   will-change: transform;
+  transition: transform 8s cubic-bezier(0.15, 0.85, 0.25, 1);
+}
+
+.home-boot-progress__bar.is-easing {
+  transform: scaleX(0.9);
+}
+
+.home-boot-progress__bar.is-complete {
+  transform: scaleX(1);
+  transition-duration: 0.25s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -777,6 +790,12 @@ p {
   .home-boot-progress.is-done,
   .hero-media.is-3d .hero-still,
   .hero-media.is-3d .hero-3d {
+    transition: none;
+  }
+
+  .home-boot-progress__bar,
+  .home-boot-progress__bar.is-easing,
+  .home-boot-progress__bar.is-complete {
     transition: none;
   }
 }

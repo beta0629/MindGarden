@@ -19,6 +19,17 @@ export const HOME_BOOT_FADE_MS = 400;
 export const HOME_BOOT_MIN_VISIBLE_MS = 300;
 /** Safety dismiss if hero never signals (idle + GLB can exceed poster timeout). */
 export const HOME_BOOT_BAR_TIMEOUT_MS = 15000;
+/**
+ * Soft ceiling while waiting for hero decision.
+ * Must match `.home-boot-progress__bar.is-easing` scaleX in `app/globals.css`.
+ */
+export const HOME_BOOT_EASE_CEILING = 0.9;
+/**
+ * Wait-phase CSS `transition` duration (ms) — 0.35 → {@link HOME_BOOT_EASE_CEILING}.
+ * Must match `transition: transform 8s …` on `.home-boot-progress__bar` in globals.css.
+ * Compositor-owned so the bar keeps moving when JS is blocked on hero GLB.
+ */
+export const HOME_BOOT_EASE_DURATION_MS = 8000;
 
 export type HomeBootProgressDetail = {
   ratio: number;

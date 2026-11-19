@@ -904,7 +904,13 @@ p {
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  .hero-media {
+  /*
+   * Include .is-3d: the ≤1023 .hero-media.is-3d rule is more specific and
+   * would otherwise snap max-height back to min(48svh, 24rem) when GL mounts
+   * (−62px scrollHeight on WebKit tablet).
+   */
+  .hero-media,
+  .hero-media.is-3d {
     --hero-zoom: 1.15;
     aspect-ratio: 81 / 47;
     max-height: min(56svh, 32rem);
@@ -1787,9 +1793,17 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
    Vertical fit: content-box padding reserves top/bottom pad so parents
    (html/body/#main overflow-x:clip → used overflow-y) cannot crop wings. */
 .v37-scene--bench {
+  /*
+   * Fallback pad fracs (390 pack = computePad) before inline styles hydrate —
+   * never default --bench-place-frac to 1 (oversized deferred stub).
+   */
+  --bench-place-frac: 0.35408;
+  --bench-pad-r-ratio: 0.84072;
+  --bench-pad-t-over-w: 0.90729;
+  --bench-pad-b-over-w: 0.01791;
   --bench-place-w: min(
     var(--v37-w, 100%),
-    calc(100% * var(--bench-place-frac, 1)),
+    calc(100% * var(--bench-place-frac)),
     100%
   );
   box-sizing: content-box;
@@ -1797,15 +1811,25 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   overflow: visible;
   width: var(--bench-place-w);
   max-width: 100%;
-  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0));
-  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
+  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w));
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w));
   /* Override .v37-scene margin-inline:auto, then right-align with right-pad reserved. */
   margin-inline: 0;
   margin-left: max(
     0px,
-    calc(100% - var(--bench-place-w) - var(--bench-place-w) * var(--bench-pad-r-ratio, 0))
+    calc(100% - var(--bench-place-w) - var(--bench-place-w) * var(--bench-pad-r-ratio))
   );
   margin-right: 0;
+}
+
+@media (min-width: 768px) {
+  .v37-scene--bench {
+    /* 1440 pack = computePad(bench-1440.json) until inline style overrides. */
+    --bench-place-frac: 0.45231;
+    --bench-pad-r-ratio: 0.85502;
+    --bench-pad-t-over-w: 1.11785;
+    --bench-pad-b-over-w: 0.00988;
+  }
 }
 
 /*
@@ -1821,6 +1845,12 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   height: 100%;
   object-fit: contain;
   max-width: 100%;
+}
+
+/* In-flow aspect lock after bench overflow canvas paints (absolute). */
+.v37-scene__poster--layout {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .v37-scene__hit {
@@ -2127,10 +2157,11 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-reviews--empty .v37-scene--bench {
   /* Drop in-flow top pad; keep small bottom pad for grass/legs clearance.
-   * BenchScene.layoutOverflowCanvas shifts the overflow canvas up in px when
-   * padding-top is 0 (avoids % resolution bugs with --bench-place-w). */
+   * Flight pad stays out of flow (overflow canvas shifts up). Place-frac +
+   * aspect must already match final size from the deferred stub / CSS fallbacks
+   * so intersection never changes section height. */
   padding-top: 0;
-  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w));
 }
 
 .home-reviews__header {

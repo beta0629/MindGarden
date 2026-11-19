@@ -64,26 +64,27 @@ const BENCH_MIN_OPACITY = 0.92;
 const RAF_ID = 'v37-bench';
 
 const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
-  '1440': { wPct: 28.115, aspect: '405 / 350' },
-  '390': { wPct: 57.274, aspect: '223 / 193' },
+  '1440': { wPct: 28.115, aspect: '404.857 / 350.334' },
+  '390': { wPct: 57.274, aspect: '223.37 / 193.288' },
 };
 
 const DEFAULT_PAD_FRACS: Record<
   PackId,
   { place: number; padRRatio: number; padTOverW: number; padBOverW: number }
 > = {
-  // Approximate until JSON loads — 1440 / 390 pack track bounds + 8px safety.
+  // Must match computePad(bench-{pack}.json) — deferred stub / first paint
+  // otherwise jump when JSON loads (WebKit 1440 empty-reviews ~+4px).
   '1440': {
-    place: 404.857 / 903.085,
-    padRRatio: 350.163 / 404.857,
-    padTOverW: 456.571 / 404.857,
-    padBOverW: 4 / 404.857,
+    place: 404.8573877074131 / 895.085,
+    padRRatio: 346.16261229258686 / 404.8573877074131,
+    padTOverW: 452.571 / 404.8573877074131,
+    padBOverW: 4 / 404.8573877074131,
   },
   '390': {
-    place: 223.37 / 638.84,
-    padRRatio: 191.79 / 223.37,
-    padTOverW: 206.662 / 223.37,
-    padBOverW: 4 / 223.37,
+    place: 223.36959321788316 / 630.839,
+    padRRatio: 187.79040678211686 / 223.36959321788316,
+    padTOverW: 202.662 / 223.36959321788316,
+    padBOverW: 4 / 223.36959321788316,
   },
 };
 
@@ -742,17 +743,24 @@ export function BenchScene({ sectionRef }: Props) {
       style={placeStyle}
       aria-hidden="true"
     >
-      {showPoster ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          className="v37-scene__poster"
-          src={posterSrc}
-          alt=""
-          decoding="async"
-          loading="lazy"
-          fetchPriority="low"
-        />
-      ) : null}
+      {/*
+       * Always keep an in-flow poster: the overflow canvas is position:absolute,
+       * so removing the poster collapses the aspect box on WebKit (empty
+       * .home-reviews row shrinks when paint goes live). Opacity-only hide.
+       */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={
+          showPoster
+            ? 'v37-scene__poster'
+            : 'v37-scene__poster v37-scene__poster--layout'
+        }
+        src={posterSrc}
+        alt=""
+        decoding="async"
+        loading="lazy"
+        fetchPriority="low"
+      />
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}

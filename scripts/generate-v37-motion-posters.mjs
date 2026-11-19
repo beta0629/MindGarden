@@ -52,23 +52,29 @@ async function extractAtlasFrame(atlas, frameIndex = 0) {
 }
 
 /**
- * First atlas frame with any opaque pixel (alpha > 8).
- * Booking landing frame 0 is fully transparent — motion poster uses index 1+.
+ * First landing atlas frame whose subject is fully opaque (max alpha ≥ 255).
+ * Frames 0–4 fade in (maxA 0→254); empirically index 5 reaches maxA 255 on
+ * both 390 and 1440 packs. Keep in sync with BOOKING_MOTION_HOLD_FRAME.
+ * Threshold is 255 (not 250) so we do not stop on near-opaque frame 4.
  * @param {{ sheets: Array<{ file: string }>, frame_w: number, frame_h: number, index: number[][] }} atlas
+ * @param {number} [minMaxA=255]
  */
-async function extractFirstOpaqueAtlasFrame(atlas) {
+async function extractFirstFullyOpaqueAtlasFrame(atlas, minMaxA = 255) {
   const n = atlas.index.length;
   for (let i = 0; i < n; i += 1) {
     const frame = await extractAtlasFrame(atlas, i);
     const { data } = frame;
+    let maxA = 0;
     for (let p = 3; p < data.length; p += 4) {
-      if (data[p] > 8) {
-        console.log(`  first opaque atlas frame index=${i}`);
-        return frame;
-      }
+      if (data[p] > maxA) maxA = data[p];
+      if (maxA >= minMaxA) break;
+    }
+    if (maxA >= minMaxA) {
+      console.log(`  first fully-opaque atlas frame index=${i} (maxA=${maxA})`);
+      return frame;
     }
   }
-  throw new Error('No opaque atlas frame found');
+  throw new Error(`No atlas frame with maxA ≥ ${minMaxA}`);
 }
 
 /**
@@ -139,7 +145,7 @@ async function generateGate(pack) {
 }
 
 /**
- * Booking: first opaque landing atlas frame (usually index 1 — frame 0 is empty).
+ * Booking: first fully-opaque landing atlas frame (maxA === 255; usually index 5).
  * Must stay in sync with BookingScene BOOKING_MOTION_HOLD_FRAME.
  * @param {string} pack
  */
@@ -152,7 +158,12 @@ async function generateBooking(pack) {
   );
   const json = JSON.parse(await fs.readFile(jsonPath, 'utf8'));
   const atlas = json.landing.atlas;
-  const frame = await extractFirstOpaqueAtlasFrame(atlas);
+  const frame = await extractFirstFullyOpaqueAtlasFrame(atlas, 255);
+  let maxA = 0;
+  for (let p = 3; p < frame.data.length; p += 4) {
+    if (frame.data[p] > maxA) maxA = frame.data[p];
+  }
+  console.log(`  booking ${pack}: hold frame=${frame.frameIndex} maxA=${maxA}`);
   const out = path.join(
     ASSET_ROOT,
     'booking',

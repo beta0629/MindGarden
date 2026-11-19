@@ -111,7 +111,8 @@ type HoverPhase =
 
 function ensureBookingSheets(rt: Runtime, walkF: number, landingDone: boolean): void {
   if (!landingDone && walkF < LANDING_END + 2) {
-    const raw = walkF - LANDING_START;
+    // Floor at hold frame — early landing cells are transparent / fade-in only.
+    const raw = Math.max(BOOKING_MOTION_HOLD_FRAME, walkF - LANDING_START);
     const last = rt.booking.landing.atlas.frames - 1;
     const i0 = Math.min(last, Math.max(0, Math.floor(raw)));
     const i1 = Math.min(last, Math.ceil(raw));
@@ -429,7 +430,7 @@ export function BookingScene({ sectionRef }: Props) {
       let bIdx = 0;
 
       if (holdMotionFrame && (walkF >= LANDING_START || landingMustRun())) {
-        // Match static motion poster while canvas fades in (first opaque frame).
+        // Match static motion poster while canvas fades in (fully opaque frame).
         landingIdx = BOOKING_MOTION_HOLD_FRAME;
         drawKey = `landing:${BOOKING_MOTION_HOLD_FRAME}:hold`;
         paintMode = 'landing';
@@ -437,9 +438,10 @@ export function BookingScene({ sectionRef }: Props) {
         drawKey = 'blank';
         paintMode = 'blank';
       } else if (walkF <= LANDING_END && !landingDoneRef.current) {
+        // Continue from hold index after fade — never rewind to transparent cells.
         landingIdx = Math.min(
           rt.booking.landing.atlas.frames - 1,
-          Math.max(0, walkF - LANDING_START),
+          Math.max(BOOKING_MOTION_HOLD_FRAME, walkF - LANDING_START),
         );
         drawKey = `landing:${Math.round(landingIdx * 100)}`;
         paintMode = 'landing';
@@ -613,16 +615,18 @@ export function BookingScene({ sectionRef }: Props) {
         await whenHomeDeferredWorkAllowed();
         if (!alive) return;
         if (peekSoftwareGpu() === true) return;
-        // First-play window — yield between banks so WebKit scroll stays responsive.
-        await rt.landingBank.ensureFirstPlayWindow();
+        // First-play window from hold frame — yield between banks for WebKit scroll.
+        await rt.landingBank.ensureCurrentAndNext(BOOKING_MOTION_HOLD_FRAME);
         if (!alive) return;
         await new Promise<void>((r) => {
           window.setTimeout(r, 0);
         });
         await rt.breatheBank.ensureFirstPlayWindow();
         if (!alive) return;
-        // ensureFirstPlayWindow already scheduleGpuWarm'd sheets — no second warm pass.
-        rt.landingBank.releaseExcept(rt.landingBank.currentAndNextIndexes(0));
+        // ensureCurrentAndNext already scheduleGpuWarm'd sheets — no second warm pass.
+        rt.landingBank.releaseExcept(
+          rt.landingBank.currentAndNextIndexes(BOOKING_MOTION_HOLD_FRAME),
+        );
         rt.breatheBank.releaseExcept(rt.breatheBank.currentAndNextIndexes(0));
         assetsReady = true;
         setCanvasActive(true);

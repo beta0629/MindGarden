@@ -588,51 +588,80 @@ export function sheetsReadyForFrame(
 }
 
 /**
- * Upload a sheet into the GPU decode cache at the **real CSS draw scale**.
+ * Upload half a sheet into the GPU decode cache at the **real CSS draw scale**.
  * Prefer a representative frame dest (`frame_w/sourceScale` × `frame_h/sourceScale`)
- * or the full-sheet display size. Avoids the old 2×2 warm that never matched
- * Chromium’s later half-scale raster (re-decode spikes).
+ * — never full atlas natural size (e.g. 1855×1456). Split into two halves so
+ * each idle job stays short.
+ * @param half 0 = top, 1 = bottom
  */
-export function warmSheetGpu(
+export function warmSheetGpuHalf(
   img: DecodedImage,
-  cssW?: number,
-  cssH?: number,
+  cssW: number | undefined,
+  cssH: number | undefined,
+  half: 0 | 1,
 ): void {
   if (typeof document === 'undefined') return;
   try {
     const dpr = effectiveCanvasDpr();
     const wCss = cssW != null && cssW > 0 ? cssW : 2;
     const hCss = cssH != null && cssH > 0 ? cssH : 2;
+    const fullW = Math.max(1, Math.round(wCss * dpr));
+    const fullH = Math.max(1, Math.round(hCss * dpr));
+    const halfH = Math.max(1, Math.ceil(fullH / 2));
     const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(wCss * dpr));
-    c.height = Math.max(1, Math.round(hCss * dpr));
+    c.width = fullW;
+    c.height = halfH;
     const ctx = c.getContext('2d');
     if (!ctx) return;
-    ctx.drawImage(img, 0, 0, c.width, c.height);
+    // Source crop in image pixels proportional to the dest half.
+    const htmlImg = img as HTMLImageElement;
+    const bitmap = img as ImageBitmap;
+    const srcW =
+      typeof htmlImg.naturalWidth === 'number' && htmlImg.naturalWidth > 0
+        ? htmlImg.naturalWidth
+        : bitmap.width;
+    const srcH =
+      typeof htmlImg.naturalHeight === 'number' && htmlImg.naturalHeight > 0
+        ? htmlImg.naturalHeight
+        : bitmap.height;
+    const srcHalfH = Math.max(1, Math.ceil(srcH / 2));
+    const srcY = half === 0 ? 0 : srcH - srcHalfH;
+    ctx.drawImage(img, 0, srcY, srcW, srcHalfH, 0, 0, fullW, halfH);
   } catch {
     /* ignore — warm is best-effort */
   }
 }
 
-/** One GPU-warm job per task — WebKit has no rIC; sync warmAll blocks 9–32ms. */
+/**
+ * Upload a sheet into the GPU decode cache at the **real CSS draw scale**
+ * (both halves, sync). Prefer {@link scheduleGpuWarm} off the critical path.
+ */
+export function warmSheetGpu(
+  img: DecodedImage,
+  cssW?: number,
+  cssH?: number,
+): void {
+  warmSheetGpuHalf(img, cssW, cssH, 0);
+  warmSheetGpuHalf(img, cssW, cssH, 1);
+}
+
+/** One half-sheet GPU-warm job per task — WebKit has no rIC; sync warmAll blocks. */
 const warmQueue: Array<() => void> = [];
 let warmPumpScheduled = false;
 /** Dedupe: same DecodedImage must not enqueue two warm jobs back-to-back. */
 const warmQueued = new WeakSet<object>();
 
-/** Gap between warm jobs so scroll/engagement tasks are not chained 0ms apart. */
-const WARM_PUMP_GAP_MS = 32;
-
+/**
+ * Schedule next warm job without a short rIC timeout that forces mid-scroll
+ * work. Prefer idle when available; else setTimeout(0) while offscreen/NEAR.
+ */
 function scheduleWarmPump(): void {
   if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(
-      () => {
-        pumpWarmQueue();
-      },
-      { timeout: WARM_PUMP_GAP_MS },
-    );
+    window.requestIdleCallback(() => {
+      pumpWarmQueue();
+    });
   } else {
-    window.setTimeout(pumpWarmQueue, WARM_PUMP_GAP_MS);
+    window.setTimeout(pumpWarmQueue, 0);
   }
 }
 
@@ -653,8 +682,8 @@ function pumpWarmQueue(): void {
 }
 
 /**
- * Enqueue a single-sheet GPU warm (never runs synchronously on the caller stack).
- * Chunks one sheet per idle/timeout task — safe at NEAR margin while offscreen.
+ * Enqueue a sheet GPU warm as **two half-height jobs** (never sync on caller).
+ * Chunks half a sheet per idle/timeout task — safe at NEAR margin while offscreen.
  * Duplicate schedules for the same image are ignored.
  */
 export function scheduleGpuWarm(
@@ -667,7 +696,8 @@ export function scheduleGpuWarm(
     if (warmQueued.has(img as object)) return;
     warmQueued.add(img as object);
   }
-  warmQueue.push(() => warmSheetGpu(img, cssW, cssH));
+  warmQueue.push(() => warmSheetGpuHalf(img, cssW, cssH, 0));
+  warmQueue.push(() => warmSheetGpuHalf(img, cssW, cssH, 1));
   if (warmPumpScheduled) return;
   warmPumpScheduled = true;
   scheduleWarmPump();

@@ -667,8 +667,26 @@ p {
   max-width: none;
 }
 
-/* Poster/video fallback: cover the stage; soft-fade baked sand edges only. */
-.hero-media__stage picture img,
+/*
+ * Motion LCP still: fill the stage exactly like `.hero-3d` (no zoom / radial
+ * mask). Per-breakpoint motion posters already match the panel box.
+ */
+.hero-media__stage picture img.hero-still {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  object-fit: fill;
+  transform: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* Video loop fallback: cover the stage; soft-fade baked sand edges only. */
 .hero-media__stage > .hero-loop {
   position: absolute;
   inset: auto;
@@ -757,23 +775,32 @@ p {
 }
 
 /*
- * First-GL-frame blit: match `.hero-3d` box exactly (no zoom / radial mask /
- * centered cover). Soft-GL / reduced-motion never get this class.
+ * Reduced-motion oval RM posters: keep zoom / cover / radial soft-edge.
+ * Motion posters stay fill-synced with `.hero-3d` (see rules above).
  */
-.hero-media.is-3d-still-synced .hero-media__stage picture img.hero-still,
-.hero-media.is-3d-still-synced .hero-still {
-  position: absolute;
-  inset: 0;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  aspect-ratio: auto;
-  object-fit: fill;
-  transform: none;
-  -webkit-mask-image: none;
-  mask-image: none;
+@media (prefers-reduced-motion: reduce) {
+  .hero-media__stage picture img.hero-still {
+    position: absolute;
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--hero-zoom) * 100%);
+    height: auto;
+    max-width: none;
+    aspect-ratio: 1620 / 939;
+    object-fit: cover;
+    transform: translate(-50%, -50%);
+    -webkit-mask-image: radial-gradient(
+      ellipse closest-side at 50% 50%,
+      black var(--hero-media-fade-edge),
+      transparent var(--hero-media-fade-end)
+    );
+    mask-image: radial-gradient(
+      ellipse closest-side at 50% 50%,
+      black var(--hero-media-fade-edge),
+      transparent var(--hero-media-fade-end)
+    );
+  }
 }
 
 /* —— homepage first-entry boot progress (cream track / brand-green fill) —— */

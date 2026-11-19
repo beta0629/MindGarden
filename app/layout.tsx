@@ -43,11 +43,6 @@ export const viewport: Viewport = {
 /** Latin + frequent Hangul — preload keeps CLS down (font-display:swap). */
 const PRELOAD_FONT_SLICES = [91, 90] as const;
 
-const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
-/** Motion LCP still — matches HeroPoster default (RM uses media query, not preload). */
-const HERO_POSTER_SRCSET_AVIF =
-  '/assets/hero/hero-poster-motion-640.avif 640w, /assets/hero/hero-poster-motion-1080.avif 1080w, /assets/hero/hero-poster-motion-1620.avif 1620w';
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -57,15 +52,26 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        {/* LCP candidate first — before font preloads — under LH mobile simulate. */}
+        {/* LCP motion stills — fixed per-breakpoint URLs (matches HeroPoster). */}
         <link
           rel="preload"
           as="image"
-          href="/assets/hero/hero-poster-motion-640.avif"
-          {...({
-            imageSrcSet: HERO_POSTER_SRCSET_AVIF,
-            imageSizes: HERO_POSTER_SIZES,
-          } as React.LinkHTMLAttributes<HTMLLinkElement>)}
+          href="/assets/hero/hero-poster-motion-390.avif"
+          media="(max-width: 767px)"
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/hero/hero-poster-motion-768.avif"
+          media="(min-width: 768px) and (max-width: 1023px)"
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/hero/hero-poster-motion-1440.avif"
+          media="(min-width: 1024px)"
           fetchPriority="high"
         />
         {PRELOAD_FONT_SLICES.map((slice) => (

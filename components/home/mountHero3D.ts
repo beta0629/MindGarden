@@ -94,9 +94,6 @@ export async function mountHero3D({
   const { DRACOLoader } = await import(
     'three/examples/jsm/loaders/DRACOLoader.js'
   );
-  const { RoomEnvironment } = await import(
-    'three/examples/jsm/environments/RoomEnvironment.js'
-  );
 
   if (signal?.aborted) {
     return () => undefined;
@@ -127,12 +124,21 @@ export async function mountHero3D({
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   // Shared rafScheduler owns the frame pump — never leave three's loop registered.
   renderer.setAnimationLoop(null);
+  // Skip sync shader-error stringification on the LCP path in production.
+  if (process.env.NODE_ENV === 'production') {
+    renderer.debug.checkShaderErrors = false;
+  }
 
   const scene = new THREE.Scene();
   scene.background = null;
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-  scene.environmentIntensity = 0.9;
+  /*
+   * Defer RoomEnvironment → PMREM off the first-paint path. Hemisphere + key
+   * lights already light the subject; attach env when idle after held frame.
+   */
+  /** Created lazily in attachEnvWhenIdle — null until after first paint. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- three PMREMGenerator typing across dynamic import
+  let pmrem: any = null;
+  let envReady = false;
 
   scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.6));
   const key = new THREE.DirectionalLight(0xfff3e6, 1.6);
@@ -174,14 +180,12 @@ export async function mountHero3D({
     gltf = await loader.loadAsync('/assets/hero/hero-butterfly.glb');
   } catch (err) {
     draco.dispose();
-    pmrem.dispose();
     renderer.dispose();
     throw err;
   }
 
   if (signal?.aborted) {
     draco.dispose();
-    pmrem.dispose();
     renderer.dispose();
     return () => undefined;
   }
@@ -568,10 +572,7 @@ export async function mountHero3D({
   // Subject CSS vars once after first fit — resize observer handles later updates.
   updateSubjectCssVars();
 
-  // Compile programs off the reveal path when KHR_parallel_shader_compile is available.
-  const compileAndPaintFirst = async () => {
-    await waitIdle(1500);
-    if (!running || signal?.aborted || reduce.matches) return;
+  const runCompileAsync = async () => {
     const compileAsync = (
       renderer as unknown as {
         compileAsync?: (
@@ -580,16 +581,82 @@ export async function mountHero3D({
         ) => Promise<unknown>;
       }
     ).compileAsync;
-    if (typeof compileAsync === 'function') {
-      try {
-        await compileAsync.call(renderer, scene, cam);
-      } catch {
-        /* fall through to first render */
-      }
+    if (typeof compileAsync !== 'function') return;
+    try {
+      await compileAsync.call(renderer, scene, cam);
+    } catch {
+      /* fall through to first render */
     }
+  };
+
+  /**
+   * Attach RoomEnvironment PMREM only after the held first frame has faded
+   * in (poster-out). rIC `{timeout}` can fire immediately while idle and would
+   * brighten the hold frame vs the static motion poster — use a real timer
+   * floor after reveal instead.
+   */
+  const attachEnvAfterReveal = () => {
+    if (envReady) return;
+    const start = () => {
+      void (async () => {
+        if (!running || signal?.aborted || reduce.matches || envReady) return;
+        // Yield to idle after the timer floor — never block scroll/engagement.
+        await new Promise<void>((resolve) => {
+          if (typeof window.requestIdleCallback === 'function') {
+            window.requestIdleCallback(() => resolve());
+          } else {
+            window.setTimeout(resolve, 0);
+          }
+        });
+        if (!running || signal?.aborted || reduce.matches || envReady) return;
+        try {
+          const { RoomEnvironment } = await import(
+            'three/examples/jsm/environments/RoomEnvironment.js'
+          );
+          if (!running || signal?.aborted) return;
+          pmrem = new THREE.PMREMGenerator(renderer);
+          scene.environment = pmrem.fromScene(
+            new RoomEnvironment(),
+            0.04,
+          ).texture;
+          scene.environmentIntensity = 0.9;
+          envReady = true;
+          await runCompileAsync();
+          if (!running || signal?.aborted) return;
+          markDirty(HERO_RAF_ID);
+        } catch {
+          /* lights-only is fine if env fails */
+        }
+      })();
+    };
+    if (canvasFadeDone) {
+      start();
+      return;
+    }
+    // Poll class — avoids racing the staged-reveal timers.
+    const arm = window.setInterval(() => {
+      if (!running || signal?.aborted) {
+        window.clearInterval(arm);
+        return;
+      }
+      if (canvasFadeDone || panel.classList.contains('is-3d-poster-out')) {
+        window.clearInterval(arm);
+        // Floor after poster fade so hold-frame posters (lights-only) stay matched.
+        window.setTimeout(start, Math.max(400, HERO_CANVAS_FADE_MS * 2));
+      }
+    }, 50);
+  };
+
+  // Compile programs off the reveal path when KHR_parallel_shader_compile is available.
+  const compileAndPaintFirst = async () => {
+    await waitIdle(1500);
+    if (!running || signal?.aborted || reduce.matches) return;
+    // First paint without PMREM — hemisphere + key only.
+    await runCompileAsync();
     if (!running || signal?.aborted) return;
     // First real frame into the backing store before staged reveal.
     renderer.render(scene, cam);
+    attachEnvAfterReveal();
   };
 
   const tiltBusy = (): boolean => {
@@ -803,7 +870,7 @@ export async function mountHero3D({
     delete panel.dataset.heroCam;
     delete panel.dataset.heroFitLog;
     draco.dispose();
-    pmrem.dispose();
+    if (pmrem) pmrem.dispose();
     renderer.dispose();
   };
 }

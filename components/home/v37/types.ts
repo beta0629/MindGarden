@@ -175,10 +175,10 @@ export const V37_CANVAS_FADE_MS = 180;
 
 /**
  * Booking motion poster / fade-hold atlas index.
- * Landing frame 0 is fully transparent — first opaque cell is index 1.
+ * Landing frames 0–3 fade in (maxA < 250); first fully opaque cell is index 5.
  * Keep in sync with `scripts/generate-v37-motion-posters.mjs`.
  */
-export const BOOKING_MOTION_HOLD_FRAME = 1;
+export const BOOKING_MOTION_HOLD_FRAME = 5;
 
 export type V37SceneKind = 'gate' | 'bench' | 'booking';
 

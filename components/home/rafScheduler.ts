@@ -1,6 +1,9 @@
 /**
  * Single requestAnimationFrame fan-out for homepage hero + v3.7 scenes.
  * Cancel the global rAF when nothing is active; pause all while document.hidden.
+ *
+ * Mutable state lives on `globalThis.__mgRafScheduler` so lazy chunk duplicates
+ * (hero / gate / bench / booking) still share one entries map and pump handle.
  */
 
 export type RafCallback = (now: number) => void;
@@ -18,22 +21,46 @@ type Entry = {
   paused: boolean;
 };
 
-const entries = new Map<string, Entry>();
+type RafSchedulerState = {
+  entries: Map<string, Entry>;
+  rafId: number;
+  /** True while pump() is iterating subscribers — kick() must not schedule. */
+  pumping: boolean;
+  visibilityBound: boolean;
+  docHidden: boolean;
+  debugPumpCount: number;
+};
 
-let rafId = 0;
-let visibilityBound = false;
-let docHidden =
-  typeof document !== 'undefined' ? Boolean(document.hidden) : false;
+const GLOBAL_KEY = '__mgRafScheduler' as const;
 
-/** Optional debug: count pumps while any subscriber is active. */
-let debugPumpCount = 0;
+type GlobalWithScheduler = typeof globalThis & {
+  [GLOBAL_KEY]?: RafSchedulerState;
+};
+
+function getState(): RafSchedulerState {
+  const g = globalThis as GlobalWithScheduler;
+  if (!g[GLOBAL_KEY]) {
+    g[GLOBAL_KEY] = {
+      entries: new Map(),
+      rafId: 0,
+      pumping: false,
+      visibilityBound: false,
+      docHidden:
+        typeof document !== 'undefined' ? Boolean(document.hidden) : false,
+      debugPumpCount: 0,
+    };
+  }
+  return g[GLOBAL_KEY];
+}
 
 function ensureVisibilityListener(): void {
-  if (visibilityBound || typeof document === 'undefined') return;
-  visibilityBound = true;
+  const state = getState();
+  if (state.visibilityBound || typeof document === 'undefined') return;
+  state.visibilityBound = true;
   document.addEventListener('visibilitychange', () => {
-    docHidden = Boolean(document.hidden);
-    if (docHidden) {
+    const s = getState();
+    s.docHidden = Boolean(document.hidden);
+    if (s.docHidden) {
       cancelPump();
     } else {
       kick();
@@ -42,15 +69,17 @@ function ensureVisibilityListener(): void {
 }
 
 function cancelPump(): void {
-  if (rafId) {
-    cancelAnimationFrame(rafId);
-    rafId = 0;
+  const state = getState();
+  if (state.rafId) {
+    cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
   }
 }
 
 function needsPump(): boolean {
-  if (docHidden) return false;
-  for (const e of entries.values()) {
+  const state = getState();
+  if (state.docHidden) return false;
+  for (const e of state.entries.values()) {
     if (e.paused) continue;
     if (e.continuous || e.dirty) return true;
   }
@@ -58,28 +87,36 @@ function needsPump(): boolean {
 }
 
 function pump(now: number): void {
-  rafId = 0;
-  if (docHidden) {
+  const state = getState();
+  state.rafId = 0;
+  if (state.docHidden) {
     // Stay cancelled while hidden — visibilitychange will kick() on resume.
     return;
   }
-  debugPumpCount += 1;
-  for (const e of entries.values()) {
-    if (e.paused) continue;
-    if (!e.continuous && !e.dirty) continue;
-    e.dirty = false;
-    e.fn(now);
+  state.pumping = true;
+  try {
+    state.debugPumpCount += 1;
+    for (const e of state.entries.values()) {
+      if (e.paused) continue;
+      if (!e.continuous && !e.dirty) continue;
+      e.dirty = false;
+      e.fn(now);
+    }
+  } finally {
+    state.pumping = false;
   }
   // Cancel when nothing is continuous/dirty after this frame.
-  if (needsPump()) {
-    rafId = requestAnimationFrame(pump);
+  // kick() during the loop is a no-op while pumping, so at most one schedule here.
+  if (!state.rafId && needsPump()) {
+    state.rafId = requestAnimationFrame(pump);
   }
 }
 
 function kick(): void {
   ensureVisibilityListener();
-  if (rafId || !needsPump()) return;
-  rafId = requestAnimationFrame(pump);
+  const state = getState();
+  if (state.pumping || state.rafId || !needsPump()) return;
+  state.rafId = requestAnimationFrame(pump);
 }
 
 /**
@@ -92,7 +129,8 @@ export function subscribe(
   opts?: SubscribeOpts,
 ): void {
   ensureVisibilityListener();
-  entries.set(id, {
+  const state = getState();
+  state.entries.set(id, {
     fn,
     continuous: Boolean(opts?.continuous),
     dirty: true,
@@ -102,19 +140,22 @@ export function subscribe(
 }
 
 export function unsubscribe(id: string): void {
-  entries.delete(id);
+  const state = getState();
+  state.entries.delete(id);
   if (!needsPump()) cancelPump();
 }
 
 export function markDirty(id: string): void {
-  const e = entries.get(id);
+  const state = getState();
+  const e = state.entries.get(id);
   if (!e || e.paused) return;
   e.dirty = true;
   kick();
 }
 
 export function setContinuous(id: string, continuous: boolean): void {
-  const e = entries.get(id);
+  const state = getState();
+  const e = state.entries.get(id);
   if (!e) return;
   e.continuous = continuous;
   if (continuous) {
@@ -127,7 +168,8 @@ export function setContinuous(id: string, continuous: boolean): void {
 
 /** Pause a subscriber (offscreen). Does not remove it; resumes via setPaused(false). */
 export function setPaused(id: string, paused: boolean): void {
-  const e = entries.get(id);
+  const state = getState();
+  const e = state.entries.get(id);
   if (!e) return;
   e.paused = paused;
   if (paused) {
@@ -140,21 +182,23 @@ export function setPaused(id: string, paused: boolean): void {
 }
 
 export function isDocumentHidden(): boolean {
-  return docHidden;
+  return getState().docHidden;
 }
 
 /** True when the shared rAF handle is scheduled. */
 export function isRafScheduled(): boolean {
-  return rafId !== 0;
+  return getState().rafId !== 0;
 }
 
 export function getDebugPumpCount(): number {
-  return debugPumpCount;
+  return getState().debugPumpCount;
 }
 
 /** Test/debug helper — not used in production paths. */
 export function __resetRafSchedulerForTests(): void {
   cancelPump();
-  entries.clear();
-  debugPumpCount = 0;
+  const state = getState();
+  state.entries.clear();
+  state.debugPumpCount = 0;
+  state.pumping = false;
 }

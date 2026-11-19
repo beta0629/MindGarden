@@ -7,22 +7,16 @@ import {
   type RefObject,
 } from 'react';
 import { whenHomeBootReady } from '@/components/home/homeBoot';
-import type { PackId } from './types';
+import type { V37SceneKind } from './types';
 import { useBreakpointPack } from './useBreakpointPack';
+import { V37ScenePoster } from './V37ScenePoster';
+import { peekSoftwareGpu } from './softwareGpu';
 
 type SceneProps = {
   sectionRef?: RefObject<HTMLElement | null>;
 };
 
-type SceneKind = 'gate' | 'bench' | 'booking';
-
-const POSTER: Record<SceneKind, (pack: PackId) => string> = {
-  gate: (pack) => `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`,
-  bench: (pack) =>
-    `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`,
-  booking: (pack) =>
-    `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`,
-};
+type SceneKind = V37SceneKind;
 
 const SCENE_CLASS: Record<SceneKind, string> = {
   gate: 'v37-scene v37-scene--gate',
@@ -60,6 +54,10 @@ const moduleCache = new Map<
   Promise<{ default: ComponentType<SceneProps> }>
 >();
 
+/**
+ * Soft-GL skip when {@link peekSoftwareGpu} is already `true`.
+ * `null` (unprobed) → treat as hardware and premount JS (no WebGL context here).
+ */
 let softGlSkipScenes: boolean | null = null;
 let preloadPromise: Promise<void> | null = null;
 
@@ -85,10 +83,9 @@ function loadSceneModule(
 }
 
 /**
- * After boot + short idle: fetch+eval scene JS chunks only (no atlas).
- * Soft-GL skips preload — canvases never mount.
- * Atlas fetch/decode stays behind {@link whenHomeDeferredWorkAllowed} inside
- * Gate/Booking/Bench (not here).
+ * After boot + short idle: fetch+eval scene JS chunks only (no atlas, no WebGL).
+ * Peek-only soft-GL gate — never {@link probeSoftwareGpu} (that stays in HeroMediaLazy).
+ * Atlas fetch/decode stays behind {@link whenHomeDeferredWorkAllowed} inside scenes.
  */
 function ensureSceneChunksPreloaded(): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve();
@@ -97,8 +94,8 @@ function ensureSceneChunksPreloaded(): Promise<void> {
     try {
       await whenHomeBootReady();
       await waitIdle(CHUNK_PRELOAD_IDLE_MS);
-      const { probeSoftwareGpu } = await import('./atlas');
-      if (probeSoftwareGpu()) {
+      // Peek only — do not create a WebGL context on this path.
+      if (peekSoftwareGpu() === true) {
         softGlSkipScenes = true;
         return;
       }
@@ -120,8 +117,8 @@ function ensureSceneChunksPreloaded(): Promise<void> {
 
 /**
  * Idle-mount scene React trees after boot (JS already preloaded) so first
- * scroll does not pay React commit longtasks. Soft-GL never mounts.
- * Atlas/network/decode remains engagement-gated inside each scene.
+ * scroll does not pay React commit longtasks. Soft-GL (peek===true) never mounts.
+ * Unprobed (`null`) pretends hardware so WebKit gate scroll does not pay mount.
  *
  * Place size / aspect / bench pads come from CSS media queries only (globals.css).
  * Pack is used solely for poster atlas paths — gated to client mount so desktop
@@ -146,7 +143,11 @@ function DeferredV37Scene({
       try {
         await ensureSceneChunksPreloaded();
         if (cancelled) return;
-        if (softGlSkipScenes) return;
+        // Re-peek: HeroMediaLazy may have probed soft-GL while we waited.
+        if (softGlSkipScenes || peekSoftwareGpu() === true) {
+          softGlSkipScenes = true;
+          return;
+        }
         const mod = await loadSceneModule(kind);
         const stagger = MOUNT_STAGGER_MS[kind] || 0;
         if (stagger > 0) {
@@ -171,18 +172,15 @@ function DeferredV37Scene({
   return (
     <div className={SCENE_CLASS[kind]} aria-hidden="true">
       {/*
-       * Layout spacer always (CSS aspect). Poster `src` only after mount so
-       * desktop uses the live pack — never SSR `'390'` → `'1440'` hop.
+       * Layout spacer always (CSS aspect). Poster only after mount so desktop
+       * uses the live pack — never SSR `'390'` → `'1440'` hop.
+       * Motion URL is fixed; RM via <picture> media only — never JS src flip.
        */}
       {mounted ? (
-        // eslint-disable-next-line @next/next/no-img-element -- static stand-in until scene chunk loads
-        <img
+        <V37ScenePoster
+          kind={kind}
+          pack={pack}
           className="v37-scene__poster"
-          src={POSTER[kind](pack)}
-          alt=""
-          decoding="async"
-          loading="lazy"
-          fetchPriority="low"
         />
       ) : (
         <div className="v37-scene__poster" />

@@ -14,7 +14,6 @@ import {
 } from '@/components/home/rafScheduler';
 import {
   AtlasSheetBank,
-  captureAtlasFramePoster,
   drawAtlasFrameBlend,
   effectiveCanvasDpr,
   loadJson,
@@ -29,8 +28,15 @@ import {
   type SectionMetricsCache,
 } from './scrollClock';
 import type { BookingJson, HoverJson } from './types';
-import { TRIGGER_P, TRIGGER_WALK_F } from './types';
+import {
+  BOOKING_MOTION_HOLD_FRAME,
+  TRIGGER_P,
+  TRIGGER_WALK_F,
+  V37_CANVAS_FADE_MS,
+} from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
+import { V37ScenePoster } from './V37ScenePoster';
+import { peekSoftwareGpu } from './softwareGpu';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -125,8 +131,6 @@ export function BookingScene({ sectionRef }: Props) {
   const [failed, setFailed] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
-  /** Motion poster = landing frame 0 (matches first canvas paint). */
-  const [motionPosterSrc, setMotionPosterSrc] = useState<string | null>(null);
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const hoverRef = useRef<HoverPhase>({ kind: 'idle' });
@@ -140,7 +144,6 @@ export function BookingScene({ sectionRef }: Props) {
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
-    setMotionPosterSrc(null);
     setFailed(false);
     runtimeRef.current = null;
     clockRef.current = null;
@@ -165,6 +168,12 @@ export function BookingScene({ sectionRef }: Props) {
     let metricsCache: SectionMetricsCache | null = null;
     /** Skip clearRect+paint when quantized landing/breathe/hover key unchanged. */
     let lastDrawKey = '';
+    /**
+     * Hold first opaque landing frame during canvas fade-in (matches static
+     * motion poster — atlas index {@link BOOKING_MOTION_HOLD_FRAME}, not 0).
+     */
+    let holdMotionFrame = true;
+    let fadeHoldTimer: number | null = null;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -214,12 +223,13 @@ export function BookingScene({ sectionRef }: Props) {
       const mustLand = landingMustRun();
       const paintOwed = firstPaintOwed();
       // Offscreen idle freeze still applies after landing+paintLive — only carve
-      // the exception while landing / first live paint is still owed.
+      // the exception while landing / first live paint / fade hold is owed.
       const shouldRun =
         !document.hidden &&
         assetsReady &&
         (mustLand ||
           paintOwed ||
+          holdMotionFrame ||
           (visible && (landingPending || hoverBusy)));
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
@@ -344,13 +354,19 @@ export function BookingScene({ sectionRef }: Props) {
         !landingDoneRef.current &&
         clock.wouldAdvanceWithTime(metrics) &&
         walkF >= TRIGGER_WALK_F.booking - 0.5;
-      // Keep continuous through first live paint (landing→breathe) even offscreen.
-      const continuous = landingInFlight || hoverBusy || firstPaintOwed();
+      // Keep continuous through first live paint + poster fade hold (frame 0).
+      const continuous =
+        landingInFlight || hoverBusy || firstPaintOwed() || holdMotionFrame;
       setContinuous(RAF_ID, continuous);
       if (!continuous) {
         clock.syncTime(now);
         // Idle freeze only after landing + first live paint (no forever breathe rAF).
-        if (landingDoneRef.current && paintLiveRef.current && !hoverBusy) {
+        if (
+          landingDoneRef.current &&
+          paintLiveRef.current &&
+          !hoverBusy &&
+          !holdMotionFrame
+        ) {
           setPaused(RAF_ID, true);
         }
       }
@@ -412,7 +428,12 @@ export function BookingScene({ sectionRef }: Props) {
       let hoverIdx = 0;
       let bIdx = 0;
 
-      if (walkF < LANDING_START) {
+      if (holdMotionFrame && (walkF >= LANDING_START || landingMustRun())) {
+        // Match static motion poster while canvas fades in (first opaque frame).
+        landingIdx = BOOKING_MOTION_HOLD_FRAME;
+        drawKey = `landing:${BOOKING_MOTION_HOLD_FRAME}:hold`;
+        paintMode = 'landing';
+      } else if (walkF < LANDING_START) {
         drawKey = 'blank';
         paintMode = 'blank';
       } else if (walkF <= LANDING_END && !landingDoneRef.current) {
@@ -557,6 +578,14 @@ export function BookingScene({ sectionRef }: Props) {
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
         setPaintLive(true);
+        if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
+        fadeHoldTimer = window.setTimeout(() => {
+          fadeHoldTimer = null;
+          if (!alive) return;
+          holdMotionFrame = false;
+          lastDrawKey = '';
+          markDirty(RAF_ID);
+        }, V37_CANVAS_FADE_MS);
       }
 
       /*
@@ -580,30 +609,23 @@ export function BookingScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
+        if (peekSoftwareGpu() === true) return;
         await whenHomeDeferredWorkAllowed();
         if (!alive) return;
-        // First-play window only: landing sheet 0(+next) + breathe sheet 0(+next).
-        await Promise.all([
-          rt.landingBank.ensureFirstPlayWindow(),
-          rt.breatheBank.ensureFirstPlayWindow(),
-        ]);
+        if (peekSoftwareGpu() === true) return;
+        // First-play window — yield between banks so WebKit scroll stays responsive.
+        await rt.landingBank.ensureFirstPlayWindow();
+        if (!alive) return;
+        await new Promise<void>((r) => {
+          window.setTimeout(r, 0);
+        });
+        await rt.breatheBank.ensureFirstPlayWindow();
         if (!alive) return;
         // ensureFirstPlayWindow already scheduleGpuWarm'd sheets — no second warm pass.
         rt.landingBank.releaseExcept(rt.landingBank.currentAndNextIndexes(0));
         rt.breatheBank.releaseExcept(rt.breatheBank.currentAndNextIndexes(0));
         assetsReady = true;
         setCanvasActive(true);
-        // toDataURL is sync/expensive — keep off the warm/mount task.
-        window.setTimeout(() => {
-          if (!alive) return;
-          const poster = captureAtlasFramePoster(
-            rt.landingBank,
-            rt.booking.landing.atlas,
-            0,
-            2,
-          );
-          if (poster && alive) setMotionPosterSrc(poster);
-        }, 0);
         ensureSubscribed();
         markDirty(RAF_ID);
         // Canvas ref attaches after commit — timeout, not a second native rAF.
@@ -652,6 +674,7 @@ export function BookingScene({ sectionRef }: Props) {
         });
         // Place width/aspect owned by CSS media queries — pack only for assets.
         lastDrawKey = '';
+        holdMotionFrame = true;
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -667,7 +690,7 @@ export function BookingScene({ sectionRef }: Props) {
       if (!subscribed || document.hidden) return;
       // Jump-to-bottom must dirty even when IO already says !visible so continuous arms.
       const landingPending =
-        !landingDoneRef.current || !paintLiveRef.current;
+        !landingDoneRef.current || !paintLiveRef.current || holdMotionFrame;
       if (!visible && !landingPending) return;
       if (
         landingPending ||
@@ -751,6 +774,7 @@ export function BookingScene({ sectionRef }: Props) {
 
     return () => {
       alive = false;
+      if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
       nearIO.disconnect();
       visIO.disconnect();
       window.removeEventListener('scroll', onScroll);
@@ -771,11 +795,8 @@ export function BookingScene({ sectionRef }: Props) {
     };
   }, [pack, reduced, failed, sectionRef]);
 
-  // Motion: landing frame 0 poster. RM / fail: perched RM asset only.
+  // Motion src fixed on img; RM via <picture> media only — never JS src flip.
   const showPoster = failed || reduced || !paintLive;
-  const rmPoster = `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`;
-  const posterSrc =
-    !reduced && !failed && motionPosterSrc ? motionPosterSrc : rmPoster;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
@@ -788,18 +809,14 @@ export function BookingScene({ sectionRef }: Props) {
        * Keep an in-flow poster spacer so canvas mount cannot collapse aspect.
        * Opacity-only hide after first live paint (same pattern as Bench/Gate).
        */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <V37ScenePoster
+        kind="booking"
+        pack={pack}
         className={
           showPoster
             ? 'v37-scene__poster'
             : 'v37-scene__poster v37-scene__poster--layout'
         }
-        src={posterSrc}
-        alt=""
-        decoding="async"
-        loading="lazy"
-        fetchPriority="low"
       />
       {canvasActive && !failed && !reduced ? (
         <canvas

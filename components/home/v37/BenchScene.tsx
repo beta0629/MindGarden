@@ -46,8 +46,14 @@ import type {
   BenchJson,
   PerchShadowTrackPoint,
 } from './types';
-import { TRIGGER_P, TRIGGER_WALK_F } from './types';
+import {
+  TRIGGER_P,
+  TRIGGER_WALK_F,
+  V37_CANVAS_FADE_MS,
+} from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
+import { V37ScenePoster } from './V37ScenePoster';
+import { peekSoftwareGpu } from './softwareGpu';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -359,6 +365,9 @@ export function BenchScene({ sectionRef }: Props) {
     let lastDrawKey = '';
     /** Once a full-alpha frame painted, never restart settle fade from ~0. */
     let heldOpaque = false;
+    /** Hold body+shadow (no ambient) during canvas fade-in to match motion poster. */
+    let holdPosterPose = true;
+    let fadeHoldTimer: number | null = null;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -407,7 +416,7 @@ export function BenchScene({ sectionRef }: Props) {
         !document.hidden &&
         assetsReady &&
         !frozen &&
-        (visible || paintOwed);
+        (visible || paintOwed || holdPosterPose);
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
         setContinuous(RAF_ID, false);
@@ -418,7 +427,7 @@ export function BenchScene({ sectionRef }: Props) {
 
     const tick = (now: number) => {
       if (!alive || document.hidden) return;
-      if (!visible && !firstPaintMustRun()) {
+      if (!visible && !firstPaintMustRun() && !holdPosterPose) {
         setContinuous(RAF_ID, false);
         setPaused(RAF_ID, true);
         return;
@@ -458,7 +467,7 @@ export function BenchScene({ sectionRef }: Props) {
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
-      const preSettle = settle.opacity <= 0;
+      const preSettle = holdPosterPose || settle.opacity <= 0;
       const rawOpacity = preSettle ? 1 : settle.opacity;
       // Never dip to near-transparent when settle starts / reverse-scroll returns.
       const drawOpacity = Math.max(
@@ -473,14 +482,17 @@ export function BenchScene({ sectionRef }: Props) {
         rawShadowOpacity,
       );
 
-      const settling = settleBusy(walkF);
+      const settling = !holdPosterPose && settleBusy(walkF);
       const settleKey = settling
         ? `${Math.round(drawOpacity * 1000)}:${Math.round(drawTy * 100)}:${Math.round(drawShadowScale * 1000)}:${Math.round(drawShadowOpacity * 1000)}`
         : 'done';
-      const drawKey = `${Math.round(walkF * 100)}|${settleKey}`;
+      const drawKey = holdPosterPose
+        ? 'poster-hold'
+        : `${Math.round(walkF * 100)}|${settleKey}`;
 
       const finishTick = () => {
-        const motionBusy = walkF < motionEnd || settling;
+        const motionBusy =
+          holdPosterPose || walkF < motionEnd || settling;
         if (!motionBusy) {
           frozen = true;
           setContinuous(RAF_ID, false);
@@ -567,7 +579,9 @@ export function BenchScene({ sectionRef }: Props) {
       ctx.restore();
       ctx.restore();
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'back');
+      if (!holdPosterPose) {
+        drawButterflies(ctx, rt, walkF, ox, oy, 'back');
+      }
 
       ctx.save();
       ctx.globalAlpha = drawOpacity;
@@ -575,22 +589,24 @@ export function BenchScene({ sectionRef }: Props) {
       drawCoverImage(ctx, rt.body, ox, oy, boxW, boxH);
       ctx.restore();
 
-      const perch = perchSample(rt.json.perch_shadow.track, walkF);
-      if (perch && rt.perchShadow) {
-        ctx.save();
-        ctx.globalAlpha = perch.opacity;
-        drawCoverImage(
-          ctx,
-          rt.perchShadow,
-          ox + perch.x,
-          oy + perch.y,
-          rt.json.perch_shadow.css_w,
-          rt.json.perch_shadow.css_h,
-        );
-        ctx.restore();
-      }
+      if (!holdPosterPose) {
+        const perch = perchSample(rt.json.perch_shadow.track, walkF);
+        if (perch && rt.perchShadow) {
+          ctx.save();
+          ctx.globalAlpha = perch.opacity;
+          drawCoverImage(
+            ctx,
+            rt.perchShadow,
+            ox + perch.x,
+            oy + perch.y,
+            rt.json.perch_shadow.css_w,
+            rt.json.perch_shadow.css_h,
+          );
+          ctx.restore();
+        }
 
-      drawButterflies(ctx, rt, walkF, ox, oy, 'front');
+        drawButterflies(ctx, rt, walkF, ox, oy, 'front');
+      }
       ctx.restore();
 
       lastDrawKey = drawKey;
@@ -599,6 +615,14 @@ export function BenchScene({ sectionRef }: Props) {
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
         setPaintLive(true);
+        if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
+        fadeHoldTimer = window.setTimeout(() => {
+          fadeHoldTimer = null;
+          if (!alive) return;
+          holdPosterPose = false;
+          lastDrawKey = '';
+          markDirty(RAF_ID);
+        }, V37_CANVAS_FADE_MS);
       }
 
       finishTick();
@@ -617,8 +641,10 @@ export function BenchScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
+        if (peekSoftwareGpu() === true) return;
         await whenHomeDeferredWorkAllowed();
         if (!alive) return;
+        if (peekSoftwareGpu() === true) return;
         const placeW = rt.json.place.css_w;
         const placeH = rt.json.place.css_h;
         const bodyMeta = rt.json.body;
@@ -716,6 +742,7 @@ export function BenchScene({ sectionRef }: Props) {
         // Place/pad CSS vars owned by globals.css — padRef is canvas math only.
         lastDrawKey = '';
         heldOpaque = false;
+        holdPosterPose = true;
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -803,6 +830,7 @@ export function BenchScene({ sectionRef }: Props) {
 
     return () => {
       alive = false;
+      if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
       nearIO.disconnect();
       visIO.disconnect();
       ro.disconnect();
@@ -837,7 +865,6 @@ export function BenchScene({ sectionRef }: Props) {
   }, [failed, reduced, paintLive, canvasActive]);
 
   const showPoster = failed || reduced || !paintLive;
-  const posterSrc = `/assets/home-v3.7/bench/${pack}/bench-poster-rm-${pack}.webp`;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
@@ -850,19 +877,16 @@ export function BenchScene({ sectionRef }: Props) {
        * Always keep an in-flow poster: the overflow canvas is position:absolute,
        * so removing the poster collapses the aspect box on WebKit (empty
        * .home-reviews row shrinks when paint goes live). Opacity-only hide.
+       * Motion src fixed; RM via <picture> media only — never JS src flip.
        */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <V37ScenePoster
+        kind="bench"
+        pack={pack}
         className={
           showPoster
             ? 'v37-scene__poster'
             : 'v37-scene__poster v37-scene__poster--layout'
         }
-        src={posterSrc}
-        alt=""
-        decoding="async"
-        loading="lazy"
-        fetchPriority="low"
       />
       {/*
        * Always mount the overflow canvas once active — zero-size until

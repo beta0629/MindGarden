@@ -14,7 +14,6 @@ import {
 } from '@/components/home/rafScheduler';
 import {
   AtlasSheetBank,
-  captureAtlasFramePoster,
   drawAtlasFrameBlend,
   drawCoverImage,
   effectiveCanvasDpr,
@@ -39,8 +38,14 @@ import {
   settleTranslateY,
 } from './settle';
 import type { GateJson } from './types';
-import { TRIGGER_P, TRIGGER_WALK_F } from './types';
+import {
+  TRIGGER_P,
+  TRIGGER_WALK_F,
+  V37_CANVAS_FADE_MS,
+} from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
+import { V37ScenePoster } from './V37ScenePoster';
+import { peekSoftwareGpu } from './softwareGpu';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -178,8 +183,6 @@ export function GateScene({ sectionRef }: Props) {
   const [canvasActive, setCanvasActive] = useState(false);
   /** Keep poster until settle paints so layout never shows a blank hole */
   const [paintLive, setPaintLive] = useState(false);
-  /** Motion poster = first door frame (matches first canvas paint). */
-  const [motionPosterSrc, setMotionPosterSrc] = useState<string | null>(null);
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
@@ -188,7 +191,6 @@ export function GateScene({ sectionRef }: Props) {
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
-    setMotionPosterSrc(null);
     setFailed(false);
     runtimeRef.current = null;
     clockRef.current = null;
@@ -211,6 +213,12 @@ export function GateScene({ sectionRef }: Props) {
     let lastDrawKey = '';
     /** Once a full-alpha frame painted, never fade settle back through ~0. */
     let heldOpaque = false;
+    /**
+     * Hold atlas frame 0 while the canvas opacity fade-in matches the static
+     * motion poster (no runtime toDataURL). Cleared after V37_CANVAS_FADE_MS.
+     */
+    let holdFrame0 = true;
+    let fadeHoldTimer: number | null = null;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -246,8 +254,8 @@ export function GateScene({ sectionRef }: Props) {
       const shouldRun =
         !document.hidden &&
         assetsReady &&
-        !motionComplete &&
-        (visible || paintOwed);
+        (!motionComplete || holdFrame0) &&
+        (visible || paintOwed || holdFrame0);
       setPaused(RAF_ID, !shouldRun);
       if (!shouldRun) {
         setContinuous(RAF_ID, false);
@@ -334,7 +342,9 @@ export function GateScene({ sectionRef }: Props) {
       walkF: number,
       rt: Runtime,
     ) => {
-      const busy = settleBusy(walkF) || doorBusy(rt.json, walkF);
+      // Stay busy while holding frame 0 through the canvas fade-in.
+      const busy =
+        holdFrame0 || settleBusy(walkF) || doorBusy(rt.json, walkF);
       const advancing = clock.wouldAdvanceWithTime(metrics) && busy;
       if (!busy) {
         motionComplete = true;
@@ -353,7 +363,7 @@ export function GateScene({ sectionRef }: Props) {
       if (!alive || document.hidden) return;
       // Offscreen after first paint: do not early-return while leaving
       // continuous=true (jump-to-bottom left the pump spinning forever).
-      if (!visible && !firstPaintMustRun()) {
+      if (!visible && !firstPaintMustRun() && !holdFrame0) {
         setContinuous(RAF_ID, false);
         setPaused(RAF_ID, true);
         return;
@@ -365,7 +375,11 @@ export function GateScene({ sectionRef }: Props) {
 
       const metrics = ensureMetrics().read();
       const walkF = clock.update(now, metrics);
-      void ensureGateForWalk(rt, walkF);
+      // During fade hold, keep sheet 0 warm (matches static motion poster).
+      void ensureGateForWalk(
+        rt,
+        holdFrame0 ? TRIGGER_WALK_F.gate : walkF,
+      );
 
       // Canvas mounts after setCanvasActive commit — advance settle/door even
       // without a canvas so continuous cannot stick forever while paint is owed.
@@ -381,7 +395,8 @@ export function GateScene({ sectionRef }: Props) {
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
-      const preSettle = settle.opacity <= 0;
+      // During poster→canvas fade, lock pose to frame 0 (matches static poster).
+      const preSettle = holdFrame0 || settle.opacity <= 0;
       const rawOpacity = preSettle ? 1 : settle.opacity;
       // Keep prior full-alpha pose — reverse scroll / settle phase1 must not flash.
       const drawOpacity = Math.max(
@@ -395,8 +410,10 @@ export function GateScene({ sectionRef }: Props) {
         heldOpaque || paintLiveRef.current ? 1 : GATE_MIN_OPACITY,
         rawShadowOpacity,
       );
-      const door = doorIndexForWalk(rt.json, walkF);
-      const settling = settleBusy(walkF);
+      const door = holdFrame0
+        ? { frame: 0, crossfade: 0, useStatic: false }
+        : doorIndexForWalk(rt.json, walkF);
+      const settling = !holdFrame0 && settleBusy(walkF);
 
       const doorKey = door.useStatic
         ? 'static'
@@ -490,6 +507,14 @@ export function GateScene({ sectionRef }: Props) {
       if (!paintLiveRef.current) {
         paintLiveRef.current = true;
         setPaintLive(true);
+        if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
+        fadeHoldTimer = window.setTimeout(() => {
+          fadeHoldTimer = null;
+          if (!alive) return;
+          holdFrame0 = false;
+          lastDrawKey = '';
+          markDirty(RAF_ID);
+        }, V37_CANVAS_FADE_MS);
       }
 
       finishTick(now, clock, metrics, walkF, rt);
@@ -508,17 +533,28 @@ export function GateScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
+        // Soft-GL (probed elsewhere): keep motion poster — no canvas / decode.
+        if (peekSoftwareGpu() === true) return;
         // Defer decode/warm out of the LCP/boot window.
         await whenHomeDeferredWorkAllowed();
         if (!alive) return;
+        if (peekSoftwareGpu() === true) return;
         const placeW = rt.json.place.css_w;
         const placeH = rt.json.place.css_h;
         const bodyMeta = rt.json.static.body;
         const shadowMeta = rt.json.static.shadow;
-        // First-play only: door sheet 0(+next) + static covers — not ensureAll.
+        // First-play only — worker decode + yield between banks (WebKit scroll TBT).
+        await rt.bodyBank.ensureFirstPlayWindow();
+        if (!alive) return;
+        await new Promise<void>((r) => {
+          window.setTimeout(r, 0);
+        });
+        await rt.shadowBank.ensureFirstPlayWindow();
+        if (!alive) return;
+        await new Promise<void>((r) => {
+          window.setTimeout(r, 0);
+        });
         await Promise.all([
-          rt.bodyBank.ensureFirstPlayWindow(),
-          rt.shadowBank.ensureFirstPlayWindow(),
           loadSheet(bodyMeta.file, undefined, {
             displayW: placeW,
             displayH: placeH,
@@ -545,18 +581,6 @@ export function GateScene({ sectionRef }: Props) {
         rt.shadowBank.releaseExcept(rt.shadowBank.currentAndNextIndexes(0));
         assetsReady = true;
         setCanvasActive(true);
-        // toDataURL is sync/expensive — keep off the warm/mount task.
-        const bodyScale = rt.json.body_scale || 2;
-        window.setTimeout(() => {
-          if (!alive) return;
-          const poster = captureAtlasFramePoster(
-            rt.bodyBank,
-            rt.json.door.body_atlas,
-            0,
-            bodyScale,
-          );
-          if (poster && alive) setMotionPosterSrc(poster);
-        }, 0);
         ensureSubscribed();
         markDirty(RAF_ID);
         // Canvas ref attaches after commit — use timeout, not a second rAF.
@@ -605,6 +629,7 @@ export function GateScene({ sectionRef }: Props) {
         // Place width/aspect owned by CSS media queries — pack only for assets.
         lastDrawKey = '';
         heldOpaque = false;
+        holdFrame0 = true;
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -680,6 +705,7 @@ export function GateScene({ sectionRef }: Props) {
 
     return () => {
       alive = false;
+      if (fadeHoldTimer != null) window.clearTimeout(fadeHoldTimer);
       nearIO.disconnect();
       visIO.disconnect();
       window.removeEventListener('scroll', onScroll);
@@ -700,9 +726,6 @@ export function GateScene({ sectionRef }: Props) {
   }, [pack, reduced, failed, sectionRef]);
 
   const showPoster = failed || reduced || !paintLive;
-  const rmPoster = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
-  const posterSrc =
-    !reduced && !failed && motionPosterSrc ? motionPosterSrc : rmPoster;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (
@@ -714,19 +737,16 @@ export function GateScene({ sectionRef }: Props) {
       {/*
        * Keep an in-flow poster spacer for the full lifetime of the scene so
        * canvas mount / first paint cannot collapse the aspect box.
+       * Motion src is fixed; RM via <picture> media only — never JS src flip.
        */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <V37ScenePoster
+        kind="gate"
+        pack={pack}
         className={
           showPoster
             ? 'v37-scene__poster'
             : 'v37-scene__poster v37-scene__poster--layout'
         }
-        src={posterSrc}
-        alt=""
-        decoding="async"
-        loading="lazy"
-        fetchPriority="low"
       />
       {canvasActive && !failed && !reduced ? (
         <canvas

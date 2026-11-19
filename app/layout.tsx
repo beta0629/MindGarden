@@ -44,8 +44,9 @@ export const viewport: Viewport = {
 const PRELOAD_FONT_SLICES = [91, 90] as const;
 
 const HERO_POSTER_SIZES = '(max-width: 1023px) 100vw, 60vw';
+/** Motion LCP still — matches HeroPoster default (RM uses media query, not preload). */
 const HERO_POSTER_SRCSET_AVIF =
-  '/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w';
+  '/assets/hero/hero-poster-motion-640.avif 640w, /assets/hero/hero-poster-motion-1080.avif 1080w, /assets/hero/hero-poster-motion-1620.avif 1620w';
 
 export default function RootLayout({
   children,
@@ -60,7 +61,7 @@ export default function RootLayout({
         <link
           rel="preload"
           as="image"
-          href="/assets/hero/hero-poster-640.avif"
+          href="/assets/hero/hero-poster-motion-640.avif"
           {...({
             imageSrcSet: HERO_POSTER_SRCSET_AVIF,
             imageSizes: HERO_POSTER_SIZES,

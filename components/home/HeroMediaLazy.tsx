@@ -7,7 +7,10 @@ import {
   whenHomeBootReady,
 } from '@/components/home/homeBoot';
 
-/** After LCP poster + boot gate — then idle before downloading HeroMedia. */
+/** After LCP poster + boot gate — short idle before WebGL probe (not on LCP). */
+const SOFTWARE_GPU_PROBE_IDLE_MS = 1200;
+
+/** After soft-GL probe passes — idle before downloading HeroMedia. */
 const HERO_MEDIA_IDLE_TIMEOUT_MS = 6000;
 
 function waitIdle(timeoutMs: number): Promise<void> {
@@ -24,10 +27,10 @@ type MediaProps = { enhanceOnly?: boolean };
 
 /**
  * Defers the HeroMedia client chunk (video / three.js path) until after
- * `home-boot-ready` + idle. Probes software GL immediately after the poster
- * gate so the boot bar can dismiss without waiting on idle; soft-GL keeps the
- * poster and never imports three. Soft-GL finish waits until the bar has been
- * shown so session-once cannot skip the first-entry bar.
+ * `home-boot-ready` + idle. {@link probeSoftwareGpu} also waits for a short
+ * idle so WebGL context creation stays off the LCP/boot critical path; soft-GL
+ * keeps the poster and never imports three. Soft-GL finish waits until the bar
+ * has been shown so session-once cannot skip the first-entry bar.
  */
 export function HeroMediaLazy() {
   const [Media, setMedia] = useState<ComponentType<MediaProps> | null>(null);
@@ -38,7 +41,9 @@ export function HeroMediaLazy() {
       await whenHomeBootReady();
       if (cancelled) return;
       try {
-        const { probeSoftwareGpu } = await import('./v37/atlas');
+        await waitIdle(SOFTWARE_GPU_PROBE_IDLE_MS);
+        if (cancelled) return;
+        const { probeSoftwareGpu } = await import('./v37/softwareGpu');
         if (probeSoftwareGpu()) {
           // Belt: bar must paint before hero-ready dismiss (effect order: this
           // child often runs before SiteShell's HomeBootProgress).

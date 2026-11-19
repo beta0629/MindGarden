@@ -42,96 +42,21 @@ function enqueueDecode<T>(job: () => Promise<T>): Promise<T> {
   return run;
 }
 
-let softwareGpuCache: boolean | null = null;
-
-/** Unmasked renderer strings that must keep the poster (skip three / GLB). */
-const SOFTWARE_RENDERER_RE =
-  /swiftshader|llvmpipe|softpipe|microsoft basic render|cpu rasterizer/i;
-
-/**
- * Peek cached software-GPU result without creating a WebGL context.
- * `null` means not probed yet — callers must not treat that as "real GPU".
- */
-export function peekSoftwareGpu(): boolean | null {
-  return softwareGpuCache;
-}
-
-/**
- * Reset the software-GPU probe cache (Playwright / unit tests only).
- * Lets stubs of `getExtension` / `getParameter` run between cases.
- */
-export function __resetSoftwareGpuCacheForTests(): void {
-  softwareGpuCache = null;
-}
-
-/**
- * Detect SwiftShader / llvmpipe (and similar) via WEBGL_debug_renderer_info.
- * Creates a short-lived WebGL context on first call — defer until after LCP.
- * Cached for the page lifetime.
- *
- * Rules:
- * 1. No WebGL at all → software (`true`, poster).
- * 2. `WEBGL_debug_renderer_info` present → software only on renderer regex match.
- * 3. Extension missing → hardware (`false`, allow 3D; Apple/Adreno/Mali).
- * Never use `failIfMajorPerformanceCaveat` as a fast-path that skips the
- * renderer string (Chromium SwiftShader can pass that gate).
- */
-export function probeSoftwareGpu(): boolean {
-  if (softwareGpuCache != null) return softwareGpuCache;
-  if (typeof document === 'undefined') {
-    softwareGpuCache = false;
-    return false;
-  }
-  try {
-    const probe = document.createElement('canvas');
-    const attrs: WebGLContextAttributes = {
-      alpha: false,
-      antialias: false,
-      depth: false,
-      stencil: false,
-    };
-    const gl =
-      probe.getContext('webgl', attrs) ||
-      probe.getContext('experimental-webgl', attrs);
-    if (!gl || typeof (gl as WebGLRenderingContext).getExtension !== 'function') {
-      // No WebGL at all — treat as software / skip 3D.
-      softwareGpuCache = true;
-      return true;
-    }
-    const wgl = gl as WebGLRenderingContext;
-    const info = wgl.getExtension('WEBGL_debug_renderer_info');
-    if (!info) {
-      // Privacy / missing unmasked renderer — allow 3D (do not force poster).
-      softwareGpuCache = false;
-      const lose = wgl.getExtension('WEBGL_lose_context');
-      lose?.loseContext();
-      return false;
-    }
-    const name = String(wgl.getParameter(info.UNMASKED_RENDERER_WEBGL) || '');
-    softwareGpuCache = SOFTWARE_RENDERER_RE.test(name);
-    const lose = wgl.getExtension('WEBGL_lose_context');
-    lose?.loseContext();
-    return softwareGpuCache;
-  } catch {
-    softwareGpuCache = true;
-    return true;
-  }
-}
-
-/**
- * Cached software-GPU flag. Probes on first use — prefer calling
- * {@link probeSoftwareGpu} only after LCP / `whenHomeBootReady`.
- */
-export function isSoftwareGpu(): boolean {
-  return probeSoftwareGpu();
-}
+export {
+  __resetSoftwareGpuCacheForTests,
+  isSoftwareGpu,
+  peekSoftwareGpu,
+  probeSoftwareGpu,
+} from './softwareGpu';
+import { peekSoftwareGpu } from './softwareGpu';
 
 /** DPR for 2d scene canvases — software=1, mobile overflow ≤1.5. */
 export function effectiveCanvasDpr(
   deviceDpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1,
   opts?: { overflow?: boolean },
 ): number {
-  if (isSoftwareGpu()) return 1;
+  // Peek only — never probe during first paints / atlas decode.
+  if (peekSoftwareGpu() === true) return 1;
   const mobile =
     typeof window !== 'undefined' && window.innerWidth <= MOBILE_TOP_MAX_WIDTH;
   const cap =
@@ -1087,38 +1012,6 @@ export function drawCoverImage(
   dh: number,
 ): void {
   ctx.drawImage(img, dx, dy, dw, dh);
-}
-
-/**
- * Rasterize atlas frame 0 into a data-URL poster matching the first motion
- * canvas frame (motion users). Reduced-motion / software-GL keep RM posters.
- */
-export function captureAtlasFramePoster(
-  bank: AtlasSheetBank,
-  atlas: AtlasMeta,
-  frameIndex = 0,
-  sourceScale = 2,
-): string | null {
-  if (typeof document === 'undefined') return null;
-  const entry = atlas.index[frameIndex];
-  if (!entry) return null;
-  const sheet = bank.get(entry[0]);
-  if (!sheet) return null;
-  const bs = bank.getScale(entry[0]);
-  const { cssW, cssH } = frameDisplaySize(atlas, sourceScale);
-  const dpr = effectiveCanvasDpr();
-  try {
-    const c = document.createElement('canvas');
-    c.width = Math.max(1, Math.round(cssW * dpr));
-    c.height = Math.max(1, Math.round(cssH * dpr));
-    const ctx = c.getContext('2d');
-    if (!ctx) return null;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    drawAtlasFrame(ctx, sheet, atlas, frameIndex, 0, 0, sourceScale, bs);
-    return c.toDataURL('image/webp', 0.92);
-  } catch {
-    return null;
-  }
 }
 
 export function resizeCanvas(

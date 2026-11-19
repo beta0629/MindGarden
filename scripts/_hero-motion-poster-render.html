@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Hero motion poster render</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <canvas id="hero-canvas"></canvas>
+    <script type="module">
+      /**
+       * Mirrors components/home/mountHero3D.ts first-frame pose:
+       * POSTER_CAM / POSTER_LOOK_AT / FOV 30 / WingFold t=0 / dolly-fit / transparent.
+       */
+      import * as THREE from 'three';
+      import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+      import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+      import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+      const SPHERE_FIT_MARGIN = 1.04;
+      const HERO_FOV_DEG = 30;
+      const POSTER_LOOK_AT = { x: 0, y: 0.15, z: 0.06 };
+      const POSTER_CAM = { x: 0.12, y: 1.5, z: 1.95 };
+      const YAW_SWAY_DEG = 0;
+
+      window.__heroPosterReady = false;
+      window.__heroPosterError = null;
+
+      try {
+        const canvas = document.getElementById('hero-canvas');
+        const w = Math.max(2, window.innerWidth || 1620);
+        const h = Math.max(2, window.innerHeight || 940);
+
+        const renderer = new THREE.WebGLRenderer({
+          canvas,
+          antialias: true,
+          alpha: true,
+          preserveDrawingBuffer: true,
+          powerPreference: 'high-performance',
+        });
+        renderer.setPixelRatio(1);
+        renderer.setSize(w, h, false);
+        renderer.setClearColor(0x000000, 0);
+        renderer.setClearAlpha(0);
+        renderer.toneMapping = THREE.NeutralToneMapping;
+        renderer.toneMappingExposure = 0.95;
+        renderer.shadowMap.enabled = false;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        const scene = new THREE.Scene();
+        scene.background = null;
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+        scene.environmentIntensity = 0.9;
+        scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.6));
+        const key = new THREE.DirectionalLight(0xfff3e6, 1.6);
+        key.position.set(-1.2, 3.4, 0.6);
+        scene.add(key);
+
+        const cam = new THREE.PerspectiveCamera(HERO_FOV_DEG, w / h, 0.1, 50);
+        const lookAt = new THREE.Vector3(
+          POSTER_LOOK_AT.x,
+          POSTER_LOOK_AT.y,
+          POSTER_LOOK_AT.z,
+        );
+        const posterOffset = new THREE.Vector3(
+          POSTER_CAM.x - POSTER_LOOK_AT.x,
+          POSTER_CAM.y - POSTER_LOOK_AT.y,
+          POSTER_CAM.z - POSTER_LOOK_AT.z,
+        );
+        let camDist = posterOffset.length();
+        const posterDir = posterOffset.clone().normalize();
+
+        const placePosterCam = (dist, yawRad = 0) => {
+          const offset = posterDir.clone().multiplyScalar(dist);
+          if (yawRad !== 0) {
+            offset.applyAxisAngle(new THREE.Vector3(0, 1, 0), yawRad);
+          }
+          cam.position.copy(lookAt).add(offset);
+          cam.lookAt(lookAt);
+          cam.updateMatrixWorld(true);
+        };
+        placePosterCam(camDist);
+
+        const draco = new DRACOLoader().setDecoderPath(
+          '/public/vendor/draco/gltf/',
+        );
+        const loader = new GLTFLoader().setDRACOLoader(draco);
+        const gltf = await loader.loadAsync(
+          '/public/assets/hero/hero-butterfly.glb',
+        );
+
+        gltf.scene.traverse((obj) => {
+          if (!obj.isMesh) return;
+          obj.castShadow = false;
+          obj.receiveShadow = false;
+          const mats = Array.isArray(obj.material)
+            ? obj.material
+            : [obj.material];
+          for (const mat of mats) {
+            if (typeof mat.roughness === 'number') {
+              mat.roughness = Math.min(mat.roughness, 0.65);
+            }
+          }
+        });
+
+        const tilt = new THREE.Group();
+        tilt.add(gltf.scene);
+        scene.add(tilt);
+
+        const mixer = new THREE.AnimationMixer(gltf.scene);
+        const clip = THREE.AnimationClip.findByName(gltf.animations, 'WingFold');
+        const wingAction = clip ? mixer.clipAction(clip) : null;
+        if (wingAction) wingAction.play();
+        if (clip && wingAction) mixer.setTime(0);
+
+        const _skipBoundsName = /antenna/i;
+        const proj = new THREE.Vector3();
+        const measureNdcMesh = () => {
+          tilt.updateMatrixWorld(true);
+          const into = {
+            halfX: 0,
+            halfY: 0,
+            minY: 1,
+            maxY: -1,
+            any: false,
+          };
+          tilt.traverse((obj) => {
+            if (_skipBoundsName.test(obj.name || '')) return;
+            if (!obj.isMesh || !obj.geometry?.attributes?.position) return;
+            const pos = obj.geometry.attributes.position;
+            const step = Math.max(1, Math.floor(pos.count / 4000));
+            for (let i = 0; i < pos.count; i += step) {
+              proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
+              proj.applyMatrix4(obj.matrixWorld).project(cam);
+              if (
+                !Number.isFinite(proj.x) ||
+                !Number.isFinite(proj.y) ||
+                !Number.isFinite(proj.z)
+              ) {
+                continue;
+              }
+              if (proj.z < -1.05 || proj.z > 1.05) continue;
+              if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
+              into.halfX = Math.max(into.halfX, Math.abs(proj.x));
+              into.halfY = Math.max(into.halfY, Math.abs(proj.y));
+              into.minY = Math.min(into.minY, proj.y);
+              into.maxY = Math.max(into.maxY, proj.y);
+              into.any = true;
+            }
+          });
+          if (!into.any) {
+            return { halfX: 0.5, halfY: 0.5, minY: -0.5, maxY: 0.5 };
+          }
+          return {
+            halfX: into.halfX,
+            halfY: into.halfY,
+            minY: into.minY,
+            maxY: into.maxY,
+          };
+        };
+
+        {
+          const fitTarget = 1 / SPHERE_FIT_MARGIN;
+          const animSteps = clip ? 8 : 0;
+          const duration = clip ? Math.max(clip.duration, 0.001) : 1;
+          const yawMax = THREE.MathUtils.degToRad(YAW_SWAY_DEG);
+
+          const measureFitHalf = () => {
+            let half = 0;
+            for (const yaw of [0, -yawMax, yawMax]) {
+              placePosterCam(camDist, yaw);
+              for (let s = 0; s <= animSteps; s += 1) {
+                if (clip && wingAction) {
+                  mixer.setTime((duration * s) / Math.max(animSteps, 1));
+                }
+                const ext = measureNdcMesh();
+                half = Math.max(half, ext.halfX, ext.halfY);
+              }
+            }
+            if (clip && wingAction) mixer.setTime(0);
+            return Math.max(half, 0.05);
+          };
+
+          placePosterCam(camDist);
+          for (let i = 0; i < 4; i += 1) {
+            const half = measureFitHalf();
+            camDist = Math.max(0.4, camDist * (half / fitTarget));
+          }
+          placePosterCam(camDist);
+          if (clip && wingAction) mixer.setTime(0);
+        }
+
+        // Force t=0 pose for the still.
+        if (clip && wingAction) mixer.setTime(0);
+        placePosterCam(camDist, 0);
+        tilt.rotation.set(0, 0, 0);
+        renderer.render(scene, cam);
+        // Second paint after shader compile.
+        renderer.render(scene, cam);
+
+        window.__heroPosterReady = true;
+        window.__heroPosterMeta = { camDist, w, h };
+      } catch (err) {
+        window.__heroPosterError = String(err && err.stack ? err.stack : err);
+      }
+    </script>
+  </body>
+</html>

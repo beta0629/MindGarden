@@ -46,8 +46,8 @@ const MOBILE_MIN_FRAME_MS = 1000 / 30;
 const DESKTOP_WING_SAMPLE_MS = 1000 / 30;
 /** Pause WingFold after this long with no pointer activity (scroll does NOT count). */
 const IDLE_PAUSE_MS = 8000;
-/** Canvas fade-in before poster fade-out (matches globals.css hero reveal). */
-const HERO_CANVAS_FADE_MS = 300;
+/** Canvas fade-in before poster fade-out (match v37 ~180ms; globals.css). */
+const HERO_CANVAS_FADE_MS = 180;
 /** Skip render when tilt / yaw have settled within this epsilon. */
 const POSE_EPS = 0.0004;
 
@@ -82,7 +82,9 @@ export async function mountHero3D({
   }
 
   // Safety net if a caller skipped the shared probe (cached — no second GL ctx).
-  const { probeSoftwareGpu } = await import('@/components/home/v37/atlas');
+  const { probeSoftwareGpu } = await import(
+    '@/components/home/v37/softwareGpu'
+  );
   if (probeSoftwareGpu()) {
     return () => undefined;
   }
@@ -425,6 +427,11 @@ export async function mountHero3D({
   let lastActivityAt = performance.now();
   let wingSampleTimer: number | null = null;
   let revealed = false;
+  /**
+   * Hold WingFold at t=0 until canvas opacity fade completes — static motion
+   * poster and first live pixels must match (no double-wing crossfade).
+   */
+  let canvasFadeDone = false;
 
   const noteUserActivity = () => {
     lastActivityAt = performance.now();
@@ -452,7 +459,6 @@ export async function mountHero3D({
         'is-3d',
         'is-3d-canvas-in',
         'is-3d-poster-out',
-        'is-3d-still-synced',
       );
     }
   };
@@ -604,8 +610,9 @@ export async function mountHero3D({
   };
 
   const syncWingSample = () => {
-    if (!running) {
+    if (!running || !canvasFadeDone) {
       stopWingSample();
+      setContinuous(HERO_RAF_ID, false);
       return;
     }
     const pausedUi = panel.classList.contains('is-paused');
@@ -627,7 +634,7 @@ export async function mountHero3D({
         ? MOBILE_MIN_FRAME_MS
         : DESKTOP_WING_SAMPLE_MS;
       wingSampleTimer = window.setInterval(() => {
-        if (!running || idlePaused) return;
+        if (!running || idlePaused || !canvasFadeDone) return;
         markDirty(HERO_RAF_ID);
       }, interval);
     }
@@ -637,7 +644,13 @@ export async function mountHero3D({
     if (!running) return;
     const pausedUi = panel.classList.contains('is-paused');
     const shouldRun =
-      visible && !document.hidden && !pausedUi && !idlePaused && !reduce.matches;
+      visible &&
+      !document.hidden &&
+      !pausedUi &&
+      !idlePaused &&
+      !reduce.matches &&
+      // Before fade completes: only paint held t=0 via compile / explicit dirties.
+      (canvasFadeDone || revealed);
     // Tear down three's loop entirely when not painting — no early-return stubs.
     renderer.setAnimationLoop(null);
     setPaused(HERO_RAF_ID, !shouldRun);
@@ -661,6 +674,17 @@ export async function mountHero3D({
 
   const tick = (now: number) => {
     if (!running) return;
+
+    if (!canvasFadeDone) {
+      // Hold first frame (matches static motion poster) through canvas fade-in.
+      if (clip && wingAction) mixer.setTime(0);
+      placePosterCam(camDist, 0);
+      tilt.rotation.set(0, 0, 0);
+      last = now;
+      lastRenderAt = now;
+      renderer.render(scene, cam);
+      return;
+    }
 
     if (now - lastActivityAt >= IDLE_PAUSE_MS) {
       idlePaused = true;
@@ -703,67 +727,35 @@ export async function mountHero3D({
   };
 
   // Dirty-driven by default — continuous only while tilt eases (see syncWingSample).
+  // Do not arm WingFold sampling until canvas fade completes.
   subscribe(HERO_RAF_ID, tick, { continuous: false });
-  syncHeroPlayback();
-
-  /**
-   * Replace LCP `.hero-still` pixels with the first painted WebGL frame so the
-   * crossfade matches 3D bbox (no tan oval / size jump). Soft-GL / RM never reach here.
-   * Bitmap is blitted at the canvas CSS box so aspect matches `.hero-3d`.
-   */
-  const syncStillToFirstGlFrame = (): boolean => {
-    const still = panel.querySelector<HTMLImageElement>('.hero-still');
-    const gl = renderer.domElement;
-    if (!still || !gl || gl.width < 2 || gl.height < 2) return false;
-    try {
-      const cssW = Math.max(1, Math.round(gl.clientWidth || panelRect.width));
-      const cssH = Math.max(1, Math.round(gl.clientHeight || panelRect.height));
-      const c = document.createElement('canvas');
-      c.width = cssW;
-      c.height = cssH;
-      const ctx = c.getContext('2d');
-      if (!ctx) return false;
-      // Scale backing-store → CSS display size (same aspect as the stage).
-      ctx.drawImage(gl, 0, 0, cssW, cssH);
-      const url = c.toDataURL('image/webp', 0.92);
-      // Drop picture srcset so the captured frame wins over responsive sources.
-      const picture = still.closest('picture');
-      if (picture) {
-        picture.querySelectorAll('source').forEach((s) => s.remove());
-      }
-      still.removeAttribute('srcset');
-      still.removeAttribute('sizes');
-      still.width = cssW;
-      still.height = cssH;
-      still.src = url;
-      // Match `.hero-3d` layout (inset 0 / no zoom / no radial mask).
-      panel.classList.add('is-3d-still-synced');
-      return true;
-    } catch {
-      /* keep LCP poster if blit fails */
-      return false;
-    }
-  };
+  setPaused(HERO_RAF_ID, true);
 
   /*
-   * Staged reveal: blit first GL frame into .hero-still, THEN fade canvas in
-   * and poster out — still and live canvas share the same pixels/framing.
+   * Staged reveal: paint t=0 → fade canvas in (still frozen) → unlock wings →
+   * fade static motion poster out. No runtime GL readback / toDataURL.
    */
   void (async () => {
     await compileAndPaintFirst();
     if (!running || signal?.aborted || reduce.matches) return;
-    syncStillToFirstGlFrame();
     await whenHomeBootReady();
     if (!running || signal?.aborted || reduce.matches || revealed) return;
     revealed = true;
     panel.classList.add('is-3d');
+    // Allow held-pose ticks during fade (still no mixer.update).
+    setPaused(HERO_RAF_ID, false);
+    markDirty(HERO_RAF_ID);
     // setTimeout — not a second native rAF racing rafScheduler.
     window.setTimeout(() => {
       if (!running || signal?.aborted) return;
       panel.classList.add('is-3d-canvas-in');
       window.setTimeout(() => {
         if (!running || signal?.aborted) return;
+        canvasFadeDone = true;
+        if (clip && wingAction) mixer.setTime(0);
+        last = performance.now();
         panel.classList.add('is-3d-poster-out');
+        syncHeroPlayback();
       }, HERO_CANVAS_FADE_MS);
     }, 0);
   })();
@@ -796,7 +788,6 @@ export async function mountHero3D({
       'is-3d',
       'is-3d-canvas-in',
       'is-3d-poster-out',
-      'is-3d-still-synced',
     );
     panel.classList.remove('is-cropped');
     panel.style.removeProperty('--hero-subj-left');

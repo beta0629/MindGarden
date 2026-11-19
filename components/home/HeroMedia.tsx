@@ -313,7 +313,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         await waitIdle(THREE_IDLE_TIMEOUT_MS);
         if (ac.signal.aborted) return;
 
-        const { probeSoftwareGpu } = await import('./v37/atlas');
+        const { probeSoftwareGpu } = await import('./v37/softwareGpu');
         if (probeSoftwareGpu()) {
           // Soft GL keeps the CSS poster — never import three.js.
           if (!ac.signal.aborted) dispatchHomeBootReady();

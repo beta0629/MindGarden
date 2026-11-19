@@ -170,6 +170,28 @@ export const TRIGGER_WALK_F = {
 
 export const WALK_FPS = 30;
 
+/** Matches `.v37-scene__canvas` opacity transition in globals.css. */
+export const V37_CANVAS_FADE_MS = 180;
+
+/**
+ * Booking motion poster / fade-hold atlas index.
+ * Landing frame 0 is fully transparent — first opaque cell is index 1.
+ * Keep in sync with `scripts/generate-v37-motion-posters.mjs`.
+ */
+export const BOOKING_MOTION_HOLD_FRAME = 1;
+
+export type V37SceneKind = 'gate' | 'bench' | 'booking';
+
+/** Static build-time motion poster (atlas frame 0 / body+shadow). */
+export function v37MotionPosterSrc(kind: V37SceneKind, pack: PackId): string {
+  return `${ASSET_BASE}/${kind}/${pack}/${kind}-poster-motion-${pack}.webp`;
+}
+
+/** Reduced-motion / software-GL / fail poster. */
+export function v37RmPosterSrc(kind: V37SceneKind, pack: PackId): string {
+  return `${ASSET_BASE}/${kind}/${pack}/${kind}-poster-rm-${pack}.webp`;
+}
+
 export function assetUrl(relativePath: string): string {
   const cleaned = relativePath.replace(/^\//, '');
   return `${ASSET_BASE}/${cleaned}`;

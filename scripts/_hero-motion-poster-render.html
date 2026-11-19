@@ -32,15 +32,15 @@
     <script type="module">
       /**
        * Mirrors components/home/mountHero3D.ts first-frame pose:
-       * POSTER_CAM / POSTER_LOOK_AT / FOV 30 / WingFold t=0 / dolly-fit /
-       * mobile top-pack (≤1023) / transparent.
+       * POSTER_CAM / POSTER_LOOK_AT / FOV 30 / WingFold t=0 / AABB dolly-fit /
+       * mobile top-pack (≤1023) / baked RoomEnvironment EXR / transparent.
        *
-       * Query: ?vw=390&vh=844&panelW=390&panelH=226&mobile=1
+       * Query: ?vw=390&vh=844&panelW=390&panelH=226&mobile=1&dpr=2
        */
       import * as THREE from 'three';
       import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-      // No RoomEnvironment/PMREM — match mountHero3D first held frame (env deferred).
+      import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 
       const SPHERE_FIT_MARGIN = 1.04;
       const HERO_FOV_DEG = 30;
@@ -48,6 +48,8 @@
       const POSTER_CAM = { x: 0.12, y: 1.5, z: 1.95 };
       const YAW_SWAY_DEG = 0;
       const MOBILE_TOP_NDC = 0.9;
+      const HERO_ENV_URL = '/public/assets/hero/hero-env-room.exr';
+      const HERO_ENV_INTENSITY = 0.9;
 
       const params = new URLSearchParams(window.location.search);
       const panelW = Math.max(
@@ -58,6 +60,7 @@
         2,
         Number(params.get('panelH')) || window.innerHeight || 470,
       );
+      const dpr = Math.max(1, Math.min(2, Number(params.get('dpr')) || 2));
       const applyMobileFit =
         params.get('mobile') === '1' ||
         Number(params.get('vw') || panelW) <= 1023;
@@ -77,8 +80,7 @@
           preserveDrawingBuffer: true,
           powerPreference: 'high-performance',
         });
-        // Match mountHero3D production: skip sync shader-error work.
-        renderer.setPixelRatio(1);
+        renderer.setPixelRatio(dpr);
         renderer.setSize(w, h, false);
         renderer.setClearColor(0x000000, 0);
         renderer.setClearAlpha(0);
@@ -123,9 +125,17 @@
           '/public/vendor/draco/gltf/',
         );
         const loader = new GLTFLoader().setDRACOLoader(draco);
-        const gltf = await loader.loadAsync(
-          '/public/assets/hero/hero-butterfly.glb',
-        );
+        const exrLoader = new EXRLoader();
+        const [gltf, equirect] = await Promise.all([
+          loader.loadAsync('/public/assets/hero/hero-butterfly.glb'),
+          exrLoader.loadAsync(HERO_ENV_URL),
+        ]);
+        equirect.mapping = THREE.EquirectangularReflectionMapping;
+        const pmrem = new THREE.PMREMGenerator(renderer);
+        const envRT = pmrem.fromEquirectangular(equirect);
+        scene.environment = envRT.texture;
+        scene.environmentIntensity = HERO_ENV_INTENSITY;
+        equirect.dispose();
 
         gltf.scene.traverse((obj) => {
           if (!obj.isMesh) return;
@@ -152,9 +162,33 @@
         if (clip && wingAction) mixer.setTime(0);
 
         const _skipBoundsName = /antenna/i;
-        const proj = new THREE.Vector3();
-        const measureNdcMesh = () => {
+        const subjectBox = new THREE.Box3();
+        const meshBox = new THREE.Box3();
+        const corner = new THREE.Vector3();
+
+        const refreshSubjectBounds = () => {
           tilt.updateMatrixWorld(true);
+          subjectBox.makeEmpty();
+          tilt.traverse((obj) => {
+            if (_skipBoundsName.test(obj.name || '')) return;
+            if (!obj.isMesh || !obj.geometry) return;
+            if (!obj.geometry.boundingBox) obj.geometry.computeBoundingBox();
+            meshBox
+              .copy(obj.geometry.boundingBox)
+              .applyMatrix4(obj.matrixWorld);
+            subjectBox.union(meshBox);
+          });
+          if (subjectBox.isEmpty()) {
+            subjectBox.set(
+              new THREE.Vector3(-0.5, -0.5, -0.5),
+              new THREE.Vector3(0.5, 0.5, 0.5),
+            );
+          }
+        };
+
+        const measureNdcBox = () => {
+          refreshSubjectBounds();
+          const { min, max } = subjectBox;
           const into = {
             halfX: 0,
             halfY: 0,
@@ -162,30 +196,32 @@
             maxY: -1,
             any: false,
           };
-          tilt.traverse((obj) => {
-            if (_skipBoundsName.test(obj.name || '')) return;
-            if (!obj.isMesh || !obj.geometry?.attributes?.position) return;
-            const pos = obj.geometry.attributes.position;
-            const step = Math.max(1, Math.floor(pos.count / 4000));
-            for (let i = 0; i < pos.count; i += step) {
-              proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
-              proj.applyMatrix4(obj.matrixWorld).project(cam);
-              if (
-                !Number.isFinite(proj.x) ||
-                !Number.isFinite(proj.y) ||
-                !Number.isFinite(proj.z)
-              ) {
-                continue;
+          for (let ix = 0; ix < 2; ix += 1) {
+            for (let iy = 0; iy < 2; iy += 1) {
+              for (let iz = 0; iz < 2; iz += 1) {
+                corner.set(
+                  ix ? max.x : min.x,
+                  iy ? max.y : min.y,
+                  iz ? max.z : min.z,
+                );
+                corner.project(cam);
+                if (
+                  !Number.isFinite(corner.x) ||
+                  !Number.isFinite(corner.y) ||
+                  !Number.isFinite(corner.z)
+                ) {
+                  continue;
+                }
+                if (corner.z < -1.05 || corner.z > 1.05) continue;
+                if (Math.abs(corner.x) > 4 || Math.abs(corner.y) > 4) continue;
+                into.halfX = Math.max(into.halfX, Math.abs(corner.x));
+                into.halfY = Math.max(into.halfY, Math.abs(corner.y));
+                into.minY = Math.min(into.minY, corner.y);
+                into.maxY = Math.max(into.maxY, corner.y);
+                into.any = true;
               }
-              if (proj.z < -1.05 || proj.z > 1.05) continue;
-              if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
-              into.halfX = Math.max(into.halfX, Math.abs(proj.x));
-              into.halfY = Math.max(into.halfY, Math.abs(proj.y));
-              into.minY = Math.min(into.minY, proj.y);
-              into.maxY = Math.max(into.maxY, proj.y);
-              into.any = true;
             }
-          });
+          }
           if (!into.any) {
             return { halfX: 0.5, halfY: 0.5, minY: -0.5, maxY: 0.5 };
           }
@@ -211,7 +247,7 @@
                 if (clip && wingAction) {
                   mixer.setTime((duration * s) / Math.max(animSteps, 1));
                 }
-                const ext = measureNdcMesh();
+                const ext = measureNdcBox();
                 half = Math.max(half, ext.halfX, ext.halfY);
               }
             }
@@ -227,20 +263,19 @@
           placePosterCam(camDist);
           if (clip && wingAction) mixer.setTime(0);
 
-          // Match mountHero3D mobile lookAt shift + re-dolly (≤1023).
           if (applyMobileFit) {
             const worldPerNdcY = () => {
               const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
               return dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
             };
-            const before = measureNdcMesh();
+            const before = measureNdcBox();
             const shift = (MOBILE_TOP_NDC - before.maxY) * worldPerNdcY();
             lookAt.y -= Math.max(
               -camDist * 0.12,
               Math.min(camDist * 0.22, shift),
             );
             placePosterCam(camDist);
-            const after = measureNdcMesh();
+            const after = measureNdcBox();
             const half = Math.max(after.halfX, after.halfY, 0.05);
             if (half > fitTarget) {
               camDist = Math.max(0.4, camDist * (half / fitTarget));
@@ -250,22 +285,31 @@
           }
         }
 
-        // Force t=0 pose for the still.
         if (clip && wingAction) mixer.setTime(0);
         placePosterCam(camDist, 0);
         tilt.rotation.set(0, 0, 0);
+
+        if (typeof renderer.compileAsync === 'function') {
+          await renderer.compileAsync(scene, cam);
+        }
         renderer.render(scene, cam);
-        // Second paint after shader compile.
         renderer.render(scene, cam);
 
         window.__heroPosterReady = true;
         window.__heroPosterMeta = {
           camDist,
-          w,
-          h,
+          cssW: w,
+          cssH: h,
+          backingW: canvas.width,
+          backingH: canvas.height,
+          dpr,
           mobile: applyMobileFit,
           lookAtY: lookAt.y,
+          env: HERO_ENV_URL,
         };
+
+        envRT.dispose();
+        pmrem.dispose();
       } catch (err) {
         window.__heroPosterError = String(err && err.stack ? err.stack : err);
       }

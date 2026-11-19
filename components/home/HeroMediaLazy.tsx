@@ -41,6 +41,15 @@ export function HeroMediaLazy() {
       await whenHomeBootReady();
       if (cancelled) return;
       try {
+        // Reduced-motion: poster-only — no soft-GL probe, no HeroMedia canvas/WebGL.
+        if (
+          typeof window !== 'undefined' &&
+          window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+          await whenHomeBootBarShown();
+          if (!cancelled) dispatchHomeBootReady();
+          return;
+        }
         await waitIdle(SOFTWARE_GPU_PROBE_IDLE_MS);
         if (cancelled) return;
         const { probeSoftwareGpu } = await import('./v37/softwareGpu');

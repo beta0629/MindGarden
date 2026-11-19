@@ -1,17 +1,14 @@
 #!/usr/bin/env node
 /**
- * First-frame hero motion posters (WingFold t=0, locked poster cam).
+ * First-frame hero motion posters (WingFold t=0, locked poster cam, baked env).
  *
- * Preferred: TARGET_URL=http://127.0.0.1:4011/ captures the live hold frame
- * from mountHero3D (exact cam fit + lights-only before deferred PMREM).
+ * Offline Playwright + _hero-motion-poster-render.html at each breakpoint
+ * stage (390 / 768 / 1440) with mobile top-pack ≤1023 and devicePixelRatio 2.
  *
- * Fallback: offline Playwright + _hero-motion-poster-render.html at each
- * breakpoint stage (390 / 768 / 1440) with mobile top-pack ≤1023.
- *
- * Writes WebP (+ AVIF) under public/assets/hero/hero-poster-motion-{bp}.{webp,avif}.
+ * Writes WebP (+ AVIF) under public/assets/hero/hero-poster-motion-{bp}.{webp,avif}
+ * at 2× backing-store resolution (CSS panel × dpr).
  *
  * Usage:
- *   TARGET_URL=http://127.0.0.1:4011/ node scripts/generate-hero-motion-posters.mjs
  *   node scripts/generate-hero-motion-posters.mjs
  */
 import http from 'node:http';
@@ -30,13 +27,11 @@ const ASPECT = 81 / 47;
 const WEBP_QUALITY = 92;
 /** Higher AVIF quality so LCP still ≈ live GL hold frame (pixel-diff gate). */
 const AVIF_QUALITY = 72;
+/** Capture at 2× for sharpness (matches mountHero3D max DPR). */
+const CAPTURE_DPR = 2;
 
 /**
- * Per-breakpoint stage sizes (CSS panel box at that viewport width).
- * Mobile/tablet = full-bleed width; desktop = 50.625rem (810px) panel.
- */
-/**
- * Stage CSS box ≈ live `.hero-media` backing store (integer CSS px).
+ * Stage CSS box ≈ live `.hero-media` (integer CSS px).
  * 768 uses 445 (not round(768×47/81)=446) to match live clientHeight.
  */
 const BREAKPOINTS = [
@@ -53,6 +48,8 @@ const MIME = {
   '.wasm': 'application/wasm',
   '.glb': 'model/gltf-binary',
   '.css': 'text/css; charset=utf-8',
+  '.exr': 'image/x-exr',
+  '.hdr': 'image/vnd.radiance',
 };
 
 function contentType(filePath) {
@@ -107,7 +104,7 @@ async function renderBreakpoint(browser, baseUrl, bp) {
   const panelH = bp.panelH || Math.round(bp.panelW / ASPECT);
   const page = await browser.newPage({
     viewport: { width: bp.panelW, height: panelH },
-    deviceScaleFactor: 1,
+    deviceScaleFactor: CAPTURE_DPR,
   });
 
   page.on('console', (msg) => {
@@ -123,6 +120,7 @@ async function renderBreakpoint(browser, baseUrl, bp) {
     panelW: String(bp.panelW),
     panelH: String(panelH),
     mobile: bp.mobile ? '1' : '0',
+    dpr: String(CAPTURE_DPR),
   });
   await page.goto(
     `${baseUrl}/scripts/_hero-motion-poster-render.html?${qs}`,
@@ -160,87 +158,14 @@ async function renderBreakpoint(browser, baseUrl, bp) {
   await page.close();
 }
 
-const LIVE_VIEWPORTS = [
-  { name: '390', width: 390, height: 844 },
-  { name: '768', width: 768, height: 1024 },
-  { name: '1440', width: 1440, height: 900 },
-];
-
-/**
- * Capture hold-frame posters from a running Next server (preferred).
- * @param {import('playwright').Browser} browser
- * @param {string} targetUrl
- */
-async function captureFromLive(browser, targetUrl) {
-  for (const vp of LIVE_VIEWPORTS) {
-    console.log(`live capture ${vp.name} @ ${vp.width}`);
-    const page = await browser.newPage({
-      viewport: { width: vp.width, height: vp.height },
-      deviceScaleFactor: 1,
-    });
-    await page.addInitScript(() => {
-      try {
-        sessionStorage.removeItem('mg-home-boot-done-v1');
-        sessionStorage.setItem('mg-soft-gpu-v1', '0');
-      } catch {
-        /* ignore */
-      }
-      const orig = HTMLCanvasElement.prototype.getContext;
-      HTMLCanvasElement.prototype.getContext = function getContextPatched(
-        type,
-        attrs,
-      ) {
-        if (String(type).includes('webgl')) {
-          attrs = Object.assign({}, attrs || {}, {
-            preserveDrawingBuffer: true,
-          });
-        }
-        return orig.call(this, type, attrs);
-      };
-    });
-    await page.goto(targetUrl, {
-      waitUntil: 'domcontentloaded',
-      timeout: 120000,
-    });
-    await page.waitForFunction(
-      () => {
-        const panel = document.querySelector('.hero-media');
-        const canvas = panel?.querySelector('canvas.hero-3d');
-        return !!(
-          panel &&
-          canvas &&
-          canvas.width > 0 &&
-          panel.classList.contains('is-3d') &&
-          !panel.classList.contains('is-3d-poster-out')
-        );
-      },
-      null,
-      { timeout: 180000 },
-    );
-    const readback = await page.evaluate(() => {
-      const canvas = document.querySelector('canvas.hero-3d');
-      const w = canvas.width;
-      const h = canvas.height;
-      const c2 = document.createElement('canvas');
-      c2.width = w;
-      c2.height = h;
-      c2.getContext('2d').drawImage(canvas, 0, 0);
-      return {
-        w,
-        h,
-        data: Array.from(c2.getContext('2d').getImageData(0, 0, w, h).data),
-        fit: document.querySelector('.hero-media')?.dataset?.heroFit || null,
-      };
-    });
-    console.log(`  fit ${vp.name}:`, readback.fit);
-    await writePosterFromRgba(readback.data, vp.name, readback.w, readback.h);
-    await page.close();
-  }
-}
-
 async function main() {
   await fsp.mkdir(OUT_DIR, { recursive: true });
-  const targetUrl = process.env.TARGET_URL || '';
+  const envPath = path.join(OUT_DIR, 'hero-env-room.exr');
+  if (!fs.existsSync(envPath)) {
+    throw new Error(
+      `Missing ${envPath} — run: node scripts/bake-hero-env.mjs`,
+    );
+  }
 
   let browser;
   let server = null;
@@ -258,28 +183,23 @@ async function main() {
       ],
     });
 
-    if (targetUrl) {
-      console.log(`Live capture from ${targetUrl}`);
-      await captureFromLive(browser, targetUrl);
-    } else {
-      const renderHtml = path.join(
-        ROOT,
-        'scripts',
-        '_hero-motion-poster-render.html',
+    const renderHtml = path.join(
+      ROOT,
+      'scripts',
+      '_hero-motion-poster-render.html',
+    );
+    if (!fs.existsSync(renderHtml)) {
+      throw new Error(`Missing ${renderHtml}`);
+    }
+    const started = await startStaticServer();
+    server = started.server;
+    const baseUrl = `http://127.0.0.1:${started.port}`;
+    console.log(`Static server ${baseUrl} (dpr=${CAPTURE_DPR})`);
+    for (const bp of BREAKPOINTS) {
+      console.log(
+        `breakpoint ${bp.name} (panelW=${bp.panelW}, mobile=${bp.mobile}, dpr=${CAPTURE_DPR})`,
       );
-      if (!fs.existsSync(renderHtml)) {
-        throw new Error(`Missing ${renderHtml}`);
-      }
-      const started = await startStaticServer();
-      server = started.server;
-      const baseUrl = `http://127.0.0.1:${started.port}`;
-      console.log(`Static server ${baseUrl}`);
-      for (const bp of BREAKPOINTS) {
-        console.log(
-          `breakpoint ${bp.name} (panelW=${bp.panelW}, mobile=${bp.mobile})`,
-        );
-        await renderBreakpoint(browser, baseUrl, bp);
-      }
+      await renderBreakpoint(browser, baseUrl, bp);
     }
     console.log('done');
   } finally {

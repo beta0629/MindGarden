@@ -402,7 +402,10 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         </video>
       ) : null}
 
-      <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
+      {/* Reduced-motion / still: no hero canvas — zero WebGL contexts. */}
+      {mode === '3d' ? (
+        <canvas ref={canvasRef} className="hero-3d" aria-hidden="true" />
+      ) : null}
     </>
   );
 

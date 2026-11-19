@@ -31,8 +31,7 @@ const POSTER_CAM = { x: 0.12, y: 1.5, z: 1.95 } as const;
 const YAW_SWAY_DEG = 0;
 const YAW_SWAY_PERIOD_S = 30;
 /**
- * Pause at dense-subject BR: 82nd percentile of projected verts (not AABB max,
- * which parks the control on the canvas corner when a few petals spike maxX).
+ * Pause at dense-subject BR: 82nd percentile stand-in along projected AABB X.
  */
 const PAUSE_PCT = 0.82;
 /** Mobile top-pack: push painted mesh maxY toward this NDC (less cream under CTA). */
@@ -50,6 +49,9 @@ const IDLE_PAUSE_MS = 8000;
 const HERO_CANVAS_FADE_MS = 180;
 /** Skip render when tilt / yaw have settled within this epsilon. */
 const POSE_EPS = 0.0004;
+/** Prebaked RoomEnvironment equirect (scripts/bake-hero-env.mjs). */
+const HERO_ENV_URL = '/assets/hero/hero-env-room.exr';
+const HERO_ENV_INTENSITY = 0.9;
 
 function waitIdle(timeoutMs: number): Promise<void> {
   return new Promise((resolve) => {
@@ -94,6 +96,7 @@ export async function mountHero3D({
   const { DRACOLoader } = await import(
     'three/examples/jsm/loaders/DRACOLoader.js'
   );
+  const { EXRLoader } = await import('three/examples/jsm/loaders/EXRLoader.js');
 
   if (signal?.aborted) {
     return () => undefined;
@@ -131,14 +134,12 @@ export async function mountHero3D({
 
   const scene = new THREE.Scene();
   scene.background = null;
-  /*
-   * Defer RoomEnvironment → PMREM off the first-paint path. Hemisphere + key
-   * lights already light the subject; attach env when idle after held frame.
-   */
-  /** Created lazily in attachEnvWhenIdle — null until after first paint. */
+
+  /** PMREM from baked equirect — never RoomEnvironment.fromScene at runtime. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- three PMREMGenerator typing across dynamic import
   let pmrem: any = null;
-  let envReady = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- RenderTarget from fromEquirectangular
+  let envRT: any = null;
 
   scene.add(new THREE.HemisphereLight(0xfff7ee, 0xd9cfbd, 0.6));
   const key = new THREE.DirectionalLight(0xfff3e6, 1.6);
@@ -174,17 +175,33 @@ export async function mountHero3D({
 
   const draco = new DRACOLoader().setDecoderPath('/vendor/draco/gltf/');
   const loader = new GLTFLoader().setDRACOLoader(draco);
+  const exrLoader = new EXRLoader();
 
   let gltf;
   try {
-    gltf = await loader.loadAsync('/assets/hero/hero-butterfly.glb');
+    const [gltfResult, envMap] = await Promise.all([
+      loader.loadAsync('/assets/hero/hero-butterfly.glb'),
+      exrLoader.loadAsync(HERO_ENV_URL),
+    ]);
+    gltf = gltfResult;
+    envMap.mapping = THREE.EquirectangularReflectionMapping;
+    pmrem = new THREE.PMREMGenerator(renderer);
+    envRT = pmrem.fromEquirectangular(envMap);
+    scene.environment = envRT.texture;
+    scene.environmentIntensity = HERO_ENV_INTENSITY;
+    // Equirect no longer needed after PMREM conversion.
+    envMap.dispose();
   } catch (err) {
+    if (envRT) envRT.dispose();
+    if (pmrem) pmrem.dispose();
     draco.dispose();
     renderer.dispose();
     throw err;
   }
 
   if (signal?.aborted) {
+    if (envRT) envRT.dispose();
+    if (pmrem) pmrem.dispose();
     draco.dispose();
     renderer.dispose();
     return () => undefined;
@@ -223,64 +240,84 @@ export async function mountHero3D({
 
   const _skipBoundsName = /antenna/i;
   const proj = new THREE.Vector3();
+  const subjectBox = new THREE.Box3();
+  const meshBox = new THREE.Box3();
+  const corner = new THREE.Vector3();
 
   type NdcExtents = { halfX: number; halfY: number; minY: number; maxY: number };
-  const measureNdcMesh = (): NdcExtents => {
+
+  /**
+   * World AABB from mesh geometry bounding boxes (computed once per call).
+   * No per-vertex projection — O(meshes) local AABB transforms.
+   */
+  const refreshSubjectBounds = () => {
     tilt.updateMatrixWorld(true);
-    const into = {
-      halfX: 0,
-      halfY: 0,
-      minY: 1,
-      maxY: -1,
-      any: false,
-    };
+    subjectBox.makeEmpty();
     tilt.traverse((obj) => {
       if (_skipBoundsName.test(obj.name || '')) return;
       const mesh = obj as unknown as {
         isMesh?: boolean;
         geometry?: {
-          attributes?: {
-            position?: {
-              count: number;
-              getX: (i: number) => number;
-              getY: (i: number) => number;
-              getZ: (i: number) => number;
-            };
-          };
+          boundingBox?: InstanceType<typeof THREE.Box3> | null;
+          computeBoundingBox?: () => void;
         };
         matrixWorld: InstanceType<typeof THREE.Matrix4>;
       };
-      if (!mesh.isMesh || !mesh.geometry?.attributes?.position) return;
-      const pos = mesh.geometry.attributes.position;
-      const step = Math.max(1, Math.floor(pos.count / 4000));
-      for (let i = 0; i < pos.count; i += step) {
-        proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
-        proj.applyMatrix4(mesh.matrixWorld).project(cam);
-        if (
-          !Number.isFinite(proj.x) ||
-          !Number.isFinite(proj.y) ||
-          !Number.isFinite(proj.z)
-        ) {
-          continue;
-        }
-        if (proj.z < -1.05 || proj.z > 1.05) continue;
-        if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
-        into.halfX = Math.max(into.halfX, Math.abs(proj.x));
-        into.halfY = Math.max(into.halfY, Math.abs(proj.y));
-        into.minY = Math.min(into.minY, proj.y);
-        into.maxY = Math.max(into.maxY, proj.y);
-        into.any = true;
+      if (!mesh.isMesh || !mesh.geometry) return;
+      if (!mesh.geometry.boundingBox && mesh.geometry.computeBoundingBox) {
+        mesh.geometry.computeBoundingBox();
       }
+      if (!mesh.geometry.boundingBox) return;
+      meshBox.copy(mesh.geometry.boundingBox).applyMatrix4(mesh.matrixWorld);
+      subjectBox.union(meshBox);
     });
-    if (!into.any) {
+    if (subjectBox.isEmpty()) {
+      subjectBox.set(
+        new THREE.Vector3(-0.5, -0.5, -0.5),
+        new THREE.Vector3(0.5, 0.5, 0.5),
+      );
+    }
+  };
+
+  /** Project cached AABB 8 corners into NDC — hot fit path stays &lt;30ms. */
+  const measureNdcBox = (): NdcExtents => {
+    refreshSubjectBounds();
+    const { min, max } = subjectBox;
+    let halfX = 0;
+    let halfY = 0;
+    let minY = 1;
+    let maxY = -1;
+    let any = false;
+    for (let ix = 0; ix < 2; ix += 1) {
+      for (let iy = 0; iy < 2; iy += 1) {
+        for (let iz = 0; iz < 2; iz += 1) {
+          corner.set(
+            ix ? max.x : min.x,
+            iy ? max.y : min.y,
+            iz ? max.z : min.z,
+          );
+          corner.project(cam);
+          if (
+            !Number.isFinite(corner.x) ||
+            !Number.isFinite(corner.y) ||
+            !Number.isFinite(corner.z)
+          ) {
+            continue;
+          }
+          if (corner.z < -1.05 || corner.z > 1.05) continue;
+          if (Math.abs(corner.x) > 4 || Math.abs(corner.y) > 4) continue;
+          halfX = Math.max(halfX, Math.abs(corner.x));
+          halfY = Math.max(halfY, Math.abs(corner.y));
+          minY = Math.min(minY, corner.y);
+          maxY = Math.max(maxY, corner.y);
+          any = true;
+        }
+      }
+    }
+    if (!any) {
       return { halfX: 0.5, halfY: 0.5, minY: -0.5, maxY: 0.5 };
     }
-    return {
-      halfX: into.halfX,
-      halfY: into.halfY,
-      minY: into.minY,
-      maxY: into.maxY,
-    };
+    return { halfX, halfY, minY, maxY };
   };
 
   /** Cached panel box — refreshed on resize only (no per-frame layout reads). */
@@ -315,9 +352,10 @@ export async function mountHero3D({
 
   /*
    * Dolly-fit at the locked poster angle across WingFold (+ tiny yaw extremes).
-   * Canvas size is CSS-owned — we only move along the poster ray.
+   * Uses cached mesh AABBs — never per-vert projection loops.
    */
   {
+    performance.mark('hero-fit-start');
     const fitTarget = 1 / SPHERE_FIT_MARGIN;
     const animSteps = clip ? 8 : 0;
     const duration = clip ? Math.max(clip.duration, 0.001) : 1;
@@ -331,7 +369,7 @@ export async function mountHero3D({
           if (clip && wingAction) {
             mixer.setTime((duration * s) / Math.max(animSteps, 1));
           }
-          const ext = measureNdcMesh();
+          const ext = measureNdcBox();
           half = Math.max(half, ext.halfX, ext.halfY);
         }
       }
@@ -357,12 +395,12 @@ export async function mountHero3D({
         const dist = Math.max(cam.position.distanceTo(lookAt), 0.01);
         return dist * Math.tan(THREE.MathUtils.degToRad(cam.fov * 0.5));
       };
-      const before = measureNdcMesh();
+      const before = measureNdcBox();
       const shift = (MOBILE_TOP_NDC - before.maxY) * worldPerNdcY();
       // Cap shift so we keep poster-ish framing (no extreme pitch change).
       lookAt.y -= Math.max(-camDist * 0.12, Math.min(camDist * 0.22, shift));
       placePosterCam(camDist);
-      const after = measureNdcMesh();
+      const after = measureNdcBox();
       const half = Math.max(after.halfX, after.halfY, 0.05);
       if (half > fitTarget) {
         camDist = Math.max(0.4, camDist * (half / fitTarget));
@@ -371,7 +409,7 @@ export async function mountHero3D({
       if (clip && wingAction) mixer.setTime(0);
     }
 
-    const packed = measureNdcMesh();
+    const packed = measureNdcBox();
     panel.dataset.heroFit = [
       packed.minY.toFixed(3),
       packed.maxY.toFixed(3),
@@ -379,6 +417,16 @@ export async function mountHero3D({
       Math.max(packed.halfX, packed.halfY).toFixed(3),
     ].join(',');
     panel.dataset.heroCam = 'poster-locked';
+    performance.mark('hero-fit-end');
+    try {
+      performance.measure('hero-fit', 'hero-fit-start', 'hero-fit-end');
+      const fitEntry = performance.getEntriesByName('hero-fit').pop();
+      if (fitEntry) {
+        panel.dataset.heroFitMs = fitEntry.duration.toFixed(2);
+      }
+    } catch {
+      /* User Timing unavailable */
+    }
   }
 
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -468,75 +516,62 @@ export async function mountHero3D({
   };
   reduce.addEventListener('change', onReduce);
 
-  const percentile = (sorted: number[], p: number): number => {
-    if (sorted.length === 0) return 0.5;
-    const i = Math.min(
-      sorted.length - 1,
-      Math.max(0, Math.floor(p * (sorted.length - 1))),
-    );
-    return sorted[i];
-  };
-
   const updateSubjectCssVars = () => {
     const { width, height } = panelRect;
     if (width < 1 || height < 1) return;
 
-    tilt.updateMatrixWorld(true);
+    // Project AABB corners only — no 2k-vert scans on resize / mount.
+    refreshSubjectBounds();
+    const { min, max } = subjectBox;
     const xs: number[] = [];
     const ys: number[] = [];
-    tilt.traverse((obj) => {
-      if (_skipBoundsName.test(obj.name || '')) return;
-      const m = obj as unknown as {
-        isMesh?: boolean;
-        geometry?: {
-          attributes?: {
-            position?: {
-              count: number;
-              getX: (i: number) => number;
-              getY: (i: number) => number;
-              getZ: (i: number) => number;
-            };
-          };
-        };
-        matrixWorld: InstanceType<typeof THREE.Matrix4>;
-      };
-      if (!m.isMesh || !m.geometry?.attributes?.position) return;
-      const pos = m.geometry.attributes.position;
-      const step = Math.max(1, Math.floor(pos.count / 2000));
-      for (let i = 0; i < pos.count; i += step) {
-        proj.set(pos.getX(i), pos.getY(i), pos.getZ(i));
-        proj.applyMatrix4(m.matrixWorld).project(cam);
-        if (
-          !Number.isFinite(proj.x) ||
-          !Number.isFinite(proj.y) ||
-          !Number.isFinite(proj.z)
-        ) {
-          continue;
+    for (let ix = 0; ix < 2; ix += 1) {
+      for (let iy = 0; iy < 2; iy += 1) {
+        for (let iz = 0; iz < 2; iz += 1) {
+          proj.set(ix ? max.x : min.x, iy ? max.y : min.y, iz ? max.z : min.z);
+          proj.project(cam);
+          if (
+            !Number.isFinite(proj.x) ||
+            !Number.isFinite(proj.y) ||
+            !Number.isFinite(proj.z)
+          ) {
+            continue;
+          }
+          if (proj.z < -1.05 || proj.z > 1.05) continue;
+          const px = proj.x * 0.5 + 0.5;
+          const py = -proj.y * 0.5 + 0.5;
+          if (px < -0.05 || px > 1.05 || py < -0.05 || py > 1.05) continue;
+          xs.push(Math.min(1, Math.max(0, px)));
+          ys.push(Math.min(1, Math.max(0, py)));
         }
-        if (proj.z < -1.05 || proj.z > 1.05) continue;
-        if (Math.abs(proj.x) > 4 || Math.abs(proj.y) > 4) continue;
-        const px = proj.x * 0.5 + 0.5;
-        const py = -proj.y * 0.5 + 0.5;
-        if (px < -0.05 || px > 1.05 || py < -0.05 || py > 1.05) continue;
-        xs.push(Math.min(1, Math.max(0, px)));
-        ys.push(Math.min(1, Math.max(0, py)));
       }
-    });
-    if (xs.length < 8) return;
+    }
+    if (xs.length < 2 || ys.length < 2) return;
 
     xs.sort((a, b) => a - b);
     ys.sort((a, b) => a - b);
-    const minX = xs[0];
-    const maxX = xs[xs.length - 1];
-    const minY = ys[0];
-    const maxY = ys[ys.length - 1];
-    // Dense core (ignore petal/wing tip outliers).
-    const denseR = percentile(xs, PAUSE_PCT);
+    const boxMinX = xs[0];
+    const boxMaxX = xs[xs.length - 1];
+    const boxMinY = ys[0];
+    const boxMaxY = ys[ys.length - 1];
+    const denseR = boxMinX + (boxMaxX - boxMinX) * PAUSE_PCT;
 
-    panel.style.setProperty('--hero-subj-left', `${(minX * 100).toFixed(2)}%`);
-    panel.style.setProperty('--hero-subj-top', `${(minY * 100).toFixed(2)}%`);
-    panel.style.setProperty('--hero-subj-right', `${(maxX * 100).toFixed(2)}%`);
-    panel.style.setProperty('--hero-subj-bottom', `${(maxY * 100).toFixed(2)}%`);
+    panel.style.setProperty(
+      '--hero-subj-left',
+      `${(boxMinX * 100).toFixed(2)}%`,
+    );
+    panel.style.setProperty(
+      '--hero-subj-top',
+      `${(boxMinY * 100).toFixed(2)}%`,
+    );
+    panel.style.setProperty(
+      '--hero-subj-right',
+      `${(boxMaxX * 100).toFixed(2)}%`,
+    );
+    panel.style.setProperty(
+      '--hero-subj-bottom',
+      `${(boxMaxY * 100).toFixed(2)}%`,
+    );
 
     /*
      * Pause OUTSIDE the subject AABB — prefer BELOW the painted subject
@@ -545,19 +580,15 @@ export async function mountHero3D({
      * put Y just under the panel when the mesh owns the lower edge.
      */
     const gapY = 18 / Math.max(height, 1);
-    // Visible BR of the panel inside .hero (media may bleed past container).
     const visibleRight = 0.88;
     const pauseX = Math.min(visibleRight, Math.max(0.78, denseR + 0.06));
-    /*
-     * Desktop (viewport ≥1024): sit just below the media box — subject fills
-     * the stage BR so in-panel corners still hit petals.
-     * Mobile: media margin-bottom collapses hero height — keep the control
-     * inside the panel, below AABB on the in-panel cream under the subject.
-     */
     const mobile = isMobileViewport;
     let pauseY = mobile
-      ? Math.min(0.95, Math.max(maxY + gapY * 1.35, maxY + 20 / Math.max(height, 1)))
-      : Math.max(1 + gapY, maxY + 14 / Math.max(height, 1));
+      ? Math.min(
+          0.95,
+          Math.max(boxMaxY + gapY * 1.35, boxMaxY + 20 / Math.max(height, 1)),
+        )
+      : Math.max(1 + gapY, boxMaxY + 14 / Math.max(height, 1));
     if (!mobile) {
       pauseY = Math.min(1 + 28 / Math.max(height, 1), pauseY);
     } else {
@@ -589,74 +620,14 @@ export async function mountHero3D({
     }
   };
 
-  /**
-   * Attach RoomEnvironment PMREM only after the held first frame has faded
-   * in (poster-out). rIC `{timeout}` can fire immediately while idle and would
-   * brighten the hold frame vs the static motion poster — use a real timer
-   * floor after reveal instead.
-   */
-  const attachEnvAfterReveal = () => {
-    if (envReady) return;
-    const start = () => {
-      void (async () => {
-        if (!running || signal?.aborted || reduce.matches || envReady) return;
-        // Yield to idle after the timer floor — never block scroll/engagement.
-        await new Promise<void>((resolve) => {
-          if (typeof window.requestIdleCallback === 'function') {
-            window.requestIdleCallback(() => resolve());
-          } else {
-            window.setTimeout(resolve, 0);
-          }
-        });
-        if (!running || signal?.aborted || reduce.matches || envReady) return;
-        try {
-          const { RoomEnvironment } = await import(
-            'three/examples/jsm/environments/RoomEnvironment.js'
-          );
-          if (!running || signal?.aborted) return;
-          pmrem = new THREE.PMREMGenerator(renderer);
-          scene.environment = pmrem.fromScene(
-            new RoomEnvironment(),
-            0.04,
-          ).texture;
-          scene.environmentIntensity = 0.9;
-          envReady = true;
-          await runCompileAsync();
-          if (!running || signal?.aborted) return;
-          markDirty(HERO_RAF_ID);
-        } catch {
-          /* lights-only is fine if env fails */
-        }
-      })();
-    };
-    if (canvasFadeDone) {
-      start();
-      return;
-    }
-    // Poll class — avoids racing the staged-reveal timers.
-    const arm = window.setInterval(() => {
-      if (!running || signal?.aborted) {
-        window.clearInterval(arm);
-        return;
-      }
-      if (canvasFadeDone || panel.classList.contains('is-3d-poster-out')) {
-        window.clearInterval(arm);
-        // Floor after poster fade so hold-frame posters (lights-only) stay matched.
-        window.setTimeout(start, Math.max(400, HERO_CANVAS_FADE_MS * 2));
-      }
-    }, 50);
-  };
-
-  // Compile programs off the reveal path when KHR_parallel_shader_compile is available.
+  // Env already applied — compile programs before first visible paint.
   const compileAndPaintFirst = async () => {
     await waitIdle(1500);
     if (!running || signal?.aborted || reduce.matches) return;
-    // First paint without PMREM — hemisphere + key only.
     await runCompileAsync();
     if (!running || signal?.aborted) return;
     // First real frame into the backing store before staged reveal.
     renderer.render(scene, cam);
-    attachEnvAfterReveal();
   };
 
   const tiltBusy = (): boolean => {
@@ -799,8 +770,8 @@ export async function mountHero3D({
   setPaused(HERO_RAF_ID, true);
 
   /*
-   * Staged reveal: paint t=0 → fade canvas in (still frozen) → unlock wings →
-   * fade static motion poster out. No runtime GL readback / toDataURL.
+   * Staged reveal: paint t=0 (env already on) → fade canvas in (still frozen) →
+   * unlock wings → fade static motion poster out. No runtime GL readback.
    */
   void (async () => {
     await compileAndPaintFirst();
@@ -870,7 +841,9 @@ export async function mountHero3D({
     delete panel.dataset.heroCam;
     delete panel.dataset.heroFitLog;
     draco.dispose();
+    if (envRT) envRT.dispose();
     if (pmrem) pmrem.dispose();
+    scene.environment = null;
     renderer.dispose();
   };
 }

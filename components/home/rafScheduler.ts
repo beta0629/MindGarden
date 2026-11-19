@@ -24,6 +24,11 @@ type Entry = {
 type RafSchedulerState = {
   entries: Map<string, Entry>;
   rafId: number;
+  /**
+   * True once a frame callback is queued (or running). Prefer this over rafId
+   * alone so kick() cannot double-schedule when pump clears rafId at entry.
+   */
+  scheduled: boolean;
   /** True while pump() is iterating subscribers — kick() must not schedule. */
   pumping: boolean;
   visibilityBound: boolean;
@@ -43,12 +48,17 @@ function getState(): RafSchedulerState {
     g[GLOBAL_KEY] = {
       entries: new Map(),
       rafId: 0,
+      scheduled: false,
       pumping: false,
       visibilityBound: false,
       docHidden:
         typeof document !== 'undefined' ? Boolean(document.hidden) : false,
       debugPumpCount: 0,
     };
+  }
+  // Older chunk copies may lack `scheduled` — normalize in place.
+  if (g[GLOBAL_KEY].scheduled == null) {
+    g[GLOBAL_KEY].scheduled = g[GLOBAL_KEY].rafId !== 0;
   }
   return g[GLOBAL_KEY];
 }
@@ -74,6 +84,7 @@ function cancelPump(): void {
     cancelAnimationFrame(state.rafId);
     state.rafId = 0;
   }
+  state.scheduled = false;
 }
 
 function needsPump(): boolean {
@@ -88,13 +99,14 @@ function needsPump(): boolean {
 
 function pump(now: number): void {
   const state = getState();
-  state.rafId = 0;
-  if (state.docHidden) {
-    // Stay cancelled while hidden — visibilitychange will kick() on resume.
-    return;
-  }
+  // Mark running before clearing rafId so concurrent kick() sees scheduled.
   state.pumping = true;
+  state.rafId = 0;
   try {
+    if (state.docHidden) {
+      // Stay cancelled while hidden — visibilitychange will kick() on resume.
+      return;
+    }
     state.debugPumpCount += 1;
     for (const e of state.entries.values()) {
       if (e.paused) continue;
@@ -104,18 +116,17 @@ function pump(now: number): void {
     }
   } finally {
     state.pumping = false;
+    state.scheduled = false;
   }
-  // Cancel when nothing is continuous/dirty after this frame.
-  // kick() during the loop is a no-op while pumping, so at most one schedule here.
-  if (!state.rafId && needsPump()) {
-    state.rafId = requestAnimationFrame(pump);
-  }
+  // Re-arm only via kick() so the scheduled flag stays consistent.
+  if (needsPump()) kick();
 }
 
 function kick(): void {
   ensureVisibilityListener();
   const state = getState();
-  if (state.pumping || state.rafId || !needsPump()) return;
+  if (state.pumping || state.scheduled || !needsPump()) return;
+  state.scheduled = true;
   state.rafId = requestAnimationFrame(pump);
 }
 
@@ -201,4 +212,5 @@ export function __resetRafSchedulerForTests(): void {
   state.entries.clear();
   state.debugPumpCount = 0;
   state.pumping = false;
+  state.scheduled = false;
 }

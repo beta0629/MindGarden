@@ -85,13 +85,13 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
     let minTimer = 0;
     let fadeTimer = 0;
     let safetyTimer = 0;
-    let ariaRaf = 0;
-    let startEaseRaf = 0;
+    let ariaTimer = 0;
+    let startEaseTimer = 0;
 
     const stopAriaSync = () => {
-      if (ariaRaf) {
-        window.cancelAnimationFrame(ariaRaf);
-        ariaRaf = 0;
+      if (ariaTimer) {
+        window.clearTimeout(ariaTimer);
+        ariaTimer = 0;
       }
     };
 
@@ -107,9 +107,9 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       if (finishedRef.current || ac.signal.aborted) return;
       finishedRef.current = true;
       stopAriaSync();
-      if (startEaseRaf) {
-        window.cancelAnimationFrame(startEaseRaf);
-        startEaseRaf = 0;
+      if (startEaseTimer) {
+        window.clearTimeout(startEaseTimer);
+        startEaseTimer = 0;
       }
       setBarComplete(true);
       applyRatio(1);
@@ -134,6 +134,7 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
       if (detail.done) finish();
     };
 
+    // Timeout chain — never a native rAF competing with rafScheduler (peak=2).
     const tickAria = () => {
       if (finishedRef.current || ac.signal.aborted) return;
       const el = barRef.current;
@@ -144,7 +145,7 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
           applyRatio(Math.min(HOME_BOOT_EASE_CEILING, Math.max(0, scale)));
         }
       }
-      ariaRaf = window.requestAnimationFrame(tickAria);
+      ariaTimer = window.setTimeout(tickAria, 100);
     };
 
     // Approximate progress while waiting for the hero decision — never treat
@@ -157,12 +158,12 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
     window.addEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
 
     // Paint start scale, then add is-easing so CSS transitions 0.35 → ceiling.
-    startEaseRaf = window.requestAnimationFrame(() => {
-      startEaseRaf = 0;
+    startEaseTimer = window.setTimeout(() => {
+      startEaseTimer = 0;
       if (finishedRef.current || ac.signal.aborted) return;
       setBarEasing(true);
-      ariaRaf = window.requestAnimationFrame(tickAria);
-    });
+      ariaTimer = window.setTimeout(tickAria, 100);
+    }, 0);
 
     safetyTimer = window.setTimeout(finish, HOME_BOOT_BAR_TIMEOUT_MS);
 
@@ -174,7 +175,7 @@ export function HomeBootProgress({ force = false }: { force?: boolean }) {
     return () => {
       ac.abort();
       stopAriaSync();
-      if (startEaseRaf) window.cancelAnimationFrame(startEaseRaf);
+      if (startEaseTimer) window.clearTimeout(startEaseTimer);
       window.removeEventListener(HOME_BOOT_PROGRESS_EVENT, onProgress);
       window.clearTimeout(minTimer);
       window.clearTimeout(fadeTimer);

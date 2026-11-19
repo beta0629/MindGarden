@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  noteHomeDeferredEngagement,
+  whenHomeDeferredWorkAllowed,
+} from '@/components/home/homeBoot';
+import {
   markDirty,
   setContinuous,
   setPaused,
@@ -10,6 +14,7 @@ import {
 } from '@/components/home/rafScheduler';
 import {
   AtlasSheetBank,
+  captureAtlasFramePoster,
   drawAtlasFrameBlend,
   drawCoverImage,
   effectiveCanvasDpr,
@@ -20,7 +25,7 @@ import {
   closeSheet,
   sheetsReadyForFrame,
   smoothstep,
-  warmSheetGpu,
+  scheduleGpuWarm,
   type DecodedImage,
 } from './atlas';
 import {
@@ -127,27 +132,37 @@ async function ensureGateForWalk(rt: Runtime, walkF: number): Promise<void> {
     );
   }
   if (door.crossfade > 0 || door.useStatic) {
-    const coverHint = {
-      displayW: rt.json.place.css_w,
-      displayH: rt.json.place.css_h,
-    };
+    const placeW = rt.json.place.css_w;
+    const placeH = rt.json.place.css_h;
     if (!rt.staticBody) {
+      const bodyMeta = rt.json.static.body;
+      const coverHint = {
+        displayW: placeW,
+        displayH: placeH,
+        naturalW: bodyMeta.w,
+        naturalH: bodyMeta.h,
+      };
       jobs.push(
         // Single cover images — decode-resize OK (no atlas UVs).
-        loadSheet(rt.json.static.body.file, undefined, coverHint).then((img) => {
+        loadSheet(bodyMeta.file, undefined, coverHint).then((img) => {
           rt.staticBody = img;
-          warmSheetGpu(img);
+          scheduleGpuWarm(img, placeW, placeH);
         }),
       );
     }
     if (!rt.staticShadow) {
+      const shadowMeta = rt.json.static.shadow;
+      const coverHint = {
+        displayW: placeW,
+        displayH: placeH,
+        naturalW: shadowMeta.w,
+        naturalH: shadowMeta.h,
+      };
       jobs.push(
-        loadSheet(rt.json.static.shadow.file, undefined, coverHint).then(
-          (img) => {
-            rt.staticShadow = img;
-            warmSheetGpu(img);
-          },
-        ),
+        loadSheet(shadowMeta.file, undefined, coverHint).then((img) => {
+          rt.staticShadow = img;
+          scheduleGpuWarm(img, placeW, placeH);
+        }),
       );
     }
   }
@@ -163,6 +178,8 @@ export function GateScene({ sectionRef }: Props) {
   const [canvasActive, setCanvasActive] = useState(false);
   /** Keep poster until settle paints so layout never shows a blank hole */
   const [paintLive, setPaintLive] = useState(false);
+  /** Motion poster = first door frame (matches first canvas paint). */
+  const [motionPosterSrc, setMotionPosterSrc] = useState<string | null>(null);
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
@@ -171,6 +188,7 @@ export function GateScene({ sectionRef }: Props) {
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
+    setMotionPosterSrc(null);
     setFailed(false);
     runtimeRef.current = null;
     clockRef.current = null;
@@ -333,20 +351,32 @@ export function GateScene({ sectionRef }: Props) {
 
     const tick = (now: number) => {
       if (!alive || document.hidden) return;
-      if (!visible && !firstPaintMustRun()) return;
+      // Offscreen after first paint: do not early-return while leaving
+      // continuous=true (jump-to-bottom left the pump spinning forever).
+      if (!visible && !firstPaintMustRun()) {
+        setContinuous(RAF_ID, false);
+        setPaused(RAF_ID, true);
+        return;
+      }
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
       if (!rt || !clock || !assetsReady) return;
-      // Canvas mounts after setCanvasActive commit — keep continuous while paint owed.
-      if (!canvas) {
-        if (firstPaintMustRun()) setContinuous(RAF_ID, true);
-        return;
-      }
 
       const metrics = ensureMetrics().read();
       const walkF = clock.update(now, metrics);
       void ensureGateForWalk(rt, walkF);
+
+      // Canvas mounts after setCanvasActive commit — advance settle/door even
+      // without a canvas so continuous cannot stick forever while paint is owed.
+      if (!canvas) {
+        finishTick(now, clock, metrics, walkF, rt);
+        if (firstPaintMustRun() && !motionComplete) {
+          setContinuous(RAF_ID, true);
+          markDirty(RAF_ID);
+        }
+        return;
+      }
 
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
       const risePx = SETTLE_RISE_PX[pack];
@@ -478,35 +508,58 @@ export function GateScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
-        const coverHint = {
-          displayW: rt.json.place.css_w,
-          displayH: rt.json.place.css_h,
-        };
+        // Defer decode/warm out of the LCP/boot window.
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
+        const placeW = rt.json.place.css_w;
+        const placeH = rt.json.place.css_h;
+        const bodyMeta = rt.json.static.body;
+        const shadowMeta = rt.json.static.shadow;
+        // First-play only: door sheet 0(+next) + static covers — not ensureAll.
         await Promise.all([
-          rt.bodyBank.ensureAll(),
-          rt.shadowBank.ensureAll(),
-          // Single cover images — decode-resize OK (no atlas UVs).
-          loadSheet(rt.json.static.body.file, undefined, coverHint).then(
-            (img) => {
-              rt.staticBody = img;
-              warmSheetGpu(img);
-            },
-          ),
-          loadSheet(rt.json.static.shadow.file, undefined, coverHint).then(
-            (img) => {
-              rt.staticShadow = img;
-              warmSheetGpu(img);
-            },
-          ),
+          rt.bodyBank.ensureFirstPlayWindow(),
+          rt.shadowBank.ensureFirstPlayWindow(),
+          loadSheet(bodyMeta.file, undefined, {
+            displayW: placeW,
+            displayH: placeH,
+            naturalW: bodyMeta.w,
+            naturalH: bodyMeta.h,
+          }).then((img) => {
+            rt.staticBody = img;
+            scheduleGpuWarm(img, placeW, placeH);
+          }),
+          loadSheet(shadowMeta.file, undefined, {
+            displayW: placeW,
+            displayH: placeH,
+            naturalW: shadowMeta.w,
+            naturalH: shadowMeta.h,
+          }).then((img) => {
+            rt.staticShadow = img;
+            scheduleGpuWarm(img, placeW, placeH);
+          }),
         ]);
         if (!alive) return;
-        // Sync atlas GPU upload — idle scheduleGpuWarm is too late for first paint.
-        rt.bodyBank.warmAllGpu();
-        rt.shadowBank.warmAllGpu();
+        // Cap resident = current+next after first-play prefetch.
+        // ensureFirstPlayWindow already scheduleGpuWarm'd sheets — no second warm pass.
+        rt.bodyBank.releaseExcept(rt.bodyBank.currentAndNextIndexes(0));
+        rt.shadowBank.releaseExcept(rt.shadowBank.currentAndNextIndexes(0));
         assetsReady = true;
         setCanvasActive(true);
+        // toDataURL is sync/expensive — keep off the warm/mount task.
+        const bodyScale = rt.json.body_scale || 2;
+        window.setTimeout(() => {
+          if (!alive) return;
+          const poster = captureAtlasFramePoster(
+            rt.bodyBank,
+            rt.json.door.body_atlas,
+            0,
+            bodyScale,
+          );
+          if (poster && alive) setMotionPosterSrc(poster);
+        }, 0);
         ensureSubscribed();
         markDirty(RAF_ID);
+        // Canvas ref attaches after commit — use timeout, not a second rAF.
         const armWhenCanvasReady = () => {
           if (!alive || !assetsReady) return;
           if (canvasRef.current) {
@@ -514,9 +567,9 @@ export function GateScene({ sectionRef }: Props) {
             markDirty(RAF_ID);
             return;
           }
-          requestAnimationFrame(armWhenCanvasReady);
+          window.setTimeout(armWhenCanvasReady, 0);
         };
-        requestAnimationFrame(armWhenCanvasReady);
+        window.setTimeout(armWhenCanvasReady, 0);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -531,6 +584,8 @@ export function GateScene({ sectionRef }: Props) {
       }
       loadingMeta = true;
       try {
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
         const json = await loadJson<GateJson>(`gate/${pack}/gate-${pack}.json`);
         if (!alive) return;
         runtimeRef.current = {
@@ -560,6 +615,7 @@ export function GateScene({ sectionRef }: Props) {
     };
 
     const onScroll = () => {
+      noteHomeDeferredEngagement();
       // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
       if (!subscribed || document.hidden || motionComplete) return;
       if (!visible && !firstPaintMustRun()) return;
@@ -581,6 +637,7 @@ export function GateScene({ sectionRef }: Props) {
         const hit = entries.some((e) => e.isIntersecting);
         if (hit && !near) {
           near = true;
+          // Near alone is not engagement — warmAssets awaits deferred gate.
           void loadMetaAndWarm();
         }
       },
@@ -643,7 +700,9 @@ export function GateScene({ sectionRef }: Props) {
   }, [pack, reduced, failed, sectionRef]);
 
   const showPoster = failed || reduced || !paintLive;
-  const posterSrc = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
+  const rmPoster = `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`;
+  const posterSrc =
+    !reduced && !failed && motionPosterSrc ? motionPosterSrc : rmPoster;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (

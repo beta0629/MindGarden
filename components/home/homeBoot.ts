@@ -170,9 +170,76 @@ export function whenHomeBootReady(
   });
 }
 
+/** Engagement that may unlock v37 atlas decode/warm (after boot). */
+let homeDeferredEngagement = false;
+let homeDeferredEngagementWaiters: Array<() => void> = [];
+let homeDeferredListenersBound = false;
+
+function flushDeferredEngagementWaiters(): void {
+  const waiters = homeDeferredEngagementWaiters;
+  homeDeferredEngagementWaiters = [];
+  for (const resolve of waiters) resolve();
+}
+
+/**
+ * Record real user engagement (scroll / pointer / wheel / key) so atlas work
+ * may start after {@link whenHomeBootReady}. Idempotent.
+ *
+ * **Not** near-IO — gate can sit inside 1.5vh on first paint; treating that as
+ * engagement pulled decode into the LH load window.
+ */
+export function noteHomeDeferredEngagement(): void {
+  if (homeDeferredEngagement) return;
+  homeDeferredEngagement = true;
+  flushDeferredEngagementWaiters();
+}
+
+function ensureDeferredEngagementListeners(): void {
+  if (typeof window === 'undefined' || homeDeferredListenersBound) return;
+  homeDeferredListenersBound = true;
+  const onEngage = () => noteHomeDeferredEngagement();
+  window.addEventListener('scroll', onEngage, { passive: true, once: true });
+  window.addEventListener('pointerdown', onEngage, { passive: true, once: true });
+  window.addEventListener('keydown', onEngage, { passive: true, once: true });
+  window.addEventListener('touchstart', onEngage, { passive: true, once: true });
+  // Wheel counts as intent even before layout scroll moves.
+  window.addEventListener('wheel', onEngage, { passive: true, once: true });
+}
+
+/**
+ * Atlas fetch/decode/GPU warm must wait for:
+ * 1. {@link whenHomeBootReady} (poster / session / timeout), AND
+ * 2. real user scroll / pointer / wheel / key ({@link noteHomeDeferredEngagement}).
+ *
+ * Near-IO may observe early but must **not** unlock this gate. No auto-engage
+ * timer — LH TBT must not see gate/booking decode without scroll/input.
+ * Hero GLB may proceed after boot alone.
+ */
+export async function whenHomeDeferredWorkAllowed(
+  timeoutMs = HOME_BOOT_TIMEOUT_MS,
+): Promise<void> {
+  if (typeof window === 'undefined') return;
+  ensureDeferredEngagementListeners();
+  await whenHomeBootReady(timeoutMs);
+  if (homeDeferredEngagement) return;
+  await new Promise<void>((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    homeDeferredEngagementWaiters.push(finish);
+    if (homeDeferredEngagement) finish();
+  });
+}
+
 /** Test helper — reset in-memory boot flags between cases. */
 export function __resetHomeBootStateForTests(): void {
   homeBootHeroDecided = false;
   homeBootBarShown = false;
   homeBootBarShownWaiters = [];
+  homeDeferredEngagement = false;
+  homeDeferredEngagementWaiters = [];
+  homeDeferredListenersBound = false;
 }

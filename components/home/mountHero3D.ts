@@ -448,7 +448,12 @@ export async function mountHero3D({
       stopWingSample();
       renderer.setAnimationLoop(null);
       unsubscribe(HERO_RAF_ID);
-      panel.classList.remove('is-3d', 'is-3d-canvas-in', 'is-3d-poster-out');
+      panel.classList.remove(
+        'is-3d',
+        'is-3d-canvas-in',
+        'is-3d-poster-out',
+        'is-3d-still-synced',
+      );
     }
   };
   reduce.addEventListener('change', onReduce);
@@ -701,29 +706,74 @@ export async function mountHero3D({
   subscribe(HERO_RAF_ID, tick, { continuous: false });
   syncHeroPlayback();
 
+  /**
+   * Replace LCP `.hero-still` pixels with the first painted WebGL frame so the
+   * crossfade matches 3D bbox (no tan oval / size jump). Soft-GL / RM never reach here.
+   * Bitmap is blitted at the canvas CSS box so aspect matches `.hero-3d`.
+   */
+  const syncStillToFirstGlFrame = (): boolean => {
+    const still = panel.querySelector<HTMLImageElement>('.hero-still');
+    const gl = renderer.domElement;
+    if (!still || !gl || gl.width < 2 || gl.height < 2) return false;
+    try {
+      const cssW = Math.max(1, Math.round(gl.clientWidth || panelRect.width));
+      const cssH = Math.max(1, Math.round(gl.clientHeight || panelRect.height));
+      const c = document.createElement('canvas');
+      c.width = cssW;
+      c.height = cssH;
+      const ctx = c.getContext('2d');
+      if (!ctx) return false;
+      // Scale backing-store → CSS display size (same aspect as the stage).
+      ctx.drawImage(gl, 0, 0, cssW, cssH);
+      const url = c.toDataURL('image/webp', 0.92);
+      // Drop picture srcset so the captured frame wins over responsive sources.
+      const picture = still.closest('picture');
+      if (picture) {
+        picture.querySelectorAll('source').forEach((s) => s.remove());
+      }
+      still.removeAttribute('srcset');
+      still.removeAttribute('sizes');
+      still.width = cssW;
+      still.height = cssH;
+      still.src = url;
+      // Match `.hero-3d` layout (inset 0 / no zoom / no radial mask).
+      panel.classList.add('is-3d-still-synced');
+      return true;
+    } catch {
+      /* keep LCP poster if blit fails */
+      return false;
+    }
+  };
+
   /*
-   * Staged reveal: keep .hero-still at opacity 1 until a real frame is painted,
-   * fade .hero-3d in (~300ms), then fade the poster out (not the reverse).
+   * Staged reveal: blit first GL frame into .hero-still, THEN fade canvas in
+   * and poster out — still and live canvas share the same pixels/framing.
    */
   void (async () => {
     await compileAndPaintFirst();
     if (!running || signal?.aborted || reduce.matches) return;
+    syncStillToFirstGlFrame();
     await whenHomeBootReady();
     if (!running || signal?.aborted || reduce.matches || revealed) return;
     revealed = true;
     panel.classList.add('is-3d');
-    requestAnimationFrame(() => {
+    // setTimeout — not a second native rAF racing rafScheduler.
+    window.setTimeout(() => {
       if (!running || signal?.aborted) return;
       panel.classList.add('is-3d-canvas-in');
       window.setTimeout(() => {
         if (!running || signal?.aborted) return;
         panel.classList.add('is-3d-poster-out');
       }, HERO_CANVAS_FADE_MS);
-    });
+    }, 0);
   })();
 
-  // React to class toggles (pause control) without polling every frame.
+  // React to pause toggles only — ignore reveal class churn (is-3d / synced / etc.).
+  let lastPausedUi = panel.classList.contains('is-paused');
   const mo = new MutationObserver(() => {
+    const pausedUi = panel.classList.contains('is-paused');
+    if (pausedUi === lastPausedUi) return;
+    lastPausedUi = pausedUi;
     syncHeroPlayback();
   });
   mo.observe(panel, { attributes: true, attributeFilter: ['class'] });
@@ -742,7 +792,12 @@ export async function mountHero3D({
     io.disconnect();
     unsubscribe(HERO_RAF_ID);
     renderer.setAnimationLoop(null);
-    panel.classList.remove('is-3d', 'is-3d-canvas-in', 'is-3d-poster-out');
+    panel.classList.remove(
+      'is-3d',
+      'is-3d-canvas-in',
+      'is-3d-poster-out',
+      'is-3d-still-synced',
+    );
     panel.classList.remove('is-cropped');
     panel.style.removeProperty('--hero-subj-left');
     panel.style.removeProperty('--hero-subj-top');

@@ -2,6 +2,10 @@
 
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
+  noteHomeDeferredEngagement,
+  whenHomeDeferredWorkAllowed,
+} from '@/components/home/homeBoot';
+import {
   markDirty,
   setContinuous,
   setPaused,
@@ -10,6 +14,7 @@ import {
 } from '@/components/home/rafScheduler';
 import {
   AtlasSheetBank,
+  captureAtlasFramePoster,
   drawAtlasFrameBlend,
   effectiveCanvasDpr,
   loadJson,
@@ -120,6 +125,8 @@ export function BookingScene({ sectionRef }: Props) {
   const [failed, setFailed] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
+  /** Motion poster = landing frame 0 (matches first canvas paint). */
+  const [motionPosterSrc, setMotionPosterSrc] = useState<string | null>(null);
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const hoverRef = useRef<HoverPhase>({ kind: 'idle' });
@@ -133,6 +140,7 @@ export function BookingScene({ sectionRef }: Props) {
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
+    setMotionPosterSrc(null);
     setFailed(false);
     runtimeRef.current = null;
     clockRef.current = null;
@@ -572,20 +580,33 @@ export function BookingScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
-        // Landing + breathe both ready before first paint — prevents vanish on landing→breathe.
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
+        // First-play window only: landing sheet 0(+next) + breathe sheet 0(+next).
         await Promise.all([
-          rt.landingBank.ensureAll(),
-          rt.breatheBank.ensureAll(),
+          rt.landingBank.ensureFirstPlayWindow(),
+          rt.breatheBank.ensureFirstPlayWindow(),
         ]);
         if (!alive) return;
-        // Sync GPU upload before first visible tick (WebKit first-drawImage cost).
-        rt.landingBank.warmAllGpu();
-        rt.breatheBank.warmAllGpu();
+        // ensureFirstPlayWindow already scheduleGpuWarm'd sheets — no second warm pass.
+        rt.landingBank.releaseExcept(rt.landingBank.currentAndNextIndexes(0));
+        rt.breatheBank.releaseExcept(rt.breatheBank.currentAndNextIndexes(0));
         assetsReady = true;
         setCanvasActive(true);
+        // toDataURL is sync/expensive — keep off the warm/mount task.
+        window.setTimeout(() => {
+          if (!alive) return;
+          const poster = captureAtlasFramePoster(
+            rt.landingBank,
+            rt.booking.landing.atlas,
+            0,
+            2,
+          );
+          if (poster && alive) setMotionPosterSrc(poster);
+        }, 0);
         ensureSubscribed();
         markDirty(RAF_ID);
-        // Canvas ref attaches after commit — re-arm dirty/continuous then.
+        // Canvas ref attaches after commit — timeout, not a second native rAF.
         const armWhenCanvasReady = () => {
           if (!alive || !assetsReady) return;
           if (canvasRef.current) {
@@ -593,9 +614,9 @@ export function BookingScene({ sectionRef }: Props) {
             markDirty(RAF_ID);
             return;
           }
-          requestAnimationFrame(armWhenCanvasReady);
+          window.setTimeout(armWhenCanvasReady, 0);
         };
-        requestAnimationFrame(armWhenCanvasReady);
+        window.setTimeout(armWhenCanvasReady, 0);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -610,6 +631,8 @@ export function BookingScene({ sectionRef }: Props) {
       }
       loadingMeta = true;
       try {
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
         // Booking JSON only — hover deferred until near landing / pointer
         const booking = await loadJson<BookingJson>(
           `booking/${pack}/booking-${pack}.json`,
@@ -639,6 +662,7 @@ export function BookingScene({ sectionRef }: Props) {
     };
 
     const onScroll = () => {
+      noteHomeDeferredEngagement();
       // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
       if (!subscribed || document.hidden) return;
       // Jump-to-bottom must dirty even when IO already says !visible so continuous arms.
@@ -676,6 +700,7 @@ export function BookingScene({ sectionRef }: Props) {
         const hit = entries.some((e) => e.isIntersecting);
         if (hit && !near) {
           near = true;
+          // Near alone is not engagement — warmAssets awaits deferred gate.
           void loadMetaAndWarm();
         }
       },
@@ -746,9 +771,11 @@ export function BookingScene({ sectionRef }: Props) {
     };
   }, [pack, reduced, failed, sectionRef]);
 
-  // Poster (folded 85° + flowers) until live landing/breathe paints — never hover-first.
+  // Motion: landing frame 0 poster. RM / fail: perched RM asset only.
   const showPoster = failed || reduced || !paintLive;
-  const posterSrc = `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`;
+  const rmPoster = `/assets/home-v3.7/booking/${pack}/booking-poster-rm-${pack}.webp`;
+  const posterSrc =
+    !reduced && !failed && motionPosterSrc ? motionPosterSrc : rmPoster;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
 
   return (

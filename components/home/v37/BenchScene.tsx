@@ -8,6 +8,10 @@ import {
   type RefObject,
 } from 'react';
 import {
+  noteHomeDeferredEngagement,
+  whenHomeDeferredWorkAllowed,
+} from '@/components/home/homeBoot';
+import {
   markDirty,
   setContinuous,
   setPaused,
@@ -24,7 +28,7 @@ import {
   loadSheet,
   NEAR_ROOT_MARGIN,
   resizeCanvas,
-  warmSheetGpu,
+  scheduleGpuWarm,
   type DecodedImage,
 } from './atlas';
 import {
@@ -414,7 +418,11 @@ export function BenchScene({ sectionRef }: Props) {
 
     const tick = (now: number) => {
       if (!alive || document.hidden) return;
-      if (!visible && !firstPaintMustRun()) return;
+      if (!visible && !firstPaintMustRun()) {
+        setContinuous(RAF_ID, false);
+        setPaused(RAF_ID, true);
+        return;
+      }
       const rt = runtimeRef.current;
       const clock = clockRef.current;
       const canvas = canvasRef.current;
@@ -422,9 +430,16 @@ export function BenchScene({ sectionRef }: Props) {
       if (!rt || !clock || !assetsReady || !rt.body || !rt.shadow) {
         return;
       }
-      // Canvas mounts after setCanvasActive commit — keep continuous while paint owed.
+      // Canvas mounts after setCanvasActive commit — advance settle even without canvas.
       if (!canvas) {
-        if (firstPaintMustRun()) setContinuous(RAF_ID, true);
+        // Mirror gate: do not stick continuous=true with no finish path.
+        if (firstPaintMustRun()) {
+          setContinuous(RAF_ID, true);
+          markDirty(RAF_ID);
+        } else {
+          setContinuous(RAF_ID, false);
+          setPaused(RAF_ID, true);
+        }
         return;
       }
 
@@ -602,29 +617,48 @@ export function BenchScene({ sectionRef }: Props) {
       if (!rt) return;
       warming = true;
       try {
-        const coverHint = {
-          displayW: rt.json.place.css_w,
-          displayH: rt.json.place.css_h,
-        };
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
+        const placeW = rt.json.place.css_w;
+        const placeH = rt.json.place.css_h;
+        const bodyMeta = rt.json.body;
+        const shadowMeta = rt.json.shadow;
+        const perchMeta = rt.json.perch_shadow.file;
         const [body, shadow, perchShadow] = await Promise.all([
           // Single cover images — decode-resize OK (no atlas UVs).
-          loadSheet(rt.json.body.file, undefined, coverHint),
-          loadSheet(rt.json.shadow.file, undefined, coverHint),
-          loadSheet(rt.json.perch_shadow.file.file, undefined, coverHint),
+          loadSheet(bodyMeta.file, undefined, {
+            displayW: placeW,
+            displayH: placeH,
+            naturalW: bodyMeta.w,
+            naturalH: bodyMeta.h,
+          }),
+          loadSheet(shadowMeta.file, undefined, {
+            displayW: placeW,
+            displayH: placeH,
+            naturalW: shadowMeta.w,
+            naturalH: shadowMeta.h,
+          }),
+          loadSheet(perchMeta.file, undefined, {
+            displayW: placeW,
+            displayH: placeH,
+            naturalW: perchMeta.w,
+            naturalH: perchMeta.h,
+          }),
         ]);
         rt.body = body;
         rt.shadow = shadow;
         rt.perchShadow = perchShadow;
-        warmSheetGpu(body);
-        warmSheetGpu(shadow);
-        warmSheetGpu(perchShadow);
-        // Prefetch first ambient atlas fully; further banks on demand via ensureAmbientForWalk.
+        scheduleGpuWarm(body, placeW, placeH);
+        scheduleGpuWarm(shadow, placeW, placeH);
+        scheduleGpuWarm(perchShadow, placeW, placeH);
+        // First ambient bank: first-play sheets only (not ensureAll).
         {
           const firstKey = Object.keys(rt.ambientBanks)[0];
           if (firstKey) {
-            await rt.ambientBanks[firstKey].ensureAll();
-            // Sync GPU warm before first flight paint (WebKit drawImage upload).
-            rt.ambientBanks[firstKey].warmAllGpu();
+            const bank = rt.ambientBanks[firstKey];
+            await bank.ensureFirstPlayWindow();
+            // ensureFirstPlayWindow already scheduleGpuWarm'd — no second warm pass.
+            bank.releaseExcept(bank.currentAndNextIndexes(0));
           }
         }
         if (!alive) return;
@@ -640,9 +674,9 @@ export function BenchScene({ sectionRef }: Props) {
             markDirty(RAF_ID);
             return;
           }
-          requestAnimationFrame(armWhenCanvasReady);
+          window.setTimeout(armWhenCanvasReady, 0);
         };
-        requestAnimationFrame(armWhenCanvasReady);
+        window.setTimeout(armWhenCanvasReady, 0);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -657,6 +691,8 @@ export function BenchScene({ sectionRef }: Props) {
       }
       loadingMeta = true;
       try {
+        await whenHomeDeferredWorkAllowed();
+        if (!alive) return;
         const json = await loadJson<BenchJson>(`bench/${pack}/bench-${pack}.json`);
         if (!alive) return;
         const ambientBanks: Record<string, AtlasSheetBank> = {};
@@ -690,6 +726,7 @@ export function BenchScene({ sectionRef }: Props) {
     };
 
     const onScroll = () => {
+      noteHomeDeferredEngagement();
       // Derive canvasTop from scroll delta — no getBoundingClientRect on the scroll path.
       const prev = overflowLayoutRef.current;
       if (prev) {
@@ -721,6 +758,7 @@ export function BenchScene({ sectionRef }: Props) {
         const hit = entries.some((e) => e.isIntersecting);
         if (hit && !near) {
           near = true;
+          // Near alone is not engagement — warmAssets awaits deferred gate.
           void loadMetaAndWarm();
         }
       },

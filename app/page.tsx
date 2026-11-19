@@ -3,7 +3,7 @@ import { BenchScene, BookingScene, GateScene } from '@/components/home/v37';
 import { SiteShell } from '@/components/layout/SiteShell';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { BusinessHours } from '@/components/ui/BusinessHours';
-import { YoutubeThumbPlayLazy } from '@/components/ui/YoutubeThumbPlayLazy';
+import { YoutubeThumbPlay } from '@/components/ui/YoutubeThumbPlay';
 import {
   clinicOsClient,
   resolveProductDisplayPrice,
@@ -356,7 +356,7 @@ export default async function HomePage() {
               <div className="home-readings__featured" data-reveal-stagger>
                 {featuredReadings.map((item) =>
                   item.kind === 'video' && item.thumb ? (
-                    <YoutubeThumbPlayLazy
+                    <YoutubeThumbPlay
                       key={item.key}
                       variant="feature"
                       url={item.href}

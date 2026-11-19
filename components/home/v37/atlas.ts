@@ -3,8 +3,8 @@ import { assetUrl } from './types';
 
 export type DecodedImage = ImageBitmap | HTMLImageElement;
 
-/** Cap canvas backing-store DPR (sharp on DPR 3 phones without unbounded memory). */
-export const MAX_CANVAS_DPR = 3;
+/** Cap canvas backing-store DPR (WebKit scroll budget — was 3). */
+export const MAX_CANVAS_DPR = 2;
 /** Overflow / flight canvases — keep mobile + software GL cheaper. */
 export const MOBILE_OVERFLOW_DPR_CAP = 1.5;
 const MOBILE_TOP_MAX_WIDTH = 1023;

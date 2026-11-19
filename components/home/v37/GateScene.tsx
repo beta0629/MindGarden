@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   markDirty,
   setContinuous,
@@ -30,7 +30,7 @@ import {
   settleFromWalkDelta,
   settleTranslateY,
 } from './settle';
-import type { GateJson, PackId } from './types';
+import type { GateJson } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 
@@ -47,14 +47,6 @@ type Runtime = {
 };
 
 const RAF_ID = 'v37-gate';
-
-const DEFAULT_PLACE: Record<
-  PackId,
-  { wPct: number; aspect: string }
-> = {
-  '1440': { wPct: 37.027, aspect: '533 / 523' },
-  '390': { wPct: 93.113, aspect: '363 / 356' },
-};
 
 function doorIndexForWalk(json: GateJson, walkF: number): {
   /** Fractional atlas frame for sub-frame blend. */
@@ -136,19 +128,11 @@ export function GateScene({ sectionRef }: Props) {
   const [canvasActive, setCanvasActive] = useState(false);
   /** Keep poster until settle paints so layout never shows a blank hole */
   const [paintLive, setPaintLive] = useState(false);
-  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() => ({
-    ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-    aspectRatio: DEFAULT_PLACE[pack].aspect,
-  }));
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
 
   useEffect(() => {
-    setPlaceStyle({
-      ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-      aspectRatio: DEFAULT_PLACE[pack].aspect,
-    });
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
@@ -170,6 +154,8 @@ export function GateScene({ sectionRef }: Props) {
     let loadingMeta = false;
     let metricsCache: SectionMetricsCache | null = null;
     let subscribed = false;
+    /** Skip clearRect+paint when quantized door/settle key is unchanged. */
+    let lastDrawKey = '';
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -260,6 +246,28 @@ export function GateScene({ sectionRef }: Props) {
       ctx.restore();
     };
 
+    const finishTick = (
+      now: number,
+      clock: ScrollClock,
+      metrics: ReturnType<SectionMetricsCache['read']>,
+      walkF: number,
+      rt: Runtime,
+    ) => {
+      const busy = settleBusy(walkF) || doorBusy(rt.json, walkF);
+      const advancing = clock.wouldAdvanceWithTime(metrics) && busy;
+      if (!busy) {
+        motionComplete = true;
+        setContinuous(RAF_ID, false);
+        setPaused(RAF_ID, true);
+        clock.syncTime(now);
+        return;
+      }
+      setContinuous(RAF_ID, advancing);
+      if (!advancing) {
+        clock.syncTime(now);
+      }
+    };
+
     const tick = (now: number) => {
       if (!alive || !visible || document.hidden) return;
       const rt = runtimeRef.current;
@@ -274,12 +282,27 @@ export function GateScene({ sectionRef }: Props) {
       const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.gate);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
-      // Idle before settle: paint closed door at full opacity (layout-visible)
       const preSettle = settle.opacity <= 0;
       const drawOpacity = preSettle ? 1 : settle.opacity;
       const drawTy = preSettle ? 0 : ty;
       const drawShadowScale = preSettle ? 1 : settle.shadowScaleX;
       const drawShadowOpacity = preSettle ? 1 : settle.shadowOpacity;
+      const door = doorIndexForWalk(rt.json, walkF);
+      const settling = settleBusy(walkF);
+
+      const doorKey = door.useStatic
+        ? 'static'
+        : `${Math.round(door.frame * 100)}:${Math.round(door.crossfade * 100)}`;
+      const settleKey = settling
+        ? `${Math.round(drawOpacity * 1000)}:${Math.round(drawTy * 100)}:${Math.round(drawShadowScale * 1000)}:${Math.round(drawShadowOpacity * 1000)}`
+        : 'done';
+      const drawKey = `${doorKey}|${settleKey}`;
+
+      if (drawKey === lastDrawKey) {
+        finishTick(now, clock, metrics, walkF, rt);
+        return;
+      }
+      lastDrawKey = drawKey;
 
       const { css_w: cssW, css_h: cssH } = rt.json.place;
       const dpr = effectiveCanvasDpr();
@@ -287,7 +310,6 @@ export function GateScene({ sectionRef }: Props) {
       if (!ctx) return;
 
       ctx.clearRect(0, 0, cssW, cssH);
-      const door = doorIndexForWalk(rt.json, walkF);
 
       if (door.useStatic || door.crossfade >= 1) {
         paintPair(
@@ -351,20 +373,7 @@ export function GateScene({ sectionRef }: Props) {
         setPaintLive(true);
       }
 
-      const busy = settleBusy(walkF) || doorBusy(rt.json, walkF);
-      const advancing = clock.wouldAdvanceWithTime(metrics) && busy;
-      // After settle + door static: never leave continuous true / leftover timers.
-      if (!busy) {
-        motionComplete = true;
-        setContinuous(RAF_ID, false);
-        setPaused(RAF_ID, true);
-        clock.syncTime(now);
-        return;
-      }
-      setContinuous(RAF_ID, advancing);
-      if (!advancing) {
-        clock.syncTime(now);
-      }
+      finishTick(now, clock, metrics, walkF, rt);
     };
 
     const ensureSubscribed = () => {
@@ -416,11 +425,8 @@ export function GateScene({ sectionRef }: Props) {
           triggerP: TRIGGER_P[pack].gate,
           triggerWalkF: TRIGGER_WALK_F.gate,
         });
-        const { css_w, css_h, w_pct_of_viewport } = json.place;
-        setPlaceStyle({
-          ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
-          aspectRatio: `${css_w} / ${css_h}`,
-        });
+        // Place width/aspect owned by CSS media queries — pack only for assets.
+        lastDrawKey = '';
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -430,8 +436,16 @@ export function GateScene({ sectionRef }: Props) {
       }
     };
 
-    const onScrollOrResize = () => {
+    const onScroll = () => {
+      // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
+      if (subscribed && visible && !document.hidden && !motionComplete) {
+        markDirty(RAF_ID);
+      }
+    };
+
+    const onResize = () => {
       ensureMetrics().refresh();
+      lastDrawKey = '';
       if (subscribed && visible && !document.hidden && !motionComplete) {
         markDirty(RAF_ID);
       }
@@ -465,16 +479,16 @@ export function GateScene({ sectionRef }: Props) {
 
     nearIO.observe(wrap);
     visIO.observe(wrap);
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
       nearIO.disconnect();
       visIO.disconnect();
-      window.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);
     };
@@ -487,7 +501,6 @@ export function GateScene({ sectionRef }: Props) {
     <div
       ref={wrapRef}
       className="v37-scene v37-scene--gate"
-      style={placeStyle}
       aria-hidden="true"
     >
       {/*

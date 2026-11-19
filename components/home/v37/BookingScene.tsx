@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import {
   markDirty,
   setContinuous,
@@ -22,7 +22,7 @@ import {
   ScrollClock,
   type SectionMetricsCache,
 } from './scrollClock';
-import type { BookingJson, HoverJson, PackId } from './types';
+import type { BookingJson, HoverJson } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 
@@ -46,11 +46,6 @@ const BREATHE_PERIOD_S = 2.2;
 const HOVER_BLEND_S = 0.3;
 const HOVER_LEAVE_HOLD_MS = 3200;
 const HOVER_LEAVE_EASE_MS = 600;
-
-const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
-  '1440': { wPct: 20.208, aspect: '291 / 217' },
-  '390': { wPct: 50, aspect: '195 / 113' },
-};
 
 function breatheIndexAt(elapsedS: number): number {
   const period = BREATHE_PERIOD_S;
@@ -124,11 +119,6 @@ export function BookingScene({ sectionRef }: Props) {
   const [failed, setFailed] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
-  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() => ({
-    ['--v37-booking-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-    ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-    aspectRatio: DEFAULT_PLACE[pack].aspect,
-  }));
   const runtimeRef = useRef<Runtime | null>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const hoverRef = useRef<HoverPhase>({ kind: 'idle' });
@@ -139,11 +129,6 @@ export function BookingScene({ sectionRef }: Props) {
   const paintLiveRef = useRef(false);
 
   useEffect(() => {
-    setPlaceStyle({
-      ['--v37-booking-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-      ['--v37-w' as string]: `${DEFAULT_PLACE[pack].wPct}vw`,
-      aspectRatio: DEFAULT_PLACE[pack].aspect,
-    });
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
@@ -169,6 +154,8 @@ export function BookingScene({ sectionRef }: Props) {
     let loadingMeta = false;
     let subscribed = false;
     let metricsCache: SectionMetricsCache | null = null;
+    /** Skip clearRect+paint when quantized landing/breathe/hover key unchanged. */
+    let lastDrawKey = '';
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -280,6 +267,7 @@ export function BookingScene({ sectionRef }: Props) {
         start: now,
         blendFromAngle: blendFrom,
       };
+      lastDrawKey = '';
       bumpContinuousForInteraction();
     };
 
@@ -295,6 +283,7 @@ export function BookingScene({ sectionRef }: Props) {
         enterStart: phase.start,
         blendFromAngle: phase.blendFromAngle,
       };
+      lastDrawKey = '';
       bumpContinuousForInteraction();
     };
 
@@ -303,6 +292,27 @@ export function BookingScene({ sectionRef }: Props) {
     hit.addEventListener('pointerleave', onLeave);
     hit.addEventListener('touchstart', onEnter, { passive: true });
     hit.addEventListener('touchend', onLeave);
+
+    const finishTick = (
+      now: number,
+      clock: ScrollClock,
+      metrics: ReturnType<SectionMetricsCache['read']>,
+      walkF: number,
+    ) => {
+      const hoverBusy = hoverBusyPhase(hoverRef.current);
+      const landingInFlight =
+        !landingDoneRef.current &&
+        clock.wouldAdvanceWithTime(metrics) &&
+        walkF >= LANDING_START;
+      const continuous = landingInFlight || hoverBusy;
+      setContinuous(RAF_ID, continuous);
+      if (!continuous) {
+        clock.syncTime(now);
+        if (landingDoneRef.current && !hoverBusy) {
+          setPaused(RAF_ID, true);
+        }
+      }
+    };
 
     const tick = (now: number) => {
       if (!alive || !visible || document.hidden) return;
@@ -329,31 +339,6 @@ export function BookingScene({ sectionRef }: Props) {
 
       ensureBookingSheets(rt, walkF, landingDoneRef.current);
 
-      const { css_w: cssW, css_h: cssH } = rt.booking.place;
-      const dpr = effectiveCanvasDpr();
-      const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
-      if (!ctx) return;
-      ctx.clearRect(0, 0, cssW, cssH);
-
-      const drawBankFrame = (
-        bank: AtlasSheetBank,
-        atlas: BookingJson['landing']['atlas'],
-        index: number,
-      ) => {
-        drawAtlasFrameBlend(
-          ctx,
-          (frameIndex) => {
-            const entry = atlas.index[frameIndex];
-            return entry ? bank.get(entry[0]) : null;
-          },
-          atlas,
-          index,
-          0,
-          0,
-          2,
-        );
-      };
-
       let phase = hoverRef.current;
 
       if (phase.kind === 'leaveHold' && now >= phase.holdUntil) {
@@ -366,21 +351,24 @@ export function BookingScene({ sectionRef }: Props) {
         hoverRef.current = phase;
       }
 
+      let drawKey = 'blank';
+      let paintMode: 'blank' | 'landing' | 'hover' | 'breathe' = 'blank';
+      let landingIdx = 0;
+      let hoverIdx = 0;
+      let bIdx = 0;
+
       if (walkF < LANDING_START) {
-        // blank until landing — keep poster via !paintLive
+        drawKey = 'blank';
+        paintMode = 'blank';
       } else if (walkF <= LANDING_END && !landingDoneRef.current) {
-        const idx = Math.min(
+        landingIdx = Math.min(
           rt.booking.landing.atlas.frames - 1,
           Math.max(0, walkF - LANDING_START),
         );
-        drawBankFrame(rt.landingBank, rt.booking.landing.atlas, idx);
-        if (!paintLiveRef.current) {
-          paintLiveRef.current = true;
-          setPaintLive(true);
-        }
+        drawKey = `landing:${Math.round(landingIdx * 100)}`;
+        paintMode = 'landing';
       } else {
         let useHover = false;
-        let hoverIdx = 0;
 
         if (phase.kind === 'hover' || phase.kind === 'leaveHold') {
           if (rt.hover && rt.hoverBank) {
@@ -406,7 +394,8 @@ export function BookingScene({ sectionRef }: Props) {
         }
 
         if (useHover && rt.hover && rt.hoverBank) {
-          drawBankFrame(rt.hoverBank, rt.hover.atlas, hoverIdx);
+          drawKey = `hover:${phase.kind}:${hoverIdx}`;
+          paintMode = 'hover';
         } else {
           if (lastNowRef.current === 0) lastNowRef.current = now;
           const dt = Math.min(
@@ -415,14 +404,60 @@ export function BookingScene({ sectionRef }: Props) {
           );
           lastNowRef.current = now;
           breatheElapsedRef.current += dt;
-          const bIdx = breatheIndexAt(breatheElapsedRef.current);
+          bIdx = breatheIndexAt(breatheElapsedRef.current);
           void rt.breatheBank.ensureCurrentAndNext(bIdx);
-          drawBankFrame(rt.breatheBank, rt.booking.breathe.atlas, bIdx);
+          drawKey = `breathe:${bIdx}`;
+          paintMode = 'breathe';
         }
-        if (!paintLiveRef.current) {
-          paintLiveRef.current = true;
-          setPaintLive(true);
-        }
+      }
+
+      if (drawKey === lastDrawKey) {
+        finishTick(now, clock, metrics, walkF);
+        return;
+      }
+      lastDrawKey = drawKey;
+
+      if (paintMode === 'blank') {
+        finishTick(now, clock, metrics, walkF);
+        return;
+      }
+
+      const { css_w: cssW, css_h: cssH } = rt.booking.place;
+      const dpr = effectiveCanvasDpr();
+      const ctx = resizeCanvas(canvas, cssW, cssH, dpr);
+      if (!ctx) return;
+      ctx.clearRect(0, 0, cssW, cssH);
+
+      const drawBankFrame = (
+        bank: AtlasSheetBank,
+        atlas: BookingJson['landing']['atlas'],
+        index: number,
+      ) => {
+        drawAtlasFrameBlend(
+          ctx,
+          (frameIndex) => {
+            const entry = atlas.index[frameIndex];
+            return entry ? bank.get(entry[0]) : null;
+          },
+          atlas,
+          index,
+          0,
+          0,
+          2,
+        );
+      };
+
+      if (paintMode === 'landing') {
+        drawBankFrame(rt.landingBank, rt.booking.landing.atlas, landingIdx);
+      } else if (paintMode === 'hover' && rt.hover && rt.hoverBank) {
+        drawBankFrame(rt.hoverBank, rt.hover.atlas, hoverIdx);
+      } else if (paintMode === 'breathe') {
+        drawBankFrame(rt.breatheBank, rt.booking.breathe.atlas, bIdx);
+      }
+
+      if (!paintLiveRef.current) {
+        paintLiveRef.current = true;
+        setPaintLive(true);
       }
 
       /*
@@ -430,20 +465,7 @@ export function BookingScene({ sectionRef }: Props) {
        * Idle after landing: freeze on the last breathe frame — no forever
        * interval / dirty marks (was BREATHE_DIRTY_MS → ~10 rAF/sec).
        */
-      const hoverBusy = hoverBusyPhase(hoverRef.current);
-      const landingInFlight =
-        !landingDoneRef.current &&
-        clock.wouldAdvanceWithTime(metrics) &&
-        walkF >= LANDING_START;
-      const continuous = landingInFlight || hoverBusy;
-      setContinuous(RAF_ID, continuous);
-      if (!continuous) {
-        clock.syncTime(now);
-        // Landing done + idle: pause subscriber so scroll/IO cannot keep pumping.
-        if (landingDoneRef.current && !hoverBusy) {
-          setPaused(RAF_ID, true);
-        }
-      }
+      finishTick(now, clock, metrics, walkF);
     };
 
     const ensureSubscribed = () => {
@@ -496,12 +518,8 @@ export function BookingScene({ sectionRef }: Props) {
           triggerWalkF: TRIGGER_WALK_F.booking,
           nearMaxScroll: true,
         });
-        const { css_w, css_h, w_pct_of_viewport } = booking.place;
-        setPlaceStyle({
-          ['--v37-booking-w' as string]: `${w_pct_of_viewport}vw`,
-          ['--v37-w' as string]: `${w_pct_of_viewport}vw`,
-          aspectRatio: `${css_w} / ${css_h}`,
-        });
+        // Place width/aspect owned by CSS media queries — pack only for assets.
+        lastDrawKey = '';
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -511,11 +529,18 @@ export function BookingScene({ sectionRef }: Props) {
       }
     };
 
-    const onScrollOrResize = () => {
-      ensureMetrics().refresh();
+    const onScroll = () => {
+      // scrollY-only via ensureMetrics().read() — no getBoundingClientRect.
       if (!subscribed || !visible || document.hidden) return;
-      // Landing still in progress: scroll can advance the clock.
-      // Idle breathe is frozen — do not dirty-mark forever.
+      if (!landingDoneRef.current || hoverBusyPhase(hoverRef.current)) {
+        markDirty(RAF_ID);
+      }
+    };
+
+    const onResize = () => {
+      ensureMetrics().refresh();
+      lastDrawKey = '';
+      if (!subscribed || !visible || document.hidden) return;
       if (!landingDoneRef.current || hoverBusyPhase(hoverRef.current)) {
         markDirty(RAF_ID);
       }
@@ -565,16 +590,16 @@ export function BookingScene({ sectionRef }: Props) {
 
     nearIO.observe(wrap);
     visIO.observe(wrap);
-    window.addEventListener('scroll', onScrollOrResize, { passive: true });
-    window.addEventListener('resize', onScrollOrResize, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
       nearIO.disconnect();
       visIO.disconnect();
-      window.removeEventListener('scroll', onScrollOrResize);
-      window.removeEventListener('resize', onScrollOrResize);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', onVisibility);
       hit.removeEventListener('pointerenter', onEnter);
       hit.removeEventListener('pointerleave', onLeave);
@@ -592,7 +617,6 @@ export function BookingScene({ sectionRef }: Props) {
     <div
       ref={wrapRef}
       className="v37-scene v37-scene--booking"
-      style={placeStyle}
       aria-hidden="true"
     >
       {/*

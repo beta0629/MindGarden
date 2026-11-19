@@ -5,7 +5,6 @@ import {
   useRef,
   useState,
   type ComponentType,
-  type CSSProperties,
   type RefObject,
 } from 'react';
 import { whenHomeBootReady } from '@/components/home/homeBoot';
@@ -20,46 +19,6 @@ type SceneProps = {
 };
 
 type SceneKind = 'gate' | 'bench' | 'booking';
-
-const PLACE: Record<SceneKind, Record<PackId, { wPct: number; aspect: string }>> =
-  {
-    gate: {
-      '1440': { wPct: 37.027, aspect: '533 / 523' },
-      '390': { wPct: 93.113, aspect: '363 / 356' },
-    },
-    bench: {
-      '1440': { wPct: 28.115, aspect: '404.857 / 350.334' },
-      '390': { wPct: 57.274, aspect: '223.37 / 193.288' },
-    },
-    booking: {
-      '1440': { wPct: 20.208, aspect: '291 / 217' },
-      '390': { wPct: 50, aspect: '195 / 113' },
-    },
-  };
-
-/**
- * Match BenchScene DEFAULT_PAD_FRACS — deferred poster stub must reserve the
- * same place-frac / pad box or empty .home-reviews jumps when the real scene
- * mounts (WebKit ~83px @390 from missing --bench-place-frac).
- */
-const BENCH_PAD_FRACS: Record<
-  PackId,
-  { place: number; padRRatio: number; padTOverW: number; padBOverW: number }
-> = {
-  // Keep in lockstep with BenchScene DEFAULT_PAD_FRACS / computePad(json).
-  '1440': {
-    place: 404.8573877074131 / 895.085,
-    padRRatio: 346.16261229258686 / 404.8573877074131,
-    padTOverW: 452.571 / 404.8573877074131,
-    padBOverW: 4 / 404.8573877074131,
-  },
-  '390': {
-    place: 223.36959321788316 / 630.839,
-    padRRatio: 187.79040678211686 / 223.36959321788316,
-    padTOverW: 202.662 / 223.36959321788316,
-    padBOverW: 4 / 223.36959321788316,
-  },
-};
 
 const POSTER: Record<SceneKind, (pack: PackId) => string> = {
   gate: (pack) => `/assets/home-v3.7/gate/${pack}/gate-poster-rm-${pack}.webp`,
@@ -100,30 +59,14 @@ function waitIdle(timeoutMs: number): Promise<void> {
   });
 }
 
-function placeStyleFor(kind: SceneKind, pack: PackId): CSSProperties {
-  const place = PLACE[kind][pack];
-  if (kind !== 'bench') {
-    return {
-      ['--v37-w' as string]: `${place.wPct}vw`,
-      aspectRatio: place.aspect,
-    };
-  }
-  const pad = BENCH_PAD_FRACS[pack];
-  return {
-    ['--v37-w' as string]: `${place.wPct}vw`,
-    ['--bench-place-frac' as string]: String(pad.place),
-    ['--bench-pad-r-ratio' as string]: String(pad.padRRatio),
-    ['--bench-pad-t-over-w' as string]: String(pad.padTOverW),
-    ['--bench-pad-b-over-w' as string]: String(pad.padBOverW),
-    aspectRatio: place.aspect,
-  };
-}
-
 /**
  * Keep layout + static poster until near-viewport AND home-boot poster gate,
  * then idle-load the real scene module so Gate/Bench/Booking JS never contends
  * with hero LCP. On software GPU (SwiftShader / llvmpipe), never import scene
  * chunks — atlas decode + canvas work would spike mid-scroll; poster stays forever.
+ *
+ * Place size / aspect / bench pads come from CSS media queries only (globals.css).
+ * Pack is used solely for poster atlas paths.
  */
 function DeferredV37Scene({
   kind,
@@ -186,7 +129,6 @@ function DeferredV37Scene({
     <div
       ref={wrapRef}
       className={SCENE_CLASS[kind]}
-      style={placeStyleFor(kind, pack)}
       aria-hidden="true"
     >
       {/* eslint-disable-next-line @next/next/no-img-element -- static stand-in until scene chunk loads */}

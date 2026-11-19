@@ -5,7 +5,6 @@ import {
   useLayoutEffect,
   useRef,
   useState,
-  type CSSProperties,
   type RefObject,
 } from 'react';
 import {
@@ -39,7 +38,6 @@ import {
 import type {
   AmbientButterfly,
   BenchJson,
-  PackId,
   PerchShadowTrackPoint,
 } from './types';
 import { TRIGGER_P, TRIGGER_WALK_F } from './types';
@@ -70,33 +68,10 @@ type OverflowLayout = {
 const BENCH_MIN_OPACITY = 0.92;
 const RAF_ID = 'v37-bench';
 
-const DEFAULT_PLACE: Record<PackId, { wPct: number; aspect: string }> = {
-  '1440': { wPct: 28.115, aspect: '404.857 / 350.334' },
-  '390': { wPct: 57.274, aspect: '223.37 / 193.288' },
-};
-
-const DEFAULT_PAD_FRACS: Record<
-  PackId,
-  { place: number; padRRatio: number; padTOverW: number; padBOverW: number }
-> = {
-  // Must match computePad(bench-{pack}.json) — deferred stub / first paint
-  // otherwise jump when JSON loads (WebKit 1440 empty-reviews ~+4px).
-  '1440': {
-    place: 404.8573877074131 / 895.085,
-    padRRatio: 346.16261229258686 / 404.8573877074131,
-    padTOverW: 452.571 / 404.8573877074131,
-    padBOverW: 4 / 404.8573877074131,
-  },
-  '390': {
-    place: 223.36959321788316 / 630.839,
-    padRRatio: 187.79040678211686 / 223.36959321788316,
-    padTOverW: 202.662 / 223.36959321788316,
-    padBOverW: 4 / 223.36959321788316,
-  },
-};
-
 /**
  * Pad so the overflow canvas covers every ambient / perch track CSS box.
+ * Used for canvas pixel positioning only — CSS custom properties for place/pads
+ * live in globals.css media queries (not written as inline styles).
  * Exported for alpha-bbox verification.
  */
 export function computePad(json: BenchJson): Pad {
@@ -245,32 +220,6 @@ function settleBusy(walkF: number): boolean {
   return settle.opacity < 1 || settle.rise < 1;
 }
 
-function placeStyleFromPad(
-  pack: PackId,
-  wPct: number,
-  aspect: string,
-  pad: Pad | null,
-  placeW: number,
-): CSSProperties {
-  const fracs = pad
-    ? {
-        place: placeW / (placeW + pad.left + pad.right),
-        padRRatio: pad.right / placeW,
-        padTOverW: pad.top / placeW,
-        padBOverW: pad.bottom / placeW,
-      }
-    : DEFAULT_PAD_FRACS[pack];
-  return {
-    ['--v37-w' as string]: `${wPct}vw`,
-    ['--bench-place-frac' as string]: String(fracs.place),
-    ['--bench-pad-r-ratio' as string]: String(fracs.padRRatio),
-    // Vertical pads reserved as content-box padding so ancestors cannot clip them.
-    ['--bench-pad-t-over-w' as string]: String(fracs.padTOverW),
-    ['--bench-pad-b-over-w' as string]: String(fracs.padBOverW),
-    aspectRatio: aspect,
-  };
-}
-
 /**
  * Position the overflow canvas from the displayed place box so track pads
  * stay inside `.home-reviews__scene` (no horizontal document growth).
@@ -335,15 +284,6 @@ export function BenchScene({ sectionRef }: Props) {
   const [failed, setFailed] = useState(false);
   const [canvasActive, setCanvasActive] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
-  const [placeStyle, setPlaceStyle] = useState<CSSProperties>(() =>
-    placeStyleFromPad(
-      pack,
-      DEFAULT_PLACE[pack].wPct,
-      DEFAULT_PLACE[pack].aspect,
-      null,
-      pack === '1440' ? 404.857 : 223.37,
-    ),
-  );
   const runtimeRef = useRef<Runtime | null>(null);
   const padRef = useRef<Pad>({ left: 0, top: 0, right: 0, bottom: 0 });
   const clockRef = useRef<ScrollClock | null>(null);
@@ -353,15 +293,6 @@ export function BenchScene({ sectionRef }: Props) {
   const layoutScrollYRef = useRef(0);
 
   useEffect(() => {
-    setPlaceStyle(
-      placeStyleFromPad(
-        pack,
-        DEFAULT_PLACE[pack].wPct,
-        DEFAULT_PLACE[pack].aspect,
-        null,
-        pack === '1440' ? 404.857 : 223.37,
-      ),
-    );
     setCanvasActive(false);
     setPaintLive(false);
     paintLiveRef.current = false;
@@ -377,6 +308,7 @@ export function BenchScene({ sectionRef }: Props) {
    * Apply overflow canvas geometry before paint whenever the canvas is active.
    * Avoids a poster→canvas frame where absolute canvas has auto/intrinsic size
    * and Chromium briefly collapses the aspect box (~73px @1440 empty-reviews).
+   * Place size/pads come from CSS media queries — padRef is canvas math only.
    */
   useLayoutEffect(() => {
     if (!canvasActive || failed || reduced) return;
@@ -394,7 +326,7 @@ export function BenchScene({ sectionRef }: Props) {
       rt.json.place.css_h,
     );
     layoutScrollYRef.current = window.scrollY || window.pageYOffset || 0;
-  }, [canvasActive, failed, reduced, pack, placeStyle, paintLive]);
+  }, [canvasActive, failed, reduced, pack, paintLive]);
 
   useEffect(() => {
     if (reduced || failed) return;
@@ -412,6 +344,8 @@ export function BenchScene({ sectionRef }: Props) {
     let motionEnd = TRIGGER_WALK_F.bench + 48;
     /** After peaks settle — paint once then freeze until section remount / re-trigger. */
     let frozen = false;
+    /** Skip clearRect+paint when quantized walk/settle key is unchanged. */
+    let lastDrawKey = '';
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -485,6 +419,32 @@ export function BenchScene({ sectionRef }: Props) {
       const drawShadowOpacity = preSettle
         ? 1
         : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
+
+      const settling = settleBusy(walkF);
+      const settleKey = settling
+        ? `${Math.round(drawOpacity * 1000)}:${Math.round(drawTy * 100)}:${Math.round(drawShadowScale * 1000)}:${Math.round(drawShadowOpacity * 1000)}`
+        : 'done';
+      const drawKey = `${Math.round(walkF * 100)}|${settleKey}`;
+
+      const finishTick = () => {
+        const motionBusy = walkF < motionEnd || settling;
+        if (!motionBusy) {
+          frozen = true;
+          setContinuous(RAF_ID, false);
+          setPaused(RAF_ID, true);
+          clock.syncTime(now);
+          return;
+        }
+        const advancing = clock.wouldAdvanceWithTime(metrics) && motionBusy;
+        setContinuous(RAF_ID, advancing);
+        if (!advancing) clock.syncTime(now);
+      };
+
+      if (drawKey === lastDrawKey) {
+        finishTick();
+        return;
+      }
+      lastDrawKey = drawKey;
 
       if (!overflowLayoutRef.current) refreshOverflowLayout();
       const layout = overflowLayoutRef.current;
@@ -580,18 +540,7 @@ export function BenchScene({ sectionRef }: Props) {
         setPaintLive(true);
       }
 
-      const motionBusy = walkF < motionEnd || settleBusy(walkF);
-      if (!motionBusy) {
-        // Final peak pose painted above — freeze until remount.
-        frozen = true;
-        setContinuous(RAF_ID, false);
-        setPaused(RAF_ID, true);
-        clock.syncTime(now);
-        return;
-      }
-      const advancing = clock.wouldAdvanceWithTime(metrics) && motionBusy;
-      setContinuous(RAF_ID, advancing);
-      if (!advancing) clock.syncTime(now);
+      finishTick();
     };
 
     const ensureSubscribed = () => {
@@ -663,16 +612,8 @@ export function BenchScene({ sectionRef }: Props) {
           triggerP: TRIGGER_P[pack].bench,
           triggerWalkF: TRIGGER_WALK_F.bench,
         });
-        const { css_w, css_h, w_pct_of_viewport } = json.place;
-        setPlaceStyle(
-          placeStyleFromPad(
-            pack,
-            w_pct_of_viewport,
-            `${css_w} / ${css_h}`,
-            pad,
-            css_w,
-          ),
-        );
+        // Place/pad CSS vars owned by globals.css — padRef is canvas math only.
+        lastDrawKey = '';
         ensureMetrics().refresh();
         await warmAssets();
       } catch {
@@ -700,6 +641,7 @@ export function BenchScene({ sectionRef }: Props) {
 
     const onResize = () => {
       ensureMetrics().refresh();
+      lastDrawKey = '';
       refreshOverflowLayout();
       if (subscribed && visible && !document.hidden && !frozen) {
         markDirty(RAF_ID);
@@ -775,7 +717,6 @@ export function BenchScene({ sectionRef }: Props) {
     <div
       ref={wrapRef}
       className="v37-scene v37-scene--bench"
-      style={placeStyle}
       aria-hidden="true"
     >
       {/*

@@ -43,8 +43,6 @@ const LANDING_START = 470;
 const LANDING_END = 508;
 const BREATHE_COUNT = 34;
 const BREATHE_PERIOD_S = 2.2;
-/** Idle breathe via dirty marks (~10fps) — never continuous forever. */
-const BREATHE_DIRTY_MS = 100;
 const HOVER_BLEND_S = 0.3;
 const HOVER_LEAVE_HOLD_MS = 3200;
 const HOVER_LEAVE_EASE_MS = 600;
@@ -171,7 +169,6 @@ export function BookingScene({ sectionRef }: Props) {
     let loadingMeta = false;
     let subscribed = false;
     let metricsCache: SectionMetricsCache | null = null;
-    let breatheTimer: number | null = null;
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -185,40 +182,27 @@ export function BookingScene({ sectionRef }: Props) {
       return metricsCache;
     };
 
-    const stopBreatheTimer = () => {
-      if (breatheTimer != null) {
-        window.clearInterval(breatheTimer);
-        breatheTimer = null;
-      }
-    };
-
-    const syncBreatheTimer = () => {
-      const hoverBusy =
-        hoverRef.current.kind === 'hover' ||
-        hoverRef.current.kind === 'leaveHold' ||
-        hoverRef.current.kind === 'leaveEase';
-      const need =
-        subscribed &&
-        visible &&
-        !document.hidden &&
-        assetsReady &&
-        landingDoneRef.current &&
-        !hoverBusy;
-      if (need && breatheTimer == null) {
-        breatheTimer = window.setInterval(() => {
-          markDirty(RAF_ID);
-        }, BREATHE_DIRTY_MS);
-      } else if (!need) {
-        stopBreatheTimer();
-      }
-    };
+    const hoverBusyPhase = (phase: HoverPhase): boolean =>
+      phase.kind === 'hover' ||
+      phase.kind === 'leaveHold' ||
+      phase.kind === 'leaveEase';
 
     const syncPause = () => {
       if (!subscribed) return;
-      const shouldRun = visible && !document.hidden && assetsReady;
+      const hoverBusy = hoverBusyPhase(hoverRef.current);
+      const landingPending = !landingDoneRef.current;
+      // Offscreen / hidden: no dirty marks, no continuous, no breathe interval.
+      const shouldRun =
+        visible &&
+        !document.hidden &&
+        assetsReady &&
+        (landingPending || hoverBusy);
       setPaused(RAF_ID, !shouldRun);
-      if (shouldRun) markDirty(RAF_ID);
-      syncBreatheTimer();
+      if (!shouldRun) {
+        setContinuous(RAF_ID, false);
+        return;
+      }
+      markDirty(RAF_ID);
     };
 
     const ensureHoverMeta = async () => {
@@ -273,6 +257,8 @@ export function BookingScene({ sectionRef }: Props) {
 
     const bumpContinuousForInteraction = () => {
       if (!subscribed || !visible || document.hidden) return;
+      // Resume from idle freeze so hover breathe/wing runs again.
+      setPaused(RAF_ID, false);
       setContinuous(RAF_ID, true);
       markDirty(RAF_ID);
     };
@@ -441,20 +427,23 @@ export function BookingScene({ sectionRef }: Props) {
 
       /*
        * Continuous only during landing flight + hover ease.
-       * Idle breathe uses dirty marks (~10fps) via syncBreatheTimer — never forever rAF.
+       * Idle after landing: freeze on the last breathe frame — no forever
+       * interval / dirty marks (was BREATHE_DIRTY_MS → ~10 rAF/sec).
        */
-      const hoverBusy =
-        hoverRef.current.kind === 'hover' ||
-        hoverRef.current.kind === 'leaveHold' ||
-        hoverRef.current.kind === 'leaveEase';
+      const hoverBusy = hoverBusyPhase(hoverRef.current);
       const landingInFlight =
         !landingDoneRef.current &&
         clock.wouldAdvanceWithTime(metrics) &&
         walkF >= LANDING_START;
       const continuous = landingInFlight || hoverBusy;
       setContinuous(RAF_ID, continuous);
-      if (!continuous) clock.syncTime(now);
-      syncBreatheTimer();
+      if (!continuous) {
+        clock.syncTime(now);
+        // Landing done + idle: pause subscriber so scroll/IO cannot keep pumping.
+        if (landingDoneRef.current && !hoverBusy) {
+          setPaused(RAF_ID, true);
+        }
+      }
     };
 
     const ensureSubscribed = () => {
@@ -524,7 +513,10 @@ export function BookingScene({ sectionRef }: Props) {
 
     const onScrollOrResize = () => {
       ensureMetrics().refresh();
-      if (subscribed && visible && !document.hidden) {
+      if (!subscribed || !visible || document.hidden) return;
+      // Landing still in progress: scroll can advance the clock.
+      // Idle breathe is frozen — do not dirty-mark forever.
+      if (!landingDoneRef.current || hoverBusyPhase(hoverRef.current)) {
         markDirty(RAF_ID);
       }
     };
@@ -549,14 +541,26 @@ export function BookingScene({ sectionRef }: Props) {
           hoverRef.current = { kind: 'idle' };
         }
         syncPause();
-        if (visible && assetsReady) markDirty(RAF_ID);
+        if (
+          visible &&
+          assetsReady &&
+          (!landingDoneRef.current || hoverBusyPhase(hoverRef.current))
+        ) {
+          markDirty(RAF_ID);
+        }
       },
       { rootMargin: '0px' },
     );
 
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && visible) markDirty(RAF_ID);
+      if (
+        !document.hidden &&
+        visible &&
+        (!landingDoneRef.current || hoverBusyPhase(hoverRef.current))
+      ) {
+        markDirty(RAF_ID);
+      }
     };
 
     nearIO.observe(wrap);
@@ -567,7 +571,6 @@ export function BookingScene({ sectionRef }: Props) {
 
     return () => {
       alive = false;
-      stopBreatheTimer();
       nearIO.disconnect();
       visIO.disconnect();
       window.removeEventListener('scroll', onScrollOrResize);
@@ -592,22 +595,35 @@ export function BookingScene({ sectionRef }: Props) {
       style={placeStyle}
       aria-hidden="true"
     >
-      {showPoster ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          className="v37-scene__poster"
-          src={posterSrc}
-          alt=""
-          decoding="async"
-          loading="lazy"
-          fetchPriority="low"
-        />
-      ) : null}
+      {/*
+       * Keep an in-flow poster spacer so canvas mount cannot collapse aspect.
+       * Opacity-only hide after first live paint (same pattern as Bench/Gate).
+       */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={
+          showPoster
+            ? 'v37-scene__poster'
+            : 'v37-scene__poster v37-scene__poster--layout'
+        }
+        src={posterSrc}
+        alt=""
+        decoding="async"
+        loading="lazy"
+        fetchPriority="low"
+      />
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}
           className="v37-scene__canvas"
-          style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: showPoster ? 0 : 1,
+            pointerEvents: 'none',
+          }}
         />
       ) : null}
       {/* Hover hit target only — wrapper stays pointer-events: none via CSS. */}

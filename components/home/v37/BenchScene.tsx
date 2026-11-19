@@ -1,6 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from 'react';
 import {
   markDirty,
   setContinuous,
@@ -341,6 +348,9 @@ export function BenchScene({ sectionRef }: Props) {
   const padRef = useRef<Pad>({ left: 0, top: 0, right: 0, bottom: 0 });
   const clockRef = useRef<ScrollClock | null>(null);
   const paintLiveRef = useRef(false);
+  /** Latest overflow layout — shared with useLayoutEffect so first canvas paint has geometry. */
+  const overflowLayoutRef = useRef<OverflowLayout | null>(null);
+  const layoutScrollYRef = useRef(0);
 
   useEffect(() => {
     setPlaceStyle(
@@ -359,7 +369,32 @@ export function BenchScene({ sectionRef }: Props) {
     runtimeRef.current = null;
     clockRef.current = null;
     padRef.current = { left: 0, top: 0, right: 0, bottom: 0 };
+    overflowLayoutRef.current = null;
+    layoutScrollYRef.current = 0;
   }, [pack]);
+
+  /**
+   * Apply overflow canvas geometry before paint whenever the canvas is active.
+   * Avoids a poster→canvas frame where absolute canvas has auto/intrinsic size
+   * and Chromium briefly collapses the aspect box (~73px @1440 empty-reviews).
+   */
+  useLayoutEffect(() => {
+    if (!canvasActive || failed || reduced) return;
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    const rt = runtimeRef.current;
+    if (!wrap || !canvas || !rt) return;
+    // Keep canvas invisible until first live paint — layoutOverflowCanvas reads this.
+    canvas.dataset.posterHidden = paintLive ? '0' : '1';
+    overflowLayoutRef.current = layoutOverflowCanvas(
+      wrap,
+      canvas,
+      padRef.current,
+      rt.json.place.css_w,
+      rt.json.place.css_h,
+    );
+    layoutScrollYRef.current = window.scrollY || window.pageYOffset || 0;
+  }, [canvasActive, failed, reduced, pack, placeStyle, paintLive]);
 
   useEffect(() => {
     if (reduced || failed) return;
@@ -374,8 +409,6 @@ export function BenchScene({ sectionRef }: Props) {
     let loadingMeta = false;
     let subscribed = false;
     let metricsCache: SectionMetricsCache | null = null;
-    let overflowLayout: OverflowLayout | null = null;
-    let layoutScrollY = 0;
     let motionEnd = TRIGGER_WALK_F.bench + 48;
     /** After peaks settle — paint once then freeze until section remount / re-trigger. */
     let frozen = false;
@@ -396,21 +429,25 @@ export function BenchScene({ sectionRef }: Props) {
       const rt = runtimeRef.current;
       const canvas = canvasRef.current;
       if (!rt || !canvas || !assetsReady) return;
-      overflowLayout = layoutOverflowCanvas(
+      overflowLayoutRef.current = layoutOverflowCanvas(
         wrap,
         canvas,
         padRef.current,
         rt.json.place.css_w,
         rt.json.place.css_h,
       );
-      layoutScrollY = window.scrollY || window.pageYOffset || 0;
+      layoutScrollYRef.current = window.scrollY || window.pageYOffset || 0;
     };
 
     const syncPause = () => {
       if (!subscribed) return;
-      const shouldRun = visible && !document.hidden && assetsReady;
+      const shouldRun = visible && !document.hidden && assetsReady && !frozen;
       setPaused(RAF_ID, !shouldRun);
-      if (shouldRun) markDirty(RAF_ID);
+      if (!shouldRun) {
+        setContinuous(RAF_ID, false);
+        return;
+      }
+      markDirty(RAF_ID);
     };
 
     const tick = (now: number) => {
@@ -449,8 +486,8 @@ export function BenchScene({ sectionRef }: Props) {
         ? 1
         : Math.max(BENCH_MIN_OPACITY, settle.shadowOpacity);
 
-      if (!overflowLayout) refreshOverflowLayout();
-      const layout = overflowLayout;
+      if (!overflowLayoutRef.current) refreshOverflowLayout();
+      const layout = overflowLayoutRef.current;
       if (!layout) return;
       const { scale, cssW, cssH } = layout;
       const ox = pad.left;
@@ -548,6 +585,7 @@ export function BenchScene({ sectionRef }: Props) {
         // Final peak pose painted above — freeze until remount.
         frozen = true;
         setContinuous(RAF_ID, false);
+        setPaused(RAF_ID, true);
         clock.syncTime(now);
         return;
       }
@@ -587,14 +625,10 @@ export function BenchScene({ sectionRef }: Props) {
         }
         if (!alive) return;
         assetsReady = true;
+        // Canvas mounts this commit; useLayoutEffect lays out before paint.
         setCanvasActive(true);
-        // Canvas mounts after setState — layout on next frame.
-        requestAnimationFrame(() => {
-          if (!alive) return;
-          refreshOverflowLayout();
-          ensureSubscribed();
-          markDirty(RAF_ID);
-        });
+        ensureSubscribed();
+        markDirty(RAF_ID);
       } catch {
         if (alive) setFailed(true);
       } finally {
@@ -650,15 +684,16 @@ export function BenchScene({ sectionRef }: Props) {
 
     const onScroll = () => {
       // Derive canvasTop from scroll delta — no getBoundingClientRect on the scroll path.
-      if (overflowLayout) {
+      const prev = overflowLayoutRef.current;
+      if (prev) {
         const sy = window.scrollY || window.pageYOffset || 0;
-        overflowLayout = {
-          ...overflowLayout,
-          canvasTop: overflowLayout.canvasTop + (layoutScrollY - sy),
+        overflowLayoutRef.current = {
+          ...prev,
+          canvasTop: prev.canvasTop + (layoutScrollYRef.current - sy),
         };
-        layoutScrollY = sy;
+        layoutScrollYRef.current = sy;
       }
-      if (subscribed && visible && !document.hidden) {
+      if (subscribed && visible && !document.hidden && !frozen) {
         markDirty(RAF_ID);
       }
     };
@@ -666,7 +701,7 @@ export function BenchScene({ sectionRef }: Props) {
     const onResize = () => {
       ensureMetrics().refresh();
       refreshOverflowLayout();
-      if (subscribed && visible && !document.hidden) {
+      if (subscribed && visible && !document.hidden && !frozen) {
         markDirty(RAF_ID);
       }
     };
@@ -688,14 +723,14 @@ export function BenchScene({ sectionRef }: Props) {
         ensureMetrics().refresh();
         if (visible) refreshOverflowLayout();
         syncPause();
-        if (visible && assetsReady) markDirty(RAF_ID);
+        if (visible && assetsReady && !frozen) markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
 
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && visible) markDirty(RAF_ID);
+      if (!document.hidden && visible && !frozen) markDirty(RAF_ID);
     };
 
     const ro = new ResizeObserver(() => {
@@ -761,10 +796,25 @@ export function BenchScene({ sectionRef }: Props) {
         loading="lazy"
         fetchPriority="low"
       />
+      {/*
+       * Always mount the overflow canvas once active — zero-size until
+       * useLayoutEffect / layoutOverflowCanvas applies place+pad geometry so
+       * the in-flow poster spacer never collapses during mount.
+       */}
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}
           className="v37-scene__canvas v37-scene__canvas--overflow"
+          style={{
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            opacity: 0,
+            pointerEvents: 'none',
+            maxWidth: 'none',
+          }}
         />
       ) : null}
     </div>

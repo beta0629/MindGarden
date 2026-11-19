@@ -183,11 +183,18 @@ export function GateScene({ sectionRef }: Props) {
       return metricsCache;
     };
 
+    let motionComplete = false;
+
     const syncPause = () => {
       if (!subscribed) return;
-      const shouldRun = visible && !document.hidden && assetsReady;
+      const shouldRun =
+        visible && !document.hidden && assetsReady && !motionComplete;
       setPaused(RAF_ID, !shouldRun);
-      if (shouldRun) markDirty(RAF_ID);
+      if (!shouldRun) {
+        setContinuous(RAF_ID, false);
+        return;
+      }
+      markDirty(RAF_ID);
     };
 
     const paintPair = (
@@ -346,7 +353,14 @@ export function GateScene({ sectionRef }: Props) {
 
       const busy = settleBusy(walkF) || doorBusy(rt.json, walkF);
       const advancing = clock.wouldAdvanceWithTime(metrics) && busy;
-      // After settle + door static: never leave continuous true.
+      // After settle + door static: never leave continuous true / leftover timers.
+      if (!busy) {
+        motionComplete = true;
+        setContinuous(RAF_ID, false);
+        setPaused(RAF_ID, true);
+        clock.syncTime(now);
+        return;
+      }
       setContinuous(RAF_ID, advancing);
       if (!advancing) {
         clock.syncTime(now);
@@ -418,7 +432,7 @@ export function GateScene({ sectionRef }: Props) {
 
     const onScrollOrResize = () => {
       ensureMetrics().refresh();
-      if (subscribed && visible && !document.hidden) {
+      if (subscribed && visible && !document.hidden && !motionComplete) {
         markDirty(RAF_ID);
       }
     };
@@ -439,14 +453,14 @@ export function GateScene({ sectionRef }: Props) {
         visible = entries.some((e) => e.isIntersecting);
         ensureMetrics().refresh();
         syncPause();
-        if (visible && assetsReady) markDirty(RAF_ID);
+        if (visible && assetsReady && !motionComplete) markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
 
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && visible) markDirty(RAF_ID);
+      if (!document.hidden && visible && !motionComplete) markDirty(RAF_ID);
     };
 
     nearIO.observe(wrap);
@@ -476,22 +490,35 @@ export function GateScene({ sectionRef }: Props) {
       style={placeStyle}
       aria-hidden="true"
     >
-      {showPoster ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          className="v37-scene__poster"
-          src={posterSrc}
-          alt=""
-          decoding="async"
-          loading="lazy"
-          fetchPriority="low"
-        />
-      ) : null}
+      {/*
+       * Keep an in-flow poster spacer for the full lifetime of the scene so
+       * canvas mount / first paint cannot collapse the aspect box.
+       */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        className={
+          showPoster
+            ? 'v37-scene__poster'
+            : 'v37-scene__poster v37-scene__poster--layout'
+        }
+        src={posterSrc}
+        alt=""
+        decoding="async"
+        loading="lazy"
+        fetchPriority="low"
+      />
       {canvasActive && !failed && !reduced ? (
         <canvas
           ref={canvasRef}
           className="v37-scene__canvas"
-          style={showPoster ? { position: 'absolute', inset: 0, opacity: 0 } : undefined}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            opacity: showPoster ? 0 : 1,
+            pointerEvents: 'none',
+          }}
         />
       ) : null}
     </div>

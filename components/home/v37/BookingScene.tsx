@@ -58,34 +58,8 @@ export function BookingScene({ sectionRef }: Props) {
   const breatheSrc = bookingBreatheSrc(key);
   const hoverSrc = bookingHoverSrc(key);
   const isDesktop = pack === '1440';
-  const mainSrc = phase === 'landing' ? landingSrc : breatheSrc;
 
   // Pack changes remount this component via DeferredScenes `key={pack}`.
-
-  // Preload breathe (+ hover on desktop) before landing ends.
-  useEffect(() => {
-    if (reduced || failed) return;
-    const warm = (src: string) => {
-      const v = document.createElement('video');
-      v.muted = true;
-      v.preload = 'auto';
-      v.playsInline = true;
-      v.src = src;
-      v.load();
-      const cleanup = () => {
-        v.removeAttribute('src');
-        try {
-          v.load();
-        } catch {
-          /* ignore */
-        }
-      };
-      v.addEventListener('canplaythrough', cleanup, { once: true });
-      v.addEventListener('error', cleanup, { once: true });
-    };
-    warm(breatheSrc);
-    if (isDesktop) warm(hoverSrc);
-  }, [breatheSrc, hoverSrc, isDesktop, reduced, failed]);
 
   useEffect(() => {
     if (reduced || failed) return;
@@ -265,26 +239,42 @@ export function BookingScene({ sectionRef }: Props) {
       />
       {!failed && !reduced ? (
         <>
+          {/* Landing — play-once; hold last until breathe takes over. */}
           <StackedAlphaVideo
-            src={mainSrc}
-            playOnce={phase === 'landing'}
-            loop={phase === 'breathe'}
-            playing={playing && !(isDesktop && hoverOn)}
+            src={landingSrc}
+            playOnce
+            holdLast
+            playing={playing && phase === 'landing'}
             autoPlay
-            startTime={phase === 'landing' ? BOOKING_POSTER_START_S : 0}
+            startTime={BOOKING_POSTER_START_S}
+            opacity={phase === 'landing' ? 1 : 0}
             style={videoBoxStyle}
             onFirstFrame={() => {
               paintLiveRef.current = true;
               setPaintLive(true);
             }}
             onEnded={() => {
-              if (phase !== 'landing') return;
               landingDoneRef.current = true;
               setLandingDone(true);
               setPhase('breathe');
             }}
             onUnavailable={() => setFailed(true)}
           />
+          {/* Breathe — mounted early (preload=auto) paused; one fetch per file. */}
+          <StackedAlphaVideo
+            src={breatheSrc}
+            loop
+            playing={
+              phase === 'breathe' && playing && !(isDesktop && hoverOn)
+            }
+            autoPlay
+            opacity={phase === 'breathe' ? 1 : 0}
+            style={videoBoxStyle}
+            onUnavailable={() => {
+              /* breathe optional after landing — keep last landing frame */
+            }}
+          />
+          {/* Hover — desktop only; mount once after landing (sole hover fetch). */}
           {isDesktop && landingDone ? (
             <StackedAlphaVideo
               src={hoverSrc}

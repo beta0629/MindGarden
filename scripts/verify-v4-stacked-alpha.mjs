@@ -288,15 +288,8 @@ function trackMp4(page) {
     // Ignore cancelled/aborted (status 0) and count one successful body
     // per URL. Byte-range 206s are the same media element continuing.
     if (status === 0) return;
-    if (status === 206) {
-      rangeCounts.set(key, (rangeCounts.get(key) || 0) + 1);
-      if (!counts.has(key)) counts.set(key, 1);
-      return;
-    }
-    if (status >= 200 && status < 300) {
-      counts.set(key, (counts.get(key) || 0) + 1);
-    }
-    if (/\/assets\/v4-60fps\//i.test(url)) {
+    // Record Cache-Control from any v4 mp4 response (incl. 206 Partial Content).
+    if (/\/assets\/v4-60fps\//i.test(url) && status >= 200 && status < 300) {
       const cc = res.headers()['cache-control'] || '';
       cacheHeaders.push({
         url: url.split('/').pop(),
@@ -304,6 +297,14 @@ function trackMp4(page) {
         ok: /max-age=31536000/i.test(cc) && /immutable/i.test(cc),
         status,
       });
+    }
+    if (status === 206) {
+      rangeCounts.set(key, (rangeCounts.get(key) || 0) + 1);
+      if (!counts.has(key)) counts.set(key, 1);
+      return;
+    }
+    if (status >= 200 && status < 300) {
+      counts.set(key, (counts.get(key) || 0) + 1);
     }
   };
   page.on('response', onRes);

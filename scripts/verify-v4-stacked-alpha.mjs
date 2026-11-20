@@ -561,7 +561,15 @@ async function runEngine(browserType, label, viewport, deviceName) {
   const page2 = await ctx2.newPage();
   const mp4Rm = trackMp4(page2);
   await page2.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await sleep(1800);
+  // Wait for classic boot + React cleanup to strip hero video/canvas under RM.
+  await page2
+    .waitForFunction(
+      () =>
+        document.querySelectorAll('.hero-media video, .hero-media canvas')
+          .length === 0,
+      { timeout: 3000 },
+    )
+    .catch(() => {});
   // Scroll through scenes so IO would mount if RM path were broken.
   await page2.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await sleep(1200);

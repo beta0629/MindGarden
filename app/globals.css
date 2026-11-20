@@ -651,6 +651,19 @@ p {
   max-width: none;
 }
 
+/* SSR hero decode source — hidden; StackedAlphaVideo adopts this element. */
+.hero-media__stage > .hero-stacked-video {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  inset: auto;
+  left: -99px;
+  top: -99px;
+  opacity: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
 /*
  * Motion LCP still: fill the stage exactly like stacked-alpha canvas
  * (object-fit: fill). Per-breakpoint v4 posters match the panel box.
@@ -2556,7 +2569,7 @@ picture.v37-scene__poster > img {
 
 .home-booking__actions {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2588,7 +2601,8 @@ picture.v37-scene__poster > img {
 
 .home-booking__scene {
   position: relative;
-  z-index: 0;
+  /* Above .home-booking__main so .v37-scene__hit receives desktop hover. */
+  z-index: 2;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -2604,6 +2618,10 @@ picture.v37-scene__poster > img {
   max-width: 100%;
   margin-inline: auto;
   pointer-events: none;
+}
+
+.home-booking__scene .v37-scene__hit {
+  pointer-events: auto;
 }
 
 .business-hours {

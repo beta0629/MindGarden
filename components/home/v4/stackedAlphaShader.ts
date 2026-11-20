@@ -32,6 +32,9 @@ export type StackedAlphaGl = {
   tex: WebGLTexture;
   uHalfTexel: WebGLUniformLocation;
   uTex: WebGLUniformLocation;
+  /** Allocated texture size — texImage2D once, then texSubImage2D. */
+  texW: number;
+  texH: number;
   lose: () => void;
 };
 
@@ -141,6 +144,8 @@ export function createStackedAlphaGl(
     tex,
     uHalfTexel,
     uTex,
+    texW: 0,
+    texH: 0,
     lose: () => {
       try {
         gl.deleteTexture(tex);
@@ -176,7 +181,22 @@ export function drawStackedAlphaFrame(
   gl.useProgram(program);
   gl.activeTexture(gl.TEXTURE0);
   gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+  // Allocate once; subsequent frames reuse storage when dimensions match.
+  if (api.texW !== vw || api.texH !== vh) {
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+    api.texW = vw;
+    api.texH = vh;
+  } else {
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      video,
+    );
+  }
   gl.uniform1f(uHalfTexel, 0.5 / vh);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
 }

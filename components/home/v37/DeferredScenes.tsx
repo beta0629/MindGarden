@@ -2,15 +2,14 @@
 
 import {
   useEffect,
+  useRef,
   useState,
   useSyncExternalStore,
   type ComponentType,
   type RefObject,
 } from 'react';
-import { whenHomeBootReady } from '@/components/home/homeBoot';
-import { startSequentialScenePreload } from '@/components/home/v4/preloadScenes';
 import type { V37SceneKind } from './types';
-import { useBreakpointPack } from './useBreakpointPack';
+import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
 
 type SceneProps = {
@@ -37,38 +36,17 @@ const LOADERS: Record<
     import('./BookingScene').then((m) => ({ default: m.BookingScene })),
 };
 
-/** Idle after boot before JS-only scene chunk preload. */
-const CHUNK_PRELOAD_IDLE_MS = 1200;
+/** Start decoding when the scene is within ~1.5 viewports (one fetch per file). */
+const NEAR_VIEWPORT_ROOT_MARGIN = '150% 0px';
 
-/** Stagger React mounts during idle so three commits are not one longtask. */
-const MOUNT_STAGGER_MS: Record<SceneKind, number> = {
-  gate: 0,
-  bench: 48,
-  booking: 96,
-};
-
-const SCENE_KINDS: SceneKind[] = ['gate', 'bench', 'booking'];
-
-/** Cached dynamic imports — filled by idle preload after boot. */
+/** Cached dynamic imports — filled when a scene nears the viewport. */
 const moduleCache = new Map<
   SceneKind,
   Promise<{ default: ComponentType<SceneProps> }>
 >();
 
-let preloadPromise: Promise<void> | null = null;
-
 function subscribeNoop() {
   return () => {};
-}
-
-function waitIdle(timeoutMs: number): Promise<void> {
-  return new Promise((resolve) => {
-    if (typeof window.requestIdleCallback === 'function') {
-      window.requestIdleCallback(() => resolve(), { timeout: timeoutMs });
-    } else {
-      window.setTimeout(resolve, Math.min(1200, timeoutMs));
-    }
-  });
 }
 
 function loadSceneModule(
@@ -83,34 +61,9 @@ function loadSceneModule(
 }
 
 /**
- * After boot + short idle: fetch+eval scene JS chunks.
- * Soft-GL does NOT skip scenes — stacked-alpha WebGL1 decode is tiny.
- * Also kicks sequential MP4 preload (hero → gate → bench → booking).
- */
-function ensureSceneChunksPreloaded(): Promise<void> {
-  if (typeof window === 'undefined') return Promise.resolve();
-  if (preloadPromise) return preloadPromise;
-  preloadPromise = (async () => {
-    try {
-      await whenHomeBootReady();
-      await waitIdle(CHUNK_PRELOAD_IDLE_MS);
-      void startSequentialScenePreload();
-      for (const kind of SCENE_KINDS) {
-        await loadSceneModule(kind);
-        await new Promise<void>((r) => {
-          window.setTimeout(r, 0);
-        });
-      }
-    } catch {
-      /* preload is best-effort — mount path will import on demand */
-    }
-  })();
-  return preloadPromise;
-}
-
-/**
- * Idle-mount scene React trees after boot (JS already preloaded).
- * Soft-GL is allowed — only decode failure keeps the poster.
+ * Mount scene React trees when near the viewport (IO rootMargin ~150%).
+ * Each scene player uses preload=auto — one mp4 fetch per file, ahead of trigger.
+ * Reduced-motion: poster only (never mount video players / never fetch mp4).
  * `key={pack}` remounts the scene on breakpoint change (no pack-reset setState).
  */
 function DeferredV37Scene({
@@ -118,23 +71,40 @@ function DeferredV37Scene({
   sectionRef,
 }: SceneProps & { kind: SceneKind }) {
   const pack = useBreakpointPack();
+  const reduced = usePrefersReducedMotion();
   const [Scene, setScene] = useState<ComponentType<SceneProps> | null>(null);
+  const [near, setNear] = useState(false);
+  const placeholderRef = useRef<HTMLDivElement>(null);
   /** Client-only: avoid painting pack `'390'` poster on desktop before matchMedia. */
   const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   useEffect(() => {
+    if (reduced) return;
+    const el = placeholderRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === 'undefined') {
+      setNear(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: NEAR_VIEWPORT_ROOT_MARGIN, threshold: 0 },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [kind, reduced]);
+
+  useEffect(() => {
+    if (!near || reduced) return;
     let cancelled = false;
     void (async () => {
       try {
-        await ensureSceneChunksPreloaded();
-        if (cancelled) return;
         const mod = await loadSceneModule(kind);
-        const stagger = MOUNT_STAGGER_MS[kind] || 0;
-        if (stagger > 0) {
-          await new Promise<void>((r) => {
-            window.setTimeout(r, stagger);
-          });
-        }
         if (!cancelled) setScene(() => mod.default);
       } catch {
         /* poster placeholder remains */
@@ -143,14 +113,18 @@ function DeferredV37Scene({
     return () => {
       cancelled = true;
     };
-  }, [kind]);
+  }, [near, kind, reduced]);
 
-  if (Scene) {
+  if (Scene && !reduced) {
     return <Scene key={pack} sectionRef={sectionRef} />;
   }
 
   return (
-    <div className={SCENE_CLASS[kind]} aria-hidden="true">
+    <div
+      ref={placeholderRef}
+      className={SCENE_CLASS[kind]}
+      aria-hidden="true"
+    >
       {mounted ? (
         <V37ScenePoster
           kind={kind}

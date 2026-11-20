@@ -43,13 +43,25 @@ const nextConfig: NextConfig = {
       ],
     };
 
+    // Stable hashed filenames under v4-60fps — long-lived immutable cache.
+    const v4AssetCache = {
+      source: '/assets/v4-60fps/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    };
+
     // Staging (and any non-indexable build) must send X-Robots-Tag.
     // Production sets NEXT_PUBLIC_SITE_INDEXABLE=true and skips this header.
     if (process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true') {
-      return [htmlCache];
+      return [htmlCache, v4AssetCache];
     }
     return [
       htmlCache,
+      v4AssetCache,
       {
         source: '/:path*',
         headers: [

@@ -11,13 +11,6 @@ const BASE = process.argv[2] || 'http://127.0.0.1:4000';
 const OUT = '/opt/cursor/artifacts';
 fs.mkdirSync(OUT, { recursive: true });
 
-const SCENE_BG = {
-  hero: [245, 240, 230],
-  gate: [234, 226, 210],
-  bench: [245, 240, 230],
-  booking: [234, 226, 210],
-};
-
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function withTimeout(promise, ms, label) {
@@ -34,52 +27,97 @@ async function withTimeout(promise, ms, label) {
   }
 }
 
-async function pixelBorderScan(page, selector, bgRgb) {
-  const box = await page.evaluate((selector) => {
-    const el = document.querySelector(selector);
+/**
+ * Edge check: screenshot with canvas visible vs forced-hidden, diff pixels
+ * inside the stage (excludes sticky header / section-bg outside samples).
+ */
+async function canvasEdgeDiff(page, stageSel) {
+  const box = await page.evaluate((stageSel) => {
+    const el = document.querySelector(stageSel);
     if (!el) return null;
     const r = el.getBoundingClientRect();
-    return { x: r.x, y: r.y, w: r.width, h: r.height };
-  }, selector);
-  if (!box || box.w < 2 || box.h < 2) return { maxDiff: 999, ok: false };
-  const shot = await page.screenshot({ type: 'png' });
-  const { data, info } = await sharp(shot)
+    return {
+      x: Math.max(0, Math.floor(r.x)),
+      y: Math.max(0, Math.floor(r.y)),
+      w: Math.floor(r.width),
+      h: Math.floor(r.height),
+    };
+  }, stageSel);
+  if (!box || box.w < 4 || box.h < 4) {
+    return { ok: false, maxDiff: 0, reason: 'no-box' };
+  }
+
+  const canvases = `${stageSel} canvas`;
+  await page.evaluate((sel) => {
+    for (const c of document.querySelectorAll(sel)) {
+      c.dataset._prevOpacity = c.style.opacity || '';
+      c.style.opacity = '1';
+      c.style.visibility = 'visible';
+    }
+  }, canvases);
+  const shownPng = await page.screenshot({ type: 'png' });
+
+  await page.evaluate((sel) => {
+    for (const c of document.querySelectorAll(sel)) {
+      c.style.opacity = '0';
+      c.style.visibility = 'hidden';
+    }
+  }, canvases);
+  const hiddenPng = await page.screenshot({ type: 'png' });
+
+  await page.evaluate((sel) => {
+    for (const c of document.querySelectorAll(sel)) {
+      const prev = c.dataset._prevOpacity ?? '';
+      if (prev) c.style.opacity = prev;
+      else c.style.removeProperty('opacity');
+      c.style.removeProperty('visibility');
+      delete c.dataset._prevOpacity;
+    }
+  }, canvases);
+
+  const shown = await sharp(shownPng)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
-  const { width, height, channels } = info;
-  const get = (x, y) => {
-    const xi = Math.round(x);
-    const yi = Math.round(y);
-    if (xi < 0 || yi < 0 || xi >= width || yi >= height) return null;
-    const i = (yi * width + xi) * channels;
-    return [data[i], data[i + 1], data[i + 2]];
-  };
-  // Sample 1px inside the box corners/edges — stacked-alpha UV feather makes
-  // the outermost texels fully transparent against the section background.
-  // (Outside samples can hit sticky header / sibling photos and are not valid.)
+  const hidden = await sharp(hiddenPng)
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = shown.info;
+  if (
+    hidden.info.width !== width ||
+    hidden.info.height !== height ||
+    hidden.info.channels !== channels
+  ) {
+    return { ok: false, maxDiff: 0, reason: 'size-mismatch' };
+  }
+
+  // Sample inset edge points of the stage (not sticky header).
   const pts = [
-    [box.x + 1, box.y + 1],
-    [box.x + box.w - 2, box.y + 1],
-    [box.x + 1, box.y + box.h - 2],
-    [box.x + box.w - 2, box.y + box.h - 2],
-    [box.x + box.w / 2, box.y + 1],
-    [box.x + box.w / 2, box.y + box.h - 2],
-    [box.x + 1, box.y + box.h / 2],
-    [box.x + box.w - 2, box.y + box.h / 2],
+    [box.x + 2, box.y + 2],
+    [box.x + box.w - 3, box.y + 2],
+    [box.x + 2, box.y + box.h - 3],
+    [box.x + box.w - 3, box.y + box.h - 3],
+    [box.x + Math.floor(box.w / 2), box.y + 2],
+    [box.x + Math.floor(box.w / 2), box.y + box.h - 3],
+    [box.x + 2, box.y + Math.floor(box.h / 2)],
+    [box.x + box.w - 3, box.y + Math.floor(box.h / 2)],
   ];
   let maxDiff = 0;
+  let changed = 0;
   for (const [x, y] of pts) {
-    const p = get(x, y);
-    if (!p) continue;
-    maxDiff = Math.max(
-      maxDiff,
-      Math.abs(p[0] - bgRgb[0]),
-      Math.abs(p[1] - bgRgb[1]),
-      Math.abs(p[2] - bgRgb[2]),
+    const xi = Math.min(width - 1, Math.max(0, x));
+    const yi = Math.min(height - 1, Math.max(0, y));
+    const i = (yi * width + xi) * channels;
+    const d = Math.max(
+      Math.abs(shown.data[i] - hidden.data[i]),
+      Math.abs(shown.data[i + 1] - hidden.data[i + 1]),
+      Math.abs(shown.data[i + 2] - hidden.data[i + 2]),
     );
+    maxDiff = Math.max(maxDiff, d);
+    if (d > 8) changed += 1;
   }
-  return { maxDiff, ok: maxDiff === 0, box };
+  return { ok: changed >= 2 && maxDiff > 8, maxDiff, changed, box };
 }
 
 async function sceneStats(page, sceneSel) {
@@ -87,15 +125,21 @@ async function sceneStats(page, sceneSel) {
     const root = document.querySelector(sceneSel);
     if (!root) return null;
     const videos = [...root.querySelectorAll('video')];
+    // Hero adopts SSR video which may sit as a sibling of .hero-stacked.
+    const heroVideos =
+      sceneSel === '.hero-media'
+        ? [...document.querySelectorAll('.hero-media video')]
+        : videos;
+    const list = sceneSel === '.hero-media' ? heroVideos : videos;
     const canvases = [...root.querySelectorAll('canvas')];
     return {
-      videos: videos.length,
+      videos: list.length,
       canvases: canvases.length,
-      videoSrcs: videos
+      videoSrcs: list
         .map((v) => v.currentSrc || v.src)
         .map((s) => s.split('/').pop()),
-      paused: videos.map((v) => v.paused),
-      currentTime: videos.map((v) => Number(v.currentTime.toFixed(3))),
+      paused: list.map((v) => v.paused),
+      currentTime: list.map((v) => Number(v.currentTime.toFixed(3))),
       ready: canvases.map((c) => c.dataset.ready || '0'),
       hidden: canvases.map((c) => c.dataset.hidden || '0'),
       liveClass: root.className.includes('is-live'),
@@ -103,12 +147,16 @@ async function sceneStats(page, sceneSel) {
   }, sceneSel);
 }
 
-async function measureFps(page, sceneSel, durationMs = 800) {
+async function measureFps(page, sceneSel, durationMs) {
   return withTimeout(
     page.evaluate(
       async ({ sceneSel, durationMs }) => {
         const root = document.querySelector(sceneSel);
-        const video = root?.querySelector('video');
+        const video =
+          root?.querySelector('video') ||
+          (sceneSel === '.hero-media'
+            ? document.querySelector('.hero-media video')
+            : null);
         if (!video) return { fps: 0, frames: 0, mode: 'none' };
         if (video.paused || video.ended) {
           return {
@@ -116,8 +164,12 @@ async function measureFps(page, sceneSel, durationMs = 800) {
             frames: 0,
             mode: 'paused',
             currentTime: video.currentTime,
+            duration: video.duration || null,
           };
         }
+        const clipMs = Number.isFinite(video.duration)
+          ? Math.max(durationMs, Math.ceil(video.duration * 1000))
+          : durationMs;
         let frames = 0;
         const t0 = performance.now();
         if (typeof video.requestVideoFrameCallback === 'function') {
@@ -128,11 +180,11 @@ async function measureFps(page, sceneSel, durationMs = 800) {
               done = true;
               resolve();
             };
-            const timer = setTimeout(finish, durationMs + 200);
-            const cb = (_now, meta) => {
+            const timer = setTimeout(finish, clipMs + 400);
+            const cb = () => {
               frames += 1;
               if (
-                performance.now() - t0 >= durationMs ||
+                performance.now() - t0 >= clipMs ||
                 video.paused ||
                 video.ended
               ) {
@@ -149,13 +201,15 @@ async function measureFps(page, sceneSel, durationMs = 800) {
             fps: Number((frames / elapsed).toFixed(1)),
             frames,
             mode: 'rvfc',
+            measuredMs: Math.round(performance.now() - t0),
+            clipDurationS: video.duration || null,
           };
         }
         return { fps: null, frames: 0, mode: 'no-rvfc' };
       },
       { sceneSel, durationMs },
     ),
-    durationMs + 1500,
+    Math.max(durationMs, 4000) + 2000,
     `fps:${sceneSel}`,
   ).catch((e) => ({ fps: null, error: String(e.message || e) }));
 }
@@ -189,6 +243,127 @@ async function waitReady(page, sel, ms = 10000) {
     .catch(() => false);
 }
 
+/** Navigation-start → first canvas data-ready (no artificial pre-sleep). */
+async function waitHeroFirstFrameFromNav(page, ms = 12000) {
+  return page
+    .evaluate((timeoutMs) => {
+      const nav =
+        performance.getEntriesByType('navigation')[0]?.startTime ?? 0;
+      const t0 = performance.timeOrigin + nav;
+      return new Promise((resolve) => {
+        const deadline = Date.now() + timeoutMs;
+        const tick = () => {
+          const c = document.querySelector(
+            '.hero-media canvas[data-ready="1"]',
+          );
+          if (c) {
+            resolve({
+              ok: true,
+              ms: Math.round(performance.now() - nav),
+              wallMs: Date.now() - t0,
+            });
+            return;
+          }
+          if (Date.now() > deadline) {
+            resolve({ ok: false, ms: null });
+            return;
+          }
+          requestAnimationFrame(tick);
+        };
+        tick();
+      });
+    }, ms)
+    .catch(() => ({ ok: false, ms: null }));
+}
+
+function trackMp4(page) {
+  const counts = new Map();
+  const rangeCounts = new Map();
+  const cacheHeaders = [];
+  const onRes = (res) => {
+    const url = res.url();
+    if (!/\.mp4(\?|$)/i.test(url)) return;
+    const key = url.split('?')[0];
+    const status = res.status();
+    // Ignore cancelled/aborted (status 0) and count one successful body
+    // per URL. Byte-range 206s are the same media element continuing.
+    if (status === 0) return;
+    if (status === 206) {
+      rangeCounts.set(key, (rangeCounts.get(key) || 0) + 1);
+      if (!counts.has(key)) counts.set(key, 1);
+      return;
+    }
+    if (status >= 200 && status < 300) {
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    if (/\/assets\/v4-60fps\//i.test(url)) {
+      const cc = res.headers()['cache-control'] || '';
+      cacheHeaders.push({
+        url: url.split('/').pop(),
+        cacheControl: cc,
+        ok: /max-age=31536000/i.test(cc) && /immutable/i.test(cc),
+        status,
+      });
+    }
+  };
+  page.on('response', onRes);
+  return {
+    counts,
+    stop: () => {
+      page.off('response', onRes);
+    },
+    summary: () => {
+      const byFile = {};
+      let total = 0;
+      let maxPerUrl = 0;
+      for (const [url, n] of counts) {
+        const name = url.split('/').pop();
+        byFile[name] = (byFile[name] || 0) + n;
+        total += n;
+        maxPerUrl = Math.max(maxPerUrl, n);
+      }
+      return {
+        byFile,
+        total,
+        maxPerUrl,
+        rangeFollowups: Object.fromEntries(
+          [...rangeCounts].map(([u, n]) => [u.split('/').pop(), n]),
+        ),
+      };
+    },
+    cacheControl: () => cacheHeaders[0] || { ok: false, reason: 'no-v4-mp4-response' },
+  };
+}
+
+async function probeBookingHover(page) {
+  return page.evaluate(() => {
+    const hit = document.querySelector('.home-booking__scene .v37-scene__hit');
+    const main = document.querySelector('.home-booking__main');
+    if (!hit || !main) {
+      return { ok: false, reason: 'missing-els' };
+    }
+    const r = hit.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) {
+      return { ok: false, reason: 'hit-empty', box: r };
+    }
+    const x = r.left + r.width / 2;
+    const y = r.top + r.height / 2;
+    const top = document.elementFromPoint(x, y);
+    const hitOnTop =
+      !!top && (top === hit || hit.contains(top) || top.closest?.('.v37-scene__hit') === hit);
+    const mainBlocks =
+      !!top && (top === main || main.contains(top)) && !hit.contains(top);
+    return {
+      ok: hitOnTop && !mainBlocks,
+      hitOnTop,
+      mainBlocks,
+      topTag: top?.tagName || null,
+      topClass: top?.className || null,
+      point: { x, y },
+    };
+  });
+}
+
 async function runEngine(browserType, label, viewport, deviceName) {
   console.error(`[${label}] launch`);
   // Headless shell lacks H.264 — use system Chrome for Chromium runs.
@@ -219,20 +394,21 @@ async function runEngine(browserType, label, viewport, deviceName) {
   });
   page.on('pageerror', (err) => consoleErrors.push(String(err)));
 
+  const mp4 = trackMp4(page);
   const result = { engine: label, viewport, scenes: {} };
-  const t0 = Date.now();
+
+  // No artificial sleep before first-frame measure — time from navigation.
   await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.waitForSelector('.hero-media', { timeout: 12000 });
-  // Poster gate + hero idle import + deferred scene chunks.
-  await sleep(2500);
 
-  const heroReady = await waitReady(page, '.hero-media', 15000);
-  result.heroFirstFrameMs = heroReady ? Date.now() - t0 : null;
+  const heroFirst = await waitHeroFirstFrameFromNav(page, 15000);
+  result.heroFirstFrameMs = heroFirst.ok ? heroFirst.ms : null;
+  result.heroFirstFrameOk = heroFirst.ok;
   await page.screenshot({ path: path.join(OUT, `v4-${label}-hero.png`) });
   result.scenes.hero = {
-    ready: heroReady,
+    ready: heroFirst.ok,
     stats: await sceneStats(page, '.hero-media'),
-    borderPx: await pixelBorderScan(page, '.hero-media__stage', SCENE_BG.hero),
+    edgeDiff: await canvasEdgeDiff(page, '.hero-media__stage'),
     fps: await measureFps(page, '.hero-media', 700),
   };
   console.error(`[${label}] hero`, result.scenes.hero.fps, result.heroFirstFrameMs);
@@ -240,13 +416,13 @@ async function runEngine(browserType, label, viewport, deviceName) {
   const gateTrig = viewport.width >= 768 ? 0.5291 : 0.4365;
   await forcePastTrigger(page, '.v37-scene--gate', gateTrig);
   await waitReady(page, '.v37-scene--gate', 12000);
-  await sleep(900);
+  await sleep(400);
   const gateFps = await measureFps(page, '.v37-scene--gate', 600);
   await sleep(1800);
   await page.screenshot({ path: path.join(OUT, `v4-${label}-gate.png`) });
   result.scenes.gate = {
     stats: await sceneStats(page, '.v37-scene--gate'),
-    borderPx: await pixelBorderScan(page, '.v37-scene--gate', SCENE_BG.gate),
+    edgeDiff: await canvasEdgeDiff(page, '.v37-scene--gate'),
     fps: gateFps,
     holdsLast: await page.evaluate(() => {
       const v = document.querySelector('.v37-scene--gate video');
@@ -268,14 +444,13 @@ async function runEngine(browserType, label, viewport, deviceName) {
   await sleep(3200);
   result.scenes.bench = {
     stats: await sceneStats(page, '.v37-scene--bench'),
-    borderPx: await pixelBorderScan(page, '.v37-scene--bench', SCENE_BG.bench),
+    edgeDiff: await canvasEdgeDiff(page, '.v37-scene--bench'),
     fps: benchFps,
     hiddenAfterEnd: await page.evaluate(() => {
       const root = document.querySelector('.v37-scene--bench');
       if (!root) return false;
       const canvases = [...root.querySelectorAll('canvas')];
       const videos = [...root.querySelectorAll('video')];
-      // Videos unmounted after end, or canvases marked hidden / opacity 0.
       if (canvases.length === 0 && videos.length === 0) {
         return !!root.querySelector('.v37-bench__body');
       }
@@ -336,15 +511,25 @@ async function runEngine(browserType, label, viewport, deviceName) {
   });
   result.scenes.booking = {
     stats: await sceneStats(page, '.v37-scene--booking'),
-    borderPx: await pixelBorderScan(
-      page,
-      '.v37-scene--booking',
-      SCENE_BG.booking,
-    ),
+    edgeDiff: await canvasEdgeDiff(page, '.v37-scene--booking'),
     fps: bookingFps,
     landingToBreathe: swap,
   };
   console.error(`[${label}] booking`, swap);
+
+  if (viewport.width >= 768) {
+    // Ensure breathe settled so hover layer can mount, then probe hit stacking.
+    await sleep(800);
+    result.bookingHoverHit = await probeBookingHover(page);
+    console.error(`[${label}] bookingHoverHit`, result.bookingHoverHit);
+  }
+
+  mp4.stop();
+  result.cacheControl = mp4.cacheControl();
+  result.mp4Requests = mp4.summary();
+  result.mp4Ok = result.mp4Requests.maxPerUrl <= 1;
+  console.error(`[${label}] cacheControl`, result.cacheControl);
+  console.error(`[${label}] mp4`, result.mp4Requests);
 
   result.bootBarPresent = await page.evaluate(
     () => !!document.querySelector('.home-boot-progress'),
@@ -373,8 +558,12 @@ async function runEngine(browserType, label, viewport, deviceName) {
     reducedMotion: 'reduce',
   });
   const page2 = await ctx2.newPage();
+  const mp4Rm = trackMp4(page2);
   await page2.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
   await sleep(1800);
+  // Scroll through scenes so IO would mount if RM path were broken.
+  await page2.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await sleep(1200);
   result.reducedMotion = await page2.evaluate(() => {
     const roots = [
       ...document.querySelectorAll(
@@ -387,8 +576,13 @@ async function runEngine(browserType, label, viewport, deviceName) {
       videos += s.querySelectorAll('video').length;
       canvases += s.querySelectorAll('canvas').length;
     }
+    // SSR hero video must be removed under RM.
+    videos += document.querySelectorAll('.hero-stacked-video').length;
     return { videos, canvases };
   });
+  mp4Rm.stop();
+  result.reducedMotion.mp4Requests = mp4Rm.summary();
+  result.reducedMotion.mp4Ok = result.reducedMotion.mp4Requests.total === 0;
   await page2.screenshot({
     path: path.join(OUT, `v4-${label}-reduced-motion.png`),
   });

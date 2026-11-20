@@ -35,6 +35,11 @@ export type StackedAlphaVideoProps = {
   className?: string;
   style?: CSSProperties;
   opacity?: number;
+  /**
+   * Adopt an existing SSR / DOM &lt;video&gt; (e.g. `.hero-stacked-video`) so the
+   * mp4 fetch started from HTML is reused — never create a second request.
+   */
+  adoptSelector?: string;
 };
 
 type RvfcVideo = HTMLVideoElement & {
@@ -68,12 +73,13 @@ export const StackedAlphaVideo = forwardRef<
     className,
     style,
     opacity = 1,
+    adoptSelector,
   },
   ref,
 ) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const glRef = useRef<StackedAlphaGl | null>(null);
   const firstFrameRef = useRef(false);
   const endedRef = useRef(false);
@@ -134,9 +140,26 @@ export const StackedAlphaVideo = forwardRef<
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    const video = videoRef.current;
     const wrap = wrapRef.current;
-    if (!canvas || !video || !wrap) return;
+    if (!canvas || !wrap) return;
+
+    let video = videoRef.current;
+    let adopted = false;
+    if (adoptSelector) {
+      const found = document.querySelector(adoptSelector);
+      if (found instanceof HTMLVideoElement) {
+        video = found;
+        videoRef.current = found;
+        adopted = true;
+      } else {
+        onUnavailableRef.current?.();
+        return;
+      }
+    }
+    if (!video) {
+      onUnavailableRef.current?.();
+      return;
+    }
 
     let alive = true;
     const api = createStackedAlphaGl(canvas);
@@ -346,12 +369,18 @@ export const StackedAlphaVideo = forwardRef<
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
-      if (video.src !== new URL(next, window.location.href).href) {
+      const abs = new URL(next, window.location.href).href;
+      const current = video.currentSrc || video.src;
+      // Reuse in-flight SSR / preload fetch — never kick a second network load.
+      if (current === abs || (next && current.endsWith(next))) {
+        if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+          applyStartTime();
+          syncPlay();
+        }
+        // else the loadedmetadata listener attached below will sync.
+      } else {
         video.src = next;
         video.load();
-      } else if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-        applyStartTime();
-        syncPlay();
       }
     };
 
@@ -408,11 +437,14 @@ export const StackedAlphaVideo = forwardRef<
       video.removeEventListener('error', onError);
       video.removeEventListener('playing', startUpload);
       video.pause();
-      video.removeAttribute('src');
-      try {
-        video.load();
-      } catch {
-        /* ignore */
+      // Adopted SSR video stays in the DOM for remount; do not strip its src.
+      if (!adopted) {
+        video.removeAttribute('src');
+        try {
+          video.load();
+        } catch {
+          /* ignore */
+        }
       }
       glRef.current?.lose();
       glRef.current = null;
@@ -484,22 +516,24 @@ export const StackedAlphaVideo = forwardRef<
       }}
       aria-hidden="true"
     >
-      <video
-        ref={videoRef}
-        muted
-        playsInline
-        preload="auto"
-        style={{
-          position: 'absolute',
-          width: 1,
-          height: 1,
-          opacity: 0,
-          pointerEvents: 'none',
-          overflow: 'hidden',
-        }}
-        tabIndex={-1}
-        aria-hidden="true"
-      />
+      {!adoptSelector ? (
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          preload="auto"
+          style={{
+            position: 'absolute',
+            width: 1,
+            height: 1,
+            opacity: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+          }}
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      ) : null}
       <canvas
         ref={canvasRef}
         className="v37-scene__canvas"

@@ -14,9 +14,11 @@ import {
   heroStackSrc,
   packToV4Key,
 } from '@/components/home/v4/assets';
-import { startSequentialScenePreload } from '@/components/home/v4/preloadScenes';
 import { useBreakpointPack, usePrefersReducedMotion } from './v37/useBreakpointPack';
 import { HeroPoster } from './HeroPoster';
+
+/** SSR hero video started by HeroVideoInline — adopt to avoid a second fetch. */
+export const HERO_STACKED_VIDEO_SELECTOR = '.hero-stacked-video';
 
 type Props = {
   /**
@@ -45,11 +47,11 @@ function readHeroPortal(): PortalTarget | null {
 
 function finishBoot() {
   dispatchHomeBootReady();
-  void startSequentialScenePreload();
 }
 
 /**
  * Hero media: SSR WebP poster → stacked-alpha H.264 loop (WebGL1).
+ * Adopts the SSR `.hero-stacked-video` element (fetch already in flight).
  * Reduced-motion / autoplay reject / WebGL fail → keep poster (no console errors).
  */
 export function HeroMedia({ enhanceOnly = false }: Props) {
@@ -138,6 +140,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
           loop
           playing={!paused}
           autoPlay
+          adoptSelector={HERO_STACKED_VIDEO_SELECTOR}
           onFirstFrame={() => {
             setLive(true);
           }}

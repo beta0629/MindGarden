@@ -14,10 +14,11 @@ import {
   heroStackSrc,
   packToV4Key,
 } from '@/components/home/v4/assets';
+import { whenHeroMayStart } from '@/components/home/v4/heroStartGate';
 import { useBreakpointPack, usePrefersReducedMotion } from './v37/useBreakpointPack';
 import { HeroPoster } from './HeroPoster';
 
-/** SSR hero video started by HeroVideoInline — adopt to avoid a second fetch. */
+/** Detached hero video started by public/hero-boot-v4.js — adopt to avoid a second fetch. */
 export const HERO_STACKED_VIDEO_SELECTOR = '.hero-stacked-video';
 
 type Props = {
@@ -63,6 +64,8 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
   const [posterReady, setPosterReady] = useState(false);
   const [live, setLive] = useState(false);
   const [failed, setFailed] = useState(false);
+  /** Mount the player only after the LCP poster has painted (see heroStartGate). */
+  const [mayStart, setMayStart] = useState(false);
   /** Client snapshot — avoids setState-in-effect for the enhanceOnly portal. */
   const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
@@ -72,6 +75,17 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
 
   const portalTarget =
     enhanceOnly && isClient ? readHeroPortal() : null;
+
+  useEffect(() => {
+    let cancelled = false;
+    const img = document.querySelector<HTMLImageElement>('.hero .hero-still');
+    void whenHeroMayStart(img).then(() => {
+      if (!cancelled) setMayStart(true);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     const root = enhanceOnly
@@ -133,7 +147,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         };
 
   const stageExtras =
-    !reduced && !failed ? (
+    !reduced && !failed && mayStart ? (
       <div className="hero-stacked" style={frameStyle}>
         <StackedAlphaVideo
           src={src}

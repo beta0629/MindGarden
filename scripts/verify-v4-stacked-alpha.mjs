@@ -129,12 +129,20 @@ async function sceneStats(page, sceneSel) {
     const root = document.querySelector(sceneSel);
     if (!root) return null;
     const videos = [...root.querySelectorAll('video')];
-    // Hero adopts SSR video which may sit as a sibling of .hero-stacked.
-    const heroVideos =
+    // Hero decode <video> is detached (window.__mgHeroVideo) — never in the DOM.
+    const w = window;
+    const heroDetached =
       sceneSel === '.hero-media'
-        ? [...document.querySelectorAll('.hero-media video')]
+        ? [w.__mgHeroVideo, w.__mgHeroBootV].filter(
+            (v) => v instanceof HTMLVideoElement,
+          )
+        : [];
+    const list =
+      sceneSel === '.hero-media'
+        ? heroDetached.length
+          ? [...new Set(heroDetached)]
+          : [...document.querySelectorAll('.hero-media video')]
         : videos;
-    const list = sceneSel === '.hero-media' ? heroVideos : videos;
     const canvases = [...root.querySelectorAll('canvas')];
     return {
       videos: list.length,
@@ -156,10 +164,13 @@ async function measureFps(page, sceneSel, durationMs) {
     page.evaluate(
       async ({ sceneSel, durationMs }) => {
         const root = document.querySelector(sceneSel);
+        const w = window;
         const video =
           root?.querySelector('video') ||
           (sceneSel === '.hero-media'
-            ? document.querySelector('.hero-media video')
+            ? w.__mgHeroVideo ||
+              w.__mgHeroBootV ||
+              document.querySelector('.hero-media video')
             : null);
         if (!video) return { fps: 0, frames: 0, mode: 'none' };
         if (video.paused || video.ended) {
@@ -417,6 +428,7 @@ async function runEngine(browserType, label, viewport, deviceName) {
 
   // Commit early so the init probe can catch first paint; no pre-sleep.
   await page.goto(BASE + '/', { waitUntil: 'commit', timeout: 45000 });
+  const creamT0 = Date.now();
   const heroBudgetMs = label.startsWith('webkit') ? 400 : 250;
   const heroFirst = await waitHeroFirstFrameFromNav(page, 15000);
   result.heroFirstFrameMs = heroFirst.ok ? heroFirst.ms : null;
@@ -426,6 +438,45 @@ async function runEngine(browserType, label, viewport, deviceName) {
     heroFirst.ms <= heroBudgetMs;
   result.heroFirstFrameBudgetMs = heroBudgetMs;
   await page.waitForSelector('.hero-media', { timeout: 12000 });
+
+  // No black box: stage corner (transparent alpha) must stay cream page bg.
+  const creamTarget = { r: 245, g: 240, b: 230 };
+  const creamSamples = [];
+  const creamAt = [300, 1000, 3000, 7000];
+  for (const at of creamAt) {
+    await sleep(Math.max(0, at - (Date.now() - creamT0)));
+    const sample = await page.evaluate(() => {
+      const stage = document.querySelector('.hero-media__stage');
+      if (!stage) return null;
+      const r = stage.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.floor(r.x + 2)),
+        y: Math.max(0, Math.floor(r.y + 2)),
+      };
+    });
+    if (!sample) {
+      creamSamples.push({ at, ok: false, reason: 'no-stage' });
+      continue;
+    }
+    const png = await page.screenshot({ type: 'png' });
+    const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({
+      resolveWithObject: true,
+    });
+    const i = (sample.y * info.width + sample.x) * info.channels;
+    const rgb = { r: data[i], g: data[i + 1], b: data[i + 2] };
+    const d = Math.max(
+      Math.abs(rgb.r - creamTarget.r),
+      Math.abs(rgb.g - creamTarget.g),
+      Math.abs(rgb.b - creamTarget.b),
+    );
+    creamSamples.push({ at, ok: d <= 18, rgb, d });
+  }
+  result.heroCreamCorner = {
+    ok: creamSamples.every((s) => s.ok),
+    samples: creamSamples,
+  };
+  console.error(`[${label}] heroCreamCorner`, result.heroCreamCorner);
+
   await page.screenshot({ path: path.join(OUT, `v4-${label}-hero.png`) });
   result.scenes.hero = {
     ready: heroFirst.ok,
@@ -597,37 +648,36 @@ async function runEngine(browserType, label, viewport, deviceName) {
   const page2 = await ctx2.newPage();
   const mp4Rm = trackMp4(page2);
   await page2.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
-  // Wait for classic boot + React cleanup to strip hero video/canvas under RM.
-  await page2
-    .waitForFunction(
-      () =>
-        document.querySelectorAll('.hero-media video, .hero-media canvas')
-          .length === 0,
-      { timeout: 3000 },
-    )
-    .catch(() => {});
+  // Early canvas may remain (CSS-hidden); boot is a no-op under RM — wait briefly.
+  await sleep(800);
   // Scroll through scenes so IO would mount if RM path were broken.
   await page2.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
   await sleep(1200);
   result.reducedMotion = await page2.evaluate(() => {
+    const w = window;
+    const detached = [w.__mgHeroVideo, w.__mgHeroBootV].filter(Boolean).length;
     const roots = [
       ...document.querySelectorAll(
         '.hero-media, .v37-scene--gate, .v37-scene--bench, .v37-scene--booking',
       ),
     ];
-    let videos = 0;
-    let canvases = 0;
+    let videos = detached;
+    let sceneCanvases = 0;
     for (const s of roots) {
       videos += s.querySelectorAll('video').length;
-      canvases += s.querySelectorAll('canvas').length;
+      // Ignore SSR early canvas (CSS display:none under RM).
+      sceneCanvases += s.querySelectorAll(
+        'canvas:not(.hero-early-canvas)',
+      ).length;
     }
-    // SSR hero video must be removed under RM.
     videos += document.querySelectorAll('.hero-stacked-video').length;
-    return { videos, canvases };
+    return { videos, canvases: sceneCanvases };
   });
   mp4Rm.stop();
   result.reducedMotion.mp4Requests = mp4Rm.summary();
-  result.reducedMotion.mp4Ok = result.reducedMotion.mp4Requests.total === 0;
+  result.reducedMotion.mp4Ok =
+    result.reducedMotion.mp4Requests.total === 0 &&
+    result.reducedMotion.videos === 0;
   await page2.screenshot({
     path: path.join(OUT, `v4-${label}-reduced-motion.png`),
   });

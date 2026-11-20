@@ -651,19 +651,6 @@ p {
   max-width: none;
 }
 
-/* SSR hero decode source — hidden; StackedAlphaVideo adopts this element. */
-.hero-media__stage > .hero-stacked-video {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  inset: auto;
-  left: -99px;
-  top: -99px;
-  opacity: 0;
-  pointer-events: none;
-  overflow: hidden;
-}
-
 /*
  * Motion LCP still: fill the stage exactly like stacked-alpha canvas
  * (object-fit: fill). Per-breakpoint v4 posters match the panel box.
@@ -704,6 +691,13 @@ p {
 
 .hero-media.is-stacked-alpha .hero-still {
   opacity: 0;
+}
+
+/* Reduced motion: SSR early canvas stays in the DOM (hydration) but never shows. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-media__stage > .hero-early-root {
+    display: none;
+  }
 }
 
 /* Classic early-paint canvas — SSR placeholder, WebGL bound before hydrate. */

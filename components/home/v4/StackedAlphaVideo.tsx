@@ -149,15 +149,27 @@ export const StackedAlphaVideo = forwardRef<
     let adopted = false;
     let adoptedEarlyCanvas = false;
     if (adoptSelector) {
-      const found = document.querySelector(adoptSelector);
-      if (found instanceof HTMLVideoElement) {
-        video = found;
-        videoRef.current = found;
-        adopted = true;
-      } else {
-        onUnavailableRef.current?.();
-        return;
+      // Detached decode <video> created by public/hero-boot-v4.js (never in the DOM,
+      // so it can't become an LCP candidate). Create it here if the boot script
+      // has not run yet; the boot script then bails out.
+      const w = window as Window & {
+        __mgHeroVideo?: HTMLVideoElement;
+        __mgHeroBootV?: HTMLVideoElement;
+        __mgHeroAdopted?: boolean;
+      };
+      // From here React owns the paint loop; the boot script must not start its own.
+      w.__mgHeroAdopted = true;
+      let found: Element | null | undefined =
+        w.__mgHeroVideo ??
+        w.__mgHeroBootV ??
+        document.querySelector(adoptSelector);
+      if (!(found instanceof HTMLVideoElement)) {
+        found = document.createElement('video');
+        w.__mgHeroVideo = found as HTMLVideoElement;
       }
+      video = found as HTMLVideoElement;
+      videoRef.current = video;
+      adopted = true;
       // Prefer classic early-paint canvas in place (do not move DOM — avoids #418).
       const early = document.querySelector('canvas.hero-early-canvas');
       if (early instanceof HTMLCanvasElement) {
@@ -454,6 +466,45 @@ export const StackedAlphaVideo = forwardRef<
     };
     document.addEventListener('visibilitychange', onVis);
 
+    // Stall watchdog: WebKit (GStreamer) can report "playing" while currentTime
+    // stops advancing right after start, with the file fully buffered. A
+    // pause()+play() kick restarts the pipeline. Cheap: one check per 300 ms.
+    let lastT = -1;
+    let lastMove = performance.now();
+    const stallTimer = window.setInterval(() => {
+      if (
+        !alive ||
+        video.paused ||
+        video.ended ||
+        endedRef.current ||
+        holdRef.current ||
+        !visibleRef.current ||
+        !pageVisibleRef.current
+      ) {
+        lastMove = performance.now();
+        return;
+      }
+      const t = video.currentTime;
+      if (t !== lastT) {
+        lastT = t;
+        lastMove = performance.now();
+        return;
+      }
+      // Only kick when data is buffered ahead (a real network wait is not a stall).
+      let ahead = false;
+      const b = video.buffered;
+      for (let i = 0; i < b.length; i++) {
+        if (b.start(i) <= t && b.end(i) > t + 0.2) ahead = true;
+      }
+      if (ahead && performance.now() - lastMove > 450) {
+        lastMove = performance.now();
+        video.pause();
+        void video.play().catch(() => {
+          /* poster stays via onUnavailable on the main play path */
+        });
+      }
+    }, 300);
+
     const ro =
       typeof ResizeObserver !== 'undefined'
         ? new ResizeObserver(() => {
@@ -467,6 +518,7 @@ export const StackedAlphaVideo = forwardRef<
       stopUpload();
       io?.disconnect();
       ro?.disconnect();
+      window.clearInterval(stallTimer);
       document.removeEventListener('visibilitychange', onVis);
       video.removeEventListener('loadedmetadata', onLoadedMeta);
       video.removeEventListener('ended', onVideoEnded);

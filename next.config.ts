@@ -57,14 +57,26 @@ const nextConfig: NextConfig = {
       ],
     };
 
+    // Versioned hero boot script (public/hero-boot-v4.js) — same as _headers.
+    const heroBootCache = {
+      source: '/hero-boot-v4.js',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    };
+
     // Staging (and any non-indexable build) must send X-Robots-Tag.
     // Production sets NEXT_PUBLIC_SITE_INDEXABLE=true and skips this header.
     if (process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true') {
-      return [htmlCache, v4AssetCache];
+      return [htmlCache, v4AssetCache, heroBootCache];
     }
     return [
       htmlCache,
       v4AssetCache,
+      heroBootCache,
       {
         source: '/:path*',
         headers: [

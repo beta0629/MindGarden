@@ -33,13 +33,6 @@ export function HeroSection() {
         <div className="hero-media__stage">
           <HeroPoster />
           <div
-            suppressHydrationWarning
-            dangerouslySetInnerHTML={{
-              __html:
-                '<video class="hero-stacked-video" muted playsinline preload="auto" autoplay loop tabindex="-1" aria-hidden="true"></video>',
-            }}
-          />
-          <div
             className="hero-early-root"
             aria-hidden="true"
             suppressHydrationWarning
@@ -49,7 +42,7 @@ export function HeroSection() {
             }}
           />
         </div>
-        {/* Idempotent backup if head boot missed the nodes. */}
+        {/* Non-Chromium: start the hero mp4 on poster load (see HeroVideoInline). */}
         <HeroVideoInline />
         <HeroMediaLazy />
       </div>

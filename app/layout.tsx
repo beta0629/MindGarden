@@ -53,9 +53,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        {/* Before CSS — MutationObserver sets hero video src without stylesheet blocking. */}
+        {/* Async hero boot (public/hero-boot-v4.js) — after LCP poster on Chromium. */}
         <HeroVideoBootHead />
-        {/* LCP posters — motion v4 frames only when motion allowed; RM oval otherwise. */}
+        {/* LCP posters — motion v4 frames only (media excludes RM).
+            RM oval uses picture srcset (often AVIF/640w); a fixed 1080.webp
+            preload was unused and triggered browser warnings. */}
         <link
           rel="preload"
           as="image"
@@ -69,26 +71,6 @@ export default function RootLayout({
           href="/assets/v4-60fps/hero/hero-d-poster.webp"
           media="(min-width: 768px) and (prefers-reduced-motion: no-preference)"
           fetchPriority="high"
-        />
-        <link
-          rel="preload"
-          as="image"
-          href="/assets/hero/hero-poster-1080.webp"
-          media="(prefers-reduced-motion: reduce)"
-          fetchPriority="high"
-        />
-        {/* Hero mp4 — start bytes in &lt;head&gt; (media excludes RM). */}
-        <link
-          rel="preload"
-          as="video"
-          href="/assets/v4-60fps/hero/hero-m-stack.mp4"
-          media="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
-        />
-        <link
-          rel="preload"
-          as="video"
-          href="/assets/v4-60fps/hero/hero-d-stack.mp4"
-          media="(min-width: 768px) and (prefers-reduced-motion: no-preference)"
         />
         {PRELOAD_FONT_SLICES.map((slice) => (
           <link

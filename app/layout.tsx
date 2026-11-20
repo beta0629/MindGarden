@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { HeroVideoBootHead } from '@/components/home/HeroVideoBootHead';
 import './pretendard-critical.css';
 import './globals.css';
 
@@ -52,6 +53,8 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* Before CSS — MutationObserver sets hero video src without stylesheet blocking. */}
+        <HeroVideoBootHead />
         {/* LCP posters — motion v4 frames only when motion allowed; RM oval otherwise. */}
         <link
           rel="preload"
@@ -73,6 +76,19 @@ export default function RootLayout({
           href="/assets/hero/hero-poster-1080.webp"
           media="(prefers-reduced-motion: reduce)"
           fetchPriority="high"
+        />
+        {/* Hero mp4 — start bytes in &lt;head&gt; (media excludes RM). */}
+        <link
+          rel="preload"
+          as="video"
+          href="/assets/v4-60fps/hero/hero-m-stack.mp4"
+          media="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
+        />
+        <link
+          rel="preload"
+          as="video"
+          href="/assets/v4-60fps/hero/hero-d-stack.mp4"
+          media="(min-width: 768px) and (prefers-reduced-motion: no-preference)"
         />
         {PRELOAD_FONT_SLICES.map((slice) => (
           <link

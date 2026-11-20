@@ -139,12 +139,15 @@ export const StackedAlphaVideo = forwardRef<
   }));
 
   useEffect(() => {
-    const canvas = canvasRef.current;
     const wrap = wrapRef.current;
-    if (!canvas || !wrap) return;
+    if (!wrap) return;
+
+    let canvas = canvasRef.current;
+    if (!canvas) return;
 
     let video = videoRef.current;
     let adopted = false;
+    let adoptedEarlyCanvas = false;
     if (adoptSelector) {
       const found = document.querySelector(adoptSelector);
       if (found instanceof HTMLVideoElement) {
@@ -154,6 +157,26 @@ export const StackedAlphaVideo = forwardRef<
       } else {
         onUnavailableRef.current?.();
         return;
+      }
+      // Prefer classic early-paint canvas in place (do not move DOM — avoids #418).
+      const early = document.querySelector('canvas.hero-early-canvas');
+      if (early instanceof HTMLCanvasElement) {
+        try {
+          (
+            window as Window & { __mgHeroEarlyStop?: () => void }
+          ).__mgHeroEarlyStop?.();
+        } catch {
+          /* ignore */
+        }
+        // Hide the React-owned canvas; keep drawing on the SSR early canvas.
+        canvas.style.display = 'none';
+        canvas = early;
+        canvasRef.current = early;
+        adoptedEarlyCanvas = true;
+        wrap.style.opacity = '1';
+        if (early.dataset.ready === '1') {
+          firstFrameRef.current = true;
+        }
       }
     }
     if (!video) {
@@ -356,7 +379,8 @@ export const StackedAlphaVideo = forwardRef<
       endedRef.current = false;
       holdRef.current = false;
       stopUpload();
-      if (resetFirstFrame) {
+      // Keep early-paint ready state — never blank the canvas on adopt.
+      if (resetFirstFrame && !adoptedEarlyCanvas) {
         firstFrameRef.current = false;
         canvas.dataset.ready = '0';
       }
@@ -370,9 +394,15 @@ export const StackedAlphaVideo = forwardRef<
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
       const abs = new URL(next, window.location.href).href;
-      const current = video.currentSrc || video.src;
-      // Reuse in-flight SSR / preload fetch — never kick a second network load.
-      if (current === abs || (next && current.endsWith(next))) {
+      const current = video.currentSrc || video.src || '';
+      const attr = video.getAttribute('src') || '';
+      // Reuse in-flight SSR fetch — never call load() when src already matches.
+      if (
+        current === abs ||
+        (next && current.endsWith(next)) ||
+        attr === next ||
+        (next && attr.endsWith(next))
+      ) {
         if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
           applyStartTime();
           syncPlay();
@@ -386,6 +416,12 @@ export const StackedAlphaVideo = forwardRef<
 
     srcRef.current = src;
     loadSrc(src, true);
+
+    // Early canvas already painted — notify parent without waiting another frame.
+    if (adoptedEarlyCanvas && firstFrameRef.current) {
+      canvas.dataset.ready = '1';
+      onFirstFrameRef.current?.();
+    }
 
     video.addEventListener('loadedmetadata', onLoadedMeta);
     video.addEventListener('ended', onVideoEnded);

@@ -7,9 +7,8 @@ import { HeroVideoInline } from './HeroVideoInline';
 
 /**
  * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
- * Poster + empty hero video are RSC HTML (src left unset so static HTML is
- * breakpoint-safe). Classic script sets d/m src via matchMedia before React;
- * StackedAlphaVideo adopts that element (one logical fetch when coalesced).
+ * Video + early canvas live in dangerouslySetInnerHTML slots; head
+ * beforeInteractive boot (HeroVideoBootHead) sets src + WebGL without CSS block.
  * Plain &lt;a&gt; for secondary CTA — avoids App Router client on LCP path.
  */
 export function HeroSection() {
@@ -33,23 +32,27 @@ export function HeroSection() {
       <div className="hero-media">
         <div className="hero-media__stage">
           <HeroPoster />
-          {/* Empty SSR video — script sets d/m src; adopt avoids a second element. */}
-          <video
-            className="hero-stacked-video"
-            muted
-            playsInline
-            preload="auto"
-            autoPlay
-            loop
-            tabIndex={-1}
+          <div
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html:
+                '<video class="hero-stacked-video" muted playsinline preload="auto" autoplay loop tabindex="-1" aria-hidden="true"></video>',
+            }}
+          />
+          <div
+            className="hero-early-root"
             aria-hidden="true"
             suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html:
+                '<canvas class="hero-early-canvas v37-scene__canvas" data-ready="0" aria-hidden="true"></canvas>',
+            }}
           />
         </div>
+        {/* Idempotent backup if head boot missed the nodes. */}
         <HeroVideoInline />
         <HeroMediaLazy />
       </div>
-      {/* After poster markup so the classic script can find `.hero-still`. */}
       <HomeBootInline />
     </section>
   );

@@ -706,6 +706,25 @@ p {
   opacity: 0;
 }
 
+/* Classic early-paint canvas — SSR placeholder, WebGL bound before hydrate. */
+.hero-media__stage > .hero-early-root {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hero-media__stage .hero-early-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
+
 /*
  * Reduced-motion oval RM posters: keep zoom / cover / radial soft-edge.
  */

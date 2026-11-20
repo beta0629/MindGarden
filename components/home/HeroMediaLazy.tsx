@@ -1,41 +1,33 @@
 'use client';
 
-import { useEffect, useState, type ComponentType } from 'react';
+import { useEffect } from 'react';
 import { dispatchHomeBootReady } from '@/components/home/homeBoot';
-
-type MediaProps = { enhanceOnly?: boolean };
+import { HeroMedia } from './HeroMedia';
+import { usePrefersReducedMotion } from './v37/useBreakpointPack';
 
 /**
- * Loads the HeroMedia client chunk immediately on mount (no boot gate / idle).
- * Soft-GL is fine for stacked-alpha WebGL1 — never skip the island for soft-GL.
- * Reduced-motion: remove SSR hero video (0 mp4), poster only.
+ * Eager hero enhance — HeroMedia is statically imported so WebGL lives in the
+ * same client chunk that hydrates with the page (no dynamic import RTT).
+ * Reduced-motion: strip SSR video + early canvas (0 mp4 / no WebGL).
  */
 export function HeroMediaLazy() {
-  const [Media, setMedia] = useState<ComponentType<MediaProps> | null>(null);
+  const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      try {
-        if (
-          typeof window !== 'undefined' &&
-          window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        ) {
-          document.querySelector('.hero-stacked-video')?.remove();
-          dispatchHomeBootReady();
-          return;
-        }
-        const mod = await import('./HeroMedia');
-        if (!cancelled) setMedia(() => mod.HeroMedia);
-      } catch {
-        if (!cancelled) dispatchHomeBootReady();
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (!reduced) return;
+    document.querySelector('.hero-stacked-video')?.remove();
+    document.querySelector('.hero-early-canvas')?.remove();
+    document.querySelector('.hero-early-root')?.remove();
+    try {
+      (
+        window as Window & { __mgHeroEarlyStop?: () => void }
+      ).__mgHeroEarlyStop?.();
+    } catch {
+      /* ignore */
+    }
+    dispatchHomeBootReady();
+  }, [reduced]);
 
-  if (!Media) return null;
-  return <Media enhanceOnly />;
+  if (reduced) return null;
+  return <HeroMedia enhanceOnly />;
 }

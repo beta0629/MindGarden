@@ -83,8 +83,9 @@ function DeferredV37Scene({
     const el = placeholderRef.current;
     if (!el) return;
     if (typeof IntersectionObserver === 'undefined') {
-      setNear(true);
-      return;
+      // Defer setState — sync updates inside effects trip lint (and match scene pattern).
+      const t = window.setTimeout(() => setNear(true), 0);
+      return () => window.clearTimeout(t);
     }
     const io = new IntersectionObserver(
       (entries) => {

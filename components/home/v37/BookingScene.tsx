@@ -60,18 +60,7 @@ export function BookingScene({ sectionRef }: Props) {
   const isDesktop = pack === '1440';
   const mainSrc = phase === 'landing' ? landingSrc : breatheSrc;
 
-  useEffect(() => {
-    setFailed(false);
-    setPaintLive(false);
-    setPlaying(false);
-    setPhase('landing');
-    setLandingDone(false);
-    setHoverOn(false);
-    paintLiveRef.current = false;
-    landingDoneRef.current = false;
-    startedRef.current = false;
-    clockRef.current = null;
-  }, [pack]);
+  // Pack changes remount this component via DeferredScenes `key={pack}`.
 
   // Preload breathe (+ hover on desktop) before landing ends.
   useEffect(() => {

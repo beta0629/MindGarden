@@ -3,6 +3,7 @@
 import {
   useEffect,
   useState,
+  useSyncExternalStore,
   type ComponentType,
   type RefObject,
 } from 'react';
@@ -56,6 +57,10 @@ const moduleCache = new Map<
 
 let preloadPromise: Promise<void> | null = null;
 
+function subscribeNoop() {
+  return () => {};
+}
+
 function waitIdle(timeoutMs: number): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window.requestIdleCallback === 'function') {
@@ -106,6 +111,7 @@ function ensureSceneChunksPreloaded(): Promise<void> {
 /**
  * Idle-mount scene React trees after boot (JS already preloaded).
  * Soft-GL is allowed — only decode failure keeps the poster.
+ * `key={pack}` remounts the scene on breakpoint change (no pack-reset setState).
  */
 function DeferredV37Scene({
   kind,
@@ -114,11 +120,7 @@ function DeferredV37Scene({
   const pack = useBreakpointPack();
   const [Scene, setScene] = useState<ComponentType<SceneProps> | null>(null);
   /** Client-only: avoid painting pack `'390'` poster on desktop before matchMedia. */
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   useEffect(() => {
     let cancelled = false;
@@ -144,7 +146,7 @@ function DeferredV37Scene({
   }, [kind]);
 
   if (Scene) {
-    return <Scene sectionRef={sectionRef} />;
+    return <Scene key={pack} sectionRef={sectionRef} />;
   }
 
   return (

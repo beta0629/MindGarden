@@ -417,6 +417,9 @@ export const StackedAlphaVideo = forwardRef<
       glRef.current?.lose();
       glRef.current = null;
     };
+    // Mount-once: WebGL context + IO/visibility wiring. Src swaps are handled
+    // by the following effect so landing→breathe keeps the same canvas.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional empty deps
   }, []);
 
   // Src / loop mode changes — keep WebGL context; swap the media element only.

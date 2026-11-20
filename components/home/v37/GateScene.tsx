@@ -42,7 +42,6 @@ export function GateScene({ sectionRef }: Props) {
   const settleRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const [failed, setFailed] = useState(false);
-  const [armed, setArmed] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
   const [playing, setPlaying] = useState(false);
   const paintLiveRef = useRef(false);
@@ -53,17 +52,7 @@ export function GateScene({ sectionRef }: Props) {
   const key = packToV4Key(pack);
   const src = gateStackSrc(key);
 
-  useEffect(() => {
-    setFailed(false);
-    setArmed(false);
-    setPaintLive(false);
-    setPlaying(false);
-    paintLiveRef.current = false;
-    heldOpaqueRef.current = false;
-    motionDoneRef.current = false;
-    startedRef.current = false;
-    clockRef.current = null;
-  }, [pack]);
+  // Pack changes remount this component via DeferredScenes `key={pack}`.
 
   useEffect(() => {
     if (reduced || failed) return;
@@ -79,7 +68,6 @@ export function GateScene({ sectionRef }: Props) {
       triggerP: TRIGGER_P[pack].gate,
       triggerWalkF: TRIGGER_WALK_F.gate,
     });
-    setArmed(true);
 
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
@@ -226,7 +214,7 @@ export function GateScene({ sectionRef }: Props) {
             : 'v37-scene__poster v37-scene__poster--layout'
         }
       />
-      {!failed && !reduced && armed ? (
+      {!failed && !reduced ? (
         <div ref={settleRef} className="v37-scene__settle" style={settleStyle}>
           <StackedAlphaVideo
             src={src}

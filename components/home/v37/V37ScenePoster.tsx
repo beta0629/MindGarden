@@ -20,7 +20,6 @@ export function V37ScenePoster({ kind, pack, className }: Props) {
         type="image/webp"
         srcSet={v4RmPosterSrc(kind, pack)}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element -- static LCP/layout spacer */}
       <img
         className={className}
         src={v4ScenePosterSrc(kind, pack)}

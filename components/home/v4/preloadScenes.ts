@@ -105,10 +105,8 @@ export function startSequentialScenePreload(): Promise<void> {
       const urls = sceneUrls(key);
       for (const url of urls) {
         // Sequential — one decode pipeline warm at a time.
-        // eslint-disable-next-line no-await-in-loop
         await preloadVideo(url);
         // Yield between scenes so scroll/input stay responsive.
-        // eslint-disable-next-line no-await-in-loop
         await new Promise<void>((r) => {
           window.setTimeout(r, 0);
         });

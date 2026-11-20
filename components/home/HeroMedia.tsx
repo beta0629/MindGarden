@@ -4,7 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
-  useEffectEvent,
+  useSyncExternalStore,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { dispatchHomeBootReady } from '@/components/home/homeBoot';
@@ -26,6 +26,28 @@ type Props = {
   enhanceOnly?: boolean;
 };
 
+type PortalTarget = {
+  panel: HTMLElement;
+  stage: HTMLElement;
+};
+
+function subscribeNoop() {
+  return () => {};
+}
+
+function readHeroPortal(): PortalTarget | null {
+  if (typeof document === 'undefined') return null;
+  const panel = document.querySelector<HTMLElement>('.hero .hero-media');
+  const stage = panel?.querySelector<HTMLElement>('.hero-media__stage');
+  if (panel && stage) return { panel, stage };
+  return null;
+}
+
+function finishBoot() {
+  dispatchHomeBootReady();
+  void startSequentialScenePreload();
+}
+
 /**
  * Hero media: SSR WebP poster → stacked-alpha H.264 loop (WebGL1).
  * Reduced-motion / autoplay reject / WebGL fail → keep poster (no console errors).
@@ -39,25 +61,15 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
   const [posterReady, setPosterReady] = useState(false);
   const [live, setLive] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [portalTarget, setPortalTarget] = useState<{
-    panel: HTMLElement;
-    stage: HTMLElement;
-  } | null>(null);
+  /** Client snapshot — avoids setState-in-effect for the enhanceOnly portal. */
+  const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
 
   const key = packToV4Key(pack);
   const src = heroStackSrc(key);
   const isMobilePack = pack === '390';
 
-  useEffect(() => {
-    if (!enhanceOnly) return;
-    const panel = document.querySelector<HTMLElement>('.hero .hero-media');
-    const stage = panel?.querySelector<HTMLElement>('.hero-media__stage');
-    if (panel && stage) {
-      panelRef.current = panel as HTMLDivElement;
-      stageRef.current = stage as HTMLDivElement;
-      setPortalTarget({ panel, stage });
-    }
-  }, [enhanceOnly]);
+  const portalTarget =
+    enhanceOnly && isClient ? readHeroPortal() : null;
 
   useEffect(() => {
     const root = enhanceOnly
@@ -65,12 +77,13 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
       : panelRef.current;
     const img = root?.querySelector<HTMLImageElement>('.hero-still');
     if (img?.complete && img.naturalWidth > 0) {
-      setPosterReady(true);
-      return;
+      // Defer so we do not setState synchronously inside the effect body.
+      const t = window.setTimeout(() => setPosterReady(true), 0);
+      return () => window.clearTimeout(t);
     }
     if (!img) {
-      setPosterReady(true);
-      return;
+      const t = window.setTimeout(() => setPosterReady(true), 0);
+      return () => window.clearTimeout(t);
     }
     const onLoad = () => setPosterReady(true);
     img.addEventListener('load', onLoad, { once: true });
@@ -79,27 +92,24 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
       img.removeEventListener('load', onLoad);
       img.removeEventListener('error', onLoad);
     };
-  }, [enhanceOnly, portalTarget]);
-
-  const finishBoot = useEffectEvent(() => {
-    dispatchHomeBootReady();
-    void startSequentialScenePreload();
-  });
+  }, [enhanceOnly, isClient]);
 
   useEffect(() => {
     if (!posterReady) return;
-    if (reduced || failed) {
+    if (reduced || failed || live) {
       finishBoot();
     }
-  }, [posterReady, reduced, failed]);
+  }, [posterReady, reduced, failed, live]);
 
   useEffect(() => {
-    const panel = panelRef.current;
+    const panel = enhanceOnly
+      ? document.querySelector<HTMLElement>('.hero .hero-media')
+      : panelRef.current;
     if (!panel) return;
     panel.classList.toggle('is-paused', paused);
     panel.classList.toggle('is-video-playing', live);
     panel.classList.toggle('is-stacked-alpha', live && !failed && !reduced);
-  }, [paused, live, failed, reduced, portalTarget]);
+  }, [paused, live, failed, reduced, enhanceOnly, isClient]);
 
   const togglePause = () => setPaused((v) => !v);
 
@@ -130,12 +140,10 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
           autoPlay
           onFirstFrame={() => {
             setLive(true);
-            finishBoot();
           }}
           onUnavailable={() => {
             setFailed(true);
             setLive(false);
-            finishBoot();
           }}
         />
       </div>

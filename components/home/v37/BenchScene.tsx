@@ -95,12 +95,17 @@ export function BenchScene({ sectionRef }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const clockRef = useRef<ScrollClock | null>(null);
   const [failed, setFailed] = useState(false);
-  const [paintLive, setPaintLive] = useState(false);
+  /** Body/shadow are layout stills — live as soon as the motion path mounts. */
+  const paintLive = !failed && !reduced;
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [videosDone, setVideosDone] = useState(false);
   const [overflow, setOverflow] = useState<OverflowBox | null>(null);
   const [placeBox, setPlaceBox] = useState<PlaceBox | null>(null);
-  const paintLiveRef = useRef(false);
+  const paintLiveRef = useRef(paintLive);
+
+  useEffect(() => {
+    paintLiveRef.current = paintLive;
+  }, [paintLive]);
   const heldOpaqueRef = useRef(false);
   const frozenRef = useRef(false);
   const videoStartedRef = useRef(false);
@@ -108,27 +113,18 @@ export function BenchScene({ sectionRef }: Props) {
 
   const key = packToV4Key(pack);
 
-  useEffect(() => {
-    setFailed(false);
-    setPaintLive(false);
-    setVideoPlaying(false);
-    setVideosDone(false);
-    setOverflow(null);
-    setPlaceBox(null);
-    paintLiveRef.current = false;
-    heldOpaqueRef.current = false;
-    frozenRef.current = false;
-    videoStartedRef.current = false;
-    videosEndedRef.current = 0;
-    clockRef.current = null;
-  }, [pack]);
+  // Pack changes remount this component via DeferredScenes `key={pack}`.
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap || reduced || failed) return;
-    const boxes = layoutBoxes(wrap, pack);
-    setOverflow(boxes.overflow);
-    setPlaceBox(boxes.place);
+    // Defer setState out of the layout-effect body (ResizeObserver/rAF path).
+    const id = requestAnimationFrame(() => {
+      const boxes = layoutBoxes(wrap, pack);
+      setOverflow(boxes.overflow);
+      setPlaceBox(boxes.place);
+    });
+    return () => cancelAnimationFrame(id);
   }, [pack, reduced, failed, paintLive]);
 
   useEffect(() => {
@@ -279,10 +275,6 @@ export function BenchScene({ sectionRef }: Props) {
 
     window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('visibilitychange', onVisibility);
-
-    // Show body/shadow immediately (layout stills).
-    paintLiveRef.current = true;
-    setPaintLive(true);
 
     return () => {
       alive = false;

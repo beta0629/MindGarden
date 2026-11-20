@@ -37,7 +37,6 @@ export function HeroPoster() {
         type="image/webp"
         srcSet={heroPosterSrc('d')}
       />
-      {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before video */}
       <img
         className="hero-still"
         src={heroPosterSrc('d')}

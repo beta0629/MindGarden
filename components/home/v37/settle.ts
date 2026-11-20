@@ -1,11 +1,14 @@
-import { smoothstep } from './atlas';
-
 /** Rise distance in CSS px — calm settle (≤16px; was 36/28). */
 export const SETTLE_RISE_PX = { '1440': 16, '390': 14 } as const;
 
 const PHASE1_MS = 300;
 const TOTAL_MS = 1200;
 const DELAY_AFTER_TRIGGER_MS = 350;
+
+export function smoothstep(t: number): number {
+  const x = Math.min(1, Math.max(0, t));
+  return x * x * (3 - 2 * x);
+}
 
 /**
  * Sample cubic-bezier(0.32, 0.72, 0, 1) for t in [0,1].
@@ -96,6 +99,3 @@ export function settleFromWalkDelta(walkDeltaFromTrigger: number): SettleState {
 export function settleTranslateY(rise: number, risePx: number): number {
   return (1 - rise) * risePx;
 }
-
-/** Expose smoothstep for crossfades that share the settle module. */
-export { smoothstep };

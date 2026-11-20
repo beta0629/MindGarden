@@ -1,5 +1,5 @@
 import type { PackId, V37SceneKind } from './types';
-import { v37MotionPosterSrc, v37RmPosterSrc } from './types';
+import { v4RmPosterSrc, v4ScenePosterSrc } from '@/components/home/v4/assets';
 
 type Props = {
   kind: V37SceneKind;
@@ -18,12 +18,12 @@ export function V37ScenePoster({ kind, pack, className }: Props) {
       <source
         media="(prefers-reduced-motion: reduce)"
         type="image/webp"
-        srcSet={v37RmPosterSrc(kind, pack)}
+        srcSet={v4RmPosterSrc(kind, pack)}
       />
       {/* eslint-disable-next-line @next/next/no-img-element -- static LCP/layout spacer */}
       <img
         className={className}
-        src={v37MotionPosterSrc(kind, pack)}
+        src={v4ScenePosterSrc(kind, pack)}
         alt=""
         decoding="async"
         loading="lazy"

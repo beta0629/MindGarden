@@ -607,18 +607,13 @@ p {
 
 .hero-media {
   --hero-zoom: 1.15;
-  /* Soft rim only for poster/video fallback — never a midtone cream wash. */
+  /* Soft rim only for reduced-motion oval posters. */
   --hero-media-fade-edge: 88%;
   --hero-media-fade-end: 100%;
-  /* Subject projected AABB from mountHero3D (fallbacks ≈ centered fit sphere). */
-  --hero-subj-left: 8%;
-  --hero-subj-top: 6%;
-  --hero-subj-right: 92%;
-  --hero-subj-bottom: 94%;
   --hero-pause-x: 88%;
   --hero-pause-y: 104%;
   position: relative;
-  /* Visible: pause may sit just below the panel on hero cream (off GLB). */
+  /* Visible: pause may sit just below the panel on hero cream. */
   overflow: visible;
   border-radius: 0;
   border: 0;
@@ -630,17 +625,6 @@ p {
   width: min(100%, 50.625rem);
   max-width: 100%;
   aspect-ratio: 81 / 47;
-  height: auto;
-  max-height: min(58svh, 29.375rem);
-}
-
-/*
- * Live GLB: locked poster camera inside the 81:47 stage (IMPLEMENTATION §3).
- */
-.hero-media.is-3d {
-  overflow: visible;
-  aspect-ratio: 81 / 47;
-  width: min(100%, 50.625rem);
   height: auto;
   max-height: min(58svh, 29.375rem);
 }
@@ -668,8 +652,8 @@ p {
 }
 
 /*
- * Motion LCP still: fill the stage exactly like `.hero-3d` (no zoom / radial
- * mask). Per-breakpoint motion posters already match the panel box.
+ * Motion LCP still: fill the stage exactly like stacked-alpha canvas
+ * (object-fit: fill). Per-breakpoint v4 posters match the panel box.
  */
 .hero-media__stage picture img.hero-still {
   position: absolute;
@@ -684,39 +668,7 @@ p {
   transform: none;
   -webkit-mask-image: none;
   mask-image: none;
-}
-
-/* Video loop fallback: cover the stage; soft-fade baked sand edges only. */
-.hero-media__stage > .hero-loop {
-  position: absolute;
-  inset: auto;
-  left: 50%;
-  top: 50%;
-  width: calc(var(--hero-zoom) * 100%);
-  height: auto;
-  max-width: none;
-  aspect-ratio: 1620 / 939;
-  object-fit: cover;
-  transform: translate(-50%, -50%);
-  -webkit-mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-media-fade-edge),
-    transparent var(--hero-media-fade-end)
-  );
-  mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-media-fade-edge),
-    transparent var(--hero-media-fade-end)
-  );
-}
-
-.hero-media__stage > .hero-3d {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  object-fit: cover;
-  /* Transparent WebGL — page cream shows through; no CSS veil on the subject. */
-  background: transparent;
+  transition: opacity 180ms ease;
 }
 
 .hero-still {
@@ -724,59 +676,25 @@ p {
   z-index: 1;
 }
 
-.hero-loop,
-.hero-3d {
-  display: none;
+/* Stacked-alpha hero loop — fades in after first decoded frame. */
+.hero-media__stage > .hero-stacked {
   z-index: 2;
-}
-
-/* Poster stays underneath as the loop-restart underlay; video fades in once frames play. */
-.hero-media:has(.hero-loop) .hero-loop {
-  display: block;
-  opacity: 0;
-  transition: opacity 0.45s ease;
-}
-
-.hero-media.is-video-playing .hero-loop {
-  opacity: 1;
-}
-
-.hero-media.is-3d .hero-loop {
-  display: none;
-}
-
-.hero-media.is-3d .hero-media__stage {
-  inset: 0;
-  height: 100%;
-}
-
-.hero-media.is-3d .hero-3d {
-  display: block;
-  /* Camera fit owns framing — no CSS scale / offset crop. */
-  transform: none;
-  height: 100%;
-  /* Hold transparent until is-3d-canvas-in — poster stays fully visible. */
   opacity: 0;
   transition: opacity 180ms ease;
+  background: transparent;
+  pointer-events: none;
 }
 
-.hero-media.is-3d.is-3d-canvas-in .hero-3d {
+.hero-media.is-stacked-alpha .hero-stacked {
   opacity: 1;
 }
 
-.hero-media.is-3d .hero-still {
-  /* Poster stays at 1 until canvas has faded in, then is-3d-poster-out. */
-  opacity: 1;
-  transition: opacity 180ms ease;
-}
-
-.hero-media.is-3d.is-3d-poster-out .hero-still {
+.hero-media.is-stacked-alpha .hero-still {
   opacity: 0;
 }
 
 /*
  * Reduced-motion oval RM posters: keep zoom / cover / radial soft-edge.
- * Motion posters stay fill-synced with `.hero-3d` (see rules above).
  */
 @media (prefers-reduced-motion: reduce) {
   .hero-media__stage picture img.hero-still {
@@ -800,75 +718,11 @@ p {
       black var(--hero-media-fade-edge),
       transparent var(--hero-media-fade-end)
     );
-  }
-}
-
-/* —— homepage first-entry boot progress (cream track / brand-green fill) —— */
-.home-boot-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10000;
-  height: 3px;
-  pointer-events: none;
-  background: var(--cream);
-  opacity: 1;
-  transition: opacity 400ms ease;
-}
-
-.home-boot-progress.is-done {
-  opacity: 0;
-}
-
-.home-boot-progress__bar {
-  height: 100%;
-  width: 100%;
-  transform-origin: left center;
-  /* Start ~inline takeover; wait phase is CSS-driven (compositor) so the bar
-     keeps moving when the main thread blocks on hero GLB. Duration must match
-     HOME_BOOT_EASE_DURATION_MS in homeBoot.ts; ceiling matches HOME_BOOT_EASE_CEILING. */
-  transform: scaleX(0.35);
-  background: var(--green);
-  will-change: transform;
-  transition: transform 8s cubic-bezier(0.15, 0.85, 0.25, 1);
-}
-
-.home-boot-progress__bar.is-easing {
-  transform: scaleX(0.9);
-}
-
-.home-boot-progress__bar.is-complete {
-  transform: scaleX(1);
-  transition-duration: 0.25s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .home-boot-progress,
-  .home-boot-progress.is-done,
-  .hero-media.is-3d .hero-still,
-  .hero-media.is-3d .hero-3d,
-  .hero-media.is-3d.is-3d-canvas-in .hero-3d,
-  .hero-media.is-3d.is-3d-poster-out .hero-still {
-    transition: none;
-  }
-
-  .home-boot-progress__bar,
-  .home-boot-progress__bar.is-easing,
-  .home-boot-progress__bar.is-complete {
-    transition: none;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .hero-loop,
-  .hero-3d {
-    display: none !important;
-  }
-
-  .hero-still {
-    display: block !important;
     opacity: 1 !important;
+  }
+
+  .hero-stacked {
+    display: none !important;
   }
 }
 
@@ -968,28 +822,13 @@ p {
     max-height: min(48svh, 24rem);
   }
 
-  .hero-media.is-3d {
-    aspect-ratio: 81 / 47;
-    width: calc(100% + var(--pad) * 2);
-    max-width: none;
-    margin-inline: calc(var(--pad) * -1);
-    margin-bottom: -3.25rem;
-    max-height: min(48svh, 24rem);
-  }
-
   .hero-media__stage {
     inset: 0;
   }
 }
 
 @media (min-width: 768px) and (max-width: 1023px) {
-  /*
-   * Include .is-3d: the ≤1023 .hero-media.is-3d rule is more specific and
-   * would otherwise snap max-height back to min(48svh, 24rem) when GL mounts
-   * (−62px scrollHeight on WebKit tablet).
-   */
-  .hero-media,
-  .hero-media.is-3d {
+  .hero-media {
     --hero-zoom: 1.15;
     aspect-ratio: 81 / 47;
     max-height: min(56svh, 32rem);
@@ -1046,15 +885,6 @@ p {
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
-  .hero-media.is-3d {
-    aspect-ratio: 81 / 47;
-    width: min(100%, 50.625rem);
-    max-width: 50.625rem;
-    max-height: min(58svh, 29.375rem);
-    margin-right: calc((var(--hero-container) - 100vw) / 2);
-  }
-
-  .hero-media.is-3d .hero-3d,
   .hero-media__stage {
     pointer-events: none;
   }
@@ -1062,10 +892,6 @@ p {
   .hero-media .hero__pause,
   .hero-media .hero__play {
     pointer-events: auto;
-  }
-
-  .hero-media.is-3d .hero-3d {
-    transform: none;
   }
 }
 
@@ -1980,7 +1806,8 @@ picture.v37-scene__poster > img {
   transition: opacity 180ms ease;
 }
 
-.v37-scene__canvas {
+/* Scoped to scenes — hero stacked canvas must not inherit opacity:0. */
+.v37-scene .v37-scene__canvas {
   opacity: 0;
   transition: opacity 180ms ease;
 }

@@ -1,3 +1,5 @@
+import { heroPosterSrc } from '@/components/home/v4/assets';
+
 /** Reduced-motion oval LCP set — media query only (no JS swap). */
 const RM_AVIF =
   '/assets/hero/hero-poster-640.avif 640w, /assets/hero/hero-poster-1080.avif 1080w, /assets/hero/hero-poster-1620.avif 1620w';
@@ -6,11 +8,9 @@ const RM_WEBP =
 const RM_SIZES = '(max-width: 1023px) 100vw, 60vw';
 
 /**
- * Static LCP poster — safe in Server Components. Keep markup discoverable
- * without waiting on HeroMedia client hydration / three.js.
- *
- * Default = build-time first GL frame per breakpoint (motion). Soft-GL keeps
- * these URLs (no oval swap). Reduced-motion selects the old posters via media.
+ * Static LCP poster — safe in Server Components.
+ * Motion: v4-60fps decoded frame 0 (d ≥768 / m &lt;768).
+ * Reduced-motion: existing oval RM posters via media.
  */
 export function HeroPoster() {
   return (
@@ -29,36 +29,18 @@ export function HeroPoster() {
       />
       <source
         media="(max-width: 767px)"
-        type="image/avif"
-        srcSet="/assets/hero/hero-poster-motion-390.avif"
-      />
-      <source
-        media="(max-width: 767px)"
         type="image/webp"
-        srcSet="/assets/hero/hero-poster-motion-390.webp"
+        srcSet={heroPosterSrc('m')}
       />
       <source
-        media="(max-width: 1023px)"
-        type="image/avif"
-        srcSet="/assets/hero/hero-poster-motion-768.avif"
-      />
-      <source
-        media="(max-width: 1023px)"
+        media="(min-width: 768px)"
         type="image/webp"
-        srcSet="/assets/hero/hero-poster-motion-768.webp"
+        srcSet={heroPosterSrc('d')}
       />
-      <source
-        type="image/avif"
-        srcSet="/assets/hero/hero-poster-motion-1440.avif"
-      />
-      <source
-        type="image/webp"
-        srcSet="/assets/hero/hero-poster-motion-1440.webp"
-      />
-      {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before three.js / video */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- LCP poster must paint before video */}
       <img
         className="hero-still"
-        src="/assets/hero/hero-poster-motion-1440.webp"
+        src={heroPosterSrc('d')}
         alt=""
         width={810}
         height={470}

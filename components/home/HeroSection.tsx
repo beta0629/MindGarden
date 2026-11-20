@@ -6,7 +6,7 @@ import { HeroMediaLazy } from './HeroMediaLazy';
 
 /**
  * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
- * Poster is RSC HTML; three/video enhance is a deferred client island.
+ * Poster is RSC HTML; stacked-alpha video enhance is a deferred client island.
  * Plain &lt;a&gt; for secondary CTA — avoids App Router client on LCP path.
  */
 export function HeroSection() {

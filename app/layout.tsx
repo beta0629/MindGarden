@@ -52,26 +52,19 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        {/* LCP motion stills — fixed per-breakpoint URLs (matches HeroPoster). */}
+        {/* LCP v4 stacked-alpha posters — d ≥768 / m &lt;768 (matches HeroPoster). */}
         <link
           rel="preload"
           as="image"
-          href="/assets/hero/hero-poster-motion-390.avif"
+          href="/assets/v4-60fps/hero/hero-m-poster.webp"
           media="(max-width: 767px)"
           fetchPriority="high"
         />
         <link
           rel="preload"
           as="image"
-          href="/assets/hero/hero-poster-motion-768.avif"
-          media="(min-width: 768px) and (max-width: 1023px)"
-          fetchPriority="high"
-        />
-        <link
-          rel="preload"
-          as="image"
-          href="/assets/hero/hero-poster-motion-1440.avif"
-          media="(min-width: 1024px)"
+          href="/assets/v4-60fps/hero/hero-d-poster.webp"
+          media="(min-width: 768px)"
           fetchPriority="high"
         />
         {PRELOAD_FONT_SLICES.map((slice) => (

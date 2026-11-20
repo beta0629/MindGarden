@@ -7,10 +7,10 @@ import {
   type RefObject,
 } from 'react';
 import { whenHomeBootReady } from '@/components/home/homeBoot';
+import { startSequentialScenePreload } from '@/components/home/v4/preloadScenes';
 import type { V37SceneKind } from './types';
 import { useBreakpointPack } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
-import { peekSoftwareGpu } from './softwareGpu';
 
 type SceneProps = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -36,7 +36,7 @@ const LOADERS: Record<
     import('./BookingScene').then((m) => ({ default: m.BookingScene })),
 };
 
-/** Idle after boot before JS-only scene chunk preload (no atlas fetch/decode). */
+/** Idle after boot before JS-only scene chunk preload. */
 const CHUNK_PRELOAD_IDLE_MS = 1200;
 
 /** Stagger React mounts during idle so three commits are not one longtask. */
@@ -54,11 +54,6 @@ const moduleCache = new Map<
   Promise<{ default: ComponentType<SceneProps> }>
 >();
 
-/**
- * Soft-GL skip when {@link peekSoftwareGpu} is already `true`.
- * `null` (unprobed) → treat as hardware and premount JS (no WebGL context here).
- */
-let softGlSkipScenes: boolean | null = null;
 let preloadPromise: Promise<void> | null = null;
 
 function waitIdle(timeoutMs: number): Promise<void> {
@@ -83,9 +78,9 @@ function loadSceneModule(
 }
 
 /**
- * After boot + short idle: fetch+eval scene JS chunks only (no atlas, no WebGL).
- * Peek-only soft-GL gate — never {@link probeSoftwareGpu} (that stays in HeroMediaLazy).
- * Atlas fetch/decode stays behind {@link whenHomeDeferredWorkAllowed} inside scenes.
+ * After boot + short idle: fetch+eval scene JS chunks.
+ * Soft-GL does NOT skip scenes — stacked-alpha WebGL1 decode is tiny.
+ * Also kicks sequential MP4 preload (hero → gate → bench → booking).
  */
 function ensureSceneChunksPreloaded(): Promise<void> {
   if (typeof window === 'undefined') return Promise.resolve();
@@ -94,13 +89,7 @@ function ensureSceneChunksPreloaded(): Promise<void> {
     try {
       await whenHomeBootReady();
       await waitIdle(CHUNK_PRELOAD_IDLE_MS);
-      // Peek only — do not create a WebGL context on this path.
-      if (peekSoftwareGpu() === true) {
-        softGlSkipScenes = true;
-        return;
-      }
-      softGlSkipScenes = false;
-      // Stagger chunk eval so one longtask does not absorb all three modules.
+      void startSequentialScenePreload();
       for (const kind of SCENE_KINDS) {
         await loadSceneModule(kind);
         await new Promise<void>((r) => {
@@ -108,7 +97,6 @@ function ensureSceneChunksPreloaded(): Promise<void> {
         });
       }
     } catch {
-      softGlSkipScenes = softGlSkipScenes ?? false;
       /* preload is best-effort — mount path will import on demand */
     }
   })();
@@ -116,13 +104,8 @@ function ensureSceneChunksPreloaded(): Promise<void> {
 }
 
 /**
- * Idle-mount scene React trees after boot (JS already preloaded) so first
- * scroll does not pay React commit longtasks. Soft-GL (peek===true) never mounts.
- * Unprobed (`null`) pretends hardware so WebKit gate scroll does not pay mount.
- *
- * Place size / aspect / bench pads come from CSS media queries only (globals.css).
- * Pack is used solely for poster atlas paths — gated to client mount so desktop
- * never flashes the SSR/hydration `'390'` pack.
+ * Idle-mount scene React trees after boot (JS already preloaded).
+ * Soft-GL is allowed — only decode failure keeps the poster.
  */
 function DeferredV37Scene({
   kind,
@@ -143,11 +126,6 @@ function DeferredV37Scene({
       try {
         await ensureSceneChunksPreloaded();
         if (cancelled) return;
-        // Re-peek: HeroMediaLazy may have probed soft-GL while we waited.
-        if (softGlSkipScenes || peekSoftwareGpu() === true) {
-          softGlSkipScenes = true;
-          return;
-        }
         const mod = await loadSceneModule(kind);
         const stagger = MOUNT_STAGGER_MS[kind] || 0;
         if (stagger > 0) {
@@ -171,11 +149,6 @@ function DeferredV37Scene({
 
   return (
     <div className={SCENE_CLASS[kind]} aria-hidden="true">
-      {/*
-       * Layout spacer always (CSS aspect). Poster only after mount so desktop
-       * uses the live pack — never SSR `'390'` → `'1440'` hop.
-       * Motion URL is fixed; RM via <picture> media only — never JS src flip.
-       */}
       {mounted ? (
         <V37ScenePoster
           kind={kind}

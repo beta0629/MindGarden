@@ -477,29 +477,44 @@ async function runEngine(browserType, label, viewport, deviceName) {
   const swap = await withTimeout(
     page.evaluate(async () => {
       const root = document.querySelector('.v37-scene--booking');
-      const v = root?.querySelector('video');
-      if (!v) return { ok: false, reason: 'no-video' };
-      const before = (v.currentSrc || v.src).split('/').pop();
-      if (before.includes('breathe')) {
-        return { ok: true, before, after: before, blank: false, already: true };
+      const videos = [...(root?.querySelectorAll('video') || [])];
+      if (!videos.length) return { ok: false, reason: 'no-video' };
+      const names = () =>
+        videos.map((v) => (v.currentSrc || v.src).split('/').pop());
+      const activeBreathe = () =>
+        videos.find((v) => {
+          const src = (v.currentSrc || v.src).split('/').pop() || '';
+          if (!src.includes('breathe')) return false;
+          const op = getComputedStyle(v.parentElement || v).opacity;
+          return op !== '0' && !v.paused;
+        });
+      const before = names();
+      if (activeBreathe()) {
+        return {
+          ok: true,
+          before: before.join('|'),
+          after: before.join('|'),
+          blank: false,
+          already: true,
+        };
       }
       const t0 = performance.now();
       let after = before;
       let blank = false;
       while (performance.now() - t0 < 3500) {
-        const src = (v.currentSrc || v.src).split('/').pop();
-        if (src.includes('breathe')) {
-          after = src;
-          const c = root.querySelector('canvas');
-          if (c && getComputedStyle(c).opacity === '0') blank = true;
+        const hit = activeBreathe();
+        if (hit) {
+          after = names();
+          const wraps = [...root.querySelectorAll('[style*="opacity"], .v37-scene__canvas')];
+          blank = wraps.every((el) => getComputedStyle(el).opacity === '0');
           break;
         }
         await new Promise((r) => setTimeout(r, 50));
       }
       return {
-        ok: after.includes('breathe'),
-        before,
-        after,
+        ok: Boolean(activeBreathe()) || after.some((s) => s.includes('breathe')),
+        before: before.join('|'),
+        after: after.join('|'),
         blank,
         t: Number(((performance.now() - t0) / 1000).toFixed(2)),
       };

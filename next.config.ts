@@ -40,12 +40,9 @@ const nextConfig: NextConfig = {
           key: 'Cache-Control',
           value: 'public, s-maxage=300, stale-while-revalidate=600',
         },
-        // Start hero mp4 before HTML/CSS parse (media picks d vs m; RM excluded).
-        {
-          key: 'Link',
-          value:
-            '</assets/v4-60fps/hero/hero-d-stack.mp4>; rel=preload; as=video; type=video/mp4; media="(min-width: 768px) and (prefers-reduced-motion: no-preference)", </assets/v4-60fps/hero/hero-m-stack.mp4>; rel=preload; as=video; type=video/mp4; media="(max-width: 767px) and (prefers-reduced-motion: no-preference)"',
-        },
+        // Hero mp4 preload lives in app/layout.tsx <link media=...> only.
+        // Chromium ignores prefers-reduced-motion on HTTP Link, which leaked
+        // a full hero fetch under reduced-motion.
       ],
     };
 

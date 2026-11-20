@@ -92,16 +92,14 @@ async function canvasEdgeDiff(page, stageSel) {
     return { ok: false, maxDiff: 0, reason: 'size-mismatch' };
   }
 
-  // Sample inset edge points of the stage (not sticky header).
+  // Corners only (inset) — mid-edge samples often hit the subject silhouette.
+  // Transparent corners → shown≈hidden (clean alpha). Diff = fringe.
+  const inset = Math.max(16, Math.min(32, Math.floor(Math.min(box.w, box.h) * 0.06)));
   const pts = [
-    [box.x + 2, box.y + 2],
-    [box.x + box.w - 3, box.y + 2],
-    [box.x + 2, box.y + box.h - 3],
-    [box.x + box.w - 3, box.y + box.h - 3],
-    [box.x + Math.floor(box.w / 2), box.y + 2],
-    [box.x + Math.floor(box.w / 2), box.y + box.h - 3],
-    [box.x + 2, box.y + Math.floor(box.h / 2)],
-    [box.x + box.w - 3, box.y + Math.floor(box.h / 2)],
+    [box.x + inset, box.y + inset],
+    [box.x + box.w - inset - 1, box.y + inset],
+    [box.x + inset, box.y + box.h - inset - 1],
+    [box.x + box.w - inset - 1, box.y + box.h - inset - 1],
   ];
   let maxDiff = 0;
   let changed = 0;
@@ -117,7 +115,13 @@ async function canvasEdgeDiff(page, stageSel) {
     maxDiff = Math.max(maxDiff, d);
     if (d > 8) changed += 1;
   }
-  return { ok: changed >= 2 && maxDiff > 8, maxDiff, changed, box };
+  // ok = clean edges. Allow one corner of mild AA (≤24) on soft-GL/WebKit.
+  return {
+    ok: changed === 0 || (changed === 1 && maxDiff <= 24),
+    maxDiff,
+    changed,
+    box,
+  };
 }
 
 async function sceneStats(page, sceneSel) {
@@ -243,37 +247,49 @@ async function waitReady(page, sel, ms = 10000) {
     .catch(() => false);
 }
 
-/** Navigation-start → first canvas data-ready (no artificial pre-sleep). */
-async function waitHeroFirstFrameFromNav(page, ms = 12000) {
-  return page
-    .evaluate((timeoutMs) => {
-      const nav =
-        performance.getEntriesByType('navigation')[0]?.startTime ?? 0;
-      const t0 = performance.timeOrigin + nav;
-      return new Promise((resolve) => {
-        const deadline = Date.now() + timeoutMs;
-        const tick = () => {
-          const c = document.querySelector(
-            '.hero-media canvas[data-ready="1"]',
-          );
-          if (c) {
-            resolve({
-              ok: true,
-              ms: Math.round(performance.now() - nav),
-              wallMs: Date.now() - t0,
-            });
-            return;
-          }
-          if (Date.now() > deadline) {
-            resolve({ ok: false, ms: null });
-            return;
-          }
-          requestAnimationFrame(tick);
-        };
-        tick();
+/**
+ * Install before navigation: record performance.now() at first hero canvas
+ * data-ready (early boot or hydrated player). Avoids measuring after DCL wait.
+ */
+async function installHeroFirstFrameProbe(page) {
+  await page.addInitScript(() => {
+    const w = window;
+    w.__mgHeroFirstFrameMs = null;
+    const mark = () => {
+      if (w.__mgHeroFirstFrameMs != null) return;
+      const c = document.querySelector(
+        '.hero-media canvas[data-ready="1"], .hero-early-canvas[data-ready="1"]',
+      );
+      if (!c) return;
+      w.__mgHeroFirstFrameMs = Math.round(performance.now());
+    };
+    const obs = new MutationObserver(mark);
+    const start = () => {
+      obs.observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        attributes: true,
+        attributeFilter: ['data-ready'],
       });
-    }, ms)
-    .catch(() => ({ ok: false, ms: null }));
+      mark();
+    };
+    if (document.documentElement) start();
+    else document.addEventListener('DOMContentLoaded', start, { once: true });
+  });
+}
+
+/** Read first-frame ms captured by the init probe (nav → data-ready). */
+async function waitHeroFirstFrameFromNav(page, ms = 12000) {
+  try {
+    await page.waitForFunction(
+      () => window.__mgHeroFirstFrameMs != null,
+      { timeout: ms },
+    );
+    const readyMs = await page.evaluate(() => window.__mgHeroFirstFrameMs);
+    return { ok: typeof readyMs === 'number', ms: readyMs };
+  } catch {
+    return { ok: false, ms: null };
+  }
 }
 
 function trackMp4(page) {
@@ -389,6 +405,7 @@ async function runEngine(browserType, label, viewport, deviceName) {
     reducedMotion: 'no-preference',
   });
   const page = await context.newPage();
+  await installHeroFirstFrameProbe(page);
   const consoleErrors = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
@@ -398,13 +415,17 @@ async function runEngine(browserType, label, viewport, deviceName) {
   const mp4 = trackMp4(page);
   const result = { engine: label, viewport, scenes: {} };
 
-  // No artificial sleep before first-frame measure — time from navigation.
-  await page.goto(BASE + '/', { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await page.waitForSelector('.hero-media', { timeout: 12000 });
-
+  // Commit early so the init probe can catch first paint; no pre-sleep.
+  await page.goto(BASE + '/', { waitUntil: 'commit', timeout: 45000 });
+  const heroBudgetMs = label.startsWith('webkit') ? 400 : 250;
   const heroFirst = await waitHeroFirstFrameFromNav(page, 15000);
   result.heroFirstFrameMs = heroFirst.ok ? heroFirst.ms : null;
-  result.heroFirstFrameOk = heroFirst.ok;
+  result.heroFirstFrameOk =
+    heroFirst.ok &&
+    typeof heroFirst.ms === 'number' &&
+    heroFirst.ms <= heroBudgetMs;
+  result.heroFirstFrameBudgetMs = heroBudgetMs;
+  await page.waitForSelector('.hero-media', { timeout: 12000 });
   await page.screenshot({ path: path.join(OUT, `v4-${label}-hero.png`) });
   result.scenes.hero = {
     ready: heroFirst.ok,

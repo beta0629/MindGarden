@@ -607,18 +607,13 @@ p {
 
 .hero-media {
   --hero-zoom: 1.15;
-  /* Soft rim only for poster/video fallback — never a midtone cream wash. */
+  /* Soft rim only for reduced-motion oval posters. */
   --hero-media-fade-edge: 88%;
   --hero-media-fade-end: 100%;
-  /* Subject projected AABB from mountHero3D (fallbacks ≈ centered fit sphere). */
-  --hero-subj-left: 8%;
-  --hero-subj-top: 6%;
-  --hero-subj-right: 92%;
-  --hero-subj-bottom: 94%;
   --hero-pause-x: 88%;
   --hero-pause-y: 104%;
   position: relative;
-  /* Visible: pause may sit just below the panel on hero cream (off GLB). */
+  /* Visible: pause may sit just below the panel on hero cream. */
   overflow: visible;
   border-radius: 0;
   border: 0;
@@ -630,17 +625,6 @@ p {
   width: min(100%, 50.625rem);
   max-width: 100%;
   aspect-ratio: 81 / 47;
-  height: auto;
-  max-height: min(58svh, 29.375rem);
-}
-
-/*
- * Live GLB: locked poster camera inside the 81:47 stage (IMPLEMENTATION §3).
- */
-.hero-media.is-3d {
-  overflow: visible;
-  aspect-ratio: 81 / 47;
-  width: min(100%, 50.625rem);
   height: auto;
   max-height: min(58svh, 29.375rem);
 }
@@ -667,38 +651,24 @@ p {
   max-width: none;
 }
 
-/* Poster/video fallback: cover the stage; soft-fade baked sand edges only. */
-.hero-media__stage picture img,
-.hero-media__stage > .hero-loop {
+/*
+ * Motion LCP still: fill the stage exactly like stacked-alpha canvas
+ * (object-fit: fill). Per-breakpoint v4 posters match the panel box.
+ */
+.hero-media__stage picture img.hero-still {
   position: absolute;
-  inset: auto;
-  left: 50%;
-  top: 50%;
-  width: calc(var(--hero-zoom) * 100%);
-  height: auto;
-  max-width: none;
-  aspect-ratio: 1620 / 939;
-  object-fit: cover;
-  transform: translate(-50%, -50%);
-  -webkit-mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-media-fade-edge),
-    transparent var(--hero-media-fade-end)
-  );
-  mask-image: radial-gradient(
-    ellipse closest-side at 50% 50%,
-    black var(--hero-media-fade-edge),
-    transparent var(--hero-media-fade-end)
-  );
-}
-
-.hero-media__stage > .hero-3d {
+  inset: 0;
+  left: 0;
+  top: 0;
   width: 100%;
   height: 100%;
   max-width: none;
-  object-fit: cover;
-  /* Transparent WebGL — page cream shows through; no CSS veil on the subject. */
-  background: transparent;
+  aspect-ratio: auto;
+  object-fit: fill;
+  transform: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  transition: opacity 180ms ease;
 }
 
 .hero-still {
@@ -706,90 +676,79 @@ p {
   z-index: 1;
 }
 
-.hero-loop,
-.hero-3d {
-  display: none;
+/* Stacked-alpha hero loop — fades in after first decoded frame. */
+.hero-media__stage > .hero-stacked {
   z-index: 2;
-}
-
-/* Poster stays underneath as the loop-restart underlay; video fades in once frames play. */
-.hero-media:has(.hero-loop) .hero-loop {
-  display: block;
   opacity: 0;
-  transition: opacity 0.45s ease;
-}
-
-.hero-media.is-video-playing .hero-loop {
-  opacity: 1;
-}
-
-.hero-media.is-3d .hero-loop {
-  display: none;
-}
-
-.hero-media.is-3d .hero-media__stage {
-  inset: 0;
-  height: 100%;
-}
-
-.hero-media.is-3d .hero-3d {
-  display: block;
-  /* Camera fit owns framing — no CSS scale / offset crop. */
-  transform: none;
-  height: 100%;
-  opacity: 1;
-}
-
-.hero-media.is-3d .hero-still {
-  opacity: 0;
-  transition: opacity 400ms ease;
-}
-
-/* —— homepage first-entry boot progress (cream track / brand-green fill) —— */
-.home-boot-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10000;
-  height: 3px;
+  transition: opacity 180ms ease;
+  background: transparent;
   pointer-events: none;
-  background: var(--cream);
-  opacity: 1;
-  transition: opacity 400ms ease;
 }
 
-.home-boot-progress.is-done {
+.hero-media.is-stacked-alpha .hero-stacked {
+  opacity: 1;
+}
+
+.hero-media.is-stacked-alpha .hero-still {
   opacity: 0;
 }
 
-.home-boot-progress__bar {
-  height: 100%;
+/* Reduced motion: SSR early canvas stays in the DOM (hydration) but never shows. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-media__stage > .hero-early-root {
+    display: none;
+  }
+}
+
+/* Classic early-paint canvas — SSR placeholder, WebGL bound before hydrate. */
+.hero-media__stage > .hero-early-root {
+  position: absolute;
+  inset: 0;
   width: 100%;
-  transform-origin: left center;
-  transform: scaleX(0);
-  background: var(--green);
-  will-change: transform;
+  height: 100%;
+  z-index: 2;
+  pointer-events: none;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .home-boot-progress,
-  .home-boot-progress.is-done,
-  .hero-media.is-3d .hero-still,
-  .hero-media.is-3d .hero-3d {
-    transition: none;
-  }
+.hero-media__stage .hero-early-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
 }
 
+/*
+ * Reduced-motion oval RM posters: keep zoom / cover / radial soft-edge.
+ */
 @media (prefers-reduced-motion: reduce) {
-  .hero-loop,
-  .hero-3d {
-    display: none !important;
-  }
-
-  .hero-still {
-    display: block !important;
+  .hero-media__stage picture img.hero-still {
+    position: absolute;
+    inset: auto;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--hero-zoom) * 100%);
+    height: auto;
+    max-width: none;
+    aspect-ratio: 1620 / 939;
+    object-fit: cover;
+    transform: translate(-50%, -50%);
+    -webkit-mask-image: radial-gradient(
+      ellipse closest-side at 50% 50%,
+      black var(--hero-media-fade-edge),
+      transparent var(--hero-media-fade-end)
+    );
+    mask-image: radial-gradient(
+      ellipse closest-side at 50% 50%,
+      black var(--hero-media-fade-edge),
+      transparent var(--hero-media-fade-end)
+    );
     opacity: 1 !important;
+  }
+
+  .hero-stacked {
+    display: none !important;
   }
 }
 
@@ -889,15 +848,6 @@ p {
     max-height: min(48svh, 24rem);
   }
 
-  .hero-media.is-3d {
-    aspect-ratio: 81 / 47;
-    width: calc(100% + var(--pad) * 2);
-    max-width: none;
-    margin-inline: calc(var(--pad) * -1);
-    margin-bottom: -3.25rem;
-    max-height: min(48svh, 24rem);
-  }
-
   .hero-media__stage {
     inset: 0;
   }
@@ -961,15 +911,6 @@ p {
     margin-right: calc((var(--hero-container) - 100vw) / 2);
   }
 
-  .hero-media.is-3d {
-    aspect-ratio: 81 / 47;
-    width: min(100%, 50.625rem);
-    max-width: 50.625rem;
-    max-height: min(58svh, 29.375rem);
-    margin-right: calc((var(--hero-container) - 100vw) / 2);
-  }
-
-  .hero-media.is-3d .hero-3d,
   .hero-media__stage {
     pointer-events: none;
   }
@@ -977,10 +918,6 @@ p {
   .hero-media .hero__pause,
   .hero-media .hero__play {
     pointer-events: auto;
-  }
-
-  .hero-media.is-3d .hero-3d {
-    transform: none;
   }
 }
 
@@ -1782,30 +1719,82 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   overflow: clip;
 }
 
+/*
+ * Layout sizes are SSR/CSS-owned (390 default + 768=1440 pack).
+ * JS useBreakpointPack only picks atlas/poster paths — never inline --v37-*.
+ */
+.v37-scene--gate {
+  --v37-w: 93.113vw;
+  aspect-ratio: 363 / 356;
+}
+
+@media (min-width: 768px) {
+  .v37-scene--gate {
+    --v37-w: 37.027vw;
+    aspect-ratio: 533 / 523;
+  }
+}
+
+.v37-scene--booking {
+  --v37-w: 50vw;
+  --v37-booking-w: 50vw;
+  aspect-ratio: 195 / 113;
+}
+
+@media (min-width: 768px) {
+  .v37-scene--booking {
+    --v37-w: 20.208vw;
+    --v37-booking-w: 20.208vw;
+    aspect-ratio: 291 / 217;
+  }
+}
+
 /* Bench: overflow canvas paints ambient tracks outside the place box.
    Horizontal fit: --bench-place-frac inside .home-reviews__scene.
    Vertical fit: content-box padding reserves top/bottom pad so parents
    (html/body/#main overflow-x:clip → used overflow-y) cannot crop wings. */
 .v37-scene--bench {
+  /*
+   * 390 pack layout (computePad) — SSR media, not JS hydrate.
+   * never default --bench-place-frac to 1 (oversized deferred stub).
+   */
+  --v37-w: 57.274vw;
+  --bench-place-frac: 0.35408;
+  --bench-pad-r-ratio: 0.84072;
+  --bench-pad-t-over-w: 0.90729;
+  --bench-pad-b-over-w: 0.01791;
   --bench-place-w: min(
     var(--v37-w, 100%),
-    calc(100% * var(--bench-place-frac, 1)),
+    calc(100% * var(--bench-place-frac)),
     100%
   );
+  aspect-ratio: 223.37 / 193.288;
   box-sizing: content-box;
   /* Visible: horizontal pads still hang into .home-reviews__scene (place-frac). */
   overflow: visible;
   width: var(--bench-place-w);
   max-width: 100%;
-  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w, 0));
-  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
+  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w));
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w));
   /* Override .v37-scene margin-inline:auto, then right-align with right-pad reserved. */
   margin-inline: 0;
   margin-left: max(
     0px,
-    calc(100% - var(--bench-place-w) - var(--bench-place-w) * var(--bench-pad-r-ratio, 0))
+    calc(100% - var(--bench-place-w) - var(--bench-place-w) * var(--bench-pad-r-ratio))
   );
   margin-right: 0;
+}
+
+@media (min-width: 768px) {
+  .v37-scene--bench {
+    /* 1440 pack = computePad(bench-1440.json). */
+    --v37-w: 28.115vw;
+    --bench-place-frac: 0.45231;
+    --bench-pad-r-ratio: 0.85502;
+    --bench-pad-t-over-w: 1.11785;
+    --bench-pad-b-over-w: 0.00988;
+    aspect-ratio: 404.857 / 350.334;
+  }
 }
 
 /*
@@ -1821,6 +1810,56 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   height: 100%;
   object-fit: contain;
   max-width: 100%;
+}
+
+/* <picture class="v37-scene__poster"> — same in-flow aspect lock as bare img. */
+picture.v37-scene__poster {
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+}
+
+picture.v37-scene__poster > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  max-width: 100%;
+}
+
+.v37-scene__poster {
+  transition: opacity 180ms ease;
+}
+
+/* Scoped to scenes — hero stacked canvas must not inherit opacity:0. */
+.v37-scene .v37-scene__canvas {
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+/* Motion: crossfade after first complete canvas frame (paintLive → is-live). */
+.v37-scene.is-live .v37-scene__canvas {
+  opacity: 1;
+}
+
+.v37-scene.is-live .v37-scene__poster--layout {
+  opacity: 0;
+}
+
+/* In-flow aspect lock after bench overflow canvas paints (absolute). */
+.v37-scene__poster--layout {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v37-scene__poster,
+  .v37-scene__canvas,
+  .v37-scene.is-live .v37-scene__canvas,
+  .v37-scene.is-live .v37-scene__poster--layout {
+    transition: none;
+  }
 }
 
 .v37-scene__hit {
@@ -1917,6 +1956,22 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
+}
+
+/*
+ * Absorb Pretendard swap vs fallback metrics at 390 (1lh ≈ 23.76px for 0.9rem×1.65).
+ * Some topic bodies wrap 3→2 lines; accent 2→1 — each drop shrinks .home-areas ~24px
+ * (observed 1023→999). Reserve line boxes so first paint cannot collapse after swap,
+ * matching hero__copy / booking address absorbs. Mobile-only: desktop already Δ0.
+ */
+@media (max-width: 767px) {
+  .home-area-card p {
+    min-height: 3lh;
+  }
+
+  .home-area-card--accent p {
+    min-height: 2lh;
+  }
 }
 
 /* 2-col mobile grid: 5th topic card spans the full row (no orphan). */
@@ -2127,10 +2182,11 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-reviews--empty .v37-scene--bench {
   /* Drop in-flow top pad; keep small bottom pad for grass/legs clearance.
-   * BenchScene.layoutOverflowCanvas shifts the overflow canvas up in px when
-   * padding-top is 0 (avoids % resolution bugs with --bench-place-w). */
+   * Flight pad stays out of flow (overflow canvas shifts up). Place-frac +
+   * aspect must already match final size from the deferred stub / CSS fallbacks
+   * so intersection never changes section height. */
   padding-top: 0;
-  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w, 0));
+  padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w));
 }
 
 .home-reviews__header {
@@ -2526,7 +2582,7 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-booking__actions {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2558,7 +2614,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 .home-booking__scene {
   position: relative;
-  z-index: 0;
+  /* Above .home-booking__main so .v37-scene__hit receives desktop hover. */
+  z-index: 2;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -2574,6 +2631,10 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   max-width: 100%;
   margin-inline: auto;
   pointer-events: none;
+}
+
+.home-booking__scene .v37-scene__hit {
+  pointer-events: auto;
 }
 
 .business-hours {
@@ -2621,6 +2682,16 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 .home-booking__facts dd {
   margin: 0;
   max-width: 28ch;
+}
+
+/*
+ * Address string wraps 3 lines under system fallback metrics, then 2 after Pretendard
+ * (font-display:swap) — ~84px→56px (1lh≈28px). Reserve 3 lines so swap cannot shrink
+ * .home-booking / document scrollHeight. size-adjust on every unicode-range face would
+ * be broader; this is the minimal local lock matching hero__copy’s metric-swap absorb.
+ */
+.home-booking__facts div:first-child dd {
+  min-height: 3lh;
 }
 
 @media (min-width: 768px) {

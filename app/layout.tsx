@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
 import { SITE } from '@/lib/site';
-import './pretendard.css';
+import { HeroVideoBootHead } from '@/components/home/HeroVideoBootHead';
+import './pretendard-critical.css';
 import './globals.css';
 
 const baseMetadata = buildMetadata({
@@ -40,7 +41,7 @@ export const viewport: Viewport = {
   themeColor: '#F5F0E6',
 };
 
-/** Latin + most frequent Hangul slices — preloaded so first paint avoids a font swap flash. */
+/** Latin + frequent Hangul — preload keeps CLS down (font-display:swap). */
 const PRELOAD_FONT_SLICES = [91, 90] as const;
 
 export default function RootLayout({
@@ -52,6 +53,25 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* Async hero boot (public/hero-boot-v4.js) — after LCP poster on Chromium. */}
+        <HeroVideoBootHead />
+        {/* LCP posters — motion v4 frames only (media excludes RM).
+            RM oval uses picture srcset (often AVIF/640w); a fixed 1080.webp
+            preload was unused and triggered browser warnings. */}
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/v4-60fps/hero/hero-m-poster.webp"
+          media="(max-width: 767px) and (prefers-reduced-motion: no-preference)"
+          fetchPriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          href="/assets/v4-60fps/hero/hero-d-poster.webp"
+          media="(min-width: 768px) and (prefers-reduced-motion: no-preference)"
+          fetchPriority="high"
+        />
         {PRELOAD_FONT_SLICES.map((slice) => (
           <link
             key={slice}
@@ -60,8 +80,26 @@ export default function RootLayout({
             type="font/woff2"
             href={`/fonts/pretendard/PretendardVariable.subset.${slice}.woff2`}
             crossOrigin="anonymous"
+            fetchPriority="low"
           />
         ))}
+        {/* Remaining unicode-range faces — print→all so parse/download stay off LCP. */}
+        <link
+          rel="stylesheet"
+          href="/fonts/pretendard-rest.css"
+          media="print"
+          // Applied immediately after parse via the classic script below.
+          data-mg-font-rest=""
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){function go(){var l=document.querySelector('link[data-mg-font-rest]');if(l)l.media='all';}if(document.readyState==='complete')go();else window.addEventListener('load',go);})();",
+          }}
+        />
+        <noscript>
+          <link rel="stylesheet" href="/fonts/pretendard-rest.css" />
+        </noscript>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

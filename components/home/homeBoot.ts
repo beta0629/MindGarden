@@ -1,16 +1,18 @@
-/** Session-once homepage boot gate (progress bar + hero 3D reveal). */
+/**
+ * Homepage boot gate (poster-ready).
+ *
+ * Poster gate (`home-boot-ready` / {@link HOME_BOOT_READY_EVENT}): unblocks
+ * deferred work after the LCP poster — owned by HomeBootInline.
+ * Visual top progress bar removed (v4 stacked-alpha) — session key is marked
+ * when {@link dispatchHomeBootReady} fires.
+ */
 
 export const HOME_BOOT_SESSION_KEY = 'mg-home-boot-done-v1';
 export const HOME_BOOT_READY_EVENT = 'mg-home-boot-ready';
-export const HOME_BOOT_PROGRESS_EVENT = 'mg-home-boot-progress';
 export const HOME_BOOT_TIMEOUT_MS = 6000;
-/** Soft fade when hero 3D / boot reveal completes. */
-export const HOME_BOOT_FADE_MS = 400;
 
-export type HomeBootProgressDetail = {
-  ratio: number;
-  done: boolean;
-};
+/** Hero / poster path decided this page life. */
+let homeBootHeroDecided = false;
 
 export function hasHomeBootCompleted(): boolean {
   try {
@@ -28,26 +30,26 @@ export function markHomeBootCompleted(): void {
   }
 }
 
-export function dispatchHomeBootProgress(ratio: number, done = false): void {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(
-    new CustomEvent<HomeBootProgressDetail>(HOME_BOOT_PROGRESS_EVENT, {
-      detail: { ratio: Math.min(1, Math.max(0, ratio)), done },
-    }),
-  );
+/** True after {@link dispatchHomeBootReady} this page load (in-memory). */
+export function isHomeBootHeroDecided(): boolean {
+  return homeBootHeroDecided;
 }
 
+/**
+ * Hero / poster path ready. Marks session-once and unblocks deferred work.
+ * (No visual progress bar.)
+ */
 export function dispatchHomeBootReady(): void {
   if (typeof window === 'undefined') return;
+  homeBootHeroDecided = true;
   markHomeBootCompleted();
-  dispatchHomeBootProgress(1, true);
   window.dispatchEvent(new CustomEvent(HOME_BOOT_READY_EVENT));
   document.documentElement.classList.add('home-boot-ready');
 }
 
 /**
- * Resolves when the homepage boot gate is ready (session already done,
- * ready event, or timeout). Does not block LCP text.
+ * Resolves when the homepage poster gate is ready (session already done,
+ * ready event / class, or timeout). Does not block LCP text.
  */
 export function whenHomeBootReady(
   timeoutMs = HOME_BOOT_TIMEOUT_MS,
@@ -71,4 +73,9 @@ export function whenHomeBootReady(
     window.addEventListener(HOME_BOOT_READY_EVENT, onReady);
     const timer = window.setTimeout(finish, timeoutMs);
   });
+}
+
+/** Test helper — reset in-memory boot flags between cases. */
+export function __resetHomeBootStateForTests(): void {
+  homeBootHeroDecided = false;
 }

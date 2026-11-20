@@ -1,0 +1,67 @@
+{
+ "scene": "hero",
+ "created": "2026-11-20 KST",
+ "section_bg": "#F5F0E6 (cream)",
+ "fps": 60,
+ "frames": 300,
+ "duration_s": 5.0,
+ "loop": "infinite (frame 299 -> 0 is a seamless loop; seam frames pinned with graded x264 zones q14..q21)",
+ "display": "video fills the hero stage box (position absolute, inset 0, width/height 100%, object-fit: fill), same box as the poster; 390: the frame wrapper uses transform translateY(-13%) scale(1.059), origin 50% 50% (matches live 38d4 framing)",
+ "decode": "stacked alpha: top = premultiplied RGB, bottom = alpha; a = clamp((A-.006)/.988,0,1) * uvEdge(smoothstep(0,.015)), rgb = min(rgb,a)",
+ "poster": "hero-<k>-poster.webp = decoded frame 0 of the stack (webp q90, alpha_quality 100)",
+ "reduced_motion": "poster only, no video",
+ "files": {
+  "d": {
+   "file": "hero-d-stack.mp4",
+   "video_px": [
+    1296,
+    752
+   ],
+   "stacked_px": [
+    1296,
+    1504
+   ],
+   "ffprobe": {
+    "profile": "High",
+    "width": 1296,
+    "height": 1504,
+    "level": 42,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "r_frame_rate": "60/1",
+    "nb_frames": "300",
+    "duration": "5.000000",
+    "bytes": 672357,
+    "x264": "ref=4 keyint=600 crf=20.0 zones=0,2,q=14/3,5,q=15/6,8,q=16/9,11,q=17/12,14,q=18/15,17,q=19/18,20,q=20/21,23,q=21/276,278,q=21/279,281,q=20/282,284,q=19/285,287,q=18/288,290,q=17/291,293,q=16/294,296,q=15/297,299,q=14"
+   }
+  },
+  "m": {
+   "file": "hero-m-stack.mp4",
+   "video_px": [
+    704,
+    408
+   ],
+   "stacked_px": [
+    704,
+    816
+   ],
+   "ffprobe": {
+    "profile": "High",
+    "width": 704,
+    "height": 816,
+    "level": 42,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "r_frame_rate": "60/1",
+    "nb_frames": "300",
+    "duration": "5.000000",
+    "bytes": 275508,
+    "x264": "ref=4 keyint=600 crf=20.0 zones=0,2,q=14/3,5,q=15/6,8,q=16/9,11,q=17/12,14,q=18/15,17,q=19/18,20,q=20/21,23,q=21/276,278,q=21/279,281,q=20/282,284,q=19/285,287,q=18/288,290,q=17/291,293,q=16/294,296,q=15/297,299,q=14"
+   }
+  }
+ }
+}

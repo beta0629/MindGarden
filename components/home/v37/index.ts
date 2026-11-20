@@ -1,3 +1,2 @@
-export { GateScene } from './GateScene';
-export { BenchScene } from './BenchScene';
-export { BookingScene } from './BookingScene';
+/** Homepage v3.7 scenes — deferred wrappers (code-split until near-viewport + boot). */
+export { GateScene, BenchScene, BookingScene } from './DeferredScenes';

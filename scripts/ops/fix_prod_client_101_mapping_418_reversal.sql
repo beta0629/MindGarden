@@ -257,9 +257,12 @@ INNER JOIN (
   WHERE tenant_id = @tenant_id AND journal_entry_id = @rev_je_id AND is_deleted = 0
   GROUP BY tenant_id, account_id
 ) rev ON rev.tenant_id = lg.tenant_id AND rev.account_id = lg.account_id
-SET lg.total_debit = lg.total_debit + rev.add_debit,
+-- MySQL UPDATE SET은 좌→우로 평가된다. total_debit/credit를 먼저 갱신한 뒤
+-- (lg.total_debit + rev.add_debit)를 쓰면 closing_balance에 역분개 금액이 이중 반영된다.
+-- closing은 갱신 전(원래) total_debit/credit 기준으로 먼저 계산한다.
+SET lg.closing_balance = lg.opening_balance + (lg.total_debit + rev.add_debit) - (lg.total_credit + rev.add_credit),
+    lg.total_debit = lg.total_debit + rev.add_debit,
     lg.total_credit = lg.total_credit + rev.add_credit,
-    lg.closing_balance = lg.opening_balance + (lg.total_debit + rev.add_debit) - (lg.total_credit + rev.add_credit),
     lg.updated_at = NOW()
 WHERE lg.tenant_id = @tenant_id
   AND lg.period_start = '2026-11-01'

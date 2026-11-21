@@ -388,6 +388,9 @@ jobs:
       - name: Deploy check scripts self-test (public health · clock skew)
         run: bash scripts/deployment/deploy-checks.test.sh
 
+      - name: Toggle .dev SMS_TEST_MODE script self-test
+        run: bash scripts/deployment/toggle-dev-sms-test-mode.test.sh
+
   prod-gate-be-build:
     name: Prod gate · BE build
     if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && github.base_ref == 'release/prod'

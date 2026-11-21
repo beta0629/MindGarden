@@ -1,7 +1,10 @@
 # 운영 내담자 회기 RCA (2026-11-21 재학 제보) — production (순수 읽기 전용)
 # 트리거: workflow_dispatch 전용. push/PR/schedule 트리거 없음. 배포 워크플로 호출 없음.
 # DB: scripts/ops/readonly/prod_client_sessions_rca.sql 를 READ ONLY 세션으로 실행 (SELECT 만, 쓰기 키워드 가드).
-#     client_id 는 양의 정수만 허용 후 __CLIENT_ID__ 치환. 이름 검색 없음(암호화).
+#     client_id 는 양의 정수만 허용 후 __CLIENT_ID__ 치환. 비우면 discover_consultant_mapping_id 로 탐색.
+#     탐색: 해당 매핑의 consultant_id 와 같은 mindgarden 매핑 중 total_sessions=12
+#     또는 (used=1 AND remaining=11). distinct client_id 가 1개일 때만 본문 SELECT.
+#     이름 검색 없음(암호화).
 # 로그: appleboy/ssh-action + PRODUCTION_* 시크릿, grep/tail 만. 재시작·설정 변경·파일 쓰기·heal 금지.
 #       검색은 client_id(숫자)만. 이름·전화·이메일 미검색.
 # 출력: 전화번호·이메일 마스킹, 이름·PG 원문·이력 JSON 미선택.
@@ -15,9 +18,15 @@ on:
   workflow_dispatch:
     inputs:
       client_id:
-        description: '내담자 users.id (양의 정수). 이름은 암호화되어 입력하지 않음.'
-        required: true
+        description: '내담자 users.id (양의 정수). 비우면 discover_consultant_mapping_id 로 탐색. 이름은 입력하지 않음.'
+        required: false
         type: string
+        default: ''
+      discover_consultant_mapping_id:
+        description: 'client_id 가 비었을 때 탐색 기준 매핑 id (양의 정수, 예: 401). 같은 상담사의 total=12 또는 used=1/remaining=11 매핑을 나열한다.'
+        required: false
+        type: string
+        default: ''
       confirm_readonly:
         description: 'SELECT/grep only — 읽기 전용 확인 (반드시 true)'
         type: boolean
@@ -40,11 +49,14 @@ jobs:
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 8
+    outputs:
+      target_client_id: ${{ steps.run_select.outputs.target_client_id }}
     steps:
       - name: Validate inputs + KST guard
         id: guard
         env:
           CLIENT_ID: ${{ inputs.client_id }}
+          DISCOVER_MAPPING_ID: ${{ inputs.discover_consultant_mapping_id }}
           CONFIRM_READONLY: ${{ inputs.confirm_readonly }}
           FORCE_INCIDENT: ${{ inputs.force_incident }}
         run: |
@@ -53,9 +65,20 @@ jobs:
             echo "::error::confirm_readonly must be true (explicit SELECT-only acknowledgement)"
             exit 1
           fi
-          [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          CLIENT_ID="$(echo -n "${CLIENT_ID:-}" | tr -d '[:space:]')"
+          DISCOVER_MAPPING_ID="$(echo -n "${DISCOVER_MAPPING_ID:-}" | tr -d '[:space:]')"
+          if [ -n "$CLIENT_ID" ]; then
+            [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          fi
+          if [ -n "$DISCOVER_MAPPING_ID" ]; then
+            [[ "$DISCOVER_MAPPING_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid discover_consultant_mapping_id (positive integer required)"; exit 1; }
+          fi
+          if [ -z "$CLIENT_ID" ] && [ -z "$DISCOVER_MAPPING_ID" ]; then
+            echo "::error::client_id or discover_consultant_mapping_id is required"
+            exit 1
+          fi
           HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
-          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT} client_id=${CLIENT_ID}"
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT} client_id=${CLIENT_ID:-0} discover_mapping_id=${DISCOVER_MAPPING_ID:-0}"
           if [ "${FORCE_INCIDENT}" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
             echo "::notice::KST 11–19 preventive window — skip (exit 0)"
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -116,6 +139,7 @@ jobs:
           echo "DB target resolved (host/user masked) db=$NAME"
 
       - name: Run read-only SELECT
+        id: run_select
         if: steps.guard.outputs.skip != 'true'
         env:
           DB_HOST: ${{ steps.db.outputs.host }}
@@ -123,9 +147,23 @@ jobs:
           DB_NAME: ${{ steps.db.outputs.name }}
           MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
           CLIENT_ID: ${{ inputs.client_id }}
+          DISCOVER_MAPPING_ID: ${{ inputs.discover_consultant_mapping_id }}
         run: |
           set -euo pipefail
-          [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          CLIENT_ID="$(echo -n "${CLIENT_ID:-}" | tr -d '[:space:]')"
+          DISCOVER_MAPPING_ID="$(echo -n "${DISCOVER_MAPPING_ID:-}" | tr -d '[:space:]')"
+          if [ -n "$CLIENT_ID" ]; then
+            [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          fi
+          if [ -n "$DISCOVER_MAPPING_ID" ]; then
+            [[ "$DISCOVER_MAPPING_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid discover_consultant_mapping_id (positive integer required)"; exit 1; }
+          fi
+          if [ -z "$CLIENT_ID" ] && [ -z "$DISCOVER_MAPPING_ID" ]; then
+            echo "::error::client_id or discover_consultant_mapping_id is required"
+            exit 1
+          fi
+          CLIENT_ID_SUB="${CLIENT_ID:-0}"
+          DISCOVER_SUB="${DISCOVER_MAPPING_ID:-0}"
           if [ -z "${MYSQL_PWD:-}" ]; then
             echo "::error::secrets.PRODUCTION_DB_PASSWORD is not set"
             exit 1
@@ -141,9 +179,9 @@ jobs:
             echo "::error::CONNECT: FAIL"
             exit 1
           fi
-          sed -e "s/__CLIENT_ID__/${CLIENT_ID}/g" scripts/ops/readonly/prod_client_sessions_rca.sql > /tmp/rca.sql
-          if grep -Fqo '__CLIENT_ID__' /tmp/rca.sql; then
-            echo "::error::client_id substitution failed"
+          sed -e "s/__CLIENT_ID__/${CLIENT_ID_SUB}/g" -e "s/__DISCOVER_MAPPING_ID__/${DISCOVER_SUB}/g"             scripts/ops/readonly/prod_client_sessions_rca.sql > /tmp/rca.sql
+          if grep -Fqo '__CLIENT_ID__' /tmp/rca.sql || grep -Fqo '__DISCOVER_MAPPING_ID__' /tmp/rca.sql; then
+            echo "::error::placeholder substitution failed"
             exit 1
           fi
           OUT=/tmp/client_sessions_rca.out
@@ -160,8 +198,19 @@ jobs:
             -e 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' \
             -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***@***/g' \
             "$OUT" | tee /tmp/client_sessions_rca.masked
+          TARGET_CLIENT_ID=""
+          mapfile -t TARGET_IDS < <(awk -F'|' '
+            $2 ~ /00e_target_client/ {
+              gsub(/[[:space:]]/, "", $3)
+              if ($3 ~ /^[1-9][0-9]*$/) print $3
+            }' /tmp/client_sessions_rca.masked)
+          if [ "${#TARGET_IDS[@]}" -eq 1 ]; then
+            TARGET_CLIENT_ID="${TARGET_IDS[0]}"
+          fi
+          echo "target_client_id=${TARGET_CLIENT_ID}" >> "$GITHUB_OUTPUT"
+          echo "resolved target_client_id=${TARGET_CLIENT_ID:-none} (count=${#TARGET_IDS[@]})"
           {
-            echo "## client sessions RCA (read-only) client_id=${CLIENT_ID}"
+            echo "## client sessions RCA (read-only) client_id=${CLIENT_ID_SUB} discover_mapping_id=${DISCOVER_SUB} target_client_id=${TARGET_CLIENT_ID:-none}"
             echo
             echo '```'
             cat /tmp/client_sessions_rca.masked
@@ -170,6 +219,7 @@ jobs:
 
   logs-readonly:
     name: prod app log grep (read-only)
+    needs: db-readonly
     runs-on: ubuntu-latest
     environment: production
     timeout-minutes: 8
@@ -178,6 +228,7 @@ jobs:
         id: guard
         env:
           CLIENT_ID: ${{ inputs.client_id }}
+          DISCOVER_MAPPING_ID: ${{ inputs.discover_consultant_mapping_id }}
           CONFIRM_READONLY: ${{ inputs.confirm_readonly }}
           FORCE_INCIDENT: ${{ inputs.force_incident }}
         run: |
@@ -186,9 +237,20 @@ jobs:
             echo "::error::confirm_readonly must be true (explicit SELECT-only acknowledgement)"
             exit 1
           fi
-          [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          CLIENT_ID="$(echo -n "${CLIENT_ID:-}" | tr -d '[:space:]')"
+          DISCOVER_MAPPING_ID="$(echo -n "${DISCOVER_MAPPING_ID:-}" | tr -d '[:space:]')"
+          if [ -n "$CLIENT_ID" ]; then
+            [[ "$CLIENT_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid client_id (positive integer required)"; exit 1; }
+          fi
+          if [ -n "$DISCOVER_MAPPING_ID" ]; then
+            [[ "$DISCOVER_MAPPING_ID" =~ ^[1-9][0-9]{0,17}$ ]] || { echo "::error::invalid discover_consultant_mapping_id (positive integer required)"; exit 1; }
+          fi
+          if [ -z "$CLIENT_ID" ] && [ -z "$DISCOVER_MAPPING_ID" ]; then
+            echo "::error::client_id or discover_consultant_mapping_id is required"
+            exit 1
+          fi
           HOUR=$((10#$(TZ=Asia/Seoul date +%H)))
-          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT} client_id=${CLIENT_ID}"
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT} client_id=${CLIENT_ID:-0} discover_mapping_id=${DISCOVER_MAPPING_ID:-0}"
           if [ "${FORCE_INCIDENT}" != "true" ] && [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
             echo "::notice::KST 11–19 preventive window — skip (exit 0)"
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -197,10 +259,10 @@ jobs:
           echo "skip=false" >> "$GITHUB_OUTPUT"
 
       - name: Grep prod logs by client_id (read-only)
-        if: steps.guard.outputs.skip != 'true'
+        if: steps.guard.outputs.skip != 'true' && (needs.db-readonly.outputs.target_client_id != '' || inputs.client_id != '')
         uses: appleboy/ssh-action@master
         env:
-          CLIENT_ID: ${{ inputs.client_id }}
+          CLIENT_ID: ${{ needs.db-readonly.outputs.target_client_id || inputs.client_id }}
         with:
           host: ${{ secrets.PRODUCTION_HOST }}
           username: ${{ secrets.PRODUCTION_USER }}

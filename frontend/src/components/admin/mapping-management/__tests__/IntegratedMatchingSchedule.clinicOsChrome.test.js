@@ -116,10 +116,16 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
       /@media\s*\(min-width:\s*768px\)\s*\{[\s\S]*?position:\s*absolute[\s\S]*?inset-inline-start:\s*0/
     );
     expect(scheduleCss).toMatch(
-      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+      /padding-inline-start:\s*calc\(var\(--integrated-schedule-sidebar-width\)\s*\+\s*var\(--mg-v2-space-4\)\)/
     );
     expect(scheduleCss).toMatch(
-      /:has\(\.integrated-schedule__sidebar--collapsed\)[\s\S]*?padding-inline-start:\s*48px/
+      /margin-inline-start:\s*calc\(var\(--integrated-schedule-sidebar-width\)\s*\+\s*var\(--mg-v2-space-4\)\)/
+    );
+    expect(scheduleCss).toMatch(
+      /:has\(\.integrated-schedule__sidebar--collapsed\)[\s\S]*?padding-inline-start:\s*calc\(48px\s*\+\s*var\(--mg-v2-space-4\)\)/
+    );
+    expect(scheduleCss).toMatch(
+      /:has\(\.integrated-schedule__sidebar--collapsed\)[\s\S]*?margin-inline-start:\s*calc\(48px\s*\+\s*var\(--mg-v2-space-4\)\)/
     );
 
     const mainRegionClinic = scheduleCss.match(
@@ -129,7 +135,7 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(mainRegionClinic[0]).toMatch(/max-width:\s*none/);
     expect(mainRegionClinic[0]).toMatch(/width:\s*100%/);
     expect(mainRegionClinic[0]).toMatch(
-      /padding-inline-start:\s*var\(--integrated-schedule-sidebar-width\)/
+      /padding-inline-start:\s*calc\(var\(--integrated-schedule-sidebar-width\)\s*\+\s*var\(--mg-v2-space-4\)\)/
     );
   });
 

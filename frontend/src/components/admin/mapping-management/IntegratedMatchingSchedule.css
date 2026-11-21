@@ -1729,17 +1729,17 @@
     min-width: 0;
     max-width: none;
     box-sizing: border-box;
-    padding-inline-start: var(--integrated-schedule-sidebar-width);
+    padding-inline-start: calc(var(--integrated-schedule-sidebar-width) + var(--mg-v2-space-4));
   }
 
   .integrated-schedule--clinic-os .mg-v2-content-area > .integrated-schedule-summary {
     grid-column: 1;
     grid-row: 2;
-    width: 100%;
+    width: auto;
     min-width: 0;
     max-width: none;
     box-sizing: border-box;
-    padding-inline-start: var(--integrated-schedule-sidebar-width);
+    margin-inline-start: calc(var(--integrated-schedule-sidebar-width) + var(--mg-v2-space-4));
   }
 
   .integrated-schedule--clinic-os .integrated-schedule__stage,
@@ -1793,7 +1793,7 @@
     max-height: none;
     justify-self: stretch;
     box-sizing: border-box;
-    padding-inline-start: var(--integrated-schedule-sidebar-width);
+    padding-inline-start: calc(var(--integrated-schedule-sidebar-width) + var(--mg-v2-space-4));
   }
 
   .integrated-schedule--clinic-os
@@ -1801,11 +1801,14 @@
     > .mg-v2-content-header,
   .integrated-schedule--clinic-os
     .mg-v2-content-area:has(.integrated-schedule__sidebar--collapsed)
-    > .integrated-schedule-summary,
+    .integrated-schedule__main-region {
+    padding-inline-start: calc(48px + var(--mg-v2-space-4));
+  }
+
   .integrated-schedule--clinic-os
     .mg-v2-content-area:has(.integrated-schedule__sidebar--collapsed)
-    .integrated-schedule__main-region {
-    padding-inline-start: 48px;
+    > .integrated-schedule-summary {
+    margin-inline-start: calc(48px + var(--mg-v2-space-4));
   }
 }
 

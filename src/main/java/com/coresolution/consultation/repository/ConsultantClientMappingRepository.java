@@ -496,7 +496,7 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
             + "WHERE m.tenantId = :tenantId "
             + "AND m.client.id IN :clientIds "
             + "AND m.isDeleted = false "
-            + "AND m.status = com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus.TERMINATED "
+            + "AND m.status = 'TERMINATED' "
             + "AND m.notes LIKE CONCAT('%', :mergedMarker, '%') "
             + "ORDER BY m.terminatedAt ASC, m.createdAt ASC, m.id ASC")
     List<ConsultantClientMapping> findMergedAdditionalMappingsByTenantIdAndClientIdIn(

@@ -30,7 +30,17 @@ jest.mock('../../../../utils/safeDisplay', () => ({
 
 jest.mock('../../../../utils/packagePricing', () => ({
   __esModule: true,
-  parseCombinedPackageName: (name) => (name ? [String(name)] : [])
+  parseCombinedPackageName: (name) => (name ? [String(name)] : []),
+  resolveMappingPackageDisplayName: (mapping) => {
+    if (mapping == null || typeof mapping !== 'object') {
+      return '';
+    }
+    const display = mapping.displayPackageName != null ? String(mapping.displayPackageName).trim() : '';
+    if (display) {
+      return display;
+    }
+    return mapping.packageName != null ? String(mapping.packageName).trim() : '';
+  }
 }));
 
 jest.mock('../../../common/ActionButton', () => ({

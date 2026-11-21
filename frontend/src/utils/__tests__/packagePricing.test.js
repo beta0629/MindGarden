@@ -7,7 +7,9 @@ import {
   toPackageOption,
   parseCombinedPackageName,
   buildCombinedPackageName,
-  renderCompactPackageName
+  renderCompactPackageName,
+  resolveMappingPackageDisplayName,
+  pickSchedulePackageFields
 } from '../packagePricing';
 import { render } from '@testing-library/react';
 
@@ -247,6 +249,30 @@ describe('packagePricing', () => {
       const badgeSpan = container.querySelector('.mg-v2-badge');
       expect(badgeSpan).not.toBeNull();
       expect(badgeSpan.textContent).toBe('+2');
+    });
+  });
+
+  describe('resolveMappingPackageDisplayName / pickSchedulePackageFields', () => {
+    it('displayPackageName이 있으면 결합 표시명을 우선한다', () => {
+      expect(resolveMappingPackageDisplayName({
+        packageName: '단회기 90,000원',
+        displayPackageName: '단회기 90,000원 + 기본10회기'
+      })).toBe('단회기 90,000원 + 기본10회기');
+    });
+
+    it('pickSchedulePackageFields는 raw packageName과 표시 필드를 복사한다', () => {
+      const source = {
+        packageName: '단회기 90,000원',
+        displayPackageName: '단회기 90,000원 + 기본10회기',
+        mergedPackageNames: ['기본10회기'],
+        packagePrice: 90000
+      };
+      expect(pickSchedulePackageFields(source)).toEqual({
+        packageName: '단회기 90,000원',
+        displayPackageName: '단회기 90,000원 + 기본10회기',
+        mergedPackageNames: ['기본10회기']
+      });
+      expect(source.packagePrice).toBe(90000);
     });
   });
 });

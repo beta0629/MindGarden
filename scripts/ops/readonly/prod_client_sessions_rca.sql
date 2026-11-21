@@ -620,3 +620,78 @@ WHERE s.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarde
         ) t
       )
 ORDER BY s.date, s.start_time, s.id;
+
+SELECT '10_ft_414_detail' AS q, f.id, f.tenant_id, f.transaction_type, f.status,
+       f.category, f.subcategory, f.amount, f.tax_included, f.tax_amount,
+       f.amount_before_tax, f.withholding_tax_amount, f.card_merchant_fee_amount,
+       f.transaction_date, f.related_entity_type, f.related_entity_id,
+       f.approved_at, f.is_deleted, f.created_at, f.updated_at
+FROM financial_transactions f
+WHERE f.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND f.id = 414
+  AND EXISTS (
+        SELECT 1 FROM consultant_client_mappings m
+        WHERE m.id = f.related_entity_id
+          AND m.tenant_id = f.tenant_id
+          AND m.client_id = __CLIENT_ID__
+      );
+
+SELECT '11_accounting_entries_411' AS q, e.id, e.tenant_id, e.entry_number, e.entry_date,
+       e.entry_type, e.account_code, e.account_name, e.amount,
+       e.related_transaction_id, e.financial_transaction_id, e.related_transaction_type,
+       e.balance_sheet_category, e.subcategory, e.approval_status, e.approver_id,
+       e.approved_at, e.total_debit, e.total_credit, e.entry_status, e.posted_at,
+       e.is_deleted, e.created_at, e.updated_at
+FROM accounting_entries e
+WHERE e.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND e.id = 411
+  AND __CLIENT_ID__ = 101;
+
+SELECT '12_erp_journal_entry_lines' AS q, l.id, l.journal_entry_id, l.line_number,
+       l.account_id, a.account_number, a.bank_code, a.description AS account_desc,
+       l.debit_amount, l.credit_amount, l.description AS line_desc,
+       l.is_deleted, l.created_at, l.updated_at
+FROM erp_journal_entry_lines l
+LEFT JOIN accounts a
+       ON a.id = l.account_id
+      AND a.tenant_id = l.tenant_id
+WHERE l.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND l.journal_entry_id IN (398, 411, 412)
+  AND __CLIENT_ID__ = 101
+ORDER BY l.journal_entry_id, l.line_number, l.id;
+
+SELECT '13_erp_ledgers_2026_11' AS q, lg.id, lg.tenant_id, lg.account_id,
+       a.account_number, a.description AS account_desc,
+       lg.period_start, lg.period_end, lg.opening_balance,
+       lg.total_debit, lg.total_credit, lg.closing_balance,
+       lg.created_at, lg.updated_at
+FROM erp_ledgers lg
+LEFT JOIN accounts a
+       ON a.id = lg.account_id
+      AND a.tenant_id = lg.tenant_id
+WHERE lg.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND lg.period_start >= '2026-11-01'
+  AND lg.period_start < '2026-12-01'
+  AND __CLIENT_ID__ = 101
+ORDER BY lg.period_start, lg.account_id, lg.id;
+
+SELECT '14_financial_period_2026_11' AS q, fp.id, fp.tenant_id, fp.period_type,
+       fp.period_start, fp.period_end, fp.status,
+       fp.total_income, fp.total_expense, fp.net_amount,
+       fp.total_tax_amount, fp.total_refund,
+       fp.closed_at, fp.reopened_at, fp.version, fp.created_at, fp.updated_at
+FROM financial_period fp
+WHERE fp.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND fp.period_end >= '2026-11-01'
+  AND __CLIENT_ID__ = 101
+ORDER BY fp.period_type, fp.period_start, fp.id;
+
+SELECT '15_next_je_number' AS q, e.tenant_id,
+       MAX(e.entry_number) AS max_entry_number,
+       MAX(CAST(SUBSTRING(e.entry_number, LENGTH(e.entry_number) - 3) AS UNSIGNED)) AS max_seq,
+       COUNT(*) AS count_2026
+FROM accounting_entries e
+WHERE e.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+  AND e.entry_number LIKE CONCAT('JE-', e.tenant_id, '-2026-%')
+  AND __CLIENT_ID__ = 101
+GROUP BY e.tenant_id;

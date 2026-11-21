@@ -18,6 +18,7 @@ import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { shouldRenderEngagementTypeBadge } from '../../../../../constants/mappingEngagementType';
 import { resolveCardTodoPill } from '../utils/resolveCardTodoPill';
 import { resolveScheduleReminderSmsDisplay } from '../utils/scheduleReminderSmsDisplay';
+import { resolveMappingRegistrationDateDisplay } from '../utils/mappingDateDisplay';
 import {
   isInstitutionLinkMapping,
   shouldShowInstitutionLinkInitialPaymentUi
@@ -41,7 +42,9 @@ const CardMeta = ({
   initialConsultationPayment,
   institutionLinkBillingComposition,
   institutionLinkInitialBillingMode,
-  clientReminderSms
+  clientReminderSms,
+  createdAt,
+  startDate
 }) => {
   const { t } = useTranslation(['admin']);
   const todoPill = resolveCardTodoPill({
@@ -74,9 +77,14 @@ const CardMeta = ({
     engagementType,
     clientEngagementType
   });
+  const registrationDateLabel = resolveMappingRegistrationDateDisplay({
+    createdAt,
+    startDate
+  });
+  const showRegistrationDate = Boolean(registrationDateLabel);
 
   // 빈 래퍼도 카드 본문 flex gap 을 한 번 더 먹으므로 표시할 내용이 없으면 그리지 않는다.
-  if (!showEngagementBadge && !showInitialPaymentCompleted && !showBadgeRow) {
+  if (!showEngagementBadge && !showInitialPaymentCompleted && !showBadgeRow && !showRegistrationDate) {
     return null;
   }
 
@@ -112,6 +120,14 @@ const CardMeta = ({
           {hasReminderSms ? <ScheduleReminderSmsBadge sms={clientReminderSms} /> : null}
         </div>
       ) : null}
+      {showRegistrationDate ? (
+        <p
+          className="integrated-schedule__card-meta-mute"
+          data-testid="mapping-card-registration-date"
+        >
+          <SafeText>{registrationDateLabel}</SafeText>
+        </p>
+      ) : null}
     </div>
   );
 };
@@ -138,7 +154,9 @@ CardMeta.propTypes = {
     fireAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     sentAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
     failureReason: PropTypes.string
-  })
+  }),
+  createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array]),
+  startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array])
 };
 
 CardMeta.defaultProps = {
@@ -155,7 +173,9 @@ CardMeta.defaultProps = {
   initialConsultationPayment: null,
   institutionLinkBillingComposition: undefined,
   institutionLinkInitialBillingMode: undefined,
-  clientReminderSms: null
+  clientReminderSms: null,
+  createdAt: null,
+  startDate: null
 };
 
 export default CardMeta;

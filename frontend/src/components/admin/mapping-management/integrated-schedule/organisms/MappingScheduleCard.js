@@ -144,6 +144,8 @@ const MappingScheduleCard = ({
         institutionLinkBillingComposition={mapping?.institutionLinkBillingComposition}
         institutionLinkInitialBillingMode={mapping?.institutionLinkInitialBillingMode}
         clientReminderSms={mapping?.clientReminderSms}
+        createdAt={mapping?.createdAt}
+        startDate={mapping?.startDate}
       />
       <CardBillingProgress
         usedSessions={mapping?.usedSessions}
@@ -208,7 +210,9 @@ MappingScheduleCard.propTypes = {
       PropTypes.string
     ]),
     clientEngagementType: PropTypes.string,
-    clientReminderSms: PropTypes.object
+    clientReminderSms: PropTypes.object,
+    createdAt: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array]),
+    startDate: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array])
   }),
   eventData: PropTypes.object,
   isDraggable: PropTypes.bool,

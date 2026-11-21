@@ -416,4 +416,38 @@ describe('MappingScheduleCard Clinic-OS v2.1', () => {
       expect(container.querySelector('.integrated-schedule__card-badge-row')).toBeNull();
     });
   });
+
+  describe('registration date line (MM.DD 등록)', () => {
+    it('renders MM.DD 등록 from mapping.createdAt (KST) while keeping #1045 simplified layout', () => {
+      render(
+        <MappingScheduleCard
+          mapping={{
+            ...MOCK_MAPPING,
+            createdAt: '2026-11-20T15:00:00Z',
+            startDate: '2026-11-01'
+          }}
+        />
+      );
+      const regEl = screen.getByTestId('mapping-card-registration-date');
+      expect(regEl).toHaveClass('integrated-schedule__card-meta-mute');
+      expect(regEl).toHaveTextContent('11.21 등록');
+      expect(screen.queryByTestId('mapping-card-meta-mute')).not.toBeInTheDocument();
+      expect(screen.getByTestId('mapping-card-billing-progress')).toHaveTextContent('누적 진행');
+    });
+
+    it('falls back to startDate when createdAt is missing and hides when both are missing', () => {
+      const { rerender } = render(
+        <MappingScheduleCard
+          mapping={{
+            ...MOCK_MAPPING,
+            startDate: '2026-09-05'
+          }}
+        />
+      );
+      expect(screen.getByTestId('mapping-card-registration-date')).toHaveTextContent('09.05 등록');
+
+      rerender(<MappingScheduleCard mapping={MOCK_MAPPING} />);
+      expect(screen.queryByTestId('mapping-card-registration-date')).not.toBeInTheDocument();
+    });
+  });
 });

@@ -11,7 +11,10 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
+import java.util.Collections;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.Value;
 
@@ -39,6 +42,40 @@ public final class ScheduleMappingContextResolver {
         Integer remainingSessions;
         String paymentTiming;
         String engagementType;
+        String packageName;
+        String displayPackageName;
+        List<String> mergedPackageNames;
+
+        public ScheduleMappingResponseContext(
+                Long mappingId,
+                Integer totalSessions,
+                Integer remainingSessions,
+                String paymentTiming,
+                String engagementType) {
+            this(mappingId, totalSessions, remainingSessions, paymentTiming, engagementType,
+                    null, null, Collections.emptyList());
+        }
+
+        public ScheduleMappingResponseContext(
+                Long mappingId,
+                Integer totalSessions,
+                Integer remainingSessions,
+                String paymentTiming,
+                String engagementType,
+                String packageName,
+                String displayPackageName,
+                List<String> mergedPackageNames) {
+            this.mappingId = mappingId;
+            this.totalSessions = totalSessions;
+            this.remainingSessions = remainingSessions;
+            this.paymentTiming = paymentTiming;
+            this.engagementType = engagementType;
+            this.packageName = packageName;
+            this.displayPackageName = displayPackageName;
+            this.mergedPackageNames = mergedPackageNames != null
+                    ? mergedPackageNames
+                    : Collections.emptyList();
+        }
 
         /** 매핑 컨텍스트 없음 — 필드 전부 null */
         public static ScheduleMappingResponseContext empty() {
@@ -93,9 +130,21 @@ public final class ScheduleMappingContextResolver {
             paymentTiming = currentMapping.getPaymentTiming();
         }
         String engagementType = resolveEngagementType(client, paymentTiming);
+        ConsultantClientMapping packageTarget = scheduleMapping != null ? scheduleMapping : currentMapping;
+        MergedPackageDisplay mergedDisplay = packageTarget != null
+                ? MergedPackageDisplayResolver.resolveSingle(
+                        resolvedTenantId, packageTarget, schedule.getClientId(), mappingRepository)
+                : MergedPackageDisplay.plain(null);
 
         return new ScheduleMappingResponseContext(
-                mappingId, totalSessions, remainingSessions, paymentTiming, engagementType);
+                mappingId,
+                totalSessions,
+                remainingSessions,
+                paymentTiming,
+                engagementType,
+                mergedDisplay.rawPackageName(),
+                mergedDisplay.displayPackageName(),
+                mergedDisplay.mergedPackageNames());
     }
 
     /**

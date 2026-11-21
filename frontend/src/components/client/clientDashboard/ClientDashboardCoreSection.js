@@ -14,7 +14,7 @@ import ClientPersonalizedMessages from '../../dashboard/ClientPersonalizedMessag
 import { CLIENT_DASHBOARD_KPI_ROUTES } from '../../../constants/clientDashboardRoutes';
 import ClientDashboardListSection from './ClientDashboardListSection';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { renderCompactPackageName } from '../../../utils/packagePricing';
+import { renderCompactPackageName, resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import {
   MAPPING_STATUS,
   MAPPING_STATUS_LABELS,
@@ -49,8 +49,9 @@ const ClientDashboardCoreSection = ({
         resolveMappingConsultantDisplayName(primaryActiveMapping),
         ''
       );
-      const pkg = primaryActiveMapping.packageName
-        ? renderCompactPackageName(primaryActiveMapping.packageName)
+      const primaryPkgLabel = resolveMappingPackageDisplayName(primaryActiveMapping);
+      const pkg = primaryPkgLabel
+        ? renderCompactPackageName(primaryPkgLabel)
         : t('common:client.ClientDashboard.t_17cef764');
       const rem = toDisplayString(primaryActiveMapping.remainingSessions, '0');
 

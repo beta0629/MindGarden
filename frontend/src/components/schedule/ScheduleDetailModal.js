@@ -25,6 +25,7 @@ import {
     parseScheduleSessionCount
 } from '../../constants/schedule';
 import ClientSummaryField from '../consultant/molecules/ClientSummaryField';
+import { resolveMappingPackageDisplayName } from '../../utils/packagePricing';
 import StatusBadge from '../common/StatusBadge';
 import EngagementTypeBadge from '../common/EngagementTypeBadge';
 import SegmentedTabs from '../common/SegmentedTabs';
@@ -1454,6 +1455,16 @@ const ScheduleDetailModal = ({
                         <ClientSummaryField label={t('schedule:ScheduleDetailModal.t_bff20dc3')} className="schedule-detail-modal__detail-row">
                             <SafeText>{displayData.title}</SafeText>
                         </ClientSummaryField>
+                        {!isVacationEvent() && resolveMappingPackageDisplayName(displayData) ? (
+                            <ClientSummaryField
+                                label={t('schedule:ScheduleDetailModal.packageLabel')}
+                                className="schedule-detail-modal__detail-row"
+                            >
+                                <span data-testid="schedule-detail-package-name">
+                                    <SafeText>{resolveMappingPackageDisplayName(displayData)}</SafeText>
+                                </span>
+                            </ClientSummaryField>
+                        ) : null}
                         {!isVacationEvent() && (() => {
                             const plateRaw = displayData.vehiclePlate;
                             const plateTrimmed = plateRaw != null ? String(plateRaw).trim() : '';

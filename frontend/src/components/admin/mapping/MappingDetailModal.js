@@ -7,6 +7,7 @@ import { getUserStatusKoreanNameSync } from '../../../utils/codeHelper';
 import UnifiedModal from '../../common/modals/UnifiedModal';
 import MGButton from '../../common/MGButton';
 import { StatusBadge } from '../../common';
+import { resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import './MappingDetailModal.css';
 import { useTranslation } from 'react-i18next';
@@ -189,6 +190,10 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                                 <label>{t('admin:MappingDetailModal.t_5d24a2fc')}</label>
                                                 <span>{mapping?.branchCode || '-'}</span>
                                             </div>
+                                            <div className="info-item" data-testid="mapping-detail-basic-package">
+                                                <label>{t('admin:MappingDetailModal.t_86796c3d')}</label>
+                                                <span>{resolveMappingPackageDisplayName(mapping) || '-'}</span>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -245,9 +250,9 @@ const MappingDetailModal = ({ mapping, isOpen, onClose }) => {
                                     <div className="mg-v2-ad-b0kla__card info-section">
                                         <h4 className="mg-v2-ad-b0kla__section-title"><CreditCard size={18} className="mg-v2-icon-inline" /> {t('admin:MappingDetailModal.t_cc4993c8')}</h4>
                                         <div className="info-grid">
-                                            <div className="info-item">
+                                            <div className="info-item" data-testid="mapping-detail-payment-package">
                                                 <label>{t('admin:MappingDetailModal.t_86796c3d')}</label>
-                                                <span>{mapping?.packageName || '-'}</span>
+                                                <span>{resolveMappingPackageDisplayName(mapping) || '-'}</span>
                                             </div>
                                             <div className="info-item">
                                                 <label>{t('admin:MappingDetailModal.t_db433938')}</label>

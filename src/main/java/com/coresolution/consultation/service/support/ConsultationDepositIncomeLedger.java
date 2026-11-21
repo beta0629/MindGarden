@@ -44,7 +44,7 @@ public final class ConsultationDepositIncomeLedger {
             FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING,
             FinancialTransactionConstants.RELATED_ENTITY_CONSULTANT_CLIENT_MAPPING_ADDITIONAL);
 
-    private static final Pattern MERGED_TARGET_MAPPING_ID = Pattern.compile("targetActiveMappingId=(\\d+)");
+    public static final Pattern MERGED_TARGET_MAPPING_ID = Pattern.compile("targetActiveMappingId=(\\d+)");
 
     private ConsultationDepositIncomeLedger() {
     }

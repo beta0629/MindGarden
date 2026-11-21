@@ -247,7 +247,8 @@
     "vehiclePlateLabel": "내담자 차량번호",
     "consultantVehiclePlateLabel": "상담사 차량번호",
     "vehiclePlateUnregistered": "미등록",
-    "vehiclePlateRegisterCta": "차량 등록"
+    "vehiclePlateRegisterCta": "차량 등록",
+    "packageLabel": "패키지"
   },
   "RescheduleScheduleModal": {
     "t_a1423935": "예약 변경에 실패했습니다."

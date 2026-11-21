@@ -1,4 +1,5 @@
 import React from 'react';
+import { toDisplayString } from './safeDisplay';
 
 /**
  * 상담 패키지(공통코드 CONSULTATION_PACKAGE) 관련 공용 유틸
@@ -225,4 +226,23 @@ export function renderCompactPackageName(packageName) {
       </span>
     </span>
   );
+}
+
+/**
+ * 매핑/일정의 패키지 표시명 SSOT.
+ * 추가 패키지 병합 시 BE가 산출한 displayPackageName('원상품 + 병합상품')을 우선 사용하고,
+ * 없으면 원 packageName으로 폴백한다. (로직 입력용 packageName은 불변)
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {string} 표시용 패키지명 (없으면 '')
+ */
+export function resolveMappingPackageDisplayName(mapping) {
+  if (mapping == null || typeof mapping !== 'object') {
+    return '';
+  }
+  const display = toDisplayString(mapping.displayPackageName, '').trim();
+  if (display) {
+    return display;
+  }
+  return toDisplayString(mapping.packageName, '').trim();
 }

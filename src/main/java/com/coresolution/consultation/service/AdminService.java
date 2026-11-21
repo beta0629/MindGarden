@@ -21,6 +21,7 @@ import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import org.springframework.data.domain.Pageable;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 
 /**
  * 관리자 서비스 인터페이스
@@ -810,6 +811,20 @@ public interface AdminService {
      * @return 세션 테넌트의 매핑 상세, 없으면 null
      */
     ConsultantClientMappingResponse getMappingDetail(Long mappingId);
+
+    /**
+     * 매핑 목록에 대해 추가 패키지 병합 이력을 반영한 파생 표시명을 일괄 산출한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappings 대상 매핑 목록
+     * @return {@code mappingId -> MergedPackageDisplay}
+     */
+    default Map<Long, MergedPackageDisplay> resolveMergedPackageDisplayMap(
+            String tenantId,
+            Collection<ConsultantClientMapping> mappings) {
+        return java.util.Collections.emptyMap();
+    }
+
 
     // ==================== 상담사 변경 시스템 ====================
 

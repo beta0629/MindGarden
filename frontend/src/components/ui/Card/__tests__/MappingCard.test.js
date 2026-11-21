@@ -111,4 +111,21 @@ describe('MappingCard detailed Primary1+overflow', () => {
     expect(screen.queryByRole('button', { name: '결제 확인' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: '더보기' })).toBeInTheDocument();
   });
+
+  it('renders displayPackageName when additional package was merged while keeping packagePrice untouched', () => {
+    render(
+      <MappingCard
+        mapping={{
+          ...BASE_MAPPING,
+          packageName: '단회기 90,000원',
+          displayPackageName: '단회기 90,000원 + 기본10회기',
+          packagePrice: 90000
+        }}
+        onView={jest.fn()}
+        onEdit={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('단회기 90,000원 + 기본10회기')).toBeInTheDocument();
+  });
 });

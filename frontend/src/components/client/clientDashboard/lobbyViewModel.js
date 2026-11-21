@@ -10,7 +10,7 @@ import {
   resolveShopPackageType,
   SHOP_PACKAGE_TYPE
 } from '../../../utils/shopSessionCount';
-import { renderCompactPackageName } from '../../../utils/packagePricing';
+import { renderCompactPackageName, resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import {
   MAPPING_STATUS,
   countsTowardClientRemainingSessions,
@@ -317,12 +317,13 @@ export function buildSessionChipAndBalance(mappings) {
       singleRemaining += rem;
     } else {
       packageRemaining += rem;
-      const nameNode = mapping.packageName
-        ? renderCompactPackageName(mapping.packageName)
+      const resolvedPkgName = resolveMappingPackageDisplayName(mapping);
+      const nameNode = resolvedPkgName
+        ? renderCompactPackageName(resolvedPkgName)
         : CLIENT_LOBBY_PACKAGE_FALLBACK;
       const name = typeof nameNode === 'string'
         ? nameNode
-        : toDisplayString(mapping.packageName, CLIENT_LOBBY_PACKAGE_FALLBACK);
+        : toDisplayString(resolvedPkgName, CLIENT_LOBBY_PACKAGE_FALLBACK);
       rows.push({
         id: String(mapping.id || `pkg-${idx}`),
         name,

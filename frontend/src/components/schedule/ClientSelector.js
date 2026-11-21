@@ -91,7 +91,7 @@ const ClientSelector = ({
                         mappingsByClientId[clientId] = {
                             hasMapping: true,
                             remainingSessions: mapping.remainingSessions || 0,
-                            packageName: mapping.packageName || '기본 패키지',
+                            packageName: mapping.displayPackageName || mapping.packageName || '기본 패키지',
                             // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                             mappingStatus: mapping.status || 'ACTIVE',
                             lastSessionDate: mapping.lastSessionDate,
@@ -269,7 +269,7 @@ const ClientSelector = ({
                 return {
                     hasMapping: data.data.hasMapping,
                     remainingSessions: data.data.remainingSessions || 0,
-                    packageName: data.data.packageName || '기본 패키지',
+                    packageName: data.data.displayPackageName || data.data.packageName || '기본 패키지',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: data.data.mappingStatus || MAPPING_STATUS.ACTIVE,
                     lastSessionDate: data.data.lastSessionDate,

@@ -20,6 +20,8 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -130,7 +132,21 @@ public class ScheduleListBatchLoader {
         Map<Long, ConsultantClientMapping> mappingById = loadMappingsById(tenantId, scheduleMappingIds);
         Map<String, List<ConsultantClientMapping>> bookingCandidatesByPairKey = loadBookingCandidatesByPairKey(
                 tenantId, bookingConsultantIds, bookingClientIds, bookingPairKeys);
-        Map<Long, Client> clientsById = loadClientsById(tenantId, collectClientIds(schedules));
+        Set<Long> scheduleClientIds = collectClientIds(schedules);
+        Map<Long, Client> clientsById = loadClientsById(tenantId, scheduleClientIds);
+        List<ConsultantClientMapping> packageDisplayTargets = new ArrayList<>();
+        packageDisplayTargets.addAll(mappingById.values());
+        for (List<ConsultantClientMapping> candidates : bookingCandidatesByPairKey.values()) {
+            if (candidates != null) {
+                packageDisplayTargets.addAll(candidates);
+            }
+        }
+        if (activeOrExhaustedLookup != null) {
+            packageDisplayTargets.addAll(activeOrExhaustedLookup.values());
+        }
+        Map<Long, MergedPackageDisplay> mergedDisplayByMappingId =
+                MergedPackageDisplayResolver.resolveBatch(
+                        tenantId, packageDisplayTargets, scheduleClientIds, mappingRepository);
 
         Map<Long, ScheduleMappingResponseContext> out = new HashMap<>();
         for (Schedule schedule : schedules) {
@@ -171,8 +187,20 @@ public class ScheduleListBatchLoader {
             }
             Client client = schedule.getClientId() != null ? clientsById.get(schedule.getClientId()) : null;
             String engagementType = ScheduleMappingContextResolver.resolveEngagementType(client, paymentTiming);
+            ConsultantClientMapping packageTarget = displayMapping != null ? displayMapping : current;
+            MergedPackageDisplay mergedDisplay = packageTarget != null && packageTarget.getId() != null
+                    ? mergedDisplayByMappingId.getOrDefault(
+                            packageTarget.getId(), MergedPackageDisplay.plain(packageTarget.getPackageName()))
+                    : MergedPackageDisplay.plain(packageTarget != null ? packageTarget.getPackageName() : null);
             out.put(schedule.getId(), new ScheduleMappingResponseContext(
-                    mappingId, totalSessions, remainingSessions, paymentTiming, engagementType));
+                    mappingId,
+                    totalSessions,
+                    remainingSessions,
+                    paymentTiming,
+                    engagementType,
+                    mergedDisplay.rawPackageName(),
+                    mergedDisplay.displayPackageName(),
+                    mergedDisplay.mergedPackageNames()));
         }
         return out;
     }

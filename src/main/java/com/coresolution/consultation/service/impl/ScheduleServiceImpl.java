@@ -4562,6 +4562,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
+            .packageName(mappingContext.getPackageName())
+            .displayPackageName(mappingContext.getDisplayPackageName())
+            .mergedPackageNames(mappingContext.getMergedPackageNames())
             .build();
         response.applyCombinedSessions(
                 clientPastSessionCount,

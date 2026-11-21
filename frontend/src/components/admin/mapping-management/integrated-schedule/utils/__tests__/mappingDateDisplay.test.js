@@ -11,6 +11,7 @@ import {
   resolveFirstConsultationDate,
   resolveFirstConsultationDateFromSchedules,
   resolveMappingPrimaryDateDisplay,
+  resolveMappingRegistrationDateDisplay,
   resolveMappingStartDate
 } from '../mappingDateDisplay';
 
@@ -88,5 +89,77 @@ describe('mappingDateDisplay', () => {
     });
     expect(primary.date).toBe('2026-08-31');
     expect(primary.label).toBe(MAPPING_DATE_LABEL.FIRST_CONSULTATION);
+  });
+
+  describe('resolveMappingRegistrationDateDisplay (KST MM.DD 등록)', () => {
+    it('handles KST midnight boundary for UTC and offset ISO timestamps', () => {
+      // UTC 14:59:59 == KST 23:59:59 (same day 11.20)
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-11-20T14:59:59Z' })
+      ).toBe('11.20 등록');
+      // UTC 15:00:00 == KST 00:00:00 (next day 11.21)
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-11-20T15:00:00Z' })
+      ).toBe('11.21 등록');
+      // Explicit +09:00 midnight boundary
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-11-20T23:59:59+09:00' })
+      ).toBe('11.20 등록');
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-11-21T00:00:00+09:00' })
+      ).toBe('11.21 등록');
+      // Negative offset crossing KST midnight
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-11-20T15:00:00-05:00' })
+      ).toBe('11.21 등록');
+      // Floating KST LocalDateTime & zero-padded month/day
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: '2026-09-01T00:00:00' })
+      ).toBe('09.01 등록');
+      // Date instance at KST midnight
+      expect(
+        resolveMappingRegistrationDateDisplay({ createdAt: new Date('2026-11-20T15:00:00Z') })
+      ).toBe('11.21 등록');
+    });
+
+    it('prefers createdAt over startDate and falls back to startDate when createdAt is absent', () => {
+      expect(
+        resolveMappingRegistrationDateDisplay({
+          createdAt: '2026-11-21T09:15:00',
+          startDate: '2026-11-10'
+        })
+      ).toBe('11.21 등록');
+
+      expect(
+        resolveMappingRegistrationDateDisplay({
+          createdAt: null,
+          startDate: '2026-11-10'
+        })
+      ).toBe('11.10 등록');
+
+      expect(
+        resolveMappingRegistrationDateDisplay({
+          createdAt: '',
+          startDate: '2026-03-05'
+        })
+      ).toBe('03.05 등록');
+
+      expect(
+        resolveMappingRegistrationDateDisplay({
+          createdAt: 'invalid-date',
+          startDate: '2026-04-09'
+        })
+      ).toBe('04.09 등록');
+    });
+
+    it('returns null when both createdAt and startDate are missing or invalid', () => {
+      expect(resolveMappingRegistrationDateDisplay(null)).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay(undefined)).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay({})).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay({ createdAt: null, startDate: '' })).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay({ createdAt: 'not-a-date' })).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay({ startDate: '2026-13-45' })).toBeNull();
+      expect(resolveMappingRegistrationDateDisplay({ startDate: '2026-02-30' })).toBeNull();
+    });
   });
 });

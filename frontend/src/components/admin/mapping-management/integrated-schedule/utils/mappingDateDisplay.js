@@ -8,6 +8,7 @@
  */
 
 import { toDisplayString } from '../../../../../utils/safeDisplay';
+import { DEFAULT_ZONE, parseScheduleDateKey } from '../../../../../utils/zonedDateTime';
 import { isInstitutionLinkEngagement } from '../../../../../constants/mappingEngagementType';
 import {
   normalizeConsultationSchedules,
@@ -17,7 +18,8 @@ import {
 export const MAPPING_DATE_LABEL = Object.freeze({
   MAPPING_START: '매핑 시작일',
   FIRST_CONSULTATION: '최초 상담일',
-  FALLBACK: '날짜'
+  FALLBACK: '날짜',
+  REGISTRATION: '등록'
 });
 
 export const MAPPING_DATE_KIND = Object.freeze({
@@ -91,6 +93,58 @@ export const resolveMappingStartDate = (mapping) => {
   }
   const created = toDisplayString(mapping.createdAt, '').trim();
   return created || null;
+};
+
+const YMD_DATE_KEY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const isValidCalendarYmd = (year, month, day) => {
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+  const utc = new Date(Date.UTC(year, month - 1, day));
+  return (
+    utc.getUTCFullYear() === year
+    && utc.getUTCMonth() + 1 === month
+    && utc.getUTCDate() === day
+  );
+};
+
+const formatKstRegistrationLabel = (raw) => {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  const ymd = parseScheduleDateKey(raw, DEFAULT_ZONE);
+  if (!ymd) {
+    return null;
+  }
+  const match = YMD_DATE_KEY_PATTERN.exec(ymd);
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (!isValidCalendarYmd(year, month, day)) {
+    return null;
+  }
+  return `${match[2]}.${match[3]} ${MAPPING_DATE_LABEL.REGISTRATION}`;
+};
+
+/**
+ * 사이드바 매핑 카드 등록일 한 줄(`MM.DD 등록`, KST 기준).
+ * mapping.createdAt 우선, 없으면 startDate 폴백, 둘 다 없거나 해석 불가 시 null.
+ *
+ * @param {object|null|undefined} mapping
+ * @returns {string|null}
+ */
+export const resolveMappingRegistrationDateDisplay = (mapping) => {
+  if (mapping == null || typeof mapping !== 'object') {
+    return null;
+  }
+  return (
+    formatKstRegistrationLabel(mapping.createdAt)
+    || formatKstRegistrationLabel(mapping.startDate)
+  );
 };
 
 /**

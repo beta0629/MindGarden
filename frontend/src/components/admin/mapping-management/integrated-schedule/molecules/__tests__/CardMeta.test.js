@@ -60,4 +60,25 @@ describe('CardMeta', () => {
     expect(container.querySelector('.integrated-schedule__card-meta')).toBeTruthy();
     expect(screen.queryByTestId(CARD_BADGE_ROW_TEST_ID)).not.toBeInTheDocument();
   });
+
+  it('renders KST registration date line from createdAt or startDate fallback and hides when both missing', () => {
+    const { rerender, container } = render(
+      <CardMeta
+        status="ACTIVE"
+        remainingSessions={6}
+        createdAt="2026-11-20T15:00:00Z"
+        startDate="2026-11-10"
+      />
+    );
+    const regEl = screen.getByTestId('mapping-card-registration-date');
+    expect(regEl).toHaveClass('integrated-schedule__card-meta-mute');
+    expect(regEl).toHaveTextContent('11.21 등록');
+
+    rerender(<CardMeta status="ACTIVE" remainingSessions={6} startDate="2026-11-10" />);
+    expect(screen.getByTestId('mapping-card-registration-date')).toHaveTextContent('11.10 등록');
+
+    rerender(<CardMeta status="ACTIVE" remainingSessions={6} />);
+    expect(screen.queryByTestId('mapping-card-registration-date')).not.toBeInTheDocument();
+    expect(container.firstChild).toBeNull();
+  });
 });

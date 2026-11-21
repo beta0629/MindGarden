@@ -498,6 +498,42 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
     });
 
+    test('displayPackageName만 있고 raw packageName이 없으면 가드가 결제 폼을 막는다', () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{
+            id: 1001,
+            consultantId: 2002,
+            displayPackageName: '단회기 90,000원 + 기본10회기',
+            mergedPackageNames: ['기본10회기']
+          }}
+        />
+      );
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
+    });
+
+    test('raw packageName과 displayPackageName이 함께 있으면 가드를 통과한다', async () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{
+            ...baseMapping,
+            packageName: '단회기 90,000원',
+            displayPackageName: '단회기 90,000원 + 기본10회기',
+            mergedPackageNames: ['기본10회기']
+          }}
+        />
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+      });
+    });
+
     test('mapping.id 누락 → alert 박스 표시', () => {
       render(
         <CheckoutSameDayModal

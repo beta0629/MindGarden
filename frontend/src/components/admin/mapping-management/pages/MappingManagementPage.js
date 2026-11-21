@@ -40,7 +40,7 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import {
-  adminMappingsListGet,
+  adminMappingsListGetAll,
   adminPendingPaymentMappingsGetAll
 } from '../../../../api/adminListFetch';
 import {
@@ -286,7 +286,7 @@ const MappingManagementPage = () => {
     try {
       await runResourceLoad(options, setLoading, async() => {
         const [response, pendingRaw, dirtyRaw] = await Promise.all([
-          adminMappingsListGet(),
+          adminMappingsListGetAll(),
           adminPendingPaymentMappingsGetAll(),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
             ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,

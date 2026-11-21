@@ -73,9 +73,10 @@ jest.mock('../../../../utils/commonCodeApi', () => ({
 
 jest.mock('../../../common/modals/UnifiedModal', () => ({
   __esModule: true,
-  default: ({ isOpen, children, actions, title }) => (
+  default: ({ isOpen, children, actions, title, subtitle }) => (
     isOpen ? (
       <div role="dialog" aria-label={title} data-testid="unified-modal-mock">
+        {subtitle ? <div data-testid="checkout-same-day-subtitle">{subtitle}</div> : null}
         {children}
         <div data-testid="modal-actions">{actions}</div>
       </div>
@@ -496,6 +497,57 @@ describe('CheckoutSameDayModal — 옵션 B 당일 카드 결제 모달', () => 
       const alertBox = screen.getByRole('alert');
       expect(alertBox).toBeInTheDocument();
       expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
+    });
+
+    test('displayPackageName만 있고 raw packageName이 없으면 가드가 결제 폼을 막는다', () => {
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={{
+            id: 1001,
+            consultantId: 2002,
+            displayPackageName: '단회기 90,000원 + 기본10회기',
+            mergedPackageNames: ['기본10회기']
+          }}
+        />
+      );
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+      expect(screen.queryByDisplayValue('CREDIT_CARD')).toBeNull();
+    });
+
+    test('표시는 결합 displayPackageName, 가드·요청은 raw packageName을 유지한다', async () => {
+      const mergedMapping = {
+        ...baseMapping,
+        packageName: '단회기 90,000원',
+        displayPackageName: '단회기 90,000원 + 기본10회기',
+        mergedPackageNames: ['기본10회기']
+      };
+      render(
+        <CheckoutSameDayModal
+          isOpen
+          onClose={jest.fn()}
+          mapping={mergedMapping}
+        />
+      );
+      expect(screen.queryByRole('alert')).toBeNull();
+      expect(screen.getByTestId('checkout-same-day-subtitle'))
+        .toHaveTextContent('단회기 90,000원 + 기본10회기');
+      expect(screen.getByTestId('checkout-same-day-summary-bar'))
+        .toHaveTextContent('단회기 90,000원 + 기본10회기');
+      await waitFor(() => {
+        expect(screen.getByDisplayValue('CREDIT_CARD')).toBeInTheDocument();
+      });
+      const referenceInput = screen.getByLabelText('admin:mapping.checkout.sameDay.paymentReference.label');
+      fireEvent.change(referenceInput, { target: { value: 'AUTH-MERGED-1' } });
+      await act(async () => {
+        fireEvent.click(screen.getByText('admin:mapping.checkout.sameDay.submit'));
+      });
+      expect(mockStandardizedApi.post).toHaveBeenCalled();
+      const [, payload] = mockStandardizedApi.post.mock.calls[0];
+      expect(JSON.stringify(payload)).not.toContain('단회기 90,000원 + 기본10회기');
+      expect(payload).not.toHaveProperty('displayPackageName');
+      expect(mergedMapping.packageName).toBe('단회기 90,000원');
     });
 
     test('mapping.id 누락 → alert 박스 표시', () => {

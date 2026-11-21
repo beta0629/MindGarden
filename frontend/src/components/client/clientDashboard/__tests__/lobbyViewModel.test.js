@@ -186,4 +186,22 @@ describe('lobbyViewModel', () => {
       { status: 'ACTIVE', paymentStatus: 'CONFIRMED' }
     ])).toBe(2);
   });
+
+  test('병합 매핑 fixture는 칩 행에 displayPackageName을 쓰고 raw packageName은 유지한다', () => {
+    const mapping = {
+      id: 404,
+      status: MAPPING_STATUS.ACTIVE,
+      totalSessions: 11,
+      remainingSessions: 10,
+      packageName: '단회기 90,000원',
+      displayPackageName: '단회기 90,000원 + 기본10회기',
+      mergedPackageNames: ['기본10회기'],
+      packagePrice: 90000
+    };
+    const meta = buildSessionChipAndBalance([mapping]);
+    expect(meta.rows.some((r) => r.name === '단회기 90,000원 + 기본10회기')).toBe(true);
+    expect(meta.rows.some((r) => r.name === '단회기 90,000원')).toBe(false);
+    expect(mapping.packageName).toBe('단회기 90,000원');
+    expect(mapping.packagePrice).toBe(90000);
+  });
 });

@@ -246,3 +246,27 @@ export function resolveMappingPackageDisplayName(mapping) {
   }
   return toDisplayString(mapping.packageName, '').trim();
 }
+
+/**
+ * 일정 API 행/캘린더 extendedProps에서 패키지 표시 필드를 그대로 복사한다.
+ * packageName(로직 입력)은 변경하지 않고, displayPackageName·mergedPackageNames만 전달한다.
+ *
+ * @param {object|null|undefined} source
+ * @returns {{ packageName: string|null, displayPackageName: string|null, mergedPackageNames: string[] }}
+ */
+export function pickSchedulePackageFields(source) {
+  if (source == null || typeof source !== 'object') {
+    return {
+      packageName: null,
+      displayPackageName: null,
+      mergedPackageNames: []
+    };
+  }
+  return {
+    packageName: source.packageName ?? null,
+    displayPackageName: source.displayPackageName ?? null,
+    mergedPackageNames: Array.isArray(source.mergedPackageNames)
+      ? source.mergedPackageNames
+      : []
+  };
+}

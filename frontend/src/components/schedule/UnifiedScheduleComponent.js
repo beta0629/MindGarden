@@ -62,6 +62,7 @@ import {
 } from '../../constants/schedule';
 import { CLIENT_REMINDER_SMS_FIELD } from '../../constants/scheduleClientReminderSms';
 import { KR_PUBLIC_HOLIDAY_FULLCALENDAR_EVENTS } from '../../utils/krPublicHolidays';
+import { pickSchedulePackageFields } from '../../utils/packagePricing';
 import { decorateScheduleEventsForSameDayPending } from './utils/sameDayPendingEventDecorator';
 import { stampPaymentTimingOnScheduleEvents } from '../../constants/mappingEngagementType';
 import { filterScheduleEventsBySelectedClientIds } from './utils/scheduleClientFilter';
@@ -823,7 +824,8 @@ const UnifiedScheduleComponent = ({
                             paymentTiming: schedule.paymentTiming ?? null,
                             engagementType: schedule.engagementType ?? schedule.mappingEngagementType ?? null,
                             [CLIENT_REMINDER_SMS_FIELD]:
-                                schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
+                                schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null,
+                            ...pickSchedulePackageFields(schedule)
                         }
                     };
                 }).filter(event => event !== null); // null 제거
@@ -972,7 +974,8 @@ const UnifiedScheduleComponent = ({
                                 paymentTiming: schedule.paymentTiming ?? null,
                                 engagementType: schedule.engagementType ?? schedule.mappingEngagementType ?? null,
                                 [CLIENT_REMINDER_SMS_FIELD]:
-                                    schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null
+                                    schedule[CLIENT_REMINDER_SMS_FIELD] || schedule.client_reminder_sms || null,
+                                ...pickSchedulePackageFields(schedule)
                             }
                         };
                     }).filter(event => event !== null); // null 제거
@@ -1270,7 +1273,8 @@ const UnifiedScheduleComponent = ({
             paymentTiming: event.extendedProps.paymentTiming ?? null,
             engagementType: event.extendedProps.engagementType
                 ?? event.extendedProps.mappingEngagementType
-                ?? null
+                ?? null,
+            ...pickSchedulePackageFields(event.extendedProps)
         };
 
         setSelectedSchedule(scheduleData);

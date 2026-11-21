@@ -1,0 +1,214 @@
+# 단건 운영 데이터 정정: client_id=101, mapping 404/418, ft 414 CANCELLED, JE 411 역분개 + 2026-11 원장 보정
+# 고정 SQL 파일만 실행, 가드/ROW_COUNT 실패 시 즉시 중단·롤백, 기본 dry_run=true.
+
+name: 🛠️ Fix prod client 101 mapping 418 reversal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "FIX-CLIENT-101-MAPPING-418" to proceed'
+        required: true
+        default: ''
+      dry_run:
+        description: 'true: ROLLBACK at end of transaction | false: COMMIT once'
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fix-prod-client-101-mapping-418-reversal
+  cancel-in-progress: false
+
+jobs:
+  fix-client-101:
+    name: prod DB fix (client 101 mapping 418 reversal)
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 8
+    steps:
+      - name: Validate inputs
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "FIX-CLIENT-101-MAPPING-418" ]; then
+            echo "::error::confirm must equal FIX-CLIENT-101-MAPPING-418"
+            exit 1
+          fi
+          echo "validated dry_run=$DRY_RUN KST=$(TZ=Asia/Seoul date '+%F %T')"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MySQL client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Resolve DB host
+        id: db
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        run: |
+          set -euo pipefail
+          HOST="${PRODUCTION_DB_HOST:-}"
+          if [ -z "$HOST" ]; then HOST="${PRODUCTION_HOST:-}"; fi
+          USER="${PRODUCTION_DB_USER:-}"
+          NAME="${PRODUCTION_DB_NAME:-}"
+          MISSING=""
+          [ -n "$HOST" ] || MISSING="$MISSING PRODUCTION_DB_HOST|PRODUCTION_HOST"
+          [ -n "$USER" ] || MISSING="$MISSING PRODUCTION_DB_USER"
+          [ -n "$NAME" ] || MISSING="$MISSING PRODUCTION_DB_NAME"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Required secrets missing:$MISSING"
+            exit 1
+          fi
+          echo "::add-mask::$HOST"
+          echo "::add-mask::$USER"
+          {
+            echo "host=$HOST"
+            echo "user=$USER"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+          echo "DB target resolved (host/user masked) db=$NAME"
+
+      - name: Run fix SQL (single transaction)
+        env:
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+          [ -n "$MYSQL_PWD" ] || { echo "::error::secrets.PRODUCTION_DB_PASSWORD is not set"; exit 1; }
+          if ! mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" --connect-timeout=10 -N -e "SELECT 1;" >/dev/null 2>&1; then
+            echo "::error::CONNECT: FAIL"
+            exit 1
+          fi
+          echo "CONNECT: OK"
+
+          if [ "$DRY_RUN" = "true" ]; then
+            TX_END="ROLLBACK"
+          elif [ "$DRY_RUN" = "false" ]; then
+            TX_END="COMMIT"
+          else
+            echo "::error::invalid dry_run=$DRY_RUN"
+            exit 1
+          fi
+
+          sed "s/__TX_END__/${TX_END}/g" scripts/ops/fix_prod_client_101_mapping_418_reversal.sql > /tmp/fix.sql
+          if grep -Fqo '__TX_END__' /tmp/fix.sql; then
+            echo "::error::placeholder substitution failed"
+            exit 1
+          fi
+
+          echo "=== executing with TX_END=${TX_END} (no --force) ==="
+          OUT=/tmp/fix_client_101.out
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --default-character-set=utf8mb4 -t \
+            < /tmp/fix.sql > "$OUT" 2>&1 || {
+              sed -E \
+                -e 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' \
+                -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***@***/g' \
+                "$OUT"
+              exit 1
+            }
+
+          sed -E \
+            -e 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' \
+            -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***@***/g' \
+            "$OUT"
+
+      - name: Post-transaction read-only verification SELECT
+        if: always() && steps.db.outputs.host != ''
+        env:
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 -t <<'SQL' \
+            | sed -E \
+                -e 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' \
+                -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***@***/g'
+          SELECT 'POST_MAPPINGS' AS section, id, status, payment_status,
+                 total_sessions, used_sessions, remaining_sessions, package_name, payment_amount, updated_at
+          FROM consultant_client_mappings
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND id IN (364, 404, 418, 421)
+          ORDER BY id;
+
+          SELECT 'POST_HISTORY_404' AS section, id, mapping_id, event_type, reason, created_at,
+                 JSON_UNQUOTE(JSON_EXTRACT(before_state_json, '$.totalSessions')) AS before_total,
+                 JSON_UNQUOTE(JSON_EXTRACT(before_state_json, '$.remainingSessions')) AS before_rem,
+                 JSON_UNQUOTE(JSON_EXTRACT(after_state_json, '$.totalSessions')) AS after_total,
+                 JSON_UNQUOTE(JSON_EXTRACT(after_state_json, '$.remainingSessions')) AS after_rem
+          FROM consultant_client_mapping_history
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND mapping_id = 404
+          ORDER BY id;
+
+          SELECT 'POST_FT' AS section, id, related_entity_id, transaction_type, status, amount, updated_at
+          FROM financial_transactions
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND id IN (400, 401, 414, 415)
+          ORDER BY id;
+
+          SELECT 'POST_FT_TOTALS' AS section,
+                 SUM(CASE WHEN transaction_type = 'INCOME' AND status = 'COMPLETED' THEN amount ELSE 0 END) AS completed_income,
+                 SUM(CASE WHEN transaction_type = 'INCOME' AND status = 'CANCELLED' THEN amount ELSE 0 END) AS cancelled_income,
+                 SUM(CASE WHEN transaction_type = 'EXPENSE' AND status = 'COMPLETED' THEN amount ELSE 0 END) AS completed_expense
+          FROM financial_transactions
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND is_deleted = 0
+            AND related_entity_type LIKE 'CONSULTANT_CLIENT_MAPPING%'
+            AND related_entity_id IN (364, 404, 418, 421);
+
+          SELECT 'POST_JE' AS section, id, entry_number, entry_date, entry_type,
+                 account_code, amount, total_debit, total_credit, entry_status,
+                 financial_transaction_id, related_transaction_id, related_transaction_type
+          FROM accounting_entries
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND (id IN (397, 398, 411, 412) OR related_transaction_id = 411)
+          ORDER BY id;
+
+          SELECT 'POST_LEDGERS_2026_11' AS section, id, account_id, opening_balance,
+                 total_debit, total_credit, closing_balance, updated_at
+          FROM erp_ledgers
+          WHERE tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND period_start = '2026-11-01' AND period_end = '2026-11-30'
+            AND id IN (40, 41, 42, 43, 44)
+          ORDER BY account_id;
+
+          SELECT 'POST_JE_LINES' AS section, l.journal_entry_id, l.line_number, l.account_id,
+                 l.debit_amount, l.credit_amount, l.is_deleted
+          FROM erp_journal_entry_lines l
+          INNER JOIN accounting_entries e ON e.id = l.journal_entry_id AND e.tenant_id = l.tenant_id
+          WHERE l.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND (e.id IN (398, 411, 412) OR e.related_transaction_id = 411)
+          ORDER BY l.journal_entry_id, l.line_number;
+
+          SELECT 'POST_JE_411_NET_BY_ACCOUNT' AS section, l.account_id,
+                 SUM(l.debit_amount) AS sum_debit,
+                 SUM(l.credit_amount) AS sum_credit,
+                 SUM(l.debit_amount) - SUM(l.credit_amount) AS net_amount
+          FROM erp_journal_entry_lines l
+          INNER JOIN accounting_entries e ON e.id = l.journal_entry_id AND e.tenant_id = l.tenant_id
+          WHERE l.tenant_id IN (SELECT tenant_id FROM tenants WHERE subdomain = 'mindgarden')
+            AND l.is_deleted = 0
+            AND (e.id = 411 OR (e.related_transaction_id = 411 AND e.related_transaction_type = 'REVERSAL_OF_ACCOUNTING_ENTRY'))
+          GROUP BY l.account_id
+          ORDER BY l.account_id;
+          SQL

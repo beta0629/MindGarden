@@ -56,6 +56,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AdminBulkMappingPaymentService;
 import com.coresolution.consultation.service.AdminService;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ClientMappingListPayloadService;
 import com.coresolution.consultation.service.ClientStatsService;
@@ -678,6 +679,9 @@ public class AdminController extends BaseApiController {
         Map<Long, LocalDate> lastSessionDateByClientId = loadLastCompletedSessionDatesByConsultantAndClients(
                 tenantId, consultantId, mappingClientIdsForLastSession);
 
+        Map<Long, MergedPackageDisplay> mergedDisplayByIdForConsultant =
+                adminService.resolveMergedPackageDisplayMap(tenantId, mappings);
+
         List<Map<String, Object>> activeMappings = mappings.stream()
                 .filter(mapping -> {
                     // 표준화 2025-12-08: 필터링 로직 개선 - 모든 활성 매핑 포함
@@ -743,6 +747,12 @@ public class AdminController extends BaseApiController {
                         data.put("usedSessions", mapping.getUsedSessions());
                         data.put("remainingSessions", mapping.getRemainingSessions());
                         data.put("packageName", mapping.getPackageName());
+                        MergedPackageDisplay mergedDisplay = mapping.getId() != null
+                                ? mergedDisplayByIdForConsultant.getOrDefault(
+                                        mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()))
+                                : MergedPackageDisplay.plain(mapping.getPackageName());
+                        data.put("displayPackageName", mergedDisplay.displayPackageName());
+                        data.put("mergedPackageNames", mergedDisplay.mergedPackageNames());
                         data.put("paymentStatus", mapping.getPaymentStatus().toString());
                         // 보안 라운드 2 (2026-06-03): 상담사 호출 시 결제 금액·결제일·결제 수단·결제 참조 필드는 응답에서 제외.
                         // ADMIN/STAFF 호출 시에만 표시한다. UserRole.isProfessionalProvider() == false 인 경우에만 채운다.
@@ -1319,6 +1329,9 @@ public class AdminController extends BaseApiController {
                 .filter(java.util.Objects::nonNull)
                 .distinct()
                 .collect(Collectors.toList());
+        Map<Long, MergedPackageDisplay> mergedDisplayByIdForList =
+                adminService.resolveMergedPackageDisplayMap(tenantId, mappings);
+
         Map<Long, String> vehiclePlateByClientId = new HashMap<>();
         Map<Long, String> engagementTypeByClientId = new HashMap<>();
         if (!mappingClientIds.isEmpty()) {
@@ -1430,6 +1443,12 @@ public class AdminController extends BaseApiController {
                 data.put("remainingSessions", mapping.getRemainingSessions());
                 data.put("usedSessions", mapping.getUsedSessions());
                 data.put("packageName", mapping.getPackageName());
+                MergedPackageDisplay mergedDisplay = mapping.getId() != null
+                        ? mergedDisplayByIdForList.getOrDefault(
+                                mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()))
+                        : MergedPackageDisplay.plain(mapping.getPackageName());
+                data.put("displayPackageName", mergedDisplay.displayPackageName());
+                data.put("mergedPackageNames", mergedDisplay.mergedPackageNames());
                 data.put("packagePrice", mapping.getPackagePrice());
                 data.put("paymentAmount", mapping.getPaymentAmount());
                 data.put("paymentMethod", mapping.getPaymentMethod());
@@ -1704,6 +1723,9 @@ public class AdminController extends BaseApiController {
         clientPathAccessGuard.requireTenantManager(session);
         log.info("🔍 활성 매칭 목록 조회");
         List<ConsultantClientMapping> mappings = adminService.getActiveMappings();
+        String activeTenantId = SessionUtils.getTenantId(session);
+        Map<Long, MergedPackageDisplay> mergedDisplayByIdForActive =
+                adminService.resolveMergedPackageDisplayMap(activeTenantId, mappings);
 
         List<Map<String, Object>> mappingData = mappings.stream().map(mapping -> {
             Map<String, Object> data = new java.util.HashMap<>();
@@ -1782,6 +1804,12 @@ public class AdminController extends BaseApiController {
                 data.put("remainingSessions", mapping.getRemainingSessions());
                 data.put("usedSessions", mapping.getUsedSessions());
                 data.put("packageName", mapping.getPackageName());
+                MergedPackageDisplay mergedDisplay = mapping.getId() != null
+                        ? mergedDisplayByIdForActive.getOrDefault(
+                                mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()))
+                        : MergedPackageDisplay.plain(mapping.getPackageName());
+                data.put("displayPackageName", mergedDisplay.displayPackageName());
+                data.put("mergedPackageNames", mergedDisplay.mergedPackageNames());
                 data.put("packagePrice", mapping.getPackagePrice());
                 data.put("startDate", mapping.getStartDate());
                 data.put("endDate", mapping.getEndDate());

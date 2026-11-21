@@ -15,6 +15,7 @@ import SafeText from '../../../../common/SafeText';
 import { toDisplayString } from '../../../../../utils/safeDisplay';
 import { getMappingStatusKoreanNameSync } from '../../../../../utils/codeHelper';
 import { renderCompactPackageName } from '../../../../../utils/packagePricing';
+import { resolveMappingPackageDisplayName } from '../utils/mappingPackageDisplay';
 import {
   MAPPING_SCHEDULE_STATUS_KIND,
   resolveMappingScheduleStatus
@@ -168,12 +169,12 @@ const MatchingScheduleCompactRow = ({
           {mapping?.clientName}
         </SafeText>
       </span>
-      {mapping?.packageName && (
+      {resolveMappingPackageDisplayName(mapping) && (
         <span
           className="integrated-schedule__compact-row-package"
-          title={toDisplayString(mapping.packageName)}
+          title={resolveMappingPackageDisplayName(mapping)}
         >
-          {renderCompactPackageName(mapping.packageName)}
+          {renderCompactPackageName(resolveMappingPackageDisplayName(mapping))}
         </span>
       )}
       <span className="integrated-schedule__compact-row-secondary" title={secondaryTitle}>
@@ -207,6 +208,7 @@ MatchingScheduleCompactRow.propTypes = {
     consultantName: PropTypes.string,
     clientName: PropTypes.string,
     packageName: PropTypes.string,
+    displayPackageName: PropTypes.string,
     status: PropTypes.string,
     remainingSessions: PropTypes.number,
     pendingSessionExtension: PropTypes.object,

@@ -3,6 +3,7 @@ package com.coresolution.consultation.dto;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import com.coresolution.consultation.entity.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -106,6 +107,15 @@ public class ScheduleResponse {
 
     /** 예약 시점 회차(1-based). 미설정·가예약·단회기 미차감 시 null. */
     private Integer sessionSequence;
+
+    /** 연결된 매핑의 원 패키지명 (없으면 null). */
+    private String packageName;
+
+    /** 추가 패키지 병합 시 원 상품 + 병합 상품을 조합한 UI 표시명 (없으면 null). */
+    private String displayPackageName;
+
+    /** 병합된 추가 패키지명 목록 (병합 순, 없으면 빈 리스트/null). */
+    private List<String> mergedPackageNames;
 
     /**
      * 내담자({@code clientId}) 의 외부 과거 회기수 ({@code users.past_session_count}).

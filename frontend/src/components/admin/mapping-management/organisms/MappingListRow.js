@@ -14,7 +14,7 @@ import { StatusBadge, ENTITY_ROW_ACTIONS_LAYOUT } from '../../../common';
 import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
 import SessionProgressIndicator from '../molecules/SessionProgressIndicator';
-import { renderCompactPackageName } from '../../../../utils/packagePricing';
+import { renderCompactPackageName, resolveMappingPackageDisplayName } from '../../../../utils/packagePricing';
 import './MappingListRow.css';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -134,7 +134,7 @@ const MappingListRow = ({
             </div>
           </div>
           <div className="mg-v2-mapping-list-row__package">
-            {mapping.packageName ? renderCompactPackageName(mapping.packageName) : <span>N/A</span>}
+            {resolveMappingPackageDisplayName(mapping) ? renderCompactPackageName(resolveMappingPackageDisplayName(mapping)) : <span>N/A</span>}
           </div>
         </div>
 

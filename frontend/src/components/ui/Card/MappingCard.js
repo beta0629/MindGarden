@@ -17,6 +17,7 @@ import {
 import EngagementTypeBadge from '../../common/EngagementTypeBadge';
 import Avatar from '../../common/Avatar';
 import SafeText from '../../common/SafeText';
+import { resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import MappingEntityRowActions from '../../admin/mapping-management/molecules/MappingEntityRowActions';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { useTranslation } from 'react-i18next';
@@ -89,7 +90,7 @@ const MappingCardSummary = ({ mapping, onClick, actions }) => {
 
       <div className="mg-v2-mapping-card-details">
         <div className="mg-v2-mapping-detail-item">{mapping.consultantName}</div>
-        <div className="mg-v2-mapping-detail-item">{mapping.packageName}</div>
+        <div className="mg-v2-mapping-detail-item">{resolveMappingPackageDisplayName(mapping)}</div>
       </div>
 
       <div className="mg-v2-mapping-sessions-grid">
@@ -218,7 +219,7 @@ const MappingCardDetailed = ({
             <Package size={16} className="mg-v2-mapping-icon" />
             <div className="mg-v2-mapping-package-info-item">
               <div className="mg-v2-mapping-package-label">패키지</div>
-              <div className="mg-v2-mapping-package-name">{mapping.packageName || 'N/A'}</div>
+              <div className="mg-v2-mapping-package-name">{resolveMappingPackageDisplayName(mapping) || 'N/A'}</div>
             </div>
           </div>
           <div className="mg-v2-mapping-package-row">
@@ -294,6 +295,7 @@ const MappingCardCompact = ({
   id,
   consultantName,
   packageName,
+  displayPackageName,
   status,
   usedSessions,
   totalSessions,
@@ -316,6 +318,7 @@ const MappingCardCompact = ({
     id,
     consultantName,
     packageName,
+    displayPackageName,
     status,
     usedSessions,
     totalSessions,
@@ -373,10 +376,10 @@ const MappingCardCompact = ({
               <SafeText fallback="알 수 없음">{consultantName}</SafeText>
             </span>
           </div>
-          {packageName && (
+          {resolveMappingPackageDisplayName(compactMapping) && (
             <div className="mg-v2-mapping-card__row">
               <span className="mg-v2-mapping-card__label">패키지</span>
-              <span className="mg-v2-mapping-card__value"><SafeText>{packageName}</SafeText></span>
+              <span className="mg-v2-mapping-card__value"><SafeText>{resolveMappingPackageDisplayName(compactMapping)}</SafeText></span>
             </div>
           )}
           {(totalSessions != null || remainingSessions !== undefined || usedSessions != null) && (

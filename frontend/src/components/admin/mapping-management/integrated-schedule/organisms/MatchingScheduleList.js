@@ -44,6 +44,8 @@ const buildEventData = (mapping) => {
     paymentTiming: mapping.paymentTiming ?? null,
     engagementType: mapping.engagementType ?? mapping.mappingEngagementType ?? null,
     packageName: mapping.packageName ?? null,
+    displayPackageName: mapping.displayPackageName ?? null,
+    mergedPackageNames: Array.isArray(mapping.mergedPackageNames) ? mapping.mergedPackageNames : [],
     packagePrice: mapping.packagePrice ?? null,
     totalSessions: mapping.totalSessions ?? null,
     hasConsultationSchedule: mapping.hasConsultationSchedule === true,

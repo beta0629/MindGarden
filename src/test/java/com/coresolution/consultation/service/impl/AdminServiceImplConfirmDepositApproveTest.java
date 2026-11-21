@@ -577,6 +577,7 @@ class AdminServiceImplConfirmDepositApproveTest {
 
         assertEquals(ConsultantClientMapping.MappingStatus.ACTIVE, active.getStatus());
         assertEquals("기존패키지", active.getPackageName());
+        assertEquals(800_000L, active.getPackagePrice());
         assertEquals(15, active.getTotalSessions());
         assertEquals(12, active.getRemainingSessions());
         assertEquals(3, active.getUsedSessions());
@@ -617,6 +618,73 @@ class AdminServiceImplConfirmDepositApproveTest {
                 () -> adminService.approveMapping(additionalId, "AdminMerge"));
         assertTrue(ex.getMessage().contains("활성 매칭을 찾을 수 없습니다"));
         verify(mappingRepository, never()).save(any(ConsultantClientMapping.class));
+    }
+
+    @Test
+    @DisplayName("추가 매칭 병합 후 getMappingDetail 은 displayPackageName 에 합산 상품을 노출하고 원명·금액은 불변")
+    void approveMapping_additionalMerge_getMappingDetailShowsCombinedDisplayAndKeepsPriceImmutable() {
+        Long additionalId = 70L;
+        Long activeId = 404L;
+
+        User consultant = new User();
+        consultant.setId(11L);
+        consultant.setTenantId(TEST_TENANT_ID);
+        consultant.setName("상담사");
+        User client = new User();
+        client.setId(21L);
+        client.setTenantId(TEST_TENANT_ID);
+        client.setName("테스트내담자");
+
+        ConsultantClientMapping active = new ConsultantClientMapping();
+        active.setId(activeId);
+        active.setTenantId(TEST_TENANT_ID);
+        active.setConsultant(consultant);
+        active.setClient(client);
+        active.setStatus(ConsultantClientMapping.MappingStatus.ACTIVE);
+        active.setPackageName("단회기 90,000원");
+        active.setPackagePrice(90_000L);
+        active.setTotalSessions(1);
+        active.setRemainingSessions(1);
+        active.setUsedSessions(0);
+
+        ConsultantClientMapping additional = new ConsultantClientMapping();
+        additional.setId(additionalId);
+        additional.setTenantId(TEST_TENANT_ID);
+        additional.setConsultant(consultant);
+        additional.setClient(client);
+        additional.setStatus(ConsultantClientMapping.MappingStatus.DEPOSIT_PENDING);
+        additional.setPaymentStatus(ConsultantClientMapping.PaymentStatus.APPROVED);
+        additional.setTotalSessions(10);
+        additional.setRemainingSessions(0);
+        additional.setUsedSessions(0);
+        additional.setPackageName("기본10회기");
+        additional.setPackagePrice(800_000L);
+        additional.setNotes(String.format(
+                AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_LINE_FMT, activeId, 10));
+
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(additionalId)))
+                .thenReturn(Optional.of(additional));
+        when(mappingRepository.findByTenantIdAndId(eq(TEST_TENANT_ID), eq(activeId)))
+                .thenReturn(Optional.of(active));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.findMergedAdditionalMappingsByTenantIdAndClientIdIn(
+                eq(TEST_TENANT_ID),
+                any(),
+                eq(AdminServiceUserFacingMessages.NOTES_ADDITIONAL_MAPPING_MERGED_MARKER)))
+                .thenReturn(java.util.List.of(additional));
+
+        adminService.approveMapping(additionalId, "AdminMerge");
+
+        assertEquals("단회기 90,000원", active.getPackageName());
+        assertEquals(90_000L, active.getPackagePrice());
+
+        com.coresolution.consultation.dto.ConsultantClientMappingResponse detail =
+                adminService.getMappingDetail(activeId);
+        assertNotNull(detail);
+        assertEquals("단회기 90,000원", detail.getPackageName());
+        assertEquals("단회기 90,000원 + 기본10회기", detail.getDisplayPackageName());
+        assertEquals(java.util.List.of("기본10회기"), detail.getMergedPackageNames());
+        assertEquals(90_000L, detail.getPackagePrice());
     }
 
     private ConsultantClientMapping buildMappingForConfirmDeposit(Long mappingId) {

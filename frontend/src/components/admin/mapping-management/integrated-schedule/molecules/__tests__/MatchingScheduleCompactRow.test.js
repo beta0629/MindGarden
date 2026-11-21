@@ -175,4 +175,20 @@ describe('MatchingScheduleCompactRow', () => {
     expect(screen.getAllByTestId('engagement-type-badge')).toHaveLength(1);
     expect(screen.queryByText('남은 0회')).not.toBeInTheDocument();
   });
+
+  it('renders displayPackageName compactly when additional packages were merged', () => {
+    render(
+      <MatchingScheduleCompactRow
+        mapping={{
+          ...MOCK_MAPPING,
+          packageName: '단회기 90,000원',
+          displayPackageName: '단회기 90,000원 + 기본10회기'
+        }}
+      />
+    );
+
+    expect(screen.getByText('단회기 90,000원')).toBeInTheDocument();
+    expect(screen.getByText('+1')).toBeInTheDocument();
+    expect(screen.getAllByTitle('단회기 90,000원 + 기본10회기').length).toBeGreaterThan(0);
+  });
 });

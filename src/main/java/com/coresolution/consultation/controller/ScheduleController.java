@@ -51,6 +51,8 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.service.ScheduleListBatchLoader;
 import com.coresolution.consultation.service.ScheduleListUserFieldsResolver;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver.ScheduleMappingResponseContext;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ConsultationRecordAccessGuard;
@@ -1179,7 +1181,15 @@ public class ScheduleController extends BaseApiController {
                 ConsultantClientMapping mapping = activeMapping.get();
                 mappingData.put("hasMapping", true);
                 mappingData.put("remainingSessions", mapping.getRemainingSessions());
+                String checkTenantId = mapping.getTenantId() != null
+                        ? mapping.getTenantId()
+                        : TenantContextHolder.getTenantId();
+                MergedPackageDisplay mergedDisplay = MergedPackageDisplayResolver
+                        .resolveFromMappings(checkTenantId, mappings)
+                        .getOrDefault(mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()));
                 mappingData.put("packageName", mapping.getPackageName());
+                mappingData.put("displayPackageName", mergedDisplay.displayPackageName());
+                mappingData.put("mergedPackageNames", mergedDisplay.mergedPackageNames());
                 mappingData.put("mappingStatus", mapping.getStatus().toString());
                 mappingData.put("lastSessionDate", null); // getLastSessionDate 메서드가 없으므로 null로 설정
                 mappingData.put("totalSessions", mapping.getTotalSessions());
@@ -1190,6 +1200,8 @@ public class ScheduleController extends BaseApiController {
                 mappingData.put("hasMapping", false);
                 mappingData.put("remainingSessions", 0);
                 mappingData.put("packageName", null);
+                mappingData.put("displayPackageName", null);
+                mappingData.put("mergedPackageNames", java.util.Collections.emptyList());
                 mappingData.put("mappingStatus", "NO_MAPPING");
                 mappingData.put("lastSessionDate", null);
                 mappingData.put("totalSessions", 0);
@@ -2528,6 +2540,9 @@ public class ScheduleController extends BaseApiController {
             .totalSessions(mappingContext.getTotalSessions())
             .remainingSessions(mappingContext.getRemainingSessions())
             .sessionSequence(schedule.getSessionSequence())
+            .packageName(mappingContext.getPackageName())
+            .displayPackageName(mappingContext.getDisplayPackageName())
+            .mergedPackageNames(mappingContext.getMergedPackageNames())
             .build();
         response.applyCombinedSessions(
                 clientPastSessionCount,
@@ -2668,6 +2683,9 @@ public class ScheduleController extends BaseApiController {
                 .totalSessions(safeMappingContext.getTotalSessions())
                 .remainingSessions(safeMappingContext.getRemainingSessions())
                 .sessionSequence(schedule.getSessionSequence())
+                .packageName(safeMappingContext.getPackageName())
+                .displayPackageName(safeMappingContext.getDisplayPackageName())
+                .mergedPackageNames(safeMappingContext.getMergedPackageNames())
                 .build();
 
         response.applyCombinedSessions(

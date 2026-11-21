@@ -484,6 +484,26 @@ public interface ConsultantClientMappingRepository extends BaseRepository<Consul
      * @author MindGarden
      * @since 2026-10-14
      */
+    /**
+     * 병합 완료된 추가 패키지 매핑 배치 조회 (표시명 조합 전용, tenantId·clientId 격리).
+     *
+     * @param tenantId     테넌트 ID
+     * @param clientIds    내담자 ID 집합
+     * @param mergedMarker 병합 완료 마커 ({@code AdminServiceUserFacingMessages#NOTES_ADDITIONAL_MAPPING_MERGED_MARKER})
+     * @return TERMINATED + 미삭제 + 병합 완료 notes 보유 매핑 (병합 순)
+     */
+    @Query("SELECT m FROM ConsultantClientMapping m "
+            + "WHERE m.tenantId = :tenantId "
+            + "AND m.client.id IN :clientIds "
+            + "AND m.isDeleted = false "
+            + "AND m.status = com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus.TERMINATED "
+            + "AND m.notes LIKE CONCAT('%', :mergedMarker, '%') "
+            + "ORDER BY m.terminatedAt ASC, m.createdAt ASC, m.id ASC")
+    List<ConsultantClientMapping> findMergedAdditionalMappingsByTenantIdAndClientIdIn(
+            @Param("tenantId") String tenantId,
+            @Param("clientIds") java.util.Collection<Long> clientIds,
+            @Param("mergedMarker") String mergedMarker);
+
     boolean existsByTenantIdAndConsultant_IdAndClient_IdAndPackageNameAndCreatedAtGreaterThanEqual(
             String tenantId, Long consultantId, Long clientId, String packageName, LocalDateTime createdAt);
 }

@@ -20,6 +20,7 @@ import {
 import { calculateClientSessionTotalsFromMappings } from '../../utils/clientSessionTotals';
 import { toDisplayString, toSafeNumber } from '../../utils/safeDisplay';
 import SafeText from '../common/SafeText';
+import { resolveMappingPackageDisplayName } from '../../utils/packagePricing';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ClientWebPageShell from './ClientWebPageShell';
 import {
@@ -171,7 +172,7 @@ const ClientSessionManagement = () => {
                 <span className="client-sessions-packages__name">
                   <SafeText>
                     {toDisplayString(
-                      mapping.packageName || mapping.consultant?.consultantName,
+                      resolveMappingPackageDisplayName(mapping) || mapping.consultant?.consultantName,
                       CLIENT_WEB_SUITE_COPY.SESSIONS_BREAKDOWN_REMAINING
                     )}
                   </SafeText>

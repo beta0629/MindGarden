@@ -19,7 +19,10 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.ShopClientOrder;
 import com.coresolution.consultation.entity.ShopClientOrderLine;
+import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.PaymentRepository;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.service.ClientMappingListPayloadService;
@@ -54,6 +57,7 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
     private final ShopClientOrderRepository shopClientOrderRepository;
     private final PaymentRepository paymentRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
+    private final ConsultantClientMappingRepository mappingRepository;
 
     /**
      * {@inheritDoc}
@@ -71,11 +75,22 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
         Map<String, Payment> paymentByOrderId = loadPaymentsByOrderId(tenantId, paymentReferences);
         Map<String, ShopClientOrderLine> lineByOrderPublicId =
                 loadLatestOrderLinesByOrderPublicId(tenantId, paymentReferences);
+        Map<Long, MergedPackageDisplay> mergedDisplayById =
+                MergedPackageDisplayResolver.resolveBatch(tenantId, mappings, mappingRepository);
 
         List<Map<String, Object>> payloads = new ArrayList<>(mappings.size());
         for (ConsultantClientMapping mapping : mappings) {
+            MergedPackageDisplay mergedDisplay = mapping.getId() != null
+                    ? mergedDisplayById.getOrDefault(
+                            mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()))
+                    : MergedPackageDisplay.plain(mapping.getPackageName());
             payloads.add(toPayload(
-                    mapping, lineByMappingId, orderByPublicId, paymentByOrderId, lineByOrderPublicId));
+                    mapping,
+                    lineByMappingId,
+                    orderByPublicId,
+                    paymentByOrderId,
+                    lineByOrderPublicId,
+                    mergedDisplay));
         }
         return payloads;
     }
@@ -196,13 +211,19 @@ public class ClientMappingListPayloadServiceImpl implements ClientMappingListPay
             Map<Long, ShopClientOrderLine> lineByMappingId,
             Map<String, ShopClientOrder> orderByPublicId,
             Map<String, Payment> paymentByOrderId,
-            Map<String, ShopClientOrderLine> lineByOrderPublicId) {
+            Map<String, ShopClientOrderLine> lineByOrderPublicId,
+            MergedPackageDisplay mergedDisplay) {
         Map<String, Object> mappingInfo = new HashMap<>();
         mappingInfo.put("id", mapping.getId());
         mappingInfo.put("totalSessions", mapping.getTotalSessions());
         mappingInfo.put("usedSessions", mapping.getUsedSessions());
         mappingInfo.put("remainingSessions", mapping.getRemainingSessions());
         mappingInfo.put("packageName", mapping.getPackageName());
+        MergedPackageDisplay safeDisplay = mergedDisplay != null
+                ? mergedDisplay
+                : MergedPackageDisplay.plain(mapping.getPackageName());
+        mappingInfo.put("displayPackageName", safeDisplay.displayPackageName());
+        mappingInfo.put("mergedPackageNames", safeDisplay.mergedPackageNames());
         mappingInfo.put("packagePrice", mapping.getPackagePrice());
         mappingInfo.put("paymentAmount", mapping.getPaymentAmount());
         mappingInfo.put(

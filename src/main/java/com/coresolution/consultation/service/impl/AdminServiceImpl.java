@@ -127,6 +127,8 @@ import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.ConsultationDepositIncomeLedger;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.dto.PaymentSource;
 import com.coresolution.consultation.entity.Payment;
@@ -6032,6 +6034,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         clientData.put("branchCode", null);
         clientData.put("profileImageUrl", user.getProfileImageUrl());
 
+        String clientMappingTenantId = getTenantIdOrNull();
+        if (clientMappingTenantId == null || clientMappingTenantId.isBlank()) {
+            clientMappingTenantId = user.getTenantId();
+        }
+        Map<Long, MergedPackageDisplay> mergedDisplayById = MergedPackageDisplayResolver
+                .resolveFromMappings(clientMappingTenantId, mappingsForClient);
+
         List<Map<String, Object>> mappings = mappingsForClient.stream()
                 .map(mapping -> {
                     Map<String, Object> mappingData = new HashMap<>();
@@ -6049,6 +6058,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                         mappingData.put("consultantName", "");
                     }
                     mappingData.put("packageName", mapping.getPackageName());
+                    MergedPackageDisplay mergedDisplay = mapping.getId() != null
+                            ? mergedDisplayById.getOrDefault(
+                                    mapping.getId(), MergedPackageDisplay.plain(mapping.getPackageName()))
+                            : MergedPackageDisplay.plain(mapping.getPackageName());
+                    mappingData.put("displayPackageName", mergedDisplay.displayPackageName());
+                    mappingData.put("mergedPackageNames", mergedDisplay.mergedPackageNames());
                     mappingData.put("totalSessions", mapping.getTotalSessions());
                     mappingData.put("remainingSessions", mapping.getRemainingSessions());
                     mappingData.put("usedSessions", mapping.getUsedSessions());
@@ -10239,6 +10254,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Override
     @Transactional(readOnly = true)
+    public Map<Long, MergedPackageDisplay> resolveMergedPackageDisplayMap(
+            String tenantId,
+            Collection<ConsultantClientMapping> mappings) {
+        return MergedPackageDisplayResolver.resolveBatch(tenantId, mappings, mappingRepository);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public ConsultantClientMappingResponse getMappingDetail(Long mappingId) {
         String tenantId = getTenantIdOrNull();
         if (tenantId == null || tenantId.isEmpty()) {
@@ -10249,6 +10272,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     ConsultantClientMappingResponse response = ConsultantClientMappingResponse.fromEntity(mapping);
                     response.setConsultantName(decryptedNameOf(mapping.getConsultant()));
                     response.setClientName(decryptedNameOf(mapping.getClient()));
+                    Long clientIdForDisplay = mapping.getClient() != null ? mapping.getClient().getId() : null;
+                    response.applyMergedPackageDisplay(MergedPackageDisplayResolver.resolveSingle(
+                            tenantId, mapping, clientIdForDisplay, mappingRepository));
                     return response;
                 })
                 .orElse(null);

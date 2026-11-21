@@ -598,6 +598,8 @@ MappingScheduleSidePeekContent.propTypes = {
     consultantName: PropTypes.string,
     consultant: PropTypes.object,
     packageName: PropTypes.string,
+    displayPackageName: PropTypes.string,
+    mergedPackageNames: PropTypes.arrayOf(PropTypes.string),
     packagePrice: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     totalSessions: PropTypes.number,
     status: PropTypes.string,

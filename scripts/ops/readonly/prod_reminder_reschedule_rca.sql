@@ -177,3 +177,112 @@ SELECT s.tenant_id, s.id, s.date, s.start_time, s.status, s.slot_changed_at,
             AND p.previous_date <> s.date)
  ORDER BY s.date
  LIMIT 60;
+
+-- ===== r2: 변경 pending 미생성 경로 대비 slot_changed_at/updated_at 기준 보강 =====
+SELECT '== L. 조회일 수정된 일정 + 발송 이력' AS section;
+SELECT s.tenant_id, s.id, s.date, s.start_time, s.status, s.created_at, s.updated_at, s.slot_changed_at,
+       (SELECT GROUP_CONCAT(CONCAT(l.template_code,'|',l.target_slot_key,'|',l.success,'|',DATE_FORMAT(l.sent_at,'%m-%d %H:%i')) ORDER BY l.sent_at SEPARATOR ' ; ')
+          FROM notification_batch_send_log l
+         WHERE l.tenant_id = s.tenant_id AND l.target_type = 'SCHEDULE' AND l.target_id = s.id) AS send_logs
+  FROM schedules s
+ WHERE s.updated_at >= '__TARGET_DATE__' AND s.updated_at < DATE_ADD('__TARGET_DATE__', INTERVAL 1 DAY)
+ ORDER BY s.updated_at
+ LIMIT 80;
+
+SELECT '== M. 최근 3일 slot_changed_at 일정 + 발송 이력' AS section;
+SELECT s.tenant_id, s.id, s.date, s.start_time, s.status, s.created_at, s.slot_changed_at,
+       (SELECT GROUP_CONCAT(CONCAT(l.template_code,'|',l.target_slot_key,'|',l.success,'|',DATE_FORMAT(l.sent_at,'%m-%d %H:%i')) ORDER BY l.sent_at SEPARATOR ' ; ')
+          FROM notification_batch_send_log l
+         WHERE l.tenant_id = s.tenant_id AND l.target_type = 'SCHEDULE' AND l.target_id = s.id) AS send_logs
+  FROM schedules s
+ WHERE s.slot_changed_at >= DATE_SUB('__TARGET_DATE__', INTERVAL 3 DAY)
+ ORDER BY s.slot_changed_at
+ LIMIT 80;
+
+SELECT '== N. 변경 pending 일별 건수 (최근 21일)' AS section;
+SELECT tenant_id, DATE(created_at) AS d, status, COUNT(*) AS n
+  FROM schedule_change_notification_pending
+ WHERE created_at >= DATE_SUB('__TARGET_DATE__', INTERVAL 21 DAY)
+ GROUP BY tenant_id, DATE(created_at), status
+ ORDER BY d, tenant_id, status;
+
+SELECT '== O. 조회일 예약 SMS 발송분' AS section;
+SELECT l.tenant_id, l.target_id AS schedule_id, l.template_code, l.target_slot_key, l.success, l.channel_used, l.error_code, l.sent_at
+  FROM notification_batch_send_log l
+ WHERE l.sent_at >= '__TARGET_DATE__' AND l.sent_at < DATE_ADD('__TARGET_DATE__', INTERVAL 1 DAY)
+   AND l.template_code IN ('RESERVATION_IMMEDIATE_LATE','RESERVATION_REMINDER_D2','RESERVATION_IMMEDIATE_SINGLE')
+ ORDER BY l.sent_at;
+
+-- 영향 집계 r2: 변경 pending 대신 slot_changed_at > 성공 발송 시각 (기간 __SINCE__~). 날짜 변경 확정은 LATE/D2 슬롯 키 날짜 ≠ 현재 date.
+SELECT '== P. 영향 집계 r2 (slot_changed_at 기준, 테넌트별)' AS section;
+SELECT m.tenant_id,
+       COUNT(*) AS changed_after_send,
+       SUM(m.cancelled = 1) AS cancelled_or_deleted,
+       SUM(m.cancelled = 0 AND m.date_changed_by_key = 1) AS date_changed_confirmed_by_key,
+       SUM(m.cancelled = 0 AND m.has_keyed = 0) AS date_change_unknown_single_only,
+       SUM(m.cancelled = 0 AND m.d1_passed = 1 AND m.new_d1_sent = 1) AS d1_passed_sent_on_d1,
+       SUM(m.cancelled = 0 AND m.d1_passed = 1 AND m.new_d1_sent = 0 AND m.changed_before_d1 = 1) AS d1_passed_missed_changed_before_d1,
+       SUM(m.cancelled = 0 AND m.d1_passed = 1 AND m.new_d1_sent = 0 AND m.changed_before_d1 = 0) AS d1_passed_missed_changed_after_d1_batch,
+       SUM(m.cancelled = 0 AND m.d1_passed = 0) AS d1_future
+  FROM (
+    SELECT s.tenant_id, s.id,
+           (s.status = 'CANCELLED' OR IFNULL(s.is_deleted,0) = 1) AS cancelled,
+           (NOW() >= TIMESTAMP(DATE_SUB(s.date, INTERVAL 1 DAY), '09:00:00')) AS d1_passed,
+           (s.slot_changed_at < TIMESTAMP(DATE_SUB(s.date, INTERVAL 1 DAY), '09:00:00')) AS changed_before_d1,
+           EXISTS (SELECT 1 FROM notification_batch_send_log k
+                    WHERE k.tenant_id = s.tenant_id AND k.target_type = 'SCHEDULE' AND k.target_id = s.id
+                      AND k.success = 1 AND k.target_slot_key <> '' AND k.sent_at < s.slot_changed_at) AS has_keyed,
+           EXISTS (SELECT 1 FROM notification_batch_send_log k2
+                    WHERE k2.tenant_id = s.tenant_id AND k2.target_type = 'SCHEDULE' AND k2.target_id = s.id
+                      AND k2.success = 1 AND k2.target_slot_key <> '' AND k2.sent_at < s.slot_changed_at
+                      AND LEFT(k2.target_slot_key, 10) <> DATE_FORMAT(s.date,'%Y-%m-%d')) AS date_changed_by_key,
+           EXISTS (SELECT 1 FROM notification_batch_send_log l2
+                    WHERE l2.tenant_id = s.tenant_id AND l2.target_type = 'SCHEDULE' AND l2.target_id = s.id
+                      AND l2.template_code = 'RESERVATION_IMMEDIATE_LATE' AND l2.success = 1
+                      AND l2.target_slot_key LIKE CONCAT(DATE_FORMAT(s.date,'%Y-%m-%d'),'T',DATE_FORMAT(s.start_time,'%H:%i'),'%')
+                      AND DATE(l2.sent_at) = DATE_SUB(s.date, INTERVAL 1 DAY)) AS new_d1_sent
+      FROM schedules s
+     WHERE s.slot_changed_at IS NOT NULL
+       AND EXISTS (SELECT 1 FROM notification_batch_send_log l
+                    WHERE l.tenant_id = s.tenant_id AND l.target_type = 'SCHEDULE' AND l.target_id = s.id
+                      AND l.success = 1
+                      AND l.template_code IN ('RESERVATION_REMINDER_D2','RESERVATION_IMMEDIATE_SINGLE','RESERVATION_IMMEDIATE_LATE')
+                      AND l.sent_at >= '__SINCE__'
+                      AND l.sent_at < s.slot_changed_at)
+  ) m
+ GROUP BY m.tenant_id WITH ROLLUP;
+
+SELECT '== Q. r2 상세: 발송 후 슬롯 변경 + D-1 지났는데 새 슬롯 D-1 미발송 (최대 60)' AS section;
+SELECT s.tenant_id, s.id, s.date, s.start_time, s.status, s.created_at, s.slot_changed_at,
+       (SELECT GROUP_CONCAT(CONCAT(l.template_code,'|',l.target_slot_key,'|',l.success,'|',DATE_FORMAT(l.sent_at,'%m-%d %H:%i')) ORDER BY l.sent_at SEPARATOR ' ; ')
+          FROM notification_batch_send_log l
+         WHERE l.tenant_id = s.tenant_id AND l.target_type = 'SCHEDULE' AND l.target_id = s.id) AS send_logs
+  FROM schedules s
+ WHERE s.slot_changed_at IS NOT NULL AND s.status <> 'CANCELLED' AND IFNULL(s.is_deleted,0) = 0
+   AND NOW() >= TIMESTAMP(DATE_SUB(s.date, INTERVAL 1 DAY), '09:00:00')
+   AND EXISTS (SELECT 1 FROM notification_batch_send_log k
+                WHERE k.tenant_id = s.tenant_id AND k.target_type = 'SCHEDULE' AND k.target_id = s.id
+                  AND k.success = 1 AND k.sent_at >= '__SINCE__' AND k.sent_at < s.slot_changed_at
+                  AND k.template_code IN ('RESERVATION_REMINDER_D2','RESERVATION_IMMEDIATE_SINGLE','RESERVATION_IMMEDIATE_LATE'))
+   AND NOT EXISTS (SELECT 1 FROM notification_batch_send_log l2
+                    WHERE l2.tenant_id = s.tenant_id AND l2.target_type = 'SCHEDULE' AND l2.target_id = s.id
+                      AND l2.template_code = 'RESERVATION_IMMEDIATE_LATE' AND l2.success = 1
+                      AND l2.target_slot_key LIKE CONCAT(DATE_FORMAT(s.date,'%Y-%m-%d'),'T',DATE_FORMAT(s.start_time,'%H:%i'),'%')
+                      AND DATE(l2.sent_at) = DATE_SUB(s.date, INTERVAL 1 DAY))
+ ORDER BY s.date DESC
+ LIMIT 60;
+
+SELECT '== R. 발송 후 슬롯 변경 + D-1 미래 상세 (최대 60)' AS section;
+SELECT s.tenant_id, s.id, s.date, s.start_time, s.status, s.created_at, s.slot_changed_at,
+       (SELECT GROUP_CONCAT(CONCAT(l.template_code,'|',l.target_slot_key,'|',l.success,'|',DATE_FORMAT(l.sent_at,'%m-%d %H:%i')) ORDER BY l.sent_at SEPARATOR ' ; ')
+          FROM notification_batch_send_log l
+         WHERE l.tenant_id = s.tenant_id AND l.target_type = 'SCHEDULE' AND l.target_id = s.id) AS send_logs
+  FROM schedules s
+ WHERE s.slot_changed_at IS NOT NULL AND s.status <> 'CANCELLED' AND IFNULL(s.is_deleted,0) = 0
+   AND NOW() < TIMESTAMP(DATE_SUB(s.date, INTERVAL 1 DAY), '09:00:00')
+   AND EXISTS (SELECT 1 FROM notification_batch_send_log k
+                WHERE k.tenant_id = s.tenant_id AND k.target_type = 'SCHEDULE' AND k.target_id = s.id
+                  AND k.success = 1 AND k.sent_at >= '__SINCE__' AND k.sent_at < s.slot_changed_at
+                  AND k.template_code IN ('RESERVATION_REMINDER_D2','RESERVATION_IMMEDIATE_SINGLE','RESERVATION_IMMEDIATE_LATE'))
+ ORDER BY s.date
+ LIMIT 60;

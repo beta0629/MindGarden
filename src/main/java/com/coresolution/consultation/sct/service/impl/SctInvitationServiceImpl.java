@@ -621,6 +621,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         Long previousClientId = invitation.getClientId();
         invitation.setClientId(null);
         invitation.setMappingId(null);
+        invitation.setConsultantId(null);
         invitationRepository.save(invitation);
         auditLogService.record(AuditLog.builder()
                 .tenantId(tenantId)

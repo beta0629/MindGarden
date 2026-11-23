@@ -16,6 +16,7 @@ import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.security.PasswordService;
+import com.coresolution.core.util.ApiUriSanitizer;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -83,7 +84,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "요청한 정보를 찾을 수 없습니다."),
             "SCT_FEATURE_DISABLED",
             HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
@@ -100,7 +101,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "링크가 만료되었거나 취소되었습니다."),
             "SCT_GONE",
             HttpStatus.GONE.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.GONE).body(error);
@@ -117,7 +118,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "요청을 처리할 수 없는 상태입니다."),
             "SCT_CONFLICT",
             HttpStatus.CONFLICT.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -134,7 +135,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "검증이 잠겼습니다."),
             "SCT_VERIFY_LOCKED",
             HttpStatus.TOO_MANY_REQUESTS.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);

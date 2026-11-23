@@ -2,6 +2,7 @@ package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -283,6 +284,49 @@ class SctInvitationServiceTest {
         ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogService).record(auditCaptor.capture());
         assertEquals(AuditAction.SCT_RESPONSE_PRINTED, auditCaptor.getValue().getAction());
+    }
+
+    @Test
+    void unlink_clearsConsultantId_consultantDeniedClinicalAccess() {
+        User consultant = new User();
+        consultant.setId(8L);
+        consultant.setRole(UserRole.CONSULTANT);
+
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .clientId(100L)
+                .consultantId(8L)
+                .mappingId(50L)
+                .managementNo("SCT-000020")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(1))
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L))
+                .thenReturn(Optional.of(template));
+
+        invitationService.unlink("t1", admin, 77L);
+
+        ArgumentCaptor<SctInvitation> savedCaptor = ArgumentCaptor.forClass(SctInvitation.class);
+        verify(invitationRepository).save(savedCaptor.capture());
+        SctInvitation saved = savedCaptor.getValue();
+        assertNull(saved.getClientId());
+        assertNull(saved.getMappingId());
+        assertNull(saved.getConsultantId());
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(saved));
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.getInvitation("t1", consultant, 77L, false, null, null));
     }
 
     @Test

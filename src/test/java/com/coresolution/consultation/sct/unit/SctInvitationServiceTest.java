@@ -1,6 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,7 +15,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.constant.UserRole;
+import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
@@ -26,12 +29,17 @@ import com.coresolution.consultation.sct.dto.SctInviteCreateRequest;
 import com.coresolution.consultation.sct.entity.SctAccessLog;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
+import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
+import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
+import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
+import com.coresolution.consultation.sct.repository.SctManagementNoSeqRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
@@ -45,7 +53,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 /**
- * SCT 초대 — 테넌트 격리·SMS_TEST_MODE·STAFF 열람 로그·플래그·만료일 스냅샷.
+ * SCT 초대 — 테넌트 격리·SMS_TEST_MODE·CHILD 거부·관리번호·파기.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -59,11 +67,14 @@ class SctInvitationServiceTest {
     @Mock private SctFormItemRepository formItemRepository;
     @Mock private SctInvitationRepository invitationRepository;
     @Mock private SctResponseAnswerRepository answerRepository;
+    @Mock private SctDomainMemoRepository domainMemoRepository;
+    @Mock private SctManagementNoSeqRepository managementNoSeqRepository;
     @Mock private ClientRepository clientRepository;
     @Mock private ConsultantClientMappingRepository mappingRepository;
     @Mock private SmsAuthService smsAuthService;
     @Mock private AuditLogService auditLogService;
     @Mock private SctAccessLogService sctAccessLogService;
+    @Mock private SctConsentService sctConsentService;
 
     @InjectMocks
     private SctInvitationServiceImpl invitationService;
@@ -92,6 +103,16 @@ class SctInvitationServiceTest {
                 .build();
     }
 
+    private void stubManagementNo(String tenantId) {
+        when(managementNoSeqRepository.findByTenantIdForUpdate(tenantId))
+                .thenReturn(Optional.of(SctManagementNoSeq.builder()
+                        .tenantId(tenantId)
+                        .nextVal(1L)
+                        .build()));
+        when(managementNoSeqRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(sctSettingsService.resolveRetentionDays(tenantId)).thenReturn(365);
+    }
+
     @Test
     void featureOff_createThrows404() {
         org.mockito.Mockito.doThrow(new SctFeatureDisabledException("off"))
@@ -103,8 +124,18 @@ class SctInvitationServiceTest {
     }
 
     @Test
+    void createChildForm_rejectedWith400() {
+        assertThrows(IllegalArgumentException.class, () ->
+                invitationService.createInvitation("t1", admin,
+                        SctInviteCreateRequest.builder()
+                                .formType("CHILD").phone("01012345678").build()));
+        verify(invitationRepository, never()).save(any());
+    }
+
+    @Test
     void createUsesSettingsExpiry_andDoesNotMutateExistingExpiresAt() {
         when(sctSettingsService.resolveLinkExpiryDays("t1")).thenReturn(21);
+        stubManagementNo("t1");
         when(formTemplateRepository
                 .findByTenantIdAndFormTypeAndFormVersionAndIsActiveTrueAndIsDeletedFalse(
                         "", "ADULT", "v3")).thenReturn(Optional.of(template));
@@ -128,6 +159,10 @@ class SctInvitationServiceTest {
         SctInvitation saved = captor.getAllValues().get(0);
         assertTrue(saved.getTokenExpiresAt().isAfter(before.plusDays(20)));
         assertTrue(saved.getTokenExpiresAt().isBefore(before.plusDays(22).plusMinutes(1)));
+        assertEquals("SCT-000001", saved.getManagementNo());
+        assertEquals("SCT-000001", created.getManagementNo());
+        assertFalse(saved.getManagementNo().contains("010"));
+        assertFalse(saved.getManagementNo().toLowerCase().contains("name"));
         assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
     }
@@ -136,6 +171,7 @@ class SctInvitationServiceTest {
     void existingInvitationExpiryUnchanged_whenSettingsChange() {
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
+                .managementNo("SCT-000007")
                 .tokenHash("abc")
                 .tokenExpiresAt(LocalDateTime.of(2026, 12, 1, 0, 0))
                 .status(SctInviteStatus.SUBMITTED.name())
@@ -145,6 +181,7 @@ class SctInvitationServiceTest {
         existing.setId(77L);
         existing.setTenantId("t1");
 
+        when(sctSettingsService.resolveRetentionDays("t1")).thenReturn(365);
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
                 .thenReturn(Optional.of(existing));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(10L))
@@ -159,28 +196,48 @@ class SctInvitationServiceTest {
 
         var view = invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua");
         assertEquals(LocalDateTime.of(2026, 12, 1, 0, 0), view.getTokenExpiresAt());
+        assertEquals("SCT-000007", view.getManagementNo());
         verify(sctAccessLogService).logViewBody(
                 eq(existing), eq(2L), eq("STAFF"), eq("1.1.1.1"), eq("ua"));
     }
 
     @Test
     void otherTenantId_denied() {
-        SctInvitation existing = SctInvitation.builder()
-                .formTemplateId(10L)
-                .tokenHash("abc")
-                .tokenExpiresAt(LocalDateTime.now().plusDays(1))
-                .status(SctInviteStatus.SENT.name())
-                .sentByUserId(1L)
-                .verifyFailCount(0)
-                .build();
-        existing.setId(77L);
-        existing.setTenantId("tenant-a");
-
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("tenant-b", 77L))
                 .thenReturn(Optional.empty());
 
         assertThrows(com.coresolution.consultation.exception.EntityNotFoundException.class,
                 () -> invitationService.getInvitation("tenant-b", admin, 77L, false, null, null));
+    }
+
+    @Test
+    void recordPrintAudit_writesPrintAccessAndAuditAction() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000010")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.of(2026, 12, 1, 0, 0))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .sentByUserId(1L)
+                .clientId(100L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+        when(sctAccessLogService.logPrint(any(), any(), any(), any(), any()))
+                .thenReturn(new SctAccessLog());
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        invitationService.recordPrintAudit("t1", staff, 77L, "1.2.3.4", "ua");
+
+        verify(sctAccessLogService).logPrint(
+                eq(existing), eq(2L), eq("STAFF"), eq("1.2.3.4"), eq("ua"));
+        ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).record(auditCaptor.capture());
+        assertEquals(AuditAction.SCT_RESPONSE_PRINTED, auditCaptor.getValue().getAction());
     }
 
     @Test
@@ -193,6 +250,7 @@ class SctInvitationServiceTest {
                 .formTemplateId(10L)
                 .clientId(100L)
                 .consultantId(8L)
+                .managementNo("SCT-000011")
                 .tokenHash("abc")
                 .tokenExpiresAt(LocalDateTime.now().plusDays(1))
                 .status(SctInviteStatus.SENT.name())
@@ -209,5 +267,86 @@ class SctInvitationServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> invitationService.getInvitation("t1", consultant, 77L, false, null, null));
+    }
+
+    @Test
+    void destroy_staffForbidden() {
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.destroyInvitation("t1", staff, 77L));
+    }
+
+    @Test
+    void destroy_notEligible_conflict409() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000012")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(1))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .submittedAt(LocalDateTime.now().minusDays(10))
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+        when(sctSettingsService.resolveRetentionDays("t1")).thenReturn(365);
+
+        assertThrows(SctConflictException.class,
+                () -> invitationService.destroyInvitation("t1", admin, 77L));
+        verify(answerRepository, never()).deleteByTenantIdAndInvitationId(anyString(), any());
+    }
+
+    @Test
+    void destroy_eligible_deletesAnswersAndKeepsConsentAuditWithoutBody() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000013")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().minusDays(1))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .submittedAt(LocalDateTime.now().minusDays(400))
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+        when(sctSettingsService.resolveRetentionDays("t1")).thenReturn(365);
+        when(domainMemoRepository.findByTenantIdAndInvitationIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(List.of());
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        invitationService.destroyInvitation("t1", admin, 77L);
+
+        verify(answerRepository).deleteByTenantIdAndInvitationId("t1", 77L);
+        assertTrue(Boolean.TRUE.equals(existing.getIsDeleted()));
+        ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).record(auditCaptor.capture());
+        AuditLog audit = auditCaptor.getValue();
+        assertEquals(AuditAction.SCT_RESPONSE_DESTROYED, audit.getAction());
+        assertEquals(1L, audit.getActorUserId());
+        assertTrue(audit.getMetadataJson().contains("SCT-000013"));
+        assertFalse(audit.getMetadataJson().contains("answer"));
+        assertFalse(audit.getMetadataJson().contains("010"));
+    }
+
+    @Test
+    void isDestroyEligible_requiresSubmittedAndRetentionElapsed() {
+        SctInvitation inv = SctInvitation.builder()
+                .status(SctInviteStatus.SUBMITTED.name())
+                .submittedAt(LocalDateTime.now().minusDays(365))
+                .build();
+        assertTrue(SctInvitationServiceImpl.isDestroyEligible(inv, 365));
+        inv.setSubmittedAt(LocalDateTime.now().minusDays(10));
+        assertFalse(SctInvitationServiceImpl.isDestroyEligible(inv, 365));
+        inv.setStatus(SctInviteStatus.DRAFT.name());
+        inv.setSubmittedAt(LocalDateTime.now().minusDays(400));
+        assertFalse(SctInvitationServiceImpl.isDestroyEligible(inv, 365));
     }
 }

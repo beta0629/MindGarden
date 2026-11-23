@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,28 +14,28 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.constant.SctInviteStatus;
+import com.coresolution.consultation.sct.dto.SctConsentStatusView;
 import com.coresolution.consultation.sct.dto.SctDraftAnswerItem;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
+import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
-import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
-import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
-import com.coresolution.consultation.sct.repository.SctConsentRepository;
-import com.coresolution.consultation.sct.repository.SctConsentTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
@@ -44,14 +44,14 @@ import com.coresolution.consultation.util.PhoneHashUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 
 /**
- * 공개 SCT 흐름 단위 테스트 — 만료/취소 410, 제출 후 409, verify 잠금, 플래그 OFF 404.
+ * 공개 SCT 흐름 단위 테스트 — 만료/취소 410, 제출 후 409, verify 잠금, 동의 403, 메타 마스킹 제거.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -67,17 +67,17 @@ class SctPublicServiceTest {
     @Mock private SctFormTemplateRepository formTemplateRepository;
     @Mock private SctFormItemRepository formItemRepository;
     @Mock private SctResponseAnswerRepository answerRepository;
-    @Mock private SctConsentRepository consentRepository;
-    @Mock private SctConsentTemplateRepository consentTemplateRepository;
     @Mock private SctInviteAccessAttemptRepository attemptRepository;
     @Spy private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore();
     @Mock private SctFeatureGuard sctFeatureGuard;
+    @Mock private SctConsentService sctConsentService;
     @Mock private AuditLogService auditLogService;
 
     @InjectMocks
     private SctPublicServiceImpl sctPublicService;
 
     private SctInvitation invitation;
+    private SctFormTemplate template;
 
     @BeforeEach
     void setUp() {
@@ -94,13 +94,24 @@ class SctPublicServiceTest {
                 .build();
         invitation.setId(100L);
         invitation.setTenantId(TENANT_A);
+
+        template = SctFormTemplate.builder()
+                .id(1L)
+                .formType("ADULT")
+                .title("t")
+                .instructionText("i")
+                .formVersion("v3")
+                .tenantId("")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
     }
 
     @Test
     void featureOff_throws404() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
-        org.mockito.Mockito.doThrow(new SctFeatureDisabledException("off"))
+        doThrow(new SctFeatureDisabledException("off"))
                 .when(sctFeatureGuard).requireEnabled(TENANT_A);
 
         assertThrows(SctFeatureDisabledException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
@@ -125,8 +136,36 @@ class SctPublicServiceTest {
     }
 
     @Test
-    void verifyLocksAfterFiveFailures() {
+    void meta_exposesChannelHintOnly_noMaskedContact() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
+
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctConsentKeys.CHANNEL_PHONE, meta.getVerifyChannelHint());
+        assertEquals(SctConsentKeys.SIGNER_BAND_ADULT, meta.getSignerBand());
+    }
+
+    @Test
+    void childFormToken_rejected() {
+        template.setFormType("CHILD");
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> sctPublicService.getMeta(RAW_TOKEN));
+        assertEquals(SctConstants.MSG_CHILD_ONLINE_UNSUPPORTED, ex.getMessage());
+    }
+
+    @Test
+    void verifyLocksAfterFiveFailures_usesPessimisticLoad() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -140,18 +179,63 @@ class SctPublicServiceTest {
                 () -> sctPublicService.verify(RAW_TOKEN, bad, "127.0.0.1"));
         assertEquals(SctConstants.VERIFY_MAX_FAILURES, invitation.getVerifyFailCount());
         assertTrue(invitation.getVerifyLockedUntil().isAfter(LocalDateTime.now()));
+        verify(invitationRepository, never()).findByTokenHashAndIsDeletedFalse(any());
+    }
+
+    @Test
+    void formWithoutConsent_throws403() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        String sid = verifySessionStore.issue(100L, TENANT_A);
+        doThrow(new AccessDeniedException("필수 동의가 없습니다."))
+                .when(sctConsentService).requireSatisfied(invitation, "ADULT");
+
+        assertThrows(AccessDeniedException.class,
+                () -> sctPublicService.getForm(RAW_TOKEN, sid));
+    }
+
+    @Test
+    void draftWithoutConsent_throws403() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        String sid = verifySessionStore.issue(100L, TENANT_A);
+        doThrow(new AccessDeniedException("필수 동의가 없습니다."))
+                .when(sctConsentService).requireSatisfied(invitation, "ADULT");
+
+        assertThrows(AccessDeniedException.class, () -> sctPublicService.saveDraft(
+                RAW_TOKEN, SctDraftSaveRequest.builder()
+                        .verifySessionId(sid)
+                        .answers(Collections.singletonList(SctDraftAnswerItem.builder()
+                                .formItemId(1L).answerText("x").build()))
+                        .build()));
+    }
+
+    @Test
+    void submitWithoutConsent_throws403() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        String sid = verifySessionStore.issue(100L, TENANT_A);
+        doThrow(new AccessDeniedException("필수 동의가 없습니다."))
+                .when(sctConsentService).requireSatisfied(invitation, "ADULT");
+
+        assertThrows(AccessDeniedException.class, () -> sctPublicService.submit(
+                RAW_TOKEN, SctSubmitRequest.builder().verifySessionId(sid).build()));
     }
 
     @Test
     void submitThenDraft_throws409() {
-        invitation.setStatus(SctInviteStatus.SENT.name());
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.of(invitation));
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        when(consentRepository.existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
-                eq(TENANT_A), eq(100L), eq(SctConstants.CONSENT_SENSITIVE_INFO)))
-                .thenReturn(true);
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
         SctVerifyResponse verified = sctPublicService.verify(
                 RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
@@ -173,12 +257,12 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L))
-                .thenReturn(Optional.of(SctFormTemplate.builder()
-                        .id(1L).formType("ADULT").title("t").instructionText("i")
-                        .formVersion("v3").tenantId("").isActive(true).isDeleted(false).build()));
+                .thenReturn(Optional.of(template));
         when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
         when(answerRepository.findByTenantIdAndInvitationId("tenant-b", 100L))
                 .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
         sctPublicService.getMeta(RAW_TOKEN);
         verify(sctFeatureGuard).requireEnabled("tenant-b");

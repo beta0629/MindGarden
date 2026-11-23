@@ -15,9 +15,23 @@ public interface SctConsentRepository extends JpaRepository<SctConsent, Long> {
 
     List<SctConsent> findByTenantIdAndInvitationId(String tenantId, Long invitationId);
 
-    Optional<SctConsent> findByTenantIdAndInvitationIdAndConsentType(
+    Optional<SctConsent> findByTenantIdAndInvitationIdAndConsentTypeAndRevokedFalse(
             String tenantId, Long invitationId, String consentType);
 
-    boolean existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
+    Optional<SctConsent> findFirstByTenantIdAndClientIdAndConsentTypeAndRevokedFalseAndAgreedTrueOrderByAgreedAtDesc(
+            String tenantId, Long clientId, String consentType);
+
+    boolean existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
             String tenantId, Long invitationId, String consentType);
+
+    boolean existsByTenantIdAndClientIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+            String tenantId, Long clientId, String consentType);
+
+    boolean existsByTenantIdAndClientIdAndConsentTypeAndRevokedTrue(
+            String tenantId, Long clientId, String consentType);
+
+    List<SctConsent> findByTenantIdAndClientIdAndRevokedFalse(String tenantId, Long clientId);
+
+    List<SctConsent> findByTenantIdAndInvitationIdAndClientIdIsNullAndRevokedFalse(
+            String tenantId, Long invitationId);
 }

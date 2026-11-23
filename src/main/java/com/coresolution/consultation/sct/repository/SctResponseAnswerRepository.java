@@ -17,4 +17,12 @@ public interface SctResponseAnswerRepository extends JpaRepository<SctResponseAn
 
     Optional<SctResponseAnswer> findByTenantIdAndInvitationIdAndFormItemId(
             String tenantId, Long invitationId, Long formItemId);
+
+    /**
+     * 초대 응답 하드 삭제(파기).
+     *
+     * @param tenantId     테넌트
+     * @param invitationId 초대
+     */
+    void deleteByTenantIdAndInvitationId(String tenantId, Long invitationId);
 }

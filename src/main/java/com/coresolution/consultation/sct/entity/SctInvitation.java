@@ -24,7 +24,8 @@ import lombok.experimental.SuperBuilder;
  */
 @Entity
 @Table(name = "sct_invitations", uniqueConstraints = {
-    @UniqueConstraint(name = "uk_sct_inv_token_hash", columnNames = "token_hash")
+    @UniqueConstraint(name = "uk_sct_inv_token_hash", columnNames = "token_hash"),
+    @UniqueConstraint(name = "uk_sct_inv_tenant_mgmt_no", columnNames = {"tenant_id", "management_no"})
 }, indexes = {
     @Index(name = "idx_sct_inv_tenant_status", columnList = "tenant_id,status,created_at"),
     @Index(name = "idx_sct_inv_tenant_client", columnList = "tenant_id,client_id,submitted_at"),
@@ -49,6 +50,10 @@ public class SctInvitation extends BaseEntity {
 
     @Column(name = "consultant_id")
     private Long consultantId;
+
+    /** 테넌트 단위 관리번호(PII 없음). 생성 시 자동 부여, 수정 API 없음. */
+    @Column(name = "management_no", nullable = false, length = 32)
+    private String managementNo;
 
     @Convert(converter = PhoneAttributeConverter.class)
     @Column(name = "target_phone", length = 512)

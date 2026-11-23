@@ -34,4 +34,12 @@ public interface SctSettingsService {
      * @return 일수
      */
     int resolveLinkExpiryDays(String tenantId);
+
+    /**
+     * 응답 보관 일수(기본 365). 자동 삭제 배치 없음.
+     *
+     * @param tenantId 테넌트
+     * @return 일수
+     */
+    int resolveRetentionDays(String tenantId);
 }

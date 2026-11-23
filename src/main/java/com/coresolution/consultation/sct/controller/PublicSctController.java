@@ -1,5 +1,6 @@
 package com.coresolution.consultation.sct.controller;
 
+import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
 import com.coresolution.consultation.sct.dto.SctPublicFormResponse;
@@ -14,13 +15,13 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
@@ -67,16 +68,20 @@ public class PublicSctController extends BaseApiController {
     }
 
     /**
-     * 양식+임시답.
+     * 양식+임시답. verifySessionId 는 헤더 {@code X-Sct-Verify-Session}.
      *
-     * @param token            토큰
-     * @param verifySessionId  검증 세션
+     * @param token 토큰
+     * @param http  HTTP
      * @return 양식
      */
     @GetMapping("/{token}/form")
     public ResponseEntity<?> form(
             @PathVariable String token,
-            @RequestParam("verifySessionId") String verifySessionId) {
+            HttpServletRequest http) {
+        String verifySessionId = http.getHeader(SctConsentKeys.VERIFY_SESSION_HEADER);
+        if (!StringUtils.hasText(verifySessionId)) {
+            throw new IllegalArgumentException("본인 확인이 필요합니다.");
+        }
         SctPublicFormResponse data = sctPublicService.getForm(token, verifySessionId);
         return success(data);
     }

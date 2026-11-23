@@ -44,4 +44,35 @@ public interface SctInvitationService {
     SctInvitationResponse link(String tenantId, User actor, Long invitationId, SctLinkRequest request);
 
     SctInvitationResponse unlink(String tenantId, User actor, Long invitationId);
+
+    /**
+     * ADMIN — 내담자 단위 SCT 동의 철회. 이후 발송·실시 차단.
+     *
+     * @param tenantId 테넌트
+     * @param actor 관리자
+     * @param clientId 내담자
+     */
+    void revokeClientConsent(String tenantId, User actor, Long clientId);
+
+    /**
+     * 응답 인쇄 감사(sct_access_logs PRINT + AuditAction.SCT_RESPONSE_PRINTED).
+     * 열람과 동일 권한(ADMIN·STAFF·담당 CONSULTANT).
+     *
+     * @param tenantId  테넌트
+     * @param actor     행위자
+     * @param id        초대 ID
+     * @param clientIp  IP
+     * @param userAgent UA
+     */
+    void recordPrintAudit(String tenantId, User actor, Long id, String clientIp, String userAgent);
+
+    /**
+     * ADMIN 수동 파기. 파기 대상(보관일 경과)만 허용, 아니면 409.
+     * 응답·영역 메모 삭제, 동의(sct_consents)는 유지. 감사는 managementNo 만.
+     *
+     * @param tenantId 테넌트
+     * @param actor    ADMIN
+     * @param id       초대 ID
+     */
+    void destroyInvitation(String tenantId, User actor, Long id);
 }

@@ -18,4 +18,13 @@ public enum SctFormType {
     public static SctFormType fromCode(String code) {
         return SctFormType.valueOf(code);
     }
+
+    /**
+     * 온라인 실시 가능 여부(성인·청소년만).
+     *
+     * @return true면 온라인 발송·공개 실시 가능
+     */
+    public boolean isOnlineSupported() {
+        return this == ADULT || this == ADOLESCENT;
+    }
 }

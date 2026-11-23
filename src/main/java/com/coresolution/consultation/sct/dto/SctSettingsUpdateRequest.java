@@ -21,8 +21,12 @@ public class SctSettingsUpdateRequest {
     @Min(1)
     @Max(30)
     private Integer linkExpiryDays;
-    /** null 허용 = 자동 파기 없음 */
+    /** 보관 일수(기본 365). 자동 삭제 배치 없음. */
     @Min(1)
     private Integer retentionDays;
+    /**
+     * true 이면 보관일을 기본값(365)으로 되돌림.
+     * null 보관(자동 파기 없음)은 더 이상 허용하지 않음.
+     */
     private Boolean clearRetention;
 }

@@ -1,7 +1,6 @@
 package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,7 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
- * SCT 설정 — ADMIN 변경·감사·새 링크 만료일 반영.
+ * SCT 설정 — ADMIN 변경·감사·보관 기본 365.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -46,6 +45,30 @@ class SctSettingsServiceTest {
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
                 SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
         assertEquals(14, settingsService.resolveLinkExpiryDays("t1"));
+    }
+
+    @Test
+    void defaultRetentionIs365() {
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        assertEquals(365, settingsService.resolveRetentionDays("t1"));
+    }
+
+    @Test
+    void blankRetentionConfigFallsBackTo365() {
+        SystemConfig blank = SystemConfig.builder()
+                .tenantId("")
+                .configKey(SctFeatureFlagKeys.RETENTION_DAYS)
+                .configValue(null)
+                .isActive(true)
+                .build();
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.of(blank));
+        assertEquals(365, settingsService.resolveRetentionDays("t1"));
     }
 
     @Test
@@ -81,7 +104,7 @@ class SctSettingsServiceTest {
     }
 
     @Test
-    void retentionNullMeansNoAutoPurgeSettingOnly() {
+    void clearRetentionResetsToDefault365() {
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
                 SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
@@ -96,7 +119,7 @@ class SctSettingsServiceTest {
         var res = settingsService.updateSettings("t1",
                 SctSettingsUpdateRequest.builder().clearRetention(true).build(),
                 1L, "ADMIN");
-        assertNull(res.getRetentionDays());
+        assertEquals(365, res.getRetentionDays());
     }
 
     private static void assertTrueContains(String hay, String needle) {

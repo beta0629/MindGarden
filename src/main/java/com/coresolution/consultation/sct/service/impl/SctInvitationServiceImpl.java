@@ -1,6 +1,8 @@
 package com.coresolution.consultation.sct.service.impl;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -18,6 +20,7 @@ import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.constant.SctFormType;
 import com.coresolution.consultation.sct.constant.SctInviteStatus;
@@ -27,16 +30,21 @@ import com.coresolution.consultation.sct.dto.SctInviteCreateRequest;
 import com.coresolution.consultation.sct.dto.SctInvitationResponse;
 import com.coresolution.consultation.sct.dto.SctLinkCandidateResponse;
 import com.coresolution.consultation.sct.dto.SctLinkRequest;
+import com.coresolution.consultation.sct.entity.SctDomainMemo;
 import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
+import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
+import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
+import com.coresolution.consultation.sct.repository.SctManagementNoSeqRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctInvitationService;
 import com.coresolution.consultation.sct.service.SctSettingsService;
@@ -68,11 +76,14 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     private final SctFormItemRepository formItemRepository;
     private final SctInvitationRepository invitationRepository;
     private final SctResponseAnswerRepository answerRepository;
+    private final SctDomainMemoRepository domainMemoRepository;
+    private final SctManagementNoSeqRepository managementNoSeqRepository;
     private final ClientRepository clientRepository;
     private final ConsultantClientMappingRepository mappingRepository;
     private final SmsAuthService smsAuthService;
     private final AuditLogService auditLogService;
     private final SctAccessLogService sctAccessLogService;
+    private final SctConsentService sctConsentService;
 
     @Override
     @Transactional(readOnly = true)
@@ -97,6 +108,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         sctFeatureGuard.requireEnabled(tenantId);
         requireStaffLike(actor);
         SctFormType formType = SctFormType.fromCode(request.getFormType());
+        if (!formType.isOnlineSupported()) {
+            throw new IllegalArgumentException(SctConstants.MSG_CHILD_ONLINE_UNSUPPORTED);
+        }
         SctFormTemplate template = resolveActiveTemplate(formType);
 
         Long clientId = request.getClientId();
@@ -133,6 +147,13 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             throw new AccessDeniedException("상담사는 담당 내담자/배정으로만 발송할 수 있습니다.");
         }
 
+        sctConsentService.assertNotRevokedForDispatch(tenantId, clientId);
+
+        Client linkedClient = null;
+        if (clientId != null) {
+            linkedClient = clientRepository.findById(clientId).orElse(null);
+        }
+
         String phone = StringUtils.hasText(request.getPhone())
                 ? LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone())
                 : null;
@@ -150,14 +171,18 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             throw new IllegalArgumentException("만료 일수는 1~30 이어야 합니다.");
         }
 
+        boolean requiresGuardian = resolveRequiresGuardian(formType, linkedClient, request);
+
         String rawToken = SctTokenHasher.generateOpaqueToken();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
+        String managementNo = nextManagementNo(tenantId);
 
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(template.getId())
                 .clientId(clientId)
                 .mappingId(mappingId)
                 .consultantId(consultantId)
+                .managementNo(managementNo)
                 .targetPhone(phone)
                 .targetEmail(email)
                 .targetPhoneHash(phone == null ? null : PhoneHashUtils.sha256Hex(phone))
@@ -167,7 +192,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .status(SctInviteStatus.SENT.name())
                 .sentAt(LocalDateTime.now())
                 .sentByUserId(actor.getId())
-                .requiresGuardian(Boolean.TRUE.equals(request.getRequiresGuardian()))
+                .requiresGuardian(requiresGuardian)
                 .verifyFailCount(0)
                 .build();
         invitation.setTenantId(tenantId);
@@ -363,17 +388,104 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     public List<SctLinkCandidateResponse> linkCandidates(String tenantId, Long invitationId) {
         sctFeatureGuard.requireEnabled(tenantId);
         SctInvitation invitation = requireInvitation(tenantId, invitationId);
+        // 자동 배정 금지 — 동일 테넌트 활성 내담자만 스캔해 후보 반환.
+        String targetPhoneHash = invitation.getTargetPhoneHash();
+        String targetEmailHash = invitation.getTargetEmailHash();
+        if (!StringUtils.hasText(targetPhoneHash) && !StringUtils.hasText(targetEmailHash)) {
+            return List.of();
+        }
+
+        List<Client> clients = clientRepository.findByTenantIdAndIsDeletedFalse(tenantId);
         List<SctLinkCandidateResponse> candidates = new ArrayList<>();
-        // 후보만 — 자동 배정 금지. 전화/이메일 해시로 Client 검색은 컨버터 한계상
-        // 동일 테넌트 활성 내담자 중 해시 일치 후보를 반환(구현: phone hash 컬럼이 있는 경우만).
-        // Client 엔티티에 phone_hash 가 없을 수 있어 빈 목록 + 메타만 허용.
-        if (invitation.getTargetPhoneHash() != null) {
-            log.info("SCT link-candidates: phoneHash present invitationId={}", invitationId);
+        for (Client client : clients) {
+            boolean phoneMatch = StringUtils.hasText(targetPhoneHash)
+                    && targetPhoneHash.equals(hashClientPhone(client));
+            boolean emailMatch = StringUtils.hasText(targetEmailHash)
+                    && targetEmailHash.equals(hashClientEmail(client));
+            if (!phoneMatch && !emailMatch) {
+                continue;
+            }
+            String channel;
+            if (phoneMatch && emailMatch) {
+                channel = SctConstants.MATCH_CHANNEL_BOTH;
+            } else if (phoneMatch) {
+                channel = SctConstants.MATCH_CHANNEL_PHONE;
+            } else {
+                channel = SctConstants.MATCH_CHANNEL_EMAIL;
+            }
+            candidates.add(SctLinkCandidateResponse.builder()
+                    .clientId(client.getId())
+                    .maskedName(maskClientName(client.getName()))
+                    .matchChannel(channel)
+                    .build());
         }
-        if (invitation.getTargetEmailHash() != null) {
-            log.info("SCT link-candidates: emailHash present invitationId={}", invitationId);
-        }
+        log.info("SCT link-candidates invitationId={} tenant={} count={}",
+                invitationId, tenantId, candidates.size());
         return candidates;
+    }
+
+    /**
+     * Client.phone(컨버터 복호) → 정규화 → SHA-256.
+     *
+     * @param client 내담자
+     * @return 해시 또는 null
+     */
+    private static String hashClientPhone(Client client) {
+        if (client == null || !StringUtils.hasText(client.getPhone())) {
+            return null;
+        }
+        try {
+            String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(client.getPhone());
+            if (!StringUtils.hasText(normalized)) {
+                return null;
+            }
+            return PhoneHashUtils.sha256Hex(normalized);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * Client.email(컨버터 복호) → 소문자 정규화 → SHA-256(초대 해시와 동일).
+     *
+     * @param client 내담자
+     * @return 해시 또는 null
+     */
+    private static String hashClientEmail(Client client) {
+        if (client == null || !StringUtils.hasText(client.getEmail())) {
+            return null;
+        }
+        try {
+            String normalized = client.getEmail().trim().toLowerCase(Locale.ROOT);
+            if (!StringUtils.hasText(normalized)) {
+                return null;
+            }
+            return SctTokenHasher.sha256Hex(normalized);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * 내담자명 마스킹(자동 배정 금지·후보 표시용).
+     *
+     * @param name 이름
+     * @return 마스킹
+     */
+    private static String maskClientName(String name) {
+        if (name == null || name.isBlank()) {
+            return "***";
+        }
+        String trimmed = name.trim();
+        if (trimmed.length() == 1) {
+            return trimmed;
+        }
+        if (trimmed.length() == 2) {
+            return trimmed.charAt(0) + "*";
+        }
+        return trimmed.charAt(0)
+                + "*".repeat(trimmed.length() - 2)
+                + trimmed.charAt(trimmed.length() - 1);
     }
 
     @Override
@@ -406,7 +518,12 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setClientId(client.getId());
         invitation.setMappingId(mappingId);
         invitation.setConsultantId(consultantId);
+        if (client.getBirthDate() != null && isUnder14(client.getBirthDate())) {
+            invitation.setRequiresGuardian(true);
+        }
         invitationRepository.save(invitation);
+        sctConsentService.succeedUnlinkedToClient(
+                tenantId, invitation.getId(), client.getId(), actor);
         auditLogService.record(AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actor.getId())
@@ -419,6 +536,81 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                         + ",\"mappingId\":" + mappingId + "}")
                 .build());
         return toMetaResponse(invitation, resolveFormType(invitation.getFormTemplateId()));
+    }
+
+    @Override
+    @Transactional
+    public void revokeClientConsent(String tenantId, User actor, Long clientId) {
+        sctFeatureGuard.requireEnabled(tenantId);
+        ensureCanAccessClient(tenantId, actor, clientId);
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new EntityNotFoundException("내담자를 찾을 수 없습니다."));
+        if (!tenantId.equals(client.getTenantId())) {
+            throw new AccessDeniedException("타 테넌트 내담자입니다.");
+        }
+        sctConsentService.revokeForClient(tenantId, clientId, actor);
+    }
+
+    @Override
+    @Transactional
+    public void recordPrintAudit(
+            String tenantId, User actor, Long id, String clientIp, String userAgent) {
+        sctFeatureGuard.requireEnabled(tenantId);
+        requireStaffLike(actor);
+        SctInvitation invitation = requireInvitation(tenantId, id);
+        ensureCanAccessInvitation(tenantId, actor, invitation);
+        if (!SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
+            throw new SctConflictException("제출된 응답만 인쇄할 수 있습니다.");
+        }
+        sctAccessLogService.logPrint(
+                invitation, actor.getId(), actor.getRole().name(), clientIp, userAgent);
+        auditLogService.record(AuditLog.builder()
+                .tenantId(tenantId)
+                .actorUserId(actor.getId())
+                .actorRole(actor.getRole().name())
+                .targetUserId(invitation.getClientId())
+                .action(AuditAction.SCT_RESPONSE_PRINTED)
+                .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                .entityId(invitation.getId())
+                .build());
+    }
+
+    @Override
+    @Transactional
+    public void destroyInvitation(String tenantId, User actor, Long id) {
+        sctFeatureGuard.requireEnabled(tenantId);
+        if (actor == null || actor.getRole() != UserRole.ADMIN) {
+            throw new AccessDeniedException("ADMIN만 파기할 수 있습니다.");
+        }
+        SctInvitation invitation = requireInvitation(tenantId, id);
+        int retentionDays = sctSettingsService.resolveRetentionDays(tenantId);
+        if (!isDestroyEligible(invitation, retentionDays)) {
+            throw new SctConflictException(SctConstants.MSG_DESTROY_NOT_ELIGIBLE);
+        }
+        String managementNo = invitation.getManagementNo();
+        answerRepository.deleteByTenantIdAndInvitationId(tenantId, invitation.getId());
+        List<SctDomainMemo> memos = domainMemoRepository
+                .findByTenantIdAndInvitationIdAndIsDeletedFalse(tenantId, invitation.getId());
+        for (SctDomainMemo memo : memos) {
+            memo.delete();
+        }
+        if (!memos.isEmpty()) {
+            domainMemoRepository.saveAll(memos);
+        }
+        // 동의(sct_consents)는 남김
+        invitation.delete();
+        invitationRepository.save(invitation);
+        auditLogService.record(AuditLog.builder()
+                .tenantId(tenantId)
+                .actorUserId(actor.getId())
+                .actorRole(actor.getRole().name())
+                .action(AuditAction.SCT_RESPONSE_DESTROYED)
+                .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                .entityId(invitation.getId())
+                .metadataJson("{\"managementNo\":\"" + escapeJson(managementNo) + "\"}")
+                .build());
+        log.info("SCT destroy invitationId={} tenant={} managementNo={} actor={}",
+                id, tenantId, managementNo, actor.getId());
     }
 
     @Override
@@ -508,6 +700,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     private SctInvitationResponse toMetaResponse(SctInvitation invitation, String formType) {
+        int retentionDays = sctSettingsService.resolveRetentionDays(invitation.getTenantId());
         return SctInvitationResponse.builder()
                 .id(invitation.getId())
                 .formType(formType)
@@ -515,6 +708,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .clientId(invitation.getClientId())
                 .mappingId(invitation.getMappingId())
                 .consultantId(invitation.getConsultantId())
+                .managementNo(invitation.getManagementNo())
                 .status(invitation.getStatus())
                 .maskedPhone(invitation.getTargetPhone() == null
                         ? null : PhoneLogMasking.maskForLog(invitation.getTargetPhone()))
@@ -526,7 +720,55 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .cancelledAt(invitation.getCancelledAt())
                 .smsDispatchResult(invitation.getSmsDispatchResult())
                 .requiresGuardian(invitation.getRequiresGuardian())
+                .destroyEligible(isDestroyEligible(invitation, retentionDays))
                 .build();
+    }
+
+    /**
+     * 테넌트 시퀀스로 관리번호 발급(PII 없음).
+     *
+     * @param tenantId 테넌트
+     * @return SCT-000001 형식
+     */
+    private String nextManagementNo(String tenantId) {
+        SctManagementNoSeq seq = managementNoSeqRepository.findByTenantIdForUpdate(tenantId)
+                .orElseGet(() -> {
+                    SctManagementNoSeq created = SctManagementNoSeq.builder()
+                            .tenantId(tenantId)
+                            .nextVal(1L)
+                            .build();
+                    return managementNoSeqRepository.saveAndFlush(created);
+                });
+        long value = seq.getNextVal() == null ? 1L : seq.getNextVal();
+        seq.setNextVal(value + 1);
+        managementNoSeqRepository.save(seq);
+        return SctConstants.MANAGEMENT_NO_PREFIX
+                + String.format(Locale.ROOT, "%0" + SctConstants.MANAGEMENT_NO_DIGITS + "d", value);
+    }
+
+    /**
+     * 제출일(실시일) + 보관일 경과 여부.
+     *
+     * @param invitation    초대
+     * @param retentionDays 보관일
+     * @return 파기 대상이면 true
+     */
+    public static boolean isDestroyEligible(SctInvitation invitation, int retentionDays) {
+        if (invitation == null || invitation.getSubmittedAt() == null) {
+            return false;
+        }
+        if (!SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
+            return false;
+        }
+        LocalDateTime eligibleAt = invitation.getSubmittedAt().plusDays(retentionDays);
+        return !eligibleAt.isAfter(LocalDateTime.now());
+    }
+
+    private static String escapeJson(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.replace("\\", "\\\\").replace("\"", "\\\"");
     }
 
     private String resolveFormType(Long formTemplateId) {
@@ -593,5 +835,37 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         if (!ok) {
             throw new AccessDeniedException("담당 내담자가 아닙니다.");
         }
+    }
+
+    /**
+     * birthDate로 만 14세 미만 여부. 없으면 요청 플래그·CHILD 양식.
+     *
+     * @param formType 양식
+     * @param client 내담자(미연동 null)
+     * @param request 발송 요청
+     * @return 법정대리인 필요 여부
+     */
+    private static boolean resolveRequiresGuardian(
+            SctFormType formType, Client client, SctInviteCreateRequest request) {
+        if (formType == SctFormType.CHILD) {
+            return true;
+        }
+        if (client != null && client.getBirthDate() != null) {
+            return isUnder14(client.getBirthDate());
+        }
+        return Boolean.TRUE.equals(request.getRequiresGuardian());
+    }
+
+    /**
+     * 만 14세 미만 판정({@link Period}).
+     *
+     * @param birthDate 생년월일
+     * @return true면 만 14세 미만
+     */
+    private static boolean isUnder14(LocalDate birthDate) {
+        if (birthDate == null) {
+            return false;
+        }
+        return Period.between(birthDate, LocalDate.now()).getYears() < SctConsentKeys.UNDER_14_AGE;
     }
 }

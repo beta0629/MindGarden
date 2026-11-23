@@ -59,6 +59,10 @@ public class SctFormTemplate {
     @Column(name = "target_desc", length = 200)
     private String targetDesc;
 
+    /** 머리 칸 JSON (web-handoff / build_sct_v3 header). */
+    @Column(name = "header_fields_json", columnDefinition = "TEXT")
+    private String headerFieldsJson;
+
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;

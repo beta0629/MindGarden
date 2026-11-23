@@ -24,6 +24,10 @@ public class SctConsentRequest {
     private String consentType;
     @NotNull
     private Boolean agreed;
+    /** 본인 서명 성명(성인·14세↑). */
+    private String signerName;
     private String guardianName;
     private String guardianRelation;
+    /** 아동 이름 확인(선택). */
+    private String childNameConfirm;
 }

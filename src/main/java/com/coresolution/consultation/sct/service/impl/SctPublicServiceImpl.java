@@ -10,10 +10,13 @@ import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.AuditLogService;
+import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.constant.SctConstants;
+import com.coresolution.consultation.sct.constant.SctFormType;
 import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.dto.SctAnswerView;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
+import com.coresolution.consultation.sct.dto.SctConsentStatusView;
 import com.coresolution.consultation.sct.dto.SctDraftAnswerItem;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
 import com.coresolution.consultation.sct.dto.SctPublicFormResponse;
@@ -21,8 +24,6 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
-import com.coresolution.consultation.sct.entity.SctConsent;
-import com.coresolution.consultation.sct.entity.SctConsentTemplate;
 import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
@@ -31,20 +32,18 @@ import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
-import com.coresolution.consultation.sct.repository.SctConsentRepository;
-import com.coresolution.consultation.sct.repository.SctConsentTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PhoneHashUtils;
-import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -67,11 +66,10 @@ public class SctPublicServiceImpl implements SctPublicService {
     private final SctFormTemplateRepository formTemplateRepository;
     private final SctFormItemRepository formItemRepository;
     private final SctResponseAnswerRepository answerRepository;
-    private final SctConsentRepository consentRepository;
-    private final SctConsentTemplateRepository consentTemplateRepository;
     private final SctInviteAccessAttemptRepository attemptRepository;
     private final SctVerifySessionStore verifySessionStore;
     private final SctFeatureGuard sctFeatureGuard;
+    private final SctConsentService sctConsentService;
     private final AuditLogService auditLogService;
 
     @Override
@@ -85,24 +83,33 @@ public class SctPublicServiceImpl implements SctPublicService {
         boolean hasDraft = SctInviteStatus.DRAFT.name().equals(invitation.getStatus())
                 || !answerRepository.findByTenantIdAndInvitationId(
                         invitation.getTenantId(), invitation.getId()).isEmpty();
+        boolean requiresGuardian = Boolean.TRUE.equals(invitation.getRequiresGuardian());
+        String channel = null;
+        if (StringUtils.hasText(invitation.getTargetPhoneHash())) {
+            channel = SctConsentKeys.CHANNEL_PHONE;
+        } else if (StringUtils.hasText(invitation.getTargetEmailHash())) {
+            channel = SctConsentKeys.CHANNEL_EMAIL;
+        }
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
                 .status(invitation.getStatus())
                 .itemCount(itemCount)
-                .maskedPhoneHint(invitation.getTargetPhone() == null
-                        ? null : PhoneLogMasking.maskForLog(invitation.getTargetPhone()))
-                .maskedEmailHint(maskEmail(invitation.getTargetEmail()))
+                .verifyChannelHint(channel)
                 .tokenExpiresAt(invitation.getTokenExpiresAt())
                 .hasDraft(hasDraft)
-                .requiresGuardian(Boolean.TRUE.equals(invitation.getRequiresGuardian()))
+                .requiresGuardian(requiresGuardian)
+                .signerBand(sctConsentService.resolveSignerBand(template.getFormType(), requiresGuardian))
                 .build();
     }
 
     @Override
     @Transactional
     public SctVerifyResponse verify(String rawToken, SctVerifyRequest request, String clientIp) {
-        SctInvitation invitation = loadByToken(rawToken);
+        String hash = hashToken(rawToken);
+        SctInvitation invitation = invitationRepository
+                .findByTokenHashAndIsDeletedFalseForUpdate(hash)
+                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
         if (invitation.getVerifyLockedUntil() != null
@@ -138,9 +145,12 @@ public class SctPublicServiceImpl implements SctPublicService {
         }
         invitationRepository.save(invitation);
         String sessionId = verifySessionStore.issue(invitation.getId(), invitation.getTenantId());
+        SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
                 .expiresInSeconds(SctConstants.VERIFY_SESSION_TTL_MINUTES * 60)
+                .consent(consent)
                 .build();
     }
 
@@ -152,6 +162,8 @@ public class SctPublicServiceImpl implements SctPublicService {
         requireVerifySession(verifySessionId, invitation);
         assertReadable(invitation);
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        sctConsentService.requireSatisfied(invitation, template.getFormType());
+
         List<SctFormItem> items = formItemRepository
                 .findByFormTemplateIdOrderBySortOrderAsc(template.getId());
         List<SctResponseAnswer> answers = answerRepository
@@ -173,30 +185,16 @@ public class SctPublicServiceImpl implements SctPublicService {
                     .build();
         }).collect(Collectors.toList());
 
-        SctConsentTemplate sensitive = activeConsent(SctConstants.CONSENT_SENSITIVE_INFO);
-        SctConsentTemplate guardian = activeConsent(SctConstants.CONSENT_GUARDIAN_UNDER_14);
-        boolean sensitiveDone = consentRepository
-                .existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
-                        invitation.getTenantId(), invitation.getId(),
-                        SctConstants.CONSENT_SENSITIVE_INFO);
-        boolean guardianDone = consentRepository
-                .existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
-                        invitation.getTenantId(), invitation.getId(),
-                        SctConstants.CONSENT_GUARDIAN_UNDER_14);
-
+        SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctPublicFormResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
                 .instructionText(template.getInstructionText())
+                .headerFieldsJson(template.getHeaderFieldsJson())
                 .status(invitation.getStatus())
                 .requiresGuardian(Boolean.TRUE.equals(invitation.getRequiresGuardian()))
-                .sensitiveConsentRequired(!sensitiveDone)
-                .guardianConsentRequired(
-                        Boolean.TRUE.equals(invitation.getRequiresGuardian()) && !guardianDone)
-                .sensitiveConsentTitle(sensitive == null ? null : sensitive.getTitle())
-                .sensitiveConsentBody(sensitive == null ? null : sensitive.getBodyText())
-                .guardianConsentTitle(guardian == null ? null : guardian.getTitle())
-                .guardianConsentBody(guardian == null ? null : guardian.getBodyText())
+                .signerBand(consent.getSignerBand())
+                .consent(consent)
                 .items(views)
                 .build();
     }
@@ -208,6 +206,8 @@ public class SctPublicServiceImpl implements SctPublicService {
         bindTenantAndGuard(invitation);
         requireVerifySession(request.getVerifySessionId(), invitation);
         assertWritable(invitation);
+        SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        sctConsentService.requireSatisfied(invitation, template.getFormType());
         if (request.getAnswers() != null) {
             for (SctDraftAnswerItem item : request.getAnswers()) {
                 upsertAnswer(invitation, item);
@@ -228,27 +228,9 @@ public class SctPublicServiceImpl implements SctPublicService {
         bindTenantAndGuard(invitation);
         requireVerifySession(request.getVerifySessionId(), invitation);
         assertWritable(invitation);
-        if (!Boolean.TRUE.equals(request.getAgreed())) {
-            throw new IllegalArgumentException("동의가 필요합니다.");
-        }
-        SctConsentTemplate template = activeConsent(request.getConsentType());
-        String version = template == null ? null : template.getVersion();
-        Optional<SctConsent> existing = consentRepository
-                .findByTenantIdAndInvitationIdAndConsentType(
-                        invitation.getTenantId(), invitation.getId(), request.getConsentType());
-        SctConsent consent = existing.orElseGet(SctConsent::new);
-        consent.setTenantId(invitation.getTenantId());
-        consent.setInvitationId(invitation.getId());
-        consent.setConsentType(request.getConsentType());
-        consent.setConsentTemplateVersion(version);
-        consent.setAgreed(true);
-        consent.setGuardianName(request.getGuardianName());
-        consent.setGuardianRelation(request.getGuardianRelation());
-        consent.setAgreedAt(LocalDateTime.now());
-        consent.setIpHash(SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp));
-        consent.setUserAgentHash(
-                userAgent == null ? null : SctTokenHasher.sha256Hex(userAgent));
-        consentRepository.save(consent);
+        SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        sctConsentService.recordPublicConsent(
+                invitation, template.getFormType(), request, clientIp, userAgent);
     }
 
     @Override
@@ -258,22 +240,8 @@ public class SctPublicServiceImpl implements SctPublicService {
         bindTenantAndGuard(invitation);
         requireVerifySession(request.getVerifySessionId(), invitation);
         assertWritable(invitation);
-        boolean sensitive = consentRepository
-                .existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
-                        invitation.getTenantId(), invitation.getId(),
-                        SctConstants.CONSENT_SENSITIVE_INFO);
-        if (!sensitive) {
-            throw new IllegalArgumentException("민감정보 동의가 필요합니다.");
-        }
-        if (Boolean.TRUE.equals(invitation.getRequiresGuardian())) {
-            boolean guardian = consentRepository
-                    .existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrue(
-                            invitation.getTenantId(), invitation.getId(),
-                            SctConstants.CONSENT_GUARDIAN_UNDER_14);
-            if (!guardian) {
-                throw new IllegalArgumentException("보호자 동의가 필요합니다.");
-            }
-        }
+        SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        sctConsentService.requireSatisfied(invitation, template.getFormType());
         invitation.setStatus(SctInviteStatus.SUBMITTED.name());
         invitation.setSubmittedAt(LocalDateTime.now());
         invitationRepository.save(invitation);
@@ -291,8 +259,13 @@ public class SctPublicServiceImpl implements SctPublicService {
         if (item.getFormItemId() == null) {
             return;
         }
-        formItemRepository.findByIdAndFormTemplateId(item.getFormItemId(), invitation.getFormTemplateId())
+        SctFormItem formItem = formItemRepository
+                .findByIdAndFormTemplateId(item.getFormItemId(), invitation.getFormTemplateId())
                 .orElseThrow(() -> new IllegalArgumentException("문항이 올바르지 않습니다."));
+        boolean na = Boolean.TRUE.equals(item.getNotApplicable());
+        if (na && !Boolean.TRUE.equals(formItem.getAllowsNotApplicable())) {
+            throw new IllegalArgumentException("해당 없음이 허용되지 않는 문항입니다.");
+        }
         SctResponseAnswer answer = answerRepository
                 .findByTenantIdAndInvitationIdAndFormItemId(
                         invitation.getTenantId(), invitation.getId(), item.getFormItemId())
@@ -300,7 +273,6 @@ public class SctPublicServiceImpl implements SctPublicService {
         answer.setTenantId(invitation.getTenantId());
         answer.setInvitationId(invitation.getId());
         answer.setFormItemId(item.getFormItemId());
-        boolean na = Boolean.TRUE.equals(item.getNotApplicable());
         answer.setNotApplicable(na);
         String text = na ? null : item.getAnswerText();
         answer.setAnswerText(text);
@@ -309,18 +281,37 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private SctInvitation loadByToken(String rawToken) {
+        return invitationRepository.findByTokenHashAndIsDeletedFalse(hashToken(rawToken))
+                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+    }
+
+    private static String hashToken(String rawToken) {
         if (!StringUtils.hasText(rawToken)) {
             throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
         }
-        String hash = SctTokenHasher.sha256Hex(rawToken);
-        return invitationRepository.findByTokenHashAndIsDeletedFalse(hash)
-                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+        return SctTokenHasher.sha256Hex(rawToken);
     }
 
     private void bindTenantAndGuard(SctInvitation invitation) {
         TenantContextHolder.setTenantId(invitation.getTenantId());
         sctFeatureGuard.requireEnabled(invitation.getTenantId());
         refreshExpired(invitation);
+        assertOnlineFormType(invitation);
+    }
+
+    /**
+     * 아동용 초대 토큰은 공개 API에서 거부(온라인 미제공).
+     *
+     * @param invitation 초대
+     */
+    private void assertOnlineFormType(SctInvitation invitation) {
+        formTemplateRepository.findByIdAndIsDeletedFalse(invitation.getFormTemplateId())
+                .ifPresent(template -> {
+                    if (SctFormType.CHILD.name().equals(template.getFormType())) {
+                        throw new IllegalArgumentException(
+                                SctConstants.MSG_CHILD_ONLINE_UNSUPPORTED);
+                    }
+                });
     }
 
     private void refreshExpired(SctInvitation invitation) {
@@ -379,23 +370,5 @@ public class SctPublicServiceImpl implements SctPublicService {
     private SctFormTemplate requireTemplate(Long id) {
         return formTemplateRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new EntityNotFoundException("양식을 찾을 수 없습니다."));
-    }
-
-    private SctConsentTemplate activeConsent(String type) {
-        return consentTemplateRepository
-                .findFirstByTenantIdAndConsentTypeAndIsActiveTrueOrderByCreatedAtDesc(
-                        SctConstants.CORE_TENANT_ID, type)
-                .orElse(null);
-    }
-
-    private static String maskEmail(String email) {
-        if (email == null || email.isBlank()) {
-            return null;
-        }
-        int at = email.indexOf('@');
-        if (at <= 1) {
-            return "***";
-        }
-        return email.charAt(0) + "***" + email.substring(at);
     }
 }

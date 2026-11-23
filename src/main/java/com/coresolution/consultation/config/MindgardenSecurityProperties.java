@@ -133,6 +133,16 @@ public class MindgardenSecurityProperties {
          * 센터 홈페이지 공개 테넌트 API URI 접두.
          */
         private String publicTenantsPathPrefix = "/api/v1/public/tenants/";
+
+        /**
+         * SCT 공개 API({@code /api/v1/public/sct/**}) IP당 분당 허용 수.
+         */
+        private int sctPublicRequestsPerMinute = 60;
+
+        /**
+         * SCT 공개 API URI 접두.
+         */
+        private String sctPublicPathPrefix = "/api/v1/public/sct";
     }
 
     @Data

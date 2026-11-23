@@ -25,7 +25,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "sct_consent_templates", uniqueConstraints = {
     @UniqueConstraint(name = "uk_sct_consent_tpl",
-            columnNames = {"tenant_id", "consent_type", "version"})
+            columnNames = {"tenant_id", "consent_type", "form_type", "version"})
 })
 @Getter
 @Setter
@@ -43,6 +43,10 @@ public class SctConsentTemplate {
 
     @Column(name = "consent_type", nullable = false, length = 40)
     private String consentType;
+
+    /** ADULT/ADOLESCENT/CHILD. GUARDIAN 등은 null. */
+    @Column(name = "form_type", length = 20)
+    private String formType;
 
     @Column(name = "version", nullable = false, length = 40)
     private String version;

@@ -40,6 +40,10 @@ public class SctConsent {
     @Column(name = "invitation_id", nullable = false)
     private Long invitationId;
 
+    /** 내담자 단위 동의. 미연동 시 null, link 시 승계. */
+    @Column(name = "client_id")
+    private Long clientId;
+
     @Column(name = "consent_type", nullable = false, length = 40)
     private String consentType;
 
@@ -55,6 +59,24 @@ public class SctConsent {
 
     @Column(name = "guardian_relation", length = 40)
     private String guardianRelation;
+
+    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Column(name = "signer_name_enc", length = 512)
+    private String signerName;
+
+    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Column(name = "child_name_confirm_enc", length = 512)
+    private String childNameConfirm;
+
+    @Column(name = "is_revoked", nullable = false)
+    @Builder.Default
+    private Boolean revoked = false;
+
+    @Column(name = "revoked_at")
+    private LocalDateTime revokedAt;
+
+    @Column(name = "revoked_by_user_id")
+    private Long revokedByUserId;
 
     @Column(name = "agreed_at", nullable = false)
     private LocalDateTime agreedAt;

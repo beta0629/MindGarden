@@ -12,6 +12,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
  */
 public interface SctConsentTemplateRepository extends JpaRepository<SctConsentTemplate, Long> {
 
+    Optional<SctConsentTemplate> findFirstByTenantIdAndConsentTypeAndFormTypeAndIsActiveTrueOrderByCreatedAtDesc(
+            String tenantId, String consentType, String formType);
+
+    Optional<SctConsentTemplate> findFirstByTenantIdAndConsentTypeAndFormTypeIsNullAndIsActiveTrueOrderByCreatedAtDesc(
+            String tenantId, String consentType);
+
     Optional<SctConsentTemplate> findFirstByTenantIdAndConsentTypeAndIsActiveTrueOrderByCreatedAtDesc(
             String tenantId, String consentType);
 }

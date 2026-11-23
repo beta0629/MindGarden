@@ -38,7 +38,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
         sctFeatureGuard.requireEnabled(tenantId);
         return SctSettingsResponse.builder()
                 .linkExpiryDays(resolveLinkExpiryDays(tenantId))
-                .retentionDays(readRetentionDays(tenantId))
+                .retentionDays(resolveRetentionDays(tenantId))
                 .featureEnabled(true)
                 .build();
     }
@@ -52,7 +52,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
             throw new IllegalArgumentException("요청이 필요합니다.");
         }
         Integer beforeExpiry = resolveLinkExpiryDays(tenantId);
-        Integer beforeRetention = readRetentionDays(tenantId);
+        Integer beforeRetention = resolveRetentionDays(tenantId);
 
         Integer newExpiry = beforeExpiry;
         if (request.getLinkExpiryDays() != null) {
@@ -68,19 +68,24 @@ public class SctSettingsServiceImpl implements SctSettingsService {
 
         Integer newRetention = beforeRetention;
         if (Boolean.TRUE.equals(request.getClearRetention())) {
-            upsertConfig(tenantId, SctFeatureFlagKeys.RETENTION_DAYS, null,
-                    "SCT 응답 보관일수", actorId);
-            newRetention = null;
-        } else if (request.getRetentionDays() != null) {
             upsertConfig(tenantId, SctFeatureFlagKeys.RETENTION_DAYS,
-                    String.valueOf(request.getRetentionDays()), "SCT 응답 보관일수", actorId);
-            newRetention = request.getRetentionDays();
+                    String.valueOf(SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS),
+                    "SCT 응답 보관일수", actorId);
+            newRetention = SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
+        } else if (request.getRetentionDays() != null) {
+            int days = request.getRetentionDays();
+            if (days < SctFeatureFlagKeys.MIN_RETENTION_DAYS) {
+                throw new IllegalArgumentException("보관 일수는 1 이상이어야 합니다.");
+            }
+            upsertConfig(tenantId, SctFeatureFlagKeys.RETENTION_DAYS,
+                    String.valueOf(days), "SCT 응답 보관일수", actorId);
+            newRetention = days;
         }
 
         String beforeJson = "{\"linkExpiryDays\":" + beforeExpiry
-                + ",\"retentionDays\":" + (beforeRetention == null ? "null" : beforeRetention) + "}";
+                + ",\"retentionDays\":" + beforeRetention + "}";
         String afterJson = "{\"linkExpiryDays\":" + newExpiry
-                + ",\"retentionDays\":" + (newRetention == null ? "null" : newRetention) + "}";
+                + ",\"retentionDays\":" + newRetention + "}";
         AuditLog entry = AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actorId)
@@ -107,37 +112,31 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, SctFeatureFlagKeys.LINK_EXPIRY_DAYS);
         if (tenantCfg.isPresent() && tenantCfg.get().getConfigValue() != null
                 && !tenantCfg.get().getConfigValue().isBlank()) {
-            return parseDays(tenantCfg.get().getConfigValue(), SctFeatureFlagKeys.DEFAULT_LINK_EXPIRY_DAYS);
+            return parseLinkExpiryDays(tenantCfg.get().getConfigValue());
         }
         Optional<SystemConfig> globalCfg = systemConfigRepository
                 .findByTenantIdAndConfigKeyAndIsActiveTrue("", SctFeatureFlagKeys.LINK_EXPIRY_DAYS);
         if (globalCfg.isPresent() && globalCfg.get().getConfigValue() != null
                 && !globalCfg.get().getConfigValue().isBlank()) {
-            return parseDays(globalCfg.get().getConfigValue(), SctFeatureFlagKeys.DEFAULT_LINK_EXPIRY_DAYS);
+            return parseLinkExpiryDays(globalCfg.get().getConfigValue());
         }
         return SctFeatureFlagKeys.DEFAULT_LINK_EXPIRY_DAYS;
     }
 
-    private Integer readRetentionDays(String tenantId) {
+    @Override
+    @Transactional(readOnly = true)
+    public int resolveRetentionDays(String tenantId) {
         Optional<SystemConfig> tenantCfg = systemConfigRepository
                 .findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, SctFeatureFlagKeys.RETENTION_DAYS);
         if (tenantCfg.isPresent()) {
-            String v = tenantCfg.get().getConfigValue();
-            if (v == null || v.isBlank()) {
-                return null;
-            }
-            return Integer.parseInt(v.trim());
+            return parseRetentionDays(tenantCfg.get().getConfigValue());
         }
         Optional<SystemConfig> globalCfg = systemConfigRepository
                 .findByTenantIdAndConfigKeyAndIsActiveTrue("", SctFeatureFlagKeys.RETENTION_DAYS);
-        if (globalCfg.isEmpty()) {
-            return null;
+        if (globalCfg.isPresent()) {
+            return parseRetentionDays(globalCfg.get().getConfigValue());
         }
-        String v = globalCfg.get().getConfigValue();
-        if (v == null || v.isBlank()) {
-            return null;
-        }
-        return Integer.parseInt(v.trim());
+        return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
     }
 
     private void upsertConfig(String tenantId, String key, String value, String description, Long actorId) {
@@ -167,15 +166,31 @@ public class SctSettingsServiceImpl implements SctSettingsService {
         }
     }
 
-    private static int parseDays(String raw, int defaultValue) {
+    private static int parseLinkExpiryDays(String raw) {
         try {
             int v = Integer.parseInt(raw.trim());
-            if (v < SctFeatureFlagKeys.MIN_LINK_EXPIRY_DAYS || v > SctFeatureFlagKeys.MAX_LINK_EXPIRY_DAYS) {
-                return defaultValue;
+            if (v < SctFeatureFlagKeys.MIN_LINK_EXPIRY_DAYS
+                    || v > SctFeatureFlagKeys.MAX_LINK_EXPIRY_DAYS) {
+                return SctFeatureFlagKeys.DEFAULT_LINK_EXPIRY_DAYS;
             }
             return v;
         } catch (NumberFormatException e) {
-            return defaultValue;
+            return SctFeatureFlagKeys.DEFAULT_LINK_EXPIRY_DAYS;
+        }
+    }
+
+    private static int parseRetentionDays(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
+        }
+        try {
+            int v = Integer.parseInt(raw.trim());
+            if (v < SctFeatureFlagKeys.MIN_RETENTION_DAYS) {
+                return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
+            }
+            return v;
+        } catch (NumberFormatException e) {
+            return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
         }
     }
 }

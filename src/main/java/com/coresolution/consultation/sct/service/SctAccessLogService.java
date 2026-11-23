@@ -62,6 +62,66 @@ public class SctAccessLogService {
         return save(invitation, actorId, actorRole, SctConstants.ACCESS_SESSION_VIEW, clientIp, userAgent);
     }
 
+    /**
+     * 인쇄(미리보기·출력) 로그.
+     *
+     * @param invitation 초대
+     * @param actorId    행위자
+     * @param actorRole  역할
+     * @param clientIp   IP
+     * @param userAgent  UA
+     * @return 로그
+     */
+    @Transactional
+    public SctAccessLog logPrint(
+            SctInvitation invitation,
+            Long actorId,
+            String actorRole,
+            String clientIp,
+            String userAgent) {
+        return save(invitation, actorId, actorRole, SctConstants.ACCESS_PRINT, clientIp, userAgent);
+    }
+
+    /**
+     * 영역 메모 열람 로그.
+     *
+     * @param invitation 초대
+     * @param actorId    행위자
+     * @param actorRole  역할
+     * @param clientIp   IP
+     * @param userAgent  UA
+     * @return 로그
+     */
+    @Transactional
+    public SctAccessLog logMemoView(
+            SctInvitation invitation,
+            Long actorId,
+            String actorRole,
+            String clientIp,
+            String userAgent) {
+        return save(invitation, actorId, actorRole, SctConstants.ACCESS_MEMO_VIEW, clientIp, userAgent);
+    }
+
+    /**
+     * 영역 메모 저장 로그.
+     *
+     * @param invitation 초대
+     * @param actorId    행위자
+     * @param actorRole  역할
+     * @param clientIp   IP
+     * @param userAgent  UA
+     * @return 로그
+     */
+    @Transactional
+    public SctAccessLog logMemoSave(
+            SctInvitation invitation,
+            Long actorId,
+            String actorRole,
+            String clientIp,
+            String userAgent) {
+        return save(invitation, actorId, actorRole, SctConstants.ACCESS_MEMO_SAVE, clientIp, userAgent);
+    }
+
     private SctAccessLog save(
             SctInvitation invitation,
             Long actorId,

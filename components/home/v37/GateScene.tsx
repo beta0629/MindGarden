@@ -16,7 +16,6 @@ import { gateStackSrc, packToV4Key } from '@/components/home/v4/assets';
 import { FOCUS_ROOT_MARGIN, SRC_ROOT_MARGIN } from './centerFocus';
 import {
   SETTLE_RISE_PX,
-  SETTLE_SPAN_MS,
   sampleSettle,
   settleTranslateY,
 } from './settle';
@@ -59,7 +58,6 @@ export function GateScene({ sectionRef: _sectionRef }: Props) {
 
     let alive = true;
     let subscribed = false;
-    let settleStart = 0;
 
     const applySettle = (elapsedMs: number) => {
       const el = settleRef.current;
@@ -78,13 +76,8 @@ export function GateScene({ sectionRef: _sectionRef }: Props) {
         setContinuous(RAF_ID, false);
         return;
       }
-      const elapsed = performance.now() - settleStart;
-      applySettle(elapsed);
-      if (elapsed >= SETTLE_SPAN_MS) {
-        applySettle(SETTLE_SPAN_MS);
-        setContinuous(RAF_ID, false);
-        return;
-      }
+      const t = playerRef.current?.getVideo()?.currentTime ?? 0;
+      applySettle(t * 1000);
       setContinuous(RAF_ID, true);
     };
 
@@ -95,7 +88,6 @@ export function GateScene({ sectionRef: _sectionRef }: Props) {
     const enterFocus = () => {
       if (!alive || focusedRef.current) return;
       focusedRef.current = true;
-      settleStart = performance.now();
       applySettle(0);
       playerRef.current?.play();
       setPaused(RAF_ID, document.hidden);
@@ -194,8 +186,7 @@ export function GateScene({ sectionRef: _sectionRef }: Props) {
             ref={playerRef}
             src={src}
             blobSrc
-            playOnce
-            holdLast
+            pingPong
             playing={false}
             autoPlay={false}
             onFirstFrame={() => {

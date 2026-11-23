@@ -38,10 +38,16 @@ export type StackedAlphaVideoProps = {
    */
   blobSrc?: boolean;
   /**
-   * If set, pause and hold this time (seconds) instead of playing through to
-   * the file duration — bench butterflies fade out after 2.8s otherwise.
+   * If set, treat this time (seconds) as the clip end: hold-last stops here,
+   * and ping-pong turns around here (bench butterflies fade out after 2.8s).
    */
   holdAt?: number;
+  /**
+   * While playing, ping-pong at 1x between 0 and `holdAt` (or duration):
+   * native play forward, then seek-draw reverse (blob URLs are seekable).
+   * Smoother than a hard restart, which would snap the last frame to 0.
+   */
+  pingPong?: boolean;
   onEnded?: () => void;
   onFirstFrame?: () => void;
   onUnavailable?: () => void;
@@ -82,6 +88,7 @@ export const StackedAlphaVideo = forwardRef<
     startTime = 0,
     blobSrc = false,
     holdAt,
+    pingPong = false,
     onEnded,
     onFirstFrame,
     onUnavailable,
@@ -112,8 +119,12 @@ export const StackedAlphaVideo = forwardRef<
   const startTimeRef = useRef(startTime);
   const blobSrcRef = useRef(blobSrc);
   const holdAtRef = useRef(holdAt);
+  const pingPongRef = useRef(pingPong);
+  const pingPongDirRef = useRef<'fwd' | 'rev'>('fwd');
+  const reverseRafRef = useRef(0);
   const seekAndDrawRef = useRef<(timeS: number) => void>(() => {});
   const syncPlayRef = useRef<() => void>(() => {});
+  const stopReverseRef = useRef<() => void>(() => {});
   const playingRef = useRef(playing);
   const autoPlayRef = useRef(autoPlay);
   const onEndedRef = useRef(onEnded);
@@ -133,8 +144,10 @@ export const StackedAlphaVideo = forwardRef<
   startTimeRef.current = startTime;
   blobSrcRef.current = blobSrc;
   holdAtRef.current = holdAt;
-  playingRef.current = playing;
-  autoPlayRef.current = autoPlay;
+  pingPongRef.current = pingPong;
+  // playing/autoPlay are synced in the prop effect so imperative play()
+  // (gate/bench pass playing={false} autoPlay={false}) is not clobbered
+  // on unrelated re-renders.
   onEndedRef.current = onEnded;
   onFirstFrameRef.current = onFirstFrame;
   onUnavailableRef.current = onUnavailable;
@@ -146,18 +159,23 @@ export const StackedAlphaVideo = forwardRef<
     play: () => {
       endedRef.current = false;
       holdRef.current = false;
+      pingPongDirRef.current = 'fwd';
+      stopReverseRef.current();
       playingRef.current = true;
       autoPlayRef.current = true;
       syncPlayRef.current();
     },
     pause: () => {
       playingRef.current = false;
+      stopReverseRef.current();
       videoRef.current?.pause();
     },
     reset: () => {
       endedRef.current = false;
       holdRef.current = false;
+      pingPongDirRef.current = 'fwd';
       playingRef.current = false;
+      stopReverseRef.current();
       seekAndDrawRef.current(0);
     },
     getVideo: () => videoRef.current,
@@ -315,6 +333,66 @@ export const StackedAlphaVideo = forwardRef<
       return video.currentTime >= end - 1 / 120;
     };
 
+    const reachedPingPongEnd = () => {
+      if (!pingPongRef.current) return false;
+      if (pingPongDirRef.current !== 'fwd') return false;
+      if (endedRef.current || holdRef.current) return false;
+      const end = holdDeadlineS();
+      if (end == null) return false;
+      return video.currentTime >= end - 1 / 120;
+    };
+
+    const stopReverse = () => {
+      if (reverseRafRef.current) {
+        cancelAnimationFrame(reverseRafRef.current);
+        reverseRafRef.current = 0;
+      }
+    };
+    stopReverseRef.current = stopReverse;
+
+    let reverseLast = 0;
+    const startReverse = () => {
+      if (!alive || !pingPongRef.current) return;
+      pingPongDirRef.current = 'rev';
+      endedRef.current = false;
+      holdRef.current = false;
+      video.pause();
+      stopUpload();
+      if (reverseRafRef.current) return;
+      reverseLast = performance.now();
+      // Track media time ourselves: in-flight seeks leave currentTime stale,
+      // so subtracting dt from currentTime would crawl slower than 1x.
+      let mediaT = video.currentTime;
+      const tick = (now: number) => {
+        if (
+          !alive ||
+          pingPongDirRef.current !== 'rev' ||
+          !playingRef.current
+        ) {
+          reverseRafRef.current = 0;
+          return;
+        }
+        if (!pageVisibleRef.current || !visibleRef.current) {
+          reverseRafRef.current = 0;
+          return;
+        }
+        const dt = Math.min(0.08, Math.max(0, (now - reverseLast) / 1000));
+        reverseLast = now;
+        mediaT = Math.max(0, mediaT - dt);
+        seekAndDrawRef.current(mediaT);
+        if (mediaT <= 1 / 120) {
+          reverseRafRef.current = 0;
+          pingPongDirRef.current = 'fwd';
+          endedRef.current = false;
+          holdRef.current = false;
+          syncPlayRef.current();
+          return;
+        }
+        reverseRafRef.current = requestAnimationFrame(tick);
+      };
+      reverseRafRef.current = requestAnimationFrame(tick);
+    };
+
     const holdNow = () => {
       if (!alive || endedRef.current) return;
       endedRef.current = true;
@@ -342,6 +420,10 @@ export const StackedAlphaVideo = forwardRef<
         if (!alive) return;
         if (shouldUpload()) {
           drawOnce();
+          if (reachedPingPongEnd()) {
+            startReverse();
+            return;
+          }
           if (reachedHoldAt()) {
             holdNow();
             return;
@@ -363,6 +445,10 @@ export const StackedAlphaVideo = forwardRef<
         if (!alive) return;
         if (shouldUpload()) {
           drawOnce();
+          if (reachedPingPongEnd()) {
+            startReverse();
+            return;
+          }
           if (reachedHoldAt()) {
             holdNow();
             return;
@@ -392,7 +478,13 @@ export const StackedAlphaVideo = forwardRef<
         pageVisibleRef.current &&
         visibleRef.current &&
         !endedRef.current;
+      if (want && pingPongRef.current && pingPongDirRef.current === 'rev') {
+        startReverse();
+        return;
+      }
       if (want) {
+        stopReverse();
+        pingPongDirRef.current = 'fwd';
         video.muted = true;
         video.defaultMuted = true;
         video.setAttribute('muted', '');
@@ -415,6 +507,7 @@ export const StackedAlphaVideo = forwardRef<
           startUpload();
         }
       } else {
+        stopReverse();
         video.pause();
         stopUpload();
         if (holdRef.current) drawHoldSafe();
@@ -495,6 +588,10 @@ export const StackedAlphaVideo = forwardRef<
 
     const onVideoEnded = () => {
       if (!alive) return;
+      if (pingPongRef.current && playingRef.current) {
+        startReverse();
+        return;
+      }
       if (loopRef.current && !playOnceRef.current) return;
       // Hold the last decoded frame as-is. Seeking duration-1/60 can snap
       // some clips back to t=0; holdFrameStillPresent guards later draws.
@@ -636,7 +733,8 @@ export const StackedAlphaVideo = forwardRef<
       }
       canvas.dataset.hidden = '0';
       canvas.style.removeProperty('opacity');
-      video.loop = loopRef.current && !playOnceRef.current;
+      video.loop =
+        loopRef.current && !playOnceRef.current && !pingPongRef.current;
       video.muted = true;
       video.playsInline = true;
       video.preload = 'auto';
@@ -678,6 +776,7 @@ export const StackedAlphaVideo = forwardRef<
               visibleRef.current = entries.some((e) => e.isIntersecting);
               if (visibleRef.current) syncPlay();
               else {
+                stopReverse();
                 video.pause();
                 stopUpload();
               }
@@ -691,6 +790,7 @@ export const StackedAlphaVideo = forwardRef<
       pageVisibleRef.current = !document.hidden;
       if (pageVisibleRef.current) syncPlay();
       else {
+        stopReverse();
         video.pause();
         stopUpload();
       }
@@ -747,6 +847,7 @@ export const StackedAlphaVideo = forwardRef<
 
     return () => {
       alive = false;
+      stopReverse();
       stopUpload();
       io?.disconnect();
       ro?.disconnect();
@@ -791,15 +892,16 @@ export const StackedAlphaVideo = forwardRef<
     holdLastRef.current = holdLast;
     hideOnEndedRef.current = hideOnEnded;
     startTimeRef.current = startTime;
+    pingPongRef.current = pingPong;
 
     if (prev === src) {
-      video.loop = loop && !playOnce;
+      video.loop = loop && !playOnce && !pingPong;
       return;
     }
 
     // Keep last drawn pixels until the new clip's first frame (seamless swap).
     loadSrcRef.current(src, true);
-  }, [src, loop, playOnce, holdLast, hideOnEnded, startTime]);
+  }, [src, loop, playOnce, holdLast, hideOnEnded, startTime, pingPong]);
 
   useEffect(() => {
     playingRef.current = playing;

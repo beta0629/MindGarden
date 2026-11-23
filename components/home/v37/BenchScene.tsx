@@ -31,7 +31,6 @@ import {
 import { FOCUS_ROOT_MARGIN, SRC_ROOT_MARGIN } from './centerFocus';
 import {
   SETTLE_RISE_PX,
-  SETTLE_SPAN_MS,
   sampleSettle,
   settleTranslateY,
 } from './settle';
@@ -130,7 +129,6 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
 
     let alive = true;
     let subscribed = false;
-    let settleStart = 0;
 
     const applySettle = (elapsedMs: number) => {
       const settle = sampleSettle(elapsedMs);
@@ -155,13 +153,8 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
         setContinuous(RAF_ID, false);
         return;
       }
-      const elapsed = performance.now() - settleStart;
-      applySettle(elapsed);
-      if (elapsed >= SETTLE_SPAN_MS) {
-        applySettle(SETTLE_SPAN_MS);
-        setContinuous(RAF_ID, false);
-        return;
-      }
+      const t = backRef.current?.getVideo()?.currentTime ?? 0;
+      applySettle(t * 1000);
       setContinuous(RAF_ID, true);
     };
 
@@ -172,7 +165,6 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     const enterFocus = () => {
       if (!alive || focusedRef.current) return;
       focusedRef.current = true;
-      settleStart = performance.now();
       applySettle(0);
       backRef.current?.play();
       frontRef.current?.play();
@@ -311,8 +303,7 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
               ref={backRef}
               src={backSrc}
               blobSrc
-              playOnce
-              holdLast
+              pingPong
               holdAt={BENCH_HOLD_S}
               playing={false}
               autoPlay={false}
@@ -334,8 +325,7 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
               ref={frontRef}
               src={frontSrc}
               blobSrc
-              playOnce
-              holdLast
+              pingPong
               holdAt={BENCH_HOLD_S}
               playing={false}
               autoPlay={false}

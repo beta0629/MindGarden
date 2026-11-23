@@ -130,7 +130,8 @@ export const BENCH_VIDEO_DELAY_S = 0.5667;
 
 /**
  * Last fully-opaque butterfly time (walk f421). The clip fades to empty
- * between 2.8s and 3.15s (f421–f431) — hold here so they never vanish.
+ * between 2.8s and 3.15s (f421–f431) — ping-pong turns around here so
+ * they never vanish.
  */
 export const BENCH_HOLD_S = 2.8;
 

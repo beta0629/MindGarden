@@ -91,27 +91,57 @@ async function gotoWithSettle(page: Page, urlPath: string) {
   // commit: SPA 라우트 전환이 길 때 domcontentloaded 고착을 완화
   await page.goto(urlPath, { waitUntil: 'commit', timeout: 60_000 });
   await page.waitForLoadState('domcontentloaded', { timeout: 30_000 }).catch(() => {});
-  await page.waitForTimeout(500);
+  await page.waitForSelector('body', { state: 'attached', timeout: 30_000 }).catch(() => {});
+  // 셸 마운트 대기 — 햄버거 미마운트 flake 완화
+  await page
+    .locator('.mg-v2-mobile-gnb__menu')
+    .first()
+    .waitFor({ state: 'attached', timeout: 20_000 })
+    .catch(() => {});
+  await page.waitForTimeout(600);
 }
 
 async function assertShellBasics(page: Page, opts: { id: string; path: string; viewport: number }) {
-  const fatal = await page.evaluate(() => {
-    const text = (document.body?.innerText || '').trim();
-    if (!text) return 'blank-body';
-    if (/Something went wrong|Application error|ChunkLoadError/i.test(text.slice(0, 400))) {
-      return 'fatal-banner';
+  await page.waitForSelector('body', { state: 'attached', timeout: 30_000 }).catch(() => {});
+
+  let fatal: string | null = 'evaluate-failed';
+  let scroll = { sw: 0, cw: 0, bsw: 0, bcw: 0 };
+  // SPA 전환 중 documentElement/body 순간 null → 짧게 재시도
+  for (let i = 0; i < 6; i += 1) {
+    try {
+      const snap = await page.evaluate(() => {
+        const docEl = document.documentElement;
+        const body = document.body;
+        if (!docEl || !body) return { fatal: 'no-document', scroll: null as null };
+        const text = (body.innerText || '').trim();
+        let fatal: string | null = null;
+        if (!text) fatal = 'blank-body';
+        else if (/Something went wrong|Application error|ChunkLoadError/i.test(text.slice(0, 400))) {
+          fatal = 'fatal-banner';
+        }
+        return {
+          fatal,
+          scroll: {
+            sw: docEl.scrollWidth,
+            cw: docEl.clientWidth,
+            bsw: body.scrollWidth,
+            bcw: body.clientWidth
+          }
+        };
+      });
+      if (snap.scroll) {
+        fatal = snap.fatal;
+        scroll = snap.scroll;
+        break;
+      }
+    } catch {
+      /* retry */
     }
-    return null;
-  });
+    await page.waitForTimeout(250);
+  }
 
   const hamburger = await page.locator('.mg-v2-mobile-gnb__menu').count();
   const desktopLnb = await page.locator('.mg-v2-desktop-lnb').count();
-  const scroll = await page.evaluate(() => ({
-    sw: document.documentElement.scrollWidth,
-    cw: document.documentElement.clientWidth,
-    bsw: document.body.scrollWidth,
-    bcw: document.body.clientWidth
-  }));
   const noHScroll =
     scroll.sw <= scroll.cw + 1 && scroll.bsw <= scroll.bcw + 1;
 
@@ -198,6 +228,9 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
   });
 
   test.beforeEach(async ({ page }) => {
+    await page.route('**/*fonts.googleapis.com/**', (route) => route.abort());
+    await page.route('**/*fonts.gstatic.com/**', (route) => route.abort());
+    await page.route('**/*cdn.jsdelivr.net/**', (route) => route.abort());
     await installAdminHamburgerShellMocks(page, {
       id: 99999001,
       email: 'e2e-erp-redirect-admin@local',
@@ -258,15 +291,30 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
 
   test('통합스케줄 달력·본문 폭 실측 기록 (FAIL 단언 없음)', async ({ page }) => {
     /* 사이드바/달력 실측만 JSON에 남김. r3 목표값(1110/1564 등) FAIL 금지. */
+    // 외부 폰트/CDN hang → 렌더·샷 지연 완화
+    await page.route('**/*fonts.googleapis.com/**', (route) => route.abort());
+    await page.route('**/*fonts.gstatic.com/**', (route) => route.abort());
+    await page.route('**/*cdn.jsdelivr.net/**', (route) => route.abort());
+
     for (const width of VIEWPORTS) {
       await page.setViewportSize({ width, height: VIEWPORT_H });
       await gotoWithSettle(page, '/admin/integrated-schedule');
+      // release/dev·PR 공통: 접힌 사이드바면 펼친 뒤 측정
+      const collapsed = page.locator('.integrated-schedule__sidebar--collapsed');
+      if (await collapsed.count()) {
+        const toggle = page.locator('.integrated-schedule__sidebar-toggle').first();
+        if (await toggle.count()) {
+          await toggle.click({ force: true }).catch(() => {});
+          await page.waitForTimeout(400);
+        }
+      }
       await page
         .locator('.integrated-schedule__calendar-wrapper')
         .first()
-        .waitFor({ state: 'visible', timeout: 20_000 })
+        .waitFor({ state: 'attached', timeout: 25_000 })
         .catch(() => {});
-      await page.waitForTimeout(500);
+      await setCalendarView(page, 'week');
+      await page.waitForTimeout(700);
 
       const measured = await measureCalendar(page);
       let ratio: number | null = null;
@@ -306,12 +354,17 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
 
 test.describe('사무원 드로어 메뉴 패리티 (STAFF)', () => {
   test.use({ storageState: buildSyntheticStaffStorageState() });
+  test.describe.configure({ timeout: 120_000 });
 
   test.beforeEach(async ({ page }) => {
+    await page.route('**/*fonts.googleapis.com/**', (route) => route.abort());
+    await page.route('**/*fonts.gstatic.com/**', (route) => route.abort());
+    await page.route('**/*cdn.jsdelivr.net/**', (route) => route.abort());
     await installAdminHamburgerShellMocks(page, getSyntheticStaffUser());
   });
 
   test('드로어 항목 vs filterStaffRestrictedLnbItems diff 0', async ({ page }) => {
+    test.setTimeout(120_000);
     ensureDirs();
     await page.setViewportSize({ width: 1440, height: VIEWPORT_H });
     await gotoWithSettle(page, '/admin/dashboard');

@@ -195,6 +195,8 @@ import AccountDeletionInstructions from './components/common/AccountDeletionInst
 import PricingPage from './pages/public/PricingPage';
 const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
 const SctPublicPage = lazy(() => import('./components/public/sct/SctPublicPage'));
+const SctViewportHarnessPage = lazy(() => import('./components/e2e/SctViewportHarnessPage'));
+const SctPrintPreviewPage = lazy(() => import('./components/consultant/sct/SctPrintPreviewPage'));
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
 import SystemNotificationManagement from './components/admin/SystemNotificationManagement';
@@ -1122,6 +1124,27 @@ function AppContent() {
                 <Suspense fallback={<div className="mg-loading" />}>
                   <SctPublicPage />
                 </Suspense>
+              )}
+            />
+            {/* SCT 7폭 E2E 하네스 — synthetic storage + API mock (ENV 로그인 금지) */}
+            <Route
+              path="/e2e/sct-viewport"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.CONSULTANT, USER_ROLES.STAFF]}>
+                  <Suspense fallback={<div className="mg-loading" />}>
+                    <SctViewportHarnessPage />
+                  </Suspense>
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/consultant/sct-print"
+              element={(
+                <ProtectedRoute requiredRoles={[USER_ROLES.ADMIN, USER_ROLES.CONSULTANT, USER_ROLES.STAFF]}>
+                  <Suspense fallback={<div className="mg-loading" />}>
+                    <SctPrintPreviewPage />
+                  </Suspense>
+                </ProtectedRoute>
               )}
             />
             {/* PUBLIC_ROUTES_INSERT_HERE - C-3 W1: W2/W3 공개 라우트를 여기에 추가 */}

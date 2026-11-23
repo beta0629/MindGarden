@@ -7,7 +7,7 @@
 
 import StandardizedApi from './standardizedApi';
 import { resolveApiObjectData, asArray } from './apiResponseNormalize';
-import { SCT_API } from '../constants/sctOnline';
+import { SCT_API, SCT_VERIFY_SESSION_HEADER } from '../constants/sctOnline';
 
 /**
  * @param {string} token
@@ -31,6 +31,8 @@ export async function verifySctPublic(token, body) {
 }
 
 /**
+ * GET form — verifySessionId 는 쿼리가 아니라 헤더 {@link SCT_VERIFY_SESSION_HEADER}.
+ *
  * @param {string} token
  * @param {string} verifySessionId
  * @returns {Promise<object>}
@@ -38,8 +40,11 @@ export async function verifySctPublic(token, body) {
 export async function fetchSctPublicForm(token, verifySessionId) {
   const res = await StandardizedApi.get(
     SCT_API.publicForm(token),
-    { verifySessionId },
-    { skipSessionRefresh: true }
+    {},
+    {
+      skipSessionRefresh: true,
+      headers: { [SCT_VERIFY_SESSION_HEADER]: verifySessionId }
+    }
   );
   return resolveApiObjectData(res) || res;
 }
@@ -115,6 +120,16 @@ export async function cancelSctInvitation(id) {
 }
 
 /**
+ * ADMIN — 파기 대상 응답 수동 파기.
+ *
+ * @param {number|string} id
+ * @returns {Promise<*>}
+ */
+export async function destroySctInvitation(id) {
+  return StandardizedApi.delete(SCT_API.destroyInvitation(id));
+}
+
+/**
  * @param {number|string} id
  * @returns {Promise<*>}
  */
@@ -182,4 +197,44 @@ export async function linkSctInvitation(id, body) {
  */
 export async function unlinkSctInvitation(id) {
   return StandardizedApi.delete(SCT_API.link(id));
+}
+
+/**
+ * @param {number|string} invitationId
+ * @returns {Promise<object[]>}
+ */
+export async function fetchSctDomainMemos(invitationId) {
+  const res = await StandardizedApi.get(SCT_API.domainMemos(invitationId));
+  return asArray(res, 'data');
+}
+
+/**
+ * @param {number|string} invitationId
+ * @param {string} domainCode
+ * @param {{ memoText: string }} body
+ * @returns {Promise<object>}
+ */
+export async function upsertSctDomainMemo(invitationId, domainCode, body) {
+  const res = await StandardizedApi.put(SCT_API.domainMemo(invitationId, domainCode), body);
+  return resolveApiObjectData(res) || res;
+}
+
+/**
+ * ADMIN — 내담자 단위 동의 철회.
+ *
+ * @param {number|string} clientId
+ * @returns {Promise<*>}
+ */
+export async function revokeSctClientConsent(clientId) {
+  return StandardizedApi.post(SCT_API.revokeConsent(clientId), {});
+}
+
+/**
+ * 응답 인쇄 감사 로그(VIEW 와 별도 PRINT).
+ *
+ * @param {number|string} invitationId
+ * @returns {Promise<*>}
+ */
+export async function recordSctPrintAudit(invitationId) {
+  return StandardizedApi.post(SCT_API.printAudit(invitationId), {});
 }

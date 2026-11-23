@@ -11,11 +11,15 @@ import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import UnifiedModal from '../../common/modals/UnifiedModal';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
+import { RoleUtils } from '../../../constants/roles';
+import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelSctInvitation,
+  destroySctInvitation,
   fetchSctClientInvitations,
   fetchSctInvitation
 } from '../../../utils/sctApi';
@@ -44,11 +48,15 @@ const formatDate = (iso) => {
  * @param {{ client: object }} props
  */
 const SctClientQuestionnairePanel = ({ client }) => {
+  const { user } = useSession();
+  const isAdmin = RoleUtils.isAdmin(user);
   const { enabled, loading: flagLoading } = useSctFeatureEnabled();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sendOpen, setSendOpen] = useState(false);
   const [detail, setDetail] = useState(null);
+  const [destroyTarget, setDestroyTarget] = useState(null);
+  const [destroyBusy, setDestroyBusy] = useState(false);
 
   const clientId = client?.id;
 
@@ -92,6 +100,25 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const hasActiveDraft = list.some(
     (r) => r.status === SCT_STATUS.SENT || r.status === SCT_STATUS.DRAFT
   );
+
+  const handleDestroy = async() => {
+    if (!destroyTarget?.id) return;
+    setDestroyBusy(true);
+    try {
+      await destroySctInvitation(destroyTarget.id);
+      notificationManager.success(SCT_UI.DESTROY_SUCCESS);
+      setDestroyTarget(null);
+      setDetail(null);
+      reload();
+    } catch (e) {
+      notificationManager.show(
+        resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
+        'error'
+      );
+    } finally {
+      setDestroyBusy(false);
+    }
+  };
 
   if (flagLoading) {
     return <UnifiedLoading type="inline" text={SCT_UI.LOADING} />;
@@ -151,6 +178,16 @@ const SctClientQuestionnairePanel = ({ client }) => {
                   <SafeText>
                     {SCT_FORM_TYPE_LABEL[row.formType] || row.formType}
                   </SafeText>
+                  {row.managementNo ? (
+                    <p
+                      className={SCT_CSS.CAPTION}
+                      data-testid={SCT_TEST_ID.MANAGEMENT_NO}
+                    >
+                      {SCT_UI.MANAGEMENT_NO}
+                      {': '}
+                      <SafeText>{row.managementNo}</SafeText>
+                    </p>
+                  ) : null}
                 </div>
                 <div className="lab-m">
                   <SafeText>
@@ -159,9 +196,19 @@ const SctClientQuestionnairePanel = ({ client }) => {
                 </div>
                 <div className="lab-m">{formatDate(row.sentAt)}</div>
                 <div className="lab-m">{formatDate(row.tokenExpiresAt)}</div>
-                                <StatusBadge status={row.status}>
-                                  {SCT_STATUS_LABEL[row.status] || row.status}
-                                </StatusBadge>
+                <div>
+                  <StatusBadge status={row.status}>
+                    {SCT_STATUS_LABEL[row.status] || row.status}
+                  </StatusBadge>
+                  {row.destroyEligible ? (
+                    <span
+                      className="mg-v2-sct-tag mg-v2-sct-tag--danger"
+                      data-testid={SCT_TEST_ID.DESTROY_BADGE}
+                    >
+                      {SCT_UI.DESTROY_ELIGIBLE}
+                    </span>
+                  ) : null}
+                </div>
                 <div>
                   {row.status === SCT_STATUS.SUBMITTED ? (
                     <MGButton
@@ -182,6 +229,18 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       }}
                     >
                       열람
+                    </MGButton>
+                  ) : null}
+                  {isAdmin && row.destroyEligible ? (
+                    <MGButton
+                      type="button"
+                      variant="danger"
+                      size="small"
+                      preventDoubleClick={false}
+                      data-testid={SCT_TEST_ID.DESTROY_BTN}
+                      onClick={() => setDestroyTarget(row)}
+                    >
+                      {SCT_UI.DESTROY}
                     </MGButton>
                   ) : null}
                   {row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT ? (
@@ -216,6 +275,13 @@ const SctClientQuestionnairePanel = ({ client }) => {
       {detail?.answers?.length ? (
         <section className="mg-v2-sct-session__body" aria-label="응답 본문">
           <h4>제출 응답</h4>
+          {detail.managementNo ? (
+            <p className={SCT_CSS.CAPTION}>
+              {SCT_UI.MANAGEMENT_NO}
+              {': '}
+              <SafeText>{detail.managementNo}</SafeText>
+            </p>
+          ) : null}
           <ul>
             {detail.answers.map((a) => (
               <li key={a.formItemId || a.itemNo} className="mg-v2-sct-sent">
@@ -244,6 +310,44 @@ const SctClientQuestionnairePanel = ({ client }) => {
         hasActiveDraft={hasActiveDraft}
         onSent={reload}
       />
+
+      <UnifiedModal
+        isOpen={Boolean(destroyTarget)}
+        onClose={() => (!destroyBusy ? setDestroyTarget(null) : null)}
+        title={SCT_UI.DESTROY_CONFIRM_TITLE}
+        size="small"
+        actions={(
+          <>
+            <MGButton
+              type="button"
+              variant="outline"
+              preventDoubleClick={false}
+              disabled={destroyBusy}
+              onClick={() => setDestroyTarget(null)}
+            >
+              {SCT_UI.CANCEL}
+            </MGButton>
+            <MGButton
+              type="button"
+              variant="danger"
+              preventDoubleClick={false}
+              loading={destroyBusy}
+              onClick={handleDestroy}
+            >
+              {SCT_UI.DESTROY}
+            </MGButton>
+          </>
+        )}
+      >
+        <p>{SCT_UI.DESTROY_CONFIRM_BODY}</p>
+        {destroyTarget?.managementNo ? (
+          <p className={SCT_CSS.CAPTION}>
+            {SCT_UI.MANAGEMENT_NO}
+            {': '}
+            <SafeText>{destroyTarget.managementNo}</SafeText>
+          </p>
+        ) : null}
+      </UnifiedModal>
     </section>
   );
 };

@@ -1614,6 +1614,7 @@ const ConsultationLogModal = ({
                 <SctSessionPanel
                   clientId={psychHookClientId}
                   mappingId={Number.isFinite(sctMappingId) ? sctMappingId : undefined}
+                  clientName={scheduleData?.clientName || consultationRecord?.clientName || ''}
                 />
               ) : null}
             </div>

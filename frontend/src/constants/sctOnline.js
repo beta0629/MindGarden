@@ -20,20 +20,35 @@ export const SCT_API = Object.freeze({
   publicConsents: (token) => `/api/v1/public/sct/${token}/consents`,
   publicSubmit: (token) => `/api/v1/public/sct/${token}/submit`,
   invitation: (id) => `/api/v1/sct/invitations/${id}`,
+  destroyInvitation: (id) => `/api/v1/sct/invitations/${id}`,
   cancelInvitation: (id) => `/api/v1/sct/invitations/${id}/cancel`,
   resendSms: (id) => `/api/v1/sct/invitations/${id}/resend-sms`,
   linkCandidates: (id) => `/api/v1/sct/invitations/${id}/link-candidates`,
-  link: (id) => `/api/v1/sct/invitations/${id}/link`
+  link: (id) => `/api/v1/sct/invitations/${id}/link`,
+  domainMemos: (id) => `/api/v1/sct/invitations/${id}/domain-memos`,
+  domainMemo: (id, domainCode) =>
+    `/api/v1/sct/invitations/${id}/domain-memos/${encodeURIComponent(domainCode)}`,
+  printAudit: (id) => `/api/v1/sct/invitations/${id}/print-audit`,
+  revokeConsent: (clientId) => `/api/v1/sct/clients/${clientId}/consents/revoke`
 });
 
 export const SCT_PUBLIC_ROUTE = '/public/sct/:token';
 export const SCT_PUBLIC_PATH = (token) => `/public/sct/${token}`;
+export const SCT_PRINT_ROUTE = '/consultant/sct-print';
+export const SCT_PRINT_PATH = (invitationId) =>
+  `${SCT_PRINT_ROUTE}?invitationId=${encodeURIComponent(invitationId)}`;
 
 export const SCT_FORM_TYPE = Object.freeze({
   ADULT: 'ADULT',
   ADOLESCENT: 'ADOLESCENT',
   CHILD: 'CHILD'
 });
+
+/** 온라인 발송·실시 대상(아동용 제외) */
+export const SCT_ONLINE_FORM_TYPES = Object.freeze([
+  SCT_FORM_TYPE.ADULT,
+  SCT_FORM_TYPE.ADOLESCENT
+]);
 
 export const SCT_FORM_TYPE_LABEL = Object.freeze({
   ADULT: '성인용',
@@ -65,10 +80,17 @@ export const SCT_STATUS_LABEL = Object.freeze({
 });
 
 export const SCT_CONSENT_TYPE = Object.freeze({
-  SENSITIVE: 'SENSITIVE',
-  GUARDIAN_UNDER_14: 'GUARDIAN_UNDER_14',
-  INSTRUCTION_READ: 'INSTRUCTION_READ'
+  SENSITIVE_INFO: 'SENSITIVE_INFO',
+  GUARDIAN_UNDER_14: 'GUARDIAN_UNDER_14'
 });
+
+export const SCT_SIGNER_BAND = Object.freeze({
+  ADULT: 'ADULT',
+  TEEN_14_PLUS: 'TEEN_14_PLUS',
+  UNDER_14: 'UNDER_14'
+});
+
+export const SCT_VERIFY_SESSION_HEADER = 'X-Sct-Verify-Session';
 
 export const SCT_CHANNEL = Object.freeze({
   PHONE: 'PHONE',
@@ -79,6 +101,8 @@ export const SCT_DEFAULTS = Object.freeze({
   LINK_EXPIRY_DAYS: 14,
   LINK_EXPIRY_MIN: 1,
   LINK_EXPIRY_MAX: 30,
+  RETENTION_DAYS: 365,
+  RETENTION_MIN: 1,
   DRAFT_DEBOUNCE_MS: 800,
   FOCUS_SCROLL_DELAY_MS: 250,
   KEYBOARD_DELTA_PX: 120,
@@ -108,10 +132,14 @@ export const SCT_UI = Object.freeze({
   MEMO_WRITE: '메모 쓰기',
   MEMO_LABEL: '면담에서 확인할 질문 · 메모',
   MEMO_PLACEHOLDER: '상담사만 봅니다',
-  MEMO_SAVE_PENDING: '메모 저장 API는 추후 연동됩니다',
-  PANEL_NOTICE: '센터 자체 제작 · 표준화 검사 아님',
+  MEMO_SAVE: '메모 저장',
+  MEMO_SAVE_SUCCESS: '메모를 저장했습니다',
+  MEMO_SAVE_PENDING: '저장되지 않은 변경이 있습니다',
+  MEMO_SAVED: '저장됨',
+  PANEL_NOTICE: '센터 자체 제작 · 상담 면담 참고용 · 표준화 검사 아님',
+  /** 상담사·관리자 별지용. 공개 내담자 화면에는 쓰지 않음. */
   SHEET_NOTICE_PLACEHOLDER:
-    '표준화된 심리검사가 아닙니다. 상담 장면에서 함께 살펴보기 위한 참고 자료입니다.',
+    '상담 면담 참고용 자료이며, 표준화된 심리검사가 아닙니다.',
   ASSIGN: '배정',
   UNASSIGN: '배정 해제',
   VIEW_BY_DOMAIN: '영역별',
@@ -129,9 +157,16 @@ export const SCT_UI = Object.freeze({
   SETTINGS_SECTION: '문장완성 질문지(SCT)',
   SETTINGS_LINK_EXPIRY: '링크 만료(일)',
   SETTINGS_RETENTION: '응답 보관(일)',
-  SETTINGS_RETENTION_HINT: '비우면 자동 파기 없음',
+  SETTINGS_RETENTION_HINT: '기본 365일. 기간이 지나면 파기 대상이 됩니다(자동 삭제 없음).',
   SETTINGS_SAVE: 'SCT 설정 저장',
   SETTINGS_FEATURE_OFF: '기능이 꺼져 있으면 탭·패널이 숨겨집니다',
+  MANAGEMENT_NO: '관리번호',
+  DESTROY_ELIGIBLE: '파기 대상',
+  DESTROY: '파기',
+  DESTROY_CONFIRM_TITLE: '응답 파기',
+  DESTROY_CONFIRM_BODY: '파기 대상 응답과 메모를 삭제합니다. 동의 기록은 남습니다. 되돌릴 수 없습니다.',
+  DESTROY_SUCCESS: '응답을 파기했습니다',
+  ONLINE_CHILD_HINT: '아동용은 온라인으로 보내지 않습니다(종이 전용).',
   PHONE_SEGMENT: '휴대폰 번호',
   EMAIL_SEGMENT: '이메일',
   PROGRESS_ANSWERED: '답한 문항',
@@ -160,9 +195,13 @@ export const SCT_UI = Object.freeze({
   GUARDIAN_NAME: '보호자 이름',
   GUARDIAN_RELATION: '관계',
   GUARDIAN_PHONE: '보호자 휴대폰',
+  SIGNER_NAME: '본인 성명(서명)',
+  CHILD_NAME_CONFIRM: '아동 본인 확인 이름(선택)',
   INSTRUCTION_READ: '실시 안내를 읽었습니다',
-  SENSITIVE_REQUIRED: '[필수] 민감정보 수집·이용',
+  SENSITIVE_REQUIRED: '[필수] 민감정보(심리·건강 관련 정보) 처리 동의',
   GUARDIAN_REQUIRED: '[필수] 법정대리인 동의',
+  CONSENT_REUSE_HINT: '한 번 동의하면 철회할 때까지 이후 실시에도 적용됩니다.',
+  SETTINGS_LEGAL_NOTE: '법률 검토 권장',
   STEP_VERIFY: '본인 확인',
   STEP_CONSENT: '안내와 동의',
   STEP_ITEMS: '문장 이어 쓰기',
@@ -183,7 +222,66 @@ export const SCT_UI = Object.freeze({
   CANCEL_SUCCESS: '발송을 취소했습니다',
   SETTINGS_SAVE_SUCCESS: 'SCT 설정을 저장했습니다',
   VALIDATE_REQUIRED: '필수 항목을 확인해 주세요',
-  VALIDATE_EXPIRY: '만료일은 1~30일 사이여야 합니다'
+  VALIDATE_EXPIRY: '만료일은 1~30일 사이여야 합니다',
+  PRINT: '인쇄',
+  PRINT_PREVIEW: '인쇄 미리보기',
+  PRINT_DO: '인쇄하기',
+  PRINT_CLOSE: '닫기',
+  PRINT_PAPER: '용지',
+  PRINT_ORIENTATION: '방향',
+  PRINT_SCALE: '배율',
+  PRINT_PORTRAIT: '세로',
+  PRINT_LANDSCAPE: '가로',
+  PRINT_SCALE_FIT: '맞춤',
+  PRINT_HEADER_NOTICE: '상담 면담 참고용 질문지이며, 표준화 검사가 아닙니다. ⓒ 마인드가든',
+  PRINT_CLIENT: '내담자',
+  PRINT_FORM: '양식',
+  PRINT_SUBMITTED: '제출일',
+  PRINT_MANAGEMENT_NO: '관리번호',
+  PRINT_MEMO_TITLE: '상담사 메모',
+  PRINT_MEMO_HINT: '면담에서 확인할 질문 · 메모 (여백)',
+  FONT_SIZE: '글자 크기',
+  FONT_SMALL: '작게',
+  FONT_MEDIUM: '보통',
+  FONT_LARGE: '크게',
+  SEARCH_PLACEHOLDER: '문항 검색·번호 점프',
+  SEARCH_JUMP: '이동',
+  DOMAIN_JUMP_ALL: '전체',
+  PRINT_AUDIT_FAIL: '인쇄 감사 기록을 남기지 못했습니다'
+});
+
+/** 인쇄 용지 (CSS @page size) */
+export const SCT_PRINT_PAPER = Object.freeze({
+  A4: 'A4',
+  B5: 'B5',
+  LETTER: 'Letter'
+});
+
+export const SCT_PRINT_ORIENTATION = Object.freeze({
+  PORTRAIT: 'portrait',
+  LANDSCAPE: 'landscape'
+});
+
+/** 배율 — fit 은 미리보기에서 콘텐츠 맞춤 */
+export const SCT_PRINT_SCALE = Object.freeze({
+  FIT: 'fit',
+  S90: '90',
+  S100: '100',
+  S110: '110'
+});
+
+export const SCT_PRINT_SCALE_FACTOR = Object.freeze({
+  fit: 1,
+  '90': 0.9,
+  '100': 1,
+  '110': 1.1
+});
+
+/** 화면(비인쇄) 글자 크기 */
+export const SCT_SCREEN_FONT = Object.freeze({
+  SM: 'sm',
+  MD: 'md',
+  LG: 'lg'
 });
 
 export const SCT_CSS = Object.freeze({
@@ -205,7 +303,12 @@ export const SCT_CSS = Object.freeze({
   SEND_SHEET: 'mg-v2-sct-send-sheet',
   SESSION: 'mg-v2-sct-session',
   SESSION_GRID: 'mg-v2-sct-session-grid',
-  PEEK_TAB: 'mg-v2-sct-peek'
+  PEEK_TAB: 'mg-v2-sct-peek',
+  PRINT: 'mg-v2-sct-print',
+  PRINT_SHEET: 'mg-v2-sct-print-sheet',
+  PRINT_ITEM: 'mg-v2-sct-print-item',
+  PRINT_CONTROLS: 'mg-v2-sct-print-controls',
+  SEARCH: 'mg-v2-sct-session-search'
 });
 
 export const SCT_TEST_ID = Object.freeze({
@@ -213,9 +316,26 @@ export const SCT_TEST_ID = Object.freeze({
   THUMB_BAR: 'sct-thumb-bar',
   PAUSE_CHILD: 'sct-pause-child',
   MEMO_ADD: 'sct-memo-add',
+  MEMO_SAVE: 'sct-memo-save',
   CAPTION: 'sct-caption',
   ADMIN_TAB: 'sct-admin-tab',
   SESSION_PANEL: 'sct-session-panel',
   FEATURE_GATE: 'sct-feature-gate',
-  SETTINGS: 'sct-settings-section'
+  SETTINGS: 'sct-settings-section',
+  HARNESS: 'sct-viewport-harness',
+  CONSENT_STEP: 'sct-consent-step',
+  GUARDIAN_STEP: 'sct-guardian-step',
+  PRINT_BTN: 'sct-print-btn',
+  PRINT_PREVIEW: 'sct-print-preview',
+  PRINT_DO: 'sct-print-do',
+  PRINT_PAPER: 'sct-print-paper',
+  PRINT_ORIENT: 'sct-print-orient',
+  PRINT_SCALE: 'sct-print-scale',
+  PRINT_ITEM: 'sct-print-item',
+  FONT_SIZE: 'sct-font-size',
+  SEARCH: 'sct-session-search',
+  DOMAIN_CHIP: 'sct-domain-chip',
+  DESTROY_BTN: 'sct-destroy-btn',
+  DESTROY_BADGE: 'sct-destroy-badge',
+  MANAGEMENT_NO: 'sct-management-no'
 });

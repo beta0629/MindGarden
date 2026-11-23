@@ -35,6 +35,7 @@ import {
   SCT_FORM_TYPE,
   SCT_FORM_TYPE_LABEL,
   SCT_ITEMS_PER_PAGE,
+  SCT_SIGNER_BAND,
   SCT_STATUS,
   SCT_TEST_ID,
   SCT_UI
@@ -94,12 +95,14 @@ const SctPublicPage = () => {
   const [verifyError, setVerifyError] = useState('');
   const [busy, setBusy] = useState(false);
 
+  const [consentStatus, setConsentStatus] = useState(null);
   const [sensitiveAgreed, setSensitiveAgreed] = useState(false);
   const [instructionRead, setInstructionRead] = useState(false);
+  const [signerName, setSignerName] = useState('');
+  const [childNameConfirm, setChildNameConfirm] = useState('');
   const [guardianName, setGuardianName] = useState('');
   const [guardianRelation, setGuardianRelation] = useState('');
   const [guardianAgreed, setGuardianAgreed] = useState(false);
-  const [guardianDone, setGuardianDone] = useState(false);
 
   const [answersMap, setAnswersMap] = useState({});
   const [pageIndex, setPageIndex] = useState(0);
@@ -136,6 +139,11 @@ const SctPublicPage = () => {
     try {
       const data = await fetchSctPublicMeta(token);
       setMeta(data);
+      if (data?.verifyChannelHint === SCT_CHANNEL.EMAIL) {
+        setChannel(SCT_CHANNEL.EMAIL);
+      } else if (data?.verifyChannelHint === SCT_CHANNEL.PHONE) {
+        setChannel(SCT_CHANNEL.PHONE);
+      }
       if (data?.status === SCT_STATUS.SUBMITTED) {
         setStep(STEP.ALREADY);
       } else if (data?.status === SCT_STATUS.EXPIRED || data?.status === SCT_STATUS.CANCELLED) {
@@ -174,6 +182,39 @@ const SctPublicPage = () => {
 
   const openVerify = () => setStep(STEP.VERIFY);
 
+  const applyFormAndGoItems = async(sid, consent) => {
+    const formData = await fetchSctPublicForm(token, sid);
+    setForm(formData);
+    if (formData?.consent) {
+      setConsentStatus(formData.consent);
+    } else if (consent) {
+      setConsentStatus(consent);
+    }
+    const nextAnswers = {};
+    (formData?.items || []).forEach((it) => {
+      if (it.answerText != null || it.notApplicable) {
+        nextAnswers[it.formItemId] = {
+          formItemId: it.formItemId,
+          answerText: it.answerText || '',
+          notApplicable: Boolean(it.notApplicable)
+        };
+      }
+    });
+    setAnswersMap(nextAnswers);
+    if (formData?.status === SCT_STATUS.SUBMITTED) {
+      setStep(STEP.ALREADY);
+      return;
+    }
+    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0) {
+      const answeredNos = (formData?.items || [])
+        .filter((it) => it.answerText || it.notApplicable)
+        .map((it) => it.itemNo);
+      const last = answeredNos.length ? Math.max(...answeredNos) : 0;
+      setPageIndex(Math.floor(last / perPage));
+    }
+    setStep(STEP.ITEMS);
+  };
+
   const handleVerify = async() => {
     setVerifyError('');
     const body = channel === SCT_CHANNEL.EMAIL
@@ -193,35 +234,21 @@ const SctPublicPage = () => {
         return;
       }
       setVerifySessionId(sid);
-      const formData = await fetchSctPublicForm(token, sid);
-      setForm(formData);
-      const nextAnswers = {};
-      (formData?.items || []).forEach((it) => {
-        if (it.answerText != null || it.notApplicable) {
-          nextAnswers[it.formItemId] = {
-            formItemId: it.formItemId,
-            answerText: it.answerText || '',
-            notApplicable: Boolean(it.notApplicable)
-          };
-        }
-      });
-      setAnswersMap(nextAnswers);
-      if (formData?.status === SCT_STATUS.SUBMITTED) {
-        setStep(STEP.ALREADY);
+      const consent = res?.consent || null;
+      setConsentStatus(consent);
+      if (consent?.revoked) {
+        setErrorMsg(SCT_UI.LOAD_FAIL);
+        setStep(STEP.ERROR);
         return;
       }
-      const needsGuardian = formData?.requiresGuardian || formData?.guardianConsentRequired;
-      if (needsGuardian && !guardianDone) {
+      if (consent?.satisfied) {
+        await applyFormAndGoItems(sid, consent);
+        return;
+      }
+      if (consent?.guardianRequired) {
         setStep(STEP.GUARDIAN);
       } else {
         setStep(STEP.CONSENT);
-      }
-      if (meta?.hasDraft || Object.keys(nextAnswers).length > 0) {
-        const answeredNos = (formData?.items || [])
-          .filter((it) => it.answerText || it.notApplicable)
-          .map((it) => it.itemNo);
-        const last = answeredNos.length ? Math.max(...answeredNos) : 0;
-        setPageIndex(Math.floor(last / perPage));
       }
     } catch (error) {
       setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
@@ -244,7 +271,6 @@ const SctPublicPage = () => {
         guardianName: guardianName.trim(),
         guardianRelation: guardianRelation.trim()
       });
-      setGuardianDone(true);
       setVerifyError('');
       setStep(STEP.CONSENT);
     } catch (error) {
@@ -255,24 +281,50 @@ const SctPublicPage = () => {
   };
 
   const handleConsentStart = async() => {
+    const under14 = Boolean(consentStatus?.requiresGuardian)
+      || consentStatus?.signerBand === SCT_SIGNER_BAND.UNDER_14
+      || formType === SCT_FORM_TYPE.CHILD;
+    const needsSelfSign = Boolean(consentStatus?.selfSignatureRequired) && !under14;
     if (!sensitiveAgreed || !instructionRead) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    if (needsSelfSign && !signerName.trim()) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    if (under14 && (!guardianName.trim() || !guardianRelation.trim())) {
       setVerifyError(SCT_UI.VALIDATE_REQUIRED);
       return;
     }
     setBusy(true);
     try {
-      await saveSctConsent(token, {
+      const payload = {
         verifySessionId,
-        consentType: SCT_CONSENT_TYPE.SENSITIVE,
+        consentType: SCT_CONSENT_TYPE.SENSITIVE_INFO,
         agreed: true
-      });
-      await saveSctConsent(token, {
-        verifySessionId,
-        consentType: SCT_CONSENT_TYPE.INSTRUCTION_READ,
-        agreed: true
-      });
+      };
+      if (under14) {
+        payload.guardianName = guardianName.trim();
+        payload.guardianRelation = guardianRelation.trim();
+        if (childNameConfirm.trim()) {
+          payload.childNameConfirm = childNameConfirm.trim();
+        }
+      } else {
+        payload.signerName = signerName.trim();
+      }
+      await saveSctConsent(token, payload);
+      if (under14 && consentStatus?.guardianRequired) {
+        await saveSctConsent(token, {
+          verifySessionId,
+          consentType: SCT_CONSENT_TYPE.GUARDIAN_UNDER_14,
+          agreed: true,
+          guardianName: guardianName.trim(),
+          guardianRelation: guardianRelation.trim()
+        });
+      }
       setVerifyError('');
-      setStep(STEP.ITEMS);
+      await applyFormAndGoItems(verifySessionId, { ...consentStatus, satisfied: true });
     } catch (error) {
       setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
     } finally {
@@ -499,7 +551,7 @@ const SctPublicPage = () => {
             </li>
           </ol>
           <p className="mg-v2-sct-notice mg-v2-sct-foot">
-            {toDisplayString(meta?.title, SCT_UI.SHEET_NOTICE_PLACEHOLDER)}
+            {toDisplayString(meta?.title, SCT_UI.TITLE)}
           </p>
         </section>
       </>
@@ -534,6 +586,13 @@ const SctPublicPage = () => {
             {SCT_UI.EMAIL_SEGMENT}
           </MGButton>
         </div>
+        {meta?.verifyChannelHint ? (
+          <p className={SCT_CSS.CAPTION}>
+            {meta.verifyChannelHint === SCT_CHANNEL.EMAIL
+              ? SCT_UI.EMAIL_SEGMENT
+              : SCT_UI.PHONE_SEGMENT}
+          </p>
+        ) : null}
         {verifyError ? (
           <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
         ) : null}
@@ -548,7 +607,6 @@ const SctPublicPage = () => {
               value={phone}
               aria-invalid={Boolean(verifyError)}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder={toDisplayString(meta?.maskedPhoneHint, '')}
             />
           </div>
         ) : (
@@ -561,7 +619,6 @@ const SctPublicPage = () => {
               value={email}
               aria-invalid={Boolean(verifyError)}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={toDisplayString(meta?.maskedEmailHint, '')}
             />
           </div>
         )}
@@ -578,7 +635,7 @@ const SctPublicPage = () => {
     );
   } else if (step === STEP.GUARDIAN) {
     body = (
-      <>
+      <div data-testid={SCT_TEST_ID.GUARDIAN_STEP}>
         {renderTop('보호자 동의', false)}
         <h1 className="mg-v2-sct-h1">보호자 동의</h1>
         <p className="mg-v2-sct-lead">{SCT_UI.CHILD_GUARD_HINT}</p>
@@ -595,12 +652,16 @@ const SctPublicPage = () => {
         </div>
         <div className="mg-v2-sct-consent-body">
           <SafeText>
-            {toDisplayString(form?.guardianConsentBody, SCT_UI.GUARDIAN_REQUIRED)}
+            {toDisplayString(
+              consentStatus?.guardianConsentBody,
+              SCT_UI.GUARDIAN_REQUIRED
+            )}
           </SafeText>
         </div>
         {checkBtn(guardianAgreed, () => setGuardianAgreed((v) => !v), SCT_UI.GUARDIAN_REQUIRED)}
         <p className={SCT_CSS.CAPTION}>{SCT_UI.CONSENT_OPTIONAL_NOTE}</p>
-      </>
+        <p className={SCT_CSS.CAPTION}>{SCT_UI.CONSENT_REUSE_HINT}</p>
+      </div>
     );
     bar = (
       <SctThumbBar
@@ -611,19 +672,22 @@ const SctPublicPage = () => {
       />
     );
   } else if (step === STEP.CONSENT) {
+    const under14 = Boolean(consentStatus?.requiresGuardian)
+      || consentStatus?.signerBand === SCT_SIGNER_BAND.UNDER_14
+      || formType === SCT_FORM_TYPE.CHILD;
+    const needsSelfSign = Boolean(consentStatus?.selfSignatureRequired) && !under14;
     body = (
-      <>
+      <div data-testid={SCT_TEST_ID.CONSENT_STEP}>
         {renderTop(SCT_UI.STEP_CONSENT, false)}
-        <h1 className="mg-v2-sct-h1">실시 안내</h1>
-        <div className="mg-v2-sct-consent-body">
-          <SafeText>{toDisplayString(form?.instructionText, '')}</SafeText>
-        </div>
-        <h2 className="mg-v2-sct-top__title">
-          {toDisplayString(form?.sensitiveConsentTitle, SCT_UI.SENSITIVE_REQUIRED)}
-        </h2>
+        <h1 className="mg-v2-sct-h1">
+          {toDisplayString(consentStatus?.sensitiveConsentTitle, '실시 안내 및 동의')}
+        </h1>
         <div className="mg-v2-sct-consent-body">
           <SafeText>
-            {toDisplayString(form?.sensitiveConsentBody, '동의 문구는 센터 템플릿에서 제공됩니다.')}
+            {toDisplayString(
+              consentStatus?.sensitiveConsentBody,
+              form?.instructionText || ''
+            )}
           </SafeText>
         </div>
         {verifyError ? (
@@ -631,14 +695,59 @@ const SctPublicPage = () => {
         ) : null}
         {checkBtn(sensitiveAgreed, () => setSensitiveAgreed((v) => !v), SCT_UI.SENSITIVE_REQUIRED)}
         {checkBtn(instructionRead, () => setInstructionRead((v) => !v), SCT_UI.INSTRUCTION_READ)}
+        {needsSelfSign ? (
+          <div className="mg-v2-sct-field">
+            <label htmlFor="sct-signer">{SCT_UI.SIGNER_NAME}</label>
+            <input
+              id="sct-signer"
+              value={signerName}
+              onChange={(e) => setSignerName(e.target.value)}
+            />
+          </div>
+        ) : null}
+        {under14 ? (
+          <>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-g-name-c">{SCT_UI.GUARDIAN_NAME}</label>
+              <input
+                id="sct-g-name-c"
+                value={guardianName}
+                onChange={(e) => setGuardianName(e.target.value)}
+              />
+            </div>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-g-rel-c">{SCT_UI.GUARDIAN_RELATION}</label>
+              <input
+                id="sct-g-rel-c"
+                value={guardianRelation}
+                onChange={(e) => setGuardianRelation(e.target.value)}
+              />
+            </div>
+            {consentStatus?.childNameOptional ? (
+              <div className="mg-v2-sct-field">
+                <label htmlFor="sct-child-name">{SCT_UI.CHILD_NAME_CONFIRM}</label>
+                <input
+                  id="sct-child-name"
+                  value={childNameConfirm}
+                  onChange={(e) => setChildNameConfirm(e.target.value)}
+                />
+              </div>
+            ) : null}
+          </>
+        ) : null}
         <p className={SCT_CSS.CAPTION}>{SCT_UI.CONSENT_OPTIONAL_NOTE}</p>
-      </>
+        <p className={SCT_CSS.CAPTION}>{SCT_UI.CONSENT_REUSE_HINT}</p>
+      </div>
     );
+    const consentReady = sensitiveAgreed
+      && instructionRead
+      && (!needsSelfSign || Boolean(signerName.trim()))
+      && (!under14 || (Boolean(guardianName.trim()) && Boolean(guardianRelation.trim())));
     bar = (
       <SctThumbBar
         primaryLabel={SCT_UI.AGREE_START}
         onPrimary={handleConsentStart}
-        primaryDisabled={!sensitiveAgreed || !instructionRead}
+        primaryDisabled={!consentReady}
         loading={busy}
       />
     );

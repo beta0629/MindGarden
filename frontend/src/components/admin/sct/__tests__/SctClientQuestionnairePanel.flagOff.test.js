@@ -15,10 +15,15 @@ jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
   default: () => ({ enabled: false, loading: false, refresh: jest.fn() })
 }));
 
+jest.mock('../../../../contexts/SessionContext', () => ({
+  useSession: () => ({ user: { role: 'ADMIN' } })
+}));
+
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctClientInvitations: jest.fn(),
   fetchSctInvitation: jest.fn(),
-  cancelSctInvitation: jest.fn()
+  cancelSctInvitation: jest.fn(),
+  destroySctInvitation: jest.fn()
 }));
 
 describe('SctClientQuestionnairePanel flag OFF', () => {

@@ -1,65 +1,191 @@
 /**
- * SCT 관리자 탭·상담사 패널 — 7폭 초안 (API mock 허용)
+ * SCT 관리자·상담사·설정 — 7폭 실렌더 (ENV 로그인 skip 금지)
  *
- * 로그인·실데이터 의존 구간은 annotation 후 셸·라우트만 검증할 수 있다.
- * core-tester가 mock 확장·실행을 이어간다.
+ * syntheticAdmin/Consultant storageState + API mock으로 실제 React 트리 검증.
  *
  * @author MindGarden
  * @since 2026-11-23
  */
 
-import { test, expect, Page } from '@playwright/test';
-import { getMindGardenWebLogin } from '../../helpers/erpAuth';
+import { test, expect } from '@playwright/test';
+import * as path from 'path';
+import { buildSyntheticAdminStorageState } from '../../helpers/syntheticAdminStorageState';
+import {
+  buildSyntheticConsultantStorageState,
+  getSyntheticConsultantUser
+} from '../../helpers/syntheticConsultantStorageState';
+import { installAdminHamburgerShellMocks } from '../../helpers/adminHamburgerShellMocks';
 import {
   SCT_VIEWPORTS,
+  SCT_VIEWPORT_ARTIFACT_DIR,
   assertNoHorizontalOverflow,
-  mockSctPublicApis
+  assertPanelVisible,
+  ensureSctViewportArtifactDir,
+  installSctShellMocks,
+  writeSctViewportMeasurements
 } from './sct-viewport-helper';
 
-async function tryAdminLogin(page: Page): Promise<boolean> {
-  const { username, password } = getMindGardenWebLogin();
-  if (!username || !password) {
-    return false;
-  }
-  await page.goto('/login');
-  await page.fill('input[name="username"], input[name="email"], input[type="email"]', username);
-  await page.fill('input[name="password"], input[type="password"]', password);
-  await page.click('button[type="submit"], button:has-text("로그인")');
-  try {
-    await page.waitForURL(/dashboard|admin|home|consultant/i, { timeout: 20000 });
-    return true;
-  } catch {
-    return false;
-  }
+const ADMIN_USER = {
+  id: 99999001,
+  email: 'e2e-erp-redirect-admin@local',
+  name: 'E2E ERP Redirect Admin',
+  role: 'ADMIN',
+  permissionGroupCodes: [] as string[],
+  tenantId: 'e2e-local'
+};
+
+async function measureOverflow(page: import('@playwright/test').Page): Promise<number> {
+  return page.evaluate(() => {
+    const doc = document.documentElement;
+    const body = document.body;
+    const scrollW = Math.max(doc.scrollWidth, body?.scrollWidth || 0);
+    return scrollW - doc.clientWidth;
+  });
 }
 
-test.describe('SCT 관리자·상담사 7폭 (초안)', () => {
+/** CRA HMR/웹소켓·폰트가 goto 를 붙잡는 경우 완화 */
+async function hardenPageNetwork(page: import('@playwright/test').Page): Promise<void> {
+  await page.route('**/*fonts.googleapis.com/**', (route) => route.abort());
+  await page.route('**/*fonts.gstatic.com/**', (route) => route.abort());
+  await page.route('**/sockjs-node/**', (route) => route.abort());
+  await page.route('**/ws', (route) => route.abort());
+  await page.route('**/*hot-update*', (route) => route.abort());
+}
+
+async function gotoSettled(
+  page: import('@playwright/test').Page,
+  url: string
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+      return;
+    } catch (err) {
+      lastError = err;
+      await page.waitForTimeout(500);
+    }
+  }
+  throw lastError;
+}
+
+test.describe('SCT 관리자 질문지 탭 7폭', () => {
+  test.use({ storageState: buildSyntheticAdminStorageState() });
+  test.describe.configure({ timeout: 180_000 });
+
+  test.beforeAll(() => {
+    ensureSctViewportArtifactDir();
+  });
+
+  test.beforeEach(async({ page }) => {
+    await hardenPageNetwork(page);
+    await installSctShellMocks(page, ADMIN_USER);
+  });
+
   for (const vp of SCT_VIEWPORTS) {
-    test(`관리자 사용자관리 + SCT mock ${vp.name}`, async({ page }) => {
+    test(`관리자 ClientSidePeek 질문지 @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await mockSctPublicApis(page);
-      const loggedIn = await tryAdminLogin(page);
-      if (!loggedIn) {
-        test.info().annotations.push({
-          type: 'note',
-          description: '로그인 불가 — 공개 SCT 셸만 overflow 검사'
-        });
-        await page.goto('/public/sct/e2e-mock-token', { waitUntil: 'domcontentloaded' });
-        await expect(page.getByTestId('sct-public-app')).toBeVisible({ timeout: 15000 });
-        await assertNoHorizontalOverflow(page);
-        return;
-      }
-      await page.goto('/admin/user-management?type=client', { waitUntil: 'domcontentloaded' });
+      await gotoSettled(page, '/e2e/sct-viewport?panel=admin');
+      await expect(page.getByTestId('sct-viewport-harness')).toBeVisible({ timeout: 20000 });
+
+      const tab = page.getByRole('tab', { name: '질문지' });
+      await expect(tab).toBeVisible({ timeout: 15000 });
+      await tab.click();
+      await assertPanelVisible(page, 'sct-admin-tab');
       await assertNoHorizontalOverflow(page);
+
+      const overflowPx = await measureOverflow(page);
+      await page.screenshot({
+        path: path.join(SCT_VIEWPORT_ARTIFACT_DIR, `admin-questionnaire-${vp.width}.png`),
+        fullPage: false
+      });
+      writeSctViewportMeasurements([{
+        panel: 'admin-questionnaire',
+        name: vp.name,
+        width: vp.width,
+        height: vp.height,
+        overflowPx,
+        visible: true
+      }]);
     });
   }
+});
 
-  test('상담사 세션 패널 CSS 클래스 계약(페이지 로드 시)', async({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await mockSctPublicApis(page);
-    const loggedIn = await tryAdminLogin(page);
-    test.skip(!loggedIn, '로그인 자격 없음 — 상담사 패널 UI는 Jest 스모크로 커버');
-    await page.goto('/consultant/dashboard', { waitUntil: 'domcontentloaded' });
-    await assertNoHorizontalOverflow(page);
+test.describe('SCT 상담사 세션 패널 7폭', () => {
+  test.use({ storageState: buildSyntheticConsultantStorageState() });
+  test.describe.configure({ timeout: 180_000 });
+
+  test.beforeAll(() => {
+    ensureSctViewportArtifactDir();
   });
+
+  test.beforeEach(async({ page }) => {
+    await hardenPageNetwork(page);
+    await installSctShellMocks(page, getSyntheticConsultantUser());
+  });
+
+  for (const vp of SCT_VIEWPORTS) {
+    test(`상담사 SctSessionPanel @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      await gotoSettled(page, '/e2e/sct-viewport?panel=session');
+      await assertPanelVisible(page, 'sct-session-panel');
+      await expect(page.getByText('영역별')).toBeVisible({ timeout: 15000 });
+      await assertNoHorizontalOverflow(page);
+
+      const overflowPx = await measureOverflow(page);
+      await page.screenshot({
+        path: path.join(SCT_VIEWPORT_ARTIFACT_DIR, `consultant-session-${vp.width}.png`),
+        fullPage: false
+      });
+      writeSctViewportMeasurements([{
+        panel: 'consultant-session',
+        name: vp.name,
+        width: vp.width,
+        height: vp.height,
+        overflowPx,
+        visible: true
+      }]);
+    });
+  }
+});
+
+test.describe('SCT 설정 섹션 — system-config 7폭 (1440·375 포함)', () => {
+  test.use({ storageState: buildSyntheticAdminStorageState() });
+  test.describe.configure({ timeout: 180_000 });
+
+  test.beforeAll(() => {
+    ensureSctViewportArtifactDir();
+  });
+
+  test.beforeEach(async({ page }) => {
+    await hardenPageNetwork(page);
+    // SCT mock 을 나중에 등록(LIFO)해 feature ON·설정 API가 우선 매칭되게 한다.
+    await installAdminHamburgerShellMocks(page, ADMIN_USER);
+    await installSctShellMocks(page, ADMIN_USER);
+  });
+
+  for (const vp of SCT_VIEWPORTS) {
+    test(`system-config 질문지 섹션 @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
+      await page.setViewportSize({ width: vp.width, height: vp.height });
+      // 실경로: LNB 시스템 설정(/admin/system-config). harness 폴백 없이 본 경로만 사용.
+      await gotoSettled(page, '/admin/system-config');
+      await assertPanelVisible(page, 'sct-settings-section');
+      await expect(page.getByLabel('링크 만료(일)')).toBeVisible({ timeout: 15000 });
+      await assertNoHorizontalOverflow(page);
+
+      const overflowPx = await measureOverflow(page);
+      await page.screenshot({
+        path: path.join(SCT_VIEWPORT_ARTIFACT_DIR, `settings-system-config-${vp.width}.png`),
+        fullPage: false
+      });
+      writeSctViewportMeasurements([{
+        panel: 'settings-system-config',
+        name: vp.name,
+        width: vp.width,
+        height: vp.height,
+        overflowPx,
+        visible: true
+      }]);
+    });
+  }
 });

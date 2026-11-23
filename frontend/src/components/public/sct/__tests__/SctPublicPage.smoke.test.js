@@ -19,10 +19,11 @@ jest.mock('../../../../utils/sctApi', () => ({
     title: '문장완성 질문지',
     status: 'SENT',
     itemCount: 50,
-    maskedPhoneHint: '010****1234',
+    verifyChannelHint: 'PHONE',
     tokenExpiresAt: '2026-12-01T23:59:00',
     hasDraft: false,
-    requiresGuardian: true
+    requiresGuardian: true,
+    signerBand: 'UNDER_14'
   }),
   verifySctPublic: jest.fn(),
   fetchSctPublicForm: jest.fn(),

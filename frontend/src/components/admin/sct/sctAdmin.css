@@ -164,6 +164,71 @@
   align-items: center;
 }
 
+.mg-v2-sct-session__tools--secondary {
+  border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  padding-top: var(--mg-v2-space-2);
+}
+
+.mg-v2-sct-session__select {
+  min-height: var(--mg-v2-touch-target-min);
+  padding: 0 var(--mg-v2-space-3);
+  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-v2-color-surface-main);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-sct-session-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+.mg-v2-sct-session__search-input {
+  flex: 1 1 var(--mg-v2-space-20);
+  min-height: var(--mg-v2-touch-target-min);
+  padding: 0 var(--mg-v2-space-3);
+  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-v2-color-surface-main);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-sct-session__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  padding: 0 var(--mg-v2-space-4) var(--mg-v2-space-2);
+}
+
+.mg-v2-sct-session--font-sm .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-sct-session--font-md .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-sct-session--font-lg .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-body-lg, var(--mg-v2-font-size-h2));
+}
+
+.mg-v2-sct-session .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .mg-v2-sct-session__body {
   flex: 1 1 auto;
   overflow: auto;
@@ -202,6 +267,11 @@
   font-size: var(--mg-v2-font-size-caption);
   background: var(--mg-v2-color-surface-stone);
   border-radius: var(--mg-v2-radius-sm, 0.25rem);
+}
+
+.mg-v2-sct-tag--danger {
+  color: var(--mg-v2-color-error-text, var(--mg-v2-color-danger));
+  background: var(--mg-v2-color-error-bg, var(--mg-v2-color-surface-stone));
 }
 
 .mg-v2-sct-dom {

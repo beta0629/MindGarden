@@ -1,5 +1,5 @@
 /**
- * SCT 질문지 보내기 시트
+ * SCT 질문지 보내기 시트 — 온라인은 성인·청소년만
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -19,6 +19,7 @@ import {
   SCT_DEFAULTS,
   SCT_FORM_TYPE,
   SCT_FORM_TYPE_LABEL,
+  SCT_ONLINE_FORM_TYPES,
   SCT_UI
 } from '../../../constants/sctOnline';
 import './sctAdmin.css';
@@ -52,12 +53,17 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
           fetchSctSettings().catch(() => null)
         ]);
         if (cancelled) return;
-        setForms(formList);
+        const onlineForms = (formList || []).filter(
+          (f) => SCT_ONLINE_FORM_TYPES.includes(f.formType)
+        );
+        setForms(onlineForms);
         const days = settings?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS;
         setCenterDefaultDays(days);
         setExpiresInDays(days);
-        if (formList[0]?.formType) {
-          setFormType(formList[0].formType);
+        if (onlineForms[0]?.formType) {
+          setFormType(onlineForms[0].formType);
+        } else {
+          setFormType(SCT_FORM_TYPE.ADULT);
         }
       } catch (e) {
         if (!cancelled) {
@@ -73,7 +79,9 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   }, [isOpen, client]);
 
   const validate = () => {
-    if (!formType) return SCT_UI.VALIDATE_REQUIRED;
+    if (!formType || !SCT_ONLINE_FORM_TYPES.includes(formType)) {
+      return SCT_UI.VALIDATE_REQUIRED;
+    }
     if (!phone.trim() && !email.trim()) return SCT_UI.VALIDATE_REQUIRED;
     const days = Number(expiresInDays);
     if (!Number.isFinite(days)
@@ -98,8 +106,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         clientId: client?.id != null ? Number(client.id) : undefined,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
-        expiresInDays: Number(expiresInDays),
-        requiresGuardian: formType === SCT_FORM_TYPE.CHILD
+        expiresInDays: Number(expiresInDays)
       });
       notificationManager.success(SCT_UI.SEND_SUCCESS);
       onSent?.();
@@ -111,7 +118,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
     }
   };
 
-  const kindOptions = Object.keys(SCT_FORM_TYPE_LABEL).map((key) => ({
+  const kindOptions = SCT_ONLINE_FORM_TYPES.map((key) => ({
     value: key,
     label: SCT_FORM_TYPE_LABEL[key],
     fromApi: forms.find((f) => f.formType === key)
@@ -145,9 +152,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         {hasActiveDraft ? (
           <p className="mg-v2-sct-warn" role="status">{SCT_UI.RESEND_WARN}</p>
         ) : null}
-        {formType === SCT_FORM_TYPE.CHILD ? (
-          <p className="mg-v2-sct-warn" role="note">{SCT_UI.CHILD_GUARD_HINT}</p>
-        ) : null}
+        <p className={SCT_CSS.CAPTION} role="note">{SCT_UI.ONLINE_CHILD_HINT}</p>
         {error ? (
           <p className="mg-v2-sct-warn" role="alert"><SafeText>{error}</SafeText></p>
         ) : null}

@@ -1,12 +1,11 @@
 /**
- * 센터 설정 — SCT 섹션 (ADMIN만 변경)
+ * 센터 설정 — SCT 「질문지」 섹션 (ADMIN만 변경, feature OFF면 숨김)
  *
  * @author MindGarden
  * @since 2026-11-23
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { SettingsSectionPanel, SettingsButton } from '../settings-shell';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { RoleUtils } from '../../../constants/roles';
@@ -23,14 +22,14 @@ import {
 import './sctAdmin.css';
 
 /**
- * @param {{ forceShow?: boolean }} [props]
+ * feature.sct.enabled OFF이면 렌더하지 않는다.
  */
-const AdminSctSettingsSection = ({ forceShow = false }) => {
+const AdminSctSettingsSection = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
   const { enabled, loading: flagLoading } = useSctFeatureEnabled({ preferSettings: true });
   const [linkExpiryDays, setLinkExpiryDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
-  const [retentionDays, setRetentionDays] = useState('');
+  const [retentionDays, setRetentionDays] = useState(String(SCT_DEFAULTS.RETENTION_DAYS));
   const [featureEnabled, setFeatureEnabled] = useState(false);
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -40,7 +39,7 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
     try {
       const data = await fetchSctSettings();
       setLinkExpiryDays(data?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS);
-      setRetentionDays(data?.retentionDays != null ? String(data.retentionDays) : '');
+      setRetentionDays(String(data?.retentionDays ?? SCT_DEFAULTS.RETENTION_DAYS));
       setFeatureEnabled(data?.featureEnabled === true);
       setLoaded(true);
       setError(null);
@@ -57,10 +56,9 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
   if (flagLoading) {
     return null;
   }
-  if (!forceShow && !enabled && !loaded) {
+  if (!enabled) {
     return null;
   }
-  // 설정 화면에서는 feature OFF여도 ADMIN이 값을 볼 수 있게 섹션 유지(로드 성공 시)
   if (!loaded && error) {
     return null;
   }
@@ -75,19 +73,19 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
       notificationManager.show(SCT_UI.VALIDATE_EXPIRY, 'error');
       return;
     }
+    const retention = Number(retentionDays);
+    if (!Number.isFinite(retention) || retention < SCT_DEFAULTS.RETENTION_MIN) {
+      notificationManager.show(SCT_UI.VALIDATE_REQUIRED, 'error');
+      return;
+    }
     setSaving(true);
     try {
-      const body = {
-        linkExpiryDays: days
-      };
-      if (retentionDays === '' || retentionDays == null) {
-        body.clearRetention = true;
-      } else {
-        body.retentionDays = Number(retentionDays);
-      }
-      const saved = await updateSctSettings(body);
+      const saved = await updateSctSettings({
+        linkExpiryDays: days,
+        retentionDays: retention
+      });
       setLinkExpiryDays(saved?.linkExpiryDays ?? days);
-      setRetentionDays(saved?.retentionDays != null ? String(saved.retentionDays) : '');
+      setRetentionDays(String(saved?.retentionDays ?? retention));
       setFeatureEnabled(saved?.featureEnabled === true);
       notificationManager.success(SCT_UI.SETTINGS_SAVE_SUCCESS);
     } catch (err) {
@@ -102,15 +100,18 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
 
   return (
     <SettingsSectionPanel
-      title={SCT_UI.SETTINGS_SECTION}
+      title={SCT_UI.TAB_QUESTIONNAIRE}
       testId={SCT_TEST_ID.SETTINGS}
     >
-      <div data-testid={SCT_TEST_ID.SETTINGS}>
+      <div>
         <SafeErrorDisplay error={error} />
         <p className="mg-v2-settings-muted mg-v2-sct-caption">
+          {SCT_UI.SETTINGS_SECTION}
+          {' · '}
           {SCT_UI.SETTINGS_FEATURE_OFF}
           {featureEnabled ? ' (현재 ON)' : ' (현재 OFF)'}
         </p>
+        <p className="mg-v2-sct-caption" role="note">{SCT_UI.SETTINGS_LEGAL_NOTE}</p>
         <form className="mg-v2-settings-form-grid" onSubmit={handleSave} noValidate>
           <div className="mg-v2-settings-field">
             <label className="mg-v2-form-label" htmlFor="sct-link-expiry">
@@ -135,11 +136,10 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
               id="sct-retention"
               className="mg-v2-form-input"
               type="number"
-              min={1}
+              min={SCT_DEFAULTS.RETENTION_MIN}
               value={retentionDays}
               disabled={!isAdmin || saving}
               onChange={(ev) => setRetentionDays(ev.target.value)}
-              placeholder={SCT_UI.SETTINGS_RETENTION_HINT}
             />
             <p className="mg-v2-sct-caption">{SCT_UI.SETTINGS_RETENTION_HINT}</p>
           </div>
@@ -154,10 +154,6 @@ const AdminSctSettingsSection = ({ forceShow = false }) => {
       </div>
     </SettingsSectionPanel>
   );
-};
-
-AdminSctSettingsSection.propTypes = {
-  forceShow: PropTypes.bool
 };
 
 export default AdminSctSettingsSection;

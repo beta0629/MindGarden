@@ -294,7 +294,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e, HttpServletRequest request) {
         String msg = e.getMessage() != null ? e.getMessage() : "";
         if (msg.contains("Tenant ID is not set")) {
-            log.warn("Tenant context not set (401): path={}, message={}", request.getRequestURI(), msg);
+            log.warn("Tenant context not set (401): path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), msg);
             ErrorResponse error = ErrorResponse.of(
                 "세션 또는 테넌트 정보가 없습니다. 다시 로그인해 주세요.",
                 "TENANT_ID_NOT_SET",
@@ -324,7 +324,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NumberFormatException.class)
     public ResponseEntity<ErrorResponse> handleNumberFormat(NumberFormatException e, HttpServletRequest request) {
-        log.warn("NumberFormat 실패: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("NumberFormat 실패: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
             ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
             ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
@@ -374,7 +374,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException e, HttpServletRequest request) {
-        log.warn("Bad credentials: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("Bad credentials: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
             clientSafeMessage(e.getMessage(), "아이디 또는 비밀번호가 올바르지 않습니다."),
@@ -393,7 +393,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e, HttpServletRequest request) {
-        log.warn("Authentication failed: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("Authentication failed: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         
         ErrorResponse error = ErrorResponse.of(
             clientSafeMessage(e.getMessage(), "인증에 실패했습니다."),
@@ -413,7 +413,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
-        log.warn("Access denied: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("Access denied: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
 
         String message = clientSafeMessage(e.getMessage(), "접근 권한이 없습니다.");
 
@@ -518,7 +518,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(CommonCodeInUseException.class)
     public ResponseEntity<ErrorResponse> handleCommonCodeInUse(
             CommonCodeInUseException e, HttpServletRequest request) {
-        log.warn("Common code in use: path={}", request.getRequestURI());
+        log.warn("Common code in use: path={}", ApiUriSanitizer.forLogging(request.getRequestURI()));
         ErrorResponse error = ErrorResponse.of(
                 e.getMessage(),
                 CommonCodeInUseException.ERROR_CODE,
@@ -534,7 +534,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SalaryProfileConflictException.class)
     public ResponseEntity<ErrorResponse> handleSalaryProfileConflict(
             SalaryProfileConflictException e, HttpServletRequest request) {
-        log.info("[SALARY_PROFILE_CONFLICT] path={} message={}", request.getRequestURI(), e.getMessage());
+        log.info("[SALARY_PROFILE_CONFLICT] path={} message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
                 e.getMessage(),
                 SalaryProfileConflictException.ERROR_CODE,
@@ -696,7 +696,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SchedulePastTimeException.class)
     public ResponseEntity<ErrorResponse> handleSchedulePastTime(
             SchedulePastTimeException e, HttpServletRequest request) {
-        log.info("[{}] scheduleId={} path={}", e.getErrorCode(), e.getScheduleId(), request.getRequestURI());
+        log.info("[{}] scheduleId={} path={}", e.getErrorCode(), e.getScheduleId(), ApiUriSanitizer.forLogging(request.getRequestURI()));
         ErrorResponse error = ErrorResponse.of(
             e.getMessage(),
             e.getErrorCode(),
@@ -713,7 +713,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ScheduleSessionNotStartedException.class)
     public ResponseEntity<ErrorResponse> handleScheduleSessionNotStarted(
             ScheduleSessionNotStartedException e, HttpServletRequest request) {
-        log.info("[SCHEDULE_SESSION_NOT_STARTED] scheduleId={} path={}", e.getScheduleId(), request.getRequestURI());
+        log.info("[SCHEDULE_SESSION_NOT_STARTED] scheduleId={} path={}", e.getScheduleId(), ApiUriSanitizer.forLogging(request.getRequestURI()));
         ErrorResponse error = ErrorResponse.of(
             e.getMessage(),
             ScheduleSessionStartGate.COMPLETION_BEFORE_START_ERROR_CODE,
@@ -730,7 +730,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ScheduleTimeConflictException.class)
     public ResponseEntity<ErrorResponse> handleScheduleTimeConflict(
             ScheduleTimeConflictException e, HttpServletRequest request) {
-        log.info("[SCHEDULE_TIME_CONFLICT] path={} message={}", request.getRequestURI(), e.getMessage());
+        log.info("[SCHEDULE_TIME_CONFLICT] path={} message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
             e.getMessage(),
             ScheduleTimeConflictException.ERROR_CODE,
@@ -1022,7 +1022,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
             HttpMessageNotReadableException e, HttpServletRequest request) {
-        log.warn("HttpMessageNotReadable: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("HttpMessageNotReadable: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
                 ApiRequestErrorMessages.INVALID_REQUEST_BODY,
                 ApiRequestErrorMessages.CODE_INVALID_REQUEST_BODY,
@@ -1039,7 +1039,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupported(
             HttpMediaTypeNotSupportedException e, HttpServletRequest request) {
-        log.warn("HttpMediaTypeNotSupported: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("HttpMediaTypeNotSupported: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
                 ApiRequestErrorMessages.UNSUPPORTED_MEDIA_TYPE,
                 ApiRequestErrorMessages.CODE_UNSUPPORTED_MEDIA_TYPE,
@@ -1056,7 +1056,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(
             MissingServletRequestParameterException e, HttpServletRequest request) {
-        log.warn("MissingServletRequestParameter: path={}, message={}", request.getRequestURI(), e.getMessage());
+        log.warn("MissingServletRequestParameter: path={}, message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
                 ApiRequestErrorMessages.MISSING_REQUEST_PARAMETER,
                 ApiRequestErrorMessages.CODE_MISSING_REQUEST_PARAMETER,
@@ -1098,7 +1098,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DateTimeParseException.class)
     public ResponseEntity<ErrorResponse> handleDateTimeParse(
             DateTimeParseException e, HttpServletRequest request) {
-        log.warn("DateTimeParse 실패: path={}, errorIndex={}", request.getRequestURI(), e.getErrorIndex());
+        log.warn("DateTimeParse 실패: path={}, errorIndex={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getErrorIndex());
         ErrorResponse error = ErrorResponse.of(
                 ApiRequestErrorMessages.INVALID_DATE_FORMAT,
                 ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT,
@@ -1117,7 +1117,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConversionFailedException.class)
     public ResponseEntity<ErrorResponse> handleConversionFailed(
             ConversionFailedException e, HttpServletRequest request) {
-        log.warn("ConversionFailed: path={}, targetType={}", request.getRequestURI(),
+        log.warn("ConversionFailed: path={}, targetType={}", ApiUriSanitizer.forLogging(request.getRequestURI()),
                 e.getTargetType() != null ? e.getTargetType().getName() : null);
         boolean temporal = e.getTargetType() != null && isTemporalType(e.getTargetType().getType());
         ErrorResponse error = ErrorResponse.of(
@@ -1143,7 +1143,7 @@ public class GlobalExceptionHandler {
         String details = e.getBindingResult().getFieldErrors().stream()
                 .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
                 .collect(Collectors.joining(", "));
-        log.warn("BindException: path={}, details={}", request.getRequestURI(), details);
+        log.warn("BindException: path={}, details={}", ApiUriSanitizer.forLogging(request.getRequestURI()), details);
         ErrorResponse error = ErrorResponse.of(
                 ApiRequestErrorMessages.INVALID_REQUEST_BINDING,
                 ApiRequestErrorMessages.CODE_INVALID_REQUEST_BINDING,
@@ -1173,7 +1173,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PasswordService.InvalidPasswordException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPassword(
             PasswordService.InvalidPasswordException e, HttpServletRequest request) {
-        log.info("[INVALID_PASSWORD] path={} message={}", request.getRequestURI(), e.getMessage());
+        log.info("[INVALID_PASSWORD] path={} message={}", ApiUriSanitizer.forLogging(request.getRequestURI()), e.getMessage());
         ErrorResponse error = ErrorResponse.of(
             e.getMessage(),
             PasswordService.InvalidPasswordException.ERROR_CODE,
@@ -1212,7 +1212,7 @@ public class GlobalExceptionHandler {
         }
         
         // 기타 정적 리소스는 경고 로그만 남기고 조용히 처리
-        log.debug("Static resource not found: {}", resourcePath);
+        log.debug("Static resource not found: {}", ApiUriSanitizer.forLogging(resourcePath));
         return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
     }
     
@@ -1223,7 +1223,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupported(
             HttpRequestMethodNotSupportedException e, HttpServletRequest request) {
-        log.warn("HTTP method not supported: path={}, method={}", request.getRequestURI(), request.getMethod());
+        log.warn("HTTP method not supported: path={}, method={}", ApiUriSanitizer.forLogging(request.getRequestURI()), request.getMethod());
         
         // Spring 기본 문구는 영문·기술 문구라 응답에 쓰지 않는다 (위 로그에만 남긴다).
         ErrorResponse error = ErrorResponse.of(

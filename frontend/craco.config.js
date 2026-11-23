@@ -10,6 +10,7 @@
  */
 
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 /**
  * src 밖에서 import 를 허용하는 파일 — 로그인 비밀번호 정책 BE/FE 공용 픽스처 하나뿐.
@@ -32,6 +33,45 @@ module.exports = {
       resolvePlugins
         .filter((p) => p.constructor.name === 'ModuleScopePlugin' && p.allowedFiles instanceof Set)
         .forEach((p) => SHARED_OUTSIDE_SRC_FILES.forEach((file) => p.allowedFiles.add(file)));
+
+      const harnessEntry = path.resolve(__dirname, 'src/__e2e__/mountSctHarness.js');
+      const entry = webpackConfig.entry;
+      if (Array.isArray(entry)) {
+        webpackConfig.entry = { main: entry, sctHarness: harnessEntry };
+      } else if (typeof entry === 'string') {
+        webpackConfig.entry = { main: entry, sctHarness: harnessEntry };
+      } else if (entry && typeof entry === 'object') {
+        webpackConfig.entry = { ...entry, sctHarness: harnessEntry };
+      }
+
+      webpackConfig.plugins
+        .filter((p) => p.constructor && p.constructor.name === 'HtmlWebpackPlugin')
+        .forEach((plugin) => {
+          const options = plugin.userOptions || plugin.options;
+          if (!options) {
+            return;
+          }
+          const htmlName = options.filename || 'index.html';
+          if (htmlName !== 'e2e-sct-viewport.html') {
+            options.chunks = ['main'];
+            if (plugin.userOptions) {
+              plugin.userOptions.chunks = ['main'];
+            }
+            if (plugin.options) {
+              plugin.options.chunks = ['main'];
+            }
+          }
+        });
+
+      webpackConfig.plugins.push(
+        new HtmlWebpackPlugin({
+          inject: true,
+          template: path.resolve(__dirname, 'public/e2e-sct-viewport.template.html'),
+          filename: 'e2e-sct-viewport.html',
+          chunks: ['sctHarness']
+        })
+      );
+
       return webpackConfig;
     }
   },

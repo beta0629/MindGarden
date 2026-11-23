@@ -195,10 +195,6 @@ import AccountDeletionInstructions from './components/common/AccountDeletionInst
 import PricingPage from './pages/public/PricingPage';
 const OnboardingPage = lazy(() => import('./pages/public/OnboardingPage'));
 const SctPublicPage = lazy(() => import('./components/public/sct/SctPublicPage'));
-const SCT_E2E_HARNESS_ENABLED = process.env.REACT_APP_SCT_E2E_HARNESS === 'true';
-const SctViewportHarnessPage = SCT_E2E_HARNESS_ENABLED
-  ? lazy(() => import('./__e2e__/SctViewportHarnessPage'))
-  : null;
 const SctPrintPreviewPage = lazy(() => import('./components/consultant/sct/SctPrintPreviewPage'));
 import SystemNotifications from './components/notifications/SystemNotifications';
 import UnifiedNotifications from './components/notifications/UnifiedNotifications';
@@ -1129,16 +1125,6 @@ function AppContent() {
                 </Suspense>
               )}
             />
-            {SCT_E2E_HARNESS_ENABLED && SctViewportHarnessPage ? (
-              <Route
-                path="/e2e/sct-viewport"
-                element={(
-                  <Suspense fallback={<div className="mg-loading" />}>
-                    <SctViewportHarnessPage />
-                  </Suspense>
-                )}
-              />
-            ) : null}
             <Route
               path="/consultant/sct-print"
               element={(

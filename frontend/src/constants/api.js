@@ -341,6 +341,9 @@ export const ADMIN_API = {
   /** 테넌트 SMS 비시크릿 설정 (GET/PUT 동일 경로) */
   TENANT_SMS_SETTINGS: '/api/v1/admin/tenant-sms-settings',
 
+  /** SCT 센터 설정 (GET/PUT) */
+  SCT_SETTINGS: '/api/v1/admin/sct-settings',
+
   /** 온라인 카탈로그 SKU (GET/POST, GET/PUT/PATCH `/{id}`) */
   SHOP_CATALOG_SKUS: '/api/v1/admin/shop/catalog-skus',
 
@@ -355,6 +358,7 @@ export const ADMIN_API = {
 export const API = {
   KAKAO_ALIMTALK_SETTINGS: ADMIN_API.KAKAO_ALIMTALK_SETTINGS,
   TENANT_SMS_SETTINGS: ADMIN_API.TENANT_SMS_SETTINGS,
+  SCT_SETTINGS: ADMIN_API.SCT_SETTINGS,
   SHOP_CATALOG_SKUS: ADMIN_API.SHOP_CATALOG_SKUS,
   SHOP_POINT_POLICIES: ADMIN_API.SHOP_POINT_POLICIES,
   SHOP_ORDERS: ADMIN_API.SHOP_ORDERS

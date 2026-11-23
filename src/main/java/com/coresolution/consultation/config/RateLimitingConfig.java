@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.coresolution.core.util.ApiUriSanitizer;
 import com.coresolution.core.util.HttpRequestClientIp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -63,6 +64,7 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_ONBOARDING_PUBLIC = "_onboarding_public";
         private static final String RATE_KEY_SUFFIX_KR_PUBLIC_DATA = "_kr_public_data";
         private static final String RATE_KEY_SUFFIX_PUBLIC_TENANTS = "_public_tenants";
+        private static final String RATE_KEY_SUFFIX_SCT_PUBLIC = "_sct_public";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
@@ -72,6 +74,7 @@ public class RateLimitingConfig {
         private static final String REASON_ONBOARDING_PUBLIC = "onboarding_public";
         private static final String REASON_KR_PUBLIC_DATA = "kr_public_data";
         private static final String REASON_PUBLIC_TENANTS = "public_tenants";
+        private static final String REASON_SCT_PUBLIC = "sct_public";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
@@ -117,7 +120,8 @@ public class RateLimitingConfig {
                 || isOnboardingCreatePublicRequest(request)
                 || isOnboardingPublicRateLimitRequest(request)
                 || isKrPublicDataRateLimitRequest(request)
-                || isPublicTenantsRateLimitRequest(request);
+                || isPublicTenantsRateLimitRequest(request)
+                || isSctPublicRateLimitRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -170,6 +174,11 @@ public class RateLimitingConfig {
             return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
         }
 
+        private boolean isSctPublicRateLimitRequest(HttpServletRequest request) {
+            String prefix = properties.getRateLimit().getSctPublicPathPrefix();
+            return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -189,6 +198,9 @@ public class RateLimitingConfig {
             }
             if (isPublicTenantsRateLimitRequest(request)) {
                 return isPublicTenantsAllowed(clientIp);
+            }
+            if (isSctPublicRateLimitRequest(request)) {
+                return isSctPublicAllowed(clientIp);
             }
             return true;
         }
@@ -249,6 +261,13 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isSctPublicAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_SCT_PUBLIC;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getSctPublicRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -304,6 +323,15 @@ public class RateLimitingConfig {
                 } else {
                     tenantsInfo.increment();
                 }
+            } else if (isSctPublicRateLimitRequest(request)) {
+                String key = clientIp + RATE_KEY_SUFFIX_SCT_PUBLIC;
+                RequestInfo sctInfo = requestCounts.get(key);
+                if (sctInfo == null) {
+                    sctInfo = new RequestInfo();
+                    requestCounts.put(key, sctInfo);
+                } else {
+                    sctInfo.increment();
+                }
             }
         }
 
@@ -321,7 +349,8 @@ public class RateLimitingConfig {
 
             String requestPath = request.getRequestURI();
             String blockReason = resolveBlockReason(request);
-            log.warn("HTTP 429 rate limit exceeded: uri={}, reason={}", requestPath, blockReason);
+            log.warn("HTTP 429 rate limit exceeded: uri={}, reason={}",
+                ApiUriSanitizer.forLogging(requestPath), blockReason);
 
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json;charset=UTF-8");
@@ -347,6 +376,9 @@ public class RateLimitingConfig {
                 errorResponse.put("retryAfter", 60);
             } else if (isPublicTenantsRateLimitRequest(request)) {
                 errorResponse.put("message", "공개 테넌트 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
+            } else if (isSctPublicRateLimitRequest(request)) {
+                errorResponse.put("message", "SCT 공개 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
@@ -396,6 +428,9 @@ public class RateLimitingConfig {
             }
             if (isPublicTenantsRateLimitRequest(request)) {
                 return REASON_PUBLIC_TENANTS;
+            }
+            if (isSctPublicRateLimitRequest(request)) {
+                return REASON_SCT_PUBLIC;
             }
             return REASON_UNKNOWN;
         }

@@ -26,6 +26,7 @@ import ChipMultiSelect from '../common/ChipMultiSelect';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
 import OpsManagedSwitchRow from '../common/molecules/OpsManagedSwitchRow';
 import { SettingsPageShell, SettingsSectionPanel, SettingsButton } from './settings-shell';
+import AdminSctSettingsSection from './sct/AdminSctSettingsSection';
 import { ADMIN_ROUTES } from '../../constants/adminRoutes';
 import '../../styles/unified-design-tokens.css';
 import './AdminDashboard/AdminDashboardB0KlA.css';
@@ -496,6 +497,9 @@ const SystemConfigManagement = () => {
           flags={schedulerFlags}
           loading={schedulerLoading}
         />
+
+        {/* 질문지(SCT) — feature.sct.enabled ON일 때만 섹션 표시 */}
+        <AdminSctSettingsSection />
 
         {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}
         <SettingsSectionPanel

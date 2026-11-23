@@ -16,6 +16,7 @@ import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ServerErrorResponses;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.security.PasswordService;
+import com.coresolution.core.util.ApiUriSanitizer;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -70,6 +71,74 @@ public class GlobalExceptionHandler {
         );
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * SCT 기능 플래그 OFF — HTTP 404 fail-closed.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctFeatureDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleSctFeatureDisabled(
+            com.coresolution.consultation.sct.exception.SctFeatureDisabledException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "요청한 정보를 찾을 수 없습니다."),
+            "SCT_FEATURE_DISABLED",
+            HttpStatus.NOT_FOUND.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * SCT 만료·취소 — HTTP 410 Gone.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctGoneException.class)
+    public ResponseEntity<ErrorResponse> handleSctGone(
+            com.coresolution.consultation.sct.exception.SctGoneException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "링크가 만료되었거나 취소되었습니다."),
+            "SCT_GONE",
+            HttpStatus.GONE.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
+    /**
+     * SCT 상태 충돌 — HTTP 409.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctConflictException.class)
+    public ResponseEntity<ErrorResponse> handleSctConflict(
+            com.coresolution.consultation.sct.exception.SctConflictException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "요청을 처리할 수 없는 상태입니다."),
+            "SCT_CONFLICT",
+            HttpStatus.CONFLICT.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    }
+
+    /**
+     * SCT 검증 잠금 — HTTP 429.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctVerifyLockedException.class)
+    public ResponseEntity<ErrorResponse> handleSctVerifyLocked(
+            com.coresolution.consultation.sct.exception.SctVerifyLockedException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "검증이 잠겼습니다."),
+            "SCT_VERIFY_LOCKED",
+            HttpStatus.TOO_MANY_REQUESTS.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
     }
 
     /**

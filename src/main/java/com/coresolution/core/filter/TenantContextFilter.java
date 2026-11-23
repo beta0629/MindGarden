@@ -9,6 +9,7 @@ import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.constant.PublicApiPathPolicy;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.HttpRequestClientIp;
+import com.coresolution.core.util.HttpRequestHeadersForLog;
 import com.coresolution.core.util.LocalProfileGuard;
 import com.coresolution.core.util.TenantHostSubdomainUtil;
 import org.springframework.core.annotation.Order;
@@ -610,19 +611,7 @@ public class TenantContextFilter implements Filter {
      * 디버깅용: 모든 헤더를 문자열로 반환
      */
     private String getHeadersAsString(HttpServletRequest request) {
-        StringBuilder sb = new StringBuilder("{");
-        java.util.Enumeration<String> headerNames = request.getHeaderNames();
-        boolean first = true;
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            if (!first) {
-                sb.append(", ");
-            }
-            sb.append(headerName).append("=").append(request.getHeader(headerName));
-            first = false;
-        }
-        sb.append("}");
-        return sb.toString();
+        return HttpRequestHeadersForLog.formatAllHeaders(request);
     }
 }
 

@@ -72,4 +72,28 @@ describe('MobileLnbDrawer soft-sheet', () => {
     expect(mobileLayoutCss).toMatch(/1\.6667vw/);
     expect(mobileLayoutCss).not.toMatch(/--drawer-open|drawer-open.*width:\s*calc/);
   });
+
+  it('soft-sheet chrome-offset · drawer/overlay top은 헤더 아래', () => {
+    const mobileLayoutCss = read('components/dashboard-v2/templates/MobileLayout.css');
+    expect(mobileLayoutCss).toMatch(
+      /\.mg-v2-mobile-layout--soft-sheet\s*\{[^}]*--mg-v2-soft-sheet-chrome-offset:\s*calc\(\s*var\(--mg-layout-header-height-mobile/s
+    );
+    expect(mobileLayoutCss).toMatch(
+      /\.mg-v2-mobile-layout--admin-shell\s*\{[^}]*--mg-v2-soft-sheet-chrome-offset:\s*calc\(\s*var\(--mg-v2-space-16\)/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*top:\s*var\(\s*--mg-v2-soft-sheet-chrome-offset/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*height:\s*calc\(\s*100dvh\s*-\s*var\(\s*--mg-v2-soft-sheet-chrome-offset/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*top:\s*var\(\s*--mg-v2-soft-sheet-chrome-offset/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*height:\s*calc\(\s*100dvh\s*-\s*var\(\s*--mg-v2-soft-sheet-chrome-offset/s
+    );
+    expect(css).toMatch(/\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*z-index:\s*30/s);
+    expect(css).toMatch(/\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*z-index:\s*40/s);
+  });
 });

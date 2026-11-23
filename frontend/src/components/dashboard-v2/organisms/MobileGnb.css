@@ -154,6 +154,8 @@
  * (상담사 MobileGnb 레거시 56 높이는 기본 클래스 유지)
  */
 .mg-v2-mobile-gnb--admin-shell {
+  position: sticky;
+  top: 0;
   height: calc(var(--mg-v2-space-16, 4rem) + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
   padding-inline: calc(var(--mg-v2-space-3) + env(safe-area-inset-left, 0px))
@@ -161,7 +163,8 @@
   column-gap: var(--mg-v2-space-2);
   background: var(--mg-v2-color-surface-card, var(--mg-color-background-main));
   border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-200, var(--mg-color-border-main));
-  z-index: var(--mg-v2-z-header, 20);
+  /* soft-sheet 드로어/스크림은 헤더 아래에서 시작 — ☰는 GNB 레이어에서 항상 클릭 가능 */
+  z-index: var(--mg-v2-z-header);
 }
 
 .mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__menu.mg-v2-nav-icon {

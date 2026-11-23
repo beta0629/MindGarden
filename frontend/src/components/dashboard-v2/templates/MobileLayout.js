@@ -43,7 +43,7 @@ const MobileLayout = ({
   const isSoftSheet = drawerVariant === 'soft-sheet';
   const isAdminShell = isSoftSheet && shellTone === 'admin';
 
-  const handleMenuClick = () => setDrawerOpen(true);
+  const handleMenuClick = () => setDrawerOpen((open) => !open);
   const handleDrawerClose = () => setDrawerOpen(false);
 
   const handleLogout = () => {

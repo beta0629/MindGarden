@@ -289,6 +289,123 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
     });
   }
 
+  for (const width of VIEWPORTS) {
+    test(`ADMIN 햄버거 토글·닫기 히트 @${width}`, async ({ page }) => {
+      test.setTimeout(120_000);
+      await page.setViewportSize({ width, height: VIEWPORT_H });
+      await gotoWithSettle(page, '/admin/dashboard');
+
+      const hamburger = page.locator('.mg-v2-mobile-gnb__menu').first();
+      const drawer = page.getByTestId('admin-menu-drawer');
+
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'true');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+
+      // ☰ 재클릭 → 토글로 닫힘
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+      record({
+        id: `hamburger-toggle-close/${width}`,
+        viewport: width,
+        path: '/admin/dashboard',
+        pass: true,
+        detail: { via: 'hamburger-retoggle' }
+      });
+
+      // 다시 열고 「메뉴 닫기」 X 중심점 elementFromPoint → 버튼/자식, 클릭 시 닫힘
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+
+      const closeBtn = drawer.locator('.mg-v2-mobile-lnb-drawer__close').first();
+      await expect(closeBtn).toBeVisible();
+      const hitOk = await closeBtn.evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        const x = rect.left + rect.width / 2;
+        const y = rect.top + rect.height / 2;
+        const top = document.elementFromPoint(x, y);
+        if (!top) return false;
+        return el === top || el.contains(top);
+      });
+      expect(hitOk, `close btn elementFromPoint @${width}`).toBe(true);
+      await closeBtn.click();
+      await page.waitForTimeout(350);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+      record({
+        id: `close-btn-hit/${width}`,
+        viewport: width,
+        path: '/admin/dashboard',
+        pass: hitOk,
+        detail: { via: 'drawer-close-button' }
+      });
+
+      // ESC 닫힘
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(350);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+      record({
+        id: `escape-close/${width}`,
+        viewport: width,
+        path: '/admin/dashboard',
+        pass: true,
+        detail: { via: 'escape' }
+      });
+
+      // 스크림(바깥) 클릭 닫힘
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      const scrim = page.locator('.mg-v2-mobile-lnb-overlay--soft-sheet.mg-v2-mobile-lnb-overlay--open');
+      await expect(scrim).toBeVisible();
+      const scrimBox = await scrim.boundingBox();
+      expect(scrimBox, `scrim box @${width}`).toBeTruthy();
+      // 드로어 우측(스크림) 지점 클릭
+      await page.mouse.click(
+        Math.min((scrimBox!.x + scrimBox!.width - 24), width - 8),
+        scrimBox!.y + Math.min(80, scrimBox!.height / 2)
+      );
+      await page.waitForTimeout(350);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+      record({
+        id: `scrim-close/${width}`,
+        viewport: width,
+        path: '/admin/dashboard',
+        pass: true,
+        detail: { via: 'scrim' }
+      });
+
+      // 라우팅(메뉴 링크) 후 닫힘
+      await hamburger.click();
+      await page.waitForTimeout(350);
+      await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+      const dashLink = drawer.locator('a.mg-v2-nav-link[href="/admin/dashboard"]').first();
+      if (await dashLink.count()) {
+        await dashLink.click();
+      } else {
+        const anyLink = drawer.locator('a.mg-v2-nav-link[href^="/admin/"]').first();
+        await anyLink.click();
+      }
+      await page.waitForTimeout(500);
+      await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+      await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+      record({
+        id: `route-close/${width}`,
+        viewport: width,
+        path: '/admin/dashboard',
+        pass: true,
+        detail: { via: 'nav-link' }
+      });
+    });
+  }
+
   test('통합스케줄 달력·본문 폭 실측 기록 (FAIL 단언 없음)', async ({ page }) => {
     /* 사이드바/달력 실측만 JSON에 남김. r3 목표값(1110/1564 등) FAIL 금지. */
     // 외부 폰트/CDN hang → 렌더·샷 지연 완화

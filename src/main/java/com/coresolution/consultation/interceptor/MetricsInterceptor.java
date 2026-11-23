@@ -1,5 +1,6 @@
 package com.coresolution.consultation.interceptor;
 
+import com.coresolution.core.util.ApiUriSanitizer;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
@@ -55,7 +56,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
         // API 요청 수 카운터
         Counter.builder(METRIC_API_REQUESTS)
                 .tag("method", method)
-                .tag("uri", sanitizeUri(uri))
+                .tag("uri", ApiUriSanitizer.forMetrics(uri))
                 .tag("status", String.valueOf(status))
                 .register(meterRegistry)
                 .increment();
@@ -63,7 +64,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
         // API 응답 시간 타이머
         Timer.builder(METRIC_API_DURATION)
                 .tag("method", method)
-                .tag("uri", sanitizeUri(uri))
+                .tag("uri", ApiUriSanitizer.forMetrics(uri))
                 .tag("status", String.valueOf(status))
                 .register(meterRegistry)
                 .record(duration, java.util.concurrent.TimeUnit.MILLISECONDS);
@@ -72,7 +73,7 @@ public class MetricsInterceptor implements HandlerInterceptor {
         if (status >= 400) {
             Counter.builder(METRIC_API_ERRORS)
                     .tag("method", method)
-                    .tag("uri", sanitizeUri(uri))
+                    .tag("uri", ApiUriSanitizer.forMetrics(uri))
                     .tag("status", String.valueOf(status))
                     .register(meterRegistry)
                     .increment();
@@ -82,24 +83,11 @@ public class MetricsInterceptor implements HandlerInterceptor {
         if (ex != null) {
             Counter.builder(METRIC_API_ERRORS)
                     .tag("method", method)
-                    .tag("uri", sanitizeUri(uri))
+                    .tag("uri", ApiUriSanitizer.forMetrics(uri))
                     .tag("exception", ex.getClass().getSimpleName())
                     .register(meterRegistry)
                     .increment();
         }
-    }
-    
-    /**
-     * URI 정규화 (ID 등 동적 파라미터 제거)
-     */
-    private String sanitizeUri(String uri) {
-        // UUID 패턴 제거
-        uri = uri.replaceAll("/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", "/{id}");
-        
-        // 숫자 ID 제거
-        uri = uri.replaceAll("/\\d+", "/{id}");
-        
-        return uri;
     }
 }
 

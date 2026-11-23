@@ -1,5 +1,6 @@
 package com.coresolution.core.interceptor;
 
+import com.coresolution.core.util.ApiUriSanitizer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -68,22 +69,9 @@ public class ApiPerformanceInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
         
         // 동적 경로 파라미터 정규화 (예: /api/users/123 -> /api/users/{id})
-        uri = normalizePath(uri);
-        
-        return method + " " + uri;
-    }
+        uri = ApiUriSanitizer.forPerformanceStats(uri);
 
-    /**
-     * 경로 정규화 (ID 등 동적 파라미터를 플레이스홀더로 변경)
-     */
-    private String normalizePath(String path) {
-        // 숫자 ID를 {id}로 변경
-        path = path.replaceAll("/\\d+", "/{id}");
-        
-        // UUID 패턴을 {uuid}로 변경
-        path = path.replaceAll("/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", "/{uuid}");
-        
-        return path;
+        return method + " " + uri;
     }
 
     /**

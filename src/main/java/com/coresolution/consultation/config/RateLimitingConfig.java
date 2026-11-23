@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
+import com.coresolution.core.util.ApiUriSanitizer;
 import com.coresolution.core.util.HttpRequestClientIp;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -348,7 +349,8 @@ public class RateLimitingConfig {
 
             String requestPath = request.getRequestURI();
             String blockReason = resolveBlockReason(request);
-            log.warn("HTTP 429 rate limit exceeded: uri={}, reason={}", requestPath, blockReason);
+            log.warn("HTTP 429 rate limit exceeded: uri={}, reason={}",
+                ApiUriSanitizer.forLogging(requestPath), blockReason);
 
             response.setStatus(HttpStatus.TOO_MANY_REQUESTS.value());
             response.setContentType("application/json;charset=UTF-8");

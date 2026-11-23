@@ -38,5 +38,15 @@ public class SctInvitationResponse {
     private Boolean requiresGuardian;
     /** 보관 기간 경과 시 true — ADMIN 수동 파기 대상. */
     private Boolean destroyEligible;
+    /** 미연결 발송 시 관리 화면 표시명(PII 최소). */
+    private String recipientName;
+    /**
+     * 공개 응답 URL. 생성·링크 재발급 직후 응답에만 포함(일회성).
+     */
+    private String publicUrl;
+    /**
+     * 평문 초대 토큰. 생성·링크 재발급 직후에만 포함 — 이후 조회 API에는 없음.
+     */
+    private String token;
     private List<SctAnswerView> answers;
 }

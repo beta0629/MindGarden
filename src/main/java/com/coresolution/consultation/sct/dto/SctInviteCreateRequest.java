@@ -26,4 +26,6 @@ public class SctInviteCreateRequest {
     /** 만료 일수 오버라이드(1~30). null이면 테넌트 설정. */
     private Integer expiresInDays;
     private Boolean requiresGuardian;
+    /** 미연결 발송 시 목록 표시용 이름(선택). */
+    private String recipientName;
 }

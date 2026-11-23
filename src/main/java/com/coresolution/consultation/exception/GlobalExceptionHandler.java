@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "요청한 정보를 찾을 수 없습니다."),
             "ENTITY_NOT_FOUND",
             HttpStatus.NOT_FOUND.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         
@@ -152,7 +152,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "로그인이 필요합니다."),
             "UNAUTHORIZED",
             HttpStatus.UNAUTHORIZED.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -169,7 +169,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "접근 권한이 없습니다."),
             "FORBIDDEN",
             HttpStatus.FORBIDDEN.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
@@ -299,7 +299,7 @@ public class GlobalExceptionHandler {
                 "세션 또는 테넌트 정보가 없습니다. 다시 로그인해 주세요.",
                 "TENANT_ID_NOT_SET",
                 HttpStatus.UNAUTHORIZED.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
             );
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
@@ -309,7 +309,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), ApiRequestErrorMessages.INVALID_PARAMETER_VALUE),
             "ILLEGAL_STATE",
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -329,7 +329,7 @@ public class GlobalExceptionHandler {
             ApiRequestErrorMessages.INVALID_PARAMETER_TYPE,
             ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -350,7 +350,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), ApiRequestErrorMessages.INVALID_PARAMETER_VALUE),
             "ILLEGAL_ARGUMENT",
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         
@@ -380,7 +380,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "아이디 또는 비밀번호가 올바르지 않습니다."),
             "BAD_CREDENTIALS",
             HttpStatus.UNAUTHORIZED.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         
@@ -399,7 +399,7 @@ public class GlobalExceptionHandler {
             clientSafeMessage(e.getMessage(), "인증에 실패했습니다."),
             "AUTHENTICATION_FAILED",
             HttpStatus.UNAUTHORIZED.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         
@@ -421,7 +421,7 @@ public class GlobalExceptionHandler {
             message,
             "ACCESS_DENIED",
             HttpStatus.FORBIDDEN.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
 
@@ -468,7 +468,7 @@ public class GlobalExceptionHandler {
             clientMessage,
             errorCode,
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -490,7 +490,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 e.getErrorCode(),
                 HttpStatus.CONFLICT.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -507,7 +507,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 e.getErrorCode(),
                 HttpStatus.CONFLICT.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -523,7 +523,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 CommonCodeInUseException.ERROR_CODE,
                 HttpStatus.CONFLICT.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -539,7 +539,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 SalaryProfileConflictException.ERROR_CODE,
                 HttpStatus.CONFLICT.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
@@ -611,7 +611,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "MAPPING_ALREADY_PROCESSED");
         body.put("status", HttpStatus.CONFLICT.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -637,7 +637,7 @@ public class GlobalExceptionHandler {
         body.put("message", e.getMessage());
         body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
@@ -662,7 +662,7 @@ public class GlobalExceptionHandler {
         body.put("message", e.getMessage());
         body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
     }
@@ -684,7 +684,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "CONSULTATION_RECORD_DUPLICATE");
         body.put("status", HttpStatus.CONFLICT.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -701,7 +701,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             e.getErrorCode(),
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -718,7 +718,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             ScheduleSessionStartGate.COMPLETION_BEFORE_START_ERROR_CODE,
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -735,7 +735,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             ScheduleTimeConflictException.ERROR_CODE,
             HttpStatus.CONFLICT.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -753,7 +753,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             ShopCatalogSkuEventPriceConflictException.ERROR_CODE,
             HttpStatus.CONFLICT.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -779,7 +779,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "ILLEGAL_STATE_TRANSITION");
         body.put("status", HttpStatus.CONFLICT.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -797,7 +797,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             e.getErrorCode(),
             HttpStatus.CONFLICT.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -823,7 +823,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "ADMIN_DELETE_BLOCKED");
         body.put("status", HttpStatus.CONFLICT.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -851,7 +851,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "PERIOD_CLOSED");
         body.put("status", HttpStatus.CONFLICT.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
@@ -881,7 +881,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", "TAX_INTEGRITY_FAIL");
         body.put("status", HttpStatus.UNPROCESSABLE_ENTITY.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(body);
@@ -910,7 +910,7 @@ public class GlobalExceptionHandler {
         body.put("errorCode", e.getErrorCode());
         body.put("status", HttpStatus.BAD_REQUEST.value());
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
@@ -945,7 +945,7 @@ public class GlobalExceptionHandler {
         body.put("status", status.value());
         body.put("data", data);
         body.put("timestamp", java.time.LocalDateTime.now().toString());
-        body.put("path", request.getRequestURI());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         body.put("method", request.getMethod());
 
         ResponseEntity.BodyBuilder builder = ResponseEntity.status(status);
@@ -968,7 +968,7 @@ public class GlobalExceptionHandler {
             e.getMessage() != null ? e.getMessage() : "알림톡 템플릿 조회에 실패했습니다.",
             "ALIMTALK_TEMPLATE_FETCH_FAILED",
             HttpStatus.BAD_GATEWAY.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
@@ -988,7 +988,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 OnboardingApprovalBlockedException.ERROR_CODE,
                 HttpStatus.CONFLICT.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
@@ -1008,7 +1008,7 @@ public class GlobalExceptionHandler {
                 e.getMessage(),
                 ProcedureExecutionException.ERROR_CODE,
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         error.setTraceId(traceId);
@@ -1027,7 +1027,7 @@ public class GlobalExceptionHandler {
                 ApiRequestErrorMessages.INVALID_REQUEST_BODY,
                 ApiRequestErrorMessages.CODE_INVALID_REQUEST_BODY,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1044,7 +1044,7 @@ public class GlobalExceptionHandler {
                 ApiRequestErrorMessages.UNSUPPORTED_MEDIA_TYPE,
                 ApiRequestErrorMessages.CODE_UNSUPPORTED_MEDIA_TYPE,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1061,7 +1061,7 @@ public class GlobalExceptionHandler {
                 ApiRequestErrorMessages.MISSING_REQUEST_PARAMETER,
                 ApiRequestErrorMessages.CODE_MISSING_REQUEST_PARAMETER,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1084,7 +1084,7 @@ public class GlobalExceptionHandler {
                 temporal ? ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT
                         : ApiRequestErrorMessages.CODE_INVALID_PARAMETER_TYPE,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1103,7 +1103,7 @@ public class GlobalExceptionHandler {
                 ApiRequestErrorMessages.INVALID_DATE_FORMAT,
                 ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1126,7 +1126,7 @@ public class GlobalExceptionHandler {
                 temporal ? ApiRequestErrorMessages.CODE_INVALID_DATE_FORMAT
                         : ApiRequestErrorMessages.CODE_INVALID_PARAMETER_VALUE,
                 HttpStatus.BAD_REQUEST.value(),
-                request.getRequestURI(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
                 request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1150,7 +1150,7 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 details.isBlank() ? null : details
         );
-        error.setPath(request.getRequestURI());
+        error.setPath(ApiUriSanitizer.forLogging(request.getRequestURI()));
         error.setMethod(request.getMethod());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
@@ -1178,7 +1178,7 @@ public class GlobalExceptionHandler {
             e.getMessage(),
             PasswordService.InvalidPasswordException.ERROR_CODE,
             HttpStatus.BAD_REQUEST.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
@@ -1230,7 +1230,7 @@ public class GlobalExceptionHandler {
             "요청 메서드가 지원되지 않습니다.",
             "METHOD_NOT_ALLOWED",
             HttpStatus.METHOD_NOT_ALLOWED.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         
@@ -1267,7 +1267,7 @@ public class GlobalExceptionHandler {
             ServerErrorMessages.INTERNAL_SERVER_ERROR,
             errorCode,
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
-            request.getRequestURI(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
             request.getMethod()
         );
         error.setTraceId(traceId);

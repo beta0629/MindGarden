@@ -166,6 +166,9 @@ class SctInvitationServiceTest {
         assertFalse(saved.getManagementNo().toLowerCase().contains("name"));
         assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
+        assertTrue(org.springframework.util.StringUtils.hasText(created.getPublicUrl()));
+        assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
+        assertTrue(org.springframework.util.StringUtils.hasText(created.getToken()));
     }
 
     @Test
@@ -187,6 +190,8 @@ class SctInvitationServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua"));
+        verify(auditLogService).record(org.mockito.ArgumentMatchers.argThat(log ->
+                log != null && AuditAction.SCT_CLINICAL_ACCESS_DENIED.equals(log.getAction())));
         verify(sctAccessLogService, never()).logViewBody(any(), any(), any(), any(), any());
     }
 

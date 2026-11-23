@@ -1,5 +1,6 @@
 package com.coresolution.consultation.config;
 
+import com.coresolution.core.util.ApiUriSanitizer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,7 +37,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         errorResponse.put("success", false);
         errorResponse.put("message", "접근 권한이 없습니다.");
         errorResponse.put("redirectToLogin", true);
-        errorResponse.put("path", request.getRequestURI());
+        errorResponse.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
         errorResponse.put("method", request.getMethod());
         errorResponse.put("timestamp", System.currentTimeMillis());
         

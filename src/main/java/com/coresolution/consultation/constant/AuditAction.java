@@ -115,6 +115,13 @@ public enum AuditAction {
     /** SCT 초대 취소. */
     SCT_INVITE_CANCELLED("SCT_INVITE_CANCELLED", "enums.AuditAction.SCT_INVITE_CANCELLED"),
 
+    /** SCT 공개 링크 재발급(토큰 회전). */
+    SCT_INVITE_REISSUED("SCT_INVITE_REISSUED", "enums.AuditAction.SCT_INVITE_REISSUED"),
+
+    /** STAFF 등 임상 본문 접근 거부. */
+    SCT_CLINICAL_ACCESS_DENIED(
+            "SCT_CLINICAL_ACCESS_DENIED", "enums.AuditAction.SCT_CLINICAL_ACCESS_DENIED"),
+
     /** SCT 응답 제출. */
     SCT_RESPONSE_SUBMITTED("SCT_RESPONSE_SUBMITTED", "enums.AuditAction.SCT_RESPONSE_SUBMITTED"),
 

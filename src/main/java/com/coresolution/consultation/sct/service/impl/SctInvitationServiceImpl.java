@@ -70,6 +70,8 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SctInvitationServiceImpl implements SctInvitationService {
 
+    private static final String PUBLIC_SCT_WEB_PREFIX = "/public/sct/";
+
     private final SctFeatureGuard sctFeatureGuard;
     private final SctSettingsService sctSettingsService;
     private final SctFormTemplateRepository formTemplateRepository;
@@ -177,12 +179,15 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
         String managementNo = nextManagementNo(tenantId);
 
+        String recipientName = normalizeRecipientName(request.getRecipientName());
+
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(template.getId())
                 .clientId(clientId)
                 .mappingId(mappingId)
                 .consultantId(consultantId)
                 .managementNo(managementNo)
+                .recipientName(recipientName)
                 .targetPhone(phone)
                 .targetEmail(email)
                 .targetPhoneHash(phone == null ? null : PhoneHashUtils.sha256Hex(phone))
@@ -215,7 +220,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .build());
 
         SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
-        // 발송 직후 평문 토큰은 응답에 넣지 않음(보안). 테스트용 필드는 별도 없음.
+        attachOneShotPublicLink(response, rawToken);
         return response;
     }
 
@@ -326,6 +331,41 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setSmsDispatchResult(smsResult);
         invitationRepository.save(invitation);
         return toMetaResponse(invitation, template.getFormType());
+    }
+
+    @Override
+    @Transactional
+    public SctInvitationResponse reissueLink(String tenantId, User actor, Long id) {
+        sctFeatureGuard.requireEnabled(tenantId);
+        requireStaffLike(actor);
+        SctInvitation invitation = requireInvitation(tenantId, id);
+        ensureCanAccessInvitation(tenantId, actor, invitation);
+        refreshExpired(invitation);
+        if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
+                || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())
+                || SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
+            throw new SctConflictException("링크를 재발급할 수 없는 상태입니다.");
+        }
+        String rawToken = SctTokenHasher.generateOpaqueToken();
+        invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
+        invitation.setSentAt(LocalDateTime.now());
+        invitation.setVerifyFailCount(0);
+        invitation.setVerifyLockedUntil(null);
+        invitationRepository.save(invitation);
+        auditLogService.record(AuditLog.builder()
+                .tenantId(tenantId)
+                .actorUserId(actor.getId())
+                .actorRole(actor.getRole().name())
+                .targetUserId(invitation.getClientId())
+                .action(AuditAction.SCT_INVITE_REISSUED)
+                .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                .entityId(invitation.getId())
+                .metadataJson("{\"managementNo\":\"" + invitation.getManagementNo() + "\"}")
+                .build());
+        SctInvitationResponse response = toMetaResponse(
+                invitation, resolveFormType(invitation.getFormTemplateId()));
+        attachOneShotPublicLink(response, rawToken);
+        return response;
     }
 
     @Override
@@ -719,7 +759,27 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .smsDispatchResult(invitation.getSmsDispatchResult())
                 .requiresGuardian(invitation.getRequiresGuardian())
                 .destroyEligible(isDestroyEligible(invitation, retentionDays))
+                .recipientName(invitation.getRecipientName())
                 .build();
+    }
+
+    private static String normalizeRecipientName(String raw) {
+        if (!StringUtils.hasText(raw)) {
+            return null;
+        }
+        String trimmed = raw.trim();
+        if (trimmed.length() > 120) {
+            return trimmed.substring(0, 120);
+        }
+        return trimmed;
+    }
+
+    private static void attachOneShotPublicLink(SctInvitationResponse response, String rawToken) {
+        if (!StringUtils.hasText(rawToken) || response == null) {
+            return;
+        }
+        response.setToken(rawToken);
+        response.setPublicUrl(PUBLIC_SCT_WEB_PREFIX + rawToken);
     }
 
     /**
@@ -817,6 +877,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             return;
         }
         if (actor.getRole() == UserRole.STAFF) {
+            recordClinicalAccessDenied(tenantId, actor, invitation);
             throw new AccessDeniedException("권한이 없습니다.");
         }
         if (actor.getRole() == UserRole.CONSULTANT) {
@@ -826,6 +887,19 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             return;
         }
         throw new AccessDeniedException("권한이 없습니다.");
+    }
+
+    private void recordClinicalAccessDenied(String tenantId, User actor, SctInvitation invitation) {
+        auditLogService.record(AuditLog.builder()
+                .tenantId(tenantId)
+                .actorUserId(actor != null ? actor.getId() : null)
+                .actorRole(actor != null && actor.getRole() != null ? actor.getRole().name() : null)
+                .targetUserId(invitation.getClientId())
+                .action(AuditAction.SCT_CLINICAL_ACCESS_DENIED)
+                .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                .entityId(invitation.getId())
+                .metadataJson("{\"managementNo\":\"" + invitation.getManagementNo() + "\"}")
+                .build());
     }
 
     private boolean canConsultantAccess(String tenantId, Long consultantId, SctInvitation invitation) {

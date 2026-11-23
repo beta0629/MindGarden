@@ -1,0 +1,163 @@
+/**
+ * 센터 설정 — SCT 섹션 (ADMIN만 변경)
+ *
+ * @author MindGarden
+ * @since 2026-11-23
+ */
+
+import React, { useCallback, useEffect, useState } from 'react';
+import PropTypes from 'prop-types';
+import { SettingsSectionPanel, SettingsButton } from '../settings-shell';
+import SafeErrorDisplay from '../../common/SafeErrorDisplay';
+import { RoleUtils } from '../../../constants/roles';
+import { useSession } from '../../../contexts/SessionContext';
+import notificationManager from '../../../utils/notification';
+import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
+import { fetchSctSettings, updateSctSettings } from '../../../utils/sctApi';
+import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
+import {
+  SCT_DEFAULTS,
+  SCT_TEST_ID,
+  SCT_UI
+} from '../../../constants/sctOnline';
+import './sctAdmin.css';
+
+/**
+ * @param {{ forceShow?: boolean }} [props]
+ */
+const AdminSctSettingsSection = ({ forceShow = false }) => {
+  const { user } = useSession();
+  const isAdmin = RoleUtils.isAdmin(user);
+  const { enabled, loading: flagLoading } = useSctFeatureEnabled({ preferSettings: true });
+  const [linkExpiryDays, setLinkExpiryDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
+  const [retentionDays, setRetentionDays] = useState('');
+  const [featureEnabled, setFeatureEnabled] = useState(false);
+  const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  const load = useCallback(async() => {
+    try {
+      const data = await fetchSctSettings();
+      setLinkExpiryDays(data?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS);
+      setRetentionDays(data?.retentionDays != null ? String(data.retentionDays) : '');
+      setFeatureEnabled(data?.featureEnabled === true);
+      setLoaded(true);
+      setError(null);
+    } catch (e) {
+      setLoaded(false);
+      setError(e);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (flagLoading) {
+    return null;
+  }
+  if (!forceShow && !enabled && !loaded) {
+    return null;
+  }
+  // 설정 화면에서는 feature OFF여도 ADMIN이 값을 볼 수 있게 섹션 유지(로드 성공 시)
+  if (!loaded && error) {
+    return null;
+  }
+
+  const handleSave = async(e) => {
+    e.preventDefault();
+    if (!isAdmin) return;
+    const days = Number(linkExpiryDays);
+    if (!Number.isFinite(days)
+      || days < SCT_DEFAULTS.LINK_EXPIRY_MIN
+      || days > SCT_DEFAULTS.LINK_EXPIRY_MAX) {
+      notificationManager.show(SCT_UI.VALIDATE_EXPIRY, 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const body = {
+        linkExpiryDays: days
+      };
+      if (retentionDays === '' || retentionDays == null) {
+        body.clearRetention = true;
+      } else {
+        body.retentionDays = Number(retentionDays);
+      }
+      const saved = await updateSctSettings(body);
+      setLinkExpiryDays(saved?.linkExpiryDays ?? days);
+      setRetentionDays(saved?.retentionDays != null ? String(saved.retentionDays) : '');
+      setFeatureEnabled(saved?.featureEnabled === true);
+      notificationManager.success(SCT_UI.SETTINGS_SAVE_SUCCESS);
+    } catch (err) {
+      notificationManager.show(
+        resolveUserFacingApiErrorMessage(err, SCT_UI.LOAD_FAIL),
+        'error'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <SettingsSectionPanel
+      title={SCT_UI.SETTINGS_SECTION}
+      testId={SCT_TEST_ID.SETTINGS}
+    >
+      <div data-testid={SCT_TEST_ID.SETTINGS}>
+        <SafeErrorDisplay error={error} />
+        <p className="mg-v2-settings-muted mg-v2-sct-caption">
+          {SCT_UI.SETTINGS_FEATURE_OFF}
+          {featureEnabled ? ' (현재 ON)' : ' (현재 OFF)'}
+        </p>
+        <form className="mg-v2-settings-form-grid" onSubmit={handleSave} noValidate>
+          <div className="mg-v2-settings-field">
+            <label className="mg-v2-form-label" htmlFor="sct-link-expiry">
+              {SCT_UI.SETTINGS_LINK_EXPIRY}
+            </label>
+            <input
+              id="sct-link-expiry"
+              className="mg-v2-form-input"
+              type="number"
+              min={SCT_DEFAULTS.LINK_EXPIRY_MIN}
+              max={SCT_DEFAULTS.LINK_EXPIRY_MAX}
+              value={linkExpiryDays}
+              disabled={!isAdmin || saving}
+              onChange={(ev) => setLinkExpiryDays(ev.target.value)}
+            />
+          </div>
+          <div className="mg-v2-settings-field">
+            <label className="mg-v2-form-label" htmlFor="sct-retention">
+              {SCT_UI.SETTINGS_RETENTION}
+            </label>
+            <input
+              id="sct-retention"
+              className="mg-v2-form-input"
+              type="number"
+              min={1}
+              value={retentionDays}
+              disabled={!isAdmin || saving}
+              onChange={(ev) => setRetentionDays(ev.target.value)}
+              placeholder={SCT_UI.SETTINGS_RETENTION_HINT}
+            />
+            <p className="mg-v2-sct-caption">{SCT_UI.SETTINGS_RETENTION_HINT}</p>
+          </div>
+          {isAdmin ? (
+            <div>
+              <SettingsButton type="submit" disabled={saving}>
+                {SCT_UI.SETTINGS_SAVE}
+              </SettingsButton>
+            </div>
+          ) : null}
+        </form>
+      </div>
+    </SettingsSectionPanel>
+  );
+};
+
+AdminSctSettingsSection.propTypes = {
+  forceShow: PropTypes.bool
+};
+
+export default AdminSctSettingsSection;

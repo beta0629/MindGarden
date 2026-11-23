@@ -23,6 +23,7 @@ import { runResourceLoad, softRefresh } from '../../utils/softRefresh';
 import '../../styles/unified-design-tokens.css';
 import './AdminTenantSmsSettingsPage.css';
 import { useTranslation } from 'react-i18next';
+import AdminSctSettingsSection from './sct/AdminSctSettingsSection';
 
 const PROVIDER_MAX_LEN = 120;
 const SENDER_MAX_LEN = 32;
@@ -361,6 +362,8 @@ const AdminTenantSmsSettingsPage = () => {
             </SettingsButton>
           </div>
         </form>
+
+        <AdminSctSettingsSection forceShow />
       </SettingsPageShell>
       <ConfirmEnableModal />
     </AdminCommonLayout>

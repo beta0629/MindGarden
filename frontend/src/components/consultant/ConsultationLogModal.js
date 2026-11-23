@@ -42,6 +42,8 @@ import ConsultationLogFormPanel from './organisms/ConsultationLogFormPanel';
 import ConsultationLogRequiredFieldsNotice from './molecules/ConsultationLogRequiredFieldsNotice';
 import ConsultationLogSessionHeaderMeta from './molecules/ConsultationLogSessionHeaderMeta';
 import ConsultationLogAdminWriteBadge from './molecules/ConsultationLogAdminWriteBadge';
+import SctSessionPanel from './sct/SctSessionPanel';
+import useSctFeatureEnabled from '../../hooks/useSctFeatureEnabled';
 import {
   INSTITUTION_LINK_CONSULTATION_RECORDS_API,
   buildInstitutionLinkLatestLogUrl,
@@ -545,6 +547,11 @@ const ConsultationLogModal = ({
     const n = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
     return Number.isNaN(n) ? null : n;
   }, [client?.id, consultationRecord?.clientId, scheduleData?.clientId]);
+
+  const { enabled: sctFeatureEnabled } = useSctFeatureEnabled();
+  const sctMappingId = scheduleData?.mappingId != null
+    ? Number(scheduleData.mappingId)
+    : undefined;
 
   const riskLevels = priorityOptions;
 
@@ -1557,44 +1564,58 @@ const ConsultationLogModal = ({
               </div>
             </aside>
 
-            <div className="mg-v2-consultation-log__main">
-              {loading ? (
-                <div className="mg-v2-consultation-log__form-loading">
-                  <div className="mg-loading">
-                    {CONSULTATION_LOG_AUTOSAVE_STRINGS.FORM_LOADING}
+            <div
+              className={
+                sctFeatureEnabled && psychHookClientId != null
+                  ? 'mg-v2-consultation-log__layout--with-sct'
+                  : undefined
+              }
+            >
+              <div className="mg-v2-consultation-log__main mg-v2-consultation-log__journal">
+                {loading ? (
+                  <div className="mg-v2-consultation-log__form-loading">
+                    <div className="mg-loading">
+                      {CONSULTATION_LOG_AUTOSAVE_STRINGS.FORM_LOADING}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <>
-                  <ConsultationLogRequiredFieldsNotice
-                    sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
-                  />
+                ) : (
+                  <>
+                    <ConsultationLogRequiredFieldsNotice
+                      sessionNumberMissing={!isInstitutionLinkLog && resolveLockedSessionNumber() == null}
+                    />
 
-                  <ConsultationLogFormPanel
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    setFormData={setFormDataWithDirty}
-                    validationErrors={validationErrors}
-                    riskLevels={riskLevels}
-                    goalAchievementLevels={goalAchievementLevels}
-                    completionStatusOptions={completionStatusOptions}
-                    loadingCodes={loadingCodes}
-                  />
-                </>
-              )}
+                    <ConsultationLogFormPanel
+                      formData={formData}
+                      handleInputChange={handleInputChange}
+                      setFormData={setFormDataWithDirty}
+                      validationErrors={validationErrors}
+                      riskLevels={riskLevels}
+                      goalAchievementLevels={goalAchievementLevels}
+                      completionStatusOptions={completionStatusOptions}
+                      loadingCodes={loadingCodes}
+                    />
+                  </>
+                )}
 
-              <section
-                className="mg-v2-consultation-log-modal__precautions-wrap"
-                aria-label="주의사항"
-              >
-                <div className="mg-accordion mg-v2-consultation-log-modal__accordion">
-                  <ConsultationLogPrecautionsPanel
-                    expanded={accordionPrecautionsOpen}
-                    onExpandedChange={setAccordionPrecautionsOpen}
-                    importantComments={importantComments}
-                  />
-                </div>
-              </section>
+                <section
+                  className="mg-v2-consultation-log-modal__precautions-wrap"
+                  aria-label="주의사항"
+                >
+                  <div className="mg-accordion mg-v2-consultation-log-modal__accordion">
+                    <ConsultationLogPrecautionsPanel
+                      expanded={accordionPrecautionsOpen}
+                      onExpandedChange={setAccordionPrecautionsOpen}
+                      importantComments={importantComments}
+                    />
+                  </div>
+                </section>
+              </div>
+              {sctFeatureEnabled && psychHookClientId != null ? (
+                <SctSessionPanel
+                  clientId={psychHookClientId}
+                  mappingId={Number.isFinite(sctMappingId) ? sctMappingId : undefined}
+                />
+              ) : null}
             </div>
           </div>
         </section>

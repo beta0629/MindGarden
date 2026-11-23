@@ -108,4 +108,40 @@
 /* 상담사(soft-sheet) 전 페이지+홈 ☰ 좌측 x = 서브페이지 공통 pad-x (관리자 다크 드로어 레이아웃 비대상) */
 .mg-v2-mobile-layout--soft-sheet {
   --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-subpage-pad-x);
+  /* 드로어·스크림은 GNB 아래에서 시작 — 헤더 ☰ 토글·닫기 히트 유지 */
+  --mg-v2-soft-sheet-chrome-offset: calc(
+    var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px)
+  );
+}
+
+/*
+ * 관리자 soft-sheet — full-bleed 본문.
+ * 여백 SSOT: clamp(16px, 1.6667vw, 32px) + safe-area (핸드오프 r2).
+ * DesktopLnb / --mg-layout-sidebar-width 영향 없음.
+ */
+.mg-v2-mobile-layout--admin-shell {
+  --mg-v2-admin-stage-pad-x: clamp(var(--mg-v2-space-4), 1.6667vw, var(--mg-v2-space-8));
+  --mg-v2-admin-stage-pad-y: clamp(var(--mg-v2-space-4), 1.6vw, calc(var(--mg-v2-space-6) + var(--mg-v2-space-1)));
+  --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-space-3);
+  --mg-layout-sidebar-width: 0px;
+  /* 관리자 GNB 64(--mg-v2-space-16) + safe-top */
+  --mg-v2-soft-sheet-chrome-offset: calc(
+    var(--mg-v2-space-16) + env(safe-area-inset-top, 0px)
+  );
+}
+
+.mg-v2-mobile-layout--admin-shell .mg-v2-mobile-layout__main {
+  padding-block: var(--mg-v2-admin-stage-pad-y);
+  padding-inline: calc(var(--mg-v2-admin-stage-pad-x) + env(safe-area-inset-left, 0px))
+    calc(var(--mg-v2-admin-stage-pad-x) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--mg-v2-admin-stage-pad-y) + env(safe-area-inset-bottom, 0px));
+  margin-left: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.mg-v2-mobile-layout--admin-shell .mg-v2-mobile-layout__stage {
+  margin-left: 0;
+  width: 100%;
+  max-width: none;
 }

@@ -29,12 +29,13 @@ describe('consultant Cover+Chapter menu entry SSOT', () => {
     expect(source).toMatch(/useAdminShell/);
   });
 
-  test('AdminCommonLayout: 상담사는 항상 MobileLayout(isDesktop false), soft-sheet · hideSearch 전달', () => {
+  test('AdminCommonLayout: 상담사·관리자 soft-sheet MobileLayout(isDesktop false) · hideSearch 전달', () => {
     const source = fs.readFileSync(LAYOUT_JS, 'utf8');
     expect(source).toMatch(/drawerVariant:\s*'soft-sheet'/);
     expect(source).toMatch(/isCounselorOnly/);
+    expect(source).toMatch(/useSoftSheetShell/);
     expect(source).toMatch(
-      /const isDesktop = isCounselorOnly\s*\?\s*false\s*:\s*\(windowSize\.width >= BREAKPOINT_DESKTOP\)/
+      /const isDesktop = useSoftSheetShell\s*\?\s*false/
     );
     expect(source).toMatch(/hideSearch:\s*resolvedHideSearch/);
     expect(source).not.toMatch(/BREAKPOINT_CONSULTANT_DESKTOP/);

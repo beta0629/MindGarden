@@ -328,7 +328,24 @@
   background: var(--mg-v2-color-surface-stone);
   border-right: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-color-border-main));
   box-shadow: none;
-  padding-top: env(safe-area-inset-top, 0px);
+  /* GNB 아래 soft-sheet — safe-top은 layout chrome-offset에 포함(이중 inset 금지) */
+  top: var(
+    --mg-v2-soft-sheet-chrome-offset,
+    calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+  );
+  height: calc(
+    100vh - var(
+      --mg-v2-soft-sheet-chrome-offset,
+      calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+    )
+  );
+  height: calc(
+    100dvh - var(
+      --mg-v2-soft-sheet-chrome-offset,
+      calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+    )
+  );
+  padding-top: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   padding-left: env(safe-area-inset-left, 0px);
   color: var(--mg-v2-color-text-primary);
@@ -460,4 +477,97 @@
 .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link:hover .mg-v2-nav-link__text,
 .mg-v2-mobile-lnb-drawer--soft-sheet .mg-v2-nav-link:hover .mg-v2-nav-link__icon {
   color: inherit;
+}
+
+/* soft-sheet 전환·스크림 (핸드오프: 220ms / 200ms, reduced-motion) */
+.mg-v2-mobile-lnb-overlay--soft-sheet {
+  background: color-mix(in srgb, var(--mg-v2-color-neutral-900, var(--cs-black)) 36%, transparent);
+  /* 헤더 아래 스크림 — GNB ☰ 히트 영역과 겹치지 않음 */
+  top: var(
+    --mg-v2-soft-sheet-chrome-offset,
+    calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+  );
+  bottom: auto;
+  height: calc(
+    100vh - var(
+      --mg-v2-soft-sheet-chrome-offset,
+      calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+    )
+  );
+  height: calc(
+    100dvh - var(
+      --mg-v2-soft-sheet-chrome-offset,
+      calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
+    )
+  );
+  /* 본문 위 · 헤더(--mg-v2-z-header) 아래 — ☰ 토글 유지 */
+  z-index: 30;
+  transition: opacity 200ms ease, visibility 200ms ease;
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet {
+  z-index: 40;
+  transition: transform 220ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-mobile-lnb-overlay--soft-sheet,
+  .mg-v2-mobile-lnb-drawer--soft-sheet {
+    transition: none;
+  }
+}
+
+.mg-v2-mobile-lnb-drawer--soft-sheet :focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--mg-v2-color-surface-card, var(--mg-color-background-main)),
+    0 0 0 5px var(--mg-v2-color-neutral-900, var(--cs-ink));
+}
+
+/*
+ * 관리자 soft-sheet 활성: slate-200 배경 + slate-400 inset 선 + 굵기 700.
+ * 녹색 채움·왼쪽 컬러 바 금지 (상담사 primary-solid 는 --soft-sheet 기본 유지).
+ */
+.mg-v2-mobile-lnb-drawer--admin-slate {
+  --mg-v2-lnb-on-fill: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head,
+.mg-v2-mobile-lnb-drawer--admin-slate a.mg-v2-nav-link.mg-v2-nav-link--active,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-nav-link--active {
+  background: var(--cs-slate-200, var(--mg-v2-color-neutral-200));
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-bold, 700);
+  box-shadow: inset 0 0 0 var(--mg-v2-border-width-thin) var(--cs-slate-400, var(--mg-v2-color-neutral-500));
+}
+
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head::before {
+  display: none;
+}
+
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-head .mg-v2-nav-link__icon svg,
+.mg-v2-mobile-lnb-drawer--admin-slate .mg-v2-mobile-lnb-drawer__group--active .mg-v2-mobile-lnb-drawer__group-chevron,
+.mg-v2-mobile-lnb-drawer--admin-slate a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__text,
+.mg-v2-mobile-lnb-drawer--admin-slate a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon,
+.mg-v2-mobile-lnb-drawer--admin-slate a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon .mg-v2-icon,
+.mg-v2-mobile-lnb-drawer--admin-slate a.mg-v2-nav-link.mg-v2-nav-link--active .mg-v2-nav-link__icon svg {
+  color: var(--mg-v2-color-text-primary);
+  stroke: currentColor;
+}
+
+/* 관리자 soft-sheet: 폭 항상 min(280, 85vw) — ≥1280 축소 규칙 무효 */
+.mg-v2-mobile-lnb-drawer--admin-slate.mg-v2-mobile-lnb-drawer--soft-sheet {
+  width: min(calc(var(--mg-v2-space-20) * 3.5), 85vw);
+  max-width: 85vw;
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-mobile-lnb-drawer--admin-slate.mg-v2-mobile-lnb-drawer--soft-sheet {
+    width: min(calc(var(--mg-v2-space-20) * 3.5), 85vw);
+    max-width: 85vw;
+  }
 }

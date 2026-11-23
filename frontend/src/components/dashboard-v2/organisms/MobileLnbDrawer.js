@@ -1,14 +1,12 @@
 /**
  * MobileLnbDrawer - 280px 슬라이드 드로어, 오버레이 (메인/서브 트리 지원)
- * RESPONSIVE_LAYOUT_SPEC: 모바일 LNB 280px
- * 그룹은 아코디언: 기본 접힘, 헤더 클릭 시 해당 그룹만 펼침.
- * pathname/menuItems 변경 시 아코디언 동기화 (DesktopLnb 와 동일).
+ * soft-sheet: stone 면 · dialog a11y(열릴 때만) · 상담사 primary / 관리자 slate 활성
  *
  * @author CoreSolution
  * @since 2025-02-22
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import useCoverDrawerFocus from '../../common/coverChapter/useCoverDrawerFocus';
 import '../../common/coverChapter/CoverChapterMotion.css';
 import { useLocation } from 'react-router-dom';
@@ -28,9 +26,11 @@ import {
 } from '../utils/lnbAccordion';
 import './MobileLnbDrawer.css';
 
-/** 상담사 soft-sheet ☰ 드로어 — 하네스·테스트 셀렉터 */
+/** soft-sheet ☰ 드로어 — 하네스·테스트 셀렉터 */
 export const COUNSELOR_MENU_DRAWER_TEST_ID = 'counselor-menu-drawer';
-const COUNSELOR_MENU_TRIGGER_SELECTOR = '.mg-v2-mobile-gnb__menu';
+export const ADMIN_MENU_DRAWER_TEST_ID = 'admin-menu-drawer';
+const SOFT_SHEET_MENU_TRIGGER_SELECTOR = '.mg-v2-mobile-gnb__menu';
+const SOFT_SHEET_DRAWER_DOM_ID = 'mg-v2-soft-sheet-drawer';
 
 const MobileLnbDrawer = ({
   isOpen,
@@ -38,19 +38,26 @@ const MobileLnbDrawer = ({
   menuItems = [],
   headerTitle = '운영',
   onLogout,
-  variant
+  variant,
+  /** 'primary'(상담사) | 'slate'(관리자) — soft-sheet 활성 강조 */
+  activeTone
 }) => {
   const location = useLocation();
   const { pathname } = location;
   const isSoftSheet = variant === 'soft-sheet';
+  const isAdminSlate = isSoftSheet && activeTone === 'slate';
   const panelRef = useRef(null);
+  const titleId = useId();
+  const resolvedTitle = isSoftSheet && isAdminSlate
+    ? '메뉴'
+    : (headerTitle || (isSoftSheet ? '메뉴' : '운영'));
 
-  /* 상담사 soft-sheet: 내담자 CoverMenuDrawer와 같은 공통 훅(포커스·Tab 트랩·Esc·☰ 복귀) */
+  /* soft-sheet: 공통 훅(포커스·Tab 트랩·Esc·☰ 복귀) */
   useCoverDrawerFocus({
     isOpen: isSoftSheet && isOpen,
     panelRef,
     onClose,
-    returnFocusSelector: COUNSELOR_MENU_TRIGGER_SELECTOR
+    returnFocusSelector: SOFT_SHEET_MENU_TRIGGER_SELECTOR
   });
 
   const [expandedGroupKey, setExpandedGroupKey] = useState(() =>
@@ -92,7 +99,37 @@ const MobileLnbDrawer = ({
   const drawerClassName = [
     'mg-v2-mobile-lnb-drawer',
     isOpen ? 'mg-v2-mobile-lnb-drawer--open' : '',
-    isSoftSheet ? 'mg-v2-mobile-lnb-drawer--soft-sheet' : ''
+    isSoftSheet ? 'mg-v2-mobile-lnb-drawer--soft-sheet' : '',
+    isAdminSlate ? 'mg-v2-mobile-lnb-drawer--admin-slate' : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const softSheetDialogProps = isSoftSheet
+    ? (isOpen
+      ? {
+        id: SOFT_SHEET_DRAWER_DOM_ID,
+        role: 'dialog',
+        'aria-modal': 'true',
+        'aria-labelledby': titleId,
+        'aria-hidden': 'false',
+        'data-testid': isAdminSlate ? ADMIN_MENU_DRAWER_TEST_ID : COUNSELOR_MENU_DRAWER_TEST_ID
+      }
+      : {
+        id: SOFT_SHEET_DRAWER_DOM_ID,
+        'aria-hidden': 'true',
+        'aria-label': resolvedTitle,
+        'data-testid': isAdminSlate ? ADMIN_MENU_DRAWER_TEST_ID : COUNSELOR_MENU_DRAWER_TEST_ID
+      })
+    : {
+      role: 'navigation',
+      'aria-label': '메뉴'
+    };
+
+  const overlayClassName = [
+    'mg-v2-mobile-lnb-overlay',
+    isOpen ? 'mg-v2-mobile-lnb-overlay--open' : '',
+    isSoftSheet ? 'mg-v2-mobile-lnb-overlay--soft-sheet' : ''
   ]
     .filter(Boolean)
     .join(' ');
@@ -100,24 +137,23 @@ const MobileLnbDrawer = ({
   return (
     <>
       <div
-        className={`mg-v2-mobile-lnb-overlay ${isOpen ? 'mg-v2-mobile-lnb-overlay--open' : ''}`}
+        className={overlayClassName}
         onClick={onClose}
         onKeyDown={(e) => e.key === 'Escape' && onClose()}
         role="button"
-        tabIndex={0}
+        tabIndex={isOpen ? 0 : -1}
         aria-label="메뉴 닫기"
+        aria-hidden={!isOpen}
       />
       <aside
         ref={panelRef}
         className={drawerClassName}
-        role="navigation"
-        aria-label="메뉴"
-        {...(isSoftSheet
-          ? { 'data-testid': COUNSELOR_MENU_DRAWER_TEST_ID, 'aria-hidden': !isOpen }
-          : {})}
+        {...softSheetDialogProps}
       >
         <div className="mg-v2-mobile-lnb-drawer__header">
-          <span className="mg-v2-mobile-lnb-drawer__title">{headerTitle}</span>
+          <span className="mg-v2-mobile-lnb-drawer__title" id={isSoftSheet ? titleId : undefined}>
+            {resolvedTitle}
+          </span>
           {isSoftSheet ? (
             <MGButton
               type="button"
@@ -138,7 +174,7 @@ const MobileLnbDrawer = ({
             </MGButton>
           ) : null}
         </div>
-        <nav className="mg-v2-mobile-lnb-drawer__nav">
+        <nav className="mg-v2-mobile-lnb-drawer__nav" aria-label="메뉴 목록">
           <ul className="mg-v2-mobile-lnb-drawer__list">
             {menuItems.map((item) => {
               const itemKey = getLnbItemKey(item);

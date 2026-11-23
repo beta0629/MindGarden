@@ -439,6 +439,26 @@
   margin-bottom: var(--mg-v2-space-4);
 }
 
+@media (max-width: 640px) {
+  .mg-v2-sct-harness {
+    padding: var(--mg-v2-space-2);
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  .mg-v2-sct-peek__tabs {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .mg-v2-sct-peek__tabs .mg-v2-button {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
 .mg-v2-consultation-log__layout--with-sct {
   display: grid;
   grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);

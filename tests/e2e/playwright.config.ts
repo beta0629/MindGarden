@@ -65,7 +65,8 @@ export default defineConfig({
   ...(isLocalhost
     ? {
         webServer: {
-          command: 'REACT_APP_SCT_E2E_HARNESS=true npm start',
+          // SCT 관리자 7폭 등 `/e2e-sct-viewport` 스펙용 하네스 — 프로덕션 build 에는 포함되지 않음
+          command: 'npm run start:e2e-sct',
           cwd: frontendRoot,
           url: baseURL,
           reuseExistingServer: true,

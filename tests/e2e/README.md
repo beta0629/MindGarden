@@ -2,7 +2,20 @@
 
 `tests/e2e/tests/**/*.spec.ts` — 주로 ERP·관리자 흐름. 루트에서 `cd tests/e2e && npx playwright install --with-deps chromium` 후 `npx playwright test` (프로젝트·경로는 팀 표준 스크립트가 있으면 그에 따름). 일부 관리자 스모크는 **콘솔 게이트**: React **#130**·**invalid child** 문자열만 실패로 간주하고 그 외 `console.error` 노이즈는 무시한다. 수집·필터 SSOT: [`helpers/react130ConsoleGate.ts`](./helpers/react130ConsoleGate.ts) (`admin-dashboard-lnb-console-smoke`, `integrated-schedule-client-notes` S5).
 
-설정 SSOT: [`playwright.config.ts`](./playwright.config.ts) (`BASE_URL`, 로컬 시 `webServer`로 `frontend`의 `npm start`).
+설정 SSOT: [`playwright.config.ts`](./playwright.config.ts) (`BASE_URL`, 로컬 시 `webServer`로 `frontend`의 `npm run start:e2e-sct`).
+
+### SCT E2E 뷰포트 하네스 (`/e2e-sct-viewport`)
+
+관리자·상담·설정 7폭 스펙(`tests/sct/sct-admin-session-seven-viewport.spec.ts` 등)은 CRA 멀티 엔트리 하네스 HTML을 사용한다. **프로덕션 `npm run build` / `build:ci` 에는 포함되지 않는다.**
+
+| 용도 | 명령 / 플래그 |
+|------|----------------|
+| Playwright 로컬 (기본) | `playwright.config.ts`의 `webServer` → `frontend`에서 `npm run start:e2e-sct` (`REACT_APP_SCT_E2E_HARNESS=true`) |
+| 수동 개발 서버 | `cd frontend && npm run start:e2e-sct` |
+| 정적 serve 회귀 | `cd frontend && npm run build:e2e-sct && npm run serve:e2e-sct` (`serve` cleanUrls가 `e2e-sct-viewport.html` 제공, `serve-e2e.json`은 `/public/**`·`/admin/**` SPA rewrite) |
+| 운영·CI 기본 빌드 | 플래그 **없이** `build` / `build:ci` — `e2e-sct-viewport.html`·`sctHarness` 청크 미생성 |
+
+공개 SCT 흐름(`sct-public-flow.spec.ts` 등 `/public/sct/...`)은 메인 SPA만 쓰므로 하네스 플래그와 무관하다. 이미 `npm start`(플래그 없음)로 3000이 떠 있으면 `reuseExistingServer` 때문에 7폭 하네스 URL이 404일 수 있다 — 그 경우 서버를 끄고 Playwright가 `start:e2e-sct`로 기동하게 한다.
 
 **로컬 회귀 — 스펙 경로**: `cd tests/e2e` 후 `npx playwright test`의 인자는 `testDir`(./tests) 기준이므로 `tests/admin/…spec.ts` 형태다. 저장소 루트에서 `tests/e2e/tests/admin/…`처럼 중복 prefix를 붙이면 파일을 찾지 못한다. 예: `npx playwright test tests/admin/integrated-schedule-detail-modal.spec.ts tests/admin/integrated-schedule-client-notes.spec.ts --project=chromium`.
 

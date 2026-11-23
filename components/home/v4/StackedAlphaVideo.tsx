@@ -114,6 +114,12 @@ export const StackedAlphaVideo = forwardRef<
   const onEndedRef = useRef(onEnded);
   const onFirstFrameRef = useRef(onFirstFrame);
   const onUnavailableRef = useRef(onUnavailable);
+  const blobUrlRef = useRef<string | null>(null);
+  const blobHttpSrcRef = useRef('');
+  const fetchAbortRef = useRef<AbortController | null>(null);
+  const loadSrcRef = useRef<(next: string, resetFirstFrame: boolean) => void>(
+    () => {},
+  );
 
   loopRef.current = loop;
   playOnceRef.current = playOnce;
@@ -494,13 +500,104 @@ export const StackedAlphaVideo = forwardRef<
       stopUpload();
     };
 
+    const abortFetch = () => {
+      fetchAbortRef.current?.abort();
+      fetchAbortRef.current = null;
+    };
+
+    const revokeBlobUrl = () => {
+      const url = blobUrlRef.current;
+      blobUrlRef.current = null;
+      blobHttpSrcRef.current = '';
+      if (url) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {
+          /* ignore */
+        }
+      }
+    };
+
+    const assignHttpSrc = (next: string) => {
+      const abs = new URL(next, window.location.href).href;
+      const current = video.currentSrc || video.src || '';
+      const attr = video.getAttribute('src') || '';
+      // Reuse in-flight SSR fetch — never call load() when src already matches.
+      if (
+        current === abs ||
+        current.endsWith(next) ||
+        attr === next ||
+        attr.endsWith(next)
+      ) {
+        if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
+          applyStartTime();
+          syncPlay();
+        }
+        return;
+      }
+      video.src = next;
+      video.load();
+    };
+
+    const assignBlobSrc = (next: string) => {
+      const abs = new URL(next, window.location.href).href;
+      if (
+        blobHttpSrcRef.current === abs &&
+        video.src.startsWith('blob:') &&
+        video.readyState >= HTMLMediaElement.HAVE_METADATA
+      ) {
+        applyStartTime();
+        syncPlay();
+        return;
+      }
+      abortFetch();
+      const ac = new AbortController();
+      fetchAbortRef.current = ac;
+      void (async () => {
+        try {
+          const res = await fetch(abs, {
+            signal: ac.signal,
+            credentials: 'same-origin',
+          });
+          if (!res.ok) throw new Error('unavailable');
+          const blob = await res.blob();
+          if (!alive || ac.signal.aborted || srcRef.current !== next) return;
+          const media =
+            blob.type.startsWith('video/')
+              ? blob
+              : new Blob([blob], { type: 'video/mp4' });
+          const objectUrl = URL.createObjectURL(media);
+          revokeBlobUrl();
+          blobUrlRef.current = objectUrl;
+          blobHttpSrcRef.current = abs;
+          video.src = objectUrl;
+          video.load();
+        } catch (err) {
+          if (
+            !alive ||
+            ac.signal.aborted ||
+            (err instanceof DOMException && err.name === 'AbortError')
+          ) {
+            return;
+          }
+          revokeBlobUrl();
+          if (!adopted) {
+            video.removeAttribute('src');
+          }
+          onUnavailableRef.current?.();
+        }
+      })();
+    };
+
     const loadSrc = (next: string, resetFirstFrame: boolean) => {
       endedRef.current = false;
       holdRef.current = false;
       stopUpload();
       if (!next) {
+        abortFetch();
         if (!adopted) {
           video.removeAttribute('src');
+          revokeBlobUrl();
         }
         return;
       }
@@ -518,26 +615,18 @@ export const StackedAlphaVideo = forwardRef<
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
-      const abs = new URL(next, window.location.href).href;
-      const current = video.currentSrc || video.src || '';
-      const attr = video.getAttribute('src') || '';
-      // Reuse in-flight SSR fetch — never call load() when src already matches.
-      if (
-        current === abs ||
-        (next && current.endsWith(next)) ||
-        attr === next ||
-        (next && attr.endsWith(next))
-      ) {
-        if (video.readyState >= HTMLMediaElement.HAVE_METADATA) {
-          applyStartTime();
-          syncPlay();
-        }
-        // else the loadedmetadata listener attached below will sync.
+      // Scrub needs a seekable source. Workers static assets ignore Range
+      // (200 + no Accept-Ranges), so Chromium reports seekable=[0,0] on the
+      // HTTP URL; a blob: object URL of the same bytes is seekable. Play-once
+      // / loop (hero, booking) keep the plain URL. Fetch uses the same URL so
+      // the HTTP cache still applies; the object URL is revoked on swap/unmount.
+      if (scrubRef.current && !adopted) {
+        assignBlobSrc(next);
       } else {
-        video.src = next;
-        video.load();
+        assignHttpSrc(next);
       }
     };
+    loadSrcRef.current = loadSrc;
 
     srcRef.current = src;
     loadSrc(src, true);
@@ -640,6 +729,7 @@ export const StackedAlphaVideo = forwardRef<
       video.removeEventListener('playing', startUpload);
       video.pause();
       // Adopted SSR video stays in the DOM for remount; do not strip its src.
+      abortFetch();
       if (!adopted) {
         video.removeAttribute('src');
         try {
@@ -647,6 +737,7 @@ export const StackedAlphaVideo = forwardRef<
         } catch {
           /* ignore */
         }
+        revokeBlobUrl();
       }
       glRef.current?.lose();
       glRef.current = null;
@@ -677,13 +768,8 @@ export const StackedAlphaVideo = forwardRef<
       return;
     }
 
-    endedRef.current = false;
-    holdRef.current = false;
     // Keep last drawn pixels until the new clip's first frame (seamless swap).
-    video.loop = loop && !playOnce;
-    video.muted = true;
-    video.src = src;
-    video.load();
+    loadSrcRef.current(src, true);
   }, [src, loop, playOnce, holdLast, hideOnEnded, startTime]);
 
   useEffect(() => {

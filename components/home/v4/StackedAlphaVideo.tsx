@@ -259,6 +259,23 @@ export const StackedAlphaVideo = forwardRef<
       !video.paused &&
       video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 
+    /**
+     * After `ended`, Chromium leaves currentTime at duration. Seeking
+     * `duration - 1/60` on these single-GOP (I-frame at 0) clips rewinds to
+     * t=0 instead, so later draws must not re-sample a rewound element.
+     */
+    const holdFrameStillPresent = () => {
+      if (!holdRef.current) return false;
+      const d = video.duration;
+      if (!d || !Number.isFinite(d)) return false;
+      return video.currentTime >= d - 2 / 60;
+    };
+
+    const drawHoldSafe = () => {
+      if (holdRef.current && !holdFrameStillPresent()) return;
+      drawOnce();
+    };
+
     const pumpRvfc = () => {
       const v = video as RvfcVideo;
       if (!v.requestVideoFrameCallback) return false;
@@ -270,7 +287,7 @@ export const StackedAlphaVideo = forwardRef<
         } else {
           uploadingRef.current = false;
           rvfcIdRef.current = 0;
-          if (holdRef.current) drawOnce();
+          if (holdRef.current) drawHoldSafe();
         }
       };
       uploadingRef.current = true;
@@ -287,7 +304,7 @@ export const StackedAlphaVideo = forwardRef<
         } else {
           uploadingRef.current = false;
           rafIdRef.current = 0;
-          if (holdRef.current) drawOnce();
+          if (holdRef.current) drawHoldSafe();
         }
       };
       uploadingRef.current = true;
@@ -296,7 +313,7 @@ export const StackedAlphaVideo = forwardRef<
 
     const startUpload = () => {
       if (uploadingRef.current || !alive) return;
-      if (!shouldUpload() && !holdRef.current) return;
+      if (!shouldUpload() && !holdFrameStillPresent()) return;
       if (!pumpRvfc()) pumpRaf();
     };
 
@@ -333,7 +350,7 @@ export const StackedAlphaVideo = forwardRef<
       } else {
         video.pause();
         stopUpload();
-        if (holdRef.current) drawOnce();
+        if (holdRef.current) drawHoldSafe();
       }
     };
 
@@ -354,14 +371,8 @@ export const StackedAlphaVideo = forwardRef<
       endedRef.current = true;
       if (holdLastRef.current) {
         holdRef.current = true;
-        try {
-          if (video.duration && Number.isFinite(video.duration)) {
-            video.currentTime = Math.max(0, video.duration - 1 / 60);
-          }
-        } catch {
-          /* ignore */
-        }
         video.pause();
+        stopUpload();
         drawOnce();
       } else if (hideOnEndedRef.current) {
         stopUpload();
@@ -508,7 +519,8 @@ export const StackedAlphaVideo = forwardRef<
     const ro =
       typeof ResizeObserver !== 'undefined'
         ? new ResizeObserver(() => {
-            if (firstFrameRef.current || holdRef.current) drawOnce();
+            if (holdRef.current) drawHoldSafe();
+            else if (firstFrameRef.current) drawOnce();
           })
         : null;
     ro?.observe(wrap);

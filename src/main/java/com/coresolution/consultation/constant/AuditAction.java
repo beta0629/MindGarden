@@ -107,7 +107,28 @@ public enum AuditAction {
      * 임시 비밀번호 SMS 발송 결과. metadata 에 본문·비밀번호를 넣지 않는다.
      */
     TEMP_PASSWORD_SMS(
-            "TEMP_PASSWORD_SMS", "enums.AuditAction.TEMP_PASSWORD_SMS");
+            "TEMP_PASSWORD_SMS", "enums.AuditAction.TEMP_PASSWORD_SMS"),
+
+    /** SCT 초대 발송. 응답 본문·토큰 평문 금지. */
+    SCT_INVITE_SENT("SCT_INVITE_SENT", "enums.AuditAction.SCT_INVITE_SENT"),
+
+    /** SCT 초대 취소. */
+    SCT_INVITE_CANCELLED("SCT_INVITE_CANCELLED", "enums.AuditAction.SCT_INVITE_CANCELLED"),
+
+    /** SCT 응답 제출. */
+    SCT_RESPONSE_SUBMITTED("SCT_RESPONSE_SUBMITTED", "enums.AuditAction.SCT_RESPONSE_SUBMITTED"),
+
+    /** SCT 내담자 배정(연결). */
+    SCT_CLIENT_LINKED("SCT_CLIENT_LINKED", "enums.AuditAction.SCT_CLIENT_LINKED"),
+
+    /** SCT 내담자 배정 해제. */
+    SCT_CLIENT_UNLINKED("SCT_CLIENT_UNLINKED", "enums.AuditAction.SCT_CLIENT_UNLINKED"),
+
+    /** SCT 센터 설정 변경(만료·보관). */
+    SCT_SETTINGS_CHANGED("SCT_SETTINGS_CHANGED", "enums.AuditAction.SCT_SETTINGS_CHANGED"),
+
+    /** SCT 응답 본문 열람(상세는 sct_access_logs). */
+    SCT_RESPONSE_VIEWED("SCT_RESPONSE_VIEWED", "enums.AuditAction.SCT_RESPONSE_VIEWED");
 
     private final String code;
     private final String messageKey;

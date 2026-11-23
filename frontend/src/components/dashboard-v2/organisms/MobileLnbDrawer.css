@@ -500,13 +500,17 @@
       calc(var(--mg-layout-header-height-mobile, 56px) + env(safe-area-inset-top, 0px))
     )
   );
-  /* 본문 위 · 헤더(--mg-v2-z-header) 아래 — ☰ 토글 유지 */
-  z-index: 30;
+  /*
+   * sticky(1020)·header(1000) 위 · modal(10000) 아래.
+   * soft-sheet top/height는 chrome-offset으로 헤더 아래라 ☰ 히트는 유지.
+   */
+  z-index: var(--mg-v2-z-overlay);
   transition: opacity 200ms ease, visibility 200ms ease;
 }
 
 .mg-v2-mobile-lnb-drawer--soft-sheet {
-  z-index: 40;
+  /* overlay와 동일 토큰 — 마크업에서 drawer가 overlay 형제 뒤라 위 층 */
+  z-index: var(--mg-v2-z-overlay);
   transition: transform 220ms ease;
 }
 

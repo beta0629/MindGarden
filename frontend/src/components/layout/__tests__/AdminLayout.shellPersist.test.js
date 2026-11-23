@@ -1,5 +1,6 @@
 /**
  * AdminLayout 영속 셸 — 라우트 전환 시 GNB/LNB remount·getLnbMenus 재호출 방지
+ * ADMIN/STAFF soft-sheet chrome은 MobileLayout을 사용한다.
  *
  * @author Core Solution
  * @since 2026-09-08
@@ -47,22 +48,26 @@ jest.mock('../../common/UnifiedLoading', () => ({ text }) => (
   <div data-testid="unified-loading">{text}</div>
 ));
 
-let desktopLayoutMountCount = 0;
+let shellLayoutMountCount = 0;
 
 jest.mock('../../dashboard-v2/templates', () => {
   const ReactActual = require('react');
   return {
-    DesktopLayout: ({ children, headerTitle }) => {
+    DesktopLayout: ({ children, headerTitle }) => (
+      <div data-testid="desktop-layout" data-header-title={headerTitle}>
+        {children}
+      </div>
+    ),
+    MobileLayout: ({ children, headerTitle }) => {
       ReactActual.useEffect(() => {
-        desktopLayoutMountCount += 1;
+        shellLayoutMountCount += 1;
       }, []);
       return (
-        <div data-testid="desktop-layout" data-header-title={headerTitle}>
+        <div data-testid="mobile-layout" data-header-title={headerTitle}>
           {children}
         </div>
       );
-    },
-    MobileLayout: ({ children }) => <div data-testid="mobile-layout">{children}</div>
+    }
   };
 });
 
@@ -89,7 +94,7 @@ const PageB = () => {
 
 describe('AdminLayout shell persist', () => {
   beforeEach(() => {
-    desktopLayoutMountCount = 0;
+    shellLayoutMountCount = 0;
     mockUseBranding.mockReturnValue({ brandingInfo: null, isLoading: false });
     mockUseResponsive.mockReturnValue({ windowSize: { width: 1280 } });
     mockUseTenantComponentFlags.mockReturnValue({
@@ -109,7 +114,7 @@ describe('AdminLayout shell persist', () => {
     });
   });
 
-  test('라우트 전환 시 DesktopLayout 단일 마운트·getLnbMenus 추가 호출 없음·pathname만 변경', async() => {
+  test('라우트 전환 시 MobileLayout(soft-sheet chrome) 단일 마운트·getLnbMenus 추가 호출 없음·pathname만 변경', async() => {
     render(
       <MemoryRouter initialEntries={['/admin/a']}>
         <Routes>
@@ -128,9 +133,9 @@ describe('AdminLayout shell persist', () => {
       expect(mockGetLnbMenus).toHaveBeenCalledTimes(1);
     });
 
-    const layoutBefore = screen.getByTestId('desktop-layout');
-    expect(desktopLayoutMountCount).toBe(1);
-    expect(screen.getAllByTestId('desktop-layout')).toHaveLength(1);
+    const layoutBefore = screen.getByTestId('mobile-layout');
+    expect(shellLayoutMountCount).toBe(1);
+    expect(screen.getAllByTestId('mobile-layout')).toHaveLength(1);
 
     await act(async() => {
       screen.getByRole('link', { name: 'go-b' }).click();
@@ -142,16 +147,16 @@ describe('AdminLayout shell persist', () => {
 
     expect(screen.queryByTestId('page-a')).not.toBeInTheDocument();
     expect(screen.getByTestId('pathname')).toHaveTextContent('/admin/b');
-    expect(screen.getByTestId('desktop-layout')).toBe(layoutBefore);
-    expect(desktopLayoutMountCount).toBe(1);
+    expect(screen.getByTestId('mobile-layout')).toBe(layoutBefore);
+    expect(shellLayoutMountCount).toBe(1);
     expect(mockGetLnbMenus).toHaveBeenCalledTimes(1);
-    expect(screen.getAllByTestId('desktop-layout')).toHaveLength(1);
+    expect(screen.getAllByTestId('mobile-layout')).toHaveLength(1);
     await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toHaveAttribute('data-header-title', '페이지B');
+      expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-header-title', '페이지B');
     });
   });
 
-  test('lazy Outlet suspend 시 DesktopLayout(chrome) 유지·stage fallback만 표시', async() => {
+  test('lazy Outlet suspend 시 MobileLayout(soft-sheet chrome) 유지·stage fallback만 표시', async() => {
     let resolveLazy;
     const lazyPromise = new Promise((resolve) => {
       resolveLazy = resolve;
@@ -176,14 +181,14 @@ describe('AdminLayout shell persist', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
     });
     expect(screen.getByTestId('admin-layout-stage-fallback')).toBeInTheDocument();
     expect(screen.getByTestId('unified-loading')).toHaveTextContent('페이지를 불러오는 중...');
     expect(screen.queryByTestId('lazy-page')).not.toBeInTheDocument();
-    expect(desktopLayoutMountCount).toBe(1);
+    expect(shellLayoutMountCount).toBe(1);
 
-    const layoutDuringSuspend = screen.getByTestId('desktop-layout');
+    const layoutDuringSuspend = screen.getByTestId('mobile-layout');
 
     await act(async() => {
       resolveLazy();
@@ -194,8 +199,8 @@ describe('AdminLayout shell persist', () => {
     });
 
     expect(screen.queryByTestId('admin-layout-stage-fallback')).not.toBeInTheDocument();
-    expect(screen.getByTestId('desktop-layout')).toBe(layoutDuringSuspend);
-    expect(desktopLayoutMountCount).toBe(1);
+    expect(screen.getByTestId('mobile-layout')).toBe(layoutDuringSuspend);
+    expect(shellLayoutMountCount).toBe(1);
     expect(mockGetLnbMenus).toHaveBeenCalledTimes(1);
   });
 });

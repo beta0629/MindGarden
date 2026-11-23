@@ -93,7 +93,11 @@ describe('MobileLnbDrawer soft-sheet', () => {
     expect(css).toMatch(
       /\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*height:\s*calc\(\s*100dvh\s*-\s*var\(\s*--mg-v2-soft-sheet-chrome-offset/s
     );
-    expect(css).toMatch(/\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*z-index:\s*30/s);
-    expect(css).toMatch(/\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*z-index:\s*40/s);
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-overlay--soft-sheet\s*\{[^}]*z-index:\s*var\(--mg-v2-z-overlay\)/s
+    );
+    expect(css).toMatch(
+      /\.mg-v2-mobile-lnb-drawer--soft-sheet\s*\{[^}]*z-index:\s*var\(--mg-v2-z-overlay\)/s
+    );
   });
 });

@@ -29,8 +29,12 @@ import {
 
 const ARTIFACTS = '/opt/cursor/artifacts';
 const SHOTS = path.join(ARTIFACTS, 'shots');
+/** 기존 5폭 셸·토글 회귀 */
 const VIEWPORTS = [820, 1024, 1280, 1440, 1920] as const;
+/** 스케줄 사이드바 겹침 — 모바일 포함 6폭 */
+const OVERLAP_VIEWPORTS = [375, 820, 1024, 1280, 1440, 1920] as const;
 const VIEWPORT_H = 900;
+const SIDEBAR_STATES = ['expanded', 'collapsed'] as const;
 
 const ADMIN_PAGES: Array<{ name: string; path: string }> = [
   { name: '대시보드', path: '/admin/dashboard' },
@@ -219,6 +223,146 @@ async function setCalendarView(
   }
 }
 
+/**
+ * soft-sheet 드로어 패널 bbox 위 8×12 격자 elementFromPoint.
+ * 모든 샘플이 drawer(또는 자손)여야 하며, 사이드바·달력 히트는 0.
+ */
+async function sampleDrawerPanelHitGrid(page: Page) {
+  return page.evaluate(() => {
+    const drawer = document.querySelector(
+      '[data-testid="admin-menu-drawer"]'
+    ) as HTMLElement | null;
+    if (!drawer) {
+      return {
+        ok: false,
+        reason: 'no-drawer',
+        samples: 0,
+        drawerHits: 0,
+        sidebarHits: 0,
+        calendarHits: 0,
+        foreignHits: 0
+      };
+    }
+    const rect = drawer.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) {
+      return {
+        ok: false,
+        reason: 'drawer-bbox-too-small',
+        samples: 0,
+        drawerHits: 0,
+        sidebarHits: 0,
+        calendarHits: 0,
+        foreignHits: 0
+      };
+    }
+
+    const cols = 8;
+    const rows = 12;
+    let samples = 0;
+    let drawerHits = 0;
+    let sidebarHits = 0;
+    let calendarHits = 0;
+    let foreignHits = 0;
+    const foreignTags: string[] = [];
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const x = rect.left + ((col + 0.5) / cols) * rect.width;
+        const y = rect.top + ((row + 0.5) / rows) * rect.height;
+        const top = document.elementFromPoint(x, y);
+        samples += 1;
+        if (!top) {
+          foreignHits += 1;
+          foreignTags.push('null');
+          continue;
+        }
+        if (drawer === top || drawer.contains(top)) {
+          drawerHits += 1;
+          continue;
+        }
+        if (
+          top.closest('.integrated-schedule__sidebar')
+          || top.classList.contains('integrated-schedule__sidebar')
+        ) {
+          sidebarHits += 1;
+          foreignHits += 1;
+          foreignTags.push('sidebar');
+          continue;
+        }
+        if (
+          top.closest('.integrated-schedule__calendar-wrapper, .fc, .mg-v2-schedule-calendar-view')
+        ) {
+          calendarHits += 1;
+          foreignHits += 1;
+          foreignTags.push('calendar');
+          continue;
+        }
+        foreignHits += 1;
+        foreignTags.push(
+          (top as HTMLElement).tagName
+            + (top.className ? `.${String(top.className).split(/\s+/).slice(0, 2).join('.')}` : '')
+        );
+      }
+    }
+
+    return {
+      ok: drawerHits === samples && sidebarHits === 0 && calendarHits === 0 && foreignHits === 0,
+      reason: null as string | null,
+      samples,
+      drawerHits,
+      sidebarHits,
+      calendarHits,
+      foreignHits,
+      foreignTags: foreignTags.slice(0, 12),
+      drawerBox: {
+        w: Math.round(rect.width * 10) / 10,
+        h: Math.round(rect.height * 10) / 10
+      }
+    };
+  });
+}
+
+async function measureScheduleSidebarWidth(page: Page) {
+  return page.evaluate(() => {
+    const el = document.querySelector(
+      '.integrated-schedule__sidebar'
+    ) as HTMLElement | null;
+    if (!el) return null;
+    return Math.round(el.getBoundingClientRect().width * 10) / 10;
+  });
+}
+
+/**
+ * 통합스케줄 clinic-os 사이드바를 expanded|collapsed 로 맞춘다.
+ * 토글 버튼이 없으면 no-op.
+ */
+async function ensureScheduleSidebarState(
+  page: Page,
+  state: (typeof SIDEBAR_STATES)[number]
+) {
+  const sidebar = page.locator('.integrated-schedule__sidebar').first();
+  await sidebar.waitFor({ state: 'attached', timeout: 20_000 }).catch(() => {});
+  if (!(await sidebar.count())) return;
+
+  const isCollapsed = await sidebar.evaluate((el) =>
+    el.classList.contains('integrated-schedule__sidebar--collapsed')
+  );
+  const wantCollapsed = state === 'collapsed';
+  if (isCollapsed === wantCollapsed) return;
+
+  const toggle = page.locator('.integrated-schedule__sidebar-toggle').first();
+  if (!(await toggle.count())) return;
+  await toggle.click({ force: true }).catch(() => {});
+  await page.waitForTimeout(400);
+
+  await expect
+    .poll(async () =>
+      sidebar.evaluate((el) =>
+        el.classList.contains('integrated-schedule__sidebar--collapsed')
+      ), { timeout: 5_000 })
+    .toBe(wantCollapsed);
+}
+
 test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
   test.use({ storageState: buildSyntheticAdminStorageState() });
   test.describe.configure({ timeout: 180_000 });
@@ -403,6 +547,134 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
         pass: true,
         detail: { via: 'nav-link' }
       });
+    });
+  }
+
+  for (const width of OVERLAP_VIEWPORTS) {
+    for (const sidebarState of SIDEBAR_STATES) {
+      test(`ADMIN 드로어가 스케줄 사이드바 위 (${sidebarState}) @${width}`, async ({ page }) => {
+        test.setTimeout(120_000);
+        await page.setViewportSize({ width, height: VIEWPORT_H });
+        await gotoWithSettle(page, '/admin/integrated-schedule');
+        await page
+          .locator(
+            '[data-layout-context="integrated-schedule"], .integrated-schedule__calendar-wrapper, .integrated-schedule__sidebar'
+          )
+          .first()
+          .waitFor({ state: 'attached', timeout: 20_000 })
+          .catch(() => {});
+
+        await ensureScheduleSidebarState(page, sidebarState);
+
+        const sidebarWidthBefore = await measureScheduleSidebarWidth(page);
+        expect(
+          sidebarWidthBefore,
+          `sidebar measurable before drawer (${sidebarState}) @${width}`
+        ).not.toBeNull();
+
+        const hamburger = page.locator('.mg-v2-mobile-gnb__menu').first();
+        const drawer = page.getByTestId('admin-menu-drawer');
+        await hamburger.click();
+        await page.waitForTimeout(400);
+        await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+        await expect(drawer).toBeVisible();
+
+        const hit = await sampleDrawerPanelHitGrid(page);
+        record({
+          id: `drawer-above-schedule-sidebar/${sidebarState}/${width}`,
+          viewport: width,
+          path: '/admin/integrated-schedule',
+          pass: Boolean(hit.ok),
+          detail: { ...hit, sidebarWidthBefore, sidebarState },
+          error: hit.ok
+            ? undefined
+            : `samples=${hit.samples} drawer=${hit.drawerHits} sidebar=${hit.sidebarHits} calendar=${hit.calendarHits} foreign=${hit.foreignHits} tags=${JSON.stringify(hit.foreignTags)}`
+        });
+        expect(
+          hit.ok,
+          `drawer 8x12 grid above sidebar (${sidebarState}) @${width}: ${JSON.stringify(hit)}`
+        ).toBe(true);
+        expect(hit.sidebarHits, `sidebar hits (${sidebarState}) @${width}`).toBe(0);
+        expect(hit.calendarHits, `calendar hits (${sidebarState}) @${width}`).toBe(0);
+
+        const sidebarWidthOpen = await measureScheduleSidebarWidth(page);
+        expect(
+          sidebarWidthOpen,
+          `sidebar width while drawer open (${sidebarState}) @${width}`
+        ).toBe(sidebarWidthBefore);
+        record({
+          id: `sidebar-width-invariant/${sidebarState}/${width}`,
+          viewport: width,
+          path: '/admin/integrated-schedule',
+          pass: sidebarWidthOpen === sidebarWidthBefore,
+          detail: { sidebarWidthBefore, sidebarWidthOpen, sidebarState }
+        });
+
+        // 「메뉴 닫기」 중심 elementFromPoint ⊆ 버튼/자식 → 클릭 닫힘
+        const closeBtn = drawer.locator('.mg-v2-mobile-lnb-drawer__close').first();
+        await expect(closeBtn).toBeVisible();
+        const closeHitOk = await closeBtn.evaluate((el) => {
+          const rect = el.getBoundingClientRect();
+          const x = rect.left + rect.width / 2;
+          const y = rect.top + rect.height / 2;
+          const top = document.elementFromPoint(x, y);
+          if (!top) return false;
+          return el === top || el.contains(top);
+        });
+        expect(
+          closeHitOk,
+          `close btn elementFromPoint (${sidebarState}) @${width}`
+        ).toBe(true);
+        await closeBtn.click();
+        await page.waitForTimeout(350);
+        await expect(hamburger).toHaveAttribute('aria-expanded', 'false');
+        await expect(drawer).toHaveAttribute('aria-hidden', 'true');
+        record({
+          id: `schedule-close-btn-hit/${sidebarState}/${width}`,
+          viewport: width,
+          path: '/admin/integrated-schedule',
+          pass: closeHitOk,
+          detail: { via: 'drawer-close-button', sidebarState }
+        });
+
+        const sidebarWidthAfter = await measureScheduleSidebarWidth(page);
+        expect(
+          sidebarWidthAfter,
+          `sidebar width after close (${sidebarState}) @${width}`
+        ).toBe(sidebarWidthBefore);
+      });
+    }
+  }
+
+  // 발견분 fixed/sticky 후보 — 상담일지(상세 sticky) · 동일 격자(드로어 위면만)
+  for (const width of OVERLAP_VIEWPORTS) {
+    test(`ADMIN 드로어 격자(상담일지) @${width}`, async ({ page }) => {
+      test.setTimeout(90_000);
+      await page.setViewportSize({ width, height: VIEWPORT_H });
+      await gotoWithSettle(page, '/admin/consultation-logs');
+
+      const hamburger = page.locator('.mg-v2-mobile-gnb__menu').first();
+      const drawer = page.getByTestId('admin-menu-drawer');
+      await hamburger.click();
+      await page.waitForTimeout(400);
+      await expect(drawer).toHaveAttribute('aria-hidden', 'false');
+
+      const hit = await sampleDrawerPanelHitGrid(page);
+      // 스케줄 전용 셀렉터 히트는 0이어야 하고, 패널 bbox는 드로어만
+      record({
+        id: `drawer-above-consultation-logs/${width}`,
+        viewport: width,
+        path: '/admin/consultation-logs',
+        pass: Boolean(hit.ok),
+        detail: hit,
+        error: hit.ok
+          ? undefined
+          : `samples=${hit.samples} drawer=${hit.drawerHits} foreign=${hit.foreignHits} tags=${JSON.stringify(hit.foreignTags)}`
+      });
+      expect(hit.ok, `drawer 8x12 grid @ consultation-logs ${width}: ${JSON.stringify(hit)}`).toBe(true);
+
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(250);
     });
   }
 

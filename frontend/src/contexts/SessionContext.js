@@ -170,6 +170,14 @@ export const SessionProvider = ({ children }) => {
   useEffect(() => {
     let cancelled = false;
     (async() => {
+      // /public/sct/ — 인증 전역(current-user·후속 shell API) 부트스트랩 스킵
+      const bootPath = typeof window !== 'undefined' ? window.location.pathname : '';
+      if (bootPath.startsWith('/public/sct/')) {
+        logger.debug('🔓 SessionProvider: 공개 SCT SPA — checkSession 스킵', { bootPath });
+        dispatch({ type: SessionActionTypes.SET_HAS_CHECKED_SESSION, payload: true });
+        return;
+      }
+
       const postLogoutGate = sessionManager.consumePostLogoutGate();
       logger.debug('🔄 SessionProvider 마운트: checkSession( true ) 실행', {
         postLogoutGate

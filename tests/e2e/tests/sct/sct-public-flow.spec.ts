@@ -76,6 +76,7 @@ test.describe('SCT public flow (mocked)', () => {
     await page.goto(PUBLIC_TOKEN_PATH, { waitUntil: 'commit', timeout: 60_000 });
     await assertPanelVisible(page, 'sct-public-app');
     await assertNoHorizontalOverflow(page);
+    expect(commonCodes.length, '공개 SCT 진입 직후 common-codes 호출 0').toBe(0);
     commonCodes.length = 0;
 
     await completeVerifyAndConsent(page);

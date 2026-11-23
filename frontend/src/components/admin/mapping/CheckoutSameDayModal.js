@@ -21,6 +21,7 @@ import {
 import { useAlert } from '../../../hooks/useAlert';
 import { getTenantCodes } from '../../../utils/commonCodeApi';
 import { toDisplayString } from '../../../utils/safeDisplay';
+import { resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import {
   filterCheckoutSameDayPaymentMethodCodes,
   isCardPaymentMethod,
@@ -350,7 +351,7 @@ const CheckoutSameDayModal = ({
       isOpen={isOpen}
       onClose={handleClose}
       title={t(`${i18nPrefix}.title`)}
-      subtitle={mapping?.packageName || ''}
+      subtitle={resolveMappingPackageDisplayName(mapping) || ''}
       size="medium"
       className="mg-v2-ad-b0kla mg-v2-checkout-same-day-modal"
       backdropClick={!isLoading}
@@ -418,7 +419,7 @@ const CheckoutSameDayModal = ({
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-separator">|</span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--product">
-                <SafeText fallback="N/A">{mapping.packageName}</SafeText>
+                <SafeText fallback="N/A">{resolveMappingPackageDisplayName(mapping)}</SafeText>
               </span>
               <span className="mg-v2-mapping-creation-modal__summary-segment mg-v2-mapping-creation-modal__summary-segment--amount">
                 {summaryAmountText}
@@ -531,6 +532,8 @@ CheckoutSameDayModal.propTypes = {
     clientId: PropTypes.number,
     clientName: PropTypes.string,
     packageName: PropTypes.string,
+    displayPackageName: PropTypes.string,
+    mergedPackageNames: PropTypes.arrayOf(PropTypes.string),
     packagePrice: PropTypes.number,
     paymentAmount: PropTypes.number,
     totalSessions: PropTypes.number,

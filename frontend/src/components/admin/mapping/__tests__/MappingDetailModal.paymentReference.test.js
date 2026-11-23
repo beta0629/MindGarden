@@ -71,4 +71,27 @@ describe('MappingDetailModal — 결제 참조번호 행', () => {
       expect(screen.queryByText('REF-501')).toBeNull();
     }
   );
+
+  test('병합 패키지 mapping 은 기본/결제 탭에서 displayPackageName 을 표시하고 packagePrice/paymentAmount 는 유지', async () => {
+    render(
+      <MappingDetailModal
+        isOpen
+        onClose={jest.fn()}
+        mapping={{
+          ...baseMapping,
+          packageName: '단회기 90,000원',
+          displayPackageName: '단회기 90,000원 + 기본10회기',
+          packagePrice: 90000,
+          paymentAmount: 90000,
+          paymentMethod: 'BANK_TRANSFER'
+        }}
+      />
+    );
+    await waitFor(() => expect(mockApiGet).toHaveBeenCalled());
+    expect(await screen.findByTestId('mapping-detail-basic-package')).toHaveTextContent('단회기 90,000원 + 기본10회기');
+
+    fireEvent.click(await screen.findByText(PAYMENT_TAB_KEY));
+    expect(screen.getByTestId('mapping-detail-payment-package')).toHaveTextContent('단회기 90,000원 + 기본10회기');
+    expect(screen.getAllByText('90,000원').length).toBeGreaterThanOrEqual(2);
+  });
 });

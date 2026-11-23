@@ -40,4 +40,16 @@ describe('mappingPackageDisplay', () => {
     expect(resolveMappingPackageDisplayName(null)).toBe('');
     expect(resolveMappingPackageDisplayName(undefined)).toBe('');
   });
+
+  it('prefers displayPackageName over raw packageName when merged packages exist', () => {
+    const label = resolveMappingPackageDisplayName({
+      paymentTiming: 'ADVANCE',
+      packageName: '단회기 90,000원',
+      displayPackageName: '단회기 90,000원 + 기본10회기',
+      packagePrice: 90000,
+      institutionLinkPrepaidAmount: 100000
+    });
+    expect(label).toBe('단회기 90,000원 + 기본10회기');
+    expect(label).not.toContain('100,000');
+  });
 });

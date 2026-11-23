@@ -12,6 +12,7 @@ import ActionBar from '../../../common/ActionBar';
 import ActionBarButton from '../../../common/ActionBarButton';
 import MGButton from '../../../common/MGButton';
 import { SidePeekShell } from '../../../common';
+import { resolveMappingPackageDisplayName } from '../../../../utils/packagePricing';
 import StandardizedApi from '../../../../utils/standardizedApi';
 import notificationManager from '../../../../utils/notification';
 import { useConfirm } from '../../../../hooks/useConfirm';
@@ -39,7 +40,7 @@ import '../../../../styles/dashboard-tokens-extension.css';
 import '../MappingManagementPage.css';
 import { API_ENDPOINTS } from '../../../../constants/apiEndpoints';
 import {
-  adminMappingsListGet,
+  adminMappingsListGetAll,
   adminPendingPaymentMappingsGetAll
 } from '../../../../api/adminListFetch';
 import {
@@ -285,7 +286,7 @@ const MappingManagementPage = () => {
     try {
       await runResourceLoad(options, setLoading, async() => {
         const [response, pendingRaw, dirtyRaw] = await Promise.all([
-          adminMappingsListGet(),
+          adminMappingsListGetAll(),
           adminPendingPaymentMappingsGetAll(),
           StandardizedApi.get(API_ENDPOINTS.ADMIN.MAPPINGS.PENDING_PAYMENT_DIRTY, {
             ageHours: PENDING_PAYMENT_DIRTY_DEFAULT_AGE_HOURS,
@@ -598,6 +599,7 @@ const MappingManagementPage = () => {
           ? {
             ...m,
             packageName: payload.packageName ?? m.packageName,
+            displayPackageName: payload.displayPackageName ?? payload.packageName ?? m.displayPackageName,
             packagePrice: payload.packagePrice ?? m.packagePrice,
             totalSessions: payload.totalSessions ?? m.totalSessions,
             remainingSessions: payload.remainingSessions ?? m.remainingSessions,
@@ -610,6 +612,7 @@ const MappingManagementPage = () => {
           ? {
             ...prev,
             packageName: payload.packageName ?? prev.packageName,
+            displayPackageName: payload.displayPackageName ?? payload.packageName ?? prev.displayPackageName,
             packagePrice: payload.packagePrice ?? prev.packagePrice,
             totalSessions: payload.totalSessions ?? prev.totalSessions,
             remainingSessions: payload.remainingSessions ?? prev.remainingSessions,
@@ -700,6 +703,8 @@ const MappingManagementPage = () => {
           mapping.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (mapping.packageName &&
           mapping.packageName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (mapping.displayPackageName &&
+          mapping.displayPackageName.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (searchTerm.startsWith('#') &&
           mapping.status === searchTerm.substring(1).toUpperCase());
       return matchesStatus && matchesSearch;
@@ -889,7 +894,7 @@ const MappingManagementPage = () => {
                   <strong>{t('admin:mapping.page.modal.client')}</strong> {refundMapping.clientName}
                 </p>
                 <p>
-                  <strong>{t('admin:mapping.page.modal.package')}</strong> {refundMapping.packageName}
+                  <strong>{t('admin:mapping.page.modal.package')}</strong> {resolveMappingPackageDisplayName(refundMapping)}
                 </p>
                 <p>
                   <strong>{t('admin:mapping.page.modal.totalSessions')}</strong> {refundMapping.totalSessions}{t('admin:mapping.page.modal.sessionUnit')}

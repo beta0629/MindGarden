@@ -6,7 +6,7 @@
  */
 
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { renderCompactPackageName } from '../../../utils/packagePricing';
+import { renderCompactPackageName, resolveMappingPackageDisplayName } from '../../../utils/packagePricing';
 import { STATUS } from '../../../constants/schedule';
 import {
   CLIENT_DEFAULT_CONSULTANT_LABEL,
@@ -185,7 +185,7 @@ export function buildPaymentRows(mappings) {
     .map((mapping, idx) => ({
       id: mapping.id || `client-payment-${idx}`,
       paymentDateLabel: formatPaymentDate(mapping.paymentDate),
-      packageName: mapping.packageName ? renderCompactPackageName(mapping.packageName) : CLIENT_DEFAULT_PACKAGE_LABEL,
+      packageName: resolveMappingPackageDisplayName(mapping) ? renderCompactPackageName(resolveMappingPackageDisplayName(mapping)) : CLIENT_DEFAULT_PACKAGE_LABEL,
       amountLabel: formatCurrencyKRW(mapping.packagePrice),
       statusLabel: resolvePaymentStatusLabel(mapping.paymentStatus)
     }));

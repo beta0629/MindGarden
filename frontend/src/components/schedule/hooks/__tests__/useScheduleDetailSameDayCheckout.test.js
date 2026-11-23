@@ -72,6 +72,28 @@ describe('useScheduleDetailSameDayCheckout helpers', () => {
     );
   });
 
+  test('buildCheckoutSameDayMappingPayload — displayPackageName이 있어도 가드·요청값은 raw packageName', () => {
+    const merged = {
+      ...COMPLETE_MAPPING,
+      packageName: '단회기 90,000원',
+      displayPackageName: '단회기 90,000원 + 기본10회기',
+      mergedPackageNames: ['기본10회기']
+    };
+    const payload = buildCheckoutSameDayMappingPayload(merged, 55);
+    expect(payload).not.toBeNull();
+    expect(payload.packageName).toBe('단회기 90,000원');
+    expect(payload.packageName).not.toBe(merged.displayPackageName);
+    expect(buildCheckoutSameDayMappingPayload({
+      ...merged,
+      packageName: ''
+    }, 55)).toBeNull();
+    expect(buildCheckoutSameDayMappingPayload({
+      id: 42,
+      consultantId: 7,
+      displayPackageName: '단회기 90,000원 + 기본10회기'
+    }, 55)).toBeNull();
+  });
+
   test('buildCheckoutSameDayMappingPayload — 배정 저장 결제 방식(paymentMethod) 전달 (당일 결제 prefill)', () => {
     expect(buildCheckoutSameDayMappingPayload(
       { ...COMPLETE_MAPPING, paymentMethod: 'BANK_TRANSFER' },

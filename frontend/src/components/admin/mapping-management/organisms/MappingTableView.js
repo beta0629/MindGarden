@@ -14,7 +14,7 @@ import EngagementTypeBadge from '../../../common/EngagementTypeBadge';
 import MGButton from '../../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../../erp/common/erpMgButtonProps';
 import MappingEntityRowActions from '../molecules/MappingEntityRowActions';
-import { renderCompactPackageName } from '../../../../utils/packagePricing';
+import { renderCompactPackageName, resolveMappingPackageDisplayName } from '../../../../utils/packagePricing';
 import './MappingTableView.css';
 import { useTranslation } from 'react-i18next';
 import { ADMIN_ROUTES } from '../../../../constants/adminRoutes';
@@ -166,7 +166,7 @@ const MappingTableView = ({
                 </td>
                 <td>{mapping.consultantName || 'N/A'}</td>
                 <td>{mapping.clientName || 'N/A'}</td>
-                <td>{mapping.packageName ? renderCompactPackageName(mapping.packageName) : 'N/A'}</td>
+                <td>{resolveMappingPackageDisplayName(mapping) ? renderCompactPackageName(resolveMappingPackageDisplayName(mapping)) : 'N/A'}</td>
                 <td>{formatAmount(mapping.packagePrice || mapping.paymentAmount)}</td>
                 <td>
                   <span>{mapping.usedSessions ?? 0}/{mapping.totalSessions ?? 0}회</span>

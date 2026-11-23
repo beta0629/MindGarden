@@ -2,6 +2,9 @@ package com.coresolution.consultation.dto;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,6 +40,10 @@ public class ConsultantClientMappingResponse {
     private Integer totalSessions;
     private Integer remainingSessions;
     private String packageName;
+    /** 추가 패키지 병합 시 원 상품 + 병합 상품을 조합한 UI 표시명 (로직 입력용 packageName은 불변). */
+    private String displayPackageName;
+    /** 병합된 추가 패키지명 목록 (병합 순, 없으면 빈 리스트). */
+    private List<String> mergedPackageNames;
     private Long packagePrice;
     private Long paymentAmount;
     private String paymentMethod;
@@ -70,6 +77,22 @@ public class ConsultantClientMappingResponse {
      * @param mapping ConsultantClientMapping 엔티티
      * @return ConsultantClientMappingResponse
      */
+
+    /**
+     * 파생 병합 패키지 표시 정보를 적용한다. ({@code packageName} 은 유지)
+     *
+     * @param display 파생 표시 정보
+     */
+    public void applyMergedPackageDisplay(MergedPackageDisplay display) {
+        if (display == null) {
+            return;
+        }
+        this.displayPackageName = display.displayPackageName();
+        this.mergedPackageNames = display.mergedPackageNames() != null
+                ? display.mergedPackageNames()
+                : Collections.emptyList();
+    }
+
     public static ConsultantClientMappingResponse fromEntity(ConsultantClientMapping mapping) {
         if (mapping == null) {
             return null;
@@ -90,6 +113,8 @@ public class ConsultantClientMappingResponse {
             .totalSessions(mapping.getTotalSessions())
             .remainingSessions(mapping.getRemainingSessions())
             .packageName(mapping.getPackageName())
+            .displayPackageName(mapping.getPackageName())
+            .mergedPackageNames(Collections.emptyList())
             .packagePrice(mapping.getPackagePrice())
             .paymentAmount(mapping.getPaymentAmount())
             .paymentMethod(mapping.getPaymentMethod())
@@ -134,6 +159,8 @@ public class ConsultantClientMappingResponse {
             .totalSessions(dto.getTotalSessions())
             .remainingSessions(dto.getRemainingSessions())
             .packageName(dto.getPackageName())
+            .displayPackageName(dto.getPackageName())
+            .mergedPackageNames(Collections.emptyList())
             .packagePrice(dto.getPackagePrice())
             .paymentAmount(dto.getPaymentAmount())
             .paymentMethod(dto.getPaymentMethod())

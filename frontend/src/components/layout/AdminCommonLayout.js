@@ -136,9 +136,10 @@ const AdminCommonLayoutShell = ({
   const isCounselorOnly = RoleUtils.hasCounselorCapability(user) && !RoleUtils.hasOperatorCapability(user);
   const isClientOnly = userRole === USER_ROLES.CLIENT;
   const isStaffUser = RoleUtils.isStaff(user);
-  // 상담사: 전 폭 햄버거+stone soft-sheet (Desktop LNB 게이트 폐기).
-  // 운영/어드민: --mg-breakpoint-desktop(1280)부터 고정 LNB. 태블릿은 햄버거.
-  const isDesktop = isCounselorOnly
+  // 상담사·운영자·사무원: 전 폭 햄버거+stone soft-sheet (Desktop LNB 게이트 폐기).
+  // 내담자만 기존 Desktop 폭 게이트 유지.
+  const useSoftSheetShell = isCounselorOnly || !isClientOnly;
+  const isDesktop = useSoftSheetShell
     ? false
     : (windowSize.width >= BREAKPOINT_DESKTOP);
 
@@ -319,7 +320,14 @@ const AdminCommonLayoutShell = ({
     onLogout: handleLogout,
     hideSearch: resolvedHideSearch,
     navigateQuickActionsFromLnb,
-    ...(isCounselorOnly ? { drawerVariant: 'soft-sheet' } : {})
+    ...(useSoftSheetShell
+      ? {
+        drawerVariant: 'soft-sheet',
+        drawerActiveTone: isCounselorOnly ? 'primary' : 'slate',
+        drawerTitle: isCounselorOnly ? LNB_HEADER_TITLE_COUNSELOR : '메뉴',
+        shellTone: isCounselorOnly ? 'counselor' : 'admin'
+      }
+      : {})
   };
 
   // Clinic-OS chrome(GNB+LNB) 마운트 유지 — stage(Outlet/children)만 교체. 셸 레벨 loading 대체 금지.

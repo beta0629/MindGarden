@@ -109,3 +109,31 @@
 .mg-v2-mobile-layout--soft-sheet {
   --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-subpage-pad-x);
 }
+
+/*
+ * 관리자 soft-sheet — full-bleed 본문.
+ * 여백 SSOT: clamp(16px, 1.6667vw, 32px) + safe-area (핸드오프 r2).
+ * DesktopLnb / --mg-layout-sidebar-width 영향 없음.
+ */
+.mg-v2-mobile-layout--admin-shell {
+  --mg-v2-admin-stage-pad-x: clamp(var(--mg-v2-space-4), 1.6667vw, var(--mg-v2-space-8));
+  --mg-v2-admin-stage-pad-y: clamp(var(--mg-v2-space-4), 1.6vw, calc(var(--mg-v2-space-6) + var(--mg-v2-space-1)));
+  --mg-v2-mobile-gnb-edge-pad: var(--mg-v2-space-3);
+  --mg-layout-sidebar-width: 0px;
+}
+
+.mg-v2-mobile-layout--admin-shell .mg-v2-mobile-layout__main {
+  padding-block: var(--mg-v2-admin-stage-pad-y);
+  padding-inline: calc(var(--mg-v2-admin-stage-pad-x) + env(safe-area-inset-left, 0px))
+    calc(var(--mg-v2-admin-stage-pad-x) + env(safe-area-inset-right, 0px));
+  padding-bottom: calc(var(--mg-v2-admin-stage-pad-y) + env(safe-area-inset-bottom, 0px));
+  margin-left: 0;
+  width: 100%;
+  max-width: none;
+}
+
+.mg-v2-mobile-layout--admin-shell .mg-v2-mobile-layout__stage {
+  margin-left: 0;
+  width: 100%;
+  max-width: none;
+}

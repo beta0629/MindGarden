@@ -53,7 +53,17 @@ jest.mock('../../dashboard-v2/templates', () => ({
       {children}
     </div>
   ),
-  MobileLayout: ({ children }) => <div data-testid="mobile-layout">{children}</div>
+  MobileLayout: ({ children, menuItems, headerTitle, logoHomePath, drawerVariant }) => (
+    <div
+      data-testid="mobile-layout"
+      data-header-title={headerTitle}
+      data-logo-home={logoHomePath}
+      data-drawer-variant={drawerVariant || ''}
+      data-menu-labels={(menuItems || []).map((m) => m.label).join('|')}
+    >
+      {children}
+    </div>
+  )
 }));
 
 import AdminCommonLayout from '../AdminCommonLayout';
@@ -88,7 +98,7 @@ describe('AdminCommonLayout STAFF ERP LNB strip', () => {
     });
   });
 
-  test('STAFF: LNB에서 운영·재무 제거, logoHome /admin/dashboard', async() => {
+  test('STAFF: soft-sheet MobileLayout · 운영·재무 제거, logoHome /admin/dashboard', async() => {
     render(
       <MemoryRouter>
         <AdminCommonLayout>
@@ -98,11 +108,13 @@ describe('AdminCommonLayout STAFF ERP LNB strip', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
+      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
     });
 
-    const layout = screen.getByTestId('desktop-layout');
+    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+    const layout = screen.getByTestId('mobile-layout');
     expect(layout).toHaveAttribute('data-logo-home', '/admin/dashboard');
+    expect(layout).toHaveAttribute('data-drawer-variant', 'soft-sheet');
     const labels = layout.getAttribute('data-menu-labels') || '';
     expect(labels).not.toContain('운영·재무');
     expect(labels).not.toContain('이번 달 돈');

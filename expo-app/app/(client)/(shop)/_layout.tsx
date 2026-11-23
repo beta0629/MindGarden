@@ -5,6 +5,7 @@
  * @since 2026-05-19
  */
 import { Redirect, Stack, type Href } from 'expo-router';
+import { PortOnePaymentHost } from '@/components/shop/organisms/PortOnePaymentHost';
 import { CLIENT_SHOP_MENU_TEMPORARILY_DISABLED } from '@/constants/clientShopConstants';
 
 export default function ClientShopLayout() {
@@ -13,14 +14,19 @@ export default function ClientShopLayout() {
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
-      <Stack.Screen name="index" />
-      <Stack.Screen name="cart" />
-      <Stack.Screen name="checkout" />
-      <Stack.Screen name="points" />
-      <Stack.Screen name="orders/index" />
-      <Stack.Screen name="orders/[orderPublicId]" />
-      <Stack.Screen name="sku/[skuCode]" />
-    </Stack>
+    <>
+      <Stack screenOptions={{ headerShown: false, animation: 'slide_from_right' }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="cart" />
+        <Stack.Screen name="checkout" />
+        <Stack.Screen name="points" />
+        <Stack.Screen name="orders/index" />
+        <Stack.Screen name="orders/[orderPublicId]" />
+        <Stack.Screen name="sku/[skuCode]" />
+        <Stack.Screen name="payment-return" />
+        <Stack.Screen name="complete/[orderPublicId]" />
+      </Stack>
+      <PortOnePaymentHost />
+    </>
   );
 }

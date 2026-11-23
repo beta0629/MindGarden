@@ -28,16 +28,28 @@ import {
   useClientShopPreparePayment,
 } from '@/api/hooks/useClientShopOrders';
 import {
+  buildShopPaymentCompletePath,
   CLIENT_SHOP_ROUTES,
   isShopOrderAwaitingPayment,
   SHOP_ORDER_STATUS_LABELS,
+  SHOP_PAYMENT_LAUNCH_COPY,
 } from '@/constants/clientShopConstants';
+import { useAuthStore } from '@/stores/useAuthStore';
 import { formatShopMoney } from '@/utils/clientShopFormat';
+import {
+  assertPortOneCustomerReadyBeforeCheckout,
+  type PortOneCustomerSessionUser,
+} from '@/utils/clientShopPaymentCustomer';
+import { isShopPrepareReadyForPortOne } from '@/utils/shopCheckoutPortOneGuard';
+import { isPortOneUserCancel } from '@/utils/shopPaymentCancel';
+import { clearShopPendingPaymentVerify } from '@/utils/shopPendingPaymentVerify';
+import { runShopPortOnePaymentIfReady } from '@/utils/shopPortOneCheckout';
 import { toDisplayString } from '@/utils/toDisplayString';
 
 export default function ShopOrderDetailScreen() {
   const theme = useTheme();
   const router = useRouter();
+  const user = useAuthStore((s) => s.user);
   const { orderPublicId } = useLocalSearchParams<{ orderPublicId: string }>();
   const orderId = typeof orderPublicId === 'string' ? orderPublicId : '';
 
@@ -45,11 +57,12 @@ export default function ShopOrderDetailScreen() {
   const prepareMutation = useClientShopPreparePayment();
   const [message, setMessage] = useState('');
   const [paymentUrl, setPaymentUrl] = useState('');
+  const [paying, setPaying] = useState(false);
 
   const order = orderQuery.data ?? null;
   const awaitingPayment = isShopOrderAwaitingPayment(order);
   const lines = order?.lines ?? [];
-  const loading = orderQuery.isLoading || prepareMutation.isPending;
+  const loading = orderQuery.isLoading || prepareMutation.isPending || paying;
 
   const handleRefresh = useCallback(async () => {
     await orderQuery.refetch();
@@ -59,18 +72,55 @@ export default function ShopOrderDetailScreen() {
     if (!orderId) {
       return;
     }
+    const gate = assertPortOneCustomerReadyBeforeCheckout(
+      user as PortOneCustomerSessionUser | null,
+    );
+    if (!gate.ready) {
+      setMessage(gate.message || SHOP_PAYMENT_LAUNCH_COPY.CUSTOMER_PHONE_REQUIRED);
+      return;
+    }
     try {
       setMessage('');
+      setPaying(true);
       const result = await prepareMutation.mutateAsync(orderId);
-      if (result?.paymentUrl) {
+      if (isShopPrepareReadyForPortOne(result)) {
+        try {
+          const flow = await runShopPortOnePaymentIfReady(result, {
+            orderName: `주문 ${orderId}`,
+            customer: gate.customer,
+          });
+          if (flow.skipped) {
+            setMessage(SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
+            return;
+          }
+          if (flow.verified) {
+            clearShopPendingPaymentVerify();
+            router.replace(buildShopPaymentCompletePath(orderId));
+            return;
+          }
+        } catch (portoneError: unknown) {
+          const err = portoneError as { portoneResult?: unknown; message?: string };
+          if (isPortOneUserCancel(err?.portoneResult as { code?: string } | null)) {
+            setMessage('결제가 취소되었습니다.');
+            await orderQuery.refetch();
+            return;
+          }
+          throw portoneError;
+        }
+      } else if (result?.paymentUrl) {
+        // non-IAMPORT fallback — paymentUrl Linking only when PortOne fields absent
         setPaymentUrl(result.paymentUrl);
         await Linking.openURL(result.paymentUrl);
+        setMessage('결제 페이지를 열었습니다. 완료 후 아래로 당겨 새로고침해 주세요.');
+      } else {
+        setMessage(SHOP_PAYMENT_LAUNCH_COPY.MODULE_UNAVAILABLE);
       }
-      setMessage('결제 페이지를 열었습니다. 완료 후 아래로 당겨 새로고침해 주세요.');
       await orderQuery.refetch();
     } catch (e) {
       const errMsg = e instanceof Error ? e.message : '결제 준비에 실패했습니다.';
       setMessage(errMsg);
+    } finally {
+      setPaying(false);
     }
   };
 

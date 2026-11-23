@@ -11,7 +11,6 @@ import { SHOP_API } from '@/api/endpoints';
 import { unwrapApiResponse } from '@/api/unwrapApiResponse';
 import { useApiQueryReady } from '@/hooks/useApiQueryReady';
 import {
-  SHOP_CATALOG_QUERY_KEYS,
   useClientShopCatalog,
   type ShopCatalogSku,
 } from '@/api/hooks/useClientShopCatalog';
@@ -45,8 +44,20 @@ export interface ShopOrderDetail {
   fulfillmentLines?: ShopOrderFulfillmentLine[];
 }
 
+/** prepare-payment 응답 — PortOne V2 필드 (웹과 동일 계약) */
 export interface ShopPreparePaymentResult {
   paymentUrl?: string;
+  storeId?: string;
+  channelKey?: string;
+  paymentId?: string;
+  cashAmount?: number;
+  pgReady?: boolean;
+  paymentProvider?: string;
+  customerEmail?: string;
+  customerName?: string;
+  orderPublicId?: string;
+  payMethod?: string;
+  testMode?: boolean;
 }
 
 export const SHOP_ORDERS_QUERY_KEYS = {
@@ -82,7 +93,13 @@ async function postPrepareShopPayment(orderPublicId: string): Promise<ShopPrepar
     throw new Error((raw as { message?: string }).message || '결제 준비에 실패했습니다.');
   }
   const data = unwrapApiResponse<ShopPreparePaymentResult>(raw);
-  return data ?? {};
+  if (!data || typeof data !== 'object') {
+    return {};
+  }
+  return {
+    ...data,
+    orderPublicId: data.orderPublicId || orderPublicId,
+  };
 }
 
 export function useClientShopOrders(page = 0, size = 20) {
@@ -154,3 +171,5 @@ export function useClientShopCatalogSku(skuCodeParam: string | undefined) {
     refetch: catalogQuery.refetch,
   };
 }
+
+export { postPrepareShopPayment, fetchShopOrder };

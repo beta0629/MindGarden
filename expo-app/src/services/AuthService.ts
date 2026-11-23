@@ -134,6 +134,12 @@ interface SocialLoginApiUser {
   role: unknown;
   profileImageUrl?: string;
   tenantId?: string;
+  phone?: string | null;
+  phoneNumber?: string | null;
+  mobile?: string | null;
+  userEmail?: string | null;
+  isPhoneVerified?: boolean | null;
+  phoneVerified?: boolean | null;
   counselingEnabled?: boolean;
   hasOperatorRole?: boolean;
   hasCounselorRole?: boolean;
@@ -506,6 +512,12 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser, accessToken?: string): U
       }
     }
   }
+  const phone =
+    readOptionalString(raw.phone) ||
+    readOptionalString(raw.phoneNumber) ||
+    readOptionalString(raw.mobile);
+  const isPhoneVerified =
+    raw.isPhoneVerified === true || raw.phoneVerified === true;
   return {
     id: Number.isFinite(id) && id > 0 ? id : 0,
     email: raw.email ?? '',
@@ -517,6 +529,11 @@ function mapApiUserToStoreUser(raw: SocialLoginApiUser, accessToken?: string): U
       (typeof raw.tenantId === 'string' && raw.tenantId.trim()) ||
       useTenantStore.getState().tenantId ||
       undefined,
+    ...(phone ? { phone } : {}),
+    ...(typeof raw.userEmail === 'string' && raw.userEmail.trim()
+      ? { userEmail: raw.userEmail.trim() }
+      : {}),
+    ...(isPhoneVerified ? { isPhoneVerified: true, phoneVerified: true } : {}),
     ...(typeof raw.counselingEnabled === 'boolean'
       ? { counselingEnabled: raw.counselingEnabled }
       : {}),

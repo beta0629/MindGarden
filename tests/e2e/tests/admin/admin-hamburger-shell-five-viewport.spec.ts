@@ -56,7 +56,7 @@ const assertionRows: AssertionRow[] = [];
 const calendarWidthRows: Array<{
   viewport: number;
   calendarWidth: number | null;
-  stageWidth: number | null;
+  bodyWidth: number | null;
   ratio: number | null;
   expected: string;
   pass: boolean;
@@ -140,22 +140,38 @@ async function assertShellBasics(page: Page, opts: { id: string; path: string; v
   expect(fatal, `${opts.id} blank/fatal`).toBeNull();
 }
 
+/**
+ * 달력·본문 폭을 분리 측정.
+ * calendar-wrapper 와 stage/data-layout-context 를 동일 요소로 취급하지 않음.
+ * 본문 = `.mg-v2-mobile-layout__main` content box, 없으면 viewport−2×clamp.
+ */
 async function measureCalendar(page: Page) {
   return page.evaluate(() => {
     const cal = document.querySelector(
       '.integrated-schedule__calendar-wrapper'
     ) as HTMLElement | null;
-    const stage = document.querySelector(
-      '[data-layout-context="integrated-schedule"]'
+
+    const main = document.querySelector(
+      '.mg-v2-mobile-layout__main'
     ) as HTMLElement | null;
-    const stageFallback = document.querySelector(
-      '.integrated-schedule__main-region, .integrated-schedule__content, main'
-    ) as HTMLElement | null;
-    const stageEl = stage || stageFallback;
-    return {
-      calendarWidth: cal ? Math.round(cal.getBoundingClientRect().width) : null,
-      stageWidth: stageEl ? Math.round(stageEl.getBoundingClientRect().width) : null
-    };
+
+    let bodyWidth: number | null = null;
+    if (main) {
+      const cs = window.getComputedStyle(main);
+      const padL = parseFloat(cs.paddingLeft) || 0;
+      const padR = parseFloat(cs.paddingRight) || 0;
+      bodyWidth = Math.round((main.clientWidth - padL - padR) * 10) / 10;
+    } else {
+      const vw = window.innerWidth;
+      const padX = Math.min(32, Math.max(16, vw * (1.6667 / 100)));
+      bodyWidth = Math.round((vw - 2 * padX) * 10) / 10;
+    }
+
+    const calendarWidth = cal
+      ? Math.round(cal.getBoundingClientRect().width * 10) / 10
+      : null;
+
+    return { calendarWidth, bodyWidth };
   });
 }
 
@@ -282,15 +298,21 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
   }
 
   test('통합스케줄 달력 폭 실측 (레일 닫힘 또는 in-flow)', async ({ page }) => {
+    /* SSOT r3 달력 폭 ±2px. 본문 폭은 main content box 별도 측정. */
     const expectations: Record<
       number,
-      { approx?: number; tol?: number; minRatio?: number }
+      {
+        calendar: number;
+        body?: number;
+        tol: number;
+        minRatioWhenClosed?: number;
+      }
     > = {
-      820: { minRatio: 0.9 },
-      1024: { minRatio: 0.9 },
-      1280: { approx: 965, tol: 40 },
-      1440: { approx: 1110, tol: 40 },
-      1920: { approx: 1564, tol: 50 }
+      820: { calendar: 788, body: 788, tol: 2, minRatioWhenClosed: 0.9 },
+      1024: { calendar: 989.9, body: 989.9, tol: 2, minRatioWhenClosed: 0.9 },
+      1280: { calendar: 965.3, body: 1237.3, tol: 2 },
+      1440: { calendar: 1110, body: 1392, tol: 2 },
+      1920: { calendar: 1564, body: 1856, tol: 2 }
     };
 
     for (const width of VIEWPORTS) {
@@ -309,38 +331,57 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
       let pass = false;
       let error: string | undefined;
       let ratio: number | null = null;
+      const railClosed = width < 1110;
 
       if (measured.calendarWidth == null) {
         error = 'calendar not found';
-      } else if (exp.minRatio != null) {
-        ratio =
-          measured.stageWidth && measured.stageWidth > 0
-            ? measured.calendarWidth / measured.stageWidth
-            : null;
-        // 스테이지를 못 잡으면 viewport 본문 대비로 완화
-        if (ratio == null) {
-          ratio = measured.calendarWidth / Math.max(width - 64, 1);
+      } else {
+        const calOk =
+          Math.abs(measured.calendarWidth - exp.calendar) <= exp.tol;
+        if (!calOk) {
+          error = `calendar got=${measured.calendarWidth} expected≈${exp.calendar}±${exp.tol}`;
         }
-        pass = ratio >= exp.minRatio;
-        if (!pass) {
-          error = `ratio=${ratio?.toFixed(3)} < ${exp.minRatio}`;
+
+        if (exp.body != null && measured.bodyWidth != null) {
+          const bodyOk = Math.abs(measured.bodyWidth - exp.body) <= exp.tol;
+          if (!bodyOk) {
+            error = [
+              error,
+              `body got=${measured.bodyWidth} expected≈${exp.body}±${exp.tol}`
+            ]
+              .filter(Boolean)
+              .join('; ');
+          }
         }
-      } else if (exp.approx != null && exp.tol != null) {
-        pass = Math.abs(measured.calendarWidth - exp.approx) <= exp.tol;
-        if (!pass) {
-          error = `got=${measured.calendarWidth} expected≈${exp.approx}±${exp.tol}`;
+
+        if (
+          railClosed
+          && exp.minRatioWhenClosed != null
+          && measured.bodyWidth
+          && measured.bodyWidth > 0
+        ) {
+          ratio = measured.calendarWidth / measured.bodyWidth;
+          if (ratio < exp.minRatioWhenClosed) {
+            error = [
+              error,
+              `ratio=${ratio.toFixed(3)} < ${exp.minRatioWhenClosed}`
+            ]
+              .filter(Boolean)
+              .join('; ');
+          }
         }
+
+        pass = error == null;
       }
 
       calendarWidthRows.push({
         viewport: width,
         calendarWidth: measured.calendarWidth,
-        stageWidth: measured.stageWidth,
+        bodyWidth: measured.bodyWidth,
         ratio,
-        expected:
-          exp.minRatio != null
-            ? `≥${(exp.minRatio * 100).toFixed(0)}% of stage`
-            : `≈${exp.approx}±${exp.tol}`,
+        expected: railClosed
+          ? `cal≈${exp.calendar}±${exp.tol}, body≈${exp.body}±${exp.tol}, ≥${((exp.minRatioWhenClosed || 0.9) * 100).toFixed(0)}%`
+          : `cal≈${exp.calendar}±${exp.tol}, body≈${exp.body}±${exp.tol}`,
         pass,
         error
       });
@@ -350,7 +391,7 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
         viewport: width,
         path: '/admin/integrated-schedule',
         pass,
-        detail: { ...measured, ratio, expected: exp },
+        detail: { ...measured, ratio, expected: exp, railClosed },
         error
       });
 

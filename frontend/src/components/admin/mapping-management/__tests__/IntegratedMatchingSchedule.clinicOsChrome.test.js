@@ -70,6 +70,16 @@ describe('IntegratedMatchingSchedule Clinic-OS chrome', () => {
     expect(scheduleCss).toMatch(/\.integrated-schedule__stage\s*\{[^}]*border-radius:\s*var\(--mg-v2-radius-lg\)/s);
   });
 
+  test('clinic-os stage is flush (no leftover card padding/border)', () => {
+    /* admin-shell pad만 본문 여백 — stage 이중 인셋 금지 (≤767 contents와 정합) */
+    expect(scheduleCss).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__stage\s*\{[^}]*padding:\s*0[^}]*border:\s*none/s
+    );
+    expect(scheduleCss).toMatch(
+      /\.integrated-schedule--clinic-os\s+\.integrated-schedule__stage\s*\{[^}]*border:\s*none/s
+    );
+  });
+
   test('sidebar title has no left accent bar', () => {
     expect(scheduleCss).toMatch(/\.integrated-schedule__sidebar-title::before[\s\S]*content:\s*none/);
     expect(scheduleCss).toMatch(/border-left:\s*none\s*!important/);

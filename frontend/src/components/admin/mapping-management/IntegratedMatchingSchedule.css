@@ -1673,6 +1673,16 @@
   padding: 0;
 }
 
+/*
+ * clinic-os stage flush — admin-shell `--mg-v2-admin-stage-pad-x` 만 본문 여백.
+ * leftover card inset(padding space-4 + 1px border ≈ 쪽당 17px) 제거.
+ * ≤767 display:contents 와 정합. background/radius 는 베이스 규칙 유지.
+ */
+.integrated-schedule--clinic-os .integrated-schedule__stage {
+  padding: 0;
+  border: none;
+}
+
 /* viewport-bound: soft-sheet MobileLayout / DesktopLayout 공용 */
 .mg-v2-desktop-layout__main:has(> .integrated-schedule--clinic-os),
 .mg-v2-mobile-layout__main:has(> .integrated-schedule--clinic-os) {

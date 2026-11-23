@@ -89,6 +89,8 @@ export function buildCheckoutSameDayMappingPayload(mapping, scheduleId) {
     clientId: mapping.clientId,
     clientName: mapping.clientName,
     packageName: mapping.packageName,
+    displayPackageName: mapping.displayPackageName ?? null,
+    mergedPackageNames: Array.isArray(mapping.mergedPackageNames) ? mapping.mergedPackageNames : [],
     packagePrice: mapping.packagePrice ?? null,
     paymentAmount: mapping.paymentAmount ?? null,
     totalSessions: mapping.totalSessions ?? null,

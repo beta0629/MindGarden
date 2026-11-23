@@ -83,6 +83,8 @@ describe('useScheduleDetailSameDayCheckout helpers', () => {
     expect(payload).not.toBeNull();
     expect(payload.packageName).toBe('단회기 90,000원');
     expect(payload.packageName).not.toBe(merged.displayPackageName);
+    expect(payload.displayPackageName).toBe('단회기 90,000원 + 기본10회기');
+    expect(payload.mergedPackageNames).toEqual(['기본10회기']);
     expect(buildCheckoutSameDayMappingPayload({
       ...merged,
       packageName: ''
@@ -92,6 +94,12 @@ describe('useScheduleDetailSameDayCheckout helpers', () => {
       consultantId: 7,
       displayPackageName: '단회기 90,000원 + 기본10회기'
     }, 55)).toBeNull();
+  });
+
+  test('buildCheckoutSameDayMappingPayload — displayPackageName/mergedPackageNames 누락 시 null·[]', () => {
+    const payload = buildCheckoutSameDayMappingPayload(COMPLETE_MAPPING, 55);
+    expect(payload.displayPackageName).toBeNull();
+    expect(payload.mergedPackageNames).toEqual([]);
   });
 
   test('buildCheckoutSameDayMappingPayload — 배정 저장 결제 방식(paymentMethod) 전달 (당일 결제 prefill)', () => {

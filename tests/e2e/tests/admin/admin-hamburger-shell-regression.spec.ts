@@ -534,12 +534,11 @@ test.describe('관리자 햄버거 셸 회귀 (ADMIN)', () => {
         });
       }
 
-      // 카드 title(병합명) 필수. 모달은 앱이 displayPackageName 을 넘기지 않으면 base 만 노출될 수 있음 →
-      // 카드 병합 title + 모달 오픈(base 또는 merged) 으로 단언.
+      // 카드 title(병합명) 필수 + 모달에 병합 displayPackageName 필수.
       const packagePass =
         packageOnCardByTitle
         && modalOpen
-        && (modalShowsMerged || modalShowsBase);
+        && modalShowsMerged;
       record({
         id: `admin-integrated/display-package-name/${width}`,
         viewport: width,
@@ -550,12 +549,11 @@ test.describe('관리자 햄버거 셸 회귀 (ADMIN)', () => {
           modalOpen,
           modalShowsMerged,
           modalShowsBase,
-          expected: REGRESSION_DISPLAY_PACKAGE_NAME,
-          note: 'card title carries full displayPackageName; modal payload may omit it'
+          expected: REGRESSION_DISPLAY_PACKAGE_NAME
         },
         error: packagePass
           ? undefined
-          : `displayPackageName card/modal assertion failed`
+          : `displayPackageName card/modal assertion failed (modalShowsMerged required)`
       });
       expect(packagePass, `displayPackageName @${width}`).toBe(true);
 

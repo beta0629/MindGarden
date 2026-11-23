@@ -15,6 +15,10 @@ import {
   packToV4Key,
 } from '@/components/home/v4/assets';
 import { whenHeroMayStart } from '@/components/home/v4/heroStartGate';
+import {
+  LOADER_DONE_EVENT,
+  isLoaderActive,
+} from '@/components/home/v4/firstVisitLoader';
 import { useBreakpointPack, usePrefersReducedMotion } from './v37/useBreakpointPack';
 import { HeroPoster } from './HeroPoster';
 
@@ -46,6 +50,11 @@ function readHeroPortal(): PortalTarget | null {
   return null;
 }
 
+function subscribeLoaderHold(onChange: () => void) {
+  window.addEventListener(LOADER_DONE_EVENT, onChange);
+  return () => window.removeEventListener(LOADER_DONE_EVENT, onChange);
+}
+
 function finishBoot() {
   dispatchHomeBootReady();
 }
@@ -68,6 +77,11 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
   const [mayStart, setMayStart] = useState(false);
   /** Client snapshot — avoids setState-in-effect for the enhanceOnly portal. */
   const isClient = useSyncExternalStore(subscribeNoop, () => true, () => false);
+  const loaderHold = useSyncExternalStore(
+    subscribeLoaderHold,
+    isLoaderActive,
+    () => false,
+  );
 
   const key = packToV4Key(pack);
   const src = heroStackSrc(key);
@@ -152,7 +166,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         <StackedAlphaVideo
           src={src}
           loop
-          playing={!paused}
+          playing={!paused && !loaderHold}
           autoPlay
           adoptSelector={HERO_STACKED_VIDEO_SELECTOR}
           onFirstFrame={() => {

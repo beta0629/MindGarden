@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { buildMetadata, localBusinessJsonLd } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { HeroVideoBootHead } from '@/components/home/HeroVideoBootHead';
+import { FirstVisitLoaderInline } from '@/components/home/FirstVisitLoaderInline';
 import './pretendard-critical.css';
 import './globals.css';
 
@@ -53,6 +54,8 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
+        {/* First-visit loader must run before the async hero boot. */}
+        <FirstVisitLoaderInline />
         {/* Async hero boot (public/hero-boot-v4.js) — after LCP poster on Chromium. */}
         <HeroVideoBootHead />
         {/* LCP posters — motion v4 frames only (media excludes RM).

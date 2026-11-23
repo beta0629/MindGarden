@@ -12,6 +12,8 @@
   --confirm: #9a5b16;
   --confirm-bg: #fff4d6;
   --footer: #1a2330;
+  /* Footer-only surface, sampled from the approved reference. */
+  --footer-bg: #11342e;
   --card-soft: #e8eef2;
   --radius: 4px;
   --radius-btn: 12px;
@@ -1346,9 +1348,8 @@ p {
 }
 
 .site-footer {
-  /* Brand dark green — same token as the 네이버 플레이스로 예약 button
-   * and the 처음이세요 accent card. */
-  background: var(--garden);
+  /* Footer-only dark green (#11342E). Buttons and the loader bar keep --garden. */
+  background: var(--footer-bg);
   color: var(--cream);
   padding: 3rem 0 2rem;
   font-size: 0.9rem;

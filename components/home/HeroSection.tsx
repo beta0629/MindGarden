@@ -4,6 +4,7 @@ import { HomeBootInline } from './HomeBootInline';
 import { HeroPoster } from './HeroPoster';
 import { HeroMediaLazy } from './HeroMediaLazy';
 import { HeroVideoInline } from './HeroVideoInline';
+import { FirstVisitLoader } from './FirstVisitLoader';
 
 /**
  * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
@@ -47,6 +48,7 @@ export function HeroSection() {
         <HeroMediaLazy />
       </div>
       <HomeBootInline />
+      <FirstVisitLoader />
     </section>
   );
 }

@@ -12,6 +12,8 @@ import {
 /** Cache Storage bucket. Bump when the cache format itself changes. */
 export const SCENE_CACHE_PREFIX = 'mg-scenes-';
 export const SCENE_CACHE_NAME = 'mg-scenes-v1';
+/** localStorage flag: last signed scene URL set. The loader skips when it matches. */
+export const SCENES_READY_STORAGE_KEY = 'mg-scenes-ready-v1';
 
 export type ScenePreloadProgress = {
   loadedBytes: number;
@@ -39,6 +41,14 @@ export function sceneVideoUrls(pack: V4Key = v4KeyFromViewport()): string[] {
   ];
   if (pack === 'd') urls.push(bookingHoverSrc(pack));
   return urls;
+}
+
+/**
+ * Stable id of every pack's scene URLs (includes `?v=`). When an asset
+ * version changes, the first-visit loader shows again.
+ */
+export function sceneCacheSignature(): string {
+  return [...new Set([...sceneVideoUrls('m'), ...sceneVideoUrls('d')])].join('|');
 }
 
 function absUrl(url: string): string {

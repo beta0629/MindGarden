@@ -89,6 +89,9 @@ const renderGareyarkCard = (gareyarkCard, t) => {
 const MatchingScheduleSidebar = ({
   isCollapsed,
   onToggle,
+  /** <1110 오버레이 모드 — 열릴 때만 dialog a11y */
+  overlayMode = false,
+  overlayOpen = false,
   filteredMappings,
   loading,
   viewFilter,
@@ -140,23 +143,41 @@ const MatchingScheduleSidebar = ({
     selectedStatusOption ? toDisplayString(selectedStatusOption.label) : null
   ].filter(Boolean).join(' · ');
 
+  const isOverlayDialog = overlayMode && overlayOpen;
+  const sidebarClassName = [
+    'integrated-schedule__sidebar',
+    isCollapsed ? 'integrated-schedule__sidebar--collapsed' : '',
+    overlayMode ? 'integrated-schedule__sidebar--overlay' : '',
+    isOverlayDialog ? 'integrated-schedule__sidebar--overlay-open' : '',
+    sidebarDensity !== SIDEBAR_DENSITY_COMFORTABLE
+      ? 'integrated-schedule__sidebar--compact'
+      : ''
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const dialogProps = isOverlayDialog
+    ? {
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-labelledby': 'integrated-schedule-rail-title'
+    }
+    : {
+      'aria-label': '오늘 처리할 배정 패널'
+    };
+
   return (
     <aside
-      className={`integrated-schedule__sidebar${
-        isCollapsed ? ' integrated-schedule__sidebar--collapsed' : ''
-      }${
-        sidebarDensity !== SIDEBAR_DENSITY_COMFORTABLE
-          ? ' integrated-schedule__sidebar--compact'
-          : ''
-      }`}
-      aria-label="오늘 처리할 배정 패널"
+      className={sidebarClassName}
+      hidden={overlayMode && isCollapsed}
+      {...dialogProps}
     >
       <div className="integrated-schedule__sidebar-header">
         <h2
           className="integrated-schedule__sidebar-title"
-          id="integrated-schedule-sidebar-title"
+          id="integrated-schedule-rail-title"
         >
-          오늘 처리할 배정
+          배정 목록
           <span
             className="integrated-schedule__sidebar-count"
             aria-label={t('integratedSchedule.sidebar.collapsedBadgeLabel', {
@@ -175,15 +196,21 @@ const MatchingScheduleSidebar = ({
           aria-label={
             isCollapsed
               ? t('integratedSchedule.sidebar.expandAria')
-              : t('integratedSchedule.sidebar.collapseAria')
+              : (overlayMode
+                ? '배정 목록 닫기'
+                : t('integratedSchedule.sidebar.collapseAria'))
           }
           title={
             isCollapsed
               ? t('integratedSchedule.sidebar.expandAria')
-              : t('integratedSchedule.sidebar.collapseAria')
+              : (overlayMode
+                ? '배정 목록 닫기'
+                : t('integratedSchedule.sidebar.collapseAria'))
           }
         >
-          {isCollapsed ? (
+          {overlayMode && !isCollapsed ? (
+            <span aria-hidden="true">×</span>
+          ) : isCollapsed ? (
             <ChevronRight size={18} aria-hidden="true" />
           ) : (
             <ChevronLeft size={18} aria-hidden="true" />
@@ -360,6 +387,8 @@ const MatchingScheduleSidebar = ({
 MatchingScheduleSidebar.propTypes = {
   isCollapsed: PropTypes.bool,
   onToggle: PropTypes.func.isRequired,
+  overlayMode: PropTypes.bool,
+  overlayOpen: PropTypes.bool,
   filteredMappings: PropTypes.arrayOf(PropTypes.object).isRequired,
   loading: PropTypes.bool,
   viewFilter: PropTypes.string.isRequired,
@@ -404,6 +433,8 @@ MatchingScheduleSidebar.propTypes = {
 
 MatchingScheduleSidebar.defaultProps = {
   isCollapsed: false,
+  overlayMode: false,
+  overlayOpen: false,
   loading: false,
   clientSearchQuery: '',
   onClientSearchChange: null,

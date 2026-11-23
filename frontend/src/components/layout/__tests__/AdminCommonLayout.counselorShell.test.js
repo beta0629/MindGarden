@@ -1,7 +1,6 @@
 /**
- * AdminCommonLayout — 상담사-only LNB·로고 랜딩 가드
- * 상담사: 전 폭 MobileLayout + 햄버거 + soft-sheet (Desktop LNB 폐기)
- * 운영/어드민: BREAKPOINT_DESKTOP(1280) DesktopLayout — 태블릿은 MobileLayout+햄버거
+ * AdminCommonLayout — 상담사·관리자 soft-sheet 햄버거 셸
+ * 상담사·운영자·사무원: 전 폭 MobileLayout + soft-sheet (Desktop LNB 폐기)
  */
 
 import React from 'react';
@@ -61,10 +60,22 @@ jest.mock('../../dashboard-v2/templates', () => ({
       {children}
     </div>
   ),
-  MobileLayout: ({ children, drawerVariant, menuItems, headerTitle, logoHomePath }) => (
+  MobileLayout: ({
+    children,
+    drawerVariant,
+    drawerActiveTone,
+    drawerTitle,
+    shellTone,
+    menuItems,
+    headerTitle,
+    logoHomePath
+  }) => (
     <div
       data-testid="mobile-layout"
       data-drawer-variant={drawerVariant || ''}
+      data-drawer-active-tone={drawerActiveTone || ''}
+      data-drawer-title={drawerTitle || ''}
+      data-shell-tone={shellTone || ''}
       data-header-title={headerTitle}
       data-logo-home={logoHomePath}
       data-menu-labels={(menuItems || []).map((m) => m.label).join('|')}
@@ -81,6 +92,7 @@ import AdminCommonLayout from '../AdminCommonLayout';
 import { MEDIA_QUERY_CONSULTANT_DESKTOP_FINE_POINTER } from '../../dashboard-v2/constants/menuItems';
 
 const COUNSELOR_SOFT_SHEET_WIDTHS = [820, 1024, 1180, 1280, 1440, 1920];
+const ADMIN_SOFT_SHEET_WIDTHS = [820, 1024, 1280, 1440, 1920];
 
 const expectCounselorMobileSoftSheet = async() => {
   await waitFor(() => {
@@ -88,8 +100,23 @@ const expectCounselorMobileSoftSheet = async() => {
   });
   expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
   expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  expect(screen.getByTestId('mobile-layout')).toHaveAttribute('data-drawer-active-tone', 'primary');
   expect(document.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(1);
   expect(document.querySelectorAll('.consultant-cover-chapter__menu-btn')).toHaveLength(0);
+  expect(document.querySelectorAll('.mg-v2-desktop-lnb')).toHaveLength(0);
+};
+
+const expectAdminMobileSoftSheet = async() => {
+  await waitFor(() => {
+    expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
+  });
+  expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
+  const layout = screen.getByTestId('mobile-layout');
+  expect(layout).toHaveAttribute('data-drawer-variant', 'soft-sheet');
+  expect(layout).toHaveAttribute('data-drawer-active-tone', 'slate');
+  expect(layout).toHaveAttribute('data-drawer-title', '메뉴');
+  expect(layout).toHaveAttribute('data-shell-tone', 'admin');
+  expect(document.querySelectorAll('.mg-v2-mobile-gnb__menu')).toHaveLength(1);
   expect(document.querySelectorAll('.mg-v2-desktop-lnb')).toHaveLength(0);
 };
 
@@ -200,66 +227,24 @@ describe('AdminCommonLayout counselor Clinic-OS shell', () => {
     await expectCounselorMobileSoftSheet();
   });
 
-  test('운영자 태블릿(820): SSOT 1280 미만 → MobileLayout(햄버거)', async() => {
-    mockUseSession.mockReturnValue({
-      user: { id: 2, role: 'ADMIN', name: '관리자' },
-      logout: jest.fn()
-    });
-    mockUseResponsive.mockReturnValue({ windowSize: { width: 820, height: 1180 } });
+  test.each(ADMIN_SOFT_SHEET_WIDTHS)(
+    '운영자 폭 %i: MobileLayout + soft-sheet slate (DesktopLnb 없음)',
+    async(width) => {
+      mockUseSession.mockReturnValue({
+        user: { id: 2, role: 'ADMIN', name: '관리자' },
+        logout: jest.fn()
+      });
+      mockUseResponsive.mockReturnValue({ windowSize: { width, height: 900 } });
 
-    render(
-      <MemoryRouter>
-        <AdminCommonLayout>
-          <span>본문</span>
-        </AdminCommonLayout>
-      </MemoryRouter>
-    );
+      render(
+        <MemoryRouter>
+          <AdminCommonLayout>
+            <span>본문</span>
+          </AdminCommonLayout>
+        </MemoryRouter>
+      );
 
-    await waitFor(() => {
-      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
-  });
-
-  test('운영자 태블릿(1180): SSOT 1280 미만 → MobileLayout(햄버거)', async() => {
-    mockUseSession.mockReturnValue({
-      user: { id: 2, role: 'ADMIN', name: '관리자' },
-      logout: jest.fn()
-    });
-    mockUseResponsive.mockReturnValue({ windowSize: { width: 1180, height: 800 } });
-
-    render(
-      <MemoryRouter>
-        <AdminCommonLayout>
-          <span>본문</span>
-        </AdminCommonLayout>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('mobile-layout')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('desktop-layout')).not.toBeInTheDocument();
-  });
-
-  test('운영자 데스크톱(1280): DesktopLayout 회귀', async() => {
-    mockUseSession.mockReturnValue({
-      user: { id: 2, role: 'ADMIN', name: '관리자' },
-      logout: jest.fn()
-    });
-    mockUseResponsive.mockReturnValue({ windowSize: { width: 1280, height: 800 } });
-
-    render(
-      <MemoryRouter>
-        <AdminCommonLayout>
-          <span>본문</span>
-        </AdminCommonLayout>
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('desktop-layout')).toBeInTheDocument();
-    });
-    expect(screen.queryByTestId('mobile-layout')).not.toBeInTheDocument();
-  });
+      await expectAdminMobileSoftSheet();
+    }
+  );
 });

@@ -148,3 +148,74 @@
 .mg-v2-mobile-gnb .mg-v2-notification-badge {
   transform: none;
 }
+
+/*
+ * 관리자 soft-sheet 셸 — 헤더 64 · ☰ 44 · 패딩 12+safe · 검색≥1024 · 시계≥1280
+ * (상담사 MobileGnb 레거시 56 높이는 기본 클래스 유지)
+ */
+.mg-v2-mobile-gnb--admin-shell {
+  height: calc(var(--mg-v2-space-16, 4rem) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-inline: calc(var(--mg-v2-space-3) + env(safe-area-inset-left, 0px))
+    calc(var(--mg-v2-space-3) + env(safe-area-inset-right, 0px));
+  column-gap: var(--mg-v2-space-2);
+  background: var(--mg-v2-color-surface-card, var(--mg-color-background-main));
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-200, var(--mg-color-border-main));
+  z-index: var(--mg-v2-z-header, 20);
+}
+
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__menu.mg-v2-nav-icon {
+  width: var(--mg-v2-touch-target-min);
+  min-width: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+  min-height: var(--mg-v2-touch-target-min);
+  border: var(--mg-v2-border-width-thin) solid var(--cs-slate-200, var(--mg-v2-color-neutral-300));
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__page-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-inline-start: var(--mg-v2-space-2);
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-bold);
+  color: var(--mg-v2-color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__search {
+  display: none;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: min(18.75rem, 28vw);
+}
+
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__search .mg-v2-search-input,
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__search input {
+  height: calc(var(--mg-v2-space-10));
+  min-height: calc(var(--mg-v2-space-10));
+}
+
+@media (min-width: 1024px) {
+  .mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__search {
+    display: block;
+  }
+}
+
+.mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__center {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__center {
+    display: flex;
+  }
+}
+
+@media (pointer: coarse) {
+  .mg-v2-mobile-gnb--admin-shell .mg-v2-mobile-gnb__search input {
+    font-size: var(--mg-v2-font-size-body-md);
+  }
+}

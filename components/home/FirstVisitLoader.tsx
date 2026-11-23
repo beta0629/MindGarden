@@ -17,12 +17,11 @@ import {
   LOADER_MOTION_CLASS,
   LOADER_REDUCED_FADE_MS,
   LOADER_REVEAL_CLASS,
-  holdHeroPlayback,
-  isHeroFirstFramePainted,
+  isHeroFrameBoxReady,
   measureHeroButterflyRect,
   prefersReducedMotion,
   releaseHeroPlayback,
-  watchHeroFirstFrame,
+  watchHeroFrameBox,
 } from '@/components/home/v4/firstVisitLoader';
 
 type WindowWithLoader = Window & {
@@ -42,6 +41,34 @@ function setProgress(root: HTMLElement, percent: number) {
   const step = n < 50 ? 0 : n < 100 ? 50 : 100;
   const text = `불러오는 중 ${step}%`;
   if (live.textContent !== text) live.textContent = text;
+}
+
+/** Batch DOM writes to one frame so preload byte events don't become long tasks. */
+function createProgressWriter(root: HTMLElement) {
+  let next = 0;
+  let raf = 0;
+  const flush = () => {
+    raf = 0;
+    setProgress(root, next);
+  };
+  return {
+    set(percent: number, immediate = false) {
+      next = percent;
+      if (immediate) {
+        if (raf) {
+          cancelAnimationFrame(raf);
+          raf = 0;
+        }
+        flush();
+        return;
+      }
+      if (!raf) raf = requestAnimationFrame(flush);
+    },
+    cancel() {
+      if (raf) cancelAnimationFrame(raf);
+      raf = 0;
+    },
+  };
 }
 
 function inertPage(overlay: HTMLElement): HTMLElement[] {
@@ -117,29 +144,35 @@ export function FirstVisitLoader() {
 
     const reduced = prefersReducedMotion();
     const started = performance.now();
-    let scenesDone = false;
-    let heroReady = isHeroFirstFramePainted();
+    let frameReady = isHeroFrameBoxReady();
     let closed = false;
     let minTimer = 0;
+    let tickRaf = 0;
     const w = window as WindowWithLoader;
 
     document.documentElement.classList.add(LOADER_CLASS);
     if (!reduced) document.documentElement.classList.add(LOADER_MOTION_CLASS);
     w.__mgHoldHero = true;
-    // Pause only after the first frame is on the canvas; pausing earlier
-    // would prevent that frame from ever painting.
-    if (heroReady) holdHeroPlayback();
     const inerted = inertPage(root);
-    setProgress(root, 0);
+    const progress = createProgressWriter(root);
+    progress.set(0, true);
 
-    const reportProgress = (bytePct: number, allReady: boolean) => {
-      if (allReady) setProgress(root, 100);
-      else setProgress(root, Math.min(99, Math.round(Math.max(0, bytePct) * 99)));
+    // Time-based bar only — scene/hero bytes are deferred until after the
+    // FLIP so preload work cannot become long tasks under the overlay.
+    const tickProgress = () => {
+      if (closed) return;
+      const elapsed = performance.now() - started;
+      const p = Math.min(99, (elapsed / LOADER_MIN_MS) * 99);
+      progress.set(p);
+      tickRaf = requestAnimationFrame(tickProgress);
     };
+    tickRaf = requestAnimationFrame(tickProgress);
 
+    // Dismiss once the hero frame box can be measured (SSR layout, no WebGL)
+    // and the 1.2s minimum has elapsed.
     const tryClose = (timedOut = false) => {
       if (closed) return;
-      if (!timedOut && !(scenesDone && heroReady)) return;
+      if (!timedOut && !frameReady) return;
       const elapsed = performance.now() - started;
       if (!timedOut && elapsed < LOADER_MIN_MS) {
         window.clearTimeout(minTimer);
@@ -149,10 +182,9 @@ export function FirstVisitLoader() {
       closed = true;
       window.clearTimeout(maxTimer);
       window.clearTimeout(minTimer);
-      if (scenesDone && heroReady) setProgress(root, 100);
+      progress.set(100, true);
 
       const finish = () => {
-        markScenesReady();
         w.__mgLoaderPauseObs?.disconnect();
         document.documentElement.classList.remove(
           LOADER_CLASS,
@@ -163,9 +195,21 @@ export function FirstVisitLoader() {
         document.getElementById('mg-load-css')?.remove();
         root.remove();
         releaseHeroPlayback();
+        // Prefetch scenes only after the handoff so their bytes and blob
+        // copies do not compete with the hero first frame or LCP.
+        const startPreload = () => {
+          void preloadSceneVideos(undefined, { priority: 'low' })
+            .then(() => markScenesReady())
+            .catch(() => markScenesReady());
+        };
+        if (typeof window.requestIdleCallback === 'function') {
+          window.requestIdleCallback(startPreload, { timeout: 1500 });
+        } else {
+          window.setTimeout(startPreload, 0);
+        }
       };
 
-      if (reduced || (timedOut && !heroReady)) {
+      if (reduced || (timedOut && !frameReady)) {
         root.classList.add('is-out-rm');
         window.setTimeout(finish, LOADER_REDUCED_FADE_MS);
         return;
@@ -179,37 +223,18 @@ export function FirstVisitLoader() {
       void runFlip(root, mark).then(finish);
     };
 
-    const stopWatch = watchHeroFirstFrame(() => {
-      heroReady = true;
-      holdHeroPlayback();
-      if (scenesDone) reportProgress(1, true);
+    const stopWatch = watchHeroFrameBox(() => {
+      frameReady = true;
       tryClose(false);
     });
-
-    void preloadSceneVideos((progress) => {
-      const bytePct =
-        progress.totalBytes && progress.totalBytes > 0
-          ? progress.loadedBytes / progress.totalBytes
-          : progress.itemsTotal > 0
-            ? progress.itemsDone / progress.itemsTotal
-            : 0;
-      reportProgress(bytePct, scenesDone && heroReady);
-    })
-      .then(() => {
-        scenesDone = true;
-        reportProgress(1, heroReady);
-        tryClose(false);
-      })
-      .catch(() => {
-        scenesDone = true;
-        tryClose(false);
-      });
 
     const maxTimer = window.setTimeout(() => tryClose(true), LOADER_MAX_MS);
 
     return () => {
       window.clearTimeout(maxTimer);
       window.clearTimeout(minTimer);
+      progress.cancel();
+      if (tickRaf) cancelAnimationFrame(tickRaf);
       stopWatch();
       if (!closed) {
         // Unmount mid-load (client nav): don't leave the page inert.

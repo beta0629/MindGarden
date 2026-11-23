@@ -48,6 +48,41 @@ export function isHeroFirstFramePainted(): boolean {
   );
 }
 
+/** Layout box of the hero frame, available from SSR even before WebGL paints. */
+export function isHeroFrameBoxReady(): boolean {
+  const frame = heroFrameElement();
+  if (!frame) return false;
+  const r = frame.getBoundingClientRect();
+  return r.width >= 2 && r.height >= 2;
+}
+
+export function watchHeroFrameBox(onReady: () => void): () => void {
+  if (isHeroFrameBoxReady()) {
+    onReady();
+    return () => {};
+  }
+  let done = false;
+  const fire = () => {
+    if (done || !isHeroFrameBoxReady()) return;
+    done = true;
+    cleanup();
+    onReady();
+  };
+  const ro = new ResizeObserver(fire);
+  const frame = heroFrameElement();
+  if (frame) ro.observe(frame);
+  else ro.observe(document.documentElement);
+  const raf = window.setInterval(fire, 50);
+  const cleanup = () => {
+    ro.disconnect();
+    window.clearInterval(raf);
+  };
+  return () => {
+    done = true;
+    cleanup();
+  };
+}
+
 /**
  * Viewport box of the hero butterfly in the currently painted first frame.
  * Uses the live frame's getBoundingClientRect (includes the 390 framing

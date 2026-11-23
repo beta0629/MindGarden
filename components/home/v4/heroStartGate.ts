@@ -11,6 +11,12 @@
  */
 export function whenHeroMayStart(img: HTMLImageElement | null): Promise<void> {
   return new Promise((resolve) => {
+    // Loader already covers the page; start the hero immediately so the
+    // first frame (and FLIP) are not gated on the poster's LCP entry.
+    if (typeof document !== 'undefined' && document.documentElement.classList.contains('mg-loading')) {
+      resolve();
+      return;
+    }
     const w = window as Window & { __mgHeroStarted?: number };
     let done = false;
     const cleanups: Array<() => void> = [];

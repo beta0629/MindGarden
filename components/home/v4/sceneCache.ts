@@ -25,6 +25,8 @@ export type ScenePreloadProgress = {
 export type ScenePreloadOptions = {
   pack?: V4Key;
   signal?: AbortSignal;
+  /** Fetch priority hint (Chromium). Preload uses 'low' so the hero mp4 wins. */
+  priority?: 'low' | 'high' | 'auto';
 };
 
 /**
@@ -134,7 +136,11 @@ async function readBlobWithProgress(
  */
 export async function fetchSceneVideoBlob(
   url: string,
-  opts?: { signal?: AbortSignal; onBytes?: (loaded: number, total: number | null) => void },
+  opts?: {
+    signal?: AbortSignal;
+    onBytes?: (loaded: number, total: number | null) => void;
+    priority?: 'low' | 'high' | 'auto';
+  },
 ): Promise<Blob> {
   const abs = absUrl(url);
   const cache = await openSceneCache();
@@ -154,7 +160,8 @@ export async function fetchSceneVideoBlob(
   const res = await fetch(abs, {
     signal: opts?.signal,
     credentials: 'same-origin',
-  });
+    ...(opts?.priority ? { priority: opts.priority } : {}),
+  } as RequestInit);
   if (!res.ok) throw new Error('unavailable');
   const blob = await readBlobWithProgress(res, opts?.onBytes);
   if (cache) {
@@ -191,7 +198,7 @@ export async function preloadSceneVideos(
   const totalByItem = new Array<number | null>(itemsTotal).fill(null);
   let itemsDone = 0;
 
-  const report = () => {
+  const emit = () => {
     const loadedBytes = loadedByItem.reduce((a, b) => a + b, 0);
     const known = totalByItem.every((n): n is number => n != null && n > 0);
     const totalBytes = known ? totalByItem.reduce((a, n) => a + n, 0) : null;
@@ -203,11 +210,31 @@ export async function preloadSceneVideos(
     });
   };
 
-  report();
+  // Coalesce byte callbacks to one update per frame — avoids long task
+  // sequences of style/ARIA writes on the main thread.
+  let raf = 0;
+  const report = (flush = false) => {
+    if (flush) {
+      if (raf) {
+        cancelAnimationFrame(raf);
+        raf = 0;
+      }
+      emit();
+      return;
+    }
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      emit();
+    });
+  };
+
+  report(true);
   await Promise.all(
     urls.map(async (url, i) => {
       const blob = await fetchSceneVideoBlob(url, {
         signal: opts?.signal,
+        priority: opts?.priority ?? 'low',
         onBytes: (loaded, total) => {
           loadedByItem[i] = loaded;
           if (total != null) totalByItem[i] = total;
@@ -220,4 +247,5 @@ export async function preloadSceneVideos(
       report();
     }),
   );
+  report(true);
 }

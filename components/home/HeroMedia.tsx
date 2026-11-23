@@ -166,7 +166,7 @@ export function HeroMedia({ enhanceOnly = false }: Props) {
         <StackedAlphaVideo
           src={src}
           loop
-          playing={!paused && !loaderHold}
+          playing={!paused && !(loaderHold && live)}
           autoPlay
           adoptSelector={HERO_STACKED_VIDEO_SELECTOR}
           onFirstFrame={() => {

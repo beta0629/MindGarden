@@ -695,6 +695,16 @@ p {
   opacity: 0;
 }
 
+/*
+ * First-visit loader: keep the poster <img> out of LCP after the overlay is
+ * removed (opacity 0 is not an LCP candidate). A CSS background-image here
+ * would itself become a late LCP element, so the stage stays empty until
+ * the stacked-alpha canvas paints.
+ */
+html.mg-await-hero .hero-media__stage picture img.hero-still {
+  opacity: 0 !important;
+}
+
 /* Reduced motion: SSR early canvas stays in the DOM (hydration) but never shows. */
 @media (prefers-reduced-motion: reduce) {
   .hero-media__stage > .hero-early-root {

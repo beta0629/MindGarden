@@ -11,6 +11,10 @@ import {
 import type { V37SceneKind } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
+import {
+  LOADER_DONE_EVENT,
+  isLoaderActive,
+} from '@/components/home/v4/firstVisitLoader';
 
 type SceneProps = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -83,22 +87,40 @@ function DeferredV37Scene({
     if (reduced) return;
     const el = placeholderRef.current;
     if (!el) return;
+    const arm = () => {
+      setNear(true);
+    };
+    const maybeArm = () => {
+      // Off-screen scene WebGL must wait until the loader hands off so
+      // texture uploads do not compete with the hero first frame / LCP.
+      if (isLoaderActive()) {
+        window.addEventListener(LOADER_DONE_EVENT, arm, { once: true });
+        return;
+      }
+      arm();
+    };
     if (typeof IntersectionObserver === 'undefined') {
       // Defer setState — sync updates inside effects trip lint (and match scene pattern).
-      const t = window.setTimeout(() => setNear(true), 0);
-      return () => window.clearTimeout(t);
+      const t = window.setTimeout(maybeArm, 0);
+      return () => {
+        window.clearTimeout(t);
+        window.removeEventListener(LOADER_DONE_EVENT, arm);
+      };
     }
     const io = new IntersectionObserver(
       (entries) => {
         if (entries.some((e) => e.isIntersecting)) {
-          setNear(true);
+          maybeArm();
           io.disconnect();
         }
       },
       { rootMargin: NEAR_VIEWPORT_ROOT_MARGIN, threshold: 0 },
     );
     io.observe(el);
-    return () => io.disconnect();
+    return () => {
+      io.disconnect();
+      window.removeEventListener(LOADER_DONE_EVENT, arm);
+    };
   }, [kind, reduced]);
 
   useEffect(() => {

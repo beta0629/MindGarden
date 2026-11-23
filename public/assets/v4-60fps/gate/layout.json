@@ -8,7 +8,7 @@
  "display": "one video per breakpoint, position absolute over the gate body layer box (page CSS px below), object-fit: fill (mod-16 resample undone on screen)",
  "section_bg": "#EAE2D2 (sand)",
  "decode": "stacked alpha: top = premultiplied RGB, bottom = alpha; a = clamp((A-.006)/.988,0,1) * uvEdge(smoothstep(0,.015)), rgb = min(rgb,a)",
- "play": "once; at ended keep the last frame (= static gate3d composite, crossfade w=1) - or swap to gate-<k>-end-poster.webp (decoded last frame)",
+ "play": "scroll-scrub: progress 0 = closed (frame 0), progress 1 = open (last frame); hold end frames; reverse on scroll up. Cache-bust ?v=scrub1. Encode: High@L4.2 yuv420p bt709 60fps CRF 18 GOP 4 bframes=0 ref=4.",
  "posters": {
   "poster": "gate-<k>-poster.webp = decoded frame 0 (walk f196, door closed), webp q90 alpha_quality 100",
   "end_poster": "gate-<k>-end-poster.webp = decoded last frame (static gate)"
@@ -54,8 +54,8 @@
     "r_frame_rate": "60/1",
     "nb_frames": "119",
     "duration": "1.983333",
-    "bytes": 545169,
-    "x264": "ref=4 keyint=600 crf=16.0"
+    "bytes": 1854329,
+    "x264": "ref=4 keyint=4 crf=18.0 bframes=0"
    }
   },
   "390": {
@@ -98,8 +98,8 @@
     "r_frame_rate": "60/1",
     "nb_frames": "101",
     "duration": "1.683333",
-    "bytes": 289720,
-    "x264": "ref=4 keyint=600 crf=16.0"
+    "bytes": 973543,
+    "x264": "ref=4 keyint=4 crf=18.0 bframes=0"
    }
   }
  }

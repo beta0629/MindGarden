@@ -23,7 +23,7 @@
   "frames": 189,
   "fps": 60,
   "duration_s": 3.15,
-  "play": "once, both layers started together on the same clock; on ended -> hide/remove both videos (last frame is fully transparent)"
+  "play": "scroll-scrub both layers together; progress maps to 0..2.8s (last fully-opaque frame at walk f421). Do not scrub the 2.8–3.15s end fade (last frame is fully transparent). Reverse on scroll up; never hide. Cache-bust ?v=scrub1. Encode: High@L4.2 yuv420p bt709 60fps CRF 18 GOP 4 bframes=0 ref=4."
  },
  "first_frame": "f337: butterflies already visible at their entry positions (alpha 255) - same as 38d4 where ambient appears at f337; nothing is drawn before f337",
  "last_frame": "f431: max alpha 0 in both layers",
@@ -43,7 +43,7 @@
    "videos": {
     "back": {
      "file": "bench-d-back-stack.mp4",
-     "bytes": 338866,
+     "bytes": 378021,
      "stacked": [
       1104,
       1984
@@ -53,7 +53,7 @@
     },
     "front": {
      "file": "bench-d-front-stack.mp4",
-     "bytes": 250174,
+     "bytes": 294406,
      "stacked": [
       1104,
       1984
@@ -156,7 +156,7 @@
    "videos": {
     "back": {
      "file": "bench-m-back-stack.mp4",
-     "bytes": 157199,
+     "bytes": 183774,
      "stacked": [
       1248,
       1568
@@ -166,7 +166,7 @@
     },
     "front": {
      "file": "bench-m-front-stack.mp4",
-     "bytes": 247968,
+     "bytes": 290404,
      "stacked": [
       1248,
       1568

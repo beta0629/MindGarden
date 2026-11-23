@@ -893,22 +893,34 @@ p {
     white-space: nowrap;
   }
 
-  /* Spec 81:47 → 810×470 @1440 (50.625rem × 29.375rem); bleed right under copy. */
+  /*
+   * Hero butterfly is the core visual: size from the container’s right column,
+   * no viewport-edge bleed. 70.5vw / 78.5rem cap → panel ~1015×590 @1440
+   * (visible ~755×511) and ~1256×729 @3006 (visible ~935×625). Taller panel
+   * also grows the hero block so the subject does not sit on the area cards.
+   */
   .hero-media {
     --hero-zoom: 1.12;
     --hero-media-fade-edge: 90%;
     --hero-media-fade-end: 100%;
+    --hero-media-max-h: min(72svh, 46rem);
+    --hero-media-w: min(
+      100%,
+      70.5vw,
+      78.5rem,
+      calc(var(--hero-media-max-h) * 81 / 47)
+    );
     grid-area: 1 / 1;
     justify-self: end;
     align-self: center;
     z-index: 1;
     pointer-events: none;
-    width: min(100%, 50.625rem);
-    max-width: 50.625rem;
+    width: var(--hero-media-w);
+    max-width: none;
     aspect-ratio: 81 / 47;
     height: auto;
-    max-height: min(58svh, 29.375rem);
-    margin-right: calc((var(--hero-container) - 100vw) / 2);
+    max-height: var(--hero-media-max-h);
+    margin-right: 0;
   }
 
   .hero-media__stage {
@@ -1724,14 +1736,24 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
  * JS useBreakpointPack only picks atlas/poster paths — never inline --v37-*.
  */
 .v37-scene--gate {
-  --v37-w: 93.113vw;
+  /* ~240px @390 (was 93.113vw / ~350). */
+  --v37-w: 61.5vw;
   aspect-ratio: 363 / 356;
 }
 
 @media (min-width: 768px) {
   .v37-scene--gate {
+    /* 768 unchanged — 37.027vw (~284). */
     --v37-w: 37.027vw;
     aspect-ratio: 533 / 523;
+  }
+}
+
+@media (min-width: 1024px) {
+  .v37-scene--gate {
+    /* ~380 @1440, ~500 @3006. 31.25rem cap is the approved wide size
+       (26.5rem would cap at 424px). 768 is handled above and left unchanged. */
+    --v37-w: min(26.4vw, 31.25rem);
   }
 }
 
@@ -1787,8 +1809,10 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 
 @media (min-width: 768px) {
   .v37-scene--bench {
-    /* 1440 pack = computePad(bench-1440.json). */
-    --v37-w: 28.115vw;
+    /* 1440 pack = computePad(bench-1440.json). Cap at 25rem so wide
+       viewports (~3000px) do not outgrow the hero butterfly. 768 is
+       28.115vw (~216) and stays under the cap. */
+    --v37-w: min(28.115vw, 25rem);
     --bench-place-frac: 0.45231;
     --bench-pad-r-ratio: 0.85502;
     --bench-pad-t-over-w: 1.11785;
@@ -2070,7 +2094,7 @@ picture.v37-scene__poster > img {
 }
 
 .home-spaces__scene .v37-scene--gate {
-  width: min(var(--v37-w, 93.113vw), 100%);
+  width: min(var(--v37-w, 61.5vw), 100%);
   margin-inline: auto;
 }
 
@@ -2737,7 +2761,7 @@ picture.v37-scene__poster > img {
   }
 
   .home-spaces__scene .v37-scene--gate {
-    width: min(var(--v37-w, 37.027vw), 100%);
+    width: min(var(--v37-w, min(26.4vw, 31.25rem)), 100%);
     margin-inline: 0;
   }
 

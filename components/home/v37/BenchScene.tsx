@@ -15,8 +15,12 @@ import {
   subscribe,
   unsubscribe,
 } from '@/components/home/rafScheduler';
-import { StackedAlphaVideo } from '@/components/home/v4/StackedAlphaVideo';
 import {
+  StackedAlphaVideo,
+  type StackedAlphaVideoHandle,
+} from '@/components/home/v4/StackedAlphaVideo';
+import {
+  BENCH_HOLD_PROGRESS,
   BENCH_OVERFLOW,
   benchBackSrc,
   benchBodySrc,
@@ -26,24 +30,23 @@ import {
 } from '@/components/home/v4/assets';
 import {
   createSectionMetricsCache,
-  ScrollClock,
   type SectionMetricsCache,
 } from './scrollClock';
 import {
   SETTLE_RISE_PX,
-  settleFromWalkDelta,
+  sampleSettleFromProgress,
   settleTranslateY,
 } from './settle';
-import { TRIGGER_P, TRIGGER_WALK_F } from './types';
+import { TRIGGER_P } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
+import { SCRUB_SRC_ROOT_MARGIN, scrollMediaProgress } from './scrubProgress';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
 };
 
 const RAF_ID = 'v37-bench';
-const BENCH_MIN_OPACITY = 0.92;
 
 type OverflowBox = {
   left: number;
@@ -70,7 +73,6 @@ function layoutBoxes(
   const cssH = meta.overflowH * scale;
   const hostPadT = parseFloat(getComputedStyle(wrap).paddingTop) || 0;
   const hostPadB = parseFloat(getComputedStyle(wrap).paddingBottom) || 0;
-  // Absolute children are relative to the padding edge — offset imgs into the content box.
   const placeTop = hostPadT;
   const placeHeight = Math.max(1, wrap.clientHeight - hostPadT - hostPadB);
   return {
@@ -85,20 +87,18 @@ function layoutBoxes(
 }
 
 /**
- * Bench — static body/shadow settle; back/front stacked-alpha videos outside settle.
- * Both videos start together 0.567s after trigger, play once, then hide.
- * Do NOT mirror B1 — orientation is baked into the video.
+ * Bench — static body/shadow settle on rAF/scroll; back/front stacked-alpha
+ * videos scrubbed by scroll (fly in and settle, reverse on scroll up, never hide).
  */
 export function BenchScene({ sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
-  const clockRef = useRef<ScrollClock | null>(null);
+  const backRef = useRef<StackedAlphaVideoHandle>(null);
+  const frontRef = useRef<StackedAlphaVideoHandle>(null);
   const [failed, setFailed] = useState(false);
-  /** Body/shadow are layout stills — live as soon as the motion path mounts. */
   const paintLive = !failed && !reduced;
-  const [videoPlaying, setVideoPlaying] = useState(false);
-  const [videosDone, setVideosDone] = useState(false);
+  const [near, setNear] = useState(false);
   const [overflow, setOverflow] = useState<OverflowBox | null>(null);
   const [placeBox, setPlaceBox] = useState<PlaceBox | null>(null);
   const paintLiveRef = useRef(paintLive);
@@ -106,19 +106,14 @@ export function BenchScene({ sectionRef }: Props) {
   useEffect(() => {
     paintLiveRef.current = paintLive;
   }, [paintLive]);
-  const heldOpaqueRef = useRef(false);
-  const frozenRef = useRef(false);
-  const videoStartedRef = useRef(false);
-  const videosEndedRef = useRef(0);
 
   const key = packToV4Key(pack);
-
-  // Pack changes remount this component via DeferredScenes `key={pack}`.
+  const backSrc = near ? benchBackSrc(key) : '';
+  const frontSrc = near ? benchFrontSrc(key) : '';
 
   useLayoutEffect(() => {
     const wrap = wrapRef.current;
     if (!wrap || reduced || failed) return;
-    // Defer setState out of the layout-effect body (ResizeObserver/rAF path).
     const id = requestAnimationFrame(() => {
       const boxes = layoutBoxes(wrap, pack);
       setOverflow(boxes.overflow);
@@ -137,11 +132,6 @@ export function BenchScene({ sectionRef }: Props) {
     let subscribed = false;
     let metricsCache: SectionMetricsCache | null = null;
 
-    clockRef.current = new ScrollClock({
-      triggerP: TRIGGER_P[pack].bench,
-      triggerWalkF: TRIGGER_WALK_F.bench,
-    });
-
     const resolveSection = (): HTMLElement =>
       sectionRef?.current ??
       (wrap.closest('section') as HTMLElement | null) ??
@@ -154,27 +144,17 @@ export function BenchScene({ sectionRef }: Props) {
       return metricsCache;
     };
 
-    const applySettle = (walkF: number) => {
-      const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
+    const applySettle = (progress: number) => {
+      const settle = sampleSettleFromProgress(progress);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
-      const pre = settle.opacity <= 0 && !paintLiveRef.current;
-      const rawOpacity = pre ? 1 : settle.opacity;
-      const opacity = Math.max(
-        heldOpaqueRef.current || paintLiveRef.current ? 1 : BENCH_MIN_OPACITY,
-        rawOpacity,
-      );
-      const y = pre ? 0 : ty;
-      if (opacity >= 1) heldOpaqueRef.current = true;
+      // Chair stays visible; rise/shadow follow scroll and reverse on the way up.
+      const opacity = 1;
+      const y = ty;
       const shadow = wrap.querySelector<HTMLElement>('.v37-bench__shadow');
       if (shadow) {
-        const sx = pre ? 1 : settle.shadowScaleX;
-        const so = Math.max(
-          heldOpaqueRef.current || paintLiveRef.current ? 1 : BENCH_MIN_OPACITY,
-          pre ? 1 : settle.shadowOpacity,
-        );
-        shadow.style.transform = `translateY(${y}px) scaleX(${sx})`;
-        shadow.style.opacity = String(so);
+        shadow.style.transform = `translateY(${y}px) scaleX(${settle.shadowScaleX})`;
+        shadow.style.opacity = String(Math.max(0.92, settle.shadowOpacity));
         shadow.style.transformOrigin = '50% 100%';
       }
       const body = wrap.querySelector<HTMLElement>('.v37-bench__body');
@@ -186,52 +166,22 @@ export function BenchScene({ sectionRef }: Props) {
 
     const syncPause = () => {
       if (!subscribed) return;
-      const shouldRun =
-        !document.hidden &&
-        !frozenRef.current &&
-        (visible || !paintLiveRef.current);
+      const shouldRun = !document.hidden && (visible || !paintLiveRef.current);
       setPaused(RAF_ID, !shouldRun);
-      if (!shouldRun) {
-        setContinuous(RAF_ID, false);
-        return;
-      }
-      markDirty(RAF_ID);
+      setContinuous(RAF_ID, false);
+      if (shouldRun) markDirty(RAF_ID);
     };
 
-    const tick = (now: number) => {
+    const tick = () => {
       if (!alive || document.hidden) return;
-      const clock = clockRef.current;
-      if (!clock) return;
-      if (frozenRef.current) {
-        setContinuous(RAF_ID, false);
-        clock.syncTime(now);
-        return;
-      }
-
       const metrics = ensureMetrics().read();
-      const walkF = clock.update(now, metrics);
-      applySettle(walkF);
-
-      // f320 trigger → f337 video start (= 0.5667s @ 30fps walk clock).
-      if (!videoStartedRef.current && walkF >= TRIGGER_WALK_F.bench + 17) {
-        videoStartedRef.current = true;
-        setVideoPlaying(true);
-      }
-
-      const settle = settleFromWalkDelta(walkF - TRIGGER_WALK_F.bench);
-      const settleBusy = settle.opacity < 1 || settle.rise < 1;
-      const videoBusy = videoStartedRef.current && videosEndedRef.current < 2;
-      const motionBusy = settleBusy || videoBusy || !paintLiveRef.current;
-      if (!motionBusy) {
-        frozenRef.current = true;
-        setContinuous(RAF_ID, false);
-        setPaused(RAF_ID, true);
-        clock.syncTime(now);
-        return;
-      }
-      const advancing = clock.wouldAdvanceWithTime(metrics) || videoBusy;
-      setContinuous(RAF_ID, advancing && motionBusy);
-      if (!advancing) clock.syncTime(now);
+      const progress = scrollMediaProgress(metrics, TRIGGER_P[pack].bench);
+      applySettle(progress);
+      // Hold the last opaque frame (skip the end fade to empty).
+      const mediaProgress = progress * BENCH_HOLD_PROGRESS;
+      backRef.current?.seekProgress(mediaProgress);
+      frontRef.current?.seekProgress(mediaProgress);
+      setContinuous(RAF_ID, false);
     };
 
     subscribe(RAF_ID, tick, { continuous: false });
@@ -248,29 +198,40 @@ export function BenchScene({ sectionRef }: Props) {
           setPlaceBox(boxes.place);
         }
         syncPause();
-        if (!frozenRef.current) markDirty(RAF_ID);
+        markDirty(RAF_ID);
       },
       { rootMargin: '0px' },
     );
     visIO.observe(wrap);
+
+    const srcIO = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setNear(true);
+          srcIO.disconnect();
+        }
+      },
+      { rootMargin: SCRUB_SRC_ROOT_MARGIN },
+    );
+    srcIO.observe(wrap);
 
     const ro = new ResizeObserver(() => {
       const boxes = layoutBoxes(wrap, pack);
       setOverflow(boxes.overflow);
       setPlaceBox(boxes.place);
       ensureMetrics().refresh();
-      if (!subscribed || document.hidden || frozenRef.current) return;
+      if (!subscribed || document.hidden) return;
       markDirty(RAF_ID);
     });
     ro.observe(wrap);
 
     const onScroll = () => {
-      if (!subscribed || document.hidden || frozenRef.current) return;
+      if (!subscribed || document.hidden) return;
       markDirty(RAF_ID);
     };
     const onVisibility = () => {
       syncPause();
-      if (!document.hidden && !frozenRef.current) markDirty(RAF_ID);
+      if (!document.hidden) markDirty(RAF_ID);
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
@@ -279,12 +240,17 @@ export function BenchScene({ sectionRef }: Props) {
     return () => {
       alive = false;
       visIO.disconnect();
+      srcIO.disconnect();
       ro.disconnect();
       window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);
     };
   }, [pack, reduced, failed, sectionRef]);
+
+  useEffect(() => {
+    if (near) markDirty(RAF_ID);
+  }, [near]);
 
   const showPoster = failed || reduced || !paintLive;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
@@ -312,14 +278,6 @@ export function BenchScene({ sectionRef }: Props) {
     willChange: 'transform, opacity',
   };
 
-  const onVideoEnded = () => {
-    videosEndedRef.current += 1;
-    if (videosEndedRef.current >= 2) {
-      setVideosDone(true);
-      setVideoPlaying(false);
-    }
-  };
-
   return (
     <div
       ref={wrapRef}
@@ -345,15 +303,15 @@ export function BenchScene({ sectionRef }: Props) {
             decoding="async"
             style={{ ...imgBase, zIndex: 1 }}
           />
-          {!videosDone && overflow ? (
+          {near && overflow ? (
             <StackedAlphaVideo
-              src={benchBackSrc(key)}
-              playOnce
-              hideOnEnded
-              playing={videoPlaying}
-              autoPlay
+              ref={backRef}
+              src={backSrc}
+              scrub
+              progress={0}
+              playing={false}
+              autoPlay={false}
               style={{ ...overflowStyle, zIndex: 2 }}
-              onEnded={onVideoEnded}
               onUnavailable={() => setFailed(true)}
             />
           ) : null}
@@ -365,15 +323,15 @@ export function BenchScene({ sectionRef }: Props) {
             decoding="async"
             style={{ ...imgBase, zIndex: 3 }}
           />
-          {!videosDone && overflow ? (
+          {near && overflow ? (
             <StackedAlphaVideo
-              src={benchFrontSrc(key)}
-              playOnce
-              hideOnEnded
-              playing={videoPlaying}
-              autoPlay
+              ref={frontRef}
+              src={frontSrc}
+              scrub
+              progress={0}
+              playing={false}
+              autoPlay={false}
               style={{ ...overflowStyle, zIndex: 4 }}
-              onEnded={onVideoEnded}
               onUnavailable={() => setFailed(true)}
             />
           ) : null}

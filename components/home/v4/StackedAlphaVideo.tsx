@@ -15,6 +15,8 @@ import {
 
 export type StackedAlphaVideoHandle = {
   seek: (timeS: number) => void;
+  /** 0..1 scrub; no-op when not in scrub mode or metadata is not ready. */
+  seekProgress: (progress: number) => void;
   play: () => void;
   pause: () => void;
   getVideo: () => HTMLVideoElement | null;
@@ -29,6 +31,13 @@ export type StackedAlphaVideoProps = {
   autoPlay?: boolean;
   playing?: boolean;
   startTime?: number;
+  /**
+   * Pause + precise-seek mode for scroll-linked clips. When true, or when
+   * `progress` is a number, the video never auto-plays.
+   */
+  scrub?: boolean;
+  /** 0..1 target in scrub mode (optional; also driven via seekProgress). */
+  progress?: number;
   onEnded?: () => void;
   onFirstFrame?: () => void;
   onUnavailable?: () => void;
@@ -67,6 +76,8 @@ export const StackedAlphaVideo = forwardRef<
     autoPlay = true,
     playing = true,
     startTime = 0,
+    scrub = false,
+    progress,
     onEnded,
     onFirstFrame,
     onUnavailable,
@@ -95,6 +106,9 @@ export const StackedAlphaVideo = forwardRef<
   const holdLastRef = useRef(holdLast);
   const hideOnEndedRef = useRef(hideOnEnded);
   const startTimeRef = useRef(startTime);
+  const scrubRef = useRef(scrub || progress !== undefined);
+  const progressRef = useRef(progress);
+  const applyScrubRef = useRef<() => void>(() => {});
   const playingRef = useRef(playing);
   const autoPlayRef = useRef(autoPlay);
   const onEndedRef = useRef(onEnded);
@@ -106,6 +120,8 @@ export const StackedAlphaVideo = forwardRef<
   holdLastRef.current = holdLast;
   hideOnEndedRef.current = hideOnEnded;
   startTimeRef.current = startTime;
+  scrubRef.current = scrub || progress !== undefined;
+  progressRef.current = progress;
   playingRef.current = playing;
   autoPlayRef.current = autoPlay;
   onEndedRef.current = onEnded;
@@ -121,6 +137,12 @@ export const StackedAlphaVideo = forwardRef<
       } catch {
         /* ignore */
       }
+      applyScrubRef.current();
+    },
+    seekProgress: (next: number) => {
+      progressRef.current = next;
+      scrubRef.current = true;
+      applyScrubRef.current();
     },
     play: () => {
       playingRef.current = true;
@@ -319,6 +341,12 @@ export const StackedAlphaVideo = forwardRef<
 
     const syncPlay = () => {
       if (!alive) return;
+      if (scrubRef.current) {
+        video.pause();
+        stopUpload();
+        applyScrub();
+        return;
+      }
       const want =
         autoPlayRef.current &&
         playingRef.current &&
@@ -365,8 +393,76 @@ export const StackedAlphaVideo = forwardRef<
       }
     };
 
+    let seekInFlight = false;
+    let pendingScrub: number | null = null;
+
+    const applyScrub = () => {
+      if (!alive || !scrubRef.current) return;
+      video.pause();
+      stopUpload();
+      if (video.readyState < HTMLMediaElement.HAVE_METADATA) return;
+      const d = video.duration;
+      if (!d || !Number.isFinite(d) || d <= 0) return;
+      const raw = progressRef.current;
+      const p = typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
+      const t = p <= 0 ? 0 : p >= 1 ? Math.max(0, d - 1e-4) : p * d;
+      if (seekInFlight) {
+        pendingScrub = t;
+        return;
+      }
+      if (Math.abs(video.currentTime - t) < 5e-4) {
+        drawOnce();
+        return;
+      }
+      seekInFlight = true;
+      const onSeeked = () => {
+        video.removeEventListener('seeked', onSeeked);
+        seekInFlight = false;
+        if (!alive) return;
+        drawOnce();
+        if (pendingScrub !== null) {
+          const next = pendingScrub;
+          pendingScrub = null;
+          if (Math.abs(video.currentTime - next) >= 5e-4) {
+            seekInFlight = true;
+            video.addEventListener('seeked', onSeeked);
+            try {
+              video.currentTime = next;
+            } catch {
+              seekInFlight = false;
+            }
+            return;
+          }
+        }
+      };
+      video.addEventListener('seeked', onSeeked);
+      try {
+        video.currentTime = t;
+      } catch {
+        seekInFlight = false;
+        video.removeEventListener('seeked', onSeeked);
+        return;
+      }
+      // GOP-4 seeks on a buffered clip may apply synchronously and skip 'seeked'.
+      if (
+        Math.abs(video.currentTime - t) < 5e-4 &&
+        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+      ) {
+        video.removeEventListener('seeked', onSeeked);
+        seekInFlight = false;
+        drawOnce();
+      }
+    };
+    applyScrubRef.current = applyScrub;
+
     const onVideoEnded = () => {
       if (!alive) return;
+      if (scrubRef.current) {
+        video.pause();
+        stopUpload();
+        drawOnce();
+        return;
+      }
       if (loopRef.current && !playOnceRef.current) return;
       endedRef.current = true;
       if (holdLastRef.current) {
@@ -402,6 +498,12 @@ export const StackedAlphaVideo = forwardRef<
       endedRef.current = false;
       holdRef.current = false;
       stopUpload();
+      if (!next) {
+        if (!adopted) {
+          video.removeAttribute('src');
+        }
+        return;
+      }
       // Keep early-paint ready state — never blank the canvas on adopt.
       if (resetFirstFrame && !adoptedEarlyCanvas) {
         firstFrameRef.current = false;
@@ -583,6 +685,12 @@ export const StackedAlphaVideo = forwardRef<
     video.src = src;
     video.load();
   }, [src, loop, playOnce, holdLast, hideOnEnded, startTime]);
+
+  useEffect(() => {
+    scrubRef.current = scrub || progress !== undefined;
+    progressRef.current = progress;
+    if (scrubRef.current) applyScrubRef.current();
+  }, [scrub, progress]);
 
   useEffect(() => {
     playingRef.current = playing;

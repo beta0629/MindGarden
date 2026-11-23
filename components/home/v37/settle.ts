@@ -90,6 +90,14 @@ export function sampleSettle(elapsedSinceTriggerMs: number): SettleState {
   };
 }
 
+export const SETTLE_SPAN_MS = DELAY_AFTER_TRIGGER_MS + TOTAL_MS;
+
+/** Map a 0..1 scroll/rAF progress onto the existing settle curve (reversible). */
+export function sampleSettleFromProgress(progress: number): SettleState {
+  const t = progress <= 0 ? 0 : progress >= 1 ? 1 : progress;
+  return sampleSettle(t * SETTLE_SPAN_MS);
+}
+
 /** Map walk-frame delta (at 30fps) into settle sample using forward time. */
 export function settleFromWalkDelta(walkDeltaFromTrigger: number): SettleState {
   const ms = (walkDeltaFromTrigger / 30) * 1000;

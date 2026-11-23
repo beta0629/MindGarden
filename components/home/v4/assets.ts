@@ -24,7 +24,7 @@ export function heroPosterSrc(key: V4Key): string {
 }
 
 /** Query rev for immutable `/assets/v4-60fps/gate/*` (stable filenames). */
-const GATE_ASSET_V = 'd-final';
+const GATE_ASSET_V = 'scrub1';
 
 export function gateStackSrc(key: V4Key): string {
   return `${V4_BASE}/gate/gate-${key}-stack.mp4?v=${GATE_ASSET_V}`;
@@ -38,12 +38,15 @@ export function gateEndPosterSrc(key: V4Key): string {
   return `${V4_BASE}/gate/gate-${key}-end-poster.webp?v=${GATE_ASSET_V}`;
 }
 
+/** Query rev for bench stacked-alpha clips (same ?v= as gate after GOP-4 re-encode). */
+const BENCH_ASSET_V = 'scrub1';
+
 export function benchBackSrc(key: V4Key): string {
-  return `${V4_BASE}/bench/bench-${key}-back-stack.mp4`;
+  return `${V4_BASE}/bench/bench-${key}-back-stack.mp4?v=${BENCH_ASSET_V}`;
 }
 
 export function benchFrontSrc(key: V4Key): string {
-  return `${V4_BASE}/bench/bench-${key}-front-stack.mp4`;
+  return `${V4_BASE}/bench/bench-${key}-front-stack.mp4?v=${BENCH_ASSET_V}`;
 }
 
 export function bookingLandingSrc(key: V4Key): string {
@@ -124,6 +127,14 @@ export const BOOKING_POSTER_START_S = 10 / 60;
 
 /** Bench butterflies start 0.567s after walk trigger (f320 → f337 @ 30fps). */
 export const BENCH_VIDEO_DELAY_S = 0.5667;
+
+/**
+ * Last fully-opaque butterfly time (walk f421). The clip fades to empty
+ * between 2.8s and 3.15s (f421–f431) — scrub holds here so they never vanish.
+ */
+export const BENCH_HOLD_S = 2.8;
+export const BENCH_DURATION_S = 3.15;
+export const BENCH_HOLD_PROGRESS = BENCH_HOLD_S / BENCH_DURATION_S;
 
 /** Desktop hover crossfade. */
 export const BOOKING_HOVER_FADE_MS = 300;

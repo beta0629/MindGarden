@@ -28,7 +28,7 @@ import {
   benchShadowSrc,
   packToV4Key,
 } from '@/components/home/v4/assets';
-import { FOCUS_ROOT_MARGIN, SRC_ROOT_MARGIN } from './centerFocus';
+import { observeCenterFocus, SRC_ROOT_MARGIN } from './centerFocus';
 import {
   SETTLE_RISE_PX,
   sampleSettle,
@@ -194,15 +194,14 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     );
     srcIO.observe(wrap);
 
-    const focusIO = new IntersectionObserver(
-      (entries) => {
-        if (!alive) return;
-        if (entries.some((e) => e.isIntersecting)) enterFocus();
-        else leaveFocus();
+    const stopFocusIO = observeCenterFocus(focus, {
+      onEnter: () => {
+        if (alive) enterFocus();
       },
-      { rootMargin: FOCUS_ROOT_MARGIN, threshold: 0 },
-    );
-    focusIO.observe(focus);
+      onLeave: () => {
+        if (alive) leaveFocus();
+      },
+    });
 
     const ro = new ResizeObserver(() => {
       const boxes = layoutBoxes(wrap, pack);
@@ -221,7 +220,7 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     return () => {
       alive = false;
       srcIO.disconnect();
-      focusIO.disconnect();
+      stopFocusIO();
       ro.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);

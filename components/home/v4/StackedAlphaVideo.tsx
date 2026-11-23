@@ -12,6 +12,7 @@ import {
   drawStackedAlphaFrame,
   type StackedAlphaGl,
 } from './stackedAlphaShader';
+import { fetchSceneVideoBlob } from './sceneCache';
 
 export type StackedAlphaVideoHandle = {
   seek: (timeS: number) => void;
@@ -122,6 +123,7 @@ export const StackedAlphaVideo = forwardRef<
   const pingPongRef = useRef(pingPong);
   const pingPongDirRef = useRef<'fwd' | 'rev'>('fwd');
   const reverseRafRef = useRef(0);
+  const forwardRafRef = useRef(0);
   const seekAndDrawRef = useRef<(timeS: number) => void>(() => {});
   const syncPlayRef = useRef<() => void>(() => {});
   const stopReverseRef = useRef<() => void>(() => {});
@@ -342,13 +344,18 @@ export const StackedAlphaVideo = forwardRef<
       return video.currentTime >= end - 1 / 120;
     };
 
-    const stopReverse = () => {
+    const stopLoopClocks = () => {
       if (reverseRafRef.current) {
         cancelAnimationFrame(reverseRafRef.current);
         reverseRafRef.current = 0;
       }
+      if (forwardRafRef.current) {
+        cancelAnimationFrame(forwardRafRef.current);
+        forwardRafRef.current = 0;
+      }
     };
-    stopReverseRef.current = stopReverse;
+    const stopReverse = stopLoopClocks;
+    stopReverseRef.current = stopLoopClocks;
 
     let reverseLast = 0;
     const startReverse = () => {
@@ -391,6 +398,52 @@ export const StackedAlphaVideo = forwardRef<
         reverseRafRef.current = requestAnimationFrame(tick);
       };
       reverseRafRef.current = requestAnimationFrame(tick);
+    };
+
+    /**
+     * Seek-draw the forward half of a ping-pong loop. Used when native
+     * play() is rejected (iOS Safari often refuses a second play() outside
+     * a user-gesture window) or when currentTime stalls while "playing".
+     * Blob URLs stay seekable without Range, so this path does not depend
+     * on requestVideoFrameCallback or another play() promise.
+     */
+    const startForwardScrub = () => {
+      if (!alive || !pingPongRef.current || !playingRef.current) return;
+      pingPongDirRef.current = 'fwd';
+      endedRef.current = false;
+      holdRef.current = false;
+      video.pause();
+      stopUpload();
+      if (forwardRafRef.current) return;
+      let last = performance.now();
+      let mediaT = video.currentTime;
+      const tick = (now: number) => {
+        if (
+          !alive ||
+          pingPongDirRef.current !== 'fwd' ||
+          !playingRef.current
+        ) {
+          forwardRafRef.current = 0;
+          return;
+        }
+        if (!pageVisibleRef.current || !visibleRef.current) {
+          forwardRafRef.current = 0;
+          return;
+        }
+        const dt = Math.min(0.08, Math.max(0, (now - last) / 1000));
+        last = now;
+        const end = holdDeadlineS();
+        const cap = end != null && Number.isFinite(end) ? end : mediaT + dt;
+        mediaT = Math.min(cap, mediaT + dt);
+        seekAndDrawRef.current(mediaT);
+        if (end != null && mediaT >= end - 1 / 120) {
+          forwardRafRef.current = 0;
+          startReverse();
+          return;
+        }
+        forwardRafRef.current = requestAnimationFrame(tick);
+      };
+      forwardRafRef.current = requestAnimationFrame(tick);
     };
 
     const holdNow = () => {
@@ -491,10 +544,18 @@ export const StackedAlphaVideo = forwardRef<
         video.setAttribute('playsinline', '');
         video.setAttribute('webkit-playsinline', '');
         const p = video.play();
+        video.playsInline = true;
         if (p && typeof p.then === 'function') {
           p.then(() => {
             if (alive) startUpload();
           }).catch((err: unknown) => {
+            if (!alive) return;
+            // iOS Safari often rejects a later play() outside the original
+            // gesture. Keep the loop going by seeking the already-loaded blob.
+            if (pingPongRef.current && playingRef.current) {
+              startForwardScrub();
+              return;
+            }
             if (
               err instanceof DOMException &&
               (err.name === 'NotAllowedError' ||
@@ -566,6 +627,25 @@ export const StackedAlphaVideo = forwardRef<
         }
       };
       video.addEventListener('seeked', onSeeked);
+      let seekTimer = 0;
+      const finishIfApplied = () => {
+        if (
+          Math.abs(video.currentTime - t) < 0.05 &&
+          video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
+        ) {
+          if (seekTimer) window.clearTimeout(seekTimer);
+          video.removeEventListener('seeked', onSeeked);
+          seekInFlight = false;
+          drawOnce();
+          if (pendingSeek !== null) {
+            const next = pendingSeek;
+            pendingSeek = null;
+            if (Math.abs(video.currentTime - next) >= 5e-4) seekAndDraw(next);
+          }
+          return true;
+        }
+        return false;
+      };
       try {
         video.currentTime = t;
       } catch {
@@ -574,14 +654,12 @@ export const StackedAlphaVideo = forwardRef<
         return;
       }
       // GOP-4 seeks on a buffered clip may apply synchronously and skip 'seeked'.
-      if (
-        Math.abs(video.currentTime - t) < 5e-4 &&
-        video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA
-      ) {
-        video.removeEventListener('seeked', onSeeked);
-        seekInFlight = false;
-        drawOnce();
-      }
+      // WebKit can also apply the seek and omit the event; poll once.
+      if (finishIfApplied()) return;
+      seekTimer = window.setTimeout(() => {
+        seekTimer = 0;
+        if (seekInFlight) finishIfApplied();
+      }, 80);
     };
     seekAndDrawRef.current = seekAndDraw;
     syncPlayRef.current = syncPlay;
@@ -680,17 +758,8 @@ export const StackedAlphaVideo = forwardRef<
       fetchAbortRef.current = ac;
       void (async () => {
         try {
-          const res = await fetch(abs, {
-            signal: ac.signal,
-            credentials: 'same-origin',
-          });
-          if (!res.ok) throw new Error('unavailable');
-          const blob = await res.blob();
+          const media = await fetchSceneVideoBlob(abs, { signal: ac.signal });
           if (!alive || ac.signal.aborted || srcRef.current !== next) return;
-          const media =
-            blob.type.startsWith('video/')
-              ? blob
-              : new Blob([blob], { type: 'video/mp4' });
           const objectUrl = URL.createObjectURL(media);
           revokeBlobUrl();
           blobUrlRef.current = objectUrl;
@@ -764,10 +833,18 @@ export const StackedAlphaVideo = forwardRef<
       onFirstFrameRef.current?.();
     }
 
+    const onTimeUpdate = () => {
+      if (!alive || !pingPongRef.current) return;
+      if (pingPongDirRef.current === 'fwd' && reachedPingPongEnd()) {
+        startReverse();
+      }
+    };
+
     video.addEventListener('loadedmetadata', onLoadedMeta);
     video.addEventListener('ended', onVideoEnded);
     video.addEventListener('error', onError);
     video.addEventListener('playing', startUpload);
+    video.addEventListener('timeupdate', onTimeUpdate);
 
     const io =
       typeof IntersectionObserver !== 'undefined'
@@ -829,6 +906,10 @@ export const StackedAlphaVideo = forwardRef<
       }
       if (ahead && performance.now() - lastMove > 450) {
         lastMove = performance.now();
+        if (pingPongRef.current && playingRef.current) {
+          startForwardScrub();
+          return;
+        }
         video.pause();
         void video.play().catch(() => {
           /* poster stays via onUnavailable on the main play path */
@@ -857,6 +938,7 @@ export const StackedAlphaVideo = forwardRef<
       video.removeEventListener('ended', onVideoEnded);
       video.removeEventListener('error', onError);
       video.removeEventListener('playing', startUpload);
+      video.removeEventListener('timeupdate', onTimeUpdate);
       video.pause();
       // Adopted SSR video stays in the DOM for remount; do not strip its src.
       abortFetch();

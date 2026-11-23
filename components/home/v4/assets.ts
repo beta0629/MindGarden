@@ -49,16 +49,19 @@ export function benchFrontSrc(key: V4Key): string {
   return `${V4_BASE}/bench/bench-${key}-front-stack.mp4?v=${BENCH_ASSET_V}`;
 }
 
+/** Query rev for booking clips (same bust as gate/bench after GOP-4 re-encode). */
+const BOOKING_ASSET_V = 'scrub1';
+
 export function bookingLandingSrc(key: V4Key): string {
-  return `${V4_BASE}/booking/booking-${key}-landing-stack.mp4`;
+  return `${V4_BASE}/booking/booking-${key}-landing-stack.mp4?v=${BOOKING_ASSET_V}`;
 }
 
 export function bookingBreatheSrc(key: V4Key): string {
-  return `${V4_BASE}/booking/booking-${key}-breathe-stack.mp4`;
+  return `${V4_BASE}/booking/booking-${key}-breathe-stack.mp4?v=${BOOKING_ASSET_V}`;
 }
 
 export function bookingHoverSrc(key: V4Key): string {
-  return `${V4_BASE}/booking/booking-${key}-hover-stack.mp4`;
+  return `${V4_BASE}/booking/booking-${key}-hover-stack.mp4?v=${BOOKING_ASSET_V}`;
 }
 
 export function bookingPosterSrc(key: V4Key): string {

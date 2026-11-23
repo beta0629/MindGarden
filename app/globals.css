@@ -1346,8 +1346,10 @@ p {
 }
 
 .site-footer {
-  background: var(--footer);
-  color: #d7dde6;
+  /* Brand dark green — same token as the 네이버 플레이스로 예약 button
+   * and the 처음이세요 accent card. */
+  background: var(--garden);
+  color: var(--cream);
   padding: 3rem 0 2rem;
   font-size: 0.9rem;
 }
@@ -1356,8 +1358,14 @@ p {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: #eef2f7;
+  color: var(--white);
   text-decoration: none;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  color: var(--cream);
+  text-decoration: underline;
 }
 
 .site-footer .stack-sm {
@@ -1371,7 +1379,7 @@ p {
 }
 
 .site-footer .brand__sub {
-  color: #aeb6c2;
+  color: var(--cream);
 }
 
 .site-footer__grid {
@@ -1380,7 +1388,7 @@ p {
 }
 
 .site-footer__meta {
-  color: #aeb6c2;
+  color: var(--cream);
   display: grid;
   gap: 0.15rem;
 }
@@ -1402,7 +1410,7 @@ p {
   gap: 0 1.25rem;
   margin-top: 1.25rem;
   padding-top: 1.25rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  border-top: 1px solid color-mix(in srgb, var(--cream) 35%, transparent);
 }
 
 .sticky-booking {
@@ -1726,9 +1734,15 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   max-width: 100%;
 }
 
-.v37-scene--booking,
 .v37-scene--gate {
   overflow: clip;
+}
+
+/* Booking butterfly sits close to the frame edge (m-pack has ~4px bottom
+ * pad). Clipping the scene cut the lower wing/shadow on mobile, and the
+ * desktop video box that extends 8px above the place box. */
+.v37-scene--booking {
+  overflow: visible;
 }
 
 /*
@@ -1760,7 +1774,9 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 .v37-scene--booking {
   --v37-w: 50vw;
   --v37-booking-w: 50vw;
-  aspect-ratio: 195 / 113;
+  /* Match booking-m-poster (400×224), not 195/113, so the near-edge
+   * shadow/wing is not stretched into a clip. */
+  aspect-ratio: 400 / 224;
 }
 
 @media (min-width: 768px) {
@@ -2592,7 +2608,10 @@ picture.v37-scene__poster > img {
  * Mobile: scene sits after ALL text. Desktop: scene overlays free cream right of CTA.
  */
 .home-booking {
-  overflow: clip;
+  /* Clip only x so a wide wing cannot blow the page; keep y visible
+   * (and pad the scene below) so the butterfly is not cut at the footer. */
+  overflow-x: clip;
+  overflow-y: visible;
   max-width: 100%;
 }
 
@@ -2649,7 +2668,10 @@ picture.v37-scene__poster > img {
   width: 100%;
   max-width: 100%;
   min-width: 0;
-  overflow: clip;
+  overflow: visible;
+  /* In-flow pad so the near-edge wing stays inside the section content box
+   * (and above the mobile sticky booking bar / footer). */
+  padding-bottom: 1rem;
   pointer-events: none;
 }
 

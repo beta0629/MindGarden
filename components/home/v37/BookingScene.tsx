@@ -242,6 +242,7 @@ export function BookingScene({ sectionRef }: Props) {
           {/* Landing — play-once; hold last until breathe takes over. */}
           <StackedAlphaVideo
             src={landingSrc}
+            blobSrc
             playOnce
             holdLast
             playing={playing && phase === 'landing'}
@@ -263,6 +264,7 @@ export function BookingScene({ sectionRef }: Props) {
           {/* Breathe — mounted early (preload=auto) paused; one fetch per file. */}
           <StackedAlphaVideo
             src={breatheSrc}
+            blobSrc
             loop
             playing={
               phase === 'breathe' && playing && !(isDesktop && hoverOn)
@@ -278,6 +280,7 @@ export function BookingScene({ sectionRef }: Props) {
           {isDesktop && landingDone ? (
             <StackedAlphaVideo
               src={hoverSrc}
+              blobSrc
               loop
               playing={hoverOn}
               autoPlay

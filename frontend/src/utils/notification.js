@@ -17,6 +17,15 @@ import { cachedApiCall, CACHE_CONFIG } from './apiCache';
 import { COMMON_CODE_API } from '../constants/api';
 import { NOTIFICATION_DEDUPE_WINDOW_MS } from '../constants/notificationTiming';
 import { getNotificationText, resolveNotificationDuration } from './notificationDuration';
+import { isPublicSpaPath } from './publicSpaPaths';
+
+/** 공개 SPA·로드 실패 시 사용하는 알림 유형 기본값 */
+const DEFAULT_NOTIFICATION_TYPES = Object.freeze([
+    { code: 'SUCCESS', name: '성공', icon: null, color: 'var(--mg-success-500)', description: '성공 알림' },
+    { code: 'ERROR', name: '오류', icon: null, color: 'var(--mg-error-500)', description: '오류 알림' },
+    { code: 'WARNING', name: '경고', icon: null, color: 'var(--mg-warning-500)', description: '경고 알림' },
+    { code: 'INFO', name: '정보', icon: null, color: 'var(--mg-primary-500)', description: '정보 알림' }
+]);
 
 class NotificationManager {
     constructor() {
@@ -28,9 +37,15 @@ class NotificationManager {
     }
 
 /**
-     * 알림 유형 코드 로드 (캐시 적용)
+     * 알림 유형 코드 로드 (캐시 적용).
+     * /public/sct/ 등 공개 SPA에서는 인증 전역 API(common-codes)를 호출하지 않는다.
      */
     async loadNotificationTypes() {
+        if (typeof window !== 'undefined' && isPublicSpaPath(window.location.pathname)) {
+            this.notificationTypes = [...DEFAULT_NOTIFICATION_TYPES];
+            return;
+        }
+
         try {
             const response = await cachedApiCall(
                 `${COMMON_CODE_API.BASE}?codeGroup=NOTIFICATION_TYPE`,
@@ -58,13 +73,7 @@ class NotificationManager {
             }
         } catch (error) {
             console.error('알림 유형 코드 로드 실패:', error);
-            // 실패 시 기본값 설정 (통일된 색상 체계)
-            this.notificationTypes = [
-                { code: 'SUCCESS', name: '성공', icon: null, color: 'var(--mg-success-500)', description: '성공 알림' },     // 녹색
-                { code: 'ERROR', name: '오류', icon: null, color: 'var(--mg-error-500)', description: '오류 알림' },       // 빨강
-                { code: 'WARNING', name: '경고', icon: null, color: 'var(--mg-warning-500)', description: '경고 알림' },     // 주황
-                { code: 'INFO', name: '정보', icon: null, color: 'var(--mg-primary-500)', description: '정보 알림' }        // 파랑
-            ];
+            this.notificationTypes = [...DEFAULT_NOTIFICATION_TYPES];
         }
     }
 

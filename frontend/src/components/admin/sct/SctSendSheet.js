@@ -22,6 +22,7 @@ import {
   SCT_ONLINE_FORM_TYPES,
   SCT_UI
 } from '../../../constants/sctOnline';
+import SctPublicLinkCopy from './SctPublicLinkCopy';
 import './sctAdmin.css';
 
 /**
@@ -42,9 +43,11 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   const [centerDefaultDays, setCenterDefaultDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sentPublicUrl, setSentPublicUrl] = useState('');
 
   useEffect(() => {
     if (!isOpen) return undefined;
+    setSentPublicUrl('');
     let cancelled = false;
     (async() => {
       try {
@@ -101,7 +104,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
     setBusy(true);
     setError('');
     try {
-      await createSctInvitation({
+      const created = await createSctInvitation({
         formType,
         clientId: client?.id != null ? Number(client.id) : undefined,
         phone: phone.trim() || undefined,
@@ -110,7 +113,11 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       });
       notificationManager.success(SCT_UI.SEND_SUCCESS);
       onSent?.();
-      onClose();
+      if (created?.publicUrl) {
+        setSentPublicUrl(created.publicUrl);
+      } else {
+        onClose();
+      }
     } catch (e) {
       setError(resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL));
     } finally {
@@ -134,21 +141,27 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       actions={(
         <>
           <MGButton type="button" variant="outline" preventDoubleClick={false} onClick={onClose}>
-            {SCT_UI.CANCEL}
+            {sentPublicUrl ? SCT_UI.PRINT_CLOSE : SCT_UI.CANCEL}
           </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            preventDoubleClick={false}
-            loading={busy}
-            onClick={handleSend}
-          >
-            {SCT_UI.SEND_SMS}
-          </MGButton>
+          {sentPublicUrl ? null : (
+            <MGButton
+              type="button"
+              variant="primary"
+              preventDoubleClick={false}
+              loading={busy}
+              onClick={handleSend}
+            >
+              {SCT_UI.SEND_SMS}
+            </MGButton>
+          )}
         </>
       )}
     >
       <div className={SCT_CSS.SEND_SHEET}>
+        {sentPublicUrl ? (
+          <SctPublicLinkCopy publicUrl={sentPublicUrl} />
+        ) : (
+          <>
         {hasActiveDraft ? (
           <p className="mg-v2-sct-warn" role="status">{SCT_UI.RESEND_WARN}</p>
         ) : null}
@@ -221,6 +234,8 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
             onChange={(e) => setExpiresInDays(e.target.value)}
           />
         </div>
+          </>
+        )}
       </div>
     </UnifiedModal>
   );

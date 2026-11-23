@@ -65,7 +65,7 @@ export default defineConfig({
   ...(isLocalhost
     ? {
         webServer: {
-          command: 'npm start',
+          command: 'REACT_APP_SCT_E2E_HARNESS=true npm start',
           cwd: frontendRoot,
           url: baseURL,
           reuseExistingServer: true,

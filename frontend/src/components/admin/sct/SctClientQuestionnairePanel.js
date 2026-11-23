@@ -21,8 +21,10 @@ import {
   cancelSctInvitation,
   destroySctInvitation,
   fetchSctClientInvitations,
-  fetchSctInvitation
+  fetchSctInvitation,
+  reissueSctLink
 } from '../../../utils/sctApi';
+import SctPublicLinkCopy from './SctPublicLinkCopy';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import {
   SCT_CSS,
@@ -57,6 +59,7 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const [detail, setDetail] = useState(null);
   const [destroyTarget, setDestroyTarget] = useState(null);
   const [destroyBusy, setDestroyBusy] = useState(false);
+  const [reissuedUrl, setReissuedUrl] = useState('');
 
   const clientId = client?.id;
 
@@ -246,6 +249,31 @@ const SctClientQuestionnairePanel = ({ client }) => {
                   {row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT ? (
                     <MGButton
                       type="button"
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
+                      onClick={async() => {
+                        try {
+                          const refreshed = await reissueSctLink(row.id);
+                          if (refreshed?.publicUrl) {
+                            setReissuedUrl(refreshed.publicUrl);
+                            notificationManager.success(SCT_UI.REISSUE_SUCCESS);
+                          }
+                          reload();
+                        } catch (e) {
+                          notificationManager.show(
+                            resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
+                            'error'
+                          );
+                        }
+                      }}
+                    >
+                      {SCT_UI.REISSUE_LINK}
+                    </MGButton>
+                  ) : null}
+                  {row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT ? (
+                    <MGButton
+                      type="button"
                       variant="ghost"
                       size="small"
                       preventDoubleClick={false}
@@ -301,6 +329,10 @@ const SctClientQuestionnairePanel = ({ client }) => {
             ))}
           </ul>
         </section>
+      ) : null}
+
+      {reissuedUrl ? (
+        <SctPublicLinkCopy publicUrl={reissuedUrl} className="mg-v2-sct-admin__reissue-link" />
       ) : null}
 
       <SctSendSheet

@@ -138,6 +138,27 @@ export async function resendSctSms(id) {
 }
 
 /**
+ * 공개 링크 재발급(토큰 회전, SMS 없음).
+ *
+ * @param {number|string} id
+ * @returns {Promise<object>}
+ */
+export async function reissueSctLink(id) {
+  const res = await StandardizedApi.post(SCT_API.reissueLink(id), {});
+  return resolveApiObjectData(res) || res;
+}
+
+/**
+ * 미연결 초대 목록(ADMIN/STAFF).
+ *
+ * @returns {Promise<object[]>}
+ */
+export async function fetchSctUnlinkedInvitations() {
+  const res = await StandardizedApi.get(SCT_API.UNLINKED);
+  return asArray(res, 'data');
+}
+
+/**
  * @param {{ clientId: number, mappingId?: number }} params
  * @returns {Promise<object>}
  */

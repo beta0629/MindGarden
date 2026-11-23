@@ -8,11 +8,11 @@
 
 import React, { useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import ClientSidePeekContent from '../admin/ClientComprehensiveManagement/molecules/ClientSidePeekContent';
-import AdminSctSettingsSection from '../admin/sct/AdminSctSettingsSection';
-import SctSessionPanel from '../consultant/sct/SctSessionPanel';
-import { SCT_TEST_ID, SCT_UI } from '../../constants/sctOnline';
-import '../admin/sct/sctAdmin.css';
+import ClientSidePeekContent from '../components/admin/ClientComprehensiveManagement/molecules/ClientSidePeekContent';
+import AdminSctSettingsSection from '../components/admin/sct/AdminSctSettingsSection';
+import SctSessionPanel from '../components/consultant/sct/SctSessionPanel';
+import { SCT_TEST_ID, SCT_UI } from '../constants/sctOnline';
+import '../components/admin/sct/sctAdmin.css';
 
 const HARNESS_CLIENT = Object.freeze({
   id: 9001,

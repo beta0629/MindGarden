@@ -81,6 +81,16 @@ class ApiUriSanitizerTest {
     }
 
     @Test
+    @DisplayName("SPA /public/sct/{token} → {token}")
+    void forLogging_publicSctWebPath_redacted() {
+        String raw = "opaque-web-token";
+        assertThat(ApiUriSanitizer.forLogging("/public/sct/" + raw))
+                .isEqualTo("/public/sct/{token}");
+        assertThat(ApiUriSanitizer.forLogging("/public/sct/" + raw + "/extra"))
+                .isEqualTo("/public/sct/{token}/extra");
+    }
+
+    @Test
     @DisplayName("비 SCT 경로는 변경하지 않음")
     void forPerformanceStats_nonSctPath_unchangedExceptKnownPatterns() {
         assertThat(ApiUriSanitizer.forPerformanceStats("/api/v1/admin/performance/stats"))

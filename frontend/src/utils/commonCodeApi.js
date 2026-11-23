@@ -18,8 +18,16 @@ import {
     CORE_CODE_GROUPS,
     HYBRID_READ_WITH_CORE_FALLBACK_GROUPS
 } from '../constants/tenantCodeConstants';
+import { isPublicSpaPath } from './publicSpaPaths';
 
 const API_BASE = '/api/v1/common-codes';
+
+/**
+ * 공개 SPA(/public/sct/ 등)에서는 인증 전역 common-codes 조회를 하지 않는다.
+ * @returns {boolean}
+ */
+const shouldSkipCommonCodesOnPublicSpa = () =>
+    typeof window !== 'undefined' && isPublicSpaPath(window.location.pathname);
 
 /** 관리자 목록에서 비활성 코드까지 받기 위한 조회 파라미터 이름(서버 CommonCodeController 와 동일) */
 export const COMMON_CODE_INCLUDE_INACTIVE_PARAM = 'includeInactive';
@@ -108,6 +116,9 @@ const normalizeDeleteResponse = (response, failMessage) => {
  * @returns {Promise<Array>} 공통코드 목록
  */
 export const getCommonCodes = async(codeGroup = null, forceTenant = null, options = {}) => {
+    if (shouldSkipCommonCodesOnPublicSpa()) {
+        return [];
+    }
     try {
         const useTenantApi = shouldUseTenantOnlyReadPath(codeGroup, forceTenant);
         const includeInactive = options.includeInactive === true;
@@ -382,6 +393,9 @@ export const getLegacyCodeGroupsList = async() => {
  * @returns {Promise<Array>} 코드 그룹 목록
  */
 export const getCodeGroups = async() => {
+    if (shouldSkipCommonCodesOnPublicSpa()) {
+        return [];
+    }
     try {
         // 새로운 API 시도
         const response = await StandardizedApi.get(`${API_BASE}?codeGroup=`);

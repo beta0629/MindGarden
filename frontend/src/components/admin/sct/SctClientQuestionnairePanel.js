@@ -15,14 +15,16 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelSctInvitation,
   destroySctInvitation,
   fetchSctClientInvitations,
-  fetchSctInvitation
+  fetchSctInvitation,
+  reissueSctLink
 } from '../../../utils/sctApi';
+import SctPublicLinkCopy from './SctPublicLinkCopy';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import {
   SCT_CSS,
@@ -45,11 +47,22 @@ const formatDate = (iso) => {
 };
 
 /**
+ * 공개 링크 복사·재발급 UI — ADMIN·CONSULTANT만 (STAFF 임상 본문 403 정합).
+ *
+ * @param {object|null|undefined} user
+ * @returns {boolean}
+ */
+const canUseSctPublicLinkUi = (user) => (
+  RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.CONSULTANT)
+);
+
+/**
  * @param {{ client: object }} props
  */
 const SctClientQuestionnairePanel = ({ client }) => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
+  const canPublicLink = canUseSctPublicLinkUi(user);
   const { enabled, loading: flagLoading } = useSctFeatureEnabled();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +70,7 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const [detail, setDetail] = useState(null);
   const [destroyTarget, setDestroyTarget] = useState(null);
   const [destroyBusy, setDestroyBusy] = useState(false);
+  const [reissuedUrl, setReissuedUrl] = useState('');
 
   const clientId = client?.id;
 
@@ -243,6 +257,32 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       {SCT_UI.DESTROY}
                     </MGButton>
                   ) : null}
+                  {canPublicLink
+                    && (row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT) ? (
+                    <MGButton
+                      type="button"
+                      variant="outline"
+                      size="small"
+                      preventDoubleClick={false}
+                      onClick={async() => {
+                        try {
+                          const refreshed = await reissueSctLink(row.id);
+                          if (refreshed?.publicUrl) {
+                            setReissuedUrl(refreshed.publicUrl);
+                            notificationManager.success(SCT_UI.REISSUE_SUCCESS);
+                          }
+                          reload();
+                        } catch (e) {
+                          notificationManager.show(
+                            resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
+                            'error'
+                          );
+                        }
+                      }}
+                    >
+                      {SCT_UI.REISSUE_LINK}
+                    </MGButton>
+                  ) : null}
                   {row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT ? (
                     <MGButton
                       type="button"
@@ -301,6 +341,10 @@ const SctClientQuestionnairePanel = ({ client }) => {
             ))}
           </ul>
         </section>
+      ) : null}
+
+      {canPublicLink && reissuedUrl ? (
+        <SctPublicLinkCopy publicUrl={reissuedUrl} className="mg-v2-sct-admin__reissue-link" />
       ) : null}
 
       <SctSendSheet

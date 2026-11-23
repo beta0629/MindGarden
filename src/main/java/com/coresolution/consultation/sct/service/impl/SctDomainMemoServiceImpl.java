@@ -151,6 +151,16 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
             return;
         }
         if (actor.getRole() == UserRole.STAFF) {
+            auditLogService.record(AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(actor.getId())
+                    .actorRole(actor.getRole().name())
+                    .targetUserId(invitation.getClientId())
+                    .action(AuditAction.SCT_CLINICAL_ACCESS_DENIED)
+                    .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                    .entityId(invitation.getId())
+                    .metadataJson("{\"managementNo\":\"" + invitation.getManagementNo() + "\"}")
+                    .build());
             throw new AccessDeniedException("권한이 없습니다.");
         }
         if (actor.getRole() == UserRole.CONSULTANT) {

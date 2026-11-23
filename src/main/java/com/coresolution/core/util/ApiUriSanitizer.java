@@ -19,6 +19,7 @@ public final class ApiUriSanitizer {
     private static final String NUMERIC_ID_REGEX = "/\\d+";
 
     private static final String SCT_PUBLIC_PATH_PREFIX = SctConstants.PUBLIC_API_PREFIX + "/";
+    private static final String SCT_PUBLIC_WEB_PREFIX = "/public/sct/";
 
     private ApiUriSanitizer() {
     }
@@ -60,6 +61,7 @@ public final class ApiUriSanitizer {
             return path;
         }
         String normalized = redactSctOpaqueTokenSegment(path);
+        normalized = redactSctPublicWebTokenSegment(normalized);
         normalized = normalized.replaceAll(UUID_REGEX, "/" + uuidPlaceholder);
         normalized = normalized.replaceAll(NUMERIC_ID_REGEX, "/" + PLACEHOLDER_ID);
         return normalized;
@@ -82,5 +84,23 @@ public final class ApiUriSanitizer {
         }
         String afterToken = remainder.substring(slash);
         return SCT_PUBLIC_PATH_PREFIX + PLACEHOLDER_TOKEN + afterToken;
+    }
+
+    /**
+     * SPA 공개 경로 {@code /public/sct/{token}} 의 토큰 세그먼트 마스킹.
+     */
+    static String redactSctPublicWebTokenSegment(String path) {
+        if (path == null || !path.regionMatches(0, SCT_PUBLIC_WEB_PREFIX, 0, SCT_PUBLIC_WEB_PREFIX.length())) {
+            return path;
+        }
+        String remainder = path.substring(SCT_PUBLIC_WEB_PREFIX.length());
+        if (remainder.isEmpty()) {
+            return SCT_PUBLIC_WEB_PREFIX + PLACEHOLDER_TOKEN;
+        }
+        int slash = remainder.indexOf('/');
+        if (slash < 0) {
+            return SCT_PUBLIC_WEB_PREFIX + PLACEHOLDER_TOKEN;
+        }
+        return SCT_PUBLIC_WEB_PREFIX + PLACEHOLDER_TOKEN + remainder.substring(slash);
     }
 }

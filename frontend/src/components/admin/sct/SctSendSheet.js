@@ -13,6 +13,8 @@ import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
+import { useSession } from '../../../contexts/SessionContext';
 import { createSctInvitation, fetchSctForms, fetchSctSettings } from '../../../utils/sctApi';
 import {
   SCT_CSS,
@@ -22,7 +24,18 @@ import {
   SCT_ONLINE_FORM_TYPES,
   SCT_UI
 } from '../../../constants/sctOnline';
+import SctPublicLinkCopy from './SctPublicLinkCopy';
 import './sctAdmin.css';
+
+/**
+ * 공개 링크 복사 UI — ADMIN·CONSULTANT만 (STAFF는 SMS 발송만).
+ *
+ * @param {object|null|undefined} user
+ * @returns {boolean}
+ */
+const canUseSctPublicLinkUi = (user) => (
+  RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.CONSULTANT)
+);
 
 /**
  * @param {{
@@ -34,6 +47,8 @@ import './sctAdmin.css';
  * }} props
  */
 const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent }) => {
+  const { user } = useSession();
+  const canPublicLink = canUseSctPublicLinkUi(user);
   const [forms, setForms] = useState([]);
   const [formType, setFormType] = useState(SCT_FORM_TYPE.ADULT);
   const [phone, setPhone] = useState('');
@@ -42,9 +57,11 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   const [centerDefaultDays, setCenterDefaultDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [sentPublicUrl, setSentPublicUrl] = useState('');
 
   useEffect(() => {
     if (!isOpen) return undefined;
+    setSentPublicUrl('');
     let cancelled = false;
     (async() => {
       try {
@@ -101,7 +118,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
     setBusy(true);
     setError('');
     try {
-      await createSctInvitation({
+      const created = await createSctInvitation({
         formType,
         clientId: client?.id != null ? Number(client.id) : undefined,
         phone: phone.trim() || undefined,
@@ -110,7 +127,11 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       });
       notificationManager.success(SCT_UI.SEND_SUCCESS);
       onSent?.();
-      onClose();
+      if (canPublicLink && created?.publicUrl) {
+        setSentPublicUrl(created.publicUrl);
+      } else {
+        onClose();
+      }
     } catch (e) {
       setError(resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL));
     } finally {
@@ -134,21 +155,27 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       actions={(
         <>
           <MGButton type="button" variant="outline" preventDoubleClick={false} onClick={onClose}>
-            {SCT_UI.CANCEL}
+            {sentPublicUrl ? SCT_UI.PRINT_CLOSE : SCT_UI.CANCEL}
           </MGButton>
-          <MGButton
-            type="button"
-            variant="primary"
-            preventDoubleClick={false}
-            loading={busy}
-            onClick={handleSend}
-          >
-            {SCT_UI.SEND_SMS}
-          </MGButton>
+          {sentPublicUrl ? null : (
+            <MGButton
+              type="button"
+              variant="primary"
+              preventDoubleClick={false}
+              loading={busy}
+              onClick={handleSend}
+            >
+              {SCT_UI.SEND_SMS}
+            </MGButton>
+          )}
         </>
       )}
     >
       <div className={SCT_CSS.SEND_SHEET}>
+        {canPublicLink && sentPublicUrl ? (
+          <SctPublicLinkCopy publicUrl={sentPublicUrl} />
+        ) : (
+          <>
         {hasActiveDraft ? (
           <p className="mg-v2-sct-warn" role="status">{SCT_UI.RESEND_WARN}</p>
         ) : null}
@@ -221,6 +248,8 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
             onChange={(e) => setExpiresInDays(e.target.value)}
           />
         </div>
+          </>
+        )}
       </div>
     </UnifiedModal>
   );

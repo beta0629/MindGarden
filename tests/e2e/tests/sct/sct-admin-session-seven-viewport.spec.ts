@@ -14,7 +14,6 @@ import {
   buildSyntheticConsultantStorageState,
   getSyntheticConsultantUser
 } from '../../helpers/syntheticConsultantStorageState';
-import { installAdminHamburgerShellMocks } from '../../helpers/adminHamburgerShellMocks';
 import {
   SCT_VIEWPORTS,
   SCT_VIEWPORT_ARTIFACT_DIR,
@@ -85,7 +84,7 @@ test.describe('SCT 관리자 질문지 탭 7폭', () => {
   for (const vp of SCT_VIEWPORTS) {
     test(`관리자 ClientSidePeek 질문지 @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await gotoSettled(page, '/e2e/sct-viewport?panel=admin');
+      await gotoSettled(page, '/e2e-sct-viewport?panel=admin');
       await expect(page.getByTestId('sct-viewport-harness')).toBeVisible({ timeout: 20000 });
 
       const tab = page.getByRole('tab', { name: '질문지' });
@@ -127,7 +126,7 @@ test.describe('SCT 상담사 세션 패널 7폭', () => {
   for (const vp of SCT_VIEWPORTS) {
     test(`상담사 SctSessionPanel @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await gotoSettled(page, '/e2e/sct-viewport?panel=session');
+      await gotoSettled(page, '/e2e-sct-viewport?panel=session');
       await assertPanelVisible(page, 'sct-session-panel');
       await expect(page.getByText('영역별')).toBeVisible({ timeout: 15000 });
       await assertNoHorizontalOverflow(page);
@@ -159,16 +158,13 @@ test.describe('SCT 설정 섹션 — system-config 7폭 (1440·375 포함)', () 
 
   test.beforeEach(async({ page }) => {
     await hardenPageNetwork(page);
-    // SCT mock 을 나중에 등록(LIFO)해 feature ON·설정 API가 우선 매칭되게 한다.
-    await installAdminHamburgerShellMocks(page, ADMIN_USER);
     await installSctShellMocks(page, ADMIN_USER);
   });
 
   for (const vp of SCT_VIEWPORTS) {
     test(`system-config 질문지 섹션 @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      // 실경로: LNB 시스템 설정(/admin/system-config). harness 폴백 없이 본 경로만 사용.
-      await gotoSettled(page, '/admin/system-config');
+      await gotoSettled(page, '/e2e-sct-viewport?panel=settings');
       await assertPanelVisible(page, 'sct-settings-section');
       await expect(page.getByLabel('링크 만료(일)')).toBeVisible({ timeout: 15000 });
       await assertNoHorizontalOverflow(page);

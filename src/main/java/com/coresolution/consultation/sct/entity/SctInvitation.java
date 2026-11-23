@@ -55,6 +55,9 @@ public class SctInvitation extends BaseEntity {
     @Column(name = "management_no", nullable = false, length = 32)
     private String managementNo;
 
+    @Column(name = "recipient_name", length = 120)
+    private String recipientName;
+
     @Convert(converter = PhoneAttributeConverter.class)
     @Column(name = "target_phone", length = 512)
     private String targetPhone;

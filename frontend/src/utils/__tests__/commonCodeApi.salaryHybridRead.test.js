@@ -3,12 +3,18 @@
  */
 import { getCommonCodes } from '../commonCodeApi';
 import StandardizedApi from '../standardizedApi';
+import { isPublicSpaPath } from '../publicSpaPaths';
 
 jest.mock('../standardizedApi', () => ({
   __esModule: true,
   default: {
     get: jest.fn()
   }
+}));
+
+jest.mock('../publicSpaPaths', () => ({
+  isPublicSpaPath: jest.fn(() => false),
+  isPublicClientShopPath: jest.fn(() => false)
 }));
 
 const SALARY_HYBRID_READ_GROUPS = [
@@ -19,11 +25,32 @@ const SALARY_HYBRID_READ_GROUPS = [
 ];
 
 describe('commonCodeApi getCommonCodes salary hybrid path', () => {
+  let logSpy;
+  let warnSpy;
+  let errorSpy;
+
   beforeEach(() => {
     jest.clearAllMocks();
+    logSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    isPublicSpaPath.mockReturnValue(false);
     StandardizedApi.get.mockResolvedValue([
       { codeValue: 'FREELANCE', codeLabel: '프리랜서' }
     ]);
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  test('공개 SPA 경로에서는 common-codes 를 호출하지 않는다', async() => {
+    isPublicSpaPath.mockReturnValue(true);
+    const codes = await getCommonCodes('SALARY_TYPE');
+    expect(codes).toEqual([]);
+    expect(StandardizedApi.get).not.toHaveBeenCalled();
   });
 
   test.each(SALARY_HYBRID_READ_GROUPS)(

@@ -19,6 +19,7 @@ import {
   SCT_TEST_ID,
   SCT_UI
 } from '../../../constants/sctOnline';
+import AdminSctUnlinkedPanel from './AdminSctUnlinkedPanel';
 import './sctAdmin.css';
 
 /**
@@ -151,6 +152,7 @@ const AdminSctSettingsSection = () => {
             </div>
           ) : null}
         </form>
+        <AdminSctUnlinkedPanel />
       </div>
     </SettingsSectionPanel>
   );

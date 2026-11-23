@@ -228,6 +228,193 @@ export async function mockSctPublicApisThroughConsent(
   });
 }
 
+const PUBLIC_FORM_ITEMS = [
+  {
+    formItemId: 1,
+    itemNo: 1,
+    promptText: '내 이름 앞에 어울리는 수식어를 하나 붙인다면',
+    domainCode: 'SELF_CONCEPT',
+    domainLabel: '자기개념',
+    allowsNotApplicable: true,
+    answerText: null,
+    notApplicable: false,
+    isBlank: true
+  },
+  {
+    formItemId: 2,
+    itemNo: 2,
+    promptText: '기운이 바닥난 날 내 방의 모습은',
+    domainCode: 'AFFECT',
+    domainLabel: '정서(우울)',
+    allowsNotApplicable: true,
+    answerText: null,
+    notApplicable: false,
+    isBlank: true
+  }
+];
+
+/**
+ * 임시저장·제출·재접속 잠김까지 상태ful 공개 API mock.
+ *
+ * @param page Playwright page
+ */
+export async function installSctPublicFullFlowMock(page: Page): Promise<void> {
+  const consent = { ...DEFAULT_CONSENT };
+  const state = {
+    submitted: false,
+    hasDraft: false,
+    answers: {} as Record<number, { formItemId: number; answerText: string; notApplicable: boolean }>,
+    verifySessionId: 'e2e-verify-session'
+  };
+
+  const answersFromState = () => PUBLIC_FORM_ITEMS.map((item) => {
+    const saved = state.answers[item.formItemId];
+    return {
+      ...item,
+      answerText: saved?.answerText ?? null,
+      notApplicable: Boolean(saved?.notApplicable),
+      isBlank: !saved?.answerText && !saved?.notApplicable
+    };
+  });
+
+  await page.route('**/api/v1/public/sct/**', async(route) => {
+    const request = route.request();
+    const method = request.method();
+    const url = request.url();
+
+    if (method === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: CORS });
+      return;
+    }
+
+    if (url.includes('/meta')) {
+      const status = state.submitted ? 'SUBMITTED' : 'SENT';
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        headers: CORS,
+        body: JSON.stringify({
+          success: true,
+          data: {
+            formType: 'ADULT',
+            title: '문장완성 질문지',
+            status,
+            itemCount: 50,
+            verifyChannelHint: 'PHONE',
+            tokenExpiresAt: '2026-12-01T23:59:00',
+            hasDraft: state.hasDraft && !state.submitted,
+            requiresGuardian: false,
+            signerBand: consent.signerBand
+          }
+        })
+      });
+      return;
+    }
+
+    if (state.submitted && (url.includes('/draft') || url.includes('/submit'))) {
+      await route.fulfill({
+        status: 409,
+        contentType: 'application/json',
+        headers: CORS,
+        body: JSON.stringify({
+          success: false,
+          message: '이미 제출한 질문지입니다.'
+        })
+      });
+      return;
+    }
+
+    if (url.includes('/verify') && method === 'POST') {
+      consent.satisfied = true;
+      consent.sensitiveRequired = false;
+      await route.fulfill(jsonOk({
+        verifySessionId: state.verifySessionId,
+        expiresInSeconds: 1800,
+        consent: { ...consent, satisfied: true, sensitiveRequired: false }
+      }));
+      return;
+    }
+
+    if (url.includes('/consents') && method === 'POST') {
+      consent.satisfied = true;
+      consent.sensitiveRequired = false;
+      await route.fulfill(jsonOk({ message: 'ok' }));
+      return;
+    }
+
+    if (url.includes('/draft') && method === 'PUT') {
+      let body: { answers?: Array<{ formItemId: number; answerText?: string; notApplicable?: boolean }> } = {};
+      try {
+        body = request.postDataJSON() as typeof body;
+      } catch {
+        body = {};
+      }
+      (body.answers || []).forEach((a) => {
+        if (a?.formItemId != null) {
+          state.answers[a.formItemId] = {
+            formItemId: a.formItemId,
+            answerText: a.answerText || '',
+            notApplicable: Boolean(a.notApplicable)
+          };
+        }
+      });
+      state.hasDraft = Object.keys(state.answers).length > 0;
+      await route.fulfill(jsonOk({ saved: true }));
+      return;
+    }
+
+    if (url.includes('/submit') && method === 'POST') {
+      state.submitted = true;
+      await route.fulfill(jsonOk({ status: 'SUBMITTED' }));
+      return;
+    }
+
+    if (url.includes('/form') && method === 'GET') {
+      const headers = request.headers();
+      const hasHeader = Boolean(
+        headers['x-sct-verify-session'] || headers['X-Sct-Verify-Session']
+      );
+      if (!hasHeader) {
+        await route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          headers: CORS,
+          body: JSON.stringify({ success: false, message: '본인 확인이 필요합니다.' })
+        });
+        return;
+      }
+      if (state.submitted) {
+        await route.fulfill({
+          status: 410,
+          contentType: 'application/json',
+          headers: CORS,
+          body: JSON.stringify({ success: false, message: '이미 제출한 질문지입니다.' })
+        });
+        return;
+      }
+      await route.fulfill(jsonOk({
+        formType: 'ADULT',
+        title: '문장완성 질문지',
+        instructionText: '안내',
+        headerFieldsJson: '[]',
+        status: state.hasDraft ? 'DRAFT' : 'SENT',
+        requiresGuardian: false,
+        signerBand: 'ADULT',
+        consent: { ...consent, satisfied: true, sensitiveRequired: false },
+        items: answersFromState()
+      }));
+      return;
+    }
+
+    await route.fulfill({
+      status: 404,
+      contentType: 'application/json',
+      headers: CORS,
+      body: JSON.stringify({ success: false, message: `unmocked ${method} ${url}` })
+    });
+  });
+}
+
 export type SctShellMockUser = {
   id: number;
   email: string;

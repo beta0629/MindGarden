@@ -166,6 +166,55 @@ class SctInvitationServiceTest {
         assertFalse(saved.getManagementNo().toLowerCase().contains("name"));
         assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
+        assertTrue(org.springframework.util.StringUtils.hasText(created.getPublicUrl()));
+        assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
+        assertTrue(org.springframework.util.StringUtils.hasText(created.getToken()));
+    }
+
+    @Test
+    void staffCreate_omitsPublicUrlAndToken() {
+        when(sctSettingsService.resolveLinkExpiryDays("t1")).thenReturn(14);
+        stubManagementNo("t1");
+        when(formTemplateRepository
+                .findByTenantIdAndFormTypeAndFormVersionAndIsActiveTrueAndIsDeletedFalse(
+                        "", "ADULT", "v3")).thenReturn(Optional.of(template));
+        when(smsAuthService.isTestMode()).thenReturn(true);
+        when(invitationRepository.save(any())).thenAnswer(inv -> {
+            SctInvitation i = inv.getArgument(0);
+            if (i.getId() == null) {
+                i.setId(56L);
+            }
+            return i;
+        });
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        var created = invitationService.createInvitation("t1", staff,
+                SctInviteCreateRequest.builder()
+                        .formType("ADULT").phone("01012345678").build());
+
+        assertNull(created.getPublicUrl());
+        assertNull(created.getToken());
+        assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
+        assertEquals("SCT-000001", created.getManagementNo());
+    }
+
+    @Test
+    void staffReissueLink_denied() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000008")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(3))
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(88L);
+        existing.setTenantId("t1");
+
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.reissueLink("t1", staff, 88L));
+        verify(invitationRepository, never()).save(any());
     }
 
     @Test
@@ -187,6 +236,8 @@ class SctInvitationServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua"));
+        verify(auditLogService).record(org.mockito.ArgumentMatchers.argThat(log ->
+                log != null && AuditAction.SCT_CLINICAL_ACCESS_DENIED.equals(log.getAction())));
         verify(sctAccessLogService, never()).logViewBody(any(), any(), any(), any(), any());
     }
 

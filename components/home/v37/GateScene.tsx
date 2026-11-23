@@ -13,19 +13,15 @@ import {
   type StackedAlphaVideoHandle,
 } from '@/components/home/v4/StackedAlphaVideo';
 import { gateStackSrc, packToV4Key } from '@/components/home/v4/assets';
-import {
-  createSectionMetricsCache,
-  type SectionMetricsCache,
-} from './scrollClock';
+import { FOCUS_ROOT_MARGIN, SRC_ROOT_MARGIN } from './centerFocus';
 import {
   SETTLE_RISE_PX,
-  sampleSettleFromProgress,
+  SETTLE_SPAN_MS,
+  sampleSettle,
   settleTranslateY,
 } from './settle';
-import { TRIGGER_P } from './types';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
-import { SCRUB_SRC_ROOT_MARGIN, scrollMediaProgress } from './scrubProgress';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
@@ -34,19 +30,23 @@ type Props = {
 const RAF_ID = 'v37-gate';
 
 /**
- * Gate door — stacked-alpha MP4 scrubbed by scroll (down opens, up closes).
- * End frames are held. Video src is assigned only when near the viewport.
+ * Gate door — plays forward at 60fps when the scene center enters the
+ * viewport's focus band, holds the last (open) frame, and resets to frame 0
+ * when it leaves so the next visit can play again. Video src is assigned
+ * only when near the viewport.
  */
-export function GateScene({ sectionRef }: Props) {
+export function GateScene({ sectionRef: _sectionRef }: Props) {
   const pack = useBreakpointPack();
   const reduced = usePrefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const focusRef = useRef<HTMLDivElement>(null);
   const settleRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<StackedAlphaVideoHandle>(null);
   const [failed, setFailed] = useState(false);
   const [paintLive, setPaintLive] = useState(false);
   const [near, setNear] = useState(false);
   const paintLiveRef = useRef(false);
+  const focusedRef = useRef(false);
 
   const key = packToV4Key(pack);
   const src = near ? gateStackSrc(key) : '';
@@ -54,68 +54,63 @@ export function GateScene({ sectionRef }: Props) {
   useEffect(() => {
     if (reduced || failed) return;
     const wrap = wrapRef.current;
-    if (!wrap) return;
+    const focus = focusRef.current;
+    if (!wrap || !focus) return;
 
     let alive = true;
-    let visible = false;
     let subscribed = false;
-    let metricsCache: SectionMetricsCache | null = null;
+    let settleStart = 0;
 
-    const resolveSection = (): HTMLElement =>
-      sectionRef?.current ??
-      (wrap.closest('section') as HTMLElement | null) ??
-      wrap;
-
-    const ensureMetrics = (): SectionMetricsCache => {
-      if (!metricsCache) {
-        metricsCache = createSectionMetricsCache(resolveSection());
-      }
-      return metricsCache;
-    };
-
-    const applySettle = (progress: number) => {
+    const applySettle = (elapsedMs: number) => {
       const el = settleRef.current;
       if (!el) return;
-      const settle = sampleSettleFromProgress(progress);
+      const settle = sampleSettle(elapsedMs);
       const risePx = SETTLE_RISE_PX[pack];
       const ty = settleTranslateY(settle.rise, risePx);
-      // Closed door must stay visible at progress 0; only the 16px rise links to scroll.
+      // Closed door stays visible; only the 16px rise plays on focus.
       const opacity = paintLiveRef.current ? 1 : Math.max(0.92, settle.opacity);
       el.style.transform = `translateY(${paintLiveRef.current ? ty : 0}px)`;
       el.style.opacity = String(opacity);
     };
 
-    const syncPause = () => {
-      if (!subscribed) return;
-      const shouldRun = !document.hidden && (visible || !paintLiveRef.current);
-      setPaused(RAF_ID, !shouldRun);
-      setContinuous(RAF_ID, false);
-      if (shouldRun) markDirty(RAF_ID);
-    };
-
     const tick = () => {
-      if (!alive || document.hidden) return;
-      const metrics = ensureMetrics().read();
-      const progress = scrollMediaProgress(metrics, TRIGGER_P[pack].gate);
-      applySettle(progress);
-      playerRef.current?.seekProgress(progress);
-      setContinuous(RAF_ID, false);
+      if (!alive || document.hidden || !focusedRef.current) {
+        setContinuous(RAF_ID, false);
+        return;
+      }
+      const elapsed = performance.now() - settleStart;
+      applySettle(elapsed);
+      if (elapsed >= SETTLE_SPAN_MS) {
+        applySettle(SETTLE_SPAN_MS);
+        setContinuous(RAF_ID, false);
+        return;
+      }
+      setContinuous(RAF_ID, true);
     };
 
     subscribe(RAF_ID, tick, { continuous: false });
     subscribed = true;
-    syncPause();
+    setPaused(RAF_ID, document.hidden);
 
-    const visIO = new IntersectionObserver(
-      (entries) => {
-        visible = entries.some((e) => e.isIntersecting);
-        ensureMetrics().refresh();
-        syncPause();
-        markDirty(RAF_ID);
-      },
-      { rootMargin: '0px' },
-    );
-    visIO.observe(wrap);
+    const enterFocus = () => {
+      if (!alive || focusedRef.current) return;
+      focusedRef.current = true;
+      settleStart = performance.now();
+      applySettle(0);
+      playerRef.current?.play();
+      setPaused(RAF_ID, document.hidden);
+      setContinuous(RAF_ID, true);
+      markDirty(RAF_ID);
+    };
+
+    const leaveFocus = () => {
+      if (!alive || !focusedRef.current) return;
+      focusedRef.current = false;
+      applySettle(-1);
+      playerRef.current?.reset();
+      setContinuous(RAF_ID, false);
+      setPaused(RAF_ID, true);
+    };
 
     const srcIO = new IntersectionObserver(
       (entries) => {
@@ -124,42 +119,35 @@ export function GateScene({ sectionRef }: Props) {
           srcIO.disconnect();
         }
       },
-      { rootMargin: SCRUB_SRC_ROOT_MARGIN },
+      { rootMargin: SRC_ROOT_MARGIN },
     );
     srcIO.observe(wrap);
 
-    const onScroll = () => {
-      if (!subscribed || document.hidden) return;
-      markDirty(RAF_ID);
-    };
-    const onResize = () => {
-      ensureMetrics().refresh();
-      if (!subscribed || document.hidden) return;
-      markDirty(RAF_ID);
-    };
-    const onVisibility = () => {
-      syncPause();
-      if (!document.hidden) markDirty(RAF_ID);
-    };
+    const focusIO = new IntersectionObserver(
+      (entries) => {
+        if (!alive) return;
+        if (entries.some((e) => e.isIntersecting)) enterFocus();
+        else leaveFocus();
+      },
+      { rootMargin: FOCUS_ROOT_MARGIN, threshold: 0 },
+    );
+    focusIO.observe(focus);
 
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onResize, { passive: true });
+    const onVisibility = () => {
+      if (!subscribed) return;
+      setPaused(RAF_ID, document.hidden || !focusedRef.current);
+      if (!document.hidden && focusedRef.current) markDirty(RAF_ID);
+    };
     document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
       alive = false;
-      visIO.disconnect();
       srcIO.disconnect();
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onResize);
+      focusIO.disconnect();
       document.removeEventListener('visibilitychange', onVisibility);
       if (subscribed) unsubscribe(RAF_ID);
     };
-  }, [pack, reduced, failed, sectionRef]);
-
-  useEffect(() => {
-    if (near) markDirty(RAF_ID);
-  }, [near]);
+  }, [pack, reduced, failed]);
 
   const showPoster = failed || reduced || !paintLive;
   const liveClass = paintLive && !failed && !reduced ? ' is-live' : '';
@@ -179,6 +167,18 @@ export function GateScene({ sectionRef }: Props) {
       className={`v37-scene v37-scene--gate${liveClass}`}
       aria-hidden="true"
     >
+      <div
+        ref={focusRef}
+        className="v37-scene__focus"
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: 1,
+          height: 1,
+          pointerEvents: 'none',
+        }}
+      />
       <V37ScenePoster
         kind="gate"
         pack={pack}
@@ -193,13 +193,15 @@ export function GateScene({ sectionRef }: Props) {
           <StackedAlphaVideo
             ref={playerRef}
             src={src}
-            scrub
-            progress={0}
+            blobSrc
+            playOnce
+            holdLast
             playing={false}
             autoPlay={false}
             onFirstFrame={() => {
               paintLiveRef.current = true;
               setPaintLive(true);
+              if (focusedRef.current) playerRef.current?.play();
             }}
             onUnavailable={() => setFailed(true)}
           />

@@ -1792,11 +1792,13 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
   );
   aspect-ratio: 223.37 / 193.288;
   box-sizing: content-box;
-  /* Visible: horizontal pads still hang into .home-reviews__scene (place-frac). */
+  /* Visible: horizontal pads still hang into .home-reviews__scene (place-frac).
+   * Top flight pad is out of flow on the overflow canvas (top: -padT) so the
+   * in-flow box is just the bench; .home-reviews clips any overlap upward. */
   overflow: visible;
   width: var(--bench-place-w);
   max-width: 100%;
-  padding-top: calc(var(--bench-place-w) * var(--bench-pad-t-over-w));
+  padding-top: 0;
   padding-bottom: calc(var(--bench-place-w) * var(--bench-pad-b-over-w));
   /* Override .v37-scene margin-inline:auto, then right-align with right-pad reserved. */
   margin-inline: 0;
@@ -1824,7 +1826,8 @@ html.reveal-js [data-reveal-stagger] > [data-reveal].reveal-pending:nth-child(5)
 /*
  * Bench stays in-flow beside the reviews title (fix10c). Do NOT sticky +
  * translateY — that shoved the padded canvas onto .home-reviews__grid and
- * covered card text. Ambient may pass under the header; cards never covered.
+ * covered card text. Flight may paint above the place box but is clipped
+ * to .home-reviews so it never overlaps the counselor card.
  */
 
 .v37-scene__canvas,
@@ -2175,9 +2178,9 @@ picture.v37-scene__poster > img {
 }
 
 .home-reviews {
-  /* Top pad is now in-flow on .v37-scene--bench; keep x clipped, y paintable. */
+  /* Clip both axes so butterfly flight stays inside this section. */
   overflow-x: clip;
-  overflow-y: visible;
+  overflow-y: clip;
   max-width: 100%;
 }
 
@@ -2187,7 +2190,8 @@ picture.v37-scene__poster > img {
  * title — while butterflies stay unclipped (#main still clips horizontal).
  */
 .home-reviews--empty {
-  overflow: visible;
+  overflow-x: clip;
+  overflow-y: clip;
   padding-block: clamp(5rem, 5.75vw, 6rem);
 }
 
@@ -2755,9 +2759,10 @@ picture.v37-scene__poster > img {
   }
 
   .home-spaces__scene {
+    /* Span both rows and center the door against heading + text + photos. */
+    align-self: stretch;
+    align-items: center;
     justify-content: flex-end;
-    position: sticky;
-    top: calc(var(--header-sticky-h) + 1rem);
   }
 
   .home-spaces__scene .v37-scene--gate {
@@ -2779,11 +2784,10 @@ picture.v37-scene__poster > img {
 
   .home-reviews__header {
     display: grid;
-    /* Wide right column so padded bench canvas (place + flight pads) can fit. */
+    /* Title in the left column, bench in the right, vertically centered. */
     grid-template-columns: minmax(12rem, 0.28fr) minmax(0, 1fr);
     gap: 1rem 2rem;
-    /* Place box sits under top pad — align copy with the bench, not the sky. */
-    align-items: end;
+    align-items: center;
     overflow-x: clip;
     overflow-y: visible;
   }
@@ -2796,9 +2800,9 @@ picture.v37-scene__poster > img {
     overflow-y: visible;
   }
 
-  /* Empty: title at top of row — place box sits beside it (flight pad out of flow). */
+  /* Place box is now in-flow (no tall flight pad), so center it with the title. */
   .home-reviews--empty .home-reviews__header {
-    align-items: start;
+    align-items: center;
   }
 
   .home-reviews__grid {

@@ -15,10 +15,10 @@ import {
 
 export type StackedAlphaVideoHandle = {
   seek: (timeS: number) => void;
-  /** 0..1 scrub; no-op when not in scrub mode or metadata is not ready. */
-  seekProgress: (progress: number) => void;
   play: () => void;
   pause: () => void;
+  /** Pause, seek to 0, and draw the first frame. Clears ended/hold so play() can restart. */
+  reset: () => void;
   getVideo: () => HTMLVideoElement | null;
 };
 
@@ -32,12 +32,16 @@ export type StackedAlphaVideoProps = {
   playing?: boolean;
   startTime?: number;
   /**
-   * Pause + precise-seek mode for scroll-linked clips. When true, or when
-   * `progress` is a number, the video never auto-plays.
+   * Fetch `src` into a Blob and assign an object URL so seeking (reset to
+   * frame 0) works when the HTTP server ignores Range (Workers static assets).
+   * Play-once/loop (hero, booking) leave this off and keep the plain URL.
    */
-  scrub?: boolean;
-  /** 0..1 target in scrub mode (optional; also driven via seekProgress). */
-  progress?: number;
+  blobSrc?: boolean;
+  /**
+   * If set, pause and hold this time (seconds) instead of playing through to
+   * the file duration — bench butterflies fade out after 2.8s otherwise.
+   */
+  holdAt?: number;
   onEnded?: () => void;
   onFirstFrame?: () => void;
   onUnavailable?: () => void;
@@ -76,8 +80,8 @@ export const StackedAlphaVideo = forwardRef<
     autoPlay = true,
     playing = true,
     startTime = 0,
-    scrub = false,
-    progress,
+    blobSrc = false,
+    holdAt,
     onEnded,
     onFirstFrame,
     onUnavailable,
@@ -106,9 +110,10 @@ export const StackedAlphaVideo = forwardRef<
   const holdLastRef = useRef(holdLast);
   const hideOnEndedRef = useRef(hideOnEnded);
   const startTimeRef = useRef(startTime);
-  const scrubRef = useRef(scrub || progress !== undefined);
-  const progressRef = useRef(progress);
-  const applyScrubRef = useRef<() => void>(() => {});
+  const blobSrcRef = useRef(blobSrc);
+  const holdAtRef = useRef(holdAt);
+  const seekAndDrawRef = useRef<(timeS: number) => void>(() => {});
+  const syncPlayRef = useRef<() => void>(() => {});
   const playingRef = useRef(playing);
   const autoPlayRef = useRef(autoPlay);
   const onEndedRef = useRef(onEnded);
@@ -126,8 +131,8 @@ export const StackedAlphaVideo = forwardRef<
   holdLastRef.current = holdLast;
   hideOnEndedRef.current = hideOnEnded;
   startTimeRef.current = startTime;
-  scrubRef.current = scrub || progress !== undefined;
-  progressRef.current = progress;
+  blobSrcRef.current = blobSrc;
+  holdAtRef.current = holdAt;
   playingRef.current = playing;
   autoPlayRef.current = autoPlay;
   onEndedRef.current = onEnded;
@@ -136,32 +141,24 @@ export const StackedAlphaVideo = forwardRef<
 
   useImperativeHandle(ref, () => ({
     seek: (timeS: number) => {
-      const v = videoRef.current;
-      if (!v) return;
-      try {
-        v.currentTime = timeS;
-      } catch {
-        /* ignore */
-      }
-      applyScrubRef.current();
-    },
-    seekProgress: (next: number) => {
-      progressRef.current = next;
-      scrubRef.current = true;
-      applyScrubRef.current();
+      seekAndDrawRef.current(timeS);
     },
     play: () => {
+      endedRef.current = false;
+      holdRef.current = false;
       playingRef.current = true;
-      const v = videoRef.current;
-      if (!v) return;
-      v.muted = true;
-      void v.play().catch(() => {
-        onUnavailableRef.current?.();
-      });
+      autoPlayRef.current = true;
+      syncPlayRef.current();
     },
     pause: () => {
       playingRef.current = false;
       videoRef.current?.pause();
+    },
+    reset: () => {
+      endedRef.current = false;
+      holdRef.current = false;
+      playingRef.current = false;
+      seekAndDrawRef.current(0);
     },
     getVideo: () => videoRef.current,
   }));
@@ -292,11 +289,45 @@ export const StackedAlphaVideo = forwardRef<
      * `duration - 1/60` on these single-GOP (I-frame at 0) clips rewinds to
      * t=0 instead, so later draws must not re-sample a rewound element.
      */
+    const holdDeadlineS = () => {
+      const d = video.duration;
+      const cap = holdAtRef.current;
+      if (cap != null && Number.isFinite(cap) && cap > 0) {
+        if (d && Number.isFinite(d)) return Math.min(cap, d);
+        return cap;
+      }
+      return d && Number.isFinite(d) ? d : null;
+    };
+
     const holdFrameStillPresent = () => {
       if (!holdRef.current) return false;
-      const d = video.duration;
-      if (!d || !Number.isFinite(d)) return false;
-      return video.currentTime >= d - 2 / 60;
+      const end = holdDeadlineS();
+      if (end == null) return false;
+      return video.currentTime >= end - 2 / 60;
+    };
+
+    const reachedHoldAt = () => {
+      if (endedRef.current || holdRef.current) return false;
+      const cap = holdAtRef.current;
+      if (cap == null || !Number.isFinite(cap) || cap <= 0) return false;
+      const end = holdDeadlineS();
+      if (end == null) return false;
+      return video.currentTime >= end - 1 / 120;
+    };
+
+    const holdNow = () => {
+      if (!alive || endedRef.current) return;
+      endedRef.current = true;
+      if (holdLastRef.current) {
+        holdRef.current = true;
+        video.pause();
+        stopUpload();
+        drawOnce();
+      } else {
+        stopUpload();
+        video.pause();
+      }
+      onEndedRef.current?.();
     };
 
     const drawHoldSafe = () => {
@@ -311,6 +342,10 @@ export const StackedAlphaVideo = forwardRef<
         if (!alive) return;
         if (shouldUpload()) {
           drawOnce();
+          if (reachedHoldAt()) {
+            holdNow();
+            return;
+          }
           rvfcIdRef.current = v.requestVideoFrameCallback!(tick);
         } else {
           uploadingRef.current = false;
@@ -328,6 +363,10 @@ export const StackedAlphaVideo = forwardRef<
         if (!alive) return;
         if (shouldUpload()) {
           drawOnce();
+          if (reachedHoldAt()) {
+            holdNow();
+            return;
+          }
           rafIdRef.current = requestAnimationFrame(tick);
         } else {
           uploadingRef.current = false;
@@ -347,12 +386,6 @@ export const StackedAlphaVideo = forwardRef<
 
     const syncPlay = () => {
       if (!alive) return;
-      if (scrubRef.current) {
-        video.pause();
-        stopUpload();
-        applyScrub();
-        return;
-      }
       const want =
         autoPlayRef.current &&
         playingRef.current &&
@@ -400,24 +433,22 @@ export const StackedAlphaVideo = forwardRef<
     };
 
     let seekInFlight = false;
-    let pendingScrub: number | null = null;
+    let pendingSeek: number | null = null;
 
-    const applyScrub = () => {
-      if (!alive || !scrubRef.current) return;
+    const seekAndDraw = (timeS: number) => {
+      if (!alive) return;
       video.pause();
       stopUpload();
       if (video.readyState < HTMLMediaElement.HAVE_METADATA) return;
       const d = video.duration;
-      if (!d || !Number.isFinite(d) || d <= 0) return;
-      const raw = progressRef.current;
-      const p = typeof raw === 'number' && Number.isFinite(raw) ? raw : 0;
-      const t = p <= 0 ? 0 : p >= 1 ? Math.max(0, d - 1e-4) : p * d;
+      const max = d && Number.isFinite(d) && d > 0 ? d : timeS;
+      const t = timeS <= 0 ? 0 : Math.min(timeS, Math.max(0, max - 1e-4));
       if (seekInFlight) {
-        pendingScrub = t;
+        pendingSeek = t;
         return;
       }
       if (Math.abs(video.currentTime - t) < 5e-4) {
-        drawOnce();
+        if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) drawOnce();
         return;
       }
       seekInFlight = true;
@@ -426,9 +457,9 @@ export const StackedAlphaVideo = forwardRef<
         seekInFlight = false;
         if (!alive) return;
         drawOnce();
-        if (pendingScrub !== null) {
-          const next = pendingScrub;
-          pendingScrub = null;
+        if (pendingSeek !== null) {
+          const next = pendingSeek;
+          pendingSeek = null;
           if (Math.abs(video.currentTime - next) >= 5e-4) {
             seekInFlight = true;
             video.addEventListener('seeked', onSeeked);
@@ -459,17 +490,14 @@ export const StackedAlphaVideo = forwardRef<
         drawOnce();
       }
     };
-    applyScrubRef.current = applyScrub;
+    seekAndDrawRef.current = seekAndDraw;
+    syncPlayRef.current = syncPlay;
 
     const onVideoEnded = () => {
       if (!alive) return;
-      if (scrubRef.current) {
-        video.pause();
-        stopUpload();
-        drawOnce();
-        return;
-      }
       if (loopRef.current && !playOnceRef.current) return;
+      // Hold the last decoded frame as-is. Seeking duration-1/60 can snap
+      // some clips back to t=0; holdFrameStillPresent guards later draws.
       endedRef.current = true;
       if (holdLastRef.current) {
         holdRef.current = true;
@@ -615,12 +643,13 @@ export const StackedAlphaVideo = forwardRef<
       video.setAttribute('muted', '');
       video.setAttribute('playsinline', '');
       video.setAttribute('webkit-playsinline', '');
-      // Scrub needs a seekable source. Workers static assets ignore Range
-      // (200 + no Accept-Ranges), so Chromium reports seekable=[0,0] on the
-      // HTTP URL; a blob: object URL of the same bytes is seekable. Play-once
-      // / loop (hero, booking) keep the plain URL. Fetch uses the same URL so
-      // the HTTP cache still applies; the object URL is revoked on swap/unmount.
-      if (scrubRef.current && !adopted) {
+      // A seekable source is required to reset to frame 0. Workers static
+      // assets ignore Range (200 + no Accept-Ranges), so Chromium reports
+      // seekable=[0,0] on the HTTP URL; a blob: object URL of the same bytes
+      // is seekable. Play-once/loop (hero, booking) keep the plain URL.
+      // Fetch uses the same URL so the HTTP cache still applies; the object
+      // URL is revoked on swap/unmount.
+      if (blobSrcRef.current && !adopted) {
         assignBlobSrc(next);
       } else {
         assignHttpSrc(next);
@@ -771,12 +800,6 @@ export const StackedAlphaVideo = forwardRef<
     // Keep last drawn pixels until the new clip's first frame (seamless swap).
     loadSrcRef.current(src, true);
   }, [src, loop, playOnce, holdLast, hideOnEnded, startTime]);
-
-  useEffect(() => {
-    scrubRef.current = scrub || progress !== undefined;
-    progressRef.current = progress;
-    if (scrubRef.current) applyScrubRef.current();
-  }, [scrub, progress]);
 
   useEffect(() => {
     playingRef.current = playing;

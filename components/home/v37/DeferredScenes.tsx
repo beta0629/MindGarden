@@ -63,7 +63,7 @@ function loadSceneModule(
 /**
  * Mount scene React trees when near the viewport (IO rootMargin ~150%).
  * Scene JS loads at ~150%. Gate/bench assign mp4 src only at 25% rootMargin
- * (scroll-scrub clips); booking still preloads when its module mounts.
+ * (center-focus clips); booking still preloads when its module mounts.
  * Reduced-motion: poster only (never mount video players / never fetch mp4).
  * `key={pack}` remounts the scene on breakpoint change (no pack-reset setState).
  */

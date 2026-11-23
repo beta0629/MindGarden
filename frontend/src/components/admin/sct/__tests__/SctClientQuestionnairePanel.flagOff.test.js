@@ -23,7 +23,8 @@ jest.mock('../../../../utils/sctApi', () => ({
   fetchSctClientInvitations: jest.fn(),
   fetchSctInvitation: jest.fn(),
   cancelSctInvitation: jest.fn(),
-  destroySctInvitation: jest.fn()
+  destroySctInvitation: jest.fn(),
+  reissueSctLink: jest.fn()
 }));
 
 describe('SctClientQuestionnairePanel flag OFF', () => {

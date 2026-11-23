@@ -13,6 +13,8 @@ import SafeText from '../../common/SafeText';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
+import { useSession } from '../../../contexts/SessionContext';
 import { createSctInvitation, fetchSctForms, fetchSctSettings } from '../../../utils/sctApi';
 import {
   SCT_CSS,
@@ -26,6 +28,16 @@ import SctPublicLinkCopy from './SctPublicLinkCopy';
 import './sctAdmin.css';
 
 /**
+ * 공개 링크 복사 UI — ADMIN·CONSULTANT만 (STAFF는 SMS 발송만).
+ *
+ * @param {object|null|undefined} user
+ * @returns {boolean}
+ */
+const canUseSctPublicLinkUi = (user) => (
+  RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.CONSULTANT)
+);
+
+/**
  * @param {{
  *   isOpen: boolean,
  *   onClose: () => void,
@@ -35,6 +47,8 @@ import './sctAdmin.css';
  * }} props
  */
 const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent }) => {
+  const { user } = useSession();
+  const canPublicLink = canUseSctPublicLinkUi(user);
   const [forms, setForms] = useState([]);
   const [formType, setFormType] = useState(SCT_FORM_TYPE.ADULT);
   const [phone, setPhone] = useState('');
@@ -113,7 +127,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       });
       notificationManager.success(SCT_UI.SEND_SUCCESS);
       onSent?.();
-      if (created?.publicUrl) {
+      if (canPublicLink && created?.publicUrl) {
         setSentPublicUrl(created.publicUrl);
       } else {
         onClose();
@@ -158,7 +172,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
       )}
     >
       <div className={SCT_CSS.SEND_SHEET}>
-        {sentPublicUrl ? (
+        {canPublicLink && sentPublicUrl ? (
           <SctPublicLinkCopy publicUrl={sentPublicUrl} />
         ) : (
           <>

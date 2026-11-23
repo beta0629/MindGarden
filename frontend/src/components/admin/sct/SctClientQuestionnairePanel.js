@@ -15,7 +15,7 @@ import UnifiedModal from '../../common/modals/UnifiedModal';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
-import { RoleUtils } from '../../../constants/roles';
+import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { useSession } from '../../../contexts/SessionContext';
 import {
   cancelSctInvitation,
@@ -47,11 +47,22 @@ const formatDate = (iso) => {
 };
 
 /**
+ * 공개 링크 복사·재발급 UI — ADMIN·CONSULTANT만 (STAFF 임상 본문 403 정합).
+ *
+ * @param {object|null|undefined} user
+ * @returns {boolean}
+ */
+const canUseSctPublicLinkUi = (user) => (
+  RoleUtils.isAdmin(user) || RoleUtils.hasRole(user, USER_ROLES.CONSULTANT)
+);
+
+/**
  * @param {{ client: object }} props
  */
 const SctClientQuestionnairePanel = ({ client }) => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
+  const canPublicLink = canUseSctPublicLinkUi(user);
   const { enabled, loading: flagLoading } = useSctFeatureEnabled();
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -246,7 +257,8 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       {SCT_UI.DESTROY}
                     </MGButton>
                   ) : null}
-                  {row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT ? (
+                  {canPublicLink
+                    && (row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT) ? (
                     <MGButton
                       type="button"
                       variant="outline"
@@ -331,7 +343,7 @@ const SctClientQuestionnairePanel = ({ client }) => {
         </section>
       ) : null}
 
-      {reissuedUrl ? (
+      {canPublicLink && reissuedUrl ? (
         <SctPublicLinkCopy publicUrl={reissuedUrl} className="mg-v2-sct-admin__reissue-link" />
       ) : null}
 

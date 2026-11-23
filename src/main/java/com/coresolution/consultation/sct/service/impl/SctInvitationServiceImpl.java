@@ -220,7 +220,10 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .build());
 
         SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
-        attachOneShotPublicLink(response, rawToken);
+        // STAFF는 SMS 발송용 초대 생성만 — publicUrl/평문 토큰 미노출(임상 본문 403 정합)
+        if (canReceiveOneShotPublicLink(actor)) {
+            attachOneShotPublicLink(response, rawToken);
+        }
         return response;
     }
 
@@ -337,7 +340,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     @Transactional
     public SctInvitationResponse reissueLink(String tenantId, User actor, Long id) {
         sctFeatureGuard.requireEnabled(tenantId);
-        requireStaffLike(actor);
+        requireAdminOrConsultant(actor);
         SctInvitation invitation = requireInvitation(tenantId, id);
         ensureCanAccessInvitation(tenantId, actor, invitation);
         refreshExpired(invitation);
@@ -774,12 +777,44 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         return trimmed;
     }
 
+    /**
+     * one-shot publicUrl/평문 토큰 — ADMIN·CONSULTANT만 수신.
+     *
+     * @param response 응답
+     * @param rawToken 평문 토큰
+     */
     private static void attachOneShotPublicLink(SctInvitationResponse response, String rawToken) {
         if (!StringUtils.hasText(rawToken) || response == null) {
             return;
         }
         response.setToken(rawToken);
         response.setPublicUrl(PUBLIC_SCT_WEB_PREFIX + rawToken);
+    }
+
+    /**
+     * 공개 링크(one-shot) 수신 가능 역할 — ADMIN·CONSULTANT.
+     * STAFF는 임상 본문 403과 정합해 URL/토큰 미수신.
+     *
+     * @param actor 행위자
+     * @return true면 one-shot 링크 포함 가능
+     */
+    private static boolean canReceiveOneShotPublicLink(User actor) {
+        if (actor == null || actor.getRole() == null) {
+            return false;
+        }
+        UserRole role = actor.getRole();
+        return role == UserRole.ADMIN || role == UserRole.CONSULTANT;
+    }
+
+    /**
+     * 링크 재발급 — ADMIN·CONSULTANT만 (STAFF 제외).
+     *
+     * @param actor 행위자
+     */
+    private static void requireAdminOrConsultant(User actor) {
+        if (!canReceiveOneShotPublicLink(actor)) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
     }
 
     /**

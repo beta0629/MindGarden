@@ -31,9 +31,10 @@ public interface SctInvitationService {
 
     /**
      * 공개 링크 재발급 — 토큰 회전, SMS 없음, 응답에 one-shot publicUrl/token.
+     * ADMIN·CONSULTANT만 허용(STAFF 거부). STAFF 임상 본문 403 우회 방지.
      *
      * @param tenantId 테넌트
-     * @param actor    행위자
+     * @param actor    행위자(ADMIN·CONSULTANT)
      * @param id       초대 ID
      * @return 초대 메타 + one-shot 링크
      */

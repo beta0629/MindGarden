@@ -164,13 +164,14 @@ public class SctInvitationController extends BaseApiController {
 
     /**
      * 공개 링크 재발급(SMS 없음). 이전 토큰 무효, 응답에 one-shot publicUrl.
+     * STAFF 제외 — 임상 본문 403 우회(공개 링크) 방지. ADMIN·CONSULTANT만.
      *
      * @param id      초대 ID
      * @param session 세션
      * @return 초대 메타 + 링크
      */
     @PostMapping("/invitations/{id}/reissue-link")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
     public ResponseEntity<?> reissueLink(@PathVariable Long id, HttpSession session) {
         User actor = requireUser(session);
         String tenantId = TenantContextHolder.getRequiredTenantId();

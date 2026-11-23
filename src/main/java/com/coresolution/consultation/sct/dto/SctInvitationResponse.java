@@ -42,10 +42,12 @@ public class SctInvitationResponse {
     private String recipientName;
     /**
      * 공개 응답 URL. 생성·링크 재발급 직후 응답에만 포함(일회성).
+     * ADMIN·CONSULTANT만 — STAFF 응답에는 null.
      */
     private String publicUrl;
     /**
      * 평문 초대 토큰. 생성·링크 재발급 직후에만 포함 — 이후 조회 API에는 없음.
+     * ADMIN·CONSULTANT만 — STAFF 응답에는 null.
      */
     private String token;
     private List<SctAnswerView> answers;

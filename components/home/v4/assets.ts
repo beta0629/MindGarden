@@ -23,16 +23,19 @@ export function heroPosterSrc(key: V4Key): string {
   return `${V4_BASE}/hero/hero-${key}-poster.webp`;
 }
 
+/** Query rev for immutable `/assets/v4-60fps/gate/*` (stable filenames). */
+const GATE_ASSET_V = 'd-final';
+
 export function gateStackSrc(key: V4Key): string {
-  return `${V4_BASE}/gate/gate-${key}-stack.mp4`;
+  return `${V4_BASE}/gate/gate-${key}-stack.mp4?v=${GATE_ASSET_V}`;
 }
 
 export function gatePosterSrc(key: V4Key): string {
-  return `${V4_BASE}/gate/gate-${key}-poster.webp`;
+  return `${V4_BASE}/gate/gate-${key}-poster.webp?v=${GATE_ASSET_V}`;
 }
 
 export function gateEndPosterSrc(key: V4Key): string {
-  return `${V4_BASE}/gate/gate-${key}-end-poster.webp`;
+  return `${V4_BASE}/gate/gate-${key}-end-poster.webp?v=${GATE_ASSET_V}`;
 }
 
 export function benchBackSrc(key: V4Key): string {

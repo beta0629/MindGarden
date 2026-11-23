@@ -54,7 +54,7 @@
     "r_frame_rate": "60/1",
     "nb_frames": "119",
     "duration": "1.983333",
-    "bytes": 524042,
+    "bytes": 545169,
     "x264": "ref=4 keyint=600 crf=16.0"
    }
   },
@@ -98,7 +98,7 @@
     "r_frame_rate": "60/1",
     "nb_frames": "101",
     "duration": "1.683333",
-    "bytes": 271571,
+    "bytes": 289720,
     "x264": "ref=4 keyint=600 crf=16.0"
    }
   }

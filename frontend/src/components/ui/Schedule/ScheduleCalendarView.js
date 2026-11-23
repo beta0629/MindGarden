@@ -53,9 +53,7 @@ import {
 import { SCHEDULE_CALENDAR_I18N, buildScheduleCalendarTextOptions } from './scheduleCalendarI18n';
 import useCalendarDragEscapeCancel from './useCalendarDragEscapeCancel';
 import WeekDayScheduleEventChip from './WeekDayScheduleEventChip';
-import WeekOverlapSheet from './WeekOverlapSheet';
 import ConsultantTabletAgendaList from './ConsultantTabletAgendaList';
-import useWeekOverlapFold from '../../../hooks/useWeekOverlapFold';
 import { getKrPublicHolidayNameForLocalDate } from '../../../utils/krPublicHolidays';
 import { useConsultantColorPalette } from '../../../hooks/useConsultantColorPalette';
 import useMediaQuery from '../../../hooks/useMediaQuery';
@@ -245,19 +243,6 @@ const ScheduleCalendarView = ({
         () => (Array.isArray(events) ? events.map(normalizeCalendarEventForZone) : events),
         [events]
     );
-
-    const overlapFoldEnabled = activeViewType === CALENDAR_VIEW_WEEK
-      || activeViewType === CALENDAR_VIEW_DAY;
-    const {
-      sheetOpen: overlapSheetOpen,
-      sheetTitle: overlapSheetTitle,
-      sheetRows: overlapSheetRows,
-      closeSheet: closeOverlapSheet
-    } = useWeekOverlapFold({
-      containerRef: calendarWrapperRef,
-      enabled: overlapFoldEnabled,
-      deps: [calendarEvents, activeViewType]
-    });
 
     const updateCalendarSize = useCallback(() => {
         const calendarApi = calendarRef.current?.getApi?.();
@@ -955,12 +940,6 @@ const ScheduleCalendarView = ({
                     onEventClick={onEventClick}
                 />
             ) : null}
-            <WeekOverlapSheet
-                isOpen={overlapSheetOpen}
-                title={overlapSheetTitle}
-                rows={overlapSheetRows}
-                onClose={closeOverlapSheet}
-            />
         </div>
     );
 };

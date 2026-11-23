@@ -213,15 +213,9 @@ describe('MappingScheduleCard.clinicOsChrome', () => {
     expect(partiesCss).toMatch(
       /\.integrated-schedule__card-identity--consultant[\s\S]*?min-width:\s*0/
     );
-    /* r3: 패키지 메타도 말줄임 금지 (overflow-wrap / white-space normal) */
+    /* package line may still ellipsis; identity-name must wrap for gate */
     expect(partiesCss).toMatch(
-      /\.integrated-schedule__card-package\s*\{[\s\S]*?overflow-wrap:\s*anywhere/
-    );
-    expect(partiesCss).toMatch(
-      /\.integrated-schedule__card-package\s*\{[\s\S]*?white-space:\s*normal/
-    );
-    expect(partiesCss).not.toMatch(
-      /\.integrated-schedule__card-package\s*\{[^}]*text-overflow:\s*ellipsis/
+      /\.integrated-schedule__card-package\s*\{[\s\S]*?text-overflow:\s*ellipsis/
     );
     expect(partiesCss).toMatch(
       /\.integrated-schedule__card-identity-name[\s\S]*?white-space:\s*normal/

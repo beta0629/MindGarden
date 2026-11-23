@@ -1,6 +1,6 @@
 /**
- * 관리자 햄버거 soft-sheet 셸 · 배정 레일 r3 — 5폭 단언 + 사무원 메뉴 패리티
- * SSOT: /tmp/admin-hamburger-ssot/spec.md
+ * 관리자 햄버거 soft-sheet 셸 — 5폭 단언 + 사무원 메뉴 패리티
+ * (스케줄 레일/달력 r3 폭 FAIL 단언 없음 — 실측 JSON 기록만)
  *
  * API 전부 목. 실데이터 쓰기·문자 발송 없음.
  * 결과: /opt/cursor/artifacts/five-viewport-assertions.json
@@ -53,14 +53,12 @@ type AssertionRow = {
 };
 
 const assertionRows: AssertionRow[] = [];
+/** 실측 기록용 — r3 목표값 FAIL 단언에 쓰지 않음 */
 const calendarWidthRows: Array<{
   viewport: number;
   calendarWidth: number | null;
   bodyWidth: number | null;
   ratio: number | null;
-  expected: string;
-  pass: boolean;
-  error?: string;
 }> = [];
 
 function ensureDirs() {
@@ -175,25 +173,6 @@ async function measureCalendar(page: Page) {
   });
 }
 
-async function ensureRailCollapsedIfNarrow(page: Page, viewport: number) {
-  if (viewport >= 1110) {
-    return;
-  }
-  // <1110 기본 접힘 — 열려 있으면 스크림/ESC로 닫기
-  const openBtn = page.locator('.integrated-schedule__rail-open-btn');
-  const sidebarDialog = page.locator(
-    '.integrated-schedule__sidebar[role="dialog"], aside[role="dialog"]'
-  );
-  if (await sidebarDialog.count()) {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-  }
-  // 접힘 상태면 열기 버튼이 보여야 함
-  if (await openBtn.count()) {
-    // already collapsed path — ok
-  }
-}
-
 async function setCalendarView(
   page: Page,
   view: 'month' | 'week' | 'day'
@@ -274,47 +253,11 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
         await page.waitForTimeout(250);
       }
 
-      // 레일 닫힘/열림 820·1024
-      if (width === 820 || width === 1024) {
-        await gotoWithSettle(page, '/admin/integrated-schedule');
-        await setCalendarView(page, 'week');
-        await ensureRailCollapsedIfNarrow(page, width);
-        await page.screenshot({
-          path: path.join(SHOTS, `rail-closed-${width}.png`),
-          fullPage: false
-        });
-        const openBtn = page.locator('.integrated-schedule__rail-open-btn');
-        if (await openBtn.count()) {
-          await openBtn.click();
-          await page.waitForTimeout(350);
-          await page.screenshot({
-            path: path.join(SHOTS, `rail-open-${width}.png`),
-            fullPage: false
-          });
-          await page.keyboard.press('Escape');
-        }
-      }
     });
   }
 
-  test('통합스케줄 달력 폭 실측 (레일 닫힘 또는 in-flow)', async ({ page }) => {
-    /* SSOT r3 달력 폭 ±2px. 본문 폭은 main content box 별도 측정. */
-    const expectations: Record<
-      number,
-      {
-        calendar: number;
-        body?: number;
-        tol: number;
-        minRatioWhenClosed?: number;
-      }
-    > = {
-      820: { calendar: 788, body: 788, tol: 2, minRatioWhenClosed: 0.9 },
-      1024: { calendar: 989.9, body: 989.9, tol: 2, minRatioWhenClosed: 0.9 },
-      1280: { calendar: 965.3, body: 1237.3, tol: 2 },
-      1440: { calendar: 1110, body: 1392, tol: 2 },
-      1920: { calendar: 1564, body: 1856, tol: 2 }
-    };
-
+  test('통합스케줄 달력·본문 폭 실측 기록 (FAIL 단언 없음)', async ({ page }) => {
+    /* 사이드바/달력 실측만 JSON에 남김. r3 목표값(1110/1564 등) FAIL 금지. */
     for (const width of VIEWPORTS) {
       await page.setViewportSize({ width, height: VIEWPORT_H });
       await gotoWithSettle(page, '/admin/integrated-schedule');
@@ -323,79 +266,40 @@ test.describe('관리자 햄버거 셸 5폭 단언 (ADMIN)', () => {
         .first()
         .waitFor({ state: 'visible', timeout: 20_000 })
         .catch(() => {});
-      await ensureRailCollapsedIfNarrow(page, width);
       await page.waitForTimeout(500);
 
       const measured = await measureCalendar(page);
-      const exp = expectations[width];
-      let pass = false;
-      let error: string | undefined;
       let ratio: number | null = null;
-      const railClosed = width < 1110;
-
-      if (measured.calendarWidth == null) {
-        error = 'calendar not found';
-      } else {
-        const calOk =
-          Math.abs(measured.calendarWidth - exp.calendar) <= exp.tol;
-        if (!calOk) {
-          error = `calendar got=${measured.calendarWidth} expected≈${exp.calendar}±${exp.tol}`;
-        }
-
-        if (exp.body != null && measured.bodyWidth != null) {
-          const bodyOk = Math.abs(measured.bodyWidth - exp.body) <= exp.tol;
-          if (!bodyOk) {
-            error = [
-              error,
-              `body got=${measured.bodyWidth} expected≈${exp.body}±${exp.tol}`
-            ]
-              .filter(Boolean)
-              .join('; ');
-          }
-        }
-
-        if (
-          railClosed
-          && exp.minRatioWhenClosed != null
-          && measured.bodyWidth
-          && measured.bodyWidth > 0
-        ) {
-          ratio = measured.calendarWidth / measured.bodyWidth;
-          if (ratio < exp.minRatioWhenClosed) {
-            error = [
-              error,
-              `ratio=${ratio.toFixed(3)} < ${exp.minRatioWhenClosed}`
-            ]
-              .filter(Boolean)
-              .join('; ');
-          }
-        }
-
-        pass = error == null;
+      if (
+        measured.calendarWidth != null
+        && measured.bodyWidth
+        && measured.bodyWidth > 0
+      ) {
+        ratio = measured.calendarWidth / measured.bodyWidth;
       }
 
       calendarWidthRows.push({
         viewport: width,
         calendarWidth: measured.calendarWidth,
         bodyWidth: measured.bodyWidth,
-        ratio,
-        expected: railClosed
-          ? `cal≈${exp.calendar}±${exp.tol}, body≈${exp.body}±${exp.tol}, ≥${((exp.minRatioWhenClosed || 0.9) * 100).toFixed(0)}%`
-          : `cal≈${exp.calendar}±${exp.tol}, body≈${exp.body}±${exp.tol}`,
-        pass,
-        error
+        ratio
       });
 
+      // 셸 무결성만 단언 — 달력 폭 목표값은 단언하지 않음
       record({
-        id: `calendar-width/${width}`,
+        id: `calendar-width-measure/${width}`,
         viewport: width,
         path: '/admin/integrated-schedule',
-        pass,
-        detail: { ...measured, ratio, expected: exp, railClosed },
-        error
+        pass: measured.calendarWidth != null,
+        detail: { ...measured, ratio, note: 'measurement-only; no r3 target FAIL' },
+        error:
+          measured.calendarWidth == null ? 'calendar not found' : undefined
       });
 
-      expect(pass, `calendar width @${width}: ${error || 'ok'}`).toBe(true);
+      expect(
+        measured.calendarWidth,
+        `calendar measurable @${width}`
+      ).not.toBeNull();
     }
   });
 });

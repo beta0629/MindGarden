@@ -192,21 +192,17 @@
 }
 
 /*
- * r2/r3: 내담자 이름 전체 표시(2줄) · 말줄임 금지.
- * 안 보이면 useWeekOverlapFold 가 「외 n」으로 접음.
- * 상담사는 자리가 있을 때만(기존 fit) — shrink/ellipsis 허용.
+ * 좁은 칩: 내담자 우선 + 상담사 먼저 shrink/ellipsis.
+ * 기관연계 배지는 말줄임 금지(전부 또는 생략).
+ * marker(표식) 단계에서는 min-width:1ch 미적용 — 글자 조각 방지.
  */
 .mg-v2-ad-calendar-event--week-day-fit:not(.mg-v2-ad-calendar-event--chip-marker)
   .mg-v2-ad-calendar-event__title .client-name {
     flex: 1 1 auto;
     min-width: 1ch;
     overflow: hidden;
-    text-overflow: unset;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .mg-v2-ad-calendar-event--week-day-fit .mg-v2-ad-calendar-event__title .counselor-name {

@@ -142,9 +142,7 @@ import { buildMonthDateRangeYmd } from '../../../utils/dateUtils';
 const CLIENT_FILTER_IDLE_FALLBACK_MS = 500;
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'mg.integratedSchedule.sidebarCollapsed';
-/** 레일 in-flow 상시 기준 — 달력 ≥800 확보 ≈ 뷰포트 ≥1110 (핸드오프 r3) */
-const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1109;
-const SIDEBAR_IN_FLOW_MIN_WIDTH_PX = 1110;
+const SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX = 1408;
 const SESSION_SUCCESSION_HIGHLIGHT_CLEAR_MS = 8000;
 const INTEGRATED_SCHEDULE_DEFAULT_SAVED_VIEW = buildIntegratedScheduleDefaultSavedView(
   SIDEBAR_DENSITY_COMFORTABLE
@@ -626,7 +624,7 @@ const IntegratedMatchingSchedule = () => {
     setCurrentMonth((prev) => (prev === nextMonth ? prev : nextMonth));
   }, []);
 
-  // 좌측 사이드바 collapse: localStorage 선호값 우선, 없으면 <1110 접힘 / ≥1110 in-flow 펼침
+  // 좌측 사이드바 collapse 상태: localStorage 선호값이 있으면 우선, 없으면 화면 폭 기반 초기값
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     const stored = readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY);
     if (stored !== null) return stored;
@@ -635,44 +633,29 @@ const IntegratedMatchingSchedule = () => {
     }
     return false;
   });
-  const [isRailInFlow, setIsRailInFlow] = useState(() => {
-    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
-      return window.matchMedia(`(min-width: ${SIDEBAR_IN_FLOW_MIN_WIDTH_PX}px)`).matches;
-    }
-    return true;
-  });
   const userOverrideSidebarRef = useRef(readStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY) !== null);
-  const railOpenButtonRef = useRef(null);
 
   /**
-   * <1110 자동 접힘 / ≥1110 in-flow (사용자 명시적 토글 이전까지만 적용).
+   * 1408px 이하에서 자동 접힘 (사용자 명시적 토글 이전까지만 적용).
+   * 사용자가 한 번 토글하면 userOverrideSidebarRef=true 가 되어 자동 접힘이 더는 강제되지 않음.
    */
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
-    const collapseMql = window.matchMedia(`(max-width: ${SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX}px)`);
-    const inFlowMql = window.matchMedia(`(min-width: ${SIDEBAR_IN_FLOW_MIN_WIDTH_PX}px)`);
-    const handleCollapse = (event) => {
+    const mql = window.matchMedia(`(max-width: ${SIDEBAR_AUTO_COLLAPSE_BREAKPOINT_PX}px)`);
+    const handle = (event) => {
       if (userOverrideSidebarRef.current) return;
       setIsSidebarCollapsed(event.matches);
     };
-    const handleInFlow = (event) => {
-      setIsRailInFlow(event.matches);
-    };
-    setIsRailInFlow(inFlowMql.matches);
-    if (typeof collapseMql.addEventListener === 'function') {
-      collapseMql.addEventListener('change', handleCollapse);
-      inFlowMql.addEventListener('change', handleInFlow);
-    } else if (typeof collapseMql.addListener === 'function') {
-      collapseMql.addListener(handleCollapse);
-      inFlowMql.addListener(handleInFlow);
+    if (typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', handle);
+    } else if (typeof mql.addListener === 'function') {
+      mql.addListener(handle);
     }
     return () => {
-      if (typeof collapseMql.removeEventListener === 'function') {
-        collapseMql.removeEventListener('change', handleCollapse);
-        inFlowMql.removeEventListener('change', handleInFlow);
-      } else if (typeof collapseMql.removeListener === 'function') {
-        collapseMql.removeListener(handleCollapse);
-        inFlowMql.removeListener(handleInFlow);
+      if (typeof mql.removeEventListener === 'function') {
+        mql.removeEventListener('change', handle);
+      } else if (typeof mql.removeListener === 'function') {
+        mql.removeListener(handle);
       }
     };
   }, []);
@@ -685,23 +668,6 @@ const IntegratedMatchingSchedule = () => {
       return next;
     });
   }, []);
-
-  const handleRailOpenFromToolbar = useCallback(() => {
-    userOverrideSidebarRef.current = true;
-    writeStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY, false);
-    setIsSidebarCollapsed(false);
-  }, []);
-
-  const handleRailOverlayClose = useCallback(() => {
-    userOverrideSidebarRef.current = true;
-    writeStoredBoolean(SIDEBAR_COLLAPSED_STORAGE_KEY, true);
-    setIsSidebarCollapsed(true);
-    if (railOpenButtonRef.current && typeof railOpenButtonRef.current.focus === 'function') {
-      railOpenButtonRef.current.focus();
-    }
-  }, []);
-
-  const isRailOverlayOpen = !isRailInFlow && !isSidebarCollapsed;
 
   const loadMappingsGenerationRef = useRef(0);
 
@@ -1086,8 +1052,6 @@ const IntegratedMatchingSchedule = () => {
       clientId: mapping.clientId,
       clientName: mapping.clientName,
       packageName: mapping.packageName,
-      displayPackageName: mapping.displayPackageName ?? null,
-      mergedPackageNames: Array.isArray(mapping.mergedPackageNames) ? mapping.mergedPackageNames : [],
       packagePrice: mapping.packagePrice ?? null,
       paymentAmount: mapping.paymentAmount ?? null,
       totalSessions: mapping.totalSessions ?? null,
@@ -1509,16 +1473,8 @@ const IntegratedMatchingSchedule = () => {
     </div>
   ) : null;
 
-  const showRailToolbarButton = isSidebarCollapsed;
-  const scheduleRootClassName = [
-    'integrated-schedule',
-    'integrated-schedule--clinic-os',
-    isRailInFlow ? 'integrated-schedule--rail-in-flow' : 'integrated-schedule--rail-overlay',
-    isSidebarCollapsed ? 'integrated-schedule--rail-collapsed' : 'integrated-schedule--rail-open'
-  ].join(' ');
-
   return (
-    <div className={scheduleRootClassName}>
+    <div className="integrated-schedule integrated-schedule--clinic-os">
       <div className="integrated-schedule__shell">
         <ContentArea ariaLabel="통합 스케줄">
           <ContentHeader
@@ -1543,19 +1499,9 @@ const IntegratedMatchingSchedule = () => {
               peekMapping ? ' integrated-schedule__content--peek-open' : ''
             }`}
           >
-        {isRailOverlayOpen ? (
-          <button
-            type="button"
-            className="integrated-schedule__rail-scrim"
-            aria-label="배정 목록 닫기"
-            onClick={handleRailOverlayClose}
-          />
-        ) : null}
         <MatchingScheduleSidebar
           isCollapsed={isSidebarCollapsed}
-          onToggle={isRailInFlow ? handleSidebarToggle : handleRailOverlayClose}
-          overlayMode={!isRailInFlow}
-          overlayOpen={isRailOverlayOpen}
+          onToggle={handleSidebarToggle}
           filteredMappings={filteredMappings}
           loading={loading}
           viewFilter={viewFilter}
@@ -1646,31 +1592,12 @@ const IntegratedMatchingSchedule = () => {
               onScheduleEventsChange={handleScheduleEventsChange}
               onAfterScheduleUpdated={() => softRefresh(loadMappings)}
               headerToolbarEnd={(
-                <>
-                  {showRailToolbarButton ? (
-                    <button
-                      ref={railOpenButtonRef}
-                      type="button"
-                      className="integrated-schedule__rail-open-btn"
-                      onClick={handleRailOpenFromToolbar}
-                      aria-haspopup="dialog"
-                      aria-expanded="false"
-                      aria-controls="integrated-schedule-sidebar-body"
-                      aria-label={`배정 ${filteredMappings.length}건 열기`}
-                    >
-                      배정
-                      <span className="integrated-schedule__rail-open-btn-count" aria-hidden="true">
-                        {filteredMappings.length}
-                      </span>
-                    </button>
-                  ) : null}
-                  <ScheduleNotesReminderToggle
-                    enabled={notesReminderEnabled}
-                    onChange={(next) => setNotesReminderMode(
-                      next ? SCHEDULE_NOTES_REMINDER_ON : SCHEDULE_NOTES_REMINDER_OFF
-                    )}
-                  />
-                </>
+                <ScheduleNotesReminderToggle
+                  enabled={notesReminderEnabled}
+                  onChange={(next) => setNotesReminderMode(
+                    next ? SCHEDULE_NOTES_REMINDER_ON : SCHEDULE_NOTES_REMINDER_OFF
+                  )}
+                />
               )}
               sameDayPendingLegendContent={(
                 <p

@@ -56,7 +56,7 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
         sctFeatureGuard.requireEnabled(tenantId);
         requireStaffLike(actor);
         SctInvitation invitation = requireInvitation(tenantId, invitationId);
-        ensureCanAccessInvitation(tenantId, actor, invitation);
+        ensureCanAccessClinicalBody(tenantId, actor, invitation);
 
         List<SctDomainMemoResponse> memos = domainMemoRepository
                 .findByTenantIdAndInvitationIdAndIsDeletedFalse(tenantId, invitationId)
@@ -96,7 +96,7 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
         }
         String code = normalizeDomainCode(domainCode);
         SctInvitation invitation = requireInvitation(tenantId, invitationId);
-        ensureCanAccessInvitation(tenantId, actor, invitation);
+        ensureCanAccessClinicalBody(tenantId, actor, invitation);
 
         SctDomainMemo memo = domainMemoRepository
                 .findByTenantIdAndInvitationIdAndDomainCodeAndIsDeletedFalse(
@@ -146,13 +146,20 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
         }
     }
 
-    private void ensureCanAccessInvitation(String tenantId, User actor, SctInvitation invitation) {
-        if (actor.getRole() == UserRole.ADMIN || actor.getRole() == UserRole.STAFF) {
+    private void ensureCanAccessClinicalBody(String tenantId, User actor, SctInvitation invitation) {
+        if (actor.getRole() == UserRole.ADMIN) {
             return;
         }
-        if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
-            throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
+        if (actor.getRole() == UserRole.STAFF) {
+            throw new AccessDeniedException("권한이 없습니다.");
         }
+        if (actor.getRole() == UserRole.CONSULTANT) {
+            if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
+                throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
+            }
+            return;
+        }
+        throw new AccessDeniedException("권한이 없습니다.");
     }
 
     private boolean canConsultantAccess(String tenantId, Long consultantId, SctInvitation invitation) {

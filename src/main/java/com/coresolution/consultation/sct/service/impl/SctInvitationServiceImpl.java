@@ -259,23 +259,20 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         SctInvitationResponse response = toMetaResponse(
                 invitation, resolveFormType(invitation.getFormTemplateId()));
         if (includeAnswers && SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
-            if (actor.getRole() == UserRole.ADMIN
-                    || actor.getRole() == UserRole.STAFF
-                    || actor.getRole() == UserRole.CONSULTANT) {
-                response.setAnswers(loadAnswers(invitation));
-                sctAccessLogService.logViewBody(
-                        invitation, actor.getId(),
-                        actor.getRole().name(), clientIp, userAgent);
-                auditLogService.record(AuditLog.builder()
-                        .tenantId(tenantId)
-                        .actorUserId(actor.getId())
-                        .actorRole(actor.getRole().name())
-                        .targetUserId(invitation.getClientId())
-                        .action(AuditAction.SCT_RESPONSE_VIEWED)
-                        .entityType(SctConstants.ENTITY_TYPE_INVITATION)
-                        .entityId(invitation.getId())
-                        .build());
-            }
+            ensureCanAccessClinicalBody(tenantId, actor, invitation);
+            response.setAnswers(loadAnswers(invitation));
+            sctAccessLogService.logViewBody(
+                    invitation, actor.getId(),
+                    actor.getRole().name(), clientIp, userAgent);
+            auditLogService.record(AuditLog.builder()
+                    .tenantId(tenantId)
+                    .actorUserId(actor.getId())
+                    .actorRole(actor.getRole().name())
+                    .targetUserId(invitation.getClientId())
+                    .action(AuditAction.SCT_RESPONSE_VIEWED)
+                    .entityType(SctConstants.ENTITY_TYPE_INVITATION)
+                    .entityId(invitation.getId())
+                    .build());
         }
         return response;
     }
@@ -558,7 +555,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         sctFeatureGuard.requireEnabled(tenantId);
         requireStaffLike(actor);
         SctInvitation invitation = requireInvitation(tenantId, id);
-        ensureCanAccessInvitation(tenantId, actor, invitation);
+        ensureCanAccessClinicalBody(tenantId, actor, invitation);
         if (!SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("제출된 응답만 인쇄할 수 있습니다.");
         }
@@ -812,6 +809,22 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
             throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
         }
+    }
+
+    private void ensureCanAccessClinicalBody(String tenantId, User actor, SctInvitation invitation) {
+        if (actor.getRole() == UserRole.ADMIN) {
+            return;
+        }
+        if (actor.getRole() == UserRole.STAFF) {
+            throw new AccessDeniedException("권한이 없습니다.");
+        }
+        if (actor.getRole() == UserRole.CONSULTANT) {
+            if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
+                throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
+            }
+            return;
+        }
+        throw new AccessDeniedException("권한이 없습니다.");
     }
 
     private boolean canConsultantAccess(String tenantId, Long consultantId, SctInvitation invitation) {

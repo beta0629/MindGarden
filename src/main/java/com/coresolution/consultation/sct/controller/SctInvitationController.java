@@ -14,6 +14,7 @@ import com.coresolution.consultation.sct.service.SctInvitationService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.HttpRequestClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -253,7 +254,7 @@ public class SctInvitationController extends BaseApiController {
      * @return 메모
      */
     @GetMapping("/invitations/{id}/domain-memos")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
     public ResponseEntity<?> listDomainMemos(
             @PathVariable Long id,
             HttpSession session,
@@ -276,7 +277,7 @@ public class SctInvitationController extends BaseApiController {
      * @return 저장 결과
      */
     @PutMapping("/invitations/{id}/domain-memos/{domainCode}")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
     public ResponseEntity<?> upsertDomainMemo(
             @PathVariable Long id,
             @PathVariable String domainCode,
@@ -300,7 +301,7 @@ public class SctInvitationController extends BaseApiController {
      * @return 204
      */
     @PostMapping("/invitations/{id}/print-audit")
-    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
     public ResponseEntity<?> printAudit(
             @PathVariable Long id,
             HttpSession session,
@@ -371,10 +372,6 @@ public class SctInvitationController extends BaseApiController {
     }
 
     private static String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }

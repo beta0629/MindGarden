@@ -121,8 +121,22 @@ class SctDomainMemoServiceTest {
     }
 
     @Test
-    @DisplayName("담당 CONSULTANT·ADMIN·STAFF 저장 허용 + converter 필드 라운드트립")
-    void assignedAndStaff_canSave() {
+    @DisplayName("STAFF 영역 메모 저장 403")
+    void staffCannotSave() {
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
+                .thenReturn(Optional.of(invitation));
+
+        assertThrows(AccessDeniedException.class, () ->
+                domainMemoService.upsert(
+                        "t1", staff, 55L, "AFFECT",
+                        SctDomainMemoUpsertRequest.builder().memoText("메모").build(),
+                        "1.1.1.1", "ua"));
+        verify(domainMemoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("담당 CONSULTANT·ADMIN 저장 허용 + converter 필드 라운드트립")
+    void assignedConsultantAndAdmin_canSave() {
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
                 .thenReturn(Optional.of(invitation));
         when(domainMemoRepository
@@ -154,8 +168,5 @@ class SctDomainMemoServiceTest {
         var listed = domainMemoService.list("t1", admin, 55L, "1.1.1.1", "ua");
         assertEquals(1, listed.size());
         assertEquals("면담 확인", listed.get(0).getMemoText());
-
-        var staffListed = domainMemoService.list("t1", staff, 55L, null, null);
-        assertEquals(1, staffListed.size());
     }
 }

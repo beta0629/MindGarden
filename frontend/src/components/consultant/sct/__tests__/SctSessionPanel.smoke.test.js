@@ -180,7 +180,9 @@ describe('SctSessionPanel', () => {
     const dest = mockNavigate.mock.calls[0][0];
     expect(dest).toContain('/consultant/sct-print');
     expect(dest).toContain('invitationId=55');
-    expect(dest).toContain('clientName');
+    expect(dest).not.toContain('clientName');
+    const navOptions = mockNavigate.mock.calls[0][1];
+    expect(navOptions?.state?.clientName).toBe('홍길동');
   });
 
   it('groups by domain from handoff/seed codes', () => {

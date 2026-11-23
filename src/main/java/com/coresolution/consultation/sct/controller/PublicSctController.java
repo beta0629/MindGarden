@@ -10,6 +10,7 @@ import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.core.controller.BaseApiController;
+import com.coresolution.core.util.HttpRequestClientIp;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -134,10 +135,6 @@ public class PublicSctController extends BaseApiController {
     }
 
     private static String clientIp(HttpServletRequest request) {
-        String forwarded = request.getHeader("X-Forwarded-For");
-        if (forwarded != null && !forwarded.isBlank()) {
-            return forwarded.split(",")[0].trim();
-        }
-        return request.getRemoteAddr();
+        return HttpRequestClientIp.resolve(request);
     }
 }

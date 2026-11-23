@@ -6,7 +6,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import UnifiedLoading from '../../common/UnifiedLoading';
@@ -45,9 +45,10 @@ const PAGE_SIZE_CSS = Object.freeze({
  */
 const SctPrintPreviewPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [params] = useSearchParams();
   const invitationId = params.get('invitationId');
-  const clientName = params.get('clientName') || '';
+  const clientName = location.state?.clientName || '';
   const { enabled, loading: flagLoading } = useSctFeatureEnabled();
 
   const [data, setData] = useState(null);

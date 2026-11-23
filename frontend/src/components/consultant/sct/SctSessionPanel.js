@@ -203,8 +203,9 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
   const handlePrint = () => {
     if (invitationId == null) return;
     const qs = new URLSearchParams({ invitationId: String(invitationId) });
-    if (clientName) qs.set('clientName', clientName);
-    navigate(`${SCT_PRINT_PATH(invitationId).split('?')[0]}?${qs.toString()}`);
+    const path = `${SCT_PRINT_PATH(invitationId).split('?')[0]}?${qs.toString()}`;
+    const state = clientName ? { clientName } : undefined;
+    navigate(path, state ? { state } : undefined);
   };
 
   const jumpToItem = () => {

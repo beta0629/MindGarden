@@ -16,11 +16,13 @@ const mockUseSctFeatureEnabled = jest.fn();
 const mockFetchSctInvitation = jest.fn();
 const mockRecordSctPrintAudit = jest.fn();
 const mockNavigate = jest.fn();
-let mockSearch = new URLSearchParams('invitationId=55&clientName=E2E');
+let mockSearch = new URLSearchParams('invitationId=55');
+let mockLocationState = { clientName: 'E2E' };
 
 jest.mock('react-router-dom', () => ({
   useNavigate: () => mockNavigate,
-  useSearchParams: () => [mockSearch]
+  useSearchParams: () => [mockSearch],
+  useLocation: () => ({ state: mockLocationState })
 }));
 
 jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
@@ -55,7 +57,8 @@ jest.mock('../../../common/UnifiedLoading', () => ({
 
 describe('SctPrintPreviewPage', () => {
   beforeEach(() => {
-    mockSearch = new URLSearchParams('invitationId=55&clientName=E2E');
+    mockSearch = new URLSearchParams('invitationId=55');
+    mockLocationState = { clientName: 'E2E' };
     mockUseSctFeatureEnabled.mockReturnValue({ enabled: true, loading: false });
     mockFetchSctInvitation.mockResolvedValue({
       id: 55,

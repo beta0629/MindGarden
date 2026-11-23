@@ -49,6 +49,18 @@ import org.springframework.mock.web.MockHttpServletResponse;
 class SctSecurityHighTest {
 
     @Test
+    void securityHeaderFilter_appliesNoStoreToAuthenticatedSct() throws Exception {
+        SecurityHeaderFilter filter = new SecurityHeaderFilter();
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "GET", "/api/v1/sct/session-view");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        FilterChain chain = mock(FilterChain.class);
+        filter.doFilter(request, response, chain);
+        assertThat(response.getHeader("Cache-Control")).contains("no-store");
+        verify(chain).doFilter(request, response);
+    }
+
+    @Test
     void securityHeaderFilter_appliesNoStoreToPublicSct() throws Exception {
         SecurityHeaderFilter filter = new SecurityHeaderFilter();
         MockHttpServletRequest request = new MockHttpServletRequest(

@@ -168,6 +168,28 @@ class SctInvitationServiceTest {
     }
 
     @Test
+    void staffCannotViewAnswers_withIncludeAnswers() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000007")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.of(2026, 12, 1, 0, 0))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua"));
+        verify(sctAccessLogService, never()).logViewBody(any(), any(), any(), any(), any());
+    }
+
+    @Test
     void existingInvitationExpiryUnchanged_whenSettingsChange() {
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
@@ -194,11 +216,11 @@ class SctInvitationServiceTest {
                 .thenReturn(new SctAccessLog());
         when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
 
-        var view = invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua");
+        var view = invitationService.getInvitation("t1", admin, 77L, true, "1.1.1.1", "ua");
         assertEquals(LocalDateTime.of(2026, 12, 1, 0, 0), view.getTokenExpiresAt());
         assertEquals("SCT-000007", view.getManagementNo());
         verify(sctAccessLogService).logViewBody(
-                eq(existing), eq(2L), eq("STAFF"), eq("1.1.1.1"), eq("ua"));
+                eq(existing), eq(1L), eq("ADMIN"), eq("1.1.1.1"), eq("ua"));
     }
 
     @Test
@@ -208,6 +230,29 @@ class SctInvitationServiceTest {
 
         assertThrows(com.coresolution.consultation.exception.EntityNotFoundException.class,
                 () -> invitationService.getInvitation("tenant-b", admin, 77L, false, null, null));
+    }
+
+    @Test
+    void recordPrintAudit_staffForbidden() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000010")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.of(2026, 12, 1, 0, 0))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .sentByUserId(1L)
+                .clientId(100L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.recordPrintAudit("t1", staff, 77L, "1.2.3.4", "ua"));
+        verify(sctAccessLogService, never()).logPrint(any(), any(), any(), any(), any());
     }
 
     @Test
@@ -231,10 +276,10 @@ class SctInvitationServiceTest {
                 .thenReturn(new SctAccessLog());
         when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
 
-        invitationService.recordPrintAudit("t1", staff, 77L, "1.2.3.4", "ua");
+        invitationService.recordPrintAudit("t1", admin, 77L, "1.2.3.4", "ua");
 
         verify(sctAccessLogService).logPrint(
-                eq(existing), eq(2L), eq("STAFF"), eq("1.2.3.4"), eq("ua"));
+                eq(existing), eq(1L), eq("ADMIN"), eq("1.2.3.4"), eq("ua"));
         ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
         verify(auditLogService).record(auditCaptor.capture());
         assertEquals(AuditAction.SCT_RESPONSE_PRINTED, auditCaptor.getValue().getAction());

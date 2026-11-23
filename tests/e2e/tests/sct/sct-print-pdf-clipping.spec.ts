@@ -212,7 +212,7 @@ test.describe('SCT 인쇄 미리보기 7폭', () => {
   for (const vp of SCT_VIEWPORTS) {
     test(`인쇄 진입·미리보기 @${vp.name} (${vp.width}x${vp.height})`, async({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
-      await gotoSettled(page, '/e2e/sct-viewport?panel=session');
+      await gotoSettled(page, '/e2e-sct-viewport?panel=session');
       await assertPanelVisible(page, 'sct-session-panel');
       await expect(page.getByTestId('sct-print-btn')).toBeVisible({ timeout: 15000 });
       await expect(page.getByTestId('sct-font-size')).toBeVisible();

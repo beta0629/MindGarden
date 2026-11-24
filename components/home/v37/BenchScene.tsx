@@ -9,13 +9,6 @@ import {
   type RefObject,
 } from 'react';
 import {
-  markDirty,
-  setContinuous,
-  setPaused,
-  subscribe,
-  unsubscribe,
-} from '@/components/home/rafScheduler';
-import {
   StackedAlphaVideo,
   type StackedAlphaVideoHandle,
 } from '@/components/home/v4/StackedAlphaVideo';
@@ -29,19 +22,12 @@ import {
   packToV4Key,
 } from '@/components/home/v4/assets';
 import { observeCenterFocus, SRC_ROOT_MARGIN } from './centerFocus';
-import {
-  SETTLE_RISE_PX,
-  sampleSettle,
-  settleTranslateY,
-} from './settle';
 import { useBreakpointPack, usePrefersReducedMotion } from './useBreakpointPack';
 import { V37ScenePoster } from './V37ScenePoster';
 
 type Props = {
   sectionRef?: RefObject<HTMLElement | null>;
 };
-
-const RAF_ID = 'v37-bench';
 
 type OverflowBox = {
   left: number;
@@ -82,10 +68,11 @@ function layoutBoxes(
 }
 
 /**
- * Bench — chair/shadow settle on rAF when the scene center enters the
- * viewport's focus band; back/front butterflies play forward, hold the last
- * opaque frame, and reset when the scene leaves so the next visit can play
- * again. Video src is assigned only when near the viewport.
+ * Bench — back/front butterflies play when the scene center enters the
+ * viewport's focus band, ping-pong while it stays there (hold at 2.8s so
+ * the end fade is never shown), and reset when the scene leaves. The
+ * static body and shadow stay put; only the butterflies move. Video src
+ * is assigned only when near the viewport.
  */
 export function BenchScene({ sectionRef: _sectionRef }: Props) {
   const pack = useBreakpointPack();
@@ -128,59 +115,19 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     if (!wrap || !focus) return;
 
     let alive = true;
-    let subscribed = false;
-
-    const applySettle = (elapsedMs: number) => {
-      const settle = sampleSettle(elapsedMs);
-      const risePx = SETTLE_RISE_PX[pack];
-      const ty = settleTranslateY(settle.rise, risePx);
-      const y = ty;
-      const shadow = wrap.querySelector<HTMLElement>('.v37-bench__shadow');
-      if (shadow) {
-        shadow.style.transform = `translateY(${y}px) scaleX(${settle.shadowScaleX})`;
-        shadow.style.opacity = String(Math.max(0.92, settle.shadowOpacity));
-        shadow.style.transformOrigin = '50% 100%';
-      }
-      const body = wrap.querySelector<HTMLElement>('.v37-bench__body');
-      if (body) {
-        body.style.transform = `translateY(${y}px)`;
-        body.style.opacity = '1';
-      }
-    };
-
-    const tick = () => {
-      if (!alive || document.hidden || !focusedRef.current) {
-        setContinuous(RAF_ID, false);
-        return;
-      }
-      const t = backRef.current?.getVideo()?.currentTime ?? 0;
-      applySettle(t * 1000);
-      setContinuous(RAF_ID, true);
-    };
-
-    subscribe(RAF_ID, tick, { continuous: false });
-    subscribed = true;
-    setPaused(RAF_ID, document.hidden);
 
     const enterFocus = () => {
       if (!alive || focusedRef.current) return;
       focusedRef.current = true;
-      applySettle(0);
       backRef.current?.play();
       frontRef.current?.play();
-      setPaused(RAF_ID, document.hidden);
-      setContinuous(RAF_ID, true);
-      markDirty(RAF_ID);
     };
 
     const leaveFocus = () => {
       if (!alive || !focusedRef.current) return;
       focusedRef.current = false;
-      applySettle(-1);
       backRef.current?.reset();
       frontRef.current?.reset();
-      setContinuous(RAF_ID, false);
-      setPaused(RAF_ID, true);
     };
 
     const srcIO = new IntersectionObserver(
@@ -210,20 +157,11 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     });
     ro.observe(wrap);
 
-    const onVisibility = () => {
-      if (!subscribed) return;
-      setPaused(RAF_ID, document.hidden || !focusedRef.current);
-      if (!document.hidden && focusedRef.current) markDirty(RAF_ID);
-    };
-    document.addEventListener('visibilitychange', onVisibility);
-
     return () => {
       alive = false;
       srcIO.disconnect();
       stopFocusIO();
       ro.disconnect();
-      document.removeEventListener('visibilitychange', onVisibility);
-      if (subscribed) unsubscribe(RAF_ID);
     };
   }, [pack, reduced, failed]);
 
@@ -250,7 +188,7 @@ export function BenchScene({ sectionRef: _sectionRef }: Props) {
     height: placeBox?.height ?? '100%',
     objectFit: 'fill',
     pointerEvents: 'none',
-    willChange: 'transform, opacity',
+    willChange: 'opacity',
   };
 
   const playIfFocused = () => {

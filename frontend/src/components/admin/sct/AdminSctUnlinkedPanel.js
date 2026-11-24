@@ -14,6 +14,7 @@ import { useSession } from '../../../contexts/SessionContext';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import notificationManager from '../../../utils/notification';
+import { asArray } from '../../../utils/apiResponseNormalize';
 import { fetchSctUnlinkedInvitations, reissueSctLink } from '../../../utils/sctApi';
 import {
   SCT_CSS,
@@ -48,7 +49,7 @@ const AdminSctUnlinkedPanel = () => {
     setLoading(true);
     try {
       const data = await fetchSctUnlinkedInvitations();
-      setRows(data);
+      setRows(asArray(data, 'data'));
     } catch (e) {
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),

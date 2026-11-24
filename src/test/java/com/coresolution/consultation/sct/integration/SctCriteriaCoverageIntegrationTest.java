@@ -57,6 +57,8 @@ class SctCriteriaCoverageIntegrationTest {
                 Path.of("src/main/resources/db/migration/V20261123_001__create_sct_tables.sql")));
         assertTrue(Files.exists(
                 Path.of("src/main/resources/db/migration/V20261123_003__seed_sct_feature_flag_and_codes.sql")));
+        assertTrue(Files.exists(
+                Path.of("src/main/resources/db/migration/V20261124_002__sct_feature_flag_tenant_default_off.sql")));
         assertFalse(seed.isBlank());
     }
 }

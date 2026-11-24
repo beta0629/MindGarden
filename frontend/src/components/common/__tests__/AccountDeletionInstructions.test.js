@@ -113,6 +113,21 @@ describe('AccountDeletionInstructions (Content)', () => {
     expect(procedureMailto).toBeDefined();
   });
 
+  it('문의처에 이메일이 남아 있고 응대 시간은 노출되지 않는다', () => {
+    renderContent();
+    const contactEmail = accountDeletionLocale.contact.emailValue;
+    const contactMailto = screen.getAllByRole('link', { name: contactEmail }).find((el) => {
+      const href = el.getAttribute('href') || '';
+      return href === `mailto:${contactEmail}`;
+    });
+    expect(contactMailto).toBeDefined();
+    expect(
+      screen.getAllByText(accountDeletionLocale.contact.operatorName).length
+    ).toBeGreaterThan(0);
+    expect(screen.queryByText('응대 시간')).not.toBeInTheDocument();
+    expect(screen.queryByText(/09:00/)).not.toBeInTheDocument();
+  });
+
   it('삭제·보존 데이터 섹션과 보존 기간 행이 모두 렌더된다', () => {
     renderContent();
     expect(

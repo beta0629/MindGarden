@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { ContentArea, ContentHeader } from '../dashboard-v2/content';
@@ -7,10 +7,34 @@ import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../erp/co
 import MGButton from './MGButton';
 import './HelpPage.css';
 import { useTranslation } from 'react-i18next';
+import { fetchTenantPublicHomeMeta } from '../../utils/tenantPublicHomeMeta';
 
 const HelpPage = () => {
   const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState('general');
+  const [businessLandline, setBusinessLandline] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const meta = await fetchTenantPublicHomeMeta();
+        if (!cancelled) {
+          const raw = meta?.tenant?.merchantLegal?.businessLandline;
+          const landline = typeof raw === 'string' ? raw.trim() : '';
+          setBusinessLandline(landline);
+        }
+      } catch (err) {
+        console.warn('HelpPage 공개 메타 로드 실패:', err);
+        if (!cancelled) {
+          setBusinessLandline('');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const helpSections = [
     {
@@ -136,8 +160,9 @@ const HelpPage = () => {
             <h5 className="help-section__card-title">
               <i className="bi bi-telephone help-section__card-icon" /> {t('common:common.HelpPage.t_775f0d23')}
             </h5>
-            <p className="help-section__card-text">{t('common:common.HelpPage.t_a9e37e4d')}</p>
-            <p className="help-section__card-text">{t('common:common.HelpPage.t_ee67c5d7')}</p>
+            {businessLandline ? (
+              <p className="help-section__card-text">{`• ${t('common:common.HelpPage.t_775f0d23')}: ${businessLandline}`}</p>
+            ) : null}
             <p className="help-section__card-text">{t('common:common.HelpPage.t_f5ad9f21')}</p>
           </div>
           
@@ -214,19 +239,21 @@ const HelpPage = () => {
             >
               <i className="bi bi-envelope" /> {t('common:common.HelpPage.t_b823d496')}
             </MGButton>
-            <MGButton
-              className={buildErpMgButtonClassName({
-                variant: 'outline',
-                size: 'md',
-                loading: false,
-                className: 'btn btn-outline-primary'
-              })}
-              loadingText={ERP_MG_BUTTON_LOADING_TEXT}
-              onClick={() => window.open('tel:1588-0000')}
-              variant="outline"
-            >
-              <i className="bi bi-telephone" /> {t('common:common.HelpPage.t_775f0d23')}
-            </MGButton>
+            {businessLandline ? (
+              <MGButton
+                className={buildErpMgButtonClassName({
+                  variant: 'outline',
+                  size: 'md',
+                  loading: false,
+                  className: 'btn btn-outline-primary'
+                })}
+                loadingText={ERP_MG_BUTTON_LOADING_TEXT}
+                onClick={() => window.open(`tel:${businessLandline.replace(/\s/g, '')}`)}
+                variant="outline"
+              >
+                <i className="bi bi-telephone" /> {t('common:common.HelpPage.t_775f0d23')}
+              </MGButton>
+            ) : null}
           </div>
         </div>
         </div>

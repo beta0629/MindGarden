@@ -168,8 +168,6 @@ export const AccountDeletionInstructionsContent = ({ omitHeading = false }) => {
                 {t('contact.emailValue')}
               </a>
             </dd>
-            <dt>{t('contact.responseHoursLabel')}</dt>
-            <dd>{t('contact.responseHoursValue')}</dd>
           </dl>
         </div>
       </div>

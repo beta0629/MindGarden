@@ -22,7 +22,7 @@ import {
   destroySctInvitation,
   fetchSctClientInvitations,
   fetchSctInvitation,
-  reissueSctLink
+  reissueSctInviteLink
 } from '../../../utils/sctApi';
 import SctPublicLinkCopy from './SctPublicLinkCopy';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
@@ -266,7 +266,7 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       preventDoubleClick={false}
                       onClick={async() => {
                         try {
-                          const refreshed = await reissueSctLink(row.id);
+                          const refreshed = await reissueSctInviteLink(row.id);
                           if (refreshed?.publicUrl) {
                             setReissuedUrl(refreshed.publicUrl);
                             notificationManager.success(SCT_UI.REISSUE_SUCCESS);

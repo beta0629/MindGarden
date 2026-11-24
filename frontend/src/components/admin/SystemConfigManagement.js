@@ -498,7 +498,7 @@ const SystemConfigManagement = () => {
           loading={schedulerLoading}
         />
 
-        {/* 질문지(SCT) — feature.sct.enabled ON일 때만 섹션 표시 */}
+        {/* 질문지(SCT) — feature OFF여도 섹션 렌더(ADMIN 토글로 ON 가능) */}
         <AdminSctSettingsSection />
 
         {/* 세션 보안 — 테넌트별 중복 로그인 허용 */}

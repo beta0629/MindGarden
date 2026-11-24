@@ -168,12 +168,20 @@
 
 .mg-v2-sct-unlinked__row {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
   gap: var(--mg-v2-space-2);
   padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   font-size: var(--mg-v2-font-size-body-md);
+  min-width: 0;
+  align-items: start;
+}
+
+.mg-v2-sct-unlinked__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
   min-width: 0;
 }
 

@@ -29,4 +29,8 @@ public class SctSettingsUpdateRequest {
      * null 보관(자동 파기 없음)은 더 이상 허용하지 않음.
      */
     private Boolean clearRetention;
+    /**
+     * SCT 기능 플래그(feature.sct.enabled). null 이면 변경하지 않음.
+     */
+    private Boolean featureEnabled;
 }

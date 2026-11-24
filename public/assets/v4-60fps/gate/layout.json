@@ -1,0 +1,106 @@
+{
+ "scene": "gate",
+ "created": "2026-11-20 KST",
+ "source_of_truth": {
+  "component": "components/home/v37/GateScene.tsx @38d4fa8",
+  "pixels": "motion/webexport/export_gate.py gate_layers() (shadow under body) sampled every 1/60 s (walk_f step 0.5), then a 22-frame tail crossfade (w = smoothstep((j/2)/11)) into the approved static gate3d body+shadow composite"
+ },
+ "display": "one video per breakpoint, position absolute over the gate body layer box (page CSS px below), object-fit: fill (mod-16 resample undone on screen)",
+ "section_bg": "#EAE2D2 (sand)",
+ "decode": "stacked alpha: top = premultiplied RGB, bottom = alpha; a = clamp((A-.006)/.988,0,1) * uvEdge(smoothstep(0,.015)), rgb = min(rgb,a)",
+ "play": "scroll-scrub: progress 0 = closed (frame 0), progress 1 = open (last frame); hold end frames; reverse on scroll up. Cache-bust ?v=scrub1. Encode: High@L4.2 yuv420p bt709 60fps CRF 18 GOP 4 bframes=0 ref=4.",
+ "posters": {
+  "poster": "gate-<k>-poster.webp = decoded frame 0 (walk f196, door closed), webp q90 alpha_quality 100",
+  "end_poster": "gate-<k>-end-poster.webp = decoded last frame (static gate)"
+ },
+ "bp": {
+  "1440": {
+   "k": "d",
+   "file": "gate-d-stack.mp4",
+   "video_px": [
+    1024,
+    1008
+   ],
+   "stacked_px": [
+    1024,
+    2016
+   ],
+   "box_css_page": {
+    "x": 737.7501541654052,
+    "y": 1903.6764350894828,
+    "w": 533.1856298751181,
+    "h": 522.7739885928702
+   },
+   "frames": 119,
+   "fps": 60,
+   "duration_s": 1.9833,
+   "door_frames": {
+    "count": 97,
+    "walk_f": [
+     196.0,
+     244.0
+    ]
+   },
+   "tail_crossfade_frames": 22,
+   "ffprobe": {
+    "profile": "High",
+    "width": 1024,
+    "height": 2016,
+    "level": 42,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "r_frame_rate": "60/1",
+    "nb_frames": "119",
+    "duration": "1.983333",
+    "bytes": 1854329,
+    "x264": "ref=4 keyint=4 crf=18.0 bframes=0"
+   }
+  },
+  "390": {
+   "k": "m",
+   "file": "gate-m-stack.mp4",
+   "video_px": [
+    736,
+    720
+   ],
+   "stacked_px": [
+    736,
+    1440
+   ],
+   "box_css_page": {
+    "x": 22.06226716130294,
+    "y": 1597.8985449798638,
+    "w": 363.14264521224266,
+    "h": 356.0514733119008
+   },
+   "frames": 101,
+   "fps": 60,
+   "duration_s": 1.6833,
+   "door_frames": {
+    "count": 79,
+    "walk_f": [
+     196.0,
+     235.0
+    ]
+   },
+   "tail_crossfade_frames": 22,
+   "ffprobe": {
+    "profile": "High",
+    "width": 736,
+    "height": 1440,
+    "level": 42,
+    "color_range": "tv",
+    "color_space": "bt709",
+    "color_transfer": "bt709",
+    "color_primaries": "bt709",
+    "r_frame_rate": "60/1",
+    "nb_frames": "101",
+    "duration": "1.683333",
+    "bytes": 973543,
+    "x264": "ref=4 keyint=4 crf=18.0 bframes=0"
+   }
+  }
+ }
+}

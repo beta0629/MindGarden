@@ -31,12 +31,52 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // CDN-friendly HTML for the homepage (ISR revalidate=300).
+    // Safe with Cloudflare OpenNext — s-maxage + SWR, no immutable.
+    const htmlCache = {
+      source: '/',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, s-maxage=300, stale-while-revalidate=600',
+        },
+        // Hero mp4 preload lives in app/layout.tsx <link media=...> only.
+        // Chromium ignores prefers-reduced-motion on HTTP Link, which leaked
+        // a full hero fetch under reduced-motion.
+      ],
+    };
+
+    // Stable hashed filenames under v4-60fps — long-lived immutable cache.
+    const v4AssetCache = {
+      source: '/assets/v4-60fps/:path*',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    };
+
+    // Versioned hero boot script (public/hero-boot-v4.js) — same as _headers.
+    const heroBootCache = {
+      source: '/hero-boot-v4.js',
+      headers: [
+        {
+          key: 'Cache-Control',
+          value: 'public, max-age=31536000, immutable',
+        },
+      ],
+    };
+
     // Staging (and any non-indexable build) must send X-Robots-Tag.
     // Production sets NEXT_PUBLIC_SITE_INDEXABLE=true and skips this header.
     if (process.env.NEXT_PUBLIC_SITE_INDEXABLE === 'true') {
-      return [];
+      return [htmlCache, v4AssetCache, heroBootCache];
     }
     return [
+      htmlCache,
+      v4AssetCache,
+      heroBootCache,
       {
         source: '/:path*',
         headers: [

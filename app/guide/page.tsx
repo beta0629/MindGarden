@@ -10,10 +10,11 @@ import {
   getActiveEventProduct,
   resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
-import { guideCopy } from '@/lib/content/subpages';
+import { guideCopy, publicBookingPolicyText, publicBookingPolicyTitle } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { SitePhones } from '@/components/ui/SitePhones';
 import { BusinessHours } from '@/components/ui/BusinessHours';
 
 export const revalidate = 300;
@@ -87,9 +88,15 @@ export default async function GuidePage() {
           <h2 className="section__title">운영 시간</h2>
           <p><BusinessHours /></p>
           <p>
-            대표번호{' '}
-            <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+            <SitePhones label="상담문의:" />
           </p>
+        </div>
+      </section>
+
+      <section className="section" id="booking-policy">
+        <div className="container">
+          <h2 className="section__title">{publicBookingPolicyTitle}</h2>
+          <div className="prose policy-copy">{publicBookingPolicyText}</div>
         </div>
       </section>
 
@@ -142,7 +149,7 @@ export default async function GuidePage() {
               body={guideCopy.offEventLine}
             >
               <p>
-                <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+                <SitePhones label="상담문의:" />
                 {' · '}
                 <a
                   className="text-link"

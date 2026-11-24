@@ -1,0 +1,231 @@
+{
+ "scene": "booking",
+ "created": "2026-11-20 KST",
+ "source_of_truth": {
+  "component": "components/home/v37/BookingScene.tsx @38d4fa8 (verify-aa41, read-only)",
+  "pixels": "motion/webexport/export_booking.py (verbatim: bf_pair shadow, flowers + flower-shadow layers, place2x, clip_rows2x, shadow k=1.08-0.08g) evaluated at t = 470 + i/2 using fix10b_bf_curve BFC.body(t) * BSC*K10B",
+  "renders": "integer frames = approved /tmp/v37m/f10b/bf (+hov/fr); half frames = booking/tools/render_bf60.py (= arrival_butterfly_v37_fix10b.py, ROOTZ -40, body 100% 32spp, bshadow 16spp, motion blur wings only, shutter 0.5 @30fps, subframe .5); new hover angles = bf_angles_v37_fix10b.py (no mblur)"
+ },
+ "display": {
+  "position": "absolute inside the existing place box; object-fit: fill; decode shader = hero/gate/bench (top premult RGB, bottom alpha, a=clamp((A-.006)/.988)*uvEdge(smoothstep(0,.015)), rgb=min(rgb,a))",
+  "section_bg": "#EAE2D2 (sand)"
+ },
+ "boxes": {
+  "1440": {
+   "place_box_css": {
+    "page_x": 610.0,
+    "page_y": 6666.0,
+    "w": 291.0,
+    "h": 217.0,
+    "x_from_section_left": 610.0,
+    "y_from_section_top": 268.0
+   },
+   "video_box_css_relative_to_place": {
+    "x": 0.0,
+    "y": -8.0,
+    "w": 291.0,
+    "h": 225.0
+   },
+   "video_px": [
+    592,
+    464
+   ],
+   "stacked_px": [
+    592,
+    928
+   ],
+   "css_ratio_check": "291/217 = 1.3410; video 592/464 = 1.2759 vs box 1.2933 (object-fit: fill undoes the mod-16 resample)",
+   "crop2x": [
+    78,
+    42,
+    582,
+    450
+   ],
+   "feather_alpha_loss_max": 0.00999,
+   "clip_line": null
+  },
+  "390": {
+   "place_box_css": {
+    "page_x": 158.0,
+    "page_y": 6048.0,
+    "w": 195.0,
+    "h": 113.0,
+    "x_from_section_left": 158.0,
+    "y_from_section_top": 220.0
+   },
+   "video_box_css_relative_to_place": {
+    "x": 0.0,
+    "y": 0.0,
+    "w": 195.0,
+    "h": 113.0
+   },
+   "video_px": [
+    400,
+    224
+   ],
+   "stacked_px": [
+    400,
+    448
+   ],
+   "css_ratio_check": "195/113 = 1.7257; video 400/224 = 1.7857 vs box 1.7257 (object-fit: fill undoes the mod-16 resample)",
+   "crop2x": [
+    78,
+    46,
+    390,
+    226
+   ],
+   "feather_alpha_loss_max": 0.00744,
+   "clip_line": {
+    "page_y": 6159.128774680605,
+    "rule": "390 only: butterfly+shadow rows below CLIPY = button top + 3 px are cleared (export_booking clip_rows2x, baked in video); shadow line = button top",
+    "button_top": 6156.128774680605,
+    "y_in_video_px": 220.29
+   }
+  }
+ },
+ "deviations": [
+  "1440 video is 592x464 (not 592x448): the video box extends 8 CSS px ABOVE the place box (top:-8px, height:225px). Wing tip at f488 touched the box top and the 1.5% uv-edge feather cut it by up to 9.5% alpha; with TOPPAD max loss 1.0%. 390 unchanged 400x224.",
+  "hover angle range is 85 -> 73 deg (BookingScene hoverTheta = 85 - 6*smoothstep(tau/0.3)*(1-cos(2*pi*tau/1.6))), not 30+-6."
+ ],
+ "clips": {
+  "landing": {
+   "file": "booking-<k>-landing-stack.mp4",
+   "frames": 77,
+   "fps": 60,
+   "t": "f470..f508 step 0.5 (30fps frame numbers)",
+   "first_frame": "fully transparent (op = cosi(0,1,(t-470)/5))",
+   "play": "once; on `ended` swap to breathe (src frame 76 = f508 == breathe frame 0 = f509 pose, source delta 0.012/255 mean)"
+  },
+  "breathe": {
+   "file": "booking-<k>-breathe-stack.mp4",
+   "frames": 132,
+   "duration_s": 2.2,
+   "loop": true,
+   "t": "ping-pong f509..f542..f509 (i<=66: 509+i/2, else 509+(132-i)/2) == breatheIndexAt linear ping-pong over 34 atlas frames, period 2.2s"
+  },
+  "hover": {
+   "file": "booking-<k>-hover-stack.mp4",
+   "frames": 96,
+   "duration_s": 1.6,
+   "loop": true,
+   "angle": "theta_i = 85 - 6*(1-cos(2*pi*i/96)) deg (frame 0 = 85 rest pose, frame 48 = 73)",
+   "integration": "desktop only (hover:hover). 38d4 entry ramp (smoothstep 0.3s) and leave (hold then 600ms ease back) -> CSS opacity crossfade 300ms breathe<->hover; hover frame 0 vs breathe frame 0 source delta 0.012/255, so starting hover at currentTime 0 is seamless only when breathe is near frame 0/131; otherwise crossfade."
+  }
+ },
+ "posters": {
+  "poster": {
+   "file": "booking-<k>-poster.webp",
+   "frame": "decoded landing frame 10 = f475 = BOOKING_MOTION_HOLD_FRAME 5 @30fps (same frame as live booking-poster-motion-<bp>.webp)",
+   "webp": "q90 alpha_quality 100, shader-math unpack",
+   "integration": "if poster is shown before play, start landing at currentTime = 10/60 s; if not, play from 0 (transparent fade-in)"
+  },
+  "end_poster": {
+   "file": "booking-<k>-end-poster.webp",
+   "frame": "decoded landing frame 76 = f508 (= breathe frame 0); reduced-motion / idle-freeze still"
+  },
+  "psnr_vs_live_motion_poster_dB": {
+   "1440": 40.04,
+   "390": 40.01
+  }
+ },
+ "timing_notes": "trigger/visibility rules unchanged from BookingScene (IntersectionObserver start, idle freeze after landing -> show end-poster or pause breathe at frame 0).",
+ "encoding": "High@L4.2, ref=4 explicit, bt709 primaries/transfer/matrix tv-range in SPS VUI and container, +faststart. CRF: landing 14, breathe/hover 16. Seam frames pinned with x264 zones q=12 (q=14 taper before) so loop/swap boundaries carry the same low noise.",
+ "ffprobe": {
+  "booking-d-breathe-stack.mp4": {
+   "profile": "High",
+   "width": 592,
+   "height": 928,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "132",
+   "duration": "2.200000",
+   "bytes": 242257,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=16.0 zones=0,2,q=12/3,5,q=14/126,128,q=14/129,131,q=12"
+  },
+  "booking-d-hover-stack.mp4": {
+   "profile": "High",
+   "width": 592,
+   "height": 928,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "96",
+   "duration": "1.600000",
+   "bytes": 203770,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=16.0 zones=0,1,q=12/2,3,q=14/92,93,q=14/94,95,q=12"
+  },
+  "booking-d-landing-stack.mp4": {
+   "profile": "High",
+   "width": 592,
+   "height": 928,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "77",
+   "duration": "1.283333",
+   "bytes": 586137,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=14.0 zones=68,71,q=14/72,76,q=12"
+  },
+  "booking-m-breathe-stack.mp4": {
+   "profile": "High",
+   "width": 400,
+   "height": 448,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "132",
+   "duration": "2.200000",
+   "bytes": 137722,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=16.0 zones=0,2,q=12/3,5,q=14/126,128,q=14/129,131,q=12"
+  },
+  "booking-m-hover-stack.mp4": {
+   "profile": "High",
+   "width": 400,
+   "height": 448,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "96",
+   "duration": "1.600000",
+   "bytes": 111219,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=16.0 zones=0,1,q=12/2,3,q=14/92,93,q=14/94,95,q=12"
+  },
+  "booking-m-landing-stack.mp4": {
+   "profile": "High",
+   "width": 400,
+   "height": 448,
+   "pix_fmt": "yuv420p",
+   "level": 42,
+   "color_range": "tv",
+   "color_space": "bt709",
+   "color_transfer": "bt709",
+   "color_primaries": "bt709",
+   "r_frame_rate": "60/1",
+   "nb_read_frames": "77",
+   "duration": "1.283333",
+   "bytes": 303470,
+   "x264": "ref=4 bframes=2 keyint=600 preset=veryslow +faststart; crf=14.0 zones=68,71,q=14/72,76,q=12"
+  }
+ }
+}

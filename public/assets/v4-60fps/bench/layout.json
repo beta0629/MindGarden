@@ -1,0 +1,258 @@
+{
+ "scene": "bench",
+ "created": "2026-11-20 KST",
+ "source_of_truth": {
+  "component": "components/home/v37/BenchScene.tsx @38d4fa8 (computePad + draw order: shadow -> back butterflies -> body -> perch shadow -> front butterflies)",
+  "pixels": "motion/webexport/export_bench.py amb2x + perch-shadow ellipse (verbatim, 2x) evaluated at f = 337 + i/2 from motion/fix10b_bench.state(); layer rule = motion/build_motion_fix10b.py draw_amb",
+  "sprites": "/tmp/v37m/f10b/amb (132 approved, used) + bench/sprites/amb60 (73 new pairs, blender/amb_sprites_v37_fix10b.py ROOTZ -40, pct 40, 24spp; reproduces approved sprites bit-exact)"
+ },
+ "z_order": [
+  "bench-shadow-<bp>.webp (static, settles)",
+  "bench-<k>-back-stack.mp4 (video)",
+  "bench-body-<bp>.webp (static, settles)",
+  "bench-<k>-front-stack.mp4 (video)"
+ ],
+ "z_order_note": "1:1 with BenchScene: back butterflies sit above the ground shadow but under the body. If the static bench is shipped as ONE merged image, put back video under it (back butterflies are then also under the ground shadow - small look change).",
+ "display": "both videos: position absolute, same box, object-fit: fill (mod-16 non-uniform resample undone on screen); NOT inside the settle transform wrapper (track positions are page coords, not moved by the bench rise)",
+ "decode": "stacked alpha: top = premultiplied RGB, bottom = alpha; shader a = clamp((A-.006)/.988) * uvEdge(smoothstep(0,.015)), rgb = min(rgb, a)",
+ "timing": {
+  "walk_fps": 30,
+  "trigger_walk_f": 320,
+  "video_starts_walk_f": 337,
+  "start_after_trigger_s": 0.5667,
+  "frames": 189,
+  "fps": 60,
+  "duration_s": 3.15,
+  "play": "scroll-scrub both layers together; progress maps to 0..2.8s (last fully-opaque frame at walk f421). Do not scrub the 2.8–3.15s end fade (last frame is fully transparent). Reverse on scroll up; never hide. Cache-bust ?v=scrub1. Encode: High@L4.2 yuv420p bt709 60fps CRF 18 GOP 4 bframes=0 ref=4."
+ },
+ "first_frame": "f337: butterflies already visible at their entry positions (alpha 255) - same as 38d4 where ambient appears at f337; nothing is drawn before f337",
+ "last_frame": "f431: max alpha 0 in both layers",
+ "end_fade": {
+  "walk_f": [
+   421,
+   431
+  ],
+  "curve": "opacity 1 - smoothstep",
+  "note": "DEVIATION from fix10b: the generator keeps all butterflies inside the overflow box at f431 (the box is defined by the f431 positions), so an empty last frame needs a fade. 38d4 instead freezes the f431 pose (trackSample holds the last point). Set FADE0 env in prep_bench.py to change/remove."
+ },
+ "mirror": "B1 mirrored ONCE (== approved fix10b composite). NOTE: 38d4 drawButterflies() mirrors the already-mirrored export cell again, so staging shows B1 un-mirrored; the video follows the approved look.",
+ "reduced_motion": "no video; bench-poster-rm-<bp>.webp only (unchanged)",
+ "bp": {
+  "1440": {
+   "k": "d",
+   "videos": {
+    "back": {
+     "file": "bench-d-back-stack.mp4",
+     "bytes": 378021,
+     "stacked": [
+      1104,
+      1984
+     ],
+     "level": 42,
+     "frames": 189
+    },
+    "front": {
+     "file": "bench-d-front-stack.mp4",
+     "bytes": 294406,
+     "stacked": [
+      1104,
+      1984
+     ],
+     "level": 42,
+     "frames": 189
+    }
+   },
+   "target_px": [
+    1104,
+    992
+   ],
+   "place_box_css": {
+    "w": 404.8573877074131,
+    "h": 350.33388021716854
+   },
+   "overflow_box_css": {
+    "x": -144.065,
+    "y": -452.571,
+    "w": 895.085,
+    "h": 806.9048802171685,
+    "note": "relative to the bench place box top-left; = BenchScene computePad (+4px safety pad)"
+   },
+   "pad_css": {
+    "left": 144.065,
+    "top": 452.571,
+    "right": 346.16261229258686,
+    "bottom": 4
+   },
+   "pad_over_place_w": {
+    "left": 0.35584,
+    "top": 1.11785,
+    "right": 0.85502,
+    "bottom": 0.00988,
+    "css_vars_check": {
+     "--bench-pad-r-ratio": 0.85502,
+     "--bench-pad-t-over-w": 1.11785,
+     "--bench-pad-b-over-w": 0.00988
+    }
+   },
+   "css_scale_rule": "scale = displayed place width / place_box_css.w; video left = -pad.left*scale, top = -pad.top*scale (same as layoutOverflowCanvas), width = overflow w*scale, height = overflow h*scale",
+   "butterflies": [
+    "B1",
+    "B2",
+    "B3"
+   ],
+   "b3_included": true,
+   "layer_segments": {
+    "B1": [
+     {
+      "layer": "front",
+      "walk_f": [
+       337.0,
+       431.0
+      ]
+     }
+    ],
+    "B2": [
+     {
+      "layer": "back",
+      "walk_f": [
+       337.0,
+       365.5
+      ]
+     },
+     {
+      "layer": "front",
+      "walk_f": [
+       366.0,
+       395.5
+      ]
+     },
+     {
+      "layer": "back",
+      "walk_f": [
+       396.0,
+       431.0
+      ]
+     }
+    ],
+    "B3": [
+     {
+      "layer": "back",
+      "walk_f": [
+       337.0,
+       431.0
+      ]
+     }
+    ]
+   },
+   "perch_shadow_walk_f": [
+    366.0,
+    395.5
+   ],
+   "max_clip_fraction": 0.0,
+   "edge_feather_alpha_loss_max": 0.0
+  },
+  "390": {
+   "k": "m",
+   "videos": {
+    "back": {
+     "file": "bench-m-back-stack.mp4",
+     "bytes": 183774,
+     "stacked": [
+      1248,
+      1568
+     ],
+     "level": 42,
+     "frames": 189
+    },
+    "front": {
+     "file": "bench-m-front-stack.mp4",
+     "bytes": 290404,
+     "stacked": [
+      1248,
+      1568
+     ],
+     "level": 42,
+     "frames": 189
+    }
+   },
+   "target_px": [
+    1248,
+    784
+   ],
+   "place_box_css": {
+    "w": 223.36959321788316,
+    "h": 193.28765805085166
+   },
+   "overflow_box_css": {
+    "x": -219.679,
+    "y": -202.662,
+    "w": 630.839,
+    "h": 399.94965805085167,
+    "note": "relative to the bench place box top-left; = BenchScene computePad (+4px safety pad)"
+   },
+   "pad_css": {
+    "left": 219.679,
+    "top": 202.662,
+    "right": 187.79040678211686,
+    "bottom": 4
+   },
+   "pad_over_place_w": {
+    "left": 0.98348,
+    "top": 0.90729,
+    "right": 0.84072,
+    "bottom": 0.01791,
+    "css_vars_check": {
+     "--bench-pad-r-ratio": 0.84072,
+     "--bench-pad-t-over-w": 0.90729,
+     "--bench-pad-b-over-w": 0.01791
+    }
+   },
+   "css_scale_rule": "scale = displayed place width / place_box_css.w; video left = -pad.left*scale, top = -pad.top*scale (same as layoutOverflowCanvas), width = overflow w*scale, height = overflow h*scale",
+   "butterflies": [
+    "B1",
+    "B2"
+   ],
+   "b3_included": false,
+   "layer_segments": {
+    "B1": [
+     {
+      "layer": "front",
+      "walk_f": [
+       337.0,
+       431.0
+      ]
+     }
+    ],
+    "B2": [
+     {
+      "layer": "back",
+      "walk_f": [
+       337.0,
+       365.5
+      ]
+     },
+     {
+      "layer": "front",
+      "walk_f": [
+       366.0,
+       395.5
+      ]
+     },
+     {
+      "layer": "back",
+      "walk_f": [
+       396.0,
+       431.0
+      ]
+     }
+    ]
+   },
+   "perch_shadow_walk_f": [
+    366.0,
+    395.5
+   ],
+   "max_clip_fraction": 0.0,
+   "edge_feather_alpha_loss_max": 0.0
+  }
+ }
+}

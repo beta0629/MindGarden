@@ -1,41 +1,55 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { PackId } from './types';
 
 const MQ = '(min-width: 768px)';
+const REDUCED_MOTION_MQ = '(prefers-reduced-motion: reduce)';
 
 function packFromMatch(matches: boolean): PackId {
   return matches ? '1440' : '390';
 }
 
+function subscribePack(onChange: () => void) {
+  const mql = window.matchMedia(MQ);
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
+}
+
+function getPackSnapshot(): PackId {
+  return packFromMatch(window.matchMedia(MQ).matches);
+}
+
+function getPackServerSnapshot(): PackId {
+  return '390';
+}
+
 /**
  * width ≥768 → '1440' asset pack; &lt;768 → '390'.
+ * Client snapshot is live matchMedia from the first client render (useSyncExternalStore).
  */
 export function useBreakpointPack(): PackId {
-  const [pack, setPack] = useState<PackId>('390');
+  return useSyncExternalStore(subscribePack, getPackSnapshot, getPackServerSnapshot);
+}
 
-  useEffect(() => {
-    const mql = window.matchMedia(MQ);
-    const apply = () => setPack(packFromMatch(mql.matches));
-    apply();
-    mql.addEventListener('change', apply);
-    return () => mql.removeEventListener('change', apply);
-  }, []);
+function subscribeReducedMotion(onChange: () => void) {
+  const mql = window.matchMedia(REDUCED_MOTION_MQ);
+  mql.addEventListener('change', onChange);
+  return () => mql.removeEventListener('change', onChange);
+}
 
-  return pack;
+function getReducedMotionSnapshot(): boolean {
+  return window.matchMedia(REDUCED_MOTION_MQ).matches;
+}
+
+function getReducedMotionServerSnapshot(): boolean {
+  return false;
 }
 
 export function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(false);
-
-  useEffect(() => {
-    const mql = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = () => setReduced(mql.matches);
-    apply();
-    mql.addEventListener('change', apply);
-    return () => mql.removeEventListener('change', apply);
-  }, []);
-
-  return reduced;
+  return useSyncExternalStore(
+    subscribeReducedMotion,
+    getReducedMotionSnapshot,
+    getReducedMotionServerSnapshot,
+  );
 }

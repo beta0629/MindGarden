@@ -8,6 +8,7 @@ import {
 import type { ConsultationProduct } from '@/lib/clinic-os/types';
 import { formatWon } from '@/lib/format';
 import { SITE } from '@/lib/site';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 type ProductPriceListProps = {
   products: ConsultationProduct[];
@@ -42,7 +43,7 @@ export function ProductPriceList({ products, lead }: ProductPriceListProps) {
         body="대표전화 또는 네이버 플레이스 예약에서 확인해 주세요."
       >
         <p>
-          <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+          <SitePhones label="상담문의:" />
           {' · '}
           <a
             className="text-link"

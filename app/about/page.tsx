@@ -7,6 +7,7 @@ import { aboutCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { BusinessHours } from '@/components/ui/BusinessHours';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 export const metadata = buildMetadata({
   title: '센터 소개',
@@ -154,7 +155,7 @@ export default function AboutPage() {
             </Link>
           </p>
           <p>
-            <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+            <SitePhones label="상담문의:" />
           </p>
           <p className="muted"><BusinessHours /></p>
         </div>

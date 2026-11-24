@@ -1,12 +1,16 @@
-'use client';
-
-import Link from 'next/link';
 import { BookingCta } from '@/components/ui/BookingCta';
 import { homeCopy } from '@/lib/content/home';
-import { HeroMedia } from './HeroMedia';
+import { HomeBootInline } from './HomeBootInline';
+import { HeroPoster } from './HeroPoster';
+import { HeroMediaLazy } from './HeroMediaLazy';
+import { HeroVideoInline } from './HeroVideoInline';
+import { FirstVisitLoader } from './FirstVisitLoader';
 
 /**
  * Above-the-fold: no data-reveal (reveal boot must not touch LCP media).
+ * Video + early canvas live in dangerouslySetInnerHTML slots; head
+ * beforeInteractive boot (HeroVideoBootHead) sets src + WebGL without CSS block.
+ * Plain &lt;a&gt; for secondary CTA — avoids App Router client on LCP path.
  */
 export function HeroSection() {
   return (
@@ -20,13 +24,31 @@ export function HeroSection() {
         <p className="hero__subtitle">{homeCopy.hero.subtitle}</p>
         <div className="hero__actions">
           <BookingCta label={homeCopy.hero.primaryCta} />
-          <Link className="text-link hero__secondary" href={homeCopy.hero.secondaryHref}>
+          <a className="text-link hero__secondary" href={homeCopy.hero.secondaryHref}>
             {homeCopy.hero.secondaryCta}
             <span aria-hidden="true"> →</span>
-          </Link>
+          </a>
         </div>
       </div>
-      <HeroMedia />
+      <div className="hero-media">
+        <div className="hero-media__stage">
+          <HeroPoster />
+          <div
+            className="hero-early-root"
+            aria-hidden="true"
+            suppressHydrationWarning
+            dangerouslySetInnerHTML={{
+              __html:
+                '<canvas class="hero-early-canvas v37-scene__canvas" data-ready="0" aria-hidden="true"></canvas>',
+            }}
+          />
+        </div>
+        {/* Non-Chromium: start the hero mp4 on poster load (see HeroVideoInline). */}
+        <HeroVideoInline />
+        <HeroMediaLazy />
+      </div>
+      <HomeBootInline />
+      <FirstVisitLoader />
     </section>
   );
 }

@@ -1,11 +1,13 @@
-import Link from 'next/link';
-
 type BrandLockupProps = {
   href?: string;
   compact?: boolean;
   onNavigate?: () => void;
 };
 
+/**
+ * Brand mark + name. Plain &lt;a&gt; (not next/link) so the App Router client
+ * chunk is not pulled into first paint on marketing pages.
+ */
 export function BrandLockup({
   href = '/',
   compact = false,
@@ -20,6 +22,7 @@ export function BrandLockup({
         width={40}
         height={40}
         decoding="async"
+        fetchPriority="low"
       />
       <span className="brand__text">
         <span className="brand__name">마인드가든</span>
@@ -31,8 +34,8 @@ export function BrandLockup({
   );
 
   return (
-    <Link className="brand" href={href} onClick={onNavigate}>
+    <a className="brand" href={href} onClick={onNavigate}>
       {inner}
-    </Link>
+    </a>
   );
 }

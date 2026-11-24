@@ -18,6 +18,7 @@ import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
 import com.coresolution.consultation.sct.service.SctDomainMemoService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final AuditLogService auditLogService;
     private final SctAccessLogService sctAccessLogService;
+    private final SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
 
     @Override
     @Transactional
@@ -151,16 +153,7 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
             return;
         }
         if (actor.getRole() == UserRole.STAFF) {
-            auditLogService.record(AuditLog.builder()
-                    .tenantId(tenantId)
-                    .actorUserId(actor.getId())
-                    .actorRole(actor.getRole().name())
-                    .targetUserId(invitation.getClientId())
-                    .action(AuditAction.SCT_CLINICAL_ACCESS_DENIED)
-                    .entityType(SctConstants.ENTITY_TYPE_INVITATION)
-                    .entityId(invitation.getId())
-                    .metadataJson("{\"managementNo\":\"" + invitation.getManagementNo() + "\"}")
-                    .build());
+            clinicalAccessDeniedAuditWriter.record(tenantId, actor, invitation);
             throw new AccessDeniedException("권한이 없습니다.");
         }
         if (actor.getRole() == UserRole.CONSULTANT) {

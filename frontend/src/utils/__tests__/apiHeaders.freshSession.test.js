@@ -51,15 +51,27 @@ describe('hasFreshSessionTenant', () => {
 
 describe('getTenantId(forceRefresh)', () => {
   const originalManager = window.sessionManager;
+  const originalLocation = window.location;
+
+  const setPathname = (pathname) => {
+    delete window.location;
+    window.location = {
+      ...originalLocation,
+      pathname
+    };
+  };
 
   beforeEach(() => {
     jest.spyOn(Date, 'now').mockReturnValue(NOW);
     jest.spyOn(console, 'log').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+    // jsdom 기본 pathname '/' 는 공개 SPA — 인증 경로로 두고 강제 확인 분기를 검증한다.
+    setPathname('/admin/dashboard');
   });
 
   afterEach(() => {
     window.sessionManager = originalManager;
+    window.location = originalLocation;
     jest.restoreAllMocks();
   });
 
@@ -76,6 +88,14 @@ describe('getTenantId(forceRefresh)', () => {
     await getTenantId(true);
     expect(manager.checkSession).toHaveBeenCalledTimes(1);
     expect(manager.checkSession).toHaveBeenCalledWith(true);
+  });
+
+  test('공개 SPA 경로에서는 강제 확인을 하지 않는다', async() => {
+    setPathname('/public/sct/token-abc');
+    const manager = buildManager({ verifiedAt: NOW - API_HEADER_SESSION_FRESH_MS - 1 });
+    window.sessionManager = manager;
+    await getTenantId(true);
+    expect(manager.checkSession).not.toHaveBeenCalled();
   });
 
   test('forceRefresh=false 는 확인하지 않는다', async() => {

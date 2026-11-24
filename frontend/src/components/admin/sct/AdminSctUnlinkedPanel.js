@@ -116,12 +116,24 @@ const AdminSctUnlinkedPanel = () => {
                     >
                       {SCT_UI.REISSUE_LINK}
                     </MGButton>
-                    {publicUrl ? (
-                      <SctPublicLinkCopy
-                        publicUrl={publicUrl}
-                        className="mg-v2-sct-admin__reissue-link"
-                      />
-                    ) : null}
+                    <div
+                      className="mg-v2-sct-unlinked__copy"
+                      data-testid={`${SCT_TEST_ID.UNLINKED_COPY_AREA}-${row.id}`}
+                    >
+                      {publicUrl ? (
+                        <SctPublicLinkCopy
+                          publicUrl={publicUrl}
+                          className="mg-v2-sct-admin__reissue-link"
+                        />
+                      ) : (
+                        <p
+                          className={SCT_CSS.CAPTION}
+                          data-testid={`${SCT_TEST_ID.UNLINKED_COPY_HINT}-${row.id}`}
+                        >
+                          {SCT_UI.UNLINKED_COPY_HINT}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </li>

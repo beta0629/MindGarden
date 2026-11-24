@@ -66,9 +66,15 @@ test.describe('SCT public flow (mocked)', () => {
   test('meta → 동의 → 문항·임시저장 → 이어쓰기 → 제출 → 재접속 잠김', async({ page }) => {
     await hardenPublicPageNetwork(page);
     const commonCodes: string[] = [];
+    const currentUserHits: string[] = [];
     await page.route('**/api/v1/common-codes**', async(route) => {
       commonCodes.push(route.request().url());
       await route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true,"data":[]}' });
+    });
+    page.on('request', (req) => {
+      if (req.url().includes('/api/v1/auth/current-user')) {
+        currentUserHits.push(req.url());
+      }
     });
 
     await installSctPublicFullFlowMock(page);
@@ -77,9 +83,11 @@ test.describe('SCT public flow (mocked)', () => {
     await assertPanelVisible(page, 'sct-public-app');
     await assertNoHorizontalOverflow(page);
     expect(commonCodes.length, '공개 SCT 진입 직후 common-codes 호출 0').toBe(0);
+    expect(currentUserHits.length, '공개 SCT 진입 직후 current-user 호출 0').toBe(0);
     commonCodes.length = 0;
 
     await completeVerifyAndConsent(page);
+    expect(currentUserHits.length, 'verify→form 구간 current-user 호출 0').toBe(0);
 
     await page.locator('#sct-ans-1').fill('차분한');
     await page.getByRole('button', { name: '임시 저장' }).click();
@@ -101,5 +109,20 @@ test.describe('SCT public flow (mocked)', () => {
     await page.goto(PUBLIC_TOKEN_PATH, { waitUntil: 'commit', timeout: 60_000 });
     await expect(page.getByText('이미 제출한 질문지입니다')).toBeVisible({ timeout: 15000 });
     await assertNoHorizontalOverflow(page);
+    expect(currentUserHits.length, '전체 공개 흐름 current-user 호출 0').toBe(0);
+  });
+
+  test('rotated meta 410 → 만료 화면', async({ page }) => {
+    await hardenPublicPageNetwork(page);
+    await page.route('**/api/v1/public/sct/**/meta**', async(route) => {
+      await route.fulfill({
+        status: 410,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: false, message: '링크가 만료되었거나 취소되었습니다.' })
+      });
+    });
+    await page.goto('/public/sct/rotated-old-token', { waitUntil: 'commit', timeout: 60_000 });
+    await expect(page.getByText('작성 기한이 지났습니다', { exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('새 링크가 필요하면 센터에 문의해 주세요.')).toBeVisible();
   });
 });

@@ -29,4 +29,13 @@ describe('ShopCheckoutPage merchant legal footer', () => {
     expect(SOURCE).not.toMatch(/제\d{4}-서울-\d+호/);
     expect(SOURCE).not.toMatch(/mailOrderReportNumber:\s*['"][^'"]+['"]/);
   });
+
+  test('환불 요약은 헬퍼·MallCheckoutRefundNotice 를 쓰고 90000 리터럴이 없다', () => {
+    expect(SOURCE).toMatch(/buildCheckoutRefundDeductionLines/);
+    expect(SOURCE).toMatch(/resolveSingleSessionRegularPriceMinor/);
+    expect(SOURCE).toMatch(/MallCheckoutRefundNotice/);
+    expect(SOURCE).toMatch(/consultationPackages/);
+    expect(SOURCE).not.toMatch(/90000/);
+    expect(SOURCE).not.toMatch(/90,000/);
+  });
 });

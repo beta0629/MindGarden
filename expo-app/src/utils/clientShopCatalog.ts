@@ -35,6 +35,8 @@ export function normalizeCatalogSku(row: CatalogRowInput | null | undefined): Sh
   const unitPriceMinor = Number(row.unitPriceMinor);
   const currency = toDisplayString(row.currency, 'KRW').trim() || 'KRW';
   const descriptionText = toDisplayString(row.descriptionText, '').trim();
+  const sessionRaw = Number(row.sessionCount);
+  const sessionCount = Number.isFinite(sessionRaw) ? sessionRaw : undefined;
 
   return {
     skuCode,
@@ -46,6 +48,7 @@ export function normalizeCatalogSku(row: CatalogRowInput | null | undefined): Sh
       row.catalogCategory as string | undefined,
     ) as ShopCatalogCategory,
     thumbnailUrl: resolvedThumbnail ?? null,
+    sessionCount,
   };
 }
 

@@ -13,6 +13,19 @@ import { CLIENT_SHOP_ROUTES } from './clientShopConstants';
 /** 환불 안내 — 목록·상세·결제 전 확인이 공유하는 단일 문구 */
 export const CLIENT_REFUND_NOTICE = '환불 기준과 신청 방법은 센터 환불 규칙에 따라 안내해 드려요.';
 
+/**
+ * 결제 전 패키지 환불 차감 요약 — 구조화 템플릿 (금액 슬롯만 데이터).
+ * `{priceLabel}` = 포맷된 단회 정상가 또는 PRICE_LABEL_FALLBACK.
+ */
+export const CLIENT_CHECKOUT_REFUND_COPY = Object.freeze({
+  DEDUCTION_TEMPLATE:
+    '사용한 회기는 할인가가 아니라 {priceLabel}로 차감하고 남은 금액을 환불합니다.',
+  DEDUCTION_CAP: '차감액은 결제금액을 넘지 않습니다.',
+  PRICE_LABEL_FALLBACK: '정상가 기준',
+  FULL_POLICY_LINK: '환불 규정 전문 보기',
+  FIRST_SENTENCES_LIMIT: 2
+});
+
 /** §9 이용기간 안내 — 목록 배너·장바구니 */
 export const CLIENT_MALL_USAGE_BANNER =
   '이용기간 — 상품마다 정한 기간(예: 단회기는 결제일부터 2개월, 10회기는 3개월, 20회기는 6개월) 안에 사용해야 합니다. '

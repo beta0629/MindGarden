@@ -58,19 +58,29 @@ export function normalizeConsultationPackageRow(row) {
     }
   }
 
+  const extra = parseExtraData(row.extraData);
+
   let price = null;
   if (row.price !== undefined && row.price !== null && row.price !== '') {
     const n = Number(row.price);
     price = Number.isNaN(n) ? null : n;
   } else {
-    const extra = parseExtraData(row.extraData);
     price = extra.price;
+  }
+
+  let sessions = null;
+  if (row.sessions !== undefined && row.sessions !== null && row.sessions !== '') {
+    const n = Number(row.sessions);
+    sessions = Number.isNaN(n) ? null : n;
+  } else if (extra.sessions != null) {
+    sessions = extra.sessions;
   }
 
   return {
     name,
     description,
     price,
+    sessions,
     priceLabel: formatConsultationPackagePriceLabel(price)
   };
 }

@@ -32,7 +32,6 @@ import {
   CLIENT_MALL_MIN_AMOUNT_ERROR_MARKERS,
   CLIENT_MALL_TEST_IDS,
   CLIENT_MALL_THIRD_PARTY_BODY,
-  CLIENT_REFUND_NOTICE,
   buildClientMallProductUsageNotice
 } from '../../../constants/clientMallConstants';
 import {
@@ -51,6 +50,7 @@ import {
   CLIENT_WEB_SUITE_TEST_IDS
 } from '../../../constants/clientWebSuiteConstants';
 import { CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE } from '../../../constants/legalPublic';
+import MallCheckoutRefundNotice from '../../../components/shop/molecules/MallCheckoutRefundNotice';
 import {
   MIN_PAYMENT_AMOUNT,
   formatPaymentAmountForDisplay,
@@ -119,6 +119,10 @@ import {
 import { buildSettingsPathWithReturnTo } from '../../../utils/clientSettingsReturnTo';
 import { applyVerifiedPhoneToSession } from '../../../utils/clientPhoneVerifiedSession';
 import { fetchTenantPublicHomeMeta } from '../../../utils/tenantPublicHomeMeta';
+import {
+  buildCheckoutRefundDeductionLines,
+  resolveSingleSessionRegularPriceMinor
+} from '../../../utils/clientCheckoutRefundNotice';
 
 /** 테넌트 사업자·약관 푸터 빈 값(플레이스홀더) — API/settings 만 사용, 하드코딩 금지 */
 const EMPTY_MERCHANT_LEGAL = {
@@ -181,6 +185,7 @@ const ShopCheckoutPage = () => {
     centerName: '{센터명}',
     legal: EMPTY_MERCHANT_LEGAL
   });
+  const [consultationPackages, setConsultationPackages] = useState([]);
   const idempotencyStoreRef = useRef(null);
   if (idempotencyStoreRef.current == null) {
     idempotencyStoreRef.current = createShopCheckoutIdempotencyKeyStore();
@@ -205,10 +210,16 @@ const ShopCheckoutPage = () => {
           tenantName && String(tenantName).trim() ? String(tenantName).trim() : '{센터명}';
         const legal = meta?.tenant?.merchantLegal || EMPTY_MERCHANT_LEGAL;
         setMerchantLegalFooter({ centerName, legal });
+        setConsultationPackages(
+          Array.isArray(meta?.tenant?.consultationPackages)
+            ? meta.tenant.consultationPackages
+            : []
+        );
       } catch (err) {
         console.warn('체크아웃 사업자 푸터 메타 로드 실패:', err);
         if (!cancelled) {
           setMerchantLegalFooter({ centerName: '{센터명}', legal: EMPTY_MERCHANT_LEGAL });
+          setConsultationPackages([]);
         }
       }
     })();
@@ -216,6 +227,18 @@ const ShopCheckoutPage = () => {
       cancelled = true;
     };
   }, []);
+
+  const checkoutRefundNotice = useMemo(() => {
+    const regularPriceMinor = resolveSingleSessionRegularPriceMinor({
+      consultationPackages,
+      catalogSkus: catalog
+    });
+    return buildCheckoutRefundDeductionLines({
+      refundPolicyText: merchantLegalFooter.legal?.refundPolicyText,
+      regularPriceMinor,
+      formatWon: formatMallWon
+    });
+  }, [consultationPackages, catalog, merchantLegalFooter.legal?.refundPolicyText]);
 
   const buyNowLines = useMemo(
     () => (isBuyNow ? toBuyNowCheckoutLines({ skuCode: buyNowSku, quantity: buyNowQty }) : null),
@@ -594,7 +617,7 @@ const ShopCheckoutPage = () => {
         {usageBodies.map(({ line, months }) => (
           <p key={line.skuCode}>{buildClientMallProductUsageNotice(months)}</p>
         ))}
-        <p>{CLIENT_REFUND_NOTICE}</p>
+        <MallCheckoutRefundNotice lines={checkoutRefundNotice.lines} asList={false} />
       </>
     ),
     [CLIENT_MALL_AGREEMENT_KEYS.THIRD_PARTY]: <p>{CLIENT_MALL_THIRD_PARTY_BODY}</p>
@@ -768,9 +791,7 @@ const ShopCheckoutPage = () => {
             data-testid={CLIENT_MALL_TEST_IDS.CHECKOUT_REFUND}
           >
             <h2 className="client-mall-box__title">{CLIENT_MALL_CHECKOUT_COPY.REFUND_SECTION}</h2>
-            <ul className="client-mall-bullets">
-              <li>{CLIENT_REFUND_NOTICE}</li>
-            </ul>
+            <MallCheckoutRefundNotice lines={checkoutRefundNotice.lines} />
           </section>
 
           <div

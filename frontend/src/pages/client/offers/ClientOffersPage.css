@@ -57,8 +57,10 @@
 .client-offers__pay-row--total dt { color: var(--client-web-ink); font-weight: var(--mg-v2-font-weight-semibold); }
 .client-offers__pay-row--total dd { font-size: var(--mg-v2-font-size-h2); font-weight: var(--mg-v2-font-weight-bold); }
 .client-offers__pay-unit { font-size: var(--mg-v2-font-size-body-md); font-weight: var(--mg-v2-font-weight-semibold); margin-inline-start: var(--mg-v2-space-0-5); }
-.client-offers__pay-refund { display: flex; align-items: flex-start; gap: var(--mg-v2-space-2); margin: 0; color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); }
-.client-offers__pay-refund-link { display: inline; padding: 0; border: 0; background: transparent; color: var(--client-web-ink); font-size: inherit; font-weight: var(--mg-v2-font-weight-semibold); text-decoration: underline; cursor: pointer; }
+.client-offers__pay-refund { display: flex; align-items: flex-start; gap: var(--mg-v2-space-2); margin: 0; color: var(--cs-slate-700); font-size: var(--mg-v2-font-size-caption); min-inline-size: 0; }
+.client-offers__pay-refund-body { display: flex; flex-direction: column; gap: var(--mg-v2-space-1); min-inline-size: 0; flex: 1 1 auto; word-break: break-word; overflow-wrap: anywhere; }
+.client-offers__pay-refund-body .client-mall-bullets { padding-left: var(--mg-v2-space-4); color: inherit; font-size: inherit; }
+.client-offers__pay-refund-link { display: inline; padding: 0; border: 0; background: transparent; color: var(--client-web-ink); font-size: inherit; font-weight: var(--mg-v2-font-weight-semibold); text-decoration: underline; cursor: pointer; word-break: break-word; }
 .client-offers__pay-agree { display: flex; flex-direction: column; gap: var(--mg-v2-space-2); padding-block-start: var(--mg-v2-space-3); border-block-start: var(--mg-v2-border-width-thin) solid var(--client-web-line); }
 .client-offers__pay-agree-all,
 .client-offers__pay-agree-label { display: flex; align-items: center; gap: var(--mg-v2-space-2); min-block-size: var(--mg-v2-touch-target-min); }

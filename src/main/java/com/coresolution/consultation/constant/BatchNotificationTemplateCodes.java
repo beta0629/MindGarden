@@ -251,7 +251,11 @@ public final class BatchNotificationTemplateCodes {
     /** 변수 누락 시 fallback 내담자명. */
     public static final String FALLBACK_CLIENT_NAME = "고객";
 
-    /** 변수 누락 시 fallback 고객센터/대표 번호. {@link com.coresolution.consultation.config.BatchNotificationProperties#getContactPhone()} 이 빈 값일 때 사용. */
+    /**
+     * 변수 누락 시 fallback 고객센터/대표 번호.
+     * {@link com.coresolution.core.domain.Tenant#getBusinessLandline()} (merchant legal SSOT) 이
+     * 비어 있거나 테넌트를 조회하지 못할 때 사용.
+     */
     public static final String FALLBACK_CONTACT_PHONE = "고객센터";
 
     /** 변수 누락 시 fallback 지점 주소. */

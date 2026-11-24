@@ -9,7 +9,12 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import AdminSctSettingsSection from '../AdminSctSettingsSection';
 import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
-import { fetchSctSettings } from '../../../../utils/sctApi';
+import {
+  fetchSctSettings,
+  fetchSctUnlinkedInvitations,
+  reissueSctLink,
+  updateSctSettings
+} from '../../../../utils/sctApi';
 
 jest.mock('../../../../contexts/SessionContext', () => ({
   useSession: () => ({ user: { role: 'ADMIN' } })
@@ -18,7 +23,8 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctSettings: jest.fn(),
   updateSctSettings: jest.fn(),
-  fetchSctUnlinkedInvitations: jest.fn(() => Promise.resolve([]))
+  fetchSctUnlinkedInvitations: jest.fn(),
+  reissueSctLink: jest.fn()
 }));
 
 jest.mock('../../../../utils/notification', () => ({
@@ -33,6 +39,13 @@ describe('AdminSctSettingsSection feature OFF', () => {
       retentionDays: 365,
       featureEnabled: false
     });
+    updateSctSettings.mockResolvedValue({
+      linkExpiryDays: 14,
+      retentionDays: 365,
+      featureEnabled: false
+    });
+    fetchSctUnlinkedInvitations.mockResolvedValue([]);
+    reissueSctLink.mockResolvedValue({});
   });
 
   it('renders settings section when feature is disabled', async() => {

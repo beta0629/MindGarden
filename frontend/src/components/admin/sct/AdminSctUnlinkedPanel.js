@@ -48,7 +48,7 @@ const AdminSctUnlinkedPanel = () => {
     setLoading(true);
     try {
       const data = await fetchSctUnlinkedInvitations();
-      setRows(data);
+      setRows(Array.isArray(data) ? data : []);
     } catch (e) {
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),

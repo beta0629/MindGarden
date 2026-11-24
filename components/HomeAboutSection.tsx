@@ -118,7 +118,7 @@ export default function HomeAboutSection() {
         </p>
         <p>
           <strong>상담 문의:</strong>{' '}
-          <a href="tel:0327248501">032-724-8501</a> / <a href="tel:01079238501">010-7923-8501</a>
+          <a href="tel:0327248501">032-724-8501</a> / <a href="tel:01042858570">010-4285-8570</a>
         </p>
         <p>
           <strong>운영 시간:</strong> 평일 11:00 - 20:00 / 토 10:00 - 17:00 (시간 외 예약 협의 가능)

@@ -71,10 +71,13 @@ export default function Footer() {
             <p className="footer-simple__contact-line">
               <span className="footer-simple__label">상담문의:</span>{' '}
               <a href="tel:0327248501">032-724-8501</a> /{' '}
-              <a href="tel:01079238501">010-7923-8501</a>
+              <a href="tel:01042858570">010-4285-8570</a>
             </p>
             <p className="footer-simple__contact-line">
-              <span className="footer-simple__label">운영시간:</span> 주중 10:00 – 20:00 · 토요일 10:00 – 17:00 · 일요일 정기휴무
+              <span className="footer-simple__label">운영시간:</span> 주중 11:00 – 20:00 · 토요일 10:00 – 17:00 · 일요일 정기휴무
+            </p>
+            <p className="footer-simple__contact-line">
+              공휴일은 예약이 있을 때만 운영합니다.
             </p>
             <p className="footer-simple__contact-line">
               <span className="footer-simple__label">오시는 길:</span> 인천광역시 연수구 해돋이로120번길 23 아크리아2 2층 204호

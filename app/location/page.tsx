@@ -7,6 +7,7 @@ import { locationCopy } from '@/lib/content/subpages';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
 import { BusinessHours } from '@/components/ui/BusinessHours';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 export const metadata = buildMetadata({
   title: '오시는 길',
@@ -23,7 +24,7 @@ export default function LocationPage() {
         <p className="muted">{SITE.addressLandmark}</p>
         <p><BusinessHours /></p>
         <p>
-          <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+          <SitePhones label="상담문의:" />
         </p>
       </section>
 

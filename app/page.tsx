@@ -15,6 +15,7 @@ import { formatWon } from '@/lib/format';
 import { getLatestBlogPosts, getLatestVideos } from '@/lib/feeds';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 export const revalidate = 300;
 
@@ -449,7 +450,7 @@ export default async function HomePage() {
 
             <div className="home-booking__actions">
               <BookingCta label={homeCopy.booking.primaryCta} />
-              <a className="home-booking__phone" href={`tel:${SITE.phoneTel}`}>
+              <span className="home-booking__phone">
                 <img
                   src="/icons/contact-phone.svg"
                   alt=""
@@ -460,9 +461,9 @@ export default async function HomePage() {
                   fetchPriority="low"
                 />
                 <span>
-                  {homeCopy.booking.phoneLabel}: {SITE.phoneDisplay}
+                  {homeCopy.booking.phoneLabel}: <SitePhones />
                 </span>
-              </a>
+              </span>
               <p className="home-booking__contact-link">
                 <a className="text-link" href={homeCopy.booking.contactHref}>
                   {homeCopy.booking.contactLinkLabel}

@@ -13,6 +13,7 @@ import { eventCopy } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 export const revalidate = 300;
 
@@ -40,7 +41,7 @@ export default async function EventPage() {
             body={eventCopy.offBody}
           >
             <p>
-              <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+              <SitePhones label="상담문의:" />
               {' · '}
               <a
                 className="text-link"

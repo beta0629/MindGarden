@@ -3,6 +3,8 @@ export const SITE = {
   shortName: '마인드가든',
   phoneDisplay: '032-724-8501',
   phoneTel: '0327248501',
+  phoneMobileDisplay: '010-4285-8570',
+  phoneMobileTel: '01042858570',
   address: '인천 연수구 해돋이로120번길 23 아크리아2 2층 204호',
   addressLandmark: '해양경찰청 인근',
   hours: '주중 11:00–20:00 · 토요일 10:00–17:00 · 일요일 정기휴무',

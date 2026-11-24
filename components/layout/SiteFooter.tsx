@@ -1,6 +1,7 @@
 import { BrandLockup } from '@/components/brand/BrandLockup';
 import { SITE } from '@/lib/site';
 import { BusinessHours } from '@/components/ui/BusinessHours';
+import { SitePhones } from '@/components/ui/SitePhones';
 
 export function SiteFooter() {
   return (
@@ -11,7 +12,7 @@ export function SiteFooter() {
           <div className="site-footer__meta" style={{ marginTop: '0.75rem' }}>
             <span>대표 {SITE.representative}</span>
             <span>{SITE.address}</span>
-            <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
+            <span><SitePhones label="상담문의:" /></span>
             <span>
               <BusinessHours layout="stack" />
             </span>

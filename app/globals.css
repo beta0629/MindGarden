@@ -2665,12 +2665,12 @@ picture.v37-scene__poster > img {
 .home-booking__phone {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.45rem;
   min-height: 44px;
   text-decoration: none;
   font-weight: 600;
   color: var(--ink);
-  white-space: nowrap;
 }
 
 .home-booking__phone img {

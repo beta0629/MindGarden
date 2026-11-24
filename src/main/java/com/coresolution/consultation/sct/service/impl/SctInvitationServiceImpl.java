@@ -47,6 +47,7 @@ import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
 import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDenySupport;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctInvitationService;
@@ -147,7 +148,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 throw new AccessDeniedException("타 테넌트 내담자입니다.");
             }
             if (actor.getRole() == UserRole.CONSULTANT) {
-                ensureConsultantOwnsClient(tenantId, actor.getId(), clientId);
+                ensureConsultantOwnsClient(tenantId, actor, clientId);
                 consultantId = actor.getId();
             }
         } else if (actor.getRole() == UserRole.CONSULTANT) {
@@ -902,7 +903,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         if (actor.getRole() == UserRole.ADMIN || actor.getRole() == UserRole.STAFF) {
             return;
         }
-        ensureConsultantOwnsClient(tenantId, actor.getId(), clientId);
+        ensureConsultantOwnsClient(tenantId, actor, clientId);
     }
 
     private void ensureCanAccessInvitation(String tenantId, User actor, SctInvitation invitation) {
@@ -919,20 +920,21 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             return;
         }
         if (actor.getRole() == UserRole.STAFF) {
-            recordClinicalAccessDenied(tenantId, actor, invitation);
-            throw new AccessDeniedException("권한이 없습니다.");
+            SctClinicalAccessDenySupport.denyAndThrow(
+                    clinicalAccessDeniedAuditWriter,
+                    tenantId, actor, invitation, null,
+                    "권한이 없습니다.");
         }
         if (actor.getRole() == UserRole.CONSULTANT) {
             if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
-                throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
+                SctClinicalAccessDenySupport.denyAndThrow(
+                        clinicalAccessDeniedAuditWriter,
+                        tenantId, actor, invitation, null,
+                        "담당 건만 접근할 수 있습니다.");
             }
             return;
         }
         throw new AccessDeniedException("권한이 없습니다.");
-    }
-
-    private void recordClinicalAccessDenied(String tenantId, User actor, SctInvitation invitation) {
-        clinicalAccessDeniedAuditWriter.record(tenantId, actor, invitation);
     }
 
     /**
@@ -969,13 +971,16 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .isEmpty();
     }
 
-    private void ensureConsultantOwnsClient(String tenantId, Long consultantId, Long clientId) {
+    private void ensureConsultantOwnsClient(String tenantId, User actor, Long clientId) {
         boolean ok = !mappingRepository
                 .findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
-                        tenantId, consultantId, clientId)
+                        tenantId, actor.getId(), clientId)
                 .isEmpty();
         if (!ok) {
-            throw new AccessDeniedException("담당 내담자가 아닙니다.");
+            SctClinicalAccessDenySupport.denyAndThrow(
+                    clinicalAccessDeniedAuditWriter,
+                    tenantId, actor, null, clientId,
+                    "담당 내담자가 아닙니다.");
         }
     }
 

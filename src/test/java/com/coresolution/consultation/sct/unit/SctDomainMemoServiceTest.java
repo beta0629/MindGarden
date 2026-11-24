@@ -106,8 +106,24 @@ class SctDomainMemoServiceTest {
     }
 
     @Test
-    @DisplayName("비담당 CONSULTANT는 403")
-    void unassignedConsultant_denied() {
+    @DisplayName("비담당 CONSULTANT 목록 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
+    void unassignedConsultant_listDenied_withAudit() {
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
+                .thenReturn(Optional.of(invitation));
+        invitation.setConsultantId(8L);
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                "t1", 9L, 100L)).thenReturn(List.of());
+
+        assertThrows(AccessDeniedException.class, () ->
+                domainMemoService.list("t1", consultant, 55L, "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(consultant), eq(invitation));
+        verify(domainMemoRepository, never())
+                .findByTenantIdAndInvitationIdAndIsDeletedFalse(any(), any());
+    }
+
+    @Test
+    @DisplayName("비담당 CONSULTANT 저장 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
+    void unassignedConsultant_upsertDenied_withAudit() {
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
                 .thenReturn(Optional.of(invitation));
         invitation.setConsultantId(8L);
@@ -119,6 +135,7 @@ class SctDomainMemoServiceTest {
                         "t1", consultant, 55L, "AFFECT",
                         SctDomainMemoUpsertRequest.builder().memoText("메모").build(),
                         "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(consultant), eq(invitation));
         verify(domainMemoRepository, never()).save(any());
     }
 
@@ -186,5 +203,7 @@ class SctDomainMemoServiceTest {
         var listed = domainMemoService.list("t1", admin, 55L, "1.1.1.1", "ua");
         assertEquals(1, listed.size());
         assertEquals("면담 확인", listed.get(0).getMemoText());
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any());
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any(), any());
     }
 }

@@ -46,8 +46,11 @@ import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -63,6 +66,9 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SctPublicServiceImpl implements SctPublicService {
 
+    /** 동시 임시저장(@Version) 충돌 시 재시도 상한. */
+    private static final int DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS = 3;
+
     private final SctInvitationRepository invitationRepository;
     private final SctFormTemplateRepository formTemplateRepository;
     private final SctFormItemRepository formItemRepository;
@@ -73,6 +79,9 @@ public class SctPublicServiceImpl implements SctPublicService {
     private final SctFeatureGuard sctFeatureGuard;
     private final SctConsentService sctConsentService;
     private final AuditLogService auditLogService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -204,6 +213,32 @@ public class SctPublicServiceImpl implements SctPublicService {
     @Override
     @Transactional
     public void saveDraft(String rawToken, SctDraftSaveRequest request) {
+        OptimisticLockingFailureException lastConflict = null;
+        for (int attempt = 1; attempt <= DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS; attempt++) {
+            try {
+                persistDraftAttempt(rawToken, request);
+                return;
+            } catch (OptimisticLockingFailureException conflict) {
+                lastConflict = conflict;
+                log.warn(
+                        "SCT draft save optimistic-lock conflict attempt={}/{}",
+                        attempt,
+                        DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS);
+                if (attempt < DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS && entityManager != null) {
+                    entityManager.clear();
+                }
+            }
+        }
+        throw lastConflict;
+    }
+
+    /**
+     * 임시저장 1회 시도 — 초대 재조회·검증·답변 upsert·draftSavedAt 반영.
+     *
+     * @param rawToken 공개 토큰
+     * @param request  임시저장 요청
+     */
+    private void persistDraftAttempt(String rawToken, SctDraftSaveRequest request) {
         SctInvitation invitation = loadByToken(rawToken);
         bindTenantAndGuard(invitation);
         requireVerifySession(request.getVerifySessionId(), invitation);
@@ -219,7 +254,8 @@ public class SctPublicServiceImpl implements SctPublicService {
             invitation.setStatus(SctInviteStatus.DRAFT.name());
         }
         invitation.setDraftSavedAt(LocalDateTime.now());
-        invitationRepository.save(invitation);
+        // flush 로 커밋 전 @Version 충돌을 드러내 재시도 루프에서 잡는다.
+        invitationRepository.saveAndFlush(invitation);
     }
 
     @Override

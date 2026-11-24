@@ -34,6 +34,8 @@ export default function useSctDraftAutosave({
   const [savedAtLabel, setSavedAtLabel] = useState('');
   const timerRef = useRef(null);
   const latestRef = useRef({ token, verifySessionId, answersMap });
+  const inFlightRef = useRef(false);
+  const pendingRef = useRef(false);
 
   latestRef.current = { token, verifySessionId, answersMap };
 
@@ -42,23 +44,38 @@ export default function useSctDraftAutosave({
     if (!snap.token || !snap.verifySessionId || !enabled) {
       return;
     }
-    const answers = Object.values(snap.answersMap || {}).filter((a) => a && a.formItemId != null);
+    if (inFlightRef.current) {
+      pendingRef.current = true;
+      return;
+    }
+    inFlightRef.current = true;
     setStatus(SCT_SAVE_STATUS.SAVING);
     try {
-      await saveSctDraft(snap.token, {
-        verifySessionId: snap.verifySessionId,
-        answers
-      });
-      const now = new Date();
-      const label = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      setSavedAtLabel(label);
-      setStatus(SCT_SAVE_STATUS.SAVED);
+      do {
+        pendingRef.current = false;
+        const current = latestRef.current;
+        if (!current.token || !current.verifySessionId || !enabled) {
+          break;
+        }
+        const answers = Object.values(current.answersMap || {})
+          .filter((a) => a && a.formItemId != null);
+        await saveSctDraft(current.token, {
+          verifySessionId: current.verifySessionId,
+          answers
+        });
+        const now = new Date();
+        const label = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        setSavedAtLabel(label);
+        setStatus(SCT_SAVE_STATUS.SAVED);
+      } while (pendingRef.current);
     } catch (error) {
       if (typeof navigator !== 'undefined' && navigator.onLine === false) {
         setStatus(SCT_SAVE_STATUS.OFFLINE);
       } else {
         setStatus(SCT_SAVE_STATUS.OFFLINE);
       }
+    } finally {
+      inFlightRef.current = false;
     }
   }, [enabled]);
 

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -25,8 +26,10 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
+import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
@@ -43,14 +46,18 @@ import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.util.PhoneHashUtils;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * 공개 SCT 흐름 단위 테스트 — 만료/취소 410, 제출 후 409, verify 잠금, 동의 403, 메타 마스킹 제거.
@@ -75,6 +82,7 @@ class SctPublicServiceTest {
     @Mock private SctFeatureGuard sctFeatureGuard;
     @Mock private SctConsentService sctConsentService;
     @Mock private AuditLogService auditLogService;
+    @Mock private EntityManager entityManager;
 
     @InjectMocks
     private SctPublicServiceImpl sctPublicService;
@@ -108,6 +116,8 @@ class SctPublicServiceTest {
                 .isActive(true)
                 .isDeleted(false)
                 .build();
+
+        ReflectionTestUtils.setField(sctPublicService, "entityManager", entityManager);
     }
 
     @Test
@@ -300,5 +310,71 @@ class SctPublicServiceTest {
 
         assertThrows(SctGoneException.class, () -> sctPublicService.verify(
                 RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+    }
+
+    @Test
+    @DisplayName("draft save @Version 충돌 1회 후 재시도 성공")
+    void saveDraft_retriesOnceOnOptimisticLock_thenSucceeds() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        SctFormItem formItem = SctFormItem.builder()
+                .id(1L)
+                .formTemplateId(1L)
+                .itemNo(1)
+                .promptText("p")
+                .allowsNotApplicable(false)
+                .build();
+        when(formItemRepository.findByIdAndFormTemplateId(1L, 1L)).thenReturn(Optional.of(formItem));
+        when(answerRepository.findByTenantIdAndInvitationIdAndFormItemId(TENANT_A, 100L, 1L))
+                .thenReturn(Optional.empty());
+        when(answerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invitationRepository.saveAndFlush(any()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(SctInvitation.class, 100L))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        String sid = verifySessionStore.issue(100L, TENANT_A);
+        sctPublicService.saveDraft(RAW_TOKEN, SctDraftSaveRequest.builder()
+                .verifySessionId(sid)
+                .answers(Collections.singletonList(SctDraftAnswerItem.builder()
+                        .formItemId(1L).answerText("답").build()))
+                .build());
+
+        verify(invitationRepository, times(2)).saveAndFlush(any());
+        verify(entityManager).clear();
+        assertEquals(SctInviteStatus.DRAFT.name(), invitation.getStatus());
+        assertTrue(invitation.getDraftSavedAt() != null);
+        verify(answerRepository, times(2)).save(any(SctResponseAnswer.class));
+    }
+
+    @Test
+    @DisplayName("draft save @Version 충돌이 상한 초과면 예외 전파")
+    void saveDraft_optimisticLockExhausted_propagates() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        SctFormItem formItem = SctFormItem.builder()
+                .id(1L)
+                .formTemplateId(1L)
+                .itemNo(1)
+                .promptText("p")
+                .allowsNotApplicable(false)
+                .build();
+        when(formItemRepository.findByIdAndFormTemplateId(1L, 1L)).thenReturn(Optional.of(formItem));
+        when(answerRepository.findByTenantIdAndInvitationIdAndFormItemId(TENANT_A, 100L, 1L))
+                .thenReturn(Optional.empty());
+        when(answerRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invitationRepository.saveAndFlush(any()))
+                .thenThrow(new ObjectOptimisticLockingFailureException(SctInvitation.class, 100L));
+
+        String sid = verifySessionStore.issue(100L, TENANT_A);
+        assertThrows(ObjectOptimisticLockingFailureException.class, () ->
+                sctPublicService.saveDraft(RAW_TOKEN, SctDraftSaveRequest.builder()
+                        .verifySessionId(sid)
+                        .answers(Collections.singletonList(SctDraftAnswerItem.builder()
+                                .formItemId(1L).answerText("답").build()))
+                        .build()));
+        verify(invitationRepository, times(3)).saveAndFlush(any());
+        verify(entityManager, times(2)).clear();
     }
 }

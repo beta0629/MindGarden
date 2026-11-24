@@ -2,10 +2,13 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 
+import java.util.List;
 import java.util.Map;
 import com.coresolution.consultation.integration.solapi.SolapiSendIds;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.util.PhoneLogMasking;
+import com.coresolution.consultation.util.SmsMessageLogSupport;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,6 +58,10 @@ public class NotificationDispatchHelper {
     public DispatchResult dispatchSms(String phone, String content) {
         // 테스트 모드는 실제 발송이 없으므로 성공으로 돌려주지 않는다(미발송을 성공으로 기록 금지).
         if (smsAuthService.isTestMode()) {
+            String maskedPhone = PhoneLogMasking.maskForLog(phone);
+            List<String> urls = SmsMessageLogSupport.extractUrls(content);
+            log.info("SMS_TEST_MODE_NOT_SENT testMode=true phone={} urls={} content={}",
+                    maskedPhone, urls, content);
             return new DispatchResult(false,
                 BatchNotificationTemplateCodes.ERROR_CODE_SMS_TEST_MODE_NOT_SENT,
                 SMS_TEST_MODE_NOT_SENT_MESSAGE, null, null);

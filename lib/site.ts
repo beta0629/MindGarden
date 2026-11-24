@@ -5,12 +5,13 @@ export const SITE = {
   phoneTel: '0327248501',
   address: '인천 연수구 해돋이로120번길 23 아크리아2 2층 204호',
   addressLandmark: '해양경찰청 인근',
-  hours: '주중 10:00–20:00 · 토요일 10:00–17:00 · 일요일 정기휴무',
+  hours: '주중 11:00–20:00 · 토요일 10:00–17:00 · 일요일 정기휴무',
   /** One entry per line on narrow layouts — never wrap a line starting with a separator. */
   hoursLines: [
-    '주중 10:00–20:00',
+    '주중 11:00–20:00',
     '토요일 10:00–17:00',
     '일요일 정기휴무',
+    '공휴일은 예약이 있을 때만 운영합니다.',
   ],
   representative: '김선희',
   businessNumber: '855-49-01086',

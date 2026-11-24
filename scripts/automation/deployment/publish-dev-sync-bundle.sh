@@ -42,6 +42,7 @@ dev_sync_bundle_build() {
     cp "$ROOT/$SYNC_REL" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize.sql" "$dest/scripts/database/sync/"
     cp "$ROOT/scripts/database/sync/post-dev-sync-anonymize-dry-run.sql" "$dest/scripts/database/sync/"
+    cp "$ROOT/scripts/database/sync/post-dev-sync-sct-feature-enabled.sql" "$dest/scripts/database/sync/"
     for f in deploy-standardized-procedures.sh procedure-deploy-changed-only.sh procedure-deploy-db-diff.sh; do
         cp "$ROOT/scripts/automation/deployment/$f" "$dest/scripts/automation/deployment/"
     done

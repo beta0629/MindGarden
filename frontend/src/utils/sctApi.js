@@ -143,7 +143,7 @@ export async function resendSctSms(id) {
  * @param {number|string} id
  * @returns {Promise<object>}
  */
-export async function reissueSctLink(id) {
+export async function reissueSctInviteLink(id) {
   const res = await StandardizedApi.post(SCT_API.reissueLink(id), {});
   return resolveApiObjectData(res) || res;
 }

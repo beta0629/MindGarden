@@ -100,6 +100,17 @@ const apiCache = new ApiCache();
 export async function cachedApiCall(url, options = {}, ttl = 5 * 60 * 1000) {
     const cacheKey = `${url}_${JSON.stringify(options)}`;
 
+    // 공개 SPA(/public/sct/ 등)에서는 인증 전역 common-codes 를 호출하지 않는다.
+    if (
+        typeof window !== 'undefined'
+        && typeof url === 'string'
+        && url.includes('/api/v1/common-codes')
+        && isPublicSpaPath(window.location.pathname)
+    ) {
+        console.log(`🔓 공개 SPA - common-codes 스킵: ${url}`);
+        return { success: true, data: { codes: [] }, codes: [] };
+    }
+
     // 캐시에서 조회
     const cachedData = apiCache.get(cacheKey);
     if (cachedData) {

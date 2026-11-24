@@ -43,7 +43,7 @@ class GlobalExceptionHandlerNoActiveConsultantMappingTest {
         assertThat(body.get("errorCode")).isEqualTo("NO_ACTIVE_CONSULTANT_MAPPING");
         assertThat(body.get("status")).isEqualTo(400);
         assertThat(body.get("message")).asString().contains("매칭된 담당 상담사가 없습니다");
-        assertThat(body.get("path")).isEqualTo("/api/v1/mind-weather/123/share");
+        assertThat(body.get("path")).isEqualTo("/api/v1/mind-weather/{id}/share");
         assertThat(body.get("method")).isEqualTo("POST");
     }
 

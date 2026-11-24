@@ -29,7 +29,8 @@ const PUBLIC_PREFIXES = [
   '/login/',
   '/register/',
   '/tablet/register/',
-  '/auth/oauth2/'
+  '/auth/oauth2/',
+  '/public/sct/'
 ];
 
 const isPublicRoute = () => {

@@ -15,9 +15,11 @@ import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.util.JwtTokenCutoffUtils;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.ApiUriSanitizer;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -71,6 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         String requestPath = request.getRequestURI();
+        String logPath = ApiUriSanitizer.forLogging(requestPath);
 
         // Ops Portal API 요청인 경우 상세 로깅 (onboarding 포함)
         boolean isOpsApi = requestPath.startsWith("/api/v1/ops/")
@@ -84,11 +87,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 token = authHeader.substring(7);
                 if (isOpsApi) {
-                    log.debug("JWT 토큰 발견: path={}, tokenLength={}", requestPath, token.length());
+                    log.debug("JWT 토큰 발견: path={}, tokenLength={}", logPath, token.length());
                 }
             } else {
                 if (isOpsApi) {
-                    log.debug("JWT 토큰 없음: path={}, Authorization header={}", requestPath,
+                    log.debug("JWT 토큰 없음: path={}, Authorization header={}", logPath,
                             authHeader);
                 }
             }
@@ -97,13 +100,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (token != null) {
                 boolean isValid = jwtService.isTokenValid(token);
                 if (isOpsApi) {
-                    log.debug("JWT 토큰 유효성 검사: path={}, isValid={}", requestPath, isValid);
+                    log.debug("JWT 토큰 유효성 검사: path={}, isValid={}", logPath, isValid);
                 }
 
                 if (isValid) {
                     if (jwtService.isPasswordChangeRequired(token)
                             && !PasswordChangeGate.isAllowed(request)) {
-                        log.info("비밀번호 변경 전 토큰 거부: path={}", requestPath);
+                        log.info("비밀번호 변경 전 토큰 거부: path={}", logPath);
                         PasswordChangeGate.writeForbidden(response);
                         return;
                     }
@@ -149,7 +152,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     || Boolean.FALSE.equals(user.getIsActive())) {
                                 log.warn(
                                         "Inactive user request rejected: path={}, userId={}, lifecycleState={}, isActive={}",
-                                        requestPath, user.getId(), lifecycleState, user.getIsActive());
+                                        logPath, user.getId(), lifecycleState, user.getIsActive());
                                 filterChain.doFilter(request, response);
                                 return;
                             }
@@ -157,7 +160,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             if (!isOpsApi && isAccessTokenRevoked(user, token)) {
                                 log.warn(
                                         "Revoked access token rejected: path={}, userId={}",
-                                        requestPath, user.getId());
+                                        logPath, user.getId());
                                 filterChain.doFilter(request, response);
                                 return;
                             }
@@ -167,7 +170,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 if (!bearerIdleSessionService.isBearerSessionActive(sid, user.getRole())) {
                                     log.warn(
                                             "Bearer idle session rejected: path={}, userId={}, sidPresent={}",
-                                            requestPath, user.getId(),
+                                            logPath, user.getId(),
                                             sid != null && !sid.isBlank());
                                     bearerIdleSessionService.writeUnauthorizedIdle(request, response);
                                     return;
@@ -182,7 +185,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             authorities = createAuthoritiesFromUser(user);
                             log.info(
                                     "JWT 인증 성공 (DB 조회): path={}, userId={}, userRole={}, authorities={}",
-                                    requestPath, userId, user.getRole(), authorities);
+                                    logPath, userId, user.getRole(), authorities);
                         } else {
                             // 사용자가 데이터베이스에 없는 경우 (Ops Portal 전용 계정 등)
                             // JWT 토큰에서 actorRole 추출하여 권한 부여
@@ -190,7 +193,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             authorities = createAuthoritiesFromActorRole(userId, actorRole);
                             log.info(
                                     "JWT 인증 성공 (토큰 기반): path={}, userId={}, actorRole={}, authorities={}",
-                                    requestPath, userId, actorRole, authorities);
+                                    logPath, userId, actorRole, authorities);
                         }
 
                         // userId를 principal로 사용
@@ -207,7 +210,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                         log.info(
                                 "Spring Security 컨텍스트에 인증 정보 설정 완료: path={}, userId={}, authorities={}",
-                                requestPath, userId, authorities);
+                                logPath, userId, authorities);
 
                         // Phase 3: JWT 토큰에서 tenantId 추출하여 TenantContextHolder 설정
                         try {
@@ -224,20 +227,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     } else {
                         if (isOpsApi) {
                             log.debug("JWT 인증 스킵: path={}, userId={}, alreadyAuthenticated={}",
-                                    requestPath, userId,
+                                    logPath, userId,
                                     SecurityContextHolder.getContext().getAuthentication() != null);
                         }
                     }
                 } else {
                     if (isOpsApi) {
-                        log.warn("JWT 토큰이 유효하지 않음: path={}", requestPath);
+                        log.warn("JWT 토큰이 유효하지 않음: path={}", logPath);
                     }
                 }
             } else {
                 // Ops Portal API 또는 온보딩 API인 경우 상세 로깅
                 if (isOpsApi && !requestPath.startsWith("/api/v1/ops/auth/login")
                         && !requestPath.startsWith("/api/v1/ops/plans/")) {
-                    log.warn("JWT 토큰 없음 (인증 필요 경로): path={}, Authorization header={}", requestPath,
+                    log.warn("JWT 토큰 없음 (인증 필요 경로): path={}, Authorization header={}", logPath,
                             authHeader);
                     // 현재 SecurityContext 상태 확인
                     org.springframework.security.core.Authentication currentAuth =
@@ -252,7 +255,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // 온보딩 API인 경우에도 로깅 (isOpsApi가 true이므로 포함됨)
             }
         } catch (Exception e) {
-            log.error("JWT 인증 처리 중 오류 발생: path={}, error={}", requestPath, e.getMessage(), e);
+            log.error("JWT 인증 처리 중 오류 발생: path={}, error={}", logPath, e.getMessage(), e);
         } finally {
             // 요청 종료 시 TenantContext 정리 (메모리 누수 방지)
             // 주의: TenantContextFilter에서도 정리하므로 중복 정리는 문제 없음
@@ -303,6 +306,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/v1/onboarding/") // 온보딩 API 제외 (새로운 테넌트 등록, Ops Portal 경로 제외)
                 || path.startsWith("/api/v1/public/kr-public-data/") // 비로그인 공공데이터 프록시
                 || path.startsWith("/api/v1/public/tenants/") // 센터 홈페이지 공개 테넌트 API
+                || path.startsWith(SctConstants.PUBLIC_API_PREFIX) // SCT 공개 API (토큰 기반, JWT 불필요)
                 || path.startsWith("/oauth2/") || path.startsWith("/api/password-reset/")
                 || path.startsWith("/api/health/") || path.equals("/error")
                 || path.equals(SystemTimeConstants.API_PATH)

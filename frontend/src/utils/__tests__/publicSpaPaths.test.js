@@ -31,4 +31,10 @@ describe('publicSpaPaths', () => {
     expect(isPublicSpaPath('/services/')).toBe(true);
     expect(isPublicSpaPath('/admin')).toBe(false);
   });
+
+  test('공개 SCT 경로는 비로그인 SPA로 인정한다', () => {
+    expect(isPublicSpaPath('/public/sct/token-abc')).toBe(true);
+    expect(isPublicSpaPath('/public/sct/')).toBe(true);
+    expect(isPublicSpaPath('/public/other')).toBe(false);
+  });
 });

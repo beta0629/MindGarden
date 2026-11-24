@@ -102,7 +102,8 @@ export function isSessionPublicPath(pathname) {
     pathname.startsWith('/tablet/register') ||
     pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/auth/oauth2/callback')
+    pathname.startsWith('/auth/oauth2/callback') ||
+    pathname.startsWith('/public/sct/')
   );
 }
 

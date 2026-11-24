@@ -73,8 +73,11 @@
   "scripts": {
     "prebuild": "npm install --no-save || true",
     "start": "craco start",
+    "start:e2e-sct": "REACT_APP_SCT_E2E_HARNESS=true craco start",
     "build": "GENERATE_SOURCEMAP=false craco build",
     "build:ci": "CI=false GENERATE_SOURCEMAP=false craco build",
+    "build:e2e-sct": "REACT_APP_SCT_E2E_HARNESS=true GENERATE_SOURCEMAP=false craco build",
+    "serve:e2e-sct": "npx --yes serve build -l 3000 -c \"$INIT_CWD/serve-e2e.json\"",
     "test": "craco test",
     "eject": "npx react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",

@@ -91,6 +91,16 @@ CRON_TZ=Asia/Seoul
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
 - 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).
 
+### D-1 후 SCT feature 플래그 복원 (.dev only)
+
+운영 `feature.sct.enabled` 는 fail-closed(기본 OFF)다. D-1 복원 시 .dev 도 운영 OFF로 덮여 SCT API가 404가 된다.
+Flyway `V20261123_003` 은 이미 적용된 환경에서는 재배포만으로 재실행되지 않으므로, **복원 직후 .dev 전용 SQL**로 마인드가든 테넌트만 ON 한다.
+
+1. `prod-to-dev-daily.sh` 가 `POST_SYNC_SQL_FILE`(익명화) 실행 뒤, 같은 디렉터리의 `post-dev-sync-sct-feature-enabled.sql` 을 자동 실행한다.
+2. 경로 변경 시 env `POST_SYNC_SCT_SQL_FILE` 로 지정. 파일이 없으면 WARN만 남기고 동기화는 계속한다.
+3. SQL은 `tenants` name/subdomain에 마인드가든/mindgarden 매칭 테넌트만 `feature.sct.enabled='true'` upsert. UUID 하드코딩 없음. 전역 `tenant_id=''` 은 건드리지 않는다(false 유지).
+4. **운영 DB·운영 플래그·운영 워크플로 무영향.** 배포 직후 자동 ON이 아니라 D-1 배치 후처리 + ADMIN UI 토글(설정)로 관리한다.
+
 ## Flyway 소유 온보딩 프로시저 재적재
 
 운영 덤프는 항상 `--skip-routines` 라서 루틴이 없고, 복원은 `DROP DATABASE` 로 시작한다.

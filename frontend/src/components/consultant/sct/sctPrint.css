@@ -1,0 +1,205 @@
+/**
+ * SCT 상담사 인쇄 미리보기 — mg-v2 토큰만. @page·break-inside 로 문항 잘림 방지.
+ *
+ * @author MindGarden
+ * @since 2026-11-23
+ */
+
+.mg-v2-sct-print {
+  --sct-print-scale: 1;
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-surface-main);
+  font-family: var(--mg-v2-font-family-base);
+  font-size: calc(var(--mg-v2-font-size-body-md) * var(--sct-print-scale));
+  line-height: var(--mg-v2-font-line-height-body);
+}
+
+.mg-v2-sct-print-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-3);
+  align-items: flex-end;
+  padding: var(--mg-v2-space-4);
+  border-bottom: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  background: var(--mg-v2-color-surface-stone);
+}
+
+.mg-v2-sct-print-controls__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  min-width: var(--mg-v2-space-20);
+}
+
+.mg-v2-sct-print-controls__field label {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-sct-print-controls__field select {
+  min-height: var(--mg-v2-touch-target-min);
+  padding: 0 var(--mg-v2-space-3);
+  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-v2-color-surface-main);
+  color: var(--mg-v2-color-text-primary);
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-sct-print-controls__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  margin-left: auto;
+}
+
+.mg-v2-sct-print-sheet {
+  max-width: 100%;
+  margin: 0 auto;
+  padding: var(--mg-v2-space-6) var(--mg-v2-space-5);
+  background: var(--mg-v2-color-surface-main);
+}
+
+.mg-v2-sct-print-header {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-bottom: var(--mg-v2-space-5);
+  padding-bottom: var(--mg-v2-space-3);
+  border-bottom: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+}
+
+.mg-v2-sct-print-header h1 {
+  margin: 0 0 var(--mg-v2-space-2);
+  font-size: calc(var(--mg-v2-font-size-h2) * var(--sct-print-scale));
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-sct-print-header__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--mg-v2-space-2);
+  margin-bottom: var(--mg-v2-space-2);
+  font-size: calc(var(--mg-v2-font-size-body-md) * var(--sct-print-scale));
+}
+
+.mg-v2-sct-print-header__meta dt {
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-sct-print-header__meta dd {
+  margin: 0;
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-v2-sct-print-header__notice {
+  margin: 0;
+  font-size: calc(var(--mg-v2-font-size-caption) * var(--sct-print-scale));
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-sct-print-item {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
+  margin-bottom: var(--mg-v2-space-3);
+  padding-bottom: var(--mg-v2-space-2);
+  border-bottom: 1px dashed var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+}
+
+/* PDF 구조 검사용 마커 — 화면에서는 숨기고 인쇄 텍스트 스트림에만 남김 */
+.mg-v2-sct-print-item__marker {
+  display: none;
+}
+
+.mg-v2-sct-print-item__no {
+  display: inline-block;
+  min-width: var(--mg-v2-space-6);
+  margin-right: var(--mg-v2-space-2);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-sct-print-item__prompt {
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-sct-print-item__answer {
+  color: var(--mg-v2-color-text-primary);
+  font-weight: var(--mg-v2-font-weight-semibold);
+}
+
+.mg-v2-sct-print-item__tag {
+  display: inline-block;
+  margin-left: var(--mg-v2-space-2);
+  padding: 0 var(--mg-v2-space-2);
+  font-size: calc(var(--mg-v2-font-size-caption) * var(--sct-print-scale));
+  background: var(--mg-v2-color-surface-stone);
+  border-radius: var(--mg-v2-radius-sm, 0.25rem);
+  color: var(--mg-v2-color-text-tertiary);
+}
+
+.mg-v2-sct-print-memo {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  margin-top: var(--mg-v2-space-6);
+  padding: var(--mg-v2-space-4);
+  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  min-height: var(--mg-v2-space-20);
+}
+
+.mg-v2-sct-print-memo h2 {
+  margin: 0 0 var(--mg-v2-space-2);
+  font-size: calc(var(--mg-v2-font-size-h2) * var(--sct-print-scale));
+}
+
+.mg-v2-sct-print-memo p {
+  margin: 0;
+  color: var(--mg-v2-color-text-tertiary);
+  font-size: calc(var(--mg-v2-font-size-caption) * var(--sct-print-scale));
+}
+
+.mg-v2-sct-print-memo__lines {
+  margin-top: var(--mg-v2-space-4);
+  min-height: var(--mg-v2-space-16);
+  border-bottom: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0,
+      transparent calc(var(--mg-v2-space-5) - 1px),
+      var(--mg-v2-color-border-main, var(--mg-v2-color-border)) calc(var(--mg-v2-space-5) - 1px),
+      var(--mg-v2-color-border-main, var(--mg-v2-color-border)) var(--mg-v2-space-5)
+    );
+}
+
+@media print {
+  .mg-v2-sct-print-controls,
+  .mg-v2-sct-no-print {
+    display: none !important;
+  }
+
+  .mg-v2-sct-print {
+    background: transparent;
+  }
+
+  .mg-v2-sct-print-sheet {
+    padding: 0;
+    max-width: none;
+  }
+
+  .mg-v2-sct-print-item,
+  .mg-v2-sct-print-header,
+  .mg-v2-sct-print-memo {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .mg-v2-sct-print-item__marker {
+    display: inline;
+    font-size: var(--mg-v2-font-size-caption);
+    color: var(--mg-v2-color-surface-main);
+  }
+}

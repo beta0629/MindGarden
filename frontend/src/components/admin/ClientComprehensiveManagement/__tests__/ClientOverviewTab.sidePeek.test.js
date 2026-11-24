@@ -32,6 +32,11 @@ jest.mock('../../package-payment-history/PackagePaymentHistoryList', () => ({
   default: () => <div data-testid="package-payment-history-list">payment-history-mock</div>
 }));
 
+jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
+  __esModule: true,
+  default: () => ({ enabled: false, loading: false, refresh: jest.fn() })
+}));
+
 import ClientOverviewTab from '../ClientOverviewTab';
 import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import ClientSidePeekContent from '../molecules/ClientSidePeekContent';

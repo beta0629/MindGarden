@@ -47,7 +47,9 @@ public class SecurityHeaderFilter implements Filter {
             "/clinical-automation",
             "/clinical-reports",
             "/emotion-analysis",
-            "/psych-assessments");
+            "/psych-assessments",
+            "/api/v1/public/sct",
+            "/api/v1/sct");
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {

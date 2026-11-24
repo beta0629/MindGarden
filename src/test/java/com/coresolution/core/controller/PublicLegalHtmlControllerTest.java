@@ -237,6 +237,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(body).doesNotContain("마인드가든");
         assertThat(body).doesNotContain("김선희");
         assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("010-4285-8570");
         assertThat(body).doesNotContain("010-7923-8501");
         assertThat(body).doesNotContain("해돋이로");
         assertThat(body).doesNotContain("트리니티 심리상담연구소");
@@ -285,9 +286,10 @@ class PublicLegalHtmlControllerTest {
         assertThat(body).contains("마인드가든 심리상담센터");
         assertThat(body).contains("김선희");
         assertThat(body).contains("032-724-8501");
+        assertThat(body).contains("010-4285-8570");
         assertThat(body).contains("15년 이상 임상 경험을 갖춘 대표원장이 직접 상담합니다.");
         assertThat(body).contains(HtmlUtils.htmlEscape(
-                "주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무"));
+                "평일 11:00–20:00, 토 10:00–17:00, 일 정기휴무, 공휴일은 예약이 있을 때만 운영"));
         assertThat(body).doesNotContain("010-7923-8501");
         assertThat(body).doesNotContain("센터장이 직접 상담합니다.");
     }
@@ -313,6 +315,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(body).contains("마인드가든 심리상담센터");
         assertThat(body).contains("김선희");
         assertThat(body).contains("032-724-8501");
+        assertThat(body).contains("010-4285-8570");
         assertThat(body).doesNotContain("010-7923-8501");
         assertThat(body).contains("rel=\"canonical\" href=\"" + canonical + "\"");
         assertThat(body).doesNotContain("~^");
@@ -336,6 +339,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(body).doesNotContain("마인드가든 심리상담센터");
         assertThat(body).doesNotContain("김선희");
         assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("010-4285-8570");
         assertThat(body).doesNotContain("~^");
         assertThat(body).doesNotContain("rel=\"canonical\"");
         verify(tenantRepository, never()).findBySubdomainIgnoreCase(anyString());
@@ -363,6 +367,7 @@ class PublicLegalHtmlControllerTest {
         assertThat(body).doesNotContain("마인드가든 심리상담센터");
         assertThat(body).doesNotContain("김선희");
         assertThat(body).doesNotContain("032-724-8501");
+        assertThat(body).doesNotContain("010-4285-8570");
         assertThat(body).doesNotContain("010-7923-8501");
         assertThat(body).doesNotContain("~^");
         verify(tenantRepository, never()).findBySubdomainIgnoreCase(eq("mindgarden"));

@@ -69,4 +69,23 @@ public class AuditLogServiceImpl implements AuditLogService {
     public List<AuditLog> findByTenantIdAndTargetUserId(String tenantId, Long targetUserId) {
         return auditLogRepository.findByTenantIdAndTargetUserIdOrderByCreatedAtDesc(tenantId, targetUserId);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<AuditLog> findAdminPage(
+            String tenantId, AuditAction action, String entityType, Pageable pageable) {
+        if (action != null && entityType != null) {
+            return auditLogRepository.findByTenantIdAndActionAndEntityTypeOrderByCreatedAtDesc(
+                    tenantId, action, entityType, pageable);
+        }
+        if (action != null) {
+            return auditLogRepository.findByTenantIdAndActionOrderByCreatedAtDesc(
+                    tenantId, action, pageable);
+        }
+        if (entityType != null) {
+            return auditLogRepository.findByTenantIdAndEntityTypeOrderByCreatedAtDesc(
+                    tenantId, entityType, pageable);
+        }
+        return auditLogRepository.findByTenantIdOrderByCreatedAtDesc(tenantId, pageable);
+    }
 }

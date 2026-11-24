@@ -65,6 +65,11 @@ jest.mock('../../../hooks/useConsultationLogDraftAutosave', () => ({
 jest.mock('../../../hooks/useUnsavedChangesGuard', () => ({
   useUnsavedChangesGuard: () => ({ blocker: null, releaseGuard: jest.fn() })
 }));
+/** 저장 흐름 시나리오는 SCT와 무관 — 패널(useNavigate) 마운트 방지 */
+jest.mock('../../../hooks/useSctFeatureEnabled', () => ({
+  __esModule: true,
+  default: () => ({ enabled: false, loading: false, refresh: jest.fn() })
+}));
 jest.mock('../../common/modals/UnifiedModal', () => ({
   __esModule: true,
   default: ({ isOpen, children, actions }) => (isOpen ? (

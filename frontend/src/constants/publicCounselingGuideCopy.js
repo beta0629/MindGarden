@@ -23,8 +23,8 @@ export const PUBLIC_GUIDE_LABELS = Object.freeze({
 const MINDGARDEN_GUIDE = Object.freeze({
   centerName: '마인드가든 심리상담센터',
   address: '인천 연수구 해돋이로120번길 23 아크리아2 2층 204호',
-  phone: '032-724-8501',
-  hours: '주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무',
+  phone: '032-724-8501, 010-4285-8570',
+  hours: '평일 11:00–20:00, 토 10:00–17:00, 일 정기휴무, 공휴일은 예약이 있을 때만 운영',
   counselorNameLine: '김선희 대표원장',
   majorLine: '전공: 청소년교육 학사, 상담학 석사, 가족상담 박사과정 일부 수료',
   credentialLabel: '전문자격:',

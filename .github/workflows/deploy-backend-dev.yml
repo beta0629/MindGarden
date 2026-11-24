@@ -1641,6 +1641,61 @@ jobs:
     # ============================================================================
 
     # ============================================================================
+    # [2026-11-24 재학 결정] SMS_TEST_MODE=true 멱등 가드 (.dev 실발송 금지)
+    # - sync-solapi-sms-env.sh 가 예전에 DEV 에 false 를 쓰던 문제 방지.
+    # - 본 워크플로는 sync-solapi 를 호출하지 않으나, 배포·재시작 후에도 true 유지.
+    # - 운영(deploy-production.yml) 은 건드리지 않음.
+    # ============================================================================
+    - name: 📵 SMS_TEST_MODE=true 멱등 가드 (dev 실발송 금지)
+      uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+      with:
+        host: ${{ secrets.DEV_SERVER_HOST }}
+        username: ${{ secrets.DEV_SERVER_USER }}
+        key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+        port: 22
+        timeout: 120s
+        command_timeout: 10m
+        script: |
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          KEY=SMS_TEST_MODE
+          VALUE=true
+
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::warning title=dev.env 누락::$DEV_ENV_FILE 가 없어 신규 생성합니다."
+            sudo mkdir -p /etc/mindgarden
+            sudo touch "$DEV_ENV_FILE"
+            sudo chmod 600 "$DEV_ENV_FILE"
+            sudo chown root:root "$DEV_ENV_FILE"
+          fi
+
+          CURRENT_VALUE=$(sudo grep -E "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null | tail -n1 | sed -n 's/^[^=]*=//p' | sed -E 's/^"(.*)"$/\1/' | sed -E "s/^'(.*)'$/\1/" | tr -d '\r')
+          if [ "$CURRENT_VALUE" = "$VALUE" ]; then
+            echo "✅ ${KEY} 변경 없음 (${VALUE}) — env 갱신·재시작 생략 (no-op)"
+            exit 0
+          fi
+
+          BACKUP_FILE="${DEV_ENV_FILE}.bak.$(date +%Y%m%d_%H%M%S)"
+          sudo cp -p "$DEV_ENV_FILE" "$BACKUP_FILE" 2>/dev/null || true
+          echo "📦 백업: $BACKUP_FILE"
+
+          escaped_value=$(printf '%s' "$VALUE" | sed -e 's/[\\&|]/\\&/g')
+          if sudo grep -qE "^[[:space:]]*${KEY}=" "$DEV_ENV_FILE" 2>/dev/null; then
+            sudo sed -i "s|^[[:space:]]*${KEY}=.*|${KEY}=\"${escaped_value}\"|" "$DEV_ENV_FILE"
+          else
+            printf '%s="%s"\n' "$KEY" "$VALUE" | sudo tee -a "$DEV_ENV_FILE" >/dev/null
+          fi
+          sudo chmod 600 "$DEV_ENV_FILE"
+          sudo chown root:root "$DEV_ENV_FILE"
+          if id mindgarden >/dev/null 2>&1; then sudo chown root:mindgarden "$DEV_ENV_FILE" && sudo chmod 640 "$DEV_ENV_FILE"; fi
+          echo "✅ ${KEY}=\"${VALUE}\" 갱신 완료 (was: '${CURRENT_VALUE}')"
+
+          sudo touch /tmp/mindgarden-dev-env-pending-restart
+          echo "📝 변경 마커 작성: /tmp/mindgarden-dev-env-pending-restart (통합 restart step 에서 ${KEY} 반영·검증)"
+    # ============================================================================
+    # [/2026-11-24 SMS_TEST_MODE 가드]
+    # ============================================================================
+
+    # ============================================================================
     # [P2 2026-06-11] dev.env 일괄 반영 단일 재시작 (5+ restart 통합 → 1회, transient 502 차단)
     # 배경: 디버거 보고서 db6bd2c5-b587-48d5-9f7d-386925579b97 — dev 외부 502 Cloudflare 자가 복구.
     # 근본 원인: 4개 env 자동 주입 step 이 각각 systemctl restart + sleep 15 → BE 부팅(Flyway/OAuth2 ~60s) 보다

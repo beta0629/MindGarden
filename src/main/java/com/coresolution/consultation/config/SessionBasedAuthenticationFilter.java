@@ -13,10 +13,12 @@ import com.coresolution.consultation.constant.auth.PasswordChangeGate;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserSessionService;
+import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.SessionIdCookieCodec;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.util.ApiUriSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -72,11 +74,12 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String requestPath = request.getRequestURI();
-        log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", requestPath);
+        String logPath = ApiUriSanitizer.forLogging(requestPath);
+        log.info("🔍 SessionBasedAuthenticationFilter 실행: {}", logPath);
         
         // 소셜 계정 관련 요청에 대한 특별 로깅
         if (requestPath.contains("/social-account")) {
-            log.info("🔍 소셜 계정 요청 감지: {}", requestPath);
+            log.info("🔍 소셜 계정 요청 감지: {}", logPath);
         }
         
         HttpServletRequest requestToUse = request; // 기본값은 원본 요청
@@ -238,7 +241,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                 // 스케줄 관련 요청에 대한 특별 로깅
                 if (requestPath.contains("/schedules")) {
                     log.info("🔍 스케줄 요청 감지: path={}, method={}, user={}", 
-                        requestPath, request.getMethod(), user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
+                        logPath, request.getMethod(), user != null ? EmailLogMasking.maskForLog(user.getEmail()) : "null");
                 }
                 
                 // 세션이 있으면 사용자 정보를 세션에서 가져오고, 없으면 SecurityContext에서 가져옴
@@ -329,7 +332,8 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
         }
         
         if (sessionRequiresPasswordChange && !PasswordChangeGate.isAllowed(requestToUse)) {
-            log.info("비밀번호 변경 전 세션 거부: path={}", requestToUse.getRequestURI());
+            log.info("비밀번호 변경 전 세션 거부: path={}",
+                    ApiUriSanitizer.forLogging(requestToUse.getRequestURI()));
             SecurityContextHolder.clearContext();
             PasswordChangeGate.writeForbidden(response);
             return;
@@ -727,6 +731,7 @@ public class SessionBasedAuthenticationFilter extends OncePerRequestFilter {
                path.equals("/manifest.json") ||
                path.startsWith("/api/auth/") ||  // 모든 인증 관련 API 제외
                path.startsWith("/api/v1/onboarding/") ||  // 온보딩 API 제외 (새로운 테넌트 등록)
+               path.startsWith(SctConstants.PUBLIC_API_PREFIX) ||  // SCT 공개 API (토큰 기반, 세션 불필요)
                path.startsWith("/api/v1/ops/") ||  // Ops Portal API 제외 (JWT 토큰으로만 인증)
                path.startsWith("/oauth2/") ||
                path.startsWith("/api/password-reset/") ||

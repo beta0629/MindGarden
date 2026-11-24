@@ -82,6 +82,7 @@ const FORBIDDEN_FACTS = [
   '마인드가든',
   '김선희',
   '032-724-8501',
+  '010-4285-8570',
   '010-7923-8501',
   '해돋이로',
   '트리니티 심리상담연구소',
@@ -143,7 +144,8 @@ describe('CounselingServiceGuidePage', () => {
     expect(screen.getByText(guide.centerName)).toBeInTheDocument();
     expect(screen.getByText(guide.address)).toBeInTheDocument();
     expect(screen.getByText(guide.phone)).toBeInTheDocument();
-    expect(screen.getByText('032-724-8501')).toBeInTheDocument();
+    expect(document.body.textContent).toContain('032-724-8501');
+    expect(document.body.textContent).toContain('010-4285-8570');
     expect(screen.getByText(guide.hours)).toBeInTheDocument();
     expect(screen.getByText('김선희 대표원장')).toBeInTheDocument();
     expect(screen.getByText(/한국상담학회 전문상담사/)).toBeInTheDocument();

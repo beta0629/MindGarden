@@ -98,3 +98,18 @@
   overflow-y: auto;
   padding: var(--mg-spacing-lg);
 }
+
+@media (max-width: 640px) {
+  .mg-side-peek-shell--open {
+    --mg-side-peek-shell-width: min(100vw, 100%);
+    flex: 0 0 var(--mg-side-peek-shell-width);
+    width: var(--mg-side-peek-shell-width);
+    max-width: 100vw;
+    overflow-x: clip;
+  }
+
+  .mg-side-peek-shell__body {
+    overflow-x: clip;
+    max-width: 100%;
+  }
+}

@@ -67,6 +67,7 @@ class PublicCounselingServiceGuideServiceTest {
         assertThat(html).doesNotContain("마인드가든");
         assertThat(html).doesNotContain("김선희");
         assertThat(html).doesNotContain("032-724-8501");
+        assertThat(html).doesNotContain("010-4285-8570");
         assertThat(html).doesNotContain("010-7923-8501");
         assertThat(view.getCounselors()).isEmpty();
         assertThat(view.getRefundBody()).contains("문의해 주세요");
@@ -189,9 +190,10 @@ class PublicCounselingServiceGuideServiceTest {
         assertThat(mindgardenHtml).contains("마인드가든 심리상담센터");
         assertThat(mindgardenHtml).contains("김선희");
         assertThat(mindgardenHtml).contains("032-724-8501");
+        assertThat(mindgardenHtml).contains("010-4285-8570");
         assertThat(mindgardenHtml).contains("15년 이상 임상 경험을 갖춘 대표원장이 직접 상담합니다.");
         assertThat(mindgardenHtml).contains(HtmlUtils.htmlEscape(
-                "주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무"));
+                "평일 11:00–20:00, 토 10:00–17:00, 일 정기휴무, 공휴일은 예약이 있을 때만 운영"));
         assertThat(mindgardenHtml).contains("마인드상품");
         assertThat(mindgardenHtml).doesNotContain("다른상품");
         assertThat(mindgardenHtml).doesNotContain("010-7923-8501");
@@ -201,6 +203,7 @@ class PublicCounselingServiceGuideServiceTest {
         assertThat(otherHtml).doesNotContain("마인드가든");
         assertThat(otherHtml).doesNotContain("김선희");
         assertThat(otherHtml).doesNotContain("032-724-8501");
+        assertThat(otherHtml).doesNotContain("010-4285-8570");
         assertThat(otherHtml).doesNotContain("010-7923-8501");
         assertThat(otherHtml).doesNotContain("해돋이로");
         assertThat(otherHtml).doesNotContain("트리니티 심리상담연구소");

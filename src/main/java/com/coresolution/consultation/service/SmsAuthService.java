@@ -6,6 +6,8 @@ import com.coresolution.consultation.config.SmsProperties;
 import com.coresolution.consultation.dto.TenantSmsEffectiveCredentials;
 import com.coresolution.consultation.service.sms.SmsProvider;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PhoneLogMasking;
+import com.coresolution.consultation.util.SmsMessageLogSupport;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +31,7 @@ public class SmsAuthService {
     private final SmsProperties smsProperties;
     private final TenantSmsSettingsService tenantSmsSettingsService;
     private final List<SmsProvider> smsProviders;
-    
+
     /**
      * SMS 인증번호 발송
      * @param phoneNumber 전화번호
@@ -37,36 +39,36 @@ public class SmsAuthService {
      */
     public String sendVerificationCode(String phoneNumber) {
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}, SMS 활성화: {}, 테스트 모드: {}", 
-                normalizedPhone, isEffectiveSmsEnabled(), smsProperties.isTestMode());
-        
+        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}, SMS 활성화: {}, 테스트 모드: {}",
+                PhoneLogMasking.maskForLog(normalizedPhone), isEffectiveSmsEnabled(), smsProperties.isTestMode());
+
         if (!isEffectiveSmsEnabled()) {
             log.warn("⚠️ SMS 인증이 비활성화되어 있습니다. 설정을 확인해주세요.");
             return null;
         }
-        
+
         String verificationCode;
-        
+
         if (smsProperties.isTestMode()) {
-            // 테스트 모드: 고정 인증번호 사용 (비용 절약)
+            // 테스트 모드: 고정 인증번호 사용 (비용 절약). mock 코드는 테스트모드에서만 로그.
             verificationCode = smsProperties.getMockVerificationCode();
             log.info("🧪 테스트 모드: 고정 인증번호 사용 - {}", verificationCode);
         } else {
             // 실제 모드: 랜덤 인증번호 생성 및 실제 SMS 발송
             verificationCode = generateVerificationCode();
             boolean sent = sendActualSms(normalizedPhone, verificationCode);
-            
+
             if (!sent) {
                 log.error("❌ SMS 발송 실패");
                 return null;
             }
-            
+
             log.info("✅ SMS 발송 성공(인증번호는 로그에 남기지 않음)");
         }
-        
+
         return verificationCode;
     }
-    
+
     /**
      * 인증번호 검증
      * @param phoneNumber 전화번호
@@ -76,20 +78,20 @@ public class SmsAuthService {
      */
     public boolean verifyCode(String phoneNumber, String inputCode, String sentCode) {
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력: {}, 발송: {}", 
-                normalizedPhone, inputCode, sentCode);
-        
+        log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력: {}, 발송: {}",
+                PhoneLogMasking.maskForLog(normalizedPhone), inputCode, sentCode);
+
         if (inputCode == null || sentCode == null) {
             log.warn("⚠️ 인증번호가 null입니다.");
             return false;
         }
-        
+
         boolean isValid = inputCode.equals(sentCode);
         log.info("{} SMS 인증번호 검증 결과: {}", isValid ? "✅" : "❌", isValid);
-        
+
         return isValid;
     }
-    
+
     /**
      * SMS 인증 설정 상태 확인
      * @return SMS 인증 사용 가능 여부
@@ -107,7 +109,7 @@ public class SmsAuthService {
         return smsProperties.isEnabled()
             && tenantSmsSettingsService.isSmsEnabledForTenant(TenantContextHolder.getTenantId());
     }
-    
+
     /**
      * 테스트 모드 여부 확인
      * @return 테스트 모드 여부
@@ -133,8 +135,10 @@ public class SmsAuthService {
             return false;
         }
         if (smsProperties.isTestMode()) {
-            log.info("🧪 SMS 테스트 모드: 알림 메시지 발송 시뮬레이션");
-            log.info("📱 발송 메시지: {}", message);
+            String maskedPhone = PhoneLogMasking.maskForLog(phoneNumber);
+            List<String> urls = SmsMessageLogSupport.extractUrls(message);
+            log.info("SMS 테스트 모드 알림 미발송: testMode=true phone={} urls={} body={}",
+                    maskedPhone, urls, message);
             return true;
         }
         return sendViaConfiguredProvider(phoneNumber, message);
@@ -155,8 +159,8 @@ public class SmsAuthService {
             return false;
         }
         if (smsProperties.isTestMode()) {
-            log.info("SMS 테스트 모드 비밀 알림: phone={}, bodyLength={}",
-                    com.coresolution.consultation.util.PhoneLogMasking.maskForLog(phoneNumber),
+            log.info("SMS 테스트 모드 비밀 알림: testMode=true phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
                     message == null ? 0 : message.length());
             return true;
         }
@@ -177,7 +181,7 @@ public class SmsAuthService {
         LAST_ERROR_DETAIL.remove();
         return value;
     }
-    
+
     /**
      * 인증번호 생성 (6자리 랜덤 숫자)
      */
@@ -186,13 +190,13 @@ public class SmsAuthService {
         int code = 100000 + random.nextInt(900000); // 100000 ~ 999999
         return String.valueOf(code);
     }
-    
+
     /**
      * 실제 SMS 발송 (NHN 등 SMS API 연동)
      * 설정된 프로바이더를 사용하여 실제 SMS 발송
      */
     private boolean sendActualSms(String phoneNumber, String verificationCode) {
-        log.info("📤 실제 SMS 발송 시작 - 전화번호: {}", phoneNumber);
+        log.info("📤 실제 SMS 발송 시작 - 전화번호: {}", PhoneLogMasking.maskForLog(phoneNumber));
         TenantSmsEffectiveCredentials creds = tenantSmsSettingsService.getEffectiveCredentials(
             TenantContextHolder.getTenantId());
         String senderLabel = creds.senderNumber() != null && !creds.senderNumber().isEmpty()

@@ -48,12 +48,14 @@ import com.coresolution.core.config.KiccEasypayProperties;
     "com.coresolution.core.entity",
     "com.coresolution.consultation.entity",
     "com.coresolution.consultation.assessment.entity",
+    "com.coresolution.consultation.sct.entity",
     "com.coresolution.user.entity"
 })
 @EnableJpaRepositories(basePackages = {
     "com.coresolution.core.repository",
     "com.coresolution.consultation.repository",
     "com.coresolution.consultation.assessment.repository",
+    "com.coresolution.consultation.sct.repository",
     "com.coresolution.user.repository"
 })
 @EnableJpaAuditing

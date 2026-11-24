@@ -41,9 +41,10 @@ class PublicCounselingServiceGuideHtmlTest {
         assertThat(html).contains("마인드가든 심리상담센터");
         assertThat(html).contains("인천 연수구 해돋이로120번길 23 아크리아2 2층 204호");
         assertThat(html).contains(HtmlUtils.htmlEscape(
-                "주중 10:00–20:00, 토요일 10:00–17:00, 일요일 정기휴무"));
+                "평일 11:00–20:00, 토 10:00–17:00, 일 정기휴무, 공휴일은 예약이 있을 때만 운영"));
         assertThat(html).doesNotContain("화~금 11:00");
         assertThat(html).contains("032-724-8501");
+        assertThat(html).contains("010-4285-8570");
         assertThat(html).doesNotContain("010-7923-8501");
         assertThat(html).contains(HtmlUtils.htmlEscape("아동·청소년·성인 1:1 개인상담"));
         assertThat(html).contains(HtmlUtils.htmlEscape(
@@ -151,6 +152,7 @@ class PublicCounselingServiceGuideHtmlTest {
         assertThat(html).doesNotContain("마인드가든");
         assertThat(html).doesNotContain("김선희");
         assertThat(html).doesNotContain("032-724-8501");
+        assertThat(html).doesNotContain("010-4285-8570");
         assertThat(html).doesNotContain("010-7923-8501");
         assertThat(html).doesNotContain("해돋이로");
         assertThat(html).doesNotContain("트리니티 심리상담연구소");

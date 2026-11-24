@@ -54,4 +54,16 @@ public interface AuditLogService {
      * 테넌트 + 대상 사용자별 감사 로그 조회.
      */
     List<AuditLog> findByTenantIdAndTargetUserId(String tenantId, Long targetUserId);
+
+    /**
+     * ADMIN 감사 로그 목록(테넌트 격리, 선택 필터).
+     *
+     * @param tenantId   테넌트
+     * @param action     action 필터(null 허용)
+     * @param entityType entityType 필터(null 허용)
+     * @param pageable   페이징
+     * @return 페이지
+     */
+    Page<AuditLog> findAdminPage(
+            String tenantId, AuditAction action, String entityType, Pageable pageable);
 }

@@ -107,7 +107,58 @@ public enum AuditAction {
      * 임시 비밀번호 SMS 발송 결과. metadata 에 본문·비밀번호를 넣지 않는다.
      */
     TEMP_PASSWORD_SMS(
-            "TEMP_PASSWORD_SMS", "enums.AuditAction.TEMP_PASSWORD_SMS");
+            "TEMP_PASSWORD_SMS", "enums.AuditAction.TEMP_PASSWORD_SMS"),
+
+    /** SCT 초대 발송. 응답 본문·토큰 평문 금지. */
+    SCT_INVITE_SENT("SCT_INVITE_SENT", "enums.AuditAction.SCT_INVITE_SENT"),
+
+    /** SCT 초대 취소. */
+    SCT_INVITE_CANCELLED("SCT_INVITE_CANCELLED", "enums.AuditAction.SCT_INVITE_CANCELLED"),
+
+    /** SCT 공개 링크 재발급(토큰 회전). */
+    SCT_INVITE_REISSUED("SCT_INVITE_REISSUED", "enums.AuditAction.SCT_INVITE_REISSUED"),
+
+    /** STAFF 등 임상 본문 접근 거부. */
+    SCT_CLINICAL_ACCESS_DENIED(
+            "SCT_CLINICAL_ACCESS_DENIED", "enums.AuditAction.SCT_CLINICAL_ACCESS_DENIED"),
+
+    /** SCT 응답 제출. */
+    SCT_RESPONSE_SUBMITTED("SCT_RESPONSE_SUBMITTED", "enums.AuditAction.SCT_RESPONSE_SUBMITTED"),
+
+    /** SCT 내담자 배정(연결). */
+    SCT_CLIENT_LINKED("SCT_CLIENT_LINKED", "enums.AuditAction.SCT_CLIENT_LINKED"),
+
+    /** SCT 내담자 배정 해제. */
+    SCT_CLIENT_UNLINKED("SCT_CLIENT_UNLINKED", "enums.AuditAction.SCT_CLIENT_UNLINKED"),
+
+    /** SCT 센터 설정 변경(만료·보관). */
+    SCT_SETTINGS_CHANGED("SCT_SETTINGS_CHANGED", "enums.AuditAction.SCT_SETTINGS_CHANGED"),
+
+    /** SCT 응답 본문 열람(상세는 sct_access_logs). */
+    SCT_RESPONSE_VIEWED("SCT_RESPONSE_VIEWED", "enums.AuditAction.SCT_RESPONSE_VIEWED"),
+
+    /** SCT 영역 메모 열람. */
+    SCT_DOMAIN_MEMO_VIEWED("SCT_DOMAIN_MEMO_VIEWED", "enums.AuditAction.SCT_DOMAIN_MEMO_VIEWED"),
+
+    /** SCT 영역 메모 저장. */
+    SCT_DOMAIN_MEMO_SAVED("SCT_DOMAIN_MEMO_SAVED", "enums.AuditAction.SCT_DOMAIN_MEMO_SAVED"),
+
+    /** SCT 동의 저장(내담자·미연동). */
+    SCT_CONSENT_RECORDED("SCT_CONSENT_RECORDED", "enums.AuditAction.SCT_CONSENT_RECORDED"),
+
+    /** SCT 동의 철회(ADMIN). */
+    SCT_CONSENT_REVOKED("SCT_CONSENT_REVOKED", "enums.AuditAction.SCT_CONSENT_REVOKED"),
+
+    /** SCT 미연동 동의 → 내담자 승계. */
+    SCT_CONSENT_LINKED("SCT_CONSENT_LINKED", "enums.AuditAction.SCT_CONSENT_LINKED"),
+
+    /** SCT 응답 인쇄(미리보기·출력). 상세는 sct_access_logs PRINT. */
+    SCT_RESPONSE_PRINTED("SCT_RESPONSE_PRINTED", "enums.AuditAction.SCT_RESPONSE_PRINTED"),
+
+    /**
+     * SCT 응답 수동 파기(ADMIN). metadata 에 managementNo 만 허용(본문·PII 금지).
+     */
+    SCT_RESPONSE_DESTROYED("SCT_RESPONSE_DESTROYED", "enums.AuditAction.SCT_RESPONSE_DESTROYED");
 
     private final String code;
     private final String messageKey;

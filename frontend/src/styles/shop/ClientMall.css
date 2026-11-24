@@ -905,6 +905,35 @@
   padding-left: var(--mg-v2-space-5, 1.25rem);
   color: var(--client-mall-slate);
   font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.client-mall-refund-notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2, 0.5rem);
+  min-inline-size: 0;
+}
+
+.client-mall-refund-notice__paras {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1, 0.25rem);
+  color: var(--client-mall-slate);
+  font-size: var(--mg-v2-font-size-body-sm, 0.8125rem);
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.client-mall-refund-notice__paras p {
+  margin: 0;
+}
+
+.client-mall-refund-notice__link-wrap {
+  margin: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* ---------- pay panel ---------- */

@@ -31,14 +31,18 @@ describe('Shop purchase surfaces usage/refund SSOT', () => {
     expect(mallConstants).toContain('`이용기간 — 이 상품은 결제일부터 ${validityMonths}개월 안에 사용해야 합니다. `');
   });
 
-  test('환불 안내는 CLIENT_REFUND_NOTICE 하나를 목록·상세·결제 전 확인이 공유한다', () => {
+  test('환불 안내는 CLIENT_REFUND_NOTICE SSOT를 유지하고 체크아웃은 헬퍼 요약을 쓴다', () => {
     expect(mallConstants).toContain(
       "export const CLIENT_REFUND_NOTICE = '환불 기준과 신청 방법은 센터 환불 규칙에 따라 안내해 드려요.';"
     );
+    expect(mallConstants).toMatch(/CLIENT_CHECKOUT_REFUND_COPY/);
     expect(beforeBuy).toMatch(/CLIENT_REFUND_NOTICE/);
     expect(catalog).toMatch(/MallBeforeBuyCard/);
     expect(detail).toMatch(/CLIENT_REFUND_NOTICE/);
-    expect(checkout).toMatch(/CLIENT_REFUND_NOTICE/);
+    expect(checkout).toMatch(/buildCheckoutRefundDeductionLines/);
+    expect(checkout).toMatch(/MallCheckoutRefundNotice/);
+    expect(checkout).not.toMatch(/90000/);
+    expect(checkout).not.toMatch(/90,000/);
   });
 
   test('결제 전 확인 줄마다 그 상품 개월 수로 §9 안내를 렌더한다', () => {

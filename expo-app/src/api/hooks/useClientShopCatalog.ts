@@ -20,8 +20,9 @@ export interface ShopCatalogSku {
   currency: string;
   catalogCategory: ShopCatalogCategory | string;
   thumbnailUrl?: string | null;
+  /** 회기 수 — 단회(1) 정상가 판별용. API 누락 시 undefined */
+  sessionCount?: number;
 }
-
 export const SHOP_CATALOG_QUERY_KEYS = {
   all: ['clientShop', 'catalog'] as const,
   list: (tenantId: string) => [...SHOP_CATALOG_QUERY_KEYS.all, tenantId] as const,

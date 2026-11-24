@@ -17,6 +17,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme';
 import { AppTopBar } from '@/components/app-chrome/AppTopBar';
 import { MerchantLegalFooter } from '@/components/molecules/MerchantLegalFooter';
@@ -36,6 +37,12 @@ import {
   SHOP_CHECKOUT_AGREEMENT_LABEL,
   SHOP_CHECKOUT_MAPPING_COPY,
 } from '@/constants/clientShopConstants';
+import { CLIENT_CHECKOUT_REFUND_COPY } from '@/constants/clientCheckoutRefundCopy';
+import { LEGAL_PUBLIC_PATHS } from '@/constants/legalPublic';
+import {
+  buildCheckoutRefundDeductionLines,
+  resolveSingleSessionRegularPriceMinor,
+} from '@/utils/clientCheckoutRefundNotice';
 import {
   buildConsultantPickerOptions,
   cartHasConsultationSku,
@@ -52,6 +59,7 @@ import { toDisplayString } from '@/utils/toDisplayString';
 
 export default function ShopCheckoutScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const [pointsInput, setPointsInput] = useState('0');
   const [agreed, setAgreed] = useState(false);
   const [selectedMappingId, setSelectedMappingId] = useState('');
@@ -67,6 +75,24 @@ export default function ShopCheckoutScreen() {
   const cart = cartQuery.data ?? { lines: [], subtotalMinor: 0 };
   const catalog = catalogQuery.data ?? [];
   const balance = balanceQuery.data ?? { availableMinor: 0, heldMinor: 0 };
+
+  const checkoutRefundNotice = useMemo(() => {
+    const catalogSkus = catalog.map((row) => ({
+      title: row.title,
+      sessionCount: row.sessionCount,
+      unitPriceMinor: row.unitPriceMinor,
+      skuCode: row.skuCode,
+    }));
+    const regularPriceMinor = resolveSingleSessionRegularPriceMinor({
+      consultationPackages: [],
+      catalogSkus,
+    });
+    return buildCheckoutRefundDeductionLines({
+      refundPolicyText: merchantLegal?.refundPolicyText,
+      regularPriceMinor,
+      formatWon: formatShopMoney,
+    });
+  }, [catalog, merchantLegal?.refundPolicyText]);
 
   const hasConsultationInCart = useMemo(
     () => cartHasConsultationSku(cart.lines, catalog),
@@ -493,6 +519,53 @@ export default function ShopCheckoutScreen() {
             </Text>
           </Pressable>
 
+          <View
+            style={[
+              styles.refundNotice,
+              {
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface,
+                borderRadius: theme.borderRadius.md,
+              },
+            ]}
+            accessibilityLabel={CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK}
+          >
+            {checkoutRefundNotice.lines.map((line) => (
+              <Text
+                key={line}
+                style={[
+                  styles.refundLine,
+                  {
+                    color: theme.colors.textSecondary,
+                    fontFamily: theme.fontFamily.regular,
+                    fontSize: theme.fontSize.sm,
+                  },
+                ]}
+              >
+                {`· ${line}`}
+              </Text>
+            ))}
+            <Pressable
+              onPress={() => router.push(LEGAL_PUBLIC_PATHS.REFUND)}
+              accessibilityRole="link"
+              accessibilityLabel={CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK}
+              style={styles.refundLinkBtn}
+            >
+              <Text
+                style={[
+                  styles.refundLink,
+                  {
+                    color: theme.colors.primary,
+                    fontFamily: theme.fontFamily.semibold,
+                    fontSize: theme.fontSize.sm,
+                  },
+                ]}
+              >
+                {CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK}
+              </Text>
+            </Pressable>
+          </View>
+
           {message ? (
             <Text
               style={[
@@ -603,6 +676,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   agreeText: { flex: 1, lineHeight: 20 },
+  refundNotice: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
+    borderWidth: StyleSheet.hairlineWidth,
+    gap: 6,
+  },
+  refundLine: { lineHeight: 20 },
+  refundLinkBtn: { minHeight: 44, justifyContent: 'center' },
+  refundLink: { lineHeight: 20, textDecorationLine: 'underline' },
   message: {
     marginHorizontal: 16,
     marginTop: 12,

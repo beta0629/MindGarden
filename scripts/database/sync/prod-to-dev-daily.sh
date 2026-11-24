@@ -184,6 +184,16 @@ elif [[ ! -f "$POST_SYNC_SQL_FILE" ]]; then
   log "WARN: POST_SYNC_SQL_FILE=$POST_SYNC_SQL_FILE 파일이 없음 — 후처리(PII 익명화) 건너뜀."
 fi
 
+# D-1 복원 후 .dev 전용 SCT feature 플래그 복원(운영 OFF 덮어쓰기 보정). 운영 WRITE 없음.
+# POST_SYNC_SCT_SQL_FILE 이 있으면 그 경로, 없으면 이 스크립트 형제 post-dev-sync-sct-feature-enabled.sql
+POST_SYNC_SCT_SQL_FILE="${POST_SYNC_SCT_SQL_FILE:-$SCRIPT_DIR/post-dev-sync-sct-feature-enabled.sql}"
+if [[ -f "$POST_SYNC_SCT_SQL_FILE" ]]; then
+  log "SCT feature 후처리 SQL 실행: $POST_SYNC_SCT_SQL_FILE"
+  mysql_dev "$DEV_DB_NAME" < "$POST_SYNC_SCT_SQL_FILE"
+else
+  log "WARN: SCT feature 후처리 SQL 없음($POST_SYNC_SCT_SQL_FILE) — feature.sct.enabled 가 운영 OFF로 남을 수 있음."
+fi
+
 if [[ "$SYNC_MODE" == "dump_live" && "$RETAIN_LOCAL_DUMPS" != "1" ]]; then
   rm -f "$DUMP_FILE"
   log "임시 덤프 삭제"

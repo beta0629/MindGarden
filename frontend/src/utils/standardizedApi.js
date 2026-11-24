@@ -44,12 +44,12 @@ class StandardizedApi {
         try {
             // 엔드포인트 검증 (콜백으로 전달 시 this 상실 방지)
             StandardizedApi.validateEndpoint(endpoint);
-            
-            // 세션 갱신 및 헤더 준비
-            const headers = await getDefaultApiHeadersAsync({}, true);
+
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
             
             logger.debug('📤 [표준화 API] GET', endpoint, { params, tenantId: headers['X-Tenant-Id'] });
@@ -106,11 +106,12 @@ class StandardizedApi {
     static async put(endpoint, data = {}, options = {}) {
         try {
             StandardizedApi.validateEndpoint(endpoint);
-            
-            const headers = await getDefaultApiHeadersAsync({}, true);
+
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
             
             logger.debug('📤 [표준화 API] PUT', endpoint, { tenantId: headers['X-Tenant-Id'] });
@@ -136,10 +137,11 @@ class StandardizedApi {
         try {
             StandardizedApi.validateEndpoint(endpoint);
 
-            const headers = await getDefaultApiHeadersAsync({}, true);
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
 
             logger.debug('📤 [표준화 API] PATCH', endpoint, { tenantId: headers['X-Tenant-Id'] });
@@ -164,12 +166,13 @@ class StandardizedApi {
     static async postFormData(endpoint, formData, options = {}) {
         try {
             StandardizedApi.validateEndpoint(endpoint);
-            
-            const headers = await getDefaultApiHeadersAsync({}, true);
+
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             delete headers['Content-Type']; // multipart/form-data 자동 설정
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
             
             const url = endpoint.startsWith('http://') || endpoint.startsWith('https://')
@@ -197,11 +200,12 @@ class StandardizedApi {
     static async delete(endpoint, options = {}) {
         try {
             StandardizedApi.validateEndpoint(endpoint);
-            
-            const headers = await getDefaultApiHeadersAsync({}, true);
+
+            const { skipSessionRefresh = false, headers: optionHeaders, ...restOptions } = options || {};
+            const headers = await getDefaultApiHeadersAsync({}, skipSessionRefresh !== true);
             const finalOptions = {
-                ...options,
-                headers: { ...headers, ...(options.headers || {}) }
+                ...restOptions,
+                headers: { ...headers, ...(optionHeaders || {}) }
             };
             
             logger.debug('📤 [표준화 API] DELETE', endpoint, { tenantId: headers['X-Tenant-Id'] });

@@ -33,17 +33,21 @@ import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
+import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctManagementNoSeqRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
+import com.coresolution.consultation.sct.util.SctTokenHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -76,6 +80,8 @@ class SctInvitationServiceTest {
     @Mock private AuditLogService auditLogService;
     @Mock private SctAccessLogService sctAccessLogService;
     @Mock private SctConsentService sctConsentService;
+    @Mock private SctRotatedTokenHashRepository rotatedTokenHashRepository;
+    @Mock private SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
 
     @InjectMocks
     private SctInvitationServiceImpl invitationService;
@@ -236,9 +242,45 @@ class SctInvitationServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> invitationService.getInvitation("t1", staff, 77L, true, "1.1.1.1", "ua"));
-        verify(auditLogService).record(org.mockito.ArgumentMatchers.argThat(log ->
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(staff), eq(existing));
+        verify(auditLogService, never()).record(org.mockito.ArgumentMatchers.argThat(log ->
                 log != null && AuditAction.SCT_CLINICAL_ACCESS_DENIED.equals(log.getAction())));
         verify(sctAccessLogService, never()).logViewBody(any(), any(), any(), any(), any());
+    }
+
+    @Test
+    void reissueLink_persistsOldTokenHashBeforeOverwrite() {
+        String oldHash = SctTokenHasher.sha256Hex("old-opaque-token-value-32bytes!!");
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000009")
+                .tokenHash(oldHash)
+                .tokenExpiresAt(LocalDateTime.now().plusDays(3))
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(99L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 99L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(rotatedTokenHashRepository.existsByTokenHash(oldHash)).thenReturn(false);
+        when(rotatedTokenHashRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        var response = invitationService.reissueLink("t1", admin, 99L);
+
+        ArgumentCaptor<SctRotatedTokenHash> rotatedCaptor =
+                ArgumentCaptor.forClass(SctRotatedTokenHash.class);
+        verify(rotatedTokenHashRepository).save(rotatedCaptor.capture());
+        assertEquals(oldHash, rotatedCaptor.getValue().getTokenHash());
+        assertEquals(99L, rotatedCaptor.getValue().getInvitationId());
+        assertEquals("t1", rotatedCaptor.getValue().getTenantId());
+        assertTrue(response.getPublicUrl() != null && response.getPublicUrl().contains("/public/sct/"));
+        assertFalse(oldHash.equals(existing.getTokenHash()));
     }
 
     @Test

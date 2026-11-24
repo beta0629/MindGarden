@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import SctPublicPage from '../SctPublicPage';
 import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
+import { fetchSctPublicMeta } from '../../../../utils/sctApi';
 
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctPublicMeta: jest.fn().mockResolvedValue({
@@ -67,5 +68,16 @@ describe('SctPublicPage smoke', () => {
     );
     const tokens = fs.readFileSync(tokenPath, 'utf8');
     expect(tokens).toMatch(/--mg-v2-font-size-caption:\s*0\.75rem/);
+  });
+
+  it('meta 410 → expired step (rotated token)', async() => {
+    const gone = new Error('gone');
+    gone.status = 410;
+    fetchSctPublicMeta.mockRejectedValueOnce(gone);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.EXPIRED_TITLE)).toBeInTheDocument();
+    });
+    expect(screen.getByText(SCT_UI.EXPIRED_BODY)).toBeInTheDocument();
   });
 });

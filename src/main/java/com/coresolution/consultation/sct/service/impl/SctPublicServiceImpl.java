@@ -37,6 +37,7 @@ import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
@@ -67,6 +68,7 @@ public class SctPublicServiceImpl implements SctPublicService {
     private final SctFormItemRepository formItemRepository;
     private final SctResponseAnswerRepository answerRepository;
     private final SctInviteAccessAttemptRepository attemptRepository;
+    private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final SctVerifySessionStore verifySessionStore;
     private final SctFeatureGuard sctFeatureGuard;
     private final SctConsentService sctConsentService;
@@ -109,7 +111,7 @@ public class SctPublicServiceImpl implements SctPublicService {
         String hash = hashToken(rawToken);
         SctInvitation invitation = invitationRepository
                 .findByTokenHashAndIsDeletedFalseForUpdate(hash)
-                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+                .orElseGet(() -> resolveMissingToken(hash));
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
         if (invitation.getVerifyLockedUntil() != null
@@ -281,8 +283,22 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private SctInvitation loadByToken(String rawToken) {
-        return invitationRepository.findByTokenHashAndIsDeletedFalse(hashToken(rawToken))
-                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+        String hash = hashToken(rawToken);
+        return invitationRepository.findByTokenHashAndIsDeletedFalse(hash)
+                .orElseGet(() -> resolveMissingToken(hash));
+    }
+
+    /**
+     * 활성 초대가 없을 때 — 회전 이력이면 410, 미존재면 404(동일 메시지·정보 누출 방지).
+     *
+     * @param tokenHash SHA-256 hex
+     * @return never (항상 예외)
+     */
+    private SctInvitation resolveMissingToken(String tokenHash) {
+        if (rotatedTokenHashRepository.existsByTokenHash(tokenHash)) {
+            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+        }
+        throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
     }
 
     private static String hashToken(String rawToken) {

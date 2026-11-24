@@ -24,6 +24,7 @@ import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
@@ -138,6 +139,7 @@ class SctSecurityHighTest {
                 mock(SctFormItemRepository.class),
                 mock(SctResponseAnswerRepository.class),
                 attemptRepository,
+                mock(SctRotatedTokenHashRepository.class),
                 new SctVerifySessionStore(),
                 mock(SctFeatureGuard.class),
                 mock(SctConsentService.class),

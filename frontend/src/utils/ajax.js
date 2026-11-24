@@ -289,6 +289,12 @@ export const checkSessionAndRedirect = async(response, requestUrl = '', options 
   const currentPath = window.location.pathname;
   const isLoginPage = currentPath === '/login' || currentPath.startsWith('/login/');
 
+  // 공개 SPA(/public/sct/ 등) — current-user·refresh 호출 금지
+  if (isPublicSpaPath(currentPath)) {
+    logger.debug('🔐 공개 SPA 경로 - checkSessionAndRedirect 스킵:', currentPath);
+    return false;
+  }
+
   // 401, 403 오류 시에만 세션 체크 (500 오류는 서버 오류이므로 세션 체크하지 않음)
   if (response.status === 401 || response.status === 403) {
     // shell chrome(브랜딩·LNB·unread-count 등) — 리다이렉트하지 않음

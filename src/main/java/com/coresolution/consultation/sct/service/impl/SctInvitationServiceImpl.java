@@ -36,6 +36,7 @@ import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
+import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -43,7 +44,9 @@ import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctManagementNoSeqRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctInvitationService;
@@ -86,6 +89,8 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     private final AuditLogService auditLogService;
     private final SctAccessLogService sctAccessLogService;
     private final SctConsentService sctConsentService;
+    private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
+    private final SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
 
     @Override
     @Transactional(readOnly = true)
@@ -324,6 +329,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         }
         // 미제출: 동일 토큰 재문자 — 평문 토큰은 DB에 없으므로 신규 토큰 발급 후 해시 교체
         String rawToken = SctTokenHasher.generateOpaqueToken();
+        persistRotatedTokenHash(invitation);
         invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
         SctFormTemplate template = formTemplateRepository.findByIdAndIsDeletedFalse(
@@ -350,6 +356,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             throw new SctConflictException("링크를 재발급할 수 없는 상태입니다.");
         }
         String rawToken = SctTokenHasher.generateOpaqueToken();
+        persistRotatedTokenHash(invitation);
         invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
         invitation.setVerifyFailCount(0);
@@ -925,15 +932,27 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     private void recordClinicalAccessDenied(String tenantId, User actor, SctInvitation invitation) {
-        auditLogService.record(AuditLog.builder()
-                .tenantId(tenantId)
-                .actorUserId(actor != null ? actor.getId() : null)
-                .actorRole(actor != null && actor.getRole() != null ? actor.getRole().name() : null)
-                .targetUserId(invitation.getClientId())
-                .action(AuditAction.SCT_CLINICAL_ACCESS_DENIED)
-                .entityType(SctConstants.ENTITY_TYPE_INVITATION)
-                .entityId(invitation.getId())
-                .metadataJson("{\"managementNo\":\"" + invitation.getManagementNo() + "\"}")
+        clinicalAccessDeniedAuditWriter.record(tenantId, actor, invitation);
+    }
+
+    /**
+     * 토큰 해시 교체 직전 이전 해시를 회전 이력에 남긴다(평문 미저장).
+     *
+     * @param invitation 현재 초대
+     */
+    private void persistRotatedTokenHash(SctInvitation invitation) {
+        String oldHash = invitation.getTokenHash();
+        if (!StringUtils.hasText(oldHash)) {
+            return;
+        }
+        if (rotatedTokenHashRepository.existsByTokenHash(oldHash)) {
+            return;
+        }
+        rotatedTokenHashRepository.save(SctRotatedTokenHash.builder()
+                .tenantId(invitation.getTenantId())
+                .invitationId(invitation.getId())
+                .tokenHash(oldHash)
+                .rotatedAt(LocalDateTime.now())
                 .build());
     }
 

@@ -303,6 +303,14 @@ class SessionManager {
     const skipAuthGrace = options.skipAuthGrace === true;
     const now = Date.now();
 
+    // /public/sct/ — current-user 호출 금지 (SessionContext boot skip 과 정합)
+    if (typeof window !== 'undefined'
+        && window.location.pathname
+        && window.location.pathname.startsWith('/public/sct/')) {
+      console.log('🔄 세션 체크 스킵 (공개 SCT SPA)');
+      return this.user !== null;
+    }
+
     // 프로필 수정 중이면 세션 체크 스킵
     if (this.isProfileEditing && !force) {
       console.log('🔄 세션 체크 스킵 (프로필 수정 중)');

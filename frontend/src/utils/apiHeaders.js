@@ -8,6 +8,7 @@
  */
 
 import { API_HEADER_SESSION_FRESH_MS } from '../constants/session';
+import { isPublicSpaPath } from './publicSpaPaths';
 
 /**
  * 직전 current-user 200 이 재사용 창 안이고 tenantId 가 있으면 true.
@@ -34,8 +35,12 @@ export const hasFreshSessionTenant = (manager) => {
  */
 export const getTenantId = async(forceRefresh = false) => {
     try {
+        // 공개 SPA — current-user(force checkSession) 호출 금지
+        const onPublicSpa = typeof window !== 'undefined'
+            && isPublicSpaPath(window.location.pathname);
         // forceRefresh 시 API 호출 전 한 번 갱신. 직전 확인이 재사용 창 안이면 요청마다 다시 확인하지 않는다.
-        if (forceRefresh && typeof window !== 'undefined' && window.sessionManager?.checkSession
+        if (!onPublicSpa && forceRefresh && typeof window !== 'undefined'
+            && window.sessionManager?.checkSession
             && !hasFreshSessionTenant(window.sessionManager)) {
             await window.sessionManager.checkSession(true);
         }
@@ -75,8 +80,10 @@ export const getTenantId = async(forceRefresh = false) => {
                     tenantId.startsWith('unknown-') || tenantId.startsWith('default-') ||
                     tenantId === 'tenant-unknown' || tenantId === 'tenant-default') {
                     console.warn('⚠️ 기본값 tenantId 감지, 세션 갱신 시도:', user.tenantId);
-                    // 세션 갱신 시도 (비동기)
-                    window.sessionManager.checkSession(true).catch(() => {});
+                    // 세션 갱신 시도 (비동기) — 공개 SPA 제외
+                    if (!onPublicSpa) {
+                        window.sessionManager.checkSession(true).catch(() => {});
+                    }
                 } else {
                     // "tenant-unknown-consultation-*" 같은 실제 tenantId는 허용
                     console.log('✅ getTenantId: tenantId 발견 (user):', user.tenantId);

@@ -232,6 +232,11 @@ export const SCT_UI = Object.freeze({
   COPY_LINK_FAIL: '복사하지 못했습니다',
   REISSUE_LINK: '링크 재발급',
   REISSUE_SUCCESS: '새 공개 링크가 발급되었습니다',
+  /**
+   * 미연결 목록 — 평문 토큰은 DB에 없어 재발급 전 복사 불가(보안).
+   */
+  UNLINKED_COPY_HINT:
+    '보안상 링크 원문은 저장되지 않습니다. 「링크 재발급」 후 새 링크를 복사하세요.',
   UNLINKED_TITLE: '미연결 초대',
   UNLINKED_EMPTY: '미연결 초대가 없습니다',
   RECIPIENT_NAME: '표시 이름',
@@ -340,6 +345,8 @@ export const SCT_TEST_ID = Object.freeze({
   SETTINGS: 'sct-settings-section',
   SETTINGS_FEATURE_SWITCH: 'sct-settings-feature-switch',
   UNLINKED_REISSUE: 'sct-unlinked-reissue',
+  UNLINKED_COPY_HINT: 'sct-unlinked-copy-hint',
+  UNLINKED_COPY_AREA: 'sct-unlinked-copy-area',
   HARNESS: 'sct-viewport-harness',
   CONSENT_STEP: 'sct-consent-step',
   GUARDIAN_STEP: 'sct-guardian-step',

@@ -43,6 +43,19 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
     reissueSctInviteLink.mockResolvedValue({ publicUrl: '/public/sct/new-token' });
   });
 
+  it('ADMIN always sees copy area with security hint before reissue', async() => {
+    mockUseSession.mockReturnValue({ user: { role: 'ADMIN' } });
+    render(<AdminSctUnlinkedPanel />);
+    await waitFor(() => {
+      expect(screen.getByText('홍길동')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId(`${SCT_TEST_ID.UNLINKED_COPY_AREA}-42`)).toBeInTheDocument();
+    expect(screen.getByTestId(`${SCT_TEST_ID.UNLINKED_COPY_HINT}-42`)).toHaveTextContent(
+      SCT_UI.UNLINKED_COPY_HINT
+    );
+    expect(screen.queryByText(SCT_UI.COPY_LINK)).not.toBeInTheDocument();
+  });
+
   it('ADMIN can reissue and then copy public link', async() => {
     mockUseSession.mockReturnValue({ user: { role: 'ADMIN' } });
     render(<AdminSctUnlinkedPanel />);
@@ -57,14 +70,16 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
     await waitFor(() => {
       expect(screen.getByText(SCT_UI.COPY_LINK)).toBeInTheDocument();
     });
+    expect(screen.queryByTestId(`${SCT_TEST_ID.UNLINKED_COPY_HINT}-42`)).not.toBeInTheDocument();
   });
 
-  it('STAFF sees list without reissue button', async() => {
+  it('STAFF sees list without reissue button or copy area', async() => {
     mockUseSession.mockReturnValue({ user: { role: 'STAFF' } });
     render(<AdminSctUnlinkedPanel />);
     await waitFor(() => {
       expect(screen.getByText('홍길동')).toBeInTheDocument();
     });
     expect(screen.queryByTestId(`${SCT_TEST_ID.UNLINKED_REISSUE}-42`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`${SCT_TEST_ID.UNLINKED_COPY_AREA}-42`)).not.toBeInTheDocument();
   });
 });

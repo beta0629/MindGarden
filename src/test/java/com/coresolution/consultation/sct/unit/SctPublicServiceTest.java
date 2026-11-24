@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Optional;
+import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.AuditLogService;
 import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.constant.SctConstants;
@@ -35,6 +36,7 @@ import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
+import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
@@ -68,6 +70,7 @@ class SctPublicServiceTest {
     @Mock private SctFormItemRepository formItemRepository;
     @Mock private SctResponseAnswerRepository answerRepository;
     @Mock private SctInviteAccessAttemptRepository attemptRepository;
+    @Mock private SctRotatedTokenHashRepository rotatedTokenHashRepository;
     @Spy private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore();
     @Mock private SctFeatureGuard sctFeatureGuard;
     @Mock private SctConsentService sctConsentService;
@@ -267,5 +270,35 @@ class SctPublicServiceTest {
         sctPublicService.getMeta(RAW_TOKEN);
         verify(sctFeatureGuard).requireEnabled("tenant-b");
         verify(sctFeatureGuard, never()).requireEnabled(TENANT_A);
+    }
+
+    @Test
+    void rotatedTokenHash_throws410Gone() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+    }
+
+    @Test
+    void unknownTokenHash_throws404NotFound() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(false);
+
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> sctPublicService.getMeta(RAW_TOKEN));
+        assertEquals("SCT 링크를 찾을 수 없습니다.", ex.getMessage());
+    }
+
+    @Test
+    void rotatedTokenHash_verify_throws410Gone() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.verify(
+                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
     }
 }

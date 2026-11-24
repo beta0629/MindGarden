@@ -22,6 +22,7 @@ import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.impl.SctDomainMemoServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,7 @@ class SctDomainMemoServiceTest {
     @Mock private ConsultantClientMappingRepository mappingRepository;
     @Mock private AuditLogService auditLogService;
     @Mock private SctAccessLogService sctAccessLogService;
+    @Mock private SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
 
     @InjectMocks
     private SctDomainMemoServiceImpl domainMemoService;
@@ -131,6 +133,7 @@ class SctDomainMemoServiceTest {
                         "t1", staff, 55L, "AFFECT",
                         SctDomainMemoUpsertRequest.builder().memoText("메모").build(),
                         "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(staff), eq(invitation));
         verify(domainMemoRepository, never()).save(any());
     }
 

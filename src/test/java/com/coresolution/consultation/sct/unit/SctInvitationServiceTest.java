@@ -6,8 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +51,7 @@ import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -449,6 +452,106 @@ class SctInvitationServiceTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> invitationService.getInvitation("t1", consultant, 77L, false, null, null));
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any());
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("비담당 CONSULTANT session-view 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
+    void unassignedConsultant_sessionViewDenied_withAudit() {
+        User consultant = new User();
+        consultant.setId(9L);
+        consultant.setRole(UserRole.CONSULTANT);
+
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                "t1", 9L, 100L)).thenReturn(List.of());
+
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.sessionView("t1", consultant, 100L, null, "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(consultant), isNull(), eq(100L));
+        verify(invitationRepository, never())
+                .findFirstByTenantIdAndClientIdAndStatusAndIsDeletedFalseOrderBySubmittedAtDesc(
+                        anyString(), anyLong(), anyString());
+    }
+
+    @Test
+    @DisplayName("담당 CONSULTANT session-view 허용 시 거부 감사 없음")
+    void assignedConsultant_sessionView_noDenyAudit() {
+        User consultant = new User();
+        consultant.setId(9L);
+        consultant.setRole(UserRole.CONSULTANT);
+
+        com.coresolution.consultation.entity.ConsultantClientMapping mapping =
+                new com.coresolution.consultation.entity.ConsultantClientMapping();
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                "t1", 9L, 100L)).thenReturn(List.of(mapping));
+
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .clientId(100L)
+                .consultantId(9L)
+                .managementNo("SCT-000030")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(1))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .submittedAt(LocalDateTime.now().minusDays(1))
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(88L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository
+                .findFirstByTenantIdAndClientIdAndStatusAndIsDeletedFalseOrderBySubmittedAtDesc(
+                        "t1", 100L, SctInviteStatus.SUBMITTED.name()))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L))
+                .thenReturn(Optional.of(template));
+        when(answerRepository.findByTenantIdAndInvitationId("t1", 88L))
+                .thenReturn(Collections.emptyList());
+        when(formItemRepository.findByFormTemplateIdOrderBySortOrderAsc(10L))
+                .thenReturn(Collections.emptyList());
+        when(sctAccessLogService.logSessionView(any(), any(), any(), any(), any()))
+                .thenReturn(new SctAccessLog());
+
+        var view = invitationService.sessionView("t1", consultant, 100L, null, "1.1.1.1", "ua");
+        assertEquals("SCT-000030", view.getManagementNo());
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any());
+        verify(clinicalAccessDeniedAuditWriter, never()).record(any(), any(), any(), any());
+        verify(sctAccessLogService).logSessionView(
+                eq(existing), eq(9L), eq("CONSULTANT"), eq("1.1.1.1"), eq("ua"));
+    }
+
+    @Test
+    @DisplayName("비담당 CONSULTANT print 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
+    void unassignedConsultant_printDenied_withAudit() {
+        User consultant = new User();
+        consultant.setId(9L);
+        consultant.setRole(UserRole.CONSULTANT);
+
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .clientId(100L)
+                .consultantId(8L)
+                .managementNo("SCT-000031")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(1))
+                .status(SctInviteStatus.SUBMITTED.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(77L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 77L))
+                .thenReturn(Optional.of(existing));
+        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                "t1", 9L, 100L)).thenReturn(List.of());
+
+        assertThrows(AccessDeniedException.class,
+                () -> invitationService.recordPrintAudit("t1", consultant, 77L, "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(consultant), eq(existing));
+        verify(sctAccessLogService, never()).logPrint(any(), any(), any(), any(), any());
     }
 
     @Test

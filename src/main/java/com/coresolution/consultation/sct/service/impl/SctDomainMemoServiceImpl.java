@@ -19,6 +19,7 @@ import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.service.SctAccessLogService;
 import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWriter;
+import com.coresolution.consultation.sct.service.SctClinicalAccessDenySupport;
 import com.coresolution.consultation.sct.service.SctDomainMemoService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import lombok.RequiredArgsConstructor;
@@ -153,12 +154,17 @@ public class SctDomainMemoServiceImpl implements SctDomainMemoService {
             return;
         }
         if (actor.getRole() == UserRole.STAFF) {
-            clinicalAccessDeniedAuditWriter.record(tenantId, actor, invitation);
-            throw new AccessDeniedException("권한이 없습니다.");
+            SctClinicalAccessDenySupport.denyAndThrow(
+                    clinicalAccessDeniedAuditWriter,
+                    tenantId, actor, invitation, null,
+                    "권한이 없습니다.");
         }
         if (actor.getRole() == UserRole.CONSULTANT) {
             if (!canConsultantAccess(tenantId, actor.getId(), invitation)) {
-                throw new AccessDeniedException("담당 건만 접근할 수 있습니다.");
+                SctClinicalAccessDenySupport.denyAndThrow(
+                        clinicalAccessDeniedAuditWriter,
+                        tenantId, actor, invitation, null,
+                        "담당 건만 접근할 수 있습니다.");
             }
             return;
         }

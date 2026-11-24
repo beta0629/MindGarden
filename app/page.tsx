@@ -10,6 +10,7 @@ import {
 } from '@/lib/clinic-os/client';
 import type { ConsultationProduct } from '@/lib/clinic-os/types';
 import { homeCopy } from '@/lib/content/home';
+import { publicBookingPolicyText, publicBookingPolicyTitle } from '@/lib/content/subpages';
 import { formatWon } from '@/lib/format';
 import { getLatestBlogPosts, getLatestVideos } from '@/lib/feeds';
 import { buildMetadata } from '@/lib/seo';
@@ -499,6 +500,10 @@ export default async function HomePage() {
           <div className="home-booking__scene" aria-hidden="true">
             <BookingScene />
           </div>
+        </div>
+        <div className="container home-booking__policy">
+          <h3 className="section__title">{publicBookingPolicyTitle}</h3>
+          <div className="prose policy-copy">{publicBookingPolicyText}</div>
         </div>
       </section>
     </SiteShell>

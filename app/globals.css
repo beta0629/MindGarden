@@ -1257,6 +1257,19 @@ html.mg-await-hero .hero-media__stage picture img.hero-still {
 .faq p {
   margin: 0 0 1rem;
   color: var(--ink-soft);
+  white-space: pre-line;
+}
+
+.policy-copy {
+  white-space: pre-line;
+  margin-top: 1.25rem;
+}
+
+.home-booking__policy {
+  position: relative;
+  z-index: 1;
+  margin-top: 2rem;
+  min-width: 0;
 }
 
 .form {

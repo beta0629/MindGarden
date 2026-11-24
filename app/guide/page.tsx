@@ -10,7 +10,7 @@ import {
   getActiveEventProduct,
   resolveProductDisplayPrice,
 } from '@/lib/clinic-os/client';
-import { guideCopy } from '@/lib/content/subpages';
+import { guideCopy, publicBookingPolicyText, publicBookingPolicyTitle } from '@/lib/content/subpages';
 import { formatKstDateRange, formatWon } from '@/lib/format';
 import { buildMetadata } from '@/lib/seo';
 import { SITE } from '@/lib/site';
@@ -90,6 +90,13 @@ export default async function GuidePage() {
             대표번호{' '}
             <a href={`tel:${SITE.phoneTel}`}>{SITE.phoneDisplay}</a>
           </p>
+        </div>
+      </section>
+
+      <section className="section" id="booking-policy">
+        <div className="container">
+          <h2 className="section__title">{publicBookingPolicyTitle}</h2>
+          <div className="prose policy-copy">{publicBookingPolicyText}</div>
         </div>
       </section>
 

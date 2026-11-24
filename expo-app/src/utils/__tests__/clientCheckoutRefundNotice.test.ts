@@ -40,7 +40,9 @@ describe('clientCheckoutRefundNotice (expo parity)', () => {
       formatWon: (n) => `${n.toLocaleString('ko-KR')}원`,
     });
     expect(result.usedFallback).toBe(false);
-    expect(result.lines[0]).toContain('50,000원');
+    expect(result.lines[0]).toContain('정상가(50,000원)');
+    expect(result.lines[0]).toMatch(/할인가가 아니라 정상가\(50,000원\)로/);
+    expect(result.lines[0]).not.toMatch(/원로/);
     expect(result.lines[1]).toBe(CLIENT_CHECKOUT_REFUND_COPY.DEDUCTION_CAP);
     const source = JSON.stringify(result);
     expect(source).not.toMatch(/90000/);

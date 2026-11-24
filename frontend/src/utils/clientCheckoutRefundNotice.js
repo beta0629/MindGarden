@@ -145,7 +145,8 @@ function resolvePriceLabel(regularPriceMinor, formatWon) {
   if (price != null && typeof formatWon === 'function') {
     const formatted = formatWon(price);
     if (formatted != null && String(formatted).trim() !== '') {
-      return String(formatted).trim();
+      // 「{priceLabel}로」조사 결합 — 금액만 넣으면 「85,000원로」가 되므로 정상가(...)로 감싼다.
+      return `정상가(${String(formatted).trim()})`;
     }
   }
   return CLIENT_CHECKOUT_REFUND_COPY.PRICE_LABEL_FALLBACK;

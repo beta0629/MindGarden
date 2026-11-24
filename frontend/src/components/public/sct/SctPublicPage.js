@@ -55,6 +55,7 @@ const STEP = Object.freeze({
   REVIEW: 'REVIEW',
   DONE: 'DONE',
   EXPIRED: 'EXPIRED',
+  INVALID_LINK: 'INVALID_LINK',
   ALREADY: 'ALREADY',
   ERROR: 'ERROR'
 });
@@ -131,22 +132,27 @@ const SctPublicPage = () => {
 
   const loadMeta = useCallback(async() => {
     if (!token) {
-      setStep(STEP.ERROR);
-      setErrorMsg(SCT_UI.LOAD_FAIL);
+      setStep(STEP.INVALID_LINK);
       return;
     }
     setBusy(true);
     try {
       const data = await fetchSctPublicMeta(token);
+      // 방어: null/빈 메타는 ENTRY 시작 셸로 가지 않음(토큰 존재 여부 비공개)
+      if (data == null || typeof data !== 'object' || !data.status) {
+        setMeta(null);
+        setStep(STEP.INVALID_LINK);
+        return;
+      }
       setMeta(data);
-      if (data?.verifyChannelHint === SCT_CHANNEL.EMAIL) {
+      if (data.verifyChannelHint === SCT_CHANNEL.EMAIL) {
         setChannel(SCT_CHANNEL.EMAIL);
-      } else if (data?.verifyChannelHint === SCT_CHANNEL.PHONE) {
+      } else if (data.verifyChannelHint === SCT_CHANNEL.PHONE) {
         setChannel(SCT_CHANNEL.PHONE);
       }
-      if (data?.status === SCT_STATUS.SUBMITTED) {
+      if (data.status === SCT_STATUS.SUBMITTED) {
         setStep(STEP.ALREADY);
-      } else if (data?.status === SCT_STATUS.EXPIRED || data?.status === SCT_STATUS.CANCELLED) {
+      } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
         setStep(STEP.EXPIRED);
       } else {
         setStep(STEP.ENTRY);
@@ -155,6 +161,8 @@ const SctPublicPage = () => {
       const statusCode = error?.status;
       if (statusCode === 410) {
         setStep(STEP.EXPIRED);
+      } else if (statusCode === 404) {
+        setStep(STEP.INVALID_LINK);
       } else {
         setErrorMsg(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
         setStep(STEP.ERROR);
@@ -462,6 +470,13 @@ const SctPublicPage = () => {
       <>
         <h1 className="mg-v2-sct-h1">{SCT_UI.EXPIRED_TITLE}</h1>
         <p className="mg-v2-sct-lead">{SCT_UI.EXPIRED_BODY}</p>
+      </>
+    );
+  } else if (step === STEP.INVALID_LINK) {
+    body = (
+      <>
+        <h1 className="mg-v2-sct-h1">{SCT_UI.INVALID_LINK_TITLE}</h1>
+        <p className="mg-v2-sct-lead">{SCT_UI.INVALID_LINK_BODY}</p>
       </>
     );
   } else if (step === STEP.ALREADY) {

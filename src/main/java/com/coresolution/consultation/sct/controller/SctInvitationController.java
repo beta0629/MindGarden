@@ -270,7 +270,7 @@ public class SctInvitationController extends BaseApiController {
      * @return 메모
      */
     @GetMapping("/invitations/{id}/domain-memos")
-    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
     public ResponseEntity<?> listDomainMemos(
             @PathVariable Long id,
             HttpSession session,
@@ -293,7 +293,7 @@ public class SctInvitationController extends BaseApiController {
      * @return 저장 결과
      */
     @PutMapping("/invitations/{id}/domain-memos/{domainCode}")
-    @PreAuthorize("hasAnyRole('ADMIN','CONSULTANT')")
+    @PreAuthorize("hasAnyRole('ADMIN','STAFF','CONSULTANT')")
     public ResponseEntity<?> upsertDomainMemo(
             @PathVariable Long id,
             @PathVariable String domainCode,

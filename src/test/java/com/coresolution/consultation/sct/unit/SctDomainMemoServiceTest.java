@@ -36,7 +36,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 /**
- * SCT 영역 메모 — 테넌트 격리·비담당 거부·담당/ADMIN/STAFF 허용·암호 필드 저장.
+ * SCT 영역 메모 — 테넌트 격리·비담당 거부·담당/ADMIN 허용·STAFF 임상 본문 거부(+감사)·암호 필드 저장.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -123,7 +123,21 @@ class SctDomainMemoServiceTest {
     }
 
     @Test
-    @DisplayName("STAFF 영역 메모 저장 403")
+    @DisplayName("STAFF 영역 메모 목록 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
+    void staffCannotList() {
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
+                .thenReturn(Optional.of(invitation));
+
+        assertThrows(AccessDeniedException.class, () ->
+                domainMemoService.list("t1", staff, 55L, "1.1.1.1", "ua"));
+        verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(staff), eq(invitation));
+        verify(domainMemoRepository, never())
+                .findByTenantIdAndInvitationIdAndIsDeletedFalse(any(), any());
+        verify(auditLogService, never()).record(any());
+    }
+
+    @Test
+    @DisplayName("STAFF 영역 메모 저장 403 + SCT_CLINICAL_ACCESS_DENIED 감사")
     void staffCannotSave() {
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
                 .thenReturn(Optional.of(invitation));
@@ -135,6 +149,7 @@ class SctDomainMemoServiceTest {
                         "1.1.1.1", "ua"));
         verify(clinicalAccessDeniedAuditWriter).record(eq("t1"), eq(staff), eq(invitation));
         verify(domainMemoRepository, never()).save(any());
+        verify(auditLogService, never()).record(any());
     }
 
     @Test

@@ -193,6 +193,9 @@ export const SCT_UI = Object.freeze({
   DONE_BODY: '담당 상담사가 다음 상담에서 함께 살펴봅니다. 창을 닫아도 됩니다.',
   EXPIRED_TITLE: '작성 기한이 지났습니다',
   EXPIRED_BODY: '새 링크가 필요하면 센터에 문의해 주세요.',
+  /** 공개 링크 토큰 없음·404(삼킴) — 존재 여부 비공개 */
+  INVALID_LINK_TITLE: '링크가 올바르지 않습니다',
+  INVALID_LINK_BODY: '주소를 다시 확인하거나 센터에 문의해 주세요.',
   ALREADY_TITLE: '이미 제출한 질문지입니다',
   ALREADY_BODY: '답 내용은 여기서 다시 보지 않습니다.',
   MISMATCH: '번호가 일치하지 않습니다',

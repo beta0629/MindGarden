@@ -14,18 +14,20 @@ import SctPublicPage from '../SctPublicPage';
 import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
 import { fetchSctPublicMeta } from '../../../../utils/sctApi';
 
+const DEFAULT_META = Object.freeze({
+  formType: 'CHILD',
+  title: '문장완성 질문지',
+  status: 'SENT',
+  itemCount: 50,
+  verifyChannelHint: 'PHONE',
+  tokenExpiresAt: '2026-12-01T23:59:00',
+  hasDraft: false,
+  requiresGuardian: true,
+  signerBand: 'UNDER_14'
+});
+
 jest.mock('../../../../utils/sctApi', () => ({
-  fetchSctPublicMeta: jest.fn().mockResolvedValue({
-    formType: 'CHILD',
-    title: '문장완성 질문지',
-    status: 'SENT',
-    itemCount: 50,
-    verifyChannelHint: 'PHONE',
-    tokenExpiresAt: '2026-12-01T23:59:00',
-    hasDraft: false,
-    requiresGuardian: true,
-    signerBand: 'UNDER_14'
-  }),
+  fetchSctPublicMeta: jest.fn(),
   verifySctPublic: jest.fn(),
   fetchSctPublicForm: jest.fn(),
   saveSctDraft: jest.fn(),
@@ -49,13 +51,18 @@ const renderPage = () => render(
 );
 
 describe('SctPublicPage smoke', () => {
+  beforeEach(() => {
+    fetchSctPublicMeta.mockReset();
+    fetchSctPublicMeta.mockResolvedValue({ ...DEFAULT_META });
+  });
+
   it('renders public app shell after meta load', async() => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByTestId(SCT_TEST_ID.PUBLIC_APP)).toBeInTheDocument();
+      expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
     });
+    expect(screen.getByTestId(SCT_TEST_ID.PUBLIC_APP)).toBeInTheDocument();
     expect(screen.getByTestId(SCT_TEST_ID.THUMB_BAR)).toBeInTheDocument();
-    expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
   });
 
   it('caption class uses rem font-size token (0.75rem floor)', () => {
@@ -79,5 +86,26 @@ describe('SctPublicPage smoke', () => {
       expect(screen.getByText(SCT_UI.EXPIRED_TITLE)).toBeInTheDocument();
     });
     expect(screen.getByText(SCT_UI.EXPIRED_BODY)).toBeInTheDocument();
+  });
+
+  it('meta 404 → invalid link UI (not ENTRY start)', async() => {
+    const missing = new Error('not found');
+    missing.status = 404;
+    fetchSctPublicMeta.mockRejectedValueOnce(missing);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.INVALID_LINK_TITLE)).toBeInTheDocument();
+    });
+    expect(screen.getByText(SCT_UI.INVALID_LINK_BODY)).toBeInTheDocument();
+    expect(screen.queryByText(SCT_UI.START)).not.toBeInTheDocument();
+  });
+
+  it('meta null → invalid link UI (404 swallowed by apiGet)', async() => {
+    fetchSctPublicMeta.mockResolvedValueOnce(null);
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.INVALID_LINK_TITLE)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(SCT_UI.START)).not.toBeInTheDocument();
   });
 });

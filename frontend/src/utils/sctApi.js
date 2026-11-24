@@ -10,12 +10,21 @@ import { resolveApiObjectData, asArray } from './apiResponseNormalize';
 import { SCT_API, SCT_VERIFY_SESSION_HEADER } from '../constants/sctOnline';
 
 /**
+ * 공개 메타. apiGet 이 404 를 null 로 삼키면 status=404 로 재던진다(존재 여부 비공개 UI용).
+ *
  * @param {string} token
  * @returns {Promise<object>}
  */
 export async function fetchSctPublicMeta(token) {
   const res = await StandardizedApi.get(SCT_API.publicMeta(token), {}, { skipSessionRefresh: true });
-  return resolveApiObjectData(res) || res;
+  const data = resolveApiObjectData(res) || res;
+  // 404 삼킴 → null/빈 본문. ENTRY 셸로 떨어지지 않도록 호출부에 전달
+  if (data == null || typeof data !== 'object' || Array.isArray(data)) {
+    const err = new Error('SCT meta not found');
+    err.status = 404;
+    throw err;
+  }
+  return data;
 }
 
 /**

@@ -1,5 +1,5 @@
 /**
- * 센터 설정 — SCT 「질문지」 섹션 (ADMIN만 변경, feature OFF면 숨김)
+ * 센터 설정 — SCT 「질문지」 섹션 (ADMIN만 변경, feature OFF여도 렌더)
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -7,13 +7,13 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import { SettingsSectionPanel, SettingsButton } from '../settings-shell';
+import SettingSwitchRow from '../../common/molecules/SettingSwitchRow';
 import SafeErrorDisplay from '../../common/SafeErrorDisplay';
 import { RoleUtils } from '../../../constants/roles';
 import { useSession } from '../../../contexts/SessionContext';
 import notificationManager from '../../../utils/notification';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import { fetchSctSettings, updateSctSettings } from '../../../utils/sctApi';
-import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import {
   SCT_DEFAULTS,
   SCT_TEST_ID,
@@ -23,12 +23,11 @@ import AdminSctUnlinkedPanel from './AdminSctUnlinkedPanel';
 import './sctAdmin.css';
 
 /**
- * feature.sct.enabled OFF이면 렌더하지 않는다.
+ * feature.sct.enabled OFF여도 섹션을 렌더해 ADMIN이 토글로 켤 수 있게 한다.
  */
 const AdminSctSettingsSection = () => {
   const { user } = useSession();
   const isAdmin = RoleUtils.isAdmin(user);
-  const { enabled, loading: flagLoading } = useSctFeatureEnabled({ preferSettings: true });
   const [linkExpiryDays, setLinkExpiryDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [retentionDays, setRetentionDays] = useState(String(SCT_DEFAULTS.RETENTION_DAYS));
   const [featureEnabled, setFeatureEnabled] = useState(false);
@@ -54,13 +53,18 @@ const AdminSctSettingsSection = () => {
     load();
   }, [load]);
 
-  if (flagLoading) {
-    return null;
-  }
-  if (!enabled) {
-    return null;
-  }
   if (!loaded && error) {
+    return (
+      <SettingsSectionPanel
+        title={SCT_UI.TAB_QUESTIONNAIRE}
+        testId={SCT_TEST_ID.SETTINGS}
+      >
+        <SafeErrorDisplay error={error} />
+      </SettingsSectionPanel>
+    );
+  }
+
+  if (!loaded) {
     return null;
   }
 
@@ -83,7 +87,8 @@ const AdminSctSettingsSection = () => {
     try {
       const saved = await updateSctSettings({
         linkExpiryDays: days,
-        retentionDays: retention
+        retentionDays: retention,
+        featureEnabled
       });
       setLinkExpiryDays(saved?.linkExpiryDays ?? days);
       setRetentionDays(String(saved?.retentionDays ?? retention));
@@ -114,6 +119,22 @@ const AdminSctSettingsSection = () => {
         </p>
         <p className="mg-v2-sct-caption" role="note">{SCT_UI.SETTINGS_LEGAL_NOTE}</p>
         <form className="mg-v2-settings-form-grid" onSubmit={handleSave} noValidate>
+          {isAdmin ? (
+            <SettingSwitchRow
+              id="sct-feature-enabled"
+              label={SCT_UI.SETTINGS_FEATURE_TOGGLE}
+              hint={SCT_UI.SETTINGS_FEATURE_HINT}
+              statusLabel={featureEnabled
+                ? SCT_UI.SETTINGS_FEATURE_ON
+                : SCT_UI.SETTINGS_FEATURE_OFF_LABEL}
+              checked={featureEnabled}
+              onCheckedChange={setFeatureEnabled}
+              disabled={saving}
+              isPending={saving}
+              data-testid={SCT_TEST_ID.SETTINGS_FEATURE_SWITCH}
+              ariaLabel={SCT_UI.SETTINGS_FEATURE_TOGGLE}
+            />
+          ) : null}
           <div className="mg-v2-settings-field">
             <label className="mg-v2-form-label" htmlFor="sct-link-expiry">
               {SCT_UI.SETTINGS_LINK_EXPIRY}
@@ -152,7 +173,7 @@ const AdminSctSettingsSection = () => {
             </div>
           ) : null}
         </form>
-        <AdminSctUnlinkedPanel />
+        <AdminSctUnlinkedPanel key={featureEnabled ? 'on' : 'off'} />
       </div>
     </SettingsSectionPanel>
   );

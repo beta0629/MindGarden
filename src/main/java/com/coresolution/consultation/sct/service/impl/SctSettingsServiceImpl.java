@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * SCT 설정 서비스 구현.
+ * get/update 는 feature OFF 여도 허용(ADMIN이 토글로 켤 수 있도록).
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -35,11 +36,11 @@ public class SctSettingsServiceImpl implements SctSettingsService {
     @Override
     @Transactional(readOnly = true)
     public SctSettingsResponse getSettings(String tenantId) {
-        sctFeatureGuard.requireEnabled(tenantId);
+        boolean enabled = sctFeatureGuard.isEnabled(tenantId);
         return SctSettingsResponse.builder()
                 .linkExpiryDays(resolveLinkExpiryDays(tenantId))
                 .retentionDays(resolveRetentionDays(tenantId))
-                .featureEnabled(true)
+                .featureEnabled(enabled)
                 .build();
     }
 
@@ -47,12 +48,12 @@ public class SctSettingsServiceImpl implements SctSettingsService {
     @Transactional
     public SctSettingsResponse updateSettings(
             String tenantId, SctSettingsUpdateRequest request, Long actorId, String actorRole) {
-        sctFeatureGuard.requireEnabled(tenantId);
         if (request == null) {
             throw new IllegalArgumentException("요청이 필요합니다.");
         }
         Integer beforeExpiry = resolveLinkExpiryDays(tenantId);
         Integer beforeRetention = resolveRetentionDays(tenantId);
+        boolean beforeFeature = sctFeatureGuard.isEnabled(tenantId);
 
         Integer newExpiry = beforeExpiry;
         if (request.getLinkExpiryDays() != null) {
@@ -62,7 +63,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 throw new IllegalArgumentException("만료 일수는 1~30 이어야 합니다.");
             }
             upsertConfig(tenantId, SctFeatureFlagKeys.LINK_EXPIRY_DAYS, String.valueOf(days),
-                    "SCT 링크 만료일수", actorId);
+                    "SCT 링크 만료일수", SctFeatureFlagKeys.CONFIG_CATEGORY, actorId);
             newExpiry = days;
         }
 
@@ -70,7 +71,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
         if (Boolean.TRUE.equals(request.getClearRetention())) {
             upsertConfig(tenantId, SctFeatureFlagKeys.RETENTION_DAYS,
                     String.valueOf(SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS),
-                    "SCT 응답 보관일수", actorId);
+                    "SCT 응답 보관일수", SctFeatureFlagKeys.CONFIG_CATEGORY, actorId);
             newRetention = SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
         } else if (request.getRetentionDays() != null) {
             int days = request.getRetentionDays();
@@ -78,14 +79,26 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 throw new IllegalArgumentException("보관 일수는 1 이상이어야 합니다.");
             }
             upsertConfig(tenantId, SctFeatureFlagKeys.RETENTION_DAYS,
-                    String.valueOf(days), "SCT 응답 보관일수", actorId);
+                    String.valueOf(days), "SCT 응답 보관일수",
+                    SctFeatureFlagKeys.CONFIG_CATEGORY, actorId);
             newRetention = days;
         }
 
+        boolean newFeature = beforeFeature;
+        if (request.getFeatureEnabled() != null) {
+            newFeature = Boolean.TRUE.equals(request.getFeatureEnabled());
+            upsertConfig(tenantId, SctFeatureFlagKeys.FEATURE_SCT_ENABLED,
+                    String.valueOf(newFeature),
+                    "SCT 온라인 질문지 기능",
+                    SctFeatureFlagKeys.FEATURE_CATEGORY, actorId);
+        }
+
         String beforeJson = "{\"linkExpiryDays\":" + beforeExpiry
-                + ",\"retentionDays\":" + beforeRetention + "}";
+                + ",\"retentionDays\":" + beforeRetention
+                + ",\"featureEnabled\":" + beforeFeature + "}";
         String afterJson = "{\"linkExpiryDays\":" + newExpiry
-                + ",\"retentionDays\":" + newRetention + "}";
+                + ",\"retentionDays\":" + newRetention
+                + ",\"featureEnabled\":" + newFeature + "}";
         AuditLog entry = AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actorId)
@@ -94,14 +107,15 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .entityType(SctConstants.ENTITY_TYPE_SETTINGS)
                 .beforeJson(beforeJson)
                 .afterJson(afterJson)
-                .metadataJson("{\"keys\":[\"sct.link.expiry.days\",\"sct.retention.days\"]}")
+                .metadataJson("{\"keys\":[\"sct.link.expiry.days\",\"sct.retention.days\","
+                        + "\"feature.sct.enabled\"]}")
                 .build();
         auditLogService.record(entry);
 
         return SctSettingsResponse.builder()
                 .linkExpiryDays(newExpiry)
                 .retentionDays(newRetention)
-                .featureEnabled(true)
+                .featureEnabled(newFeature)
                 .build();
     }
 
@@ -139,7 +153,9 @@ public class SctSettingsServiceImpl implements SctSettingsService {
         return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
     }
 
-    private void upsertConfig(String tenantId, String key, String value, String description, Long actorId) {
+    private void upsertConfig(
+            String tenantId, String key, String value, String description,
+            String category, Long actorId) {
         Optional<SystemConfig> existing = systemConfigRepository
                 .findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, key);
         String actor = actorId == null ? "ADMIN" : String.valueOf(actorId);
@@ -148,7 +164,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
             cfg.setConfigValue(value);
             cfg.setUpdatedBy(actor);
             cfg.setDescription(description);
-            cfg.setCategory(SctFeatureFlagKeys.CONFIG_CATEGORY);
+            cfg.setCategory(category);
             systemConfigRepository.save(cfg);
         } else {
             SystemConfig cfg = SystemConfig.builder()
@@ -156,7 +172,7 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                     .configKey(key)
                     .configValue(value)
                     .description(description)
-                    .category(SctFeatureFlagKeys.CONFIG_CATEGORY)
+                    .category(category)
                     .isEncrypted(false)
                     .isActive(true)
                     .createdBy(actor)

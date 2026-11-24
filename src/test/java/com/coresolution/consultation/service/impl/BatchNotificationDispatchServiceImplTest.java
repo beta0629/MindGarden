@@ -22,6 +22,8 @@ import com.coresolution.consultation.service.BatchNotificationDispatchService.Di
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -67,6 +69,7 @@ import static org.mockito.Mockito.when;
 class BatchNotificationDispatchServiceImplTest {
 
     private static final String TENANT_ID = "tenant-incheon-counseling-001";
+    private static final String TENANT_ID_B = "tenant-seoul-counseling-002";
     private static final Long SCHEDULE_ID = 1001L;
     private static final Long MAPPING_ID = 2001L;
     private static final Long CLIENT_ID = 3001L;
@@ -74,6 +77,10 @@ class BatchNotificationDispatchServiceImplTest {
     private static final Long LOG_ID = 5001L;
     private static final String PHONE = "01012345678";
     private static final String ALIMTALK_TEMPLATE_ID = "KA01TP000000000000ABCDEFG";
+    /** 테스트 fixture — 테넌트 A 사업장 유선번호 (프로덕션 하드코딩 금지). */
+    private static final String LANDLINE_TENANT_A = "032-111-2222";
+    /** 테스트 fixture — 테넌트 B 사업장 유선번호. */
+    private static final String LANDLINE_TENANT_B = "02-333-4444";
 
     @Mock
     private ScheduleRepository scheduleRepository;
@@ -93,6 +100,8 @@ class BatchNotificationDispatchServiceImplTest {
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
     private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock
+    private TenantRepository tenantRepository;
     @Mock
     private com.coresolution.consultation.service.SmsTemplateService smsTemplateService;
 
@@ -118,7 +127,7 @@ class BatchNotificationDispatchServiceImplTest {
             scheduleRepository, mappingRepository, userRepository,
             userPrivacyConsentRepository, sendLogRepository, sendLogger,
             dispatchHelper, templateMappingResolver, encryptionUtil, properties,
-            smsTemplateService);
+            tenantRepository, smsTemplateService);
 
         // 2단계 게이트(글로벌 + 종목별, V20260603_002 + SmsDispatchFlagKeys) — 본 테스트군은 게이트 ON
         // 동작 시나리오를 검증하므로 setUp 에서 일괄 ON 으로 stub 한다. 게이트 OFF 회귀 시나리오는
@@ -128,6 +137,9 @@ class BatchNotificationDispatchServiceImplTest {
         when(smsTemplateService.isGlobalAutoDispatchEnabled()).thenReturn(true);
 
         TenantContext.setTenantId(TENANT_ID);
+        // 기본: 테넌트 없음 → contactPhone 은 FALLBACK_CONTACT_PHONE(「고객센터」).
+        when(tenantRepository.findByTenantIdAndIsDeletedFalse(TENANT_ID))
+            .thenReturn(Optional.empty());
 
         // 복호화: 입력값을 그대로 반환 (테스트 단순화).
         when(encryptionUtil.decrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -587,6 +599,7 @@ class BatchNotificationDispatchServiceImplTest {
     @Test
     @DisplayName("CLIENT_WELCOME_FIRST — 신규 매칭 + 알림톡 성공 → ALIMTALK_SENT, target_type=USER")
     void dispatchClientWelcomeFirst_whenNewMapping_sendsWelcome() {
+        givenTenantBusinessLandline(TENANT_ID, LANDLINE_TENANT_A);
         ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 10,
             MappingStatus.ACTIVE, null);
         when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
@@ -604,12 +617,116 @@ class BatchNotificationDispatchServiceImplTest {
             eq(BatchNotificationTemplateCodes.CLIENT_WELCOME_FIRST),
             eq(BatchNotificationTemplateCodes.TARGET_TYPE_USER),
             eq(CLIENT_ID), eq(CLIENT_ID), anyString());
-        // 변수 매핑에 contactPhone 이 포함되었는지 확인.
+        // merchant legal businessLandline → contactPhone 변수 매핑.
         ArgumentCaptor<java.util.Map<String, String>> paramsCaptor =
             ArgumentCaptor.forClass(java.util.Map.class);
         verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
         assertThat(paramsCaptor.getValue())
-            .containsKey(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE);
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE, LANDLINE_TENANT_A);
+    }
+
+    @Test
+    @DisplayName("CLIENT_WELCOME_FIRST — businessLandline 값 있음 → contactPhone 에 해당 번호")
+    void dispatchClientWelcomeFirst_whenBusinessLandlinePresent_usesLandline() {
+        givenTenantBusinessLandline(TENANT_ID, LANDLINE_TENANT_A);
+        ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 10,
+            MappingStatus.ACTIVE, null);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+            .thenReturn(Optional.of(mapping));
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchSuccess();
+
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+
+        ArgumentCaptor<java.util.Map<String, String>> paramsCaptor =
+            ArgumentCaptor.forClass(java.util.Map.class);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE, LANDLINE_TENANT_A);
+    }
+
+    @Test
+    @DisplayName("CLIENT_WELCOME_FIRST — businessLandline 빈 값/null/테넌트 없음 → 「고객센터」")
+    void dispatchClientWelcomeFirst_whenBusinessLandlineBlankOrMissing_usesFallback() {
+        ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 10,
+            MappingStatus.ACTIVE, null);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+            .thenReturn(Optional.of(mapping));
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchSuccess();
+
+        // 1) 테넌트 없음 (setUp 기본 stub)
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+        ArgumentCaptor<java.util.Map<String, String>> paramsCaptor =
+            ArgumentCaptor.forClass(java.util.Map.class);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
+                BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
+
+        // 2) businessLandline blank
+        org.mockito.Mockito.clearInvocations(dispatchHelper);
+        givenTenantBusinessLandline(TENANT_ID, "   ");
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
+                BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
+
+        // 3) businessLandline null
+        org.mockito.Mockito.clearInvocations(dispatchHelper);
+        givenTenantBusinessLandline(TENANT_ID, null);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
+                BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE);
+    }
+
+    @Test
+    @DisplayName("CLIENT_WELCOME_FIRST — 테넌트 A/B 각각 다른 landline → 각자 값")
+    void dispatchClientWelcomeFirst_whenDifferentTenants_usesEachLandline() {
+        givenTenantBusinessLandline(TENANT_ID, LANDLINE_TENANT_A);
+        givenTenantBusinessLandline(TENANT_ID_B, LANDLINE_TENANT_B);
+
+        ConsultantClientMapping mapping = givenMapping(MAPPING_ID, 10, 10,
+            MappingStatus.ACTIVE, null);
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+            .thenReturn(Optional.of(mapping));
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID_B), eq(MAPPING_ID)))
+            .thenReturn(Optional.of(mapping));
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        givenAlimtalkMappingResolved();
+        givenAlimtalkDispatchSuccess();
+
+        ArgumentCaptor<java.util.Map<String, String>> paramsCaptor =
+            ArgumentCaptor.forClass(java.util.Map.class);
+
+        TenantContext.setTenantId(TENANT_ID);
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE, LANDLINE_TENANT_A);
+
+        org.mockito.Mockito.clearInvocations(dispatchHelper, sendLogger, sendLogRepository);
+        givenIdempotencyNotExists();
+        givenLoggerInsertSucceeds();
+        when(templateMappingResolver.resolveSolapiTemplateId(eq(TENANT_ID_B), anyString()))
+            .thenReturn(ALIMTALK_TEMPLATE_ID);
+        TenantContext.setTenantId(TENANT_ID_B);
+        service.dispatchClientWelcomeFirst(MAPPING_ID);
+        verify(dispatchHelper).dispatchAlimtalk(eq(PHONE), anyString(), paramsCaptor.capture());
+        assertThat(paramsCaptor.getValue())
+            .containsEntry(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE, LANDLINE_TENANT_B);
     }
 
     @Test
@@ -1055,6 +1172,13 @@ class BatchNotificationDispatchServiceImplTest {
         mapping.setId(mappingId);
         mapping.setTenantId(TENANT_ID);
         return mapping;
+    }
+
+    private void givenTenantBusinessLandline(String tenantId, String landline) {
+        Tenant tenant = new Tenant();
+        tenant.setBusinessLandline(landline);
+        when(tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId))
+            .thenReturn(Optional.of(tenant));
     }
 
     private void givenIdempotencyNotExists() {

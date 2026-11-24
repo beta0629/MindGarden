@@ -34,6 +34,8 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.domain.Tenant;
+import com.coresolution.core.repository.TenantRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -83,6 +85,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final PersonalDataEncryptionUtil encryptionUtil;
     private final BatchNotificationProperties properties;
+    private final TenantRepository tenantRepository;
     private final SmsTemplateService smsTemplateService;
     private final Clock reservationSmsClock;
     private final ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository;
@@ -100,6 +103,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @param templateMappingResolver         알림톡 매핑
      * @param encryptionUtil                  복호화
      * @param properties                      배치 설정
+     * @param tenantRepository                테넌트 (merchant legal businessLandline SSOT)
      * @param smsTemplateService              SMS 템플릿
      * @param scheduleChangeHistoryRepository 일정 변경 이력 (슬롯 미기록 발송 로그의 발송 당시 슬롯 추정)
      */
@@ -115,6 +119,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             AlimtalkTemplateMappingResolver templateMappingResolver,
             PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
+            TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,
             ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository) {
         this(
@@ -128,6 +133,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 templateMappingResolver,
                 encryptionUtil,
                 properties,
+                tenantRepository,
                 smsTemplateService,
                 Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL),
                 scheduleChangeHistoryRepository);
@@ -146,6 +152,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
      * @param templateMappingResolver      알림톡 매핑
      * @param encryptionUtil               복호화
      * @param properties                   배치 설정
+     * @param tenantRepository             테넌트 (merchant legal businessLandline SSOT)
      * @param smsTemplateService           SMS 템플릿
      */
     public BatchNotificationDispatchServiceImpl(
@@ -159,6 +166,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             AlimtalkTemplateMappingResolver templateMappingResolver,
             PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
+            TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService) {
         this(
                 scheduleRepository,
@@ -171,6 +179,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 templateMappingResolver,
                 encryptionUtil,
                 properties,
+                tenantRepository,
                 smsTemplateService,
                 Clock.system(ReservationSmsBusinessHours.ZONE_SEOUL));
     }
@@ -191,6 +200,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             AlimtalkTemplateMappingResolver templateMappingResolver,
             PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
+            TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,
             Clock reservationSmsClock) {
         this(
@@ -204,6 +214,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
                 templateMappingResolver,
                 encryptionUtil,
                 properties,
+                tenantRepository,
                 smsTemplateService,
                 reservationSmsClock,
                 /* scheduleChangeHistoryRepository */ null);
@@ -226,6 +237,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             AlimtalkTemplateMappingResolver templateMappingResolver,
             PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
+            TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,
             Clock reservationSmsClock,
             ScheduleChangeNotificationPendingRepository scheduleChangeHistoryRepository) {
@@ -239,6 +251,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         this.templateMappingResolver = templateMappingResolver;
         this.encryptionUtil = encryptionUtil;
         this.properties = properties;
+        this.tenantRepository = tenantRepository;
         this.smsTemplateService = smsTemplateService;
         this.reservationSmsClock = reservationSmsClock;
         this.scheduleChangeHistoryRepository = scheduleChangeHistoryRepository;
@@ -375,9 +388,11 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
         }
 
         Map<String, String> params = baseClientConsultantParams(client, consultant);
+        String landline = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId)
+            .map(Tenant::getBusinessLandline)
+            .orElse("");
         params.put(BatchNotificationTemplateCodes.VAR_CONTACT_PHONE,
-            orFallback(properties.getContactPhone(),
-                BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE));
+            orFallback(landline, BatchNotificationTemplateCodes.FALLBACK_CONTACT_PHONE));
 
         // 테넌트가 본문에 {{scheduleDate}}/{{scheduleTime}} 자리표시자를 추가한 경우 대비
         // (예: 인천 테넌트의 환영 + 첫 상담 일정 통합 메시지). 매칭 직후 일정이 아직 안 잡힌

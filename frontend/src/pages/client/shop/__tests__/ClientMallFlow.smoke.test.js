@@ -11,6 +11,7 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import ShopCatalogPage from '../ShopCatalogPage';
 import ShopCheckoutPage from '../ShopCheckoutPage';
 import {
+  CLIENT_CHECKOUT_REFUND_COPY,
   CLIENT_MALL_CHECKOUT_COPY,
   CLIENT_MALL_COPY,
   CLIENT_MALL_PHONE_COPY,
@@ -18,6 +19,8 @@ import {
   CLIENT_REFUND_NOTICE,
   buildClientMallProductUsageNotice
 } from '../../../../constants/clientMallConstants';
+import { LEGAL_PUBLIC_PATHS } from '../../../../constants/legalPublic';
+import { formatMallWon } from '../../../../utils/clientMall';
 import { CLIENT_SHOP_ROUTES, SHOP_CHECKOUT_MAPPING_COPY } from '../../../../constants/clientShopConstants';
 import { buildBuyNowCheckoutPath } from '../../../../utils/clientMallBuyNow';
 import * as notification from '../../../../utils/notification';
@@ -311,7 +314,7 @@ describe('ShopCheckoutPage (TO-BE)', () => {
     expect(screen.getByTestId(CLIENT_MALL_TEST_IDS.PHONE_ERROR)).toHaveTextContent(CLIENT_MALL_PHONE_COPY.SEND_FAILED);
   });
 
-  test('결제 전 확인 — eyebrow · 포인트 0P · 보유 0P · +10회기 · 수량 · 환불 한 문장(예시 없음)', async() => {
+  test('결제 전 확인 — eyebrow · 포인트 0P · 보유 0P · +10회기 · 수량 · 환불 차감 요약(예시 없음)', async() => {
     mockUseSession.mockReturnValue(sessionFor({ phone: '01012341234', isPhoneVerified: false }));
     mockService.fetchShopCart.mockResolvedValue(cartWithPkg);
     render(<MemoryRouter initialEntries={['/client/shop/checkout']}><ShopCheckoutPage /></MemoryRouter>);
@@ -324,7 +327,12 @@ describe('ShopCheckoutPage (TO-BE)', () => {
     expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY)).toBeInTheDocument();
     expect(screen.getByText(CLIENT_MALL_CHECKOUT_COPY.PHONE_NEEDS_VERIFY_HINT)).toBeInTheDocument();
     const refund = screen.getByTestId(CLIENT_MALL_TEST_IDS.CHECKOUT_REFUND);
-    expect(refund).toHaveTextContent(CLIENT_REFUND_NOTICE);
+    // 카탈로그 단회기 unitPriceMinor → 구조화 요약 (하드코딩 90000 리터럴 금지, 데이터 포맷만)
+    expect(refund).toHaveTextContent(formatMallWon(CATALOG.find((r) => r.sessionCount === 1).unitPriceMinor));
+    expect(refund).toHaveTextContent(CLIENT_CHECKOUT_REFUND_COPY.DEDUCTION_CAP);
+    expect(refund).toHaveTextContent(CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK);
+    expect(within(refund).getByRole('link', { name: CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK }))
+      .toHaveAttribute('href', LEGAL_PUBLIC_PATHS.REFUND);
     expect(refund.textContent).not.toMatch(/예시/);
     expect(screen.getByTestId('client-mall-checkout-bar')).toHaveTextContent(CLIENT_MALL_CHECKOUT_COPY.PAY_SECTION);
   });

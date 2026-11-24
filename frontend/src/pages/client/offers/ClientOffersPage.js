@@ -25,10 +25,10 @@ import MGButton from '../../../components/common/MGButton';
 import UnifiedModal from '../../../components/common/modals/UnifiedModal';
 import SafeText from '../../../components/common/SafeText';
 import {
+  CLIENT_CHECKOUT_REFUND_COPY,
   CLIENT_MALL_AGREEMENT_ITEMS,
   CLIENT_MALL_AGREEMENT_KEYS,
   CLIENT_MALL_THIRD_PARTY_BODY,
-  CLIENT_REFUND_NOTICE,
   CLIENT_MALL_USAGE_BANNER,
   CLIENT_MALL_USAGE_BANNER_EXAMPLE,
   buildClientMallProductUsageNotice
@@ -47,7 +47,11 @@ import {
   CLIENT_OFFERS_TEST_IDS,
   CLIENT_OFFER_ROUTES
 } from '../../../constants/shopClientOfferConstants';
-import { CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE } from '../../../constants/legalPublic';
+import {
+  CONSULTATION_PACKAGE_PAYMENT_TYPE_NOTE,
+  LEGAL_PUBLIC_PATHS
+} from '../../../constants/legalPublic';
+import MallCheckoutRefundNotice from '../../../components/shop/molecules/MallCheckoutRefundNotice';
 import { useSession } from '../../../contexts/SessionContext';
 import { useClientShopAuth } from '../../../hooks/useClientShopAuth';
 import usePhoneVerifyFlow from '../../../hooks/usePhoneVerifyFlow';
@@ -80,7 +84,7 @@ import {
   resolveInitialMappingId,
   shouldShowConsultantMappingPicker
 } from '../../../utils/clientShopCheckoutMapping';
-import { formatMallNumber } from '../../../utils/clientMall';
+import { formatMallNumber, formatMallWon } from '../../../utils/clientMall';
 import { toBuyNowCheckoutLines } from '../../../utils/clientMallBuyNow';
 import {
   describeOfferDiscount,
@@ -89,6 +93,11 @@ import {
   writeClientOffersDraft,
   readClientOffersPayFailureReason
 } from '../../../utils/shopClientOffer';
+import { fetchTenantPublicHomeMeta } from '../../../utils/tenantPublicHomeMeta';
+import {
+  buildCheckoutRefundDeductionLines,
+  resolveSingleSessionRegularPriceMinor
+} from '../../../utils/clientCheckoutRefundNotice';
 import '../../../styles/tokens/shop-offer-tokens.css';
 import './ClientOffersPage.css';
 
@@ -119,6 +128,8 @@ const ClientOffersPage = () => {
   const [mappings, setMappings] = useState([]);
   const [selectedMappingId, setSelectedMappingId] = useState('');
   const [agreements, setAgreements] = useState(EMPTY_AGREEMENTS);
+  const [refundPolicyText, setRefundPolicyText] = useState('');
+  const [consultationPackages, setConsultationPackages] = useState([]);
   const restoredRef = useRef(false);
   const termsOpenerRef = useRef(null);
   const idempotencyStoreRef = useRef(null);
@@ -132,6 +143,53 @@ const ClientOffersPage = () => {
     () => payable.find((o) => o.offerSkuCode === selectedSkuCode) || null,
     [payable, selectedSkuCode]
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    (async() => {
+      try {
+        const meta = await fetchTenantPublicHomeMeta();
+        if (cancelled) {
+          return;
+        }
+        setRefundPolicyText(meta?.tenant?.merchantLegal?.refundPolicyText || '');
+        setConsultationPackages(
+          Array.isArray(meta?.tenant?.consultationPackages)
+            ? meta.tenant.consultationPackages
+            : []
+        );
+      } catch (err) {
+        console.warn('오퍼 결제 환불 요약 메타 로드 실패:', err);
+        if (!cancelled) {
+          setRefundPolicyText('');
+          setConsultationPackages([]);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const checkoutRefundNotice = useMemo(() => {
+    const offerAsSku = selectedOffer && Number(selectedOffer.sessionCount) === 1
+      ? [{
+        sessionCount: 1,
+        unitPriceMinor: selectedOffer.originalPriceMinor,
+        originalPriceMinor: selectedOffer.originalPriceMinor,
+        title: selectedOffer.title
+      }]
+      : [];
+    const regularPriceMinor = resolveSingleSessionRegularPriceMinor({
+      consultationPackages,
+      catalogSkus: offerAsSku
+    });
+    return buildCheckoutRefundDeductionLines({
+      refundPolicyText,
+      regularPriceMinor,
+      formatWon: formatMallWon
+    });
+  }, [consultationPackages, refundPolicyText, selectedOffer]);
 
   const loadData = useCallback(async() => {
     setLoadState('loading');
@@ -440,7 +498,7 @@ const ClientOffersPage = () => {
     [CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND]: (
       <>
         {selectedOffer?.validityMonths != null ? <p>{buildClientMallProductUsageNotice(selectedOffer.validityMonths)}</p> : null}
-        <p>{CLIENT_REFUND_NOTICE}</p>
+        <MallCheckoutRefundNotice lines={checkoutRefundNotice.lines} asList={false} />
       </>
     ),
     [CLIENT_MALL_AGREEMENT_KEYS.THIRD_PARTY]: <p>{CLIENT_MALL_THIRD_PARTY_BODY}</p>
@@ -515,21 +573,22 @@ const ClientOffersPage = () => {
           </dd>
         </div>
       </dl>
-      <p className="client-offers__pay-refund">
+      <div className="client-offers__pay-refund">
         <Info className="client-offers__icon" aria-hidden="true" />
-        <span>
-          {CLIENT_REFUND_NOTICE}
-          {' '}
-          <button
-            type="button"
+        <div className="client-offers__pay-refund-body">
+          <ul className="client-mall-bullets">
+            {checkoutRefundNotice.lines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+          <Link
+            to={LEGAL_PUBLIC_PATHS.REFUND}
             className="client-offers__pay-refund-link"
-            disabled={paying}
-            onClick={(event) => openTerms(CLIENT_MALL_AGREEMENT_KEYS.USAGE_REFUND, event.currentTarget)}
           >
-            {t('pay.refundLink')}
-          </button>
-        </span>
-      </p>
+            {CLIENT_CHECKOUT_REFUND_COPY.FULL_POLICY_LINK}
+          </Link>
+        </div>
+      </div>
       <div className="client-offers__pay-agree">
         <h3 className="client-offers__pay-h">{t('pay.agreeTitle')}</h3>
         <label className="client-offers__pay-agree-all">

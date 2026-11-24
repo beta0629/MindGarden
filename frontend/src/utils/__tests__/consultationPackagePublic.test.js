@@ -23,19 +23,21 @@ describe('consultationPackagePublic', () => {
       name: '10회 패키지',
       description: '기본 상담',
       price: 300000,
+      sessions: null,
       priceLabel: '300,000원'
     });
   });
 
-  test('공통코드 row는 extraData.price·remark 를 사용한다', () => {
+  test('공통코드 row는 extraData.price·remark·sessions 를 사용한다', () => {
     const row = normalizeConsultationPackageRow({
       koreanName: '단회',
       codeDescription: '',
-      extraData: JSON.stringify({ price: 50000, remark: '1회기' })
+      extraData: JSON.stringify({ price: 50000, remark: '1회기', sessions: 1 })
     });
     expect(row.name).toBe('단회');
     expect(row.description).toBe('1회기');
     expect(row.price).toBe(50000);
+    expect(row.sessions).toBe(1);
     expect(row.priceLabel).toBe('50,000원');
   });
 

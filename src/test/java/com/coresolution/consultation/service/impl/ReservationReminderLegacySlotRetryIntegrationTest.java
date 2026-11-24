@@ -29,6 +29,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.repository.TenantRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -301,7 +302,8 @@ class ReservationReminderLegacySlotRetryIntegrationTest {
             scheduleRepository, mappingRepository, userRepository,
             mock(UserPrivacyConsentRepository.class), sendLogRepository, sendLogger,
             dispatchHelper, mock(AlimtalkTemplateMappingResolver.class), encryptionUtil,
-            properties, smsTemplateService, clock, scheduleChangeHistoryRepository);
+            properties, mock(TenantRepository.class), smsTemplateService, clock,
+            scheduleChangeHistoryRepository);
     }
 
     private void givenSmsResult(boolean success) {

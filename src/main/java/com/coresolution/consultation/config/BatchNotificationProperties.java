@@ -56,13 +56,6 @@ public class BatchNotificationProperties {
     private boolean reservationReminderEnabled = true;
 
     /**
-     * 신규 매칭 환영 안내({@code CLIENT_WELCOME_FIRST})·첫 상담 안내({@code INITIAL_GUIDE_*})
-     * 변수 매핑에 사용되는 고객센터/대표 번호. 빈 값이면
-     * {@link com.coresolution.consultation.constant.BatchNotificationTemplateCodes#FALLBACK_CONTACT_PHONE} 로 대체.
-     */
-    private String contactPhone = "";
-
-    /**
      * {@code INITIAL_GUIDE_OFFLINE} 발송 시 지점 주소 변수 누락 또는 미해결 시 사용할 fallback 문구.
      * 빈 값이면 {@link com.coresolution.consultation.constant.BatchNotificationTemplateCodes#FALLBACK_BRANCH_ADDRESS} 로 대체.
      */

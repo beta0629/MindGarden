@@ -33,6 +33,7 @@ import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
+import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.service.SchedulerAlertService;
 import com.coresolution.core.service.SchedulerExecutionLogService;
 import com.coresolution.core.service.TenantService;
@@ -476,7 +477,7 @@ class ReservationReminderRescheduleResendIntegrationTest {
             scheduleRepository, mappingRepository, userRepository,
             mock(UserPrivacyConsentRepository.class), sendLogRepository, sendLogger,
             dispatchHelper, mock(AlimtalkTemplateMappingResolver.class), encryptionUtil,
-            properties, smsTemplateService, clock);
+            properties, mock(TenantRepository.class), smsTemplateService, clock);
     }
 
     private ReservationReminderScheduler newScheduler(BatchNotificationDispatchServiceImpl dispatchService) {

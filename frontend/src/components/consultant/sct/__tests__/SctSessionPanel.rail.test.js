@@ -307,7 +307,7 @@ describe('SctSessionPanel rail states', () => {
     expect(localStorage.getItem(openKey)).toBe('1');
   });
 
-  it('submitted <1180: no auto sheet; expand opens sheet not side; Esc closes', async() => {
+  it('submitted <1180: no auto sheet; expand opens sheet not side; Esc closes SCT only', async() => {
     mockUseMediaQuery.mockReturnValue(false);
     mockFetchSctSessionView.mockResolvedValue({
       id: 61,
@@ -351,12 +351,72 @@ describe('SctSessionPanel rail states', () => {
     expect(screen.getByText(SECRET_ANSWER)).toBeInTheDocument();
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true');
 
+    // UnifiedModal-style bubble listener (등록 시점: SCT capture 이후) — Esc 가 stopPropagation 되면 미호출
+    const modalOnClose = jest.fn();
+    const modalBubbleListener = (e) => {
+      if (e.key === 'Escape') {
+        modalOnClose();
+      }
+    };
+    document.addEventListener('keydown', modalBubbleListener);
+
     await act(async() => {
-      fireEvent.keyDown(document, { key: 'Escape' });
+      fireEvent.keyDown(document, { key: 'Escape', bubbles: true });
     });
     await waitFor(() => {
       expect(screen.queryByTestId(SCT_TEST_ID.SHEET)).not.toBeInTheDocument();
     });
+    expect(modalOnClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId(SCT_TEST_ID.EXPAND_BTN)).toBeInTheDocument();
+    document.removeEventListener('keydown', modalBubbleListener);
+  });
+
+  it('submitted desktop: Esc collapses side panel and keeps expand trigger', async() => {
+    mockUseMediaQuery.mockReturnValue(true);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 62,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt: '2026-03-25T12:00:00Z',
+      answers: [
+        {
+          formItemId: 1,
+          itemNo: 1,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: SECRET_ANSWER,
+          notApplicable: false,
+          isBlank: false
+        }
+      ]
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      { id: 62, status: 'SUBMITTED', formType: 'ADULT', submittedAt: '2026-03-25T12:00:00Z' }
+    ]);
+
+    render(<SctSessionPanel clientId={6} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
+    });
+
+    const modalOnClose = jest.fn();
+    const modalBubbleListener = (e) => {
+      if (e.key === 'Escape') {
+        modalOnClose();
+      }
+    };
+    document.addEventListener('keydown', modalBubbleListener);
+
+    await act(async() => {
+      fireEvent.keyDown(document, { key: 'Escape', bubbles: true });
+    });
+    await waitFor(() => {
+      expect(screen.queryByTestId(SCT_TEST_ID.SIDE)).not.toBeInTheDocument();
+    });
+    expect(modalOnClose).not.toHaveBeenCalled();
+    expect(screen.getByTestId(SCT_TEST_ID.EXPAND_BTN)).toBeInTheDocument();
+    document.removeEventListener('keydown', modalBubbleListener);
   });
 
   it('CSS places strip rail above journal spanning full width when side open', () => {
@@ -376,20 +436,33 @@ describe('SctSessionPanel rail states', () => {
     );
   });
 
-  it('memo-ta / memo-add use 16px base font and touch-target height (pointer-independent)', () => {
+  it('memo-ta / memo-add use literal 16px font and touch-target height (pointer-independent)', () => {
     const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
     const css = fs.readFileSync(cssPath, 'utf8');
     const memoTaBlock = css.match(/\.mg-v2-sct-memo-ta\s*\{[^}]+\}/);
     const memoAddBlock = css.match(/\.mg-v2-sct-memo-add\s*\{[^}]+\}/);
     expect(memoTaBlock).not.toBeNull();
     expect(memoAddBlock).not.toBeNull();
-    expect(memoTaBlock[0]).toMatch(/font-size:\s*var\(--mg-font-size-base,\s*16px\)/);
+    expect(memoTaBlock[0]).toMatch(/font-size:\s*16px/);
+    expect(memoTaBlock[0]).not.toMatch(/font-size:\s*var\(--mg-font-size-base/);
     expect(memoTaBlock[0]).not.toMatch(/font-size:\s*var\(--mg-v2-font-size-body-md\)/);
-    expect(memoAddBlock[0]).toMatch(/font-size:\s*var\(--mg-font-size-base,\s*16px\)/);
+    expect(memoAddBlock[0]).toMatch(/font-size:\s*16px/);
+    expect(memoAddBlock[0]).not.toMatch(/font-size:\s*var\(--mg-font-size-base/);
     expect(memoAddBlock[0]).toMatch(/min-height:\s*var\(--mg-v2-touch-target-min\)/);
     expect(memoAddBlock[0]).toMatch(/height:\s*var\(--mg-v2-touch-target-min\)/);
     expect(css).not.toMatch(
       /@media\s*\(\s*pointer:\s*coarse\s*\)\s*\{[^}]*\.mg-v2-sct-memo-(?:ta|add)/
+    );
+  });
+
+  it('narrow phone sheet root leaves top gap for strip; 820 media not used', () => {
+    const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    expect(css).toMatch(
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?top:\s*calc\(\s*var\(--mg-v2-touch-target-min\)\s*\+\s*var\(--mg-v2-space-10\)\s*\)/
+    );
+    expect(css).not.toMatch(
+      /@media\s*\(\s*max-width:\s*51\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root/
     );
   });
 

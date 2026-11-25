@@ -469,33 +469,43 @@
 
 /*
  * 상담일지 + SCT 레일
- * - 기본·미제출·접힘: 1열 (저널 전체 폭 + 스트립). 빈 오른쪽 절반 금지.
- * - 제출 + 펼침 + ≥1180(73.75rem): 저널 | 사이드 패널 clamp(25rem, 36vw, 40rem)
+ * - rail(스트립)은 항상 전체 폭 상단. journal 아래가 아님 · 오른쪽 열 전용이 아님.
+ * - 기본·미제출·접힘: rail + journal 1열. 빈 오른쪽 절반 금지.
+ * - 제출 + 펼침 + ≥1180: "rail rail" / "journal side"
  */
 .mg-v2-consultation-log__layout--with-sct {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'rail'
+    'journal';
   gap: var(--mg-v2-space-4);
   width: 100%;
   max-width: none;
 }
 
-@media (min-width: 73.75rem) {
-  .mg-v2-consultation-log__layout--with-sct.is-sct-side-open {
-    grid-template-columns: minmax(0, 1fr) clamp(25rem, 36vw, 40rem);
-  }
+.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-rail {
+  grid-area: rail;
+  min-width: 0;
 }
 
 .mg-v2-consultation-log__layout--with-sct .mg-v2-consultation-log__journal {
+  grid-area: journal;
   min-width: 0;
 }
 
-.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-rail {
-  min-width: 0;
-}
+@media (min-width: 73.75rem) {
+  .mg-v2-consultation-log__layout--with-sct.is-sct-side-open {
+    grid-template-columns: minmax(0, 1fr) clamp(25rem, 36vw, 40rem);
+    grid-template-areas:
+      'rail rail'
+      'journal side';
+  }
 
-.mg-v2-consultation-log__layout--with-sct.is-sct-side-open .mg-v2-sct-side {
-  max-height: 70vh;
+  .mg-v2-consultation-log__layout--with-sct.is-sct-side-open .mg-v2-sct-side {
+    grid-area: side;
+    max-height: 70vh;
+  }
 }
 
 /* ——— SCT journal rail / strip / peek / sheet ——— */
@@ -505,8 +515,6 @@
   flex-direction: column;
   gap: var(--mg-v2-space-2);
   min-width: 0;
-  container-type: inline-size;
-  container-name: sct-rail;
 }
 
 .mg-v2-sct-strip {
@@ -656,6 +664,8 @@
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
   border-radius: var(--mg-v2-radius-md);
   background: var(--mg-v2-color-surface-card);
+  container-type: inline-size;
+  container-name: sct-side;
   transition:
     opacity var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
     transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
@@ -762,15 +772,18 @@
   }
 }
 
-.mg-v2-sct-rail .mg-v2-sct-session__search-input:focus,
-.mg-v2-sct-rail .mg-v2-sct-session__select:focus,
-.mg-v2-sct-rail .mg-v2-sct-memo-ta:focus {
+.mg-v2-sct-side .mg-v2-sct-session__search-input:focus,
+.mg-v2-sct-side .mg-v2-sct-session__select:focus,
+.mg-v2-sct-side .mg-v2-sct-memo-ta:focus,
+.mg-v2-sct-sheet .mg-v2-sct-session__search-input:focus,
+.mg-v2-sct-sheet .mg-v2-sct-session__select:focus,
+.mg-v2-sct-sheet .mg-v2-sct-memo-ta:focus {
   outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
   outline-offset: var(--mg-v2-space-0-5);
   border-color: var(--mg-v2-color-neutral-900);
 }
 
-@container sct-rail (max-width: 40rem) {
+@container sct-side (max-width: 40rem) {
   .mg-v2-sct-session__chips {
     flex-direction: column;
     align-items: stretch;

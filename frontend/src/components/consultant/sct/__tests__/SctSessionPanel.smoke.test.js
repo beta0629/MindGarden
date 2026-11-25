@@ -175,6 +175,9 @@ describe('SctSessionPanel', () => {
       /\.mg-v2-sct-memo-add\s*\{[\s\S]*min-height:\s*var\(--mg-v2-touch-target-min\)/
     );
     expect(css).toMatch(/\.mg-v2-consultation-log__layout--with-sct\.is-sct-side-open/);
+    expect(css).toMatch(/grid-template-areas:\s*[\s\S]*'rail'[\s\S]*'journal'/);
+    expect(css).toMatch(/grid-template-areas:\s*[\s\S]*'rail rail'[\s\S]*'journal side'/);
+    expect(css).toMatch(/\.mg-v2-consultation-log__layout--with-sct\s+\.mg-v2-sct-rail\s*\{[\s\S]*grid-area:\s*rail/);
     expect(css).not.toMatch(
       /\.mg-v2-consultation-log__layout--with-sct\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*5fr\)/
     );

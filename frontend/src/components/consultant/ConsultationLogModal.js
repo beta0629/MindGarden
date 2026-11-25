@@ -1574,6 +1574,18 @@ const ConsultationLogModal = ({
                   : undefined
               }
             >
+              {/*
+                SctSessionPanel = Fragment(rail, side?, sheet portal).
+                grid-areas: rail 전체 폭 상단 → journal → side(≥1180 펼침).
+              */}
+              {sctFeatureEnabled && psychHookClientId != null ? (
+                <SctSessionPanel
+                  clientId={psychHookClientId}
+                  mappingId={Number.isFinite(sctMappingId) ? sctMappingId : undefined}
+                  clientName={scheduleData?.clientName || consultationRecord?.clientName || ''}
+                  onSidePanelOpenChange={setSctSidePanelOpen}
+                />
+              ) : null}
               <div className="mg-v2-consultation-log__main mg-v2-consultation-log__journal">
                 {loading ? (
                   <div className="mg-v2-consultation-log__form-loading">
@@ -1613,14 +1625,6 @@ const ConsultationLogModal = ({
                   </div>
                 </section>
               </div>
-              {sctFeatureEnabled && psychHookClientId != null ? (
-                <SctSessionPanel
-                  clientId={psychHookClientId}
-                  mappingId={Number.isFinite(sctMappingId) ? sctMappingId : undefined}
-                  clientName={scheduleData?.clientName || consultationRecord?.clientName || ''}
-                  onSidePanelOpenChange={setSctSidePanelOpen}
-                />
-              ) : null}
             </div>
           </div>
         </section>

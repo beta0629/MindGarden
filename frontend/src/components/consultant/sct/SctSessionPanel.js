@@ -8,6 +8,7 @@
  */
 
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
@@ -706,150 +707,9 @@ const SctSessionPanelBody = ({
   const draftSavedAt = inviteMeta?.draftSavedAt;
   const tokenExpiresAt = inviteMeta?.tokenExpiresAt || session?.tokenExpiresAt;
 
-  return (
-    <section
-      className={`${SCT_CSS.RAIL} ${SCT_CSS.SESSION} mg-v2-sct-session--font-${fontSize}`}
-      data-testid={SCT_TEST_ID.SESSION_PANEL}
-      data-sct-ui-state={uiState}
-      data-sct-side-open={sidePanelOpen ? '1' : '0'}
-      aria-label={SCT_UI.RAIL_STRIP_LABEL}
-    >
-      <div
-        className={SCT_CSS.STRIP}
-        data-testid={SCT_TEST_ID.STRIP}
-      >
-        <div
-          className={`${SCT_CSS.SPINE} ${spineMod}`.trim()}
-          aria-hidden="true"
-          title={SCT_UI.SPINE_LABEL}
-        >
-          <i className="mg-v2-sct-spine__line" />
-          <i className="mg-v2-sct-spine__line" />
-          <i className="mg-v2-sct-spine__line" />
-          <i className="mg-v2-sct-spine__line" />
-        </div>
-        <div className="mg-v2-sct-strip__main">
-          <h2 className="mg-v2-sct-strip__title">
-            <SafeText>{titleText}</SafeText>
-          </h2>
-          <span
-            className={`mg-v2-sct-status ${statusClass}`.trim()}
-            data-testid={freshBadge ? SCT_TEST_ID.FRESH_BADGE : SCT_TEST_ID.STATUS_BADGE}
-          >
-            <SafeText>{statusLabel}</SafeText>
-          </span>
-          {loading ? (
-            <p className="mg-v2-sct-strip__meta">{SCT_UI.LOADING}</p>
-          ) : null}
-          {!loading && error ? (
-            <p className="mg-v2-sct-strip__meta" role="alert"><SafeText>{error}</SafeText></p>
-          ) : null}
-        </div>
-        <div className="mg-v2-sct-strip__actions">
-          {isSubmitted ? (
-            bodyOpen ? (
-              <MGButton
-                type="button"
-                variant="outline"
-                size="small"
-                preventDoubleClick={false}
-                data-testid={SCT_TEST_ID.COLLAPSE_BTN}
-                aria-expanded="true"
-                aria-controls={expandControlsId}
-                onClick={handleCollapseBody}
-              >
-                {SCT_UI.COLLAPSE_SIDE}
-              </MGButton>
-            ) : (
-              <MGButton
-                type="button"
-                variant="primary"
-                size="small"
-                preventDoubleClick={false}
-                data-testid={SCT_TEST_ID.EXPAND_BTN}
-                aria-expanded="false"
-                aria-controls={expandControlsId}
-                onClick={handleExpandBody}
-              >
-                {SCT_UI.EXPAND_SIDE}
-              </MGButton>
-            )
-          ) : (
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              preventDoubleClick={false}
-              data-testid={SCT_TEST_ID.PEEK_TOGGLE}
-              aria-expanded={peekOpen ? 'true' : 'false'}
-              aria-controls={`${bodyPanelId}-peek`}
-              onClick={() => setPeekOpen((v) => !v)}
-            >
-              {peekOpen ? SCT_UI.PEEK_CLOSE : SCT_UI.PEEK_DETAILS}
-            </MGButton>
-          )}
-        </div>
-      </div>
-
-      {showPeek ? (
-        <div
-          id={`${bodyPanelId}-peek`}
-          className={SCT_CSS.PEEK}
-          data-testid={SCT_TEST_ID.PEEK}
-        >
-          <p className="mg-v2-sct-peek-card__body">
-            <SafeText>
-              {uiState === SCT_JOURNAL_UI_STATE.EXPIRED
-                ? SCT_UI.STATUS_EXPIRED
-                : SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT}
-            </SafeText>
-          </p>
-          {uiState === SCT_JOURNAL_UI_STATE.PENDING && draftSavedAt ? (
-            <p className="mg-v2-sct-peek-card__body">
-              {SCT_UI.DRAFT_SAVED_AT}
-              {': '}
-              <SafeText>{formatDateTimeLabel(draftSavedAt)}</SafeText>
-            </p>
-          ) : null}
-          {tokenExpiresAt ? (
-            <p className="mg-v2-sct-peek-card__body">
-              {SCT_UI.EXPIRES_AT}
-              {': '}
-              <SafeText>{formatDateTimeLabel(tokenExpiresAt)}</SafeText>
-            </p>
-          ) : null}
-          {/*
-            BE 는 draft answeredCount 를 노출하지 않음.
-            SENT/DRAFT 피크에서 진행 눈금·분모를 만들지 않는다 (가짜 23/50 금지).
-          */}
-        </div>
-      ) : null}
-
-      {sidePanelOpen ? (
-        <aside
-          id={bodyPanelId}
-          className={`${SCT_CSS.SIDE} mg-v2-sct-session--font-${fontSize}`}
-          data-testid={SCT_TEST_ID.SIDE}
-          aria-label={titleText}
-        >
-          <div className="mg-v2-sct-session__head">
-            <h2>
-              <SafeText>{titleText}</SafeText>
-            </h2>
-            {session?.managementNo ? (
-              <p className={SCT_CSS.CAPTION} data-testid={SCT_TEST_ID.MANAGEMENT_NO}>
-                {SCT_UI.MANAGEMENT_NO}
-                {': '}
-                <SafeText>{session.managementNo}</SafeText>
-              </p>
-            ) : null}
-            <span className={SCT_CSS.CAPTION}>{SCT_UI.PANEL_NOTICE}</span>
-          </div>
-          {renderSubmittedBody()}
-        </aside>
-      ) : null}
-
-      {sheetOpen ? (
+  const sheetNode = sheetOpen && typeof document !== 'undefined'
+    ? createPortal(
+      (
         <div className="mg-v2-sct-sheet-root" data-testid={SCT_TEST_ID.SHEET}>
           <button
             type="button"
@@ -894,8 +754,163 @@ const SctSessionPanelBody = ({
             </div>
           </div>
         </div>
+      ),
+      document.body
+    )
+    : null;
+
+  /*
+   * Fragment → layout grid 직접 자식:
+   *   rail (strip+peek) | side? | sheet portal
+   * grid-areas 로 rail 이 journal 위 전체 폭을 차지한다.
+   */
+  return (
+    <>
+      <section
+        className={`${SCT_CSS.RAIL} ${SCT_CSS.SESSION} mg-v2-sct-session--font-${fontSize}`}
+        data-testid={SCT_TEST_ID.SESSION_PANEL}
+        data-sct-ui-state={uiState}
+        data-sct-side-open={sidePanelOpen ? '1' : '0'}
+        aria-label={SCT_UI.RAIL_STRIP_LABEL}
+      >
+        <div
+          className={SCT_CSS.STRIP}
+          data-testid={SCT_TEST_ID.STRIP}
+        >
+          <div
+            className={`${SCT_CSS.SPINE} ${spineMod}`.trim()}
+            aria-hidden="true"
+            title={SCT_UI.SPINE_LABEL}
+          >
+            <i className="mg-v2-sct-spine__line" />
+            <i className="mg-v2-sct-spine__line" />
+            <i className="mg-v2-sct-spine__line" />
+            <i className="mg-v2-sct-spine__line" />
+          </div>
+          <div className="mg-v2-sct-strip__main">
+            <h2 className="mg-v2-sct-strip__title">
+              <SafeText>{titleText}</SafeText>
+            </h2>
+            <span
+              className={`mg-v2-sct-status ${statusClass}`.trim()}
+              data-testid={freshBadge ? SCT_TEST_ID.FRESH_BADGE : SCT_TEST_ID.STATUS_BADGE}
+            >
+              <SafeText>{statusLabel}</SafeText>
+            </span>
+            {loading ? (
+              <p className="mg-v2-sct-strip__meta">{SCT_UI.LOADING}</p>
+            ) : null}
+            {!loading && error ? (
+              <p className="mg-v2-sct-strip__meta" role="alert"><SafeText>{error}</SafeText></p>
+            ) : null}
+          </div>
+          <div className="mg-v2-sct-strip__actions">
+            {isSubmitted ? (
+              bodyOpen ? (
+                <MGButton
+                  type="button"
+                  variant="outline"
+                  size="small"
+                  preventDoubleClick={false}
+                  data-testid={SCT_TEST_ID.COLLAPSE_BTN}
+                  aria-expanded="true"
+                  aria-controls={expandControlsId}
+                  onClick={handleCollapseBody}
+                >
+                  {SCT_UI.COLLAPSE_SIDE}
+                </MGButton>
+              ) : (
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  size="small"
+                  preventDoubleClick={false}
+                  data-testid={SCT_TEST_ID.EXPAND_BTN}
+                  aria-expanded="false"
+                  aria-controls={expandControlsId}
+                  onClick={handleExpandBody}
+                >
+                  {SCT_UI.EXPAND_SIDE}
+                </MGButton>
+              )
+            ) : (
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                preventDoubleClick={false}
+                data-testid={SCT_TEST_ID.PEEK_TOGGLE}
+                aria-expanded={peekOpen ? 'true' : 'false'}
+                aria-controls={`${bodyPanelId}-peek`}
+                onClick={() => setPeekOpen((v) => !v)}
+              >
+                {peekOpen ? SCT_UI.PEEK_CLOSE : SCT_UI.PEEK_DETAILS}
+              </MGButton>
+            )}
+          </div>
+        </div>
+
+        {showPeek ? (
+          <div
+            id={`${bodyPanelId}-peek`}
+            className={SCT_CSS.PEEK}
+            data-testid={SCT_TEST_ID.PEEK}
+          >
+            <p className="mg-v2-sct-peek-card__body">
+              <SafeText>
+                {uiState === SCT_JOURNAL_UI_STATE.EXPIRED
+                  ? SCT_UI.STATUS_EXPIRED
+                  : SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT}
+              </SafeText>
+            </p>
+            {uiState === SCT_JOURNAL_UI_STATE.PENDING && draftSavedAt ? (
+              <p className="mg-v2-sct-peek-card__body">
+                {SCT_UI.DRAFT_SAVED_AT}
+                {': '}
+                <SafeText>{formatDateTimeLabel(draftSavedAt)}</SafeText>
+              </p>
+            ) : null}
+            {tokenExpiresAt ? (
+              <p className="mg-v2-sct-peek-card__body">
+                {SCT_UI.EXPIRES_AT}
+                {': '}
+                <SafeText>{formatDateTimeLabel(tokenExpiresAt)}</SafeText>
+              </p>
+            ) : null}
+            {/*
+              BE 는 draft answeredCount 를 노출하지 않음.
+              SENT/DRAFT 피크에서 진행 눈금·분모를 만들지 않는다 (가짜 23/50 금지).
+            */}
+          </div>
+        ) : null}
+      </section>
+
+      {sidePanelOpen ? (
+        <aside
+          id={bodyPanelId}
+          className={`${SCT_CSS.SIDE} mg-v2-sct-session--font-${fontSize}`}
+          data-testid={SCT_TEST_ID.SIDE}
+          aria-label={titleText}
+        >
+          <div className="mg-v2-sct-session__head">
+            <h2>
+              <SafeText>{titleText}</SafeText>
+            </h2>
+            {session?.managementNo ? (
+              <p className={SCT_CSS.CAPTION} data-testid={SCT_TEST_ID.MANAGEMENT_NO}>
+                {SCT_UI.MANAGEMENT_NO}
+                {': '}
+                <SafeText>{session.managementNo}</SafeText>
+              </p>
+            ) : null}
+            <span className={SCT_CSS.CAPTION}>{SCT_UI.PANEL_NOTICE}</span>
+          </div>
+          {renderSubmittedBody()}
+        </aside>
       ) : null}
-    </section>
+
+      {sheetNode}
+    </>
   );
 };
 

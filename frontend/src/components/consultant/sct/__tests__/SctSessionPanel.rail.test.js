@@ -7,6 +7,8 @@
 
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import fs from 'fs';
+import path from 'path';
 import SctSessionPanel from '../SctSessionPanel';
 import {
   SCT_JOURNAL_PANEL_LS_KEYS,
@@ -262,6 +264,23 @@ describe('SctSessionPanel rail states', () => {
     await waitFor(() => {
       expect(screen.queryByTestId(SCT_TEST_ID.SHEET)).not.toBeInTheDocument();
     });
+  });
+
+  it('CSS places strip rail above journal spanning full width when side open', () => {
+    const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    expect(css).toMatch(
+      /\.mg-v2-consultation-log__layout--with-sct\s*\{[\s\S]*grid-template-areas:\s*[\s\S]*'rail'[\s\S]*'journal'/
+    );
+    expect(css).toMatch(
+      /\.is-sct-side-open\s*\{[\s\S]*grid-template-areas:\s*[\s\S]*'rail rail'[\s\S]*'journal side'/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-consultation-log__layout--with-sct\s+\.mg-v2-sct-rail\s*\{[\s\S]*grid-area:\s*rail/
+    );
+    expect(css).toMatch(
+      /\.is-sct-side-open\s+\.mg-v2-sct-side\s*\{[\s\S]*grid-area:\s*side/
+    );
   });
 
   it('localStorage keys are scoped consultantId × invitationId', async() => {

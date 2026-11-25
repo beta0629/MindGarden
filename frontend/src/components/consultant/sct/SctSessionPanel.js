@@ -350,6 +350,7 @@ const SctSessionPanelBody = ({
   }, [clientId, enabled, mappingId, loadMemos]);
 
   // 제출 본문 초기 펼침 — 데스크톱 ≥1180 만. 모바일 시트 자동 오픈 금지.
+  // open.v1 접힘 키만 기록. seen 은 본문 실제 노출 effect 에서 갱신.
   useEffect(() => {
     if (loading || !isSubmitted || invitationId == null || initRef.current) return;
     initRef.current = true;
@@ -373,6 +374,18 @@ const SctSessionPanelBody = ({
     seenKey,
     session?.submittedAt
   ]);
+
+  // 사이드/시트 본문이 실제로 열린 경우에만 seen 갱신(스트립만 보면 금지).
+  // freshBadge 는 노출 시점에 끄지 않음 — 이 세션 라벨 유지. collapse 시에만 끔.
+  useEffect(() => {
+    if (!bodyOpen || !isSubmitted) return;
+    if (!seenKey || session?.submittedAt == null) return;
+    writeSctJournalPanelSeenSubmittedAt(
+      seenKey,
+      String(session.submittedAt),
+      invitationId
+    );
+  }, [bodyOpen, isSubmitted, seenKey, session?.submittedAt, invitationId]);
 
   const answers = isSubmitted ? (session?.answers || []) : [];
   const { domains } = useMemo(

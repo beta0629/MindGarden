@@ -1,6 +1,7 @@
 /**
  * 상담일지 SCT 레일 — 접힘·제출 열람 시각 localStorage SSOT.
- * 키는 consultantId × invitationId 로만 스코프한다 (서버 스키마/API 없음).
+ * open: consultantId × invitationId (open.v1)
+ * seen: consultantId × clientId (seenSubmitted.v2) — 초대가 바뀌어도 동일 내담자 기준 유지
  *
  * @author MindGarden
  * @since 2026-03-25
@@ -8,10 +9,22 @@
 
 export const SCT_JOURNAL_PANEL_STORAGE = Object.freeze({
   OPEN_PREFIX: 'mg.sctJournalPanel.open.v1',
-  SEEN_PREFIX: 'mg.sctJournalPanel.seenSubmitted.v1',
+  SEEN_PREFIX: 'mg.sctJournalPanel.seenSubmitted.v2',
   OPEN: '1',
   CLOSED: '0'
 });
+
+/**
+ * @param {unknown} value
+ * @returns {string|null} 파싱 가능한 ISO 또는 null (절대 throw 하지 않음)
+ */
+function normalizeSeenSubmittedAt(value) {
+  if (value == null) return null;
+  const s = String(value).trim();
+  if (!s) return null;
+  if (!Number.isFinite(Date.parse(s))) return null;
+  return s;
+}
 
 /**
  * @param {string|number|null|undefined} consultantId
@@ -27,16 +40,18 @@ export function buildSctJournalPanelOpenKey(consultantId, invitationId) {
 }
 
 /**
+ * seen v2 — consultantId × clientId (journal client)
+ *
  * @param {string|number|null|undefined} consultantId
- * @param {string|number|null|undefined} invitationId
+ * @param {string|number|null|undefined} clientId
  * @returns {string|null}
  */
-export function buildSctJournalPanelSeenKey(consultantId, invitationId) {
-  if (consultantId == null || invitationId == null) return null;
+export function buildSctJournalPanelSeenKey(consultantId, clientId) {
+  if (consultantId == null || clientId == null) return null;
   const c = String(consultantId).trim();
-  const i = String(invitationId).trim();
-  if (!c || !i) return null;
-  return `${SCT_JOURNAL_PANEL_STORAGE.SEEN_PREFIX}:${c}:${i}`;
+  const client = String(clientId).trim();
+  if (!c || !client) return null;
+  return `${SCT_JOURNAL_PANEL_STORAGE.SEEN_PREFIX}:${c}:${client}`;
 }
 
 /**
@@ -72,6 +87,9 @@ export function writeSctJournalPanelOpenState(key, isOpen) {
 }
 
 /**
+ * 저장된 seen 값에서 submittedAt 추출.
+ * 허용: plain ISO 문자열 · JSON `{"submittedAt":"..."}` · 그 외/깨진 값 → null (never throw)
+ *
  * @param {string|null} key
  * @returns {string|null} ISO string or null
  */
@@ -80,7 +98,12 @@ export function readSctJournalPanelSeenSubmittedAt(key) {
   try {
     const raw = localStorage.getItem(key);
     if (raw == null || String(raw).trim() === '') return null;
-    return String(raw).trim();
+    const trimmed = String(raw).trim();
+    if (trimmed.charAt(0) === '{') {
+      const parsed = JSON.parse(trimmed);
+      return normalizeSeenSubmittedAt(parsed && parsed.submittedAt);
+    }
+    return normalizeSeenSubmittedAt(trimmed);
   } catch {
     return null;
   }
@@ -89,11 +112,21 @@ export function readSctJournalPanelSeenSubmittedAt(key) {
 /**
  * @param {string|null} key
  * @param {string} iso
+ * @param {string|number|null|undefined} [invitationId] 디버깅용 — 있으면 JSON 저장
  */
-export function writeSctJournalPanelSeenSubmittedAt(key, iso) {
+export function writeSctJournalPanelSeenSubmittedAt(key, iso, invitationId) {
   if (!key || !iso || typeof localStorage === 'undefined') return;
   try {
-    localStorage.setItem(key, String(iso));
+    const submittedAt = String(iso);
+    const hasInvite =
+      invitationId != null && String(invitationId).trim() !== '';
+    const value = hasInvite
+      ? JSON.stringify({
+        submittedAt,
+        invitationId: Number(invitationId) || invitationId
+      })
+      : submittedAt;
+    localStorage.setItem(key, value);
   } catch {
     // ignore
   }

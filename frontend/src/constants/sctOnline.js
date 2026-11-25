@@ -352,10 +352,10 @@ export const buildSctPeekPendingCopy = (opts = {}, total = SCT_DEFAULTS.TOTAL_IT
   return parts.join(' ');
 };
 
-/** 상담일지 SCT 레일 localStorage 키 prefix (consultantId × invitationId) */
+/** 상담일지 SCT 레일 localStorage 키 prefix (open: consultant×invite, seen: consultant×client) */
 export const SCT_JOURNAL_PANEL_LS_KEYS = Object.freeze({
   OPEN: 'mg.sctJournalPanel.open.v1',
-  SEEN_SUBMITTED: 'mg.sctJournalPanel.seenSubmitted.v1'
+  SEEN_SUBMITTED: 'mg.sctJournalPanel.seenSubmitted.v2'
 });
 
 /** 사이드 패널 분기 뷰포트 — 1180px = 73.75rem */

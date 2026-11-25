@@ -82,6 +82,7 @@ deployment/*.env*
 # Configuration templates with sensitive data
 *-template.*
 *template*
+!docs/tools/diagram-design/**/template*.html
 config/examples/
 config/shell-scripts/
 deployment/*template*

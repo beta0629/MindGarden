@@ -20,7 +20,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.BaseRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
-import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.dto.CredentialSmsResult;
 import com.coresolution.consultation.service.ClientCredentialNotificationService;
@@ -64,11 +63,7 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PersonalDataEncryptionUtil encryptionUtil;
-    
-    @Autowired
-    private EmailService emailService;
-    
-    
+
     @Autowired
     private BranchService branchService;
 

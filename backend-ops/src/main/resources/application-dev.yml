@@ -64,7 +64,7 @@ server:
 # CORS 설정 (개발 서버 도메인)
 ops:
   cors:
-    allowed-origins: ${OPS_CORS_ALLOWED_ORIGINS:http://localhost:4300,https://ops.dev.e-trinity.co.kr}
+    allowed-origins: ${OPS_CORS_ALLOWED_ORIGINS:http://localhost:4300,https://ops.dev.e-trinity.co.kr,https://ops-dev.core-solution.co.kr}
 
 # JWT 설정 (dev.env 참조)
 security:

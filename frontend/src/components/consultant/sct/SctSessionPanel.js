@@ -1,31 +1,44 @@
 /**
- * 상담사 — 상담일지 옆 SCT 세션 패널
- * 영역별 보기 · 미응답/해당없음 · 글자크기 · 검색/점프 · 인쇄 진입
- * (자동 해석·점수화·AI 분석 없음 — 데이터만 표시)
+ * 상담사 — 상담일지 SCT 레일(스트립 + 피크 / 사이드·시트)
+ * 미제출·만료 = 스트립만(저널 전체 폭). 제출 + ≥1180 펼침 = 사이드 패널.
+ * <1180 제출 본문 = 바텀 시트(Esc·포커스 트랩). 테넌트 fail-closed.
  *
  * @author MindGarden
  * @since 2026-11-23
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import UnifiedLoading from '../../common/UnifiedLoading';
+import useCoverDrawerFocus from '../../common/coverChapter/useCoverDrawerFocus';
+import { useSession } from '../../../contexts/SessionContext';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import {
+  fetchSctClientInvitations,
   fetchSctDomainMemos,
   fetchSctSessionView,
   upsertSctDomainMemo
 } from '../../../utils/sctApi';
+import {
+  buildSctJournalPanelOpenKey,
+  buildSctJournalPanelSeenKey,
+  resolveSctJournalPanelInitialOpen,
+  writeSctJournalPanelOpenState,
+  writeSctJournalPanelSeenSubmittedAt
+} from '../../../utils/sctJournalPanelStorage';
 import { groupSctAnswersByDomain } from '../../../constants/sctDomainGrouping';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
+import useMediaQuery from '../../../hooks/useMediaQuery';
 import {
   SCT_CSS,
   SCT_FORM_TYPE_LABEL,
+  SCT_JOURNAL_PANEL_DESKTOP_MQ,
+  SCT_JOURNAL_UI_STATE,
   SCT_PRINT_PATH,
   SCT_SCREEN_FONT,
   SCT_STATUS,
@@ -42,11 +55,84 @@ const VIEW = Object.freeze({
 
 const NOOP_NAVIGATE = () => {};
 
+const BODY_PANEL_ID = 'sct-journal-body-panel';
+const SHEET_TITLE_ID = 'sct-journal-sheet-title';
+
+/**
+ * 초대 목록에서 레일 메타용 최신 행 선택 (CANCELLED 제외).
+ * @param {object[]} rows
+ * @returns {object|null}
+ */
+const pickLatestInvitationMeta = (rows) => {
+  const list = Array.isArray(rows) ? rows : [];
+  const usable = list.filter((r) => r && r.status !== SCT_STATUS.CANCELLED);
+  if (!usable.length) return null;
+  const submitted = usable
+    .filter((r) => r.status === SCT_STATUS.SUBMITTED)
+    .sort((a, b) => String(b.submittedAt || '').localeCompare(String(a.submittedAt || '')));
+  if (submitted.length) return submitted[0];
+  return usable.slice().sort((a, b) => {
+    const ta = String(a.sentAt || a.draftSavedAt || a.tokenExpiresAt || '');
+    const tb = String(b.sentAt || b.draftSavedAt || b.tokenExpiresAt || '');
+    return tb.localeCompare(ta);
+  })[0];
+};
+
+/**
+ * @param {object|null} session
+ * @param {object|null} meta
+ * @returns {string}
+ */
+const deriveUiState = (session, meta) => {
+  if (session?.status === SCT_STATUS.SUBMITTED) {
+    return SCT_JOURNAL_UI_STATE.SUBMITTED;
+  }
+  if (!meta) return SCT_JOURNAL_UI_STATE.UNSENT;
+  if (meta.status === SCT_STATUS.EXPIRED) return SCT_JOURNAL_UI_STATE.EXPIRED;
+  if (meta.status === SCT_STATUS.SENT || meta.status === SCT_STATUS.DRAFT) {
+    return SCT_JOURNAL_UI_STATE.PENDING;
+  }
+  if (meta.status === SCT_STATUS.SUBMITTED) return SCT_JOURNAL_UI_STATE.SUBMITTED;
+  return SCT_JOURNAL_UI_STATE.UNSENT;
+};
+
+/**
+ * @param {string|null|undefined} iso
+ * @returns {string}
+ */
+const formatSubmittedBadge = (iso) => {
+  if (!iso) return SCT_UI.SUMMARY_SUBMITTED;
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return toDisplayString(iso, SCT_UI.SUMMARY_SUBMITTED);
+    return `${d.getMonth() + 1}월 ${d.getDate()}일 제출`;
+  } catch {
+    return toDisplayString(iso, SCT_UI.SUMMARY_SUBMITTED);
+  }
+};
+
+/**
+ * @param {string|null|undefined} iso
+ * @returns {string}
+ */
+const formatDateTimeLabel = (iso) => {
+  if (!iso) return '';
+  try {
+    return new Date(iso).toLocaleString('ko-KR');
+  } catch {
+    return toDisplayString(iso, '');
+  }
+};
+
 /**
  * Router 밖(모달 단위 테스트 등)에서도 크래시하지 않도록 navigate 주입을 분리한다.
- * 인쇄 네비는 Router 안에서만 실제 useNavigate로 동작한다.
  *
- * @param {{ clientId: number, mappingId?: number, clientName?: string }} props
+ * @param {{
+ *   clientId: number,
+ *   mappingId?: number,
+ *   clientName?: string,
+ *   onSidePanelOpenChange?: (open: boolean) => void
+ * }} props
  */
 const SctSessionPanel = (props) => {
   const inRouter = useInRouterContext();
@@ -62,11 +148,31 @@ const SctSessionPanelRouted = (props) => {
 };
 
 /**
- * @param {{ clientId: number, mappingId?: number, clientName?: string, navigate: (to: string) => void }} props
+ * @param {{
+ *   clientId: number,
+ *   mappingId?: number,
+ *   clientName?: string,
+ *   navigate: (to: string, opts?: object) => void,
+ *   onSidePanelOpenChange?: (open: boolean) => void
+ * }} props
  */
-const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
+const SctSessionPanelBody = ({
+  clientId,
+  mappingId,
+  clientName,
+  navigate,
+  onSidePanelOpenChange
+}) => {
+  const { user } = useSession();
+  const consultantId = user?.id;
   const { enabled, loading: flagLoading } = useSctFeatureEnabled();
-  const [data, setData] = useState(null);
+  const isDesktopWide = useMediaQuery(SCT_JOURNAL_PANEL_DESKTOP_MQ);
+  const reactId = useId();
+  const bodyPanelId = `${BODY_PANEL_ID}-${reactId.replace(/:/g, '')}`;
+  const sheetTitleId = `${SHEET_TITLE_ID}-${reactId.replace(/:/g, '')}`;
+
+  const [session, setSession] = useState(null);
+  const [inviteMeta, setInviteMeta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [view, setView] = useState(VIEW.DOMAIN);
@@ -77,11 +183,73 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
   const [fontSize, setFontSize] = useState(SCT_SCREEN_FONT.MD);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeDomain, setActiveDomain] = useState('');
+  const [bodyOpen, setBodyOpen] = useState(false);
+  const [peekOpen, setPeekOpen] = useState(false);
+  const [freshBadge, setFreshBadge] = useState(false);
+  const initRef = useRef(false);
+  const sheetRef = useRef(null);
 
-  const loadMemos = useCallback(async(invitationId) => {
-    if (invitationId == null) return;
+  const uiState = deriveUiState(session, inviteMeta);
+  const isSubmitted = uiState === SCT_JOURNAL_UI_STATE.SUBMITTED;
+  const invitationId = session?.id ?? inviteMeta?.id ?? null;
+  const formType = session?.formType || inviteMeta?.formType;
+  const formLabel = formType ? (SCT_FORM_TYPE_LABEL[formType] || formType) : '';
+  const titleText = formLabel ? `${SCT_UI.TITLE} · ${formLabel}` : SCT_UI.TITLE;
+
+  const openKey = useMemo(
+    () => buildSctJournalPanelOpenKey(consultantId, invitationId),
+    [consultantId, invitationId]
+  );
+  const seenKey = useMemo(
+    () => buildSctJournalPanelSeenKey(consultantId, invitationId),
+    [consultantId, invitationId]
+  );
+
+  const sidePanelOpen = isSubmitted && bodyOpen && isDesktopWide;
+  const sheetOpen = isSubmitted && bodyOpen && !isDesktopWide;
+
+  const markSeenAndPersistOpen = useCallback((nextOpen) => {
+    if (openKey) writeSctJournalPanelOpenState(openKey, nextOpen);
+    if (seenKey && session?.submittedAt) {
+      writeSctJournalPanelSeenSubmittedAt(seenKey, String(session.submittedAt));
+    }
+    if (!nextOpen) setFreshBadge(false);
+  }, [openKey, seenKey, session?.submittedAt]);
+
+  const handleExpandBody = useCallback(() => {
+    setBodyOpen(true);
+    setPeekOpen(false);
+    markSeenAndPersistOpen(true);
+  }, [markSeenAndPersistOpen]);
+
+  const handleCollapseBody = useCallback(() => {
+    setBodyOpen(false);
+    markSeenAndPersistOpen(false);
+  }, [markSeenAndPersistOpen]);
+
+  useCoverDrawerFocus({
+    isOpen: sheetOpen,
+    panelRef: sheetRef,
+    onClose: handleCollapseBody,
+    returnFocusSelector: `[data-testid="${SCT_TEST_ID.EXPAND_BTN}"]`
+  });
+
+  useEffect(() => {
+    if (typeof onSidePanelOpenChange === 'function') {
+      onSidePanelOpenChange(sidePanelOpen);
+    }
+  }, [sidePanelOpen, onSidePanelOpenChange]);
+
+  useEffect(() => () => {
+    if (typeof onSidePanelOpenChange === 'function') {
+      onSidePanelOpenChange(false);
+    }
+  }, [onSidePanelOpenChange]);
+
+  const loadMemos = useCallback(async(invId) => {
+    if (invId == null) return;
     try {
-      const rows = await fetchSctDomainMemos(invitationId);
+      const rows = await fetchSctDomainMemos(invId);
       const drafts = {};
       (Array.isArray(rows) ? rows : []).forEach((row) => {
         if (row?.domainCode != null) {
@@ -98,7 +266,6 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
         return next;
       });
     } catch (e) {
-      // 메모 로드 실패는 패널 본문을 막지 않음
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
         'error'
@@ -112,23 +279,41 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
       return undefined;
     }
     let cancelled = false;
+    initRef.current = false;
     (async() => {
       setLoading(true);
       setError('');
+      setSession(null);
+      setInviteMeta(null);
+      setBodyOpen(false);
+      setPeekOpen(false);
+      setFreshBadge(false);
       try {
         const params = { clientId: Number(clientId) };
         if (mappingId != null) params.mappingId = Number(mappingId);
-        const res = await fetchSctSessionView(params);
-        if (!cancelled) {
-          setData(res);
-          if (res?.id != null && res?.status === SCT_STATUS.SUBMITTED) {
-            await loadMemos(res.id);
-          }
+
+        const [sessionResult, inviteRows] = await Promise.all([
+          fetchSctSessionView(params).catch(() => null),
+          fetchSctClientInvitations(clientId).catch(() => [])
+        ]);
+
+        if (cancelled) return;
+
+        const submitted = sessionResult?.status === SCT_STATUS.SUBMITTED
+          ? sessionResult
+          : null;
+        setSession(submitted);
+        const meta = pickLatestInvitationMeta(inviteRows);
+        setInviteMeta(meta);
+
+        if (submitted?.id != null) {
+          await loadMemos(submitted.id);
         }
       } catch (e) {
         if (!cancelled) {
           setError(resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL));
-          setData(null);
+          setSession(null);
+          setInviteMeta(null);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -139,18 +324,39 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
     };
   }, [clientId, enabled, mappingId, loadMemos]);
 
-  const answers = data?.answers || [];
-  const submitted = data?.status === SCT_STATUS.SUBMITTED;
-  const invitationId = data?.id;
+  // 제출 본문 초기 펼침 — 데스크톱 ≥1180 만. 모바일 시트 자동 오픈 금지.
+  useEffect(() => {
+    if (loading || !isSubmitted || invitationId == null || initRef.current) return;
+    initRef.current = true;
+    const { open, fresh } = resolveSctJournalPanelInitialOpen({
+      isDesktopWide,
+      openKey,
+      seenKey,
+      submittedAt: session?.submittedAt
+    });
+    setFreshBadge(fresh);
+    if (open) {
+      setBodyOpen(true);
+      if (openKey) writeSctJournalPanelOpenState(openKey, true);
+    }
+  }, [
+    loading,
+    isSubmitted,
+    invitationId,
+    isDesktopWide,
+    openKey,
+    seenKey,
+    session?.submittedAt
+  ]);
 
+  const answers = isSubmitted ? (session?.answers || []) : [];
   const { domains } = useMemo(
-    () => groupSctAnswersByDomain(answers, data?.formType),
-    [answers, data?.formType]
+    () => groupSctAnswersByDomain(answers, formType),
+    [answers, formType]
   );
 
   const emptyCount = answers.filter((a) => a.isBlank || (!a.answerText && !a.notApplicable)).length;
   const naCount = answers.filter((a) => a.notApplicable).length;
-
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
   const matchesQuery = useCallback((a) => {
@@ -220,6 +426,31 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
     }
   };
 
+  const statusLabel = (() => {
+    if (uiState === SCT_JOURNAL_UI_STATE.UNSENT) return SCT_UI.STATUS_UNSENT;
+    if (uiState === SCT_JOURNAL_UI_STATE.PENDING) return SCT_UI.STATUS_PENDING;
+    if (uiState === SCT_JOURNAL_UI_STATE.EXPIRED) return SCT_UI.STATUS_EXPIRED;
+    if (freshBadge) return SCT_UI.STATUS_JUST_SUBMITTED;
+    return formatSubmittedBadge(session?.submittedAt);
+  })();
+
+  const statusClass = (() => {
+    if (uiState === SCT_JOURNAL_UI_STATE.PENDING) return 'mg-v2-sct-status--pending';
+    if (uiState === SCT_JOURNAL_UI_STATE.EXPIRED) return 'mg-v2-sct-status--expired';
+    if (uiState === SCT_JOURNAL_UI_STATE.SUBMITTED && freshBadge) return 'mg-v2-sct-status--fresh';
+    if (uiState === SCT_JOURNAL_UI_STATE.SUBMITTED) return 'mg-v2-sct-status--submitted';
+    return '';
+  })();
+
+  const spineMod = (() => {
+    if (uiState === SCT_JOURNAL_UI_STATE.SUBMITTED) return 'mg-v2-sct-spine--done';
+    if (uiState === SCT_JOURNAL_UI_STATE.PENDING) return 'mg-v2-sct-spine--prog';
+    if (uiState === SCT_JOURNAL_UI_STATE.EXPIRED) return 'mg-v2-sct-spine--exp';
+    return '';
+  })();
+
+  const expandControlsId = isDesktopWide ? bodyPanelId : `${bodyPanelId}-sheet`;
+
   if (flagLoading) {
     return <UnifiedLoading type="inline" text={SCT_UI.LOADING} />;
   }
@@ -265,259 +496,414 @@ const SctSessionPanelBody = ({ clientId, mappingId, clientName, navigate }) => {
     );
   };
 
-  return (
-    <aside
-      className={`${SCT_CSS.SESSION} mg-v2-sct-session--font-${fontSize}`}
-      data-testid={SCT_TEST_ID.SESSION_PANEL}
-      aria-label={SCT_UI.TITLE}
-    >
-      <div className="mg-v2-sct-session__head">
-        <h2>
-          {SCT_UI.TITLE}
-          {data?.formType ? ` · ${SCT_FORM_TYPE_LABEL[data.formType] || data.formType}` : ''}
-          {submitted ? (
-            <span className="mg-v2-sct-tag">
-              {toDisplayString(data?.submittedAt, '제출')}
-            </span>
-          ) : (
-            <span className="mg-v2-sct-tag">{SCT_UI.SUMMARY_DRAFT}</span>
-          )}
-        </h2>
-        {data?.managementNo ? (
-          <p className={SCT_CSS.CAPTION} data-testid={SCT_TEST_ID.MANAGEMENT_NO}>
-            {SCT_UI.MANAGEMENT_NO}
-            {': '}
-            <SafeText>{data.managementNo}</SafeText>
-          </p>
-        ) : null}
-        <span className={SCT_CSS.CAPTION}>{SCT_UI.PANEL_NOTICE}</span>
+  const renderSubmittedBody = () => (
+    <>
+      <div className="mg-v2-sct-session__tools" role="toolbar" aria-label="보기 도구">
+        <MGButton
+          type="button"
+          variant={view === VIEW.DOMAIN ? 'primary' : 'outline'}
+          size="small"
+          preventDoubleClick={false}
+          onClick={() => setView(VIEW.DOMAIN)}
+        >
+          {SCT_UI.VIEW_BY_DOMAIN}
+        </MGButton>
+        <MGButton
+          type="button"
+          variant={view === VIEW.NUMBER ? 'primary' : 'outline'}
+          size="small"
+          preventDoubleClick={false}
+          onClick={() => setView(VIEW.NUMBER)}
+        >
+          {SCT_UI.VIEW_BY_NUMBER}
+        </MGButton>
+        <MGButton
+          type="button"
+          variant={view === VIEW.EMPTY ? 'primary' : 'outline'}
+          size="small"
+          preventDoubleClick={false}
+          onClick={() => setView(VIEW.EMPTY)}
+        >
+          {SCT_UI.EMPTY_ONLY}
+          {' '}
+          {emptyCount}
+        </MGButton>
+        <span className={SCT_CSS.CAPTION}>
+          {SCT_UI.NA_COUNT}
+          {' '}
+          {naCount}
+        </span>
+        <MGButton
+          type="button"
+          variant="outline"
+          size="small"
+          preventDoubleClick={false}
+          data-testid={SCT_TEST_ID.PRINT_BTN}
+          onClick={handlePrint}
+        >
+          {SCT_UI.PRINT}
+        </MGButton>
       </div>
 
-      {loading ? (
-        <div className="mg-v2-sct-session__body">
-          <UnifiedLoading type="inline" text={SCT_UI.LOADING} />
+      <div className="mg-v2-sct-session__tools mg-v2-sct-session__tools--secondary" role="toolbar" aria-label="가독성 도구">
+        <label className={SCT_CSS.CAPTION} htmlFor={`sct-font-size-${reactId}`}>{SCT_UI.FONT_SIZE}</label>
+        <select
+          id={`sct-font-size-${reactId}`}
+          data-testid={SCT_TEST_ID.FONT_SIZE}
+          value={fontSize}
+          onChange={(e) => setFontSize(e.target.value)}
+          className="mg-v2-sct-session__select"
+        >
+          <option value={SCT_SCREEN_FONT.SM}>{SCT_UI.FONT_SMALL}</option>
+          <option value={SCT_SCREEN_FONT.MD}>{SCT_UI.FONT_MEDIUM}</option>
+          <option value={SCT_SCREEN_FONT.LG}>{SCT_UI.FONT_LARGE}</option>
+        </select>
+        <div className={SCT_CSS.SEARCH}>
+          <label className="sr-only" htmlFor={`sct-session-search-${reactId}`}>{SCT_UI.SEARCH_PLACEHOLDER}</label>
+          <input
+            id={`sct-session-search-${reactId}`}
+            type="search"
+            data-testid={SCT_TEST_ID.SEARCH}
+            className="mg-v2-sct-session__search-input"
+            placeholder={SCT_UI.SEARCH_PLACEHOLDER}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                jumpToItem();
+              }
+            }}
+          />
+          <MGButton
+            type="button"
+            variant="outline"
+            size="small"
+            preventDoubleClick={false}
+            onClick={jumpToItem}
+          >
+            {SCT_UI.SEARCH_JUMP}
+          </MGButton>
         </div>
-      ) : error ? (
-        <div className="mg-v2-sct-session__body">
-          <p role="alert"><SafeText>{error}</SafeText></p>
-        </div>
-      ) : !submitted ? (
-        <div className="mg-v2-sct-session__body">
-          <h3>{SCT_UI.PENDING_TITLE}</h3>
-          <p className="mg-v2-sct-lead">
-            제출 전에는 응답 본문을 열람할 수 없습니다.
-            {data?.draftSavedAt ? ` 마지막 저장 ${toDisplayString(data.draftSavedAt, '')}` : ''}
-          </p>
-        </div>
-      ) : (
-        <>
-          <div className="mg-v2-sct-session__tools" role="toolbar" aria-label="보기 도구">
-            <MGButton
-              type="button"
-              variant={view === VIEW.DOMAIN ? 'primary' : 'outline'}
-              size="small"
-              preventDoubleClick={false}
-              onClick={() => setView(VIEW.DOMAIN)}
-            >
-              {SCT_UI.VIEW_BY_DOMAIN}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant={view === VIEW.NUMBER ? 'primary' : 'outline'}
-              size="small"
-              preventDoubleClick={false}
-              onClick={() => setView(VIEW.NUMBER)}
-            >
-              {SCT_UI.VIEW_BY_NUMBER}
-            </MGButton>
-            <MGButton
-              type="button"
-              variant={view === VIEW.EMPTY ? 'primary' : 'outline'}
-              size="small"
-              preventDoubleClick={false}
-              onClick={() => setView(VIEW.EMPTY)}
-            >
-              {SCT_UI.EMPTY_ONLY}
-              {' '}
-              {emptyCount}
-            </MGButton>
-            <span className={SCT_CSS.CAPTION}>
-              {SCT_UI.NA_COUNT}
-              {' '}
-              {naCount}
-            </span>
-            <MGButton
-              type="button"
-              variant="outline"
-              size="small"
-              preventDoubleClick={false}
-              data-testid={SCT_TEST_ID.PRINT_BTN}
-              onClick={handlePrint}
-            >
-              {SCT_UI.PRINT}
-            </MGButton>
-          </div>
+      </div>
 
-          <div className="mg-v2-sct-session__tools mg-v2-sct-session__tools--secondary" role="toolbar" aria-label="가독성 도구">
-            <label className={SCT_CSS.CAPTION} htmlFor="sct-font-size">{SCT_UI.FONT_SIZE}</label>
-            <select
-              id="sct-font-size"
-              data-testid={SCT_TEST_ID.FONT_SIZE}
-              value={fontSize}
-              onChange={(e) => setFontSize(e.target.value)}
-              className="mg-v2-sct-session__select"
+      {view !== VIEW.NUMBER ? (
+        <div className="mg-v2-sct-session__chips" role="navigation" aria-label={SCT_UI.DOMAIN_JUMP}>
+          <MGButton
+            type="button"
+            variant={!activeDomain ? 'primary' : 'outline'}
+            size="small"
+            preventDoubleClick={false}
+            data-testid={SCT_TEST_ID.DOMAIN_CHIP}
+            onClick={() => setActiveDomain('')}
+          >
+            {SCT_UI.DOMAIN_JUMP_ALL}
+          </MGButton>
+          {domains.map((dom) => (
+            <MGButton
+              key={dom.code}
+              type="button"
+              variant={activeDomain === dom.code ? 'primary' : 'outline'}
+              size="small"
+              preventDoubleClick={false}
+              data-testid={SCT_TEST_ID.DOMAIN_CHIP}
+              onClick={() => {
+                setActiveDomain(dom.code);
+                const el = document.getElementById(`sct-dom-${dom.code}`);
+                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }}
             >
-              <option value={SCT_SCREEN_FONT.SM}>{SCT_UI.FONT_SMALL}</option>
-              <option value={SCT_SCREEN_FONT.MD}>{SCT_UI.FONT_MEDIUM}</option>
-              <option value={SCT_SCREEN_FONT.LG}>{SCT_UI.FONT_LARGE}</option>
-            </select>
-            <div className={SCT_CSS.SEARCH}>
-              <label className="sr-only" htmlFor="sct-session-search">{SCT_UI.SEARCH_PLACEHOLDER}</label>
-              <input
-                id="sct-session-search"
-                type="search"
-                data-testid={SCT_TEST_ID.SEARCH}
-                className="mg-v2-sct-session__search-input"
-                placeholder={SCT_UI.SEARCH_PLACEHOLDER}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    jumpToItem();
-                  }
-                }}
-              />
+              <SafeText>{dom.label}</SafeText>
+            </MGButton>
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mg-v2-sct-session__body">
+        {view === VIEW.NUMBER ? (
+          <ul>{filteredAnswers.map((a) => renderSentence(a, true))}</ul>
+        ) : (
+          filteredDomains.map((dom) => {
+            const sourceDom = domains.find((d) => d.code === dom.code) || dom;
+            const items = view === VIEW.EMPTY
+              ? dom.items.filter((a) => a.isBlank || (!a.answerText && !a.notApplicable))
+              : dom.items;
+            if (!items.length) return null;
+            const blankInDom = sourceDom.items.filter((a) => a.isBlank || (!a.answerText && !a.notApplicable)).length;
+            const naInDom = sourceDom.items.filter((a) => a.notApplicable).length;
+            const memoOpen = openMemos[dom.code];
+            return (
+              <section key={dom.code} id={`sct-dom-${dom.code}`} className="mg-v2-sct-dom">
+                <div className="mg-v2-sct-dom__h">
+                  <h3><SafeText>{dom.label}</SafeText></h3>
+                  <span className={SCT_CSS.CAPTION}>
+                    {sourceDom.items.length}
+                    문항
+                    {blankInDom ? ` · 빈 응답 ${blankInDom}` : ''}
+                    {naInDom ? ` · 해당 없음 ${naInDom}` : ''}
+                  </span>
+                </div>
+                <ul>{items.map((a) => renderSentence(a, false))}</ul>
+                {view !== VIEW.EMPTY ? (
+                  memoOpen ? (
+                    <div className="mg-v2-sct-memo">
+                      <label htmlFor={`sct-memo-${dom.code}`}>{SCT_UI.MEMO_LABEL}</label>
+                      <textarea
+                        id={`sct-memo-${dom.code}`}
+                        className={SCT_CSS.MEMO_TA}
+                        placeholder={SCT_UI.MEMO_PLACEHOLDER}
+                        value={memoDrafts[dom.code] || ''}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setMemoDrafts((prev) => ({ ...prev, [dom.code]: value }));
+                          setMemoDirty((prev) => ({ ...prev, [dom.code]: true }));
+                        }}
+                      />
+                      <div className="mg-v2-sct-memo__actions">
+                        <MGButton
+                          type="button"
+                          variant="primary"
+                          size="small"
+                          preventDoubleClick
+                          loading={!!memoSaving[dom.code]}
+                          data-testid={SCT_TEST_ID.MEMO_SAVE}
+                          onClick={() => handleSaveMemo(dom.code)}
+                        >
+                          {SCT_UI.MEMO_SAVE}
+                        </MGButton>
+                        <p className={SCT_CSS.CAPTION}>
+                          {memoDirty[dom.code] ? SCT_UI.MEMO_SAVE_PENDING : SCT_UI.MEMO_SAVED}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className={SCT_CSS.MEMO_BTN}
+                      data-testid={SCT_TEST_ID.MEMO_ADD}
+                      onClick={() => setOpenMemos((prev) => ({ ...prev, [dom.code]: true }))}
+                    >
+                      {SCT_UI.MEMO_WRITE}
+                    </button>
+                  )
+                ) : null}
+              </section>
+            );
+          })
+        )}
+      </div>
+      <footer className={SCT_CSS.FOOT} data-testid={SCT_TEST_ID.CAPTION}>
+        {SCT_UI.SHEET_NOTICE_PLACEHOLDER}
+      </footer>
+    </>
+  );
+
+  const showPeek = peekOpen
+    && (uiState === SCT_JOURNAL_UI_STATE.UNSENT
+      || uiState === SCT_JOURNAL_UI_STATE.PENDING
+      || uiState === SCT_JOURNAL_UI_STATE.EXPIRED);
+
+  const draftSavedAt = inviteMeta?.draftSavedAt;
+  const tokenExpiresAt = inviteMeta?.tokenExpiresAt || session?.tokenExpiresAt;
+
+  return (
+    <section
+      className={`${SCT_CSS.RAIL} ${SCT_CSS.SESSION} mg-v2-sct-session--font-${fontSize}`}
+      data-testid={SCT_TEST_ID.SESSION_PANEL}
+      data-sct-ui-state={uiState}
+      data-sct-side-open={sidePanelOpen ? '1' : '0'}
+      aria-label={SCT_UI.RAIL_STRIP_LABEL}
+    >
+      <div
+        className={SCT_CSS.STRIP}
+        data-testid={SCT_TEST_ID.STRIP}
+      >
+        <div
+          className={`${SCT_CSS.SPINE} ${spineMod}`.trim()}
+          aria-hidden="true"
+          title={SCT_UI.SPINE_LABEL}
+        >
+          <i className="mg-v2-sct-spine__line" />
+          <i className="mg-v2-sct-spine__line" />
+          <i className="mg-v2-sct-spine__line" />
+          <i className="mg-v2-sct-spine__line" />
+        </div>
+        <div className="mg-v2-sct-strip__main">
+          <h2 className="mg-v2-sct-strip__title">
+            <SafeText>{titleText}</SafeText>
+          </h2>
+          <span
+            className={`mg-v2-sct-status ${statusClass}`.trim()}
+            data-testid={freshBadge ? SCT_TEST_ID.FRESH_BADGE : SCT_TEST_ID.STATUS_BADGE}
+          >
+            <SafeText>{statusLabel}</SafeText>
+          </span>
+          {loading ? (
+            <p className="mg-v2-sct-strip__meta">{SCT_UI.LOADING}</p>
+          ) : null}
+          {!loading && error ? (
+            <p className="mg-v2-sct-strip__meta" role="alert"><SafeText>{error}</SafeText></p>
+          ) : null}
+        </div>
+        <div className="mg-v2-sct-strip__actions">
+          {isSubmitted ? (
+            bodyOpen ? (
               <MGButton
                 type="button"
                 variant="outline"
                 size="small"
                 preventDoubleClick={false}
-                onClick={jumpToItem}
+                data-testid={SCT_TEST_ID.COLLAPSE_BTN}
+                aria-expanded="true"
+                aria-controls={expandControlsId}
+                onClick={handleCollapseBody}
               >
-                {SCT_UI.SEARCH_JUMP}
+                {SCT_UI.COLLAPSE_SIDE}
               </MGButton>
-            </div>
-          </div>
-
-          {view !== VIEW.NUMBER ? (
-            <div className="mg-v2-sct-session__chips" role="navigation" aria-label={SCT_UI.DOMAIN_JUMP}>
+            ) : (
               <MGButton
                 type="button"
-                variant={!activeDomain ? 'primary' : 'outline'}
+                variant="primary"
                 size="small"
                 preventDoubleClick={false}
-                data-testid={SCT_TEST_ID.DOMAIN_CHIP}
-                onClick={() => setActiveDomain('')}
+                data-testid={SCT_TEST_ID.EXPAND_BTN}
+                aria-expanded="false"
+                aria-controls={expandControlsId}
+                onClick={handleExpandBody}
               >
-                {SCT_UI.DOMAIN_JUMP_ALL}
+                {SCT_UI.EXPAND_SIDE}
               </MGButton>
-              {domains.map((dom) => (
-                <MGButton
-                  key={dom.code}
-                  type="button"
-                  variant={activeDomain === dom.code ? 'primary' : 'outline'}
-                  size="small"
-                  preventDoubleClick={false}
-                  data-testid={SCT_TEST_ID.DOMAIN_CHIP}
-                  onClick={() => {
-                    setActiveDomain(dom.code);
-                    const el = document.getElementById(`sct-dom-${dom.code}`);
-                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }}
-                >
-                  <SafeText>{dom.label}</SafeText>
-                </MGButton>
-              ))}
-            </div>
-          ) : null}
+            )
+          ) : (
+            <MGButton
+              type="button"
+              variant="outline"
+              size="small"
+              preventDoubleClick={false}
+              data-testid={SCT_TEST_ID.PEEK_TOGGLE}
+              aria-expanded={peekOpen ? 'true' : 'false'}
+              aria-controls={`${bodyPanelId}-peek`}
+              onClick={() => setPeekOpen((v) => !v)}
+            >
+              {peekOpen ? SCT_UI.PEEK_CLOSE : SCT_UI.PEEK_DETAILS}
+            </MGButton>
+          )}
+        </div>
+      </div>
 
-          <div className="mg-v2-sct-session__body">
-            {view === VIEW.NUMBER ? (
-              <ul>{filteredAnswers.map((a) => renderSentence(a, true))}</ul>
-            ) : (
-              filteredDomains.map((dom) => {
-                const sourceDom = domains.find((d) => d.code === dom.code) || dom;
-                const items = view === VIEW.EMPTY
-                  ? dom.items.filter((a) => a.isBlank || (!a.answerText && !a.notApplicable))
-                  : dom.items;
-                if (!items.length) return null;
-                const blankInDom = sourceDom.items.filter((a) => a.isBlank || (!a.answerText && !a.notApplicable)).length;
-                const naInDom = sourceDom.items.filter((a) => a.notApplicable).length;
-                const memoOpen = openMemos[dom.code];
-                return (
-                  <section key={dom.code} id={`sct-dom-${dom.code}`} className="mg-v2-sct-dom">
-                    <div className="mg-v2-sct-dom__h">
-                      <h3><SafeText>{dom.label}</SafeText></h3>
-                      <span className={SCT_CSS.CAPTION}>
-                        {sourceDom.items.length}
-                        문항
-                        {blankInDom ? ` · 빈 응답 ${blankInDom}` : ''}
-                        {naInDom ? ` · 해당 없음 ${naInDom}` : ''}
-                      </span>
-                    </div>
-                    <ul>{items.map((a) => renderSentence(a, false))}</ul>
-                    {view !== VIEW.EMPTY ? (
-                      memoOpen ? (
-                        <div className="mg-v2-sct-memo">
-                          <label htmlFor={`sct-memo-${dom.code}`}>{SCT_UI.MEMO_LABEL}</label>
-                          <textarea
-                            id={`sct-memo-${dom.code}`}
-                            className={SCT_CSS.MEMO_TA}
-                            placeholder={SCT_UI.MEMO_PLACEHOLDER}
-                            value={memoDrafts[dom.code] || ''}
-                            onChange={(e) => {
-                              const value = e.target.value;
-                              setMemoDrafts((prev) => ({ ...prev, [dom.code]: value }));
-                              setMemoDirty((prev) => ({ ...prev, [dom.code]: true }));
-                            }}
-                          />
-                          <div className="mg-v2-sct-memo__actions">
-                            <MGButton
-                              type="button"
-                              variant="primary"
-                              size="small"
-                              preventDoubleClick
-                              loading={!!memoSaving[dom.code]}
-                              data-testid={SCT_TEST_ID.MEMO_SAVE}
-                              onClick={() => handleSaveMemo(dom.code)}
-                            >
-                              {SCT_UI.MEMO_SAVE}
-                            </MGButton>
-                            <p className={SCT_CSS.CAPTION}>
-                              {memoDirty[dom.code] ? SCT_UI.MEMO_SAVE_PENDING : SCT_UI.MEMO_SAVED}
-                            </p>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className={SCT_CSS.MEMO_BTN}
-                          data-testid={SCT_TEST_ID.MEMO_ADD}
-                          onClick={() => setOpenMemos((prev) => ({ ...prev, [dom.code]: true }))}
-                        >
-                          {SCT_UI.MEMO_WRITE}
-                        </button>
-                      )
-                    ) : null}
-                  </section>
-                );
-              })
-            )}
+      {showPeek ? (
+        <div
+          id={`${bodyPanelId}-peek`}
+          className={SCT_CSS.PEEK}
+          data-testid={SCT_TEST_ID.PEEK}
+        >
+          <p className="mg-v2-sct-peek-card__body">
+            <SafeText>
+              {uiState === SCT_JOURNAL_UI_STATE.EXPIRED
+                ? SCT_UI.STATUS_EXPIRED
+                : SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT}
+            </SafeText>
+          </p>
+          {uiState === SCT_JOURNAL_UI_STATE.PENDING && draftSavedAt ? (
+            <p className="mg-v2-sct-peek-card__body">
+              {SCT_UI.DRAFT_SAVED_AT}
+              {': '}
+              <SafeText>{formatDateTimeLabel(draftSavedAt)}</SafeText>
+            </p>
+          ) : null}
+          {tokenExpiresAt ? (
+            <p className="mg-v2-sct-peek-card__body">
+              {SCT_UI.EXPIRES_AT}
+              {': '}
+              <SafeText>{formatDateTimeLabel(tokenExpiresAt)}</SafeText>
+            </p>
+          ) : null}
+          {/*
+            BE 는 draft answeredCount 를 노출하지 않음.
+            SENT/DRAFT 피크에서 진행 눈금·분모를 만들지 않는다 (가짜 23/50 금지).
+          */}
+        </div>
+      ) : null}
+
+      {sidePanelOpen ? (
+        <aside
+          id={bodyPanelId}
+          className={`${SCT_CSS.SIDE} mg-v2-sct-session--font-${fontSize}`}
+          data-testid={SCT_TEST_ID.SIDE}
+          aria-label={titleText}
+        >
+          <div className="mg-v2-sct-session__head">
+            <h2>
+              <SafeText>{titleText}</SafeText>
+            </h2>
+            {session?.managementNo ? (
+              <p className={SCT_CSS.CAPTION} data-testid={SCT_TEST_ID.MANAGEMENT_NO}>
+                {SCT_UI.MANAGEMENT_NO}
+                {': '}
+                <SafeText>{session.managementNo}</SafeText>
+              </p>
+            ) : null}
+            <span className={SCT_CSS.CAPTION}>{SCT_UI.PANEL_NOTICE}</span>
           </div>
-          <footer className={SCT_CSS.FOOT} data-testid={SCT_TEST_ID.CAPTION}>
-            {SCT_UI.SHEET_NOTICE_PLACEHOLDER}
-          </footer>
-        </>
-      )}
-    </aside>
+          {renderSubmittedBody()}
+        </aside>
+      ) : null}
+
+      {sheetOpen ? (
+        <div className="mg-v2-sct-sheet-root" data-testid={SCT_TEST_ID.SHEET}>
+          <button
+            type="button"
+            className={SCT_CSS.SHEET_SCRIM}
+            aria-label={SCT_UI.SHEET_CLOSE}
+            onClick={handleCollapseBody}
+          />
+          <div
+            id={`${bodyPanelId}-sheet`}
+            ref={sheetRef}
+            className={`${SCT_CSS.SHEET} mg-v2-sct-session--font-${fontSize}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={sheetTitleId}
+          >
+            <div className="mg-v2-sct-sheet__head">
+              <h2 id={sheetTitleId}>
+                <SafeText>{titleText}</SafeText>
+              </h2>
+              <MGButton
+                type="button"
+                variant="outline"
+                size="small"
+                preventDoubleClick={false}
+                onClick={handleCollapseBody}
+              >
+                {SCT_UI.SHEET_CLOSE}
+              </MGButton>
+            </div>
+            <div className="mg-v2-sct-sheet__body">
+              {session?.managementNo ? (
+                <p className={SCT_CSS.CAPTION} data-testid={SCT_TEST_ID.MANAGEMENT_NO}>
+                  {SCT_UI.MANAGEMENT_NO}
+                  {': '}
+                  <SafeText>{session.managementNo}</SafeText>
+                </p>
+              ) : null}
+              {renderSubmittedBody()}
+            </div>
+            <div className="mg-v2-sct-sheet__notice">
+              {SCT_UI.SHEET_NOTICE_PLACEHOLDER}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </section>
   );
 };
 
 SctSessionPanel.propTypes = {
   clientId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   mappingId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  clientName: PropTypes.string
+  clientName: PropTypes.string,
+  onSidePanelOpenChange: PropTypes.func
 };
 
 export default SctSessionPanel;

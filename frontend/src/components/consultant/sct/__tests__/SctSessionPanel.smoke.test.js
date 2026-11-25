@@ -15,13 +15,19 @@ import { groupSctAnswersByDomain } from '../../../../constants/sctDomainGrouping
 
 const mockUseSctFeatureEnabled = jest.fn();
 const mockFetchSctSessionView = jest.fn();
+const mockFetchSctClientInvitations = jest.fn();
 const mockFetchSctDomainMemos = jest.fn();
 const mockUpsertSctDomainMemo = jest.fn();
 const mockNavigate = jest.fn();
+const mockUseMediaQuery = jest.fn();
 
 jest.mock('react-router-dom', () => ({
   useInRouterContext: () => true,
   useNavigate: () => mockNavigate
+}));
+
+jest.mock('../../../../contexts/SessionContext', () => ({
+  useSession: () => ({ user: { id: 7, role: 'CONSULTANT', tenantId: 'tenant-a' } })
 }));
 
 jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
@@ -29,8 +35,14 @@ jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
   default: (...args) => mockUseSctFeatureEnabled(...args)
 }));
 
+jest.mock('../../../../hooks/useMediaQuery', () => ({
+  __esModule: true,
+  default: (...args) => mockUseMediaQuery(...args)
+}));
+
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctSessionView: (...args) => mockFetchSctSessionView(...args),
+  fetchSctClientInvitations: (...args) => mockFetchSctClientInvitations(...args),
   fetchSctDomainMemos: (...args) => mockFetchSctDomainMemos(...args),
   upsertSctDomainMemo: (...args) => mockUpsertSctDomainMemo(...args)
 }));
@@ -55,52 +67,69 @@ jest.mock('../../../common/UnifiedLoading', () => ({
   default: () => <div>loading</div>
 }));
 
+const submittedPayload = {
+  id: 55,
+  status: 'SUBMITTED',
+  formType: 'ADULT',
+  submittedAt: '2026-11-21T10:00:00Z',
+  answers: [
+    {
+      formItemId: 1,
+      itemNo: 1,
+      promptText: '나는',
+      domainCode: 'AFFECT',
+      domainLabel: '정서(우울)',
+      answerText: '괜찮다',
+      notApplicable: false,
+      isBlank: false
+    },
+    {
+      formItemId: 9,
+      itemNo: 9,
+      promptText: '어머니를 떠올리면',
+      domainCode: 'PARENT_FAMILY',
+      domainLabel: '부모/원가족(모)',
+      answerText: '',
+      notApplicable: true,
+      isBlank: false
+    },
+    {
+      formItemId: 2,
+      itemNo: 2,
+      promptText: '기운이 바닥난 날',
+      domainCode: 'AFFECT',
+      domainLabel: '정서(우울)',
+      answerText: '',
+      notApplicable: false,
+      isBlank: true
+    }
+  ]
+};
+
 describe('SctSessionPanel', () => {
   beforeEach(() => {
+    localStorage.clear();
     mockNavigate.mockReset();
     mockFetchSctSessionView.mockReset();
+    mockFetchSctClientInvitations.mockReset();
     mockFetchSctDomainMemos.mockReset();
     mockUpsertSctDomainMemo.mockReset();
+    mockUseMediaQuery.mockReturnValue(true);
     mockFetchSctDomainMemos.mockResolvedValue([]);
     mockUpsertSctDomainMemo.mockResolvedValue({ domainCode: 'AFFECT', memoText: '확인' });
-    mockFetchSctSessionView.mockResolvedValue({
-      id: 55,
-      status: 'SUBMITTED',
-      formType: 'ADULT',
-      submittedAt: '2026-11-21',
-      answers: [
-        {
-          formItemId: 1,
-          itemNo: 1,
-          promptText: '나는',
-          domainCode: 'AFFECT',
-          domainLabel: '정서(우울)',
-          answerText: '괜찮다',
-          notApplicable: false,
-          isBlank: false
-        },
-        {
-          formItemId: 9,
-          itemNo: 9,
-          promptText: '어머니를 떠올리면',
-          domainCode: 'PARENT_FAMILY',
-          domainLabel: '부모/원가족(모)',
-          answerText: '',
-          notApplicable: true,
-          isBlank: false
-        },
-        {
-          formItemId: 2,
-          itemNo: 2,
-          promptText: '기운이 바닥난 날',
-          domainCode: 'AFFECT',
-          domainLabel: '정서(우울)',
-          answerText: '',
-          notApplicable: false,
-          isBlank: true
-        }
-      ]
-    });
+    mockFetchSctSessionView.mockResolvedValue(submittedPayload);
+    mockFetchSctClientInvitations.mockResolvedValue([
+      {
+        id: 55,
+        status: 'SUBMITTED',
+        formType: 'ADULT',
+        submittedAt: '2026-11-21T10:00:00Z'
+      }
+    ]);
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it('hides when feature flag is OFF', () => {
@@ -117,6 +146,7 @@ describe('SctSessionPanel', () => {
       expect(screen.getByText(SCT_UI.VIEW_BY_DOMAIN)).toBeInTheDocument();
     });
     expect(screen.getByTestId(SCT_TEST_ID.SESSION_PANEL)).toBeInTheDocument();
+    expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
     expect(mockFetchSctSessionView).toHaveBeenCalled();
     await waitFor(() => {
       expect(mockFetchSctDomainMemos).toHaveBeenCalledWith(55);
@@ -143,6 +173,10 @@ describe('SctSessionPanel', () => {
     const css = fs.readFileSync(cssPath, 'utf8');
     expect(css).toMatch(
       /\.mg-v2-sct-memo-add\s*\{[\s\S]*min-height:\s*var\(--mg-v2-touch-target-min\)/
+    );
+    expect(css).toMatch(/\.mg-v2-consultation-log__layout--with-sct\.is-sct-side-open/);
+    expect(css).not.toMatch(
+      /\.mg-v2-consultation-log__layout--with-sct\s*\{[\s\S]*grid-template-columns:\s*minmax\(0,\s*5fr\)/
     );
     const tokenPath = path.join(
       __dirname,

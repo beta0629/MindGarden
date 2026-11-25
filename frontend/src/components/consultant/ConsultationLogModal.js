@@ -549,6 +549,7 @@ const ConsultationLogModal = ({
   }, [client?.id, consultationRecord?.clientId, scheduleData?.clientId]);
 
   const { enabled: sctFeatureEnabled } = useSctFeatureEnabled();
+  const [sctSidePanelOpen, setSctSidePanelOpen] = useState(false);
   const sctMappingId = scheduleData?.mappingId != null
     ? Number(scheduleData.mappingId)
     : undefined;
@@ -1567,7 +1568,9 @@ const ConsultationLogModal = ({
             <div
               className={
                 sctFeatureEnabled && psychHookClientId != null
-                  ? 'mg-v2-consultation-log__layout--with-sct'
+                  ? `mg-v2-consultation-log__layout--with-sct${
+                    sctSidePanelOpen ? ' is-sct-side-open' : ''
+                  }`
                   : undefined
               }
             >
@@ -1615,6 +1618,7 @@ const ConsultationLogModal = ({
                   clientId={psychHookClientId}
                   mappingId={Number.isFinite(sctMappingId) ? sctMappingId : undefined}
                   clientName={scheduleData?.clientName || consultationRecord?.clientName || ''}
+                  onSidePanelOpenChange={setSctSidePanelOpen}
                 />
               ) : null}
             </div>

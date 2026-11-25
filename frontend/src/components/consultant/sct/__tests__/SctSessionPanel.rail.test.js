@@ -11,6 +11,9 @@ import fs from 'fs';
 import path from 'path';
 import SctSessionPanel from '../SctSessionPanel';
 import {
+  buildSctStripSubmittedCopy,
+  SCT_DEFAULTS,
+  SCT_FORM_TYPE_LABEL,
   SCT_JOURNAL_PANEL_LS_KEYS,
   SCT_TEST_ID,
   SCT_UI
@@ -94,15 +97,25 @@ describe('SctSessionPanel rail states', () => {
       <SctSessionPanel clientId={9} onSidePanelOpenChange={mockOnSidePanelOpenChange} />
     );
     await waitFor(() => {
-      expect(screen.getByTestId(SCT_TEST_ID.STRIP)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toBeInTheDocument();
     });
     expect(screen.getByTestId(SCT_TEST_ID.STATUS_BADGE)).toHaveTextContent(SCT_UI.STATUS_UNSENT);
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      SCT_UI.STRIP_UNSENT
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      '질문지를 아직 보내지 않았습니다.'
+    );
     expect(screen.queryByTestId(SCT_TEST_ID.SIDE)).not.toBeInTheDocument();
     expect(screen.queryByTestId(SCT_TEST_ID.SHEET)).not.toBeInTheDocument();
     expect(screen.queryByText(SECRET_ANSWER)).not.toBeInTheDocument();
     expect(screen.getByTestId(SCT_TEST_ID.SESSION_PANEL)).toHaveAttribute(
       'data-sct-side-open',
       '0'
+    );
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.PEEK_TOGGLE));
+    expect(screen.getByTestId(SCT_TEST_ID.PEEK_COPY)).toHaveTextContent(
+      SCT_UI.PEEK_UNSENT
     );
     await waitFor(() => {
       expect(mockOnSidePanelOpenChange).toHaveBeenCalledWith(false);
@@ -127,15 +140,55 @@ describe('SctSessionPanel rail states', () => {
       );
     });
     expect(screen.queryByTestId(SCT_TEST_ID.SIDE)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByTestId(SCT_TEST_ID.PEEK_TOGGLE));
-    expect(screen.getByTestId(SCT_TEST_ID.PEEK)).toHaveTextContent(
-      SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      '제출 전 본문은 열람할 수 없습니다'
     );
-    expect(screen.getByTestId(SCT_TEST_ID.PEEK)).toHaveTextContent(SCT_UI.DRAFT_SAVED_AT);
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      SCT_UI.STRIP_PENDING
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_DEADLINE)).toHaveTextContent(
+      SCT_UI.EXPIRES_AT
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_DEADLINE).textContent).toMatch(/2026/);
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.PEEK_TOGGLE));
+    const peek = screen.getByTestId(SCT_TEST_ID.PEEK);
+    expect(peek).toHaveTextContent(SCT_UI.PEEK_PENDING_AFTER_SUBMIT);
+    expect(peek).toHaveTextContent('마지막 저장은');
     expect(screen.queryByText(SECRET_ANSWER)).not.toBeInTheDocument();
     expect(screen.queryByText(/23\s*\/\s*50/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/\d+\s*\/\s*50문항/)).not.toBeInTheDocument();
     expect(screen.queryByText(SCT_UI.SEND)).not.toBeInTheDocument();
     expect(screen.queryByText(SCT_UI.REISSUE_LINK)).not.toBeInTheDocument();
+  });
+
+  it('pending with answeredCount: strip and peek include progress n', async() => {
+    mockFetchSctSessionView.mockRejectedValue({ status: 404 });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      {
+        id: 78,
+        status: 'SENT',
+        formType: 'ADULT',
+        answeredCount: 12,
+        draftSavedAt: '2026-03-21T10:00:00Z',
+        tokenExpiresAt: '2026-03-28T23:59:00Z'
+      }
+    ]);
+    render(<SctSessionPanel clientId={33} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+        `12/${SCT_DEFAULTS.TOTAL_ITEMS}문항 작성 중`
+      );
+    });
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      '제출 전 본문은 열람할 수 없습니다'
+    );
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.PEEK_TOGGLE));
+    expect(screen.getByTestId(SCT_TEST_ID.PEEK_COPY)).toHaveTextContent(
+      `내담자가 12 / ${SCT_DEFAULTS.TOTAL_ITEMS}문항까지 썼습니다.`
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.PEEK_COPY)).toHaveTextContent(
+      SCT_UI.PEEK_PENDING_AFTER_SUBMIT
+    );
   });
 
   it('expired: strip only, no body column, peek has no answers', async() => {
@@ -154,9 +207,19 @@ describe('SctSessionPanel rail states', () => {
         SCT_UI.STATUS_EXPIRED
       );
     });
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      SCT_UI.STRIP_EXPIRED
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      '작성 기한이 지났습니다. 본문은 열람할 수 없습니다.'
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_DEADLINE)).toBeInTheDocument();
     expect(screen.queryByTestId(SCT_TEST_ID.SIDE)).not.toBeInTheDocument();
     fireEvent.click(screen.getByTestId(SCT_TEST_ID.PEEK_TOGGLE));
     expect(screen.getByTestId(SCT_TEST_ID.PEEK)).toBeInTheDocument();
+    expect(screen.getByTestId(SCT_TEST_ID.PEEK_COPY)).toHaveTextContent(
+      SCT_UI.PEEK_EXPIRED
+    );
     expect(screen.queryByText(SECRET_ANSWER)).not.toBeInTheDocument();
   });
 
@@ -177,6 +240,26 @@ describe('SctSessionPanel rail states', () => {
           answerText: SECRET_ANSWER,
           notApplicable: false,
           isBlank: false
+        },
+        {
+          formItemId: 2,
+          itemNo: 2,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: '',
+          notApplicable: false,
+          isBlank: true
+        },
+        {
+          formItemId: 3,
+          itemNo: 3,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: '',
+          notApplicable: true,
+          isBlank: false
         }
       ]
     });
@@ -190,6 +273,16 @@ describe('SctSessionPanel rail states', () => {
     await waitFor(() => {
       expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
     });
+    const expectedStrip = buildSctStripSubmittedCopy(
+      SCT_FORM_TYPE_LABEL.ADULT,
+      1,
+      1,
+      SCT_DEFAULTS.TOTAL_ITEMS
+    );
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(expectedStrip);
+    expect(screen.getByTestId(SCT_TEST_ID.STRIP_COPY)).toHaveTextContent(
+      '성인용 50문항 · 빈 응답 1 · 해당 없음 1'
+    );
     expect(screen.getByText(SECRET_ANSWER)).toBeInTheDocument();
     expect(screen.getByTestId(SCT_TEST_ID.SESSION_PANEL)).toHaveAttribute(
       'data-sct-side-open',
@@ -280,6 +373,23 @@ describe('SctSessionPanel rail states', () => {
     );
     expect(css).toMatch(
       /\.is-sct-side-open\s+\.mg-v2-sct-side\s*\{[\s\S]*grid-area:\s*side/
+    );
+  });
+
+  it('memo-ta / memo-add use 16px base font and touch-target height (pointer-independent)', () => {
+    const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    const memoTaBlock = css.match(/\.mg-v2-sct-memo-ta\s*\{[^}]+\}/);
+    const memoAddBlock = css.match(/\.mg-v2-sct-memo-add\s*\{[^}]+\}/);
+    expect(memoTaBlock).not.toBeNull();
+    expect(memoAddBlock).not.toBeNull();
+    expect(memoTaBlock[0]).toMatch(/font-size:\s*var\(--mg-font-size-base,\s*16px\)/);
+    expect(memoTaBlock[0]).not.toMatch(/font-size:\s*var\(--mg-v2-font-size-body-md\)/);
+    expect(memoAddBlock[0]).toMatch(/font-size:\s*var\(--mg-font-size-base,\s*16px\)/);
+    expect(memoAddBlock[0]).toMatch(/min-height:\s*var\(--mg-v2-touch-target-min\)/);
+    expect(memoAddBlock[0]).toMatch(/height:\s*var\(--mg-v2-touch-target-min\)/);
+    expect(css).not.toMatch(
+      /@media\s*\(\s*pointer:\s*coarse\s*\)\s*\{[^}]*\.mg-v2-sct-memo-(?:ta|add)/
     );
   });
 

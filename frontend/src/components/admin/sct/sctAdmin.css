@@ -419,7 +419,8 @@
   padding: var(--mg-v2-space-3);
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
-  font-size: var(--mg-v2-font-size-body-md);
+  /* iOS 줌 방지: 포인터 미디어쿼리 없이 항상 ≥16px (body-md 0.875rem 금지) */
+  font-size: var(--mg-font-size-base, 16px);
   font-family: var(--mg-v2-font-family-base);
 }
 
@@ -430,7 +431,7 @@
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   background: var(--mg-v2-color-surface-main, #fff);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: var(--mg-font-size-base, 16px);
   color: var(--mg-v2-color-text-primary);
   cursor: pointer;
 }

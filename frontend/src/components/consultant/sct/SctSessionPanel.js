@@ -36,7 +36,11 @@ import { groupSctAnswersByDomain } from '../../../constants/sctDomainGrouping';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import useMediaQuery from '../../../hooks/useMediaQuery';
 import {
+  buildSctPeekPendingCopy,
+  buildSctStripPendingCopy,
+  buildSctStripSubmittedCopy,
   SCT_CSS,
+  SCT_DEFAULTS,
   SCT_FORM_TYPE_LABEL,
   SCT_JOURNAL_PANEL_DESKTOP_MQ,
   SCT_JOURNAL_UI_STATE,
@@ -123,6 +127,20 @@ const formatDateTimeLabel = (iso) => {
   } catch {
     return toDisplayString(iso, '');
   }
+};
+
+/**
+ * invite meta 진행 수 — 필드가 없으면 null (가짜 n 금지).
+ * @param {object|null|undefined} meta
+ * @returns {number|null}
+ */
+const resolveAnsweredCount = (meta) => {
+  if (!meta || typeof meta !== 'object') return null;
+  const raw = meta.answeredCount ?? meta.progressAnswered ?? meta.answered;
+  if (raw == null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return n;
 };
 
 /**
@@ -706,6 +724,50 @@ const SctSessionPanelBody = ({
 
   const draftSavedAt = inviteMeta?.draftSavedAt;
   const tokenExpiresAt = inviteMeta?.tokenExpiresAt || session?.tokenExpiresAt;
+  const answeredCount = resolveAnsweredCount(inviteMeta);
+  const deadlineLabel = tokenExpiresAt ? formatDateTimeLabel(tokenExpiresAt) : '';
+  const draftSavedLabel = draftSavedAt ? formatDateTimeLabel(draftSavedAt) : '';
+
+  const stripCopy = (() => {
+    if (uiState === SCT_JOURNAL_UI_STATE.UNSENT) return SCT_UI.STRIP_UNSENT;
+    if (uiState === SCT_JOURNAL_UI_STATE.PENDING) {
+      return buildSctStripPendingCopy(answeredCount, SCT_DEFAULTS.TOTAL_ITEMS);
+    }
+    if (uiState === SCT_JOURNAL_UI_STATE.EXPIRED) return SCT_UI.STRIP_EXPIRED;
+    if (uiState === SCT_JOURNAL_UI_STATE.SUBMITTED) {
+      return buildSctStripSubmittedCopy(
+        formLabel,
+        emptyCount,
+        naCount,
+        SCT_DEFAULTS.TOTAL_ITEMS
+      );
+    }
+    return '';
+  })();
+
+  const showStripDeadline = Boolean(
+    deadlineLabel
+      && (uiState === SCT_JOURNAL_UI_STATE.PENDING
+        || uiState === SCT_JOURNAL_UI_STATE.EXPIRED)
+  );
+
+  const showStripSubmittedAt = Boolean(
+    freshBadge
+      && uiState === SCT_JOURNAL_UI_STATE.SUBMITTED
+      && session?.submittedAt
+  );
+
+  const peekCopy = (() => {
+    if (uiState === SCT_JOURNAL_UI_STATE.UNSENT) return SCT_UI.PEEK_UNSENT;
+    if (uiState === SCT_JOURNAL_UI_STATE.EXPIRED) return SCT_UI.PEEK_EXPIRED;
+    if (uiState === SCT_JOURNAL_UI_STATE.PENDING) {
+      return buildSctPeekPendingCopy({
+        answeredCount,
+        draftSavedAtLabel: draftSavedLabel || undefined
+      }, SCT_DEFAULTS.TOTAL_ITEMS);
+    }
+    return '';
+  })();
 
   const sheetNode = sheetOpen && typeof document !== 'undefined'
     ? createPortal(
@@ -803,6 +865,34 @@ const SctSessionPanelBody = ({
             {!loading && error ? (
               <p className="mg-v2-sct-strip__meta" role="alert"><SafeText>{error}</SafeText></p>
             ) : null}
+            {!loading && !error && stripCopy ? (
+              <p
+                className="mg-v2-sct-strip__meta"
+                data-testid={SCT_TEST_ID.STRIP_COPY}
+              >
+                <SafeText>{stripCopy}</SafeText>
+              </p>
+            ) : null}
+            {!loading && !error && showStripDeadline ? (
+              <p
+                className="mg-v2-sct-strip__meta"
+                data-testid={SCT_TEST_ID.STRIP_DEADLINE}
+              >
+                {SCT_UI.EXPIRES_AT}
+                {': '}
+                <SafeText>{deadlineLabel}</SafeText>
+              </p>
+            ) : null}
+            {!loading && !error && showStripSubmittedAt ? (
+              <p
+                className="mg-v2-sct-strip__meta"
+                data-testid={SCT_TEST_ID.STRIP_SUBMITTED_AT}
+              >
+                {SCT_UI.SUBMITTED_AT}
+                {': '}
+                <SafeText>{formatDateTimeLabel(session.submittedAt)}</SafeText>
+              </p>
+            ) : null}
           </div>
           <div className="mg-v2-sct-strip__actions">
             {isSubmitted ? (
@@ -856,30 +946,23 @@ const SctSessionPanelBody = ({
             className={SCT_CSS.PEEK}
             data-testid={SCT_TEST_ID.PEEK}
           >
-            <p className="mg-v2-sct-peek-card__body">
-              <SafeText>
-                {uiState === SCT_JOURNAL_UI_STATE.EXPIRED
-                  ? SCT_UI.STATUS_EXPIRED
-                  : SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT}
-              </SafeText>
-            </p>
-            {uiState === SCT_JOURNAL_UI_STATE.PENDING && draftSavedAt ? (
-              <p className="mg-v2-sct-peek-card__body">
-                {SCT_UI.DRAFT_SAVED_AT}
-                {': '}
-                <SafeText>{formatDateTimeLabel(draftSavedAt)}</SafeText>
+            {peekCopy ? (
+              <p
+                className="mg-v2-sct-peek-card__body"
+                data-testid={SCT_TEST_ID.PEEK_COPY}
+              >
+                <SafeText>{peekCopy}</SafeText>
               </p>
             ) : null}
-            {tokenExpiresAt ? (
+            {uiState === SCT_JOURNAL_UI_STATE.EXPIRED && deadlineLabel ? (
               <p className="mg-v2-sct-peek-card__body">
                 {SCT_UI.EXPIRES_AT}
                 {': '}
-                <SafeText>{formatDateTimeLabel(tokenExpiresAt)}</SafeText>
+                <SafeText>{deadlineLabel}</SafeText>
               </p>
             ) : null}
             {/*
-              BE 는 draft answeredCount 를 노출하지 않음.
-              SENT/DRAFT 피크에서 진행 눈금·분모를 만들지 않는다 (가짜 23/50 금지).
+              answeredCount 는 meta 에 있을 때만 사용. 없으면 문항 수 절 생략 (가짜 n 금지).
             */}
           </div>
         ) : null}

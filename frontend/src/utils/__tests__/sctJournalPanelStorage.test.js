@@ -26,12 +26,16 @@ describe('sctJournalPanelStorage', () => {
     localStorage.clear();
   });
 
-  it('builds open/seen keys scoped by consultantId × invitationId', () => {
+  it('builds open key consultant×invitationId and seen key consultant×clientId (v2)', () => {
     expect(buildSctJournalPanelOpenKey(12, 99)).toBe(
       `${SCT_JOURNAL_PANEL_STORAGE.OPEN_PREFIX}:12:99`
     );
+    expect(SCT_JOURNAL_PANEL_STORAGE.OPEN_PREFIX).toBe('mg.sctJournalPanel.open.v1');
     expect(buildSctJournalPanelSeenKey('7', '55')).toBe(
       `${SCT_JOURNAL_PANEL_STORAGE.SEEN_PREFIX}:7:55`
+    );
+    expect(SCT_JOURNAL_PANEL_STORAGE.SEEN_PREFIX).toBe(
+      'mg.sctJournalPanel.seenSubmitted.v2'
     );
     expect(buildSctJournalPanelOpenKey(null, 1)).toBeNull();
     expect(buildSctJournalPanelSeenKey(1, '')).toBeNull();
@@ -60,9 +64,9 @@ describe('sctJournalPanelStorage', () => {
     expect(isSctJournalPanelFreshSubmit(null, '2026-03-25T10:00:00Z')).toBe(false);
   });
 
-  it('auto-expands desktop on first view (fresh=false) or fresh submit; never on mobile', () => {
+  it('first view: no seen → fresh false (no 「방금 제출」 path); desktop auto-expands', () => {
     const openKey = buildSctJournalPanelOpenKey(3, 8);
-    const seenKey = buildSctJournalPanelSeenKey(3, 8);
+    const seenKey = buildSctJournalPanelSeenKey(3, 5);
 
     const firstDesktop = resolveSctJournalPanelInitialOpen({
       isDesktopWide: true,
@@ -72,17 +76,23 @@ describe('sctJournalPanelStorage', () => {
     });
     expect(firstDesktop.open).toBe(true);
     expect(firstDesktop.fresh).toBe(false);
+  });
+
+  it('after markSeen, newer submittedAt → fresh true; same submittedAt → fresh false', () => {
+    const openKey = buildSctJournalPanelOpenKey(3, 8);
+    const seenKey = buildSctJournalPanelSeenKey(3, 5);
 
     writeSctJournalPanelOpenState(openKey, false);
-    writeSctJournalPanelSeenSubmittedAt(seenKey, '2026-03-25T10:00:00Z');
-    const collapsed = resolveSctJournalPanelInitialOpen({
+    writeSctJournalPanelSeenSubmittedAt(seenKey, '2026-03-25T10:00:00Z', 8);
+
+    const sameAfterSeen = resolveSctJournalPanelInitialOpen({
       isDesktopWide: true,
       openKey,
       seenKey,
       submittedAt: '2026-03-25T10:00:00Z'
     });
-    expect(collapsed.open).toBe(false);
-    expect(collapsed.fresh).toBe(false);
+    expect(sameAfterSeen.open).toBe(false);
+    expect(sameAfterSeen.fresh).toBe(false);
 
     const freshAgain = resolveSctJournalPanelInitialOpen({
       isDesktopWide: true,
@@ -103,10 +113,55 @@ describe('sctJournalPanelStorage', () => {
     expect(mobile.fresh).toBe(true);
   });
 
-  it('reads and writes seen submittedAt ISO', () => {
+  it('reads plain ISO and JSON seen values; never throws on corrupt/v1 garbage', () => {
     const key = buildSctJournalPanelSeenKey(4, 10);
     expect(readSctJournalPanelSeenSubmittedAt(key)).toBeNull();
+
     writeSctJournalPanelSeenSubmittedAt(key, '2026-03-25T11:00:00Z');
     expect(readSctJournalPanelSeenSubmittedAt(key)).toBe('2026-03-25T11:00:00Z');
+    expect(localStorage.getItem(key)).toBe('2026-03-25T11:00:00Z');
+
+    writeSctJournalPanelSeenSubmittedAt(key, '2026-03-25T12:00:00Z', 99);
+    expect(readSctJournalPanelSeenSubmittedAt(key)).toBe('2026-03-25T12:00:00Z');
+    expect(JSON.parse(localStorage.getItem(key))).toEqual({
+      submittedAt: '2026-03-25T12:00:00Z',
+      invitationId: 99
+    });
+
+    localStorage.setItem(key, '{not-json');
+    expect(readSctJournalPanelSeenSubmittedAt(key)).toBeNull();
+
+    localStorage.setItem(key, 'not-a-date');
+    expect(readSctJournalPanelSeenSubmittedAt(key)).toBeNull();
+
+    // v1 key present must not affect v2 reader (prefer v2 only; ignore v1)
+    const v1Key = 'mg.sctJournalPanel.seenSubmitted.v1:4:99';
+    localStorage.setItem(v1Key, '2026-01-01T00:00:00Z');
+    expect(readSctJournalPanelSeenSubmittedAt(key)).toBeNull();
+    expect(() => readSctJournalPanelSeenSubmittedAt(v1Key)).not.toThrow();
+  });
+
+  it('new invite same client reuses seen v2 — older seen + newer submit → fresh', () => {
+    const clientSeenKey = buildSctJournalPanelSeenKey(42, 5);
+    writeSctJournalPanelSeenSubmittedAt(
+      clientSeenKey,
+      '2026-03-20T10:00:00Z',
+      100
+    );
+
+    const openOldInvite = buildSctJournalPanelOpenKey(42, 100);
+    const openNewInvite = buildSctJournalPanelOpenKey(42, 200);
+    expect(openOldInvite).toBe('mg.sctJournalPanel.open.v1:42:100');
+    expect(openNewInvite).toBe('mg.sctJournalPanel.open.v1:42:200');
+    expect(clientSeenKey).toBe('mg.sctJournalPanel.seenSubmitted.v2:42:5');
+
+    const result = resolveSctJournalPanelInitialOpen({
+      isDesktopWide: true,
+      openKey: openNewInvite,
+      seenKey: clientSeenKey,
+      submittedAt: '2026-03-25T15:00:00Z'
+    });
+    expect(result.fresh).toBe(true);
+    expect(result.open).toBe(true);
   });
 });

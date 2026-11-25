@@ -484,7 +484,7 @@ describe('SctSessionPanel rail states', () => {
     );
   });
 
-  it('localStorage keys are scoped consultantId × invitationId', async() => {
+  it('localStorage: open consultant×invite; seen v2 consultant×clientId', async() => {
     mockUseMediaQuery.mockReturnValue(true);
     mockFetchSctSessionView.mockResolvedValue({
       id: 100,
@@ -504,8 +504,12 @@ describe('SctSessionPanel rail states', () => {
     await waitFor(() => {
       expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.OPEN}:42:100`)).toBe('0');
     });
-    expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:100`))
-      .toBe('2026-03-25T15:00:00Z');
+    expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:5`))
+      .toBe(JSON.stringify({
+        submittedAt: '2026-03-25T15:00:00Z',
+        invitationId: 100
+      }));
+    expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:100`)).toBeNull();
     expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.OPEN}:7:100`)).toBeNull();
   });
 });

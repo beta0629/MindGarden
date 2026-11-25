@@ -221,8 +221,8 @@ const SctSessionPanelBody = ({
     [consultantId, invitationId]
   );
   const seenKey = useMemo(
-    () => buildSctJournalPanelSeenKey(consultantId, invitationId),
-    [consultantId, invitationId]
+    () => buildSctJournalPanelSeenKey(consultantId, clientId),
+    [consultantId, clientId]
   );
 
   const sidePanelOpen = isSubmitted && bodyOpen && isDesktopWide;
@@ -231,10 +231,14 @@ const SctSessionPanelBody = ({
   const markSeenAndPersistOpen = useCallback((nextOpen) => {
     if (openKey) writeSctJournalPanelOpenState(openKey, nextOpen);
     if (seenKey && session?.submittedAt) {
-      writeSctJournalPanelSeenSubmittedAt(seenKey, String(session.submittedAt));
+      writeSctJournalPanelSeenSubmittedAt(
+        seenKey,
+        String(session.submittedAt),
+        invitationId
+      );
     }
     if (!nextOpen) setFreshBadge(false);
-  }, [openKey, seenKey, session?.submittedAt]);
+  }, [openKey, seenKey, session?.submittedAt, invitationId]);
 
   const handleExpandBody = useCallback(() => {
     setBodyOpen(true);

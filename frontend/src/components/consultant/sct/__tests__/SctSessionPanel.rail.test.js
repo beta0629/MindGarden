@@ -512,4 +512,181 @@ describe('SctSessionPanel rail states', () => {
     expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:100`)).toBeNull();
     expect(localStorage.getItem(`${SCT_JOURNAL_PANEL_LS_KEYS.OPEN}:7:100`)).toBeNull();
   });
+
+  it('auto-open exposes body → writes seen; remount same submittedAt → no fresh badge', async() => {
+    const submittedAt = '2026-03-25T16:00:00Z';
+    const seenKey = `${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:11`;
+    const openKey = `${SCT_JOURNAL_PANEL_LS_KEYS.OPEN}:42:110`;
+    localStorage.setItem(
+      seenKey,
+      JSON.stringify({ submittedAt: '2026-03-20T10:00:00Z', invitationId: 109 })
+    );
+    mockUseMediaQuery.mockReturnValue(true);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 110,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt,
+      answers: [
+        {
+          formItemId: 1,
+          itemNo: 1,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: SECRET_ANSWER,
+          notApplicable: false,
+          isBlank: false
+        }
+      ]
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      { id: 110, status: 'SUBMITTED', formType: 'ADULT', submittedAt }
+    ]);
+
+    const { unmount } = render(<SctSessionPanel clientId={11} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
+    });
+    expect(screen.getByTestId(SCT_TEST_ID.FRESH_BADGE)).toHaveTextContent(
+      SCT_UI.STATUS_JUST_SUBMITTED
+    );
+    await waitFor(() => {
+      expect(localStorage.getItem(seenKey)).toBe(JSON.stringify({
+        submittedAt,
+        invitationId: 110
+      }));
+    });
+    expect(localStorage.getItem(openKey)).toBe('1');
+
+    unmount();
+    render(<SctSessionPanel clientId={11} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId(SCT_TEST_ID.FRESH_BADGE)).not.toBeInTheDocument();
+    expect(screen.getByTestId(SCT_TEST_ID.STATUS_BADGE)).not.toHaveTextContent(
+      SCT_UI.STATUS_JUST_SUBMITTED
+    );
+  });
+
+  it('first view (no seen): no fresh label; desktop auto-open still writes seen', async() => {
+    const submittedAt = '2026-03-25T17:00:00Z';
+    const seenKey = `${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:12`;
+    expect(localStorage.getItem(seenKey)).toBeNull();
+    mockUseMediaQuery.mockReturnValue(true);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 120,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt,
+      answers: []
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      { id: 120, status: 'SUBMITTED', formType: 'ADULT', submittedAt }
+    ]);
+
+    render(<SctSessionPanel clientId={12} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId(SCT_TEST_ID.FRESH_BADGE)).not.toBeInTheDocument();
+    expect(screen.getByTestId(SCT_TEST_ID.STATUS_BADGE)).not.toHaveTextContent(
+      SCT_UI.STATUS_JUST_SUBMITTED
+    );
+    await waitFor(() => {
+      expect(localStorage.getItem(seenKey)).toBe(JSON.stringify({
+        submittedAt,
+        invitationId: 120
+      }));
+    });
+  });
+
+  it('after seen, newer submittedAt → fresh badge on auto-open', async() => {
+    const seenKey = `${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:13`;
+    localStorage.setItem(
+      seenKey,
+      JSON.stringify({ submittedAt: '2026-03-25T10:00:00Z', invitationId: 130 })
+    );
+    const newerAt = '2026-03-26T09:00:00Z';
+    mockUseMediaQuery.mockReturnValue(true);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 131,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt: newerAt,
+      answers: []
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      { id: 131, status: 'SUBMITTED', formType: 'ADULT', submittedAt: newerAt }
+    ]);
+
+    render(<SctSessionPanel clientId={13} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.FRESH_BADGE)).toHaveTextContent(
+        SCT_UI.STATUS_JUST_SUBMITTED
+      );
+    });
+    expect(screen.getByTestId(SCT_TEST_ID.SIDE)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(localStorage.getItem(seenKey)).toBe(JSON.stringify({
+        submittedAt: newerAt,
+        invitationId: 131
+      }));
+    });
+  });
+
+  it('narrow strip-only (body closed): does not write or overwrite seen', async() => {
+    const seenKey = `${SCT_JOURNAL_PANEL_LS_KEYS.SEEN_SUBMITTED}:42:14`;
+    const priorSeen = JSON.stringify({
+      submittedAt: '2026-03-20T08:00:00Z',
+      invitationId: 140
+    });
+    localStorage.setItem(seenKey, priorSeen);
+    mockUseMediaQuery.mockReturnValue(false);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 141,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt: '2026-03-26T11:00:00Z',
+      answers: [
+        {
+          formItemId: 1,
+          itemNo: 1,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: SECRET_ANSWER,
+          notApplicable: false,
+          isBlank: false
+        }
+      ]
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      {
+        id: 141,
+        status: 'SUBMITTED',
+        formType: 'ADULT',
+        submittedAt: '2026-03-26T11:00:00Z'
+      }
+    ]);
+
+    const { unmount } = render(<SctSessionPanel clientId={14} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.STRIP)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId(SCT_TEST_ID.SIDE)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(SCT_TEST_ID.SHEET)).not.toBeInTheDocument();
+    expect(screen.queryByText(SECRET_ANSWER)).not.toBeInTheDocument();
+    expect(localStorage.getItem(seenKey)).toBe(priorSeen);
+    unmount();
+
+    localStorage.removeItem(seenKey);
+    render(<SctSessionPanel clientId={14} />);
+    await waitFor(() => {
+      expect(screen.getByTestId(SCT_TEST_ID.STRIP)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId(SCT_TEST_ID.SHEET)).not.toBeInTheDocument();
+    expect(localStorage.getItem(seenKey)).toBeNull();
+  });
 });

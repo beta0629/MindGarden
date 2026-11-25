@@ -164,4 +164,46 @@ describe('sctJournalPanelStorage', () => {
     expect(result.fresh).toBe(true);
     expect(result.open).toBe(true);
   });
+
+  it('body exposed writes seen → same submittedAt re-resolve is not fresh; narrow open=false keeps prior seen', () => {
+    const openKey = buildSctJournalPanelOpenKey(9, 50);
+    const seenKey = buildSctJournalPanelSeenKey(9, 7);
+    const submittedAt = '2026-03-25T18:00:00Z';
+
+    writeSctJournalPanelSeenSubmittedAt(seenKey, '2026-03-24T09:00:00Z', 49);
+    writeSctJournalPanelOpenState(openKey, true);
+
+    const freshOpen = resolveSctJournalPanelInitialOpen({
+      isDesktopWide: true,
+      openKey,
+      seenKey,
+      submittedAt
+    });
+    expect(freshOpen.open).toBe(true);
+    expect(freshOpen.fresh).toBe(true);
+
+    // 본문 노출 시 패널이 호출하는 것과 동일 — seen 갱신
+    writeSctJournalPanelSeenSubmittedAt(seenKey, submittedAt, 50);
+
+    const afterExpose = resolveSctJournalPanelInitialOpen({
+      isDesktopWide: true,
+      openKey,
+      seenKey,
+      submittedAt
+    });
+    expect(afterExpose.open).toBe(true);
+    expect(afterExpose.fresh).toBe(false);
+
+    const priorSeen = readSctJournalPanelSeenSubmittedAt(seenKey);
+    const narrow = resolveSctJournalPanelInitialOpen({
+      isDesktopWide: false,
+      openKey,
+      seenKey,
+      submittedAt: '2026-03-27T12:00:00Z'
+    });
+    expect(narrow.open).toBe(false);
+    expect(narrow.fresh).toBe(true);
+    // 스트립만(open false)이면 패널이 seen을 쓰지 않음 — 기존 값 유지
+    expect(readSctJournalPanelSeenSubmittedAt(seenKey)).toBe(priorSeen);
+  });
 });

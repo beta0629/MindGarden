@@ -48,8 +48,9 @@ describe('sctJournalPanelStorage', () => {
     expect(localStorage.getItem(key)).toBe(SCT_JOURNAL_PANEL_STORAGE.CLOSED);
   });
 
-  it('detects fresh submit when submittedAt is newer than lastSeen', () => {
-    expect(isSctJournalPanelFreshSubmit('2026-03-25T10:00:00Z', null)).toBe(true);
+  it('detects fresh submit only when seen exists and submittedAt is newer', () => {
+    expect(isSctJournalPanelFreshSubmit('2026-03-25T10:00:00Z', null)).toBe(false);
+    expect(isSctJournalPanelFreshSubmit('2026-03-25T10:00:00Z', '')).toBe(false);
     expect(
       isSctJournalPanelFreshSubmit('2026-03-25T12:00:00Z', '2026-03-25T10:00:00Z')
     ).toBe(true);
@@ -59,7 +60,7 @@ describe('sctJournalPanelStorage', () => {
     expect(isSctJournalPanelFreshSubmit(null, '2026-03-25T10:00:00Z')).toBe(false);
   });
 
-  it('auto-expands desktop on first view or fresh submit; never on mobile', () => {
+  it('auto-expands desktop on first view (fresh=false) or fresh submit; never on mobile', () => {
     const openKey = buildSctJournalPanelOpenKey(3, 8);
     const seenKey = buildSctJournalPanelSeenKey(3, 8);
 
@@ -70,7 +71,7 @@ describe('sctJournalPanelStorage', () => {
       submittedAt: '2026-03-25T10:00:00Z'
     });
     expect(firstDesktop.open).toBe(true);
-    expect(firstDesktop.fresh).toBe(true);
+    expect(firstDesktop.fresh).toBe(false);
 
     writeSctJournalPanelOpenState(openKey, false);
     writeSctJournalPanelSeenSubmittedAt(seenKey, '2026-03-25T10:00:00Z');

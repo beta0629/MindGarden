@@ -419,8 +419,8 @@
   padding: var(--mg-v2-space-3);
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
-  /* iOS 줌 방지: 포인터 미디어쿼리 없이 항상 ≥16px (body-md 0.875rem 금지) */
-  font-size: var(--mg-font-size-base, 16px);
+  /* iOS 줌 방지: html root rem 과 무관하게 항상 16px (body-md·--mg-font-size-base 금지) */
+  font-size: 16px;
   font-family: var(--mg-v2-font-family-base);
 }
 
@@ -431,7 +431,7 @@
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   background: var(--mg-v2-color-surface-main, #fff);
-  font-size: var(--mg-font-size-base, 16px);
+  font-size: 16px;
   color: var(--mg-v2-color-text-primary);
   cursor: pointer;
 }
@@ -694,6 +694,13 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+}
+
+/* 좁은 폰(~375): 스크림이 스트립을 가리지 않도록 상단 여백 (820 미적용) */
+@media (max-width: 26.25rem) {
+  .mg-v2-sct-sheet-root {
+    top: calc(var(--mg-v2-touch-target-min) + var(--mg-v2-space-10));
+  }
 }
 
 .mg-v2-sct-sheet__scrim {

@@ -25,8 +25,17 @@ const isFocusableTarget = (el) => (
  * @param {{current: HTMLElement|null}} params.panelRef
  * @param {() => void} params.onClose
  * @param {string} [params.returnFocusSelector] - ☰ 버튼 셀렉터(클릭 시 포커스가 안 잡히는 브라우저 대비)
+ * @param {boolean} [params.stopPropagationOnEscape=false]
+ *   true 면 Esc capture + stopPropagation (UnifiedModal 등 document bubble 리스너보다 우선).
+ *   CoverMenuDrawer/MobileLnbDrawer 는 기본 false 유지.
  */
-const useCoverDrawerFocus = ({ isOpen, panelRef, onClose, returnFocusSelector }) => {
+const useCoverDrawerFocus = ({
+  isOpen,
+  panelRef,
+  onClose,
+  returnFocusSelector,
+  stopPropagationOnEscape = false
+}) => {
   const returnFocusRef = useRef(null);
   const wasOpenRef = useRef(false);
   const onCloseRef = useRef(onClose);
@@ -50,6 +59,9 @@ const useCoverDrawerFocus = ({ isOpen, panelRef, onClose, returnFocusSelector })
       const onKeyDown = (e) => {
         if (e.key === 'Escape') {
           e.preventDefault();
+          if (stopPropagationOnEscape) {
+            e.stopPropagation();
+          }
           onCloseRef.current?.();
           return;
         }
@@ -71,8 +83,8 @@ const useCoverDrawerFocus = ({ isOpen, panelRef, onClose, returnFocusSelector })
           head.focus();
         }
       };
-      document.addEventListener('keydown', onKeyDown);
-      return () => document.removeEventListener('keydown', onKeyDown);
+      document.addEventListener('keydown', onKeyDown, stopPropagationOnEscape);
+      return () => document.removeEventListener('keydown', onKeyDown, stopPropagationOnEscape);
     }
     if (wasOpenRef.current) {
       wasOpenRef.current = false;
@@ -86,7 +98,7 @@ const useCoverDrawerFocus = ({ isOpen, panelRef, onClose, returnFocusSelector })
       }
     }
     return undefined;
-  }, [isOpen, panelRef, returnFocusSelector]);
+  }, [isOpen, panelRef, returnFocusSelector, stopPropagationOnEscape]);
 };
 
 export default useCoverDrawerFocus;

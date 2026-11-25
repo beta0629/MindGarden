@@ -100,7 +100,8 @@ export function writeSctJournalPanelSeenSubmittedAt(key, iso) {
 }
 
 /**
- * submittedAt 이 lastSeen 보다 이후면 방금 제출(fresh).
+ * 이전 열람(seen)이 있고 submittedAt 이 그보다 이후일 때만 방금 제출(fresh).
+ * 첫 열람(seen 없음)은 fresh=false — 배지는 일반 제출일 카피.
  *
  * @param {string|null|undefined} submittedAt
  * @param {string|null|undefined} lastSeenIso
@@ -108,19 +109,20 @@ export function writeSctJournalPanelSeenSubmittedAt(key, iso) {
  */
 export function isSctJournalPanelFreshSubmit(submittedAt, lastSeenIso) {
   if (submittedAt == null || String(submittedAt).trim() === '') return false;
-  if (lastSeenIso == null || String(lastSeenIso).trim() === '') return true;
+  if (lastSeenIso == null || String(lastSeenIso).trim() === '') return false;
   const submittedMs = Date.parse(String(submittedAt));
   const seenMs = Date.parse(String(lastSeenIso));
   if (!Number.isFinite(submittedMs)) return false;
-  if (!Number.isFinite(seenMs)) return true;
+  if (!Number.isFinite(seenMs)) return false;
   return submittedMs > seenMs;
 }
 
 /**
  * 데스크톱(≥1180)에서만 초기 펼침 여부 결정.
  * - localStorage 에 접힘 기억이 있으면 그대로
- * - 없거나 fresh submit 이면 펼침
- * - 모바일은 항상 false (시트 자동 오픈 금지)
+ * - stored unset(첫 열람) 또는 fresh submit 이면 펼침
+ * - fresh 는 seen 존재 + submittedAt > seen 일 때만 true (첫 열람은 fresh=false 라도 open)
+ * - 모바일은 항상 open false (시트 자동 오픈 금지)
  *
  * @param {{
  *   isDesktopWide: boolean,
@@ -148,7 +150,7 @@ export function resolveSctJournalPanelInitialOpen({
   if (stored === true) {
     return { open: true, fresh };
   }
-  // unset 또는 fresh → 첫 열람 / 방금 제출 자동 펼침
+  // unset(첫 열람) 또는 fresh → 자동 펼침
   if (stored == null || fresh) {
     return { open: true, fresh };
   }

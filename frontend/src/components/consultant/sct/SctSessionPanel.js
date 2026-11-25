@@ -1,7 +1,7 @@
 /**
  * 상담사 — 상담일지 SCT 레일(스트립 + 피크 / 사이드·시트)
  * 미제출·만료 = 스트립만(저널 전체 폭). 제출 + ≥1180 펼침 = 사이드 패널.
- * <1180 제출 본문 = 바텀 시트(Esc·포커스 트랩). 테넌트 fail-closed.
+ * 제출 본문(시트·사이드) Esc·포커스 트랩 — UnifiedModal 보다 capture 우선. 테넌트 fail-closed.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -206,7 +206,8 @@ const SctSessionPanelBody = ({
   const [peekOpen, setPeekOpen] = useState(false);
   const [freshBadge, setFreshBadge] = useState(false);
   const initRef = useRef(false);
-  const sheetRef = useRef(null);
+  /** sheet / side 중 열린 본문 패널 (동시 마운트 없음) */
+  const bodyPanelRef = useRef(null);
 
   const uiState = deriveUiState(session, inviteMeta);
   const isSubmitted = uiState === SCT_JOURNAL_UI_STATE.SUBMITTED;
@@ -247,10 +248,11 @@ const SctSessionPanelBody = ({
   }, [markSeenAndPersistOpen]);
 
   useCoverDrawerFocus({
-    isOpen: sheetOpen,
-    panelRef: sheetRef,
+    isOpen: bodyOpen && isSubmitted,
+    panelRef: bodyPanelRef,
     onClose: handleCollapseBody,
-    returnFocusSelector: `[data-testid="${SCT_TEST_ID.EXPAND_BTN}"]`
+    returnFocusSelector: `[data-testid="${SCT_TEST_ID.EXPAND_BTN}"]`,
+    stopPropagationOnEscape: true
   });
 
   useEffect(() => {
@@ -781,7 +783,7 @@ const SctSessionPanelBody = ({
           />
           <div
             id={`${bodyPanelId}-sheet`}
-            ref={sheetRef}
+            ref={bodyPanelRef}
             className={`${SCT_CSS.SHEET} mg-v2-sct-session--font-${fontSize}`}
             role="dialog"
             aria-modal="true"
@@ -971,6 +973,7 @@ const SctSessionPanelBody = ({
       {sidePanelOpen ? (
         <aside
           id={bodyPanelId}
+          ref={bodyPanelRef}
           className={`${SCT_CSS.SIDE} mg-v2-sct-session--font-${fontSize}`}
           data-testid={SCT_TEST_ID.SIDE}
           aria-label={titleText}

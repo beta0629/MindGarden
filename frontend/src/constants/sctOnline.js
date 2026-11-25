@@ -279,6 +279,16 @@ export const SCT_UI = Object.freeze({
   STATUS_EXPIRED: '만료',
   STATUS_JUST_SUBMITTED: '방금 제출',
   BODY_HIDDEN_BEFORE_SUBMIT: '제출 전 본문은 열람할 수 없습니다',
+  /** 스트립 한 줄 카피 (상태별, 문장 끝 마침표 포함) */
+  STRIP_UNSENT: '질문지를 아직 보내지 않았습니다.',
+  STRIP_PENDING: '작성 중 · 제출 전 본문은 열람할 수 없습니다.',
+  STRIP_EXPIRED: '작성 기한이 지났습니다. 본문은 열람할 수 없습니다.',
+  STRIP_EMPTY_RESPONSES: '빈 응답',
+  STRIP_NA_RESPONSES: '해당 없음',
+  /** 피크 카피 */
+  PEEK_UNSENT: '질문지를 아직 보내지 않았습니다.',
+  PEEK_EXPIRED: '작성 기한이 지났습니다. 본문은 열람할 수 없습니다.',
+  PEEK_PENDING_AFTER_SUBMIT: '제출이 끝나면 여기에서 영역별로 살펴볼 수 있습니다.',
   PEEK_DETAILS: '자세히',
   PEEK_CLOSE: '닫기',
   EXPAND_SIDE: '펼쳐서 보기',
@@ -287,8 +297,60 @@ export const SCT_UI = Object.freeze({
   SHEET_CLOSE: '닫기',
   DRAFT_SAVED_AT: '마지막 저장',
   EXPIRES_AT: '작성 기한',
-  SPINE_LABEL: '진행 표시'
+  SPINE_LABEL: '진행 표시',
+  SUBMITTED_AT: '제출 시각'
 });
+
+/**
+ * PENDING 스트립 — answeredCount 가 있을 때만 n/50 포함.
+ * @param {number|null|undefined} answeredCount
+ * @param {number} [total=SCT_DEFAULTS.TOTAL_ITEMS]
+ * @returns {string}
+ */
+export const buildSctStripPendingCopy = (answeredCount, total = SCT_DEFAULTS.TOTAL_ITEMS) => {
+  if (answeredCount == null || !Number.isFinite(Number(answeredCount))) {
+    return SCT_UI.STRIP_PENDING;
+  }
+  const n = Number(answeredCount);
+  return `${n}/${total}문항 작성 중 · ${SCT_UI.BODY_HIDDEN_BEFORE_SUBMIT}.`;
+};
+
+/**
+ * SUBMITTED 스트립 요약.
+ * @param {string} formLabel SCT_FORM_TYPE_LABEL 값
+ * @param {number} emptyCount
+ * @param {number} naCount
+ * @param {number} [total=SCT_DEFAULTS.TOTAL_ITEMS]
+ * @returns {string}
+ */
+export const buildSctStripSubmittedCopy = (
+  formLabel,
+  emptyCount,
+  naCount,
+  total = SCT_DEFAULTS.TOTAL_ITEMS
+) => {
+  const head = formLabel ? `${formLabel} ${total}문항` : `${total}문항`;
+  return `${head} · ${SCT_UI.STRIP_EMPTY_RESPONSES} ${emptyCount} · ${SCT_UI.STRIP_NA_RESPONSES} ${naCount}`;
+};
+
+/**
+ * PENDING 피크 — n 없으면 문항 수 절 생략. 본문 답은 절대 포함하지 않음.
+ * @param {{ answeredCount?: number|null, draftSavedAtLabel?: string }} opts
+ * @param {number} [total=SCT_DEFAULTS.TOTAL_ITEMS]
+ * @returns {string}
+ */
+export const buildSctPeekPendingCopy = (opts = {}, total = SCT_DEFAULTS.TOTAL_ITEMS) => {
+  const parts = [];
+  const n = opts.answeredCount;
+  if (n != null && Number.isFinite(Number(n))) {
+    parts.push(`내담자가 ${Number(n)} / ${total}문항까지 썼습니다.`);
+  }
+  if (opts.draftSavedAtLabel) {
+    parts.push(`마지막 저장은 ${opts.draftSavedAtLabel}입니다.`);
+  }
+  parts.push(SCT_UI.PEEK_PENDING_AFTER_SUBMIT);
+  return parts.join(' ');
+};
 
 /** 상담일지 SCT 레일 localStorage 키 prefix (consultantId × invitationId) */
 export const SCT_JOURNAL_PANEL_LS_KEYS = Object.freeze({
@@ -415,5 +477,9 @@ export const SCT_TEST_ID = Object.freeze({
   COLLAPSE_BTN: 'sct-journal-collapse',
   PEEK_TOGGLE: 'sct-journal-peek-toggle',
   STATUS_BADGE: 'sct-journal-status',
-  FRESH_BADGE: 'sct-journal-fresh'
+  FRESH_BADGE: 'sct-journal-fresh',
+  STRIP_COPY: 'sct-journal-strip-copy',
+  STRIP_DEADLINE: 'sct-journal-strip-deadline',
+  STRIP_SUBMITTED_AT: 'sct-journal-strip-submitted-at',
+  PEEK_COPY: 'sct-journal-peek-copy'
 });

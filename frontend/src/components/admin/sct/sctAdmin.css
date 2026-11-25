@@ -436,6 +436,34 @@
   cursor: pointer;
 }
 
+/*
+ * clinic-os modal 의 generic textarea body-md 보다 특이도를 높여
+ * pointer:fine 에서도 SCT 메모가 16px 유지 (ConsultationLogModal.css 미수정)
+ */
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-sct-memo-ta,
+.mg-v2-clinic-os .mg-v2-consultation-log-modal textarea.mg-v2-sct-memo-ta {
+  font-size: 16px;
+  /* keep usable min-height; do not shrink writing area to 44 if already taller */
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-sct-memo-add {
+  font-size: 16px;
+  min-height: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+}
+
+/* 포탈 sheet 는 modal/clinic-os 밖일 수 있음 */
+.mg-v2-sct-sheet .mg-v2-sct-memo-ta,
+.mg-v2-sct-sheet textarea.mg-v2-sct-memo-ta {
+  font-size: 16px;
+}
+
+.mg-v2-sct-sheet .mg-v2-sct-memo-add {
+  font-size: 16px;
+  min-height: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+}
+
 .mg-v2-sct-foot {
   padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
   border-top: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
@@ -696,10 +724,10 @@
   justify-content: flex-end;
 }
 
-/* 좁은 폰(~375): 스크림이 스트립을 가리지 않도록 상단 여백 (820 미적용) */
+/* 좁은 폰(~375): 시트 시작을 스트립 하단(~354px) 아래로 (820 미적용) */
 @media (max-width: 26.25rem) {
   .mg-v2-sct-sheet-root {
-    top: calc(var(--mg-v2-touch-target-min) + var(--mg-v2-space-10));
+    top: max(22.125rem, 45dvh);
   }
 }
 

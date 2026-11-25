@@ -483,3 +483,4 @@ export const SCT_TEST_ID = Object.freeze({
   STRIP_SUBMITTED_AT: 'sct-journal-strip-submitted-at',
   PEEK_COPY: 'sct-journal-peek-copy'
 });
+

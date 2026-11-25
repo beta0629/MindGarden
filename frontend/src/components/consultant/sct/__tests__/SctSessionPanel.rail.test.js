@@ -453,13 +453,31 @@ describe('SctSessionPanel rail states', () => {
     expect(css).not.toMatch(
       /@media\s*\(\s*pointer:\s*coarse\s*\)\s*\{[^}]*\.mg-v2-sct-memo-(?:ta|add)/
     );
+    // clinic-os modal generic textarea body-md 를 이기도록 특이도 상향
+    expect(css).toMatch(
+      /\.mg-v2-clinic-os\s+\.mg-v2-consultation-log-modal\s+\.mg-v2-sct-memo-ta[\s\S]*?font-size:\s*16px/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-clinic-os\s+\.mg-v2-consultation-log-modal\s+textarea\.mg-v2-sct-memo-ta[\s\S]*?font-size:\s*16px/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-clinic-os\s+\.mg-v2-consultation-log-modal\s+\.mg-v2-sct-memo-add[\s\S]*?font-size:\s*16px/
+    );
+    expect(css).toMatch(
+      /\.mg-v2-sct-sheet\s+\.mg-v2-sct-memo-ta[\s\S]*?font-size:\s*16px/
+    );
+    const modalCssPath = path.join(__dirname, '../../ConsultationLogModal.css');
+    const modalCss = fs.readFileSync(modalCssPath, 'utf8');
+    expect(modalCss).toMatch(
+      /\.mg-v2-clinic-os\s+\.mg-v2-consultation-log-modal\s+textarea\s*\{[\s\S]*?font-size:\s*var\(--mg-v2-font-size-body-md\)/
+    );
   });
 
   it('narrow phone sheet root leaves top gap for strip; 820 media not used', () => {
     const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
     const css = fs.readFileSync(cssPath, 'utf8');
     expect(css).toMatch(
-      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?top:\s*calc\(\s*var\(--mg-v2-touch-target-min\)\s*\+\s*var\(--mg-v2-space-10\)\s*\)/
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?top:\s*max\(\s*22\.125rem\s*,\s*45dvh\s*\)/
     );
     expect(css).not.toMatch(
       /@media\s*\(\s*max-width:\s*51\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root/

@@ -8,9 +8,11 @@ import java.util.Set;
 import com.coresolution.core.constants.SecurityRoleConstants;
 import com.coresolution.core.filter.TenantContextFilter;
 import com.coresolution.core.util.TenantHostSubdomainUtil;
+import com.coresolution.consultation.config.filter.ClientEventBackfillTokenAuthenticationFilter;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
 import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
+import com.coresolution.consultation.constant.ClientEventBackfillConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.SystemTimeConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,10 @@ public class SecurityConfig {
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /** .dev 전용 — 공유 시크릿 헤더로 ROLE_OPS 부여(ops 우회). 비-dev 프로필에서는 빈 없음. */
+    @Autowired(required = false)
+    private ClientEventBackfillTokenAuthenticationFilter clientEventBackfillTokenAuthenticationFilter;
+
     @Autowired(required = false)
     private HomepagePublicApiProperties homepagePublicApiProperties;
     
@@ -87,14 +93,20 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // UsernamePasswordAuthenticationFilter 앞 커스텀 필터 — 동일 앵커에 등록 시 마지막 등록이 요청 최초 실행.
-            // 요청 순서: Jwt → TenantContext → SessionBased → UsernamePassword
+            // 요청 순서: (BackfillToken?) → Jwt → TenantContext → SessionBased → UsernamePassword
             .addFilterBefore(sessionBasedAuthenticationFilter,
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(tenantContextFilter,
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter,
-                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
-            
+                org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+        if (clientEventBackfillTokenAuthenticationFilter != null) {
+            // 유효 시크릿이면 ROLE_OPS 설정(세션/JWT 보다 앞, ops 우회). 미설정·불일치면 no-op.
+            http.addFilterBefore(
+                    clientEventBackfillTokenAuthenticationFilter,
+                    org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+        }
+        http
             // SessionCookieRenewalFilter: 인증 완료 후 JSESSIONID 쿠키 Max-Age 슬라이딩 갱신
             .addFilterAfter(sessionCookieRenewalFilter, SessionBasedAuthenticationFilter.class);
         
@@ -339,6 +351,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 조회(GET)만 공개 — 로그인 전 화면 테마 로딩. 저장·삭제는 anyRequest 인증 + 컨트롤러 본사 Ops 가드
                     .requestMatchers(HttpMethod.GET, "/api/v1/admin/css-themes/**").permitAll()
+                    // client_event 백필(.dev @Profile("dev") + ROLE_OPS만). 시크릿 필터가 ROLE_OPS 부여.
+                    // 센터 ROLE_ADMIN 교차/전체 테넌트 백필 차단. 운영 매트릭스에는 경로 추가 금지.
+                    .requestMatchers(HttpMethod.POST, ClientEventBackfillConstants.API_PATH)
+                        .hasAuthority(SecurityRoleConstants.ROLE_OPS)
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
                     .requestMatchers("/services", "/services/**").permitAll()

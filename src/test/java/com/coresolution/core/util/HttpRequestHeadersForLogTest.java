@@ -2,6 +2,7 @@ package com.coresolution.core.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.coresolution.consultation.constant.ClientEventBackfillConstants;
 import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 class HttpRequestHeadersForLogTest {
 
     private static final String SECRET_VERIFY_SESSION = "sct-verify-session-capability-secret-uuid";
+    private static final String SECRET_BACKFILL_TOKEN = "client-event-backfill-shared-secret-token";
     private static final String BEARER_TOKEN = "Bearer eyJhbGciOiJIUzI1NiJ9.secret.payload";
     private static final String COOKIE_VALUE = "JSESSIONID=abc123def456; Path=/";
 
@@ -32,6 +34,21 @@ class HttpRequestHeadersForLogTest {
 
         assertThat(formatted).contains(SctConsentKeys.VERIFY_SESSION_HEADER + "=[REDACTED]");
         assertThat(formatted).doesNotContain(SECRET_VERIFY_SESSION);
+        assertThat(formatted).contains("X-Tenant-Id=tenant-demo-001");
+    }
+
+    @Test
+    @DisplayName("formatAllHeaders: X-Client-Event-Backfill-Token 원문 미포함·[REDACTED]")
+    void formatAllHeaders_redactsClientEventBackfillTokenHeader() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(ClientEventBackfillConstants.BACKFILL_TOKEN_HEADER, SECRET_BACKFILL_TOKEN);
+        request.addHeader("X-Tenant-Id", "tenant-demo-001");
+
+        String formatted = HttpRequestHeadersForLog.formatAllHeaders(request);
+
+        assertThat(formatted)
+                .contains(ClientEventBackfillConstants.BACKFILL_TOKEN_HEADER + "=[REDACTED]");
+        assertThat(formatted).doesNotContain(SECRET_BACKFILL_TOKEN);
         assertThat(formatted).contains("X-Tenant-Id=tenant-demo-001");
     }
 

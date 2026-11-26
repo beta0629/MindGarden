@@ -1,0 +1,155 @@
+# client_event 백필 — 개발(.dev) 전용 · workflow_dispatch only
+#
+# 목적: 남은 소스 데이터로 내담자 관리용 타임라인을 처음부터 재구성(멱등).
+# 안전 장치:
+#   - workflow_dispatch 전용. push/pull_request 트리거 없음.
+#   - github.ref 가 refs/heads/release/dev 일 때만 진행. release/prod·main 거부(exit 1).
+#   - DEV_* secret 만 사용. 운영 호스트·운영 DB·prod workflow 복제 없음.
+#   - 앱은 @Profile("dev") 백필 엔드포인트 + ROLE_OPS (세션 또는 X-Client-Event-Backfill-Token ops 우회).
+#   - 시크릿은 서버 /etc/mindgarden/dev.env 의 CLIENT_EVENT_BACKFILL_TOKEN (평문 Actions 로그 금지).
+#   - 기본 mode=dry-run. 본 워크플로는 코어개발이 수동 dispatch. 에이전트 자동 실행 금지.
+name: client_event 백필 (개발 전용)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run (기본, insert 0) | apply'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - apply
+      tenant_id:
+        description: '선택 테넌트 ID (비우면 활성 테넌트 전체, 각 조회는 tenant 스코프)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backfill-client-event-dev
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    name: .dev client_event backfill
+    # check-dev-pwreset-redis / mindgarden-deploy 와 동일 runner
+    runs-on: [self-hosted, linux, deploy]
+    # DEV_* 가 environment-scoped 일 때 repository secret 만으로는 빈 값 → environment: dev 필수
+    environment: dev
+    timeout-minutes: 30
+    steps:
+      - name: release/dev 가드
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          echo "github.ref=$REF"
+          if [ "$REF" != "refs/heads/release/dev" ]; then
+            echo "::error title=ref 거부::client_event 백필은 refs/heads/release/dev 에서만 실행할 수 있습니다. (got: $REF)"
+            exit 1
+          fi
+          case "$REF" in
+            refs/heads/release/prod|refs/heads/main|refs/heads/master)
+              echo "::error title=운영/main 거부::운영·main ref 에서는 백필을 실행하지 않습니다."
+              exit 1
+              ;;
+          esac
+
+      - name: 입력 검증
+        env:
+          IN_MODE: ${{ inputs.mode }}
+          IN_TENANT: ${{ inputs.tenant_id }}
+        run: |
+          set -euo pipefail
+          case "$IN_MODE" in
+            dry-run|apply) ;;
+            *)
+              echo "::error title=mode 오류::mode 는 dry-run 또는 apply 여야 합니다."
+              exit 1
+              ;;
+          esac
+          if [ -n "$IN_TENANT" ]; then
+            if ! [[ "$IN_TENANT" =~ ^[A-Za-z0-9._-]{1,80}$ ]]; then
+              echo "::error title=tenant_id 형식 오류::허용: 영숫자·._- (최대 80)"
+              exit 1
+            fi
+          fi
+
+      - name: .dev 백필 호출 (SSH localhost curl)
+        env:
+          SERVER_HOST: ${{ secrets.DEV_SERVER_HOST }}
+          SERVER_USER: ${{ secrets.DEV_SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          IN_MODE: ${{ inputs.mode }}
+          IN_TENANT: ${{ inputs.tenant_id }}
+        run: |
+          set -euo pipefail
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error title=접속 정보 누락::DEV_${name#SERVER_} secret 을 확인하세요."
+              exit 1
+            fi
+          done
+
+          KEY_FILE=$(mktemp)
+          REMOTE_FILE=$(mktemp)
+          trap 'rm -f "$KEY_FILE" "$REMOTE_FILE"' EXIT
+          printf '%s\n' "$SERVER_SSH_KEY" > "$KEY_FILE"
+          chmod 600 "$KEY_FILE"
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          {
+            printf 'set -euo pipefail\n'
+            printf 'MODE=%q\n' "$IN_MODE"
+            printf 'TENANT=%q\n' "$IN_TENANT"
+            cat <<'REMOTE'
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::error title=dev.env 누락::$DEV_ENV_FILE 가 없습니다. CLIENT_EVENT_BACKFILL_TOKEN 을 설정할 수 없습니다."
+            exit 1
+          fi
+          # 평문 토큰을 로그에 출력하지 않음. set -a/source 대신 grep 으로 키만 추출.
+          BACKFILL_TOKEN=$(grep -E '^[[:space:]]*CLIENT_EVENT_BACKFILL_TOKEN=' "$DEV_ENV_FILE" \
+            | tail -n 1 \
+            | sed -E 's/^[[:space:]]*CLIENT_EVENT_BACKFILL_TOKEN=//' \
+            | sed -E 's/^["'\'']//; s/["'\'']$//' \
+            | tr -d '\r')
+          if [ -z "${BACKFILL_TOKEN:-}" ]; then
+            echo "::error title=백필 토큰 미설정::CLIENT_EVENT_BACKFILL_TOKEN 이 $DEV_ENV_FILE 에 없거나 비어 있습니다. 시크릿 경로 인증 불가."
+            exit 1
+          fi
+          echo "=== mindgarden-dev health ==="
+          curl -sf -m 10 http://127.0.0.1:8080/actuator/health
+          echo ""
+          echo "=== client_event backfill mode=$MODE tenant=${TENANT:-ALL} ==="
+          URL="http://127.0.0.1:8080/api/v1/admin/client-events/backfill?mode=${MODE}"
+          if [ -n "${TENANT:-}" ]; then
+            URL="${URL}&tenant_id=${TENANT}"
+          fi
+          BODY_FILE=$(mktemp)
+          HTTP_CODE=$(curl -sS -m 600 -o "$BODY_FILE" -w "%{http_code}" -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -H "X-Client-Event-Backfill-Token: ${BACKFILL_TOKEN}")
+          unset BACKFILL_TOKEN
+          echo "http_code=$HTTP_CODE"
+          echo "--- response ---"
+          cat "$BODY_FILE"
+          echo ""
+          # scanned/inserted/skipped 요약 (응답 JSON 또는 로그 패턴)
+          grep -E '"scanned"|"inserted"|"skipped"|"errors"|scanned=|inserted=|skipped=' "$BODY_FILE" || true
+          rm -f "$BODY_FILE"
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "backfill HTTP 실패: $HTTP_CODE"
+            exit 1
+          fi
+          echo "=== 끝 ==="
+          REMOTE
+          } > "$REMOTE_FILE"
+
+          ssh -i "$KEY_FILE" -o BatchMode=yes "${SERVER_USER}@${SERVER_HOST}" 'bash -s' < "$REMOTE_FILE"

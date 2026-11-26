@@ -1,5 +1,6 @@
 package com.coresolution.core.util;
 
+import com.coresolution.consultation.constant.ClientEventBackfillConstants;
 import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.Enumeration;
@@ -22,7 +23,8 @@ public final class HttpRequestHeadersForLog {
             HttpHeaders.AUTHORIZATION.toLowerCase(Locale.ROOT),
             HttpHeaders.COOKIE.toLowerCase(Locale.ROOT),
             HttpHeaders.SET_COOKIE.toLowerCase(Locale.ROOT),
-            SctConsentKeys.VERIFY_SESSION_HEADER.toLowerCase(Locale.ROOT));
+            SctConsentKeys.VERIFY_SESSION_HEADER.toLowerCase(Locale.ROOT),
+            ClientEventBackfillConstants.BACKFILL_TOKEN_HEADER.toLowerCase(Locale.ROOT));
 
     private HttpRequestHeadersForLog() {
     }

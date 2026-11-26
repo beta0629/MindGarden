@@ -81,6 +81,26 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_NO_TENTATIVE_MAPPING =
             "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.";
 
+    /** 배정 변경(회기 정정) 사유가 비어 있을 때. */
+    public static final String MSG_REASSIGN_MAPPING_REASON_REQUIRED =
+            "배정 변경 사유를 입력해 주세요.";
+
+    /** 배정 변경 대상 매핑이 없거나 테넌트 범위 밖일 때. */
+    public static final String MSG_REASSIGN_MAPPING_TARGET_NOT_FOUND =
+            "대상 매칭을 찾을 수 없습니다.";
+
+    /** 대상 매핑이 ACTIVE·잔여 1 이상·동일 상담사·내담자가 아닐 때. */
+    public static final String MSG_REASSIGN_MAPPING_TARGET_INVALID =
+            "대상 매칭은 동일 상담사·내담자의 활성 매칭이며 잔여 회기가 1 이상이어야 합니다.";
+
+    /** 이미 같은 매핑에 배정된 일정을 다시 같은 매핑으로 옮길 때. */
+    public static final String MSG_REASSIGN_MAPPING_SAME_TARGET =
+            "이미 해당 매칭에 배정된 일정입니다.";
+
+    /** 취소된 일정은 배정 변경 불가. */
+    public static final String MSG_REASSIGN_MAPPING_CANCELLED_DENIED =
+            "취소된 일정은 배정 변경할 수 없습니다.";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

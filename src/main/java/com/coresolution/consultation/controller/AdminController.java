@@ -37,6 +37,10 @@ import com.coresolution.consultation.dto.NewClientsStatisticsResponse;
 import com.coresolution.consultation.dto.MappingStatusCloseRequest;
 import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
+import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingRequest;
+import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
 import com.coresolution.consultation.dto.WeeklyReservationsResponse;
 import com.coresolution.consultation.dto.StaffRegistrationRequest;
 import com.coresolution.consultation.constant.AuditAction;
@@ -3462,6 +3466,95 @@ public class AdminController extends BaseApiController {
         data.put("startDate", startDate);
         data.put("endDate", endDate);
         return success(data);
+    }
+
+    /**
+     * 일정 배정 변경(회기 정정) — ADMIN only.
+     *
+     * <p>원 매핑 차감분 복원 → 대상 매핑 라벨·차감 → 양쪽 회차 재번호. 금액·결제·알림 없음.
+     * STAFF·CONSULTANT 는 403.</p>
+     *
+     * @param id 일정 ID
+     * @param request targetMappingId·reason
+     * @param session HTTP 세션
+     * @return 실행 결과
+     */
+    @PostMapping("/schedules/{id}/reassign-mapping")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ScheduleReassignMappingResponse>> reassignScheduleMapping(
+            @PathVariable("id") Long id,
+            @Valid @RequestBody ScheduleReassignMappingRequest request,
+            HttpSession session) {
+        User actor = resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        Long actorUserId = actor != null ? actor.getId() : null;
+        log.info("🔧 일정 배정 변경(회기 정정): scheduleId={}, targetMappingId={}, actorUserId={}",
+                id, request != null ? request.getTargetMappingId() : null, actorUserId);
+        ScheduleReassignMappingResponse result = scheduleService.reassignScheduleMapping(
+                id,
+                request.getTargetMappingId(),
+                request.getReason(),
+                actorUserId);
+        return success("일정 배정이 변경되었습니다.", result);
+    }
+
+    /**
+     * 일정 배정 변경 후보 매핑 목록 — ADMIN only.
+     *
+     * @param id 일정 ID
+     * @param session HTTP 세션
+     * @return 후보 목록
+     */
+    @GetMapping("/schedules/{id}/reassign-mapping/candidates")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ScheduleReassignMappingCandidateResponse>>>
+            getReassignMappingCandidates(@PathVariable("id") Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        List<ScheduleReassignMappingCandidateResponse> candidates =
+                scheduleService.findReassignMappingCandidates(id);
+        return success(candidates);
+    }
+
+    /**
+     * 일정 배정 변경 미리보기 — ADMIN only. DB 변경 없음.
+     *
+     * @param id 일정 ID
+     * @param request targetMappingId (reason 미사용)
+     * @param session HTTP 세션
+     * @return 미리보기
+     */
+    @PostMapping("/schedules/{id}/reassign-mapping/preview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ScheduleReassignMappingPreviewResponse>> previewReassignMapping(
+            @PathVariable("id") Long id,
+            @RequestBody ScheduleReassignMappingRequest request,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        if (request == null || request.getTargetMappingId() == null) {
+            throw new IllegalArgumentException("대상 매칭 ID는 필수입니다.");
+        }
+        ScheduleReassignMappingPreviewResponse preview =
+                scheduleService.previewReassignMapping(id, request.getTargetMappingId());
+        return success(preview);
+    }
+
+    /**
+     * 일정 배정 변경 미리보기(GET) — ADMIN only.
+     *
+     * @param id 일정 ID
+     * @param targetMappingId 대상 매핑 ID
+     * @param session HTTP 세션
+     * @return 미리보기
+     */
+    @GetMapping("/schedules/{id}/reassign-mapping/preview")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ScheduleReassignMappingPreviewResponse>> previewReassignMappingGet(
+            @PathVariable("id") Long id,
+            @RequestParam("targetMappingId") Long targetMappingId,
+            HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        ScheduleReassignMappingPreviewResponse preview =
+                scheduleService.previewReassignMapping(id, targetMappingId);
+        return success(preview);
     }
 
     /**

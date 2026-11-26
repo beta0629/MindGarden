@@ -89,6 +89,7 @@ CRON_TZ=Asia/Seoul
      (운영 WRITE·DROP은 사용자 명시 없이는 하지 않음.)
 
 - 스키마 버전이 어긋나면 **Flyway** `repair` / 마이그레이션 재실행 필요 여부를 배포 런북과 맞출 것.
+- **D-1 동기화 전체 성공 후** `prod-to-dev-daily.sh` 가 `.dev` BE(`mindgarden-dev.service`)를 **1회** 재기동해 Flyway pending 을 적용한다 (`POST_SYNC_RESTART_DEV_BE=0` 으로 skip 가능).
 - 동일 `POST_SYNC_SQL_FILE` 훅으로 개발 전용 플래그·외부 발송 차단 SQL을 이어 붙일 수 있다 (경로를 합본 SQL 또는 별도 오케스트레이션으로).
 
 ### D-1 후 SCT feature 플래그 복원 (.dev only)

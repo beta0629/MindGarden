@@ -411,8 +411,6 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                 }
                 clients.add(clientId);
                 Long scheduleId = resolveHistoryScheduleId(history);
-                String key = resolveHistoryIdempotencyKey(
-                        tenantId, eventType, scheduleId, history.getId());
                 Integer usedBefore = readInt(history.getBeforeStateJson(),
                         ClientEventBackfillConstants.JSON_KEY_USED_SESSIONS);
                 Integer remBefore = readInt(history.getBeforeStateJson(),
@@ -421,6 +419,16 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                         ClientEventBackfillConstants.JSON_KEY_USED_SESSIONS);
                 Integer remAfter = readInt(history.getAfterStateJson(),
                         ClientEventBackfillConstants.JSON_KEY_REMAINING_SESSIONS);
+                String key = resolveHistoryIdempotencyKey(
+                        tenantId,
+                        eventType,
+                        scheduleId,
+                        history.getId(),
+                        history.getMappingId(),
+                        remBefore,
+                        usedBefore,
+                        remAfter,
+                        usedAfter);
                 ClientEventRecordCommand command = ClientEventRecordCommand.builder()
                         .tenantId(tenantId)
                         .clientId(clientId)
@@ -476,12 +484,32 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     }
 
     private static String resolveHistoryIdempotencyKey(
-            String tenantId, ClientEventType eventType, Long scheduleId, Long historyId) {
+            String tenantId,
+            ClientEventType eventType,
+            Long scheduleId,
+            Long historyId,
+            Long mappingId,
+            Integer remBefore,
+            Integer usedBefore,
+            Integer remAfter,
+            Integer usedAfter) {
         if (eventType == ClientEventType.SESSION_DEDUCTED
                 || eventType == ClientEventType.SESSION_RESTORED
                 || eventType == ClientEventType.MAPPING_REASSIGNED) {
             return ClientEventIdempotencyKeys.forSession(
                     eventType, tenantId, scheduleId, historyId);
+        }
+        // live SESSION_ADJUSTED 와 동일 fingerprint (세션 before/after + mappingId 가능할 때)
+        if (eventType == ClientEventType.SESSION_ADJUSTED
+                && mappingId != null
+                && remBefore != null
+                && usedBefore != null
+                && remAfter != null
+                && usedAfter != null) {
+            String actionUnit = ClientEventIdempotencyKeys.sessionAdjustedActionUnit(
+                    remBefore, usedBefore, remAfter, usedAfter);
+            return ClientEventIdempotencyKeys.forMappingAction(
+                    eventType, tenantId, mappingId, actionUnit);
         }
         // 상태·조정 등 다회 가능 → ccmh 고유 키
         return ClientEventIdempotencyKeys.forCcmh(eventType, tenantId, historyId);

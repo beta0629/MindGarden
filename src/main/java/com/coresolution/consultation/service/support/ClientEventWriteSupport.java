@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 /**
  * {@code client_event} 실시간 기록 헬퍼.
@@ -285,8 +286,8 @@ public class ClientEventWriteSupport {
     /**
      * 회기 정정(총회기·잔여 조정). 동작당 정확히 1행(전→후).
      *
-     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
-     * ({@code SESSION_ADJUSTED}:{tenant}:mapping:{mappingId}) — 매핑당 실시간 1행.</p>
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMappingAction}
+     * — actionUnit = {@code rem{before}-u{before}_rem{after}-u{after}}.</p>
      *
      * @param mapping 저장 후 매핑
      * @param beforeJson 정정 전 스냅샷 JSON
@@ -302,9 +303,13 @@ public class ClientEventWriteSupport {
             return;
         }
         String tenantId = resolveTenantId(mapping.getTenantId());
+        Integer remAfter = mapping.getRemainingSessions();
+        Integer usedAfter = mapping.getUsedSessions();
+        String actionUnit = ClientEventIdempotencyKeys.sessionAdjustedActionUnit(
+                remBefore, usedBefore, remAfter, usedAfter);
         String idempotencyKey = mapping.getId() != null
-                ? ClientEventIdempotencyKeys.forMapping(
-                        ClientEventType.SESSION_ADJUSTED, tenantId, mapping.getId())
+                ? ClientEventIdempotencyKeys.forMappingAction(
+                        ClientEventType.SESSION_ADJUSTED, tenantId, mapping.getId(), actionUnit)
                 : null;
         record(ClientEventRecordCommand.builder()
                 .tenantId(tenantId)
@@ -318,9 +323,9 @@ public class ClientEventWriteSupport {
                 .afterJson(toMappingSessionJson(mapping))
                 .mappingId(mapping.getId())
                 .sessionsRemainingBefore(remBefore)
-                .sessionsRemainingAfter(mapping.getRemainingSessions())
+                .sessionsRemainingAfter(remAfter)
                 .sessionsUsedBefore(usedBefore)
-                .sessionsUsedAfter(mapping.getUsedSessions())
+                .sessionsUsedAfter(usedAfter)
                 .idempotencyKey(idempotencyKey)
                 .build());
     }
@@ -434,8 +439,8 @@ public class ClientEventWriteSupport {
     /**
      * 관리자 수동 결제 완료(매핑 기준, payments 행 없을 때).
      *
-     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
-     * ({@code PAYMENT_COMPLETED}:{tenant}:mapping:{mappingId}).</p>
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMappingAction}
+     * — actionUnit = {@code ref:{paymentReference|noref}:amt:{scaledAmount|n}}.</p>
      *
      * @param mapping 결제 확인된 매핑
      * @param amount 결제 금액(없으면 null)
@@ -443,17 +448,37 @@ public class ClientEventWriteSupport {
      */
     public void recordPaymentCompletedForMapping(
             ConsultantClientMapping mapping, BigDecimal amount, ClientEventSource source) {
+        recordPaymentCompletedForMapping(mapping, amount, null, source);
+    }
+
+    /**
+     * 관리자 수동 결제 완료(매핑 기준, payments 행 없을 때).
+     *
+     * @param mapping 결제 확인된 매핑
+     * @param amount 결제 금액(없으면 null)
+     * @param paymentReference 결제 참조(null 이면 mapping.paymentReference)
+     * @param source 출처(null 이면 기본 해석)
+     */
+    public void recordPaymentCompletedForMapping(
+            ConsultantClientMapping mapping,
+            BigDecimal amount,
+            String paymentReference,
+            ClientEventSource source) {
         if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
             return;
         }
         String tenantId = resolveTenantId(mapping.getTenantId());
+        String resolvedRef = StringUtils.hasText(paymentReference)
+                ? paymentReference
+                : mapping.getPaymentReference();
         Map<String, Object> after = new LinkedHashMap<>();
         after.put(ClientEventWriteConstants.JSON_KEY_PAYMENT_STATUS_CODE,
                 mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
         after.put(ClientEventWriteConstants.JSON_KEY_AMOUNT, amount);
+        String actionUnit = ClientEventIdempotencyKeys.paymentCompletedActionUnit(resolvedRef, amount);
         String idempotencyKey = mapping.getId() != null
-                ? ClientEventIdempotencyKeys.forMapping(
-                        ClientEventType.PAYMENT_COMPLETED, tenantId, mapping.getId())
+                ? ClientEventIdempotencyKeys.forMappingAction(
+                        ClientEventType.PAYMENT_COMPLETED, tenantId, mapping.getId(), actionUnit)
                 : null;
         record(ClientEventRecordCommand.builder()
                 .tenantId(tenantId)
@@ -474,8 +499,8 @@ public class ClientEventWriteSupport {
     /**
      * 관리자 매핑 환불(payments 행 없을 때).
      *
-     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
-     * ({@code PAYMENT_REFUNDED}:{tenant}:mapping:{mappingId}).</p>
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMappingAction}
+     * — actionUnit = {@code amt:{scaled}:r:{reasonHashOrEmpty}}.</p>
      *
      * @param mapping 환불·종료된 매핑
      * @param amount 환불 금액
@@ -495,9 +520,10 @@ public class ClientEventWriteSupport {
         after.put(ClientEventWriteConstants.JSON_KEY_PAYMENT_STATUS_CODE,
                 mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
         after.put(ClientEventWriteConstants.JSON_KEY_AMOUNT, amount);
+        String actionUnit = ClientEventIdempotencyKeys.paymentRefundedActionUnit(amount, reason);
         String idempotencyKey = mapping.getId() != null
-                ? ClientEventIdempotencyKeys.forMapping(
-                        ClientEventType.PAYMENT_REFUNDED, tenantId, mapping.getId())
+                ? ClientEventIdempotencyKeys.forMappingAction(
+                        ClientEventType.PAYMENT_REFUNDED, tenantId, mapping.getId(), actionUnit)
                 : null;
         record(ClientEventRecordCommand.builder()
                 .tenantId(tenantId)

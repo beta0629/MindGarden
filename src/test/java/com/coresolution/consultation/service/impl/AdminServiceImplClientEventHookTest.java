@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -7,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -159,6 +161,7 @@ class AdminServiceImplClientEventHookTest {
         verify(clientEventWriteSupport).recordPaymentCompletedForMapping(
                 any(ConsultantClientMapping.class),
                 eq(BigDecimal.valueOf(100_000L)),
+                eq("REF-1"),
                 isNull());
         verify(clientEventWriteSupport).recordMappingStatusChanged(
                 any(ConsultantClientMapping.class),
@@ -178,6 +181,7 @@ class AdminServiceImplClientEventHookTest {
         verify(clientEventWriteSupport).recordPaymentCompletedForMapping(
                 any(ConsultantClientMapping.class),
                 eq(BigDecimal.valueOf(100_000L)),
+                eq("REF-2"),
                 isNull());
         verify(clientEventWriteSupport).recordMappingStatusChanged(
                 any(ConsultantClientMapping.class),
@@ -238,6 +242,66 @@ class AdminServiceImplClientEventHookTest {
 
         verify(clientEventWriteSupport, never()).recordSessionAdjusted(
                 any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("updateMapping remainingSessions 단독 정정 → SESSION_ADJUSTED 1행")
+    void updateMapping_remainingSessionsOnly_recordsSessionAdjusted() {
+        ConsultantClientMapping mapping = activeMapping(10, 2, 8);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConsultantClientMappingCreateRequest dto = new ConsultantClientMappingCreateRequest();
+        dto.setRemainingSessions(5);
+
+        adminService.updateMapping(MAPPING_ID, dto, "admin");
+
+        verify(clientEventWriteSupport).recordSessionAdjusted(
+                any(ConsultantClientMapping.class),
+                anyString(),
+                eq(8),
+                eq(2));
+        assertThat(mapping.getRemainingSessions()).isEqualTo(5);
+    }
+
+    @Test
+    @DisplayName("updateMapping total+remaining 동시 변경도 SESSION_ADJUSTED 1회만")
+    void updateMapping_totalAndRemaining_recordsSessionAdjustedOnce() {
+        ConsultantClientMapping mapping = activeMapping(10, 2, 8);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConsultantClientMappingCreateRequest dto = new ConsultantClientMappingCreateRequest();
+        dto.setTotalSessions(12);
+        dto.setRemainingSessions(9);
+
+        adminService.updateMapping(MAPPING_ID, dto, "admin");
+
+        verify(clientEventWriteSupport, times(1)).recordSessionAdjusted(
+                any(ConsultantClientMapping.class),
+                anyString(),
+                eq(8),
+                eq(2));
+    }
+
+    @Test
+    @DisplayName("approveMapping ACTIVE 전이 → MAPPING_STATUS_CHANGED")
+    void approveMapping_recordsMappingStatusChanged() {
+        ConsultantClientMapping mapping = pendingMapping();
+        mapping.setStatus(MappingStatus.DEPOSIT_PENDING);
+        mapping.setPaymentStatus(PaymentStatus.APPROVED);
+        mapping.setRemainingSessions(3);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        adminService.approveMapping(MAPPING_ID, "admin");
+
+        verify(clientEventWriteSupport).recordMappingStatusChanged(
+                any(ConsultantClientMapping.class),
+                eq(MappingStatus.DEPOSIT_PENDING.name()));
     }
 
     private ConsultantClientMapping pendingMapping() {

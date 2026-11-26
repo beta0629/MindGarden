@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -182,7 +183,7 @@ class ClientEventWriteSupportTest {
     }
 
     @Test
-    @DisplayName("SESSION_ADJUSTED: forMapping 멱등 키 + before/after 세션 카운터")
+    @DisplayName("SESSION_ADJUSTED: forMappingAction 멱등 키 + before/after 세션 카운터")
     void recordSessionAdjusted_setsForMappingKeyAndBeforeAfter() {
         User client = new User();
         client.setId(42L);
@@ -209,11 +210,11 @@ class ClientEventWriteSupportTest {
         assertThat(cmd.getBeforeJson()).contains("totalSessions");
         assertThat(cmd.getAfterJson()).contains("15");
         assertThat(cmd.getIdempotencyKey())
-                .isEqualTo("SESSION_ADJUSTED:" + TENANT_ID + ":mapping:700");
+                .isEqualTo("SESSION_ADJUSTED:" + TENANT_ID + ":mapping:700:rem8-u2_rem13-u2");
     }
 
     @Test
-    @DisplayName("PAYMENT_COMPLETED(매핑): forMapping 멱등 키 + 금액")
+    @DisplayName("PAYMENT_COMPLETED(매핑): forMappingAction 멱등 키 + 금액")
     void recordPaymentCompletedForMapping_setsUnifiedMappingKey() {
         User client = new User();
         client.setId(42L);
@@ -222,6 +223,7 @@ class ClientEventWriteSupportTest {
         mapping.setTenantId(TENANT_ID);
         mapping.setClient(client);
         mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+        mapping.setPaymentReference("REF-PAY-701");
 
         support.recordPaymentCompletedForMapping(
                 mapping, new BigDecimal("90000"), ClientEventSource.API);
@@ -234,11 +236,11 @@ class ClientEventWriteSupportTest {
         assertThat(cmd.getAmount()).isEqualByComparingTo("90000");
         assertThat(cmd.getMappingId()).isEqualTo(701L);
         assertThat(cmd.getIdempotencyKey())
-                .isEqualTo("PAYMENT_COMPLETED:" + TENANT_ID + ":mapping:701");
+                .isEqualTo("PAYMENT_COMPLETED:" + TENANT_ID + ":mapping:701:ref:REF-PAY-701:amt:90000");
     }
 
     @Test
-    @DisplayName("PAYMENT_REFUNDED(매핑): forMapping 멱등 키")
+    @DisplayName("PAYMENT_REFUNDED(매핑): forMappingAction 멱등 키(부분환불 fingerprint)")
     void recordPaymentRefundedForMapping_setsUnifiedMappingKey() {
         User client = new User();
         client.setId(42L);
@@ -258,6 +260,44 @@ class ClientEventWriteSupportTest {
         assertThat(cmd.getEventType()).isEqualTo(ClientEventType.PAYMENT_REFUNDED);
         assertThat(cmd.getReason()).isEqualTo("관리자 종료 환불");
         assertThat(cmd.getIdempotencyKey())
-                .isEqualTo("PAYMENT_REFUNDED:" + TENANT_ID + ":mapping:702");
+                .startsWith("PAYMENT_REFUNDED:" + TENANT_ID + ":mapping:702:amt:50000:r:");
+        assertThat(cmd.getIdempotencyKey())
+                .isNotEqualTo("PAYMENT_REFUNDED:" + TENANT_ID + ":mapping:702");
+    }
+
+    @Test
+    @DisplayName("mapping-only 재결제·부분환불 fingerprint 가 서로 다르고 동일 요청은 동일 키")
+    void mappingOnlyPaymentKeys_distinctPerActionUnit() {
+        User client = new User();
+        client.setId(42L);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(703L);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setClient(client);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+
+        support.recordPaymentCompletedForMapping(
+                mapping, new BigDecimal("90000"), "REF-A", ClientEventSource.API);
+        support.recordPaymentCompletedForMapping(
+                mapping, new BigDecimal("90000"), "REF-B", ClientEventSource.API);
+        support.recordPaymentRefundedForMapping(
+                mapping, new BigDecimal("10000"), "부분1", null);
+        support.recordPaymentRefundedForMapping(
+                mapping, new BigDecimal("10000"), "부분1", null);
+        support.recordPaymentRefundedForMapping(
+                mapping, new BigDecimal("20000"), "부분2", null);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService, times(5)).record(captor.capture());
+        java.util.List<String> keys = new java.util.ArrayList<>();
+        for (ClientEventRecordCommand command : captor.getAllValues()) {
+            keys.add(command.getIdempotencyKey());
+        }
+        assertThat(keys.get(0)).contains("ref:REF-A:amt:90000");
+        assertThat(keys.get(1)).contains("ref:REF-B:amt:90000");
+        assertThat(keys.get(0)).isNotEqualTo(keys.get(1));
+        assertThat(keys.get(2)).isEqualTo(keys.get(3));
+        assertThat(keys.get(2)).isNotEqualTo(keys.get(4));
     }
 }

@@ -248,7 +248,23 @@
     "consultantVehiclePlateLabel": "상담사 차량번호",
     "vehiclePlateUnregistered": "미등록",
     "vehiclePlateRegisterCta": "차량 등록",
-    "packageLabel": "패키지"
+    "packageLabel": "패키지",
+    "reassignMappingCta": "배정 변경",
+    "reassignMappingTitle": "배정 변경",
+    "reassignMappingDisclaimer": "결제 금액과 장부는 바뀌지 않습니다.",
+    "reassignMappingSuccess": "배정을 바꿨습니다"
+  },
+  "ScheduleReassignMappingPanel": {
+    "title": "배정 변경",
+    "subtitle": "회기 정정",
+    "close": "닫기",
+    "confirm": "배정 변경",
+    "disclaimer": "결제 금액과 장부는 바뀌지 않습니다.",
+    "success": "배정을 바꿨습니다",
+    "stepSelect": "옮길 배정",
+    "stepPreview": "바뀌는 회기",
+    "stepReason": "사유",
+    "cancelRecommendedLink": "배정 관리로 이동"
   },
   "RescheduleScheduleModal": {
     "t_a1423935": "예약 변경에 실패했습니다."

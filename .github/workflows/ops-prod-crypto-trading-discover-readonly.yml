@@ -1,0 +1,79 @@
+# 운영 서버 crypto-trading.jar 실행 주체 확인 — 읽기 전용.
+# 변경 명령 없음. 인자 값(=뒤)은 마스킹해 시크릿 노출 방지.
+name: 🔎 운영 crypto-trading 실행 주체 확인 (읽기 전용)
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-prod-crypto-trading
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    name: 원격 읽기 전용 확인
+    runs-on: ubuntu-latest
+    steps:
+      - name: 원격 확인
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 5m
+          script: |
+            set -u
+            S() { sudo -n "$@" 2>/dev/null || "$@" 2>&1; }
+            m() { sed -E 's/(=)[^ ]+/\1<v>/g' | cut -c1-260; }
+            MYSESS=$(ps -o sess= -p $$ | tr -d ' ')
+            cpids() { for pid in $(pgrep -f 'crypto'); do [ "$(ps -o sess= -p $pid 2>/dev/null | tr -d ' ')" = "$MYSESS" ] && continue; echo $pid; done; }
+            echo "=== now $(date '+%F %T %Z') whoami=$(whoami) ==="
+            echo "--- memory ---"; free -m; swapon --show
+            echo "--- crypto-trading processes (3 samples, 3s apart) ---"
+            for k in 1 2 3; do for pid in $(cpids); do ps -o pid=,ppid=,user=,etimes=,rss=,args= -p $pid | m; done; echo "-- sample $k"; sleep 3; done
+            echo "--- parent chain + cgroup ---"
+            for pid in $(cpids); do
+              echo "## pid $pid cgroup: $(cat /proc/$pid/cgroup 2>/dev/null | tr '\n' ' ')"
+              p=$pid; for i in 1 2 3 4 5 6; do
+                pp=$(ps -o ppid= -p $p 2>/dev/null | tr -d ' '); [ -n "$pp" ] || break
+                echo "  parent $pp: $(ps -o user=,etimes=,args= -p $pp 2>/dev/null | m)"
+                [ "$pp" -le 1 ] && break; p=$pp
+              done
+              echo "  cwd=$(S readlink /proc/$pid/cwd) exe=$(S readlink /proc/$pid/exe)"
+            done
+            echo "--- systemd units ---"
+            S systemctl list-units --all --no-pager 2>/dev/null | grep -iE 'crypto|trad' 
+            S systemctl list-unit-files --no-pager 2>/dev/null | grep -iE 'crypto|trad'
+            S grep -rlis 'crypto-trading' /etc/systemd/system /lib/systemd/system /usr/lib/systemd/system 2>/dev/null
+            for u in $(S systemctl list-units --all --no-legend --plain 2>/dev/null | awk '{print $1}' | grep -iE 'crypto|trad'); do
+              echo "## $u"; S systemctl show "$u" -p FragmentPath,DropInPaths,Restart,RestartUSec,User,WorkingDirectory,ActiveState,SubState,UnitFileState,NRestarts,MainPID --no-pager
+              S systemctl show "$u" -p ExecStart --no-pager | m
+            done
+            echo "--- systemd --user (all users with lingering/runtime) ---"
+            for d in /run/user/*; do uid=$(basename $d); u=$(getent passwd $uid | cut -d: -f1); echo "uid=$uid user=$u: $(S sudo -n -u $u XDG_RUNTIME_DIR=$d systemctl --user list-units --all --no-legend 2>/dev/null | grep -iE 'crypto|trad' | tr '\n' ';')"; done
+            ls /var/lib/systemd/linger 2>/dev/null
+            echo "--- docker ---"; command -v docker >/dev/null && S docker ps -a --format '{{.ID}} {{.Names}} {{.Image}} {{.Status}}' 2>&1 | head -20 || echo "docker none"
+            echo "--- cron ---"
+            for u in $(cut -d: -f1 /etc/passwd); do l=$(S crontab -u $u -l 2>/dev/null | grep -v '^\s*#' | grep -iE 'crypto|trad'); [ -n "$l" ] && echo "user $u: $(echo "$l" | m)"; done
+            S grep -rnis 'crypto' /etc/crontab /etc/cron.d /etc/cron.hourly /etc/cron.daily /etc/rc.local /etc/supervisor 2>/dev/null | m
+            echo "--- pm2 ---"
+            for pid in $(ps -eo pid=,comm= | awk '$2 ~ /^PM2/{print $1}'); do echo "pm2 daemon pid=$pid user=$(ps -o user= -p $pid) home=$(S cat /proc/$pid/environ 2>/dev/null | tr '\0' '\n' | grep -E '^(PM2_HOME|HOME)=' | tr '\n' ' ')"; done
+            for u in $(ps -eo user=,comm= | awk '$2 ~ /^PM2/{print $1}' | sort -u); do
+              echo "## pm2 list as $u"; S sudo -n -u $u -i pm2 jlist 2>/dev/null | python3 -c 'import json,sys
+            try:
+              d=json.load(sys.stdin)
+            except Exception as e:
+              print("parse fail",e); sys.exit()
+            for p in d:
+              e=p.get("pm2_env",{}); print(p.get("name"),"pid",p.get("pid"),"status",e.get("status"),"restarts",e.get("restart_time"),"exec",e.get("pm_exec_path"),"interp",e.get("exec_interpreter"),"cwd",e.get("pm_cwd"),"autorestart",e.get("autorestart"))' 2>&1
+            done
+            echo "--- supervisor ---"; command -v supervisorctl >/dev/null && S supervisorctl status 2>&1 | head || echo "supervisor none"
+            echo "--- journal crypto (last 1h, counts) ---"
+            S journalctl --since "-1 hour" --no-pager -o short-iso 2>/dev/null | grep -iE 'crypto' | awk '{print $2,$3}' | sort | uniq -c | sort -rn | head -10
+            S journalctl --since "-1 hour" --no-pager -o short-iso 2>/dev/null | grep -iE 'crypto' | tail -6 | m
+            echo "=== end (read-only, no changes) ==="

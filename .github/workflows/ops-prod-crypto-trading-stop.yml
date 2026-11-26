@@ -1,0 +1,126 @@
+# 운영 서버 crypto-trading.jar 중지 + 자동 재시작 차단 (쓰기 1건).
+# 승인: 재학 2026-11-27 00:52 KST 「멈추고 자동 재시작도 막아」 「자동매매 현재 안써」.
+# 범위: crypto-trading 만. MindGarden(blue/green)·nginx·mysql·redis·docker 데몬·pm2 데몬은 거부.
+# 파일·jar·설정 삭제 없음. cron 은 해당 줄만 주석 + 백업 사본.
+name: 🛑 운영 crypto-trading 중지·자동재시작 차단
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: '확인 문구 STOP_CRYPTO_TRADING'
+        required: true
+        type: string
+      mechanism:
+        description: '실행 주체 (discover 워크플로 결과)'
+        required: true
+        type: choice
+        options: [systemd, docker, pm2, cron, process]
+      target:
+        description: 'systemd 유닛명 / 컨테이너명 / pm2 앱명 / cron 사용자 / process 는 crypto-trading'
+        required: true
+        type: string
+      pm2_user:
+        description: 'pm2 일 때 pm2 데몬 소유 사용자 (그 외 빈 값)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-prod-crypto-trading
+  cancel-in-progress: false
+
+jobs:
+  stop:
+    name: crypto-trading 중지
+    runs-on: ubuntu-latest
+    steps:
+      - name: 입력 하드가드
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          TARGET: ${{ inputs.target }}
+          PM2U: ${{ inputs.pm2_user }}
+        run: |
+          set -euo pipefail
+          [ "$CONFIRM" = "STOP_CRYPTO_TRADING" ] || { echo "::error::confirm mismatch"; exit 1; }
+          echo "$TARGET" | grep -Eq '^[A-Za-z0-9@._-]{1,80}$' || { echo "::error::bad target"; exit 1; }
+          [ -z "$PM2U" ] || echo "$PM2U" | grep -Eq '^[a-z_][a-z0-9_-]{0,31}$' || { echo "::error::bad pm2_user"; exit 1; }
+          if echo "$TARGET" | grep -Eiq 'mindgarden|nginx|mysql|maria|redis|^docker(\.service)?$|containerd|ssh|^pm2|cron(\.service)?$|systemd|next|core'; then
+            echo "::error::protected target name: $TARGET"; exit 1
+          fi
+
+      - name: 원격 중지
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 6m
+          script: |
+            set -u
+            MECH='${{ inputs.mechanism }}'; T='${{ inputs.target }}'; PU='${{ inputs.pm2_user }}'
+            S() { sudo -n "$@" 2>/dev/null || "$@"; }
+            m() { sed -E 's/(=)[^ ]+/\1<v>/g' | cut -c1-240; }
+            snap() { echo "--- $1 $(date '+%T %Z') ---"; free -m; swapon --show; ps -eo pid,rss,etimes,comm --sort=-rss | head -8 | awk 'NR==1{print;next}{printf "%s %dMB %ss %s\n",$1,$2/1024,$3,$4}'; echo "crypto pids: $(cpids | tr '\n' ' ')"; }
+            die() { echo "ABORT: $*"; exit 1; }
+            MYSESS=$(ps -o sess= -p $$ | tr -d ' ')
+            cpids() { for pid in $(pgrep -f 'crypto-trading'); do [ "$(ps -o sess= -p $pid 2>/dev/null | tr -d ' ')" = "$MYSESS" ] && continue; a=$(tr '\0' ' ' < /proc/$pid/cmdline 2>/dev/null); echo "$a" | grep -Eqi 'mindgarden|app\.jar' && continue; echo $pid; done; }
+            snap BEFORE
+            case "$MECH" in
+              systemd)
+                ES=$(S systemctl show "$T" -p ExecStart --value 2>/dev/null)
+                echo "$ES" | grep -q 'crypto-trading' || die "unit $T ExecStart has no crypto-trading"
+                echo "$ES" | grep -Eqi 'mindgarden|app\.jar|nginx|mysql' && die "unit $T ExecStart touches protected app"
+                echo "unit=$T restart=$(S systemctl show "$T" -p Restart --value) state=$(S systemctl is-enabled "$T" 2>&1)"
+                echo "+ systemctl stop $T"; S systemctl stop "$T" || die "stop failed"
+                echo "+ systemctl disable $T"; S systemctl disable "$T" 2>&1 | m
+                echo "after: active=$(S systemctl is-active "$T" 2>&1) enabled=$(S systemctl is-enabled "$T" 2>&1)" ;;
+              docker)
+                C=$(S docker inspect -f '{{.Config.Image}} {{join .Config.Cmd " "}} {{join .Config.Entrypoint " "}} {{.Name}}' "$T" 2>/dev/null) || die "no container $T"
+                echo "$C" | grep -qi 'crypto' || die "container $T is not crypto-trading"
+                echo "$C" | grep -Eqi 'mindgarden|nginx|mysql' && die "container touches protected app"
+                echo "+ docker update --restart=no $T"; S docker update --restart=no "$T"
+                echo "+ docker stop $T"; S docker stop "$T"
+                echo "after: $(S docker inspect -f '{{.State.Status}} restart={{.HostConfig.RestartPolicy.Name}}' "$T")" ;;
+              pm2)
+                [ -n "$PU" ] || die "pm2_user required"
+                ps -eo user=,comm= | awk -v u="$PU" '$1==u && $2 ~ /^PM2/' | grep -q . || die "no PM2 daemon owned by $PU"
+                P() { S sudo -n -u "$PU" -i pm2 "$@"; }
+                INFO=$(P jlist 2>/dev/null | python3 -c 'import json,sys
+            d=json.load(sys.stdin); t=sys.argv[1]
+            for p in d:
+              if p.get("name")==t:
+                e=p.get("pm2_env",{}); print(e.get("pm_exec_path",""), " ".join(map(str,e.get("args",[]) or [])), e.get("status"))' "$T")
+                echo "pm2 app $T: $(echo "$INFO" | m)"
+                echo "$INFO" | grep -q 'crypto-trading' || die "pm2 app $T has no crypto-trading"
+                echo "$INFO" | grep -Eqi 'mindgarden|app\.jar|next' && die "pm2 app touches protected app"
+                echo "+ pm2 stop $T"; P stop "$T" >/dev/null && echo ok
+                echo "+ pm2 save"; P save >/dev/null && echo ok
+                P jlist 2>/dev/null | python3 -c 'import json,sys
+            for p in json.load(sys.stdin): print(p.get("name"), p.get("pm2_env",{}).get("status"))' ;;
+              cron)
+                id "$T" >/dev/null 2>&1 || die "no user $T"
+                CUR=$(S crontab -u "$T" -l 2>/dev/null) || die "no crontab for $T"
+                echo "$CUR" | grep -v '^\s*#' | grep -q 'crypto-trading' || die "no crypto-trading line in $T crontab"
+                BK="/root/crontab-backup-$T-$(date +%Y%m%d%H%M%S).txt"; S sh -c "crontab -u '$T' -l > '$BK'" && echo "backup: $BK"
+                NEW=$(echo "$CUR" | sed -E '/^\s*#/!{/crypto-trading/s/^/# disabled 2026-11-27 (재학 승인) # /}')
+                echo "changed lines: $(diff <(echo "$CUR") <(echo "$NEW") | grep -c '^>')"
+                echo "$NEW" | S crontab -u "$T" - && echo "crontab updated"
+                for pid in $(cpids); do echo "+ kill -TERM $pid ($(ps -o comm= -p $pid))"; S kill -TERM "$pid"; done ;;
+              process)
+                [ "$T" = "crypto-trading" ] || die "process target must be crypto-trading"
+                for pid in $(cpids); do echo "+ kill -TERM $pid ($(ps -o comm= -p $pid))"; S kill -TERM "$pid"; done ;;
+              *) die "bad mechanism" ;;
+            esac
+            echo "--- wait 60s ---"; sleep 60
+            snap AFTER60
+            echo "--- MindGarden untouched check ---"
+            for u in mindgarden-core-blue mindgarden-core-green nginx; do echo "$u: $(systemctl is-active $u) since $(systemctl show -p ActiveEnterTimestamp --value $u)"; done
+            echo "local health 8080: $(curl -s -o /dev/null -m 5 -w '%{http_code}' http://127.0.0.1:8080/actuator/health)"
+            if [ -n "$(cpids)" ]; then echo "RESULT: crypto-trading STILL RUNNING"; for pid in $(cpids); do ps -o pid=,ppid=,etimes=,args= -p $pid | m; done; exit 2; fi
+            echo "RESULT: crypto-trading stopped"

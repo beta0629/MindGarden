@@ -361,6 +361,15 @@
   min-height: calc(var(--mg-v2-space-6) * 8);
 }
 
+/* 상담 요약·주요 내용·다음 계획: 말줄임으로 내용 숨기지 않음 */
+.mg-v2-clinic-os .mg-v2-consultation-log-modal__textarea,
+.mg-v2-clinic-os .mg-v2-consultation-log__textarea--primary {
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-overflow: unset;
+  white-space: pre-wrap;
+}
+
 .mg-v2-clinic-os .mg-v2-consultation-log-modal__input-readonly {
   background-color: var(--mg-v2-color-surface-stone);
   cursor: not-allowed;

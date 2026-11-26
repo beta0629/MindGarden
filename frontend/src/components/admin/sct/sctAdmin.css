@@ -419,7 +419,8 @@
   padding: var(--mg-v2-space-3);
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
-  font-size: var(--mg-v2-font-size-body-md);
+  /* iOS 줌 방지: html root rem 과 무관하게 항상 16px (body-md·--mg-font-size-base 금지) */
+  font-size: 16px;
   font-family: var(--mg-v2-font-family-base);
 }
 
@@ -430,9 +431,37 @@
   border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   background: var(--mg-v2-color-surface-main, #fff);
-  font-size: var(--mg-v2-font-size-body-md);
+  font-size: 16px;
   color: var(--mg-v2-color-text-primary);
   cursor: pointer;
+}
+
+/*
+ * clinic-os modal 의 generic textarea body-md 보다 특이도를 높여
+ * pointer:fine 에서도 SCT 메모가 16px 유지 (ConsultationLogModal.css 미수정)
+ */
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-sct-memo-ta,
+.mg-v2-clinic-os .mg-v2-consultation-log-modal textarea.mg-v2-sct-memo-ta {
+  font-size: 16px;
+  /* keep usable min-height; do not shrink writing area to 44 if already taller */
+}
+
+.mg-v2-clinic-os .mg-v2-consultation-log-modal .mg-v2-sct-memo-add {
+  font-size: 16px;
+  min-height: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
+}
+
+/* 포탈 sheet 는 modal/clinic-os 밖일 수 있음 */
+.mg-v2-sct-sheet .mg-v2-sct-memo-ta,
+.mg-v2-sct-sheet textarea.mg-v2-sct-memo-ta {
+  font-size: 16px;
+}
+
+.mg-v2-sct-sheet .mg-v2-sct-memo-add {
+  font-size: 16px;
+  min-height: var(--mg-v2-touch-target-min);
+  height: var(--mg-v2-touch-target-min);
 }
 
 .mg-v2-sct-foot {
@@ -467,25 +496,361 @@
   }
 }
 
+/*
+ * 상담일지 + SCT 레일
+ * - rail(스트립)은 항상 전체 폭 상단. journal 아래가 아님 · 오른쪽 열 전용이 아님.
+ * - 기본·미제출·접힘: rail + journal 1열. 빈 오른쪽 절반 금지.
+ * - 제출 + 펼침 + ≥1180: "rail rail" / "journal side"
+ */
 .mg-v2-consultation-log__layout--with-sct {
   display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'rail'
+    'journal';
   gap: var(--mg-v2-space-4);
   width: 100%;
   max-width: none;
 }
 
-@media (max-width: 900px) and (orientation: portrait) {
-  .mg-v2-consultation-log__layout--with-sct {
-    grid-template-columns: 1fr;
-  }
+.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-rail {
+  grid-area: rail;
+  min-width: 0;
 }
 
 .mg-v2-consultation-log__layout--with-sct .mg-v2-consultation-log__journal {
+  grid-area: journal;
   min-width: 0;
 }
 
-.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-session {
+@media (min-width: 73.75rem) {
+  .mg-v2-consultation-log__layout--with-sct.is-sct-side-open {
+    grid-template-columns: minmax(0, 1fr) clamp(25rem, 36vw, 40rem);
+    grid-template-areas:
+      'rail rail'
+      'journal side';
+  }
+
+  .mg-v2-consultation-log__layout--with-sct.is-sct-side-open .mg-v2-sct-side {
+    grid-area: side;
+    max-height: 70vh;
+  }
+}
+
+/* ——— SCT journal rail / strip / peek / sheet ——— */
+
+.mg-v2-sct-rail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
   min-width: 0;
-  max-height: 70vh;
+}
+
+.mg-v2-sct-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-3);
+  min-height: calc(var(--mg-v2-touch-target-min) + var(--mg-v2-space-2));
+  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  background: var(--mg-v2-color-surface-stone);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-md);
+  color: var(--mg-v2-color-text-primary);
+}
+
+.mg-v2-sct-strip__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mg-v2-sct-strip__title {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-strip__meta {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-strip__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--mg-v2-space-2);
+  align-items: center;
+}
+
+.mg-v2-sct-strip__actions .mg-v2-button,
+.mg-v2-sct-strip__actions button {
+  min-height: var(--mg-v2-touch-target-min);
+}
+
+.mg-v2-sct-spine {
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-1);
+  flex: 0 0 auto;
+  width: var(--mg-v2-space-8);
+  padding: var(--mg-v2-space-1) 0;
+}
+
+.mg-v2-sct-spine__line {
+  display: block;
+  height: var(--mg-v2-border-width-thick);
+  width: 100%;
+  border-radius: var(--mg-v2-radius-pill);
+  background: var(--mg-v2-color-neutral-300);
+  opacity: 0.55;
+}
+
+.mg-v2-sct-spine--prog .mg-v2-sct-spine__line:nth-child(1),
+.mg-v2-sct-spine--prog .mg-v2-sct-spine__line:nth-child(2) {
+  background: var(--mg-v2-color-neutral-500);
+  opacity: 1;
+}
+
+.mg-v2-sct-spine--done .mg-v2-sct-spine__line:nth-child(3) {
+  background: var(--mg-v2-color-neutral-900);
+  opacity: 1;
+}
+
+.mg-v2-sct-spine--exp .mg-v2-sct-spine__line {
+  background: var(--mg-v2-color-neutral-300);
+  opacity: 0.35;
+}
+
+.mg-v2-sct-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--mg-v2-space-6);
+  padding: 0 var(--mg-v2-space-2);
+  border-radius: var(--mg-v2-radius-sm);
+  font-size: var(--mg-v2-font-size-caption);
+  font-weight: var(--mg-v2-font-weight-semibold);
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-neutral-100);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-status--pending {
+  background: var(--mg-v2-color-semantic-warning-light);
+  border-color: var(--mg-v2-color-semantic-warning);
+  color: var(--mg-v2-color-semantic-warning-dark);
+}
+
+.mg-v2-sct-status--expired {
+  background: var(--mg-v2-color-neutral-100);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-secondary);
+}
+
+.mg-v2-sct-status--fresh {
+  background: var(--mg-v2-color-neutral-900);
+  border-color: var(--mg-v2-color-neutral-900);
+  color: var(--mg-v2-color-neutral-50);
+}
+
+.mg-v2-sct-status--submitted {
+  background: var(--mg-v2-color-primary-subtle);
+  border-color: var(--mg-v2-color-neutral-900);
+  color: var(--mg-v2-color-neutral-900);
+}
+
+.mg-v2-sct-peek-card {
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  background: var(--mg-v2-color-surface-bg);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-md);
+}
+
+.mg-v2-sct-peek-card__body {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-body-md);
+  color: var(--mg-v2-color-text-secondary);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-radius: var(--mg-v2-radius-md);
+  background: var(--mg-v2-color-surface-card);
+  container-type: inline-size;
+  container-name: sct-side;
+  transition:
+    opacity var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default),
+    transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-sct-side.mg-v2-sct-session--font-sm .mg-v2-sct-sent,
+.mg-v2-sct-sheet.mg-v2-sct-session--font-sm .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-caption);
+}
+
+.mg-v2-sct-side.mg-v2-sct-session--font-md .mg-v2-sct-sent,
+.mg-v2-sct-sheet.mg-v2-sct-session--font-md .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-body-md);
+}
+
+.mg-v2-sct-side.mg-v2-sct-session--font-lg .mg-v2-sct-sent,
+.mg-v2-sct-sheet.mg-v2-sct-session--font-lg .mg-v2-sct-sent {
+  font-size: var(--mg-v2-font-size-body-lg, var(--mg-v2-font-size-h2));
+}
+
+.mg-v2-sct-sheet-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--mg-v2-z-modal);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+/*
+ * 좁은 폰(~375): 시트 top = 스트립 하단(+갭) 측정값(--mg-v2-sct-sheet-inset-top).
+ * JS(SctSessionPanel)가 sheetOpen 시 setProperty. 폴백은 strip~426px 클리어.
+ * 820(51.25rem) 미디어에는 sheet-root 넣지 않음. ≥1180 사이드 패널 무변경.
+ */
+@media (max-width: 26.25rem) {
+  .mg-v2-sct-sheet-root {
+    top: var(--mg-v2-sct-sheet-inset-top, max(26.75rem, 53dvh));
+    overflow: hidden;
+  }
+
+  /* flex min-height:auto 가 콘텐츠만큼 위로 커지는 것 방지 → body 내부 스크롤 */
+  .mg-v2-sct-sheet-root .mg-v2-sct-sheet {
+    min-height: 0;
+    max-height: calc(
+      100dvh
+      - var(--mg-v2-sct-sheet-inset-top, max(26.75rem, 53dvh))
+      - env(safe-area-inset-bottom, 0px)
+    );
+  }
+}
+
+.mg-v2-sct-sheet__scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(
+    in srgb,
+    var(--mg-v2-color-neutral-900) calc(var(--mg-v2-opacity-overlay) * 100%),
+    transparent
+  );
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.mg-v2-sct-sheet {
+  position: relative;
+  z-index: var(--mg-v2-z-content);
+  display: flex;
+  flex-direction: column;
+  max-height: min(78dvh, 51.25rem);
+  padding-bottom: calc(var(--mg-v2-space-6) + env(safe-area-inset-bottom, 0px));
+  background: var(--mg-v2-color-surface-card);
+  border-radius: var(--mg-v2-radius-xl) var(--mg-v2-radius-xl) 0 0;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  border-bottom: 0;
+  box-shadow: var(--mg-v2-shadow-lg, none);
+  transition: transform var(--mg-v2-transition-duration-fast) var(--mg-v2-transition-easing-default);
+}
+
+.mg-v2-sct-sheet__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+  border-bottom: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+}
+
+.mg-v2-sct-sheet__head h2 {
+  margin: 0;
+  font-size: var(--mg-v2-font-size-h2);
+  color: var(--mg-v2-color-text-primary);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-sheet__body {
+  flex: 1 1 auto;
+  overflow: auto;
+  min-height: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4);
+}
+
+.mg-v2-sct-sheet__notice {
+  flex-shrink: 0;
+  padding: var(--mg-v2-space-3) var(--mg-v2-space-4) var(--mg-v2-space-5);
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-secondary);
+  border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mg-v2-sct-side,
+  .mg-v2-sct-sheet,
+  .mg-v2-sct-sheet__scrim {
+    transition: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .mg-v2-sct-strip:hover {
+    border-color: var(--mg-v2-color-neutral-900);
+  }
+}
+
+.mg-v2-sct-side .mg-v2-sct-session__search-input:focus,
+.mg-v2-sct-side .mg-v2-sct-session__select:focus,
+.mg-v2-sct-side .mg-v2-sct-memo-ta:focus,
+.mg-v2-sct-sheet .mg-v2-sct-session__search-input:focus,
+.mg-v2-sct-sheet .mg-v2-sct-session__select:focus,
+.mg-v2-sct-sheet .mg-v2-sct-memo-ta:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
+}
+
+@container sct-side (max-width: 40rem) {
+  .mg-v2-sct-session__chips {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .mg-v2-sct-session__chips .mg-v2-button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 상담 요약·스트립 카피: 말줄임 금지 */
+.mg-v2-consultation-log__layout--with-sct .mg-v2-consultation-log__journal textarea,
+.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-strip__title,
+.mg-v2-consultation-log__layout--with-sct .mg-v2-sct-strip__meta {
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-overflow: unset;
 }

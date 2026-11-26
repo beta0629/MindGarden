@@ -52,6 +52,7 @@ import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctInvitationService;
 import com.coresolution.consultation.sct.service.SctSettingsService;
+import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PhoneHashUtils;
@@ -92,6 +93,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     private final SctConsentService sctConsentService;
     private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
+    private final SctTenantPublicUrlResolver tenantPublicUrlResolver;
 
     @Override
     @Transactional(readOnly = true)
@@ -209,7 +211,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setTenantId(tenantId);
         invitation = invitationRepository.save(invitation);
 
-        String smsResult = dispatchSms(phone, template.getTitle(), expiresAt, rawToken);
+        String smsResult = dispatchSms(tenantId, phone, template.getTitle(), expiresAt, rawToken);
         invitation.setSmsDispatchResult(smsResult);
         invitation = invitationRepository.save(invitation);
 
@@ -228,7 +230,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
         // STAFF는 SMS 발송용 초대 생성만 — publicUrl/평문 토큰 미노출(임상 본문 403 정합)
         if (canReceiveOneShotPublicLink(actor)) {
-            attachOneShotPublicLink(response, rawToken);
+            attachOneShotPublicLink(response, tenantId, rawToken);
         }
         return response;
     }
@@ -336,7 +338,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         SctFormTemplate template = formTemplateRepository.findByIdAndIsDeletedFalse(
                 invitation.getFormTemplateId()).orElseThrow();
         String smsResult = dispatchSms(
-                invitation.getTargetPhone(), template.getTitle(),
+                tenantId, invitation.getTargetPhone(), template.getTitle(),
                 invitation.getTokenExpiresAt(), rawToken);
         invitation.setSmsDispatchResult(smsResult);
         invitationRepository.save(invitation);
@@ -375,7 +377,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .build());
         SctInvitationResponse response = toMetaResponse(
                 invitation, resolveFormType(invitation.getFormTemplateId()));
-        attachOneShotPublicLink(response, rawToken);
+        attachOneShotPublicLink(response, tenantId, rawToken);
         return response;
     }
 
@@ -686,19 +688,30 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         return toMetaResponse(invitation, resolveFormType(invitation.getFormTemplateId()));
     }
 
-    private String dispatchSms(String phone, String formTitle, LocalDateTime expiresAt, String rawToken) {
+    /**
+     * SCT 초대 SMS 발송. 본문 링크는 테넌트 도메인 절대 URL(fail-closed).
+     *
+     * @param tenantId  테넌트 ID
+     * @param phone     수신 번호(없으면 NO_PHONE)
+     * @param formTitle 양식 제목
+     * @param expiresAt 만료 시각
+     * @param rawToken  평문 토큰
+     * @return SMS 발송 결과 코드
+     */
+    private String dispatchSms(
+            String tenantId, String phone, String formTitle, LocalDateTime expiresAt, String rawToken) {
         if (!StringUtils.hasText(phone)) {
             return SctConstants.SMS_RESULT_NO_PHONE;
         }
-        if (smsAuthService.isTestMode()) {
-            log.info("SCT SMS TEST_MODE_SKIP phone={} tokenPrefix={}",
-                    PhoneLogMasking.maskForLog(phone),
-                    rawToken.substring(0, Math.min(6, rawToken.length())));
-            return SctConstants.SMS_RESULT_TEST_MODE_SKIP;
-        }
-        String link = "/public/sct/" + rawToken;
+        String link = tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken);
         String message = "[마인드가든] " + formTitle + " 작성 요청입니다. 기한: "
                 + expiresAt + ". 링크: " + link;
+        if (smsAuthService.isTestMode()) {
+            log.info("SCT SMS TEST_MODE_SKIP phone={} message={}",
+                    PhoneLogMasking.maskForLog(phone),
+                    SctTenantPublicUrlResolver.maskSmsMessageForLog(message, rawToken));
+            return SctConstants.SMS_RESULT_TEST_MODE_SKIP;
+        }
         boolean ok = smsAuthService.sendNotificationMessage(phone, message);
         return ok ? SctConstants.SMS_RESULT_SENT : SctConstants.SMS_RESULT_FAILED;
     }
@@ -786,17 +799,20 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     /**
-     * one-shot publicUrl/평문 토큰 — ADMIN·CONSULTANT만 수신.
+     * one-shot publicUrl(상대)·absoluteUrl·평문 토큰 — ADMIN·CONSULTANT만 수신.
      *
      * @param response 응답
+     * @param tenantId 테넌트 ID
      * @param rawToken 평문 토큰
      */
-    private static void attachOneShotPublicLink(SctInvitationResponse response, String rawToken) {
+    private void attachOneShotPublicLink(
+            SctInvitationResponse response, String tenantId, String rawToken) {
         if (!StringUtils.hasText(rawToken) || response == null) {
             return;
         }
         response.setToken(rawToken);
         response.setPublicUrl(PUBLIC_SCT_WEB_PREFIX + rawToken);
+        response.setAbsoluteUrl(tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken));
     }
 
     /**

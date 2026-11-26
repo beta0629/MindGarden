@@ -41,10 +41,15 @@ public class SctInvitationResponse {
     /** 미연결 발송 시 관리 화면 표시명(PII 최소). */
     private String recipientName;
     /**
-     * 공개 응답 URL. 생성·링크 재발급 직후 응답에만 포함(일회성).
-     * ADMIN·CONSULTANT만 — STAFF 응답에는 null.
+     * 공개 응답 URL(상대경로). 생성·링크 재발급 직후 응답에만 포함(일회성).
+     * ADMIN·CONSULTANT만 — STAFF 응답에는 null. FE가 origin을 붙인다.
      */
     private String publicUrl;
+    /**
+     * 테넌트 도메인 기준 절대 공개 URL. 생성·링크 재발급 직후 응답에만 포함(일회성).
+     * ADMIN·CONSULTANT만 — STAFF 응답에는 null. {@code publicUrl} 상대경로 계약과 병행.
+     */
+    private String absoluteUrl;
     /**
      * 평문 초대 토큰. 생성·링크 재발급 직후에만 포함 — 이후 조회 API에는 없음.
      * ADMIN·CONSULTANT만 — STAFF 응답에는 null.

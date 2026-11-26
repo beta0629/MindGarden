@@ -38,8 +38,10 @@ import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse.Consult
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse.ConsultantMissingLogs;
 import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingHistoryResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
+import com.coresolution.consultation.entity.ConsultantClientMappingHistory;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
 import com.coresolution.consultation.entity.ClientScheduleNote;
@@ -99,6 +101,7 @@ import com.coresolution.consultation.service.StatisticsService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -3302,6 +3305,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .targetTotalSessions(target.getTotalSessions())
                 .targetUsedSessions(target.getUsedSessions())
                 .targetRemainingSessions(target.getRemainingSessions())
+                .targetPackageName(target.getPackageName())
                 .cancelRecommended(cancelRecommended)
                 .build();
     }
@@ -3339,6 +3343,59 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                     mapping, originMappingId, consultantId, clientId, scheduleSessionSequence));
         }
         return candidates;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<ScheduleReassignMappingHistoryResponse> findReassignMappingHistory(Long scheduleId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        Schedule schedule = requireScheduleForReassign(tenantId, scheduleId);
+        Long consultantId = schedule.getConsultantId();
+        Long clientId = schedule.getClientId();
+        if (consultantId == null || clientId == null) {
+            return List.of();
+        }
+        List<ConsultantClientMapping> pairMappings =
+                mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
+                        tenantId, consultantId, clientId);
+        ensureOriginMappingIncluded(tenantId, schedule.getMappingId(), pairMappings);
+        List<Long> mappingIds = pairMappings.stream()
+                .filter(Objects::nonNull)
+                .map(ConsultantClientMapping::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (mappingIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, String> packageNameByMappingId = pairMappings.stream()
+                .filter(m -> m != null && m.getId() != null)
+                .collect(Collectors.toMap(
+                        ConsultantClientMapping::getId,
+                        m -> m.getPackageName() != null ? m.getPackageName() : "",
+                        (a, b) -> a,
+                        LinkedHashMap::new));
+        List<ConsultantClientMappingHistory> rows =
+                consultantClientMappingHistoryService.findByTenantIdAndMappingIdsAndEventTypes(
+                        tenantId,
+                        mappingIds,
+                        EnumSet.of(
+                                MappingHistoryEventType.SESSION_REASSIGN_IN,
+                                MappingHistoryEventType.SESSION_REASSIGN_OUT));
+        Map<Long, String> actorNames = resolveActorNames(
+                tenantId,
+                rows.stream()
+                        .map(ConsultantClientMappingHistory::getTriggeredByUserId)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet()));
+        List<ScheduleReassignMappingHistoryResponse> result = new ArrayList<>();
+        for (ConsultantClientMappingHistory row : rows) {
+            result.add(toReassignHistoryResponse(row, packageNameByMappingId, actorNames));
+        }
+        return result;
     }
 
     /**
@@ -3613,7 +3670,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (status == MappingStatus.SUSPENDED) {
             return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_SUSPENDED;
         }
-        if (status == MappingStatus.PENDING_PAYMENT) {
+        // 결제 전·입금 대기(DEPOSIT_PENDING)는 잔여 회기보다 상태 분기를 우선한다.
+        if (status == MappingStatus.PENDING_PAYMENT
+                || status == MappingStatus.DEPOSIT_PENDING) {
             return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT;
         }
         if (status == MappingStatus.SESSIONS_EXHAUSTED
@@ -3674,7 +3733,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         originConsultantId,
                         MappingHistoryEventType.SESSION_REASSIGN_OUT,
                         originBeforeJson,
-                        serializeSessionSnapshot(origin),
+                        serializeReassignSnapshot(origin, target),
                         actorUserId,
                         reason);
             }
@@ -3690,13 +3749,151 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         targetConsultantId,
                         MappingHistoryEventType.SESSION_REASSIGN_IN,
                         targetBeforeJson,
-                        serializeSessionSnapshot(target),
+                        serializeReassignSnapshot(target, origin),
                         actorUserId,
                         reason);
             }
         } catch (Exception historyError) {
             log.warn("배정 변경 이력 기록 실패(무시): scheduleId={}, error={}",
                     schedule != null ? schedule.getId() : null, historyError.getMessage());
+        }
+    }
+
+    /**
+     * 배정 변경 이력 after JSON — 회기 스냅샷 + 상대 배정 ID/패키지명.
+     *
+     * @param subject 이력 주체 배정
+     * @param counterpart 상대 배정(nullable)
+     * @return JSON 문자열
+     */
+    private String serializeReassignSnapshot(
+            ConsultantClientMapping subject, ConsultantClientMapping counterpart) {
+        if (subject == null) {
+            return null;
+        }
+        try {
+            Map<String, Object> snapshot = new HashMap<>();
+            snapshot.put("totalSessions", subject.getTotalSessions());
+            snapshot.put("usedSessions", subject.getUsedSessions());
+            snapshot.put("remainingSessions", subject.getRemainingSessions());
+            snapshot.put("status", subject.getStatus() != null ? subject.getStatus().name() : null);
+            snapshot.put("paymentStatus",
+                    subject.getPaymentStatus() != null ? subject.getPaymentStatus().name() : null);
+            snapshot.put("packageName", subject.getPackageName());
+            if (counterpart != null) {
+                snapshot.put("counterpartMappingId", counterpart.getId());
+                snapshot.put("counterpartPackageName", counterpart.getPackageName());
+            }
+            return sessionHistoryObjectMapper.writeValueAsString(snapshot);
+        } catch (Exception e) {
+            log.warn("배정 변경 스냅샷 직렬화 실패: mappingId={}, error={}",
+                    subject.getId(), e.getMessage());
+            return serializeSessionSnapshot(subject);
+        }
+    }
+
+    /**
+     * 이력 actor 표시명 일괄 조회.
+     *
+     * @param tenantId 테넌트 ID
+     * @param actorIds actor ID 집합
+     * @return actorId → 이름
+     */
+    private Map<Long, String> resolveActorNames(String tenantId, Set<Long> actorIds) {
+        if (tenantId == null || actorIds == null || actorIds.isEmpty()) {
+            return Map.of();
+        }
+        Map<Long, String> names = new HashMap<>();
+        for (User user : userRepository.findByTenantIdAndIdInAndIsDeletedFalse(tenantId, actorIds)) {
+            if (user != null && user.getId() != null) {
+                names.put(user.getId(), user.getName());
+            }
+        }
+        return names;
+    }
+
+    /**
+     * 이력 엔티티 → 응답 DTO.
+     *
+     * @param row 이력
+     * @param packageNameByMappingId 배정 ID → 패키지명
+     * @param actorNames actor ID → 이름
+     * @return 응답
+     */
+    private ScheduleReassignMappingHistoryResponse toReassignHistoryResponse(
+            ConsultantClientMappingHistory row,
+            Map<Long, String> packageNameByMappingId,
+            Map<Long, String> actorNames) {
+        String eventType = row.getEventType() != null ? row.getEventType().name() : null;
+        Long subjectId = row.getMappingId();
+        String subjectName = packageNameByMappingId.getOrDefault(subjectId, null);
+        Long counterpartId = readJsonLong(row.getAfterStateJson(), "counterpartMappingId");
+        String counterpartName = readJsonText(row.getAfterStateJson(), "counterpartPackageName");
+        if (counterpartName == null && counterpartId != null) {
+            counterpartName = packageNameByMappingId.get(counterpartId);
+        }
+        if (subjectName == null || subjectName.isBlank()) {
+            subjectName = readJsonText(row.getAfterStateJson(), "packageName");
+        }
+        Long fromMappingId = null;
+        String fromMappingName = null;
+        Long toMappingId = null;
+        String toMappingName = null;
+        if (row.getEventType() == MappingHistoryEventType.SESSION_REASSIGN_OUT) {
+            fromMappingId = subjectId;
+            fromMappingName = subjectName;
+            toMappingId = counterpartId;
+            toMappingName = counterpartName;
+        } else if (row.getEventType() == MappingHistoryEventType.SESSION_REASSIGN_IN) {
+            toMappingId = subjectId;
+            toMappingName = subjectName;
+            fromMappingId = counterpartId;
+            fromMappingName = counterpartName;
+        }
+        Long actorId = row.getTriggeredByUserId();
+        return ScheduleReassignMappingHistoryResponse.builder()
+                .when(row.getCreatedAt())
+                .actorUserId(actorId)
+                .actorUserName(actorId != null ? actorNames.get(actorId) : null)
+                .reason(row.getReason())
+                .eventType(eventType)
+                .fromMappingId(fromMappingId)
+                .fromMappingName(fromMappingName)
+                .toMappingId(toMappingId)
+                .toMappingName(toMappingName)
+                .build();
+    }
+
+    private Long readJsonLong(String json, String field) {
+        if (json == null || json.isBlank() || field == null) {
+            return null;
+        }
+        try {
+            JsonNode node = sessionHistoryObjectMapper.readTree(json);
+            JsonNode value = node != null ? node.get(field) : null;
+            if (value == null || value.isNull() || !value.isNumber()) {
+                return null;
+            }
+            return value.asLong();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private String readJsonText(String json, String field) {
+        if (json == null || json.isBlank() || field == null) {
+            return null;
+        }
+        try {
+            JsonNode node = sessionHistoryObjectMapper.readTree(json);
+            JsonNode value = node != null ? node.get(field) : null;
+            if (value == null || value.isNull() || !value.isTextual()) {
+                return null;
+            }
+            String text = value.asText();
+            return text != null && !text.isBlank() ? text : null;
+        } catch (Exception ignored) {
+            return null;
         }
     }
 

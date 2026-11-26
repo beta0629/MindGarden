@@ -2,6 +2,8 @@ package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.entity.ConsultantClientMappingHistory;
+import java.util.Collection;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -31,4 +33,17 @@ public interface ConsultantClientMappingHistoryService {
 
     Page<ConsultantClientMappingHistory> findByTenantIdAndMappingId(
             String tenantId, Long mappingId, Pageable pageable);
+
+    /**
+     * 배정 변경(IN/OUT) 이력을 매핑 ID 목록 기준으로 최신순 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingIds 매핑 ID 목록(비면 빈 목록)
+     * @param eventTypes 이벤트 타입
+     * @return 이력 목록
+     */
+    List<ConsultantClientMappingHistory> findByTenantIdAndMappingIdsAndEventTypes(
+            String tenantId,
+            Collection<Long> mappingIds,
+            Collection<MappingHistoryEventType> eventTypes);
 }

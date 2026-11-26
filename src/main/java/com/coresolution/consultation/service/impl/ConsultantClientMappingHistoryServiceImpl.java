@@ -4,6 +4,9 @@ import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.entity.ConsultantClientMappingHistory;
 import com.coresolution.consultation.repository.ConsultantClientMappingHistoryRepository;
 import com.coresolution.consultation.service.ConsultantClientMappingHistoryService;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -63,5 +66,20 @@ public class ConsultantClientMappingHistoryServiceImpl implements ConsultantClie
             String tenantId, Long mappingId, Pageable pageable) {
         return consultantClientMappingHistoryRepository
                 .findByTenantIdAndMappingIdOrderByCreatedAtDesc(tenantId, mappingId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ConsultantClientMappingHistory> findByTenantIdAndMappingIdsAndEventTypes(
+            String tenantId,
+            Collection<Long> mappingIds,
+            Collection<MappingHistoryEventType> eventTypes) {
+        if (tenantId == null || mappingIds == null || mappingIds.isEmpty()
+                || eventTypes == null || eventTypes.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return consultantClientMappingHistoryRepository
+                .findByTenantIdAndMappingIdInAndEventTypeInOrderByCreatedAtDesc(
+                        tenantId, mappingIds, eventTypes);
     }
 }

@@ -14,11 +14,13 @@ import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.ScheduleServiceUserFacingMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingHistoryResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
 import com.coresolution.consultation.entity.ClientScheduleNote;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
+import com.coresolution.consultation.entity.ConsultantClientMappingHistory;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientScheduleNoteRepository;
@@ -390,6 +392,16 @@ class ScheduleServiceImplReassignMappingTest {
                 .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT);
         assertThat(byMappingId(candidates, 400L).isSelectable()).isFalse();
 
+        assertThat(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_TARGET_NOT_FOUND)
+                .contains("배정")
+                .doesNotContain("매칭");
+        assertThat(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_TARGET_INVALID)
+                .contains("배정")
+                .doesNotContain("매칭");
+        assertThat(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_SAME_TARGET)
+                .contains("배정")
+                .doesNotContain("매칭");
+
         assertThat(byMappingId(candidates, 500L).getBlockReason())
                 .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_SUSPENDED);
         assertThat(byMappingId(candidates, 500L).isSelectable()).isFalse();
@@ -405,6 +417,117 @@ class ScheduleServiceImplReassignMappingTest {
         assertThat(byMappingId(candidates, 800L).getBlockReason())
                 .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_REFUNDED);
         assertThat(byMappingId(candidates, 800L).isSelectable()).isFalse();
+    }
+
+    @Test
+    @DisplayName("후보 — DEPOSIT_PENDING rem>0 이어도 결제 전 배정 사유")
+    void candidates_depositPending_usesPendingPaymentReasonEvenWithRemaining() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        ConsultantClientMapping depositPending = activeMapping(410L, 10, 0, 2);
+        depositPending.setStatus(MappingStatus.DEPOSIT_PENDING);
+
+        stubScheduleLoad(schedule);
+        when(mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
+                .thenReturn(List.of(origin, depositPending));
+
+        List<ScheduleReassignMappingCandidateResponse> candidates =
+                scheduleService.findReassignMappingCandidates(SCHEDULE_ID);
+
+        ScheduleReassignMappingCandidateResponse blocked = byMappingId(candidates, 410L);
+        assertThat(blocked.isSelectable()).isFalse();
+        assertThat(blocked.getRemainingSessions()).isEqualTo(2);
+        assertThat(blocked.getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT);
+    }
+
+    @Test
+    @DisplayName("이력 — SESSION_REASSIGN_IN/OUT 최신순·from/to·actor")
+    void history_returnsReassignEventsNewestFirst() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+        origin.setPackageName("원 패키지");
+        target.setPackageName("대상 패키지");
+
+        ConsultantClientMappingHistory out = ConsultantClientMappingHistory.builder()
+                .id(1L)
+                .tenantId(TENANT_ID)
+                .mappingId(ORIGIN_MAPPING_ID)
+                .clientId(CLIENT_ID)
+                .consultantId(CONSULTANT_ID)
+                .eventType(MappingHistoryEventType.SESSION_REASSIGN_OUT)
+                .afterStateJson("{\"packageName\":\"원 패키지\",\"counterpartMappingId\":200,\"counterpartPackageName\":\"대상 패키지\"}")
+                .triggeredByUserId(ACTOR_ID)
+                .reason("패키지 정정")
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 26, 10, 0))
+                .build();
+        ConsultantClientMappingHistory in = ConsultantClientMappingHistory.builder()
+                .id(2L)
+                .tenantId(TENANT_ID)
+                .mappingId(TARGET_MAPPING_ID)
+                .clientId(CLIENT_ID)
+                .consultantId(CONSULTANT_ID)
+                .eventType(MappingHistoryEventType.SESSION_REASSIGN_IN)
+                .afterStateJson("{\"packageName\":\"대상 패키지\",\"counterpartMappingId\":100,\"counterpartPackageName\":\"원 패키지\"}")
+                .triggeredByUserId(ACTOR_ID)
+                .reason("패키지 정정")
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 26, 10, 1))
+                .build();
+
+        stubScheduleLoad(schedule);
+        when(mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
+                .thenReturn(List.of(origin, target));
+        when(consultantClientMappingHistoryService.findByTenantIdAndMappingIdsAndEventTypes(
+                eq(TENANT_ID), any(), any()))
+                .thenReturn(List.of(in, out));
+        User actor = user(ACTOR_ID);
+        actor.setName("관리자");
+        when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), any()))
+                .thenReturn(List.of(actor));
+
+        List<ScheduleReassignMappingHistoryResponse> history =
+                scheduleService.findReassignMappingHistory(SCHEDULE_ID);
+
+        assertThat(history).hasSize(2);
+        assertThat(history.get(0).getEventType()).isEqualTo("SESSION_REASSIGN_IN");
+        assertThat(history.get(0).getToMappingId()).isEqualTo(TARGET_MAPPING_ID);
+        assertThat(history.get(0).getFromMappingId()).isEqualTo(ORIGIN_MAPPING_ID);
+        assertThat(history.get(0).getToMappingName()).isEqualTo("대상 패키지");
+        assertThat(history.get(0).getActorUserName()).isEqualTo("관리자");
+        assertThat(history.get(0).getReason()).isEqualTo("패키지 정정");
+        assertThat(history.get(1).getEventType()).isEqualTo("SESSION_REASSIGN_OUT");
+    }
+
+    @Test
+    @DisplayName("happy path 응답에 targetPackageName 포함")
+    void reassign_responseIncludesTargetPackageName() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+        target.setPackageName("옮긴 패키지");
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(ORIGIN_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        ScheduleReassignMappingResponse response = scheduleService.reassignScheduleMapping(
+                SCHEDULE_ID, TARGET_MAPPING_ID, "패키지명 확인", ACTOR_ID);
+
+        assertThat(response.getTargetPackageName()).isEqualTo("옮긴 패키지");
     }
 
     @Test

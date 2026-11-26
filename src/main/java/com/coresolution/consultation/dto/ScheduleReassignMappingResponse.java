@@ -31,6 +31,8 @@ public class ScheduleReassignMappingResponse {
     private Integer targetTotalSessions;
     private Integer targetUsedSessions;
     private Integer targetRemainingSessions;
+    /** 대상 배정 패키지명(상세 모달 표시 갱신용). */
+    private String targetPackageName;
     /** 원 배정이 결제대기로 비면(PENDING_PAYMENT + used=0) 취소 권장 UI 힌트. */
     private boolean cancelRecommended;
 }

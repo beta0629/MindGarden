@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ScheduleReassignMappingRequest {
 
-    @NotNull(message = "대상 매칭 ID는 필수입니다.")
+    @NotNull(message = "대상 배정 ID는 필수입니다.")
     private Long targetMappingId;
 
     @NotBlank(message = "배정 변경 사유를 입력해 주세요.")

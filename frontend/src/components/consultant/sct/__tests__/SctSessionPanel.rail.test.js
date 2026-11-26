@@ -496,6 +496,17 @@ describe('SctSessionPanel rail states', () => {
     );
   });
 
+  it('expired status uses slate/neutral tokens, not semantic-error', () => {
+    const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
+    const css = fs.readFileSync(cssPath, 'utf8');
+    const expiredBlock = css.match(/\.mg-v2-sct-status--expired\s*\{[^}]+\}/);
+    expect(expiredBlock).not.toBeNull();
+    expect(expiredBlock[0]).not.toMatch(/semantic-error/);
+    expect(expiredBlock[0]).toMatch(/--mg-v2-color-neutral-100/);
+    expect(expiredBlock[0]).toMatch(/--mg-v2-color-neutral-300/);
+    expect(expiredBlock[0]).toMatch(/--mg-v2-color-text-secondary/);
+  });
+
   it('sheetOpen sets --mg-v2-sct-sheet-inset-top from strip bottom (+ gap)', async() => {
     mockUseMediaQuery.mockReturnValue(false);
     mockFetchSctSessionView.mockResolvedValue({

@@ -653,9 +653,9 @@
 }
 
 .mg-v2-sct-status--expired {
-  background: var(--mg-v2-color-semantic-error-light);
-  border-color: var(--mg-v2-color-semantic-error);
-  color: var(--mg-v2-color-semantic-error-dark);
+  background: var(--mg-v2-color-neutral-100);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-sct-status--fresh {

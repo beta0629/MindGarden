@@ -62,7 +62,7 @@ public class SecurityConfig {
     private final TenantContextFilter tenantContextFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    /** .dev 전용 — 공유 시크릿 헤더로 ROLE_ADMIN 부여. 비-dev 프로필에서는 빈 없음. */
+    /** .dev 전용 — 공유 시크릿 헤더로 ROLE_OPS 부여(ops 우회). 비-dev 프로필에서는 빈 없음. */
     @Autowired(required = false)
     private ClientEventBackfillTokenAuthenticationFilter clientEventBackfillTokenAuthenticationFilter;
 
@@ -101,7 +101,7 @@ public class SecurityConfig {
             .addFilterBefore(jwtAuthenticationFilter,
                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
         if (clientEventBackfillTokenAuthenticationFilter != null) {
-            // 유효 시크릿이면 ROLE_ADMIN 설정(세션/JWT 보다 앞). 미설정·불일치면 no-op.
+            // 유효 시크릿이면 ROLE_OPS 설정(세션/JWT 보다 앞, ops 우회). 미설정·불일치면 no-op.
             http.addFilterBefore(
                     clientEventBackfillTokenAuthenticationFilter,
                     org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
@@ -351,10 +351,10 @@ public class SecurityConfig {
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 조회(GET)만 공개 — 로그인 전 화면 테마 로딩. 저장·삭제는 anyRequest 인증 + 컨트롤러 본사 Ops 가드
                     .requestMatchers(HttpMethod.GET, "/api/v1/admin/css-themes/**").permitAll()
-                    // client_event 백필(.dev @Profile("dev") + ADMIN). 시크릿 필터가 ROLE_ADMIN 부여.
-                    // 운영 매트릭스에는 경로 추가 금지.
+                    // client_event 백필(.dev @Profile("dev") + ROLE_OPS만). 시크릿 필터가 ROLE_OPS 부여.
+                    // 센터 ROLE_ADMIN 교차/전체 테넌트 백필 차단. 운영 매트릭스에는 경로 추가 금지.
                     .requestMatchers(HttpMethod.POST, ClientEventBackfillConstants.API_PATH)
-                        .hasAuthority(SecurityRoleConstants.ROLE_ADMIN)
+                        .hasAuthority(SecurityRoleConstants.ROLE_OPS)
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
                     .requestMatchers("/services", "/services/**").permitAll()

@@ -5,7 +5,7 @@
 #   - workflow_dispatch 전용. push/pull_request 트리거 없음.
 #   - github.ref 가 refs/heads/release/dev 일 때만 진행. release/prod·main 거부(exit 1).
 #   - DEV_* secret 만 사용. 운영 호스트·운영 DB·prod workflow 복제 없음.
-#   - 앱은 @Profile("dev") 백필 엔드포인트 + ROLE_ADMIN (세션 또는 X-Client-Event-Backfill-Token).
+#   - 앱은 @Profile("dev") 백필 엔드포인트 + ROLE_OPS (세션 또는 X-Client-Event-Backfill-Token ops 우회).
 #   - 시크릿은 서버 /etc/mindgarden/dev.env 의 CLIENT_EVENT_BACKFILL_TOKEN (평문 Actions 로그 금지).
 #   - 기본 mode=dry-run. 본 워크플로는 코어개발이 수동 dispatch. 에이전트 자동 실행 금지.
 name: client_event 백필 (개발 전용)

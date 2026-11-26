@@ -25,7 +25,7 @@ public final class ClientEventBackfillConstants {
 
     /**
      * 공유 시크릿 env 키 ({@code /etc/mindgarden/dev.env}).
-     * 비어 있으면 시크릿 경로 인증 불가 — ADMIN 세션만 허용.
+     * 비어 있으면 시크릿 경로 인증 불가 — OPS 세션/JWT 만 허용.
      */
     public static final String BACKFILL_TOKEN_ENV = "CLIENT_EVENT_BACKFILL_TOKEN";
 

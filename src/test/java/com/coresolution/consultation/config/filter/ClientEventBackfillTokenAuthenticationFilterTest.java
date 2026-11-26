@@ -22,7 +22,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
- * 백필 공유 시크릿 필터 — 유효 토큰만 ROLE_ADMIN, 그 외 no-op.
+ * 백필 공유 시크릿 필터 — 유효 토큰만 ROLE_OPS(ops 우회), 그 외 no-op.
  *
  * @author MindGarden
  * @since 2026-11-26
@@ -76,8 +76,8 @@ class ClientEventBackfillTokenAuthenticationFilterTest {
     }
 
     @Test
-    @DisplayName("유효 토큰 → ROLE_ADMIN 부여")
-    void validToken_setsAdmin() throws Exception {
+    @DisplayName("유효 토큰 → ROLE_OPS 부여(ops 우회), details=backfill-token")
+    void validToken_setsOps() throws Exception {
         when(environment.getProperty(ClientEventBackfillConstants.BACKFILL_TOKEN_ENV)).thenReturn(TOKEN);
 
         MockHttpServletRequest request = postBackfill();
@@ -88,10 +88,12 @@ class ClientEventBackfillTokenAuthenticationFilterTest {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertThat(auth).isNotNull();
         assertThat(auth.isAuthenticated()).isTrue();
+        assertThat(auth.getPrincipal()).isEqualTo("client-event-backfill-token");
+        assertThat(auth.getDetails()).isEqualTo("backfill-token");
         assertThat(auth.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .collect(Collectors.toSet()))
-                .containsExactly(SecurityRoleConstants.ROLE_ADMIN);
+                .containsExactly(SecurityRoleConstants.ROLE_OPS);
     }
 
     @Test

@@ -25,11 +25,11 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * {@code client_event} 백필 공유 시크릿 헤더 → {@code ROLE_ADMIN} 부여 필터 (.dev 전용).
+ * {@code client_event} 백필 공유 시크릿 헤더 → {@code ROLE_OPS} 부여 필터 (.dev 전용, ops 우회).
  *
  * <p>env {@link ClientEventBackfillConstants#BACKFILL_TOKEN_ENV} 가 비어 있으면 no-op
- * (시크릿 경로 불가 — ADMIN 세션/JWT 만). 헤더 불일치·누락도 no-op → Security 가 401/403.
- * 토큰 값은 로그에 남기지 않는다.</p>
+ * (시크릿 경로 불가 — OPS 세션/JWT 만). 헤더 불일치·누락도 no-op → Security 가 401/403.
+ * 토큰 값은 로그에 남기지 않는다. principal/details({@code backfill-token})는 유지한다.</p>
  *
  * @author MindGarden
  * @since 2026-11-26
@@ -76,11 +76,12 @@ public class ClientEventBackfillTokenAuthenticationFilter extends OncePerRequest
         }
 
         if (constantTimeEquals(expected.trim(), provided.trim())) {
+            // ops 우회: 공유 시크릿 → ROLE_OPS (센터 ROLE_ADMIN 과 분리)
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             PRINCIPAL,
                             null,
-                            List.of(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_ADMIN)));
+                            List.of(new SimpleGrantedAuthority(SecurityRoleConstants.ROLE_OPS)));
             authentication.setDetails("backfill-token");
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.info("client_event backfill authenticated via shared secret header");

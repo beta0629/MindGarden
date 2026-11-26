@@ -11,6 +11,7 @@ import com.coresolution.core.util.TenantHostSubdomainUtil;
 import com.coresolution.consultation.config.filter.JwtAuthenticationFilter;
 import com.coresolution.consultation.config.security.BearerTokenAuthCsrfMatcher;
 import com.coresolution.consultation.constant.AccountIntegrationApiPaths;
+import com.coresolution.consultation.constant.ClientEventBackfillConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
 import com.coresolution.consultation.constant.SystemTimeConstants;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -339,6 +340,8 @@ public class SecurityConfig {
                     .requestMatchers("/api/business-categories/**").permitAll() // 레거시 경로 지원 (하위 호환성)
                     // CSS 테마 조회(GET)만 공개 — 로그인 전 화면 테마 로딩. 저장·삭제는 anyRequest 인증 + 컨트롤러 본사 Ops 가드
                     .requestMatchers(HttpMethod.GET, "/api/v1/admin/css-themes/**").permitAll()
+                    // client_event 백필(.dev 컨트롤러 @Profile("dev") + loopback/ADMIN 가드). 운영 매트릭스에는 없음.
+                    .requestMatchers(HttpMethod.POST, ClientEventBackfillConstants.API_PATH).permitAll()
                     // 크롤러용 공개 법적 HTML (terms/privacy/products)
                     .requestMatchers("/legal/**").permitAll()
                     .requestMatchers("/services", "/services/**").permitAll()

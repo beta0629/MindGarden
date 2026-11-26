@@ -1,5 +1,9 @@
 package com.coresolution.consultation.constant;
 
+import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
@@ -9,6 +13,7 @@ import org.springframework.util.StringUtils;
  * {@code client_event} 멱등 키 공통 팩토리 (실시간 훅 ↔ 백필 동일 형식).
  *
  * <p>형식: {@code {eventType}:{tenantId}:{entityKind}:{entityId}}
+ * 동작 단위가 있으면 {@code :{actionUnit}} 을 덧붙인다.
  * entityKind = {@code mapping} | {@code schedule} | {@code payment} | {@code ccmh}.</p>
  *
  * @author MindGarden
@@ -23,6 +28,9 @@ public final class ClientEventIdempotencyKeys {
 
     /** 레거시 백필 접두 (롤백 시 과거 행 정리용). */
     public static final String LEGACY_BACKFILL_PREFIX = "BACKFILL:";
+
+    private static final String NULL_TOKEN = "n";
+    private static final String NOREF_TOKEN = "noref";
 
     private ClientEventIdempotencyKeys() {
     }
@@ -52,6 +60,30 @@ public final class ClientEventIdempotencyKeys {
     }
 
     /**
+     * 통일 멱등 키 + 동작 단위(actionUnit).
+     *
+     * <p>형식: {@code {TYPE}:{tenant}:{kind}:{id}:{actionUnit}}</p>
+     *
+     * @param eventType 이벤트 타입
+     * @param tenantId 테넌트
+     * @param entityKind entityKind
+     * @param entityId 엔티티 ID
+     * @param actionUnit 동작 지문(필수)
+     * @return 멱등 키
+     */
+    public static String ofAction(
+            ClientEventType eventType,
+            String tenantId,
+            String entityKind,
+            Long entityId,
+            String actionUnit) {
+        if (!StringUtils.hasText(actionUnit)) {
+            throw new IllegalArgumentException("actionUnit은 필수입니다.");
+        }
+        return of(eventType, tenantId, entityKind, entityId) + ":" + actionUnit.trim();
+    }
+
+    /**
      * 배정(mapping) 기준 키.
      *
      * @param eventType 이벤트 타입
@@ -61,6 +93,20 @@ public final class ClientEventIdempotencyKeys {
      */
     public static String forMapping(ClientEventType eventType, String tenantId, Long mappingId) {
         return of(eventType, tenantId, ENTITY_MAPPING, mappingId);
+    }
+
+    /**
+     * 배정(mapping) + 동작 단위 키.
+     *
+     * @param eventType 이벤트 타입
+     * @param tenantId 테넌트
+     * @param mappingId 배정 ID
+     * @param actionUnit 동작 지문
+     * @return 멱등 키
+     */
+    public static String forMappingAction(
+            ClientEventType eventType, String tenantId, Long mappingId, String actionUnit) {
+        return ofAction(eventType, tenantId, ENTITY_MAPPING, mappingId, actionUnit);
     }
 
     /**
@@ -120,6 +166,52 @@ public final class ClientEventIdempotencyKeys {
     }
 
     /**
+     * SESSION_ADJUSTED 동작 지문.
+     *
+     * <p>형식: {@code rem{before}-u{before}_rem{after}-u{after}} (null → {@code n})</p>
+     *
+     * @param remBefore 정정 전 remaining
+     * @param usedBefore 정정 전 used
+     * @param remAfter 정정 후 remaining
+     * @param usedAfter 정정 후 used
+     * @return actionUnit
+     */
+    public static String sessionAdjustedActionUnit(
+            Integer remBefore, Integer usedBefore, Integer remAfter, Integer usedAfter) {
+        return "rem" + nullToToken(remBefore)
+                + "-u" + nullToToken(usedBefore)
+                + "_rem" + nullToToken(remAfter)
+                + "-u" + nullToToken(usedAfter);
+    }
+
+    /**
+     * mapping-only PAYMENT_COMPLETED 동작 지문.
+     *
+     * <p>형식: {@code ref:{paymentReference|noref}:amt:{scaledAmount|n}}</p>
+     *
+     * @param paymentReference 결제 참조(없으면 noref)
+     * @param amount 금액(없으면 n)
+     * @return actionUnit
+     */
+    public static String paymentCompletedActionUnit(String paymentReference, BigDecimal amount) {
+        String ref = StringUtils.hasText(paymentReference) ? paymentReference.trim() : NOREF_TOKEN;
+        return "ref:" + ref + ":amt:" + scaleAmountOrN(amount);
+    }
+
+    /**
+     * mapping-only PAYMENT_REFUNDED 동작 지문.
+     *
+     * <p>형식: {@code amt:{scaled}:r:{reasonHashOrEmpty}}</p>
+     *
+     * @param amount 환불 금액
+     * @param reason 사유(해시; 없으면 빈 문자열)
+     * @return actionUnit
+     */
+    public static String paymentRefundedActionUnit(BigDecimal amount, String reason) {
+        return "amt:" + scaleAmountOrN(amount) + ":r:" + reasonHashOrEmpty(reason);
+    }
+
+    /**
      * 레거시 {@code BACKFILL:} 접두 키 여부.
      *
      * @param key 멱등 키
@@ -130,7 +222,7 @@ public final class ClientEventIdempotencyKeys {
     }
 
     /**
-     * 통일 키 패턴 여부 ({@code TYPE:tenant:kind:id}).
+     * 통일 키 패턴 여부 ({@code TYPE:tenant:kind:id} 또는 optional actionUnit).
      *
      * @param key 멱등 키
      * @param tenantId 테넌트
@@ -143,7 +235,7 @@ public final class ClientEventIdempotencyKeys {
         Pattern pattern = Pattern.compile(
                 "^[A-Z_]+:"
                         + Pattern.quote(tenantId.trim())
-                        + ":(mapping|schedule|payment|ccmh):\\d+$");
+                        + ":(mapping|schedule|payment|ccmh):\\d+(?::.+)?$");
         return pattern.matcher(key).matches();
     }
 
@@ -156,5 +248,33 @@ public final class ClientEventIdempotencyKeys {
      */
     public static boolean isRollbackEligibleKey(String key, String tenantId) {
         return isLegacyBackfillKey(key) || matchesUnifiedPattern(key, tenantId);
+    }
+
+    private static String nullToToken(Integer value) {
+        return value == null ? NULL_TOKEN : String.valueOf(value.intValue());
+    }
+
+    private static String scaleAmountOrN(BigDecimal amount) {
+        if (amount == null) {
+            return NULL_TOKEN;
+        }
+        return amount.stripTrailingZeros().toPlainString();
+    }
+
+    private static String reasonHashOrEmpty(String reason) {
+        if (!StringUtils.hasText(reason)) {
+            return "";
+        }
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashed = digest.digest(reason.trim().getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder(16);
+            for (int i = 0; i < 8 && i < hashed.length; i++) {
+                hex.append(String.format("%02x", hashed[i]));
+            }
+            return hex.toString();
+        } catch (NoSuchAlgorithmException ex) {
+            return Integer.toHexString(reason.trim().hashCode());
+        }
     }
 }

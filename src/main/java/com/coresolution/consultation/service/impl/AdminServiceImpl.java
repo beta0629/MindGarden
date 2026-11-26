@@ -4763,10 +4763,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return merged;
         }
 
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         mapping.approveByAdmin(adminName);
 
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         // ERP 수입 등록은 입금 확인(confirm-deposit)에서만 수행. 승인(approve)에서는 호출하지 않음.
+        recordClientMappingStatusChangedIfChanged(savedMapping, previousStatusName);
 
         // 통계 업데이트는 Controller에서 트랜잭션 커밋 후 별도로 호출
         // 이렇게 하면 통계 업데이트 실패가 승인 트랜잭션에 영향을 주지 않음
@@ -7256,7 +7258,10 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String sessionBeforeJson = null;
         boolean totalSessionsChanging = dto.getTotalSessions() != null
                 && (oldTotalSessions == null || !dto.getTotalSessions().equals(oldTotalSessions));
-        if (totalSessionsChanging && clientEventWriteSupport != null) {
+        boolean remainingSessionsChanging = dto.getRemainingSessions() != null
+                && (remBefore == null || !dto.getRemainingSessions().equals(remBefore));
+        boolean sessionAdjusting = totalSessionsChanging || remainingSessionsChanging;
+        if (sessionAdjusting && clientEventWriteSupport != null) {
             sessionBeforeJson = clientEventWriteSupport.toMappingSessionJson(mapping);
         }
 
@@ -7276,6 +7281,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
             }
         }
+        // remainingSessions 단독 정정(또는 total 변경 후 명시 remaining 덮어쓰기)
+        if (dto.getRemainingSessions() != null
+                && (mapping.getRemainingSessions() == null
+                        || !dto.getRemainingSessions().equals(mapping.getRemainingSessions()))) {
+            mapping.setRemainingSessions(dto.getRemainingSessions());
+        }
         
         String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         boolean statusChanging = false;
@@ -7292,7 +7303,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
-        if (totalSessionsChanging) {
+        if (sessionAdjusting) {
             recordClientSessionAdjusted(savedMapping, sessionBeforeJson, remBefore, usedBefore);
         }
         if (statusChanging) {
@@ -12989,7 +13000,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
         BigDecimal amount = resolveClientEventPaymentAmount(mapping, paymentAmount);
-        clientEventWriteSupport.recordPaymentCompletedForMapping(mapping, amount, null);
+        clientEventWriteSupport.recordPaymentCompletedForMapping(
+                mapping, amount, mapping.getPaymentReference(), null);
     }
 
     /**

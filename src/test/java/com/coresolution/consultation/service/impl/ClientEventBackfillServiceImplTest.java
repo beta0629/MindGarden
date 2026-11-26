@@ -302,6 +302,51 @@ class ClientEventBackfillServiceImplTest {
     }
 
     @Test
+    @DisplayName("SESSION_ADJUSTED 이력: live와 동일 forMappingAction fingerprint")
+    void apply_sessionAdjustedUsesMappingActionFingerprint() {
+        when(mappingRepository.findByTenantId(TENANT_A)).thenReturn(List.of());
+        when(scheduleRepository.findByTenantId(TENANT_A)).thenReturn(List.of());
+        when(paymentRepository.findByTenantIdAndIsDeletedFalse(eq(TENANT_A), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+        ConsultantClientMappingHistory adjusted = ConsultantClientMappingHistory.builder()
+                .id(77L)
+                .tenantId(TENANT_A)
+                .mappingId(50L)
+                .clientId(CLIENT_ID)
+                .eventType(MappingHistoryEventType.UPDATED)
+                .beforeStateJson("{\"usedSessions\":2,\"remainingSessions\":8}")
+                .afterStateJson("{\"usedSessions\":2,\"remainingSessions\":5}")
+                .reason("remainingSessions 정정")
+                .createdAt(LocalDateTime.of(2026, 5, 2, 11, 0))
+                .build();
+        when(historyRepository.findByTenantIdOrderByCreatedAtAscIdAsc(TENANT_A))
+                .thenReturn(List.of(adjusted));
+        when(clientEventRepository.findByTenantIdAndIdempotencyKey(eq(TENANT_A), any()))
+                .thenReturn(Optional.empty());
+        when(clientEventService.record(any())).thenAnswer(inv -> {
+            ClientEventRecordCommand cmd = inv.getArgument(0);
+            return ClientEvent.builder()
+                    .id(1L)
+                    .tenantId(cmd.getTenantId())
+                    .clientId(cmd.getClientId())
+                    .eventType(cmd.getEventType())
+                    .occurredAt(cmd.getOccurredAt())
+                    .source(ClientEventSource.BACKFILLED)
+                    .idempotencyKey(cmd.getIdempotencyKey())
+                    .build();
+        });
+
+        service.apply(TENANT_A);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        assertThat(captor.getValue().getEventType()).isEqualTo(ClientEventType.SESSION_ADJUSTED);
+        assertThat(captor.getValue().getIdempotencyKey())
+                .isEqualTo("SESSION_ADJUSTED:" + TENANT_A + ":mapping:50:rem8-u2_rem5-u2");
+    }
+
+    @Test
     @DisplayName("rollback dry-run: BACKFILLED 만 집계 · API/SCREEN 미포함")
     void rollback_dryRun_countsOnlyBackfilled() {
         ClientEvent backfilled = ClientEvent.builder()

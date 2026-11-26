@@ -100,3 +100,10 @@
 **/WorkflowAutomationServiceImplReminderEligibilityTest.java
 **/ReservationReminderSchedulerD1EligibilityTest.java
 **/MobilePushDispatchServiceImplBookingEligibilityTest.java
+
+# 2026-11-27 client_event 쓰기 훅·롤백 통합 (#1941 follow-up) — *Payment*/*Session* 패턴에 없음
+**/ClientEventWriteRollbackIntegrationTest.java
+**/ClientEvent*IntegrationTest.java
+**/AdminServiceImplClientEventHookTest.java
+**/ClientEventIdempotencyKeysTest.java
+**/ClientEventWriteSupportTest.java

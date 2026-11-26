@@ -85,17 +85,17 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_REASSIGN_MAPPING_REASON_REQUIRED =
             "배정 변경 사유를 입력해 주세요.";
 
-    /** 배정 변경 대상 매핑이 없거나 테넌트 범위 밖일 때. */
+    /** 배정 변경 대상 배정이 없거나 테넌트 범위 밖일 때. */
     public static final String MSG_REASSIGN_MAPPING_TARGET_NOT_FOUND =
-            "대상 매칭을 찾을 수 없습니다.";
+            "대상 배정을 찾을 수 없습니다.";
 
-    /** 대상 매핑이 ACTIVE·잔여 1 이상·동일 상담사·내담자가 아닐 때. */
+    /** 대상 배정이 ACTIVE·잔여 1 이상·동일 상담사·내담자가 아닐 때. */
     public static final String MSG_REASSIGN_MAPPING_TARGET_INVALID =
-            "대상 매칭은 동일 상담사·내담자의 활성 매칭이며 잔여 회기가 1 이상이어야 합니다.";
+            "대상 배정은 동일 상담사·내담자의 활성 배정이며 잔여 회기가 1 이상이어야 합니다.";
 
-    /** 이미 같은 매핑에 배정된 일정을 다시 같은 매핑으로 옮길 때. */
+    /** 이미 같은 배정에 연결된 일정을 다시 같은 배정으로 옮길 때. */
     public static final String MSG_REASSIGN_MAPPING_SAME_TARGET =
-            "이미 해당 매칭에 배정된 일정입니다.";
+            "이미 해당 배정에 배정된 일정입니다.";
 
     /** 취소된 일정은 배정 변경 불가. */
     public static final String MSG_REASSIGN_MAPPING_CANCELLED_DENIED =

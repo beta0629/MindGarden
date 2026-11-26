@@ -124,7 +124,9 @@ export const API_ENDPOINTS = {
       REASSIGN_MAPPING_CANDIDATES: (scheduleId) =>
         `/api/v1/admin/schedules/${scheduleId}/reassign-mapping/candidates`,
       REASSIGN_MAPPING_PREVIEW: (scheduleId) =>
-        `/api/v1/admin/schedules/${scheduleId}/reassign-mapping/preview`
+        `/api/v1/admin/schedules/${scheduleId}/reassign-mapping/preview`,
+      REASSIGN_MAPPING_HISTORY: (scheduleId) =>
+        `/api/v1/admin/schedules/${scheduleId}/reassign-mapping/history`
     },
 
     /** 회기 동기화 — ACTIVE→SESSIONS_EXHAUSTED 등 상태 정합 (desync-status CTA) */

@@ -49,4 +49,15 @@ describe('buildSessionCellLayout', () => {
     expect(buildSessionCellLayout(0).layout).toBe('empty');
     expect(buildSessionCellLayout(null).layout).toBe('empty');
   });
+
+  test('list 모드 — layout=list, 창 크기 제한', () => {
+    const small = buildSessionCellLayout(8, { usedCount: 2, mode: 'list' });
+    expect(small.layout).toBe('list');
+    expect(small.cells).toHaveLength(8);
+
+    const large = buildSessionCellLayout(30, { usedCount: 5, mode: 'list' });
+    expect(large.layout).toBe('list');
+    expect(large.cells.length).toBeLessThanOrEqual(10);
+    expect(large.prefixCount + large.cells.length + large.suffixCount).toBe(30);
+  });
 });

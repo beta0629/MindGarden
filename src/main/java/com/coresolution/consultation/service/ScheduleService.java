@@ -12,6 +12,7 @@ import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsRespon
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingHistoryResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
@@ -554,6 +555,18 @@ public interface ScheduleService {
      * @since 2026-11-26
      */
     ScheduleReassignMappingPreviewResponse previewReassignMapping(Long scheduleId, Long targetMappingId);
+
+    /**
+     * 일정 배정 변경 서버 이력(SESSION_REASSIGN_IN/OUT) 최신순.
+     *
+     * <p>일정의 상담사·내담자 쌍에 속한 배정들의 이력을 반환한다. ADMIN only 경로에서 호출.</p>
+     *
+     * @param scheduleId 일정 ID
+     * @return 이력 목록(최신순)
+     * @author MindGarden
+     * @since 2026-11-26
+     */
+    List<ScheduleReassignMappingHistoryResponse> findReassignMappingHistory(Long scheduleId);
 
     /**
      * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.

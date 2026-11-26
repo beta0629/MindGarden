@@ -38,6 +38,7 @@ import com.coresolution.consultation.dto.MappingStatusCloseRequest;
 import com.coresolution.consultation.dto.MappingStatusCloseResponse;
 import com.coresolution.consultation.dto.PendingPaymentPackageUpdateRequest;
 import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingHistoryResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingRequest;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
@@ -3532,7 +3533,7 @@ public class AdminController extends BaseApiController {
             HttpSession session) {
         resourceOwnerAccessGuard.requireTenantAdminAccess(session);
         if (request == null || request.getTargetMappingId() == null) {
-            throw new IllegalArgumentException("대상 매칭 ID는 필수입니다.");
+            throw new IllegalArgumentException("대상 배정 ID는 필수입니다.");
         }
         ScheduleReassignMappingPreviewResponse preview =
                 scheduleService.previewReassignMapping(id, request.getTargetMappingId());
@@ -3557,6 +3558,25 @@ public class AdminController extends BaseApiController {
         ScheduleReassignMappingPreviewResponse preview =
                 scheduleService.previewReassignMapping(id, targetMappingId);
         return success(preview);
+    }
+
+    /**
+     * 일정 배정 변경 서버 이력 — ADMIN only.
+     *
+     * <p>일정의 상담사·내담자 쌍 배정들의 {@code SESSION_REASSIGN_IN}/{@code SESSION_REASSIGN_OUT} 이력을 최신순으로 반환한다.</p>
+     *
+     * @param id 일정 ID
+     * @param session HTTP 세션
+     * @return 이력 목록
+     */
+    @GetMapping("/schedules/{id}/reassign-mapping/history")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<List<ScheduleReassignMappingHistoryResponse>>>
+            getReassignMappingHistory(@PathVariable("id") Long id, HttpSession session) {
+        resourceOwnerAccessGuard.requireTenantAdminAccess(session);
+        List<ScheduleReassignMappingHistoryResponse> history =
+                scheduleService.findReassignMappingHistory(id);
+        return success(history);
     }
 
     /**

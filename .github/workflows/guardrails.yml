@@ -251,6 +251,46 @@ jobs:
       - name: Check numeric recipient limits outside notification.manual.max-recipients (allowlist ratchet)
         run: node scripts/verification/check-recipient-limit-literals.js
 
+  guardrail-user-facing-no-matching:
+    name: Guardrail BE (reassign user-facing no 매칭)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checker self-test
+        run: node scripts/verification/check-user-facing-no-matching.test.js
+
+      - name: Check reassign user-facing strings have no 매칭
+        run: node scripts/verification/check-user-facing-no-matching.js
+
+  guardrail-reassign-mapping-css-tokens:
+    name: Guardrail FE (reassign mapping CSS no primary on selection/cells)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Checker self-test
+        run: node scripts/verification/check-reassign-mapping-css-tokens.test.js
+
+      - name: Check selected/remaining/planned cells avoid primary-* tokens
+        run: node scripts/verification/check-reassign-mapping-css-tokens.js
+
   guardrail-fe-engagement-badge-chip-layout:
     name: Guardrail FE (engagement badge chip layout)
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'

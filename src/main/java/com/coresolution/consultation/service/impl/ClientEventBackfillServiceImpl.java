@@ -1,13 +1,17 @@
 package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.coresolution.consultation.constant.ClientEventBackfillConstants;
 import com.coresolution.consultation.constant.ClientEventBackfillMode;
+import com.coresolution.consultation.constant.ClientEventIdempotencyKeys;
 import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.constant.ClientEventType;
 import com.coresolution.consultation.constant.ClientEventWriteConstants;
@@ -28,10 +32,7 @@ import com.coresolution.consultation.repository.PaymentRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ClientEventBackfillService;
 import com.coresolution.consultation.service.ClientEventService;
-import com.coresolution.consultation.service.support.ClientEventBackfillEnvironmentGuard;
 import com.coresolution.core.context.TenantContextHolder;
-import com.coresolution.core.domain.Tenant;
-import com.coresolution.core.repository.TenantRepository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,10 +46,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 /**
- * {@link ClientEventBackfillService} 구현 — 테넌트 스코프 백필(멱등).
+ * {@link ClientEventBackfillService} 구현 — 테넌트 필수 백필(멱등).
  *
  * <p>순서: 배정 생성 → 결제 완료 → 일정 → 회기/배정 이력 → 결제 취소·환불.
- * dry-run 은 {@link ClientEventService#record} 를 호출하지 않는다.</p>
+ * dry-run 은 {@link ClientEventService#record} 를 호출하지 않는다.
+ * .dev HTTP 환경 가드는 Controller 전용 — 본 구현은 CLI(운영)에서도 동작한다.</p>
  *
  * @author MindGarden
  * @since 2026-11-26
@@ -64,8 +66,6 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     private final PaymentRepository paymentRepository;
     private final ScheduleRepository scheduleRepository;
     private final ConsultantClientMappingHistoryRepository historyRepository;
-    private final TenantRepository tenantRepository;
-    private final ClientEventBackfillEnvironmentGuard environmentGuard;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -80,75 +80,108 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
 
     @Override
     public ClientEventBackfillResult run(ClientEventBackfillMode mode, String tenantId) {
-        environmentGuard.requireDevOnly();
+        requireTenantId(tenantId);
         ClientEventBackfillMode resolvedMode =
                 mode != null ? mode : ClientEventBackfillMode.DRY_RUN;
-
-        if (StringUtils.hasText(tenantId)) {
-            return runForTenant(resolvedMode, tenantId.trim());
+        if (resolvedMode == ClientEventBackfillMode.ROLLBACK) {
+            throw new IllegalArgumentException(
+                    "ROLLBACK 모드는 rollback(tenantId, dryRun) 을 사용하세요.");
         }
+        return runForTenant(resolvedMode, tenantId.trim());
+    }
 
-        ClientEventBackfillResult total = ClientEventBackfillResult.empty(resolvedMode, null);
-        List<Tenant> tenants = tenantRepository.findAllActive();
-        for (Tenant tenant : tenants) {
-            if (tenant == null || !StringUtils.hasText(tenant.getTenantId())) {
-                continue;
+    @Override
+    @Transactional
+    public ClientEventBackfillResult rollback(String tenantId, boolean dryRun) {
+        requireTenantId(tenantId);
+        String scoped = tenantId.trim();
+        String previousTenantId = TenantContextHolder.peekTenantId();
+        try {
+            TenantContextHolder.setTenantId(scoped);
+            ClientEventBackfillMode mode = dryRun
+                    ? ClientEventBackfillMode.DRY_RUN
+                    : ClientEventBackfillMode.ROLLBACK;
+            ClientEventBackfillResult result = ClientEventBackfillResult.empty(mode, scoped);
+
+            List<ClientEvent> candidates =
+                    clientEventRepository.findByTenantIdAndSource(scoped, ClientEventSource.BACKFILLED);
+            List<Long> deleteIds = new ArrayList<>();
+            Set<Long> clients = new HashSet<>();
+            for (ClientEvent event : candidates) {
+                if (event == null || event.getId() == null) {
+                    continue;
+                }
+                result.setScanned(result.getScanned() + 1);
+                if (!ClientEventIdempotencyKeys.isRollbackEligibleKey(
+                        event.getIdempotencyKey(), scoped)) {
+                    result.setSkipped(result.getSkipped() + 1);
+                    continue;
+                }
+                if (event.getClientId() != null) {
+                    clients.add(event.getClientId());
+                }
+                String typeCode = event.getEventType() != null
+                        ? event.getEventType().getCode()
+                        : "UNKNOWN";
+                result.incrementInserted(typeCode);
+                deleteIds.add(event.getId());
             }
-            try {
-                total.add(runForTenant(resolvedMode, tenant.getTenantId()));
-            } catch (RuntimeException ex) {
-                log.warn(
-                        "client_event backfill tenant failed: tenantId={}, mode={}, reason={}",
-                        tenant.getTenantId(),
-                        resolvedMode,
-                        ex.getMessage());
-                total.setErrors(total.getErrors() + 1);
+            result.setClientCount(clients.size());
+
+            if (!dryRun && !deleteIds.isEmpty()) {
+                int deleted = clientEventRepository.deleteByTenantIdAndSourceAndIdIn(
+                        scoped, ClientEventSource.BACKFILLED, deleteIds);
+                log.info(
+                        "client_event backfill rollback applied: tenantId={}, deleted={}",
+                        scoped,
+                        deleted);
+            } else {
+                log.info(
+                        "client_event backfill rollback dry-run: tenantId={}, wouldDelete={}",
+                        scoped,
+                        deleteIds.size());
             }
+            return result;
+        } finally {
+            restoreTenantContext(previousTenantId);
         }
-        log.info(
-                "client_event backfill ALL done: mode={}, scanned={}, inserted={}, skipped={}, errors={}",
-                resolvedMode,
-                total.getScanned(),
-                total.getInserted(),
-                total.getSkipped(),
-                total.getErrors());
-        return total;
     }
 
     @Transactional
     protected ClientEventBackfillResult runForTenant(ClientEventBackfillMode mode, String tenantId) {
-        if (!StringUtils.hasText(tenantId)) {
-            throw new IllegalArgumentException("tenantId는 필수입니다.");
-        }
         String previousTenantId = TenantContextHolder.peekTenantId();
         try {
             TenantContextHolder.setTenantId(tenantId);
             ClientEventBackfillResult result = ClientEventBackfillResult.empty(mode, tenantId);
-            backfillMappings(mode, tenantId, result);
-            backfillPaymentsCompleted(mode, tenantId, result);
-            backfillSchedules(mode, tenantId, result);
-            backfillHistories(mode, tenantId, result);
-            backfillPaymentsCancelledOrRefunded(mode, tenantId, result);
+            Set<Long> clients = new HashSet<>();
+            backfillMappings(mode, tenantId, result, clients);
+            backfillPaymentsCompleted(mode, tenantId, result, clients);
+            backfillSchedules(mode, tenantId, result, clients);
+            backfillHistories(mode, tenantId, result, clients);
+            backfillPaymentsCancelledOrRefunded(mode, tenantId, result, clients);
+            result.setClientCount(clients.size());
             log.info(
-                    "client_event backfill: tenantId={}, mode={}, scanned={}, inserted={}, skipped={}, errors={}",
+                    "client_event backfill: tenantId={}, mode={}, scanned={}, inserted={}, skipped={},"
+                            + " errors={}, clientCount={}, byEventType={}",
                     tenantId,
                     mode,
                     result.getScanned(),
                     result.getInserted(),
                     result.getSkipped(),
-                    result.getErrors());
+                    result.getErrors(),
+                    result.getClientCount(),
+                    result.getByEventType());
             return result;
         } finally {
-            if (previousTenantId != null) {
-                TenantContextHolder.setTenantId(previousTenantId);
-            } else {
-                TenantContextHolder.clear();
-            }
+            restoreTenantContext(previousTenantId);
         }
     }
 
     private void backfillMappings(
-            ClientEventBackfillMode mode, String tenantId, ClientEventBackfillResult result) {
+            ClientEventBackfillMode mode,
+            String tenantId,
+            ClientEventBackfillResult result,
+            Set<Long> clients) {
         List<ConsultantClientMapping> mappings = mappingRepository.findByTenantId(tenantId);
         for (ConsultantClientMapping mapping : mappings) {
             if (mapping == null || mapping.getId() == null) {
@@ -161,6 +194,7 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                     result.setErrors(result.getErrors() + 1);
                     continue;
                 }
+                clients.add(clientId);
                 String key = ClientEventBackfillConstants.idempotencyMappingCreated(
                         tenantId, mapping.getId());
                 ClientEventRecordCommand command = ClientEventRecordCommand.builder()
@@ -190,13 +224,19 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     }
 
     private void backfillPaymentsCompleted(
-            ClientEventBackfillMode mode, String tenantId, ClientEventBackfillResult result) {
-        backfillPayments(mode, tenantId, result, true);
+            ClientEventBackfillMode mode,
+            String tenantId,
+            ClientEventBackfillResult result,
+            Set<Long> clients) {
+        backfillPayments(mode, tenantId, result, clients, true);
     }
 
     private void backfillPaymentsCancelledOrRefunded(
-            ClientEventBackfillMode mode, String tenantId, ClientEventBackfillResult result) {
-        backfillPayments(mode, tenantId, result, false);
+            ClientEventBackfillMode mode,
+            String tenantId,
+            ClientEventBackfillResult result,
+            Set<Long> clients) {
+        backfillPayments(mode, tenantId, result, clients, false);
     }
 
     /**
@@ -207,6 +247,7 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
             ClientEventBackfillMode mode,
             String tenantId,
             ClientEventBackfillResult result,
+            Set<Long> clients,
             boolean completedPhase) {
         int page = 0;
         Page<Payment> paymentPage;
@@ -231,7 +272,9 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                         result.setErrors(result.getErrors() + 1);
                         continue;
                     }
-                    String key = resolvePaymentIdempotencyKey(tenantId, eventType, payment.getId());
+                    clients.add(payment.getPayerId());
+                    String key = ClientEventIdempotencyKeys.forPayment(
+                            eventType, tenantId, payment.getId());
                     LocalDateTime occurredAt = resolvePaymentOccurredAt(payment, eventType);
                     Map<String, Object> after = new LinkedHashMap<>();
                     after.put(
@@ -284,7 +327,10 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     }
 
     private void backfillSchedules(
-            ClientEventBackfillMode mode, String tenantId, ClientEventBackfillResult result) {
+            ClientEventBackfillMode mode,
+            String tenantId,
+            ClientEventBackfillResult result,
+            Set<Long> clients) {
         List<Schedule> schedules = scheduleRepository.findByTenantId(tenantId);
         for (Schedule schedule : schedules) {
             if (schedule == null || schedule.getId() == null) {
@@ -300,6 +346,7 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                     result.setErrors(result.getErrors() + 1);
                     continue;
                 }
+                clients.add(schedule.getClientId());
                 String key = ClientEventBackfillConstants.idempotencySchedule(
                         tenantId, eventType, schedule.getId());
                 Map<String, Object> after = new LinkedHashMap<>();
@@ -341,7 +388,10 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     }
 
     private void backfillHistories(
-            ClientEventBackfillMode mode, String tenantId, ClientEventBackfillResult result) {
+            ClientEventBackfillMode mode,
+            String tenantId,
+            ClientEventBackfillResult result,
+            Set<Long> clients) {
         List<ConsultantClientMappingHistory> histories =
                 historyRepository.findByTenantIdOrderByCreatedAtAscIdAsc(tenantId);
         for (ConsultantClientMappingHistory history : histories) {
@@ -359,8 +409,10 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                     result.setErrors(result.getErrors() + 1);
                     continue;
                 }
-                String key = ClientEventBackfillConstants.idempotencyHistory(
-                        tenantId, eventType, history.getId());
+                clients.add(clientId);
+                Long scheduleId = resolveHistoryScheduleId(history);
+                String key = resolveHistoryIdempotencyKey(
+                        tenantId, eventType, scheduleId, history.getId());
                 Integer usedBefore = readInt(history.getBeforeStateJson(),
                         ClientEventBackfillConstants.JSON_KEY_USED_SESSIONS);
                 Integer remBefore = readInt(history.getBeforeStateJson(),
@@ -369,7 +421,6 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
                         ClientEventBackfillConstants.JSON_KEY_USED_SESSIONS);
                 Integer remAfter = readInt(history.getAfterStateJson(),
                         ClientEventBackfillConstants.JSON_KEY_REMAINING_SESSIONS);
-                Long scheduleId = extractScheduleIdFromReason(history.getReason());
                 ClientEventRecordCommand command = ClientEventRecordCommand.builder()
                         .tenantId(tenantId)
                         .clientId(clientId)
@@ -407,18 +458,46 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
             String idempotencyKey,
             ClientEventRecordCommand command,
             ClientEventBackfillResult result) {
+        String typeCode = command.getEventType() != null
+                ? command.getEventType().getCode()
+                : "UNKNOWN";
         Optional<ClientEvent> existing =
                 clientEventRepository.findByTenantIdAndIdempotencyKey(tenantId, idempotencyKey);
         if (existing.isPresent()) {
-            result.setSkipped(result.getSkipped() + 1);
+            result.incrementSkipped(typeCode);
             return;
         }
         if (mode == ClientEventBackfillMode.DRY_RUN) {
-            result.setInserted(result.getInserted() + 1);
+            result.incrementInserted(typeCode);
             return;
         }
         clientEventService.record(command);
-        result.setInserted(result.getInserted() + 1);
+        result.incrementInserted(typeCode);
+    }
+
+    private static String resolveHistoryIdempotencyKey(
+            String tenantId, ClientEventType eventType, Long scheduleId, Long historyId) {
+        if (eventType == ClientEventType.SESSION_DEDUCTED
+                || eventType == ClientEventType.SESSION_RESTORED
+                || eventType == ClientEventType.MAPPING_REASSIGNED) {
+            return ClientEventIdempotencyKeys.forSession(
+                    eventType, tenantId, scheduleId, historyId);
+        }
+        // 상태·조정 등 다회 가능 → ccmh 고유 키
+        return ClientEventIdempotencyKeys.forCcmh(eventType, tenantId, historyId);
+    }
+
+    private Long resolveHistoryScheduleId(ConsultantClientMappingHistory history) {
+        Long fromReason = extractScheduleIdFromReason(history.getReason());
+        if (fromReason != null) {
+            return fromReason;
+        }
+        Long fromBefore = readLong(
+                history.getBeforeStateJson(), ClientEventWriteConstants.JSON_KEY_SCHEDULE_ID);
+        if (fromBefore != null) {
+            return fromBefore;
+        }
+        return readLong(history.getAfterStateJson(), ClientEventWriteConstants.JSON_KEY_SCHEDULE_ID);
     }
 
     private static ClientEventType resolveScheduleEventType(Schedule schedule) {
@@ -468,20 +547,6 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
             default:
                 return null;
         }
-    }
-
-    private static String resolvePaymentIdempotencyKey(
-            String tenantId, ClientEventType eventType, Long paymentId) {
-        if (eventType == ClientEventType.PAYMENT_COMPLETED) {
-            return ClientEventBackfillConstants.idempotencyPaymentCompleted(tenantId, paymentId);
-        }
-        if (eventType == ClientEventType.PAYMENT_CANCELLED) {
-            return ClientEventBackfillConstants.idempotencyPaymentCancelled(tenantId, paymentId);
-        }
-        if (eventType == ClientEventType.PAYMENT_REFUNDED) {
-            return ClientEventBackfillConstants.idempotencyPaymentRefunded(tenantId, paymentId);
-        }
-        throw new IllegalArgumentException("Unsupported payment eventType: " + eventType);
     }
 
     private static LocalDateTime resolvePaymentOccurredAt(Payment payment, ClientEventType eventType) {
@@ -536,6 +601,42 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
     }
 
     private Integer readInt(String json, String field) {
+        JsonNode value = readNode(json, field);
+        if (value == null) {
+            return null;
+        }
+        try {
+            if (value.isNumber()) {
+                return value.intValue();
+            }
+            if (value.isTextual()) {
+                return Integer.parseInt(value.asText().trim());
+            }
+            return null;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private Long readLong(String json, String field) {
+        JsonNode value = readNode(json, field);
+        if (value == null) {
+            return null;
+        }
+        try {
+            if (value.isNumber()) {
+                return value.longValue();
+            }
+            if (value.isTextual()) {
+                return Long.parseLong(value.asText().trim());
+            }
+            return null;
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private JsonNode readNode(String json, String field) {
         if (!StringUtils.hasText(json) || !StringUtils.hasText(field)) {
             return null;
         }
@@ -544,14 +645,7 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
             if (node == null || !node.has(field) || node.get(field).isNull()) {
                 return null;
             }
-            JsonNode value = node.get(field);
-            if (value.isNumber()) {
-                return value.intValue();
-            }
-            if (value.isTextual()) {
-                return Integer.parseInt(value.asText().trim());
-            }
-            return null;
+            return node.get(field);
         } catch (Exception ex) {
             return null;
         }
@@ -582,6 +676,20 @@ public class ClientEventBackfillServiceImpl implements ClientEventBackfillServic
         } catch (Exception ex) {
             log.warn("client_event backfill JSON 직렬화 실패: {}", ex.getMessage());
             return null;
+        }
+    }
+
+    private static void requireTenantId(String tenantId) {
+        if (!StringUtils.hasText(tenantId)) {
+            throw new IllegalArgumentException("tenantId는 필수입니다.");
+        }
+    }
+
+    private static void restoreTenantContext(String previousTenantId) {
+        if (previousTenantId != null) {
+            TenantContextHolder.setTenantId(previousTenantId);
+        } else {
+            TenantContextHolder.clear();
         }
     }
 }

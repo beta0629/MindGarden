@@ -3430,12 +3430,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 targetBeforeJson,
                 actorUserId,
                 trimmedReason);
+        // MAPPING_REASSIGNED 1행만 — SESSION_DEDUCTED 중복 기록 금지(회기 차감은 재배정 스냅샷에 포함).
         recordClientMappingReassigned(schedule, originMappingId, target,
                 originBeforeJson, targetBeforeJson, remBefore, usedBefore, trimmedReason);
-        recordClientSessionDeducted(tenantId, schedule.getClientId(), target.getId(), schedule.getId(),
-                remBefore, target.getRemainingSessions(),
-                usedBefore, target.getUsedSessions(),
-                targetBeforeJson, serializeSessionSnapshot(target));
 
         // 자동취소 없음. UI 힌트만: 원 배정이 결제대기로 비면(used=0) 취소 권장.
         boolean cancelRecommended = isCancelRecommendedForEmptiedPendingOrigin(

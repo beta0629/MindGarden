@@ -28,11 +28,14 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * {@code client_event} 백필 OPS 진입점 — {@code @Profile("dev")} 전용.
  *
+ * <p><b>dev HTTP 유지, 운영은 CLI만.</b> 본 컨트롤러·토큰 필터·dev workflow 는 .dev 전용으로 유지하고
+ * 운영 노출은 0이다. 운영 백필은 {@code ClientEventBackfillCliApplication}(Web NONE) 만 사용한다.</p>
+ *
  * <p>운영 프로필에서는 빈이 로드되지 않는다. 런타임에도 prod 프로파일을 거부한다.
  * 인가는 {@code ROLE_OPS} 만 허용한다(세션·JWT 또는 공유 시크릿 필터의 ops 우회).
- * 센터 {@code ROLE_ADMIN} 단독으로는 403 — 교차/전체 테넌트 백필 차단.</p>
+ * 센터 {@code ROLE_ADMIN} 단독으로는 403 — 교차 테넌트 백필 차단.</p>
  *
- * <p>{@code tenant_id} 는 optional: 지정 시 해당 테넌트, 생략 시 활성 테넌트 전체(OPS/토큰만).</p>
+ * <p>{@code tenant_id} 는 필수이다(전체 테넌트 순회 없음).</p>
  *
  * @author MindGarden
  * @since 2026-11-26
@@ -48,27 +51,35 @@ public class ClientEventBackfillController extends BaseApiController {
     private final ClientEventBackfillEnvironmentGuard environmentGuard;
 
     /**
-     * 백필 실행(dry-run 기본).
+     * 백필 실행(dry-run 기본). .dev HTTP 전용 — 운영은 CLI.
      *
      * @param mode dry-run | apply
-     * @param tenantId 선택 테넌트(없으면 활성 테넌트 전체 — OPS/토큰만 허용)
+     * @param tenantId 테넌트(필수)
      * @param request HTTP 요청(로그용 remoteAddr — 인가에 사용하지 않음)
-     * @return scanned/inserted/skipped/errors
+     * @return scanned/inserted/skipped/errors/clientCount/byEventType
      */
     @PostMapping
     @PreAuthorize("hasAuthority('" + SecurityRoleConstants.ROLE_OPS + "')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> run(
             @RequestParam(required = false, defaultValue = ClientEventBackfillConstants.MODE_DRY_RUN)
                     String mode,
-            @RequestParam(required = false, name = "tenant_id") String tenantId,
+            @RequestParam(required = true, name = "tenant_id") String tenantId,
             HttpServletRequest request) {
 
         // SecurityConfig·@PreAuthorize 이중 방어 + TenantOps와 동일 수동 가드
         OpsPermissionUtils.requireOps();
+        // HTTP/dev 전용 가드 — CLI 서비스 경로에는 적용하지 않음
         environmentGuard.requireDevOnly();
 
+        if (!StringUtils.hasText(tenantId)) {
+            throw new IllegalArgumentException("tenant_id는 필수입니다.");
+        }
+
         ClientEventBackfillMode backfillMode = ClientEventBackfillMode.fromCode(mode);
-        String scopedTenant = StringUtils.hasText(tenantId) ? tenantId.trim() : null;
+        if (backfillMode == ClientEventBackfillMode.ROLLBACK) {
+            throw new IllegalArgumentException("rollback 은 서버 로컬 CLI 만 지원합니다.");
+        }
+        String scopedTenant = tenantId.trim();
 
         log.info(
                 "client_event backfill requested: mode={}, tenantId={}, profiles={}, remote={}",
@@ -86,6 +97,8 @@ public class ClientEventBackfillController extends BaseApiController {
         data.put("inserted", result.getInserted());
         data.put("skipped", result.getSkipped());
         data.put("errors", result.getErrors());
+        data.put("clientCount", result.getClientCount());
+        data.put("byEventType", result.getByEventType());
         return success(data);
     }
 }

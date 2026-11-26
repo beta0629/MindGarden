@@ -24,16 +24,7 @@ public final class ClientEventWriteConstants {
     public static final String JSON_KEY_TARGET = "target";
     public static final String JSON_KEY_AMOUNT = "amount";
     public static final String JSON_KEY_PAYMENT_STATUS_CODE = "paymentStatus";
-
-    public static final String IDEMPOTENCY_SESSION_DEDUCTED_SCHEDULE_PREFIX =
-            "SESSION_DEDUCTED:schedule:";
-    public static final String IDEMPOTENCY_SESSION_RESTORED_SCHEDULE_PREFIX =
-            "SESSION_RESTORED:schedule:";
-    public static final String IDEMPOTENCY_PAYMENT_COMPLETED_PREFIX = "PAYMENT_COMPLETED:payment:";
-    public static final String IDEMPOTENCY_PAYMENT_CANCELLED_PREFIX = "PAYMENT_CANCELLED:payment:";
-    public static final String IDEMPOTENCY_PAYMENT_REFUNDED_PREFIX = "PAYMENT_REFUNDED:payment:";
-    public static final String IDEMPOTENCY_MAPPING_REASSIGNED_SCHEDULE_PREFIX =
-            "MAPPING_REASSIGNED:schedule:";
+    public static final String JSON_KEY_SCHEDULE_ID = "scheduleId";
 
     private ClientEventWriteConstants() {
     }

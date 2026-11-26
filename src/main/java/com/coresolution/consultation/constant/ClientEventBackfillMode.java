@@ -9,7 +9,8 @@ package com.coresolution.consultation.constant;
 public enum ClientEventBackfillMode {
 
     DRY_RUN(ClientEventBackfillConstants.MODE_DRY_RUN),
-    APPLY(ClientEventBackfillConstants.MODE_APPLY);
+    APPLY(ClientEventBackfillConstants.MODE_APPLY),
+    ROLLBACK(ClientEventBackfillConstants.MODE_ROLLBACK);
 
     private final String code;
 
@@ -24,7 +25,7 @@ public enum ClientEventBackfillMode {
     /**
      * 입력 문자열을 모드로 변환한다.
      *
-     * @param raw dry-run | apply (대소문자·공백 무시)
+     * @param raw dry-run | apply | rollback (대소문자·공백 무시)
      * @return 모드
      * @throws IllegalArgumentException 알 수 없는 값
      */

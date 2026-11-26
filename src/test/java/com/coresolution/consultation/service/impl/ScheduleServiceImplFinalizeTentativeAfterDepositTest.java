@@ -47,6 +47,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -144,6 +145,7 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         t1.setTenantId(TENANT_ID);
         t1.setConsultantId(CONSULTANT_USER_ID);
         t1.setClientId(CLIENT_USER_ID);
+        t1.setMappingId(MAPPING_ID);
         t1.setDate(LocalDate.of(2026, 5, 10));
         t1.setStartTime(LocalTime.of(10, 0));
         t1.setEndTime(LocalTime.of(10, 50));
@@ -155,6 +157,7 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         t2.setTenantId(TENANT_ID);
         t2.setConsultantId(CONSULTANT_USER_ID);
         t2.setClientId(CLIENT_USER_ID);
+        t2.setMappingId(MAPPING_ID);
         t2.setDate(LocalDate.of(2026, 5, 11));
         t2.setStartTime(LocalTime.of(14, 0));
         t2.setEndTime(LocalTime.of(14, 50));
@@ -162,9 +165,8 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
         t2.setIsDeleted(false);
 
         List<Schedule> tentatives = Arrays.asList(t2, t1);
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(tentatives);
 
         java.util.List<Schedule> labeledForMapping = new java.util.ArrayList<>();
@@ -217,5 +219,77 @@ class ScheduleServiceImplFinalizeTentativeAfterDepositTest {
                 eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
         verify(mobilePushDispatchService, times(2)).dispatchBookingConfirmed(
                 eq(TENANT_ID), any(Schedule.class), isNull());
+    }
+
+    @Test
+    @DisplayName("finalize: 다른 mappingId 가예약은 조회되지 않음 — 해당 배정 일정만 날짜순 확정")
+    void finalize_scopesToMappingId_doesNotPullOtherMappingTentatives() {
+        User consultant = new User();
+        consultant.setId(CONSULTANT_USER_ID);
+        User client = new User();
+        client.setId(CLIENT_USER_ID);
+
+        ConsultantClientMapping inputMapping = new ConsultantClientMapping();
+        inputMapping.setId(MAPPING_ID);
+        inputMapping.setTenantId(TENANT_ID);
+        inputMapping.setConsultant(consultant);
+        inputMapping.setClient(client);
+
+        Schedule ownTentative = new Schedule();
+        ownTentative.setId(11L);
+        ownTentative.setTenantId(TENANT_ID);
+        ownTentative.setConsultantId(CONSULTANT_USER_ID);
+        ownTentative.setClientId(CLIENT_USER_ID);
+        ownTentative.setMappingId(MAPPING_ID);
+        ownTentative.setDate(LocalDate.of(2026, 5, 12));
+        ownTentative.setStartTime(LocalTime.of(9, 0));
+        ownTentative.setEndTime(LocalTime.of(9, 50));
+        ownTentative.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
+        ownTentative.setIsDeleted(false);
+
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
+                .thenReturn(List.of(ownTentative));
+
+        java.util.List<Schedule> labeledForMapping = new java.util.ArrayList<>();
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
+                any()))
+                .thenAnswer(inv -> new java.util.ArrayList<>(labeledForMapping));
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> {
+            Schedule saved = inv.getArgument(0);
+            if (saved.getSessionSequence() != null) {
+                labeledForMapping.removeIf(existing -> saved.getId() != null
+                        && saved.getId().equals(existing.getId()));
+                labeledForMapping.add(saved);
+            }
+            return saved;
+        });
+
+        ConsultantClientMapping fresh = new ConsultantClientMapping();
+        fresh.setId(MAPPING_ID);
+        fresh.setTenantId(TENANT_ID);
+        fresh.setConsultant(consultant);
+        fresh.setClient(client);
+        fresh.setStatus(MappingStatus.DEPOSIT_PENDING);
+        fresh.setTotalSessions(10);
+        fresh.setRemainingSessions(5);
+        fresh.setUsedSessions(0);
+        when(mappingRepository.findByTenantIdAndId(eq(TENANT_ID), eq(MAPPING_ID)))
+                .thenReturn(Optional.of(fresh));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.finalizeTentativeSchedulesAfterDepositConfirmed(inputMapping);
+
+        verify(scheduleRepository).findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)));
+        verify(scheduleRepository, never()).findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
+                any(), any(), any(), any());
+        assertThat(ownTentative.getStatus()).isEqualTo(ScheduleStatus.BOOKED);
+        assertThat(ownTentative.getMappingId()).isEqualTo(MAPPING_ID);
+        assertThat(fresh.getRemainingSessions()).isEqualTo(4);
+        assertThat(fresh.getUsedSessions()).isEqualTo(1);
+        verify(sessionSyncService, times(1)).syncAfterSessionUsage(
+                eq(MAPPING_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID));
     }
 }

@@ -42,4 +42,17 @@ public interface ConsultantClientMappingHistoryRepository
      */
     List<ConsultantClientMappingHistory> findByTenantIdAndMappingIdInOrderByCreatedAtDesc(
             String tenantId, Collection<Long> mappingIds);
+
+    /**
+     * 매핑 ID·이벤트 타입 목록의 이력을 최신순으로 조회한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param mappingIds 매핑 ID
+     * @param eventTypes 이벤트 타입
+     * @return 이력 목록
+     */
+    List<ConsultantClientMappingHistory> findByTenantIdAndMappingIdInAndEventTypeInOrderByCreatedAtDesc(
+            String tenantId,
+            Collection<Long> mappingIds,
+            Collection<MappingHistoryEventType> eventTypes);
 }

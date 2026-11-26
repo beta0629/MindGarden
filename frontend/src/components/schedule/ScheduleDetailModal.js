@@ -32,7 +32,10 @@ import SegmentedTabs from '../common/SegmentedTabs';
 import ActionBar from '../common/ActionBar';
 import ScheduleClientNotesSection from './ScheduleClientNotesSection';
 import SchedulePartyQuickViewModal from './molecules/SchedulePartyQuickViewModal';
+import ScheduleReassignMappingPanel from './ScheduleReassignMappingPanel';
+import './ScheduleReassignMapping.css';
 import VehiclePlateQuickRegisterModal from '../admin/mapping-management/integrated-schedule/molecules/VehiclePlateQuickRegisterModal';
+import { REASSIGN_UI } from '../../constants/scheduleReassignMapping';
 import { ProfileCard } from '../ui/Card/index';
 import { resolveScheduleDetailPaymentActions } from '../../utils/scheduleDetailSameDayPaymentActions';
 import { applyPartyPiiPolicy } from '../../utils/partyPiiDisplay';
@@ -294,6 +297,8 @@ const ScheduleDetailModal = ({
     const [partyQuickView, setPartyQuickView] = useState(null);
     /** 내담자 차량번호 빠른 등록 모달 */
     const [vehiclePlateRegisterOpen, setVehiclePlateRegisterOpen] = useState(false);
+    /** 관리자 배정 변경(회기 정정) 패널 — 지난(완료) 일정도 허용 */
+    const [reassignMappingOpen, setReassignMappingOpen] = useState(false);
     const clientPartyTriggerRef = useRef(null);
     const consultantPartyTriggerRef = useRef(null);
     const partyQuickViewRef = useRef(null);
@@ -374,6 +379,7 @@ const ScheduleDetailModal = ({
     useEffect(() => {
         if (!isOpen) {
             setPartyQuickView(null);
+            setReassignMappingOpen(false);
         }
     }, [isOpen]);
 
@@ -907,6 +913,7 @@ const ScheduleDetailModal = ({
     };
 
     const canRescheduleByRole = RoleUtils.isAdmin(user);
+    const canReassignMapping = RoleUtils.isAdmin(user);
 
     if (!isOpen) return null;
 
@@ -1247,7 +1254,7 @@ const ScheduleDetailModal = ({
                 backdropClick={true}
                 showCloseButton={true}
                 zIndex={SCHEDULE_DETAIL_Z_INDEX_MAIN}
-                closeOnEscape={!partyQuickView}
+                closeOnEscape={!partyQuickView && !reassignMappingOpen}
                 className="mg-v2-ad-b0kla schedule-detail-modal"
                 actions={(
                     <ActionBar
@@ -1448,6 +1455,20 @@ const ScheduleDetailModal = ({
                                         ) : undefined}
                                     />
                                 )}
+                                {canReassignMapping && (displayData.mappingId != null || displayData.consultationMappingId != null) ? (
+                                    <div className="schedule-detail-modal__reassign-cta">
+                                        <ActionBarButton
+                                            variant="outline"
+                                            onClick={() => setReassignMappingOpen(true)}
+                                            disabled={loading}
+                                            data-testid="schedule-detail-reassign-mapping"
+                                        >
+                                            {t('schedule:ScheduleDetailModal.reassignMappingCta', {
+                                                defaultValue: REASSIGN_UI.CTA
+                                            })}
+                                        </ActionBarButton>
+                                    </div>
+                                ) : null}
                             </div>
                     )}
 
@@ -1552,6 +1573,39 @@ const ScheduleDetailModal = ({
                             vehiclePlate,
                             consultantVehiclePlate: base?.consultantVehiclePlate ?? null
                         });
+                        if (typeof onScheduleUpdated === 'function') {
+                            onScheduleUpdated();
+                        }
+                    }}
+                />
+            ) : null}
+
+            {canReassignMapping ? (
+                <ScheduleReassignMappingPanel
+                    isOpen={reassignMappingOpen}
+                    onClose={() => setReassignMappingOpen(false)}
+                    schedule={displayData}
+                    zIndex={SCHEDULE_DETAIL_Z_INDEX_CONFIRM}
+                    onReassigned={(result) => {
+                        if (result?.targetMappingId != null) {
+                            const base = localScheduleOverride ?? scheduleData;
+                            const nextPackageName =
+                                result.targetPackageName
+                                ?? result.packageName
+                                ?? result.displayPackageName
+                                ?? base?.packageName;
+                            setLocalScheduleOverride({
+                                ...base,
+                                mappingId: result.targetMappingId,
+                                totalSessions: result.targetTotalSessions ?? base?.totalSessions,
+                                usedSessions: result.targetUsedSessions ?? base?.usedSessions,
+                                remainingSessions:
+                                    result.targetRemainingSessions ?? base?.remainingSessions,
+                                sessionSequence: result.sessionSequence ?? base?.sessionSequence,
+                                packageName: nextPackageName,
+                                displayPackageName: nextPackageName
+                            });
+                        }
                         if (typeof onScheduleUpdated === 'function') {
                             onScheduleUpdated();
                         }

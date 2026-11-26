@@ -2230,6 +2230,9 @@
     },
     "activeMappingMergeHint": "추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.",
     "activeMappingMergeMeta": "활성 배정 #{{id}} · 잔여 {{remaining}}회",
+    "sameDayBlockedWhileActiveRemaining": "잔여 회기가 있는 활성 배정이 있어 당일 카드(사후 결제) 배정을 만들 수 없습니다. 잔여 회기를 사용하거나 선납 추가 패키지로 등록해 주세요.",
+    "sameDayBlockedWhileActiveRemainingConfirmTitle": "당일 카드 배정 불가",
+    "sameDayBlockedWhileActiveRemainingConfirmMessage": "활성 배정 잔여 {{remaining}}회가 남아 있습니다. 당일 카드 배정은 만들 수 없습니다. 선납 추가 패키지를 이용하거나 잔여 회기를 먼저 사용해 주세요.",
     "confirmMultiplePackages": {
       "title": "상품 다중 선택 확인",
       "message": "상품 {{count}}개가 선택됐습니다. 이대로 등록할까요?",
@@ -2247,6 +2250,7 @@
       "sameDayCard": "사후 카드 결제 (당일 방문)",
       "sameDayCardDesc": "당일 방문 시 결제",
       "sameDayCardHint": "배정은 결제 대기 상태로 즉시 생성되며, 당일 방문 시 당일 결제 모달에서 결제하면 배정이 활성화되고 회기 1회가 자동 차감됩니다.",
+      "sameDayCardBlockedHint": "잔여 회기가 있는 활성 배정이 있어 당일 카드 배정을 선택할 수 없습니다.",
       "sameDayCardCompletionNotice": "결제 대기 배정이 생성되었습니다. 곧 열리는 당일 결제 모달에서 결제 정보를 입력해 배정을 활성화하세요."
     }
   },

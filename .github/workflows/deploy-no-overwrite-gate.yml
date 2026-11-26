@@ -127,6 +127,9 @@ jobs:
       - name: Nightly prod-to-dev copy re-applies repo routines
         run: bash scripts/database/sync/prod-to-dev-daily.mysql.test.sh
 
+      - name: prod-to-dev sync restarts .dev BE only after success
+        run: bash scripts/database/sync/prod-to-dev-daily.be-restart.test.sh
+
       - name: Flyway-owned procedure extract tests
         run: bash scripts/database/sync/flyway-procedure-extract.test.sh
 

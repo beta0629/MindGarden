@@ -84,6 +84,17 @@ const schedule = {
 
 const candidates = [
   {
+    mappingId: 100,
+    packageName: '현재 패키지(후보)',
+    status: 'ACTIVE',
+    totalSessions: 10,
+    usedSessions: 3,
+    remainingSessions: 7,
+    current: true,
+    selectable: false,
+    blockReason: '지금 이 일정이 연결된 배정입니다'
+  },
+  {
     mappingId: 200,
     packageName: '다른 상품',
     status: 'ACTIVE',
@@ -150,6 +161,20 @@ describe('ScheduleReassignMappingPanel', () => {
           cancelRecommended: false
         });
       }
+      if (String(url).includes('/history')) {
+        return Promise.resolve([
+          {
+            when: '2026-11-26T09:00:00',
+            fromMappingId: 100,
+            toMappingId: 200,
+            fromMappingName: '현재 패키지(후보)',
+            toMappingName: '다른 상품',
+            reason: '내담자 요청',
+            eventType: 'SESSION_REASSIGN_IN',
+            actorUserName: '관리자'
+          }
+        ]);
+      }
       return Promise.resolve([]);
     });
   });
@@ -168,8 +193,22 @@ describe('ScheduleReassignMappingPanel', () => {
     expect(screen.queryByText(/매칭/)).not.toBeInTheDocument();
   });
 
-  test('사유 없으면 확정 disabled, 칩 선택 후 확정 가능', async () => {
+  test('current 후보 used/remaining이 schedule과 달라도 current 값을 표시', async () => {
+    // schedule: used=1 rem=9 / current candidate: used=3 rem=7
     renderPanel();
+    await waitFor(() => {
+      const current = screen.getByTestId('reassign-mapping-current');
+      expect(current).toHaveTextContent('현재 패키지(후보)');
+      expect(current).toHaveTextContent('사용 3 / 총 10 · 잔여 7');
+    });
+    const current = screen.getByTestId('reassign-mapping-current');
+    expect(current).not.toHaveTextContent('사용 1 / 총 10 · 잔여 9');
+    expect(screen.getAllByTestId('reassign-session-cells').length).toBeGreaterThan(0);
+  });
+
+  test('사유 없으면 확정 disabled, 칩 선택 후 확정 가능 · cancelRecommended면 primary 숨김', async () => {
+    const onReassigned = jest.fn();
+    renderPanel({ onReassigned });
     await screen.findByTestId('reassign-mapping-candidate-200');
     fireEvent.click(screen.getByTestId('reassign-mapping-candidate-200'));
     fireEvent.click(screen.getByTestId('reassign-next'));
@@ -185,7 +224,8 @@ describe('ScheduleReassignMappingPanel', () => {
       originMappingId: 100,
       targetMappingId: 200,
       sessionSequence: 1,
-      cancelRecommended: true
+      cancelRecommended: true,
+      targetPackageName: '다른 상품'
     });
     fireEvent.click(screen.getByTestId('reassign-confirm'));
     await waitFor(() => {
@@ -197,9 +237,14 @@ describe('ScheduleReassignMappingPanel', () => {
     expect(mockSuccess).toHaveBeenCalledWith(REASSIGN_UI.SUCCESS_TOAST);
     const link = await screen.findByTestId('reassign-cancel-recommended-link');
     expect(link).toHaveAttribute('href', ADMIN_ROUTES.MAPPING_MANAGEMENT);
+    expect(screen.queryByTestId('reassign-confirm')).not.toBeInTheDocument();
+    expect(screen.getByTestId('reassign-close')).toBeInTheDocument();
+    expect(onReassigned).toHaveBeenCalledWith(
+      expect.objectContaining({ targetPackageName: '다른 상품', cancelRecommended: true })
+    );
   });
 
-  test('직접입력 max 200 · 닫기 라벨에 취소 단어 없음', async () => {
+  test('직접입력 max 200 · 변경 사유 라벨 · 닫기 라벨에 취소 단어 없음', async () => {
     renderPanel();
     await screen.findByTestId('reassign-mapping-candidate-200');
     fireEvent.click(screen.getByTestId('reassign-mapping-candidate-200'));
@@ -207,6 +252,7 @@ describe('ScheduleReassignMappingPanel', () => {
     await waitFor(() => expect(screen.getByTestId('reassign-next')).toBeEnabled());
     fireEvent.click(screen.getByTestId('reassign-next'));
 
+    expect(screen.getByText(REASSIGN_UI.REASON_LABEL)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('radio', { name: '직접 입력' }));
     const input = await screen.findByTestId('reassign-reason-input');
     fireEvent.change(input, { target: { value: 'a'.repeat(250) } });
@@ -216,5 +262,18 @@ describe('ScheduleReassignMappingPanel', () => {
     );
     expect(screen.getByTestId('reassign-close')).toHaveTextContent('닫기');
     expect(screen.getByTestId('reassign-confirm')).toHaveTextContent('배정 변경');
+  });
+
+  test('서버 이력 목록을 표시한다', async () => {
+    renderPanel();
+    await waitFor(() => {
+      expect(mockGet).toHaveBeenCalledWith(
+        API_ENDPOINTS.ADMIN.SCHEDULES.REASSIGN_MAPPING_HISTORY(501)
+      );
+    });
+    const list = await screen.findByTestId('reassign-history-list');
+    expect(list).toHaveTextContent('현재 패키지(후보)');
+    expect(list).toHaveTextContent('다른 상품');
+    expect(list).toHaveTextContent('내담자 요청');
   });
 });

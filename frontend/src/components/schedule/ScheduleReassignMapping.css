@@ -15,6 +15,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--mg-v2-space-4);
+  min-height: 0;
+  flex: 1 1 auto;
 }
 
 .schedule-reassign-mapping__disclaimer {
@@ -87,8 +89,9 @@
 }
 
 .schedule-reassign-mapping__item.is-selected {
-  border-color: var(--mg-v2-color-primary-main);
-  background: var(--mg-v2-color-state-selected);
+  border-width: var(--mg-v2-border-width-thick);
+  border-color: var(--mg-v2-color-neutral-900);
+  background: var(--mg-v2-color-surface-active);
 }
 
 .schedule-reassign-mapping__item.is-current,
@@ -115,10 +118,10 @@
   display: inline-flex;
   align-items: center;
   padding: var(--mg-v2-space-0-5) var(--mg-v2-space-2);
-  color: var(--mg-v2-color-text-secondary);
+  color: var(--mg-v2-color-primary-dark);
   font-size: var(--mg-v2-font-size-caption);
   font-weight: var(--mg-v2-font-weight-medium);
-  background: var(--mg-v2-color-neutral-200);
+  background: var(--mg-v2-color-primary-subtle);
   border-radius: var(--mg-v2-radius-sm);
 }
 
@@ -189,6 +192,16 @@
   grid-template-columns: repeat(auto-fit, minmax(var(--mg-v2-space-6), 1fr));
 }
 
+.schedule-reassign-mapping__cells--list {
+  grid-template-columns: repeat(auto-fit, minmax(var(--mg-v2-space-4), 1fr));
+  max-width: 100%;
+}
+
+.schedule-reassign-mapping__cells--list .schedule-reassign-mapping__cell {
+  min-height: var(--mg-v2-space-4);
+  font-size: var(--mg-v2-font-size-caption);
+}
+
 .schedule-reassign-mapping__cell {
   display: flex;
   align-items: center;
@@ -210,21 +223,21 @@
 }
 
 .schedule-reassign-mapping__cell--remaining {
-  background: var(--mg-v2-color-primary-subtle);
-  border-color: var(--mg-v2-color-primary-main);
-  color: var(--mg-v2-color-primary-dark);
+  color: var(--mg-v2-color-text-secondary);
+  background: var(--mg-v2-color-surface-card);
+  border-color: var(--mg-v2-color-border-strong);
 }
 
 .schedule-reassign-mapping__cell--planned {
-  color: var(--mg-v2-color-text-inverse);
-  background: var(--mg-v2-color-primary-main);
-  border-color: var(--mg-v2-color-primary-main);
+  color: var(--mg-v2-color-semantic-warning-dark);
+  background: var(--mg-v2-color-semantic-warning-light);
+  border-color: var(--mg-v2-color-semantic-warning);
 }
 
 .schedule-reassign-mapping__cell--restored {
   color: var(--mg-v2-color-semantic-warning-dark);
   background: var(--mg-v2-color-semantic-warning-light);
-  border-color: var(--mg-v2-color-semantic-warning);
+  border-color: var(--mg-v2-color-semantic-warning-dark);
 }
 
 .schedule-reassign-mapping__reason-field {
@@ -244,7 +257,8 @@
   min-height: var(--mg-v2-space-20);
   padding: var(--mg-v2-space-3);
   color: var(--mg-v2-color-text-primary);
-  font-size: var(--mg-v2-font-size-body-md);
+  /* iOS 줌 방지: body 토큰(14)보다 16px(1rem) 강제 */
+  font-size: 1rem;
   font-family: inherit;
   background: var(--mg-v2-color-surface-card);
   border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default);
@@ -318,7 +332,58 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
+  flex: none;
   gap: var(--mg-v2-space-2);
   padding-top: var(--mg-v2-space-3);
   border-top: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-subtle);
+  background: var(--mg-v2-color-surface-card);
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* UnifiedModal: className이 overlay·modal 양쪽에 붙음 → 375 하단 시트 */
+@media (max-width: 600px) {
+  .mg-modal-overlay.schedule-reassign-mapping-panel {
+    align-items: flex-end;
+    justify-content: flex-end;
+    padding: 0;
+  }
+
+  .mg-modal.schedule-reassign-mapping-panel {
+    position: relative;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 92dvh;
+    margin: 0;
+    border-radius: var(--mg-v2-radius-xl) var(--mg-v2-radius-xl) 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mg-modal.schedule-reassign-mapping-panel .mg-modal__body {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    flex: 1 1 auto;
+  }
+
+  .mg-modal.schedule-reassign-mapping-panel .schedule-reassign-mapping__body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: none;
+  }
+
+  .mg-modal.schedule-reassign-mapping-panel .schedule-reassign-mapping__footer {
+    flex: none;
+    position: sticky;
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }

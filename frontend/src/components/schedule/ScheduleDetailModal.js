@@ -1589,6 +1589,11 @@ const ScheduleDetailModal = ({
                     onReassigned={(result) => {
                         if (result?.targetMappingId != null) {
                             const base = localScheduleOverride ?? scheduleData;
+                            const nextPackageName =
+                                result.targetPackageName
+                                ?? result.packageName
+                                ?? result.displayPackageName
+                                ?? base?.packageName;
                             setLocalScheduleOverride({
                                 ...base,
                                 mappingId: result.targetMappingId,
@@ -1596,7 +1601,9 @@ const ScheduleDetailModal = ({
                                 usedSessions: result.targetUsedSessions ?? base?.usedSessions,
                                 remainingSessions:
                                     result.targetRemainingSessions ?? base?.remainingSessions,
-                                sessionSequence: result.sessionSequence ?? base?.sessionSequence
+                                sessionSequence: result.sessionSequence ?? base?.sessionSequence,
+                                packageName: nextPackageName,
+                                displayPackageName: nextPackageName
                             });
                         }
                         if (typeof onScheduleUpdated === 'function') {

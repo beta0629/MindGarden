@@ -34,8 +34,9 @@ export function toPositiveSessionTotal(value) {
  * @param {number} [options.usedCount] 사용(점유) 칸 수 — 1..used 는 used
  * @param {number|null} [options.highlightIndex] 1-based 강조 회차
  * @param {string} [options.highlightState] SESSION_CELL_STATE.*
+ * @param {'default'|'list'} [options.mode] list 는 Step1 행용 소형 창
  * @returns {{
- *   layout: 'empty'|'row'|'grid'|'window',
+ *   layout: 'empty'|'row'|'grid'|'window'|'list',
  *   cells: Array<{ index: number, state: string }>,
  *   prefixCount: number,
  *   suffixCount: number,
@@ -66,9 +67,12 @@ export function buildSessionCellLayout(total, options = {}) {
       ? Math.floor(highlightRaw)
       : null;
   const highlightState = options.highlightState || SESSION_CELL_STATE.PLANNED;
+  const isListMode = options.mode === 'list';
 
   let layout = 'row';
-  if (n > SESSION_CELL_WINDOW_SIZE * 2) {
+  if (isListMode) {
+    layout = 'list';
+  } else if (n > SESSION_CELL_WINDOW_SIZE * 2) {
     layout = 'window';
   } else if (n > SESSION_CELL_GRID_COLUMNS) {
     layout = 'grid';
@@ -76,14 +80,22 @@ export function buildSessionCellLayout(total, options = {}) {
 
   let windowStart = 1;
   let windowEnd = n;
-  if (layout === 'window') {
+  if (layout === 'window' || layout === 'list') {
     const focus =
       highlightIndex != null
         ? highlightIndex
         : Math.min(Math.max(usedCount + 1, 1), n);
-    windowStart = Math.max(1, Math.min(focus - 4, n - SESSION_CELL_WINDOW_SIZE + 1));
-    windowEnd = Math.min(n, windowStart + SESSION_CELL_WINDOW_SIZE - 1);
-    windowStart = Math.max(1, windowEnd - SESSION_CELL_WINDOW_SIZE + 1);
+    const windowSize = layout === 'list'
+      ? Math.min(SESSION_CELL_WINDOW_SIZE, n)
+      : SESSION_CELL_WINDOW_SIZE;
+    if (layout === 'list' && n <= windowSize) {
+      windowStart = 1;
+      windowEnd = n;
+    } else {
+      windowStart = Math.max(1, Math.min(focus - 4, n - windowSize + 1));
+      windowEnd = Math.min(n, windowStart + windowSize - 1);
+      windowStart = Math.max(1, windowEnd - windowSize + 1);
+    }
   }
 
   const cells = [];

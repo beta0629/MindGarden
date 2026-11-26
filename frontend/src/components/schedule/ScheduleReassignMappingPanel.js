@@ -163,16 +163,23 @@ export function isReassignReasonValid(reason) {
  * @param {object} layout
  * @returns {JSX.Element|null}
  */
-function SessionCellsView({ layout, label }) {
+function SessionCellsView({ layout, label, compact = false }) {
   if (!layout || layout.layout === 'empty') {
     return null;
   }
-  const cellsClass =
-    layout.layout === 'row'
-      ? 'schedule-reassign-mapping__cells schedule-reassign-mapping__cells--row'
-      : 'schedule-reassign-mapping__cells';
+  let cellsClass = 'schedule-reassign-mapping__cells';
+  if (layout.layout === 'row') {
+    cellsClass = 'schedule-reassign-mapping__cells schedule-reassign-mapping__cells--row';
+  } else if (layout.layout === 'list' || compact) {
+    cellsClass = 'schedule-reassign-mapping__cells schedule-reassign-mapping__cells--list';
+  }
   return (
-    <div className="schedule-reassign-mapping__cells-wrap" data-testid="reassign-session-cells" data-total={layout.total}>
+    <div
+      className="schedule-reassign-mapping__cells-wrap"
+      data-testid="reassign-session-cells"
+      data-total={layout.total}
+      data-layout={layout.layout}
+    >
       {label ? <p className="schedule-reassign-mapping__cells-summary"><SafeText>{label}</SafeText></p> : null}
       {layout.prefixCount > 0 ? (
         <p className="schedule-reassign-mapping__cells-summary" data-testid="reassign-cells-prefix">
@@ -207,8 +214,47 @@ function SessionCellsView({ layout, label }) {
 
 SessionCellsView.propTypes = {
   layout: PropTypes.object,
-  label: PropTypes.string
+  label: PropTypes.string,
+  compact: PropTypes.bool
 };
+
+/**
+ * @param {unknown} payload
+ * @returns {Array<object>}
+ */
+export function normalizeHistoryList(payload) {
+  const raw = payload?.data ?? payload;
+  if (Array.isArray(raw)) {
+    return raw;
+  }
+  if (Array.isArray(raw?.content)) {
+    return raw.content;
+  }
+  if (Array.isArray(raw?.history)) {
+    return raw.history;
+  }
+  return [];
+}
+
+/**
+ * @param {object} entry
+ * @returns {string}
+ */
+export function formatHistoryEntry(entry) {
+  if (!entry) {
+    return '';
+  }
+  const fromId = entry.fromMappingId ?? entry.originMappingId;
+  const toId = entry.toMappingId ?? entry.targetMappingId;
+  const fromName = toDisplayString(entry.fromMappingName, '');
+  const toName = toDisplayString(entry.toMappingName, '');
+  const fromLabel = fromName || (fromId != null ? String(fromId) : '?');
+  const toLabel = toName || (toId != null ? String(toId) : '?');
+  const seq = entry.sessionSequence != null ? ` · ${entry.sessionSequence}회기` : '';
+  const reason = entry.reason ? ` · ${entry.reason}` : '';
+  const actor = entry.actorUserName ? ` · ${entry.actorUserName}` : '';
+  return `${fromLabel} → ${toLabel}${seq}${reason}${actor}`;
+}
 
 /**
  * @param {object} props
@@ -234,10 +280,12 @@ const ScheduleReassignMappingPanel = ({
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [cancelRecommended, setCancelRecommended] = useState(false);
-  const [historyLog, setHistoryLog] = useState([]);
+  const [sessionHistoryLog, setSessionHistoryLog] = useState([]);
+  const [serverHistoryLog, setServerHistoryLog] = useState([]);
+  const [historyFromServer, setHistoryFromServer] = useState(false);
   const submittingRef = useRef(false);
 
-  const origin = useMemo(() => buildOriginMappingFromSchedule(schedule), [schedule]);
+  const originFallback = useMemo(() => buildOriginMappingFromSchedule(schedule), [schedule]);
   const scheduleId = schedule?.id ?? null;
 
   const resolvedReason = useMemo(
@@ -260,6 +308,9 @@ const ScheduleReassignMappingPanel = ({
     setSubmitting(false);
     setSubmitError('');
     setCancelRecommended(false);
+    setSessionHistoryLog([]);
+    setServerHistoryLog([]);
+    setHistoryFromServer(false);
     submittingRef.current = false;
   }, []);
 
@@ -301,23 +352,52 @@ const ScheduleReassignMappingPanel = ({
     }
   }, [scheduleId]);
 
+  const loadHistory = useCallback(async () => {
+    if (!scheduleId) {
+      return;
+    }
+    try {
+      const data = await StandardizedApi.get(
+        API_ENDPOINTS.ADMIN.SCHEDULES.REASSIGN_MAPPING_HISTORY(scheduleId)
+      );
+      setServerHistoryLog(normalizeHistoryList(data));
+      setHistoryFromServer(true);
+    } catch (error) {
+      setServerHistoryLog([]);
+      setHistoryFromServer(false);
+    }
+  }, [scheduleId]);
+
   useEffect(() => {
     if (!isOpen) {
       resetWizard();
       return;
     }
     loadCandidates();
-  }, [isOpen, loadCandidates, resetWizard]);
+    loadHistory();
+  }, [isOpen, loadCandidates, loadHistory, resetWizard]);
+
+  const currentCandidate = useMemo(
+    () => candidates.find((item) => item?.current === true) || null,
+    [candidates]
+  );
+
+  /** candidates의 current 우선. 로드 전·current 없을 때만 schedule origin fallback. */
+  const origin = currentCandidate || originFallback;
 
   const eligibleCandidates = useMemo(
-    () => candidates.filter((item) => isCandidateSelectable(item) && item.mappingId !== origin.mappingId),
+    () => candidates.filter((item) => isCandidateSelectable(item)
+      && Number(item.mappingId) !== Number(origin.mappingId)),
     [candidates, origin.mappingId]
   );
 
   const blockedCandidates = useMemo(
-    () => candidates.filter((item) => !isCandidateSelectable(item) || item.mappingId === origin.mappingId),
+    () => candidates.filter((item) => !isCandidateSelectable(item)
+      || Number(item.mappingId) === Number(origin.mappingId)),
     [candidates, origin.mappingId]
   );
+
+  const historyLog = historyFromServer ? serverHistoryLog : sessionHistoryLog;
 
   const selectedCandidate = useMemo(
     () => eligibleCandidates.find((item) => Number(item.mappingId) === Number(selectedMappingId)) || null,
@@ -400,20 +480,35 @@ const ScheduleReassignMappingPanel = ({
       const body = data?.data ?? data;
       const recommended = Boolean(body?.cancelRecommended);
       setCancelRecommended(recommended);
-      setHistoryLog((prev) => [
-        {
-          at: new Date().toISOString(),
-          scheduleId: body?.scheduleId ?? scheduleId,
-          originMappingId: body?.originMappingId ?? origin.mappingId,
-          targetMappingId: body?.targetMappingId ?? selectedMappingId,
-          sessionSequence: body?.sessionSequence,
-          reason: resolvedReason
-        },
-        ...prev
-      ]);
+      const sessionEntry = {
+        at: new Date().toISOString(),
+        when: new Date().toISOString(),
+        scheduleId: body?.scheduleId ?? scheduleId,
+        originMappingId: body?.originMappingId ?? origin.mappingId,
+        targetMappingId: body?.targetMappingId ?? selectedMappingId,
+        fromMappingId: body?.originMappingId ?? origin.mappingId,
+        toMappingId: body?.targetMappingId ?? selectedMappingId,
+        fromMappingName: origin.packageName,
+        toMappingName: body?.targetPackageName
+          || selectedCandidate?.packageName
+          || '',
+        sessionSequence: body?.sessionSequence,
+        reason: resolvedReason,
+        eventType: 'SESSION_REASSIGN'
+      };
+      setSessionHistoryLog((prev) => [sessionEntry, ...prev]);
+      if (historyFromServer) {
+        setServerHistoryLog((prev) => [sessionEntry, ...prev]);
+      }
       notificationManager.success(REASSIGN_UI.SUCCESS_TOAST);
       if (typeof onReassigned === 'function') {
-        onReassigned(body);
+        onReassigned({
+          ...body,
+          targetPackageName: body?.targetPackageName
+            || selectedCandidate?.packageName
+            || body?.packageName
+            || null
+        });
       }
       if (!recommended) {
         handleClose();
@@ -468,6 +563,10 @@ const ScheduleReassignMappingPanel = ({
     const id = Number(item.mappingId);
     const selected = !current && Number(selectedMappingId) === id;
     const blocked = disabled || current || !isCandidateSelectable(item);
+    const listLayout = buildSessionCellLayout(item.totalSessions, {
+      usedCount: item.usedSessions,
+      mode: 'list'
+    });
     return (
       <li key={`${current ? 'current' : 'cand'}-${id}`}>
         <button
@@ -493,6 +592,7 @@ const ScheduleReassignMappingPanel = ({
               {formatSessions(item.usedSessions, item.totalSessions, item.remainingSessions)}
             </SafeText>
           </span>
+          <SessionCellsView layout={listLayout} compact />
           {item.blockReason ? (
             <span className="schedule-reassign-mapping__block-reason">
               <SafeText>{item.blockReason}</SafeText>
@@ -503,7 +603,8 @@ const ScheduleReassignMappingPanel = ({
     );
   };
 
-  const confirmDisabled = !reasonValid || submitting || selectedMappingId == null;
+  const confirmDisabled =
+    !reasonValid || submitting || selectedMappingId == null || cancelRecommended;
 
   return (
     <UnifiedModal
@@ -550,10 +651,20 @@ const ScheduleReassignMappingPanel = ({
 
             <h3 className="schedule-reassign-mapping__section-title">{REASSIGN_UI.BLOCKED_SECTION}</h3>
             <ul className="schedule-reassign-mapping__list">
-              {origin.mappingId != null ? renderMappingButton(origin, { current: true, disabled: true }) : null}
-              {blockedCandidates
-                .filter((item) => Number(item.mappingId) !== Number(origin.mappingId))
-                .map((item) => renderMappingButton(item, { disabled: true }))}
+              {origin.mappingId != null
+                && !blockedCandidates.some(
+                  (item) => Number(item.mappingId) === Number(origin.mappingId)
+                )
+                ? renderMappingButton(origin, { current: true, disabled: true })
+                : null}
+              {blockedCandidates.map((item) => renderMappingButton(
+                item,
+                {
+                  current: item.current === true
+                    || Number(item.mappingId) === Number(origin.mappingId),
+                  disabled: true
+                }
+              ))}
             </ul>
           </section>
         ) : null}
@@ -624,35 +735,38 @@ const ScheduleReassignMappingPanel = ({
                 aria-label="배정 변경 사유"
               />
             </div>
-            {chipValue === REASSIGN_REASON_CHIP_CUSTOM || !chipValue ? (
-              <div className="schedule-reassign-mapping__reason-field">
-                <label htmlFor="schedule-reassign-reason-input">{REASSIGN_UI.REASON_PLACEHOLDER}</label>
-                <textarea
-                  id="schedule-reassign-reason-input"
-                  data-testid="reassign-reason-input"
-                  value={customReason}
-                  maxLength={REASSIGN_REASON_MAX_LENGTH}
-                  onChange={(event) => {
-                    if (chipValue !== REASSIGN_REASON_CHIP_CUSTOM) {
-                      setChipValue(REASSIGN_REASON_CHIP_CUSTOM);
-                    }
-                    setCustomReason(event.target.value.slice(0, REASSIGN_REASON_MAX_LENGTH));
-                  }}
-                />
-                <span className="schedule-reassign-mapping__char-count" data-testid="reassign-reason-count">
-                  {customReason.length}/{REASSIGN_REASON_MAX_LENGTH}
-                </span>
-              </div>
-            ) : (
-              <div className="schedule-reassign-mapping__reason-field">
-                <p className="schedule-reassign-mapping__item-meta" data-testid="reassign-reason-selected">
-                  <SafeText>{resolvedReason}</SafeText>
-                </p>
-                <span className="schedule-reassign-mapping__char-count" data-testid="reassign-reason-count">
-                  {resolvedReason.length}/{REASSIGN_REASON_MAX_LENGTH}
-                </span>
-              </div>
-            )}
+            <div className="schedule-reassign-mapping__reason-field">
+              <label htmlFor="schedule-reassign-reason-input">{REASSIGN_UI.REASON_LABEL}</label>
+              {chipValue === REASSIGN_REASON_CHIP_CUSTOM || !chipValue ? (
+                <>
+                  <textarea
+                    id="schedule-reassign-reason-input"
+                    data-testid="reassign-reason-input"
+                    value={customReason}
+                    maxLength={REASSIGN_REASON_MAX_LENGTH}
+                    placeholder={REASSIGN_UI.REASON_PLACEHOLDER}
+                    onChange={(event) => {
+                      if (chipValue !== REASSIGN_REASON_CHIP_CUSTOM) {
+                        setChipValue(REASSIGN_REASON_CHIP_CUSTOM);
+                      }
+                      setCustomReason(event.target.value.slice(0, REASSIGN_REASON_MAX_LENGTH));
+                    }}
+                  />
+                  <span className="schedule-reassign-mapping__char-count" data-testid="reassign-reason-count">
+                    {customReason.length}/{REASSIGN_REASON_MAX_LENGTH}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <p className="schedule-reassign-mapping__item-meta" data-testid="reassign-reason-selected">
+                    <SafeText>{resolvedReason}</SafeText>
+                  </p>
+                  <span className="schedule-reassign-mapping__char-count" data-testid="reassign-reason-count">
+                    {resolvedReason.length}/{REASSIGN_REASON_MAX_LENGTH}
+                  </span>
+                </>
+              )}
+            </div>
 
             {cancelRecommended ? (
               <div className="schedule-reassign-mapping__cancel-hint" data-testid="reassign-cancel-recommended">
@@ -678,13 +792,9 @@ const ScheduleReassignMappingPanel = ({
             <p className="schedule-reassign-mapping__history-hint">{REASSIGN_UI.HISTORY_EMPTY}</p>
           ) : (
             <ul className="schedule-reassign-mapping__history-list" data-testid="reassign-history-list">
-              {historyLog.map((entry) => (
-                <li key={`${entry.at}-${entry.targetMappingId}`}>
-                  <SafeText>
-                    {`${entry.originMappingId} → ${entry.targetMappingId}`}
-                    {entry.sessionSequence != null ? ` · ${entry.sessionSequence}회기` : ''}
-                    {entry.reason ? ` · ${entry.reason}` : ''}
-                  </SafeText>
+              {historyLog.map((entry, index) => (
+                <li key={`${entry.when || entry.at || index}-${entry.toMappingId || entry.targetMappingId || index}`}>
+                  <SafeText>{formatHistoryEntry(entry)}</SafeText>
                 </li>
               ))}
             </ul>
@@ -727,14 +837,16 @@ const ScheduleReassignMappingPanel = ({
                 {REASSIGN_UI.NEXT}
               </ActionBarButton>
             ) : (
-              <ActionBarButton
-                variant="primary"
-                onClick={handleConfirm}
-                disabled={confirmDisabled}
-                data-testid="reassign-confirm"
-              >
-                {REASSIGN_UI.CONFIRM}
-              </ActionBarButton>
+              !cancelRecommended ? (
+                <ActionBarButton
+                  variant="primary"
+                  onClick={handleConfirm}
+                  disabled={confirmDisabled}
+                  data-testid="reassign-confirm"
+                >
+                  {REASSIGN_UI.CONFIRM}
+                </ActionBarButton>
+              ) : null
             )}
           </ActionBar>
         </div>

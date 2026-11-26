@@ -795,7 +795,7 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     });
   });
 
-  test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (생성은 차단하지 않음)', async () => {
+  test('ACTIVE 배정 존재 시 합산 안내 배너 표시 (선납 생성은 차단하지 않음)', async () => {
     adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
     adminMappingsListGetAll.mockResolvedValue({
       data: [{
@@ -822,6 +822,44 @@ describe('MappingCreationModal — P0 핫픽스 + STEP swap', () => {
     expect(screen.getByTestId('active-mapping-merge-hint')).toHaveTextContent(
       '추가 패키지 결제 시 기존 활성 배정 회기에 합산됩니다.'
     );
+  });
+
+  test('ACTIVE remaining≥1 이면 SAME_DAY_CARD 라디오 disabled + 차단 힌트', async () => {
+    adminClientsWithMappingGetAll.mockResolvedValue({ clients: clientFixture });
+    adminMappingsListGetAll.mockResolvedValue({
+      data: [{
+        id: 75,
+        consultantId: 11,
+        clientId: 22,
+        status: 'ACTIVE',
+        remainingSessions: 3,
+        totalSessions: 10
+      }]
+    });
+    apiPost.mockClear();
+
+    renderModal();
+
+    await waitFor(() => expect(screen.getByText('상담사A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('상담사A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('내담자A')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('내담자A'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+    await waitFor(() => expect(screen.getByText('표준 패키지 (5회, 300,000원)')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('표준 패키지 (5회, 300,000원)'));
+    await act(async () => {
+      fireEvent.click(screen.getByText('common:action.next'));
+    });
+
+    await waitFor(() => expect(screen.getByDisplayValue('SAME_DAY_CARD')).toBeInTheDocument());
+    expect(screen.getByDisplayValue('SAME_DAY_CARD')).toBeDisabled();
+    expect(screen.getByTestId('same-day-blocked-active-remaining-hint')).toBeInTheDocument();
+    expect(screen.getByTestId('payment-timing-card-SAME_DAY_CARD')).toHaveAttribute('aria-disabled', 'true');
   });
 });
 

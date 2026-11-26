@@ -927,6 +927,18 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                     activeExisting.getId(), consultant.getName(), clientUser.getName());
         }
 
+        // ACTIVE remaining≥1 이면 SAME_DAY_CARD 신규 생성 차단 (박혜선 케이스 재발 방지).
+        // paymentTiming 은 상품명/회기수 하드코딩이 아니라 resolve 결과(공통코드·engagement)로 판별.
+        String resolvedPaymentTimingEarly = resolvePaymentTimingForNewMapping(
+                tenantId, clientUser.getId(), dto.getPaymentTiming());
+        if (PaymentTimingConstants.isSameDayCard(resolvedPaymentTimingEarly)
+                && activeExisting != null
+                && activeExisting.getRemainingSessions() != null
+                && activeExisting.getRemainingSessions() >= 1) {
+            throw new IllegalArgumentException(
+                    AdminServiceUserFacingMessages.MSG_MAPPING_CREATE_SAME_DAY_WHILE_ACTIVE_REMAINING);
+        }
+
         if (!existingMappings.isEmpty()) {
             log.info("🔍 기존 매칭 발견, 자동 종료 처리: 상담사={}, 내담자={}, 기존 매칭 수={}", 
                 consultant.getName(), clientUser.getName(), existingMappings.size());
@@ -1026,8 +1038,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setSpecialConsiderations(dto.getSpecialConsiderations());
         mapping.setBranchCode(null); // 표준화 2025-12-06: 브랜치 코드 사용 금지
         // 내담자 등록 유형이 SSOT. 타기관이면 기관연계만, 일반이면 회기·가예약만.
-        mapping.setPaymentTiming(resolvePaymentTimingForNewMapping(
-                tenantIdForPayment, clientUser.getId(), dto.getPaymentTiming()));
+        // 상단 SAME_DAY_CARD×ACTIVE 잔여 가드와 동일 resolve 결과를 재사용한다.
+        mapping.setPaymentTiming(resolvedPaymentTimingEarly);
 
         // 짧은 시간창 중복 생성 가드: 관리자 수동 배정 경로(createMappingFromAdmin)에만 적용한다.
         // 결제 확정(PaymentServiceImpl) 등 기존 호출자는 이 가드로 부분 성공(결제는 성공, 매칭만 거부)이

@@ -129,6 +129,15 @@ def decrypt(text, mats, order):
     return text, False  # 앱과 동일: 복호화 실패 시 원문(평문 저장) 취급
 
 
+def _is_true(v):
+    """MySQL BIT(1)/TINYINT 안전 판정 (b'\\x00' -> False)."""
+    if v is None:
+        return False
+    if isinstance(v, (bytes, bytearray)):
+        return any(v)
+    return bool(v)
+
+
 def main():
     conn = pymysql.connect(
         host=os.environ["DB_HOST"], user=os.environ["DB_USER"], password=os.environ["MYSQL_PWD"],
@@ -209,7 +218,6 @@ def main():
         ("session_compensation_history", "mapping_id"),
         ("session_extension_requests", "mapping_id"),
         ("discount_accounting_transactions", "mapping_id"),
-        ("client_schedule_notes", "mapping_id"),
         ("client_satisfaction_surveys", "mapping_id"),
         ("institution_link_consultation_logs", "mapping_id"),
         ("session_recovery_alerts", "mapping_id"),
@@ -222,12 +230,24 @@ def main():
             continue
         n = cnt(t, f"`{c}` IN (386,388,430)", ())
         gate(f"G3_{t}_mapping_ref_zero", n == 0, f"rows={n}")
-    sched_mapping_tables = ["client_schedule_notes", "client_satisfaction_surveys",
+    sched_mapping_tables = ["client_satisfaction_surveys",
                             "institution_link_consultation_logs", "session_recovery_alerts"]
     for t in sched_mapping_tables:
         if has_col(t, "schedule_id"):
             n = cnt(t, "schedule_id IN (689,781)", ())
             gate(f"G3_{t}_schedule_ref_zero", n == 0, f"rows={n}")
+    # client_schedule_notes: 재학 결정 B(2026-11-26 15:17) — 변경하지 않음, 경고만 + 현재 행 출력(내용 미출력)
+    if has_col("client_schedule_notes", "mapping_id"):
+        cur.execute("""SELECT id, schedule_id, mapping_id, created_at FROM client_schedule_notes
+                       WHERE tenant_id=%s AND (client_id=%s OR mapping_id IN (386,388,430)
+                             OR schedule_id IN (687,689,781))
+                       ORDER BY id""", (TENANT, CLIENT_ID))
+        nrows = cur.fetchall()
+        for r in nrows:
+            out(f"NOTE row id={r['id']} schedule_id={r['schedule_id']} mapping_id={r['mapping_id']} created_at={r['created_at']}")
+        linked = [r for r in nrows if r["mapping_id"] in (386, 430) or r["schedule_id"] in (689, 781)]
+        out(f"WARN: G3_client_schedule_notes rows={len(nrows)} linked_to_386_430_or_689_781={len(linked)} "
+            "— 변경하지 않음(결정 B), 통과")
     # 정보용: 일정 id만 참조(매핑 값 비저장) → 이번 변경 영향 없음
     for t, c in (("consultation_records", "consultation_id"), ("consultant_ratings", "schedule_id"),
                  ("consultation_record_alerts", "schedule_id"), ("admin_request_idempotency", "mapping_id")):
@@ -262,7 +282,7 @@ def main():
     for mid, exp in exp_m.items():
         r = m.get(mid)
         ok = r is not None and r["consultant_id"] == CONSULTANT_ID and r["client_id"] == CLIENT_ID \
-            and not r["is_deleted"] and all(r[k] == v for k, v in exp.items())
+            and not _is_true(r["is_deleted"]) and all(r[k] == v for k, v in exp.items())
         if mid == 430:
             ok = ok and r["payment_date"] is None
         show = {k: (str(v) if v is not None else None) for k, v in (r or {}).items()}

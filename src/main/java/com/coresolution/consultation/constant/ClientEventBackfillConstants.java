@@ -17,6 +17,18 @@ public final class ClientEventBackfillConstants {
 
     public static final String API_PATH = "/api/v1/admin/client-events/backfill";
 
+    /**
+     * Actions SSH 백필용 공유 시크릿 헤더명.
+     * 값은 {@link #BACKFILL_TOKEN_ENV} 환경 변수와 constant-time 비교한다.
+     */
+    public static final String BACKFILL_TOKEN_HEADER = "X-Client-Event-Backfill-Token";
+
+    /**
+     * 공유 시크릿 env 키 ({@code /etc/mindgarden/dev.env}).
+     * 비어 있으면 시크릿 경로 인증 불가 — ADMIN 세션만 허용.
+     */
+    public static final String BACKFILL_TOKEN_ENV = "CLIENT_EVENT_BACKFILL_TOKEN";
+
     public static final String IDEMPOTENCY_PREFIX = "BACKFILL:";
 
     public static final String JSON_KEY_USED_SESSIONS = "usedSessions";

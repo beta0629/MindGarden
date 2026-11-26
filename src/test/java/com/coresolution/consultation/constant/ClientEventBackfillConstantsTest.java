@@ -40,4 +40,15 @@ class ClientEventBackfillConstantsTest {
         assertThat(ClientEventBackfillMode.fromCode("apply")).isEqualTo(ClientEventBackfillMode.APPLY);
         assertThat(ClientEventBackfillMode.fromCode("DRY-RUN")).isEqualTo(ClientEventBackfillMode.DRY_RUN);
     }
+
+    @Test
+    @DisplayName("공유 시크릿 헤더·env 상수")
+    void backfillTokenConstants() {
+        assertThat(ClientEventBackfillConstants.BACKFILL_TOKEN_HEADER)
+                .isEqualTo("X-Client-Event-Backfill-Token");
+        assertThat(ClientEventBackfillConstants.BACKFILL_TOKEN_ENV)
+                .isEqualTo("CLIENT_EVENT_BACKFILL_TOKEN");
+        assertThat(ClientEventBackfillConstants.API_PATH)
+                .isEqualTo("/api/v1/admin/client-events/backfill");
+    }
 }

@@ -5,8 +5,9 @@
 #   - workflow_dispatch 전용. push/pull_request 트리거 없음.
 #   - github.ref 가 refs/heads/release/dev 일 때만 진행. release/prod·main 거부(exit 1).
 #   - DEV_* secret 만 사용. 운영 호스트·운영 DB·prod workflow 복제 없음.
-#   - 앱은 @Profile("dev") 백필 엔드포인트 + loopback 가드. 기본 mode=dry-run.
-#   - 본 워크플로는 코어개발이 수동 dispatch. 에이전트 자동 실행 금지.
+#   - 앱은 @Profile("dev") 백필 엔드포인트 + ROLE_ADMIN (세션 또는 X-Client-Event-Backfill-Token).
+#   - 시크릿은 서버 /etc/mindgarden/dev.env 의 CLIENT_EVENT_BACKFILL_TOKEN (평문 Actions 로그 금지).
+#   - 기본 mode=dry-run. 본 워크플로는 코어개발이 수동 dispatch. 에이전트 자동 실행 금지.
 name: client_event 백필 (개발 전용)
 
 on:
@@ -107,6 +108,21 @@ jobs:
             printf 'MODE=%q\n' "$IN_MODE"
             printf 'TENANT=%q\n' "$IN_TENANT"
             cat <<'REMOTE'
+          DEV_ENV_FILE=/etc/mindgarden/dev.env
+          if [ ! -f "$DEV_ENV_FILE" ]; then
+            echo "::error title=dev.env 누락::$DEV_ENV_FILE 가 없습니다. CLIENT_EVENT_BACKFILL_TOKEN 을 설정할 수 없습니다."
+            exit 1
+          fi
+          # 평문 토큰을 로그에 출력하지 않음. set -a/source 대신 grep 으로 키만 추출.
+          BACKFILL_TOKEN=$(grep -E '^[[:space:]]*CLIENT_EVENT_BACKFILL_TOKEN=' "$DEV_ENV_FILE" \
+            | tail -n 1 \
+            | sed -E 's/^[[:space:]]*CLIENT_EVENT_BACKFILL_TOKEN=//' \
+            | sed -E 's/^["'\'']//; s/["'\'']$//' \
+            | tr -d '\r')
+          if [ -z "${BACKFILL_TOKEN:-}" ]; then
+            echo "::error title=백필 토큰 미설정::CLIENT_EVENT_BACKFILL_TOKEN 이 $DEV_ENV_FILE 에 없거나 비어 있습니다. 시크릿 경로 인증 불가."
+            exit 1
+          fi
           echo "=== mindgarden-dev health ==="
           curl -sf -m 10 http://127.0.0.1:8080/actuator/health
           echo ""
@@ -118,7 +134,9 @@ jobs:
           BODY_FILE=$(mktemp)
           HTTP_CODE=$(curl -sS -m 600 -o "$BODY_FILE" -w "%{http_code}" -X POST "$URL" \
             -H "Content-Type: application/json" \
-            -H "Accept: application/json")
+            -H "Accept: application/json" \
+            -H "X-Client-Event-Backfill-Token: ${BACKFILL_TOKEN}")
+          unset BACKFILL_TOKEN
           echo "http_code=$HTTP_CODE"
           echo "--- response ---"
           cat "$BODY_FILE"

@@ -124,9 +124,9 @@ class LifecycleEnumsTest {
     @DisplayName("MappingHistoryEventType")
     class MappingHistoryEventTypeTests {
         @Test
-        @DisplayName("8 이벤트 타입이 정의된다")
-        void eight_event_types() {
-            assertThat(MappingHistoryEventType.values()).hasSize(8);
+        @DisplayName("10 이벤트 타입이 정의된다")
+        void ten_event_types() {
+            assertThat(MappingHistoryEventType.values()).hasSize(10);
         }
 
         @Test
@@ -136,6 +136,10 @@ class LifecycleEnumsTest {
                     .isEqualTo(MappingHistoryEventType.CREATED);
             assertThat(MappingHistoryEventType.fromCode("PARTIAL_REFUND"))
                     .isEqualTo(MappingHistoryEventType.PARTIAL_REFUND);
+            assertThat(MappingHistoryEventType.fromCode("SESSION_REASSIGN_OUT"))
+                    .isEqualTo(MappingHistoryEventType.SESSION_REASSIGN_OUT);
+            assertThat(MappingHistoryEventType.fromCode("SESSION_REASSIGN_IN"))
+                    .isEqualTo(MappingHistoryEventType.SESSION_REASSIGN_IN);
         }
     }
 

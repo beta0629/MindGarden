@@ -1,0 +1,134 @@
+# 단건 운영 회기 정정: client_id=105 (재학 승인 2026-11-26 14:23 KST 「정정 진행해줘」)
+#   일정 689: mapping 386->388 seq 1 / 일정 781: mapping 430->388 seq 2
+#   mapping 388: 5/0/5 -> 5/2/3 / mapping 430: PENDING_PAYMENT -> CANCELLED(REJECTED) / mapping 386 불변
+#   consultant_client_mapping_history 3행. 결제·FT·전표·일지·급여 불변.
+# 게이트 G1(이름 복호화 일치·동명이인 없음, 평문/키 미출력) G2(DDL) G3(연관 참조) G4(전값) 하나라도 FAIL → 쓰기 없음.
+# 기본 apply=false → 같은 트랜잭션을 실행 후 ROLLBACK (dry-run). apply=true 일 때만 COMMIT.
+# workflow_dispatch 전용, 고정 스크립트만 실행, SSH 없음.
+
+name: 🛠️ Fix prod client 105 sessions reassign
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "FIX-CLIENT-105-SESSIONS" to proceed'
+        required: true
+        default: ''
+      apply:
+        description: 'false: dry-run (ROLLBACK) | true: COMMIT once'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fix-prod-client-105-sessions-reassign
+  cancel-in-progress: false
+
+jobs:
+  fix-client-105:
+    name: prod DB fix (client 105 sessions reassign)
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 8
+    steps:
+      - name: Validate inputs
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM" != "FIX-CLIENT-105-SESSIONS" ]; then
+            echo "::error::confirm must equal FIX-CLIENT-105-SESSIONS"
+            exit 1
+          fi
+          case "$APPLY" in true|false) ;; *) echo "::error::invalid apply"; exit 1;; esac
+          echo "validated apply=$APPLY KST=$(TZ=Asia/Seoul date '+%F %T')"
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python deps
+        run: |
+          python3 -m pip install -q pymysql==1.1.1 cryptography==43.0.3
+
+      - name: Resolve DB host
+        id: db
+        env:
+          PRODUCTION_DB_HOST: ${{ secrets.PRODUCTION_DB_HOST }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+          PRODUCTION_DB_USER: ${{ secrets.PRODUCTION_DB_USER }}
+          PRODUCTION_DB_NAME: ${{ secrets.PRODUCTION_DB_NAME }}
+        run: |
+          set -euo pipefail
+          HOST="${PRODUCTION_DB_HOST:-}"
+          if [ -z "$HOST" ]; then HOST="${PRODUCTION_HOST:-}"; fi
+          USER="${PRODUCTION_DB_USER:-}"
+          NAME="${PRODUCTION_DB_NAME:-}"
+          MISSING=""
+          [ -n "$HOST" ] || MISSING="$MISSING PRODUCTION_DB_HOST|PRODUCTION_HOST"
+          [ -n "$USER" ] || MISSING="$MISSING PRODUCTION_DB_USER"
+          [ -n "$NAME" ] || MISSING="$MISSING PRODUCTION_DB_NAME"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Required secrets missing:$MISSING"
+            exit 1
+          fi
+          echo "::add-mask::$HOST"
+          echo "::add-mask::$USER"
+          {
+            echo "host=$HOST"
+            echo "user=$USER"
+            echo "name=$NAME"
+          } >> "$GITHUB_OUTPUT"
+          echo "DB target resolved (host/user masked) db=$NAME"
+
+      - name: Gates + single-transaction fix
+        env:
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+          PII_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
+          PII_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
+          PII_ACTIVE_KEY_ID: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
+          APPLY: ${{ inputs.apply }}
+        run: |
+          set -euo pipefail
+          [ -n "$MYSQL_PWD" ] || { echo "::error::secrets.PRODUCTION_DB_PASSWORD is not set"; exit 1; }
+          [ -n "$PII_KEYS" ] && [ -n "$PII_IVS" ] || { echo "::error::PII key/iv secrets missing — G1 cannot run"; exit 1; }
+          python3 scripts/ops/fix_prod_client_105_sessions_reassign.py 2>&1 \
+            | sed -E -e 's/(01[016789])[- ]?[0-9]{3,4}[- ]?([0-9]{4})/\1-****-\2/g' \
+                     -e 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/***@***/g'
+
+      - name: Post read-only verification SELECT
+        if: always() && steps.db.outputs.host != ''
+        env:
+          DB_HOST: ${{ steps.db.outputs.host }}
+          DB_USER: ${{ steps.db.outputs.user }}
+          DB_NAME: ${{ steps.db.outputs.name }}
+          MYSQL_PWD: ${{ secrets.PRODUCTION_DB_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq mysql-client >/dev/null 2>&1 || true
+          mysql -h "$DB_HOST" -u "$DB_USER" "$DB_NAME" \
+            --init-command="SET SESSION TRANSACTION READ ONLY" \
+            --default-character-set=utf8mb4 -t <<'SQL'
+          SELECT 'POST_MAPPINGS' AS section, id, status, payment_status, payment_timing,
+                 total_sessions, used_sessions, remaining_sessions, package_name, payment_amount,
+                 terminated_at, updated_at
+          FROM consultant_client_mappings
+          WHERE tenant_id = 'tenant-incheon-counseling-001' AND id IN (386, 388, 430) ORDER BY id;
+          SELECT 'POST_SCHEDULES' AS section, id, mapping_id, client_id, date, status, session_sequence, updated_at
+          FROM schedules
+          WHERE tenant_id = 'tenant-incheon-counseling-001' AND id IN (687, 689, 781) ORDER BY id;
+          SELECT 'POST_HISTORY' AS section, id, mapping_id, event_type, reason, created_at
+          FROM consultant_client_mapping_history
+          WHERE tenant_id = 'tenant-incheon-counseling-001' AND mapping_id IN (386, 388, 430) ORDER BY id;
+          SELECT 'POST_FT' AS section, id, related_entity_id, transaction_type, status, amount
+          FROM financial_transactions
+          WHERE tenant_id = 'tenant-incheon-counseling-001' AND related_entity_id IN (386, 388, 430)
+            AND related_entity_type LIKE '%MAPPING%' ORDER BY id;
+          SQL

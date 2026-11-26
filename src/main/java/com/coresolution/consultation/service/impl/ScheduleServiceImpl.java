@@ -3221,9 +3221,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 actorUserId,
                 trimmedReason);
 
-        boolean cancelRecommended = origin != null
-                && origin.getRemainingSessions() != null
-                && origin.getRemainingSessions() > 0;
+        // 자동취소 없음. UI 힌트만: 원 배정이 결제대기로 비면(used=0) 취소 권장.
+        boolean cancelRecommended = isCancelRecommendedForEmptiedPendingOrigin(
+                origin, origin != null ? origin.getUsedSessions() : null);
 
         log.info("일정 배정 변경(회기 정정): scheduleId={}, originMappingId={}, targetMappingId={}, "
                         + "sessionSequence={}, cancelRecommended={}",
@@ -3311,7 +3311,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             schedule.setMappingId(previousMappingId);
             schedule.setSessionSequence(previousSequence);
         }
-        boolean cancelRecommended = originRem > 0;
+        boolean cancelRecommended = isCancelRecommendedForEmptiedPendingOrigin(origin, originUsed);
 
         return ScheduleReassignMappingPreviewResponse.builder()
                 .scheduleId(scheduleId)
@@ -3327,6 +3327,27 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .targetTotalSessions(target.getTotalSessions())
                 .cancelRecommended(cancelRecommended)
                 .build();
+    }
+
+    /**
+     * 원 배정이 결제대기(PENDING_PAYMENT)이면서 사용 회기가 0이면 취소 권장 UI 힌트.
+     *
+     * <p>자동 취소는 하지 않는다. ACTIVE 등 잔여만 남은 경우는 false.</p>
+     *
+     * @param origin 원 매핑(없으면 false)
+     * @param usedSessionsAfter 이동·복원 후 usedSessions
+     * @return 취소 권장이면 true
+     */
+    private static boolean isCancelRecommendedForEmptiedPendingOrigin(
+            ConsultantClientMapping origin, Integer usedSessionsAfter) {
+        if (origin == null) {
+            return false;
+        }
+        if (origin.getStatus() != MappingStatus.PENDING_PAYMENT) {
+            return false;
+        }
+        int used = usedSessionsAfter != null ? usedSessionsAfter : 0;
+        return used == 0;
     }
 
     /**

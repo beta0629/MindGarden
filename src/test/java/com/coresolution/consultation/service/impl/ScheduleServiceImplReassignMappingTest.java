@@ -109,7 +109,7 @@ class ScheduleServiceImplReassignMappingTest {
     }
 
     @Test
-    @DisplayName("happy path — 원 매핑 복원·대상 차감·양쪽 이력·cancelRecommended")
+    @DisplayName("happy path — 원 매핑 복원·대상 차감·양쪽 이력·ACTIVE는 cancelRecommended=false")
     void reassign_happyPath_restoresOriginDeductsTargetAndRecordsHistory() {
         Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
                 today.plusDays(1), LocalTime.of(10, 0));
@@ -137,7 +137,8 @@ class ScheduleServiceImplReassignMappingTest {
         assertThat(origin.getRemainingSessions()).isEqualTo(10);
         assertThat(target.getUsedSessions()).isEqualTo(1);
         assertThat(target.getRemainingSessions()).isEqualTo(9);
-        assertThat(response.isCancelRecommended()).isTrue();
+        // ACTIVE + 잔여만 남음 → 취소 권장 아님(결제대기+used=0 일 때만 true)
+        assertThat(response.isCancelRecommended()).isFalse();
         assertThat(response.getOriginMappingId()).isEqualTo(ORIGIN_MAPPING_ID);
         assertThat(response.getTargetMappingId()).isEqualTo(TARGET_MAPPING_ID);
         assertThat(response.getSessionSequence()).isEqualTo(1);
@@ -273,7 +274,66 @@ class ScheduleServiceImplReassignMappingTest {
         assertThat(response.getScheduleId()).isEqualTo(SCHEDULE_ID);
         assertThat(schedule.getStatus()).isEqualTo(ScheduleStatus.COMPLETED);
         assertThat(schedule.getMappingId()).isEqualTo(TARGET_MAPPING_ID);
+        assertThat(response.isCancelRecommended()).isFalse();
+    }
+
+    @Test
+    @DisplayName("cancelRecommended — PENDING_PAYMENT + used=0(비어 있음) 이면 true")
+    void reassign_cancelRecommended_whenPendingOriginBecomesEmpty() {
+        // 결제대기 매핑은 회기 차감 대상이 아니므로 used=0인 채 일정만 붙어 있던 원 배정
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 0, 10);
+        origin.setStatus(MappingStatus.PENDING_PAYMENT);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(ORIGIN_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        ScheduleReassignMappingResponse response = scheduleService.reassignScheduleMapping(
+                SCHEDULE_ID, TARGET_MAPPING_ID, "결제대기 원배정 비움", ACTOR_ID);
+
+        assertThat(origin.getUsedSessions()).isZero();
+        assertThat(origin.getStatus()).isEqualTo(MappingStatus.PENDING_PAYMENT);
         assertThat(response.isCancelRecommended()).isTrue();
+    }
+
+    @Test
+    @DisplayName("cancelRecommended — PENDING_PAYMENT 라도 used>0 이면 false")
+    void reassign_cancelRecommended_falseWhenPendingOriginStillUsed() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        // 결제대기는 복원 대상이 아니므로 used는 이동 후에도 유지
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 2, 8);
+        origin.setStatus(MappingStatus.PENDING_PAYMENT);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(ORIGIN_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        ScheduleReassignMappingResponse response = scheduleService.reassignScheduleMapping(
+                SCHEDULE_ID, TARGET_MAPPING_ID, "결제대기지만 잔여 사용 있음", ACTOR_ID);
+
+        assertThat(origin.getUsedSessions()).isEqualTo(2);
+        assertThat(response.isCancelRecommended()).isFalse();
     }
 
     @Test
@@ -311,7 +371,7 @@ class ScheduleServiceImplReassignMappingTest {
     }
 
     @Test
-    @DisplayName("preview — 복원·차감 후 수치와 cancelRecommended, DB 미변경")
+    @DisplayName("preview — 복원·차감 후 수치, ACTIVE는 cancelRecommended=false, DB 미변경")
     void preview_computesAfterWithoutPersisting() {
         Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
                 today.plusDays(1), LocalTime.of(10, 0));
@@ -334,13 +394,63 @@ class ScheduleServiceImplReassignMappingTest {
         assertThat(preview.getTargetRemainingAfter()).isEqualTo(29);
         assertThat(preview.getTargetUsedAfter()).isEqualTo(1);
         assertThat(preview.getPlannedSessionSequence()).isEqualTo(1);
-        assertThat(preview.isCancelRecommended()).isTrue();
+        assertThat(preview.isCancelRecommended()).isFalse();
         assertThat(schedule.getMappingId()).isEqualTo(ORIGIN_MAPPING_ID);
         assertThat(schedule.getSessionSequence()).isEqualTo(1);
         assertThat(origin.getRemainingSessions()).isEqualTo(9);
         assertThat(target.getRemainingSessions()).isEqualTo(30);
         verify(mappingRepository, never()).save(any());
         verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("preview — PENDING_PAYMENT + usedAfter=0 이면 cancelRecommended=true")
+    void preview_cancelRecommended_whenPendingOriginWouldBeEmpty() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 0, 10);
+        origin.setStatus(MappingStatus.PENDING_PAYMENT);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 30, 0, 30);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        ScheduleReassignMappingPreviewResponse preview =
+                scheduleService.previewReassignMapping(SCHEDULE_ID, TARGET_MAPPING_ID);
+
+        assertThat(preview.isSessionWouldRestoreOnOrigin()).isFalse();
+        assertThat(preview.getOriginUsedAfter()).isZero();
+        assertThat(preview.isCancelRecommended()).isTrue();
+        verify(mappingRepository, never()).save(any());
+        verify(scheduleRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("preview — PENDING_PAYMENT 라도 usedAfter>0 이면 cancelRecommended=false")
+    void preview_cancelRecommended_falseWhenPendingOriginWouldRemainUsed() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 2, 8);
+        origin.setStatus(MappingStatus.PENDING_PAYMENT);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 30, 0, 30);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        ScheduleReassignMappingPreviewResponse preview =
+                scheduleService.previewReassignMapping(SCHEDULE_ID, TARGET_MAPPING_ID);
+
+        assertThat(preview.isSessionWouldRestoreOnOrigin()).isFalse();
+        assertThat(preview.getOriginUsedAfter()).isEqualTo(2);
+        assertThat(preview.isCancelRecommended()).isFalse();
     }
 
     @ParameterizedTest

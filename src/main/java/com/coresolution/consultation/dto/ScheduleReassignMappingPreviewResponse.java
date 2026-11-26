@@ -28,5 +28,6 @@ public class ScheduleReassignMappingPreviewResponse {
     private Integer targetUsedAfter;
     private Integer originTotalSessions;
     private Integer targetTotalSessions;
+    /** 원 배정이 결제대기로 비면(PENDING_PAYMENT + usedAfter=0) 취소 권장 UI 힌트. */
     private boolean cancelRecommended;
 }

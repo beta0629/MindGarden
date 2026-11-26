@@ -444,7 +444,7 @@ class ScheduleServiceImplReassignMappingTest {
     }
 
     @Test
-    @DisplayName("이력 — SESSION_REASSIGN_IN/OUT 최신순·from/to·actor")
+    @DisplayName("이력 — SESSION_REASSIGN_IN/OUT 페어는 1행·from/to·actor")
     void history_returnsReassignEventsNewestFirst() {
         Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
                 today.plusDays(1), LocalTime.of(10, 0));
@@ -493,14 +493,75 @@ class ScheduleServiceImplReassignMappingTest {
         List<ScheduleReassignMappingHistoryResponse> history =
                 scheduleService.findReassignMappingHistory(SCHEDULE_ID);
 
-        assertThat(history).hasSize(2);
+        assertThat(history).hasSize(1);
         assertThat(history.get(0).getEventType()).isEqualTo("SESSION_REASSIGN_IN");
-        assertThat(history.get(0).getToMappingId()).isEqualTo(TARGET_MAPPING_ID);
         assertThat(history.get(0).getFromMappingId()).isEqualTo(ORIGIN_MAPPING_ID);
+        assertThat(history.get(0).getToMappingId()).isEqualTo(TARGET_MAPPING_ID);
+        assertThat(history.get(0).getFromMappingName()).isEqualTo("원 패키지");
         assertThat(history.get(0).getToMappingName()).isEqualTo("대상 패키지");
         assertThat(history.get(0).getActorUserName()).isEqualTo("관리자");
         assertThat(history.get(0).getReason()).isEqualTo("패키지 정정");
-        assertThat(history.get(1).getEventType()).isEqualTo("SESSION_REASSIGN_OUT");
+        assertThat(history.get(0).getWhen())
+                .isEqualTo(java.time.LocalDateTime.of(2026, 11, 26, 10, 1));
+    }
+
+    @Test
+    @DisplayName("이력 — 변경 1회(IN+OUT 페어)면 응답 1행")
+    void history_oneChangeReturnsSingleRowEvenWhenInAndOutPresent() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+        origin.setPackageName("원 패키지");
+        target.setPackageName("대상 패키지");
+
+        ConsultantClientMappingHistory out = ConsultantClientMappingHistory.builder()
+                .id(11L)
+                .tenantId(TENANT_ID)
+                .mappingId(ORIGIN_MAPPING_ID)
+                .clientId(CLIENT_ID)
+                .consultantId(CONSULTANT_ID)
+                .eventType(MappingHistoryEventType.SESSION_REASSIGN_OUT)
+                .afterStateJson("{\"packageName\":\"원 패키지\",\"counterpartMappingId\":200,\"counterpartPackageName\":\"대상 패키지\"}")
+                .triggeredByUserId(ACTOR_ID)
+                .reason("회기 정정")
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 26, 9, 0))
+                .build();
+        ConsultantClientMappingHistory in = ConsultantClientMappingHistory.builder()
+                .id(12L)
+                .tenantId(TENANT_ID)
+                .mappingId(TARGET_MAPPING_ID)
+                .clientId(CLIENT_ID)
+                .consultantId(CONSULTANT_ID)
+                .eventType(MappingHistoryEventType.SESSION_REASSIGN_IN)
+                .afterStateJson("{\"packageName\":\"대상 패키지\",\"counterpartMappingId\":100,\"counterpartPackageName\":\"원 패키지\"}")
+                .triggeredByUserId(ACTOR_ID)
+                .reason("회기 정정")
+                .createdAt(java.time.LocalDateTime.of(2026, 11, 26, 9, 1))
+                .build();
+
+        stubScheduleLoad(schedule);
+        when(mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
+                eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
+                .thenReturn(List.of(origin, target));
+        when(consultantClientMappingHistoryService.findByTenantIdAndMappingIdsAndEventTypes(
+                eq(TENANT_ID), any(), any()))
+                .thenReturn(List.of(in, out));
+        User actor = user(ACTOR_ID);
+        actor.setName("운영자");
+        when(userRepository.findByTenantIdAndIdInAndIsDeletedFalse(eq(TENANT_ID), any()))
+                .thenReturn(List.of(actor));
+
+        List<ScheduleReassignMappingHistoryResponse> history =
+                scheduleService.findReassignMappingHistory(SCHEDULE_ID);
+
+        assertThat(history).hasSize(1);
+        ScheduleReassignMappingHistoryResponse row = history.get(0);
+        assertThat(row.getEventType()).isEqualTo("SESSION_REASSIGN_IN");
+        assertThat(row.getFromMappingId()).isEqualTo(ORIGIN_MAPPING_ID);
+        assertThat(row.getToMappingId()).isEqualTo(TARGET_MAPPING_ID);
+        assertThat(row.getReason()).isEqualTo("회기 정정");
+        assertThat(row.getActorUserName()).isEqualTo("운영자");
     }
 
     @Test

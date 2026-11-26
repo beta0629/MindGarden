@@ -3378,6 +3378,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         m -> m.getPackageName() != null ? m.getPackageName() : "",
                         (a, b) -> a,
                         LinkedHashMap::new));
+        // IN+OUT는 동일 변경의 쌍이므로 응답은 IN 1행만(변경 1건=1행). 고아 OUT만 fallback.
         List<ConsultantClientMappingHistory> rows =
                 consultantClientMappingHistoryService.findByTenantIdAndMappingIdsAndEventTypes(
                         tenantId,
@@ -3385,14 +3386,15 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                         EnumSet.of(
                                 MappingHistoryEventType.SESSION_REASSIGN_IN,
                                 MappingHistoryEventType.SESSION_REASSIGN_OUT));
+        List<ConsultantClientMappingHistory> displayRows = selectReassignHistoryDisplayRows(rows);
         Map<Long, String> actorNames = resolveActorNames(
                 tenantId,
-                rows.stream()
+                displayRows.stream()
                         .map(ConsultantClientMappingHistory::getTriggeredByUserId)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toSet()));
         List<ScheduleReassignMappingHistoryResponse> result = new ArrayList<>();
-        for (ConsultantClientMappingHistory row : rows) {
+        for (ConsultantClientMappingHistory row : displayRows) {
             result.add(toReassignHistoryResponse(row, packageNameByMappingId, actorNames));
         }
         return result;
@@ -3810,6 +3812,57 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             }
         }
         return names;
+    }
+
+    /**
+     * 배정 변경 이력 표시 행 선택.
+     * <p>{@code SESSION_REASSIGN_IN}/{@code SESSION_REASSIGN_OUT} 페어는 IN 1행만 노출하고,
+     * IN이 없는 고아 OUT만 fallback으로 포함한다. 원본 최신순을 유지한다.</p>
+     *
+     * @param rows IN/OUT 이력(최신순)
+     * @return 표시용 이력(변경 1건=1행)
+     */
+    private List<ConsultantClientMappingHistory> selectReassignHistoryDisplayRows(
+            List<ConsultantClientMappingHistory> rows) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        Set<String> inPairKeys = new HashSet<>();
+        for (ConsultantClientMappingHistory row : rows) {
+            if (row == null || row.getEventType() != MappingHistoryEventType.SESSION_REASSIGN_IN) {
+                continue;
+            }
+            Long toMappingId = row.getMappingId();
+            Long fromMappingId = readJsonLong(row.getAfterStateJson(), "counterpartMappingId");
+            inPairKeys.add(reassignPairKey(fromMappingId, toMappingId));
+        }
+        List<ConsultantClientMappingHistory> displayRows = new ArrayList<>();
+        for (ConsultantClientMappingHistory row : rows) {
+            if (row == null || row.getEventType() == null) {
+                continue;
+            }
+            if (row.getEventType() == MappingHistoryEventType.SESSION_REASSIGN_IN) {
+                displayRows.add(row);
+            } else if (row.getEventType() == MappingHistoryEventType.SESSION_REASSIGN_OUT) {
+                Long fromMappingId = row.getMappingId();
+                Long toMappingId = readJsonLong(row.getAfterStateJson(), "counterpartMappingId");
+                if (!inPairKeys.contains(reassignPairKey(fromMappingId, toMappingId))) {
+                    displayRows.add(row);
+                }
+            }
+        }
+        return displayRows;
+    }
+
+    /**
+     * 배정 변경 from→to 페어 키.
+     *
+     * @param fromMappingId 원 배정 ID
+     * @param toMappingId 대상 배정 ID
+     * @return 페어 키
+     */
+    private static String reassignPairKey(Long fromMappingId, Long toMappingId) {
+        return String.valueOf(fromMappingId) + "->" + String.valueOf(toMappingId);
     }
 
     /**

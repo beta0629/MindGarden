@@ -653,9 +653,9 @@
 }
 
 .mg-v2-sct-status--expired {
-  background: var(--mg-v2-color-semantic-error-light);
-  border-color: var(--mg-v2-color-semantic-error);
-  color: var(--mg-v2-color-semantic-error-dark);
+  background: var(--mg-v2-color-neutral-100);
+  border-color: var(--mg-v2-color-neutral-300);
+  color: var(--mg-v2-color-text-secondary);
 }
 
 .mg-v2-sct-status--fresh {
@@ -724,10 +724,25 @@
   justify-content: flex-end;
 }
 
-/* 좁은 폰(~375): 시트 시작을 스트립 하단(~354px) 아래로 (820 미적용) */
+/*
+ * 좁은 폰(~375): 시트 top = 스트립 하단(+갭) 측정값(--mg-v2-sct-sheet-inset-top).
+ * JS(SctSessionPanel)가 sheetOpen 시 setProperty. 폴백은 strip~426px 클리어.
+ * 820(51.25rem) 미디어에는 sheet-root 넣지 않음. ≥1180 사이드 패널 무변경.
+ */
 @media (max-width: 26.25rem) {
   .mg-v2-sct-sheet-root {
-    top: max(22.125rem, 45dvh);
+    top: var(--mg-v2-sct-sheet-inset-top, max(26.75rem, 53dvh));
+    overflow: hidden;
+  }
+
+  /* flex min-height:auto 가 콘텐츠만큼 위로 커지는 것 방지 → body 내부 스크롤 */
+  .mg-v2-sct-sheet-root .mg-v2-sct-sheet {
+    min-height: 0;
+    max-height: calc(
+      100dvh
+      - var(--mg-v2-sct-sheet-inset-top, max(26.75rem, 53dvh))
+      - env(safe-area-inset-bottom, 0px)
+    );
   }
 }
 

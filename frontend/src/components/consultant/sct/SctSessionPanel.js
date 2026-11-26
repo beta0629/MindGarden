@@ -7,7 +7,15 @@
  * @since 2026-11-23
  */
 
-import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { useInRouterContext, useNavigate } from 'react-router-dom';
@@ -62,6 +70,34 @@ const NOOP_NAVIGATE = () => {};
 
 const BODY_PANEL_ID = 'sct-journal-body-panel';
 const SHEET_TITLE_ID = 'sct-journal-sheet-title';
+/** 좁은 폰 시트 top — 스트립 하단(+갭)을 CSS 변수로 전달 */
+const SCT_SHEET_INSET_TOP_VAR = '--mg-v2-sct-sheet-inset-top';
+const SCT_SHEET_INSET_GAP_TOKEN = '--mg-v2-space-2';
+
+/**
+ * :root 의 space 토큰을 px 로 해석 (측정 inset 에 합산).
+ * @param {string} tokenName
+ * @returns {number}
+ */
+const resolveSpaceTokenPx = (tokenName) => {
+  if (typeof window === 'undefined' || !document?.documentElement) return 0;
+  const raw = window.getComputedStyle(document.documentElement)
+    .getPropertyValue(tokenName)
+    .trim();
+  if (!raw) return 0;
+  if (raw.endsWith('rem')) {
+    const rem = Number.parseFloat(raw);
+    const rootFs = Number.parseFloat(
+      window.getComputedStyle(document.documentElement).fontSize
+    ) || 16;
+    return Number.isFinite(rem) ? rem * rootFs : 0;
+  }
+  if (raw.endsWith('px')) {
+    const px = Number.parseFloat(raw);
+    return Number.isFinite(px) ? px : 0;
+  }
+  return 0;
+};
 
 /**
  * 초대 목록에서 레일 메타용 최신 행 선택 (CANCELLED 제외).
@@ -208,6 +244,8 @@ const SctSessionPanelBody = ({
   const initRef = useRef(false);
   /** sheet / side 중 열린 본문 패널 (동시 마운트 없음) */
   const bodyPanelRef = useRef(null);
+  const stripRef = useRef(null);
+  const sheetRootRef = useRef(null);
 
   const uiState = deriveUiState(session, inviteMeta);
   const isSubmitted = uiState === SCT_JOURNAL_UI_STATE.SUBMITTED;
@@ -227,6 +265,39 @@ const SctSessionPanelBody = ({
 
   const sidePanelOpen = isSubmitted && bodyOpen && isDesktopWide;
   const sheetOpen = isSubmitted && bodyOpen && !isDesktopWide;
+
+  // 좁은 폰 시트: 스트립 하단(+갭) → --mg-v2-sct-sheet-inset-top (폴백은 CSS)
+  useLayoutEffect(() => {
+    if (!sheetOpen) return undefined;
+
+    const syncSheetInsetTop = () => {
+      const root = sheetRootRef.current;
+      if (!root) return;
+      const strip = stripRef.current;
+      if (!strip) {
+        root.style.removeProperty(SCT_SHEET_INSET_TOP_VAR);
+        return;
+      }
+      const stripBottom = strip.getBoundingClientRect().bottom;
+      const gapPx = resolveSpaceTokenPx(SCT_SHEET_INSET_GAP_TOKEN);
+      root.style.setProperty(
+        SCT_SHEET_INSET_TOP_VAR,
+        `${stripBottom + gapPx}px`
+      );
+    };
+
+    syncSheetInsetTop();
+    window.addEventListener('resize', syncSheetInsetTop);
+    const vv = window.visualViewport;
+    if (vv) vv.addEventListener('resize', syncSheetInsetTop);
+
+    return () => {
+      window.removeEventListener('resize', syncSheetInsetTop);
+      if (vv) vv.removeEventListener('resize', syncSheetInsetTop);
+      const root = sheetRootRef.current;
+      if (root) root.style.removeProperty(SCT_SHEET_INSET_TOP_VAR);
+    };
+  }, [sheetOpen]);
 
   const markSeenAndPersistOpen = useCallback((nextOpen) => {
     if (openKey) writeSctJournalPanelOpenState(openKey, nextOpen);
@@ -791,7 +862,11 @@ const SctSessionPanelBody = ({
   const sheetNode = sheetOpen && typeof document !== 'undefined'
     ? createPortal(
       (
-        <div className="mg-v2-sct-sheet-root" data-testid={SCT_TEST_ID.SHEET}>
+        <div
+          ref={sheetRootRef}
+          className="mg-v2-sct-sheet-root"
+          data-testid={SCT_TEST_ID.SHEET}
+        >
           <button
             type="button"
             className={SCT_CSS.SHEET_SCRIM}
@@ -855,6 +930,7 @@ const SctSessionPanelBody = ({
         aria-label={SCT_UI.RAIL_STRIP_LABEL}
       >
         <div
+          ref={stripRef}
           className={SCT_CSS.STRIP}
           data-testid={SCT_TEST_ID.STRIP}
         >

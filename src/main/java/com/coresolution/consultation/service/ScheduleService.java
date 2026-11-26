@@ -534,11 +534,11 @@ public interface ScheduleService {
     /**
      * 일정 배정 변경 후보 매핑 목록.
      *
-     * <p>같은 clientId·consultantId, ACTIVE, remaining ≥ 1.
-     * 결제대기·일시중지·다른 상담사 제외. 초기상담도 ACTIVE·잔여 ≥ 1이면 포함.</p>
+     * <p>같은 clientId·consultantId 관련 매핑을 모두 반환한다(결제대기·일시중지·환불·소진·원 배정 포함).
+     * {@code selectable=true} 는 ACTIVE·잔여 ≥ 1·원 제외와 같다. 그 외는 {@code blockReason}·{@code current}.</p>
      *
      * @param scheduleId 일정 ID
-     * @return 후보 목록
+     * @return 후보 목록(고를 수 있는·없는 항목 혼합)
      * @author MindGarden
      * @since 2026-11-26
      */

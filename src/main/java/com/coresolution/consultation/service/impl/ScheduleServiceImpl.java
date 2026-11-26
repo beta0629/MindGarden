@@ -3257,19 +3257,24 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (consultantId == null || clientId == null) {
             return List.of();
         }
+        Long originMappingId = schedule.getMappingId();
         List<ConsultantClientMapping> mappings =
-                mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+                mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
                         tenantId, consultantId, clientId);
-        if (mappings == null || mappings.isEmpty()) {
+        if (mappings == null) {
+            mappings = new ArrayList<>();
+        } else {
+            mappings = new ArrayList<>(mappings);
+        }
+        ensureOriginMappingIncluded(tenantId, originMappingId, mappings);
+        if (mappings.isEmpty()) {
             return List.of();
         }
-        Long originMappingId = schedule.getMappingId();
+        Integer scheduleSessionSequence = schedule.getSessionSequence();
         List<ScheduleReassignMappingCandidateResponse> candidates = new ArrayList<>();
         for (ConsultantClientMapping mapping : mappings) {
-            if (!isEligibleReassignCandidate(mapping, originMappingId, consultantId, clientId)) {
-                continue;
-            }
-            candidates.add(toReassignCandidateResponse(mapping, schedule.getSessionSequence()));
+            candidates.add(toReassignCandidateResponse(
+                    mapping, originMappingId, consultantId, clientId, scheduleSessionSequence));
         }
         return candidates;
     }
@@ -3469,16 +3474,49 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     /**
-     * 후보 응답 DTO 변환.
+     * 원 매핑이 쌍 조회 결과에 없으면 목록 앞에 추가한다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param originMappingId 원 매핑 ID
+     * @param mappings 후보 목록(가변)
+     */
+    private void ensureOriginMappingIncluded(
+            String tenantId, Long originMappingId, List<ConsultantClientMapping> mappings) {
+        if (originMappingId == null) {
+            return;
+        }
+        boolean alreadyPresent = mappings.stream()
+                .anyMatch(m -> m != null && originMappingId.equals(m.getId()));
+        if (alreadyPresent) {
+            return;
+        }
+        mappingRepository.findByTenantIdAndId(tenantId, originMappingId).ifPresent(origin -> {
+            mappings.add(0, origin);
+        });
+    }
+
+    /**
+     * 후보 응답 DTO 변환. 적격·부적격·원 배정을 모두 포함한다.
      *
      * @param mapping 매핑
+     * @param originMappingId 원 매핑 ID
+     * @param scheduleConsultantId 일정 상담사
+     * @param scheduleClientId 일정 내담자
      * @param scheduleSessionSequence 현재 일정 회차
      * @return 후보 DTO
      */
     private static ScheduleReassignMappingCandidateResponse toReassignCandidateResponse(
-            ConsultantClientMapping mapping, Integer scheduleSessionSequence) {
+            ConsultantClientMapping mapping,
+            Long originMappingId,
+            Long scheduleConsultantId,
+            Long scheduleClientId,
+            Integer scheduleSessionSequence) {
         Long consultantId = mapping.getConsultant() != null ? mapping.getConsultant().getId() : null;
         Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+        boolean current = originMappingId != null && originMappingId.equals(mapping.getId());
+        boolean selectable = isEligibleReassignCandidate(
+                mapping, originMappingId, scheduleConsultantId, scheduleClientId);
+        String blockReason = selectable ? null : resolveReassignBlockReason(mapping, current);
         return ScheduleReassignMappingCandidateResponse.builder()
                 .mappingId(mapping.getId())
                 .clientId(clientId)
@@ -3489,7 +3527,55 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 .usedSessions(mapping.getUsedSessions())
                 .remainingSessions(mapping.getRemainingSessions())
                 .sessionSequence(scheduleSessionSequence)
+                .selectable(selectable)
+                .blockReason(blockReason)
+                .current(current)
                 .build();
+    }
+
+    /**
+     * 선택 불가 사유(시안 SSOT). 원 배정·환불·일시중지·결제대기·소진·잔여 0 순.
+     *
+     * @param mapping 매핑
+     * @param current 원 배정 여부
+     * @return 한글 사유
+     */
+    private static String resolveReassignBlockReason(ConsultantClientMapping mapping, boolean current) {
+        if (current) {
+            return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_CURRENT;
+        }
+        if (isRefundedReassignCandidate(mapping)) {
+            return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_REFUNDED;
+        }
+        MappingStatus status = mapping != null ? mapping.getStatus() : null;
+        if (status == MappingStatus.SUSPENDED) {
+            return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_SUSPENDED;
+        }
+        if (status == MappingStatus.PENDING_PAYMENT) {
+            return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT;
+        }
+        if (status == MappingStatus.SESSIONS_EXHAUSTED
+                || status == MappingStatus.TERMINATED
+                || status == MappingStatus.INACTIVE) {
+            return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_EXHAUSTED;
+        }
+        return ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_NO_REMAINING;
+    }
+
+    /**
+     * 전액 환불 배정 여부. SSOT: CANCELLED + paymentStatus REFUNDED (또는 REFUNDED만).
+     *
+     * @param mapping 매핑
+     * @return 환불이면 true
+     */
+    private static boolean isRefundedReassignCandidate(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return false;
+        }
+        if (mapping.getPaymentStatus() == ConsultantClientMapping.PaymentStatus.REFUNDED) {
+            return true;
+        }
+        return mapping.getStatus() == MappingStatus.CANCELLED;
     }
 
     /**

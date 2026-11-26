@@ -337,8 +337,8 @@ class ScheduleServiceImplReassignMappingTest {
     }
 
     @Test
-    @DisplayName("후보 — ACTIVE·잔여≥1만, 결제대기·일시중지·원 매핑 제외, 초기상담 포함")
-    void candidates_filterActiveRemainingAndIncludeInitial() {
+    @DisplayName("후보 — 적격·부적격·원 배정 모두 반환, selectable/blockReason/current")
+    void candidates_includeEligibleIneligibleAndCurrentWithReasons() {
         Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
                 today.plusDays(1), LocalTime.of(10, 0));
         ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
@@ -348,26 +348,63 @@ class ScheduleServiceImplReassignMappingTest {
         pending.setStatus(MappingStatus.PENDING_PAYMENT);
         ConsultantClientMapping suspended = activeMapping(500L, 10, 0, 10);
         suspended.setStatus(MappingStatus.SUSPENDED);
+        ConsultantClientMapping remZero = activeMapping(600L, 10, 10, 0);
+        ConsultantClientMapping exhausted = activeMapping(700L, 10, 10, 0);
+        exhausted.setStatus(MappingStatus.SESSIONS_EXHAUSTED);
+        ConsultantClientMapping refunded = activeMapping(800L, 10, 10, 0);
+        refunded.setStatus(MappingStatus.CANCELLED);
+        refunded.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
 
         stubScheduleLoad(schedule);
-        when(mappingRepository.findActiveOrExhaustedListByTenantIdAndConsultantIdAndClientId(
+        when(mappingRepository.findAllByTenantIdAndConsultantIdAndClientIdOrderByCreatedAtDesc(
                 eq(TENANT_ID), eq(CONSULTANT_ID), eq(CLIENT_ID)))
-                .thenReturn(List.of(origin, activeTarget, initial, pending, suspended));
+                .thenReturn(List.of(
+                        origin, activeTarget, initial, pending, suspended, remZero, exhausted, refunded));
 
         List<ScheduleReassignMappingCandidateResponse> candidates =
                 scheduleService.findReassignMappingCandidates(SCHEDULE_ID);
 
         assertThat(candidates).extracting(ScheduleReassignMappingCandidateResponse::getMappingId)
-                .containsExactlyInAnyOrder(TARGET_MAPPING_ID, 300L);
-        assertThat(candidates).allMatch(c -> c.getRemainingSessions() != null && c.getRemainingSessions() >= 1);
-        assertThat(candidates).allMatch(c -> "ACTIVE".equals(c.getStatus()));
-        ScheduleReassignMappingCandidateResponse twenty = candidates.stream()
-                .filter(c -> TARGET_MAPPING_ID.equals(c.getMappingId()))
-                .findFirst()
-                .orElseThrow();
+                .containsExactlyInAnyOrder(
+                        ORIGIN_MAPPING_ID, TARGET_MAPPING_ID, 300L, 400L, 500L, 600L, 700L, 800L);
+
+        ScheduleReassignMappingCandidateResponse current = byMappingId(candidates, ORIGIN_MAPPING_ID);
+        assertThat(current.isCurrent()).isTrue();
+        assertThat(current.isSelectable()).isFalse();
+        assertThat(current.getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_CURRENT);
+
+        ScheduleReassignMappingCandidateResponse twenty = byMappingId(candidates, TARGET_MAPPING_ID);
+        assertThat(twenty.isSelectable()).isTrue();
+        assertThat(twenty.isCurrent()).isFalse();
+        assertThat(twenty.getBlockReason()).isNull();
         assertThat(twenty.getTotalSessions()).isEqualTo(20);
         assertThat(twenty.getUsedSessions()).isZero();
         assertThat(twenty.getSessionSequence()).isEqualTo(1);
+
+        ScheduleReassignMappingCandidateResponse initialCandidate = byMappingId(candidates, 300L);
+        assertThat(initialCandidate.isSelectable()).isTrue();
+        assertThat(initialCandidate.getBlockReason()).isNull();
+
+        assertThat(byMappingId(candidates, 400L).getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT);
+        assertThat(byMappingId(candidates, 400L).isSelectable()).isFalse();
+
+        assertThat(byMappingId(candidates, 500L).getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_SUSPENDED);
+        assertThat(byMappingId(candidates, 500L).isSelectable()).isFalse();
+
+        assertThat(byMappingId(candidates, 600L).getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_NO_REMAINING);
+        assertThat(byMappingId(candidates, 600L).isSelectable()).isFalse();
+
+        assertThat(byMappingId(candidates, 700L).getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_EXHAUSTED);
+        assertThat(byMappingId(candidates, 700L).isSelectable()).isFalse();
+
+        assertThat(byMappingId(candidates, 800L).getBlockReason())
+                .isEqualTo(ScheduleServiceUserFacingMessages.MSG_REASSIGN_CANDIDATE_REFUNDED);
+        assertThat(byMappingId(candidates, 800L).isSelectable()).isFalse();
     }
 
     @Test
@@ -492,6 +529,14 @@ class ScheduleServiceImplReassignMappingTest {
         verify(scheduleRepository, atLeastOnce()).save(any(Schedule.class));
         verify(sessionSyncService, times(1)).syncAfterSessionUsage(
                 eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID));
+    }
+
+    private static ScheduleReassignMappingCandidateResponse byMappingId(
+            List<ScheduleReassignMappingCandidateResponse> candidates, Long mappingId) {
+        return candidates.stream()
+                .filter(c -> mappingId.equals(c.getMappingId()))
+                .findFirst()
+                .orElseThrow();
     }
 
     private void stubScheduleLoad(Schedule schedule) {

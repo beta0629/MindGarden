@@ -3500,6 +3500,8 @@ public class AdminController extends BaseApiController {
     /**
      * 일정 배정 변경 후보 매핑 목록 — ADMIN only.
      *
+     * <p>같은 상담사·내담자 관련 매핑을 모두 반환한다(고를 수 있는·없는 항목, {@code selectable}/{@code blockReason}/{@code current}).</p>
+     *
      * @param id 일정 ID
      * @param session HTTP 세션
      * @return 후보 목록

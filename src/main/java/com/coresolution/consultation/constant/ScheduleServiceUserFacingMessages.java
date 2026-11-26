@@ -101,6 +101,30 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_REASSIGN_MAPPING_CANCELLED_DENIED =
             "취소된 일정은 배정 변경할 수 없습니다.";
 
+    /** 후보 목록 — 지금 일정에 연결된 원 배정(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_CURRENT =
+            "지금 이 일정이 연결된 배정입니다";
+
+    /** 후보 목록 — 잔여 회기 없음(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_NO_REMAINING =
+            "남은 회기가 없습니다";
+
+    /** 후보 목록 — 결제대기(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT =
+            "결제 전 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 환불(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_REFUNDED =
+            "환불된 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 일시중지(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_SUSPENDED =
+            "일시중지된 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 회기 소진·사용 완료(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_EXHAUSTED =
+            "사용이 끝난 배정입니다";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

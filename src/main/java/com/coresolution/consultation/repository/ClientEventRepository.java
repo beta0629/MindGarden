@@ -1,12 +1,18 @@
 package com.coresolution.consultation.repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
+import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.entity.ClientEvent;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -38,4 +44,28 @@ public interface ClientEventRepository extends JpaRepository<ClientEvent, Long> 
      * @return 기존 이벤트(없으면 empty)
      */
     Optional<ClientEvent> findByTenantIdAndIdempotencyKey(String tenantId, String idempotencyKey);
+
+    /**
+     * 테넌트·source 기준 행 조회 (롤백 후보 스캔).
+     *
+     * @param tenantId 테넌트 ID
+     * @param source 출처
+     * @return 이벤트 목록
+     */
+    List<ClientEvent> findByTenantIdAndSource(String tenantId, ClientEventSource source);
+
+    /**
+     * 테넌트·source·ID 집합 삭제 (롤백 apply).
+     *
+     * @param tenantId 테넌트 ID
+     * @param source 출처({@link ClientEventSource#BACKFILLED} 만)
+     * @param ids 삭제 대상 ID
+     * @return 삭제 건수
+     */
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM ClientEvent e WHERE e.tenantId = :tenantId AND e.source = :source AND e.id IN :ids")
+    int deleteByTenantIdAndSourceAndIdIn(
+            @Param("tenantId") String tenantId,
+            @Param("source") ClientEventSource source,
+            @Param("ids") Collection<Long> ids);
 }

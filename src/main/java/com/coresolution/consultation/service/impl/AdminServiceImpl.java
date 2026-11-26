@@ -1148,6 +1148,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
         
         String tenantId = getTenantId();
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         String normalizedPaymentMethod =
                 paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
         mapping.confirmPayment(normalizedPaymentMethod, paymentReference);
@@ -1155,6 +1156,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         // 상담료 INCOME 은 입금 확인(confirmDeposit) 트랜잭션에서만 쓴다. 여기서 쓰면 입금 확인 실패·취소 후에도 남는다.
+        recordClientAdminPaymentCompleted(savedMapping, paymentAmount);
+        recordClientMappingStatusChangedIfChanged(savedMapping, previousStatusName);
 
         // 컨트롤러에서 mapping.getConsultant()/getClient() 접근 시 no Session 방지: 같은 트랜잭션 내에서 lazy 초기화
         Hibernate.initialize(savedMapping.getConsultant());
@@ -4442,11 +4445,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
 
         String tenantId = getTenantId();
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         String normalizedPaymentMethod =
                 paymentMethodSsotService.normalizeToCanonicalCodeValue(tenantId, paymentMethod);
         mapping.confirmPayment(normalizedPaymentMethod, paymentReference);
         
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
+        recordClientAdminPaymentCompleted(savedMapping, savedMapping.getPaymentAmount());
+        recordClientMappingStatusChangedIfChanged(savedMapping, previousStatusName);
         
         // 통계/ERP 실패가 결제 완료 트랜잭션에 영향 주지 않도록 별도 트랜잭션에서 실행
         final Long consultantId = savedMapping.getConsultant() != null ? savedMapping.getConsultant().getId() : null;
@@ -5095,10 +5101,16 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+
+        Integer remBefore = mapping.getRemainingSessions();
+        Integer usedBefore = mapping.getUsedSessions();
+        String beforeJson = clientEventWriteSupport != null
+                ? clientEventWriteSupport.toMappingSessionJson(mapping) : null;
         
         mapping.addSessions(additionalSessions);
         
         ConsultantClientMapping saved = mappingRepository.save(mapping);
+        recordClientSessionAdjusted(saved, beforeJson, remBefore, usedBefore);
         return ConsultantClientMappingResponse.fromEntity(saved);
     }
     
@@ -7239,6 +7251,14 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String oldPackageName = mapping.getPackageName();
         Long oldPackagePrice = mapping.getPackagePrice();
         Integer oldTotalSessions = mapping.getTotalSessions();
+        Integer remBefore = mapping.getRemainingSessions();
+        Integer usedBefore = mapping.getUsedSessions();
+        String sessionBeforeJson = null;
+        boolean totalSessionsChanging = dto.getTotalSessions() != null
+                && (oldTotalSessions == null || !dto.getTotalSessions().equals(oldTotalSessions));
+        if (totalSessionsChanging && clientEventWriteSupport != null) {
+            sessionBeforeJson = clientEventWriteSupport.toMappingSessionJson(mapping);
+        }
 
         // 동일 매핑 in-place 상담사 변경 (스케줄 bulk-move·/mappings/transfer 아님)
         applyInPlaceConsultantChangeIfRequested(mapping, dto.getConsultantId(), updatedBy);
@@ -7272,6 +7292,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        if (totalSessionsChanging) {
+            recordClientSessionAdjusted(savedMapping, sessionBeforeJson, remBefore, usedBefore);
+        }
         if (statusChanging) {
             recordClientMappingStatusChanged(savedMapping, previousStatusName);
         }
@@ -8212,10 +8235,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 환불 전표는 매칭 변경과 같은 트랜잭션에서 기록한다. 기록하지 못하면 매칭 변경까지 롤백(fail-closed).
         // 0원 배정은 입금 INCOME·PG 가 없으므로 전표·PG 취소 없이 매핑만 종료한다.
         boolean zeroCharge = PaymentConstants.isZeroCharge(mapping.getPackagePrice(), mapping.getPaymentAmount());
+        final boolean refundOccurred = !zeroCharge && (unusedFullVoid || refundAmount > 0L);
         if (zeroCharge) {
             log.info("0원 배정 종료 — 환불 전표·PG 취소 생략: MappingID={}, remaining={}",
                     id, refundedSessions);
-        } else if (unusedFullVoid || refundAmount > 0L) {
+        } else if (refundOccurred) {
             sendRefundToErp(mapping, refundedSessions, refundAmount, ledgerRefundAmount, reason, unusedFullVoid,
                     addonRefund);
         } else {
@@ -8244,6 +8268,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
         mappingRepository.save(mapping);
         recordClientMappingStatusChanged(mapping, previousStatusName);
+        if (refundOccurred) {
+            recordClientAdminPaymentRefunded(mapping, refundAmount, reason);
+        }
         
         // SSOT 핫픽스 2026-05-26 (P0-B): 미래 BOOKED/CONFIRMED/TENTATIVE 일정 일괄 CANCELLED 전이.
         // 사유는 회기관리 합의서 v2 (Q3=3A) 에 따라 REFUND_AUTO_CANCEL 코드로 표준화.
@@ -12873,8 +12900,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         }
 
         String targetPackageNameBefore = targetActive.getPackageName();
+        Integer remBefore = targetActive.getRemainingSessions();
+        Integer usedBefore = targetActive.getUsedSessions();
+        String sessionBeforeJson = clientEventWriteSupport != null
+                ? clientEventWriteSupport.toMappingSessionJson(targetActive) : null;
         targetActive.addSessions(sessionsToAdd);
         mappingRepository.save(targetActive);
+        recordClientSessionAdjusted(targetActive, sessionBeforeJson, remBefore, usedBefore);
         log.info("✅ 추가 패키지 회기 합산: targetActiveId={}, +{}회, packageName 유지={}, total={}, remaining={}",
                 targetActive.getId(), sessionsToAdd, targetPackageNameBefore,
                 targetActive.getTotalSessions(), targetActive.getRemainingSessions());
@@ -12914,6 +12946,85 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             return;
         }
         clientEventWriteSupport.recordMappingStatusChanged(mapping, previousStatusName);
+    }
+
+    private void recordClientMappingStatusChangedIfChanged(
+            ConsultantClientMapping mapping, String previousStatusName) {
+        if (mapping == null) {
+            return;
+        }
+        String current = mapping.getStatus() != null ? mapping.getStatus().name() : null;
+        if (Objects.equals(previousStatusName, current)) {
+            return;
+        }
+        recordClientMappingStatusChanged(mapping, previousStatusName);
+    }
+
+    private void recordClientSessionAdjusted(
+            ConsultantClientMapping mapping,
+            String beforeJson,
+            Integer remBefore,
+            Integer usedBefore) {
+        if (clientEventWriteSupport == null || mapping == null) {
+            return;
+        }
+        clientEventWriteSupport.recordSessionAdjusted(mapping, beforeJson, remBefore, usedBefore);
+    }
+
+    /**
+     * 관리자 수동 결제 확인 → PAYMENT_COMPLETED 1행.
+     * payments 행이 있으면 payment 멱등 키, 없으면 mapping 멱등 키.
+     */
+    private void recordClientAdminPaymentCompleted(ConsultantClientMapping mapping, Long paymentAmount) {
+        if (clientEventWriteSupport == null || mapping == null) {
+            return;
+        }
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        Payment payment = tenantId != null ? findPaymentForMapping(tenantId, mapping) : null;
+        if (payment != null) {
+            clientEventWriteSupport.recordPaymentCompleted(payment, null);
+            return;
+        }
+        BigDecimal amount = resolveClientEventPaymentAmount(mapping, paymentAmount);
+        clientEventWriteSupport.recordPaymentCompletedForMapping(mapping, amount, null);
+    }
+
+    /**
+     * 관리자 매핑 종료 환불 → PAYMENT_REFUNDED 1행.
+     */
+    private void recordClientAdminPaymentRefunded(
+            ConsultantClientMapping mapping, long refundAmount, String reason) {
+        if (clientEventWriteSupport == null || mapping == null) {
+            return;
+        }
+        String tenantId = getTenantIdFromMapping(mapping);
+        if (tenantId == null || tenantId.isBlank()) {
+            tenantId = getTenantIdOrNull();
+        }
+        Payment payment = tenantId != null ? findPaymentForMapping(tenantId, mapping) : null;
+        if (payment != null) {
+            clientEventWriteSupport.recordPaymentRefunded(payment, null, reason);
+            return;
+        }
+        clientEventWriteSupport.recordPaymentRefundedForMapping(
+                mapping, BigDecimal.valueOf(refundAmount), reason, null);
+    }
+
+    private static BigDecimal resolveClientEventPaymentAmount(
+            ConsultantClientMapping mapping, Long paymentAmount) {
+        if (paymentAmount != null) {
+            return BigDecimal.valueOf(paymentAmount);
+        }
+        if (mapping.getPaymentAmount() != null) {
+            return BigDecimal.valueOf(mapping.getPaymentAmount());
+        }
+        if (mapping.getPackagePrice() != null) {
+            return BigDecimal.valueOf(mapping.getPackagePrice());
+        }
+        return null;
     }
 
     /**

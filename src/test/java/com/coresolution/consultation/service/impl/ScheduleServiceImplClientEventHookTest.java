@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -162,6 +163,21 @@ class ScheduleServiceImplClientEventHookTest {
                 eq(2),
                 any(),
                 any());
+    }
+
+    @Test
+    @DisplayName("reassignScheduleMapping 경로 소스: SESSION_DEDUCTED 중복 호출 없음(MAPPING_REASSIGNED만)")
+    void reassignScheduleMapping_sourceHasNoDuplicateSessionDeductedAfterReassign() throws Exception {
+        // 정적 가드: reassign 직후 recordClientSessionDeducted 호출이 소스에 없어야 한다.
+        java.nio.file.Path path = java.nio.file.Paths.get(
+                "src/main/java/com/coresolution/consultation/service/impl/ScheduleServiceImpl.java");
+        String source = java.nio.file.Files.readString(path);
+        int reassignIdx = source.indexOf("recordClientMappingReassigned(schedule, originMappingId, target,");
+        assertThat(reassignIdx).isGreaterThan(0);
+        String afterReassignHook = source.substring(reassignIdx, reassignIdx + 500);
+        assertThat(afterReassignHook)
+                .as("MAPPING_REASSIGNED 직후 SESSION_DEDUCTED 중복 금지")
+                .doesNotContain("recordClientSessionDeducted(tenantId, schedule.getClientId()");
     }
 
     @Test

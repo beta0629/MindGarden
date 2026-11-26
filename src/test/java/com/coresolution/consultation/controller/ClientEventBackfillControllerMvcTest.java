@@ -55,7 +55,9 @@ class ClientEventBackfillControllerMvcTest {
     @Test
     @DisplayName("미인증 → 401, 서비스·가드 미호출")
     void unauthenticated_returns401() throws Exception {
-        mockMvc.perform(post(URI).param("mode", "dry-run")
+        mockMvc.perform(post(URI)
+                        .param("mode", "dry-run")
+                        .param("tenant_id", "tenant-a")
                         .with(request -> {
                             request.setRemoteAddr("127.0.0.1");
                             return request;
@@ -69,7 +71,9 @@ class ClientEventBackfillControllerMvcTest {
     @DisplayName("CLIENT → 403, 서비스 미호출")
     @WithMockUser(roles = {"CLIENT"})
     void client_returns403() throws Exception {
-        mockMvc.perform(post(URI).param("mode", "dry-run")
+        mockMvc.perform(post(URI)
+                        .param("mode", "dry-run")
+                        .param("tenant_id", "tenant-a")
                         .with(request -> {
                             request.setRemoteAddr("127.0.0.1");
                             return request;
@@ -91,20 +95,24 @@ class ClientEventBackfillControllerMvcTest {
     }
 
     @Test
-    @DisplayName("OPS → 200, dry-run 기본(tenant_id 생략=전체)")
+    @DisplayName("OPS → 200, tenant_id 필수 · dry-run")
     @WithMockUser(roles = {"OPS"})
-    void ops_returns200_withoutTenantId() throws Exception {
+    void ops_returns200_withTenantId() throws Exception {
         when(environmentGuard.describeActiveProfiles()).thenReturn("[dev]");
-        when(clientEventBackfillService.run(ClientEventBackfillMode.DRY_RUN, null))
-                .thenReturn(ClientEventBackfillResult.empty(ClientEventBackfillMode.DRY_RUN, null));
+        when(clientEventBackfillService.run(ClientEventBackfillMode.DRY_RUN, "tenant-a"))
+                .thenReturn(ClientEventBackfillResult.empty(
+                        ClientEventBackfillMode.DRY_RUN, "tenant-a"));
 
-        mockMvc.perform(post(URI).param("mode", "dry-run"))
+        mockMvc.perform(post(URI)
+                        .param("mode", "dry-run")
+                        .param("tenant_id", "tenant-a"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.mode").value("dry-run"))
-                .andExpect(jsonPath("$.data.scanned").value(0));
+                .andExpect(jsonPath("$.data.scanned").value(0))
+                .andExpect(jsonPath("$.data.clientCount").value(0));
 
         verify(environmentGuard).requireDevOnly();
-        verify(clientEventBackfillService).run(ClientEventBackfillMode.DRY_RUN, null);
+        verify(clientEventBackfillService).run(ClientEventBackfillMode.DRY_RUN, "tenant-a");
     }
 
     @Test
@@ -135,7 +143,9 @@ class ClientEventBackfillControllerMvcTest {
                                 "client_event backfill is allowed only on .dev profile (prod blocked)"))
                 .when(environmentGuard).requireDevOnly();
 
-        mockMvc.perform(post(URI).param("mode", "dry-run"))
+        mockMvc.perform(post(URI)
+                        .param("mode", "dry-run")
+                        .param("tenant_id", "tenant-a"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errorCode").value("ILLEGAL_STATE"));
 

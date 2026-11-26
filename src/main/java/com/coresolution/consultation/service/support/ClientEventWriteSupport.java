@@ -1,9 +1,11 @@
 package com.coresolution.consultation.service.support;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.coresolution.consultation.constant.ClientEventIdempotencyKeys;
 import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.constant.ClientEventType;
 import com.coresolution.consultation.constant.ClientEventWriteConstants;
@@ -25,7 +27,8 @@ import org.springframework.stereotype.Component;
  * {@code client_event} 실시간 기록 헬퍼.
  *
  * <p>Command 빌드 + {@link ClientEventService#record} 호출을 한곳에 모은다.
- * 기록 실패 시 예외를 삼키지 않고 전파한다(부모 트랜잭션 롤백).</p>
+ * 기록 실패 시 예외를 삼키지 않고 전파한다(부모 트랜잭션 롤백).
+ * 멱등 키는 {@link ClientEventIdempotencyKeys} 통일 형식을 사용한다.</p>
  *
  * @author MindGarden
  * @since 2026-11-26
@@ -51,8 +54,12 @@ public class ClientEventWriteSupport {
         ClientEventType type = tentative
                 ? ClientEventType.TEMP_RESERVATION_CREATED
                 : ClientEventType.SCHEDULE_CREATED;
+        String tenantId = resolveTenantId(schedule.getTenantId());
+        String idempotencyKey = schedule.getId() != null
+                ? ClientEventIdempotencyKeys.forSchedule(type, tenantId, schedule.getId())
+                : null;
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(schedule.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(schedule.getClientId())
                 .eventType(type)
                 .occurredAt(LocalDateTime.now())
@@ -62,6 +69,7 @@ public class ClientEventWriteSupport {
                 .afterJson(toScheduleSlotJson(schedule))
                 .scheduleId(schedule.getId())
                 .mappingId(schedule.getMappingId())
+                .idempotencyKey(idempotencyKey)
                 .build());
     }
 
@@ -75,10 +83,15 @@ public class ClientEventWriteSupport {
         if (schedule == null || schedule.getClientId() == null) {
             return;
         }
+        String tenantId = resolveTenantId(schedule.getTenantId());
+        String idempotencyKey = schedule.getId() != null
+                ? ClientEventIdempotencyKeys.forSchedule(
+                        ClientEventType.TEMP_RESERVATION_CONFIRMED, tenantId, schedule.getId())
+                : null;
         Map<String, Object> before = new LinkedHashMap<>();
         before.put(ClientEventWriteConstants.JSON_KEY_STATUS, previousStatusName);
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(schedule.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(schedule.getClientId())
                 .eventType(ClientEventType.TEMP_RESERVATION_CONFIRMED)
                 .occurredAt(LocalDateTime.now())
@@ -89,6 +102,7 @@ public class ClientEventWriteSupport {
                 .afterJson(toScheduleSlotJson(schedule))
                 .scheduleId(schedule.getId())
                 .mappingId(schedule.getMappingId())
+                .idempotencyKey(idempotencyKey)
                 .build());
     }
 
@@ -102,6 +116,7 @@ public class ClientEventWriteSupport {
         if (schedule == null || schedule.getClientId() == null) {
             return;
         }
+        // 다회 갱신 가능 — 멱등 키 없음(생성·취소만 키 고정)
         record(ClientEventRecordCommand.builder()
                 .tenantId(resolveTenantId(schedule.getTenantId()))
                 .clientId(schedule.getClientId())
@@ -128,10 +143,15 @@ public class ClientEventWriteSupport {
         if (schedule == null || schedule.getClientId() == null) {
             return;
         }
+        String tenantId = resolveTenantId(schedule.getTenantId());
+        String idempotencyKey = schedule.getId() != null
+                ? ClientEventIdempotencyKeys.forSchedule(
+                        ClientEventType.SCHEDULE_CANCELLED, tenantId, schedule.getId())
+                : null;
         Map<String, Object> before = new LinkedHashMap<>();
         before.put(ClientEventWriteConstants.JSON_KEY_STATUS, previousStatusName);
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(schedule.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(schedule.getClientId())
                 .eventType(ClientEventType.SCHEDULE_CANCELLED)
                 .occurredAt(LocalDateTime.now())
@@ -143,6 +163,7 @@ public class ClientEventWriteSupport {
                 .afterJson(toScheduleSlotJson(schedule))
                 .scheduleId(schedule.getId())
                 .mappingId(schedule.getMappingId())
+                .idempotencyKey(idempotencyKey)
                 .build());
     }
 
@@ -155,8 +176,13 @@ public class ClientEventWriteSupport {
         if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
             return;
         }
+        String tenantId = resolveTenantId(mapping.getTenantId());
+        String idempotencyKey = mapping.getId() != null
+                ? ClientEventIdempotencyKeys.forMapping(
+                        ClientEventType.MAPPING_CREATED, tenantId, mapping.getId())
+                : null;
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(mapping.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(mapping.getClient().getId())
                 .eventType(ClientEventType.MAPPING_CREATED)
                 .occurredAt(LocalDateTime.now())
@@ -167,6 +193,7 @@ public class ClientEventWriteSupport {
                 .mappingId(mapping.getId())
                 .sessionsRemainingAfter(mapping.getRemainingSessions())
                 .sessionsUsedAfter(mapping.getUsedSessions())
+                .idempotencyKey(idempotencyKey)
                 .build());
     }
 
@@ -180,6 +207,7 @@ public class ClientEventWriteSupport {
         if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
             return;
         }
+        // 다회 상태 변경 가능 — 멱등 키 없음
         Map<String, Object> before = new LinkedHashMap<>();
         before.put(ClientEventWriteConstants.JSON_KEY_STATUS, previousStatusName);
         record(ClientEventRecordCommand.builder()
@@ -223,17 +251,18 @@ public class ClientEventWriteSupport {
         if (schedule == null || schedule.getClientId() == null || target == null) {
             return;
         }
+        String tenantId = resolveTenantId(schedule.getTenantId());
+        String idempotencyKey = schedule.getId() != null
+                ? ClientEventIdempotencyKeys.forSchedule(
+                        ClientEventType.MAPPING_REASSIGNED, tenantId, schedule.getId())
+                : null;
         Map<String, Object> after = new LinkedHashMap<>();
         after.put(ClientEventWriteConstants.JSON_KEY_ORIGIN_MAPPING_ID, originMappingId);
         after.put(ClientEventWriteConstants.JSON_KEY_TARGET_MAPPING_ID, target.getId());
         after.put(ClientEventWriteConstants.JSON_KEY_REMAINING_SESSIONS, target.getRemainingSessions());
         after.put(ClientEventWriteConstants.JSON_KEY_USED_SESSIONS, target.getUsedSessions());
-        String idempotencyKey = schedule.getId() != null
-                ? ClientEventWriteConstants.IDEMPOTENCY_MAPPING_REASSIGNED_SCHEDULE_PREFIX + schedule.getId()
-                        + ":target:" + target.getId()
-                : null;
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(schedule.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(schedule.getClientId())
                 .eventType(ClientEventType.MAPPING_REASSIGNED)
                 .occurredAt(LocalDateTime.now())
@@ -249,6 +278,49 @@ public class ClientEventWriteSupport {
                 .sessionsRemainingAfter(target.getRemainingSessions())
                 .sessionsUsedBefore(usedBefore)
                 .sessionsUsedAfter(target.getUsedSessions())
+                .idempotencyKey(idempotencyKey)
+                .build());
+    }
+
+    /**
+     * 회기 정정(총회기·잔여 조정). 동작당 정확히 1행(전→후).
+     *
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
+     * ({@code SESSION_ADJUSTED}:{tenant}:mapping:{mappingId}) — 매핑당 실시간 1행.</p>
+     *
+     * @param mapping 저장 후 매핑
+     * @param beforeJson 정정 전 스냅샷 JSON
+     * @param remBefore 정정 전 remaining
+     * @param usedBefore 정정 전 used
+     */
+    public void recordSessionAdjusted(
+            ConsultantClientMapping mapping,
+            String beforeJson,
+            Integer remBefore,
+            Integer usedBefore) {
+        if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
+            return;
+        }
+        String tenantId = resolveTenantId(mapping.getTenantId());
+        String idempotencyKey = mapping.getId() != null
+                ? ClientEventIdempotencyKeys.forMapping(
+                        ClientEventType.SESSION_ADJUSTED, tenantId, mapping.getId())
+                : null;
+        record(ClientEventRecordCommand.builder()
+                .tenantId(tenantId)
+                .clientId(mapping.getClient().getId())
+                .eventType(ClientEventType.SESSION_ADJUSTED)
+                .occurredAt(LocalDateTime.now())
+                .actorUserId(resolveActorUserId())
+                .actorRole(resolveActorRole())
+                .source(resolveSource(null))
+                .beforeJson(beforeJson)
+                .afterJson(toMappingSessionJson(mapping))
+                .mappingId(mapping.getId())
+                .sessionsRemainingBefore(remBefore)
+                .sessionsRemainingAfter(mapping.getRemainingSessions())
+                .sessionsUsedBefore(usedBefore)
+                .sessionsUsedAfter(mapping.getUsedSessions())
                 .idempotencyKey(idempotencyKey)
                 .build());
     }
@@ -281,11 +353,11 @@ public class ClientEventWriteSupport {
         if (clientId == null) {
             return;
         }
-        String idempotencyKey = scheduleId != null
-                ? ClientEventWriteConstants.IDEMPOTENCY_SESSION_DEDUCTED_SCHEDULE_PREFIX + scheduleId
-                : null;
+        String resolvedTenant = resolveTenantId(tenantId);
+        String idempotencyKey = ClientEventIdempotencyKeys.forSession(
+                ClientEventType.SESSION_DEDUCTED, resolvedTenant, scheduleId, null);
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(tenantId))
+                .tenantId(resolvedTenant)
                 .clientId(clientId)
                 .eventType(ClientEventType.SESSION_DEDUCTED)
                 .occurredAt(LocalDateTime.now())
@@ -326,11 +398,11 @@ public class ClientEventWriteSupport {
         if (clientId == null || mapping == null) {
             return;
         }
-        String idempotencyKey = scheduleId != null
-                ? ClientEventWriteConstants.IDEMPOTENCY_SESSION_RESTORED_SCHEDULE_PREFIX + scheduleId
-                : null;
+        String resolvedTenant = resolveTenantId(tenantId);
+        String idempotencyKey = ClientEventIdempotencyKeys.forSession(
+                ClientEventType.SESSION_RESTORED, resolvedTenant, scheduleId, null);
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(tenantId))
+                .tenantId(resolvedTenant)
                 .clientId(clientId)
                 .eventType(ClientEventType.SESSION_RESTORED)
                 .occurredAt(LocalDateTime.now())
@@ -356,8 +428,92 @@ public class ClientEventWriteSupport {
      * @param source 출처(null 이면 기본 해석)
      */
     public void recordPaymentCompleted(Payment payment, ClientEventSource source) {
-        recordPaymentEvent(payment, ClientEventType.PAYMENT_COMPLETED, source,
-                ClientEventWriteConstants.IDEMPOTENCY_PAYMENT_COMPLETED_PREFIX);
+        recordPaymentEvent(payment, ClientEventType.PAYMENT_COMPLETED, source, null);
+    }
+
+    /**
+     * 관리자 수동 결제 완료(매핑 기준, payments 행 없을 때).
+     *
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
+     * ({@code PAYMENT_COMPLETED}:{tenant}:mapping:{mappingId}).</p>
+     *
+     * @param mapping 결제 확인된 매핑
+     * @param amount 결제 금액(없으면 null)
+     * @param source 출처(null 이면 기본 해석)
+     */
+    public void recordPaymentCompletedForMapping(
+            ConsultantClientMapping mapping, BigDecimal amount, ClientEventSource source) {
+        if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
+            return;
+        }
+        String tenantId = resolveTenantId(mapping.getTenantId());
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put(ClientEventWriteConstants.JSON_KEY_PAYMENT_STATUS_CODE,
+                mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
+        after.put(ClientEventWriteConstants.JSON_KEY_AMOUNT, amount);
+        String idempotencyKey = mapping.getId() != null
+                ? ClientEventIdempotencyKeys.forMapping(
+                        ClientEventType.PAYMENT_COMPLETED, tenantId, mapping.getId())
+                : null;
+        record(ClientEventRecordCommand.builder()
+                .tenantId(tenantId)
+                .clientId(mapping.getClient().getId())
+                .eventType(ClientEventType.PAYMENT_COMPLETED)
+                .occurredAt(LocalDateTime.now())
+                .actorUserId(resolveActorUserId())
+                .actorRole(resolveActorRole())
+                .source(resolveSource(source))
+                .afterJson(toJson(after))
+                .mappingId(mapping.getId())
+                .amount(amount)
+                .currency(ClientEventWriteConstants.CURRENCY_KRW)
+                .idempotencyKey(idempotencyKey)
+                .build());
+    }
+
+    /**
+     * 관리자 매핑 환불(payments 행 없을 때).
+     *
+     * <p>멱등 키는 {@link ClientEventIdempotencyKeys#forMapping}
+     * ({@code PAYMENT_REFUNDED}:{tenant}:mapping:{mappingId}).</p>
+     *
+     * @param mapping 환불·종료된 매핑
+     * @param amount 환불 금액
+     * @param reason 사유
+     * @param source 출처
+     */
+    public void recordPaymentRefundedForMapping(
+            ConsultantClientMapping mapping,
+            BigDecimal amount,
+            String reason,
+            ClientEventSource source) {
+        if (mapping == null || mapping.getClient() == null || mapping.getClient().getId() == null) {
+            return;
+        }
+        String tenantId = resolveTenantId(mapping.getTenantId());
+        Map<String, Object> after = new LinkedHashMap<>();
+        after.put(ClientEventWriteConstants.JSON_KEY_PAYMENT_STATUS_CODE,
+                mapping.getPaymentStatus() != null ? mapping.getPaymentStatus().name() : null);
+        after.put(ClientEventWriteConstants.JSON_KEY_AMOUNT, amount);
+        String idempotencyKey = mapping.getId() != null
+                ? ClientEventIdempotencyKeys.forMapping(
+                        ClientEventType.PAYMENT_REFUNDED, tenantId, mapping.getId())
+                : null;
+        record(ClientEventRecordCommand.builder()
+                .tenantId(tenantId)
+                .clientId(mapping.getClient().getId())
+                .eventType(ClientEventType.PAYMENT_REFUNDED)
+                .occurredAt(LocalDateTime.now())
+                .actorUserId(resolveActorUserId())
+                .actorRole(resolveActorRole())
+                .source(resolveSource(source))
+                .reason(reason)
+                .afterJson(toJson(after))
+                .mappingId(mapping.getId())
+                .amount(amount)
+                .currency(ClientEventWriteConstants.CURRENCY_KRW)
+                .idempotencyKey(idempotencyKey)
+                .build());
     }
 
     /**
@@ -368,8 +524,7 @@ public class ClientEventWriteSupport {
      * @param reason 사유
      */
     public void recordPaymentCancelled(Payment payment, ClientEventSource source, String reason) {
-        recordPaymentEvent(payment, ClientEventType.PAYMENT_CANCELLED, source,
-                ClientEventWriteConstants.IDEMPOTENCY_PAYMENT_CANCELLED_PREFIX, reason);
+        recordPaymentEvent(payment, ClientEventType.PAYMENT_CANCELLED, source, reason);
     }
 
     /**
@@ -380,8 +535,7 @@ public class ClientEventWriteSupport {
      * @param reason 사유
      */
     public void recordPaymentRefunded(Payment payment, ClientEventSource source, String reason) {
-        recordPaymentEvent(payment, ClientEventType.PAYMENT_REFUNDED, source,
-                ClientEventWriteConstants.IDEMPOTENCY_PAYMENT_REFUNDED_PREFIX, reason);
+        recordPaymentEvent(payment, ClientEventType.PAYMENT_REFUNDED, source, reason);
     }
 
     /**
@@ -428,28 +582,20 @@ public class ClientEventWriteSupport {
     }
 
     private void recordPaymentEvent(
-            Payment payment, ClientEventType type, ClientEventSource source, String idempotencyPrefix) {
-        recordPaymentEvent(payment, type, source, idempotencyPrefix, null);
-    }
-
-    private void recordPaymentEvent(
-            Payment payment,
-            ClientEventType type,
-            ClientEventSource source,
-            String idempotencyPrefix,
-            String reason) {
+            Payment payment, ClientEventType type, ClientEventSource source, String reason) {
         if (payment == null || payment.getPayerId() == null) {
             return;
         }
+        String tenantId = resolveTenantId(payment.getTenantId());
         Map<String, Object> after = new LinkedHashMap<>();
         after.put(ClientEventWriteConstants.JSON_KEY_PAYMENT_STATUS_CODE,
                 payment.getStatus() != null ? payment.getStatus().name() : null);
         after.put(ClientEventWriteConstants.JSON_KEY_AMOUNT, payment.getAmount());
         String idempotencyKey = payment.getId() != null
-                ? idempotencyPrefix + payment.getId()
+                ? ClientEventIdempotencyKeys.forPayment(type, tenantId, payment.getId())
                 : null;
         record(ClientEventRecordCommand.builder()
-                .tenantId(resolveTenantId(payment.getTenantId()))
+                .tenantId(tenantId)
                 .clientId(payment.getPayerId())
                 .eventType(type)
                 .occurredAt(LocalDateTime.now())

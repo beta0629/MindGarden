@@ -10,9 +10,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 /**
- * {@code client_event} 백필 .dev 전용 환경 가드.
+ * {@code client_event} 백필 .dev HTTP 전용 환경 가드.
  *
- * <p>활성 프로파일에 {@code dev} 가 있고 {@code prod}/{@code production} 이 없을 때만 허용한다.</p>
+ * <p>활성 프로파일에 {@code dev} 가 있고 {@code prod}/{@code production} 이 없을 때만 허용한다.
+ * 서버 로컬 CLI({@code ClientEventBackfillCliRunner}) 는 본 가드를 호출하지 않는다 —
+ * 운영에서도 CLI 백필이 동작한다. HTTP 컨트롤러·토큰 필터만 본 가드를 사용한다.</p>
  *
  * @author MindGarden
  * @since 2026-11-26

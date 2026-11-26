@@ -11,8 +11,10 @@ import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.constant.ClientEventType;
 import com.coresolution.consultation.dto.ClientEventRecordCommand;
 import com.coresolution.consultation.entity.ClientEvent;
+import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Payment;
 import com.coresolution.consultation.entity.Schedule;
+import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.ClientEventService;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.core.context.TenantContextHolder;
@@ -82,7 +84,53 @@ class ClientEventWriteSupportTest {
         assertThat(cmd.getSessionsRemainingAfter()).isEqualTo(4);
         assertThat(cmd.getSessionsUsedBefore()).isEqualTo(1);
         assertThat(cmd.getSessionsUsedAfter()).isEqualTo(2);
-        assertThat(cmd.getIdempotencyKey()).isEqualTo("SESSION_DEDUCTED:schedule:501");
+        assertThat(cmd.getIdempotencyKey())
+                .isEqualTo("SESSION_DEDUCTED:" + TENANT_ID + ":schedule:501");
+    }
+
+    @Test
+    @DisplayName("SCHEDULE_CREATED: 통일 schedule 멱등 키")
+    void recordScheduleCreated_setsUnifiedKey() {
+        Schedule schedule = new Schedule();
+        schedule.setId(10L);
+        schedule.setClientId(42L);
+        schedule.setTenantId(TENANT_ID);
+        schedule.setStatus(ScheduleStatus.BOOKED);
+        schedule.setDate(LocalDate.of(2026, 11, 26));
+        schedule.setStartTime(LocalTime.of(10, 0));
+        schedule.setEndTime(LocalTime.of(10, 50));
+
+        support.recordScheduleCreated(schedule, false);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        assertThat(captor.getValue().getIdempotencyKey())
+                .isEqualTo("SCHEDULE_CREATED:" + TENANT_ID + ":schedule:10");
+    }
+
+    @Test
+    @DisplayName("PAYMENT_COMPLETED: 통일 payment 멱등 키")
+    void recordPaymentCompleted_setsUnifiedKey() {
+        Payment payment = Payment.builder()
+                .paymentId("PAY-1")
+                .orderId("ORD-1")
+                .amount(new BigDecimal("50000"))
+                .status(Payment.PaymentStatus.APPROVED)
+                .method(Payment.PaymentMethod.CARD)
+                .provider(Payment.PaymentProvider.IAMPORT)
+                .payerId(42L)
+                .build();
+        payment.setId(9001L);
+        payment.setTenantId(TENANT_ID);
+
+        support.recordPaymentCompleted(payment, ClientEventSource.PG_CALLBACK);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        assertThat(captor.getValue().getIdempotencyKey())
+                .isEqualTo("PAYMENT_COMPLETED:" + TENANT_ID + ":payment:9001");
     }
 
     @Test
@@ -131,5 +179,85 @@ class ClientEventWriteSupportTest {
         assertThat(cmd.getAmount()).isEqualByComparingTo("50000");
         assertThat(cmd.getSource()).isEqualTo(ClientEventSource.PG_CALLBACK);
         assertThat(cmd.getClientId()).isEqualTo(42L);
+    }
+
+    @Test
+    @DisplayName("SESSION_ADJUSTED: forMapping 멱등 키 + before/after 세션 카운터")
+    void recordSessionAdjusted_setsForMappingKeyAndBeforeAfter() {
+        User client = new User();
+        client.setId(42L);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(700L);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setClient(client);
+        mapping.setTotalSessions(15);
+        mapping.setUsedSessions(2);
+        mapping.setRemainingSessions(13);
+
+        support.recordSessionAdjusted(mapping, "{\"totalSessions\":10}", 8, 2);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        ClientEventRecordCommand cmd = captor.getValue();
+        assertThat(cmd.getEventType()).isEqualTo(ClientEventType.SESSION_ADJUSTED);
+        assertThat(cmd.getMappingId()).isEqualTo(700L);
+        assertThat(cmd.getSessionsRemainingBefore()).isEqualTo(8);
+        assertThat(cmd.getSessionsRemainingAfter()).isEqualTo(13);
+        assertThat(cmd.getSessionsUsedBefore()).isEqualTo(2);
+        assertThat(cmd.getSessionsUsedAfter()).isEqualTo(2);
+        assertThat(cmd.getBeforeJson()).contains("totalSessions");
+        assertThat(cmd.getAfterJson()).contains("15");
+        assertThat(cmd.getIdempotencyKey())
+                .isEqualTo("SESSION_ADJUSTED:" + TENANT_ID + ":mapping:700");
+    }
+
+    @Test
+    @DisplayName("PAYMENT_COMPLETED(매핑): forMapping 멱등 키 + 금액")
+    void recordPaymentCompletedForMapping_setsUnifiedMappingKey() {
+        User client = new User();
+        client.setId(42L);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(701L);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setClient(client);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.CONFIRMED);
+
+        support.recordPaymentCompletedForMapping(
+                mapping, new BigDecimal("90000"), ClientEventSource.API);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        ClientEventRecordCommand cmd = captor.getValue();
+        assertThat(cmd.getEventType()).isEqualTo(ClientEventType.PAYMENT_COMPLETED);
+        assertThat(cmd.getAmount()).isEqualByComparingTo("90000");
+        assertThat(cmd.getMappingId()).isEqualTo(701L);
+        assertThat(cmd.getIdempotencyKey())
+                .isEqualTo("PAYMENT_COMPLETED:" + TENANT_ID + ":mapping:701");
+    }
+
+    @Test
+    @DisplayName("PAYMENT_REFUNDED(매핑): forMapping 멱등 키")
+    void recordPaymentRefundedForMapping_setsUnifiedMappingKey() {
+        User client = new User();
+        client.setId(42L);
+        ConsultantClientMapping mapping = new ConsultantClientMapping();
+        mapping.setId(702L);
+        mapping.setTenantId(TENANT_ID);
+        mapping.setClient(client);
+        mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.REFUNDED);
+
+        support.recordPaymentRefundedForMapping(
+                mapping, new BigDecimal("50000"), "관리자 종료 환불", null);
+
+        ArgumentCaptor<ClientEventRecordCommand> captor =
+                ArgumentCaptor.forClass(ClientEventRecordCommand.class);
+        verify(clientEventService).record(captor.capture());
+        ClientEventRecordCommand cmd = captor.getValue();
+        assertThat(cmd.getEventType()).isEqualTo(ClientEventType.PAYMENT_REFUNDED);
+        assertThat(cmd.getReason()).isEqualTo("관리자 종료 환불");
+        assertThat(cmd.getIdempotencyKey())
+                .isEqualTo("PAYMENT_REFUNDED:" + TENANT_ID + ":mapping:702");
     }
 }

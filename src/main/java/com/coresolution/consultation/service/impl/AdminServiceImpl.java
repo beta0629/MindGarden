@@ -139,6 +139,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.FreelanceWithholdingTaxUtil;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.MappingPartialRefundLedger;
+import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -7278,16 +7279,22 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (dto.getTotalSessions() != null) {
             mapping.setTotalSessions(dto.getTotalSessions());
             if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())) {
-                mapping.setRemainingSessions(dto.getTotalSessions() - mapping.getUsedSessions());
+                // used 고정 → remaining = total - used
+                mapping.setRemainingSessions(MappingSessionCountInvariant.deriveRemainingFromTotalAndUsed(
+                        dto.getTotalSessions(), mapping.getUsedSessions()));
             }
         }
-        // remainingSessions 단독 정정(또는 total 변경 후 명시 remaining 덮어쓰기)
+        // remainingSessions 단독 정정(또는 total 변경 후 명시 remaining 덮어쓰기): remaining SSOT → used 동기화
         if (dto.getRemainingSessions() != null
                 && (mapping.getRemainingSessions() == null
                         || !dto.getRemainingSessions().equals(mapping.getRemainingSessions()))) {
+            int syncedUsed = MappingSessionCountInvariant.deriveUsedFromTotalAndRemaining(
+                    mapping.getTotalSessions(), dto.getRemainingSessions());
             mapping.setRemainingSessions(dto.getRemainingSessions());
+            mapping.setUsedSessions(syncedUsed);
         }
-        
+        MappingSessionCountInvariant.assertInvariant(mapping);
+
         String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         boolean statusChanging = false;
         if (dto.getStatus() != null) {

@@ -829,6 +829,12 @@
   padding: calc(var(--mg-spacing-md, 16px) - 1px);
 }
 
+.mg-v2-mapping-creation-modal__payment-timing-card--disabled {
+  opacity: var(--mg-opacity-heavy);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .mg-v2-mapping-creation-modal__payment-timing-card-input {
   position: absolute;
   width: 1px;

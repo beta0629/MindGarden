@@ -81,6 +81,50 @@ public final class ScheduleServiceUserFacingMessages {
     public static final String MSG_NO_TENTATIVE_MAPPING =
             "상담사와 내담자 간 활성 또는 입금 대기 매칭이 없어 가예약을 등록할 수 없습니다.";
 
+    /** 배정 변경(회기 정정) 사유가 비어 있을 때. */
+    public static final String MSG_REASSIGN_MAPPING_REASON_REQUIRED =
+            "배정 변경 사유를 입력해 주세요.";
+
+    /** 배정 변경 대상 매핑이 없거나 테넌트 범위 밖일 때. */
+    public static final String MSG_REASSIGN_MAPPING_TARGET_NOT_FOUND =
+            "대상 매칭을 찾을 수 없습니다.";
+
+    /** 대상 매핑이 ACTIVE·잔여 1 이상·동일 상담사·내담자가 아닐 때. */
+    public static final String MSG_REASSIGN_MAPPING_TARGET_INVALID =
+            "대상 매칭은 동일 상담사·내담자의 활성 매칭이며 잔여 회기가 1 이상이어야 합니다.";
+
+    /** 이미 같은 매핑에 배정된 일정을 다시 같은 매핑으로 옮길 때. */
+    public static final String MSG_REASSIGN_MAPPING_SAME_TARGET =
+            "이미 해당 매칭에 배정된 일정입니다.";
+
+    /** 취소된 일정은 배정 변경 불가. */
+    public static final String MSG_REASSIGN_MAPPING_CANCELLED_DENIED =
+            "취소된 일정은 배정 변경할 수 없습니다.";
+
+    /** 후보 목록 — 지금 일정에 연결된 원 배정(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_CURRENT =
+            "지금 이 일정이 연결된 배정입니다";
+
+    /** 후보 목록 — 잔여 회기 없음(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_NO_REMAINING =
+            "남은 회기가 없습니다";
+
+    /** 후보 목록 — 결제대기(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_PENDING_PAYMENT =
+            "결제 전 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 환불(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_REFUNDED =
+            "환불된 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 일시중지(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_SUSPENDED =
+            "일시중지된 배정이라 고를 수 없습니다";
+
+    /** 후보 목록 — 회기 소진·사용 완료(선택 불가). */
+    public static final String MSG_REASSIGN_CANDIDATE_EXHAUSTED =
+            "사용이 끝난 배정입니다";
+
     private ScheduleServiceUserFacingMessages() {
     }
 }

@@ -366,7 +366,7 @@ def main():
         sys.exit(3)
 
     cur.execute("""SELECT id, status, payment_status, total_sessions, used_sessions, remaining_sessions,
-                   terminated_at IS NOT NULL AS terminated FROM consultant_client_mappings
+                   terminated_at IS NOT NULL AS has_terminated_at FROM consultant_client_mappings
                    WHERE tenant_id=%s AND id IN (386,388,430) ORDER BY id""", (TENANT,))
     for r in cur.fetchall():
         out(f"IN-TX mapping {r}")

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.coresolution.consultation.constant.PaymentTimingConstants;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
@@ -222,6 +223,31 @@ class AdminServiceImplUpdateMappingSessionInvariantTest {
                 anyString(),
                 eq(8),
                 eq(2));
+    }
+
+    @Test
+    @DisplayName("institution-link total-only → remaining = total - used, 불변식 유지, SESSION_ADJUSTED 1회")
+    void updateMapping_institutionLink_totalOnly_derivesRemainingAndHoldsInvariant() {
+        ConsultantClientMapping mapping = activeMapping(10, 0, 0);
+        mapping.setPaymentTiming(PaymentTimingConstants.INSTITUTION_LINK);
+        when(mappingRepository.findByTenantIdAndId(TENANT_ID, MAPPING_ID))
+                .thenReturn(Optional.of(mapping));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ConsultantClientMappingCreateRequest dto = new ConsultantClientMappingCreateRequest();
+        dto.setTotalSessions(12);
+
+        adminService.updateMapping(MAPPING_ID, dto, "admin");
+
+        assertThat(mapping.getPaymentTiming()).isEqualTo(PaymentTimingConstants.INSTITUTION_LINK);
+        assertThat(mapping.getTotalSessions()).isEqualTo(12);
+        assertThat(mapping.getUsedSessions()).isZero();
+        assertThat(mapping.getRemainingSessions()).isEqualTo(12);
+        verify(clientEventWriteSupport, times(1)).recordSessionAdjusted(
+                any(ConsultantClientMapping.class),
+                anyString(),
+                eq(0),
+                eq(0));
     }
 
     @Test

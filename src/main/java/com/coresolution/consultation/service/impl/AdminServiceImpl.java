@@ -7278,11 +7278,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         
         if (dto.getTotalSessions() != null) {
             mapping.setTotalSessions(dto.getTotalSessions());
-            if (!PaymentTimingConstants.isInstitutionLink(mapping.getPaymentTiming())) {
-                // used 고정 → remaining = total - used
-                mapping.setRemainingSessions(MappingSessionCountInvariant.deriveRemainingFromTotalAndUsed(
-                        dto.getTotalSessions(), mapping.getUsedSessions()));
-            }
+            // 모든 paymentTiming(타기관 연계 포함): used 고정 → remaining = total - used
+            mapping.setRemainingSessions(MappingSessionCountInvariant.deriveRemainingFromTotalAndUsed(
+                    dto.getTotalSessions(), mapping.getUsedSessions()));
         }
         // remainingSessions 단독 정정(또는 total 변경 후 명시 remaining 덮어쓰기): remaining SSOT → used 동기화
         if (dto.getRemainingSessions() != null

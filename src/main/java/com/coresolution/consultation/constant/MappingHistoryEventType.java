@@ -15,6 +15,8 @@ package com.coresolution.consultation.constant;
  *   <li>{@link #SESSION_USED} — 회기 사용 차감</li>
  *   <li>{@link #SESSION_ADDED} — 회기 추가 (보상/연장)</li>
  *   <li>{@link #STATUS_CHANGED} — 매핑 상태 코드 변경</li>
+ *   <li>{@link #SESSION_REASSIGN_OUT} — 일정 배정 변경으로 원 매핑에서 회기 이탈</li>
+ *   <li>{@link #SESSION_REASSIGN_IN} — 일정 배정 변경으로 대상 매핑에 회기 귀속</li>
  * </ul>
  *
  * @author CoreSolution
@@ -29,7 +31,9 @@ public enum MappingHistoryEventType {
     RESTORED("RESTORED", "enums.MappingHistoryEventType.RESTORED"),
     SESSION_USED("SESSION_USED", "enums.MappingHistoryEventType.SESSION_USED"),
     SESSION_ADDED("SESSION_ADDED", "enums.MappingHistoryEventType.SESSION_ADDED"),
-    STATUS_CHANGED("STATUS_CHANGED", "enums.MappingHistoryEventType.STATUS_CHANGED");
+    STATUS_CHANGED("STATUS_CHANGED", "enums.MappingHistoryEventType.STATUS_CHANGED"),
+    SESSION_REASSIGN_OUT("SESSION_REASSIGN_OUT", "enums.MappingHistoryEventType.SESSION_REASSIGN_OUT"),
+    SESSION_REASSIGN_IN("SESSION_REASSIGN_IN", "enums.MappingHistoryEventType.SESSION_REASSIGN_IN");
 
     private final String code;
     private final String messageKey;

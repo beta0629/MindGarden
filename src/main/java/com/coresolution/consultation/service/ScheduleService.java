@@ -11,6 +11,9 @@ import com.coresolution.consultation.dto.CumulativeConsultantCountsResponse;
 import com.coresolution.consultation.dto.CumulativeMissingConsultationLogsResponse;
 import com.coresolution.consultation.dto.MonthlyConsultantCountsResponse;
 import com.coresolution.consultation.dto.MonthlyMissingConsultationLogsResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
+import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.Schedule;
@@ -510,6 +513,47 @@ public interface ScheduleService {
      * @since 2026-10-11
      */
     Integer reorderOccupyingSessionSequences(ConsultantClientMapping mapping, Schedule focus);
+
+    /**
+     * 관리자 일정 배정 변경(회기 정정). 원 매핑 차감분 복원 후 대상 매핑으로 라벨·차감·양쪽 회차 재번호.
+     *
+     * <p>단일 트랜잭션. 금액·전표·결제·취소·환불·자동취소·heal·SMS·푸시·알림은 수행하지 않는다.
+     * 지난(완료) 일정도 허용. 사유는 공백 불가.</p>
+     *
+     * @param scheduleId 대상 일정 ID
+     * @param targetMappingId 이동할 ACTIVE 매핑 ID (잔여 ≥ 1, 동일 상담사·내담자)
+     * @param reason 변경 사유
+     * @param actorUserId 이력 actor (nullable)
+     * @return 실행 결과({@code cancelRecommended} 포함)
+     * @author MindGarden
+     * @since 2026-11-26
+     */
+    ScheduleReassignMappingResponse reassignScheduleMapping(
+            Long scheduleId, Long targetMappingId, String reason, Long actorUserId);
+
+    /**
+     * 일정 배정 변경 후보 매핑 목록.
+     *
+     * <p>같은 clientId·consultantId 관련 매핑을 모두 반환한다(결제대기·일시중지·환불·소진·원 배정 포함).
+     * {@code selectable=true} 는 ACTIVE·잔여 ≥ 1·원 제외와 같다. 그 외는 {@code blockReason}·{@code current}.</p>
+     *
+     * @param scheduleId 일정 ID
+     * @return 후보 목록(고를 수 있는·없는 항목 혼합)
+     * @author MindGarden
+     * @since 2026-11-26
+     */
+    List<ScheduleReassignMappingCandidateResponse> findReassignMappingCandidates(Long scheduleId);
+
+    /**
+     * 일정 배정 변경 미리보기(미커밋).
+     *
+     * @param scheduleId 일정 ID
+     * @param targetMappingId 대상 매핑 ID
+     * @return 미리보기
+     * @author MindGarden
+     * @since 2026-11-26
+     */
+    ScheduleReassignMappingPreviewResponse previewReassignMapping(Long scheduleId, Long targetMappingId);
 
     /**
      * 일정 완료(COMPLETED) 전환 *직전* 멱등 회기 차감 시도.

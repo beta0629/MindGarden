@@ -16,10 +16,12 @@ import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.dto.ScheduleReassignMappingCandidateResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
+import com.coresolution.consultation.entity.ClientScheduleNote;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
+import com.coresolution.consultation.repository.ClientScheduleNoteRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
@@ -86,6 +88,7 @@ class ScheduleServiceImplReassignMappingTest {
     @Mock private ScheduleListUserFieldsResolver scheduleListUserFieldsResolver;
     @Mock private ConsultantClientMappingHistoryService consultantClientMappingHistoryService;
     @Mock private ConsultationRecordRepository consultationRecordRepository;
+    @Mock private ClientScheduleNoteRepository clientScheduleNoteRepository;
 
     @InjectMocks
     private ScheduleServiceImpl scheduleService;
@@ -97,6 +100,7 @@ class ScheduleServiceImplReassignMappingTest {
         TenantContextHolder.setTenantId(TENANT_ID);
         today = LocalDate.now();
         ReflectionTestUtils.setField(scheduleService, "consultationRecordRepository", consultationRecordRepository);
+        ReflectionTestUtils.setField(scheduleService, "clientScheduleNoteRepository", clientScheduleNoteRepository);
     }
 
     @AfterEach
@@ -205,6 +209,42 @@ class ScheduleServiceImplReassignMappingTest {
                 SCHEDULE_ID, TARGET_MAPPING_ID, "잔여 없음", ACTOR_ID))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_TARGET_INVALID);
+    }
+
+    @Test
+    @DisplayName("특이사항 — reassign 후 노트의 mappingId가 대상 매핑으로 동기화")
+    void reassign_syncsClientScheduleNoteMappingIdToTarget() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        ConsultantClientMapping target = activeMapping(TARGET_MAPPING_ID, 10, 0, 10);
+        ClientScheduleNote note = new ClientScheduleNote();
+        note.setId(77L);
+        note.setTenantId(TENANT_ID);
+        note.setScheduleId(SCHEDULE_ID);
+        note.setMappingId(ORIGIN_MAPPING_ID);
+        note.setIsDeleted(false);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(target);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(mappingRepository.save(any(ConsultantClientMapping.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(ORIGIN_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(TARGET_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+        when(clientScheduleNoteRepository.listBySchedule(eq(TENANT_ID), eq(SCHEDULE_ID), eq(false)))
+                .thenReturn(List.of(note));
+        when(clientScheduleNoteRepository.save(any(ClientScheduleNote.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        scheduleService.reassignScheduleMapping(SCHEDULE_ID, TARGET_MAPPING_ID, "메모 mapping 동기화", ACTOR_ID);
+
+        assertThat(note.getMappingId()).isEqualTo(TARGET_MAPPING_ID);
+        verify(clientScheduleNoteRepository).listBySchedule(TENANT_ID, SCHEDULE_ID, false);
+        verify(clientScheduleNoteRepository).save(note);
     }
 
     @Test

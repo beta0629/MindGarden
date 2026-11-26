@@ -42,6 +42,7 @@ import com.coresolution.consultation.dto.ScheduleReassignMappingPreviewResponse;
 import com.coresolution.consultation.dto.ScheduleReassignMappingResponse;
 import com.coresolution.consultation.dto.ScheduleResponse;
 import com.coresolution.consultation.entity.Branch;
+import com.coresolution.consultation.entity.ClientScheduleNote;
 import com.coresolution.consultation.entity.Consultant;
 import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.ConsultantClientMapping.MappingStatus;
@@ -54,6 +55,7 @@ import com.coresolution.consultation.exception.ScheduleTimeConflictException;
 import com.coresolution.consultation.exception.ScheduleStatusTransitionException;
 import com.coresolution.consultation.repository.BranchRepository;
 import com.coresolution.consultation.repository.ClientRepository;
+import com.coresolution.consultation.repository.ClientScheduleNoteRepository;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ConsultationRecordRepository;
@@ -166,6 +168,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     @Autowired(required = false)
     private ConsultationRecordRepository consultationRecordRepository;
+
+    /**
+     * 배정 변경 시 일정에 묶인 특이사항({@code client_schedule_notes})의 mappingId를 맞춘다.
+     * 생성자 인자를 늘리면 기존 {@code @InjectMocks} 단위 테스트가 깨지므로 필드 주입한다.
+     */
+    @Autowired(required = false)
+    private ClientScheduleNoteRepository clientScheduleNoteRepository;
 
     /**
      * 일시 변경 후 새 슬롯 D-1 리마인드 대상화 (드래그·수정 모달·상담 재예약 공통 모듈).
@@ -3177,6 +3186,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         schedule.setSessionSequence(null);
         schedule.setMappingId(target.getId());
         scheduleRepository.save(schedule);
+        syncClientScheduleNotesMapping(tenantId, scheduleId, target.getId());
 
         Integer rem = target.getRemainingSessions();
         if (rem == null || rem < 1) {
@@ -3736,6 +3746,35 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return false;
         }
         return true;
+    }
+
+    /**
+     * 배정 변경된 일정에 묶인 미삭제 특이사항의 mappingId를 대상 매핑으로 맞춘다.
+     * 목록이 mappingId로 필터되므로 일정 mapping과 어긋나면 메모가 보이지 않는다.
+     *
+     * @param tenantId 테넌트 ID
+     * @param scheduleId 일정 ID
+     * @param targetMappingId 대상 매핑 ID
+     */
+    private void syncClientScheduleNotesMapping(String tenantId, Long scheduleId, Long targetMappingId) {
+        if (clientScheduleNoteRepository == null || tenantId == null || scheduleId == null
+                || targetMappingId == null) {
+            return;
+        }
+        List<ClientScheduleNote> notes = clientScheduleNoteRepository.listBySchedule(
+                tenantId, scheduleId, false);
+        if (notes == null || notes.isEmpty()) {
+            return;
+        }
+        for (ClientScheduleNote note : notes) {
+            if (note == null || targetMappingId.equals(note.getMappingId())) {
+                continue;
+            }
+            note.setMappingId(targetMappingId);
+            clientScheduleNoteRepository.save(note);
+            log.info("일정 특이사항 mapping 동기화: scheduleId={}, noteId={}, targetMappingId={}",
+                    scheduleId, note.getId(), targetMappingId);
+        }
     }
 
     /**

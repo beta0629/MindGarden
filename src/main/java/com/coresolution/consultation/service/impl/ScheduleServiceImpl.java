@@ -758,6 +758,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 매핑이 PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 인 경우 가예약 분기로 자동 진입한다.
      * 비-SAME_DAY_CARD PENDING_PAYMENT (= ADVANCE 입금 대기) 는 강제 분기하지 않으며 기존 가드로 차단된다.
      *
+     * <p>동일 상담사·내담자 쌍에 remaining≥1 인 ACTIVE 매핑이 있으면 자동 강제 진입을 하지 않는다.
+     * (박혜선 케이스: ACTIVE 잔여가 있는데 PENDING 단회기 SAME_DAY_CARD 로 가예약이 붙는 재발 방지)</p>
+     *
      * @param consultantId 상담사 사용자 ID
      * @param clientId 내담자 사용자 ID
      * @param requestedTentative 요청 페이로드의 {@code tentativeBeforeDeposit} 값
@@ -767,6 +770,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             boolean requestedTentative) {
         if (requestedTentative) {
             return true;
+        }
+        if (hasActiveMappingWithRemainingSessions(consultantId, clientId)) {
+            log.info("⚙️ ACTIVE 잔여 회기 존재 — SAME_DAY_CARD 자동 가예약 강제 분기 생략: 상담사 {}, 내담자 {}",
+                    consultantId, clientId);
+            return false;
         }
         if (hasPendingPaymentSameDayCardMapping(consultantId, clientId)) {
             log.info("⚙️ 옵션 B SAME_DAY_CARD 자동 가예약 분기 진입: 상담사 {}, 내담자 {} (요청 tentative=false)",
@@ -904,6 +912,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      * 입금 확인 후 가예약 일정 확정 및 지정 매핑에 대한 회기 차감·동기화.
      * {@link #useSessionForMapping}은 ACTIVE 매핑만 조회하므로, 입금 직후 {@code DEPOSIT_PENDING}인 매핑은
      * 본 메서드의 {@link #useSessionForSpecificMapping}으로 동일한 차감·동기화 경로를 탄다.
+     *
+     * <p>동일 상담사·내담자 쌍의 다른 매핑에 붙은 가예약은 끌어오지 않는다.
+     * 입금 확정 대상 {@code mapping.id} 에 연결된 가예약만 날짜·시각 순으로 확정한다.</p>
      */
     @Override
     public void finalizeTentativeSchedulesAfterDepositConfirmed(ConsultantClientMapping mapping) {
@@ -921,10 +932,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         Long consultantUserId = mapping.getConsultant().getId();
         Long clientUserId = mapping.getClient().getId();
-        List<Schedule> tentativesRaw = scheduleRepository
-                .findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                        tenantId, consultantUserId, clientUserId, ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
-        if (tentativesRaw.isEmpty()) {
+        // 해당 배정(mappingId)에 붙은 가예약만 확정 — 쌍 단위 조회는 다른 매핑 가예약을 끌어올 수 있음.
+        List<Schedule> tentativesRaw = scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                tenantId, mapping.getId(), List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT));
+        if (tentativesRaw == null || tentativesRaw.isEmpty()) {
             log.debug("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 일정 없음, mappingId={}",
                     mapping.getId());
         } else {
@@ -2435,7 +2446,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      *
      * <p>resolve 정책 SSOT:
      * <ol>
-     *   <li>PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑 중 (consultant, client) 일치 1순위</li>
+     *   <li>remaining≥1 ACTIVE 매핑이 있으면 ACTIVE 우선 (PENDING SAME_DAY_CARD 보다 앞)</li>
+     *   <li>그 외 PENDING_PAYMENT + paymentTiming=SAME_DAY_CARD 매핑 중 (consultant, client) 일치</li>
      *   <li>다수 후보 시 {@code createdAt} 내림차순(가장 최근) 1건 선택</li>
      *   <li>SAME_DAY_CARD 후보 없으면 ACTIVE 매핑 fallback (validateMappingForTentativeBeforeDepositSchedule
      *       이 ACTIVE 매핑도 통과시키므로 정합 유지)</li>
@@ -2449,6 +2461,21 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     private ConsultantClientMapping resolveMappingForTentativeBeforeDeposit(Long consultantId, Long clientId) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
+
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        ConsultantClientMapping activeWithRemaining = activeMappings.stream()
+                .filter(m -> mappingMatchesConsultantClientPair(m, consultantId, clientId))
+                .filter(this::mappingHasRemainingSessions)
+                .max(Comparator.comparing(
+                        ConsultantClientMapping::getCreatedAt,
+                        Comparator.nullsFirst(Comparator.naturalOrder())))
+                .orElse(null);
+        if (activeWithRemaining != null) {
+            log.debug("🔗 가예약 매핑 resolve: status=ACTIVE remaining≥1 우선, mappingId={}",
+                    activeWithRemaining.getId());
+            return activeWithRemaining;
+        }
 
         List<ConsultantClientMapping> pendingPaymentMappings = mappingRepository.findByTenantIdAndStatus(
                 tenantId, MappingStatus.PENDING_PAYMENT);
@@ -2465,8 +2492,6 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return sameDayCandidate;
         }
 
-        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
-                tenantId, MappingStatus.ACTIVE);
         ConsultantClientMapping activeCandidate = activeMappings.stream()
                 .filter(m -> mappingMatchesConsultantClientPair(m, consultantId, clientId))
                 .max(Comparator.comparing(
@@ -2481,6 +2506,43 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.debug("🔗 가예약 매핑 resolve 실패 — 후보 없음, consultantId={}, clientId={}",
                 consultantId, clientId);
         return null;
+    }
+
+    /**
+     * 동일 상담사·내담자 쌍에 remaining≥1 인 ACTIVE 매핑이 있는지.
+     *
+     * @param consultantId 상담사 사용자 ID
+     * @param clientId 내담자 사용자 ID
+     * @return 잔여 ACTIVE 가 있으면 true
+     */
+    private boolean hasActiveMappingWithRemainingSessions(Long consultantId, Long clientId) {
+        String tenantId = TenantContextHolder.getRequiredTenantId();
+        List<ConsultantClientMapping> activeMappings = mappingRepository.findByTenantIdAndStatus(
+                tenantId, MappingStatus.ACTIVE);
+        if (activeMappings == null || activeMappings.isEmpty()) {
+            return false;
+        }
+        for (ConsultantClientMapping mapping : activeMappings) {
+            if (mappingMatchesConsultantClientPair(mapping, consultantId, clientId)
+                    && mappingHasRemainingSessions(mapping)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 매핑 remainingSessions ≥ 1 여부 — null 은 0 취급.
+     *
+     * @param mapping 매핑
+     * @return 잔여 회기가 1 이상이면 true
+     */
+    private boolean mappingHasRemainingSessions(ConsultantClientMapping mapping) {
+        if (mapping == null) {
+            return false;
+        }
+        Integer remaining = mapping.getRemainingSessions();
+        return remaining != null && remaining >= 1;
     }
 
     /**

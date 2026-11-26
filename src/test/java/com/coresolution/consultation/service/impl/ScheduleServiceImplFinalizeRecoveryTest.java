@@ -176,9 +176,8 @@ class ScheduleServiceImplFinalizeRecoveryTest {
                 107L, ScheduleStatus.COMPLETED, LocalDate.of(2026, 6, 2), LocalTime.of(10, 0));
 
         // 가예약 없음
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(new ArrayList<>());
 
         // 미차감 COMPLETED 1건
@@ -289,9 +288,8 @@ class ScheduleServiceImplFinalizeRecoveryTest {
                 20L, ScheduleStatus.COMPLETED,
                 LocalDate.of(2026, 6, 2), LocalTime.of(10, 0));
 
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(List.of(tentative));
         when(scheduleRepository
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
@@ -380,9 +378,8 @@ class ScheduleServiceImplFinalizeRecoveryTest {
         tentative.setSessionSequence(1);
         tentative.setMappingId(MAPPING_ID);
 
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(List.of(tentative));
         when(scheduleRepository
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
@@ -419,9 +416,8 @@ class ScheduleServiceImplFinalizeRecoveryTest {
         labeledCompleted.setSessionSequence(1);
         labeledCompleted.setMappingId(MAPPING_ID);
 
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(new ArrayList<>());
         when(scheduleRepository
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(
@@ -463,9 +459,8 @@ class ScheduleServiceImplFinalizeRecoveryTest {
         labeledBooked.setSessionSequence(1);
         labeledBooked.setMappingId(MAPPING_ID);
 
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(new ArrayList<>());
         when(scheduleRepository
                 .findByTenantIdAndConsultantIdAndClientIdAndSessionSequenceIsNullAndStatusInAndIsDeletedFalse(

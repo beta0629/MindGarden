@@ -34,6 +34,7 @@ import com.coresolution.core.service.DashboardIntegrationService;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,9 +144,8 @@ class ScheduleServiceImplSessionUsedHistoryTest {
         tentative.setStatus(ScheduleStatus.TENTATIVE_PENDING_PAYMENT);
         tentative.setIsDeleted(false);
 
-        when(scheduleRepository.findByTenantIdAndConsultantIdAndClientIdAndStatusAndIsDeletedFalse(
-                eq(TENANT_ID), eq(CONSULTANT_USER_ID), eq(CLIENT_USER_ID),
-                eq(ScheduleStatus.TENTATIVE_PENDING_PAYMENT)))
+        when(scheduleRepository.findByTenantIdAndMappingIdAndStatusIn(
+                eq(TENANT_ID), eq(MAPPING_ID), eq(List.of(ScheduleStatus.TENTATIVE_PENDING_PAYMENT))))
                 .thenReturn(Collections.singletonList(tentative));
         when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
 

@@ -736,6 +736,14 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_MAPPING_CREATE_DUPLICATE_WINDOW =
             "짧은 시간 내 동일 상품으로 매칭이 이미 생성되었습니다. 잠시 후 다시 시도해 주세요.";
 
+    /**
+     * ACTIVE 잔여 회기가 있는 상담사·내담자 쌍에 SAME_DAY_CARD(당일 카드) 매칭 생성을 막을 때.
+     * 선납(ADVANCE) 추가 패키지는 허용한다.
+     */
+    public static final String MSG_MAPPING_CREATE_SAME_DAY_WHILE_ACTIVE_REMAINING =
+            "잔여 회기가 있는 활성 배정이 있어 당일 카드(사후 결제) 배정을 만들 수 없습니다. "
+                    + "잔여 회기를 사용하거나 선납 추가 패키지로 등록해 주세요.";
+
 
     /** 환불 설명 파싱·표시 기본값 */
     public static final String REFUND_REASON_FALLBACK_ETC = "기타";

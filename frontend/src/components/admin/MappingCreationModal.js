@@ -480,6 +480,27 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         : CLIENT_ENGAGEMENT_MESSAGES.SESSION_CLIENT_NOT_INSTITUTION);
       return;
     }
+    // ACTIVE remaining≥1 + SAME_DAY_CARD 이중 방어 (BE createMappingInternal 가드와 정합).
+    const activeRemainingOnSubmit = Number(activeMappingForPair?.remainingSessions);
+    if (paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD
+        && Number.isFinite(activeRemainingOnSubmit)
+        && activeRemainingOnSubmit >= 1) {
+      await confirm({
+        title: t('admin:mappingCreation.sameDayBlockedWhileActiveRemainingConfirmTitle'),
+        message: t('admin:mappingCreation.sameDayBlockedWhileActiveRemainingConfirmMessage', {
+          remaining: toDisplayString(activeRemainingOnSubmit, '0')
+        }),
+        confirmLabel: t('common:action.confirm', '확인'),
+        cancelLabel: t('common:action.cancel')
+      });
+      notificationManager.warning(
+        t(
+          'admin:mappingCreation.sameDayBlockedWhileActiveRemaining',
+          '잔여 회기가 있는 활성 배정이 있어 당일 카드(사후 결제) 배정을 만들 수 없습니다.'
+        )
+      );
+      return;
+    }
     // 기관연계 제외, 상품(패키지) 2개 이상 선택 시 등록 전 확인 모달 노출.
     const selectedPackagesForConfirm = paymentInfo.selectedPackages || [];
     if (!institutionClient && selectedPackagesForConfirm.length >= MULTI_PACKAGE_CONFIRM_THRESHOLD) {
@@ -661,6 +682,62 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
         && m.status === 'ACTIVE';
     }) || null;
   })();
+
+  const activeRemainingSessions = Number(activeMappingForPair?.remainingSessions);
+  const hasActiveRemainingSessions = Number.isFinite(activeRemainingSessions)
+    && activeRemainingSessions >= 1;
+
+  // ACTIVE remaining≥1 이면 SAME_DAY_CARD 선택을 선납으로 되돌린다 (생성 차단과 정합).
+  useEffect(() => {
+    if (!hasActiveRemainingSessions) {
+      return undefined;
+    }
+    if (paymentInfo.paymentTiming !== PAYMENT_TIMING_SAME_DAY_CARD) {
+      return undefined;
+    }
+    setPaymentInfo((prev) => ({
+      ...prev,
+      paymentTiming: PAYMENT_TIMING_ADVANCE
+    }));
+    return undefined;
+  }, [hasActiveRemainingSessions, paymentInfo.paymentTiming]);
+
+  const handlePaymentTimingChange = async(nextTiming) => {
+    if (nextTiming === PAYMENT_TIMING_SAME_DAY_CARD && hasActiveRemainingSessions) {
+      await confirm({
+        title: t('admin:mappingCreation.sameDayBlockedWhileActiveRemainingConfirmTitle'),
+        message: t('admin:mappingCreation.sameDayBlockedWhileActiveRemainingConfirmMessage', {
+          remaining: toDisplayString(activeRemainingSessions, '0')
+        }),
+        confirmLabel: t('common:action.confirm', '확인'),
+        cancelLabel: t('common:action.cancel')
+      });
+      notificationManager.warning(
+        t(
+          'admin:mappingCreation.sameDayBlockedWhileActiveRemaining',
+          '잔여 회기가 있는 활성 배정이 있어 당일 카드(사후 결제) 배정을 만들 수 없습니다.'
+        )
+      );
+      return;
+    }
+    setPaymentInfo((prev) => {
+      const paymentMethod = alignMappingCreatePaymentMethod({
+        nextTiming,
+        paymentMethod: prev.paymentMethod,
+        previousTiming: prev.paymentTiming,
+        codes: paymentMethodCodes
+      });
+      const methodChanged = paymentMethod !== prev.paymentMethod;
+      return {
+        ...prev,
+        paymentTiming: nextTiming,
+        paymentMethod,
+        paymentReference: methodChanged
+          ? generateReferenceNumber(paymentMethod)
+          : prev.paymentReference
+      };
+    });
+  };
 
   const renderActiveMappingMergeHint = () => {
     if (!activeMappingForPair || step < 2 || step > 4) {
@@ -1045,39 +1122,30 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 .filter((option) => allowedPaymentTimingsForClient(selectedClient).includes(option.value))
                 .map((option) => {
                 const isSelected = paymentInfo.paymentTiming === option.value;
+                const isSameDayBlocked = option.value === PAYMENT_TIMING_SAME_DAY_CARD
+                  && hasActiveRemainingSessions;
                 const Icon = option.icon;
                 const cardClassName = [
                   'mg-v2-mapping-creation-modal__payment-timing-card',
-                  isSelected ? 'mg-v2-mapping-creation-modal__payment-timing-card--selected' : ''
+                  isSelected ? 'mg-v2-mapping-creation-modal__payment-timing-card--selected' : '',
+                  isSameDayBlocked ? 'mg-v2-mapping-creation-modal__payment-timing-card--disabled' : ''
                 ].filter(Boolean).join(' ');
                 return (
                   <label
                     key={option.value}
                     className={cardClassName}
                     data-testid={`payment-timing-card-${option.value}`}
+                    aria-disabled={isSameDayBlocked ? 'true' : undefined}
                   >
                     <input
                       type="radio"
                       name="mapping-creation-payment-timing"
                       value={option.value}
                       checked={isSelected}
-                      onChange={() => setPaymentInfo((prev) => {
-                        const paymentMethod = alignMappingCreatePaymentMethod({
-                          nextTiming: option.value,
-                          paymentMethod: prev.paymentMethod,
-                          previousTiming: prev.paymentTiming,
-                          codes: paymentMethodCodes
-                        });
-                        const methodChanged = paymentMethod !== prev.paymentMethod;
-                        return {
-                          ...prev,
-                          paymentTiming: option.value,
-                          paymentMethod,
-                          paymentReference: methodChanged
-                            ? generateReferenceNumber(paymentMethod)
-                            : prev.paymentReference
-                        };
-                      })}
+                      disabled={isSameDayBlocked}
+                      onChange={() => {
+                        handlePaymentTimingChange(option.value);
+                      }}
                       className="mg-v2-mapping-creation-modal__payment-timing-card-input"
                     />
                     <span className="mg-v2-mapping-creation-modal__payment-timing-card-icon" aria-hidden="true">
@@ -1104,7 +1172,16 @@ const MappingCreationModal = ({ isOpen, onClose, onMappingCreated }) => {
                 );
               })}
             </fieldset>
-            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && (
+            {hasActiveRemainingSessions && (
+              <p
+                className="mg-v2-mapping-creation-modal__payment-timing-hint"
+                data-testid="same-day-blocked-active-remaining-hint"
+                role="status"
+              >
+                {t('admin:mappingCreation.paymentTiming.sameDayCardBlockedHint')}
+              </p>
+            )}
+            {paymentInfo.paymentTiming === PAYMENT_TIMING_SAME_DAY_CARD && !hasActiveRemainingSessions && (
               <p className="mg-v2-mapping-creation-modal__payment-timing-hint">
                 {t('admin:mappingCreation.paymentTiming.sameDayCardHint')}
               </p>

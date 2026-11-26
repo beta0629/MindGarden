@@ -16,7 +16,7 @@ on:
       window_end_utc:
         description: '로그 구간 끝 (UTC, "YYYY-MM-DD HH:MM")'
         type: string
-        default: '2026-11-26 15:05'
+        default: '2026-11-26 15:10'
       force_incident:
         description: 'KST 11–19 가드 우회 (명시적 장애 대응만)'
         type: boolean
@@ -128,6 +128,30 @@ jobs:
               echo "# top client IPs (remote_addr):"; printf '%s\n' "$W" | awk '{print $1}' | sort | uniq -c | sort -rn | head -8 | tr '\n' ' '; echo
               echo "# 499/5xx samples (masked):"; printf '%s\n' "$W" | grep -E '" (499|502|503|504) ' | tail -6 | awk '{print $1, $4, $6, $7, $9}' | mask
             done
+            echo "--- TLS: nginx -T ssl/listen 443/server_name (paths only) ---"
+            S nginx -T 2>/dev/null | grep -E '^\s*(listen\s+[^;]*443|server_name|ssl_certificate|ssl_certificate_key|ssl_protocols|ssl_ciphers|ssl_session|ssl_early_data|http3|quic|listen\s+[^;]*quic|add_header Alt-Svc|ssl_stapling|worker_connections|worker_rlimit_nofile|worker_processes|multi_accept)' | sed -E 's/^\s+//' | sort | uniq -c | sort -rn | head -60
+            echo "# nginx -t:"; S nginx -t 2>&1 | tail -2
+            echo "--- TLS: certificates referenced ---"
+            for c in $(S nginx -T 2>/dev/null | grep -E '^\s*ssl_certificate\s' | awk '{print $2}' | tr -d ';' | sort -u); do
+              echo "## $c"; S openssl x509 -in "$c" -noout -subject -issuer -enddate -ext subjectAltName 2>&1 | tr '\n' ' ' | cut -c1-600; echo
+            done
+            echo "--- TLS: local s_client 127.0.0.1:443 x10 per SNI ---"
+            for sni in mindgarden.core-solution.co.kr ops.e-trinity.co.kr; do
+              ok=0; fail=0; for i in $(seq 1 10); do
+                if echo | timeout 8 openssl s_client -connect 127.0.0.1:443 -servername $sni -brief 2>&1 | grep -qE 'Protocol version|Verification|CONNECTION ESTABLISHED'; then ok=$((ok+1)); else fail=$((fail+1)); fi
+              done; echo "$sni ok=$ok fail=$fail"
+              echo | timeout 8 openssl s_client -connect 127.0.0.1:443 -servername $sni 2>/dev/null | openssl x509 -noout -subject -issuer -enddate 2>/dev/null | tr '\n' ' '; echo
+            done
+            echo "--- nginx process limits ---"
+            for pid in $(pgrep -x nginx | head -3); do echo "pid $pid $(S cat /proc/$pid/limits 2>/dev/null | grep -i 'open files' | tr -s ' ') fds=$(S ls /proc/$pid/fd 2>/dev/null | wc -l)"; done
+            echo "nginx_workers=$(pgrep -c -x nginx) file-nr=$(cat /proc/sys/fs/file-nr)"
+            echo "--- nginx error.log TLS/limits counts (window) ---"
+            for f in /var/log/nginx/*error.log /var/log/nginx/*error.log.1 /var/log/nginx/error.log; do
+              [ -f "$f" ] || continue
+              W=$(S cat "$f" | awk -v s="$LS" -v e="$LE" '{t=$1" "substr($2,1,5)} t>=s && t<=e')
+              echo "$f ssl_handshake=$(printf '%s\n' "$W" | grep -ciE 'SSL_do_handshake|ssl handshake|SSL_read|SSL_write' || true) worker_conn=$(printf '%s\n' "$W" | grep -c 'worker_connections are not enough' || true) nofile=$(printf '%s\n' "$W" | grep -ci 'too many open files' || true) upstream=$(printf '%s\n' "$W" | grep -c 'upstream' || true) emerg_alert=$(printf '%s\n' "$W" | grep -cE '\[(emerg|alert|crit)\]' || true)"
+            done
+            echo "# nginx master restarts/reloads in journal (2 days):"; S journalctl -u nginx --since "-2 days" --no-pager -o short-iso 2>/dev/null | grep -iE 'reload|start|stop|fail' | tail -10
             echo "--- connections ---"
             ss -s
             echo "# 443 listen queue:"; ss -ltn '( sport = :443 or sport = :80 )'
@@ -186,3 +210,19 @@ jobs:
             echo "--- local health ---"
             for p in 8080 8081; do echo "127.0.0.1:$p -> $(curl -s -o /dev/null -m 5 -w '%{http_code} %{time_total}s' http://127.0.0.1:$p/actuator/health)"; done
             echo "=== end (no changes made) ==="
+
+      - name: 러너→오리진 직접 TLS 프로브 (IP 비출력)
+        if: steps.kst_guard.outputs.skip != 'true'
+        env:
+          ORIGIN: ${{ secrets.PRODUCTION_HOST }}
+        run: |
+          set -u
+          for sni in mindgarden.core-solution.co.kr ops.e-trinity.co.kr; do
+            ok=0; fail=0
+            for i in $(seq 1 10); do
+              if echo | timeout 10 openssl s_client -connect "${ORIGIN}:443" -servername "$sni" 2>/dev/null | grep -q 'BEGIN CERTIFICATE'; then ok=$((ok+1)); else fail=$((fail+1)); fi
+            done
+            echo "$sni origin-direct ok=$ok fail=$fail"
+            echo | timeout 10 openssl s_client -connect "${ORIGIN}:443" -servername "$sni" 2>/dev/null | openssl x509 -noout -subject -issuer -enddate 2>/dev/null | tr '\n' ' '; echo
+            echo "tcp443 connect time: $(curl -s -o /dev/null -m 10 -w '%{time_connect}s tls=%{time_appconnect}s code=%{http_code}' --resolve "$sni:443:${ORIGIN}" -k "https://$sni/" 2>&1)"
+          done

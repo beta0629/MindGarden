@@ -126,6 +126,7 @@ import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.dto.lifecycle.Actor;
 import com.coresolution.consultation.service.UserLifecycleService;
 import com.coresolution.consultation.service.UserService;
+import com.coresolution.consultation.service.support.ClientEventWriteSupport;
 import com.coresolution.consultation.service.support.ConsultationDepositIncomeLedger;
 import com.coresolution.consultation.service.support.MergedPackageDisplayResolver;
 import com.coresolution.consultation.service.support.MergedPackageDisplayResolver.MergedPackageDisplay;
@@ -233,6 +234,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
+
+    /**
+     * 내담자 타임라인({@code client_event}) 실시간 기록.
+     * 생성자 DI 호환 유지용 필드 주입. 단위 테스트에서 빈이 없으면 skip.
+     */
+    @Autowired(required = false)
+    private ClientEventWriteSupport clientEventWriteSupport;
 
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
@@ -1092,6 +1100,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         if (applyDuplicateWindowGuard) {
             savedMapping = activateZeroChargeRegularAssignmentIfEligible(savedMapping);
         }
+        recordClientMappingCreated(savedMapping);
         return savedMapping;
     }
 
@@ -5048,10 +5057,29 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public ConsultantClientMappingResponse useSession(Long mappingId) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), mappingId)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
-        
+
+        Integer remBefore = mapping.getRemainingSessions();
+        Integer usedBefore = mapping.getUsedSessions();
+        String beforeJson = clientEventWriteSupport != null
+                ? clientEventWriteSupport.toMappingSessionJson(mapping) : null;
+        Long clientId = mapping.getClient() != null ? mapping.getClient().getId() : null;
+
         mapping.useSession();
-        
+
         ConsultantClientMapping saved = mappingRepository.save(mapping);
+        if (clientEventWriteSupport != null && clientId != null) {
+            clientEventWriteSupport.recordSessionDeducted(
+                    getTenantId(),
+                    clientId,
+                    saved.getId(),
+                    null,
+                    remBefore,
+                    saved.getRemainingSessions(),
+                    usedBefore,
+                    saved.getUsedSessions(),
+                    beforeJson,
+                    clientEventWriteSupport.toMappingSessionJson(saved));
+        }
         return ConsultantClientMappingResponse.fromEntity(saved);
     }
 
@@ -7229,8 +7257,13 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
             }
         }
         
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
+        boolean statusChanging = false;
         if (dto.getStatus() != null) {
-            mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus()));
+            ConsultantClientMapping.MappingStatus newStatus =
+                    ConsultantClientMapping.MappingStatus.valueOf(dto.getStatus());
+            statusChanging = mapping.getStatus() != newStatus;
+            mapping.setStatus(newStatus);
         }
         if (dto.getPaymentStatus() != null) {
             mapping.setPaymentStatus(ConsultantClientMapping.PaymentStatus.valueOf(dto.getPaymentStatus()));
@@ -7239,6 +7272,9 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         ConsultantClientMapping savedMapping = mappingRepository.save(mapping);
         Hibernate.initialize(savedMapping.getConsultant());
         Hibernate.initialize(savedMapping.getClient());
+        if (statusChanging) {
+            recordClientMappingStatusChanged(savedMapping, previousStatusName);
+        }
         
         boolean packageChanged = (dto.getPackageName() != null && oldPackageName != null && !dto.getPackageName().equals(oldPackageName)) ||
                                 (dto.getPackageName() != null && oldPackageName == null) ||
@@ -8088,10 +8124,12 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     public void deleteMapping(Long id) {
         ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
                 .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         String terminatedStatus = getMappingStatusCode("TERMINATED");
         mapping.setStatus(ConsultantClientMapping.MappingStatus.valueOf(terminatedStatus));
         mapping.setTerminatedAt(LocalDateTime.now());
-        mappingRepository.save(mapping);
+        ConsultantClientMapping saved = mappingRepository.save(mapping);
+        recordClientMappingStatusChanged(saved, previousStatusName);
     }
 
     @Override
@@ -8117,9 +8155,11 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         // 합의서: docs/project-management/2026-05-28/R4_PENDING_PAYMENT_CLEANUP_UI_PLAN.md.
         // 결제가 발생하지 않은 매칭이므로 환불 (sendRefundToErp / 4채널 통지) 트리거를 우회하고,
         // 연결된 점유 일정(BOOKED/CONFIRMED/TENTATIVE)과 paymentStatus 만 정리한다.
+        String previousStatusName = mapping.getStatus() != null ? mapping.getStatus().name() : null;
         String pendingPaymentStatus = getMappingStatusCode(MappingStatusConstants.PENDING_PAYMENT);
         if (mapping.getStatus().name().equals(pendingPaymentStatus)) {
             terminatePendingPaymentMapping(mapping, tenantId, reason, cancelledStatus);
+            recordClientMappingStatusChanged(mapping, previousStatusName);
             return;
         }
 
@@ -8203,6 +8243,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         mapping.setUsedSessions(mapping.getTotalSessions()); // 종료 시 남은 회기 없음: used=total 로 두어 total=used+remaining 유지
 
         mappingRepository.save(mapping);
+        recordClientMappingStatusChanged(mapping, previousStatusName);
         
         // SSOT 핫픽스 2026-05-26 (P0-B): 미래 BOOKED/CONFIRMED/TENTATIVE 일정 일괄 CANCELLED 전이.
         // 사유는 회기관리 합의서 v2 (Q3=3A) 에 따라 REFUND_AUTO_CANCEL 코드로 표준화.
@@ -12859,6 +12900,20 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("✅ 추가 패키지 매핑 TERMINATED(병합): mappingId={}, targetActiveId={}",
                 terminated.getId(), targetActive.getId());
         return terminated;
+    }
+
+    private void recordClientMappingCreated(ConsultantClientMapping mapping) {
+        if (clientEventWriteSupport == null || mapping == null) {
+            return;
+        }
+        clientEventWriteSupport.recordMappingCreated(mapping);
+    }
+
+    private void recordClientMappingStatusChanged(ConsultantClientMapping mapping, String previousStatusName) {
+        if (clientEventWriteSupport == null || mapping == null) {
+            return;
+        }
+        clientEventWriteSupport.recordMappingStatusChanged(mapping, previousStatusName);
     }
 
     /**

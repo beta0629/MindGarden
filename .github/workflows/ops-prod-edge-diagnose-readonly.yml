@@ -1,0 +1,163 @@
+# 운영 엣지(Cloudflare 522) 원인 진단 — 읽기 전용.
+# 재학 승인 2026-11-26 23:52 KST 「운영 서버 읽기 전용 점검 진행해」.
+# 변경 명령 없음: restart/stop/reload/iptables -A·-D·-F/ufw 변경/설정 쓰기/DB 접근 금지.
+# 출력: 집계·IP·상태코드만. 쿼리스트링·쿠키·토큰·본문은 출력하지 않는다.
+# SSOT 2026-09-22: KST 11–19 예방 점검 금지 → 가드로 skip (force_incident=true 만 예외).
+
+name: 🔎 운영 엣지 522 진단 (읽기 전용)
+
+on:
+  workflow_dispatch:
+    inputs:
+      window_start_utc:
+        description: '로그 구간 시작 (UTC, "YYYY-MM-DD HH:MM")'
+        type: string
+        default: '2026-11-26 14:30'
+      window_end_utc:
+        description: '로그 구간 끝 (UTC, "YYYY-MM-DD HH:MM")'
+        type: string
+        default: '2026-11-26 14:55'
+      force_incident:
+        description: 'KST 11–19 가드 우회 (명시적 장애 대응만)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ops-prod-edge-diagnose-readonly
+  cancel-in-progress: false
+
+jobs:
+  diagnose:
+    name: 원격 읽기 전용 진단
+    runs-on: ubuntu-latest
+    steps:
+      - name: KST 주간 가드 (11–19 skip)
+        id: kst_guard
+        env:
+          FORCE_INCIDENT: ${{ inputs.force_incident || false }}
+        run: |
+          set -euo pipefail
+          HOUR="$(TZ=Asia/Seoul date +%H)"
+          HOUR=$((10#$HOUR))
+          echo "Asia/Seoul hour=${HOUR} force_incident=${FORCE_INCIDENT}"
+          if [ "${FORCE_INCIDENT}" = "true" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$HOUR" -ge 11 ] && [ "$HOUR" -le 19 ]; then
+            echo "::notice::KST ${HOUR}:00 is in 11–19. Skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: 입력 형식 검증
+        if: steps.kst_guard.outputs.skip != 'true'
+        env:
+          WS: ${{ inputs.window_start_utc }}
+          WE: ${{ inputs.window_end_utc }}
+        run: |
+          set -euo pipefail
+          for v in "$WS" "$WE"; do
+            echo "$v" | grep -Eq '^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}$' || { echo "::error::bad window: $v"; exit 1; }
+          done
+
+      - name: 원격 읽기 전용 진단
+        if: steps.kst_guard.outputs.skip != 'true'
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 8m
+          script: |
+            set -u
+            WS='${{ inputs.window_start_utc }}'
+            WE='${{ inputs.window_end_utc }}'
+            S() { sudo -n "$@" 2>/dev/null || "$@" 2>&1; }
+            mask() { sed -E 's/\?[^ "]*/?<q>/g; s/(token|key|password|secret|session|cookie)=[^ &";]*/\1=<m>/Ig'; }
+            # 로컬 시각 (서버 TZ) 로 변환
+            LS=$(date -d "$WS UTC" '+%Y/%m/%d %H:%M'); LE=$(date -d "$WE UTC" '+%Y/%m/%d %H:%M')
+            echo "=== window UTC [$WS ~ $WE] local [$LS ~ $LE] tz=$(date +%Z%z) now=$(date '+%F %T %Z') ==="
+            echo "--- uptime / loadavg ---"; uptime; cat /proc/loadavg; nproc
+            echo "--- free -m ---"; free -m
+            echo "--- swapon --show ---"; swapon --show
+            echo "--- vmstat 1 5 ---"; vmstat 1 5
+            echo "--- PSI ---"; for r in cpu memory io; do echo "$r: $(cat /proc/pressure/$r 2>/dev/null | tr '\n' ' ')"; done
+            echo "--- java processes (count / RSS MB / args trimmed) ---"
+            ps -C java -o pid=,rss=,etimes=,args= | awk '{printf "pid=%s rss_mb=%d etime_s=%s ", $1, $2/1024, $3; for(i=4;i<=NF;i++){ if($i ~ /^-Dserver\.port|^--server\.port|\.jar$|^-Xmx|^-Xms|^-XX:MaxRAM/) printf "%s ", $i }; print ""}'
+            echo "java_count=$(pgrep -c java || true)"
+            echo "--- top 10 by RSS ---"; ps -eo pid,rss,comm --sort=-rss | head -11 | awk 'NR==1{print;next}{printf "%s %dMB %s\n",$1,$2/1024,$3}'
+            echo "--- OOM (kernel, last 2 days) ---"
+            S journalctl -k --since "-2 days" --no-pager 2>/dev/null | grep -iE 'oom|killed process|out of memory' | tail -20 || true
+            S dmesg -T 2>/dev/null | grep -iE 'oom|killed process|out of memory' | tail -10 || true
+            echo "--- systemd slots ---"
+            for u in mindgarden-core-blue mindgarden-core-green nginx fail2ban ufw; do echo "$u: $(systemctl is-active $u 2>&1) since $(systemctl show -p ActiveEnterTimestamp --value $u 2>/dev/null)"; done
+            echo "--- systemd restarts (NRestarts) ---"
+            for u in mindgarden-core-blue mindgarden-core-green nginx; do echo "$u NRestarts=$(systemctl show -p NRestarts --value $u 2>/dev/null)"; done
+            echo "--- listen sockets (8080/8081/80/443) ---"
+            S ss -ltnp 2>/dev/null | grep -E ':(80|443|8080|8081)\b' | sed -E 's/users:\(\(("[^"]+"),pid=([0-9]+).*/\1 pid=\2/'
+            echo "--- nginx upstream (snippet + sites) ---"
+            grep -nE 'upstream|server 127|server localhost|proxy_pass|keepalive' /etc/nginx/snippets/mindgarden-core-backend-upstream.conf 2>&1
+            grep -rnE '^\s*(upstream|server 127|proxy_pass http://127)' /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ 2>/dev/null | head -30
+            echo "--- nginx real_ip / limits / worker ---"
+            grep -rnE 'set_real_ip_from|real_ip_header|limit_req|limit_conn|deny |allow |worker_connections|worker_processes|worker_rlimit' /etc/nginx/nginx.conf /etc/nginx/sites-enabled/ /etc/nginx/conf.d/ /etc/nginx/snippets/ 2>/dev/null | grep -v '^\s*#' | awk -F: '{print $1":"$2": "$3$4}' | sort | uniq -c | sort -rn | head -30
+            echo "--- nginx error logs in window (counts) ---"
+            for f in /var/log/nginx/*error.log /var/log/nginx/*error.log.1; do
+              [ -f "$f" ] || continue
+              W=$(S cat "$f" | awk -v s="$LS" -v e="$LE" '{t=$1" "substr($2,1,5)} t>=s && t<=e')
+              n=$(printf '%s' "$W" | grep -c . || true); [ "$n" -gt 0 ] || continue
+              echo "## $f lines=$n"
+              printf '%s\n' "$W" | grep -oE 'upstream timed out|connect\(\) failed|no live upstreams|upstream prematurely closed|Connection refused|Connection reset|worker_connections are not enough|too many open files|SSL_do_handshake|limiting requests|limiting connections|access forbidden' | sort | uniq -c | sort -rn
+              echo "# per-minute:"; printf '%s\n' "$W" | awk '{print substr($2,1,5)}' | sort | uniq -c | tr '\n' ' '; echo
+              echo "# samples (masked):"; printf '%s\n' "$W" | grep -E 'upstream|connect\(\)|refused|worker_connections' | tail -8 | mask | cut -c1-300
+            done
+            echo "--- nginx access logs in window ---"
+            for f in /var/log/nginx/*access.log /var/log/nginx/*access.log.1; do
+              [ -f "$f" ] || continue
+              W=$(S cat "$f" | awk -v s="$LS" -v e="$LE" 'BEGIN{split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",m," ");for(i=1;i<=12;i++)M[m[i]]=sprintf("%02d",i)}
+                { if (match($0,/\[[0-9]+\/[A-Za-z]+\/[0-9]+:[0-9]+:[0-9]+/)) { x=substr($0,RSTART+1,RLENGTH-1); split(x,a,/[\/:]/); t=a[3]"/"M[a[2]]"/"a[1]" "a[4]":"a[5]; if(t>=s && t<=e) print } }')
+              n=$(printf '%s' "$W" | grep -c . || true); [ "$n" -gt 0 ] || continue
+              echo "## $f requests=$n"
+              echo "# status:"; printf '%s\n' "$W" | awk '{for(i=1;i<=NF;i++) if($i ~ /^"(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)/){print $(i+3); break}}' | sort | uniq -c | sort -rn | head -12 | tr '\n' ' '; echo
+              echo "# 499/5xx count: $(printf '%s\n' "$W" | grep -cE '" (499|502|503|504) ' || true)"
+              echo "# per-minute requests:"; printf '%s\n' "$W" | grep -oE '[0-9]{4}:[0-9]{2}:[0-9]{2}:[0-9]{2}' | cut -d: -f2-3 | sort | uniq -c | awk '{printf "%s=%s ",$2,$1}'; echo
+              echo "# top client IPs (remote_addr):"; printf '%s\n' "$W" | awk '{print $1}' | sort | uniq -c | sort -rn | head -8 | tr '\n' ' '; echo
+              echo "# 499/5xx samples (masked):"; printf '%s\n' "$W" | grep -E '" (499|502|503|504) ' | tail -6 | awk '{print $1, $4, $6, $7, $9}' | mask
+            done
+            echo "--- connections ---"
+            ss -s
+            echo "# 443 listen queue:"; ss -ltn '( sport = :443 or sport = :80 )'
+            echo "# established/syn-recv to 443: est=$(ss -Htn state established '( sport = :443 )' | wc -l) synrecv=$(ss -Htn state syn-recv '( sport = :443 )' | wc -l)"
+            echo "# conntrack: $(cat /proc/sys/net/netfilter/nf_conntrack_count 2>/dev/null)/$(cat /proc/sys/net/netfilter/nf_conntrack_max 2>/dev/null)"
+            echo "# somaxconn=$(cat /proc/sys/net/core/somaxconn) syn_backlog=$(cat /proc/sys/net/ipv4/tcp_max_syn_backlog) syncookies=$(cat /proc/sys/net/ipv4/tcp_syncookies)"
+            echo "--- netstat -s (listen/overflow/SYN) ---"
+            (netstat -s 2>/dev/null || nstat -az 2>/dev/null) | grep -iE 'listen|overflow|SYNs|SYN|prune|drop' | head -20
+            echo "--- kernel conntrack/drop msgs (2 days) ---"
+            S journalctl -k --since "-2 days" --no-pager 2>/dev/null | grep -iE 'conntrack|table full|dropping packet|possible SYN flooding' | tail -10 || true
+            echo "--- firewall ---"
+            echo "# iptables policies + DROP/REJECT rule count:"
+            S iptables -S 2>&1 | grep -E '^-P' ; echo "drop_reject_rules=$(S iptables -S 2>/dev/null | grep -cE 'DROP|REJECT' || true)"
+            echo "# DROP/REJECT rules touching CF ranges or 443 (first 30):"
+            S iptables -S 2>/dev/null | grep -E 'DROP|REJECT' | grep -E '^-A (INPUT|ufw|f2b|DOCKER|crowdsec)|dport 443|dport 80|172\.6[4-9]|172\.7[01]|104\.(1[6-9]|2[0-9]|3[01])|162\.15[89]|108\.162|141\.101|173\.245|188\.114|190\.93|197\.234|198\.41|103\.2[12]|103\.31|131\.0' | head -30
+            echo "# chains:"; S iptables -S 2>/dev/null | grep -E '^-N' | tr '\n' ' '; echo
+            echo "# INPUT counters (top 15):"; S iptables -L INPUT -n -v --line-numbers 2>&1 | head -20
+            echo "# nft ruleset tables:"; S nft list tables 2>&1 | head -10
+            echo "# ufw:"; S ufw status verbose 2>&1 | head -30
+            echo "# fail2ban:"; S fail2ban-client status 2>&1 | head -5
+            for j in $(S fail2ban-client status 2>/dev/null | sed -n 's/.*Jail list:\s*//p' | tr ',' ' '); do echo "jail $j: $(S fail2ban-client status $j 2>/dev/null | grep -E 'Currently banned|Total banned' | tr -s ' \t' ' ' | tr '\n' ' ')"; S fail2ban-client status $j 2>/dev/null | sed -n 's/.*Banned IP list:\s*//p' | tr ' ' '\n' | grep -E '^(172\.6[4-9]|172\.7[01]|104\.(1[6-9]|2[0-9]|3[01])|162\.15[89]|108\.162|141\.101|173\.245|188\.114|190\.93|197\.234|198\.41|103\.2[12]|103\.31|131\.0)\.' | sed 's/^/  CF-range banned: /'; done
+            echo "# crowdsec/other: $(command -v cscli >/dev/null && echo present || echo none)"
+            echo "--- app security logs in window (counts) ---"
+            for u in mindgarden-core-blue mindgarden-core-green; do
+              SINCE=$(date -d "$WS UTC" '+%F %T'); UNTIL=$(date -d "$WE UTC" '+%F %T')
+              J=$(S journalctl -u $u --since "$SINCE" --until "$UNTIL" --no-pager 2>/dev/null)
+              echo "$u lines=$(printf '%s\n' "$J" | wc -l) sec_event=$(printf '%s\n' "$J" | grep -c '보안 이벤트 감지' || true) block_reco=$(printf '%s\n' "$J" | grep -c 'IP 차단 권장' || true) OOME=$(printf '%s\n' "$J" | grep -c 'OutOfMemoryError' || true) broken_pipe=$(printf '%s\n' "$J" | grep -c 'Broken pipe' || true) gc_overhead=$(printf '%s\n' "$J" | grep -ciE 'GC overhead|Full GC' || true)"
+              printf '%s\n' "$J" | grep 'IP 차단 권장' | grep -oE 'IP 차단 권장: [0-9a-f.:]+' | sort | uniq -c | head -5
+            done
+            echo "--- memory-alert ---"; ls -la /var/log/mindgarden/memory* /tmp/memory-alert* 2>/dev/null | head; tail -5 /var/log/mindgarden/memory-alert.log 2>/dev/null || true
+            echo "--- local health ---"
+            for p in 8080 8081; do echo "127.0.0.1:$p -> $(curl -s -o /dev/null -m 5 -w '%{http_code} %{time_total}s' http://127.0.0.1:$p/actuator/health)"; done
+            echo "=== end (no changes made) ==="

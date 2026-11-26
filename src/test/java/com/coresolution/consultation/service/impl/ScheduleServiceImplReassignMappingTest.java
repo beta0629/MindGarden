@@ -187,6 +187,33 @@ class ScheduleServiceImplReassignMappingTest {
     }
 
     @Test
+    @DisplayName("대상 매핑 회기 불변식 깨짐 → IllegalArgumentException(400), RuntimeException 아님")
+    void reassign_inconsistentTargetSessionCounts_throwsIllegalArgumentException() {
+        Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,
+                today.plusDays(1), LocalTime.of(10, 0));
+        ConsultantClientMapping origin = activeMapping(ORIGIN_MAPPING_ID, 10, 1, 9);
+        // total != used + remaining (의도적 불일치)
+        ConsultantClientMapping inconsistentTarget = activeMapping(TARGET_MAPPING_ID, 10, 2, 5);
+
+        stubScheduleLoad(schedule);
+        stubMappingLoad(origin);
+        stubMappingLoad(inconsistentTarget);
+        when(scheduleRepository.save(any(Schedule.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(scheduleRepository.findDeductedConsultationSchedulesForMapping(
+                eq(TENANT_ID), eq(ORIGIN_MAPPING_ID), eq(CONSULTANT_ID), eq(CLIENT_ID), any()))
+                .thenReturn(List.of());
+
+        assertThatThrownBy(() -> scheduleService.reassignScheduleMapping(
+                SCHEDULE_ID, TARGET_MAPPING_ID, "불일치 매핑 배정", ACTOR_ID))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("회기 수 불일치")
+                .hasMessageContaining("mappingId=" + TARGET_MAPPING_ID);
+
+        verify(sessionSyncService, never()).syncAfterSessionUsage(any(), any(), any());
+        verify(mappingRepository, never()).save(inconsistentTarget);
+    }
+
+    @Test
     @DisplayName("검증 실패 — 사유 공백·잔여 부족·동일 매핑")
     void reassign_validationFailures() {
         Schedule schedule = consultationSchedule(SCHEDULE_ID, ORIGIN_MAPPING_ID, ScheduleStatus.BOOKED, 1,

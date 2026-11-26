@@ -4,6 +4,10 @@ import notificationManager from '../../utils/notification';
 import UnifiedModal from '../common/modals/UnifiedModal';
 import { ActionButton, StatusBadge } from '../common';
 import { toPackageOption, buildCombinedPackageName, parseCombinedPackageName } from '../../utils/packagePricing';
+import {
+  validateRemainingAgainstTotal,
+  validateTotalSessionsAgainstUsed
+} from '../../utils/mappingSessionCountInvariant';
 import PackageOptionCard from './mapping-management/PackageOptionCard';
 import './MappingEditModal.css';
 import { useTranslation } from 'react-i18next';
@@ -152,7 +156,7 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
   };
 
   /**
-   * 폼 유효성 검사
+   * 폼 유효성 검사 — 총 회기 >= 사용 회기(BE MappingSessionCountInvariant 와 동일).
    */
   const validateForm = () => {
     const newErrors = {};
@@ -167,6 +171,27 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
       || Number.isNaN(Number(formData.totalSessions));
     if (formData.packageName && (priceMissing || sessionsMissing)) {
       newErrors.packageName = '패키지 정보를 불러오는 중입니다. 잠시 후 다시 시도해주세요.';
+    }
+
+    const totalAgainstUsedError = validateTotalSessionsAgainstUsed(
+      formData.totalSessions,
+      mapping?.usedSessions
+    );
+    if (totalAgainstUsedError) {
+      newErrors.totalSessions = totalAgainstUsedError;
+    }
+
+    // formData 에 remainingSessions 가 있는 경우(향후 확장) — remaining SSOT, used 는 서버 파생
+    if (Object.prototype.hasOwnProperty.call(formData, 'remainingSessions')
+        && formData.remainingSessions !== ''
+        && formData.remainingSessions != null) {
+      const remError = validateRemainingAgainstTotal(
+        formData.totalSessions,
+        formData.remainingSessions
+      );
+      if (remError) {
+        newErrors.remainingSessions = remError;
+      }
     }
 
     setErrors(newErrors);
@@ -382,6 +407,12 @@ const MappingEditModal = ({ isOpen, onClose, mapping, onSuccess }) => {
                     </span>
                   </div>
                 </div>
+                {errors.totalSessions && (
+                  <span className="mg-v2-form-error">{errors.totalSessions}</span>
+                )}
+                {errors.remainingSessions && (
+                  <span className="mg-v2-form-error">{errors.remainingSessions}</span>
+                )}
                 <div className="mg-v2-form-help">
                   패키지 선택 시 자동으로 설정됩니다
                 </div>

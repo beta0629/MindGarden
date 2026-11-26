@@ -12,6 +12,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.SessionExtensionRequestRepository;
 import com.coresolution.consultation.service.SessionSyncService;
+import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.MappingSessionsExhaustedRule;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.stereotype.Service;
@@ -316,55 +317,35 @@ public class SessionSyncServiceImpl extends BaseTenantAwareService implements Se
         }
     }
     
-     /**
-     * 회기 수 검증
+    /**
+     * 회기 수 검증 — {@link MappingSessionCountInvariant} (IllegalArgumentException → HTTP 400).
+     *
+     * @param mapping 검증 대상
      */
     private void validateSessionCounts(ConsultantClientMapping mapping) {
-        int total = mapping.getTotalSessions();
-        int used = mapping.getUsedSessions();
-        int remaining = mapping.getRemainingSessions();
-        
-        if (total != (used + remaining)) {
-            throw new RuntimeException(String.format(
-                "회기 수 불일치: mappingId=%d, total=%d, used=%d, remaining=%d", 
-                mapping.getId(), total, used, remaining));
-        }
-        
-        if (remaining < 0) {
-            throw new RuntimeException(String.format(
-                "잔여 회기 수 음수: mappingId=%d, remaining=%d", 
-                mapping.getId(), remaining));
-        }
+        MappingSessionCountInvariant.assertInvariant(mapping);
     }
-    
-     /**
-     * 회기 사용 후 검증 (단회기 패키지 고려)
+
+    /**
+     * 회기 사용 후 검증 (단회기 패키지 고려). 차감/복원 수식은 변경하지 않는다.
+     *
+     * @param mapping 검증 대상
      */
     private void validateSessionCountsForUsage(ConsultantClientMapping mapping) {
-        int total = mapping.getTotalSessions();
-        int used = mapping.getUsedSessions();
-        int remaining = mapping.getRemainingSessions();
-        
-        log.info("🔍 회기 사용 후 검증: mappingId={}, total={}, used={}, remaining={}", 
+        int total = MappingSessionCountInvariant.nullToZero(mapping.getTotalSessions());
+        int used = MappingSessionCountInvariant.nullToZero(mapping.getUsedSessions());
+        int remaining = MappingSessionCountInvariant.nullToZero(mapping.getRemainingSessions());
+
+        log.info("🔍 회기 사용 후 검증: mappingId={}, total={}, used={}, remaining={}",
                 mapping.getId(), total, used, remaining);
-        
-        if (total != (used + remaining)) {
-            throw new RuntimeException(String.format(
-                "회기 수 불일치: mappingId=%d, total=%d, used=%d, remaining=%d", 
-                mapping.getId(), total, used, remaining));
-        }
-        
-        if (remaining < 0) {
-            throw new RuntimeException(String.format(
-                "잔여 회기 수 음수: mappingId=%d, remaining=%d", 
-                mapping.getId(), remaining));
-        }
-        
+
+        MappingSessionCountInvariant.assertInvariant(mapping.getId(), total, used, remaining);
+
         if (total == 1 && used == 1 && remaining == 0) {
             log.info("✅ 단회기 패키지 정상 완료: mappingId={}", mapping.getId());
             return;
         }
-        
+
         log.info("✅ 회기 사용 후 검증 완료: mappingId={}", mapping.getId());
     }
     

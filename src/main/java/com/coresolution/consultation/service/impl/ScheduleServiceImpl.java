@@ -90,6 +90,7 @@ import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingOccupyingSessionSequenceOrder;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
+import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.util.ScheduleCancelMappingStatusRule;
@@ -3399,6 +3400,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         Integer rem = target.getRemainingSessions();
         if (rem == null || rem < 1) {
             throw new IllegalStateException(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_TARGET_INVALID);
+        }
+        // 회기 불변식 깨진 매핑은 useSession/sync 전 400으로 차단 (500 RuntimeException 방지)
+        MappingSessionCountInvariant.assertInvariant(target);
+        if (origin != null) {
+            MappingSessionCountInvariant.assertInvariant(origin);
         }
         Integer remBefore = target.getRemainingSessions();
         Integer usedBefore = target.getUsedSessions();

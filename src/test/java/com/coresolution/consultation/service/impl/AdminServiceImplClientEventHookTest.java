@@ -263,6 +263,8 @@ class AdminServiceImplClientEventHookTest {
                 eq(8),
                 eq(2));
         assertThat(mapping.getRemainingSessions()).isEqualTo(5);
+        assertThat(mapping.getUsedSessions()).isEqualTo(5);
+        assertThat(mapping.getTotalSessions()).isEqualTo(10);
     }
 
     @Test
@@ -284,6 +286,9 @@ class AdminServiceImplClientEventHookTest {
                 anyString(),
                 eq(8),
                 eq(2));
+        assertThat(mapping.getTotalSessions()).isEqualTo(12);
+        assertThat(mapping.getRemainingSessions()).isEqualTo(9);
+        assertThat(mapping.getUsedSessions()).isEqualTo(3);
     }
 
     @Test

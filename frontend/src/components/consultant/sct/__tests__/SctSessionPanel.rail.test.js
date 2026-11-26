@@ -473,15 +473,112 @@ describe('SctSessionPanel rail states', () => {
     );
   });
 
-  it('narrow phone sheet root leaves top gap for strip; 820 media not used', () => {
+  it('narrow phone sheet root uses inset-top var + calc max-height; 820 media not used', () => {
     const cssPath = path.join(__dirname, '../../../admin/sct/sctAdmin.css');
     const css = fs.readFileSync(cssPath, 'utf8');
     expect(css).toMatch(
-      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?top:\s*max\(\s*22\.125rem\s*,\s*45dvh\s*\)/
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?top:\s*var\(\s*--mg-v2-sct-sheet-inset-top/
+    );
+    expect(css).toMatch(
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s*\{[\s\S]*?overflow:\s*hidden/
+    );
+    expect(css).toMatch(
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s+\.mg-v2-sct-sheet\s*\{[\s\S]*?min-height:\s*0/
+    );
+    expect(css).toMatch(
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root\s+\.mg-v2-sct-sheet\s*\{[\s\S]*?max-height:\s*calc\(\s*100dvh\s*-\s*var\(\s*--mg-v2-sct-sheet-inset-top/
+    );
+    expect(css).not.toMatch(
+      /@media\s*\(\s*max-width:\s*26\.25rem\s*\)\s*\{[\s\S]*?top:\s*max\(\s*22\.125rem/
     );
     expect(css).not.toMatch(
       /@media\s*\(\s*max-width:\s*51\.25rem\s*\)\s*\{[\s\S]*?\.mg-v2-sct-sheet-root/
     );
+  });
+
+  it('sheetOpen sets --mg-v2-sct-sheet-inset-top from strip bottom (+ gap)', async() => {
+    mockUseMediaQuery.mockReturnValue(false);
+    mockFetchSctSessionView.mockResolvedValue({
+      id: 375,
+      status: 'SUBMITTED',
+      formType: 'ADULT',
+      submittedAt: '2026-03-25T12:00:00Z',
+      answers: [
+        {
+          formItemId: 1,
+          itemNo: 1,
+          promptText: '나는',
+          domainCode: 'AFFECT',
+          domainLabel: '정서',
+          answerText: SECRET_ANSWER,
+          notApplicable: false,
+          isBlank: false
+        }
+      ]
+    });
+    mockFetchSctClientInvitations.mockResolvedValue([
+      { id: 375, status: 'SUBMITTED', formType: 'ADULT', submittedAt: '2026-03-25T12:00:00Z' }
+    ]);
+
+    const stripBottom = 425.7;
+    const originalGbr = HTMLElement.prototype.getBoundingClientRect;
+    HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRectMock() {
+      if (this.getAttribute && this.getAttribute('data-testid') === SCT_TEST_ID.STRIP) {
+        return {
+          x: 0,
+          y: 8,
+          top: 8,
+          left: 0,
+          right: 375,
+          bottom: stripBottom,
+          width: 375,
+          height: stripBottom - 8,
+          toJSON() { return {}; }
+        };
+      }
+      return originalGbr.apply(this, arguments);
+    };
+
+    try {
+      render(<SctSessionPanel clientId={375} />);
+      await waitFor(() => {
+        expect(screen.getByTestId(SCT_TEST_ID.EXPAND_BTN)).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByTestId(SCT_TEST_ID.EXPAND_BTN));
+      await waitFor(() => {
+        expect(screen.getByTestId(SCT_TEST_ID.SHEET)).toBeInTheDocument();
+      });
+      const sheetRoot = screen.getByTestId(SCT_TEST_ID.SHEET);
+      await waitFor(() => {
+        const insetRaw = sheetRoot.style.getPropertyValue('--mg-v2-sct-sheet-inset-top');
+        expect(insetRaw).toMatch(/px$/);
+        const insetPx = Number.parseFloat(insetRaw);
+        expect(insetPx).toBeGreaterThanOrEqual(stripBottom);
+      });
+      const insetPx = Number.parseFloat(
+        sheetRoot.style.getPropertyValue('--mg-v2-sct-sheet-inset-top')
+      );
+      const artifactDir = '/opt/cursor/artifacts';
+      if (!fs.existsSync(artifactDir)) {
+        fs.mkdirSync(artifactDir, { recursive: true });
+      }
+      const logPath = path.join(artifactDir, 'sct-sheet-375-measure.log');
+      fs.writeFileSync(
+        logPath,
+        [
+          'viewport=375x812 (jsdom mock strip)',
+          `stripBottom=${stripBottom}`,
+          `sheetInsetTop=${insetPx}`,
+          `sheetTopApprox=${insetPx}`,
+          `clearsStrip=${insetPx >= stripBottom}`,
+          `pass=${insetPx >= stripBottom}`
+        ].join('\n'),
+        'utf8'
+      );
+      expect(insetPx).toBeGreaterThanOrEqual(stripBottom);
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = originalGbr;
+    }
   });
 
   it('localStorage: open consultant×invite; seen v2 consultant×clientId', async() => {

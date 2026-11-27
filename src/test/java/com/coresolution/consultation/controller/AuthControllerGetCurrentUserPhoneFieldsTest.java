@@ -31,7 +31,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
@@ -73,7 +73,7 @@ class AuthControllerGetCurrentUserPhoneFieldsTest {
     private static final LocalDateTime VERIFIED_AT = LocalDateTime.of(2026, 9, 18, 12, 0);
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private UserRepository userRepository;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private TenantRepository tenantRepository;

@@ -6,7 +6,7 @@ import java.lang.reflect.Method;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,7 +47,7 @@ class OAuth2ControllerRegisteredUrlsTest {
     private static final String DEV_HOST = "https://dev.core-solution.co.kr";
 
     @Mock private OAuth2FactoryService oauth2FactoryService;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private OAuth2DomainUtil oauth2DomainUtil;
     @Mock private com.coresolution.consultation.repository.UserRepository userRepository;
     @Mock private com.coresolution.consultation.service.JwtService jwtService;

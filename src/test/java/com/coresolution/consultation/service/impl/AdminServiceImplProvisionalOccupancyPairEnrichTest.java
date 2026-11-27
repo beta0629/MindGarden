@@ -58,7 +58,7 @@ class AdminServiceImplProvisionalOccupancyPairEnrichTest {
                 mock(com.coresolution.consultation.repository.CommonCodeRepository.class),
                 mock(com.coresolution.consultation.service.CommonCodeService.class),
                 mock(com.coresolution.core.security.PasswordService.class),
-                mock(com.coresolution.consultation.util.PersonalDataEncryptionUtil.class),
+                mock(com.coresolution.consultation.security.pii.PiiCryptoService.class),
                 mock(com.coresolution.consultation.service.ConsultantAvailabilityService.class),
                 mock(com.coresolution.consultation.service.ConsultationMessageService.class),
                 mock(com.coresolution.consultation.service.BranchService.class),

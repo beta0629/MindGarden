@@ -7,7 +7,7 @@ import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.integrationtest.support.AbstractIntegrationTest;
 import java.time.LocalDateTime;
 import jakarta.persistence.EntityManager;
@@ -22,12 +22,12 @@ import org.springframework.transaction.annotation.Transactional;
 /**
  * PII AttributeConverter (Email / PersonalName / Phone) JPA 통합 round-trip 테스트.
  *
- * <p>{@link com.coresolution.consultation.converter.EmailAttributeConverter},
- * {@link com.coresolution.consultation.converter.PersonalNameAttributeConverter},
- * {@link com.coresolution.consultation.converter.PhoneAttributeConverter} 가 실제
+ * <p>{@link com.coresolution.consultation.security.pii.PiiAttributeConverter},
+ * {@link com.coresolution.consultation.security.pii.PiiAttributeConverter},
+ * {@link com.coresolution.consultation.security.pii.PiiAttributeConverter} 가 실제
  * Hibernate 컨텍스트에서 다음 계약을 만족하는지 검증한다.
  * <ul>
- *   <li>save 시점에 평문 → AES-256/CBC 암호문으로 컬럼에 저장된다 (JdbcTemplate 로
+ *   <li>save 시점에 평문 → AES-256/GCM 암호문으로 컬럼에 저장된다 (JdbcTemplate 로
  *       raw SELECT 시 활성 키 prefix "{keyId}::" 가 보임)</li>
  *   <li>findById 등 load 시점에 컬럼 암호문 → 평문 entity 필드 복원</li>
  *   <li>멱등성: 서비스 레이어가 수동 {@code safeEncrypt} 한 cipher 를 entity 에 set 하더라도
@@ -51,7 +51,7 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -79,10 +79,10 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
             "SELECT nickname FROM users WHERE id = ?", String.class, saved.getId());
 
         String activeKeyId = encryptionUtil.getActiveKeyId();
-        assertThat(rawEmail).startsWith(activeKeyId + "::");
-        assertThat(rawName).startsWith(activeKeyId + "::");
-        assertThat(rawPhone).startsWith(activeKeyId + "::");
-        assertThat(rawNickname).startsWith(activeKeyId + "::");
+        assertThat(rawEmail).startsWith(activeKeyId + ":v2::");
+        assertThat(rawName).startsWith(activeKeyId + ":v2::");
+        assertThat(rawPhone).startsWith(activeKeyId + ":v2::");
+        assertThat(rawNickname).startsWith(activeKeyId + ":v2::");
 
         assertThat(rawEmail).doesNotContain("alice-pr4@example.com");
         assertThat(rawName).doesNotContain("홍길동");
@@ -110,7 +110,7 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     void idempotent_serviceLayerManualEncryptCoexists() {
         String plainEmail = "carol-pr4@example.com";
         String preEncryptedEmail = encryptionUtil.safeEncrypt(plainEmail);
-        assertThat(preEncryptedEmail).startsWith(encryptionUtil.getActiveKeyId() + "::");
+        assertThat(preEncryptedEmail).startsWith(encryptionUtil.getActiveKeyId() + ":v2::");
 
         User user = newPlainUser(plainEmail, "박지성", "010-5555-6666", "지성");
         user.setEmail(preEncryptedEmail);
@@ -120,9 +120,8 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
 
         String rawEmail = jdbcTemplate.queryForObject(
             "SELECT email FROM users WHERE id = ?", String.class, id);
-        long delimiterCount = rawEmail.chars().filter(c -> c == ':').count();
-
-        assertThat(delimiterCount).isEqualTo(2);
+        assertThat(rawEmail).contains(":v2::");
+        assertThat(com.coresolution.consultation.security.pii.PiiCipherFormats.looksV2(rawEmail)).isTrue();
 
         User reloaded = userRepository.findById(id).orElseThrow();
         assertThat(reloaded.getEmail()).isEqualTo(plainEmail);

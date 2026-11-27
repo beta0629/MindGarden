@@ -12,7 +12,7 @@ import java.util.Map;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,7 +33,7 @@ class ScheduleListUserFieldsResolverTest {
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @InjectMocks
     private ScheduleListUserFieldsResolver resolver;

@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -32,7 +34,7 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.AuditLogService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -115,7 +117,7 @@ class SctSecurityHighTest {
      * @return 초대 빌더에 넣을 해시
      */
     private static String emailHash(String email) {
-        return SctTokenHasher.sha256Hex(email.trim().toLowerCase(Locale.ROOT));
+        return PiiTestSecrets.hmacService().hmacHex(email.trim().toLowerCase(Locale.ROOT));
     }
 
     @Test
@@ -127,7 +129,7 @@ class SctSecurityHighTest {
                 .formTemplateId(1L)
                 .targetEmail(email)
                 .targetEmailHash(emailHash(email))
-                .tokenHash(SctTokenHasher.sha256Hex(raw))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex(raw))
                 .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
                 .status("SENT")
                 .sentByUserId(1L)
@@ -161,7 +163,8 @@ class SctSecurityHighTest {
                 mock(SctFeatureGuard.class),
                 consentService,
                 mock(SctSettingsService.class),
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                PiiTestSecrets.hmacService());
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -213,7 +216,7 @@ class SctSecurityHighTest {
                 .formTemplateId(1L)
                 .targetEmail(email)
                 .targetEmailHash(emailHash(email))
-                .tokenHash(SctTokenHasher.sha256Hex("other-raw-token-not-used!!!!"))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("other-raw-token-not-used!!!!"))
                 .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
                 .status("SENT")
                 .sentByUserId(1L)
@@ -254,7 +257,8 @@ class SctSecurityHighTest {
                 mock(SctFeatureGuard.class),
                 consentService,
                 mock(SctSettingsService.class),
-                mock(AuditLogService.class));
+                mock(AuditLogService.class),
+                PiiTestSecrets.hmacService());
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
         ExecutorService pool = Executors.newFixedThreadPool(threads);

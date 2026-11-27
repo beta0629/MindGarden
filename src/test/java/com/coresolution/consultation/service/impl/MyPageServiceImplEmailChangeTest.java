@@ -26,7 +26,7 @@ import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 
 import org.junit.jupiter.api.AfterEach;
@@ -70,7 +70,7 @@ class MyPageServiceImplEmailChangeTest {
     @Mock
     private UserService userService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private UserAddressRepository userAddressRepository;
     @Mock

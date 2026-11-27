@@ -18,7 +18,7 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -55,7 +55,7 @@ class OAuth2ControllerSessionTimeoutTest {
     @Mock
     private OAuth2FactoryService oauth2FactoryService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private OAuth2DomainUtil oauth2DomainUtil;
     @Mock

@@ -16,7 +16,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -74,7 +74,7 @@ class AdminTestNotificationServiceImplPhoneModeTest {
     @Mock private KakaoAlimTalkService kakaoAlimTalkService;
     @Mock private NotificationDispatchHelper dispatchHelper;
     @Mock private AlimtalkTemplateMappingResolver templateMappingResolver;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private KakaoSolapiCredentialResolver solapiCredentialResolver;
     @Mock private SolapiKakaoTemplateClient solapiKakaoTemplateClient;
     @Mock private TenantKakaoAlimtalkSettingsRepository tenantKakaoAlimtalkSettingsRepository;

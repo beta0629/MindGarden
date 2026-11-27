@@ -29,7 +29,7 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.ScheduleNotificationEligibility;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.SystemConfigService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
@@ -98,7 +98,7 @@ class ReservationReminderRescheduleResendIntegrationTest {
     private ConsultantClientMappingRepository mappingRepository;
     private NotificationDispatchHelper dispatchHelper;
     private SmsTemplateService smsTemplateService;
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     private BatchNotificationProperties properties;
 
     private String tenantId;
@@ -112,7 +112,7 @@ class ReservationReminderRescheduleResendIntegrationTest {
         mappingRepository = mock(ConsultantClientMappingRepository.class);
         dispatchHelper = mock(NotificationDispatchHelper.class);
         smsTemplateService = mock(SmsTemplateService.class);
-        encryptionUtil = mock(PersonalDataEncryptionUtil.class);
+        encryptionUtil = mock(PiiCryptoService.class);
 
         properties = new BatchNotificationProperties();
         properties.setAlimtalkEnabled(false);

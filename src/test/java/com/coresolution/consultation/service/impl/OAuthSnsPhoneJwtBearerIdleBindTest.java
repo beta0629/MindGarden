@@ -21,7 +21,7 @@ import com.coresolution.consultation.service.BearerIdleSessionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
@@ -79,7 +79,7 @@ class OAuthSnsPhoneJwtBearerIdleBindTest {
         @Mock private UserRepository userRepository;
         @Mock private ClientRepository clientRepository;
         @Mock private UserSocialAccountRepository userSocialAccountRepository;
-        @Mock private PersonalDataEncryptionUtil encryptionUtil;
+        @Mock private PiiCryptoService encryptionUtil;
         @Mock private PasswordService passwordService;
         @Mock private TemporaryPasswordGenerator temporaryPasswordGenerator;
         @Mock private PasswordEncoder passwordEncoder;
@@ -130,7 +130,7 @@ class OAuthSnsPhoneJwtBearerIdleBindTest {
         @Mock private UserRepository userRepository;
         @Mock private ClientRepository clientRepository;
         @Mock private UserSocialAccountRepository userSocialAccountRepository;
-        @Mock private PersonalDataEncryptionUtil encryptionUtil;
+        @Mock private PiiCryptoService encryptionUtil;
         @Mock private PasswordService passwordService;
         @Mock private PasswordEncoder passwordEncoder;
         @Mock private TemporaryPasswordGenerator temporaryPasswordGenerator;
@@ -179,7 +179,7 @@ class OAuthSnsPhoneJwtBearerIdleBindTest {
         @Mock private com.coresolution.consultation.integration.apple.AppleOAuth2Client oauthClient;
         @Mock private UserRepository userRepository;
         @Mock private UserSocialAccountRepository userSocialAccountRepository;
-        @Mock private PersonalDataEncryptionUtil encryptionUtil;
+        @Mock private PiiCryptoService encryptionUtil;
 
         @InjectMocks
         private AppleSignInServiceImpl service;

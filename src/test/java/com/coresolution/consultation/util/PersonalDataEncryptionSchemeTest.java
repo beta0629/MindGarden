@@ -3,6 +3,7 @@ package com.coresolution.consultation.util;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import org.springframework.test.util.ReflectionTestUtils;
  * @author CoreSolution
  * @since 2026-10-04
  */
-@DisplayName("PersonalDataEncryption 스킴")
+@DisplayName("PiiCryptoService 스킴 (레거시 호환)")
 class PersonalDataEncryptionSchemeTest {
 
     private static final String KEY_ID = "k1";
@@ -33,7 +34,7 @@ class PersonalDataEncryptionSchemeTest {
     private static final String BODY = "내담자가 불안을 호소함. 다음 회기에 호흡 훈련 예정.";
     private static final String EMAIL = "client@example.com";
 
-    private PersonalDataEncryptionUtil util;
+    private PiiCryptoService util;
 
     /**
      * 활성 키 1개로 초기화된 provider 를 만든다.
@@ -60,13 +61,13 @@ class PersonalDataEncryptionSchemeTest {
         PersonalDataEncryptionKeyProvider provider = newProvider(
             new String[] { "test" }, KEY_ID + ":" + KEY_VALUE, KEY_ID + ":" + IV_VALUE);
         provider.initialize();
-        util = new PersonalDataEncryptionUtil(provider);
+        util = new PiiCryptoService(provider);
     }
 
     @Test
     @DisplayName("v2 랜덤 IV — 왕복 복호화된다")
     void randomIv_roundTrip() {
-        String cipher = util.encryptWithRandomIv(BODY);
+        String cipher = util.encryptGcm(BODY);
 
         assertThat(cipher).startsWith(KEY_ID + ":v2::");
         assertThat(util.isRandomIvEncrypted(cipher)).isTrue();
@@ -77,8 +78,8 @@ class PersonalDataEncryptionSchemeTest {
     @Test
     @DisplayName("v2 랜덤 IV — 같은 평문을 두 번 암호화하면 암호문이 다르다")
     void randomIv_twoEncryptionsDiffer() {
-        String first = util.encryptWithRandomIv(BODY);
-        String second = util.encryptWithRandomIv(BODY);
+        String first = util.encryptGcm(BODY);
+        String second = util.encryptGcm(BODY);
 
         assertThat(first).isNotEqualTo(second);
         assertThat(util.decrypt(first)).isEqualTo(BODY);
@@ -86,20 +87,21 @@ class PersonalDataEncryptionSchemeTest {
     }
 
     @Test
-    @DisplayName("v1 고정 IV — 조회용 컬럼은 같은 평문이 같은 암호문이어야 한다 (findByEmail 의존)")
-    void deterministic_sameCipherForLookupColumns() {
+    @DisplayName("신규 쓰기 encrypt — 항상 GCM(v2), 같은 평문도 암호문 상이")
+    void encrypt_alwaysGcmRandom() {
         String first = util.encrypt(EMAIL);
         String second = util.encrypt(EMAIL);
 
-        assertThat(first).isEqualTo(second);
-        assertThat(util.isRandomIvEncrypted(first)).isFalse();
+        assertThat(first).isNotEqualTo(second);
+        assertThat(util.isRandomIvEncrypted(first)).isTrue();
         assertThat(util.decrypt(first)).isEqualTo(EMAIL);
+        assertThat(util.decrypt(second)).isEqualTo(EMAIL);
     }
 
     @Test
-    @DisplayName("혼재 읽기 — v1(#1409 형식) 암호문도 그대로 복호화된다")
+    @DisplayName("혼재 읽기 — v1 CBC 암호문도 그대로 복호화된다")
     void mixedRead_legacyV1StillDecrypts() {
-        String legacyCipher = util.encrypt(BODY);
+        String legacyCipher = util.encryptCbcForLegacyCompat(BODY);
 
         assertThat(legacyCipher).startsWith(KEY_ID + "::");
         assertThat(util.decrypt(legacyCipher)).isEqualTo(BODY);
@@ -114,7 +116,7 @@ class PersonalDataEncryptionSchemeTest {
     @Test
     @DisplayName("손상된 v2 암호문은 예외 없이 원본을 반환한다 (목록 전체 500 금지)")
     void corruptedCipher_doesNotThrow() {
-        String cipher = util.encryptWithRandomIv(BODY);
+        String cipher = util.encryptGcm(BODY);
         String corrupted = cipher.substring(0, cipher.length() - 6) + "AAAAAA";
 
         assertThat(util.decrypt(corrupted)).isNotNull();
@@ -123,13 +125,15 @@ class PersonalDataEncryptionSchemeTest {
     }
 
     @Test
-    @DisplayName("회전 시 스킴 유지 — v2 는 v2 로, v1 은 v1 로 재암호화된다")
-    void ensureActiveKeyEncryption_keepsScheme() {
-        String v2Cipher = util.encryptWithRandomIv(BODY);
-        String v1Cipher = util.encrypt(EMAIL);
+    @DisplayName("회전 — 활성 키 v2 유지, CBC는 GCM으로 승격")
+    void ensureActiveKeyEncryption_upgradesToGcm() {
+        String v2Cipher = util.encryptGcm(BODY);
+        String v1Cipher = util.encryptCbcForLegacyCompat(EMAIL);
 
         assertThat(util.ensureActiveKeyEncryption(v2Cipher)).isEqualTo(v2Cipher);
-        assertThat(util.ensureActiveKeyEncryption(v1Cipher)).isEqualTo(v1Cipher);
+        String upgraded = util.ensureActiveKeyEncryption(v1Cipher);
+        assertThat(util.isRandomIvEncrypted(upgraded)).isTrue();
+        assertThat(util.decrypt(upgraded)).isEqualTo(EMAIL);
     }
 
     @Test

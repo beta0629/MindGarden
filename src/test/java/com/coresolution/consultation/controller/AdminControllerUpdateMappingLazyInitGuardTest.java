@@ -36,7 +36,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
@@ -85,7 +85,7 @@ class AdminControllerUpdateMappingLazyInitGuardTest {
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private UserService userService;
     @Mock private MappingUpdateService mappingUpdateService;
-    @Mock private PersonalDataEncryptionUtil personalDataEncryptionUtil;
+    @Mock private PiiCryptoService personalDataEncryptionUtil;
     @Mock private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;

@@ -29,7 +29,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -79,7 +79,7 @@ class AdminManualNotificationServiceImplPhoneModeTest {
     @Mock
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
     @Spy

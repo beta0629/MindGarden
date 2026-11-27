@@ -14,7 +14,7 @@ import java.util.UUID;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.converter.ConsultationBodyAttributeConverter;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import com.coresolution.consultation.dto.ConsultationRecordDraftSaveRequest;
 import com.coresolution.consultation.entity.Schedule;
 import com.coresolution.consultation.entity.User;
@@ -176,7 +176,7 @@ class ConsultationRecordDraftAuthorOnlyIntegrationTest {
         String stored = String.valueOf(raw);
 
         assertThat(stored).doesNotContain("내담자가 불안을 호소");
-        assertThat(ConsultationBodyAttributeConverter.looksEncrypted(stored)).isTrue();
+        assertThat(PiiAttributeConverter.looksEncrypted(stored)).isTrue();
 
         // 변환기 dual-read: 엔티티로 읽으면 평문으로 돌아온다
         assertThat(draftRepository

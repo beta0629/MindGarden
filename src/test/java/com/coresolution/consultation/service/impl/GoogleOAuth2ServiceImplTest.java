@@ -9,7 +9,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -76,7 +76,7 @@ class GoogleOAuth2ServiceImplTest {
     private DynamicPermissionService dynamicPermissionService;
 
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @Mock
     private PasswordService passwordService;

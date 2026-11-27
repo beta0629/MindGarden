@@ -20,7 +20,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ProfileImageStorageService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -65,7 +65,7 @@ class UserProfileServiceImplProfileImageGuardTest {
     private UserAddressRepository userAddressRepository;
 
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @Mock
     private NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;

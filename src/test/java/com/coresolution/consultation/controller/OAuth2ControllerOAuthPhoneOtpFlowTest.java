@@ -12,7 +12,7 @@ import com.coresolution.consultation.service.impl.GoogleOAuth2ServiceImpl;
 import com.coresolution.consultation.service.impl.KakaoOAuth2ServiceImpl;
 import com.coresolution.consultation.service.impl.NaverOAuth2ServiceImpl;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,7 +49,7 @@ class OAuth2ControllerOAuthPhoneOtpFlowTest {
     @Mock
     private OAuth2FactoryService oauth2FactoryService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private OAuth2DomainUtil oauth2DomainUtil;
     @Mock

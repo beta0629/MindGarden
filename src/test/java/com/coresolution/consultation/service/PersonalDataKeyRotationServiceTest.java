@@ -35,7 +35,7 @@ import com.coresolution.consultation.dto.security.PiiRotationResult;
 import com.coresolution.consultation.entity.PiiReencryptionProgress;
 import com.coresolution.consultation.entity.PiiReencryptionProgress.Status;
 import com.coresolution.consultation.repository.PiiReencryptionProgressRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 
 /**
  * {@link PersonalDataKeyRotationService} 단위 테스트.
@@ -57,7 +57,7 @@ class PersonalDataKeyRotationServiceTest {
     private JdbcTemplate jdbcTemplate;
 
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @Mock
     private PiiReencryptionProgressRepository progressRepository;

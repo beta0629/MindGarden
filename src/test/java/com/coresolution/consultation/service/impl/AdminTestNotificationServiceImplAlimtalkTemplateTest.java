@@ -21,7 +21,7 @@ import com.coresolution.consultation.repository.TenantKakaoAlimtalkSettingsRepos
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -87,7 +87,7 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
     @Mock
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private KakaoSolapiCredentialResolver solapiCredentialResolver;
     @Mock
@@ -521,7 +521,7 @@ class AdminTestNotificationServiceImplAlimtalkTemplateTest {
         user.setId(SENDER_USER_ID);
         user.setUserId(SENDER_LOGIN);
         user.setTenantId(TENANT_ID);
-        // PersonalDataEncryptionUtil mock 이 decrypt 시 동일 값을 반환하도록 stub 한다.
+        // PiiCryptoService mock 이 decrypt 시 동일 값을 반환하도록 stub 한다.
         user.setPhone(SELF_PHONE);
         return user;
     }

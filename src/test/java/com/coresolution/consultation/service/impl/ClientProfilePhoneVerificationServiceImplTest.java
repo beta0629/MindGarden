@@ -1,5 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -16,8 +18,8 @@ import java.util.UUID;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
 import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -41,14 +44,17 @@ class ClientProfilePhoneVerificationServiceImplTest {
     private static final Long USER_ID = 77L;
     private static final String USER_ID_STR = String.valueOf(USER_ID);
     private static final String PHONE = "01012345678";
-    private static final String PHONE_HASH = PhoneHashUtils.sha256Hex(PHONE);
+    private static final String PHONE_HASH = PiiTestSecrets.hmacService().hmacHex(PHONE);
     private static final String APPLE_SUB = "apple.sub.001";
     private static final String KAKAO_PROVIDER_USER_ID = "kakao-uid-9";
 
     @Mock
     private PhoneOtpAttemptRepository phoneOtpAttemptRepository;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
+
+    @Spy
+    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
 
     @InjectMocks
     private ClientProfilePhoneVerificationServiceImpl service;
@@ -187,7 +193,7 @@ class ClientProfilePhoneVerificationServiceImplTest {
     void isVerified_failClosedOnPhoneChange() {
         User user = buildUser("01099998888");
         when(encryptionUtil.safeDecrypt("enc-01099998888")).thenReturn("01099998888");
-        String newHash = PhoneHashUtils.sha256Hex("01099998888");
+        String newHash = PiiTestSecrets.hmacService().hmacHex("01099998888");
         when(phoneOtpAttemptRepository
                 .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
                         eq(TENANT),

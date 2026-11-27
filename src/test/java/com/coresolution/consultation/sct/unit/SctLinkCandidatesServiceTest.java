@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
@@ -22,13 +24,14 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 /**
@@ -54,6 +57,9 @@ class SctLinkCandidatesServiceTest {
     @Mock private AuditLogService auditLogService;
     @Mock private SctAccessLogService sctAccessLogService;
 
+    @Spy
+    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
+
     @InjectMocks
     private SctInvitationServiceImpl invitationService;
 
@@ -62,7 +68,7 @@ class SctLinkCandidatesServiceTest {
 
     @BeforeEach
     void setUp() {
-        phoneHash = PhoneHashUtils.sha256Hex(
+        phoneHash = PiiTestSecrets.hmacService().hmacHex(
                 LoginIdentifierUtils.normalizeKoreanMobileDigits(PHONE));
         invitation = SctInvitation.builder()
                 .formTemplateId(10L)

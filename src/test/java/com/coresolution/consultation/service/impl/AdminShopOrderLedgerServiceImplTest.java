@@ -29,7 +29,7 @@ import com.coresolution.consultation.repository.ShopClientOrderRepository;
 import com.coresolution.consultation.repository.ShopOrderExpiryExtensionRepository;
 import com.coresolution.consultation.repository.ShopOrderFulfillmentEventRepository;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import java.math.BigDecimal;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -67,7 +67,7 @@ class AdminShopOrderLedgerServiceImplTest {
     @Mock
     private UserRepository userRepository;
     @Mock
-    private PersonalDataEncryptionUtil personalDataEncryptionUtil;
+    private PiiCryptoService personalDataEncryptionUtil;
 
     @InjectMocks
     private AdminShopOrderLedgerServiceImpl service;

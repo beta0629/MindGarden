@@ -51,7 +51,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.service.PaymentMethodSsotService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
@@ -115,7 +115,7 @@ class AdminServiceImplPartialRefundExhaustedScheduleCancelTest {
     @Mock private CommonCodeRepository commonCodeRepository;
     @Mock private CommonCodeService commonCodeService;
     @Mock private PasswordService passwordService;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private ConsultantAvailabilityService consultantAvailabilityService;
     @Mock private ConsultationMessageService consultationMessageService;
     @Mock private BranchService branchService;

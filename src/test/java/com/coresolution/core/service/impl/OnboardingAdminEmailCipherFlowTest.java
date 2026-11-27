@@ -19,13 +19,13 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Optional;
 import javax.sql.DataSource;
-import com.coresolution.consultation.converter.EmailAttributeConverter;
-import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
+import com.coresolution.consultation.security.pii.PiiEncryptionContextHolder;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.impl.UserServiceImpl;
 import com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.OnboardingAdminEmailCipher;
@@ -89,7 +89,7 @@ class OnboardingAdminEmailCipherFlowTest {
     @InjectMocks
     private OnboardingApprovalServiceImpl approvalService;
 
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @BeforeEach
     void setUpEncryption() {
@@ -102,13 +102,13 @@ class OnboardingAdminEmailCipherFlowTest {
         ReflectionTestUtils.setField(provider, "legacyKey", "");
         ReflectionTestUtils.setField(provider, "legacyIv", "");
         provider.initialize();
-        encryptionUtil = new PersonalDataEncryptionUtil(provider);
-        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", encryptionUtil);
+        encryptionUtil = new PiiCryptoService(provider);
+        ReflectionTestUtils.setField(PiiEncryptionContextHolder.class, "instance", encryptionUtil);
     }
 
     @AfterEach
     void tearDown() {
-        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", null);
+        ReflectionTestUtils.setField(PiiEncryptionContextHolder.class, "instance", null);
         TenantContextHolder.clear();
         OnboardingDecisionDeadline.close();
     }
@@ -122,7 +122,10 @@ class OnboardingAdminEmailCipherFlowTest {
         approvalService.processOnboardingApproval(11L, TENANT, "기관", "CONSULTATION", "ops",
                 "승인", PLAIN_EMAIL, "stored-hash", "label");
 
-        verify(callableStatement).setString(7, prepared.cipher());
+        verify(callableStatement).setString(eq(7), argThat(cipher ->
+                cipher != null
+                        && cipher.contains(":v2::")
+                        && encryptionUtil.safeDecrypt(cipher).equals(PLAIN_EMAIL)));
         verify(callableStatement).setString(eq(11), argThat(userId -> userId != null
                 && userId.startsWith(TenantAdminUserIdAllocator.PREFIX)
                 && !userId.equals("admin")
@@ -159,7 +162,7 @@ class OnboardingAdminEmailCipherFlowTest {
     @Test
     @DisplayName("반례: 암호화 유틸이 없으면 프로시저를 호출하지 않고 승인을 막는다")
     void missingCipher_blocksBeforeProcedure() throws Exception {
-        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", null);
+        ReflectionTestUtils.setField(PiiEncryptionContextHolder.class, "instance", null);
 
         assertThatThrownBy(() -> approvalService.processOnboardingApproval(12L, TENANT, "기관",
                 "CONSULTATION", "ops", "승인", PLAIN_EMAIL, "stored-hash", "label"))
@@ -186,8 +189,12 @@ class OnboardingAdminEmailCipherFlowTest {
     private void assertStoredCipherMatchesLogin(String storedCipher) {
         assertThat(storedCipher).isNotEqualTo(PLAIN_EMAIL);
         assertThat(storedCipher).doesNotContain("@");
-        assertThat(new EmailAttributeConverter().convertToDatabaseColumn(PLAIN_EMAIL)).isEqualTo(storedCipher);
+        assertThat(storedCipher).contains(":v2::");
+        // GCM 은 호출마다 nonce 가 달라 암호문 동등 비교 불가 — 복호화·재암호화 왕복으로 검증
         assertThat(encryptionUtil.safeDecrypt(storedCipher)).isEqualTo(PLAIN_EMAIL);
+        String reEncrypted = new PiiAttributeConverter().convertToDatabaseColumn(PLAIN_EMAIL);
+        assertThat(reEncrypted).contains(":v2::");
+        assertThat(encryptionUtil.safeDecrypt(reEncrypted)).isEqualTo(PLAIN_EMAIL);
 
         User loaded = new User();
         loaded.setEmail(encryptionUtil.safeDecrypt(storedCipher));

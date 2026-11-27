@@ -5,7 +5,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import java.time.LocalDateTime;
@@ -48,7 +48,7 @@ class UserServiceImplChangePasswordTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private EmailService emailService;
     @Mock

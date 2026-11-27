@@ -9,7 +9,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class RefundAutoCancelNotificationServiceImplTest {
     @Mock private EmailService emailService;
     @Mock private MobilePushDispatchService mobilePushDispatchService;
     @Mock private KakaoAlimTalkService kakaoAlimTalkService;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private CommonCodeService commonCodeService;
 
     @InjectMocks

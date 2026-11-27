@@ -7,7 +7,7 @@ import java.util.Optional;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.domain.Tenant;
 import org.junit.jupiter.api.DisplayName;
@@ -54,7 +54,7 @@ class OAuth2ControllerAppleAuthorizeTest {
     private static final String APEX_HOST = "core-solution.co.kr";
 
     @Mock private OAuth2FactoryService oauth2FactoryService;
-    @Mock private PersonalDataEncryptionUtil encryptionUtil;
+    @Mock private PiiCryptoService encryptionUtil;
     @Mock private OAuth2DomainUtil oauth2DomainUtil;
     @Mock private com.coresolution.consultation.repository.UserRepository userRepository;
     @Mock private com.coresolution.consultation.service.JwtService jwtService;

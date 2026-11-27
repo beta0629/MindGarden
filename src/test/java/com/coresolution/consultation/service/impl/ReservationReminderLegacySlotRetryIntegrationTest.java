@@ -25,7 +25,7 @@ import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.SmsTemplateService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
@@ -89,7 +89,7 @@ class ReservationReminderLegacySlotRetryIntegrationTest {
     private ConsultantClientMappingRepository mappingRepository;
     private NotificationDispatchHelper dispatchHelper;
     private SmsTemplateService smsTemplateService;
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     private BatchNotificationProperties properties;
 
     private String tenantId;
@@ -103,7 +103,7 @@ class ReservationReminderLegacySlotRetryIntegrationTest {
         mappingRepository = mock(ConsultantClientMappingRepository.class);
         dispatchHelper = mock(NotificationDispatchHelper.class);
         smsTemplateService = mock(SmsTemplateService.class);
-        encryptionUtil = mock(PersonalDataEncryptionUtil.class);
+        encryptionUtil = mock(PiiCryptoService.class);
 
         properties = new BatchNotificationProperties();
         properties.setAlimtalkEnabled(false);

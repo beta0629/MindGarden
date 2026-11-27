@@ -21,7 +21,7 @@ import com.coresolution.consultation.service.NotificationService.NotificationPri
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import java.util.List;
 import java.util.UUID;
@@ -63,7 +63,7 @@ class NotificationServiceImplSmsFallbackTest {
     @Mock
     private AlertRepository alertRepository;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private TenantKakaoAlimtalkSettingsService tenantKakaoAlimtalkSettingsService;
     @Mock

@@ -38,7 +38,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.util.OperatorFinanceAggregation;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 
 /**
@@ -76,7 +76,7 @@ class FinancialTransactionServiceImplOperatorPostedSummaryTest {
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private FinancialPeriodRepository financialPeriodRepository;
     @Mock

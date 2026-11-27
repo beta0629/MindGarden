@@ -18,7 +18,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.config.TemporaryPasswordProperties;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
@@ -58,7 +58,7 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
     @Mock
     private DynamicPermissionService dynamicPermissionService;
     @Mock
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     @Mock
     private PasswordService passwordService;
     @Mock
@@ -612,7 +612,7 @@ class AbstractOAuth2ServiceCreateUserFromSocialTest {
             UserSocialAccountRepository userSocialAccountRepository,
             JwtService jwtService,
             DynamicPermissionService dynamicPermissionService,
-            PersonalDataEncryptionUtil encryptionUtil,
+            PiiCryptoService encryptionUtil,
             PasswordService passwordService,
             UserService userService
         ) {

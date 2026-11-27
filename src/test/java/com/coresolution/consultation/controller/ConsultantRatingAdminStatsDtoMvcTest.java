@@ -30,7 +30,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.impl.ConsultantRatingServiceImpl;
 import com.coresolution.consultation.service.support.ClientPathAccessGuard;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -88,7 +88,7 @@ class ConsultantRatingAdminStatsDtoMvcTest {
         ratingRepository = mock(ConsultantRatingRepository.class);
         userRepository = mock(UserRepository.class);
         mappingRepository = mock(ConsultantClientMappingRepository.class);
-        PersonalDataEncryptionUtil encryptionUtil = mock(PersonalDataEncryptionUtil.class);
+        PiiCryptoService encryptionUtil = mock(PiiCryptoService.class);
         when(encryptionUtil.safeDecrypt(any())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.maskName(any())).thenCallRealMethod();
 

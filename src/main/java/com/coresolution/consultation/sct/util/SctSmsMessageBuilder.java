@@ -139,6 +139,29 @@ public final class SctSmsMessageBuilder {
     }
 
     /**
+     * 단문 축소 단계의 최종(가장 compact) 시도본 EUC-KR 바이트 수.
+     * {@link #buildShortSmsBody}가 null일 때 overflow 로그용.
+     *
+     * @param formType         양식 유형
+     * @param expiresAt        만료
+     * @param absoluteShortUrl 절대 단축 URL(resolver 값)
+     * @return 최종 시도본 바이트 수(입력 불가면 0)
+     */
+    public static int measureMostCompactShortSmsEucKrBytes(
+            String formType, LocalDateTime expiresAt, String absoluteShortUrl) {
+        if (!StringUtils.hasText(absoluteShortUrl) || expiresAt == null) {
+            return 0;
+        }
+        String compactDate = formatKoreanMonthDayCompact(expiresAt);
+        if (SctFormType.ADOLESCENT.name().equalsIgnoreCase(formType)) {
+            return eucKrByteLength(buildBody(
+                    shortTitleAdolescentCompact(), compactDate, absoluteShortUrl));
+        }
+        return eucKrByteLength(buildBody(
+                shortTitleForFormType(formType), compactDate, absoluteShortUrl));
+    }
+
+    /**
      * LMS 폴백 본문(단축 링크 불가 시). 사무실 문의 + 긴 공개 URL.
      *
      * @param formType           양식

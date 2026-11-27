@@ -187,7 +187,7 @@
     "permissionManagement": "권한 관리",
     "waiting": "대기중",
     "matchingManagement": "배정 관리",
-    "mappingManagement": "매핑 관리",
+    "mappingManagement": "배정 관리",
     "clerk": "사무원",
     "hide": "숨기기",
     "systemManagement": "시스템 관리",
@@ -651,8 +651,8 @@
       "pendingMatching": "대기 배정",
       "monthlyRevenue": "이번 달 수익",
       "totalClients": "전체 내담자",
-      "totalMappings": "전체 매핑",
-      "activeMappings": "활성 매핑",
+      "totalMappings": "전체 배정",
+      "activeMappings": "활성 배정",
       "pendingPayments": "결제 대기",
       "systemHealth": "시스템 상태",
       "totalUsers": "총 사용자",
@@ -1167,32 +1167,32 @@
     "ariaContent": "회기 관리 본문",
     "stat": {
       "totalClients": "총 내담자",
-      "activeMappings": "활성 매핑",
+      "activeMappings": "활성 배정",
       "usedSessions": "사용된 회기",
       "completionRate": "완료율"
     },
     "tab": {
       "quick": "빠른 추가",
       "search": "내담자 검색",
-      "mapping": "전체 매핑"
+      "mapping": "전체 배정"
     },
     "section": {
       "quickAdd": "빠른 회기 추가",
       "search": "내담자 검색 후 회기 추가",
-      "allMapping": "전체 매핑에서 회기 추가",
+      "allMapping": "전체 배정에서 회기 추가",
       "recentRequests": "최근 회기 추가 요청"
     },
     "sessionUnit": "회기",
     "empty": {
-      "activeMapping": "활성 매핑이 없습니다.",
-      "mapping": "매핑이 없습니다.",
+      "activeMapping": "활성 배정이 없습니다.",
+      "mapping": "배정이 없습니다.",
       "recentRequests": "최근 회기 추가 요청이 없습니다."
     },
     "search": {
       "placeholder": "내담자 이름으로 검색..."
     },
-    "activeMappingsCount": "{{count}}개 활성 매핑",
-    "noActiveMapping": "활성 매핑이 없습니다",
+    "activeMappingsCount": "{{count}}개 활성 배정",
+    "noActiveMapping": "활성 배정이 없습니다",
     "notActive": "활성 상태가 아닙니다",
     "addedSessions": "{{count}}회기 추가",
     "reason": "사유"
@@ -1636,7 +1636,7 @@
       "consultation-stats": "상담 통계",
       "consultation-record": "상담 기록",
       "consultant-client": "상담사-고객",
-      "mapping-management": "매핑 관리",
+      "mapping-management": "배정 관리",
       "session-management": "세션 관리",
       "schedule-registration": "일정 등록",
       "pending-deposit": "대기 입금",
@@ -1815,19 +1815,19 @@
     "regionLabel": "회기 관리 본문",
     "stats": {
       "totalClients": "총 내담자",
-      "activeMappings": "활성 매핑",
+      "activeMappings": "활성 배정",
       "usedSessions": "사용된 회기",
       "completionRate": "완료율"
     },
     "tabs": {
       "quick": "빠른 추가",
       "search": "내담자 검색",
-      "mapping": "전체 매핑"
+      "mapping": "전체 배정"
     },
     "quick": {
       "title": "빠른 회기 추가",
       "addBtn": "회기 추가",
-      "empty": "활성 매핑이 없습니다.",
+      "empty": "활성 배정이 없습니다.",
       "unitSuffix": "회기"
     },
     "search": {
@@ -1835,14 +1835,14 @@
       "placeholder": "내담자 이름으로 검색...",
       "btn": "검색",
       "noResults": "검색 결과가 없습니다.",
-      "activeMappingsLabel": "{{count}}개 활성 매핑",
-      "noActiveMappings": "활성 매핑이 없습니다"
+      "activeMappingsLabel": "{{count}}개 활성 배정",
+      "noActiveMappings": "활성 배정이 없습니다"
     },
     "mappingList": {
-      "title": "전체 매핑에서 회기 추가",
+      "title": "전체 배정에서 회기 추가",
       "filterAll": "모든 상태",
       "filterPaymentConfirmed": "결제확인",
-      "emptyMappings": "매핑이 없습니다.",
+      "emptyMappings": "배정이 없습니다.",
       "inactive": "활성 상태가 아닙니다",
       "sessionsUnit": "회기"
     },
@@ -2433,7 +2433,7 @@
       "PROFESSIONAL_PROVIDER_TYPE": "전문가유형",
       "STATUS": "상태",
       "PRIORITY": "우선순위",
-      "MAPPING_STATUS": "매핑상태",
+      "MAPPING_STATUS": "배정상태",
       "ROLE": "역할",
       "PERMISSION": "권한",
       "ROLE_PERMISSION": "역할권한",
@@ -2612,7 +2612,7 @@
       "PROFESSIONAL_PROVIDER_TYPE": "전문가유형",
       "STATUS": "상태",
       "PRIORITY": "우선순위",
-      "MAPPING_STATUS": "매핑상태",
+      "MAPPING_STATUS": "배정상태",
       "ROLE": "역할",
       "PERMISSION": "권한",
       "ROLE_PERMISSION": "역할권한",
@@ -3018,7 +3018,7 @@
       "actionSpecialRefund": "{{sessions}}회기 특별 환불",
       "actionRefund": "{{sessions}}회기 환불 처리",
       "tooltipExpired": "청약 철회 기간 초과 - 특별 사유 시에만 처리",
-      "mappingInfoTitle": "매핑 정보",
+      "mappingInfoTitle": "배정 정보",
       "client": "내담자:",
       "consultant": "상담사:",
       "totalSessions": "총 회기:",
@@ -3100,7 +3100,7 @@
       "consultationStats": "상담 통계",
       "consultationRecord": "상담 기록",
       "consultantClient": "상담사-고객",
-      "mappingManagement": "매핑 관리",
+      "mappingManagement": "배정 관리",
       "sessionManagement": "세션 관리",
       "scheduleRegistration": "일정 등록",
       "pendingDeposit": "대기 입금",
@@ -3160,7 +3160,7 @@
       "remainingSessionsLabel": "남은 회기",
       "cumulativeSessionsLabel": "이 연동 누적",
       "firstConsultationDateLabel": "최초 상담일",
-      "mappingStartDateLabel": "매핑 시작일",
+      "mappingStartDateLabel": "배정 시작일",
       "vehiclePlateLabel": "내담자 차량번호",
       "consultantVehiclePlateLabel": "상담사 차량번호",
       "vehiclePlateUnregistered": "미등록",
@@ -3183,7 +3183,7 @@
       "placeholderNote": "타임라인·결제 이력 등 상세는 이후 Side Peek MVP에서 제공됩니다.",
       "statusClose": {
         "cta": "종료 처리",
-        "modalTitle": "매칭 종료 처리",
+        "modalTitle": "배정 종료 처리",
         "modalSubtitle": "환불·회기 차감 없이 상태만 종료합니다.",
         "remainingSessionsLabel": "남은 회기",
         "reasonLabel": "종료 사유",
@@ -3191,8 +3191,8 @@
         "reasonRequired": "종료 사유를 입력해 주세요.",
         "confirm": "종료 처리",
         "cancel": "취소",
-        "success": "매칭이 종료 처리되었습니다.",
-        "failed": "매칭 종료 처리에 실패했습니다."
+        "success": "배정이 종료 처리되었습니다.",
+        "failed": "배정 종료 처리에 실패했습니다."
       }
     },
     "vehiclePlate": {
@@ -3808,7 +3808,7 @@
   },
   "mappings": {
     "pendingPaymentCleanup": {
-      "title": "디러티 배정 정리",
+      "title": "미결제 배정 정리",
       "description": "결제 미입금 상태(PENDING_PAYMENT)로 일정 시간이 지난 배정을 수동으로 정리합니다.",
       "filter": {
         "title": "경과 시간",
@@ -3819,7 +3819,7 @@
         }
       },
       "list": {
-        "title": "디러티 배정 목록"
+        "title": "미결제 배정 목록"
       },
       "columns": {
         "select": "선택",
@@ -3843,7 +3843,7 @@
         "next": "다음"
       },
       "emptyState": {
-        "title": "디러티 배정이 없습니다",
+        "title": "미결제 배정이 없습니다",
         "description": "선택한 경과 시간 기준으로 정리 대상 배정이 없습니다."
       },
       "modal": {
@@ -3871,7 +3871,7 @@
     }
   },
   "menu": {
-    "pendingPaymentCleanup": "디러티 배정 정리"
+    "pendingPaymentCleanup": "미결제 배정 정리"
   },
   "shopProductGuide": {
     "productsMenuLabel": "상품 관리",

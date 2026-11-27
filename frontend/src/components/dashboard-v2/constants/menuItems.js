@@ -105,7 +105,7 @@ const DEFAULT_MENU_ITEMS = [
       {
         to: ADMIN_ROUTES.MAPPINGS_PENDING_PAYMENT_CLEANUP,
         icon: 'TRASH',
-        label: '디러티 배정 정리',
+        label: '미결제 배정 정리',
         end: true
       }
     ]

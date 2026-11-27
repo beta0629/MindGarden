@@ -16,7 +16,7 @@ import {
 } from './cardBillingProgressDisplay';
 
 export const MAPPING_DATE_LABEL = Object.freeze({
-  MAPPING_START: '매핑 시작일',
+  MAPPING_START: '배정 시작일',
   FIRST_CONSULTATION: '최초 상담일',
   FALLBACK: '날짜',
   REGISTRATION: '등록'

@@ -205,7 +205,7 @@ const PaymentConfirmationModal = ({
     const newErrors = {};
     
     if (selectedMappings.length === 0) {
-      newErrors.mappings = '결제할 매핑을 선택해주세요.';
+      newErrors.mappings = '결제할 배정을 선택해주세요.';
     }
     
     if (!paymentData.amount || paymentData.amount <= 0) {
@@ -315,7 +315,7 @@ const PaymentConfirmationModal = ({
     }
     
     if (selectedMappings.length === 0) {
-      notificationManager.error('취소할 매핑을 선택해주세요.');
+      notificationManager.error('취소할 배정을 선택해주세요.');
       return;
     }
 
@@ -391,7 +391,7 @@ const PaymentConfirmationModal = ({
           )}
           {/* 매핑 목록 */}
           <div className="mg-v2-ad-b0kla__card mg-v2-form-section">
-            <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 매핑</h3>
+            <h3 className="mg-v2-ad-b0kla__section-title">결제 대기 중인 배정</h3>
             <div className="mg-v2-mapping-list">
               {mappings
                 .filter(isPendingPaymentMapping)

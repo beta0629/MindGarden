@@ -81,7 +81,7 @@ describe('MappingListRow', () => {
     expect(dateCell).toHaveTextContent('최초 상담일');
     expect(dateCell).toHaveTextContent('2026. 09. 07');
     expect(dateCell).not.toHaveTextContent('2026. 08. 31');
-    expect(dateCell.getAttribute('title')).toContain('매핑 시작일');
+    expect(dateCell.getAttribute('title')).toContain('배정 시작일');
   });
 
 });

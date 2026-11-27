@@ -71,7 +71,7 @@ export const ADMIN_MENU_ITEMS = {
     users: [
       { id: 'admin-user-management', label: '사용자 관리', path: '/admin/user-management', icon: 'bi-people' },
       { id: 'admin-accounts', label: '계좌 관리', path: '/admin/accounts', icon: 'bi-bank' },
-      { id: 'admin-mapping', label: '매핑 관리', path: '/admin/mapping-management', icon: 'bi-link' }
+      { id: 'admin-mapping', label: '배정 관리', path: '/admin/mapping-management', icon: 'bi-link' }
     ],
     system: [
       { id: 'admin-codes', label: '공통코드 관리', path: '/admin/common-codes', icon: 'bi-code' },

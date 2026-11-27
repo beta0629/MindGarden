@@ -47,7 +47,7 @@ const resolveTableDatePresentation = (mapping) => {
   const text = formatDate(primary.date);
   if (primary.kind === MAPPING_DATE_KIND.FIRST_CONSULTATION) {
     const startLabel = primary.mappingStartDate
-      ? ` · 매핑 시작일 ${formatDate(primary.mappingStartDate)}`
+      ? ` · 배정 시작일 ${formatDate(primary.mappingStartDate)}`
       : '';
     return {
       text,

@@ -27,7 +27,7 @@ export const E2E_ADMIN_LNB_RAW_TREE = [
       { menuName: '결제/구독 관리', menuPath: '/admin/billing/subscriptions', children: [] },
       { menuName: '결제 수단', menuPath: '/admin/billing/payment-methods', children: [] },
       {
-        menuName: '디러티 배정 정리',
+        menuName: '미결제 배정 정리',
         menuPath: '/admin/mappings/pending-payment-cleanup',
         children: []
       }

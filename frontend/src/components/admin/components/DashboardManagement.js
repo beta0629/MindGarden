@@ -56,8 +56,8 @@ const DashboardManagement = ({
     },
     {
       id: 'mappings',
-      title: '매핑 관리',
-      description: '상담사-고객 매핑을 관리합니다',
+      title: '배정 관리',
+      description: '상담사-고객 배정을 관리합니다',
       icon: null,
       color: 'mappings',
       onClick: () => onNavigate('/admin/mapping-management'),

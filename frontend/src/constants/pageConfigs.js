@@ -58,7 +58,7 @@ export const SESSION_MANAGEMENT_CONFIG = {
   BODY_CLASS: 'session-management-page',
   PAGE_HEADER: {
     TITLE: '시스템 현황을 한눈에 확인하고 관리하세요',
-    DESCRIPTION: '상담사와 내담자의 세션 매핑을 효율적으로 관리하고, 회기 현황을 실시간으로 모니터링할 수 있습니다.',
+    DESCRIPTION: '상담사와 내담자의 세션 배정을 효율적으로 관리하고, 회기 현황을 실시간으로 모니터링할 수 있습니다.',
     ICON: null,
     ACTION_BUTTON: {
       TEXT: '통계 보기',

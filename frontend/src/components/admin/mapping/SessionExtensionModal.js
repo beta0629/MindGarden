@@ -20,7 +20,7 @@ import './SessionExtensionModal.css';
 
 const MSG_USER_REQUIRED = '사용자 정보를 찾을 수 없습니다. 다시 로그인해주세요.';
 const MSG_SUBMIT_FAILED = '회기 추가 요청에 실패했습니다.';
-const MSG_PACKAGE_REQUIRED = '현재 매핑의 패키지 정보를 확인할 수 없습니다.';
+const MSG_PACKAGE_REQUIRED = '현재 배정의 패키지 정보를 확인할 수 없습니다.';
 const ERR_SESSIONS_REQUIRED = '추가할 회기 수는 1회 이상이어야 합니다.';
 const ERR_AMOUNT_REQUIRED = '추가분 결제 금액을 입력해 주세요. (회기 수와 다를 수 있습니다)';
 const DEFAULT_ADDITIONAL_SESSIONS = 1;

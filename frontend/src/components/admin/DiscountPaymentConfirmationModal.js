@@ -121,7 +121,7 @@ const DiscountPaymentConfirmationModal = ({
     }
     
     if (selectedMappings.length === 0) {
-      notificationManager.warning('선택된 매핑이 없습니다.');
+      notificationManager.warning('선택된 배정이 없습니다.');
       return;
     }
     
@@ -187,7 +187,7 @@ const DiscountPaymentConfirmationModal = ({
   const validateForm = () => {
     const newErrors = {};
     if (selectedMappings.length === 0) {
-      newErrors.selectedMappings = '선택된 매핑이 없습니다.';
+      newErrors.selectedMappings = '선택된 배정이 없습니다.';
     }
     if (!paymentData.method) {
       newErrors.method = '결제 방법을 선택해주세요.';
@@ -279,7 +279,7 @@ const DiscountPaymentConfirmationModal = ({
       <div className="mg-v2-modal-body">
           {/* 선택된 매핑 정보 */}
           <div className="mg-v2-form-section">
-            <h3 className="mg-v2-section-title">선택된 매핑</h3>
+            <h3 className="mg-v2-section-title">선택된 배정</h3>
             {errors.selectedMappings ? (
               <span className="mg-v2-form-error" role="alert">{errors.selectedMappings}</span>
             ) : null}

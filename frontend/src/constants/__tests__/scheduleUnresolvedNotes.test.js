@@ -252,7 +252,7 @@ describe('resolveCalendarSessionLabel', () => {
     ).toEqual({
       label: '잔여 3',
       variant: CALENDAR_SESSION_LABEL_VARIANT.REMAINING,
-      ariaLabel: '매핑 잔여 3'
+      ariaLabel: '배정 잔여 3'
     });
   });
 

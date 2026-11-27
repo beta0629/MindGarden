@@ -93,7 +93,7 @@ describe('packagePaymentHistory remaining and merge labels', () => {
       type: PACKAGE_PAYMENT_HISTORY_TYPE.ADDITIONAL_PACKAGE,
       mergedIntoActive: true,
       targetActiveMappingId: 501
-    })).toBe('활성 매핑 #501에 합산됨');
+    })).toBe('활성 배정 #501에 합산됨');
   });
 
   it('non-merged item yields null merge hint', () => {

@@ -25,7 +25,7 @@ const DashboardStats = ({
       id: 'clients'
     },
     {
-      title: '총 매핑',
+      title: '총 배정',
       value: stats.totalMappings || 0,
       icon: null,
       color: 'warning',

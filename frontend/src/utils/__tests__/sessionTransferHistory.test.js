@@ -55,7 +55,7 @@ describe('sessionTransferHistory formatter', () => {
   });
 
   it('매핑 ID 라벨을 포맷한다', () => {
-    expect(formatSessionTransferMappingIds(5001, 5002)).toBe('매핑 #5001 → #5002');
+    expect(formatSessionTransferMappingIds(5001, 5002)).toBe('배정 #5001 → #5002');
     expect(formatSessionTransferMappingIds(null, null)).toBeNull();
   });
 });
@@ -90,7 +90,7 @@ describe('sessionTransferHistory API mapping', () => {
 
     expect(mapped).toHaveLength(2);
     expect(mapped[0].headline).toBe('임선희 → 김예린: 6회 승계');
-    expect(mapped[0].mappingIdsLabel).toBe('매핑 #5001 → #5002');
+    expect(mapped[0].mappingIdsLabel).toBe('배정 #5001 → #5002');
     expect(mapped[0].reason).toBe('가족');
     expect(mapped[1].headline).toBe('김예린 → 임선희: 5회 승계');
     expect(mapped[1].verb).toBe('승계');

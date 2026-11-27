@@ -582,11 +582,11 @@ export const CLIENT_SELECTOR_CONSTANTS = {
   },
   
   MESSAGES: {
-    MAPPING_CHECK_SUCCESS: '매핑 정보를 확인했습니다.',
-    MAPPING_CHECK_ERROR: '매핑 정보 확인에 실패했습니다.',
-    NO_MAPPING: '해당 내담자와 상담사 간의 매핑이 없습니다.',
+    MAPPING_CHECK_SUCCESS: '배정 정보를 확인했습니다.',
+    MAPPING_CHECK_ERROR: '배정 정보 확인에 실패했습니다.',
+    NO_MAPPING: '해당 내담자와 상담사 간의 배정이 없습니다.',
     NO_SESSIONS: '사용 가능한 세션이 없습니다.',
-    LOADING_MAPPING: '매핑 정보를 확인하는 중...',
+    LOADING_MAPPING: '배정 정보를 확인하는 중...',
     LOADING_HISTORY: '상담 이력을 불러오는 중...'
   },
   

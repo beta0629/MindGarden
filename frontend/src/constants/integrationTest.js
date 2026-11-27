@@ -122,7 +122,7 @@ export const SECURITY_TESTS = {
 // 통합 테스트 항목
 export const INTEGRATION_TESTS = {
   USER_MANAGEMENT: '사용자 관리 시스템',
-  CONSULTANT_CLIENT_MAPPING: '상담사-내담자 매핑 시스템',
+  CONSULTANT_CLIENT_MAPPING: '상담사-내담자 배정 시스템',
   SCHEDULE_MANAGEMENT: '스케줄 관리 시스템',
   PAYMENT_SYSTEM: '결제 시스템',
   PERSONAL_DATA_ENCRYPTION: '개인정보 암호화 시스템',

@@ -93,9 +93,9 @@ describe('SctPublicPage OTP guardian path', () => {
   it('IDENTITY 동의 → OTP send/confirm → GUARDIAN (동일 OTP API)', async() => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.LANDING_START)).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText(SCT_UI.START));
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.LANDING_START));
 
     await waitFor(() => {
       expect(screen.getByTestId(SCT_TEST_ID.IDENTITY_CONSENT_STEP)).toBeInTheDocument();

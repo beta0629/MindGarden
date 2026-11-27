@@ -102,9 +102,9 @@ describe('SctPublicPage PHONE OTP flow', () => {
   it('PHONE: send → code → confirm → session (verifySctPublic 미호출)', async() => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.LANDING_START)).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText(SCT_UI.START));
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.LANDING_START));
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });

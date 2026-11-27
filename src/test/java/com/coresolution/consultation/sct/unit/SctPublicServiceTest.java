@@ -573,8 +573,9 @@ class SctPublicServiceTest {
     }
 
     @Test
-    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금")
+    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금(EMAIL)")
     void verify_exchangePath_usesForUpdateById() {
+        asEmailOnlyInvite();
         String exchange = "exchange-opaque-code-for-verify!!";
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
@@ -591,11 +592,33 @@ class SctPublicServiceTest {
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
         SctVerifyResponse verified = sctPublicService.verify(
-                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+                exchange, SctVerifyRequest.builder().email(EMAIL).build(), "127.0.0.1");
 
         assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
         verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
         verify(invitationRepository, never()).findByTenantIdAndIdAndIsDeletedFalse(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드+PHONE 은 ForUpdate 후 OTP 필수")
+    void verify_exchangePath_phoneRequiresOtp() {
+        String exchange = "exchange-opaque-phone-otp-path!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+
+        SctOtpRequiredException ex = assertThrows(
+                SctOtpRequiredException.class,
+                () -> sctPublicService.verify(
+                        exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals(SctConstants.MSG_OTP_REQUIRED, ex.getMessage());
+        verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
+        verify(verifySessionStore, never()).issue(any(), any(), any());
     }
 
     @Test

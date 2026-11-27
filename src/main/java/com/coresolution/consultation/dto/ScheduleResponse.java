@@ -103,8 +103,8 @@ public class ScheduleResponse {
     /**
      * 합산 사용 회기수 = ({@link #pastSessionCount} ?? 0) + (매핑 사용 회기).
      *
-     * <p>매핑 사용 회기 = {@link #sessionSequence} 우선, 없으면
-     * ({@link #totalSessions} - {@link #remainingSessions}) fallback.
+     * <p>매핑 사용 회기 = {@link #remainingSessions} 가 있으면
+     * ({@link #totalSessions} - remaining), 없으면 {@link #sessionSequence} fallback.
      * 단회기({@code totalSessions <= 1}) 또는 매핑 정보 부족 시 null. 모달은 null 시 회기 영역 비표시.</p>
      *
      * @since 2026-06-08
@@ -190,18 +190,21 @@ public class ScheduleResponse {
     }
 
     /**
-     * 매핑 단위 사용 회기수 계산. {@code sessionSequence} 가 있으면 1-based 회차를 사용 회기로
-     * 간주하고, 없으면 ({@code total - remaining}) 으로 fallback. 둘 다 부족하면 null.
+     * 매핑 단위 사용 회기수 계산.
+     *
+     * <p>{@code remainingSessions} 가 숫자(0 포함)이면 매핑 잔여 SSOT 로
+     * {@code total - remaining} 을 쓴다. {@code sessionSequence} 는 회차 라벨용이며
+     * remaining 이 없을 때만 fallback 한다. 둘 다 부족하면 null.</p>
      */
     private static Long resolveUsedFromMapping(
             Integer totalSessions,
             Integer remainingSessions,
             Integer sessionSequence) {
-        if (sessionSequence != null && sessionSequence > 0) {
-            return Math.min(sessionSequence.longValue(), totalSessions.longValue());
-        }
         if (remainingSessions != null && remainingSessions >= 0 && remainingSessions <= totalSessions) {
             return (long) (totalSessions - remainingSessions);
+        }
+        if (sessionSequence != null && sessionSequence > 0) {
+            return Math.min(sessionSequence.longValue(), totalSessions.longValue());
         }
         return null;
     }

@@ -258,6 +258,7 @@ export const CLIENT_SCHEDULE_NOTES_CLIENT_WIDE_UNRESOLVED_COUNT_FIELD =
 export const SCHEDULE_MAPPING_ID_FIELD = 'mappingId';
 export const SCHEDULE_TOTAL_SESSIONS_FIELD = 'totalSessions';
 export const SCHEDULE_REMAINING_SESSIONS_FIELD = 'remainingSessions';
+export const SCHEDULE_USED_SESSIONS_FIELD = 'usedSessions';
 export const SCHEDULE_SESSION_SEQUENCE_FIELD = 'sessionSequence';
 
 /** 월간 캘린더 회기 라벨 variant — CSS modifier `mg-v2-ad-calendar-event__sessions--*` */

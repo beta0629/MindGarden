@@ -32,6 +32,7 @@ import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
+import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
@@ -400,7 +401,7 @@ public class SctPublicServiceImpl implements SctPublicService {
     private void requireVerifySession(String sessionId, SctInvitation invitation) {
         Optional<String> tenant = verifySessionStore.validate(sessionId, invitation.getId());
         if (tenant.isEmpty() || !tenant.get().equals(invitation.getTenantId())) {
-            throw new IllegalArgumentException("본인 확인이 필요합니다.");
+            throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
         }
     }
 

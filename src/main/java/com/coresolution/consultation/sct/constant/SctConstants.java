@@ -58,6 +58,9 @@ public final class SctConstants {
     public static final String MSG_DESTROY_NOT_ELIGIBLE =
             "보관 기간이 지나지 않아 파기할 수 없습니다.";
 
+    /** 공개 본인확인 세션 없음·만료·불일치. */
+    public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";
+
     private SctConstants() {
     }
 }

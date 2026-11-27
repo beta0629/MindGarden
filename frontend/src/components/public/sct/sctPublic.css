@@ -187,6 +187,10 @@
   font-size: var(--mg-v2-font-size-body-md);
 }
 
+.mg-v2-sct-alert__actions {
+  margin-top: var(--mg-v2-space-3);
+}
+
 .mg-v2-sct-check {
   display: flex;
   gap: var(--mg-v2-space-3);

@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { saveSctDraft } from '../utils/sctApi';
+import { saveSctPublicDraft } from '../utils/sctPublicDraftStorage';
 import { SCT_DEFAULTS, SCT_UI } from '../constants/sctOnline';
 
 export const SCT_SAVE_STATUS = Object.freeze({
@@ -32,6 +33,7 @@ export default function useSctDraftAutosave({
 }) {
   const [status, setStatus] = useState(SCT_SAVE_STATUS.IDLE);
   const [savedAtLabel, setSavedAtLabel] = useState('');
+  const [localSaved, setLocalSaved] = useState(false);
   const timerRef = useRef(null);
   const latestRef = useRef({ token, verifySessionId, answersMap });
   const inFlightRef = useRef(false);
@@ -39,9 +41,23 @@ export default function useSctDraftAutosave({
 
   latestRef.current = { token, verifySessionId, answersMap };
 
+  const mirrorLocal = useCallback((snap) => {
+    if (!snap?.token) {
+      return false;
+    }
+    const ok = saveSctPublicDraft(snap.token, snap.answersMap);
+    setLocalSaved(ok);
+    return ok;
+  }, []);
+
   const persist = useCallback(async() => {
     const snap = latestRef.current;
-    if (!snap.token || !snap.verifySessionId || !enabled) {
+    if (!snap.token || !enabled) {
+      return;
+    }
+    // 서버 성공/실패와 무관하게 기기 로컬에 미러 (세션 만료·재시작 대비)
+    mirrorLocal(snap);
+    if (!snap.verifySessionId) {
       return;
     }
     if (inFlightRef.current) {
@@ -54,7 +70,11 @@ export default function useSctDraftAutosave({
       do {
         pendingRef.current = false;
         const current = latestRef.current;
-        if (!current.token || !current.verifySessionId || !enabled) {
+        if (!current.token || !enabled) {
+          break;
+        }
+        mirrorLocal(current);
+        if (!current.verifySessionId) {
           break;
         }
         const answers = Object.values(current.answersMap || {})
@@ -69,20 +89,17 @@ export default function useSctDraftAutosave({
         setStatus(SCT_SAVE_STATUS.SAVED);
       } while (pendingRef.current);
     } catch (error) {
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        setStatus(SCT_SAVE_STATUS.OFFLINE);
-      } else {
-        setStatus(SCT_SAVE_STATUS.OFFLINE);
-      }
+      mirrorLocal(latestRef.current);
+      setStatus(SCT_SAVE_STATUS.OFFLINE);
     } finally {
       inFlightRef.current = false;
     }
-  }, [enabled]);
+  }, [enabled, mirrorLocal]);
 
   const saveNow = useCallback(() => persist(), [persist]);
 
   useEffect(() => {
-    if (!enabled || !token || !verifySessionId) {
+    if (!enabled || !token) {
       return undefined;
     }
     if (timerRef.current) {
@@ -118,5 +135,5 @@ export default function useSctDraftAutosave({
     return '';
   })();
 
-  return { status, statusText, savedAtLabel, saveNow };
+  return { status, statusText, savedAtLabel, saveNow, localSaved };
 }

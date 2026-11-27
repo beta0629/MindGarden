@@ -34,6 +34,7 @@ import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
+import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
@@ -193,6 +194,44 @@ class SctPublicServiceTest {
         assertEquals(SctConstants.VERIFY_MAX_FAILURES, invitation.getVerifyFailCount());
         assertTrue(invitation.getVerifyLockedUntil().isAfter(LocalDateTime.now()));
         verify(invitationRepository, never()).findByTokenHashAndIsDeletedFalse(any());
+    }
+
+    @Test
+    @DisplayName("form/draft/submit — verify 세션 없음·무효 → SctVerifyRequiredException")
+    void missingOrInvalidVerifySession_throwsVerifyRequired() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+
+        SctVerifyRequiredException missingForm = assertThrows(
+                SctVerifyRequiredException.class,
+                () -> sctPublicService.getForm(RAW_TOKEN, null));
+        assertEquals(SctConstants.MSG_VERIFY_REQUIRED, missingForm.getMessage());
+
+        SctVerifyRequiredException invalidForm = assertThrows(
+                SctVerifyRequiredException.class,
+                () -> sctPublicService.getForm(RAW_TOKEN, "not-a-real-session"));
+        assertEquals(SctConstants.MSG_VERIFY_REQUIRED, invalidForm.getMessage());
+
+        assertThrows(SctVerifyRequiredException.class, () -> sctPublicService.saveDraft(
+                RAW_TOKEN, SctDraftSaveRequest.builder()
+                        .verifySessionId("expired-or-unknown")
+                        .answers(Collections.singletonList(SctDraftAnswerItem.builder()
+                                .formItemId(1L).answerText("x").build()))
+                        .build()));
+
+        assertThrows(SctVerifyRequiredException.class, () -> sctPublicService.submit(
+                RAW_TOKEN, SctSubmitRequest.builder().verifySessionId("").build()));
+    }
+
+    @Test
+    @DisplayName("verify 세션이 다른 초대용이면 SctVerifyRequiredException")
+    void verifySessionForOtherInvitation_throwsVerifyRequired() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        String otherInviteSid = verifySessionStore.issue(999L, TENANT_A);
+
+        assertThrows(SctVerifyRequiredException.class,
+                () -> sctPublicService.getForm(RAW_TOKEN, otherInviteSid));
     }
 
     @Test

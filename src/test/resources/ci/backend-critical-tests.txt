@@ -107,3 +107,6 @@
 **/AdminServiceImplClientEventHookTest.java
 **/ClientEventIdempotencyKeysTest.java
 **/ClientEventWriteSupportTest.java
+
+# 2026-11-27 SCT OTP 오답 잠금 REQUIRES_NEW (#1967) — *Payment*/*Session* 패턴에 없음
+**/SctIdentityOtpLockRequiresNewIntegrationTest.java

@@ -53,6 +53,7 @@
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.544.0",
     "luxon": "^3.7.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.10",
     "react-chartjs-2": "^5.3.1",

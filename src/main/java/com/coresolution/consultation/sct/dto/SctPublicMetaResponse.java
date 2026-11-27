@@ -27,4 +27,12 @@ public class SctPublicMetaResponse {
     private Boolean hasDraft;
     private Boolean requiresGuardian;
     private String signerBand;
+    /** 본인확인용 연락처 동의 문구 제목. */
+    private String identityConsentTitle;
+    /** 본인확인용 연락처 동의 문구 본문. */
+    private String identityConsentBody;
+    /** 본인확인용 연락처 동의 템플릿 버전. */
+    private String identityConsentVersion;
+    /** 해당 초대에 활성 IDENTITY_CONTACT 동의 여부. */
+    private Boolean identityConsentSatisfied;
 }

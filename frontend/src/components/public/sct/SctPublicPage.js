@@ -1,6 +1,6 @@
 /**
  * SCT 공개 응답 페이지 — /public/sct/:token
- * 흐름: 진입 → 본인확인 → (보호자) → 동의 → 문항 → 제출확인 → 완료
+ * 흐름: 진입 → 본인확인용 동의 → 본인확인 → (보호자) → 동의 → 문항 → 제출확인 → 완료
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -40,6 +40,7 @@ import {
   SCT_CONSENT_TYPE,
   SCT_CSS,
   SCT_DEFAULTS,
+  SCT_ERROR_CODE,
   SCT_FORM_TYPE,
   SCT_FORM_TYPE_LABEL,
   SCT_ITEMS_PER_PAGE,
@@ -56,6 +57,7 @@ import './sctPublic.css';
 const STEP = Object.freeze({
   LOADING: 'LOADING',
   ENTRY: 'ENTRY',
+  IDENTITY_CONSENT: 'IDENTITY_CONSENT',
   VERIFY: 'VERIFY',
   GUARDIAN: 'GUARDIAN',
   CONSENT: 'CONSENT',
@@ -67,6 +69,24 @@ const STEP = Object.freeze({
   ALREADY: 'ALREADY',
   ERROR: 'ERROR'
 });
+
+/**
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+const isIdentityContactConsentRequiredError = (error) => {
+  if (error == null || typeof error !== 'object') {
+    return false;
+  }
+  const body = error.response && typeof error.response.data === 'object'
+    ? error.response.data
+    : null;
+  const code = (body && (body.errorCode || body.code))
+    || error.errorCode
+    || error.code
+    || '';
+  return String(code) === SCT_ERROR_CODE.IDENTITY_CONTACT_CONSENT_REQUIRED;
+};
 
 const formatExpiry = (iso) => {
   if (!iso) return '—';
@@ -105,6 +125,8 @@ const SctPublicPage = () => {
   const [busy, setBusy] = useState(false);
 
   const [consentStatus, setConsentStatus] = useState(null);
+  const [identityConsentAgreed, setIdentityConsentAgreed] = useState(false);
+  const [identityConsentLocalSatisfied, setIdentityConsentLocalSatisfied] = useState(false);
   const [sensitiveAgreed, setSensitiveAgreed] = useState(false);
   const [instructionRead, setInstructionRead] = useState(false);
   const [signerName, setSignerName] = useState('');
@@ -160,6 +182,9 @@ const SctPublicPage = () => {
       } else if (data.verifyChannelHint === SCT_CHANNEL.PHONE) {
         setChannel(SCT_CHANNEL.PHONE);
       }
+      if (data.identityConsentSatisfied) {
+        setIdentityConsentLocalSatisfied(true);
+      }
       if (data.status === SCT_STATUS.SUBMITTED) {
         setStep(STEP.ALREADY);
       } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
@@ -198,13 +223,29 @@ const SctPublicPage = () => {
     return () => document.removeEventListener('focusin', onFocusIn);
   }, []);
 
-  const openVerify = () => setStep(STEP.VERIFY);
+  const hasIdentityConsent = Boolean(
+    identityConsentLocalSatisfied || meta?.identityConsentSatisfied
+  );
+
+  const openVerifyOrIdentityConsent = () => {
+    if (hasIdentityConsent) {
+      setStep(STEP.VERIFY);
+    } else {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+    }
+  };
 
   const goToReVerify = useCallback(() => {
     setVerifySessionId('');
     setVerifyError('');
-    setStep(STEP.VERIFY);
-  }, []);
+    if (identityConsentLocalSatisfied || meta?.identityConsentSatisfied) {
+      setStep(STEP.VERIFY);
+    } else {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+    }
+  }, [identityConsentLocalSatisfied, meta?.identityConsentSatisfied]);
 
   /**
    * 본인확인 재개 후 대기 중이던 제출 완료.
@@ -276,8 +317,35 @@ const SctPublicPage = () => {
     return nextAnswers;
   };
 
+  const handleIdentityConsentAgree = async() => {
+    if (!identityConsentAgreed) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    setVerifyError('');
+    try {
+      await saveSctConsent(token, {
+        consentType: SCT_CONSENT_TYPE.IDENTITY_CONTACT,
+        agreed: true
+      });
+      setIdentityConsentLocalSatisfied(true);
+      setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: true } : prev));
+      setStep(STEP.VERIFY);
+    } catch (error) {
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleVerify = async() => {
     setVerifyError('');
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
     const body = channel === SCT_CHANNEL.EMAIL
       ? { email: email.trim() }
       : { phone: phone.trim() };
@@ -328,6 +396,13 @@ const SctPublicPage = () => {
         setStep(STEP.CONSENT);
       }
     } catch (error) {
+      if (isIdentityContactConsentRequiredError(error)) {
+        setIdentityConsentLocalSatisfied(false);
+        setIdentityConsentAgreed(false);
+        setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: false } : prev));
+        setStep(STEP.IDENTITY_CONSENT);
+        return;
+      }
       setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
     } finally {
       setBusy(false);
@@ -639,12 +714,23 @@ const SctPublicPage = () => {
             <li>
               <span className="n">1</span>
               <div>
-                {SCT_UI.STEP_VERIFY}
-                <small>문자를 받은 휴대폰 번호를 입력합니다</small>
+                {SCT_UI.STEP_IDENTITY_CONSENT}
+                <small>본인확인용 연락처 수집·이용 동의</small>
               </div>
             </li>
             <li>
               <span className="n">2</span>
+              <div>
+                {SCT_UI.STEP_VERIFY}
+                <small>
+                  {channel === SCT_CHANNEL.EMAIL
+                    ? '안내받은 이메일을 입력합니다'
+                    : '문자를 받은 휴대폰 번호를 입력합니다'}
+                </small>
+              </div>
+            </li>
+            <li>
+              <span className="n">3</span>
               <div>
                 {SCT_UI.STEP_CONSENT}
                 <small>
@@ -654,7 +740,7 @@ const SctPublicPage = () => {
               </div>
             </li>
             <li>
-              <span className="n">3</span>
+              <span className="n">4</span>
               <div>
                 {SCT_UI.STEP_ITEMS}
                 <small>
@@ -665,7 +751,7 @@ const SctPublicPage = () => {
               </div>
             </li>
             <li>
-              <span className="n">4</span>
+              <span className="n">5</span>
               <div>
                 {SCT_UI.STEP_SUBMIT}
                 <small>제출한 뒤에는 상담 때 함께 살펴봅니다</small>
@@ -681,7 +767,45 @@ const SctPublicPage = () => {
     bar = (
       <SctThumbBar
         primaryLabel={resumed ? SCT_UI.RESUME : SCT_UI.START}
-        onPrimary={openVerify}
+        onPrimary={openVerifyOrIdentityConsent}
+      />
+    );
+  } else if (step === STEP.IDENTITY_CONSENT) {
+    body = (
+      <div data-testid={SCT_TEST_ID.IDENTITY_CONSENT_STEP}>
+        {renderTop(SCT_UI.STEP_IDENTITY_CONSENT, false)}
+        <h1 className="mg-v2-sct-h1">
+          {toDisplayString(
+            meta?.identityConsentTitle,
+            SCT_UI.IDENTITY_CONSENT_FALLBACK_TITLE
+          )}
+        </h1>
+        {verifyError ? (
+          <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
+        ) : null}
+        <div className="mg-v2-sct-consent-body">
+          <SafeText>
+            {toDisplayString(
+              meta?.identityConsentBody,
+              SCT_UI.IDENTITY_CONSENT_REQUIRED
+            )}
+          </SafeText>
+        </div>
+        {checkBtn(
+          identityConsentAgreed,
+          () => setIdentityConsentAgreed((v) => !v),
+          SCT_UI.IDENTITY_CONSENT_REQUIRED
+        )}
+      </div>
+    );
+    bar = (
+      <SctThumbBar
+        primaryLabel={SCT_UI.IDENTITY_CONSENT_CONTINUE}
+        onPrimary={handleIdentityConsentAgree}
+        primaryDisabled={!identityConsentAgreed}
+        loading={busy}
+        secondaryLabel={SCT_UI.PREV}
+        onSecondary={() => setStep(STEP.ENTRY)}
       />
     );
   } else if (step === STEP.VERIFY) {
@@ -750,6 +874,7 @@ const SctPublicPage = () => {
       <SctThumbBar
         primaryLabel={SCT_UI.VERIFY_SUBMIT}
         onPrimary={handleVerify}
+        primaryDisabled={!hasIdentityConsent}
         loading={busy}
         secondaryLabel={SCT_UI.PREV}
         onSecondary={() => setStep(STEP.ENTRY)}

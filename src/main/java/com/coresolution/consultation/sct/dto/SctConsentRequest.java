@@ -18,7 +18,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class SctConsentRequest {
-    @NotBlank
+    /**
+     * 본인확인 세션 ID.
+     * IDENTITY_CONTACT 는 세션 없이 토큰 기준으로 기록하므로 null 허용.
+     * 그 외 유형은 서비스에서 필수 검증.
+     */
     private String verifySessionId;
     @NotBlank
     private String consentType;

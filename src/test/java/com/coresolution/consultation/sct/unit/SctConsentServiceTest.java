@@ -249,6 +249,87 @@ class SctConsentServiceTest {
                 () -> consentService.revokeForClient(TENANT, 10L, staff));
     }
 
+    @Test
+    void identityContact_recordsWithoutSignerOrVerifySession() {
+        SctConsentTemplate identityTpl = SctConsentTemplate.builder()
+                .id(9L)
+                .tenantId("")
+                .consentType(SctConstants.CONSENT_IDENTITY_CONTACT)
+                .formType(null)
+                .version(SctConsentKeys.TEMPLATE_VERSION_IDENTITY_CONTACT)
+                .title("본인확인용 개인정보 수집·이용 동의")
+                .bodyText("본문")
+                .isActive(true)
+                .build();
+        when(consentTemplateRepository
+                .findFirstByTenantIdAndConsentTypeAndFormTypeIsNullAndIsActiveTrueOrderByCreatedAtDesc(
+                        any(), eq(SctConstants.CONSENT_IDENTITY_CONTACT)))
+                .thenReturn(Optional.of(identityTpl));
+        when(consentRepository.findByTenantIdAndInvitationIdAndConsentTypeAndRevokedFalse(
+                TENANT, 100L, SctConstants.CONSENT_IDENTITY_CONTACT))
+                .thenReturn(Optional.empty());
+        when(consentRepository.save(any(SctConsent.class))).thenAnswer(inv -> {
+            SctConsent c = inv.getArgument(0);
+            c.setId(77L);
+            return c;
+        });
+
+        consentService.recordPublicConsent(
+                invitation, SctFormType.ADULT.name(),
+                SctConsentRequest.builder()
+                        .consentType(SctConstants.CONSENT_IDENTITY_CONTACT)
+                        .agreed(true)
+                        .build(),
+                "127.0.0.1", "ua");
+
+        ArgumentCaptor<SctConsent> captor = ArgumentCaptor.forClass(SctConsent.class);
+        verify(consentRepository).save(captor.capture());
+        SctConsent saved = captor.getValue();
+        assertEquals(SctConstants.CONSENT_IDENTITY_CONTACT, saved.getConsentType());
+        assertEquals(SctConsentKeys.TEMPLATE_VERSION_IDENTITY_CONTACT, saved.getConsentTemplateVersion());
+        assertTrue(Boolean.TRUE.equals(saved.getAgreed()));
+        assertEquals(TENANT, saved.getTenantId());
+        assertEquals(100L, saved.getInvitationId());
+        verify(auditLogService).record(any());
+    }
+
+    @Test
+    void identityContact_hasConsent_invitationScopedOnly() {
+        when(consentRepository.existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                TENANT, 100L, SctConstants.CONSENT_IDENTITY_CONTACT)).thenReturn(true);
+        assertTrue(consentService.hasIdentityContactConsent(invitation));
+
+        invitation.setTenantId("other");
+        when(consentRepository.existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                "other", 100L, SctConstants.CONSENT_IDENTITY_CONTACT)).thenReturn(false);
+        assertFalse(consentService.hasIdentityContactConsent(invitation));
+        verify(consentRepository, never())
+                .existsByTenantIdAndClientIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                        any(), any(), eq(SctConstants.CONSENT_IDENTITY_CONTACT));
+    }
+
+    @Test
+    void sensitiveAndGuardian_stillRequireSignerFields() {
+        stubTemplates();
+        when(consentRepository.existsByTenantIdAndClientIdAndConsentTypeAndRevokedTrue(
+                TENANT, 10L, SctConstants.CONSENT_SENSITIVE_INFO)).thenReturn(false);
+        when(consentRepository.existsByTenantIdAndClientIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                any(), any(), any())).thenReturn(false);
+        when(consentRepository.existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                any(), any(), any())).thenReturn(false);
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue(any(), any()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(IllegalArgumentException.class, () -> consentService.recordPublicConsent(
+                invitation, SctFormType.ADULT.name(),
+                SctConsentRequest.builder()
+                        .verifySessionId("s")
+                        .consentType(SctConstants.CONSENT_SENSITIVE_INFO)
+                        .agreed(true)
+                        .build(),
+                "127.0.0.1", "ua"));
+    }
+
     private void stubTemplates() {
         when(consentTemplateRepository
                 .findFirstByTenantIdAndConsentTypeAndFormTypeAndIsActiveTrueOrderByCreatedAtDesc(

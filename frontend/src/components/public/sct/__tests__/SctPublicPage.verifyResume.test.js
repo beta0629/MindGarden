@@ -31,7 +31,9 @@ const META = Object.freeze({
   tokenExpiresAt: '2026-12-01T23:59:00',
   hasDraft: false,
   requiresGuardian: false,
-  signerBand: 'ADULT'
+  signerBand: 'ADULT',
+  // 재개 경로 테스트는 IDENTITY_CONSENT 를 이미 충족한 상태로 고정
+  identityConsentSatisfied: true
 });
 
 const FORM = Object.freeze({

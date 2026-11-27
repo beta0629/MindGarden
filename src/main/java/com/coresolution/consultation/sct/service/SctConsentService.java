@@ -3,6 +3,7 @@ package com.coresolution.consultation.sct.service;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
 import com.coresolution.consultation.sct.dto.SctConsentStatusView;
+import com.coresolution.consultation.sct.entity.SctConsentTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 
 /**
@@ -62,6 +63,21 @@ public interface SctConsentService {
             SctConsentRequest request,
             String clientIp,
             String userAgent);
+
+    /**
+     * 초대·테넌트 기준 활성 IDENTITY_CONTACT 동의 여부.
+     *
+     * @param invitation 초대
+     * @return 활성 동의 있으면 true
+     */
+    boolean hasIdentityContactConsent(SctInvitation invitation);
+
+    /**
+     * 코어 테넌트 활성 IDENTITY_CONTACT 동의 템플릿.
+     *
+     * @return 템플릿(없으면 null)
+     */
+    SctConsentTemplate activeIdentityContactTemplate();
 
     /**
      * 미연동 초대 동의를 내담자로 승계.

@@ -125,6 +125,24 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * SCT 본인확인용 개인정보 수집·이용 동의 필요 — HTTP 403 Forbidden.
+     */
+    @ExceptionHandler(
+            com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleSctIdentityContactConsentRequired(
+            com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "본인확인용 개인정보 수집·이용 동의가 필요합니다."),
+            "SCT_IDENTITY_CONTACT_CONSENT_REQUIRED",
+            HttpStatus.FORBIDDEN.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    /**
      * SCT 상태 충돌 — HTTP 409.
      */
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctConflictException.class)

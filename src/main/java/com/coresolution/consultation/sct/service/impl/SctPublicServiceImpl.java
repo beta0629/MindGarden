@@ -26,6 +26,7 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.entity.SctConsentTemplate;
 import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
@@ -33,6 +34,7 @@ import com.coresolution.consultation.sct.entity.SctInviteAccessAttempt;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
+import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
 import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -107,6 +109,8 @@ public class SctPublicServiceImpl implements SctPublicService {
         } else if (StringUtils.hasText(invitation.getTargetEmailHash())) {
             channel = SctConsentKeys.CHANNEL_EMAIL;
         }
+        SctConsentTemplate identityTpl = sctConsentService.activeIdentityContactTemplate();
+        boolean identityOk = sctConsentService.hasIdentityContactConsent(invitation);
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
@@ -117,6 +121,10 @@ public class SctPublicServiceImpl implements SctPublicService {
                 .hasDraft(hasDraft)
                 .requiresGuardian(requiresGuardian)
                 .signerBand(sctConsentService.resolveSignerBand(template.getFormType(), requiresGuardian))
+                .identityConsentTitle(identityTpl == null ? null : identityTpl.getTitle())
+                .identityConsentBody(identityTpl == null ? null : identityTpl.getBodyText())
+                .identityConsentVersion(identityTpl == null ? null : identityTpl.getVersion())
+                .identityConsentSatisfied(identityOk)
                 .build();
     }
 
@@ -129,6 +137,7 @@ public class SctPublicServiceImpl implements SctPublicService {
                 .orElseGet(() -> resolveMissingToken(hash));
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
+        assertHasIdentityContactConsent(invitation);
         if (invitation.getVerifyLockedUntil() != null
                 && invitation.getVerifyLockedUntil().isAfter(LocalDateTime.now())) {
             throw new SctVerifyLockedException("검증이 잠겼습니다. 잠시 후 다시 시도하세요.");
@@ -276,7 +285,14 @@ public class SctPublicServiceImpl implements SctPublicService {
             String rawToken, SctConsentRequest request, String clientIp, String userAgent) {
         SctInvitation invitation = loadByToken(rawToken);
         bindTenantAndGuard(invitation);
-        requireVerifySession(request.getVerifySessionId(), invitation);
+        boolean identityContact = request != null
+                && SctConstants.CONSENT_IDENTITY_CONTACT.equals(request.getConsentType());
+        if (!identityContact) {
+            if (request == null || !StringUtils.hasText(request.getVerifySessionId())) {
+                throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
+            }
+            requireVerifySession(request.getVerifySessionId(), invitation);
+        }
         assertWritable(invitation);
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         sctConsentService.recordPublicConsent(
@@ -416,6 +432,18 @@ public class SctPublicServiceImpl implements SctPublicService {
                 absoluteExpiry(invitation));
         if (tenant.isEmpty() || !tenant.get().equals(invitation.getTenantId())) {
             throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
+        }
+    }
+
+    /**
+     * 본인확인(verify) 전 IDENTITY_CONTACT 동의 fail-closed.
+     *
+     * @param invitation 초대(토큰으로 해석된 행 — tenantId 포함)
+     */
+    private void assertHasIdentityContactConsent(SctInvitation invitation) {
+        if (!sctConsentService.hasIdentityContactConsent(invitation)) {
+            throw new SctIdentityContactConsentRequiredException(
+                    SctConstants.MSG_IDENTITY_CONTACT_CONSENT_REQUIRED);
         }
     }
 

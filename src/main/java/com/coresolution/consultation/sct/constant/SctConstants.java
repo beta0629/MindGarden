@@ -32,6 +32,8 @@ public final class SctConstants {
 
     public static final String CONSENT_SENSITIVE_INFO = "SENSITIVE_INFO";
     public static final String CONSENT_GUARDIAN_UNDER_14 = "GUARDIAN_UNDER_14";
+    /** 본인확인용 연락처(휴대폰/이메일) 수집·이용 동의. */
+    public static final String CONSENT_IDENTITY_CONTACT = "IDENTITY_CONTACT";
     public static final String ENTITY_TYPE_CONSENT = "SCT_CONSENT";
 
     public static final String ACCESS_VIEW_BODY = "VIEW_BODY";
@@ -70,6 +72,10 @@ public final class SctConstants {
 
     /** 공개 본인확인 세션 없음·만료·불일치. */
     public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";
+
+    /** 본인확인용 개인정보 수집·이용 동의 없음. */
+    public static final String MSG_IDENTITY_CONTACT_CONSENT_REQUIRED =
+            "본인확인용 개인정보 수집·이용 동의가 필요합니다.";
 
     private SctConstants() {
     }

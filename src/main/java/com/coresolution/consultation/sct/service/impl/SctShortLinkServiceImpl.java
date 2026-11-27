@@ -114,19 +114,21 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
-        String landingStatus = null;
+        // 비활성·만료는 miss와 동일 경로 — 존재 오라클·교환 발급 방지
         boolean inactive = !Boolean.TRUE.equals(link.getIsActive());
         boolean codeExpired = link.getExpiresAt() != null
                 && link.getExpiresAt().isBefore(LocalDateTime.now());
-        if (inactive) {
-            landingStatus = SctConstants.PUBLIC_STATUS_REISSUED;
+        if (inactive || codeExpired) {
+            log.info("SCT short-link redirect closed codePrefix={} inactive={} expired={}",
+                    codePrefix(shortCode), inactive, codeExpired);
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
         try {
             String exchange = exchangeCodeStore.issue(
-                    invitation.getId(), invitation.getTenantId(), landingStatus);
-            log.info("SCT short-link redirect ok codePrefix={} inactive={} expired={} exchangePrefix={}",
-                    codePrefix(shortCode), inactive, codeExpired, codePrefix(exchange));
+                    invitation.getId(), invitation.getTenantId(), null);
+            log.info("SCT short-link redirect ok codePrefix={} exchangePrefix={}",
+                    codePrefix(shortCode), codePrefix(exchange));
             return SctConstants.PUBLIC_SCT_WEB_PREFIX + exchange;
         } catch (RuntimeException ex) {
             log.warn("SCT short-link exchange issue failed codePrefix={}: {}",

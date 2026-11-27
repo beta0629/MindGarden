@@ -1,6 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -171,6 +172,7 @@ class SctPublicServiceTest {
     @Test
     void expired_metaReturnsExpiredStatus() {
         invitation.setStatus(SctInviteStatus.EXPIRED.name());
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
@@ -183,6 +185,7 @@ class SctPublicServiceTest {
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctInviteStatus.EXPIRED.name(), meta.getStatus());
         assertEquals("032-724-8501", meta.getOfficePhone());
+        assertNull(meta.getRecipientName());
     }
 
     @Test
@@ -462,6 +465,7 @@ class SctPublicServiceTest {
 
     @Test
     void rotatedTokenHash_metaReturnsReissued() {
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.empty());
         when(rotatedTokenHashRepository.findByTokenHash(any()))
@@ -483,6 +487,29 @@ class SctPublicServiceTest {
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctConstants.PUBLIC_STATUS_REISSUED, meta.getStatus());
         assertEquals("010-4285-8570", meta.getMobilePhone());
+        assertNull(meta.getRecipientName());
+    }
+
+    @Test
+    @DisplayName("getMeta — SENT/SUBMITTED 는 recipientName 유지")
+    void meta_activeStatuses_keepRecipientName() {
+        invitation.setRecipientName("홍길동");
+        invitation.setStatus(SctInviteStatus.SENT.name());
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
+
+        SctPublicMetaResponse sentMeta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals("홍길동", sentMeta.getRecipientName());
+
+        invitation.setStatus(SctInviteStatus.SUBMITTED.name());
+        SctPublicMetaResponse submittedMeta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals("홍길동", submittedMeta.getRecipientName());
     }
 
     @Test
@@ -512,6 +539,47 @@ class SctPublicServiceTest {
 
         assertThrows(SctGoneException.class, () -> sctPublicService.verify(
                 RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금")
+    void verify_exchangePath_usesForUpdateById() {
+        String exchange = "exchange-opaque-code-for-verify!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(100L, TENANT_A, null, false)));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
+
+        SctVerifyResponse verified = sctPublicService.verify(
+                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+
+        assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
+        verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
+        verify(invitationRepository, never()).findByTenantIdAndIdAndIsDeletedFalse(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드 REISSUED landing → 410")
+    void verify_exchangeReissuedLanding_throws410() {
+        String exchange = "exchange-reissued-landing!!!!!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, SctConstants.PUBLIC_STATUS_REISSUED, false)));
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.verify(
+                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        verify(invitationRepository, never())
+                .findByTenantIdAndIdAndIsDeletedFalseForUpdate(any(), any());
     }
 
     @Test

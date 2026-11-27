@@ -190,4 +190,94 @@ class SctSecurityHighTest {
         assertThat(locked.get()).isGreaterThanOrEqualTo(1);
         assertThat(mismatch.get() + locked.get()).isEqualTo(threads);
     }
+
+    @Test
+    void verifyFailCount_exchangePath_usesForUpdateAndSerializes() throws Exception {
+        String exchangeCode = "opaque-exchange-verify-code-32b!";
+        String phone = "01011112222";
+        SctInvitation invitation = SctInvitation.builder()
+                .formTemplateId(1L)
+                .targetPhone(phone)
+                .targetPhoneHash(PhoneHashUtils.sha256Hex(phone))
+                .tokenHash(SctTokenHasher.sha256Hex("other-raw-token-not-used!!!!"))
+                .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
+                .status("SENT")
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .requiresGuardian(false)
+                .build();
+        invitation.setId(42L);
+        invitation.setTenantId("t1");
+
+        SctInvitationRepository invitationRepository = mock(SctInvitationRepository.class);
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(
+                ArgumentMatchers.anyString()))
+                .thenReturn(java.util.Optional.empty());
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate("t1", 42L))
+                .thenReturn(java.util.Optional.of(invitation));
+        when(invitationRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
+        when(exchangeCodeStore.resolve(exchangeCode)).thenReturn(java.util.Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(42L, "t1", null, false)));
+
+        SctInviteAccessAttemptRepository attemptRepository = mock(SctInviteAccessAttemptRepository.class);
+        when(attemptRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SctConsentService consentService = mock(SctConsentService.class);
+        when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
+
+        SctPublicServiceImpl service = new SctPublicServiceImpl(
+                invitationRepository,
+                mock(SctFormTemplateRepository.class),
+                mock(SctFormItemRepository.class),
+                mock(SctResponseAnswerRepository.class),
+                attemptRepository,
+                mock(SctRotatedTokenHashRepository.class),
+                new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
+                exchangeCodeStore,
+                mock(SctFeatureGuard.class),
+                consentService,
+                mock(SctSettingsService.class),
+                mock(AuditLogService.class));
+
+        int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(threads);
+        AtomicInteger locked = new AtomicInteger();
+        AtomicInteger mismatch = new AtomicInteger();
+        SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099998888").build();
+
+        for (int i = 0; i < threads; i++) {
+            pool.submit(() -> {
+                try {
+                    start.await();
+                    synchronized (invitation) {
+                        try {
+                            service.verify(exchangeCode, bad, "127.0.0.1");
+                        } catch (SctVerifyLockedException e) {
+                            locked.incrementAndGet();
+                        } catch (IllegalArgumentException e) {
+                            mismatch.incrementAndGet();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    done.countDown();
+                }
+            });
+        }
+        start.countDown();
+        assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
+        pool.shutdownNow();
+
+        verify(invitationRepository, times(threads))
+                .findByTenantIdAndIdAndIsDeletedFalseForUpdate("t1", 42L);
+        assertThat(invitation.getVerifyFailCount()).isEqualTo(SctConstants.VERIFY_MAX_FAILURES);
+        assertThat(invitation.getVerifyLockedUntil()).isNotNull();
+        assertThat(locked.get()).isGreaterThanOrEqualTo(1);
+        assertThat(mismatch.get() + locked.get()).isEqualTo(threads);
+    }
 }

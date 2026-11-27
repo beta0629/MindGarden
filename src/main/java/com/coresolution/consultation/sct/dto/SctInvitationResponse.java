@@ -51,6 +51,18 @@ public class SctInvitationResponse {
      */
     private String absoluteUrl;
     /**
+     * 단축 상대 경로 {@code /s/{code}}. 생성·재발급 직후 one-shot. QR은 absoluteShortUrl 권장.
+     */
+    private String shortUrl;
+    /**
+     * 테넌트 도메인 기준 절대 단축 URL. QR/문자용. 생성·재발급 직후 one-shot.
+     */
+    private String absoluteShortUrl;
+    /**
+     * 이번 발송에 적용된 링크 만료 일수(설정 또는 요청값).
+     */
+    private Integer linkExpiryDays;
+    /**
      * 평문 초대 토큰. 생성·링크 재발급 직후에만 포함 — 이후 조회 API에는 없음.
      * ADMIN·CONSULTANT만 — STAFF 응답에는 null.
      */

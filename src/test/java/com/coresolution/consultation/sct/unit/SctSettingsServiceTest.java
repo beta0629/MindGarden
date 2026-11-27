@@ -52,6 +52,31 @@ class SctSettingsServiceTest {
     }
 
     @Test
+    void resolvePublicContactPhones_fromTenantThenGlobal() {
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
+                        .configValue("032-724-8501")
+                        .isActive(true)
+                        .build()));
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("t1")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)
+                        .configValue("010-4285-8570")
+                        .isActive(true)
+                        .build()));
+
+        assertEquals("032-724-8501", settingsService.resolvePublicOfficePhone("t1"));
+        assertEquals("010-4285-8570", settingsService.resolvePublicMobilePhone("t1"));
+    }
+
+    @Test
     void defaultRetentionIs365() {
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
                 SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());

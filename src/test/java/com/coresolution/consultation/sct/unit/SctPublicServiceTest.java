@@ -35,6 +35,7 @@ import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
+import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
@@ -47,7 +48,9 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
@@ -94,8 +97,10 @@ class SctPublicServiceTest {
             Clock.systemUTC(),
             SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
 
+    @Mock private SctExchangeCodeStore exchangeCodeStore;
     @Mock private SctFeatureGuard sctFeatureGuard;
     @Mock private SctConsentService sctConsentService;
+    @Mock private SctSettingsService sctSettingsService;
     @Mock private AuditLogService auditLogService;
     @Mock private EntityManager entityManager;
 
@@ -134,6 +139,12 @@ class SctPublicServiceTest {
 
         ReflectionTestUtils.setField(sctPublicService, "entityManager", entityManager);
         redisHarness.map().clear();
+        org.mockito.Mockito.lenient().when(exchangeCodeStore.resolve(any()))
+                .thenReturn(Optional.empty());
+        org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicOfficePhone(any()))
+                .thenReturn("032-724-8501");
+        org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicMobilePhone(any()))
+                .thenReturn("010-4285-8570");
     }
 
     private Instant absoluteExpiry() {
@@ -155,21 +166,36 @@ class SctPublicServiceTest {
     }
 
     @Test
-    void expired_throws410() {
+    void expired_metaReturnsExpiredStatus() {
         invitation.setStatus(SctInviteStatus.EXPIRED.name());
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctInviteStatus.EXPIRED.name(), meta.getStatus());
+        assertEquals("032-724-8501", meta.getOfficePhone());
     }
 
     @Test
-    void cancelled_throws410() {
+    void cancelled_metaReturnsCancelledStatus() {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctInviteStatus.CANCELLED.name(), meta.getStatus());
     }
 
     @Test
@@ -345,19 +371,35 @@ class SctPublicServiceTest {
     }
 
     @Test
-    void rotatedTokenHash_throws410Gone() {
+    void rotatedTokenHash_metaReturnsReissued() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+        when(rotatedTokenHashRepository.findByTokenHash(any()))
+                .thenReturn(Optional.of(SctRotatedTokenHash.builder()
+                        .tenantId(TENANT_A)
+                        .invitationId(100L)
+                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .rotatedAt(LocalDateTime.now())
+                        .build()));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctConstants.PUBLIC_STATUS_REISSUED, meta.getStatus());
+        assertEquals("010-4285-8570", meta.getMobilePhone());
     }
 
     @Test
     void unknownTokenHash_throws404NotFound() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(false);
+        when(rotatedTokenHashRepository.findByTokenHash(any())).thenReturn(Optional.empty());
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> sctPublicService.getMeta(RAW_TOKEN));
@@ -368,7 +410,15 @@ class SctPublicServiceTest {
     void rotatedTokenHash_verify_throws410Gone() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(rotatedTokenHashRepository.findByTokenHash(any()))
+                .thenReturn(Optional.of(SctRotatedTokenHash.builder()
+                        .tenantId(TENANT_A)
+                        .invitationId(100L)
+                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .rotatedAt(LocalDateTime.now())
+                        .build()));
 
         assertThrows(SctGoneException.class, () -> sctPublicService.verify(
                 RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));

@@ -26,7 +26,9 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
@@ -141,8 +143,10 @@ class SctSecurityHighTest {
                 attemptRepository,
                 mock(SctRotatedTokenHashRepository.class),
                 new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
+                mock(SctExchangeCodeStore.class),
                 mock(SctFeatureGuard.class),
                 mock(SctConsentService.class),
+                mock(SctSettingsService.class),
                 mock(AuditLogService.class));
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;

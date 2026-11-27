@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import com.coresolution.consultation.sct.constant.SctConstants;
+import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctShortLink;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
@@ -81,7 +82,7 @@ class SctShortLinkServiceTest {
                 .thenReturn(Optional.of(link));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
                 .thenReturn(Optional.of(invitation));
-        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(null)))
+        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(null), eq("hash")))
                 .thenReturn("exchangeOpaqueCodeXYZ");
 
         String path = shortLinkService.resolveRedirectPath(CODE);
@@ -101,7 +102,7 @@ class SctShortLinkServiceTest {
                 shortLinkService.resolveRedirectPath(CODE));
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath("bad"));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
     }
 
     @Test
@@ -115,7 +116,7 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
     }
 
     @Test
@@ -129,7 +130,39 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("CANCELLED 초대 → invalid·교환 미발급")
+    void resolveRedirect_cancelledInvitation_returnsInvalidWithoutExchange() {
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
+                .thenReturn(Optional.of(link));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
+                .thenReturn(Optional.of(invitation));
+
+        assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
+                shortLinkService.resolveRedirectPath(CODE));
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("EXPIRED·SUBMITTED 초대 → invalid·교환 미발급")
+    void resolveRedirect_expiredOrSubmittedInvitation_returnsInvalidWithoutExchange() {
+        when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
+                .thenReturn(Optional.of(link));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
+                .thenReturn(Optional.of(invitation));
+
+        invitation.setStatus(SctInviteStatus.EXPIRED.name());
+        assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
+                shortLinkService.resolveRedirectPath(CODE));
+
+        invitation.setStatus(SctInviteStatus.SUBMITTED.name());
+        assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
+                shortLinkService.resolveRedirectPath(CODE));
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
     }
 
     @Test
@@ -143,7 +176,14 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+    }
+
+    @Test
+    @DisplayName("deactivateForInvitation — 활성 단축 링크 비활성")
+    void deactivateForInvitation_delegatesToRepository() {
+        shortLinkService.deactivateForInvitation(TENANT, 10L);
+        verify(shortLinkRepository).deactivateActiveForInvitation(TENANT, 10L);
     }
 
     @Test

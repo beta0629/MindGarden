@@ -191,6 +191,7 @@ class SctPublicServiceTest {
     @Test
     void cancelled_metaReturnsCancelledStatus() {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
@@ -202,6 +203,7 @@ class SctPublicServiceTest {
 
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctInviteStatus.CANCELLED.name(), meta.getStatus());
+        assertNull(meta.getRecipientName());
     }
 
     @Test
@@ -548,7 +550,8 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
         when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
-                new SctExchangeCodeStore.ExchangeEntry(100L, TENANT_A, null, false)));
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -574,12 +577,51 @@ class SctPublicServiceTest {
                 .thenReturn(Optional.empty());
         when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
                 new SctExchangeCodeStore.ExchangeEntry(
-                        100L, TENANT_A, SctConstants.PUBLIC_STATUS_REISSUED, false)));
+                        100L,
+                        TENANT_A,
+                        SctConstants.PUBLIC_STATUS_REISSUED,
+                        false,
+                        invitation.getTokenHash())));
 
         assertThrows(SctGoneException.class, () -> sctPublicService.verify(
                 exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
         verify(invitationRepository, never())
                 .findByTenantIdAndIdAndIsDeletedFalseForUpdate(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — tokenHash 회전 후 구 교환 코드 거부")
+    void verify_exchangeTokenHashMismatch_throws404() {
+        String exchange = "exchange-stale-after-reissue!!!!!";
+        String oldHash = SctTokenHasher.sha256Hex("old-token-before-reissue-rotate!");
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(100L, TENANT_A, null, false, oldHash)));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> sctPublicService.verify(
+                        exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals("SCT 링크를 찾을 수 없습니다.", ex.getMessage());
+        verify(attemptRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("getMeta — 교환 코드 CANCELLED 초대 → 410")
+    void meta_exchangeCancelledInvitation_throws410() {
+        String exchange = "exchange-cancelled-invite!!!!!!!!";
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(exchange));
     }
 
     @Test

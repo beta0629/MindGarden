@@ -219,7 +219,8 @@ class SctSecurityHighTest {
 
         SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
         when(exchangeCodeStore.resolve(exchangeCode)).thenReturn(java.util.Optional.of(
-                new SctExchangeCodeStore.ExchangeEntry(42L, "t1", null, false)));
+                new SctExchangeCodeStore.ExchangeEntry(
+                        42L, "t1", null, false, invitation.getTokenHash())));
 
         SctInviteAccessAttemptRepository attemptRepository = mock(SctInviteAccessAttemptRepository.class);
         when(attemptRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));

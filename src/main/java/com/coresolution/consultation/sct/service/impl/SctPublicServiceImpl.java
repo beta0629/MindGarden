@@ -119,9 +119,10 @@ public class SctPublicServiceImpl implements SctPublicService {
         String status = StringUtils.hasText(resolved.statusOverride())
                 ? resolved.statusOverride()
                 : invitation.getStatus();
-        // 종료 랜딩(REISSUED/EXPIRED)에서는 수신자명 PII 생략
+        // 종료 랜딩(REISSUED/EXPIRED/CANCELLED)에서는 수신자명 PII 생략
         boolean omitRecipientName = SctConstants.PUBLIC_STATUS_REISSUED.equals(status)
-                || SctInviteStatus.EXPIRED.name().equals(status);
+                || SctInviteStatus.EXPIRED.name().equals(status)
+                || SctInviteStatus.CANCELLED.name().equals(status);
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
@@ -396,14 +397,7 @@ public class SctPublicServiceImpl implements SctPublicService {
 
         Optional<SctExchangeCodeStore.ExchangeEntry> exchange = exchangeCodeStore.resolve(trimmed);
         if (exchange.isPresent()) {
-            SctExchangeCodeStore.ExchangeEntry entry = exchange.get();
-            SctInvitation invitation = invitationRepository
-                    .findByTenantIdAndIdAndIsDeletedFalse(entry.tenantId(), entry.invitationId())
-                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
-            if (!invitation.getTenantId().equals(entry.tenantId())) {
-                throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
-            }
-            return new ResolvedPublicToken(invitation, entry.landingStatus());
+            return resolveExchangeEntry(exchange.get(), allowReissuedForMeta);
         }
 
         Optional<SctRotatedTokenHash> rotated = rotatedTokenHashRepository.findByTokenHash(hash);
@@ -419,6 +413,57 @@ public class SctPublicServiceImpl implements SctPublicService {
             return new ResolvedPublicToken(invitation, SctConstants.PUBLIC_STATUS_REISSUED);
         }
         throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+    }
+
+    /**
+     * 교환 코드 → 초대. tokenHash 불일치·취소/만료는 fail-closed.
+     *
+     * @param entry                Redis 엔트리
+     * @param allowReissuedForMeta meta 전용 REISSUED 허용
+     * @return 해석 결과
+     */
+    private ResolvedPublicToken resolveExchangeEntry(
+            SctExchangeCodeStore.ExchangeEntry entry, boolean allowReissuedForMeta) {
+        if (SctConstants.PUBLIC_STATUS_REISSUED.equals(entry.landingStatus())) {
+            if (!allowReissuedForMeta) {
+                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            }
+        }
+        SctInvitation invitation = invitationRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(entry.tenantId(), entry.invitationId())
+                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+        assertExchangeBoundToInvitation(entry, invitation);
+        assertExchangeInvitationNotClosed(invitation);
+        return new ResolvedPublicToken(invitation, entry.landingStatus());
+    }
+
+    /**
+     * 교환 코드가 발급 시점 tokenHash와 일치하는지 확인(재발급·재발송 무효화).
+     *
+     * @param entry      Redis 엔트리
+     * @param invitation 현재 초대
+     */
+    private void assertExchangeBoundToInvitation(
+            SctExchangeCodeStore.ExchangeEntry entry, SctInvitation invitation) {
+        if (!invitation.getTenantId().equals(entry.tenantId())) {
+            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        }
+        if (!StringUtils.hasText(entry.tokenHash())
+                || !entry.tokenHash().equals(invitation.getTokenHash())) {
+            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        }
+    }
+
+    /**
+     * 취소·만료 초대에 묶인 교환 코드는 Gone(신규 교환도 단축 링크에서 차단).
+     *
+     * @param invitation 초대
+     */
+    private void assertExchangeInvitationNotClosed(SctInvitation invitation) {
+        if (SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())
+                || SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())) {
+            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+        }
     }
 
     /**
@@ -456,9 +501,8 @@ public class SctPublicServiceImpl implements SctPublicService {
             SctInvitation invitation = invitationRepository
                     .findByTenantIdAndIdAndIsDeletedFalseForUpdate(entry.tenantId(), entry.invitationId())
                     .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
-            if (!invitation.getTenantId().equals(entry.tenantId())) {
-                throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
-            }
+            assertExchangeBoundToInvitation(entry, invitation);
+            assertExchangeInvitationNotClosed(invitation);
             return invitation;
         }
 

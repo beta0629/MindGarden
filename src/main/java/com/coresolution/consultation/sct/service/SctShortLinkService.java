@@ -47,4 +47,12 @@ public interface SctShortLinkService {
      * @param expiresAt    새 만료
      */
     void refreshExpiry(String tenantId, Long invitationId, LocalDateTime expiresAt);
+
+    /**
+     * 초대에 연결된 활성 단축 링크 전부 비활성화(취소 등).
+     *
+     * @param tenantId     테넌트
+     * @param invitationId 초대
+     */
+    void deactivateForInvitation(String tenantId, Long invitationId);
 }

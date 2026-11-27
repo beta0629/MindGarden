@@ -3,6 +3,7 @@ package com.coresolution.consultation.sct.service.impl;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import com.coresolution.consultation.sct.constant.SctConstants;
+import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctShortLink;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
@@ -114,19 +115,28 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
-        // 비활성·만료는 miss와 동일 경로 — 존재 오라클·교환 발급 방지
+        // 비활성·만료·종료 초대는 miss와 동일 경로 — 존재 오라클·교환 발급 방지
         boolean inactive = !Boolean.TRUE.equals(link.getIsActive());
         boolean codeExpired = link.getExpiresAt() != null
                 && link.getExpiresAt().isBefore(LocalDateTime.now());
-        if (inactive || codeExpired) {
-            log.info("SCT short-link redirect closed codePrefix={} inactive={} expired={}",
-                    codePrefix(shortCode), inactive, codeExpired);
+        boolean invitationClosed = isInvitationClosedForExchange(invitation.getStatus());
+        if (inactive || codeExpired || invitationClosed) {
+            log.info(
+                    "SCT short-link redirect closed codePrefix={} inactive={} expired={} inviteStatus={}",
+                    codePrefix(shortCode), inactive, codeExpired, invitation.getStatus());
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        if (!StringUtils.hasText(invitation.getTokenHash())) {
+            log.warn("SCT short-link redirect missing tokenHash codePrefix={}", codePrefix(shortCode));
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
         try {
             String exchange = exchangeCodeStore.issue(
-                    invitation.getId(), invitation.getTenantId(), null);
+                    invitation.getId(),
+                    invitation.getTenantId(),
+                    null,
+                    invitation.getTokenHash());
             log.info("SCT short-link redirect ok codePrefix={} exchangePrefix={}",
                     codePrefix(shortCode), codePrefix(exchange));
             return SctConstants.PUBLIC_SCT_WEB_PREFIX + exchange;
@@ -149,6 +159,29 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
                     link.setExpiresAt(expiresAt);
                     shortLinkRepository.save(link);
                 });
+    }
+
+    @Override
+    @Transactional
+    public void deactivateForInvitation(String tenantId, Long invitationId) {
+        if (!StringUtils.hasText(tenantId) || invitationId == null) {
+            return;
+        }
+        int deactivated = shortLinkRepository.deactivateActiveForInvitation(tenantId, invitationId);
+        log.info("SCT short-link deactivated for cancel: tenant={} invitationId={} count={}",
+                tenantId, invitationId, deactivated);
+    }
+
+    /**
+     * 취소·만료·제출 초대는 단축 링크로 교환 코드를 발급하지 않는다.
+     *
+     * @param status 초대 status
+     * @return 종료 상태이면 true
+     */
+    private static boolean isInvitationClosedForExchange(String status) {
+        return SctInviteStatus.CANCELLED.name().equals(status)
+                || SctInviteStatus.EXPIRED.name().equals(status)
+                || SctInviteStatus.SUBMITTED.name().equals(status);
     }
 
     private static String codePrefix(String code) {

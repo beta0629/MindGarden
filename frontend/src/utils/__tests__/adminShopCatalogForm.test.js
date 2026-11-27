@@ -20,6 +20,7 @@ import {
   mapTenantConsultantSelectOptions,
   parseAdminShopEventPricePeriod,
   resolveAdminShopFieldCodeGroup,
+  shouldSyncAdminShopPackageContent,
   validateAdminShopCatalogConsultant,
   validateAdminShopCatalogFieldCode,
   validateAdminShopCatalogSessionCount
@@ -123,6 +124,20 @@ describe('validateAdminShopCatalogFieldCode', () => {
   test('ASSESSMENT 는 검사 종류 그룹을 쓴다', () => {
     expect(resolveAdminShopFieldCodeGroup(SHOP_CATALOG_CATEGORY.ASSESSMENT)).toBe('ASSESSMENT_TYPE');
     expect(resolveAdminShopFieldCodeGroup(SHOP_CATALOG_CATEGORY.CONSULTATION)).toBe('SPECIALTY');
+  });
+});
+
+describe('shouldSyncAdminShopPackageContent', () => {
+  test('packageCode 가 있으면 항상 SKU content 동기화한다', () => {
+    expect(shouldSyncAdminShopPackageContent('PACKAGE_001')).toBe(true);
+    expect(shouldSyncAdminShopPackageContent('  PKG  ')).toBe(true);
+  });
+
+  test('packageCode 가 비어 있으면 동기화하지 않는다', () => {
+    expect(shouldSyncAdminShopPackageContent('')).toBe(false);
+    expect(shouldSyncAdminShopPackageContent('   ')).toBe(false);
+    expect(shouldSyncAdminShopPackageContent(null)).toBe(false);
+    expect(shouldSyncAdminShopPackageContent(undefined)).toBe(false);
   });
 });
 

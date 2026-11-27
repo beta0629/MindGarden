@@ -66,6 +66,7 @@ import {
   mapTenantConsultantSelectOptions,
   parseAdminShopEventPricePeriod,
   resolveAdminShopFieldCodeGroup,
+  shouldSyncAdminShopPackageContent,
   validateAdminShopCatalogConsultant,
   validateAdminShopCatalogFieldCode
 } from '../../utils/adminShopCatalogForm';
@@ -115,20 +116,6 @@ function findProduct(products, id) {
   return products.find((p) => p.code === key)
     || products.find((p) => p.codeId != null && String(p.codeId) === key)
     || null;
-}
-
-/**
- * @param {object} form
- * @returns {boolean}
- */
-function hasMallContentInput(form, pendingImageFile) {
-  return Boolean(
-    form.mallVisible
-    || pendingImageFile
-    || toDisplayString(form.descriptionText, '').trim()
-    || toDisplayString(form.fieldCode, '').trim()
-    || toDisplayString(form.consultantId, '').trim()
-  );
 }
 
 function AdminShopProductEditorPage({ isNew }) {
@@ -421,27 +408,21 @@ function AdminShopProductEditorPage({ isNew }) {
     if (!validation.valid) {
       return;
     }
-    const validityChanged = toDisplayString(form.validityMonths, '').trim()
-      !== toDisplayString(initialForm.validityMonths, '').trim();
-    const eventChanged = Boolean(form.eventOnly) !== Boolean(initialForm.eventOnly)
-      || toDisplayString(form.sessionMinutes, '').trim()
-        !== toDisplayString(initialForm.sessionMinutes, '').trim();
-    const needsContent = hasMallContentInput(form, pendingImageFile) || validityChanged || eventChanged;
-    if (needsContent) {
-      const fieldParsed = validateAdminShopCatalogFieldCode(form);
-      if (!fieldParsed.valid) {
-        notificationManager.show(fieldParsed.message || ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE, 'warning');
-        return;
-      }
-      const consultantParsed = validateAdminShopCatalogConsultant(form);
-      if (!consultantParsed.valid) {
-        notificationManager.show(consultantParsed.message || ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE, 'warning');
-        return;
-      }
-      if (form.mallVisible && !pendingImageFile && !previewUrl) {
-        notificationManager.show(ADMIN_SHOP_PRODUCT_EDITOR_COPY.MALL_NEEDS_IMAGE, 'warning');
-        return;
-      }
+    // 상품 코드 저장 후 패키지 요금 SKU 는 항상 동기화한다(카테고리·findOrCreateLinked).
+    // content PUT 전에 분야·상담사·몰 이미지 가드를 통과해야 한다.
+    const fieldParsed = validateAdminShopCatalogFieldCode(form);
+    if (!fieldParsed.valid) {
+      notificationManager.show(fieldParsed.message || ADMIN_SHOP_FIELD_CODE_REQUIRED_MESSAGE, 'warning');
+      return;
+    }
+    const consultantParsed = validateAdminShopCatalogConsultant(form);
+    if (!consultantParsed.valid) {
+      notificationManager.show(consultantParsed.message || ADMIN_SHOP_CONSULTANT_REQUIRED_MESSAGE, 'warning');
+      return;
+    }
+    if (form.mallVisible && !pendingImageFile && !previewUrl) {
+      notificationManager.show(ADMIN_SHOP_PRODUCT_EDITOR_COPY.MALL_NEEDS_IMAGE, 'warning');
+      return;
     }
     if (initialForm.items.length > 0 && form.items.length === 0) {
       notificationManager.show(tComposition('clearUnsupported'), 'warning');
@@ -456,7 +437,8 @@ function AdminShopProductEditorPage({ isNew }) {
       [],
       pricing.discountRate,
       pricing.originalPrice,
-      form.homePublic
+      form.homePublic,
+      form.catalogCategory
     );
     const name = form.name.trim();
     setSaving(true);
@@ -484,7 +466,7 @@ function AdminShopProductEditorPage({ isNew }) {
       if (packageCode && form.items.length > 0 && isMallCompositionChanged(form.items, initialForm.items)) {
         await savePackageComposition(packageCode, form.items);
       }
-      if (packageCode && needsContent) {
+      if (shouldSyncAdminShopPackageContent(packageCode)) {
         const visibleOnFirstPut = form.mallVisible && Boolean(savedThumb) && !pendingImageFile;
         const saved = await updateAdminShopPackageFeeContent(packageCode, buildAdminShopPackageContentBody({
           ...form,

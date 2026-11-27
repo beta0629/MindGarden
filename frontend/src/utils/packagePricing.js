@@ -18,7 +18,14 @@ export const EXTRA_DATA_KEYS = Object.freeze({
   ITEMS: 'items',
   DISCOUNT_RATE: 'discountRate',
   ORIGINAL_PRICE: 'originalPrice',
-  PUBLIC_VISIBLE: 'publicVisible'
+  PUBLIC_VISIBLE: 'publicVisible',
+  CATEGORY: 'category'
+});
+
+/** extraData.category 허용 값 (몰 catalogCategory 와 동일 SSOT) */
+export const EXTRA_DATA_CATEGORY = Object.freeze({
+  ASSESSMENT: 'ASSESSMENT',
+  CONSULTATION: 'CONSULTATION'
 });
 
 const EMPTY_EXTRA_DATA = Object.freeze({
@@ -28,7 +35,8 @@ const EMPTY_EXTRA_DATA = Object.freeze({
   items: [],
   discountRate: 0,
   originalPrice: null,
-  publicVisible: null
+  publicVisible: null,
+  category: null
 });
 
 const toNumberOrNull = (value) => {
@@ -49,6 +57,25 @@ const toPublicVisibleOrNull = (value) => {
 };
 
 /**
+ * extraData.category 를 ASSESSMENT|CONSULTATION|null 로 정규화
+ * @param {unknown} value
+ * @returns {'ASSESSMENT'|'CONSULTATION'|null}
+ */
+const toCategoryOrNull = (value) => {
+  if (value === undefined || value === null || value === '') {
+    return null;
+  }
+  const raw = String(value).trim().toUpperCase();
+  if (raw === EXTRA_DATA_CATEGORY.ASSESSMENT) {
+    return EXTRA_DATA_CATEGORY.ASSESSMENT;
+  }
+  if (raw === EXTRA_DATA_CATEGORY.CONSULTATION) {
+    return EXTRA_DATA_CATEGORY.CONSULTATION;
+  }
+  return null;
+};
+
+/**
  * 공통코드 extraData(JSON string 또는 object)를 정규화된 객체로 변환
  * @param {string|object|null|undefined} extraData
  * @returns {{
@@ -58,7 +85,8 @@ const toPublicVisibleOrNull = (value) => {
  *   items: array,
  *   discountRate: number,
  *   originalPrice: number|null,
- *   publicVisible: boolean|null
+ *   publicVisible: boolean|null,
+ *   category: 'ASSESSMENT'|'CONSULTATION'|null
  * }}
  */
 export function parseExtraData(extraData) {
@@ -74,7 +102,8 @@ export function parseExtraData(extraData) {
       items: Array.isArray(parsed?.[EXTRA_DATA_KEYS.ITEMS]) ? parsed[EXTRA_DATA_KEYS.ITEMS] : [],
       discountRate: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.DISCOUNT_RATE]) || 0,
       originalPrice: toNumberOrNull(parsed?.[EXTRA_DATA_KEYS.ORIGINAL_PRICE]),
-      publicVisible: toPublicVisibleOrNull(parsed?.[EXTRA_DATA_KEYS.PUBLIC_VISIBLE])
+      publicVisible: toPublicVisibleOrNull(parsed?.[EXTRA_DATA_KEYS.PUBLIC_VISIBLE]),
+      category: toCategoryOrNull(parsed?.[EXTRA_DATA_KEYS.CATEGORY])
     };
   } catch {
     return { ...EMPTY_EXTRA_DATA };
@@ -100,6 +129,7 @@ export function isPublicVisible(extraData) {
  * @param {number} [discountRate]
  * @param {number|null} [originalPrice]
  * @param {boolean} [publicVisible=true]
+ * @param {string|null} [category=null] ASSESSMENT|CONSULTATION. 없으면 키 생략
  * @returns {string}
  */
 export function buildExtraDataString(
@@ -109,9 +139,10 @@ export function buildExtraDataString(
   items = [],
   discountRate = 0,
   originalPrice = null,
-  publicVisible = true
+  publicVisible = true,
+  category = null
 ) {
-  return JSON.stringify({
+  const payload = {
     [EXTRA_DATA_KEYS.SESSIONS]: sessions,
     [EXTRA_DATA_KEYS.PRICE]: price,
     [EXTRA_DATA_KEYS.REMARK]: remark || '',
@@ -119,7 +150,12 @@ export function buildExtraDataString(
     [EXTRA_DATA_KEYS.DISCOUNT_RATE]: discountRate,
     [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: originalPrice !== null ? originalPrice : price,
     [EXTRA_DATA_KEYS.PUBLIC_VISIBLE]: publicVisible !== false
-  });
+  };
+  const normalizedCategory = toCategoryOrNull(category);
+  if (normalizedCategory) {
+    payload[EXTRA_DATA_KEYS.CATEGORY] = normalizedCategory;
+  }
+  return JSON.stringify(payload);
 }
 
 /**
@@ -137,7 +173,8 @@ export function withPublicVisible(extraData, publicVisible) {
     parsed.items,
     parsed.discountRate,
     parsed.originalPrice,
-    publicVisible
+    publicVisible,
+    parsed.category
   );
 }
 

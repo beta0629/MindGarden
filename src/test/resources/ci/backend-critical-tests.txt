@@ -115,4 +115,5 @@
 
 # 2026-11-27 알림·SMS·이메일 로그 PII 마스킹
 **/NotificationServiceImplEmailSimulationLogPiiTest.java
+**/EmailServiceImplSendEmailLogPiiTest.java
 **/NotificationDispatchHelperSmsTestModeTest.java

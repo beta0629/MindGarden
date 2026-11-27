@@ -112,6 +112,40 @@ class PiiCryptoServiceTest {
             .hasMessageContaining("복호화");
     }
 
+    @Test
+    @DisplayName("safeDecrypt — 복호화 실패 시 마커 포함 원본 반환 (페이로드 미반환)")
+    void safeDecrypt_undecryptable_returnsOriginalCiphertext() {
+        PersonalDataEncryptionKeyProvider other = newProvider(
+            new String[] { "test" },
+            KEY_ID + ":other-ring-encryption-key-32b-!!",
+            KEY_ID + ":other-ring-iv-16!");
+        other.initialize();
+        PiiCryptoService otherRing = new PiiCryptoService(other);
+        String foreignV2 = otherRing.encryptGcm(BODY);
+
+        String result = crypto.safeDecrypt(foreignV2);
+        assertThat(result).isEqualTo(foreignV2);
+        assertThat(PiiCipherFormats.looksV2(result)).isTrue();
+        assertThat(result).contains(":v2::");
+    }
+
+    @Test
+    @DisplayName("safeDecrypt — 알 수 없는 keyId 도 원본 전체 반환")
+    void safeDecrypt_unknownKeyId_returnsOriginal() {
+        String unknown = "no-such-key:v2::YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=";
+        assertThat(crypto.safeDecrypt(unknown)).isEqualTo(unknown);
+        assertThat(crypto.decryptCompatible(unknown)).isEqualTo(unknown);
+    }
+
+    @Test
+    @DisplayName("decrypt — 버전 마커 실패 시 페이로드가 아닌 원본 반환")
+    void decrypt_versionedFailure_returnsFullOriginal() {
+        String unknown = "ghost:v2::dGVzdC1wYXlsb2FkLWZvci1mYWlsLWNsb3NlZCEh";
+        String decrypted = crypto.decrypt(unknown);
+        assertThat(decrypted).isEqualTo(unknown);
+        assertThat(PiiCipherFormats.requirePlaintextAfterDecrypt(unknown, decrypted)).isNull();
+    }
+
     private PersonalDataEncryptionKeyProvider newProvider(String[] profiles, String keys, String ivs) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);

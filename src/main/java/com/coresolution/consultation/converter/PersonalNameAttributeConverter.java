@@ -35,8 +35,8 @@ public class PersonalNameAttributeConverter implements AttributeConverter<String
         }
         PersonalDataEncryptionUtil util = PersonalDataEncryptionContextHolder.get();
         if (util == null) {
-            log.warn("PersonalDataEncryptionUtil 미초기화 - 이름 평문 폴백 반환 (부팅 초기 또는 비-Spring 테스트 컨텍스트)");
-            return attribute;
+            throw new IllegalStateException(
+                "PersonalDataEncryptionUtil 미초기화 - 이름 평문 저장 금지 (fail-closed)");
         }
         return util.safeEncrypt(attribute);
     }

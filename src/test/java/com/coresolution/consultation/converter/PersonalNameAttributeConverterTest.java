@@ -1,6 +1,7 @@
 package com.coresolution.consultation.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -107,12 +108,26 @@ class PersonalNameAttributeConverterTest {
     }
 
     @Test
-    @DisplayName("fail-safe: 컨텍스트 미초기화 시 평문 폴백")
-    void failSafe_whenHolderNotInitialized() {
+    @DisplayName("fail-closed: 컨텍스트 미초기화 시 WRITE는 예외, READ는 폴백")
+    void failClosed_whenHolderNotInitialized_writeThrows() {
         PersonalDataEncryptionContextHolder.setInstanceForTesting(null);
 
-        assertThat(converter.convertToDatabaseColumn("박지성")).isEqualTo("박지성");
+        assertThatThrownBy(() -> converter.convertToDatabaseColumn("박지성"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("평문 저장 금지");
         assertThat(converter.convertToEntityAttribute("any")).isEqualTo("any");
+    }
+
+    @Test
+    @DisplayName("SCT recipient_name / guardian_relation 샘플 → keyId:: 암호문")
+    void sctRecipientAndGuardianRelation_encryptToCipherMarker() {
+        String recipientCipher = converter.convertToDatabaseColumn("홍길동");
+        String relationCipher = converter.convertToDatabaseColumn("부");
+
+        assertThat(recipientCipher).startsWith("v2::").doesNotContain("홍길동");
+        assertThat(relationCipher).startsWith("v2::").doesNotContain("부");
+        assertThat(converter.convertToEntityAttribute(recipientCipher)).isEqualTo("홍길동");
+        assertThat(converter.convertToEntityAttribute(relationCipher)).isEqualTo("부");
     }
 
     private PersonalDataEncryptionUtil newEncryptionUtilWithActiveKey(String activeKeyId) {

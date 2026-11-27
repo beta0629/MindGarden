@@ -1,6 +1,7 @@
 package com.coresolution.consultation.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -84,21 +85,25 @@ class ConsultationBodyAttributeConverterTest {
     }
 
     @Test
-    @DisplayName("암호화 실패해도 예외 없이 평문 폴백으로 저장한다")
-    void convertToDatabaseColumn_encryptFailureFallsBackToPlain() {
+    @DisplayName("암호화 실패 시 WRITE는 예외 (평문 저장 금지)")
+    void convertToDatabaseColumn_encryptFailureThrows() {
         PersonalDataEncryptionUtil util = mock(PersonalDataEncryptionUtil.class);
         when(util.encryptWithRandomIv(anyString())).thenThrow(new RuntimeException("활성 키 없음"));
         PersonalDataEncryptionContextHolder.setInstanceForTesting(util);
 
-        assertThat(converter.convertToDatabaseColumn(PLAIN_KOREAN)).isEqualTo(PLAIN_KOREAN);
+        assertThatThrownBy(() -> converter.convertToDatabaseColumn(PLAIN_KOREAN))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("평문 저장 금지");
     }
 
     @Test
-    @DisplayName("유틸 미초기화(부팅 초기·단위 테스트)에서는 입력을 그대로 통과시킨다")
-    void nullUtil_passesThrough() {
+    @DisplayName("유틸 미초기화 시 WRITE는 예외, READ는 폴백")
+    void nullUtil_writeThrows_readFallsBack() {
         PersonalDataEncryptionContextHolder.setInstanceForTesting(null);
 
-        assertThat(converter.convertToDatabaseColumn(PLAIN_KOREAN)).isEqualTo(PLAIN_KOREAN);
+        assertThatThrownBy(() -> converter.convertToDatabaseColumn(PLAIN_KOREAN))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("평문 저장 금지");
         assertThat(converter.convertToEntityAttribute(CIPHER_WITH_MARKER)).isEqualTo(CIPHER_WITH_MARKER);
     }
 

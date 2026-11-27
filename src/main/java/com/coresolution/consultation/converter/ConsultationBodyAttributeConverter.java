@@ -69,15 +69,15 @@ public class ConsultationBodyAttributeConverter implements AttributeConverter<St
         }
         PersonalDataEncryptionUtil util = PersonalDataEncryptionContextHolder.get();
         if (util == null) {
-            log.warn("PersonalDataEncryptionUtil 미초기화 - 상담 본문 평문 폴백 저장 (부팅 초기 또는 비-Spring 테스트 컨텍스트)");
-            return attribute;
+            throw new IllegalStateException(
+                "PersonalDataEncryptionUtil 미초기화 - 상담 본문 평문 저장 금지 (fail-closed)");
         }
         try {
             // 서술형 본문은 동등 비교 조회가 없으므로 메시지별 랜덤 IV(AES-GCM v2) 를 쓴다.
             return util.encryptWithRandomIv(attribute);
         } catch (RuntimeException e) {
-            log.error("상담 본문 암호화 실패 - 평문 폴백 저장 (길이={})", attribute.length());
-            return attribute;
+            throw new IllegalStateException(
+                "상담 본문 암호화 실패 - 평문 저장 금지 (fail-closed)", e);
         }
     }
 

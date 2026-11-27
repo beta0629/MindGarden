@@ -143,6 +143,16 @@ public class MindgardenSecurityProperties {
          * SCT 공개 API URI 접두.
          */
         private String sctPublicPathPrefix = "/api/v1/public/sct";
+
+        /**
+         * SCT 단축 링크({@code /s/**}) IP당 분당 허용 수. 공개 API보다 엄격.
+         */
+        private int sctShortLinkRequestsPerMinute = 20;
+
+        /**
+         * SCT 단축 링크 URI 접두.
+         */
+        private String sctShortLinkPathPrefix = "/s/";
     }
 
     @Data

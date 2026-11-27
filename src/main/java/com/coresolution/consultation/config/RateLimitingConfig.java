@@ -65,6 +65,7 @@ public class RateLimitingConfig {
         private static final String RATE_KEY_SUFFIX_KR_PUBLIC_DATA = "_kr_public_data";
         private static final String RATE_KEY_SUFFIX_PUBLIC_TENANTS = "_public_tenants";
         private static final String RATE_KEY_SUFFIX_SCT_PUBLIC = "_sct_public";
+        private static final String RATE_KEY_SUFFIX_SCT_SHORT_LINK = "_sct_short_link";
 
         private static final String METRIC_RATE_LIMIT_BLOCKED = "mindgarden.rate_limit.blocked";
         private static final String TAG_REASON = "reason";
@@ -75,6 +76,7 @@ public class RateLimitingConfig {
         private static final String REASON_KR_PUBLIC_DATA = "kr_public_data";
         private static final String REASON_PUBLIC_TENANTS = "public_tenants";
         private static final String REASON_SCT_PUBLIC = "sct_public";
+        private static final String REASON_SCT_SHORT_LINK = "sct_short_link";
         private static final String REASON_UNKNOWN = "unknown";
 
         private static final int MAX_LOGIN_ATTEMPTS = 999999;
@@ -121,7 +123,8 @@ public class RateLimitingConfig {
                 || isOnboardingPublicRateLimitRequest(request)
                 || isKrPublicDataRateLimitRequest(request)
                 || isPublicTenantsRateLimitRequest(request)
-                || isSctPublicRateLimitRequest(request);
+                || isSctPublicRateLimitRequest(request)
+                || isSctShortLinkRateLimitRequest(request);
         }
 
         private boolean isLoginRateLimitPath(String requestPath) {
@@ -179,6 +182,11 @@ public class RateLimitingConfig {
             return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
         }
 
+        private boolean isSctShortLinkRateLimitRequest(HttpServletRequest request) {
+            String prefix = properties.getRateLimit().getSctShortLinkPathPrefix();
+            return prefix != null && !prefix.isEmpty() && request.getRequestURI().startsWith(prefix);
+        }
+
         private boolean isAllowed(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -201,6 +209,9 @@ public class RateLimitingConfig {
             }
             if (isSctPublicRateLimitRequest(request)) {
                 return isSctPublicAllowed(clientIp);
+            }
+            if (isSctShortLinkRateLimitRequest(request)) {
+                return isSctShortLinkAllowed(clientIp);
             }
             return true;
         }
@@ -268,6 +279,13 @@ public class RateLimitingConfig {
             return info == null || info.getCount() < maxPerMinute;
         }
 
+        private boolean isSctShortLinkAllowed(String clientIp) {
+            String key = clientIp + RATE_KEY_SUFFIX_SCT_SHORT_LINK;
+            RequestInfo info = requestCounts.get(key);
+            int maxPerMinute = properties.getRateLimit().getSctShortLinkRequestsPerMinute();
+            return info == null || info.getCount() < maxPerMinute;
+        }
+
         private void incrementRequestCount(String clientIp, HttpServletRequest request) {
             String requestPath = request.getRequestURI();
             if (isLoginRateLimitPath(requestPath)) {
@@ -332,6 +350,15 @@ public class RateLimitingConfig {
                 } else {
                     sctInfo.increment();
                 }
+            } else if (isSctShortLinkRateLimitRequest(request)) {
+                String key = clientIp + RATE_KEY_SUFFIX_SCT_SHORT_LINK;
+                RequestInfo shortInfo = requestCounts.get(key);
+                if (shortInfo == null) {
+                    shortInfo = new RequestInfo();
+                    requestCounts.put(key, shortInfo);
+                } else {
+                    shortInfo.increment();
+                }
             }
         }
 
@@ -379,6 +406,9 @@ public class RateLimitingConfig {
                 errorResponse.put("retryAfter", 60);
             } else if (isSctPublicRateLimitRequest(request)) {
                 errorResponse.put("message", "SCT 공개 API 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
+                errorResponse.put("retryAfter", 60);
+            } else if (isSctShortLinkRateLimitRequest(request)) {
+                errorResponse.put("message", "SCT 단축 링크 요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
                 errorResponse.put("retryAfter", 60);
             } else {
                 errorResponse.put("message", "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.");
@@ -431,6 +461,9 @@ public class RateLimitingConfig {
             }
             if (isSctPublicRateLimitRequest(request)) {
                 return REASON_SCT_PUBLIC;
+            }
+            if (isSctShortLinkRateLimitRequest(request)) {
+                return REASON_SCT_SHORT_LINK;
             }
             return REASON_UNKNOWN;
         }

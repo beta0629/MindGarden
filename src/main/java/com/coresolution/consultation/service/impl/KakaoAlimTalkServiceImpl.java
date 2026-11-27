@@ -222,7 +222,8 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             Map<String, String> templateParams) {
         if (simulationMode) {
             log.info("🎭 [시뮬레이션 모드] solapi 알림톡 발송 - 실제 API 호출 없음, 템플릿={}", apiTemplateCode);
-            log.debug("📋 시뮬레이션 변수: contentKey={}, params={}", contentKey, templateParams);
+            log.debug("📋 시뮬레이션 변수: contentKey={}, paramKeys={}",
+                    contentKey, templateParams == null ? null : templateParams.keySet());
             return true;
         }
         if (solapiAlimTalkClient == null || solapiCredentialResolver == null) {
@@ -557,7 +558,16 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
             if (simulationMode) {
                 // 시뮬레이션 모드
                 log.info("🎭 [시뮬레이션 모드] 카카오 알림톡 발송 성공 - 실제 API 호출 없음");
-                log.debug("📋 시뮬레이션 요청 데이터: {}", request.getBody());
+                Map<String, Object> body = request.getBody();
+                Object templateId = body != null ? body.get("templateCode") : null;
+                Object recipientNo = body != null ? body.get("recipientNo") : null;
+                Object templateParameter = body != null ? body.get("templateParameter") : null;
+                Object paramKeys = templateParameter instanceof Map
+                        ? ((Map<?, ?>) templateParameter).keySet()
+                        : null;
+                log.debug("📋 시뮬레이션 요청 데이터: templateId={}, paramKeys={}, to={}",
+                        templateId, paramKeys,
+                        recipientNo == null ? null : PhoneLogMasking.maskForLog(String.valueOf(recipientNo)));
                 return true;
             }
             
@@ -574,9 +584,12 @@ public class KakaoAlimTalkServiceImpl implements KakaoAlimTalkService {
                 if (success) {
                     log.info("✅ 카카오 알림톡 API 호출 성공");
                 } else {
-                    log.warn("⚠️ 카카오 알림톡 API 응답 오류: {}", responseBody);
+                    Object resultCode = responseBody != null ? responseBody.get("resultCode") : null;
+                    Object responseKeys = responseBody != null ? responseBody.keySet() : null;
+                    log.warn("⚠️ 카카오 알림톡 API 응답 오류: resultCode={}, responseKeys={}",
+                            resultCode, responseKeys);
                     LAST_ERROR_DETAIL.set(truncateDetail("Bizmsg " + response.getStatusCode()
-                        + ": " + responseBody));
+                        + ": resultCode=" + resultCode));
                 }
                 
                 return success;

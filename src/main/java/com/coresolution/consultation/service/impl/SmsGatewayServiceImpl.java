@@ -3,6 +3,7 @@ package com.coresolution.consultation.service.impl;
 import com.coresolution.consultation.dto.SmsGatewaySendResult;
 import com.coresolution.consultation.service.SmsGatewayService;
 import com.coresolution.consultation.service.sms.impl.SolapiSmsProvider;
+import com.coresolution.consultation.util.PhoneLogMasking;
 
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -65,12 +66,13 @@ public class SmsGatewayServiceImpl implements SmsGatewayService {
             return SmsGatewaySendResult.failure(GATEWAY_STATUS_INVALID_INPUT, "phone is blank");
         }
         if (messageBody == null || messageBody.isBlank()) {
-            log.warn("SMS 발송 skip: body 비어 있음 phone={}", normalizedPhone);
+            log.warn("SMS 발송 skip: body 비어 있음 phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             return SmsGatewaySendResult.failure(GATEWAY_STATUS_INVALID_INPUT, "body is blank");
         }
         if (isStubMode()) {
             warnStubInProd(normalizedPhone);
-            log.info("SMS 발송(stub): phone={} bodyLength={}", normalizedPhone, messageBody.length());
+            log.info("SMS 발송(stub): phone={} bodyLength={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone), messageBody.length());
             return SmsGatewaySendResult.stub();
         }
 
@@ -79,18 +81,19 @@ public class SmsGatewayServiceImpl implements SmsGatewayService {
             success = solapiSmsProvider.sendSms(normalizedPhone, messageBody);
         } catch (RuntimeException ex) {
             log.error("[OPS-ALERT] Solapi SMS 발송 예외: phone={} message={}",
-                    normalizedPhone, ex.getMessage(), ex);
+                    PhoneLogMasking.maskForLog(normalizedPhone), ex.getMessage(), ex);
             return SmsGatewaySendResult.failure(GATEWAY_STATUS_FAILURE,
                     ex.getClass().getSimpleName() + ": " + ex.getMessage());
         }
 
         if (success) {
-            log.info("Solapi SMS 발송 성공: phone={}", normalizedPhone);
+            log.info("Solapi SMS 발송 성공: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             return SmsGatewaySendResult.success(GATEWAY_STATUS_OK, "solapi accepted");
         }
 
         String detail = solapiSmsProvider.consumeLastErrorDetail();
-        log.error("[OPS-ALERT] Solapi SMS 발송 실패: phone={} detail={}", normalizedPhone, detail);
+        log.error("[OPS-ALERT] Solapi SMS 발송 실패: phone={} detail={}",
+                PhoneLogMasking.maskForLog(normalizedPhone), detail);
         return SmsGatewaySendResult.failure(GATEWAY_STATUS_FAILURE,
                 detail != null && !detail.isBlank() ? detail : "solapi sendSms returned false");
     }
@@ -109,7 +112,7 @@ public class SmsGatewayServiceImpl implements SmsGatewayService {
         for (String profile : environment.getActiveProfiles()) {
             if ("prod".equalsIgnoreCase(profile)) {
                 log.error("[OPS-ALERT] SMS stub mode in production — Solapi 자격 증명 미설정. "
-                        + "phone={} actualSendSkipped=true", phone);
+                        + "phone={} actualSendSkipped=true", PhoneLogMasking.maskForLog(phone));
                 return;
             }
         }

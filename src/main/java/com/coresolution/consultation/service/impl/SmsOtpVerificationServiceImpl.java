@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.coresolution.consultation.dto.auth.SmsOtpSendStatus;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
+import com.coresolution.consultation.util.PhoneLogMasking;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -95,7 +96,8 @@ public class SmsOtpVerificationServiceImpl implements SmsOtpVerificationService 
             throw new IllegalArgumentException("OTP code must be 6 digits");
         }
         store.put(normalizedPhone, new Entry(code, clock.millis()));
-        log.debug("SMS OTP 저장: phone={}, expiresInMs={}", normalizedPhone, OTP_TTL_MS);
+        log.debug("SMS OTP 저장: phone={}, expiresInMs={}",
+                PhoneLogMasking.maskForLog(normalizedPhone), OTP_TTL_MS);
     }
 
     @Override
@@ -108,27 +110,28 @@ public class SmsOtpVerificationServiceImpl implements SmsOtpVerificationService 
         }
         long now = clock.millis();
         if (activeLockUntil(normalizedPhone, now) > 0L) {
-            log.debug("SMS OTP 잠김 상태 검증 거부: phone={}", normalizedPhone);
+            log.debug("SMS OTP 잠김 상태 검증 거부: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             return false;
         }
         Entry entry = store.get(normalizedPhone);
         if (entry == null) {
-            log.debug("SMS OTP 미존재: phone={}", normalizedPhone);
+            log.debug("SMS OTP 미존재: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             return false;
         }
         if (now - entry.createdAtMs > OTP_TTL_MS) {
             store.remove(normalizedPhone);
-            log.debug("SMS OTP 만료: phone={}, ageMs={}", normalizedPhone, now - entry.createdAtMs);
+            log.debug("SMS OTP 만료: phone={}, ageMs={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone), now - entry.createdAtMs);
             return false;
         }
         if (!entry.code.equals(code)) {
             registerFailure(normalizedPhone, now);
-            log.debug("SMS OTP 코드 불일치: phone={}", normalizedPhone);
+            log.debug("SMS OTP 코드 불일치: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             return false;
         }
         store.remove(normalizedPhone);
         attempts.remove(normalizedPhone);
-        log.debug("SMS OTP 검증·소비 완료: phone={}", normalizedPhone);
+        log.debug("SMS OTP 검증·소비 완료: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
         return true;
     }
 
@@ -186,7 +189,8 @@ public class SmsOtpVerificationServiceImpl implements SmsOtpVerificationService 
         });
         if (next.lockedUntilMs > 0L) {
             store.remove(normalizedPhone);
-            log.info("SMS OTP 실패 한도 초과로 잠김: phone={}, lockMs={}", normalizedPhone, lockMs);
+            log.info("SMS OTP 실패 한도 초과로 잠김: phone={}, lockMs={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone), lockMs);
         }
     }
 

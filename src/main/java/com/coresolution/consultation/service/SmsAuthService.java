@@ -7,7 +7,6 @@ import com.coresolution.consultation.dto.TenantSmsEffectiveCredentials;
 import com.coresolution.consultation.service.sms.SmsProvider;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
-import com.coresolution.consultation.util.SmsMessageLogSupport;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import lombok.RequiredArgsConstructor;
@@ -138,9 +137,8 @@ public class SmsAuthService {
         }
         if (smsProperties.isTestMode()) {
             String maskedPhone = PhoneLogMasking.maskForLog(phoneNumber);
-            List<String> urls = SmsMessageLogSupport.extractUrls(message);
-            log.info("SMS 테스트 모드 알림 미발송: testMode=true phone={} urls={} bodyLength={}",
-                    maskedPhone, urls, message == null ? 0 : message.length());
+            log.info("SMS 테스트 모드 알림 미발송: testMode=true phone={} bodyLength={}",
+                    maskedPhone, message == null ? 0 : message.length());
             return true;
         }
         return sendViaConfiguredProvider(phoneNumber, message);

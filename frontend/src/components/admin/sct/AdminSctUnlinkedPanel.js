@@ -14,7 +14,11 @@ import { useSession } from '../../../contexts/SessionContext';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import notificationManager from '../../../utils/notification';
-import { fetchSctUnlinkedInvitations, reissueSctInviteLink } from '../../../utils/sctApi';
+import {
+  fetchSctSettings,
+  fetchSctUnlinkedInvitations,
+  reissueSctInviteLink
+} from '../../../utils/sctApi';
 import {
   SCT_CSS,
   SCT_STATUS,
@@ -45,12 +49,23 @@ const AdminSctUnlinkedPanel = () => {
   const [reissuedById, setReissuedById] = useState({});
   /** @type {[Record<string|number, object>, Function]} */
   const [reissuedInviteById, setReissuedInviteById] = useState({});
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
 
   const load = useCallback(async() => {
     setLoading(true);
     try {
-      const data = await fetchSctUnlinkedInvitations();
+      const [data, settings] = await Promise.all([
+        fetchSctUnlinkedInvitations(),
+        fetchSctSettings().catch(() => null)
+      ]);
       setRows(Array.isArray(data) ? data : []);
+      setOfficePhone(
+        typeof settings?.officePhone === 'string' ? settings.officePhone.trim() : ''
+      );
+      setMobilePhone(
+        typeof settings?.mobilePhone === 'string' ? settings.mobilePhone.trim() : ''
+      );
     } catch (e) {
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
@@ -136,6 +151,8 @@ const AdminSctUnlinkedPanel = () => {
                         <SctInviteQrCard
                           invitation={reissuedInvite}
                           recipientName={toDisplayString(row.recipientName, '')}
+                          officePhone={officePhone}
+                          mobilePhone={mobilePhone}
                           isReissued
                           onInvitationChange={(next) => {
                             setReissuedInviteById((prev) => ({ ...prev, [row.id]: next }));
@@ -148,6 +165,8 @@ const AdminSctUnlinkedPanel = () => {
                         <SctInviteQrCard
                           invitation={{ publicUrl, id: row.id, recipientName: row.recipientName }}
                           recipientName={toDisplayString(row.recipientName, '')}
+                          officePhone={officePhone}
+                          mobilePhone={mobilePhone}
                           isReissued
                         />
                       ) : (

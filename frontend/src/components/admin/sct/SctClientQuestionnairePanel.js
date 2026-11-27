@@ -23,6 +23,7 @@ import {
   destroySctInvitation,
   fetchSctClientInvitations,
   fetchSctInvitation,
+  fetchSctSettings,
   reissueSctInviteLink
 } from '../../../utils/sctApi';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
@@ -77,6 +78,8 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const [destroyTarget, setDestroyTarget] = useState(null);
   const [destroyBusy, setDestroyBusy] = useState(false);
   const [reissuedInvite, setReissuedInvite] = useState(null);
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
 
   const clientId = client?.id;
 
@@ -87,8 +90,17 @@ const SctClientQuestionnairePanel = ({ client }) => {
     }
     setLoading(true);
     try {
-      const rows = await fetchSctClientInvitations(clientId);
+      const [rows, settings] = await Promise.all([
+        fetchSctClientInvitations(clientId),
+        fetchSctSettings().catch(() => null)
+      ]);
       setList(rows);
+      setOfficePhone(
+        typeof settings?.officePhone === 'string' ? settings.officePhone.trim() : ''
+      );
+      setMobilePhone(
+        typeof settings?.mobilePhone === 'string' ? settings.mobilePhone.trim() : ''
+      );
     } catch (e) {
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
@@ -369,6 +381,8 @@ const SctClientQuestionnairePanel = ({ client }) => {
                 ? `${SCT_FORM_TYPE_LABEL[reissuedInvite.formType]} 문장완성 질문지`
                 : SCT_UI.TITLE
             }
+            officePhone={officePhone}
+            mobilePhone={mobilePhone}
             isReissued
             onConfirm={() => setReissuedInvite(null)}
             onInvitationChange={setReissuedInvite}

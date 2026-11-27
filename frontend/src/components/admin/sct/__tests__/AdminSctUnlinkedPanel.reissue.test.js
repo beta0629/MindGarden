@@ -10,6 +10,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import AdminSctUnlinkedPanel from '../AdminSctUnlinkedPanel';
 import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
 import {
+  fetchSctSettings,
   fetchSctUnlinkedInvitations,
   reissueSctInviteLink
 } from '../../../../utils/sctApi';
@@ -21,6 +22,7 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 }));
 
 jest.mock('../../../../utils/sctApi', () => ({
+  fetchSctSettings: jest.fn(),
   fetchSctUnlinkedInvitations: jest.fn(),
   reissueSctInviteLink: jest.fn()
 }));
@@ -51,6 +53,13 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
 
   beforeEach(() => {
     fetchSctUnlinkedInvitations.mockResolvedValue([row]);
+    fetchSctSettings.mockResolvedValue({
+      linkExpiryDays: 14,
+      retentionDays: 365,
+      featureEnabled: true,
+      officePhone: '032-724-8501',
+      mobilePhone: '010-4285-8570'
+    });
     reissueSctInviteLink.mockResolvedValue({
       id: 42,
       publicUrl: '/public/sct/new-token',

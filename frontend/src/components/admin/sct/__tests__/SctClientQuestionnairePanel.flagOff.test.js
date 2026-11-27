@@ -22,6 +22,7 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctClientInvitations: jest.fn(),
   fetchSctInvitation: jest.fn(),
+  fetchSctSettings: jest.fn(),
   cancelSctInvitation: jest.fn(),
   destroySctInvitation: jest.fn(),
   reissueSctInviteLink: jest.fn()

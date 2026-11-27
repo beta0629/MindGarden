@@ -231,8 +231,9 @@ const SctPublicPage = () => {
     } else if (consent) {
       setConsentStatus(consent);
     }
+    const itemsList = formData?.items || [];
     const serverAnswers = {};
-    (formData?.items || []).forEach((it) => {
+    itemsList.forEach((it) => {
       if (it.answerText != null || it.notApplicable) {
         serverAnswers[it.formItemId] = {
           formItemId: it.formItemId,
@@ -248,16 +249,28 @@ const SctPublicPage = () => {
       setStep(STEP.ALREADY);
       return nextAnswers;
     }
-    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0) {
-      const answeredNos = (formData?.items || [])
-        .filter((it) => {
-          const a = nextAnswers[it.formItemId] || nextAnswers[String(it.formItemId)];
-          return (a && a.answerText) || (a && a.notApplicable)
-            || it.answerText || it.notApplicable;
-        })
-        .map((it) => it.itemNo);
-      const last = answeredNos.length ? Math.max(...answeredNos) : 0;
-      setPageIndex(Math.floor(last / perPage));
+    // 재방문 재개: 첫 미답 문항 페이지, 전부 답했으면 마지막 답 페이지
+    const isAnswered = (it) => {
+      const a = nextAnswers[it.formItemId] || nextAnswers[String(it.formItemId)];
+      if (a?.notApplicable) return true;
+      if (a?.answerText && String(a.answerText).trim()) return true;
+      return false;
+    };
+    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0 || itemsList.some(isAnswered)) {
+      const firstUnansweredIdx = itemsList.findIndex((it) => !isAnswered(it));
+      let resumeIdx = 0;
+      if (firstUnansweredIdx >= 0) {
+        resumeIdx = firstUnansweredIdx;
+      } else if (itemsList.length > 0) {
+        let lastAnsweredIdx = 0;
+        itemsList.forEach((it, idx) => {
+          if (isAnswered(it)) lastAnsweredIdx = idx;
+        });
+        resumeIdx = lastAnsweredIdx;
+      }
+      setPageIndex(Math.floor(resumeIdx / perPage));
+    } else {
+      setPageIndex(0);
     }
     setStep(STEP.ITEMS);
     return nextAnswers;

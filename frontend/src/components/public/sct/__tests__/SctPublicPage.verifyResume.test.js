@@ -178,4 +178,61 @@ describe('SctPublicPage verify resume', () => {
       expect(screen.getByText(SCT_UI.DONE_TITLE)).toBeInTheDocument();
     });
   });
+
+  it('leave/expire/revisit — server draft resumes at first unanswered then submit', async() => {
+    const pages = [];
+    for (let i = 1; i <= 6; i += 1) {
+      pages.push({
+        formItemId: i,
+        itemNo: i,
+        promptText: `문항 ${i}`,
+        domainCode: 'SELF',
+        domainLabel: '자기',
+        allowsNotApplicable: true,
+        answerText: i <= 5 ? `답 ${i}` : null,
+        notApplicable: false
+      });
+    }
+    fetchSctPublicMeta.mockResolvedValue({
+      ...META,
+      status: 'DRAFT',
+      hasDraft: true,
+      itemCount: 6
+    });
+    fetchSctPublicForm.mockResolvedValue({
+      ...FORM,
+      status: 'DRAFT',
+      items: pages,
+      consent: { satisfied: true, guardianRequired: false }
+    });
+    submitSct.mockResolvedValue({});
+
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.RESUME)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(SCT_UI.RESUME));
+    await waitFor(() => {
+      expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText(SCT_UI.PHONE_SEGMENT), {
+      target: { value: '01012345678' }
+    });
+    fireEvent.click(screen.getByText(SCT_UI.VERIFY_SUBMIT));
+
+    await waitFor(() => {
+      expect(screen.getByText('문항 6')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('문항 1')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText(SCT_UI.SUBMIT));
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.SUBMIT_CONFIRM)).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText(SCT_UI.SUBMIT));
+    await waitFor(() => {
+      expect(submitSct).toHaveBeenCalled();
+      expect(screen.getByText(SCT_UI.DONE_TITLE)).toBeInTheDocument();
+    });
+  });
 });

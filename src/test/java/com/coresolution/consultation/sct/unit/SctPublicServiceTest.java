@@ -11,8 +11,12 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.service.AuditLogService;
@@ -22,6 +26,7 @@ import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.dto.SctConsentStatusView;
 import com.coresolution.consultation.sct.dto.SctDraftAnswerItem;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
+import com.coresolution.consultation.sct.dto.SctPublicFormResponse;
 import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
@@ -79,7 +84,16 @@ class SctPublicServiceTest {
     @Mock private SctResponseAnswerRepository answerRepository;
     @Mock private SctInviteAccessAttemptRepository attemptRepository;
     @Mock private SctRotatedTokenHashRepository rotatedTokenHashRepository;
-    @Spy private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore();
+
+    private final SctVerifySessionRedisTestSupport.RedisHarness redisHarness =
+            SctVerifySessionRedisTestSupport.memoryRedis();
+
+    @Spy
+    private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore(
+            redisHarness.provider(),
+            Clock.systemUTC(),
+            SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+
     @Mock private SctFeatureGuard sctFeatureGuard;
     @Mock private SctConsentService sctConsentService;
     @Mock private AuditLogService auditLogService;
@@ -119,6 +133,15 @@ class SctPublicServiceTest {
                 .build();
 
         ReflectionTestUtils.setField(sctPublicService, "entityManager", entityManager);
+        redisHarness.map().clear();
+    }
+
+    private Instant absoluteExpiry() {
+        return invitation.getTokenExpiresAt().atZone(ZoneId.of("Asia/Seoul")).toInstant();
+    }
+
+    private String issueSession() {
+        return verifySessionStore.issue(100L, TENANT_A, absoluteExpiry());
     }
 
     @Test
@@ -228,7 +251,7 @@ class SctPublicServiceTest {
     void verifySessionForOtherInvitation_throwsVerifyRequired() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
-        String otherInviteSid = verifySessionStore.issue(999L, TENANT_A);
+        String otherInviteSid = verifySessionStore.issue(999L, TENANT_A, absoluteExpiry());
 
         assertThrows(SctVerifyRequiredException.class,
                 () -> sctPublicService.getForm(RAW_TOKEN, otherInviteSid));
@@ -239,7 +262,7 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
-        String sid = verifySessionStore.issue(100L, TENANT_A);
+        String sid = issueSession();
         doThrow(new AccessDeniedException("필수 동의가 없습니다."))
                 .when(sctConsentService).requireSatisfied(invitation, "ADULT");
 
@@ -252,7 +275,7 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
-        String sid = verifySessionStore.issue(100L, TENANT_A);
+        String sid = issueSession();
         doThrow(new AccessDeniedException("필수 동의가 없습니다."))
                 .when(sctConsentService).requireSatisfied(invitation, "ADULT");
 
@@ -269,7 +292,7 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
-        String sid = verifySessionStore.issue(100L, TENANT_A);
+        String sid = issueSession();
         doThrow(new AccessDeniedException("필수 동의가 없습니다."))
                 .when(sctConsentService).requireSatisfied(invitation, "ADULT");
 
@@ -372,7 +395,7 @@ class SctPublicServiceTest {
                 .thenThrow(new ObjectOptimisticLockingFailureException(SctInvitation.class, 100L))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        String sid = verifySessionStore.issue(100L, TENANT_A);
+        String sid = issueSession();
         sctPublicService.saveDraft(RAW_TOKEN, SctDraftSaveRequest.builder()
                 .verifySessionId(sid)
                 .answers(Collections.singletonList(SctDraftAnswerItem.builder()
@@ -406,7 +429,7 @@ class SctPublicServiceTest {
         when(invitationRepository.saveAndFlush(any()))
                 .thenThrow(new ObjectOptimisticLockingFailureException(SctInvitation.class, 100L));
 
-        String sid = verifySessionStore.issue(100L, TENANT_A);
+        String sid = issueSession();
         assertThrows(ObjectOptimisticLockingFailureException.class, () ->
                 sctPublicService.saveDraft(RAW_TOKEN, SctDraftSaveRequest.builder()
                         .verifySessionId(sid)
@@ -415,5 +438,74 @@ class SctPublicServiceTest {
                         .build()));
         verify(invitationRepository, times(3)).saveAndFlush(any());
         verify(entityManager, times(2)).clear();
+    }
+
+    @Test
+    @DisplayName("draft=DB 수명 — 세션 만료 후 재확인해도 getForm 에 답 유지·제출 가능")
+    void draftSurvivesVerifySessionExpiry_thenReVerifyFormAndSubmit() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.of(invitation));
+        when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(invitationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
+
+        SctFormItem formItem = SctFormItem.builder()
+                .id(1L)
+                .formTemplateId(1L)
+                .itemNo(1)
+                .promptText("나는")
+                .allowsNotApplicable(false)
+                .build();
+        when(formItemRepository.findByIdAndFormTemplateId(1L, 1L)).thenReturn(Optional.of(formItem));
+        when(formItemRepository.findByFormTemplateIdOrderBySortOrderAsc(1L))
+                .thenReturn(List.of(formItem));
+
+        SctResponseAnswer saved = SctResponseAnswer.builder()
+                .formItemId(1L)
+                .answerText("테스트 답")
+                .notApplicable(false)
+                .isBlank(false)
+                .build();
+        saved.setTenantId(TENANT_A);
+        saved.setInvitationId(100L);
+        when(answerRepository.findByTenantIdAndInvitationIdAndFormItemId(TENANT_A, 100L, 1L))
+                .thenReturn(Optional.empty())
+                .thenReturn(Optional.of(saved));
+        when(answerRepository.save(any())).thenAnswer(inv -> {
+            SctResponseAnswer a = inv.getArgument(0);
+            saved.setAnswerText(a.getAnswerText());
+            saved.setNotApplicable(a.getNotApplicable());
+            saved.setIsBlank(a.getIsBlank());
+            return a;
+        });
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(List.of(saved));
+
+        String sid1 = issueSession();
+        sctPublicService.saveDraft(RAW_TOKEN, SctDraftSaveRequest.builder()
+                .verifySessionId(sid1)
+                .answers(Collections.singletonList(SctDraftAnswerItem.builder()
+                        .formItemId(1L).answerText("테스트 답").build()))
+                .build());
+        // verify 세션만 제거 — sct_response_answers 는 초대 수명 동안 유지
+        redisHarness.map().clear();
+        assertThrows(SctVerifyRequiredException.class,
+                () -> sctPublicService.getForm(RAW_TOKEN, sid1));
+
+        SctVerifyResponse reVerified = sctPublicService.verify(
+                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+        String sid2 = reVerified.getVerifySessionId();
+        SctPublicFormResponse form = sctPublicService.getForm(RAW_TOKEN, sid2);
+        assertEquals("테스트 답", form.getItems().get(0).getAnswerText());
+
+        sctPublicService.submit(RAW_TOKEN, SctSubmitRequest.builder().verifySessionId(sid2).build());
+        assertEquals(SctInviteStatus.SUBMITTED.name(), invitation.getStatus());
+        // 세션만 지웠고 답행은 DB에 남아 getForm 에 복원됨(초안=초대 수명)
+        verify(answerRepository, never()).deleteAll(any());
     }
 }

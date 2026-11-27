@@ -1,6 +1,8 @@
 package com.coresolution.consultation.sct.service.impl;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -69,6 +71,9 @@ public class SctPublicServiceImpl implements SctPublicService {
 
     /** 동시 임시저장(@Version) 충돌 시 재시도 상한. */
     private static final int DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS = 3;
+
+    /** 초대 tokenExpiresAt(LocalDateTime) → Instant 변환 존. */
+    private static final ZoneId TOKEN_EXPIRY_ZONE = ZoneId.of("Asia/Seoul");
 
     private final SctInvitationRepository invitationRepository;
     private final SctFormTemplateRepository formTemplateRepository;
@@ -156,12 +161,15 @@ public class SctPublicServiceImpl implements SctPublicService {
             invitation.setLinkOpenedAt(LocalDateTime.now());
         }
         invitationRepository.save(invitation);
-        String sessionId = verifySessionStore.issue(invitation.getId(), invitation.getTenantId());
+        String sessionId = verifySessionStore.issue(
+                invitation.getId(),
+                invitation.getTenantId(),
+                absoluteExpiry(invitation));
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
-                .expiresInSeconds(SctConstants.VERIFY_SESSION_TTL_MINUTES * 60)
+                .expiresInSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60)
                 .consent(consent)
                 .build();
     }
@@ -235,6 +243,9 @@ public class SctPublicServiceImpl implements SctPublicService {
 
     /**
      * 임시저장 1회 시도 — 초대 재조회·검증·답변 upsert·draftSavedAt 반영.
+     *
+     * <p>초안 답은 {@code sct_response_answers} 에 초대 수명 동안 보관된다.
+     * verify 세션 만료·재시작으로 세션이 사라져도 답행은 삭제하지 않는다.</p>
      *
      * @param rawToken 공개 토큰
      * @param request  임시저장 요청
@@ -399,10 +410,27 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private void requireVerifySession(String sessionId, SctInvitation invitation) {
-        Optional<String> tenant = verifySessionStore.validate(sessionId, invitation.getId());
+        Optional<String> tenant = verifySessionStore.validate(
+                sessionId,
+                invitation.getId(),
+                absoluteExpiry(invitation));
         if (tenant.isEmpty() || !tenant.get().equals(invitation.getTenantId())) {
             throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
         }
+    }
+
+    /**
+     * 초대 링크 절대 만료 — verify 세션 sliding 상한.
+     *
+     * @param invitation 초대
+     * @return absolute Instant
+     */
+    private Instant absoluteExpiry(SctInvitation invitation) {
+        LocalDateTime expires = invitation.getTokenExpiresAt();
+        if (expires == null) {
+            return Instant.now().plusSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+        }
+        return expires.atZone(TOKEN_EXPIRY_ZONE).toInstant();
     }
 
     private boolean matchesContact(SctInvitation invitation, SctVerifyRequest request) {

@@ -200,43 +200,47 @@ const AdminSctSettingsSection = () => {
             />
             <p className="mg-v2-sct-caption">{SCT_UI.SETTINGS_RETENTION_HINT}</p>
           </div>
-          <div className="mg-v2-settings-field">
-            <label className="mg-v2-form-label" htmlFor="sct-office-phone">
-              {SCT_UI.SETTINGS_OFFICE_PHONE}
-            </label>
-            <input
-              id="sct-office-phone"
-              className="mg-v2-form-input"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
-              value={officePhone}
-              disabled={!isAdmin || saving}
-              data-testid={SCT_TEST_ID.SETTINGS_OFFICE_PHONE}
-              onChange={(ev) => setOfficePhone(ev.target.value)}
-            />
-          </div>
-          <div className="mg-v2-settings-field">
-            <label className="mg-v2-form-label" htmlFor="sct-mobile-phone">
-              {SCT_UI.SETTINGS_MOBILE_PHONE}
-            </label>
-            <input
-              id="sct-mobile-phone"
-              className="mg-v2-form-input"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
-              value={mobilePhone}
-              disabled={!isAdmin || saving}
-              data-testid={SCT_TEST_ID.SETTINGS_MOBILE_PHONE}
-              onChange={(ev) => setMobilePhone(ev.target.value)}
-            />
-            <p className="mg-v2-sct-caption" role="note">
-              {SCT_UI.SETTINGS_PUBLIC_CONTACT_HINT}
-            </p>
-          </div>
+          {isAdmin ? (
+            <div className="mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="sct-office-phone">
+                {SCT_UI.SETTINGS_OFFICE_PHONE}
+              </label>
+              <input
+                id="sct-office-phone"
+                className="mg-v2-form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
+                value={officePhone}
+                disabled={saving}
+                data-testid={SCT_TEST_ID.SETTINGS_OFFICE_PHONE}
+                onChange={(ev) => setOfficePhone(ev.target.value)}
+              />
+            </div>
+          ) : null}
+          {isAdmin ? (
+            <div className="mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="sct-mobile-phone">
+                {SCT_UI.SETTINGS_MOBILE_PHONE}
+              </label>
+              <input
+                id="sct-mobile-phone"
+                className="mg-v2-form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
+                value={mobilePhone}
+                disabled={saving}
+                data-testid={SCT_TEST_ID.SETTINGS_MOBILE_PHONE}
+                onChange={(ev) => setMobilePhone(ev.target.value)}
+              />
+              <p className="mg-v2-sct-caption" role="note">
+                {SCT_UI.SETTINGS_PUBLIC_CONTACT_HINT}
+              </p>
+            </div>
+          ) : null}
           {isAdmin ? (
             <div>
               <SettingsButton type="submit" disabled={saving}>

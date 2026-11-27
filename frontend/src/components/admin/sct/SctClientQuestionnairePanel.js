@@ -12,6 +12,7 @@ import SafeText from '../../common/SafeText';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { formatDate } from '../../../utils/common';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
@@ -37,13 +38,18 @@ import {
 import SctSendSheet from './SctSendSheet';
 import './sctAdmin.css';
 
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleDateString('ko-KR');
-  } catch {
-    return toDisplayString(iso, '—');
-  }
+const SCT_DATE_DISPLAY_FORMAT = 'YYYY.MM.DD';
+const SCT_DATE_EMPTY = '—';
+
+/**
+ * SCT 초대 행 날짜 — YYYY.MM.DD (공통 formatDate).
+ * @param {string|number|Date|null|undefined} iso
+ * @returns {string}
+ */
+const formatSctInviteDate = (iso) => {
+  if (!iso) return SCT_DATE_EMPTY;
+  const formatted = formatDate(iso, SCT_DATE_DISPLAY_FORMAT);
+  return formatted || SCT_DATE_EMPTY;
 };
 
 /**
@@ -188,42 +194,49 @@ const SctClientQuestionnairePanel = ({ client }) => {
           ) : (
             list.map((row) => (
               <article key={row.id} className="mg-v2-sct-admin__row">
-                <div>
-                  <SafeText>
-                    {SCT_FORM_TYPE_LABEL[row.formType] || row.formType}
-                  </SafeText>
+                <div className="mg-v2-sct-admin__row-line1">
+                  <span className="mg-v2-sct-admin__row-title">
+                    <SafeText>
+                      {SCT_FORM_TYPE_LABEL[row.formType] || row.formType}
+                    </SafeText>
+                  </span>
+                  <div className="mg-v2-sct-admin__row-badges">
+                    <StatusBadge status={row.status}>
+                      {SCT_STATUS_LABEL[row.status] || row.status}
+                    </StatusBadge>
+                    {row.destroyEligible ? (
+                      <span
+                        className="mg-v2-sct-tag mg-v2-sct-tag--danger"
+                        data-testid={SCT_TEST_ID.DESTROY_BADGE}
+                      >
+                        {SCT_UI.DESTROY_ELIGIBLE}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="mg-v2-sct-admin__row-meta">
                   {row.managementNo ? (
-                    <p
-                      className={SCT_CSS.CAPTION}
+                    <span
+                      className="mg-v2-sct-admin__row-meta-item"
                       data-testid={SCT_TEST_ID.MANAGEMENT_NO}
                     >
                       {SCT_UI.MANAGEMENT_NO}
                       {': '}
                       <SafeText>{row.managementNo}</SafeText>
-                    </p>
-                  ) : null}
-                </div>
-                <div className="lab-m">
-                  <SafeText>
-                    {toDisplayString(row.maskedPhone || row.maskedEmail, '—')}
-                  </SafeText>
-                </div>
-                <div className="lab-m">{formatDate(row.sentAt)}</div>
-                <div className="lab-m">{formatDate(row.tokenExpiresAt)}</div>
-                <div>
-                  <StatusBadge status={row.status}>
-                    {SCT_STATUS_LABEL[row.status] || row.status}
-                  </StatusBadge>
-                  {row.destroyEligible ? (
-                    <span
-                      className="mg-v2-sct-tag mg-v2-sct-tag--danger"
-                      data-testid={SCT_TEST_ID.DESTROY_BADGE}
-                    >
-                      {SCT_UI.DESTROY_ELIGIBLE}
                     </span>
                   ) : null}
+                  <span className="mg-v2-sct-admin__row-meta-item">
+                    <SafeText>
+                      {toDisplayString(row.maskedPhone || row.maskedEmail, SCT_DATE_EMPTY)}
+                    </SafeText>
+                  </span>
+                  <span className="mg-v2-sct-admin__row-dates">
+                    {formatSctInviteDate(row.sentAt)}
+                    ~
+                    {formatSctInviteDate(row.tokenExpiresAt)}
+                  </span>
                 </div>
-                <div>
+                <div className="mg-v2-sct-admin__row-actions">
                   {row.status === SCT_STATUS.SUBMITTED ? (
                     <MGButton
                       type="button"

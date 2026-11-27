@@ -212,6 +212,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
           <label htmlFor="sct-send-phone">{SCT_UI.PHONE_SEGMENT}</label>
           <input
             id="sct-send-phone"
+            className="mg-v2-sct-send-sheet__input"
             type="tel"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
@@ -224,6 +225,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
           <label htmlFor="sct-send-email">{SCT_UI.EMAIL_SEGMENT}</label>
           <input
             id="sct-send-email"
+            className="mg-v2-sct-send-sheet__input"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -241,6 +243,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
           </label>
           <input
             id="sct-send-expiry"
+            className="mg-v2-sct-send-sheet__input"
             type="number"
             min={SCT_DEFAULTS.LINK_EXPIRY_MIN}
             max={SCT_DEFAULTS.LINK_EXPIRY_MAX}

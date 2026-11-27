@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +56,19 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /**
+     * H2 ddl-auto 는 Bean Validation {@code @Size(max=50)} 때문에 nickname 을
+     * VARCHAR(50) 으로 만들 수 있다. GCM 암호문(+keyId prefix)은 ~59–63자이므로
+     * 엔티티/운영 Flyway(≥512)와 맞게 IT 스키마만 넓힌다 (프로덕션 마이그레이션 변경 없음).
+     */
+    @BeforeEach
+    void widenPiiColumnsForGcmCiphertext() {
+        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN email VARCHAR(512)");
+        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN name VARCHAR(512)");
+        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN nickname VARCHAR(512)");
+        jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN phone VARCHAR(512)");
+    }
 
     @AfterEach
     void cleanup() {

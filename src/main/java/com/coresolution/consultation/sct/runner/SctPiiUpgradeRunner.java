@@ -1,11 +1,11 @@
 package com.coresolution.consultation.sct.runner;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import com.coresolution.consultation.security.pii.PiiCipherFormats;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.security.pii.PiiLegacyUpgradeSupport;
+import com.coresolution.consultation.security.pii.PiiLegacyUpgradeSupport.UpgradeCounts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -15,7 +15,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.StringUtils;
 
 /**
  * SCT PII 멱등 업그레이드 러너 — 평문/CBC→GCM, phone/email SHA→HMAC.
@@ -39,7 +38,7 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        if (!cryptoService.hasActiveKey() || !hmacService.hasSecret()) {
+        if (PiiLegacyUpgradeSupport.shouldSkipUpgrade(cryptoService, hmacService)) {
             log.warn("SCT PII upgrade skipped — keys missing (no data touched)");
             return;
         }
@@ -70,7 +69,7 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
     }
 
     private void upgradeInvitationRow(Map<String, Object> row, UpgradeCounts counts) {
-        Long id = toLong(row.get("id"));
+        Long id = PiiLegacyUpgradeSupport.toLong(row.get("id"));
         if (id == null) {
             return;
         }
@@ -81,14 +80,21 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
             String phoneHash = (String) row.get("target_phone_hash");
             String emailHash = (String) row.get("target_email_hash");
 
-            String newRecipient = upgradeCipher(recipientName, counts);
-            String newPhone = upgradeCipher(targetPhone, counts);
-            String newEmail = upgradeCipher(targetEmail, counts);
+            String newRecipient = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, recipientName, counts);
+            String newPhone = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, targetPhone, counts);
+            String newEmail = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, targetEmail, counts);
 
-            String plainPhone = plainFrom(newPhone != null ? newPhone : targetPhone);
-            String plainEmail = plainFrom(newEmail != null ? newEmail : targetEmail);
-            String newPhoneHash = upgradeHash(plainPhone, phoneHash, true, counts);
-            String newEmailHash = upgradeHash(plainEmail, emailHash, false, counts);
+            String plainPhone = PiiLegacyUpgradeSupport.plainFrom(
+                cryptoService, newPhone != null ? newPhone : targetPhone);
+            String plainEmail = PiiLegacyUpgradeSupport.plainFrom(
+                cryptoService, newEmail != null ? newEmail : targetEmail);
+            String newPhoneHash = PiiLegacyUpgradeSupport.upgradeHash(
+                hmacService, plainPhone, phoneHash, true, counts);
+            String newEmailHash = PiiLegacyUpgradeSupport.upgradeHash(
+                hmacService, plainEmail, emailHash, false, counts);
 
             boolean changed = newRecipient != null || newPhone != null || newEmail != null
                 || newPhoneHash != null || newEmailHash != null;
@@ -124,15 +130,19 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
     }
 
     private void upgradeConsentRow(Map<String, Object> row, UpgradeCounts counts) {
-        Long id = toLong(row.get("id"));
+        Long id = PiiLegacyUpgradeSupport.toLong(row.get("id"));
         if (id == null) {
             return;
         }
         try {
-            String guardianRelation = upgradeCipher((String) row.get("guardian_relation"), counts);
-            String guardianName = upgradeCipher((String) row.get("guardian_name_enc"), counts);
-            String signerName = upgradeCipher((String) row.get("signer_name_enc"), counts);
-            String childName = upgradeCipher((String) row.get("child_name_confirm_enc"), counts);
+            String guardianRelation = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, (String) row.get("guardian_relation"), counts);
+            String guardianName = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, (String) row.get("guardian_name_enc"), counts);
+            String signerName = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, (String) row.get("signer_name_enc"), counts);
+            String childName = PiiLegacyUpgradeSupport.upgradeCipher(
+                cryptoService, (String) row.get("child_name_confirm_enc"), counts);
 
             boolean changed = guardianRelation != null || guardianName != null
                 || signerName != null || childName != null;
@@ -179,12 +189,13 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
         String updateSql = "UPDATE " + table + " SET " + column + " = ? WHERE id = ?";
         for (Map<String, Object> row : rows) {
             tx.executeWithoutResult(status -> {
-                Long id = toLong(row.get("id"));
+                Long id = PiiLegacyUpgradeSupport.toLong(row.get("id"));
                 if (id == null) {
                     return;
                 }
                 try {
-                    String upgraded = upgradeCipher((String) row.get("cipher_col"), counts);
+                    String upgraded = PiiLegacyUpgradeSupport.upgradeCipher(
+                        cryptoService, (String) row.get("cipher_col"), counts);
                     if (upgraded == null) {
                         counts.skipped++;
                         return;
@@ -197,92 +208,5 @@ public class SctPiiUpgradeRunner implements ApplicationRunner {
                 }
             });
         }
-    }
-
-    /**
-     * 평문/CBC → GCM. 이미 v2 이면 null(변경 없음).
-     *
-     * @param value  현재 컬럼 값
-     * @param counts 카운터
-     * @return 새 암호문 또는 null
-     */
-    private String upgradeCipher(String value, UpgradeCounts counts) {
-        if (!StringUtils.hasText(value)) {
-            return null;
-        }
-        if (PiiCipherFormats.looksV2(value)) {
-            return null;
-        }
-        String plain = cryptoService.decryptCompatible(value);
-        if (!StringUtils.hasText(plain)) {
-            return null;
-        }
-        String gcm = cryptoService.encryptGcm(plain);
-        counts.cipherUpdated++;
-        return gcm;
-    }
-
-    /**
-     * 전화/이메일 해시를 HMAC 으로 교정.
-     *
-     * @param plain      복호화된 평문 (정규화 전)
-     * @param current    현재 해시
-     * @param isPhone    전화이면 숫자 정규화
-     * @param counts     카운터
-     * @return 새 HMAC 또는 null
-     */
-    private String upgradeHash(String plain, String current, boolean isPhone, UpgradeCounts counts) {
-        if (!StringUtils.hasText(plain)) {
-            return null;
-        }
-        String normalized = isPhone ? normalizePhone(plain) : plain.trim().toLowerCase(Locale.ROOT);
-        if (!StringUtils.hasText(normalized)) {
-            return null;
-        }
-        String hmac = hmacService.hmacHex(normalized);
-        if (hmac.equals(current)) {
-            return null;
-        }
-        counts.hashUpdated++;
-        return hmac;
-    }
-
-    private String plainFrom(String stored) {
-        if (!StringUtils.hasText(stored)) {
-            return null;
-        }
-        return cryptoService.decryptCompatible(stored);
-    }
-
-    private static String normalizePhone(String phone) {
-        if (phone == null) {
-            return null;
-        }
-        String digits = phone.replaceAll("[^0-9]", "");
-        if (digits.startsWith("82") && digits.length() >= 11) {
-            digits = "0" + digits.substring(2);
-        }
-        return digits;
-    }
-
-    private static Long toLong(Object value) {
-        if (value instanceof Number number) {
-            return number.longValue();
-        }
-        if (value == null) {
-            return null;
-        }
-        try {
-            return Long.parseLong(value.toString());
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
-
-    private static final class UpgradeCounts {
-        private int cipherUpdated;
-        private int hashUpdated;
-        private int skipped;
-        private int errors;
     }
 }

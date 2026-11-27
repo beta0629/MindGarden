@@ -157,4 +157,5 @@ notification:
 
 encryption:
   personal-data:
-    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:test-hmac-secret-not-for-production-use-only}
+    # PERSONAL_DATA_ENCRYPTION_KEY 와 동일: 상단 env 스타일 더미만 두고 nested 는 빈 기본값
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:}

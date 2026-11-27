@@ -165,6 +165,7 @@ encryption:
     # 레거시 단일 키/IV (하위 호환성)
     key: ${PERSONAL_DATA_ENCRYPTION_KEY:mindgarden_encryption_key_2025_local_dev}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:mindgarden_iv_2025_local}
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:local-test-hmac-secret-not-for-production-32b}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 

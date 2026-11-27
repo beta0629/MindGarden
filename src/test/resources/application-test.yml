@@ -124,6 +124,7 @@ JWT_REFRESH_EXPIRATION: 604800000
 
 PERSONAL_DATA_ENCRYPTION_KEY: "test-encryption-key-32-characters-long-required"
 PERSONAL_DATA_ENCRYPTION_IV: "test-iv-16-chars"
+PERSONAL_DATA_HMAC_SECRET: "test-hmac-secret-not-for-production-use-only"
 
 OPENAI_API_KEY: "test-openai-key"
 OPENAI_API_URL: "https://api.openai.com/v1"
@@ -153,3 +154,7 @@ notification:
     job:
       auto-launch: false
       recovery-enabled: false
+
+encryption:
+  personal-data:
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:test-hmac-secret-not-for-production-use-only}

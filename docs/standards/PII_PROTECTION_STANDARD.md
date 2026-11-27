@@ -25,44 +25,20 @@ PII 가 아닌 식별자 (`tenantId`, `userId` 등 surrogate PK·UUID) 는 적�
 
 ## 3. 구현 패턴 (`AttributeConverter`)
 
+**알고리즘 (2026-11-27)**: 신규 쓰기는 **AES-256/GCM + 12바이트 랜덤 nonce (v2)** —
+형식 `{keyId}:v2::{base64(nonce||ciphertext||tag)}`. JPA는 단일
+`com.coresolution.consultation.security.pii.PiiAttributeConverter` 만 사용한다.
+레거시 AES-CBC(v1, `{keyId}::{base64}`)·평문은 **읽기 전용**으로 호환한다.
+검색 해시는 `PiiHmacService` (HMAC-SHA256, `PERSONAL_DATA_HMAC_SECRET`).
+
 새 PII 컬럼 추가 시 다음 패턴을 따른다.
 
 ```java
-package com.coresolution.consultation.converter;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Column;
 
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
-import jakarta.persistence.AttributeConverter;
-import jakarta.persistence.Converter;
-import org.springframework.beans.factory.annotation.Autowired;
-
-/**
- * PII 이름 컬럼용 AttributeConverter.
- *
- * @author CoreSolution
- * @since 2026-06-14
- */
-@Converter
-public class PersonalNameConverter implements AttributeConverter<String, String> {
-
-    @Autowired
-    private PersonalDataEncryptionUtil encryptionUtil;
-
-    @Override
-    public String convertToDatabaseColumn(String attribute) {
-        return attribute == null ? null : encryptionUtil.encrypt(attribute);
-    }
-
-    @Override
-    public String convertToEntityAttribute(String dbData) {
-        return dbData == null ? null : encryptionUtil.decrypt(dbData);
-    }
-}
-```
-
-엔티티에서 사용:
-
-```java
-@Convert(converter = PersonalNameConverter.class)
+@Convert(converter = PiiAttributeConverter.class)
 @Column(name = "name", length = 512)
 private String name;
 ```
@@ -115,9 +91,11 @@ private String name;
 
 ## 9. 참조
 
-- `src/main/java/com/coresolution/consultation/util/PersonalDataEncryptionUtil.java`
+- `src/main/java/com/coresolution/consultation/security/pii/PiiCryptoService.java`
+- `src/main/java/com/coresolution/consultation/security/pii/PiiAttributeConverter.java`
+- `src/main/java/com/coresolution/consultation/security/pii/PiiHmacService.java`
 - `src/main/java/com/coresolution/consultation/util/PersonalDataEncryptionKeyProvider.java`
-- [`ENCRYPTION_STANDARD.md`](./ENCRYPTION_STANDARD.md) — AES-256/CBC 표준
+- [`ENCRYPTION_STANDARD.md`](./ENCRYPTION_STANDARD.md) — 레거시 CBC 참고; 신규 쓰기는 GCM(v2)
 - [`SECRET_ROTATION_POLICY.md`](./SECRET_ROTATION_POLICY.md) — 키 회전 절차
 - [`DB_ENV_SSOT_POLICY.md`](./DB_ENV_SSOT_POLICY.md) — KEY/IV env SSOT
 - [`SYSTEMD_FALLBACK_DB_ENV_POLICY.md`](./SYSTEMD_FALLBACK_DB_ENV_POLICY.md) — unit 평문 금지

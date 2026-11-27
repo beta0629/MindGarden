@@ -25,7 +25,6 @@ import {
   fetchSctInvitation,
   reissueSctInviteLink
 } from '../../../utils/sctApi';
-import SctPublicLinkCopy from './SctPublicLinkCopy';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import {
   SCT_CSS,
@@ -36,6 +35,7 @@ import {
   SCT_UI
 } from '../../../constants/sctOnline';
 import SctSendSheet from './SctSendSheet';
+import SctInviteQrCard from './SctInviteQrCard';
 import './sctAdmin.css';
 
 const SCT_DATE_DISPLAY_FORMAT = 'YYYY.MM.DD';
@@ -76,7 +76,7 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const [detail, setDetail] = useState(null);
   const [destroyTarget, setDestroyTarget] = useState(null);
   const [destroyBusy, setDestroyBusy] = useState(false);
-  const [reissuedUrl, setReissuedUrl] = useState('');
+  const [reissuedInvite, setReissuedInvite] = useState(null);
 
   const clientId = client?.id;
 
@@ -280,8 +280,11 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       onClick={async() => {
                         try {
                           const refreshed = await reissueSctInviteLink(row.id);
-                          if (refreshed?.publicUrl) {
-                            setReissuedUrl(refreshed.publicUrl);
+                          if (refreshed?.absoluteShortUrl
+                            || refreshed?.absoluteUrl
+                            || refreshed?.shortUrl
+                            || refreshed?.publicUrl) {
+                            setReissuedInvite(refreshed);
                             notificationManager.success(SCT_UI.REISSUE_SUCCESS);
                           }
                           reload();
@@ -356,8 +359,21 @@ const SctClientQuestionnairePanel = ({ client }) => {
         </section>
       ) : null}
 
-      {canPublicLink && reissuedUrl ? (
-        <SctPublicLinkCopy publicUrl={reissuedUrl} className="mg-v2-sct-admin__reissue-link" />
+      {canPublicLink && reissuedInvite ? (
+        <div className="mg-v2-sct-admin__reissue-link">
+          <SctInviteQrCard
+            invitation={reissuedInvite}
+            recipientName={toDisplayString(client?.name, reissuedInvite.recipientName || '')}
+            formTitle={
+              SCT_FORM_TYPE_LABEL[reissuedInvite.formType]
+                ? `${SCT_FORM_TYPE_LABEL[reissuedInvite.formType]} 문장완성 질문지`
+                : SCT_UI.TITLE
+            }
+            isReissued
+            onConfirm={() => setReissuedInvite(null)}
+            onInvitationChange={setReissuedInvite}
+          />
+        </div>
       ) : null}
 
       <SctSendSheet

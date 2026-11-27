@@ -30,6 +30,17 @@ jest.mock('../../../../utils/notification', () => ({
   default: { show: jest.fn(), success: jest.fn() }
 }));
 
+jest.mock('qrcode.react', () => ({
+  QRCodeSVG: ({ value }) => <svg data-testid="mock-qr" data-value={value} />
+}));
+
+jest.mock('../../../common/MGButton', () => ({
+  __esModule: true,
+  default: ({ children, onClick, disabled, preventDoubleClick, loading, ...rest }) => (
+    <button type="button" onClick={onClick} disabled={disabled} {...rest}>{children}</button>
+  )
+}));
+
 describe('AdminSctUnlinkedPanel reissue UI', () => {
   const row = {
     id: 42,
@@ -40,7 +51,12 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
 
   beforeEach(() => {
     fetchSctUnlinkedInvitations.mockResolvedValue([row]);
-    reissueSctInviteLink.mockResolvedValue({ publicUrl: '/public/sct/new-token' });
+    reissueSctInviteLink.mockResolvedValue({
+      id: 42,
+      publicUrl: '/public/sct/new-token',
+      absoluteShortUrl: 'https://example.com/s/abc123',
+      recipientName: '홍길동'
+    });
   });
 
   it('ADMIN always sees copy area with security hint before reissue', async() => {

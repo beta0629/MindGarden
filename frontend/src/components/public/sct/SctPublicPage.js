@@ -19,10 +19,12 @@ import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import {
+  confirmSctIdentityOtp,
   fetchSctPublicForm,
   fetchSctPublicMeta,
   saveSctConsent,
   saveSctDraft,
+  sendSctIdentityOtp,
   submitSct,
   verifySctPublic
 } from '../../../utils/sctApi';
@@ -121,6 +123,9 @@ const SctPublicPage = () => {
   const [channel, setChannel] = useState(SCT_CHANNEL.PHONE);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpHint, setOtpHint] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -239,6 +244,9 @@ const SctPublicPage = () => {
   const goToReVerify = useCallback(() => {
     setVerifySessionId('');
     setVerifyError('');
+    setOtpCode('');
+    setOtpSent(false);
+    setOtpHint('');
     if (identityConsentLocalSatisfied || meta?.identityConsentSatisfied) {
       setStep(STEP.VERIFY);
     } else {
@@ -339,6 +347,123 @@ const SctPublicPage = () => {
     }
   };
 
+  /**
+   * verify/confirm 성공 후 공통 세션 적용.
+   * @param {object} res
+   */
+  const applyVerifySuccess = async(res) => {
+    const sid = res?.verifySessionId;
+    if (!sid) {
+      setVerifyError(SCT_UI.MISMATCH);
+      return;
+    }
+    setVerifySessionId(sid);
+    const consent = res?.consent || null;
+    setConsentStatus(consent);
+    if (consent?.revoked) {
+      setErrorMsg(SCT_UI.LOAD_FAIL);
+      setStep(STEP.ERROR);
+      return;
+    }
+    if (consent?.satisfied) {
+      const merged = await applyFormAndGoItems(sid, consent);
+      if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
+        try {
+          await completePendingSubmit(sid, merged);
+        } catch (submitError) {
+          if (isSctVerifyRequiredError(submitError)) {
+            saveSctPublicDraft(token, merged);
+            pendingSubmitRef.current = true;
+            setPendingSubmitAfterVerify(true);
+            setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+            setStep(STEP.REVIEW);
+          } else {
+            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setStep(STEP.REVIEW);
+          }
+        }
+      }
+      return;
+    }
+    if (consent?.guardianRequired) {
+      setStep(STEP.GUARDIAN);
+    } else {
+      setStep(STEP.CONSENT);
+    }
+  };
+
+  const handleIdentityConsentRequired = (error) => {
+    if (!isIdentityContactConsentRequiredError(error)) {
+      return false;
+    }
+    setIdentityConsentLocalSatisfied(false);
+    setIdentityConsentAgreed(false);
+    setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: false } : prev));
+    setStep(STEP.IDENTITY_CONSENT);
+    return true;
+  };
+
+  const handleOtpSend = async() => {
+    setVerifyError('');
+    setOtpHint('');
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
+    const trimmed = phone.trim();
+    if (!trimmed) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await sendSctIdentityOtp(token, { phone: trimmed });
+      setOtpSent(true);
+      setOtpCode('');
+      setOtpHint(res?.maskedPhone
+        ? `${SCT_UI.OTP_SENT_HINT} (${res.maskedPhone})`
+        : SCT_UI.OTP_SENT_HINT);
+    } catch (error) {
+      if (handleIdentityConsentRequired(error)) {
+        return;
+      }
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleOtpConfirm = async() => {
+    setVerifyError('');
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
+    const trimmedPhone = phone.trim();
+    const trimmedCode = otpCode.trim();
+    if (!trimmedPhone || !trimmedCode) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await confirmSctIdentityOtp(token, {
+        phone: trimmedPhone,
+        code: trimmedCode
+      });
+      await applyVerifySuccess(res);
+    } catch (error) {
+      if (handleIdentityConsentRequired(error)) {
+        return;
+      }
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleVerify = async() => {
     setVerifyError('');
     if (!hasIdentityConsent) {
@@ -346,61 +471,25 @@ const SctPublicPage = () => {
       setStep(STEP.IDENTITY_CONSENT);
       return;
     }
-    const body = channel === SCT_CHANNEL.EMAIL
-      ? { email: email.trim() }
-      : { phone: phone.trim() };
-    if ((channel === SCT_CHANNEL.PHONE && !body.phone)
-      || (channel === SCT_CHANNEL.EMAIL && !body.email)) {
+    if (channel === SCT_CHANNEL.PHONE) {
+      if (otpSent) {
+        await handleOtpConfirm();
+      } else {
+        await handleOtpSend();
+      }
+      return;
+    }
+    const body = { email: email.trim() };
+    if (!body.email) {
       setVerifyError(SCT_UI.VALIDATE_REQUIRED);
       return;
     }
     setBusy(true);
     try {
       const res = await verifySctPublic(token, body);
-      const sid = res?.verifySessionId;
-      if (!sid) {
-        setVerifyError(SCT_UI.MISMATCH);
-        return;
-      }
-      setVerifySessionId(sid);
-      const consent = res?.consent || null;
-      setConsentStatus(consent);
-      if (consent?.revoked) {
-        setErrorMsg(SCT_UI.LOAD_FAIL);
-        setStep(STEP.ERROR);
-        return;
-      }
-      if (consent?.satisfied) {
-        const merged = await applyFormAndGoItems(sid, consent);
-        if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
-          try {
-            await completePendingSubmit(sid, merged);
-          } catch (submitError) {
-            if (isSctVerifyRequiredError(submitError)) {
-              saveSctPublicDraft(token, merged);
-              pendingSubmitRef.current = true;
-              setPendingSubmitAfterVerify(true);
-              setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
-              setStep(STEP.REVIEW);
-            } else {
-              setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
-              setStep(STEP.REVIEW);
-            }
-          }
-        }
-        return;
-      }
-      if (consent?.guardianRequired) {
-        setStep(STEP.GUARDIAN);
-      } else {
-        setStep(STEP.CONSENT);
-      }
+      await applyVerifySuccess(res);
     } catch (error) {
-      if (isIdentityContactConsentRequiredError(error)) {
-        setIdentityConsentLocalSatisfied(false);
-        setIdentityConsentAgreed(false);
-        setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: false } : prev));
-        setStep(STEP.IDENTITY_CONSENT);
+      if (handleIdentityConsentRequired(error)) {
         return;
       }
       setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
@@ -809,6 +898,10 @@ const SctPublicPage = () => {
       />
     );
   } else if (step === STEP.VERIFY) {
+    const phoneChannel = channel === SCT_CHANNEL.PHONE;
+    const verifyPrimaryLabel = phoneChannel
+      ? (otpSent ? SCT_UI.OTP_CONFIRM : SCT_UI.OTP_SEND)
+      : SCT_UI.VERIFY_SUBMIT;
     body = (
       <>
         {renderTop(SCT_UI.VERIFY, false)}
@@ -819,7 +912,12 @@ const SctPublicPage = () => {
             type="button"
             variant={channel === SCT_CHANNEL.PHONE ? 'primary' : 'outline'}
             preventDoubleClick={false}
-            onClick={() => setChannel(SCT_CHANNEL.PHONE)}
+            onClick={() => {
+              setChannel(SCT_CHANNEL.PHONE);
+              setOtpSent(false);
+              setOtpCode('');
+              setOtpHint('');
+            }}
           >
             {SCT_UI.PHONE_SEGMENT}
           </MGButton>
@@ -827,7 +925,12 @@ const SctPublicPage = () => {
             type="button"
             variant={channel === SCT_CHANNEL.EMAIL ? 'primary' : 'outline'}
             preventDoubleClick={false}
-            onClick={() => setChannel(SCT_CHANNEL.EMAIL)}
+            onClick={() => {
+              setChannel(SCT_CHANNEL.EMAIL);
+              setOtpSent(false);
+              setOtpCode('');
+              setOtpHint('');
+            }}
           >
             {SCT_UI.EMAIL_SEGMENT}
           </MGButton>
@@ -842,19 +945,44 @@ const SctPublicPage = () => {
         {verifyError ? (
           <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
         ) : null}
-        {channel === SCT_CHANNEL.PHONE ? (
-          <div className="mg-v2-sct-field">
-            <label htmlFor="sct-phone">{SCT_UI.PHONE_SEGMENT}</label>
-            <input
-              id="sct-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              aria-invalid={Boolean(verifyError)}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+        {otpHint ? (
+          <p className={SCT_CSS.CAPTION}><SafeText>{otpHint}</SafeText></p>
+        ) : null}
+        {phoneChannel ? (
+          <>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-phone">{SCT_UI.PHONE_SEGMENT}</label>
+              <input
+                id="sct-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                aria-invalid={Boolean(verifyError)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setOtpSent(false);
+                  setOtpCode('');
+                  setOtpHint('');
+                }}
+              />
+            </div>
+            {otpSent ? (
+              <div className="mg-v2-sct-field">
+                <label htmlFor="sct-otp-code">{SCT_UI.OTP_CODE}</label>
+                <input
+                  id="sct-otp-code"
+                  data-testid={SCT_TEST_ID.OTP_CODE}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={otpCode}
+                  aria-invalid={Boolean(verifyError)}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                />
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="mg-v2-sct-field">
             <label htmlFor="sct-email">{SCT_UI.EMAIL_SEGMENT}</label>
@@ -872,12 +1000,22 @@ const SctPublicPage = () => {
     );
     bar = (
       <SctThumbBar
-        primaryLabel={SCT_UI.VERIFY_SUBMIT}
+        primaryLabel={verifyPrimaryLabel}
         onPrimary={handleVerify}
         primaryDisabled={!hasIdentityConsent}
         loading={busy}
-        secondaryLabel={SCT_UI.PREV}
-        onSecondary={() => setStep(STEP.ENTRY)}
+        secondaryLabel={otpSent && phoneChannel ? SCT_UI.OTP_RESEND : SCT_UI.PREV}
+        onSecondary={otpSent && phoneChannel
+          ? () => {
+            setOtpSent(false);
+            setOtpCode('');
+            setOtpHint('');
+            setVerifyError('');
+          }
+          : () => setStep(STEP.ENTRY)}
+        primaryTestId={phoneChannel
+          ? (otpSent ? SCT_TEST_ID.OTP_CONFIRM : SCT_TEST_ID.OTP_SEND)
+          : undefined}
       />
     );
   } else if (step === STEP.GUARDIAN) {

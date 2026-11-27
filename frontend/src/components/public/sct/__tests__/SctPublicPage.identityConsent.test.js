@@ -13,6 +13,7 @@ import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
 import {
   fetchSctPublicMeta,
   saveSctConsent,
+  sendSctIdentityOtp,
   verifySctPublic
 } from '../../../../utils/sctApi';
 
@@ -35,6 +36,8 @@ const META = Object.freeze({
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctPublicMeta: jest.fn(),
   verifySctPublic: jest.fn(),
+  sendSctIdentityOtp: jest.fn(),
+  confirmSctIdentityOtp: jest.fn(),
   fetchSctPublicForm: jest.fn(),
   saveSctDraft: jest.fn(),
   saveSctConsent: jest.fn(),
@@ -101,7 +104,7 @@ describe('SctPublicPage identity consent', () => {
       });
     });
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.VERIFY_SUBMIT)).toBeInTheDocument();
+      expect(screen.getByText(SCT_UI.OTP_SEND)).toBeInTheDocument();
     });
     expect(screen.queryByTestId(SCT_TEST_ID.IDENTITY_CONSENT_STEP)).not.toBeInTheDocument();
   });
@@ -117,9 +120,10 @@ describe('SctPublicPage identity consent', () => {
     });
     fireEvent.click(screen.getByText(SCT_UI.START));
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.VERIFY_SUBMIT)).toBeInTheDocument();
+      expect(screen.getByText(SCT_UI.OTP_SEND)).toBeInTheDocument();
     });
     expect(screen.queryByTestId(SCT_TEST_ID.IDENTITY_CONSENT_STEP)).not.toBeInTheDocument();
     expect(saveSctConsent).not.toHaveBeenCalled();
+    expect(sendSctIdentityOtp).not.toHaveBeenCalled();
   });
 });

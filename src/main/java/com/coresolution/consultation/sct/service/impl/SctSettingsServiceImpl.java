@@ -41,6 +41,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .linkExpiryDays(resolveLinkExpiryDays(tenantId))
                 .retentionDays(resolveRetentionDays(tenantId))
                 .featureEnabled(enabled)
+                .officePhone(resolvePublicOfficePhone(tenantId))
+                .mobilePhone(resolvePublicMobilePhone(tenantId))
                 .build();
     }
 
@@ -116,6 +118,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .linkExpiryDays(newExpiry)
                 .retentionDays(newRetention)
                 .featureEnabled(newFeature)
+                .officePhone(resolvePublicOfficePhone(tenantId))
+                .mobilePhone(resolvePublicMobilePhone(tenantId))
                 .build();
     }
 

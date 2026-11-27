@@ -5,7 +5,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +47,7 @@ class UserServiceImplLoginLookupTenantScopeTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private EmailService emailService;
     @Mock

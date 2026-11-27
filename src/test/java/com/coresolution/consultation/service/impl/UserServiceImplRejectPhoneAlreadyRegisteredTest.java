@@ -15,7 +15,7 @@ import com.coresolution.consultation.exception.GlobalExceptionHandler;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -51,7 +51,7 @@ class UserServiceImplRejectPhoneAlreadyRegisteredTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private EmailService emailService;
     @Mock

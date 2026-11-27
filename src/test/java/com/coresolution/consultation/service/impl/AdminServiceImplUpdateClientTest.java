@@ -34,7 +34,7 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -92,7 +92,7 @@ class AdminServiceImplUpdateClientTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private ConsultantAvailabilityService consultantAvailabilityService;
     @Mock

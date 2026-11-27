@@ -3,7 +3,7 @@ package com.coresolution.consultation;
 import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class MigrationRunner implements CommandLineRunner {
     
     private final UserRepository userRepository;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     
     @Override
     public void run(String... args) throws Exception {

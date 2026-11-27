@@ -18,7 +18,7 @@ import com.coresolution.consultation.entity.ConsultantClientMapping;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,7 +46,7 @@ class ClientShopConsultantMappingServiceImplTest {
     private UserPersonalDataCacheService userPersonalDataCacheService;
 
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
     private ClientShopConsultantMappingServiceImpl service;

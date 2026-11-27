@@ -25,7 +25,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
@@ -59,7 +59,7 @@ public class ConsultantServiceImpl extends BaseTenantEntityServiceImpl<Consultan
     private final ClientRepository clientRepository;
     
     @Autowired
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     
     
     public ConsultantServiceImpl(

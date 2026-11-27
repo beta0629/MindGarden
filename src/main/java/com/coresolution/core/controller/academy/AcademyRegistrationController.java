@@ -13,7 +13,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpSession;
@@ -50,7 +50,7 @@ public class AcademyRegistrationController extends BaseApiController {
     private final UserRepository userRepository;
     private final BranchService branchService;
     private final PasswordService passwordService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserSocialAccountRepository userSocialAccountRepository;
     
     /**

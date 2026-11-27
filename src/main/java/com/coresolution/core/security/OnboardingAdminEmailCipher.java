@@ -1,8 +1,8 @@
 package com.coresolution.core.security;
 
 import java.util.Locale;
-import com.coresolution.consultation.security.pii.PiiEncryptionContextHolder;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
 
@@ -10,9 +10,9 @@ import com.coresolution.core.service.impl.OnboardingApprovalBlockedException;
  * 온보딩 관리자 {@code users.email} 저장값.
  *
  * <p>프로시저와 JDBC 직접 INSERT 는 JPA 컨버터를 타지 않는다. 저장 직전에
- * {@link com.coresolution.consultation.security.pii.PiiAttributeConverter} 와 같은
- * {@link PiiCryptoService#safeEncrypt(String)}
- * (AES-GCM v2)만 사용한다. SQL 에서 암호화를 다시 구현하지 않는다.</p>
+ * {@link com.coresolution.consultation.converter.EmailAttributeConverter} 와 같은
+ * {@link PersonalDataEncryptionUtil#safeEncrypt(String)}
+ * (v1 고정 IV)만 사용한다. SQL 에서 암호화를 다시 구현하지 않는다.</p>
  *
  * <p>관리자 {@code users.user_id} 는 이메일 로컬 파트가 아니다.
  * {@link TenantAdminUserIdAllocator} 가 테넌트 토큰과 난수로 만든다.
@@ -42,7 +42,7 @@ public final class OnboardingAdminEmailCipher {
                     OnboardingConstants.ERROR_ONBOARDING_ADMIN_EMAIL_ENCRYPTION_UNAVAILABLE);
         }
         String plain = normalizedPlainEmail.trim().toLowerCase(Locale.ROOT);
-        PiiCryptoService util = PiiEncryptionContextHolder.get();
+        PersonalDataEncryptionUtil util = PersonalDataEncryptionContextHolder.get();
         if (util == null) {
             throw new OnboardingApprovalBlockedException(
                     OnboardingConstants.ERROR_ONBOARDING_ADMIN_EMAIL_ENCRYPTION_UNAVAILABLE);
@@ -59,7 +59,7 @@ public final class OnboardingAdminEmailCipher {
      * 컨버터와 같은 저장 형식인지 확인한다. 평문 이메일({@code @})이면 거부한다.
      *
      * @param plain  평문
-     * @param cipher {@link PiiCryptoService#safeEncrypt(String)} 결과
+     * @param cipher {@link PersonalDataEncryptionUtil#safeEncrypt(String)} 결과
      * @return 컬럼에 넣어도 되는 암호문이면 true
      */
     public static boolean isStoredCipher(String plain, String cipher) {

@@ -1,9 +1,5 @@
 package com.coresolution.consultation.service.impl;
 
-import com.coresolution.consultation.security.pii.PiiHmacService;
-
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,7 +20,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.SmsAuthService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -73,7 +68,7 @@ class ApplePhoneVerificationServiceImplTest {
     private static final String PHONE_RAW = "010-1234-5678";
     private static final String PHONE_NORMALIZED = "01012345678";
     // PHONE_NORMALIZED 의 SHA-256 hex(소문자, 64자)
-    private static final String PHONE_HASH = PiiTestSecrets.hmacService().hmacHex(PHONE_NORMALIZED);
+    private static final String PHONE_HASH = ApplePhoneVerificationServiceImpl.sha256Hex(PHONE_NORMALIZED);
     private static final String OTP_CODE = "123456";
 
     @Mock private PhoneOtpAttemptRepository phoneOtpAttemptRepository;
@@ -82,13 +77,10 @@ class ApplePhoneVerificationServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private ClientRepository clientRepository;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private com.coresolution.consultation.service.support.TemporaryPasswordGenerator temporaryPasswordGenerator;
-
-    @Spy
-    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
 
     @InjectMocks
     private ApplePhoneVerificationServiceImpl service;

@@ -24,7 +24,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,7 +89,7 @@ class AuthServiceImplPasswordLoginMultiAccountTest {
     private PasswordEncoder passwordEncoder;
 
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
     private AuthServiceImpl authService;

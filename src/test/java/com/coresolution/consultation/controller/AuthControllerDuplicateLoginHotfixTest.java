@@ -36,7 +36,7 @@ import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.constant.TestDocumentationIps;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
@@ -88,7 +88,7 @@ class AuthControllerDuplicateLoginHotfixTest {
     private static final String ISSUED_REFRESH_TOKEN = "issued-refresh-token";
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private UserRepository userRepository;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private TenantRepository tenantRepository;

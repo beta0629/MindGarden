@@ -142,7 +142,7 @@ import com.coresolution.consultation.util.MappingPartialRefundLedger;
 import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.TaxCalculationUtil;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.util.RrnValidationUtil;
@@ -254,7 +254,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     private final CommonCodeRepository commonCodeRepository;
     private final CommonCodeService commonCodeService;
     private final PasswordService passwordService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final ConsultantAvailabilityService consultantAvailabilityService;
     private final ConsultationMessageService consultationMessageService;
     private final BranchService branchService;

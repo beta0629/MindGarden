@@ -31,7 +31,7 @@ import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.erp.accounting.AccountingService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -84,7 +84,7 @@ class FinancialTransactionServiceImplPeriodGuardTest {
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private FinancialPeriodRepository financialPeriodRepository;
 

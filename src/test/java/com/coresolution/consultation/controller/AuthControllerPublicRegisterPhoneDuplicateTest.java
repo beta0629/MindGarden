@@ -12,7 +12,7 @@ import com.coresolution.consultation.service.RoleCommonCodeAuthorizationService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -50,7 +50,7 @@ class AuthControllerPublicRegisterPhoneDuplicateTest {
     @Mock
     private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private UserRepository userRepository;
     @Mock

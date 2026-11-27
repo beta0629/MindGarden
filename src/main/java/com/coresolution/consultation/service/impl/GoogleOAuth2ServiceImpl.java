@@ -8,7 +8,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,7 +62,7 @@ public class GoogleOAuth2ServiceImpl extends AbstractOAuth2Service {
             UserSocialAccountRepository userSocialAccountRepository,
             JwtService jwtService,
             com.coresolution.consultation.service.DynamicPermissionService dynamicPermissionService,
-            PiiCryptoService encryptionUtil,
+            PersonalDataEncryptionUtil encryptionUtil,
             PasswordService passwordService,
             UserService userService) {
         super(userRepository, clientRepository, userSocialAccountRepository, jwtService,

@@ -36,7 +36,7 @@ import com.coresolution.consultation.repository.ConsultationRecordRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.access.AccessDeniedException;
 import org.junit.jupiter.api.AfterEach;
@@ -74,7 +74,7 @@ class ClientStatsServiceImplTest {
     @Mock
     private ConsultationRecordRepository consultationRecordRepository;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;

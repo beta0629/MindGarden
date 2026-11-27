@@ -2,8 +2,8 @@ package com.coresolution.core.security;
 
 import java.util.Locale;
 import java.util.Map;
-import com.coresolution.consultation.security.pii.PiiEncryptionContextHolder;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,7 +21,7 @@ import jakarta.mail.internet.InternetAddress;
 public final class OnboardingAdminContactEmailSupport {
 
     /**
-     * {@link PiiCryptoService} 암호문({@code keyId::} / {@code keyId:v2::}) 구분.
+     * {@link PersonalDataEncryptionUtil} 암호문({@code keyId::} / {@code keyId:v2::}) 구분.
      * 복호화되지 않은 값은 응답·화면에 넣지 않는다.
      */
     private static final String CIPHERTEXT_DELIMITER = "::";
@@ -58,7 +58,7 @@ public final class OnboardingAdminContactEmailSupport {
 
     /**
      * 화면·응답에 넣을 이메일.
-     * {@link PiiEncryptionContextHolder} 에 유틸이 있으면 {@code safeDecrypt} 후 정규화한다.
+     * {@link PersonalDataEncryptionContextHolder} 에 유틸이 있으면 {@code safeDecrypt} 후 정규화한다.
      * 암호문이 평문 이메일로 풀리지 않으면 null 이고, 암호문 원문은 돌려주지 않는다.
      *
      * @param raw 원문 또는 암호문
@@ -105,7 +105,7 @@ public final class OnboardingAdminContactEmailSupport {
     }
 
     private static String decryptForDisplay(String raw) {
-        PiiCryptoService util = PiiEncryptionContextHolder.get();
+        PersonalDataEncryptionUtil util = PersonalDataEncryptionContextHolder.get();
         if (util == null) {
             return raw;
         }

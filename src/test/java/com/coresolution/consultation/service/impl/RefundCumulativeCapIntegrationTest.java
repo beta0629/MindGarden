@@ -65,7 +65,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.shop.ShopOrderRefundableAmountResolver;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
@@ -130,7 +130,7 @@ class RefundCumulativeCapIntegrationTest {
     @Mock private CommonCodeRepository commonCodeRepository;
     @Mock private CommonCodeService commonCodeService;
     @Mock private PasswordService passwordService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private ConsultantAvailabilityService consultantAvailabilityService;
     @Mock private ConsultationMessageService consultationMessageService;
     @Mock private BranchService branchService;

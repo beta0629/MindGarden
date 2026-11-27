@@ -5,7 +5,7 @@ import com.coresolution.consultation.entity.erp.financial.FinancialTransaction;
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService.AmountConsistencyResult;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
@@ -54,7 +54,7 @@ class AmountManagementServiceImplTest {
     private FinancialTransactionRepository financialTransactionRepository;
 
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
     private AmountManagementServiceImpl service;

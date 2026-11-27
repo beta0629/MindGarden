@@ -20,7 +20,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AppleSignInService;
 import com.coresolution.consultation.service.JwtService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -77,7 +77,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final JwtService jwtService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     @Transactional(rollbackFor = Exception.class)

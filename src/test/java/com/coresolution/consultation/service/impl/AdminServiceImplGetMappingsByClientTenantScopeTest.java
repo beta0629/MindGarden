@@ -92,7 +92,7 @@ class AdminServiceImplGetMappingsByClientTenantScopeTest {
     @Mock private CommonCodeRepository commonCodeRepository;
     @Mock private CommonCodeService commonCodeService;
     @Mock private PasswordService passwordService;
-    @Mock private com.coresolution.consultation.security.pii.PiiCryptoService encryptionUtil;
+    @Mock private com.coresolution.consultation.util.PersonalDataEncryptionUtil encryptionUtil;
     @Mock private ConsultantAvailabilityService consultantAvailabilityService;
     @Mock private ConsultationMessageService consultationMessageService;
     @Mock private BranchService branchService;

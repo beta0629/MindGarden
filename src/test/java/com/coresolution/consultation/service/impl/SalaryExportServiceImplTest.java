@@ -37,7 +37,7 @@ import com.coresolution.consultation.repository.SalaryCalculationRepository;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 
 /**
@@ -64,7 +64,7 @@ class SalaryExportServiceImplTest {
     private UserPersonalDataCacheService userPersonalDataCacheService;
 
     @Mock
-    private PiiCryptoService personalDataEncryptionUtil;
+    private PersonalDataEncryptionUtil personalDataEncryptionUtil;
 
     @InjectMocks
     private SalaryExportServiceImpl salaryExportService;

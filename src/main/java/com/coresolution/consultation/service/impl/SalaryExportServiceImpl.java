@@ -41,7 +41,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.SalaryExportService;
 import com.coresolution.consultation.service.SalaryManagementService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 
 import lombok.RequiredArgsConstructor;
@@ -66,7 +66,7 @@ public class SalaryExportServiceImpl implements SalaryExportService {
 
     private final UserPersonalDataCacheService userPersonalDataCacheService;
 
-    private final PiiCryptoService personalDataEncryptionUtil;
+    private final PersonalDataEncryptionUtil personalDataEncryptionUtil;
 
     @Override
     @Transactional(readOnly = true)

@@ -23,7 +23,7 @@ import com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -53,7 +53,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 class OAuth2ControllerJwtBearerIdleBindTest {
 
     @Mock private OAuth2FactoryService oauth2FactoryService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private OAuth2DomainUtil oauth2DomainUtil;
     @Mock private UserRepository userRepository;
     @Mock private JwtService jwtService;

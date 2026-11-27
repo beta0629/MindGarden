@@ -20,8 +20,8 @@ import javax.sql.DataSource;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.repository.RoleTemplateRepository;
 import com.coresolution.core.repository.onboarding.OnboardingRequestRepository;
-import com.coresolution.consultation.security.pii.PiiEncryptionContextHolder;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.converter.PersonalDataEncryptionContextHolder;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.service.TenantDashboardService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -99,7 +99,7 @@ class OnboardingApprovalProcedureTimeoutTest {
     @AfterEach
     void tearDown() {
         OnboardingDecisionDeadline.close();
-        ReflectionTestUtils.setField(PiiEncryptionContextHolder.class, "instance", null);
+        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", null);
     }
 
     @Test
@@ -145,9 +145,9 @@ class OnboardingApprovalProcedureTimeoutTest {
     }
 
     private void stubConnection() throws SQLException {
-        PiiCryptoService encryptionUtil = mock(PiiCryptoService.class);
+        PersonalDataEncryptionUtil encryptionUtil = mock(PersonalDataEncryptionUtil.class);
         when(encryptionUtil.safeEncrypt(anyString())).thenReturn("k1::QUJDRA");
-        ReflectionTestUtils.setField(PiiEncryptionContextHolder.class, "instance", encryptionUtil);
+        ReflectionTestUtils.setField(PersonalDataEncryptionContextHolder.class, "instance", encryptionUtil);
         when(jdbcTemplate.getDataSource()).thenReturn(dataSource);
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.createStatement()).thenReturn(statement);

@@ -9,8 +9,8 @@ import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
 import com.coresolution.consultation.repository.auth.PhoneOtpAttemptRepository;
 import com.coresolution.consultation.service.ClientProfilePhoneVerificationService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneHashUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -41,8 +41,7 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
     private static final String PROFILE_LEDGER_CODE_HASH = "PROFILE_CHANGE_PHONE_LEDGER";
 
     private final PhoneOtpAttemptRepository phoneOtpAttemptRepository;
-    private final PiiCryptoService encryptionUtil;
-    private final PiiHmacService piiHmacService;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     @Transactional
@@ -51,7 +50,7 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
                 || !LoginIdentifierUtils.isValidKoreanMobileDigits(normalizedPhoneDigits)) {
             throw new IllegalArgumentException("프로필 휴대폰 인증 장부 기록 파라미터가 올바르지 않습니다.");
         }
-        String phoneHash = piiHmacService.hmacHex(normalizedPhoneDigits);
+        String phoneHash = PhoneHashUtils.sha256Hex(normalizedPhoneDigits);
         LocalDateTime now = LocalDateTime.now();
         PhoneOtpAttempt row = PhoneOtpAttempt.builder()
                 .tenantId(tenantId)
@@ -105,24 +104,18 @@ public class ClientProfilePhoneVerificationServiceImpl implements ClientProfileP
         if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
             return Optional.empty();
         }
+        String phoneHash = PhoneHashUtils.sha256Hex(normalized);
         List<String> providerUserIds = resolveProviderUserIdCandidates(user);
         if (providerUserIds.isEmpty()) {
             return Optional.empty();
         }
         // OTP 성공 SSOT: PROFILE(CHANGE_PHONE) 및 OAuth(APPLE/KAKAO/…) VERIFIED 행 — 본인 ID 스코프만
-        // HMAC 신규 + 레거시 SHA dual-verify
-        for (String phoneHash : piiHmacService.lookupCandidates(normalized)) {
-            Optional<PhoneOtpAttempt> found = phoneOtpAttemptRepository
+        return phoneOtpAttemptRepository
                 .findFirstByTenantIdAndPhoneHashAndStatusAndVerifiedAtIsNotNullAndProviderUserIdInOrderByVerifiedAtDesc(
-                    user.getTenantId(),
-                    phoneHash,
-                    PhoneOtpAttempt.STATUS_VERIFIED,
-                    providerUserIds);
-            if (found.isPresent()) {
-                return found;
-            }
-        }
-        return Optional.empty();
+                        user.getTenantId(),
+                        phoneHash,
+                        PhoneOtpAttempt.STATUS_VERIFIED,
+                        providerUserIds);
     }
 
     /**

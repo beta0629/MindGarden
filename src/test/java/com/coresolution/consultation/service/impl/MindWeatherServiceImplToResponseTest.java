@@ -25,7 +25,7 @@ import com.coresolution.consultation.repository.MindWeatherCardRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 
 /**
@@ -51,7 +51,7 @@ class MindWeatherServiceImplToResponseTest {
     @Mock
     private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
     private MindWeatherServiceImpl mindWeatherService;

@@ -8,7 +8,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.core.security.PasswordService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
@@ -60,7 +60,7 @@ class PersonalDataRequestTenantContactTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @InjectMocks
     private PersonalDataRequestServiceImpl personalDataRequestService;

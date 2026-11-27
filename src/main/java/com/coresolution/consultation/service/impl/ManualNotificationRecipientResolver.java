@@ -23,7 +23,7 @@ import com.coresolution.consultation.entity.UserPrivacyConsent;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -51,7 +51,7 @@ public class ManualNotificationRecipientResolver {
 
     private final UserRepository userRepository;
     private final UserPrivacyConsentRepository consentRepository;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     /**
      * 대상 집합 확정.

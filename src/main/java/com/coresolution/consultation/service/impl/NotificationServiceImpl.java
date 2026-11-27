@@ -20,7 +20,7 @@ import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -59,7 +59,7 @@ public class NotificationServiceImpl implements NotificationService {
     private final SmsTemplateService smsTemplateService;
     private final EmailService emailService;
     private final AlertRepository alertRepository;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final TenantKakaoAlimtalkSettingsService tenantKakaoAlimtalkSettingsService;
     private final NotificationChannelPreferenceResolutionService channelPreferenceResolutionService;
     

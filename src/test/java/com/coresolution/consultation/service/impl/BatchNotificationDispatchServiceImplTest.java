@@ -19,7 +19,7 @@ import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.Tenant;
@@ -99,7 +99,7 @@ class BatchNotificationDispatchServiceImplTest {
     @Mock
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private TenantRepository tenantRepository;
     @Mock

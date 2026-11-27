@@ -13,7 +13,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.service.ClientShopConsultantMappingService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.util.MappingAssignmentStatus;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ShopConsultantMappingBindUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +34,7 @@ public class ClientShopConsultantMappingServiceImpl implements ClientShopConsult
 
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     @Transactional(readOnly = true)

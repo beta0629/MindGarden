@@ -23,7 +23,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -60,7 +60,7 @@ class ConsultantRatingServiceImplRatableSchedulesReadOnlyTest {
         userRepository = mock(UserRepository.class);
         service = new ConsultantRatingServiceImpl(ratingRepository, scheduleRepository, userRepository,
             new ObjectMapper(), mock(RealTimeStatisticsService.class), mock(BranchService.class),
-            mock(UserPersonalDataCacheService.class), mock(PiiCryptoService.class));
+            mock(UserPersonalDataCacheService.class), mock(PersonalDataEncryptionUtil.class));
         User consultant = new User();
         consultant.setId(CONSULTANT_ID);
         consultant.setName("상담사");

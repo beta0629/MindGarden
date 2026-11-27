@@ -13,7 +13,7 @@ import com.coresolution.consultation.constant.oauth.OAuth2UserFacingMessages;
 import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.dto.ApiResponse;
 import org.junit.jupiter.api.DisplayName;
@@ -56,7 +56,7 @@ class OAuth2ControllerKakaoRedirectUriHotfixTest {
     private static final String CALLBACK_PATH = "/api/auth/kakao/callback";
 
     @Mock private OAuth2FactoryService oauth2FactoryService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private OAuth2DomainUtil oauth2DomainUtil;
     @Mock private com.coresolution.consultation.repository.UserRepository userRepository;
     @Mock private com.coresolution.consultation.service.JwtService jwtService;

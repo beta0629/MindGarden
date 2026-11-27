@@ -9,7 +9,7 @@ import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.config.TemporaryPasswordProperties;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
@@ -50,7 +50,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
     @Mock
     private PasswordService passwordService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @Spy
     private TemporaryPasswordGenerator temporaryPasswordGenerator =

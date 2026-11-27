@@ -13,7 +13,7 @@ import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.ScheduleRepository;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.ConsultantStatsService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -41,7 +41,7 @@ public class ConsultantStatsServiceImpl implements ConsultantStatsService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
     private final ConsultantRatingService consultantRatingService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
 
     @Override
     @Cacheable(value = "consultantsWithStats", key = "'consultant:' + #consultantId")

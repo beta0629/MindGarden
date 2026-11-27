@@ -33,7 +33,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.service.OnboardingService;
 import com.coresolution.core.util.StatusCodeHelper;
@@ -79,7 +79,7 @@ class AdminControllerMappingWriteLazyInitGuardTest {
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private UserService userService;
     @Mock private StoredProcedureService storedProcedureService;
-    @Mock private PiiCryptoService personalDataEncryptionUtil;
+    @Mock private PersonalDataEncryptionUtil personalDataEncryptionUtil;
     @Mock private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;

@@ -1,7 +1,5 @@
 package com.coresolution.consultation.service.impl;
 
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
-
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Base64;
@@ -22,8 +20,8 @@ import com.coresolution.consultation.service.ClientCredentialNotificationService
 import com.coresolution.consultation.service.PasswordResetOpaqueTokenStore;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.AfterEach;
@@ -68,14 +66,14 @@ class PasswordResetSmsServiceImplTest {
     private static final String TENANT_B = "tpr-b-" + UUID.randomUUID().toString().replace("-", "").substring(0, 28);
     private static final String PHONE_RAW = "010-1234-5678";
     private static final String PHONE_NORMALIZED = "01012345678";
-    private static final String PHONE_HASH = PiiTestSecrets.hmacService().hmacHex(PHONE_NORMALIZED);
+    private static final String PHONE_HASH = PhoneHashUtils.sha256Hex(PHONE_NORMALIZED);
     private static final String OTP_CODE = "123456";
     private static final String CLIENT_IP = "203.0.113.10";
 
     @Mock private PhoneOtpAttemptRepository phoneOtpAttemptRepository;
     @Mock private SmsAuthService smsAuthService;
     @Mock private UserRepository userRepository;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private PasswordService passwordService;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private TemporaryPasswordGenerator temporaryPasswordGenerator;
@@ -493,8 +491,7 @@ class PasswordResetSmsServiceImplTest {
             passwordEncoder,
             temporaryPasswordGenerator,
             clientCredentialNotificationService,
-            properties,
-            PiiTestSecrets.hmacService());
+            properties);
     }
 
     private static PasswordResetSmsOtpProperties defaultOtpProperties(

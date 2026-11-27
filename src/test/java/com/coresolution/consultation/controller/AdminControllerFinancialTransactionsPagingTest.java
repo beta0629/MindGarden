@@ -30,7 +30,7 @@ import com.coresolution.consultation.service.erp.ErpService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.support.ResourceOwnerAccessGuard;
 import com.coresolution.consultation.util.AdminListPaging;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.OnboardingService;
@@ -79,7 +79,7 @@ class AdminControllerFinancialTransactionsPagingTest {
     @Mock private ConsultantRatingService consultantRatingService;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private UserService userService;
-    @Mock private PiiCryptoService personalDataEncryptionUtil;
+    @Mock private PersonalDataEncryptionUtil personalDataEncryptionUtil;
     @Mock private UserPersonalDataCacheService userPersonalDataCacheService;
     @Mock private ConsultantStatsService consultantStatsService;
     @Mock private ClientStatsService clientStatsService;

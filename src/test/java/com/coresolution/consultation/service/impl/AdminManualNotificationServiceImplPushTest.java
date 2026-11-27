@@ -26,7 +26,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.AdminTestNotificationLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.MobilePushDispatchService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -71,7 +71,7 @@ class AdminManualNotificationServiceImplPushTest {
     @Mock
     private AlimtalkTemplateMappingResolver templateMappingResolver;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private MobilePushDispatchService mobilePushDispatchService;
     @Spy

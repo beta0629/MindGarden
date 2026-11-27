@@ -31,7 +31,7 @@ import com.coresolution.consultation.repository.ManualNotificationJobRecipientRe
 import com.coresolution.consultation.repository.ManualNotificationJobRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ManualNotificationJobService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -85,7 +85,7 @@ public class ManualNotificationJobServiceImpl implements ManualNotificationJobSe
     private final ManualNotificationDispatchRecordRepository dispatchRecordRepository;
     private final UserRepository userRepository;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final ObjectMapper objectMapper;
 
     @Override

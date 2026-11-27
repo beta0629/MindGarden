@@ -10,7 +10,7 @@ import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -46,7 +46,7 @@ public class SuperAdminController extends BaseApiController {
     private final UserRepository userRepository;
     private final FinancialTransactionService financialTransactionService;
     private final DynamicPermissionService dynamicPermissionService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     
     /**
      * 수퍼어드민 계정 생성

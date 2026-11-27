@@ -30,7 +30,7 @@ import com.coresolution.consultation.service.SystemConfigService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.UserSessionService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.core.dto.ApiResponse;
 import com.coresolution.core.repository.TenantRepository;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -71,7 +71,7 @@ class AuthControllerSessionInfoBearerTtlTest {
     private static final Long USER_PK = 42L;
 
     @Mock private RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private UserRepository userRepository;
     @Mock private UserSocialAccountRepository userSocialAccountRepository;
     @Mock private TenantRepository tenantRepository;

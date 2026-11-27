@@ -30,7 +30,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.SmsTemplateService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
@@ -83,7 +83,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
     private final NotificationBatchSendLogger sendLogger;
     private final NotificationDispatchHelper dispatchHelper;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final BatchNotificationProperties properties;
     private final TenantRepository tenantRepository;
     private final SmsTemplateService smsTemplateService;
@@ -117,7 +117,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             NotificationBatchSendLogger sendLogger,
             NotificationDispatchHelper dispatchHelper,
             AlimtalkTemplateMappingResolver templateMappingResolver,
-            PiiCryptoService encryptionUtil,
+            PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
             TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,
@@ -164,7 +164,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             NotificationBatchSendLogger sendLogger,
             NotificationDispatchHelper dispatchHelper,
             AlimtalkTemplateMappingResolver templateMappingResolver,
-            PiiCryptoService encryptionUtil,
+            PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
             TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService) {
@@ -198,7 +198,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             NotificationBatchSendLogger sendLogger,
             NotificationDispatchHelper dispatchHelper,
             AlimtalkTemplateMappingResolver templateMappingResolver,
-            PiiCryptoService encryptionUtil,
+            PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
             TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,
@@ -235,7 +235,7 @@ public class BatchNotificationDispatchServiceImpl implements BatchNotificationDi
             NotificationBatchSendLogger sendLogger,
             NotificationDispatchHelper dispatchHelper,
             AlimtalkTemplateMappingResolver templateMappingResolver,
-            PiiCryptoService encryptionUtil,
+            PersonalDataEncryptionUtil encryptionUtil,
             BatchNotificationProperties properties,
             TenantRepository tenantRepository,
             SmsTemplateService smsTemplateService,

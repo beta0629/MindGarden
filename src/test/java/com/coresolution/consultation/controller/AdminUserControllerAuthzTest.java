@@ -16,7 +16,7 @@ import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserAddressService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.service.UserService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import jakarta.servlet.http.HttpSession;
 import java.util.Map;
@@ -45,7 +45,7 @@ class AdminUserControllerAuthzTest {
     @Mock private UserProfileService userProfileService;
     @Mock private UserService userService;
     @Mock private EmailService emailService;
-    @Mock private PiiCryptoService encryptionUtil;
+    @Mock private PersonalDataEncryptionUtil encryptionUtil;
     @Mock private UserAddressService userAddressService;
     @Mock private BranchService branchService;
     @Mock private DynamicPermissionService dynamicPermissionService;

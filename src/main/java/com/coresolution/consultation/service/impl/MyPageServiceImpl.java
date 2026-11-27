@@ -27,7 +27,7 @@ import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -43,7 +43,7 @@ public class MyPageServiceImpl implements MyPageService {
 
     private final UserRepository userRepository;
     private final UserService userService;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserAddressRepository userAddressRepository;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final ProfileImageStorageService profileImageStorageService;

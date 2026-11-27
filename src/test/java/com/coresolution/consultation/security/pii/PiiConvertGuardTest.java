@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * PII 이름 패턴 String 필드는 {@link PiiAttributeConverter} 필수.
- * Phase-2 평문 필드는 allowlist.
+ * Phase-2 평문 필드·레거시 CBC 엔티티는 allowlist.
  *
  * @author CoreSolution
  * @since 2026-11-27
@@ -40,15 +40,31 @@ class PiiConvertGuardTest {
     /**
      * Phase-2 이전 평문·비대상 허용 목록 (엔티티.필드).
      * hash 컬럼·식별자·LocalDate 등은 아래 패턴에서 제외하거나 allowlist.
+     *
+     * <p>User/Client PII 필드는 레거시 CBC 컨버터(Email/Phone/PersonalName) 유지 —
+     * 「5차 이관 대상」.</p>
      */
     private static final Set<String> ALLOWLIST = Set.of(
-        // users / clients phase-2
+        // users / clients — 5차 이관 대상 (레거시 CBC AttributeConverter)
+        "User.email",
+        "User.name",
+        "User.nickname",
+        "User.phone",
         "User.gender",
         "User.address",
         "User.addressDetail",
         "User.rrnEncrypted",
         "User.memo",
         "User.notes",
+        "Client.name",
+        "Client.email",
+        "Client.phone",
+        "Client.emergencyContact",
+        "Client.emergencyPhone",
+        "Client.institutionContactName",
+        "Client.institutionContactPhone",
+        "Client.institutionDocumentPhone",
+        "Client.institutionDocumentEmail",
         "Client.gender",
         "Client.address",
         "Client.addressDetail",

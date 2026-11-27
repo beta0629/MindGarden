@@ -27,7 +27,7 @@ import com.coresolution.consultation.repository.UserPrivacyConsentRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BatchNotificationDispatchService.DispatchOutcome;
 import com.coresolution.consultation.service.SmsTemplateService;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ReservationSmsBusinessHours;
 import com.coresolution.core.context.TenantContextHolder;
@@ -101,7 +101,7 @@ class ReservationReminderLegacySlotEvidenceIntegrationTest {
     private ConsultantClientMappingRepository mappingRepository;
     private NotificationDispatchHelper dispatchHelper;
     private SmsTemplateService smsTemplateService;
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     private BatchNotificationProperties properties;
     private TransactionTemplate transactionTemplate;
 
@@ -117,7 +117,7 @@ class ReservationReminderLegacySlotEvidenceIntegrationTest {
         mappingRepository = mock(ConsultantClientMappingRepository.class);
         dispatchHelper = mock(NotificationDispatchHelper.class);
         smsTemplateService = mock(SmsTemplateService.class);
-        encryptionUtil = mock(PiiCryptoService.class);
+        encryptionUtil = mock(PersonalDataEncryptionUtil.class);
         transactionTemplate = new TransactionTemplate(transactionManager);
 
         properties = new BatchNotificationProperties();

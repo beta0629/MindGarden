@@ -33,8 +33,8 @@ import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
@@ -94,11 +94,10 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
-    private final PiiHmacService piiHmacService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -362,16 +361,11 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
         }
         List<User> tenantUsers = userRepository.findByTenantId(tenantId);
         return tenantUsers.stream()
-            .filter(u -> matchesUserPhoneHash(u, phoneHash))
+            .filter(u -> phoneHash.equals(hashUserPhoneIfPresent(u)))
             .collect(Collectors.toList());
     }
 
-    private boolean matchesUserPhoneHash(User user, String phoneHash) {
-        String normalized = normalizeUserPhone(user);
-        return normalized != null && piiHmacService.matches(normalized, phoneHash);
-    }
-
-    private String normalizeUserPhone(User user) {
+    private String hashUserPhoneIfPresent(User user) {
         String enc = user.getPhone();
         if (!StringUtils.hasText(enc)) {
             return null;
@@ -389,12 +383,7 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
         if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
             return null;
         }
-        return normalized;
-    }
-
-    private String hashUserPhoneIfPresent(User user) {
-        String normalized = normalizeUserPhone(user);
-        return normalized == null ? null : sha256Hex(normalized);
+        return sha256Hex(normalized);
     }
 
     /**
@@ -576,13 +565,13 @@ public class ApplePhoneVerificationServiceImpl implements ApplePhoneVerification
     }
 
     /**
-     * 정규화된 한국 휴대폰 digits 의 HMAC-SHA256 hex.
-     *
-     * @param input 정규화된 전화 digits
-     * @return hex 해시
+     * 정규화된 한국 휴대폰 digits 의 SHA-256 hex (소문자, 64자). PII 평문 저장 금지 정책 정합.
      */
-    String sha256Hex(String input) {
-        return piiHmacService.hmacHex(input);
+    /**
+     * 정규화된 한국 휴대폰 digits 의 SHA-256 hex — {@link PhoneHashUtils} SSOT 위임.
+     */
+    static String sha256Hex(String input) {
+        return PhoneHashUtils.sha256Hex(input);
     }
 
 }

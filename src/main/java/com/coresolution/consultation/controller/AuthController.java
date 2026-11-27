@@ -43,7 +43,7 @@ import com.coresolution.consultation.dto.response.SessionSecurityFlagsResponse;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
@@ -95,7 +95,7 @@ public class AuthController extends BaseApiController {
     
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
-    private final PiiCryptoService encryptionUtil;
+    private final PersonalDataEncryptionUtil encryptionUtil;
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final TenantRepository tenantRepository;

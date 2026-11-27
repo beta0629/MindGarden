@@ -30,7 +30,7 @@ import com.coresolution.consultation.service.OAuth2FactoryService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.service.OAuthWebSessionExchangeCodeService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.repository.TenantRepository;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -71,7 +71,7 @@ class OAuth2ControllerWebOAuthSessionTest {
     @Mock
     private OAuth2FactoryService oauth2FactoryService;
     @Mock
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
     @Mock
     private OAuth2DomainUtil oauth2DomainUtil;
     @Mock

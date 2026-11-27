@@ -1,5 +1,6 @@
 /**
  * SCT 임시저장 debounce + 수동 저장
+ * 답변 본문은 서버 암호화 draft만 사용. localStorage 평문 미러 없음.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -7,7 +8,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { saveSctDraft } from '../utils/sctApi';
-import { saveSctPublicDraft } from '../utils/sctPublicDraftStorage';
 import { SCT_DEFAULTS, SCT_UI } from '../constants/sctOnline';
 
 export const SCT_SAVE_STATUS = Object.freeze({
@@ -41,22 +41,13 @@ export default function useSctDraftAutosave({
 
   latestRef.current = { token, verifySessionId, answersMap };
 
-  const mirrorLocal = useCallback((snap) => {
-    if (!snap?.token) {
-      return false;
-    }
-    const ok = saveSctPublicDraft(snap.token, snap.answersMap);
-    setLocalSaved(ok);
-    return ok;
-  }, []);
-
   const persist = useCallback(async() => {
     const snap = latestRef.current;
     if (!snap.token || !enabled) {
       return;
     }
-    // 서버 성공/실패와 무관하게 기기 로컬에 미러 (세션 만료·재시작 대비)
-    mirrorLocal(snap);
+    // 로컬 답변 미러 비활성 — localSaved는 항상 false
+    setLocalSaved(false);
     if (!snap.verifySessionId) {
       return;
     }
@@ -73,7 +64,6 @@ export default function useSctDraftAutosave({
         if (!current.token || !enabled) {
           break;
         }
-        mirrorLocal(current);
         if (!current.verifySessionId) {
           break;
         }
@@ -89,12 +79,11 @@ export default function useSctDraftAutosave({
         setStatus(SCT_SAVE_STATUS.SAVED);
       } while (pendingRef.current);
     } catch (error) {
-      mirrorLocal(latestRef.current);
       setStatus(SCT_SAVE_STATUS.OFFLINE);
     } finally {
       inFlightRef.current = false;
     }
-  }, [enabled, mirrorLocal]);
+  }, [enabled]);
 
   const saveNow = useCallback(() => persist(), [persist]);
 

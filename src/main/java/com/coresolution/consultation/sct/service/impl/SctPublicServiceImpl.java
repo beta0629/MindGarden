@@ -36,6 +36,7 @@ import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
+import com.coresolution.consultation.sct.exception.SctOtpRequiredException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
 import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -151,6 +152,10 @@ public class SctPublicServiceImpl implements SctPublicService {
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
         assertHasIdentityContactConsent(invitation);
+        // PHONE 채널은 SMS OTP confirm 으로만 세션 발급(링크+해시만으로 세션 금지)
+        if (StringUtils.hasText(invitation.getTargetPhoneHash())) {
+            throw new SctOtpRequiredException(SctConstants.MSG_OTP_REQUIRED);
+        }
         if (invitation.getVerifyLockedUntil() != null
                 && invitation.getVerifyLockedUntil().isAfter(LocalDateTime.now())) {
             throw new SctVerifyLockedException("검증이 잠겼습니다. 잠시 후 다시 시도하세요.");

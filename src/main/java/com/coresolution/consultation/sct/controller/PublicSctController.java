@@ -3,6 +3,9 @@ package com.coresolution.consultation.sct.controller;
 import com.coresolution.consultation.sct.constant.SctConsentKeys;
 import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
+import com.coresolution.consultation.sct.dto.SctIdentityOtpConfirmRequest;
+import com.coresolution.consultation.sct.dto.SctIdentityOtpSendRequest;
+import com.coresolution.consultation.sct.dto.SctIdentityOtpSendResponse;
 import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
 import com.coresolution.consultation.sct.dto.SctPublicFormResponse;
@@ -10,6 +13,7 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.util.HttpRequestClientIp;
@@ -40,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PublicSctController extends BaseApiController {
 
     private final SctPublicService sctPublicService;
+    private final SctIdentityOtpService sctIdentityOtpService;
 
     /**
      * 링크 메타.
@@ -67,6 +72,42 @@ public class PublicSctController extends BaseApiController {
             @RequestBody SctVerifyRequest request,
             HttpServletRequest http) {
         SctVerifyResponse data = sctPublicService.verify(token, request, clientIp(http));
+        return success(data);
+    }
+
+    /**
+     * 본인확인 SMS OTP 발송(PHONE). 일치 여부와 무관하게 동일 스키마.
+     *
+     * @param token   토큰
+     * @param request 휴대폰
+     * @param http    HTTP
+     * @return 발송 접수 응답
+     */
+    @PostMapping("/{token}/identity/otp/send")
+    public ResponseEntity<?> sendIdentityOtp(
+            @PathVariable String token,
+            @RequestBody SctIdentityOtpSendRequest request,
+            HttpServletRequest http) {
+        SctIdentityOtpSendResponse data =
+                sctIdentityOtpService.sendOtp(token, request, clientIp(http));
+        return success(data);
+    }
+
+    /**
+     * 본인확인 SMS OTP 확인 — 성공 시에만 verify 세션 발급.
+     *
+     * @param token   토큰
+     * @param request 휴대폰+코드
+     * @param http    HTTP
+     * @return {@link SctVerifyResponse}
+     */
+    @PostMapping("/{token}/identity/otp/confirm")
+    public ResponseEntity<?> confirmIdentityOtp(
+            @PathVariable String token,
+            @RequestBody SctIdentityOtpConfirmRequest request,
+            HttpServletRequest http) {
+        SctVerifyResponse data =
+                sctIdentityOtpService.confirmOtp(token, request, clientIp(http));
         return success(data);
     }
 

@@ -6,6 +6,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -33,7 +34,6 @@ import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.service.AuditLogService;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
@@ -108,14 +108,25 @@ class SctSecurityHighTest {
                 .isEqualTo(1.0);
     }
 
+    /**
+     * EMAIL 전용 초대 — PHONE({@code targetPhoneHash}) 은 OTP 가드로 fail-count 경로에 들어가지 않음.
+     *
+     * @param email 대상 이메일
+     * @return 초대 빌더에 넣을 해시
+     */
+    private static String emailHash(String email) {
+        return SctTokenHasher.sha256Hex(email.trim().toLowerCase(Locale.ROOT));
+    }
+
     @Test
     void verifyFailCount_parallelCannotBypassLock() throws Exception {
         String raw = "parallel-verify-token-32bytes!!!!";
-        String phone = "01011112222";
+        String email = "user@example.com";
+        // EMAIL 전용: PHONE OTP 가드를 우회해 verify fail-count·잠금 직렬화를 검증
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(1L)
-                .targetPhone(phone)
-                .targetPhoneHash(PhoneHashUtils.sha256Hex(phone))
+                .targetEmail(email)
+                .targetEmailHash(emailHash(email))
                 .tokenHash(SctTokenHasher.sha256Hex(raw))
                 .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
                 .status("SENT")
@@ -158,7 +169,7 @@ class SctSecurityHighTest {
         CountDownLatch done = new CountDownLatch(threads);
         AtomicInteger locked = new AtomicInteger();
         AtomicInteger mismatch = new AtomicInteger();
-        SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099998888").build();
+        SctVerifyRequest bad = SctVerifyRequest.builder().email("other@example.com").build();
 
         for (int i = 0; i < threads; i++) {
             pool.submit(() -> {
@@ -185,6 +196,8 @@ class SctSecurityHighTest {
         assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
         pool.shutdownNow();
 
+        verify(invitationRepository, times(threads))
+                .findByTokenHashAndIsDeletedFalseForUpdate(ArgumentMatchers.anyString());
         assertThat(invitation.getVerifyFailCount()).isEqualTo(SctConstants.VERIFY_MAX_FAILURES);
         assertThat(invitation.getVerifyLockedUntil()).isNotNull();
         assertThat(locked.get()).isGreaterThanOrEqualTo(1);
@@ -194,11 +207,12 @@ class SctSecurityHighTest {
     @Test
     void verifyFailCount_exchangePath_usesForUpdateAndSerializes() throws Exception {
         String exchangeCode = "opaque-exchange-verify-code-32b!";
-        String phone = "01011112222";
+        String email = "user@example.com";
+        // EMAIL 전용 + exchange: PESSIMISTIC_WRITE(forUpdate by id) 직렬화 유지
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(1L)
-                .targetPhone(phone)
-                .targetPhoneHash(PhoneHashUtils.sha256Hex(phone))
+                .targetEmail(email)
+                .targetEmailHash(emailHash(email))
                 .tokenHash(SctTokenHasher.sha256Hex("other-raw-token-not-used!!!!"))
                 .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
                 .status("SENT")
@@ -248,7 +262,7 @@ class SctSecurityHighTest {
         CountDownLatch done = new CountDownLatch(threads);
         AtomicInteger locked = new AtomicInteger();
         AtomicInteger mismatch = new AtomicInteger();
-        SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099998888").build();
+        SctVerifyRequest bad = SctVerifyRequest.builder().email("other@example.com").build();
 
         for (int i = 0; i < threads; i++) {
             pool.submit(() -> {

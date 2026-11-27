@@ -15,9 +15,11 @@ import {
   SCT_UI
 } from '../../../../constants/sctOnline';
 import {
+  confirmSctIdentityOtp,
   fetchSctPublicForm,
   fetchSctPublicMeta,
   saveSctDraft,
+  sendSctIdentityOtp,
   submitSct,
   verifySctPublic
 } from '../../../../utils/sctApi';
@@ -68,6 +70,8 @@ const FORM = Object.freeze({
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctPublicMeta: jest.fn(),
   verifySctPublic: jest.fn(),
+  sendSctIdentityOtp: jest.fn(),
+  confirmSctIdentityOtp: jest.fn(),
   fetchSctPublicForm: jest.fn(),
   saveSctDraft: jest.fn(),
   saveSctConsent: jest.fn(),
@@ -95,11 +99,33 @@ const verifyOk = (sid = 'sid-1') => ({
   consent: { satisfied: true, guardianRequired: false, revoked: false }
 });
 
+const completePhoneOtp = async(sid = 'sid-fresh') => {
+  sendSctIdentityOtp.mockResolvedValueOnce({
+    accepted: true,
+    maskedPhone: '010-****-5678',
+    expiresInSeconds: 180,
+    resendCooldownSeconds: 60
+  });
+  confirmSctIdentityOtp.mockResolvedValueOnce(verifyOk(sid));
+  const phoneInput = screen.getByLabelText(SCT_UI.PHONE_SEGMENT);
+  fireEvent.change(phoneInput, { target: { value: '01012345678' } });
+  fireEvent.click(screen.getByText(SCT_UI.OTP_SEND));
+  await waitFor(() => {
+    expect(screen.getByTestId(SCT_TEST_ID.OTP_CODE)).toBeInTheDocument();
+  });
+  fireEvent.change(screen.getByTestId(SCT_TEST_ID.OTP_CODE), {
+    target: { value: '123456' }
+  });
+  fireEvent.click(screen.getByText(SCT_UI.OTP_CONFIRM));
+};
+
 describe('SctPublicPage verify resume', () => {
   beforeEach(() => {
     localStorage.clear();
     fetchSctPublicMeta.mockReset();
     verifySctPublic.mockReset();
+    sendSctIdentityOtp.mockReset();
+    confirmSctIdentityOtp.mockReset();
     fetchSctPublicForm.mockReset();
     saveSctDraft.mockReset();
     submitSct.mockReset();
@@ -122,9 +148,7 @@ describe('SctPublicPage verify resume', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });
-    const phoneInput = screen.getByLabelText(SCT_UI.PHONE_SEGMENT);
-    fireEvent.change(phoneInput, { target: { value: '01012345678' } });
-    fireEvent.click(screen.getByText(SCT_UI.VERIFY_SUBMIT));
+    await completePhoneOtp('sid-fresh');
     await waitFor(() => {
       expect(fetchSctPublicForm).toHaveBeenCalled();
     });
@@ -167,10 +191,7 @@ describe('SctPublicPage verify resume', () => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });
 
-    verifySctPublic.mockResolvedValueOnce(verifyOk('sid-2'));
-    const phoneInput = screen.getByLabelText(SCT_UI.PHONE_SEGMENT);
-    fireEvent.change(phoneInput, { target: { value: '01012345678' } });
-    fireEvent.click(screen.getByText(SCT_UI.VERIFY_SUBMIT));
+    await completePhoneOtp('sid-2');
 
     await waitFor(() => {
       expect(submitSct).toHaveBeenCalledTimes(2);
@@ -217,10 +238,7 @@ describe('SctPublicPage verify resume', () => {
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });
-    fireEvent.change(screen.getByLabelText(SCT_UI.PHONE_SEGMENT), {
-      target: { value: '01012345678' }
-    });
-    fireEvent.click(screen.getByText(SCT_UI.VERIFY_SUBMIT));
+    await completePhoneOtp('sid-fresh');
 
     await waitFor(() => {
       expect(screen.getByText('문항 6')).toBeInTheDocument();

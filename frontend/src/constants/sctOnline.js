@@ -15,6 +15,8 @@ export const SCT_API = Object.freeze({
   clientLatestSubmitted: (clientId) => `/api/v1/sct/clients/${clientId}/latest-submitted`,
   publicMeta: (token) => `/api/v1/public/sct/${token}/meta`,
   publicVerify: (token) => `/api/v1/public/sct/${token}/verify`,
+  publicIdentityOtpSend: (token) => `/api/v1/public/sct/${token}/identity/otp/send`,
+  publicIdentityOtpConfirm: (token) => `/api/v1/public/sct/${token}/identity/otp/confirm`,
   publicForm: (token) => `/api/v1/public/sct/${token}/form`,
   publicDraft: (token) => `/api/v1/public/sct/${token}/draft`,
   publicConsents: (token) => `/api/v1/public/sct/${token}/consents`,
@@ -133,6 +135,11 @@ export const SCT_UI = Object.freeze({
   RESUME: '이어서 작성',
   VERIFY: '본인 확인',
   VERIFY_SUBMIT: '확인',
+  OTP_SEND: '인증번호 받기',
+  OTP_CONFIRM: '인증번호 확인',
+  OTP_CODE: '인증번호',
+  OTP_SENT_HINT: '인증번호를 보냈습니다. 문자를 확인해 주세요.',
+  OTP_RESEND: '다시 받기',
   AGREE_START: '동의하고 시작',
   GUARDIAN_DONE: '동의 완료',
   PREV: '이전',
@@ -401,6 +408,11 @@ export const SCT_UI = Object.freeze({
 export const SCT_ERROR_CODE = Object.freeze({
   VERIFY_REQUIRED: 'SCT_VERIFY_REQUIRED',
   IDENTITY_CONTACT_CONSENT_REQUIRED: 'SCT_IDENTITY_CONTACT_CONSENT_REQUIRED',
+  OTP_REQUIRED: 'SCT_OTP_REQUIRED',
+  OTP_RATE_LIMITED: 'SCT_OTP_RATE_LIMITED',
+  OTP_INVALID: 'SCT_OTP_INVALID',
+  OTP_EXPIRED: 'SCT_OTP_EXPIRED',
+  OTP_LOCKED: 'SCT_OTP_LOCKED',
   GONE: 'SCT_GONE',
   CONFLICT: 'SCT_CONFLICT',
   VERIFY_LOCKED: 'SCT_VERIFY_LOCKED',
@@ -601,6 +613,9 @@ export const SCT_TEST_ID = Object.freeze({
   INVITE_QR: 'sct-invite-qr',
   INVITE_QR_URL: 'sct-invite-qr-url',
   INVITE_QR_COPY: 'sct-invite-qr-copy',
-  INVITE_A6: 'sct-invite-a6'
+  INVITE_A6: 'sct-invite-a6',
+  OTP_SEND: 'sct-otp-send',
+  OTP_CODE: 'sct-otp-code',
+  OTP_CONFIRM: 'sct-otp-confirm'
 });
 

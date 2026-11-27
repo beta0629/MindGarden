@@ -29,6 +29,8 @@ const DEFAULT_META = Object.freeze({
 jest.mock('../../../../utils/sctApi', () => ({
   fetchSctPublicMeta: jest.fn(),
   verifySctPublic: jest.fn(),
+  sendSctIdentityOtp: jest.fn(),
+  confirmSctIdentityOtp: jest.fn(),
   fetchSctPublicForm: jest.fn(),
   saveSctDraft: jest.fn(),
   saveSctConsent: jest.fn(),

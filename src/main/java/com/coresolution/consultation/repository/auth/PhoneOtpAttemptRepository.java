@@ -47,6 +47,18 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
         String tenantId, String provider, String providerUserId, LocalDateTime fromInclusive);
 
     /**
+     * SCT 본인확인 — 동일 phone_hash 시간당 발송 상한용.
+     *
+     * @param tenantId      테넌트
+     * @param provider      {@link PhoneOtpAttempt#PROVIDER_SCT_IDENTITY}
+     * @param phoneHash     정규화 번호 SHA-256 hex
+     * @param fromInclusive 윈도우 시작
+     * @return 발송 건수
+     */
+    long countByTenantIdAndProviderAndPhoneHashAndCreatedAtGreaterThanEqual(
+        String tenantId, String provider, String phoneHash, LocalDateTime fromInclusive);
+
+    /**
      * 만료된 row 청소 cron 용 — status=PENDING 이면서 expires_at &lt; now 인 row.
      */
     List<PhoneOtpAttempt> findByStatusAndExpiresAtLessThan(String status, LocalDateTime threshold);

@@ -37,4 +37,11 @@ describe('sctOnline SCT_UI — no developer/test-only copy', () => {
     expect(blob).not.toMatch(/\.dev/i);
     expect(blob).not.toMatch(/테스트하세요/);
   });
+
+  test('OTP copy bans .dev / 테스트', () => {
+    expect(SCT_UI.OTP_SEND).not.toMatch(/\.dev|테스트/i);
+    expect(SCT_UI.OTP_CONFIRM).not.toMatch(/\.dev|테스트/i);
+    expect(SCT_UI.OTP_SENT_HINT).not.toMatch(/\.dev|테스트/i);
+    expect(SCT_UI.OTP_RESEND).not.toMatch(/\.dev|테스트/i);
+  });
 });

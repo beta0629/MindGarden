@@ -90,6 +90,16 @@ public final class SctConstants {
 
     public static final String PUBLIC_API_PREFIX = "/api/v1/public/sct";
 
+    /** 관리자 SCT API 접두. */
+    public static final String ADMIN_API_PREFIX = "/api/v1/admin/sct";
+
+    /**
+     * 공개 경로에 남아 있으면 안 되는 OTP 평문 peek 패턴.
+     * SecurityConfig 에서 permitAll 보다 먼저 denyAll.
+     */
+    public static final String PUBLIC_OTP_DEV_CODE_DENY_PATTERN =
+            "/api/v1/public/sct/*/identity/otp/dev-code";
+
     public static final String HASH_ALGORITHM = "SHA-256";
 
     /** 관리번호 접두사(PII 없음). */
@@ -112,6 +122,26 @@ public final class SctConstants {
     /** 본인확인용 개인정보 수집·이용 동의 없음. */
     public static final String MSG_IDENTITY_CONTACT_CONSENT_REQUIRED =
             "본인확인용 개인정보 수집·이용 동의가 필요합니다.";
+
+    /** PHONE 채널은 SMS OTP 확인 후 세션 발급. */
+    public static final String MSG_OTP_REQUIRED =
+            "휴대폰 본인확인은 인증번호 확인이 필요합니다.";
+
+    /** OTP 요청 한도 초과. */
+    public static final String MSG_OTP_RATE_LIMITED =
+            "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.";
+
+    /** OTP 코드 오답·형식 오류(일치 여부·실번호·코드 비노출). */
+    public static final String MSG_OTP_INVALID =
+            "인증번호가 올바르지 않습니다.";
+
+    /** OTP 만료. */
+    public static final String MSG_OTP_EXPIRED =
+            "인증번호가 만료되었습니다. 다시 받아 주세요.";
+
+    /** OTP 오답 잠금. */
+    public static final String MSG_OTP_LOCKED =
+            "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요.";
 
     private SctConstants() {
     }

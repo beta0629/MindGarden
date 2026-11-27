@@ -43,6 +43,7 @@ import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
+import com.coresolution.consultation.sct.exception.SctOtpRequiredException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
 import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -84,6 +85,7 @@ class SctPublicServiceTest {
     private static final String TENANT_A = "tenant-a";
     private static final String RAW_TOKEN = "test-opaque-token-value-32bytes!!";
     private static final String PHONE = "01012345678";
+    private static final String EMAIL = "user@example.com";
 
     @Mock private SctInvitationRepository invitationRepository;
     @Mock private SctFormTemplateRepository formTemplateRepository;
@@ -157,6 +159,15 @@ class SctPublicServiceTest {
 
     private String issueSession() {
         return verifySessionStore.issue(100L, TENANT_A, absoluteExpiry());
+    }
+
+    /** EMAIL 전용 초대 — verify 해시 세션 경로. */
+    private void asEmailOnlyInvite() {
+        invitation.setTargetPhone(null);
+        invitation.setTargetPhoneHash(null);
+        invitation.setTargetEmail(EMAIL);
+        invitation.setTargetEmailHash(
+                SctTokenHasher.sha256Hex(EMAIL.trim().toLowerCase(java.util.Locale.ROOT)));
     }
 
     @Test
@@ -249,8 +260,24 @@ class SctPublicServiceTest {
     }
 
     @Test
-    @DisplayName("verify — IDENTITY_CONTACT 동의 후 연락처 일치 시 세션 발급")
-    void verifyAfterIdentityContactConsent_succeeds() {
+    @DisplayName("verify — PHONE 채널은 OTP 없이 세션 발급 불가")
+    void verifyPhoneChannel_requiresOtp() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.of(invitation));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+
+        SctOtpRequiredException ex = assertThrows(
+                SctOtpRequiredException.class,
+                () -> sctPublicService.verify(
+                        RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals(SctConstants.MSG_OTP_REQUIRED, ex.getMessage());
+        verify(verifySessionStore, never()).issue(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — EMAIL 전용 + IDENTITY_CONTACT 동의 후 해시 일치 시 세션 발급")
+    void verifyAfterIdentityContactConsent_emailSucceeds() {
+        asEmailOnlyInvite();
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -261,7 +288,7 @@ class SctPublicServiceTest {
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
         SctVerifyResponse verified = sctPublicService.verify(
-                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+                RAW_TOKEN, SctVerifyRequest.builder().email(EMAIL).build(), "127.0.0.1");
         assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
     }
 
@@ -317,13 +344,14 @@ class SctPublicServiceTest {
 
     @Test
     void verifyLocksAfterFiveFailures_usesPessimisticLoad() {
+        asEmailOnlyInvite();
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
 
-        SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099999999").build();
+        SctVerifyRequest bad = SctVerifyRequest.builder().email("other@example.com").build();
         for (int i = 0; i < SctConstants.VERIFY_MAX_FAILURES - 1; i++) {
             assertThrows(IllegalArgumentException.class,
                     () -> sctPublicService.verify(RAW_TOKEN, bad, "127.0.0.1"));
@@ -418,6 +446,7 @@ class SctPublicServiceTest {
 
     @Test
     void submitThenDraft_throws409() {
+        asEmailOnlyInvite();
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
@@ -430,7 +459,7 @@ class SctPublicServiceTest {
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
         SctVerifyResponse verified = sctPublicService.verify(
-                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+                RAW_TOKEN, SctVerifyRequest.builder().email(EMAIL).build(), "127.0.0.1");
         sctPublicService.submit(RAW_TOKEN, SctSubmitRequest.builder()
                 .verifySessionId(verified.getVerifySessionId()).build());
         assertEquals(SctInviteStatus.SUBMITTED.name(), invitation.getStatus());
@@ -544,8 +573,9 @@ class SctPublicServiceTest {
     }
 
     @Test
-    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금")
+    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금(EMAIL)")
     void verify_exchangePath_usesForUpdateById() {
+        asEmailOnlyInvite();
         String exchange = "exchange-opaque-code-for-verify!!";
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
@@ -562,11 +592,33 @@ class SctPublicServiceTest {
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
         SctVerifyResponse verified = sctPublicService.verify(
-                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+                exchange, SctVerifyRequest.builder().email(EMAIL).build(), "127.0.0.1");
 
         assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
         verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
         verify(invitationRepository, never()).findByTenantIdAndIdAndIsDeletedFalse(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드+PHONE 은 ForUpdate 후 OTP 필수")
+    void verify_exchangePath_phoneRequiresOtp() {
+        String exchange = "exchange-opaque-phone-otp-path!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+
+        SctOtpRequiredException ex = assertThrows(
+                SctOtpRequiredException.class,
+                () -> sctPublicService.verify(
+                        exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals(SctConstants.MSG_OTP_REQUIRED, ex.getMessage());
+        verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
+        verify(verifySessionStore, never()).issue(any(), any(), any());
     }
 
     @Test
@@ -693,6 +745,7 @@ class SctPublicServiceTest {
     @Test
     @DisplayName("draft=DB 수명 — 세션 만료 후 재확인해도 getForm 에 답 유지·제출 가능")
     void draftSurvivesVerifySessionExpiry_thenReVerifyFormAndSubmit() {
+        asEmailOnlyInvite();
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
@@ -749,7 +802,7 @@ class SctPublicServiceTest {
                 () -> sctPublicService.getForm(RAW_TOKEN, sid1));
 
         SctVerifyResponse reVerified = sctPublicService.verify(
-                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+                RAW_TOKEN, SctVerifyRequest.builder().email(EMAIL).build(), "127.0.0.1");
         String sid2 = reVerified.getVerifySessionId();
         SctPublicFormResponse form = sctPublicService.getForm(RAW_TOKEN, sid2);
         assertEquals("테스트 답", form.getItems().get(0).getAnswerText());

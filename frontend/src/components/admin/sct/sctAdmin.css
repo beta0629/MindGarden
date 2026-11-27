@@ -62,25 +62,85 @@
 }
 
 .mg-v2-sct-admin__row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) repeat(4, minmax(0, 1fr)) minmax(0, auto);
-  gap: var(--mg-v2-space-3);
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--mg-v2-space-2);
+  align-items: stretch;
   padding: var(--mg-v2-space-3);
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default, var(--mg-v2-color-neutral-300));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
-  background: var(--mg-v2-color-surface-main, #fff);
+  background: var(--mg-v2-color-surface-card, var(--mg-v2-color-surface-raised));
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+  overflow-x: clip;
 }
 
-.mg-v2-sct-admin__row > *:last-child {
+.mg-v2-sct-admin__row-line1 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mg-v2-space-2);
+  min-width: 0;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-sct-admin__row-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-primary);
+  word-break: keep-all;
+}
+
+.mg-v2-sct-admin__row-badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--mg-v2-space-2);
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-sct-admin__row-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--mg-v2-space-2) var(--mg-v2-space-3);
+  min-width: 0;
+  font-size: var(--mg-v2-font-size-caption);
+  color: var(--mg-v2-color-text-tertiary);
+  line-height: var(--mg-v2-font-line-height-caption);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.mg-v2-sct-admin__row-meta-item {
+  min-width: 0;
+  word-break: keep-all;
+}
+
+.mg-v2-sct-admin__row-dates {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.mg-v2-sct-admin__row-actions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--mg-v2-space-2);
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-sct-admin__row-actions .mg-v2-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 @media (max-width: 900px) {
@@ -88,18 +148,24 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .mg-v2-sct-admin__row {
-    grid-template-columns: 1fr;
-  }
-
-  .mg-v2-sct-admin__row > *:last-child {
+  .mg-v2-sct-admin__row-actions {
     justify-content: stretch;
   }
 
-  .mg-v2-sct-admin__row > *:last-child .mg-v2-button {
+  .mg-v2-sct-admin__row-actions .mg-v2-button {
     flex: 1 1 auto;
-    min-width: 0;
   }
+}
+
+.client-side-peek-stub .mg-v2-sct-admin__row,
+.mg-v2-sct-peek .mg-v2-sct-admin__row,
+.mg-v2-sct-side .mg-v2-sct-admin__row {
+  width: 100%;
+}
+
+.client-side-peek-stub .mg-v2-sct-admin__summary,
+.mg-v2-sct-peek .mg-v2-sct-admin__summary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .client-side-peek-stub .mg-v2-sct-admin,
@@ -203,17 +269,29 @@
   margin-bottom: var(--mg-v2-space-2);
   font-size: var(--mg-v2-font-size-body-md);
   font-weight: var(--mg-v2-font-weight-medium);
+  color: var(--mg-v2-color-text-primary);
 }
 
 .mg-v2-sct-send-sheet input,
-.mg-v2-sct-send-sheet select {
+.mg-v2-sct-send-sheet select,
+.mg-v2-sct-send-sheet__input {
   width: 100%;
   min-height: var(--mg-v2-touch-target-min);
   padding: var(--mg-v2-space-3);
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  box-sizing: border-box;
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-v2-color-border-default));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   font-size: var(--mg-v2-font-size-body-md);
-  background: var(--mg-v2-color-surface-main, #fff);
+  color: var(--mg-v2-color-text-primary);
+  background: var(--mg-v2-color-neutral-50, var(--mg-v2-color-surface-bg));
+}
+
+.mg-v2-sct-send-sheet input:focus,
+.mg-v2-sct-send-sheet select:focus,
+.mg-v2-sct-send-sheet__input:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
 }
 
 .mg-v2-sct-kind-grid {
@@ -835,6 +913,10 @@
 }
 
 @container sct-side (max-width: 40rem) {
+  .mg-v2-sct-admin__summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .mg-v2-sct-session__chips {
     flex-direction: column;
     align-items: stretch;

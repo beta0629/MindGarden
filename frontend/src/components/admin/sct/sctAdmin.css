@@ -163,6 +163,19 @@
   width: 100%;
 }
 
+.client-side-peek-stub .mg-v2-sct-admin__row-dates,
+.mg-v2-sct-peek .mg-v2-sct-admin__row-dates,
+.mg-v2-sct-side .mg-v2-sct-admin__row-dates {
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.client-side-peek-stub .mg-v2-sct-admin__row-actions .mg-v2-button,
+.mg-v2-sct-peek .mg-v2-sct-admin__row-actions .mg-v2-button,
+.mg-v2-sct-side .mg-v2-sct-admin__row-actions .mg-v2-button {
+  flex: 1 1 auto;
+}
+
 .client-side-peek-stub .mg-v2-sct-admin__summary,
 .mg-v2-sct-peek .mg-v2-sct-admin__summary {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -236,12 +249,18 @@
   display: grid;
   grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
   gap: var(--mg-v2-space-2);
-  padding: var(--mg-v2-space-2) var(--mg-v2-space-3);
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  padding: var(--mg-v2-space-3);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-default, var(--mg-v2-color-neutral-300));
   border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-v2-color-surface-card, var(--mg-v2-color-surface-raised));
   font-size: var(--mg-v2-font-size-body-md);
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   align-items: start;
+  overflow-x: clip;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
 
 .mg-v2-sct-unlinked__actions {
@@ -249,6 +268,44 @@
   flex-direction: column;
   gap: var(--mg-v2-space-2);
   min-width: 0;
+  max-width: 100%;
+}
+
+.mg-v2-sct-unlinked__actions .mg-v2-button {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .mg-v2-sct-unlinked__row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--mg-v2-space-2);
+  }
+
+  .mg-v2-sct-unlinked__actions .mg-v2-button {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+.client-side-peek-stub .mg-v2-sct-unlinked__row,
+.mg-v2-sct-peek .mg-v2-sct-unlinked__row,
+.mg-v2-sct-side .mg-v2-sct-unlinked__row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: var(--mg-v2-space-2);
+}
+
+.client-side-peek-stub .mg-v2-sct-unlinked__actions .mg-v2-button,
+.mg-v2-sct-peek .mg-v2-sct-unlinked__actions .mg-v2-button,
+.mg-v2-sct-side .mg-v2-sct-unlinked__actions .mg-v2-button {
+  width: 100%;
+  max-width: 100%;
 }
 
 .mg-v2-sct-harness {

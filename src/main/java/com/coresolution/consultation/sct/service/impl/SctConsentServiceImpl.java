@@ -139,12 +139,16 @@ public class SctConsentServiceImpl implements SctConsentService {
         if (request == null || !Boolean.TRUE.equals(request.getAgreed())) {
             throw new IllegalArgumentException("동의가 필요합니다.");
         }
+        String type = request.getConsentType();
+        // IDENTITY_CONTACT 는 verify 전·세션 없이 기록. 민감정보 철회 상태는 별도 게이트.
+        if (SctConstants.CONSENT_IDENTITY_CONTACT.equals(type)) {
+            recordIdentityContact(invitation, request, clientIp, userAgent);
+            return;
+        }
         SctConsentStatusView status = resolveStatus(invitation, formType);
         if (status.isRevoked()) {
             throw new AccessDeniedException("동의가 철회되어 다시 동의할 수 없습니다. 센터에 문의해 주세요.");
         }
-
-        String type = request.getConsentType();
         if (SctConstants.CONSENT_SENSITIVE_INFO.equals(type)) {
             recordSensitive(invitation, formType, status, request, clientIp, userAgent);
         } else if (SctConstants.CONSENT_GUARDIAN_UNDER_14.equals(type)) {
@@ -152,6 +156,23 @@ public class SctConsentServiceImpl implements SctConsentService {
         } else {
             throw new IllegalArgumentException("지원하지 않는 동의 유형입니다.");
         }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean hasIdentityContactConsent(SctInvitation invitation) {
+        if (invitation == null || invitation.getId() == null || invitation.getTenantId() == null) {
+            return false;
+        }
+        // 초대 단위만 인정 — 타 초대·타 테넌트 동의로 충족하지 않음
+        return consentRepository.existsByTenantIdAndInvitationIdAndConsentTypeAndAgreedTrueAndRevokedFalse(
+                invitation.getTenantId(), invitation.getId(), SctConstants.CONSENT_IDENTITY_CONTACT);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SctConsentTemplate activeIdentityContactTemplate() {
+        return activeIdentityContact();
     }
 
     @Override
@@ -204,6 +225,31 @@ public class SctConsentServiceImpl implements SctConsentService {
                 .entityId(clientId)
                 .metadataJson("{\"count\":" + active.size() + "}")
                 .build());
+    }
+
+    /**
+     * 본인확인용 연락처 동의 — 서명·보호자 필드 불필요, agreed=true 만.
+     *
+     * @param invitation 초대
+     * @param request    요청
+     * @param clientIp   IP
+     * @param userAgent  UA
+     */
+    private void recordIdentityContact(
+            SctInvitation invitation,
+            SctConsentRequest request,
+            String clientIp,
+            String userAgent) {
+        SctConsentTemplate tpl = activeIdentityContact();
+        SctConsent consent = upsertConsent(
+                invitation, SctConstants.CONSENT_IDENTITY_CONTACT, tpl, request, clientIp, userAgent);
+        if (tpl != null) {
+            consent.setConsentTemplateVersion(tpl.getVersion());
+        } else {
+            consent.setConsentTemplateVersion(SctConsentKeys.TEMPLATE_VERSION_IDENTITY_CONTACT);
+        }
+        consentRepository.save(consent);
+        auditRecorded(invitation, consent);
     }
 
     private void recordSensitive(
@@ -331,6 +377,16 @@ public class SctConsentServiceImpl implements SctConsentService {
                 .or(() -> consentTemplateRepository
                         .findFirstByTenantIdAndConsentTypeAndIsActiveTrueOrderByCreatedAtDesc(
                                 SctConstants.CORE_TENANT_ID, SctConstants.CONSENT_GUARDIAN_UNDER_14))
+                .orElse(null);
+    }
+
+    private SctConsentTemplate activeIdentityContact() {
+        return consentTemplateRepository
+                .findFirstByTenantIdAndConsentTypeAndFormTypeIsNullAndIsActiveTrueOrderByCreatedAtDesc(
+                        SctConstants.CORE_TENANT_ID, SctConstants.CONSENT_IDENTITY_CONTACT)
+                .or(() -> consentTemplateRepository
+                        .findFirstByTenantIdAndConsentTypeAndIsActiveTrueOrderByCreatedAtDesc(
+                                SctConstants.CORE_TENANT_ID, SctConstants.CONSENT_IDENTITY_CONTACT))
                 .orElse(null);
     }
 

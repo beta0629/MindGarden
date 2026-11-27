@@ -35,9 +35,12 @@ import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
+import com.coresolution.consultation.sct.dto.SctConsentRequest;
+import com.coresolution.consultation.sct.entity.SctConsentTemplate;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
+import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
 import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -182,10 +185,91 @@ class SctPublicServiceTest {
                 .thenReturn(Collections.emptyList());
         when(sctConsentService.resolveSignerBand("ADULT", false))
                 .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
+        when(sctConsentService.activeIdentityContactTemplate()).thenReturn(
+                SctConsentTemplate.builder()
+                        .title("본인확인용 개인정보 수집·이용 동의")
+                        .bodyText("본문")
+                        .version(SctConsentKeys.TEMPLATE_VERSION_IDENTITY_CONTACT)
+                        .build());
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(false);
 
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctConsentKeys.CHANNEL_PHONE, meta.getVerifyChannelHint());
         assertEquals(SctConsentKeys.SIGNER_BAND_ADULT, meta.getSignerBand());
+        assertEquals("본인확인용 개인정보 수집·이용 동의", meta.getIdentityConsentTitle());
+        assertEquals(SctConsentKeys.TEMPLATE_VERSION_IDENTITY_CONTACT, meta.getIdentityConsentVersion());
+        assertEquals(Boolean.FALSE, meta.getIdentityConsentSatisfied());
+    }
+
+    @Test
+    @DisplayName("verify — IDENTITY_CONTACT 동의 없으면 403 전용 예외")
+    void verifyWithoutIdentityContactConsent_throws() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.of(invitation));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(false);
+
+        SctIdentityContactConsentRequiredException ex = assertThrows(
+                SctIdentityContactConsentRequiredException.class,
+                () -> sctPublicService.verify(
+                        RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals(SctConstants.MSG_IDENTITY_CONTACT_CONSENT_REQUIRED, ex.getMessage());
+        verify(attemptRepository, never()).save(any());
+        verify(verifySessionStore, never()).issue(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — IDENTITY_CONTACT 동의 후 연락처 일치 시 세션 발급")
+    void verifyAfterIdentityContactConsent_succeeds() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.of(invitation));
+        when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
+
+        SctVerifyResponse verified = sctPublicService.verify(
+                RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+        assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
+    }
+
+    @Test
+    @DisplayName("saveConsent IDENTITY_CONTACT — verifySession 없이 기록")
+    void saveConsent_identityContact_withoutVerifySession() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+
+        sctPublicService.saveConsent(
+                RAW_TOKEN,
+                SctConsentRequest.builder()
+                        .consentType(SctConstants.CONSENT_IDENTITY_CONTACT)
+                        .agreed(true)
+                        .build(),
+                "127.0.0.1",
+                "ua");
+
+        verify(sctConsentService).recordPublicConsent(
+                eq(invitation), eq("ADULT"), any(SctConsentRequest.class), eq("127.0.0.1"), eq("ua"));
+        verify(verifySessionStore, never()).validate(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("saveConsent SENSITIVE_INFO — verifySession 없으면 SCT_VERIFY_REQUIRED")
+    void saveConsent_sensitiveWithoutSession_throwsVerifyRequired() {
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+
+        assertThrows(SctVerifyRequiredException.class, () -> sctPublicService.saveConsent(
+                RAW_TOKEN,
+                SctConsentRequest.builder()
+                        .consentType(SctConstants.CONSENT_SENSITIVE_INFO)
+                        .agreed(true)
+                        .signerName("홍길동")
+                        .build(),
+                "127.0.0.1",
+                "ua"));
     }
 
     @Test
@@ -206,6 +290,7 @@ class SctPublicServiceTest {
                 .thenReturn(Optional.of(invitation));
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
 
         SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099999999").build();
         for (int i = 0; i < SctConstants.VERIFY_MAX_FAILURES - 1; i++) {
@@ -309,6 +394,7 @@ class SctPublicServiceTest {
         when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
         when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 
@@ -338,10 +424,14 @@ class SctPublicServiceTest {
                 .thenReturn(Collections.emptyList());
         when(sctConsentService.resolveSignerBand("ADULT", false))
                 .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
+        when(sctConsentService.activeIdentityContactTemplate()).thenReturn(null);
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(false);
 
         sctPublicService.getMeta(RAW_TOKEN);
         verify(sctFeatureGuard).requireEnabled("tenant-b");
         verify(sctFeatureGuard, never()).requireEnabled(TENANT_A);
+        // 동의 조회도 토큰→초대 행 tenant 만 사용(타 테넌트 동의로 충족 불가)
+        verify(sctConsentService).hasIdentityContactConsent(invitation);
     }
 
     @Test
@@ -451,6 +541,7 @@ class SctPublicServiceTest {
         when(invitationRepository.saveAndFlush(any())).thenAnswer(inv -> inv.getArgument(0));
         when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
         when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
                 .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
 

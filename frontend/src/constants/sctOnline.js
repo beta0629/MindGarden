@@ -83,7 +83,8 @@ export const SCT_STATUS_LABEL = Object.freeze({
 
 export const SCT_CONSENT_TYPE = Object.freeze({
   SENSITIVE_INFO: 'SENSITIVE_INFO',
-  GUARDIAN_UNDER_14: 'GUARDIAN_UNDER_14'
+  GUARDIAN_UNDER_14: 'GUARDIAN_UNDER_14',
+  IDENTITY_CONTACT: 'IDENTITY_CONTACT'
 });
 
 export const SCT_SIGNER_BAND = Object.freeze({
@@ -211,10 +212,14 @@ export const SCT_UI = Object.freeze({
   GUARDIAN_REQUIRED: '[필수] 법정대리인 동의',
   CONSENT_REUSE_HINT: '한 번 동의하면 철회할 때까지 이후 실시에도 적용됩니다.',
   SETTINGS_LEGAL_NOTE: '법률 검토 권장',
+  STEP_IDENTITY_CONSENT: '본인확인 동의',
   STEP_VERIFY: '본인 확인',
   STEP_CONSENT: '안내와 동의',
   STEP_ITEMS: '문장 이어 쓰기',
   STEP_SUBMIT: '제출',
+  IDENTITY_CONSENT_REQUIRED: '[필수] 본인확인용 개인정보 수집·이용 동의',
+  IDENTITY_CONSENT_CONTINUE: '동의하고 본인 확인',
+  IDENTITY_CONSENT_FALLBACK_TITLE: '본인확인용 개인정보 수집·이용 동의',
   ENTRY_STEPS_TITLE: '이렇게 진행됩니다',
   AUTO_SAVE_HINT: '쓰는 동안 자동 저장',
   RESUME_HINT: '쓰던 질문지가 저장되어 있습니다',
@@ -308,6 +313,7 @@ export const SCT_UI = Object.freeze({
 /** 공개 API 오류 코드 (BE GlobalExceptionHandler 와 맞춤) */
 export const SCT_ERROR_CODE = Object.freeze({
   VERIFY_REQUIRED: 'SCT_VERIFY_REQUIRED',
+  IDENTITY_CONTACT_CONSENT_REQUIRED: 'SCT_IDENTITY_CONTACT_CONSENT_REQUIRED',
   GONE: 'SCT_GONE',
   CONFLICT: 'SCT_CONFLICT',
   VERIFY_LOCKED: 'SCT_VERIFY_LOCKED',
@@ -470,6 +476,7 @@ export const SCT_TEST_ID = Object.freeze({
   UNLINKED_COPY_AREA: 'sct-unlinked-copy-area',
   HARNESS: 'sct-viewport-harness',
   CONSENT_STEP: 'sct-consent-step',
+  IDENTITY_CONSENT_STEP: 'sct-identity-consent-step',
   GUARDIAN_STEP: 'sct-guardian-step',
   PRINT_BTN: 'sct-print-btn',
   PRINT_PREVIEW: 'sct-print-preview',

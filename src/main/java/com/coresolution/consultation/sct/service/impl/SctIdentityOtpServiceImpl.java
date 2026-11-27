@@ -32,7 +32,6 @@ import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
-import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
@@ -40,6 +39,7 @@ import com.coresolution.consultation.sct.service.SctIdentityOtpDevCodeStore;
 import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
+import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -72,9 +72,9 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private final SctInvitationRepository invitationRepository;
     private final SctFormTemplateRepository formTemplateRepository;
     private final SctInviteAccessAttemptRepository attemptRepository;
-    private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final PhoneOtpAttemptRepository phoneOtpAttemptRepository;
     private final SctVerifySessionStore verifySessionStore;
+    private final SctPublicTokenResolver publicTokenResolver;
     private final SctFeatureGuard sctFeatureGuard;
     private final SctConsentService sctConsentService;
     private final SmsAuthService smsAuthService;
@@ -86,29 +86,29 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private final PiiHmacService piiHmacService;
 
     /**
-     * @param invitationRepository         초대
-     * @param formTemplateRepository       양식
-     * @param attemptRepository            접근 시도
-     * @param rotatedTokenHashRepository   회전 토큰
-     * @param phoneOtpAttemptRepository    OTP 장부
-     * @param verifySessionStore           세션
-     * @param sctFeatureGuard              기능 가드
-     * @param sctConsentService            동의
-     * @param smsAuthService               SMS
-     * @param passwordService              코드 해시
-     * @param otpSettings                  설정 SSOT
-     * @param rateLimiter                  전용 rate limiter
-     * @param attemptRecorder              오답·잠금 REQUIRES_NEW 기록
-     * @param devCodeStore                 .dev 전용(없으면 empty)
-     * @param piiHmacService               전화·토큰 HMAC(조회·일치)
+     * @param invitationRepository       초대
+     * @param formTemplateRepository     양식
+     * @param attemptRepository          접근 시도
+     * @param phoneOtpAttemptRepository  OTP 장부
+     * @param verifySessionStore         세션
+     * @param publicTokenResolver        토큰·교환 코드 공용 해석
+     * @param sctFeatureGuard            기능 가드
+     * @param sctConsentService          동의
+     * @param smsAuthService             SMS
+     * @param passwordService            코드 해시
+     * @param otpSettings                설정 SSOT
+     * @param rateLimiter                전용 rate limiter
+     * @param attemptRecorder            오답·잠금 REQUIRES_NEW 기록
+     * @param devCodeStore               .dev 전용(없으면 empty)
+     * @param piiHmacService             전화·토큰 HMAC(조회·일치)
      */
     public SctIdentityOtpServiceImpl(
             SctInvitationRepository invitationRepository,
             SctFormTemplateRepository formTemplateRepository,
             SctInviteAccessAttemptRepository attemptRepository,
-            SctRotatedTokenHashRepository rotatedTokenHashRepository,
             PhoneOtpAttemptRepository phoneOtpAttemptRepository,
             SctVerifySessionStore verifySessionStore,
+            SctPublicTokenResolver publicTokenResolver,
             SctFeatureGuard sctFeatureGuard,
             SctConsentService sctConsentService,
             SmsAuthService smsAuthService,
@@ -121,9 +121,9 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         this.invitationRepository = invitationRepository;
         this.formTemplateRepository = formTemplateRepository;
         this.attemptRepository = attemptRepository;
-        this.rotatedTokenHashRepository = rotatedTokenHashRepository;
         this.phoneOtpAttemptRepository = phoneOtpAttemptRepository;
         this.verifySessionStore = verifySessionStore;
+        this.publicTokenResolver = publicTokenResolver;
         this.sctFeatureGuard = sctFeatureGuard;
         this.sctConsentService = sctConsentService;
         this.smsAuthService = smsAuthService;
@@ -437,27 +437,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     }
 
     private SctInvitation loadForWrite(String rawToken) {
-        if (!StringUtils.hasText(rawToken)) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
-        }
-        String trimmed = rawToken.trim();
-        for (String hash : piiHmacService.lookupCandidates(trimmed)) {
-            Optional<SctInvitation> found =
-                invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(hash);
-            if (found.isPresent()) {
-                return found.get();
-            }
-        }
-        return resolveMissingToken(trimmed);
-    }
-
-    private SctInvitation resolveMissingToken(String rawToken) {
-        for (String hash : piiHmacService.lookupCandidates(rawToken)) {
-            if (rotatedTokenHashRepository.existsByTokenHash(hash)) {
-                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
-            }
-        }
-        throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        return publicTokenResolver.loadInvitationForVerify(rawToken);
     }
 
     private Optional<PhoneOtpAttempt> findLatestSctOtpAttempt(

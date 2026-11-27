@@ -21,7 +21,7 @@ import org.springframework.data.redis.core.ValueOperations;
  * @author MindGarden
  * @since 2026-03-27
  */
-final class SctVerifySessionRedisTestSupport {
+public final class SctVerifySessionRedisTestSupport {
 
     private SctVerifySessionRedisTestSupport() {
     }
@@ -32,7 +32,7 @@ final class SctVerifySessionRedisTestSupport {
      * @return provider + lastTtlSeconds 캡처
      */
     @SuppressWarnings("unchecked")
-    static RedisHarness memoryRedis() {
+    public static RedisHarness memoryRedis() {
         ConcurrentHashMap<String, String> map = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Long> ttlSec = new ConcurrentHashMap<>();
         AtomicLong lastTtlSeconds = new AtomicLong(-1L);
@@ -78,16 +78,29 @@ final class SctVerifySessionRedisTestSupport {
         return new RedisHarness(provider, map, ttlSec, lastTtlSeconds);
     }
 
-    static ObjectProvider<StringRedisTemplate> noRedis() {
+    public static ObjectProvider<StringRedisTemplate> noRedis() {
         ObjectProvider<StringRedisTemplate> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(null);
         return provider;
     }
 
-    record RedisHarness(
+    /**
+     * @param provider       ObjectProvider
+     * @param map            키→값
+     * @param ttlSeconds     키→TTL 초
+     * @param lastTtlSeconds 최근 set/expire TTL
+     */
+    public record RedisHarness(
             ObjectProvider<StringRedisTemplate> provider,
             ConcurrentHashMap<String, String> map,
             ConcurrentHashMap<String, Long> ttlSeconds,
             AtomicLong lastTtlSeconds) {
+
+        /**
+         * @return mock {@link StringRedisTemplate}
+         */
+        public StringRedisTemplate template() {
+            return provider.getIfAvailable();
+        }
     }
 }

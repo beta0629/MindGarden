@@ -34,6 +34,7 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
+import com.coresolution.consultation.sct.service.impl.SctPublicTokenResolverImpl;
 import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.AuditLogService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -151,20 +152,24 @@ class SctSecurityHighTest {
         SctConsentService consentService = mock(SctConsentService.class);
         when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
 
+        PiiHmacService hmac = PiiTestSecrets.hmacService();
+        SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
+        SctRotatedTokenHashRepository rotatedRepo = mock(SctRotatedTokenHashRepository.class);
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository, rotatedRepo, exchangeCodeStore, hmac);
         SctPublicServiceImpl service = new SctPublicServiceImpl(
                 invitationRepository,
                 mock(SctFormTemplateRepository.class),
                 mock(SctFormItemRepository.class),
                 mock(SctResponseAnswerRepository.class),
                 attemptRepository,
-                mock(SctRotatedTokenHashRepository.class),
                 new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
-                mock(SctExchangeCodeStore.class),
+                tokenResolver,
                 mock(SctFeatureGuard.class),
                 consentService,
                 mock(SctSettingsService.class),
                 mock(AuditLogService.class),
-                PiiTestSecrets.hmacService());
+                hmac);
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -245,20 +250,25 @@ class SctSecurityHighTest {
         SctConsentService consentService = mock(SctConsentService.class);
         when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
 
+        PiiHmacService hmac = PiiTestSecrets.hmacService();
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository,
+                mock(SctRotatedTokenHashRepository.class),
+                exchangeCodeStore,
+                hmac);
         SctPublicServiceImpl service = new SctPublicServiceImpl(
                 invitationRepository,
                 mock(SctFormTemplateRepository.class),
                 mock(SctFormItemRepository.class),
                 mock(SctResponseAnswerRepository.class),
                 attemptRepository,
-                mock(SctRotatedTokenHashRepository.class),
                 new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
-                exchangeCodeStore,
+                tokenResolver,
                 mock(SctFeatureGuard.class),
                 consentService,
                 mock(SctSettingsService.class),
                 mock(AuditLogService.class),
-                PiiTestSecrets.hmacService());
+                hmac);
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
         ExecutorService pool = Executors.newFixedThreadPool(threads);

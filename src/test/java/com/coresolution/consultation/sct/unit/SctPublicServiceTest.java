@@ -60,6 +60,7 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
+import com.coresolution.consultation.sct.service.impl.SctPublicTokenResolverImpl;
 import com.coresolution.consultation.security.pii.PiiHmacService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -147,6 +148,12 @@ class SctPublicServiceTest {
                 .isDeleted(false)
                 .build();
 
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository,
+                rotatedTokenHashRepository,
+                exchangeCodeStore,
+                piiHmacService);
+        ReflectionTestUtils.setField(sctPublicService, "publicTokenResolver", tokenResolver);
         ReflectionTestUtils.setField(sctPublicService, "entityManager", entityManager);
         redisHarness.map().clear();
         org.mockito.Mockito.lenient().when(exchangeCodeStore.resolve(any()))

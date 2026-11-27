@@ -270,6 +270,27 @@ class SctIdentityOtpServiceTest {
     }
 
     @Test
+    @DisplayName("confirm — guardianRequired=true 여도 세션 발급(보호자 후속 흐름)")
+    void confirmSuccess_guardianRequired_stillIssuesSession() {
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder()
+                        .satisfied(false)
+                        .guardianRequired(true)
+                        .build());
+        seedPending(CODE, LocalDateTime.now().plusMinutes(3), 0);
+
+        SctVerifyResponse verified = service.confirmOtp(RAW_TOKEN,
+                SctIdentityOtpConfirmRequest.builder().phone(PHONE).code(CODE).build(),
+                "127.0.0.1");
+        assertNotNull(verified.getVerifySessionId());
+        assertFalse(verified.getVerifySessionId().isBlank());
+        assertNotNull(verified.getConsent());
+        assertTrue(verified.getConsent().isGuardianRequired());
+        assertFalse(verified.getConsent().isSatisfied());
+        assertEquals(PhoneOtpAttempt.STATUS_VERIFIED, savedRow.get().getStatus());
+    }
+
+    @Test
     @DisplayName("confirm — 오답 5회 잠금")
     void confirmFiveFailures_locks() {
         seedPending(CODE, LocalDateTime.now().plusMinutes(3), 0);

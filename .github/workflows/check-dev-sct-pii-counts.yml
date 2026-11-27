@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------------
 # 목적:
 #   ④ .dev BE 로그에서 SMS 본문·OTP 노출 추정 패턴 "매칭 건수만"
+#      + 배포 후 발송 이벤트 건수(로거 단순명·마스킹 키만, 원문 0자)
 #   ⑤ SCT 테이블 recipient_name·guardian_relation 이 GCM v2 암호문인지 "건수만"
 #
 # 금지 (절대):
@@ -544,6 +545,99 @@ jobs:
                   kind = ($0 ~ ENVIRON["SCT_RE"]) ? "sct" : "common"
                   print "sms_match ts=" ts " logger=" logger " kind=" kind
                 }' | sort | uniq -c | awk '{c=$1; $1=""; sub(/^ /,""); print $0 " n=" c}' | head -n 60
+            fi
+
+            # (4-d) 배포 후 발송 이벤트 건수 — 값·원문 0자.
+            #   위험 패턴 0건이 "발송 없음"에서 온 것인지, 마스킹된 발송 이벤트가
+            #   실제로 있었는지 구분한다. deploy_since_ts(유닛 ActiveEnterTimestamp) 이후만.
+            #   로거는 %logger{36} 마지막 컴포넌트. 키는 #1972 마스킹 토큰
+            #   (bodyLength/codeLength/subjectLength/contentLength/templateId) 과
+            #   SctInvitationServiceImpl 의 기존 값-없는 SCT SMS 이벤트.
+            #   awk 는 mawk 가능: {n} 구간 금지, 정규식은 리터럴(ENVIRON 불필요), since 만 -v.
+            if [ -n "${DEPLOY_TS:-}" ] && [ -n "$(echo $LOG_FILES | tr -d '[:space:]')" ]; then
+              echo "post_deploy_event_count_status=OK"
+              # shellcheck disable=SC2086
+              sudo awk -v since="$DEPLOY_TS" '
+                BEGIN {
+                  allow["SctInvitationServiceImpl"] = 1
+                  allow["EmailServiceImpl"] = 1
+                  allow["MockEmailServiceImpl"] = 1
+                  allow["NotificationServiceImpl"] = 1
+                  allow["NotificationDispatchHelper"] = 1
+                  allow["KakaoAlimTalkServiceImpl"] = 1
+                  allow["SmsGatewayServiceImpl"] = 1
+                  allow["SmsAuthService"] = 1
+                  allow["SmsAuthController"] = 1
+                  allow["SmsOtpVerificationServiceImpl"] = 1
+                  allow["AuthController"] = 1
+                  nlog = 11
+                  logs[1] = "SctInvitationServiceImpl"
+                  logs[2] = "EmailServiceImpl"
+                  logs[3] = "MockEmailServiceImpl"
+                  logs[4] = "NotificationServiceImpl"
+                  logs[5] = "NotificationDispatchHelper"
+                  logs[6] = "KakaoAlimTalkServiceImpl"
+                  logs[7] = "SmsGatewayServiceImpl"
+                  logs[8] = "SmsAuthService"
+                  logs[9] = "SmsAuthController"
+                  logs[10] = "SmsOtpVerificationServiceImpl"
+                  logs[11] = "AuthController"
+                  nkeys = 9
+                  keys[1] = "SCT_SMS_dispatch"
+                  keys[2] = "SCT_SMS_TEST_MODE_SKIP"
+                  keys[3] = "SCT_SMS_LMS_fallback"
+                  keys[4] = "SCT_SMS_short_overflow"
+                  keys[5] = "bodyLength"
+                  keys[6] = "codeLength"
+                  keys[7] = "subjectLength"
+                  keys[8] = "contentLength"
+                  keys[9] = "templateId"
+                }
+                {
+                  ts = substr($0, 1, 19)
+                  if (ts < since) next
+                  if (ts !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/) next
+                  logger = "UNKNOWN"
+                  if (match($0, /\] +(TRACE|DEBUG|INFO|WARN|ERROR) +[A-Za-z0-9_.$]+ - /)) {
+                    seg = substr($0, RSTART, RLENGTH)
+                    n = split(seg, a, / +/)
+                    logger = a[3]
+                  }
+                  npart = split(logger, lp, /\./)
+                  short = lp[npart]
+                  if (!(short in allow)) next
+                  all[short]++
+                  key = "other"
+                  if (index($0, "SCT SMS dispatch")) key = "SCT_SMS_dispatch"
+                  else if (index($0, "SCT SMS TEST_MODE_SKIP")) key = "SCT_SMS_TEST_MODE_SKIP"
+                  else if (index($0, "SCT SMS LMS fallback")) key = "SCT_SMS_LMS_fallback"
+                  else if (index($0, "SCT SMS short overflow")) key = "SCT_SMS_short_overflow"
+                  else if (index($0, "bodyLength")) key = "bodyLength"
+                  else if (index($0, "codeLength")) key = "codeLength"
+                  else if (index($0, "subjectLength")) key = "subjectLength"
+                  else if (index($0, "contentLength")) key = "contentLength"
+                  else if (index($0, "templateId")) key = "templateId"
+                  ev[short, key]++
+                }
+                END {
+                  for (i = 1; i <= nlog; i++) {
+                    lg = logs[i]
+                    print "post_deploy_event_count logger=" lg " key=ALL n=" (all[lg] + 0)
+                  }
+                  for (i = 1; i <= nlog; i++) {
+                    lg = logs[i]
+                    for (j = 1; j <= nkeys; j++) {
+                      k = keys[j]
+                      c = ev[lg, k] + 0
+                      if (c > 0) print "post_deploy_event_count logger=" lg " key=" k " n=" c
+                    }
+                    c = ev[lg, "other"] + 0
+                    if (c > 0) print "post_deploy_event_count logger=" lg " key=other n=" c
+                  }
+                }
+              ' $LOG_FILES 2>/dev/null || true
+            else
+              echo "post_deploy_event_count_status=UNAVAILABLE"
             fi
 
             # journalctl since 보조 건수 (라인 미출력)

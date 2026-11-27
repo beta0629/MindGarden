@@ -40,6 +40,7 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
 import com.coresolution.consultation.sct.service.SctIdentityOtpDevCodeStore;
 import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
@@ -173,10 +174,14 @@ class SctIdentityOtpServiceTest {
                 .findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashOrderByCreatedAtDesc(
                         anyString(), anyString(), anyString(), anyString()))
                 .thenAnswer(inv -> Optional.ofNullable(savedRow.get()));
+        when(phoneOtpAttemptRepository.findByIdAndTenantIdForUpdate(any(), anyString()))
+                .thenAnswer(inv -> Optional.ofNullable(savedRow.get()));
         when(phoneOtpAttemptRepository.saveAndFlush(any(PhoneOtpAttempt.class)))
                 .thenAnswer(inv -> {
                     PhoneOtpAttempt row = inv.getArgument(0);
-                    row.setId(1L);
+                    if (row.getId() == null) {
+                        row.setId(1L);
+                    }
                     savedRow.set(row);
                     return row;
                 });
@@ -191,6 +196,8 @@ class SctIdentityOtpServiceTest {
                 .thenReturn(true);
         when(devCodeStore.getIfAvailable()).thenReturn(null);
 
+        SctIdentityOtpAttemptRecorder attemptRecorder =
+                new SctIdentityOtpAttemptRecorder(phoneOtpAttemptRepository);
         service = new SctIdentityOtpServiceImpl(
                 invitationRepository,
                 formTemplateRepository,
@@ -204,6 +211,7 @@ class SctIdentityOtpServiceTest {
                 passwordService,
                 otpSettings,
                 rateLimiter,
+                attemptRecorder,
                 devCodeStore);
     }
 
@@ -291,10 +299,12 @@ class SctIdentityOtpServiceTest {
     }
 
     @Test
-    @DisplayName("confirm — 오답 5회 잠금")
-    void confirmFiveFailures_locks() {
+    @DisplayName("confirm — 오답 maxAttempts회 잠금(기본 5) 후 정답도 거부")
+    void confirmFiveFailures_locksAndRejectsCorrectCode() {
+        int maxAttempts = SctFeatureFlagKeys.DEFAULT_IDENTITY_OTP_MAX_ATTEMPTS;
+        assertEquals(5, maxAttempts);
         seedPending(CODE, LocalDateTime.now().plusMinutes(3), 0);
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < maxAttempts - 1; i++) {
             assertThrows(SctOtpInvalidException.class, () -> service.confirmOtp(RAW_TOKEN,
                     SctIdentityOtpConfirmRequest.builder().phone(PHONE).code("000000").build(),
                     "127.0.0.1"));
@@ -303,7 +313,10 @@ class SctIdentityOtpServiceTest {
                 SctIdentityOtpConfirmRequest.builder().phone(PHONE).code("000000").build(),
                 "127.0.0.1"));
         assertEquals(PhoneOtpAttempt.STATUS_FAILED, savedRow.get().getStatus());
-        assertEquals(5, savedRow.get().getAttempts());
+        assertEquals(maxAttempts, savedRow.get().getAttempts());
+        assertThrows(SctOtpLockedException.class, () -> service.confirmOtp(RAW_TOKEN,
+                SctIdentityOtpConfirmRequest.builder().phone(PHONE).code(CODE).build(),
+                "127.0.0.1"));
     }
 
     @Test

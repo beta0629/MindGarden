@@ -47,7 +47,8 @@
   border: 1px solid var(--mg-color-border-main);
 }
 
-.client-side-peek-stub__payment-history {
+.client-side-peek-stub__payment-history,
+.client-side-peek-stub__history {
   display: flex;
   flex-direction: column;
   gap: var(--mg-spacing-md);

@@ -22,7 +22,7 @@ import {
   SCT_TEST_ID,
   SCT_UI
 } from '../../../constants/sctOnline';
-import SctPublicLinkCopy from './SctPublicLinkCopy';
+import SctInviteQrCard from './SctInviteQrCard';
 
 /**
  * 공개 링크 복사·재발급 UI — ADMIN·CONSULTANT만 (STAFF 목록만).
@@ -43,6 +43,8 @@ const AdminSctUnlinkedPanel = () => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [reissuedById, setReissuedById] = useState({});
+  /** @type {[Record<string|number, object>, Function]} */
+  const [reissuedInviteById, setReissuedInviteById] = useState({});
 
   const load = useCallback(async() => {
     setLoading(true);
@@ -67,8 +69,17 @@ const AdminSctUnlinkedPanel = () => {
   const handleReissue = async(rowId) => {
     try {
       const refreshed = await reissueSctInviteLink(rowId);
-      if (refreshed?.publicUrl) {
-        setReissuedById((prev) => ({ ...prev, [rowId]: refreshed.publicUrl }));
+      const hasQr = Boolean(
+        refreshed?.absoluteShortUrl
+        || refreshed?.absoluteUrl
+        || refreshed?.shortUrl
+        || refreshed?.publicUrl
+      );
+      if (hasQr) {
+        setReissuedInviteById((prev) => ({ ...prev, [rowId]: refreshed }));
+        if (refreshed?.publicUrl) {
+          setReissuedById((prev) => ({ ...prev, [rowId]: refreshed.publicUrl }));
+        }
         notificationManager.success(SCT_UI.REISSUE_SUCCESS);
       }
       load();
@@ -93,6 +104,7 @@ const AdminSctUnlinkedPanel = () => {
             const canReissue = canPublicLink
               && (row.status === SCT_STATUS.SENT || row.status === SCT_STATUS.DRAFT);
             const publicUrl = reissuedById[row.id];
+            const reissuedInvite = reissuedInviteById[row.id];
             return (
               <li key={row.id} className="mg-v2-sct-unlinked__row">
                 <SafeText>
@@ -120,10 +132,23 @@ const AdminSctUnlinkedPanel = () => {
                       className="mg-v2-sct-unlinked__copy"
                       data-testid={`${SCT_TEST_ID.UNLINKED_COPY_AREA}-${row.id}`}
                     >
-                      {publicUrl ? (
-                        <SctPublicLinkCopy
-                          publicUrl={publicUrl}
-                          className="mg-v2-sct-admin__reissue-link"
+                      {reissuedInvite ? (
+                        <SctInviteQrCard
+                          invitation={reissuedInvite}
+                          recipientName={toDisplayString(row.recipientName, '')}
+                          isReissued
+                          onInvitationChange={(next) => {
+                            setReissuedInviteById((prev) => ({ ...prev, [row.id]: next }));
+                            if (next?.publicUrl) {
+                              setReissuedById((prev) => ({ ...prev, [row.id]: next.publicUrl }));
+                            }
+                          }}
+                        />
+                      ) : publicUrl ? (
+                        <SctInviteQrCard
+                          invitation={{ publicUrl, id: row.id, recipientName: row.recipientName }}
+                          recipientName={toDisplayString(row.recipientName, '')}
+                          isReissued
                         />
                       ) : (
                         <p

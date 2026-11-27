@@ -51,6 +51,8 @@ import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
@@ -156,6 +158,7 @@ class AdminServiceImplRegisterClientContactTest {
 
     @BeforeEach
     void setTenant() {
+        ReflectionTestUtils.setField(adminService, "piiHmacService", PiiTestSecrets.hmacService());
         TenantContextHolder.setTenantId(TENANT);
         lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
         ReflectionTestUtils.setField(adminService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
@@ -174,7 +177,7 @@ class AdminServiceImplRegisterClientContactTest {
         request.setPassword("");
 
         when(userService.existsPhoneDuplicateForPublicSignup("01098765432", TENANT)).thenReturn(false);
-        when(userRepository.existsByTenantIdAndEmail(eq(TENANT), anyString())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserIdFromPhone("01098765432", TENANT)).thenReturn("01098765432");
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
@@ -204,8 +207,7 @@ class AdminServiceImplRegisterClientContactTest {
         ClientRegistrationRequest request = new ClientRegistrationRequest();
         request.setEmail("dup@example.com");
 
-        when(encryptionUtil.safeEncrypt("dup@example.com")).thenReturn("enc:dup@example.com");
-        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:dup@example.com")).thenReturn(true);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(true);
 
         assertThatThrownBy(() -> adminService.registerClient(request))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -252,7 +254,7 @@ class AdminServiceImplRegisterClientContactTest {
         request.setEmail(uniqueEmail);
         request.setPassword("");
 
-        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-email-1");
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
@@ -286,7 +288,7 @@ class AdminServiceImplRegisterClientContactTest {
         request.setPassword("");
 
         when(userService.existsPhoneDuplicateForPublicSignup("01020003000", TENANT)).thenReturn(false);
-        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-both-1");
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
@@ -333,7 +335,7 @@ class AdminServiceImplRegisterClientContactTest {
         when(partnerInstitutionRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 91L))
                 .thenReturn(Optional.of(institution));
 
-        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-inst-1");
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
@@ -368,7 +370,7 @@ class AdminServiceImplRegisterClientContactTest {
         request.setEmail(uniqueEmail);
         request.setPassword("ClientInput1!");
 
-        when(userRepository.existsByTenantIdAndEmail(TENANT, "enc:" + uniqueEmail)).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserId(uniqueEmail, TENANT)).thenReturn("uid-ignore-1");
         when(passwordService.encodeSecret("Kp9@mxzw")).thenReturn("hashed-temp");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));

@@ -23,6 +23,7 @@ import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AccountIntegrationService;
 import com.coresolution.consultation.util.SocialProvider;
@@ -58,6 +59,7 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
     private final UserService userService;
     private final PasswordService passwordService;
     private final EmailService emailService;
+    private final PiiHmacService piiHmacService;
     private final MindgardenSecurityProperties mindgardenSecurityProperties;
     private final SecureNumericCodeGenerator codeGenerator;
     private final VerificationAttemptLimiter attemptLimiter;
@@ -156,7 +158,8 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             }
 
             String normalizedEmail = normalizeEmail(request.getExistingEmail());
-            Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+            Optional<User> existingUserOpt = userRepository.findByTenantIdAndEmailHash(
+                    tenantId, piiHmacService.hmacHex(normalizedEmail));
             if (existingUserOpt.isEmpty()) {
                 return AccountIntegrationResponse.failure(
                     AccountIntegrationMessages.INTEGRATION_VERIFY_FAILED,
@@ -302,7 +305,8 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
                 emailSendThrottleByNormalizedEmail.put(normalized, entry.afterSuccessfulSend(today));
 
                 String tenantId = TenantContextHolder.getRequiredTenantId();
-                boolean registered = userRepository.findByTenantIdAndEmail(tenantId, normalized).isPresent();
+                boolean registered = userRepository.findByTenantIdAndEmailHash(
+                        tenantId, piiHmacService.hmacHex(normalized)).isPresent();
                 if (!registered) {
                     log.info("이메일 인증 코드 발송 생략: 해당 기관에 가입된 이메일 아님, email={}",
                         EmailLogMasking.maskForLog(normalized));
@@ -449,7 +453,9 @@ public class AccountIntegrationServiceImpl implements AccountIntegrationService 
             String tenantId = TenantContextHolder.getRequiredTenantId();
             log.info("계정 통합 상태 확인: email={}", EmailLogMasking.maskForLog(email));
 
-            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizeEmail(email));
+            String normalized = normalizeEmail(email);
+            Optional<User> userOpt = userRepository.findByTenantIdAndEmailHash(
+                    tenantId, piiHmacService.hmacHex(normalized));
             if (userOpt.isEmpty()) {
                 return AccountIntegrationResponse.failure(
                     AccountIntegrationMessages.STATUS_NOT_LINKED,

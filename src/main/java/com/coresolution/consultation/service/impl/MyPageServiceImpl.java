@@ -28,6 +28,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ public class MyPageServiceImpl implements MyPageService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final PiiCryptoService encryptionUtil;
+    private final PiiHmacService piiHmacService;
     private final UserAddressRepository userAddressRepository;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final ProfileImageStorageService profileImageStorageService;
@@ -447,7 +449,7 @@ public class MyPageServiceImpl implements MyPageService {
      *   <li>새 이메일 정규화({@code trim().toLowerCase()}) + 형식 검증</li>
      *   <li>{@link EmailOtpVerificationService#verifyAndConsume(String, String)} 로 OTP 단일
      *       사용 검증</li>
-     *   <li>{@link UserRepository#existsByTenantIdAndEmailAndIdNot(String, String, Long)} 로
+     *   <li>{@link UserRepository#existsByTenantIdAndEmailHashAndIdNot(String, String, Long)} 로
      *       tenant 내 중복 검사 (본인 제외)</li>
      *   <li>새 이메일 저장 + AuditLog ({@link AuditAction#USER_EMAIL_CHANGE}) 기록</li>
      *   <li>{@link RefreshTokenService#revokeAllUserTokens(Long)} 호출 — JWT 강제 만료</li>
@@ -482,8 +484,8 @@ public class MyPageServiceImpl implements MyPageService {
             throw new IllegalArgumentException("인증 코드가 올바르지 않거나 만료되었습니다. 다시 받아 주세요.");
         }
 
-        boolean duplicate = userRepository.existsByTenantIdAndEmailAndIdNot(
-                tenantId, normalizedEmail, userId);
+        boolean duplicate = userRepository.existsByTenantIdAndEmailHashAndIdNot(
+                tenantId, piiHmacService.hmacHex(normalizedEmail), userId);
         if (duplicate) {
             log.warn("마이페이지 이메일 변경 중복 차단: userId={}, email={}",
                     userId, EmailLogMasking.maskForLog(normalizedEmail));

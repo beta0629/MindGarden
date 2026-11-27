@@ -15,8 +15,10 @@ import com.coresolution.consultation.converter.UserRoleConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import com.coresolution.consultation.security.pii.PiiAttributeConverter;
+import com.coresolution.consultation.security.pii.PiiBlindIndexListener;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Index;
@@ -26,7 +28,6 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import jakarta.persistence.UniqueConstraint;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -43,10 +44,12 @@ import lombok.NoArgsConstructor;
  */
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
+@EntityListeners(PiiBlindIndexListener.class)
 @Table(name = "users", 
     indexes = {
         @Index(name = "idx_users_email", columnList = "email"),
         @Index(name = "idx_users_phone", columnList = "phone"),
+        @Index(name = "idx_users_tenant_phone_hash", columnList = "tenant_id, phone_hash"),
         @Index(name = "idx_users_role", columnList = "role"),
         @Index(name = "idx_users_grade", columnList = "grade"),
         @Index(name = "idx_users_is_deleted", columnList = "is_deleted"),
@@ -54,7 +57,8 @@ import lombok.NoArgsConstructor;
         @Index(name = "idx_users_withdrawal_pending", columnList = "lifecycle_state, withdrawal_requested_at")
     },
     uniqueConstraints = {
-        @UniqueConstraint(name = "UK_users_email_tenant", columnNames = {"email", "tenant_id"}),
+        // V20261127_007: GCM ciphertext UK 제거 — 평문 유일성은 email_hash UNIQUE
+        @UniqueConstraint(name = "uk_users_tenant_email_hash", columnNames = {"tenant_id", "email_hash"}),
         // V20261011_001: 전역 user_id UNIQUE 는 soft-delete 행이 다른 테넌트 INSERT 를 막는다.
         @UniqueConstraint(name = "UK_users_tenant_user_id", columnNames = {"tenant_id", "user_id"})
     }
@@ -86,6 +90,14 @@ public class User extends BaseEntity implements Serializable {
     @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "email", nullable = false, length = 512)
     private String email;
+
+    /**
+     * 이메일 HMAC-SHA256 블라인드 인덱스 (정규화: trim+lower). {@link PiiAttributeConverter} 미적용.
+     *
+     * @since 2026-11-27
+     */
+    @Column(name = "email_hash", length = 64)
+    private String emailHash;
     
     @JsonIgnore
     @NotBlank(message = "비밀번호는 필수입니다.")
@@ -110,6 +122,14 @@ public class User extends BaseEntity implements Serializable {
     @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "phone", length = 512)
     private String phone;
+
+    /**
+     * 전화 HMAC-SHA256 블라인드 인덱스 (KR 숫자 정규화). {@link PiiAttributeConverter} 미적용.
+     *
+     * @since 2026-11-27
+     */
+    @Column(name = "phone_hash", length = 64)
+    private String phoneHash;
     
     @Column(name = "gender", length = 500) // 암호화된 데이터를 위해 길이 확장
     private String gender;

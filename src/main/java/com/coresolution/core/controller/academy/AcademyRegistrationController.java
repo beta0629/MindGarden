@@ -14,6 +14,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import jakarta.servlet.http.HttpSession;
@@ -51,6 +52,7 @@ public class AcademyRegistrationController extends BaseApiController {
     private final BranchService branchService;
     private final PasswordService passwordService;
     private final PiiCryptoService encryptionUtil;
+    private final PiiHmacService piiHmacService;
     private final UserSocialAccountRepository userSocialAccountRepository;
     
     /**
@@ -124,7 +126,8 @@ public class AcademyRegistrationController extends BaseApiController {
         }
         
         String email = request.getEmail().trim().toLowerCase();
-        if (userRepository.existsByTenantIdAndEmail(currentTenantId, email)) {
+        if (userRepository.existsByTenantIdAndEmailHash(
+                currentTenantId, piiHmacService.hmacHex(email))) {
             throw new org.springframework.dao.DataIntegrityViolationException("이미 사용 중인 이메일입니다.");
         }
         
@@ -239,8 +242,9 @@ public class AcademyRegistrationController extends BaseApiController {
         }
         
         String email = request.getEmail().trim().toLowerCase();
-        // 테넌트별 이메일 중복 확인 (전역 findByEmail 금지 — 크로스 테넌트 프로브 fail-closed)
-        if (userRepository.existsByTenantIdAndEmail(currentTenantId, email)) {
+        // 테넌트별 이메일 HMAC 중복 확인 (전역 findByEmail 금지 — 크로스 테넌트 프로브 fail-closed)
+        if (userRepository.existsByTenantIdAndEmailHash(
+                currentTenantId, piiHmacService.hmacHex(email))) {
             throw new org.springframework.dao.DataIntegrityViolationException("이미 사용 중인 이메일입니다.");
         }
         

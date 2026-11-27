@@ -4,6 +4,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserPasskey;
 import com.coresolution.consultation.repository.UserPasskeyRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.service.PasskeyService;
 import com.coresolution.consultation.util.EmailLogMasking;
@@ -37,6 +38,7 @@ public class PasskeyServiceImpl implements PasskeyService {
     private final UserRepository userRepository;
     private final UserPasskeyRepository passkeyRepository;
     private final JwtService jwtService;
+    private final PiiHmacService piiHmacService;
     
     @Value("${webauthn.rp.name:MindGarden}")
     private String rpName;
@@ -201,7 +203,9 @@ public class PasskeyServiceImpl implements PasskeyService {
         log.info("Passkey 인증 시작: email={}", EmailLogMasking.maskForLog(email));
         String tenantId = TenantContextHolder.getRequiredTenantId();
         
-        User user = userRepository.findByTenantIdAndEmail(tenantId, email)
+        String emailNorm = email == null ? "" : email.trim().toLowerCase();
+        User user = userRepository.findByTenantIdAndEmailHash(
+                        tenantId, piiHmacService.hmacHex(emailNorm))
                 .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다: " + email));
         
         // 사용자의 활성화된 Passkey 목록 조회

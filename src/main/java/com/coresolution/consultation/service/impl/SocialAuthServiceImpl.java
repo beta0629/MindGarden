@@ -25,6 +25,7 @@ import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -65,6 +66,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordService passwordService;
     private final PiiCryptoService encryptionUtil;
+    private final PiiHmacService piiHmacService;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")
@@ -113,8 +115,9 @@ public class SocialAuthServiceImpl implements SocialAuthService {
         log.info("소셜 회원가입 시작: email={}, provider={}", EmailLogMasking.maskForLog(normalizedEmail), normalizedProvider);
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        if (userRepository.existsByTenantIdAndEmail(tenantId, normalizedEmail)) {
-            Optional<User> existingOpt = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+        String emailHash = piiHmacService.hmacHex(normalizedEmail);
+        if (userRepository.existsByTenantIdAndEmailHash(tenantId, emailHash)) {
+            Optional<User> existingOpt = userRepository.findByTenantIdAndEmailHash(tenantId, emailHash);
             if (existingOpt.isEmpty()) {
                 log.warn("이메일 존재 플래그와 조회 결과 불일치: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(normalizedEmail));
                 return SocialSignupResponse.builder()

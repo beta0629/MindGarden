@@ -7,6 +7,7 @@ import com.coresolution.consultation.entity.RefreshToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.RefreshTokenRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.MultiTenantUserService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
     private final UserRepository userRepository;
     private final TenantRepository tenantRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PiiHmacService piiHmacService;
 
     /**
      * 현재 요청 테넌트 컨텍스트에서만 사용자를 조회합니다. 컨텍스트가 없거나 다른 테넌트 PK면 조회되지 않습니다.
@@ -126,7 +128,8 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         }
         
         // 특정 테넌트의 해당 이메일 사용자만 조회
-        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email.trim().toLowerCase());
+        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmailHash(
+                tenantId, piiHmacService.hmacHex(email.trim().toLowerCase()));
         if (userOpt.isEmpty()) {
             log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", EmailLogMasking.maskForLog(email), tenantId);
             return false;
@@ -162,7 +165,8 @@ public class MultiTenantUserServiceImpl implements MultiTenantUserService {
         }
         
         // 현재 테넌트의 해당 이메일 사용자만 조회
-        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmail(currentTenantId, email.trim().toLowerCase());
+        java.util.Optional<User> userOpt = userRepository.findByTenantIdAndEmailHash(
+                currentTenantId, piiHmacService.hmacHex(email.trim().toLowerCase()));
         if (userOpt.isEmpty()) {
             log.debug("해당 테넌트에 사용자를 찾을 수 없음: email={}, tenantId={}", EmailLogMasking.maskForLog(email), currentTenantId);
             return new ArrayList<>();

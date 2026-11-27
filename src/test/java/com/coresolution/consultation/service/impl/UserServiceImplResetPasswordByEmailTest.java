@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,8 @@ import java.util.function.Consumer;
 import com.coresolution.consultation.dto.CredentialSmsResult;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.consultation.service.ClientCredentialNotificationService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
@@ -62,6 +65,7 @@ class UserServiceImplResetPasswordByEmailTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(userService, "piiHmacService", PiiTestSecrets.hmacService());
         TenantContextHolder.setTenantId(TENANT_ID);
         ReflectionTestUtils.setField(userService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
         ReflectionTestUtils.setField(userService, "clientCredentialNotificationService",
@@ -135,7 +139,8 @@ class UserServiceImplResetPasswordByEmailTest {
     }
 
     private void stubLookupAndPassword(User user) {
-        when(userRepository.findByTenantIdAndEmail(TENANT_ID, LOGIN_EMAIL)).thenReturn(Optional.of(user));
+        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT_ID), any()))
+            .thenReturn(java.util.List.of(user));
         when(temporaryPasswordGenerator.generate()).thenReturn(TEMP_PASSWORD);
         when(passwordService.encodeSecret(TEMP_PASSWORD)).thenReturn(ENCODED_PASSWORD);
     }

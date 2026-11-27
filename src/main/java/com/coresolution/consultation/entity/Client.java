@@ -10,11 +10,14 @@ import lombok.experimental.SuperBuilder;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
 import jakarta.persistence.Column;
 import com.coresolution.consultation.security.pii.PiiAttributeConverter;
+import com.coresolution.consultation.security.pii.PiiBlindIndexListener;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Transient;
 
@@ -28,9 +31,13 @@ import jakarta.persistence.Transient;
  * @since 2025-01-05
  */
 @Entity
+@EntityListeners(PiiBlindIndexListener.class)
 @Table(name = "clients", indexes = {
     // Flyway V60 idx_clients_tenant_active_created — entity docs for consistency
-    @Index(name = "idx_clients_tenant_active_created", columnList = "tenant_id, is_deleted, created_at")
+    @Index(name = "idx_clients_tenant_active_created", columnList = "tenant_id, is_deleted, created_at"),
+    @Index(name = "idx_clients_tenant_phone_hash", columnList = "tenant_id, phone_hash")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uk_clients_tenant_email_hash", columnNames = {"tenant_id", "email_hash"})
 })
 @Data
 @EqualsAndHashCode(of = "id")
@@ -52,14 +59,31 @@ public class Client extends AuditableTenantBase {
     private String name;
 
     // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    // V20261127_007: ciphertext unique 제거 — 평문 유일성은 email_hash UNIQUE (tenant 스코프)
     @Convert(converter = PiiAttributeConverter.class)
-    @Column(name = "email", nullable = false, unique = true, length = 512)
+    @Column(name = "email", nullable = false, length = 512)
     private String email;
+
+    /**
+     * 이메일 HMAC-SHA256 블라인드 인덱스. {@link PiiAttributeConverter} 미적용.
+     *
+     * @since 2026-11-27
+     */
+    @Column(name = "email_hash", length = 64)
+    private String emailHash;
 
     // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
     @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "phone", length = 512)
     private String phone;
+
+    /**
+     * 전화 HMAC-SHA256 블라인드 인덱스. {@link PiiAttributeConverter} 미적용.
+     *
+     * @since 2026-11-27
+     */
+    @Column(name = "phone_hash", length = 64)
+    private String phoneHash;
     
     @Column(name = "birth_date")
     private LocalDate birthDate;

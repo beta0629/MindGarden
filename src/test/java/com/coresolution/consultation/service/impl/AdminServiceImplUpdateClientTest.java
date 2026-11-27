@@ -35,6 +35,8 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.erp.financial.CardMerchantFeeResolutionService;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
@@ -44,6 +46,7 @@ import com.coresolution.core.security.PasswordService;
 import com.coresolution.core.util.StatusCodeHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -143,6 +146,7 @@ class AdminServiceImplUpdateClientTest {
 
     @BeforeEach
     void setTenantContext() {
+        ReflectionTestUtils.setField(adminService, "piiHmacService", PiiTestSecrets.hmacService());
         TenantContextHolder.setTenantId("tenant-ut-1");
     }
 
@@ -333,7 +337,7 @@ class AdminServiceImplUpdateClientTest {
         request.setEmail("NewClientReg@test.com");
 
         when(userIdGenerator.generateUniqueUserId(anyString(), anyString())).thenReturn("uid-reg-1");
-        when(userRepository.existsByTenantIdAndEmail(anyString(), anyString())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(anyString(), anyString())).thenReturn(false);
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed-pw");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));
         when(tenantRoleRepository.findByTenantIdAndNameEnAndIsDeletedFalse(anyString(), anyString()))

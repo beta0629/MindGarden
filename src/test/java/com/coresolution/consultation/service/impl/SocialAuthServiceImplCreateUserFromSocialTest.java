@@ -8,6 +8,9 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.entity.UserSocialAccount;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
@@ -26,6 +29,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.ArgumentCaptor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,6 +65,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
 
     @BeforeEach
     void setTenantContext() {
+        ReflectionTestUtils.setField(socialAuthService, "piiHmacService", PiiTestSecrets.hmacService());
         TenantContextHolder.setTenantId("tenant-social-ut");
     }
 
@@ -86,7 +91,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .marketingConsent(false)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -123,7 +128,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .marketingConsent(false)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(encryptionUtil.encrypt("폴백표시명")).thenReturn("enc-name");
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -153,7 +158,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .termsConsent(true)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(userRepository.saveAndFlush(any(User.class))).thenAnswer(inv -> {
             User user = inv.getArgument(0);
@@ -185,7 +190,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .marketingConsent(false)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "user@test.com")).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -225,7 +230,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .marketingConsent(false)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenAnswer(inv -> {
             String plain = inv.getArgument(0);
             assertThat(PasswordPolicy.firstLoginStorageViolationMessage(plain))
@@ -268,7 +273,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .marketingConsent(false)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", request.getEmail())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(false);
         when(passwordService.encodePassword(anyString())).thenReturn("encoded");
         when(encryptionUtil.encrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
         when(encryptionUtil.safeDecrypt(anyString())).thenAnswer(inv -> inv.getArgument(0));
@@ -301,7 +306,7 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
 
         assertThat(response.isSuccess()).isFalse();
-        verify(userRepository, never()).existsByTenantIdAndEmail(anyString(), anyString());
+        verify(userRepository, never()).existsByTenantIdAndEmailHash(anyString(), anyString());
     }
 
     @Test
@@ -334,8 +339,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         existing.setId(9101L);
         existing.setTenantId("tenant-social-ut");
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "pending@test.com")).thenReturn(true);
-        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "pending@test.com"))
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString()))
             .thenReturn(java.util.Optional.of(existing));
         when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
             eq("tenant-social-ut"), eq("KAKAO"), eq("kakao-link-1")))
@@ -383,8 +388,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         existing.setId(9201L);
         existing.setTenantId("tenant-social-ut");
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "done@test.com")).thenReturn(true);
-        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "done@test.com"))
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString()))
             .thenReturn(java.util.Optional.of(existing));
 
         SocialSignupResponse response = socialAuthService.createUserFromSocial(request);
@@ -420,8 +425,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
         existing.setId(9202L);
         existing.setTenantId("tenant-social-ut");
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "hasphone@test.com")).thenReturn(true);
-        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "hasphone@test.com"))
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString()))
             .thenReturn(java.util.Optional.of(existing));
         when(encryptionUtil.safeDecrypt("enc-phone")).thenReturn("01099998888");
 
@@ -474,8 +479,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .providerUserId("nv-shared")
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "inc@test.com")).thenReturn(true);
-        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "inc@test.com"))
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString()))
             .thenReturn(java.util.Optional.of(existing));
         when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
             eq("tenant-social-ut"), eq("NAVER"), eq("nv-shared")))
@@ -535,8 +540,8 @@ class SocialAuthServiceImplCreateUserFromSocialTest {
             .phone(null)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmail("tenant-social-ut", "idem@test.com")).thenReturn(true);
-        when(userRepository.findByTenantIdAndEmail("tenant-social-ut", "idem@test.com"))
+        when(userRepository.existsByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString())).thenReturn(true);
+        when(userRepository.findByTenantIdAndEmailHash(eq("tenant-social-ut"), anyString()))
             .thenReturn(java.util.Optional.of(existing));
         when(userSocialAccountRepository.findByTenantIdAndProviderAndProviderUserIdAndIsDeletedFalse(
             eq("tenant-social-ut"), eq("KAKAO"), eq("k-idem")))

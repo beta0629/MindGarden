@@ -26,6 +26,33 @@ public interface ClientRepository extends BaseRepository<Client, Long> {
     // === tenantId 필터링 메서드 (권장) ===
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.email = :email AND c.isDeleted = false")
     Optional<Client> findByTenantIdAndEmailAndIsDeletedFalse(@Param("tenantId") String tenantId, @Param("email") String email);
+
+    /**
+     * 테넌트 + 이메일 HMAC 블라인드 인덱스로 미삭제 내담자 조회.
+     *
+     * @param tenantId  테넌트 ID
+     * @param emailHash HMAC hex
+     * @return 내담자
+     * @since 2026-11-27
+     */
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.emailHash = :emailHash "
+            + "AND c.isDeleted = false")
+    Optional<Client> findByTenantIdAndEmailHashAndIsDeletedFalse(
+            @Param("tenantId") String tenantId, @Param("emailHash") String emailHash);
+
+    /**
+     * dual-verify 후보 해시로 미삭제 내담자 조회.
+     *
+     * @param tenantId    테넌트 ID
+     * @param emailHashes 후보 해시
+     * @return 내담자
+     * @since 2026-11-27
+     */
+    @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.emailHash IN :emailHashes "
+            + "AND c.isDeleted = false")
+    Optional<Client> findByTenantIdAndEmailHashInAndIsDeletedFalse(
+            @Param("tenantId") String tenantId,
+            @Param("emailHashes") Collection<String> emailHashes);
     
     @Query("SELECT c FROM Client c WHERE c.tenantId = :tenantId AND c.isDeleted = false")
     List<Client> findByTenantIdAndIsDeletedFalse(@Param("tenantId") String tenantId);

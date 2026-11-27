@@ -11,6 +11,7 @@ import com.coresolution.consultation.service.erp.financial.FinancialTransactionS
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
@@ -47,6 +48,7 @@ public class SuperAdminController extends BaseApiController {
     private final FinancialTransactionService financialTransactionService;
     private final DynamicPermissionService dynamicPermissionService;
     private final PiiCryptoService encryptionUtil;
+    private final PiiHmacService piiHmacService;
     
     /**
      * 수퍼어드민 계정 생성
@@ -76,7 +78,8 @@ public class SuperAdminController extends BaseApiController {
         
         // 이메일 중복 확인 (테넌트별)
         if (tenantId != null && !tenantId.isEmpty()) {
-            if (userRepository.existsByTenantIdAndEmail(tenantId, request.getEmail())) {
+            String emailNorm = request.getEmail() == null ? "" : request.getEmail().trim().toLowerCase();
+            if (userRepository.existsByTenantIdAndEmailHash(tenantId, piiHmacService.hmacHex(emailNorm))) {
                 throw new RuntimeException("이미 존재하는 이메일입니다.");
             }
         } else {

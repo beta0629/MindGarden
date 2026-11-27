@@ -10,6 +10,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ClientRepository;
 import com.coresolution.consultation.repository.ConsultantRepository;
 import com.coresolution.consultation.repository.UserRepository;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import com.coresolution.core.security.PasswordService;
@@ -41,6 +42,9 @@ public class BranchAccountCreator {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private PiiHmacService piiHmacService;
 
     // 지점별 계정 정보
     private static final List<String> BRANCH_CODES = Arrays.asList(
@@ -243,6 +247,7 @@ public class BranchAccountCreator {
             System.out.println("  - tenant 컨텍스트 없음 — BranchAccountCreator 계정 생성 스킵: " + email);
             return true;
         }
-        return userRepository.existsByTenantIdAndEmail(tenantId, email);
+        String emailNorm = email == null ? "" : email.trim().toLowerCase();
+        return userRepository.existsByTenantIdAndEmailHash(tenantId, piiHmacService.hmacHex(emailNorm));
     }
 }

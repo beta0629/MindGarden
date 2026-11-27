@@ -21,6 +21,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AppleSignInService;
 import com.coresolution.consultation.service.JwtService;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
@@ -78,6 +79,7 @@ public class AppleSignInServiceImpl implements AppleSignInService {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final JwtService jwtService;
     private final PiiCryptoService encryptionUtil;
+    private final PiiHmacService piiHmacService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -260,7 +262,8 @@ public class AppleSignInServiceImpl implements AppleSignInService {
             log.info("Apple SIWA email fallback 스킵: Private Relay 이메일 (tenantId={})", tenantId);
             return null;
         }
-        Optional<User> existingByEmail = userRepository.findByEmailAndTenantId(normalizedEmail, tenantId);
+        Optional<User> existingByEmail = userRepository.findByEmailHashAndTenantId(
+                piiHmacService.hmacHex(normalizedEmail), tenantId);
         if (existingByEmail.isEmpty()) {
             return null;
         }

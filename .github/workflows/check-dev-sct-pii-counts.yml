@@ -1,0 +1,447 @@
+# =============================================================================
+# Check .dev SCT PII counts (READ-ONLY) — SCT 재게이트 증거
+# -----------------------------------------------------------------------------
+# 목적:
+#   ④ .dev BE 로그에서 SMS 본문·OTP 노출 추정 패턴 "매칭 건수만"
+#   ⑤ SCT 테이블 recipient_name·guardian_relation 이 GCM v2 암호문인지 "건수만"
+#
+# 금지 (절대):
+#   - PRODUCTION_* secret / production environment 참조
+#   - 임의 SQL 입력·쓰기(INSERT/UPDATE/DELETE/…)·백필
+#   - PII 컬럼 값·암호문·접두 부분문자열·호스트·계정명·비밀번호 출력
+#   - 매칭 로그 라인 원문 출력·파일 저장·artifact 업로드
+#   - set -x / 시크릿 echo
+#
+# 대상: .dev 전용 (environment:dev, DEV_SERVER_*, /etc/mindgarden/dev.env)
+# 트리거: workflow_dispatch only
+# =============================================================================
+
+name: 🔎 Check .dev SCT PII counts (read-only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      since_hours:
+        description: '로그·DB recent 스코프 기준 시간(시간). 숫자만. 기본 24. 허용 1–8760'
+        required: false
+        default: '24'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-dev-sct-pii-counts
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: .dev SCT PII counts (read-only)
+    # check-dev-pwreset-redis / backfill-client-event-dev 와 동일 runner
+    runs-on: [self-hosted, linux, deploy]
+    # DEV_* 가 environment-scoped 일 때 repository secret 만으로는 빈 값 → environment: dev 필수
+    environment: dev
+    timeout-minutes: 15
+    steps:
+      - name: release/dev 가드
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          echo "github.ref=$REF"
+          if [ "$REF" != "refs/heads/release/dev" ]; then
+            echo "::error title=ref 거부::SCT PII 점검은 refs/heads/release/dev 에서만 실행할 수 있습니다. (got: $REF)"
+            exit 1
+          fi
+
+      - name: Validate since_hours (digits only, 1–8760)
+        env:
+          SINCE_HOURS_INPUT: ${{ github.event.inputs.since_hours }}
+        run: |
+          set -euo pipefail
+          RAW="${SINCE_HOURS_INPUT:-24}"
+          if ! printf '%s' "$RAW" | grep -Eq '^[0-9]+$'; then
+            echo "::error title=since_hours invalid::숫자만 허용합니다 (^[0-9]+$). 임의 SQL/문자열 입력 금지."
+            exit 1
+          fi
+          # 선행 0 제거 후 범위 검사 (10# 로 8진 해석 방지)
+          N=$((10#$RAW))
+          if [ "$N" -lt 1 ] || [ "$N" -gt 8760 ]; then
+            echo "::error title=since_hours range::허용 범위는 1–8760 입니다. (got length=${#RAW})"
+            exit 1
+          fi
+          echo "since_hours_ok=${N}"
+
+      - name: 🔎 SCT PII counts + log pattern counts (SSH, read-only)
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        env:
+          SINCE_HOURS: ${{ github.event.inputs.since_hours || '24' }}
+          # 폴백만 — 운영 PRODUCTION_* 절대 미참조. 실제 SSOT 는 /etc/mindgarden/dev.env
+          DEV_DB_PASSWORD: ${{ secrets.DEV_DB_PASSWORD }}
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER }}
+          key: ${{ secrets.DEV_SERVER_SSH_KEY }}
+          port: 22
+          timeout: 120s
+          command_timeout: 12m
+          envs: SINCE_HOURS,DEV_DB_PASSWORD
+          script_stop: true
+          script: |
+            set -euo pipefail
+
+            # ---- 상수 (.dev 전용 경로 — 운영 경로 문자열을 secret 으로 읽지 않음) ----
+            APP_DIR=/var/www/mindgarden-dev
+            UNIT=mindgarden-dev.service
+            DEV_ENV_FILE=/etc/mindgarden/dev.env
+            CORES_LOG="${APP_DIR}/logs/coresolution.log"
+            DEV_STDOUT_LOG=/var/log/mindgarden/dev.log
+            WORK_DIR=""
+
+            cleanup() {
+              if [ -n "${WORK_DIR:-}" ] && [ -d "${WORK_DIR}" ]; then
+                rm -rf "${WORK_DIR}"
+              fi
+              unset DB_HOST DB_PORT DB_USERNAME DB_USER DB_PASSWORD DB_NAME MYSQL_PWD DEV_DB_PASSWORD 2>/dev/null || true
+            }
+            trap cleanup EXIT
+
+            echo "::group::🔎 .dev SCT PII counts (read-only)"
+            echo "NO WRITE SQL. NO PII values. Counts only. No artifacts."
+
+            # ---- since_hours 재검증 (원격 defense in depth) ----
+            SINCE_RAW="${SINCE_HOURS:-24}"
+            if ! printf '%s' "$SINCE_RAW" | grep -Eq '^[0-9]+$'; then
+              echo "::error title=since_hours invalid::remote 검증 실패 — 숫자만 허용"
+              exit 1
+            fi
+            SINCE_N=$((10#$SINCE_RAW))
+            if [ "$SINCE_N" -lt 1 ] || [ "$SINCE_N" -gt 8760 ]; then
+              echo "::error title=since_hours range::remote 허용 범위 1–8760"
+              exit 1
+            fi
+            echo "since_hours=${SINCE_N}"
+
+            # ---- (c) 경로 가드: .dev 상수와 불일치 시 실패 ----
+            if [ "$APP_DIR" != "/var/www/mindgarden-dev" ]; then
+              echo "::error title=path guard::APP_DIR 이 .dev 경로가 아닙니다."
+              exit 1
+            fi
+            if [ "$UNIT" != "mindgarden-dev.service" ]; then
+              echo "::error title=path guard::UNIT 이 .dev 유닛이 아닙니다."
+              exit 1
+            fi
+            if [ "$DEV_ENV_FILE" != "/etc/mindgarden/dev.env" ]; then
+              echo "::error title=path guard::DEV_ENV_FILE 이 .dev env 가 아닙니다."
+              exit 1
+            fi
+            # 운영 경로 상수 비교 가드 (secret 미사용)
+            if [ "$DEV_ENV_FILE" = "/etc/mindgarden/prod.env" ] || [ "$UNIT" = "mindgarden.service" ]; then
+              echo "::error title=path guard::운영 경로가 감지되어 중단합니다."
+              exit 1
+            fi
+            if [ ! -d "$APP_DIR" ]; then
+              echo "::error title=path guard::APP_DIR 디렉터리가 없습니다."
+              exit 1
+            fi
+            if ! ( [ -f "$DEV_ENV_FILE" ] || (command -v sudo >/dev/null 2>&1 && sudo test -f "$DEV_ENV_FILE" 2>/dev/null) ); then
+              echo "::error title=path guard::dev.env 파일이 없습니다."
+              exit 1
+            fi
+            if ! systemctl cat "$UNIT" >/dev/null 2>&1; then
+              echo "::error title=path guard::.dev systemd unit 을 확인할 수 없습니다."
+              exit 1
+            fi
+            echo "path_guard=OK app_dir=.dev unit=.dev env=.dev"
+
+            # ---- quiet env load (값 미출력) ----
+            _load_env_key_quiet() {
+              # $1=file $2=KEY $3=varname
+              local env_file="$1" key="$2" varname="$3" line raw
+              line=""
+              if command -v sudo >/dev/null 2>&1 && sudo test -f "$env_file" 2>/dev/null; then
+                line="$(sudo grep -E "^[[:space:]]*${key}=" "$env_file" 2>/dev/null | tail -n1 || true)"
+              elif [ -f "$env_file" ]; then
+                line="$(grep -E "^[[:space:]]*${key}=" "$env_file" 2>/dev/null | tail -n1 || true)"
+              fi
+              raw=""
+              if [ -n "$line" ]; then
+                raw="${line#*=}"
+                raw="$(printf '%s' "$raw" | tr -d '\r')"
+                case "$raw" in
+                  \"*\") raw="${raw#\"}"; raw="${raw%\"}" ;;
+                  \'*\') raw="${raw#\'}"; raw="${raw%\'}" ;;
+                esac
+              fi
+              eval "$varname=\"\$raw\""
+            }
+
+            unset DB_HOST DB_PORT DB_USERNAME DB_USER DB_PASSWORD DB_NAME 2>/dev/null || true
+
+            LOAD_DB_ENV="${APP_DIR}/load-deploy-db-env.sh"
+            if [ -f "$LOAD_DB_ENV" ]; then
+              export MG_DEPLOY_ENV_FILE="$DEV_ENV_FILE"
+              export MG_DEPLOY_ENV_FILE_REQUIRED=1
+              export MG_DEPLOY_SYSTEMD_UNITS="$UNIT"
+              export MG_DEPLOY_DB_PASSWORD_FALLBACK="${DEV_DB_PASSWORD:-}"
+              # shellcheck disable=SC1090
+              . "$LOAD_DB_ENV"
+              echo "db_env_loader=load-deploy-db-env.sh"
+            else
+              echo "db_env_loader=quiet-grep-fallback"
+              _load_env_key_quiet "$DEV_ENV_FILE" DB_HOST DB_HOST
+              _load_env_key_quiet "$DEV_ENV_FILE" DB_PORT DB_PORT
+              _load_env_key_quiet "$DEV_ENV_FILE" DB_USERNAME DB_USERNAME
+              if [ -z "${DB_USERNAME:-}" ]; then
+                _load_env_key_quiet "$DEV_ENV_FILE" DB_USER DB_USERNAME
+              fi
+              _load_env_key_quiet "$DEV_ENV_FILE" DB_PASSWORD DB_PASSWORD
+              _load_env_key_quiet "$DEV_ENV_FILE" DB_NAME DB_NAME
+              if [ -z "${DB_PASSWORD:-}" ] && [ -n "${DEV_DB_PASSWORD:-}" ]; then
+                DB_PASSWORD="$DEV_DB_PASSWORD"
+                echo "db_password_source=fallback_dev_secret"
+              fi
+            fi
+
+            # SET/EMPTY 만 (값·호스트·계정 미출력)
+            if [ -n "${DB_HOST:-}" ]; then echo "DB_HOST=SET"; else echo "DB_HOST=EMPTY"; fi
+            if [ -n "${DB_PORT:-}" ]; then echo "DB_PORT=SET"; else echo "DB_PORT=EMPTY"; fi
+            if [ -n "${DB_USERNAME:-}" ]; then echo "DB_USERNAME=SET"; else echo "DB_USERNAME=EMPTY"; fi
+            if [ -n "${DB_PASSWORD:-}" ]; then echo "DB_PASSWORD=SET"; else echo "DB_PASSWORD=EMPTY"; fi
+            if [ -n "${DB_NAME:-}" ]; then echo "DB_NAME=SET"; else echo "DB_NAME=EMPTY"; fi
+
+            if [ -z "${DB_HOST:-}" ] || [ -z "${DB_USERNAME:-}" ] || [ -z "${DB_NAME:-}" ] || [ -z "${DB_PASSWORD:-}" ]; then
+              echo "::error title=DB 접속 정보 누락::dev.env DB_* (또는 DEV_DB_PASSWORD 폴백) 을 확인하세요. 값은 출력하지 않습니다."
+              exit 1
+            fi
+            if [ -z "${DB_PORT:-}" ]; then
+              DB_PORT=3306
+            fi
+
+            # ---- (b) DB명 가드: 레거시/운영 스키마명 차단 ----
+            case "$DB_NAME" in
+              mind_garden|mind_garden_legacy_*)
+                echo "::error title=대상 DB 차단::DB_NAME 이 차단 패턴(mind_garden|mind_garden_legacy_*) 입니다. .dev core_solution 만 허용."
+                exit 1
+                ;;
+            esac
+            echo "db_name_guard=OK"
+
+            if ! command -v mysql >/dev/null 2>&1; then
+              echo "::error title=mysql 없음::원격 호스트에 mysql 클라이언트가 없습니다. (값 미출력)"
+              exit 1
+            fi
+
+            WORK_DIR="$(mktemp -d /tmp/check-dev-sct-pii.XXXXXX)"
+            SQL_FILE="${WORK_DIR}/counts.sql"
+
+            # ---- 고정 SQL (SELECT 전용). since_hours 는 숫자 검증 후에만 INTERVAL 에 삽입 ----
+            # v2: {keyId}:v2::{base64}  (PiiCipherFormats)
+            # v1: {keyId}::{base64} AND NOT v2
+            # other_plain_est: NOT null/empty AND NOT v1 AND NOT v2
+            cat > "$SQL_FILE" <<SQL
+            START TRANSACTION READ ONLY;
+
+            SELECT CONCAT(
+              'scope=all table=sct_invitations col=recipient_name',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN recipient_name IS NULL OR recipient_name = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN recipient_name IS NOT NULL AND recipient_name <> '' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_invitations;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_invitations col=recipient_name',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN recipient_name IS NULL OR recipient_name = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN recipient_name IS NOT NULL AND recipient_name <> '' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_invitations
+            WHERE created_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
+
+            SELECT CONCAT(
+              'scope=all table=sct_invitations col=recipient_name tenant_id=', tenant_id,
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN recipient_name IS NULL OR recipient_name = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN recipient_name IS NOT NULL AND recipient_name <> '' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_invitations
+            GROUP BY tenant_id;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_invitations col=recipient_name tenant_id=', tenant_id,
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN recipient_name IS NULL OR recipient_name = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN recipient_name IS NOT NULL AND recipient_name <> '' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (recipient_name REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_invitations
+            WHERE created_at >= NOW() - INTERVAL ${SINCE_N} HOUR
+            GROUP BY tenant_id;
+
+            SELECT CONCAT(
+              'scope=all table=sct_consents col=guardian_relation',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_relation IS NULL OR guardian_relation = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_relation IS NOT NULL AND guardian_relation <> '' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_consents col=guardian_relation',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_relation IS NULL OR guardian_relation = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_relation IS NOT NULL AND guardian_relation <> '' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
+
+            SELECT CONCAT(
+              'scope=all table=sct_consents col=guardian_relation tenant_id=', tenant_id,
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_relation IS NULL OR guardian_relation = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_relation IS NOT NULL AND guardian_relation <> '' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            GROUP BY tenant_id;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_consents col=guardian_relation tenant_id=', tenant_id,
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_relation IS NULL OR guardian_relation = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_relation IS NOT NULL AND guardian_relation <> '' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_relation REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR
+            GROUP BY tenant_id;
+
+            COMMIT;
+            SQL
+
+            # SELECT/START/COMMIT 외 쓰기 구문 가드
+            if grep -qiE '(^|[^a-z_])(insert|update|delete|drop|alter|truncate|create|replace|grant|call|set)[[:space:]]' "$SQL_FILE"; then
+              echo "::error title=SELECT 전용 위반::고정 SQL 에 쓰기/SET 구문이 있어 중단합니다."
+              exit 1
+            fi
+
+            echo "--- (5) SCT column cipher format counts (SELECT COUNT only) ---"
+            export MYSQL_PWD="$DB_PASSWORD"
+            set +e
+            MYSQL_OUT="$(mysql \
+              --init-command="SET SESSION TRANSACTION READ ONLY" \
+              -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USERNAME" "$DB_NAME" \
+              --batch --raw --skip-column-names < "$SQL_FILE" 2>/dev/null)"
+            MYSQL_RC=$?
+            set -e
+            unset MYSQL_PWD
+            if [ "$MYSQL_RC" -ne 0 ]; then
+              echo "::error title=mysql 실패::SELECT COUNT 실행 실패 (SQL 결과·에러 원문 미덤프)."
+              exit 1
+            fi
+            # 건수 라인만 출력 (이미 CONCAT key=value). 빈 줄 생략.
+            printf '%s\n' "$MYSQL_OUT" | awk 'NF'
+
+            # =================================================================
+            # (4) 로그 패턴 건수 — 매칭 라인·원문 절대 출력 금지
+            # =================================================================
+            echo "--- (4) BE log pattern counts (count only, no line dump) ---"
+            SINCE_TS="$(date -d "${SINCE_N} hours ago" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || date -v-${SINCE_N}H '+%Y-%m-%d %H:%M:%S' 2>/dev/null || true)"
+            if [ -n "${SINCE_TS:-}" ]; then
+              echo "log_since_ts=${SINCE_TS}"
+            else
+              echo "log_since_ts=UNAVAILABLE"
+            fi
+
+            LOG_FILES=""
+            if [ -f "$CORES_LOG" ]; then
+              LOG_FILES="$CORES_LOG"
+            fi
+            for f in $(ls -1t "${APP_DIR}/logs"/coresolution.*.log 2>/dev/null | head -n 5); do
+              case " $LOG_FILES " in
+                *" $f "*) ;;
+                *) LOG_FILES="$LOG_FILES $f" ;;
+              esac
+            done
+            if [ -f "$DEV_STDOUT_LOG" ]; then
+              case " $LOG_FILES " in
+                *" $DEV_STDOUT_LOG "*) ;;
+                *) LOG_FILES="$LOG_FILES $DEV_STDOUT_LOG" ;;
+              esac
+            fi
+
+            # SMS 본문/단축링크 노출 추정 (건수만)
+            SMS_BODY_PATTERN='SCT SMS|/s/|문장완성|마인드가든 심리상담센터|\[마인드가든\]'
+            # OTP 본문 유출 의심
+            OTP_PATTERN='인증번호는|[Oo][Tt][Pp].*[0-9]{4,8}|인증번호.*[0-9]{4,8}'
+            # 본문 비로그 정책 준수 보조 니들
+            IDENTITY_OTP_NEEDLE='SCT identity OTP'
+
+            _count_pattern_since() {
+              # $1=pattern(ERE)  — stdout 에 정수만
+              local pattern="$1"
+              local total=0 c
+              if [ -z "$(echo $LOG_FILES | tr -d '[:space:]')" ]; then
+                echo 0
+                return 0
+              fi
+              for f in $LOG_FILES; do
+                [ -f "$f" ] || continue
+                if [ -n "${SINCE_TS:-}" ]; then
+                  c="$(sudo grep -E "$pattern" "$f" 2>/dev/null \
+                    | awk -v since="$SINCE_TS" '
+                        {
+                          ts = substr($0, 1, 19)
+                          if (ts >= since) c++
+                        }
+                        END { print c+0 }
+                      ' || echo 0)"
+                else
+                  c="$(sudo grep -cE "$pattern" "$f" 2>/dev/null || echo 0)"
+                fi
+                # grep -c 가 "0\n" 외에 파일명:0 형태일 수 있어 숫자만
+                c="$(printf '%s' "$c" | tr -cd '0-9' | head -c 12)"
+                c="${c:-0}"
+                total=$((total + c))
+              done
+              echo "$total"
+            }
+
+            SMS_BODY_COUNT="$(_count_pattern_since "$SMS_BODY_PATTERN")"
+            OTP_COUNT="$(_count_pattern_since "$OTP_PATTERN")"
+            IDENTITY_OTP_COUNT="$(_count_pattern_since "$IDENTITY_OTP_NEEDLE")"
+
+            echo "log_sms_body_pattern_count=${SMS_BODY_COUNT}"
+            echo "log_otp_pattern_count=${OTP_COUNT}"
+            echo "log_sct_identity_otp_needle_count=${IDENTITY_OTP_COUNT}"
+
+            # journalctl since 보조 건수 (라인 미출력)
+            set +e
+            J_SMS="$(sudo journalctl -u "$UNIT" --since "${SINCE_N} hours ago" --no-pager 2>/dev/null | grep -cE "$SMS_BODY_PATTERN" || true)"
+            J_OTP="$(sudo journalctl -u "$UNIT" --since "${SINCE_N} hours ago" --no-pager 2>/dev/null | grep -cE "$OTP_PATTERN" || true)"
+            J_ID="$(sudo journalctl -u "$UNIT" --since "${SINCE_N} hours ago" --no-pager 2>/dev/null | grep -cF "$IDENTITY_OTP_NEEDLE" || true)"
+            set -e
+            J_SMS="$(printf '%s' "${J_SMS:-0}" | tr -cd '0-9')"; J_SMS="${J_SMS:-0}"
+            J_OTP="$(printf '%s' "${J_OTP:-0}" | tr -cd '0-9')"; J_OTP="${J_OTP:-0}"
+            J_ID="$(printf '%s' "${J_ID:-0}" | tr -cd '0-9')"; J_ID="${J_ID:-0}"
+            echo "journal_sms_body_pattern_count=${J_SMS}"
+            echo "journal_otp_pattern_count=${J_OTP}"
+            echo "journal_sct_identity_otp_needle_count=${J_ID}"
+
+            echo "::endgroup::"
+            echo "=== 끝 — 건수만 출력, PII·암호문·로그 원문 미출력 ==="
+            exit 0

@@ -69,6 +69,8 @@
   font-weight: var(--mg-v2-font-weight-bold);
   line-height: var(--mg-v2-font-line-height-heading);
   margin: var(--mg-v2-space-6) 0 0;
+  /* 전역 h1 색보다 우선 — cover bg(neutral-900) 대비 ≥4.5:1 (text-inverse ≈17.85:1) */
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-sct-lp-sub {

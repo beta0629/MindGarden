@@ -1,6 +1,7 @@
 package com.coresolution.consultation.sct.service.impl;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 import com.coresolution.consultation.constant.AuditAction;
 import com.coresolution.consultation.entity.AuditLog;
 import com.coresolution.consultation.entity.SystemConfig;
@@ -29,6 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class SctSettingsServiceImpl implements SctSettingsService {
 
+    private static final Pattern PUBLIC_CONTACT_PHONE_PATTERN =
+            Pattern.compile(SctFeatureFlagKeys.PUBLIC_CONTACT_PHONE_PATTERN);
+
     private final SystemConfigRepository systemConfigRepository;
     private final AuditLogService auditLogService;
     private final SctFeatureGuard sctFeatureGuard;
@@ -56,6 +60,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
         Integer beforeExpiry = resolveLinkExpiryDays(tenantId);
         Integer beforeRetention = resolveRetentionDays(tenantId);
         boolean beforeFeature = sctFeatureGuard.isEnabled(tenantId);
+        String beforeOffice = resolvePublicOfficePhone(tenantId);
+        String beforeMobile = resolvePublicMobilePhone(tenantId);
 
         Integer newExpiry = beforeExpiry;
         if (request.getLinkExpiryDays() != null) {
@@ -95,12 +101,30 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                     SctFeatureFlagKeys.FEATURE_CATEGORY, actorId);
         }
 
+        if (request.getOfficePhone() != null) {
+            String officeValue = normalizePublicContactPhone(request.getOfficePhone(), "사무실 전화");
+            upsertConfig(tenantId, SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE, officeValue,
+                    "SCT 공개 사무실 전화", SctFeatureFlagKeys.CONFIG_CATEGORY, actorId);
+        }
+        if (request.getMobilePhone() != null) {
+            String mobileValue = normalizePublicContactPhone(request.getMobilePhone(), "공개 휴대폰");
+            upsertConfig(tenantId, SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE, mobileValue,
+                    "SCT 공개 휴대폰", SctFeatureFlagKeys.CONFIG_CATEGORY, actorId);
+        }
+
+        String afterOffice = resolvePublicOfficePhone(tenantId);
+        String afterMobile = resolvePublicMobilePhone(tenantId);
+
         String beforeJson = "{\"linkExpiryDays\":" + beforeExpiry
                 + ",\"retentionDays\":" + beforeRetention
-                + ",\"featureEnabled\":" + beforeFeature + "}";
+                + ",\"featureEnabled\":" + beforeFeature
+                + ",\"officePhone\":" + jsonStringOrNull(beforeOffice)
+                + ",\"mobilePhone\":" + jsonStringOrNull(beforeMobile) + "}";
         String afterJson = "{\"linkExpiryDays\":" + newExpiry
                 + ",\"retentionDays\":" + newRetention
-                + ",\"featureEnabled\":" + newFeature + "}";
+                + ",\"featureEnabled\":" + newFeature
+                + ",\"officePhone\":" + jsonStringOrNull(afterOffice)
+                + ",\"mobilePhone\":" + jsonStringOrNull(afterMobile) + "}";
         AuditLog entry = AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actorId)
@@ -110,7 +134,9 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .beforeJson(beforeJson)
                 .afterJson(afterJson)
                 .metadataJson("{\"keys\":[\"sct.link.expiry.days\",\"sct.retention.days\","
-                        + "\"feature.sct.enabled\"]}")
+                        + "\"feature.sct.enabled\",\""
+                        + SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE + "\",\""
+                        + SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE + "\"]}")
                 .build();
         auditLogService.record(entry);
 
@@ -118,8 +144,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .linkExpiryDays(newExpiry)
                 .retentionDays(newRetention)
                 .featureEnabled(newFeature)
-                .officePhone(resolvePublicOfficePhone(tenantId))
-                .mobilePhone(resolvePublicMobilePhone(tenantId))
+                .officePhone(afterOffice)
+                .mobilePhone(afterMobile)
                 .build();
     }
 
@@ -183,6 +209,37 @@ public class SctSettingsServiceImpl implements SctSettingsService {
             return globalCfg.get().getConfigValue().trim();
         }
         return null;
+    }
+
+    /**
+     * null 요청은 호출하지 않음. blank → 빈 문자열(테넌트 행 비움). 그 외 형식 검증.
+     *
+     * @param raw   요청 값(non-null)
+     * @param label 오류 메시지용 필드명
+     * @return upsert 할 값(빈 문자열 또는 정규화된 번호)
+     * @throws IllegalArgumentException 형식 오류
+     */
+    private static String normalizePublicContactPhone(String raw, String label) {
+        String trimmed = raw.trim();
+        if (trimmed.isEmpty()) {
+            return "";
+        }
+        if (trimmed.length() > SctFeatureFlagKeys.PUBLIC_CONTACT_PHONE_MAX_LENGTH
+                || !PUBLIC_CONTACT_PHONE_PATTERN.matcher(trimmed).matches()
+                || trimmed.chars().noneMatch(Character::isDigit)) {
+            throw new IllegalArgumentException(
+                    label + "은(는) 숫자와 하이픈만 사용하며 최대 "
+                            + SctFeatureFlagKeys.PUBLIC_CONTACT_PHONE_MAX_LENGTH
+                            + "자여야 합니다.");
+        }
+        return trimmed;
+    }
+
+    private static String jsonStringOrNull(String value) {
+        if (value == null) {
+            return "null";
+        }
+        return "\"" + value + "\"";
     }
 
     private void upsertConfig(

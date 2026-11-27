@@ -215,7 +215,8 @@ public class SctInvitationServiceImpl implements SctInvitationService {
 
         SctShortLink shortLink = createShortLinkSafe(invitation);
         String smsResult = dispatchSms(
-                tenantId, phone, template.getFormType(), expiresAt, rawToken, shortLink);
+                tenantId, phone, template.getFormType(), expiresAt, rawToken, shortLink,
+                invitation.getId());
         invitation.setSmsDispatchResult(smsResult);
         invitation = invitationRepository.save(invitation);
 
@@ -348,7 +349,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         SctShortLink shortLink = createShortLinkSafe(invitation);
         String smsResult = dispatchSms(
                 tenantId, invitation.getTargetPhone(), template.getFormType(),
-                invitation.getTokenExpiresAt(), rawToken, shortLink);
+                invitation.getTokenExpiresAt(), rawToken, shortLink, invitation.getId());
         invitation.setSmsDispatchResult(smsResult);
         invitationRepository.save(invitation);
         SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
@@ -703,14 +704,16 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     /**
-     * SCT 초대 SMS 발송. 단축 URL 단문(≤90B EUC-KR). 본문에 전화번호 없음.
+     * SCT 초대 SMS 발송. 단축 URL 단문(≤90B EUC-KR). 초과 시 LMS 폴백(실패 아님).
+     * 본문에 전화번호 없음. 로그에는 초대 ID·바이트·사유만(번호·본문·토큰·URL 금지).
      *
-     * @param tenantId  테넌트 ID
-     * @param phone     수신 번호(없으면 NO_PHONE)
-     * @param formType  양식 유형
-     * @param expiresAt 만료 시각
-     * @param rawToken  평문 토큰(LMS 폴백용)
-     * @param shortLink 단축 링크(없으면 LMS 폴백)
+     * @param tenantId     테넌트 ID
+     * @param phone        수신 번호(없으면 NO_PHONE)
+     * @param formType     양식 유형
+     * @param expiresAt    만료 시각
+     * @param rawToken     평문 토큰(LMS 폴백용)
+     * @param shortLink    단축 링크(없으면 LMS 폴백)
+     * @param invitationId 초대 ID(로그용)
      * @return SMS 발송 결과 코드
      */
     private String dispatchSms(
@@ -719,41 +722,54 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             String formType,
             LocalDateTime expiresAt,
             String rawToken,
-            SctShortLink shortLink) {
+            SctShortLink shortLink,
+            Long invitationId) {
         if (!StringUtils.hasText(phone)) {
             return SctConstants.SMS_RESULT_NO_PHONE;
         }
-        String message;
+        String message = null;
         String resultOnSuccess = SctConstants.SMS_RESULT_SENT;
-        int eucKrBytes;
-        if (shortLink != null && StringUtils.hasText(shortLink.getShortCode())) {
+        int eucKrBytes = 0;
+        boolean useLms = shortLink == null || !StringUtils.hasText(shortLink.getShortCode());
+        String lmsReason = "NO_SHORT_LINK";
+
+        if (!useLms) {
             String absoluteShort = tenantPublicUrlResolver.resolveAbsoluteShortUrl(
                     tenantId, shortLink.getShortCode());
             message = SctSmsMessageBuilder.buildShortSmsBody(formType, expiresAt, absoluteShort);
             if (message == null) {
-                eucKrBytes = -1;
-                log.warn("SCT SMS BODY_TOO_LONG formType={} eucKrBytes=overflow phone={}",
-                        formType, PhoneLogMasking.maskForLog(phone));
-                return SctConstants.SMS_RESULT_BODY_TOO_LONG;
+                int overflowBytes = SctSmsMessageBuilder.measureMostCompactShortSmsEucKrBytes(
+                        formType, expiresAt, absoluteShort);
+                log.warn(
+                        "SCT SMS short overflow invitationId={} eucKrBytes={} reason=SHORT_EUC_KR_OVERFLOW",
+                        invitationId, overflowBytes);
+                useLms = true;
+                lmsReason = "SHORT_EUC_KR_OVERFLOW";
+            } else {
+                eucKrBytes = SctSmsMessageBuilder.eucKrByteLength(message);
             }
-            eucKrBytes = SctSmsMessageBuilder.eucKrByteLength(message);
-        } else {
+        }
+
+        if (useLms) {
             String office = sctSettingsService.resolvePublicOfficePhone(tenantId);
             String longUrl = tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken);
             message = SctSmsMessageBuilder.buildLmsFallbackBody(
                     formType, expiresAt, office, longUrl);
             eucKrBytes = SctSmsMessageBuilder.eucKrByteLength(message);
             resultOnSuccess = SctConstants.SMS_RESULT_LMS_FALLBACK;
-            log.info("SCT SMS LMS fallback formType={} eucKrBytes={}", formType, eucKrBytes);
+            log.info("SCT SMS LMS fallback invitationId={} eucKrBytes={} reason={}",
+                    invitationId, eucKrBytes, lmsReason);
         }
+
         if (smsAuthService.isTestMode()) {
-            log.info("SCT SMS TEST_MODE_SKIP formType={} eucKrBytes={} phone={}",
-                    formType, eucKrBytes, PhoneLogMasking.maskForLog(phone));
+            log.info("SCT SMS TEST_MODE_SKIP invitationId={} eucKrBytes={}",
+                    invitationId, eucKrBytes);
             return SctConstants.SMS_RESULT_TEST_MODE_SKIP;
         }
         boolean ok = smsAuthService.sendNotificationMessage(phone, message);
-        log.info("SCT SMS dispatch formType={} eucKrBytes={} result={}",
-                formType, eucKrBytes, ok ? resultOnSuccess : SctConstants.SMS_RESULT_FAILED);
+        log.info("SCT SMS dispatch invitationId={} eucKrBytes={} result={}",
+                invitationId, eucKrBytes,
+                ok ? resultOnSuccess : SctConstants.SMS_RESULT_FAILED);
         return ok ? resultOnSuccess : SctConstants.SMS_RESULT_FAILED;
     }
 

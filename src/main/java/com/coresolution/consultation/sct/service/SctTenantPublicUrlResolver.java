@@ -1,5 +1,6 @@
 package com.coresolution.consultation.sct.service;
 
+import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.core.domain.Tenant;
 import com.coresolution.core.repository.TenantRepository;
@@ -26,8 +27,6 @@ public class SctTenantPublicUrlResolver {
     private static final String HTTPS_SCHEME = "https";
 
     private static final String PUBLIC_SCT_WEB_PREFIX = "/public/sct/";
-
-    private static final String SHORT_LINK_WEB_PREFIX = "/s/";
 
     /** 로그용 토큰 앞부분 길이 — {@code SctInvitationServiceImpl} tokenPrefix 6자와 정합. */
     static final int TOKEN_LOG_PREFIX_LENGTH = 6;
@@ -68,7 +67,7 @@ public class SctTenantPublicUrlResolver {
             log.error("SCT 단축 URL 조립 실패: shortCode 없음");
             throw new IllegalStateException(DOMAIN_UNAVAILABLE_MESSAGE);
         }
-        return resolveAbsoluteUrl(tenantId, SHORT_LINK_WEB_PREFIX + shortCode.trim());
+        return resolveAbsoluteUrl(tenantId, SctConstants.SHORT_LINK_WEB_PREFIX + shortCode.trim());
     }
 
     /**

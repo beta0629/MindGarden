@@ -1,6 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -76,5 +77,65 @@ class SctSmsMessageBuilderTest {
         assertTrue(SctSmsMessageBuilder.eucKrByteLength(
                 "[마인드가든] 청소년 문장완성 12월 23일까지\n" + huge)
                 > SctConstants.SMS_EUC_KR_MAX_BYTES);
+    }
+
+    @Test
+    @DisplayName("12월 11일 운영 도메인 — spaced ≤90B(88) 단문 유지")
+    void dec11_prodUrl_spacedFitsAt88() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, SHORT_URL);
+        assertNotNull(body);
+        assertEquals(88, SctSmsMessageBuilder.eucKrByteLength(body));
+        assertTrue(body.contains("12월 11일"));
+        assertTrue(body.contains(SHORT_URL));
+    }
+
+    @Test
+    @DisplayName("12월 11일 .dev 도메인 — compact도 91B → null(LMS 승격 대상)")
+    void dec11_devUrl_compactOverflowsAt91() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, LONG_URL);
+        assertNull(body);
+        assertEquals(91, SctSmsMessageBuilder.measureMostCompactShortSmsEucKrBytes(
+                "ADULT", expires, LONG_URL));
+        assertTrue(91 > SctConstants.SMS_EUC_KR_MAX_BYTES);
+    }
+
+    @Test
+    @DisplayName("LMS 폴백 — officePhone 비어 있으면 문의 줄 없음")
+    void lmsFallback_emptyOffice_omitsInquiryLine() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
+        String longUrl = "https://example.core-solution.co.kr/public/sct/token-xyz";
+        String body = SctSmsMessageBuilder.buildLmsFallbackBody(
+                "ADULT", expires, null, longUrl);
+        assertFalse(body.contains("문의"));
+        assertTrue(body.contains(longUrl));
+        assertTrue(body.contains("성인용 문장완성"));
+
+        String blankBody = SctSmsMessageBuilder.buildLmsFallbackBody(
+                "ADULT", expires, "   ", longUrl);
+        assertFalse(blankBody.contains("문의"));
+    }
+
+    @Test
+    @DisplayName("LMS 폴백 — officePhone 있으면 문의 줄 포함")
+    void lmsFallback_withOffice_includesInquiryLine() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
+        String longUrl = "https://example.core-solution.co.kr/public/sct/token-xyz";
+        String body = SctSmsMessageBuilder.buildLmsFallbackBody(
+                "ADULT", expires, "02-0000-1111", longUrl);
+        assertTrue(body.contains("문의 02-0000-1111\n"));
+        assertTrue(body.contains(longUrl));
+    }
+
+    @Test
+    @DisplayName("단문 SMS 본문에는 사무실 번호 없음(변경 없음)")
+    void shortSmsBody_unchanged_noOfficePhone() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, SHORT_URL);
+        assertNotNull(body);
+        assertFalse(body.contains("문의"));
+        assertFalse(body.contains("02-0000-1111"));
+        assertTrue(body.contains(SHORT_URL));
     }
 }

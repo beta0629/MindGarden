@@ -53,6 +53,7 @@ import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctShortLinkService;
 import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
+import com.coresolution.consultation.sct.util.SctSmsMessageBuilder;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -753,6 +754,99 @@ class SctInvitationServiceTest {
         assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
         assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
         assertEquals("/s/k9P2mX", created.getShortUrl());
+    }
+
+    @Test
+    @DisplayName("운영 단축 URL + 12월 11일 — EUC-KR 88B 단문 SENT")
+    void resendSms_prodShortUrl_dec11_staysShortSms() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String prodShort = "https://mindgarden.core-solution.co.kr/s/k9P2mX";
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000070")
+                .tokenHash(SctTokenHasher.sha256Hex("old-token-for-resend-prod-fixture!!"))
+                .tokenExpiresAt(expires)
+                .targetPhone("01012345678")
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(70L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 70L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(rotatedTokenHashRepository.existsByTokenHash(anyString())).thenReturn(false);
+        when(rotatedTokenHashRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(eq("t1"), anyString()))
+                .thenReturn(prodShort);
+        when(smsAuthService.isTestMode()).thenReturn(false);
+        when(smsAuthService.sendNotificationMessage(anyString(), anyString())).thenReturn(true);
+
+        var result = invitationService.resendSms("t1", admin, 70L);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsAuthService).sendNotificationMessage(eq("01012345678"), messageCaptor.capture());
+        String body = messageCaptor.getValue();
+        assertEquals(88, SctSmsMessageBuilder.eucKrByteLength(body));
+        assertTrue(body.contains(prodShort));
+        assertTrue(body.contains("12월 11일"));
+        assertFalse(body.contains("문의"));
+        assertEquals(SctConstants.SMS_RESULT_SENT, result.getSmsDispatchResult());
+        verify(sctSettingsService, never()).resolvePublicOfficePhone(anyString());
+    }
+
+    @Test
+    @DisplayName(".dev 단축 URL + 12월 11일 — 91B overflow → LMS_FALLBACK")
+    void resendSms_devShortUrl_dec11_fallsBackToLms() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String devShort = "https://mindgarden.dev.core-solution.co.kr/s/k9P2mX";
+        String publicUrl = "https://mindgarden.dev.core-solution.co.kr/public/sct/token-fixture";
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000071")
+                .tokenHash(SctTokenHasher.sha256Hex("old-token-for-resend-dev-fixture!!!"))
+                .tokenExpiresAt(expires)
+                .targetPhone("01012345678")
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(71L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 71L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(rotatedTokenHashRepository.existsByTokenHash(anyString())).thenReturn(false);
+        when(rotatedTokenHashRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(eq("t1"), anyString()))
+                .thenReturn(devShort);
+        when(tenantPublicUrlResolver.resolveAbsolutePublicUrl(eq("t1"), anyString()))
+                .thenReturn(publicUrl);
+        when(sctSettingsService.resolvePublicOfficePhone("t1")).thenReturn(null);
+        when(smsAuthService.isTestMode()).thenReturn(false);
+        when(smsAuthService.sendNotificationMessage(anyString(), anyString())).thenReturn(true);
+
+        assertNull(SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, devShort));
+        assertEquals(91, SctSmsMessageBuilder.measureMostCompactShortSmsEucKrBytes(
+                "ADULT", expires, devShort));
+
+        var result = invitationService.resendSms("t1", admin, 71L);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsAuthService).sendNotificationMessage(eq("01012345678"), messageCaptor.capture());
+        String body = messageCaptor.getValue();
+        assertTrue(body.contains(publicUrl));
+        assertFalse(body.contains("문의"));
+        assertTrue(body.contains("성인용 문장완성"));
+        assertEquals(SctConstants.SMS_RESULT_LMS_FALLBACK, result.getSmsDispatchResult());
+        verify(sctSettingsService).resolvePublicOfficePhone("t1");
+        verify(tenantPublicUrlResolver, org.mockito.Mockito.atLeastOnce())
+                .resolveAbsolutePublicUrl(eq("t1"), anyString());
     }
 
     @Test

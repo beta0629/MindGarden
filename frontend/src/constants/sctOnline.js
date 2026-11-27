@@ -120,8 +120,13 @@ export const SCT_DEFAULTS = Object.freeze({
   DRAFT_DEBOUNCE_MS: 800,
   FOCUS_SCROLL_DELAY_MS: 250,
   KEYBOARD_DELTA_PX: 120,
-  TOTAL_ITEMS: 50
+  TOTAL_ITEMS: 50,
+  /** 공개 연락처(사무실·휴대폰) — 숫자·하이픈, 최대 길이 */
+  PUBLIC_CONTACT_PHONE_MAX: 20
 });
+
+/** 공개 연락처 전화 형식(숫자·하이픈, 1~20자, 숫자 1개 이상). */
+export const SCT_PUBLIC_CONTACT_PHONE_PATTERN = /^[0-9-]{1,20}$/;
 
 export const SCT_UI = Object.freeze({
   BRAND: '마인드가든심리상담센터',
@@ -344,8 +349,14 @@ export const SCT_UI = Object.freeze({
   RECIPIENT_NAME: '표시 이름',
   CANCEL_SUCCESS: '발송을 취소했습니다',
   SETTINGS_SAVE_SUCCESS: 'SCT 설정을 저장했습니다',
+  SETTINGS_OFFICE_PHONE: '사무실 전화',
+  SETTINGS_MOBILE_PHONE: '공개 휴대폰',
+  SETTINGS_PUBLIC_CONTACT_HINT:
+    '공개 질문지 랑딩에 표시되며, 비우면 숨김',
   VALIDATE_REQUIRED: '필수 항목을 확인해 주세요',
   VALIDATE_EXPIRY: '만료일은 1~30일 사이여야 합니다',
+  VALIDATE_PUBLIC_CONTACT_PHONE:
+    '사무실 전화·공개 휴대폰은 숫자와 하이픈만 사용하며 최대 20자여야 합니다',
   PRINT: '인쇄',
   PRINT_PREVIEW: '인쇄 미리보기',
   PRINT_DO: '인쇄하기',
@@ -570,6 +581,8 @@ export const SCT_TEST_ID = Object.freeze({
   FEATURE_GATE: 'sct-feature-gate',
   SETTINGS: 'sct-settings-section',
   SETTINGS_FEATURE_SWITCH: 'sct-settings-feature-switch',
+  SETTINGS_OFFICE_PHONE: 'sct-office-phone',
+  SETTINGS_MOBILE_PHONE: 'sct-mobile-phone',
   UNLINKED_REISSUE: 'sct-unlinked-reissue',
   UNLINKED_COPY_HINT: 'sct-unlinked-copy-hint',
   UNLINKED_COPY_AREA: 'sct-unlinked-copy-area',

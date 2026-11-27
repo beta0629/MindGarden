@@ -135,4 +135,62 @@ class AdminSctSettingsControllerTest {
         verify(sctSettingsService, never())
                 .updateSettings(anyString(), any(), anyLong(), anyString());
     }
+
+    @Test
+    @DisplayName("PUT /api/v1/admin/sct-settings — 연락처 형식 오류 시 서비스 throw → 400")
+    @WithMockUser(roles = {"ADMIN"})
+    void put_whenInvalidPublicContactPhone_returns400() throws Exception {
+        User actor = new User();
+        actor.setId(TEST_USER_ID);
+        actor.setRole(UserRole.ADMIN);
+        when(sctSettingsService.updateSettings(
+                eq(TENANT_ID), any(SctSettingsUpdateRequest.class), eq(TEST_USER_ID), anyString()))
+                .thenThrow(new IllegalArgumentException(
+                        "사무실 전화은(는) 숫자와 하이픈만 사용하며 최대 20자여야 합니다."));
+
+        try (MockedStatic<SessionUtils> sessions = mockStatic(SessionUtils.class)) {
+            sessions.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class))).thenReturn(actor);
+
+            String body = objectMapper.writeValueAsString(Map.of(
+                    "officePhone", "not-a-phone"));
+
+            mockMvc.perform(put("/api/v1/admin/sct-settings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/admin/sct-settings — ADMIN 연락처 저장 200")
+    @WithMockUser(roles = {"ADMIN"})
+    void put_whenAdminUpdatesPublicContact_returns200() throws Exception {
+        User actor = new User();
+        actor.setId(TEST_USER_ID);
+        actor.setRole(UserRole.ADMIN);
+        when(sctSettingsService.updateSettings(
+                eq(TENANT_ID), any(SctSettingsUpdateRequest.class), eq(TEST_USER_ID), anyString()))
+                .thenReturn(SctSettingsResponse.builder()
+                        .linkExpiryDays(14)
+                        .retentionDays(365)
+                        .featureEnabled(true)
+                        .officePhone("02-0000-1111")
+                        .mobilePhone("010-0000-1111")
+                        .build());
+
+        try (MockedStatic<SessionUtils> sessions = mockStatic(SessionUtils.class)) {
+            sessions.when(() -> SessionUtils.getCurrentUser(any(HttpSession.class))).thenReturn(actor);
+
+            String body = objectMapper.writeValueAsString(Map.of(
+                    "officePhone", "02-0000-1111",
+                    "mobilePhone", "010-0000-1111"));
+
+            mockMvc.perform(put("/api/v1/admin/sct-settings")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(body))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.officePhone").value("02-0000-1111"))
+                    .andExpect(jsonPath("$.data.mobilePhone").value("010-0000-1111"));
+        }
+    }
 }

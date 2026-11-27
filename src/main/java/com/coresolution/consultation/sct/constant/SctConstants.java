@@ -90,6 +90,16 @@ public final class SctConstants {
 
     public static final String PUBLIC_API_PREFIX = "/api/v1/public/sct";
 
+    /** 관리자 SCT API 접두. */
+    public static final String ADMIN_API_PREFIX = "/api/v1/admin/sct";
+
+    /**
+     * 공개 경로에 남아 있으면 안 되는 OTP 평문 peek 패턴.
+     * SecurityConfig 에서 permitAll 보다 먼저 denyAll.
+     */
+    public static final String PUBLIC_OTP_DEV_CODE_DENY_PATTERN =
+            "/api/v1/public/sct/*/identity/otp/dev-code";
+
     public static final String HASH_ALGORITHM = "SHA-256";
 
     /** 관리번호 접두사(PII 없음). */

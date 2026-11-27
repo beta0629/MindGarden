@@ -13,12 +13,18 @@
 #   - set -x / 시크릿 echo
 #
 # 대상: .dev 전용 (environment:dev, DEV_SERVER_*, /etc/mindgarden/dev.env)
-# 트리거: workflow_dispatch only
+# 트리거: workflow_dispatch + push(release/dev, 이 파일·ops/triggers/dev-sct-pii-count.txt 변경 시)
 # =============================================================================
 
 name: 🔎 Check .dev SCT PII counts (read-only)
 
 on:
+  # push: 기본 브랜치(main) 변경 없이 release/dev 에서 실행 (리더 C안). 아래 두 파일 변경 시에만.
+  push:
+    branches: [release/dev]
+    paths:
+      - '.github/workflows/check-dev-sct-pii-counts.yml'
+      - 'ops/triggers/dev-sct-pii-count.txt'
   workflow_dispatch:
     inputs:
       since_hours:

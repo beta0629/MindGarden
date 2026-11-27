@@ -1,6 +1,7 @@
 package com.coresolution.consultation.service;
 
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.constant.ShopSessionCountConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
@@ -35,6 +36,8 @@ public class ShopCatalogPackageOfferResolver {
             Pattern.compile(ShopCatalogSkuConstants.PACKAGE_CODE_PATTERN);
     private static final String EXTRA_SESSIONS = "sessions";
     private static final String EXTRA_PRICE = "price";
+    /** 공통코드 extraData 카테고리 키. ASSESSMENT|CONSULTATION 만 인정. */
+    private static final String EXTRA_CATEGORY = "category";
     private static final TypeReference<Map<String, Object>> EXTRA_TYPE = new TypeReference<>() {
     };
 
@@ -162,9 +165,28 @@ public class ShopCatalogPackageOfferResolver {
         Map<String, Object> extra = parseExtra(row.getExtraData());
         Long price = toWonOrNull(extra.get(EXTRA_PRICE));
         Integer sessions = toSessionsOrNull(extra.get(EXTRA_SESSIONS));
+        String catalogCategory = toCatalogCategoryOrNull(extra.get(EXTRA_CATEGORY));
         boolean active = Boolean.TRUE.equals(row.getIsActive());
         boolean priceReady = active && price != null && sessions != null && StringUtils.hasText(name);
-        return new ShopCatalogPackageIdentity(code, name, price, sessions, active, priceReady);
+        return new ShopCatalogPackageIdentity(code, name, price, sessions, active, priceReady, catalogCategory);
+    }
+
+    /**
+     * extraData.category 를 ASSESSMENT|CONSULTATION 만 허용. 그 외·부재는 null.
+     * 패키지명·코드로 추론하지 않는다.
+     *
+     * @param value extraData.category 원본
+     * @return 정규화된 카테고리 또는 null
+     */
+    private static String toCatalogCategoryOrNull(Object value) {
+        if (value == null) {
+            return null;
+        }
+        String text = String.valueOf(value).trim().toUpperCase();
+        if (ShopCatalogCategory.ASSESSMENT.equals(text) || ShopCatalogCategory.CONSULTATION.equals(text)) {
+            return text;
+        }
+        return null;
     }
 
     private Map<String, Object> parseExtra(String extraData) {

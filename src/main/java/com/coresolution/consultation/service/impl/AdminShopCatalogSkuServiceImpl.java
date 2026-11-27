@@ -135,12 +135,17 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 StringUtils.hasText(request.descriptionText()) ? request.descriptionText().trim() : null);
         row.setSortOrder(request.sortOrder());
         row.setCatalogVisible(request.catalogVisible());
-        String category = normalizeCatalogCategory(
-                StringUtils.hasText(request.catalogCategory())
-                        ? request.catalogCategory()
-                        : row.getCatalogCategory(),
-                row.getSkuCode());
-        row.setCatalogCategory(category);
+        // 요청 → identity SSOT → 기존 행 값. skuCode 접두 추론 금지(null skuCode).
+        String category;
+        if (StringUtils.hasText(request.catalogCategory())) {
+            category = normalizeCatalogCategory(request.catalogCategory(), null);
+            row.setCatalogCategory(category);
+        } else if (StringUtils.hasText(identity.catalogCategory())) {
+            category = normalizeCatalogCategory(identity.catalogCategory(), null);
+            row.setCatalogCategory(category);
+        } else {
+            category = row.getCatalogCategory();
+        }
         row.setFieldCode(requireFieldCode(tid, category, request.fieldCode()));
         row.setConsultantId(resolveBoundConsultantId(tid, category, request.consultantId()));
         row.setValidityMonths(request.validityMonths());
@@ -338,7 +343,12 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setSkuCode(resolveSkuCodeForCreate(tenantId, null));
         row.setSourcePackageCode(identity.packageCode());
         row.setCurrency(BankTransferConstants.CURRENCY_KRW);
-        row.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
+        // SSOT 카테고리가 있으면 사용, 없으면 생성 시에만 CONSULTATION 기본값
+        if (StringUtils.hasText(identity.catalogCategory())) {
+            row.setCatalogCategory(identity.catalogCategory().trim().toUpperCase());
+        } else {
+            row.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
+        }
         row.setCatalogVisible(false);
         row.setActive(identity.active());
         row.setSortOrder(0);
@@ -353,7 +363,10 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
     private static void applyPackageIdentity(ShopCatalogSku row, ShopCatalogPackageIdentity identity) {
         row.setSourcePackageCode(identity.packageCode());
         row.setTitle(identity.packageName());
-        row.setCatalogCategory(ShopCatalogCategory.CONSULTATION);
+        // SSOT 카테고리가 유효할 때만 반영. 없으면 기존 row 값 유지(ASSESSMENT 덮어쓰기 방지).
+        if (isValidCatalogCategory(identity.catalogCategory())) {
+            row.setCatalogCategory(identity.catalogCategory().trim().toUpperCase());
+        }
         row.setActive(identity.active());
         row.setCurrency(BankTransferConstants.CURRENCY_KRW);
         if (identity.unitPriceMinor() != null) {
@@ -367,6 +380,21 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
                 || row.getSessionCount() < ShopSessionCountConstants.MIN_SESSION_COUNT) {
             row.setSessionCount(ShopSessionCountConstants.MIN_SESSION_COUNT);
         }
+    }
+
+    /**
+     * ASSESSMENT|CONSULTATION 만 유효. 그 외·공백은 false.
+     *
+     * @param catalogCategory 후보 값
+     * @return 유효하면 true
+     */
+    private static boolean isValidCatalogCategory(String catalogCategory) {
+        if (!StringUtils.hasText(catalogCategory)) {
+            return false;
+        }
+        String normalized = catalogCategory.trim().toUpperCase();
+        return ShopCatalogCategory.ASSESSMENT.equals(normalized)
+                || ShopCatalogCategory.CONSULTATION.equals(normalized);
     }
 
     private static void assertPackageSellable(ShopCatalogPackageIdentity identity) {

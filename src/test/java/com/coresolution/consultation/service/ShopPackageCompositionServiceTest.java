@@ -71,7 +71,7 @@ class ShopPackageCompositionServiceTest {
         service = new ShopPackageCompositionService(
                 compositionRepository, skuRepository, commonCodeRepository, offerResolver, new ObjectMapper());
         lenient().when(offerResolver.requireIdentity(eq(TENANT), anyString())).thenAnswer(inv ->
-                new ShopCatalogPackageIdentity(inv.getArgument(1), "패키지", 100_000L, 4, true, true));
+                new ShopCatalogPackageIdentity(inv.getArgument(1), "패키지", 100_000L, 4, true, true, null));
         lenient().when(offerResolver.resolveLinked(eq(TENANT), any(ShopCatalogSku.class))).thenAnswer(inv ->
                 ShopCatalogOffer.unlinked(inv.getArgument(1)));
         lenient().when(compositionRepository.findComposedPackageCodes(eq(TENANT), anyCollection()))

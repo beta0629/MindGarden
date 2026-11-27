@@ -3,11 +3,11 @@
 -- @author MindGarden
 -- @since 2026-11-27
 
--- 1) sct_invitations.recipient_name → VARCHAR(512) (PersonalNameAttributeConverter)
+-- 1) sct_invitations.recipient_name → VARCHAR(512) (PiiAttributeConverter)
 ALTER TABLE sct_invitations
     MODIFY COLUMN recipient_name VARCHAR(512) NULL;
 
--- 2) sct_consents.guardian_relation → VARCHAR(512) (PersonalNameAttributeConverter)
+-- 2) sct_consents.guardian_relation → VARCHAR(512) (PiiAttributeConverter)
 ALTER TABLE sct_consents
     MODIFY COLUMN guardian_relation VARCHAR(512) NULL;
 

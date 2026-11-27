@@ -33,8 +33,8 @@ import com.coresolution.consultation.service.OAuthPhoneVerificationService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContext;
 import com.coresolution.core.context.TenantContextHolder;
@@ -103,10 +103,11 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final PasswordService passwordService;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final PasswordEncoder passwordEncoder;
+    private final PiiHmacService piiHmacService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -378,11 +379,16 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
         }
         List<User> tenantUsers = userRepository.findByTenantId(tenantId);
         return tenantUsers.stream()
-            .filter(u -> phoneHash.equals(hashUserPhoneIfPresent(u)))
+            .filter(u -> matchesUserPhoneHash(u, phoneHash))
             .collect(Collectors.toList());
     }
 
-    private String hashUserPhoneIfPresent(User user) {
+    private boolean matchesUserPhoneHash(User user, String phoneHash) {
+        String normalized = normalizeUserPhone(user);
+        return normalized != null && piiHmacService.matches(normalized, phoneHash);
+    }
+
+    private String normalizeUserPhone(User user) {
         String enc = user.getPhone();
         if (!StringUtils.hasText(enc)) {
             return null;
@@ -400,7 +406,12 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
         if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
             return null;
         }
-        return sha256Hex(normalized);
+        return normalized;
+    }
+
+    private String hashUserPhoneIfPresent(User user) {
+        String normalized = normalizeUserPhone(user);
+        return normalized == null ? null : sha256Hex(normalized);
     }
 
     private User selectBestMatchingUser(List<User> users) {
@@ -582,7 +593,7 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     /**
      * user.name 이 비어 있고 OAuth provider 가 name 을 제공한 경우에만 백필. 기존 값은 보존한다.
      *
-     * <p>{@link PersonalDataEncryptionUtil#safeDecrypt(String)} 로 복호화한 평문이 빈 문자열·공백·null
+     * <p>{@link PiiCryptoService#safeDecrypt(String)} 로 복호화한 평문이 빈 문자열·공백·null
      * 이면 비어 있는 것으로 본다. 백필 시 동일 유틸로 재암호화하여 PII 저장 정책을 유지한다.</p>
      *
      * @return 실제로 user.name 을 수정했으면 true
@@ -709,10 +720,13 @@ public class OAuthPhoneVerificationServiceImpl implements OAuthPhoneVerification
     }
 
     /**
-     * 정규화된 한국 휴대폰 digits 의 SHA-256 hex — {@link PhoneHashUtils} SSOT 위임.
+     * 정규화된 한국 휴대폰 digits 의 HMAC-SHA256 hex.
+     *
+     * @param input 정규화된 전화 digits
+     * @return hex 해시
      */
-    static String sha256Hex(String input) {
-        return PhoneHashUtils.sha256Hex(input);
+    String sha256Hex(String input) {
+        return piiHmacService.hmacHex(input);
     }
 
     /**

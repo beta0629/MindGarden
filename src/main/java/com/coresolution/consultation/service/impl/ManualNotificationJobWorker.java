@@ -20,7 +20,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.ManualNotificationJobRecipientRepository;
 import com.coresolution.consultation.repository.ManualNotificationJobRepository;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -58,7 +58,7 @@ public class ManualNotificationJobWorker {
     private final ManualNotificationRecipientResolver recipientResolver;
     private final ManualNotificationProperties properties;
     private final UserRepository userRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
     private final ObjectMapper objectMapper;
 

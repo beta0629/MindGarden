@@ -5,7 +5,7 @@ import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.entity.SctAccessLog;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.repository.SctAccessLogRepository;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SctAccessLogService {
 
     private final SctAccessLogRepository sctAccessLogRepository;
+    private final PiiHmacService piiHmacService;
 
     /**
      * 본문 열람 로그.
@@ -136,8 +137,8 @@ public class SctAccessLogService {
                 .actorRole(actorRole)
                 .action(action)
                 .accessedAt(LocalDateTime.now())
-                .ipHash(clientIp == null ? null : SctTokenHasher.sha256Hex(clientIp))
-                .userAgentHash(userAgent == null ? null : SctTokenHasher.sha256Hex(userAgent))
+                .ipHash(clientIp == null ? null : piiHmacService.hmacHex(clientIp))
+                .userAgentHash(userAgent == null ? null : piiHmacService.hmacHex(userAgent))
                 .build();
         logEntry.setTenantId(invitation.getTenantId());
         return sctAccessLogRepository.save(logEntry);

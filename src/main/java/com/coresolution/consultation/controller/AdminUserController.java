@@ -15,7 +15,7 @@ import com.coresolution.consultation.service.UserAddressService;
 import com.coresolution.consultation.service.PasswordValidationService;
 import com.coresolution.consultation.service.UserProfileService;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.security.PasswordService;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -53,7 +53,7 @@ public class AdminUserController {
     private final UserProfileService userProfileService;
     private final com.coresolution.consultation.service.UserService userService;
     private final EmailService emailService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final UserAddressService userAddressService;
     private final BranchService branchService;
     private final DynamicPermissionService dynamicPermissionService;

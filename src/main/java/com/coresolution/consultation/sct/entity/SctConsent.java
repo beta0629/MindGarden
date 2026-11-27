@@ -1,8 +1,8 @@
 package com.coresolution.consultation.sct.entity;
 
 import java.time.LocalDateTime;
-import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -53,19 +53,19 @@ public class SctConsent {
     @Column(name = "agreed", nullable = false)
     private Boolean agreed;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "guardian_name_enc", length = 512)
     private String guardianName;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "guardian_relation", length = 512)
     private String guardianRelation;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "signer_name_enc", length = 512)
     private String signerName;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "child_name_confirm_enc", length = 512)
     private String childNameConfirm;
 

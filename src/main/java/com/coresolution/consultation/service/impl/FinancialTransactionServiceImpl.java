@@ -48,7 +48,7 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.ErpMonthlyTaxBreakdownHelper;
 import com.coresolution.consultation.util.FinancialTransactionValidity;
 import com.coresolution.consultation.util.OperatorFinanceAggregation;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.service.impl.BaseTenantAwareService;
 import org.springframework.data.domain.Page;
@@ -91,7 +91,7 @@ public class FinancialTransactionServiceImpl extends BaseTenantAwareService impl
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.erp.accounting.AccountingService accountingService;
     private final com.coresolution.consultation.service.UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final FinancialPeriodRepository financialPeriodRepository;
     private final CardMerchantFeeResolutionService cardMerchantFeeResolutionService;
     private final SalaryTaxRateLookupService salaryTaxRateLookupService;

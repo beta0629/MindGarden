@@ -8,10 +8,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import com.coresolution.consultation.constant.ClientEngagementTypeConstants;
-import com.coresolution.consultation.converter.EmailAttributeConverter;
-import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
-import com.coresolution.consultation.converter.PhoneAttributeConverter;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -48,18 +46,18 @@ public class Client extends AuditableTenantBase {
     @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
-    // PR-4 (2026-06-14): PII SSOT — PersonalNameAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "name", nullable = false, length = 512)
     private String name;
 
-    // PR-4 (2026-06-14): PII SSOT — EmailAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = EmailAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "email", nullable = false, unique = true, length = 512)
     private String email;
 
-    // PR-4 (2026-06-14): PII SSOT — PhoneAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = PhoneAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "phone", length = 512)
     private String phone;
     
@@ -88,13 +86,13 @@ public class Client extends AuditableTenantBase {
     @Column(name = "consultation_history", columnDefinition = "TEXT")
     private String consultationHistory;
 
-    // PR-4 (2026-06-14): PII SSOT — PersonalNameAttributeConverter 적용 (비상 연락처 이름).
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용 (비상 연락처 이름).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "emergency_contact", length = 512)
     private String emergencyContact;
 
-    // PR-4 (2026-06-14): PII SSOT — PhoneAttributeConverter 적용 (비상 연락처 전화번호).
-    @Convert(converter = PhoneAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용 (비상 연락처 전화번호).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "emergency_phone", length = 512)
     private String emergencyPhone;
 
@@ -116,19 +114,19 @@ public class Client extends AuditableTenantBase {
     @Column(name = "institution_name", length = 200)
     private String institutionName;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "institution_contact_name", length = 512)
     private String institutionContactName;
 
-    @Convert(converter = PhoneAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "institution_contact_phone", length = 512)
     private String institutionContactPhone;
 
-    @Convert(converter = PhoneAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "institution_document_phone", length = 512)
     private String institutionDocumentPhone;
 
-    @Convert(converter = EmailAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "institution_document_email", length = 512)
     private String institutionDocumentEmail;
 

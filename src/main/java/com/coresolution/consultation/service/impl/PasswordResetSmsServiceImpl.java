@@ -22,8 +22,8 @@ import com.coresolution.consultation.service.PasswordResetSmsService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -86,12 +86,13 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
     private final SmsAuthService smsAuthService;
     private final PasswordResetOpaqueTokenStore opaqueTokenStore;
     private final UserRepository userRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final PasswordService passwordService;
     private final PasswordEncoder passwordEncoder;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     private final ClientCredentialNotificationService clientCredentialNotificationService;
     private final PasswordResetSmsOtpProperties passwordResetSmsOtpProperties;
+    private final PiiHmacService piiHmacService;
 
     /** IP+phoneHash 레이트리밋 버킷. */
     private final Map<String, RateBucket> ipPhoneBuckets = new ConcurrentHashMap<>();
@@ -112,7 +113,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
             return failure(e.getMessage(), CODE_INVALID_REQUEST);
         }
 
-        String phoneHash = PhoneHashUtils.sha256Hex(normalizedPhone);
+        String phoneHash = piiHmacService.hmacHex(normalizedPhone);
         if (!allowIpPhone(clientIp, phoneHash)) {
             return failure("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.", CODE_RATE_LIMIT);
         }
@@ -213,7 +214,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
         } catch (IllegalArgumentException e) {
             return failure(e.getMessage(), CODE_INVALID_REQUEST);
         }
-        String phoneHash = PhoneHashUtils.sha256Hex(normalizedPhone);
+        String phoneHash = piiHmacService.hmacHex(normalizedPhone);
 
         if (!allowIpPhone(clientIp, phoneHash)) {
             return failure("요청이 너무 많습니다. 잠시 후 다시 시도해주세요.", CODE_RATE_LIMIT);
@@ -397,7 +398,7 @@ public class PasswordResetSmsServiceImpl implements PasswordResetSmsService {
         if (!LoginIdentifierUtils.isValidKoreanMobileDigits(normalized)) {
             return null;
         }
-        if (!phoneHash.equals(PhoneHashUtils.sha256Hex(normalized))) {
+        if (!piiHmacService.matches(normalized, phoneHash)) {
             return null;
         }
         return new EligibleUser(user, normalized);

@@ -21,7 +21,7 @@ import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.ConsultantRatingService;
 import com.coresolution.consultation.service.RealTimeStatisticsService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -55,7 +55,7 @@ public class ConsultantRatingServiceImpl implements ConsultantRatingService {
     private final RealTimeStatisticsService realTimeStatisticsService;
     private final BranchService branchService;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
 
     @Override
     public ConsultantRating createRating(Long scheduleId, Long clientId, Integer heartScore, 

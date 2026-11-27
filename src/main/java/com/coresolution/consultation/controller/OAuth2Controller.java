@@ -36,7 +36,7 @@ import com.coresolution.consultation.service.OAuth2Service;
 import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.util.HttpRequestClientIp;
@@ -73,7 +73,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OAuth2Controller extends BaseApiController {
 
     private final OAuth2FactoryService oauth2FactoryService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final OAuth2DomainUtil oauth2DomainUtil;
     private final UserRepository userRepository;
     private final com.coresolution.consultation.service.JwtService jwtService;

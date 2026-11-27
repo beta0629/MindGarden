@@ -2,7 +2,7 @@ package com.coresolution.consultation.service.impl;
 
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UserPersonalDataCacheServiceImpl implements UserPersonalDataCacheService {
     
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     
     @Override
     @Cacheable(value = "userPersonalData", key = "'user:decrypted:' + #tenantId + ':' + #userId", 

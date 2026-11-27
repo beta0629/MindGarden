@@ -31,7 +31,7 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.JwtTokenCutoffUtils;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.TokenLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.servlet.http.HttpServletRequest;
@@ -107,7 +107,7 @@ public class AuthServiceImpl implements AuthService {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
 
     @Autowired
     private com.coresolution.consultation.service.SystemConfigService systemConfigService;

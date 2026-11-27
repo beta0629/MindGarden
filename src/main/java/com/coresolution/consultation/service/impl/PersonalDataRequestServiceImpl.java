@@ -11,7 +11,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PersonalDataAccessLogRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.PersonalDataRequestService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.constant.compliance.ComplianceServiceErrorMessages;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.util.HttpRequestClientIp;
@@ -42,7 +42,7 @@ public class PersonalDataRequestServiceImpl implements PersonalDataRequestServic
     private final TenantRepository tenantRepository;
     private final PersonalDataAccessLogRepository personalDataAccessLogRepository;
     private final PasswordService passwordService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     
     @Override
     public Map<String, Object> requestPersonalDataAccess(Long userId, HttpServletRequest request) {

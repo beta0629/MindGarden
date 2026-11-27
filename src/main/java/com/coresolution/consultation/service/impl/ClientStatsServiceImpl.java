@@ -28,7 +28,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ClientStatsService;
 import com.coresolution.consultation.service.ScheduleMappingContextResolver;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.cache.annotation.CacheEvict;
@@ -65,7 +65,7 @@ public class ClientStatsServiceImpl implements ClientStatsService {
     private final ConsultantClientMappingRepository mappingRepository;
     private final ScheduleRepository scheduleRepository;
     private final ConsultationRecordRepository consultationRecordRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
 
     @Override

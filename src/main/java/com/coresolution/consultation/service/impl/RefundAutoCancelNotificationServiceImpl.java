@@ -12,7 +12,7 @@ import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.RefundAutoCancelNotificationService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class RefundAutoCancelNotificationServiceImpl implements RefundAutoCancel
     private final EmailService emailService;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final KakaoAlimTalkService kakaoAlimTalkService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final CommonCodeService commonCodeService;
 
     @Override

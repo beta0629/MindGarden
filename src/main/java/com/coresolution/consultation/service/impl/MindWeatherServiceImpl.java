@@ -24,7 +24,7 @@ import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer;
 import com.coresolution.consultation.service.mindweather.MindWeatherHeuristicAnalyzer.AnalysisResult;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,7 +55,7 @@ public class MindWeatherServiceImpl implements MindWeatherService {
     private final UserRepository userRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final MobilePushDispatchService mobilePushDispatchService;
 
     private enum CardViewMode {

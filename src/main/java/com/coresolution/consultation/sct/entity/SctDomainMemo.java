@@ -1,8 +1,8 @@
 package com.coresolution.consultation.sct.entity;
 
-import com.coresolution.consultation.converter.ConsultationBodyAttributeConverter;
 import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -15,7 +15,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 /**
- * SCT 영역별 상담사 메모. 본문은 ConsultationBodyAttributeConverter(랜덤 IV).
+ * SCT 영역별 상담사 메모. 본문은 PiiAttributeConverter(랜덤 IV).
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -40,7 +40,7 @@ public class SctDomainMemo extends BaseEntity {
     @Column(name = "domain_code", nullable = false, length = 64)
     private String domainCode;
 
-    @Convert(converter = ConsultationBodyAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "memo_text_enc", columnDefinition = "TEXT")
     private String memoText;
 

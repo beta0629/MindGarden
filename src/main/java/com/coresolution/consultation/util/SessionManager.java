@@ -31,7 +31,7 @@ public class SessionManager {
 
     private final SessionTimeoutProperties sessionTimeoutProperties;
 
-    // PersonalDataEncryptionUtil은 제거 - 복호화된 데이터를 직접 받도록 수정
+    // PiiCryptoService은 제거 - 복호화된 데이터를 직접 받도록 수정
 
     /**
      * 현재 HTTP 세션 가져오기

@@ -27,7 +27,7 @@ import com.coresolution.consultation.repository.ShopOrderFulfillmentEventReposit
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminShopOrderLedgerService;
 import com.coresolution.consultation.service.shop.ShopOrderExpiryCalculator;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.core.util.PaginationUtils;
 import java.math.BigDecimal;
@@ -77,7 +77,7 @@ public class AdminShopOrderLedgerServiceImpl implements AdminShopOrderLedgerServ
     private final ShopOrderExpiryExtensionRepository shopOrderExpiryExtensionRepository;
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
-    private final PersonalDataEncryptionUtil personalDataEncryptionUtil;
+    private final PiiCryptoService personalDataEncryptionUtil;
 
     private Clock clock = Clock.systemDefaultZone();
 

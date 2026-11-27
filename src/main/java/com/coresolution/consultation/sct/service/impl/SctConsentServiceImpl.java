@@ -20,7 +20,7 @@ import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.repository.SctConsentRepository;
 import com.coresolution.consultation.sct.repository.SctConsentTemplateRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -43,6 +43,7 @@ public class SctConsentServiceImpl implements SctConsentService {
     private final SctConsentTemplateRepository consentTemplateRepository;
     private final AuditLogService auditLogService;
     private final SystemConfigRepository systemConfigRepository;
+    private final PiiHmacService piiHmacService;
 
     @Override
     public String resolveSignerBand(String formType, boolean requiresGuardian) {
@@ -333,8 +334,8 @@ public class SctConsentServiceImpl implements SctConsentService {
         consent.setAgreed(true);
         consent.setRevoked(false);
         consent.setAgreedAt(LocalDateTime.now());
-        consent.setIpHash(SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp));
-        consent.setUserAgentHash(userAgent == null ? null : SctTokenHasher.sha256Hex(userAgent));
+        consent.setIpHash(piiHmacService.hmacHex(clientIp == null ? "unknown" : clientIp));
+        consent.setUserAgentHash(userAgent == null ? null : piiHmacService.hmacHex(userAgent));
         return consent;
     }
 

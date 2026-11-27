@@ -1,8 +1,8 @@
 package com.coresolution.consultation.sct.entity;
 
 import java.time.LocalDateTime;
-import com.coresolution.consultation.converter.ConsultationBodyAttributeConverter;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -19,7 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * SCT 문항별 응답(임시·제출 공용). 본문은 ConsultationBodyAttributeConverter.
+ * SCT 문항별 응답(임시·제출 공용). 본문은 PiiAttributeConverter.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -48,7 +48,7 @@ public class SctResponseAnswer {
     @Column(name = "form_item_id", nullable = false)
     private Long formItemId;
 
-    @Convert(converter = ConsultationBodyAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "answer_text_enc", columnDefinition = "TEXT")
     private String answerText;
 

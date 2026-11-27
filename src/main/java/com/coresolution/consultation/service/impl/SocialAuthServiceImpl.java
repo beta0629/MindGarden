@@ -24,7 +24,7 @@ import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.SocialAuthService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -64,7 +64,7 @@ public class SocialAuthServiceImpl implements SocialAuthService {
     private final ClientRepository clientRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final PasswordService passwordService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final TemporaryPasswordGenerator temporaryPasswordGenerator;
     
     @Value("${frontend.base-url:${FRONTEND_BASE_URL:http://localhost:3000}}")

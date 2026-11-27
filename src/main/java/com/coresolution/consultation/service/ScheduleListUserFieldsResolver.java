@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessages;
 import com.coresolution.consultation.entity.User;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -25,7 +25,7 @@ public class ScheduleListUserFieldsResolver {
     private static final int ENCRYPTED_BASE64_MIN_LENGTH = 32;
 
     private final UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
 
     /**
      * 캐시 복호화 이름 → 엔티티 필드 safeDecrypt → 평문 이름 순으로 표시명을 결정한다.

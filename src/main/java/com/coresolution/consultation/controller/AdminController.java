@@ -97,7 +97,7 @@ import com.coresolution.consultation.constant.admin.AdminServiceUserFacingMessag
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.AdminListPaging;
 import com.coresolution.consultation.util.PermissionCheckUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -225,7 +225,7 @@ public class AdminController extends BaseApiController {
     private final ConsultantRatingService consultantRatingService;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
-    private final PersonalDataEncryptionUtil personalDataEncryptionUtil;
+    private final PiiCryptoService personalDataEncryptionUtil;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;

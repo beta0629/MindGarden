@@ -3,7 +3,7 @@ package com.coresolution.consultation.service;
 import java.util.List;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PhoneMigrationService {
     
     private final UserRepository userRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     
     /**
      * 전화번호 암호화 마이그레이션 실행

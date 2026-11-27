@@ -1,11 +1,9 @@
 package com.coresolution.consultation.sct.entity;
 
 import java.time.LocalDateTime;
-import com.coresolution.consultation.converter.EmailAttributeConverter;
-import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
-import com.coresolution.consultation.converter.PhoneAttributeConverter;
 import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Index;
@@ -56,15 +54,15 @@ public class SctInvitation extends BaseEntity {
     @Column(name = "management_no", nullable = false, length = 32)
     private String managementNo;
 
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "recipient_name", length = 512)
     private String recipientName;
 
-    @Convert(converter = PhoneAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "target_phone", length = 512)
     private String targetPhone;
 
-    @Convert(converter = EmailAttributeConverter.class)
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "target_email", length = 512)
     private String targetEmail;
 

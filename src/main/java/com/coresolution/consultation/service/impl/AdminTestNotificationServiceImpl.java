@@ -39,7 +39,7 @@ import com.coresolution.consultation.service.AdminTestNotificationService;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -117,7 +117,7 @@ public class AdminTestNotificationServiceImpl implements AdminTestNotificationSe
     private final KakaoAlimTalkService kakaoAlimTalkService;
     private final NotificationDispatchHelper dispatchHelper;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final ObjectMapper objectMapper;
     private final KakaoSolapiCredentialResolver solapiCredentialResolver;
     private final SolapiKakaoTemplateClient solapiKakaoTemplateClient;

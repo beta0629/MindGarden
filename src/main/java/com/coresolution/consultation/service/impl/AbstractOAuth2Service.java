@@ -26,7 +26,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.OAuthPhoneVerificationContext;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.SocialLoginUserIdDerivation;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -73,7 +73,7 @@ public abstract class AbstractOAuth2Service implements OAuth2Service {
     protected final UserSocialAccountRepository userSocialAccountRepository;
     protected final JwtService jwtService;
     protected final DynamicPermissionService dynamicPermissionService;
-    protected final PersonalDataEncryptionUtil encryptionUtil;
+    protected final PiiCryptoService encryptionUtil;
     protected final PasswordService passwordService;
     protected final UserService userService;
 

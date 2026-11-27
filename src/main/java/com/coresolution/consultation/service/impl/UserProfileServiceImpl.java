@@ -19,7 +19,7 @@ import com.coresolution.consultation.repository.UserAddressRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.ProfileImageStorageService;
 import com.coresolution.consultation.service.UserProfileService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.util.VehiclePlateText;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -45,7 +45,7 @@ public class UserProfileServiceImpl implements UserProfileService {
     private final UserRepository userRepository;
     private final ConsultantRepository consultantRepository;
     private final UserAddressRepository userAddressRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final NotificationChannelPreferenceResolutionService notificationChannelPreferenceResolutionService;
     private final ProfileImageStorageService profileImageStorageService;
 

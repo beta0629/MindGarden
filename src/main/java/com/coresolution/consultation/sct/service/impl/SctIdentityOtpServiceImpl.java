@@ -40,9 +40,8 @@ import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
@@ -82,6 +81,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private final SctIdentityOtpSettings otpSettings;
     private final SctIdentityOtpRateLimiter rateLimiter;
     private final ObjectProvider<SctIdentityOtpDevCodeStore> devCodeStore;
+    private final PiiHmacService piiHmacService;
 
     /**
      * @param invitationRepository         초대
@@ -111,7 +111,8 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
             PasswordService passwordService,
             SctIdentityOtpSettings otpSettings,
             SctIdentityOtpRateLimiter rateLimiter,
-            ObjectProvider<SctIdentityOtpDevCodeStore> devCodeStore) {
+            ObjectProvider<SctIdentityOtpDevCodeStore> devCodeStore,
+            PiiHmacService piiHmacService) {
         this.invitationRepository = invitationRepository;
         this.formTemplateRepository = formTemplateRepository;
         this.attemptRepository = attemptRepository;
@@ -125,6 +126,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         this.otpSettings = otpSettings;
         this.rateLimiter = rateLimiter;
         this.devCodeStore = devCodeStore;
+        this.piiHmacService = piiHmacService;
     }
 
     @Override
@@ -147,8 +149,8 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         }
 
         String tenantId = invitation.getTenantId();
-        String phoneHash = PhoneHashUtils.sha256Hex(normalizedPhone);
-        String ipHash = SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp);
+        String phoneHash = piiHmacService.hmacHex(normalizedPhone);
+        String ipHash = piiHmacService.hmacHex(clientIp == null ? "unknown" : clientIp);
         String inviteKey = inviteBucket(tenantId, invitation.getId());
         String phoneKey = "phone:" + tenantId + ":" + phoneHash;
         String ipKey = "ip:" + tenantId + ":" + ipHash;
@@ -199,7 +201,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
 
         int ttlSeconds = otpSettings.ttlSeconds(tenantId);
         boolean matched = invitation.getTargetPhoneHash() != null
-                && invitation.getTargetPhoneHash().equals(phoneHash);
+                && piiHmacService.matches(normalizedPhone, invitation.getTargetPhoneHash());
 
         rateLimiter.recordAttempt(inviteKey);
         rateLimiter.recordAttempt(phoneKey);
@@ -267,19 +269,15 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         code = code.trim();
 
         String tenantId = invitation.getTenantId();
-        String phoneHash = PhoneHashUtils.sha256Hex(normalizedPhone);
+        String phoneHash = piiHmacService.hmacHex(normalizedPhone);
         if (invitation.getTargetPhoneHash() == null
-                || !invitation.getTargetPhoneHash().equals(phoneHash)) {
+                || !piiHmacService.matches(normalizedPhone, invitation.getTargetPhoneHash())) {
             recordAccessAttempt(invitation, false, clientIp);
             throw new SctOtpInvalidException(SctConstants.MSG_OTP_INVALID);
         }
 
-        Optional<PhoneOtpAttempt> rowOpt = phoneOtpAttemptRepository
-                .findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashOrderByCreatedAtDesc(
-                        tenantId,
-                        PhoneOtpAttempt.PROVIDER_SCT_IDENTITY,
-                        String.valueOf(invitation.getId()),
-                        phoneHash);
+        Optional<PhoneOtpAttempt> rowOpt = findLatestSctOtpAttempt(
+                tenantId, invitation.getId(), normalizedPhone);
         if (rowOpt.isEmpty()) {
             throw new SctOtpInvalidException(SctConstants.MSG_OTP_INVALID);
         }
@@ -426,7 +424,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     }
 
     private void recordAccessAttempt(SctInvitation invitation, boolean success, String clientIp) {
-        String ipHash = SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp);
+        String ipHash = piiHmacService.hmacHex(clientIp == null ? "unknown" : clientIp);
         attemptRepository.save(SctInviteAccessAttempt.builder()
                 .tenantId(invitation.getTenantId())
                 .invitationId(invitation.getId())
@@ -436,24 +434,43 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     }
 
     private SctInvitation loadForWrite(String rawToken) {
-        String hash = hashToken(rawToken);
-        return invitationRepository
-                .findByTokenHashAndIsDeletedFalseForUpdate(hash)
-                .orElseGet(() -> resolveMissingToken(hash));
+        if (!StringUtils.hasText(rawToken)) {
+            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        }
+        String trimmed = rawToken.trim();
+        for (String hash : piiHmacService.lookupCandidates(trimmed)) {
+            Optional<SctInvitation> found =
+                invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(hash);
+            if (found.isPresent()) {
+                return found.get();
+            }
+        }
+        return resolveMissingToken(trimmed);
     }
 
-    private SctInvitation resolveMissingToken(String tokenHash) {
-        if (rotatedTokenHashRepository.existsByTokenHash(tokenHash)) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+    private SctInvitation resolveMissingToken(String rawToken) {
+        for (String hash : piiHmacService.lookupCandidates(rawToken)) {
+            if (rotatedTokenHashRepository.existsByTokenHash(hash)) {
+                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            }
         }
         throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
     }
 
-    private static String hashToken(String rawToken) {
-        if (!StringUtils.hasText(rawToken)) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+    private Optional<PhoneOtpAttempt> findLatestSctOtpAttempt(
+            String tenantId, Long invitationId, String normalizedPhone) {
+        for (String phoneHash : piiHmacService.lookupCandidates(normalizedPhone)) {
+            Optional<PhoneOtpAttempt> found = phoneOtpAttemptRepository
+                .findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashOrderByCreatedAtDesc(
+                    tenantId,
+                    PhoneOtpAttempt.PROVIDER_SCT_IDENTITY,
+                    String.valueOf(invitationId),
+                    phoneHash);
+            if (found.isPresent()) {
+                return found;
+            }
         }
-        return SctTokenHasher.sha256Hex(rawToken);
+        return Optional.empty();
     }
 
     private void bindTenantAndGuard(SctInvitation invitation) {

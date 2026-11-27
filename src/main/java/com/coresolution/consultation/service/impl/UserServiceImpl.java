@@ -28,7 +28,7 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -63,7 +63,7 @@ public class UserServiceImpl implements UserService {
     private PasswordService passwordService;
     
     @Autowired
-    private PersonalDataEncryptionUtil encryptionUtil;
+    private PiiCryptoService encryptionUtil;
     
     @Autowired
     private EmailService emailService;

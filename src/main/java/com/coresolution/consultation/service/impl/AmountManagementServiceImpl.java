@@ -17,7 +17,7 @@ import com.coresolution.consultation.repository.ConsultantClientMappingRepositor
 import com.coresolution.consultation.repository.ShopClientOrderLineRepository;
 import com.coresolution.consultation.repository.erp.financial.FinancialTransactionRepository;
 import com.coresolution.consultation.service.AmountManagementService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +40,7 @@ public class AmountManagementServiceImpl implements AmountManagementService {
     
     private final ConsultantClientMappingRepository mappingRepository;
     private final FinancialTransactionRepository financialTransactionRepository;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     /** Path B 주문 스코프 INCOME(relatedEntityId=주문 PK) amount-info 병합용 */
     private final ShopClientOrderLineRepository shopClientOrderLineRepository;
     

@@ -11,12 +11,10 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.coresolution.consultation.constant.LifecycleState;
 import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.converter.EmailAttributeConverter;
-import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
-import com.coresolution.consultation.converter.PhoneAttributeConverter;
 import com.coresolution.consultation.converter.UserRoleConverter;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -84,8 +82,8 @@ public class User extends BaseEntity implements Serializable {
     
     @NotBlank(message = "이메일은 필수입니다.")
     // @Email 제거: 암호화된 이메일은 이메일 형식이 아니므로 검증 제거 (암호화 전 검증은 DTO에서 수행)
-    // PR-4 (2026-06-14): PII SSOT — EmailAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = EmailAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "email", nullable = false, length = 512)
     private String email;
     
@@ -97,19 +95,19 @@ public class User extends BaseEntity implements Serializable {
     
     @NotBlank(message = "이름은 필수입니다.")
     @Size(min = 1, max = 500, message = "이름은 1자 이상 500자 이하여야 합니다.") // 암호화된 데이터를 위해 길이 확장
-    // PR-4 (2026-06-14): PII SSOT — PersonalNameAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "name", nullable = false, length = 512)
     private String name;
     
     @Size(max = 50, message = "닉네임은 50자 이하여야 합니다.")
-    // PR-4 (2026-06-14): PII SSOT — PersonalNameAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = PersonalNameAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "nickname", length = 512)
     private String nickname;
     
-    // PR-4 (2026-06-14): PII SSOT — PhoneAttributeConverter 적용. length 512 정규화(V20260614_002).
-    @Convert(converter = PhoneAttributeConverter.class)
+    // PR-4 (2026-06-14): PII SSOT — PiiAttributeConverter 적용. length 512 정규화(V20260614_002).
+    @Convert(converter = PiiAttributeConverter.class)
     @Column(name = "phone", length = 512)
     private String phone;
     

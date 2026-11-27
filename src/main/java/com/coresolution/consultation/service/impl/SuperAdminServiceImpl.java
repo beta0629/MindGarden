@@ -11,7 +11,7 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.SuperAdminService;
 import com.coresolution.consultation.util.EmailLogMasking;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.PasswordService;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ public class SuperAdminServiceImpl implements SuperAdminService {
     
     private final UserRepository userRepository;
     private final PasswordService passwordService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     
     /**
      * 수퍼어드민 계정 생성

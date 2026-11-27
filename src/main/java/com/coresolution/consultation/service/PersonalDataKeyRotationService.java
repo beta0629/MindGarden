@@ -22,7 +22,7 @@ import com.coresolution.consultation.dto.security.PiiRotationResult;
 import com.coresolution.consultation.entity.PiiReencryptionProgress;
 import com.coresolution.consultation.entity.PiiReencryptionProgress.Status;
 import com.coresolution.consultation.repository.PiiReencryptionProgressRepository;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.core.util.LogSanitizer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * PII KEY/IV 회전 인프라 (Phase 1).
  *
- * <p>{@code PersonalDataEncryptionUtil} 의 dual-read 인프라를 확장하여 chunk 단위로 운영
+ * <p>{@code PiiCryptoService} 의 dual-read 인프라를 확장하여 chunk 단위로 운영
  * PII 컬럼을 활성 키 ({@code PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID}) 로 재암호화한다.
  * Phase 1 인프라이며 실제 운영 회전 실행은 별도 PR (Phase 2) 에서 트리거 한다.</p>
  *
@@ -134,7 +134,7 @@ public class PersonalDataKeyRotationService {
 
     private final JdbcTemplate jdbcTemplate;
     private final TransactionTemplate transactionTemplate;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final PiiReencryptionProgressRepository progressRepository;
 
     /**
@@ -149,7 +149,7 @@ public class PersonalDataKeyRotationService {
     public PersonalDataKeyRotationService(
             JdbcTemplate jdbcTemplate,
             PlatformTransactionManager transactionManager,
-            PersonalDataEncryptionUtil encryptionUtil,
+            PiiCryptoService encryptionUtil,
             PiiReencryptionProgressRepository progressRepository,
             @Value("${pii-rotation.allow-plaintext-encryption:false}") boolean allowPlaintextEncryption) {
         this.jdbcTemplate = jdbcTemplate;
@@ -169,7 +169,7 @@ public class PersonalDataKeyRotationService {
     PersonalDataKeyRotationService(
             JdbcTemplate jdbcTemplate,
             TransactionTemplate transactionTemplate,
-            PersonalDataEncryptionUtil encryptionUtil,
+            PiiCryptoService encryptionUtil,
             PiiReencryptionProgressRepository progressRepository,
             boolean allowPlaintextEncryption) {
         this.jdbcTemplate = jdbcTemplate;
@@ -223,7 +223,7 @@ public class PersonalDataKeyRotationService {
      * dormant_user_pii_vault 1컬럼 회전.
      *
      * <p><strong>Phase 1 인프라 한정.</strong> 휴면 vault 는 AES-GCM + 단일 키 SSOT
-     * ({@code MINDGARDEN_DORMANT_PII_ENC_KEY}) 를 사용한다. {@link PersonalDataEncryptionUtil}
+     * ({@code MINDGARDEN_DORMANT_PII_ENC_KEY}) 를 사용한다. {@link PiiCryptoService}
      * 의 다중 키 인프라와 호환되지 않으므로 본 메서드는 chunk scan + progress 만 기록하고
      * 실제 ciphertext 는 변경하지 않는다 (no-op SKIPPED). Phase 2 PR 에서 dormant 다중 키
      * SSOT 가 추가되면 본 메서드를 활성 회전으로 전환한다.</p>

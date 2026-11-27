@@ -28,7 +28,7 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.AdminManualNotificationService;
 import com.coresolution.consultation.service.MobilePushDispatchService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -88,7 +88,7 @@ public class AdminManualNotificationServiceImpl implements AdminManualNotificati
     private final AdminTestNotificationRateLimiter rateLimiter;
     private final NotificationDispatchHelper dispatchHelper;
     private final AlimtalkTemplateMappingResolver templateMappingResolver;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
     private final MobilePushDispatchService mobilePushDispatchService;
     private final ManualNotificationProperties manualNotificationProperties;
 

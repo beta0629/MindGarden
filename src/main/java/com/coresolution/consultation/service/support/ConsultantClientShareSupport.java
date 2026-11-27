@@ -10,7 +10,7 @@ import com.coresolution.consultation.exception.NoActiveConsultantMappingExceptio
 import com.coresolution.consultation.repository.ConsultantClientMappingRepository;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.UserPersonalDataCacheService;
-import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
+import com.coresolution.consultation.security.pii.PiiCryptoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.AccessDeniedException;
@@ -33,7 +33,7 @@ public class ConsultantClientShareSupport {
     private final UserRepository userRepository;
     private final ConsultantClientMappingRepository consultantClientMappingRepository;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
-    private final PersonalDataEncryptionUtil encryptionUtil;
+    private final PiiCryptoService encryptionUtil;
 
     /**
      * 공유 대상 상담사 — ACTIVE 매칭 우선, 없으면 비-INACTIVE 첫 매칭.

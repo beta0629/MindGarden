@@ -1,6 +1,8 @@
 package com.coresolution.consultation.sct.service.impl;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.constant.SctInviteStatus;
@@ -28,6 +30,9 @@ import org.springframework.util.StringUtils;
 @Service
 @RequiredArgsConstructor
 public class SctShortLinkServiceImpl implements SctShortLinkService {
+
+    /** 초대 tokenExpiresAt(LocalDateTime) → Instant 변환 존(공개 verify 세션과 동일). */
+    private static final ZoneId TOKEN_EXPIRY_ZONE = ZoneId.of("Asia/Seoul");
 
     private final SctShortLinkRepository shortLinkRepository;
     private final SctInvitationRepository invitationRepository;
@@ -131,12 +136,20 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
+        LocalDateTime tokenExpiresAt = invitation.getTokenExpiresAt();
+        if (tokenExpiresAt == null) {
+            log.warn("SCT short-link redirect missing tokenExpiresAt codePrefix={}",
+                    codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        Instant absoluteExpiresAt = tokenExpiresAt.atZone(TOKEN_EXPIRY_ZONE).toInstant();
         try {
             String exchange = exchangeCodeStore.issue(
                     invitation.getId(),
                     invitation.getTenantId(),
                     null,
-                    invitation.getTokenHash());
+                    invitation.getTokenHash(),
+                    absoluteExpiresAt);
             log.info("SCT short-link redirect ok codePrefix={} exchangePrefix={}",
                     codePrefix(shortCode), codePrefix(exchange));
             return SctConstants.PUBLIC_SCT_WEB_PREFIX + exchange;

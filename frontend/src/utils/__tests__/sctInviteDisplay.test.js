@@ -71,7 +71,7 @@ describe('resolveSctInviteQrUrl', () => {
 
 describe('toSctTelHref', () => {
   test('하이픈 제거', () => {
-    expect(toSctTelHref('032-724-8501')).toBe('tel:0327248501');
+    expect(toSctTelHref('02-0000-1111')).toBe('tel:0200001111');
   });
 
   test('빈 값', () => {

@@ -146,9 +146,9 @@ class SctPublicServiceTest {
         org.mockito.Mockito.lenient().when(exchangeCodeStore.resolve(any()))
                 .thenReturn(Optional.empty());
         org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicOfficePhone(any()))
-                .thenReturn("032-724-8501");
+                .thenReturn("02-0000-1111");
         org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicMobilePhone(any()))
-                .thenReturn("010-4285-8570");
+                .thenReturn("010-0000-1111");
     }
 
     private Instant absoluteExpiry() {
@@ -184,7 +184,7 @@ class SctPublicServiceTest {
 
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctInviteStatus.EXPIRED.name(), meta.getStatus());
-        assertEquals("032-724-8501", meta.getOfficePhone());
+        assertEquals("02-0000-1111", meta.getOfficePhone());
         assertNull(meta.getRecipientName());
     }
 
@@ -488,7 +488,7 @@ class SctPublicServiceTest {
 
         SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
         assertEquals(SctConstants.PUBLIC_STATUS_REISSUED, meta.getStatus());
-        assertEquals("010-4285-8570", meta.getMobilePhone());
+        assertEquals("010-0000-1111", meta.getMobilePhone());
         assertNull(meta.getRecipientName());
     }
 

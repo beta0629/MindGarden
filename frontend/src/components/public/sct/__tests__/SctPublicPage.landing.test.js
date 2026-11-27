@@ -39,8 +39,8 @@ const BASE_META = Object.freeze({
   requiresGuardian: false,
   signerBand: 'ADULT',
   recipientName: '예시 내담자',
-  officePhone: '032-724-8501',
-  mobilePhone: '010-4285-8570'
+  officePhone: '02-0000-1111',
+  mobilePhone: '010-0000-1111'
 });
 
 const renderPage = () => render(
@@ -67,8 +67,8 @@ describe('SctPublicPage landing states', () => {
     expect(screen.getByText(/예시 내담자/)).toBeInTheDocument();
     const office = screen.getByTestId(SCT_TEST_ID.LANDING_TEL_OFFICE);
     const mobile = screen.getByTestId(SCT_TEST_ID.LANDING_TEL_MOBILE);
-    expect(office).toHaveAttribute('href', 'tel:0327248501');
-    expect(mobile).toHaveAttribute('href', 'tel:01042858570');
+    expect(office).toHaveAttribute('href', 'tel:0200001111');
+    expect(mobile).toHaveAttribute('href', 'tel:01000001111');
     expect(screen.getByText(SCT_UI.LANDING_ID_NOTE_TITLE)).toBeInTheDocument();
   });
 
@@ -79,7 +79,7 @@ describe('SctPublicPage landing states', () => {
       expect(screen.getByText(SCT_UI.EXPIRED_TITLE)).toBeInTheDocument();
     });
     expect(screen.getByTestId(SCT_TEST_ID.LANDING)).toHaveAttribute('data-landing-kind', 'expired');
-    expect(screen.getByTestId(SCT_TEST_ID.LANDING_TEL_OFFICE)).toHaveAttribute('href', 'tel:0327248501');
+    expect(screen.getByTestId(SCT_TEST_ID.LANDING_TEL_OFFICE)).toHaveAttribute('href', 'tel:0200001111');
     expect(screen.queryByTestId(SCT_TEST_ID.LANDING_START)).not.toBeInTheDocument();
   });
 

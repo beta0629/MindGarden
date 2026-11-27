@@ -57,8 +57,8 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
       linkExpiryDays: 14,
       retentionDays: 365,
       featureEnabled: true,
-      officePhone: '032-724-8501',
-      mobilePhone: '010-4285-8570'
+      officePhone: '02-0000-1111',
+      mobilePhone: '010-0000-1111'
     });
     reissueSctInviteLink.mockResolvedValue({
       id: 42,

@@ -82,7 +82,7 @@ class SctShortLinkServiceTest {
                 .thenReturn(Optional.of(link));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
                 .thenReturn(Optional.of(invitation));
-        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(null), eq("hash")))
+        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(null), eq("hash"), any()))
                 .thenReturn("exchangeOpaqueCodeXYZ");
 
         String path = shortLinkService.resolveRedirectPath(CODE);
@@ -90,6 +90,7 @@ class SctShortLinkServiceTest {
         assertEquals(SctConstants.PUBLIC_SCT_WEB_PREFIX + "exchangeOpaqueCodeXYZ", path);
         assertFalse(path.contains(invitation.getTokenHash()));
         assertFalse(path.contains("/public/sct/hash"));
+        verify(exchangeCodeStore).issue(eq(10L), eq(TENANT), eq(null), eq("hash"), any());
     }
 
     @Test
@@ -102,7 +103,7 @@ class SctShortLinkServiceTest {
                 shortLinkService.resolveRedirectPath(CODE));
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath("bad"));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -116,7 +117,7 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -130,7 +131,7 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -144,7 +145,7 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -162,7 +163,7 @@ class SctShortLinkServiceTest {
         invitation.setStatus(SctInviteStatus.SUBMITTED.name());
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test
@@ -176,7 +177,7 @@ class SctShortLinkServiceTest {
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any());
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test

@@ -62,7 +62,7 @@ class SctSettingsServiceTest {
                 .thenReturn(Optional.of(SystemConfig.builder()
                         .tenantId("")
                         .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
-                        .configValue("032-724-8501")
+                        .configValue("02-0000-1111")
                         .isActive(true)
                         .build()));
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
@@ -70,12 +70,12 @@ class SctSettingsServiceTest {
                 .thenReturn(Optional.of(SystemConfig.builder()
                         .tenantId("t1")
                         .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)
-                        .configValue("010-4285-8570")
+                        .configValue("010-0000-1111")
                         .isActive(true)
                         .build()));
 
-        assertEquals("032-724-8501", settingsService.resolvePublicOfficePhone("t1"));
-        assertEquals("010-4285-8570", settingsService.resolvePublicMobilePhone("t1"));
+        assertEquals("02-0000-1111", settingsService.resolvePublicOfficePhone("t1"));
+        assertEquals("010-0000-1111", settingsService.resolvePublicMobilePhone("t1"));
     }
 
     @Test
@@ -129,7 +129,7 @@ class SctSettingsServiceTest {
                 .thenReturn(Optional.of(SystemConfig.builder()
                         .tenantId("")
                         .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
-                        .configValue("032-724-8501")
+                        .configValue("02-0000-1111")
                         .isActive(true)
                         .build()));
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue(
@@ -137,14 +137,14 @@ class SctSettingsServiceTest {
                 .thenReturn(Optional.of(SystemConfig.builder()
                         .tenantId("t1")
                         .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)
-                        .configValue("010-4285-8570")
+                        .configValue("010-0000-1111")
                         .isActive(true)
                         .build()));
 
         SctSettingsResponse res = settingsService.getSettings("t1");
 
-        assertEquals("032-724-8501", res.getOfficePhone());
-        assertEquals("010-4285-8570", res.getMobilePhone());
+        assertEquals("02-0000-1111", res.getOfficePhone());
+        assertEquals("010-0000-1111", res.getMobilePhone());
         assertEquals(14, res.getLinkExpiryDays());
         assertTrue(Boolean.TRUE.equals(res.getFeatureEnabled()));
     }

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -37,6 +38,7 @@ import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
 import com.coresolution.consultation.sct.entity.SctConsentTemplate;
+import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
@@ -50,7 +52,9 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
@@ -97,8 +101,10 @@ class SctPublicServiceTest {
             Clock.systemUTC(),
             SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
 
+    @Mock private SctExchangeCodeStore exchangeCodeStore;
     @Mock private SctFeatureGuard sctFeatureGuard;
     @Mock private SctConsentService sctConsentService;
+    @Mock private SctSettingsService sctSettingsService;
     @Mock private AuditLogService auditLogService;
     @Mock private EntityManager entityManager;
 
@@ -137,6 +143,12 @@ class SctPublicServiceTest {
 
         ReflectionTestUtils.setField(sctPublicService, "entityManager", entityManager);
         redisHarness.map().clear();
+        org.mockito.Mockito.lenient().when(exchangeCodeStore.resolve(any()))
+                .thenReturn(Optional.empty());
+        org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicOfficePhone(any()))
+                .thenReturn("02-0000-1111");
+        org.mockito.Mockito.lenient().when(sctSettingsService.resolvePublicMobilePhone(any()))
+                .thenReturn("010-0000-1111");
     }
 
     private Instant absoluteExpiry() {
@@ -158,21 +170,40 @@ class SctPublicServiceTest {
     }
 
     @Test
-    void expired_throws410() {
+    void expired_metaReturnsExpiredStatus() {
         invitation.setStatus(SctInviteStatus.EXPIRED.name());
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctInviteStatus.EXPIRED.name(), meta.getStatus());
+        assertEquals("02-0000-1111", meta.getOfficePhone());
+        assertNull(meta.getRecipientName());
     }
 
     @Test
-    void cancelled_throws410() {
+    void cancelled_metaReturnsCancelledStatus() {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctInviteStatus.CANCELLED.name(), meta.getStatus());
+        assertNull(meta.getRecipientName());
     }
 
     @Test
@@ -435,19 +466,59 @@ class SctPublicServiceTest {
     }
 
     @Test
-    void rotatedTokenHash_throws410Gone() {
+    void rotatedTokenHash_metaReturnsReissued() {
+        invitation.setRecipientName("홍길동");
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+        when(rotatedTokenHashRepository.findByTokenHash(any()))
+                .thenReturn(Optional.of(SctRotatedTokenHash.builder()
+                        .tenantId(TENANT_A)
+                        .invitationId(100L)
+                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .rotatedAt(LocalDateTime.now())
+                        .build()));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
 
-        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(RAW_TOKEN));
+        SctPublicMetaResponse meta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals(SctConstants.PUBLIC_STATUS_REISSUED, meta.getStatus());
+        assertEquals("010-0000-1111", meta.getMobilePhone());
+        assertNull(meta.getRecipientName());
+    }
+
+    @Test
+    @DisplayName("getMeta — SENT/SUBMITTED 는 recipientName 유지")
+    void meta_activeStatuses_keepRecipientName() {
+        invitation.setRecipientName("홍길동");
+        invitation.setStatus(SctInviteStatus.SENT.name());
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.of(invitation));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(formItemRepository.countByFormTemplateId(1L)).thenReturn(50L);
+        when(answerRepository.findByTenantIdAndInvitationId(TENANT_A, 100L))
+                .thenReturn(Collections.emptyList());
+        when(sctConsentService.resolveSignerBand("ADULT", false))
+                .thenReturn(SctConsentKeys.SIGNER_BAND_ADULT);
+
+        SctPublicMetaResponse sentMeta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals("홍길동", sentMeta.getRecipientName());
+
+        invitation.setStatus(SctInviteStatus.SUBMITTED.name());
+        SctPublicMetaResponse submittedMeta = sctPublicService.getMeta(RAW_TOKEN);
+        assertEquals("홍길동", submittedMeta.getRecipientName());
     }
 
     @Test
     void unknownTokenHash_throws404NotFound() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(false);
+        when(rotatedTokenHashRepository.findByTokenHash(any())).thenReturn(Optional.empty());
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> sctPublicService.getMeta(RAW_TOKEN));
@@ -458,10 +529,99 @@ class SctPublicServiceTest {
     void rotatedTokenHash_verify_throws410Gone() {
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
-        when(rotatedTokenHashRepository.existsByTokenHash(any())).thenReturn(true);
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(rotatedTokenHashRepository.findByTokenHash(any()))
+                .thenReturn(Optional.of(SctRotatedTokenHash.builder()
+                        .tenantId(TENANT_A)
+                        .invitationId(100L)
+                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .rotatedAt(LocalDateTime.now())
+                        .build()));
 
         assertThrows(SctGoneException.class, () -> sctPublicService.verify(
                 RAW_TOKEN, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드 경로는 tenantId+id ForUpdate 잠금")
+    void verify_exchangePath_usesForUpdateById() {
+        String exchange = "exchange-opaque-code-for-verify!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+        when(invitationRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(attemptRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(1L)).thenReturn(Optional.of(template));
+        when(sctConsentService.hasIdentityContactConsent(invitation)).thenReturn(true);
+        when(sctConsentService.resolveStatus(eq(invitation), eq("ADULT")))
+                .thenReturn(SctConsentStatusView.builder().satisfied(true).build());
+
+        SctVerifyResponse verified = sctPublicService.verify(
+                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1");
+
+        assertTrue(verified.getVerifySessionId() != null && !verified.getVerifySessionId().isBlank());
+        verify(invitationRepository).findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L);
+        verify(invitationRepository, never()).findByTenantIdAndIdAndIsDeletedFalse(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — 교환 코드 REISSUED landing → 410")
+    void verify_exchangeReissuedLanding_throws410() {
+        String exchange = "exchange-reissued-landing!!!!!!";
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L,
+                        TENANT_A,
+                        SctConstants.PUBLIC_STATUS_REISSUED,
+                        false,
+                        invitation.getTokenHash())));
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.verify(
+                exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        verify(invitationRepository, never())
+                .findByTenantIdAndIdAndIsDeletedFalseForUpdate(any(), any());
+    }
+
+    @Test
+    @DisplayName("verify — tokenHash 회전 후 구 교환 코드 거부")
+    void verify_exchangeTokenHashMismatch_throws404() {
+        String exchange = "exchange-stale-after-reissue!!!!!";
+        String oldHash = SctTokenHasher.sha256Hex("old-token-before-reissue-rotate!");
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(100L, TENANT_A, null, false, oldHash)));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+
+        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+                () -> sctPublicService.verify(
+                        exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        assertEquals("SCT 링크를 찾을 수 없습니다.", ex.getMessage());
+        verify(attemptRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("getMeta — 교환 코드 CANCELLED 초대 → 410")
+    void meta_exchangeCancelledInvitation_throws410() {
+        String exchange = "exchange-cancelled-invite!!!!!!!!";
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        when(invitationRepository.findByTokenHashAndIsDeletedFalse(any()))
+                .thenReturn(Optional.empty());
+        when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        100L, TENANT_A, null, false, invitation.getTokenHash())));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_A, 100L))
+                .thenReturn(Optional.of(invitation));
+
+        assertThrows(SctGoneException.class, () -> sctPublicService.getMeta(exchange));
     }
 
     @Test

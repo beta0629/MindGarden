@@ -41,6 +41,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .linkExpiryDays(resolveLinkExpiryDays(tenantId))
                 .retentionDays(resolveRetentionDays(tenantId))
                 .featureEnabled(enabled)
+                .officePhone(resolvePublicOfficePhone(tenantId))
+                .mobilePhone(resolvePublicMobilePhone(tenantId))
                 .build();
     }
 
@@ -116,6 +118,8 @@ public class SctSettingsServiceImpl implements SctSettingsService {
                 .linkExpiryDays(newExpiry)
                 .retentionDays(newRetention)
                 .featureEnabled(newFeature)
+                .officePhone(resolvePublicOfficePhone(tenantId))
+                .mobilePhone(resolvePublicMobilePhone(tenantId))
                 .build();
     }
 
@@ -151,6 +155,34 @@ public class SctSettingsServiceImpl implements SctSettingsService {
             return parseRetentionDays(globalCfg.get().getConfigValue());
         }
         return SctFeatureFlagKeys.DEFAULT_RETENTION_DAYS;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String resolvePublicOfficePhone(String tenantId) {
+        return resolveConfigString(tenantId, SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String resolvePublicMobilePhone(String tenantId) {
+        return resolveConfigString(tenantId, SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE);
+    }
+
+    private String resolveConfigString(String tenantId, String configKey) {
+        Optional<SystemConfig> tenantCfg = systemConfigRepository
+                .findByTenantIdAndConfigKeyAndIsActiveTrue(tenantId, configKey);
+        if (tenantCfg.isPresent() && tenantCfg.get().getConfigValue() != null
+                && !tenantCfg.get().getConfigValue().isBlank()) {
+            return tenantCfg.get().getConfigValue().trim();
+        }
+        Optional<SystemConfig> globalCfg = systemConfigRepository
+                .findByTenantIdAndConfigKeyAndIsActiveTrue("", configKey);
+        if (globalCfg.isPresent() && globalCfg.get().getConfigValue() != null
+                && !globalCfg.get().getConfigValue().isBlank()) {
+            return globalCfg.get().getConfigValue().trim();
+        }
+        return null;
     }
 
     private void upsertConfig(

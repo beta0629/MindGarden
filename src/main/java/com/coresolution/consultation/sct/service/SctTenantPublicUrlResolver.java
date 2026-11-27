@@ -27,6 +27,8 @@ public class SctTenantPublicUrlResolver {
 
     private static final String PUBLIC_SCT_WEB_PREFIX = "/public/sct/";
 
+    private static final String SHORT_LINK_WEB_PREFIX = "/s/";
+
     /** 로그용 토큰 앞부분 길이 — {@code SctInvitationServiceImpl} tokenPrefix 6자와 정합. */
     static final int TOKEN_LOG_PREFIX_LENGTH = 6;
 
@@ -46,9 +48,46 @@ public class SctTenantPublicUrlResolver {
      * @throws IllegalStateException 테넌트·서브도메인·도메인 접미사 확인 실패
      */
     public String resolveAbsolutePublicUrl(String tenantId, String rawToken) {
-        if (!StringUtils.hasText(tenantId) || !StringUtils.hasText(rawToken)) {
+        if (!StringUtils.hasText(rawToken)) {
             log.error("SCT 절대 URL 조립 실패: tenantId 또는 rawToken 없음");
             throw new IllegalStateException(DOMAIN_UNAVAILABLE_MESSAGE);
+        }
+        return resolveAbsoluteUrl(tenantId, PUBLIC_SCT_WEB_PREFIX + rawToken);
+    }
+
+    /**
+     * 테넌트 도메인 기준 SCT 단축 절대 URL.
+     *
+     * @param tenantId  테넌트 ID
+     * @param shortCode 단축 코드
+     * @return {@code https://{subdomain}{suffix}/s/{shortCode}}
+     * @throws IllegalStateException 테넌트·서브도메인·도메인 접미사 확인 실패
+     */
+    public String resolveAbsoluteShortUrl(String tenantId, String shortCode) {
+        if (!StringUtils.hasText(shortCode)) {
+            log.error("SCT 단축 URL 조립 실패: shortCode 없음");
+            throw new IllegalStateException(DOMAIN_UNAVAILABLE_MESSAGE);
+        }
+        return resolveAbsoluteUrl(tenantId, SHORT_LINK_WEB_PREFIX + shortCode.trim());
+    }
+
+    /**
+     * 테넌트 호스트 origin만 반환({@code https://{subdomain}{suffix}}).
+     *
+     * @param tenantId 테넌트
+     * @return origin
+     */
+    public String resolveTenantOrigin(String tenantId) {
+        return resolveAbsoluteUrl(tenantId, "");
+    }
+
+    private String resolveAbsoluteUrl(String tenantId, String pathAndQuery) {
+        if (!StringUtils.hasText(tenantId)) {
+            log.error("SCT 절대 URL 조립 실패: tenantId 없음");
+            throw new IllegalStateException(DOMAIN_UNAVAILABLE_MESSAGE);
+        }
+        if (pathAndQuery == null) {
+            pathAndQuery = "";
         }
         Tenant tenant = tenantRepository.findByTenantIdAndIsDeletedFalse(tenantId.trim())
                 .orElse(null);
@@ -79,7 +118,7 @@ public class SctTenantPublicUrlResolver {
         if (!suffix.startsWith(".")) {
             suffix = "." + suffix;
         }
-        return HTTPS_SCHEME + "://" + hostLabel + suffix + PUBLIC_SCT_WEB_PREFIX + rawToken;
+        return HTTPS_SCHEME + "://" + hostLabel + suffix + pathAndQuery;
     }
 
     /**

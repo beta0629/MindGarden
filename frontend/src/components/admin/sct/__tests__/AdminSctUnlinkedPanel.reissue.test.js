@@ -10,6 +10,7 @@ import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import AdminSctUnlinkedPanel from '../AdminSctUnlinkedPanel';
 import { SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
 import {
+  fetchSctSettings,
   fetchSctUnlinkedInvitations,
   reissueSctInviteLink
 } from '../../../../utils/sctApi';
@@ -21,6 +22,7 @@ jest.mock('../../../../contexts/SessionContext', () => ({
 }));
 
 jest.mock('../../../../utils/sctApi', () => ({
+  fetchSctSettings: jest.fn(),
   fetchSctUnlinkedInvitations: jest.fn(),
   reissueSctInviteLink: jest.fn()
 }));
@@ -28,6 +30,17 @@ jest.mock('../../../../utils/sctApi', () => ({
 jest.mock('../../../../utils/notification', () => ({
   __esModule: true,
   default: { show: jest.fn(), success: jest.fn() }
+}));
+
+jest.mock('qrcode.react', () => ({
+  QRCodeSVG: ({ value }) => <svg data-testid="mock-qr" data-value={value} />
+}));
+
+jest.mock('../../../common/MGButton', () => ({
+  __esModule: true,
+  default: ({ children, onClick, disabled, preventDoubleClick, loading, ...rest }) => (
+    <button type="button" onClick={onClick} disabled={disabled} {...rest}>{children}</button>
+  )
 }));
 
 describe('AdminSctUnlinkedPanel reissue UI', () => {
@@ -40,7 +53,19 @@ describe('AdminSctUnlinkedPanel reissue UI', () => {
 
   beforeEach(() => {
     fetchSctUnlinkedInvitations.mockResolvedValue([row]);
-    reissueSctInviteLink.mockResolvedValue({ publicUrl: '/public/sct/new-token' });
+    fetchSctSettings.mockResolvedValue({
+      linkExpiryDays: 14,
+      retentionDays: 365,
+      featureEnabled: true,
+      officePhone: '02-0000-1111',
+      mobilePhone: '010-0000-1111'
+    });
+    reissueSctInviteLink.mockResolvedValue({
+      id: 42,
+      publicUrl: '/public/sct/new-token',
+      absoluteShortUrl: 'https://example.com/s/abc123',
+      recipientName: '홍길동'
+    });
   });
 
   it('ADMIN always sees copy area with security hint before reissue', async() => {

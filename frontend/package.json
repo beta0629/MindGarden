@@ -53,6 +53,7 @@
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.544.0",
     "luxon": "^3.7.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18.2.0",
     "react-bootstrap": "^2.10.10",
     "react-chartjs-2": "^5.3.1",
@@ -133,7 +134,8 @@
       "^@portone/browser-sdk/v2$": "<rootDir>/node_modules/@portone/browser-sdk/dist/v2.cjs",
       "^axios$": "<rootDir>/node_modules/axios/dist/node/axios.cjs",
       "^react-router$": "<rootDir>/node_modules/react-router/dist/development/index.js",
-      "^@fullcalendar/luxon3$": "<rootDir>/jest-stubs/fullcalendarLuxon3.js"
+      "^@fullcalendar/luxon3$": "<rootDir>/jest-stubs/fullcalendarLuxon3.js",
+      "^qrcode\\.react$": "<rootDir>/jest-stubs/qrcodeReact.js"
     }
   }
 }

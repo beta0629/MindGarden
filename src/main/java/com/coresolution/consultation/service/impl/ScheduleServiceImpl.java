@@ -22,6 +22,7 @@ import java.util.TreeSet;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
+import com.coresolution.consultation.constant.ClientEventWriteConstants;
 import com.coresolution.consultation.constant.ConsultationType;
 import com.coresolution.consultation.constant.MappingHistoryEventType;
 import com.coresolution.consultation.constant.PaymentTimingConstants;
@@ -89,11 +90,13 @@ import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.LeftoverOccupyingCompleteExhaust;
 import com.coresolution.consultation.util.MappingOccupyingSessionSequenceOrder;
 import com.coresolution.consultation.util.MappingPaymentScheduleGate;
+import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.ProvisionalConsultationLogSession;
 import com.coresolution.consultation.util.ScheduleCancelLinkedMappingReopen;
 import com.coresolution.consultation.util.ScheduleCancelMappingStatusRule;
 import com.coresolution.consultation.util.ScheduleSessionStartGate;
 import com.coresolution.consultation.util.ScheduleSlotGuard;
+import com.coresolution.consultation.service.support.ClientEventWriteSupport;
 import com.coresolution.consultation.service.support.DeferredExternalCalls;
 import com.coresolution.consultation.util.ScheduleStatusTransitionPolicy;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -185,6 +188,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
      */
     @Autowired(required = false)
     private ReservationReminderRescheduleService reservationReminderRescheduleService;
+
+    /**
+     * 내담자 타임라인({@code client_event}) 실시간 기록.
+     * 생성자 인자를 늘리면 기존 {@code @InjectMocks} 단위 테스트가 깨지므로 필드 주입한다.
+     * 빈이 없으면 기록을 건너뛴다(단위 테스트). 운영에서는 필수 빈이다.
+     */
+    @Autowired(required = false)
+    private ClientEventWriteSupport clientEventWriteSupport;
 
     /**
      * 옵션 B 결제 의도 코드 — 매핑 {@code payment_timing} 컬럼 값.
@@ -461,6 +472,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         boolean chronologyChanged = !Objects.equals(previousDate, saved.getDate())
                 || !Objects.equals(previousStartTime, saved.getStartTime());
         boolean cancellingNow = updateData.getStatus() == ScheduleStatus.CANCELLED;
+        if (cancellingNow && previousStatus != ScheduleStatus.CANCELLED) {
+            recordClientScheduleCancelled(saved,
+                    previousStatus != null ? previousStatus.name() : null,
+                    updateData.getDescription());
+        } else if (slotChanged && !cancellingNow) {
+            recordClientScheduleUpdated(saved, previousDate, previousStartTime, previousEndTime, previousStatus);
+        }
         if (slotChanged && !cancellingNow && saved.getStatus() != ScheduleStatus.CANCELLED) {
             try {
                 String pushTenantId = tenantId != null ? tenantId : saved.getTenantId();
@@ -763,6 +781,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 채널 정책(알림톡 OFF)·CANCELLED 가드는 notifyScheduleCreated → dispatchImmediateReservationNotification 에서 처리.
             notifyTentativeScheduleCreated(savedSchedule);
         }
+        recordClientScheduleCreated(savedSchedule, effectiveTentative);
 
         log.info("✅ 상담사 스케줄 생성 완료: ID {}, mappingId={}", savedSchedule.getId(), savedSchedule.getMappingId());
         return savedSchedule;
@@ -878,6 +897,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             // 2026-06-04 사용자 정책: 가예약(TENTATIVE_PENDING_PAYMENT)도 등록 즉시 SMS 안내 발송.
             notifyTentativeScheduleCreated(savedSchedule);
         }
+        recordClientScheduleCreated(savedSchedule, effectiveTentative);
 
         log.info("✅ 상담사 스케줄 생성 완료 (상담유형 포함): ID {}, 상담유형: {}, mappingId={}",
                 savedSchedule.getId(), consultationType, savedSchedule.getMappingId());
@@ -917,6 +937,7 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         useSessionForMapping(consultantId, clientId, savedSchedule);
         notifyScheduleCreated(savedSchedule);
+        recordClientScheduleCreated(savedSchedule, false);
 
         log.info("✅ 상담사 스케줄 생성 완료 (유형 기반): ID {}, 상담 유형: {}, 시간: {} - {}", 
                 savedSchedule.getId(), consultationType.getDisplayName(), startTime, endTime);
@@ -960,9 +981,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             log.info("finalizeTentativeSchedulesAfterDepositConfirmed: 가예약 {}건 확정 처리, mappingId={}",
                     tentatives.size(), mapping.getId());
             for (Schedule schedule : tentatives) {
+                ScheduleStatus previousStatus = schedule.getStatus();
                 schedule.setStatus(ScheduleStatus.BOOKED);
                 Schedule booked = scheduleRepository.save(schedule);
                 useSessionForSpecificMapping(tenantId, mapping.getId(), consultantUserId, clientUserId, booked);
+                recordClientTempReservationConfirmed(booked,
+                        previousStatus != null ? previousStatus.name() : null);
                 notifyTentativeScheduleBookedAfterDeposit(booked, tenantId);
             }
         }
@@ -1420,6 +1444,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 freshMapping.getUsedSessions(), freshMapping.getRemainingSessions());
         persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
         // 옵션 B: SESSION_USED history 기록을 위해 차감 전 스냅샷 캡처
+        Integer remBefore = freshMapping.getRemainingSessions();
+        Integer usedBefore = freshMapping.getUsedSessions();
         String beforeStateJson = serializeSessionSnapshot(freshMapping);
         freshMapping.useSession();
         mappingRepository.save(freshMapping);
@@ -1427,6 +1453,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         log.info("회기 사용 후 동기화 완료: mappingId={}", mappingId);
         recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
                 scheduleForSequence != null ? scheduleForSequence.getId() : null);
+        // client_event 는 mapping history warn-ignore 밖에서 실패 전파
+        recordClientSessionDeducted(tenantId, clientUserId, mappingId,
+                scheduleForSequence != null ? scheduleForSequence.getId() : null,
+                remBefore, freshMapping.getRemainingSessions(),
+                usedBefore, freshMapping.getUsedSessions(),
+                beforeStateJson, serializeSessionSnapshot(freshMapping));
         try {
             Integer rem = freshMapping.getRemainingSessions();
             if (rem != null && rem > 0 && rem <= 2) {
@@ -1490,8 +1522,10 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 continue;
             }
             if (schedule.getStatus() == ScheduleStatus.TENTATIVE_PENDING_PAYMENT) {
+                ScheduleStatus previousStatus = schedule.getStatus();
                 schedule.setStatus(ScheduleStatus.BOOKED);
                 scheduleRepository.save(schedule);
+                recordClientTempReservationConfirmed(schedule, previousStatus.name());
                 notifyTentativeScheduleBookedAfterDeposit(schedule, resolvedTenantId);
             }
             if (!isConsultationScheduleForSessionDeduction(schedule)) {
@@ -1550,11 +1584,17 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
         log.info("가예약 라벨 일정 잔여 차감: scheduleId={}, mappingId={}, sequence={}, used={}, remaining={}",
                 schedule.getId(), mappingId, schedule.getSessionSequence(), used, remaining);
+        Integer remBefore = freshMapping.getRemainingSessions();
+        Integer usedBefore = freshMapping.getUsedSessions();
         String beforeStateJson = serializeSessionSnapshot(freshMapping);
         freshMapping.useSession();
         mappingRepository.save(freshMapping);
         sessionSyncService.syncAfterSessionUsage(mappingId, consultantUserId, clientUserId);
         recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson, schedule.getId());
+        recordClientSessionDeducted(tenantId, clientUserId, mappingId, schedule.getId(),
+                remBefore, freshMapping.getRemainingSessions(),
+                usedBefore, freshMapping.getUsedSessions(),
+                beforeStateJson, serializeSessionSnapshot(freshMapping));
         dispatchSessionLifecycleNotification(freshMapping);
     }
 
@@ -1740,6 +1780,105 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         }
     }
 
+    private void recordClientScheduleCreated(Schedule schedule, boolean tentative) {
+        if (clientEventWriteSupport == null || schedule == null) {
+            return;
+        }
+        clientEventWriteSupport.recordScheduleCreated(schedule, tentative);
+    }
+
+    private void recordClientTempReservationConfirmed(Schedule schedule, String previousStatusName) {
+        if (clientEventWriteSupport == null || schedule == null) {
+            return;
+        }
+        clientEventWriteSupport.recordTempReservationConfirmed(schedule, previousStatusName);
+    }
+
+    private void recordClientScheduleUpdated(
+            Schedule schedule,
+            LocalDate previousDate,
+            LocalTime previousStartTime,
+            LocalTime previousEndTime,
+            ScheduleStatus previousStatus) {
+        if (clientEventWriteSupport == null || schedule == null) {
+            return;
+        }
+        Map<String, Object> before = new HashMap<>();
+        before.put(ClientEventWriteConstants.JSON_KEY_STATUS,
+                previousStatus != null ? previousStatus.name() : null);
+        before.put(ClientEventWriteConstants.JSON_KEY_DATE,
+                previousDate != null ? previousDate.toString() : null);
+        before.put(ClientEventWriteConstants.JSON_KEY_START_TIME,
+                previousStartTime != null ? previousStartTime.toString() : null);
+        before.put(ClientEventWriteConstants.JSON_KEY_END_TIME,
+                previousEndTime != null ? previousEndTime.toString() : null);
+        String beforeJson;
+        try {
+            beforeJson = sessionHistoryObjectMapper.writeValueAsString(before);
+        } catch (Exception e) {
+            beforeJson = null;
+        }
+        clientEventWriteSupport.recordScheduleUpdated(schedule, beforeJson);
+    }
+
+    private void recordClientScheduleCancelled(Schedule schedule, String previousStatusName, String reason) {
+        if (clientEventWriteSupport == null || schedule == null) {
+            return;
+        }
+        clientEventWriteSupport.recordScheduleCancelled(schedule, previousStatusName, reason);
+    }
+
+    private void recordClientSessionDeducted(
+            String tenantId,
+            Long clientId,
+            Long mappingId,
+            Long scheduleId,
+            Integer remBefore,
+            Integer remAfter,
+            Integer usedBefore,
+            Integer usedAfter,
+            String beforeJson,
+            String afterJson) {
+        if (clientEventWriteSupport == null || clientId == null) {
+            return;
+        }
+        clientEventWriteSupport.recordSessionDeducted(
+                tenantId, clientId, mappingId, scheduleId,
+                remBefore, remAfter, usedBefore, usedAfter, beforeJson, afterJson);
+    }
+
+    private void recordClientSessionRestored(
+            String tenantId,
+            Long clientId,
+            ConsultantClientMapping mapping,
+            Long scheduleId,
+            Integer remBefore,
+            Integer usedBefore,
+            String beforeJson) {
+        if (clientEventWriteSupport == null || clientId == null || mapping == null) {
+            return;
+        }
+        clientEventWriteSupport.recordSessionRestored(
+                tenantId, clientId, mapping, scheduleId, remBefore, usedBefore, beforeJson);
+    }
+
+    private void recordClientMappingReassigned(
+            Schedule schedule,
+            Long originMappingId,
+            ConsultantClientMapping target,
+            String originBeforeJson,
+            String targetBeforeJson,
+            Integer remBefore,
+            Integer usedBefore,
+            String reason) {
+        if (clientEventWriteSupport == null || schedule == null || target == null) {
+            return;
+        }
+        clientEventWriteSupport.recordMappingReassigned(
+                schedule, originMappingId, target, originBeforeJson, targetBeforeJson,
+                remBefore, usedBefore, reason);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<Schedule> findByConsultantId(Long consultantId) {
@@ -1817,6 +1956,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 restoreSessionForMappingIfDeducted(schedule);
             }
             syncCancelLinkedMappingOnScheduleCancelled(saved);
+            recordClientScheduleCancelled(saved,
+                    previousStatus != null ? previousStatus.name() : null, reason);
         }
         try {
             mobilePushDispatchService.dispatchBookingCancelled(
@@ -1937,6 +2078,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         
         Schedule saved = scheduleRepository.save(schedule);
         deductSessionForScheduleIfNeeded(saved);
+        if (currentStatus == ScheduleStatus.TENTATIVE_PENDING_PAYMENT) {
+            recordClientTempReservationConfirmed(saved, currentStatus.name());
+        }
         Runnable confirmedExternalCalls = buildScheduleConfirmedExternalCalls(saved);
         if (!DeferredExternalCalls.deferIfActive(confirmedExternalCalls)) {
             confirmedExternalCalls.run();
@@ -3257,6 +3401,13 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
         if (rem == null || rem < 1) {
             throw new IllegalStateException(ScheduleServiceUserFacingMessages.MSG_REASSIGN_MAPPING_TARGET_INVALID);
         }
+        // 회기 불변식 깨진 매핑은 useSession/sync 전 400으로 차단 (500 RuntimeException 방지)
+        MappingSessionCountInvariant.assertInvariant(target);
+        if (origin != null) {
+            MappingSessionCountInvariant.assertInvariant(origin);
+        }
+        Integer remBefore = target.getRemainingSessions();
+        Integer usedBefore = target.getUsedSessions();
         Integer assignedSequence = planOccupyingSessionSequences(target, schedule, true, true);
         if (assignedSequence == null) {
             throw new IllegalStateException(
@@ -3285,6 +3436,9 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 targetBeforeJson,
                 actorUserId,
                 trimmedReason);
+        // MAPPING_REASSIGNED 1행만 — SESSION_DEDUCTED 중복 기록 금지(회기 차감은 재배정 스냅샷에 포함).
+        recordClientMappingReassigned(schedule, originMappingId, target,
+                originBeforeJson, targetBeforeJson, remBefore, usedBefore, trimmedReason);
 
         // 자동취소 없음. UI 힌트만: 원 배정이 결제대기로 비면(used=0) 취소 권장.
         boolean cancelRecommended = isCancelRecommendedForEmptiedPendingOrigin(
@@ -4535,6 +4689,8 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             persistSessionSequenceBeforeDeduction(scheduleForSequence, freshMapping);
 
             // 옵션 B: SESSION_USED history 기록을 위해 차감 전 스냅샷 캡처
+            Integer remBefore = freshMapping.getRemainingSessions();
+            Integer usedBefore = freshMapping.getUsedSessions();
             String beforeStateJson = serializeSessionSnapshot(freshMapping);
 
             freshMapping.useSession();
@@ -4545,6 +4701,12 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
 
             recordSessionUsedHistory(tenantId, freshMapping, beforeStateJson,
                     scheduleForSequence != null ? scheduleForSequence.getId() : null);
+            // client_event 는 mapping history warn-ignore 밖에서 실패 전파
+            recordClientSessionDeducted(tenantId, clientId, mappingId,
+                    scheduleForSequence != null ? scheduleForSequence.getId() : null,
+                    remBefore, freshMapping.getRemainingSessions(),
+                    usedBefore, freshMapping.getUsedSessions(),
+                    beforeStateJson, serializeSessionSnapshot(freshMapping));
 
             log.info("✅ 회기 사용 완료: 남은 회기 수 {}", freshMapping.getRemainingSessions());
 
@@ -4581,6 +4743,11 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
             return;
         }
         Integer restoredSequence = schedule.getSessionSequence();
+        boolean restored = false;
+        ConsultantClientMapping restoredMapping = null;
+        Integer remBefore = null;
+        Integer usedBefore = null;
+        String beforeStateJson = null;
         try {
             ConsultantClientMapping mapping = resolveMappingForConsumedSessionRestore(
                     tenantId, schedule, consultantId, clientId);
@@ -4604,13 +4771,23 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
                 }
                 return;
             }
+            remBefore = mapping.getRemainingSessions();
+            usedBefore = mapping.getUsedSessions();
+            beforeStateJson = serializeSessionSnapshot(mapping);
             mapping.restoreSession();
             mappingRepository.save(mapping);
             clearScheduleSessionSequence(schedule);
+            restored = true;
+            restoredMapping = mapping;
             log.info("✅ 예약 취소로 회기 1회 복원: scheduleId={}, mappingId={}, clearedSessionSequence={}, 남은 회기={}",
                     schedule.getId(), mapping.getId(), restoredSequence, mapping.getRemainingSessions());
         } catch (Exception e) {
             log.warn("회기 복원 처리 실패(취소는 계속): scheduleId={}, {}", schedule.getId(), e.getMessage(), e);
+        }
+        // client_event 는 restore warn-ignore catch 밖에서 실패 전파 → 부모 TX 롤백
+        if (restored && restoredMapping != null) {
+            recordClientSessionRestored(tenantId, clientId, restoredMapping, schedule.getId(),
+                    remBefore, usedBefore, beforeStateJson);
         }
     }
 

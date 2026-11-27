@@ -2,6 +2,10 @@
 #
 # 운영 DB 스냅샷을 개발 DB로 일일 반영 (배치용)
 #
+# 서버 경로: /opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh
+# 반영: release/dev → deploy-procedures-dev.yml → publish-dev-sync-bundle.sh
+#   (수동 SSH 반영은 런북에만 문서화. 이 스크립트에 수동 SSH 를 넣지 않는다.)
+#
 # D-1 의미:
 #   - SYNC_MODE=from_file: 파일명에 포함된 "전일(어제) 날짜" 덤프를 사용 (운영 측이 전일분을 남겨야 함)
 #   - SYNC_MODE=dump_live: 실행 시점의 운영 스냅샷을 개발에 넣음 (스케줄을 새벽에 두면 전일 업무 데이터에 가깝게 유지 가능)
@@ -14,6 +18,8 @@
 #   NON_INTERACTIVE=1 /opt/mindgarden/scripts/database/sync/prod-to-dev-daily.sh
 #
 # 권장 스케줄: 매일 새벽(예: 03:30 KST) — crontab.example 참고 (CRON_TZ=Asia/Seoul)
+#
+# 테스트: PROD_TO_DEV_DAILY_LIB_ONLY=1 로 source 하면 함수만 로드 (본문 미실행).
 #
 set -euo pipefail
 
@@ -48,6 +54,141 @@ yesterday_ymd_dash() {
   date -v-1d +%Y-%m-%d
 }
 
+# .dev BE 재기동 기본값 (env 로드 후·함수 진입 시 재적용). deploy-backend-dev.yml 과 동일 기본.
+apply_dev_be_restart_defaults() {
+  DEV_BE_SYSTEMD_UNIT="${DEV_BE_SYSTEMD_UNIT:-mindgarden-dev.service}"
+  DEV_BE_HEALTH_URL="${DEV_BE_HEALTH_URL:-http://127.0.0.1:8080/actuator/health}"
+  DEV_BE_HEALTH_TIMEOUT_SEC="${DEV_BE_HEALTH_TIMEOUT_SEC:-300}"
+  DEV_BE_HEALTH_INTERVAL_SEC="${DEV_BE_HEALTH_INTERVAL_SEC:-5}"
+  POST_SYNC_RESTART_DEV_BE="${POST_SYNC_RESTART_DEV_BE:-1}"
+  SYSTEMCTL_BIN="${SYSTEMCTL_BIN:-systemctl}"
+  CURL_BIN="${CURL_BIN:-curl}"
+}
+
+run_dev_systemctl() {
+  if [[ "$SYSTEMCTL_BIN" == "systemctl" ]]; then
+    sudo "$SYSTEMCTL_BIN" "$@"
+  else
+    "$SYSTEMCTL_BIN" "$@"
+  fi
+}
+
+dev_be_flyway_url_from_health() {
+  local health="${1:-$DEV_BE_HEALTH_URL}"
+  if [[ "$health" == */health ]]; then
+    printf '%s\n' "${health%health}flyway"
+  else
+    printf '%s\n' "${health%/}/flyway"
+  fi
+}
+
+# Flyway actuator JSON 에서 state=PENDING 건수 (READ only). python3 우선, 없으면 grep.
+count_flyway_pending_from_json() {
+  local json="$1"
+  if command -v python3 >/dev/null 2>&1; then
+    printf '%s' "$json" | python3 -c '
+import json, sys
+raw = sys.stdin.read()
+try:
+    data = json.loads(raw)
+except Exception:
+    print(-1)
+    raise SystemExit(0)
+count = 0
+def walk(obj):
+    global count
+    if isinstance(obj, dict):
+        state = obj.get("state")
+        if isinstance(state, str) and state.upper() == "PENDING":
+            count += 1
+        for v in obj.values():
+            walk(v)
+    elif isinstance(obj, list):
+        for item in obj:
+            walk(item)
+walk(data)
+print(count)
+'
+    return 0
+  fi
+  # jq 없을 때 fallback: PENDING 토큰 대략 카운트 (정확도 낮음 → 로그만)
+  printf '%s' "$json" | grep -oE '"state"[[:space:]]*:[[:space:]]*"[Pp][Ee][Nn][Dd][Ii][Nn][Gg]"' | wc -l | tr -d ' '
+}
+
+# Flyway pending/실패 상태 READ only 로그 (heal·수동 SQL·데이터 수정 금지).
+log_flyway_pending_readonly() {
+  local flyway_url http_code body pending failed recent
+  flyway_url="$(dev_be_flyway_url_from_health "$DEV_BE_HEALTH_URL")"
+  log "Flyway 확인(READ only) 시도: $flyway_url (log=${LOG_FILE:-unset})"
+
+  body="$("$CURL_BIN" -s -o - -w '\n%{http_code}' --max-time 8 "$flyway_url" 2>/dev/null || true)"
+  http_code="$(printf '%s\n' "$body" | tail -n 1)"
+  body="$(printf '%s\n' "$body" | sed '$d')"
+
+  if [[ "$http_code" == "200" && -n "$body" ]]; then
+    pending="$(count_flyway_pending_from_json "$body" || echo -1)"
+    log "Flyway actuator PENDING count=${pending} (http=$http_code)"
+    return 0
+  fi
+
+  log "Flyway actuator 불가(http=${http_code:-none}) — mysql_dev READ fallback"
+
+  if ! declare -F mysql_dev >/dev/null 2>&1; then
+    log "WARN: mysql_dev 없음 — Flyway DB 확인 skip. health 200 + pending 엔드포인트 불가로 종료 표기. log=${LOG_FILE:-unset}"
+    return 0
+  fi
+
+  failed="$(mysql_dev -N --batch -e \
+    "SELECT COUNT(*) FROM \`${DEV_DB_NAME}\`.flyway_schema_history WHERE success=0;" 2>/dev/null || echo "ERR")"
+  recent="$(mysql_dev -N --batch -e \
+    "SELECT version, description, success, installed_on
+       FROM \`${DEV_DB_NAME}\`.flyway_schema_history
+      ORDER BY installed_rank DESC LIMIT 5;" 2>/dev/null || echo "(조회 실패)")"
+  log "flyway_schema_history success=0 count=${failed} (pending 엔드포인트 불가 → health 200 + failed=0 을 성공 기준으로 로그)"
+  log "flyway_schema_history recent:"
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && log "  $line"
+  done <<< "$recent"
+}
+
+wait_dev_be_health_ok() {
+  local elapsed=0 status="000"
+  log "actuator/health 폴링 시작 url=$DEV_BE_HEALTH_URL timeout=${DEV_BE_HEALTH_TIMEOUT_SEC}s interval=${DEV_BE_HEALTH_INTERVAL_SEC}s log=${LOG_FILE:-unset}"
+  while (( elapsed < DEV_BE_HEALTH_TIMEOUT_SEC )); do
+    status="$("$CURL_BIN" -s -o /dev/null -w '%{http_code}' --max-time 5 "$DEV_BE_HEALTH_URL" 2>/dev/null || echo "000")"
+    if [[ "$status" == "200" ]]; then
+      log "dev BE health 200 (elapsed=${elapsed}s) url=$DEV_BE_HEALTH_URL"
+      return 0
+    fi
+    sleep "$DEV_BE_HEALTH_INTERVAL_SEC"
+    elapsed=$((elapsed + DEV_BE_HEALTH_INTERVAL_SEC))
+  done
+  die "dev BE health timeout (${DEV_BE_HEALTH_TIMEOUT_SEC}s) last_status=${status} url=$DEV_BE_HEALTH_URL log=${LOG_FILE:-unset}"
+}
+
+# 동기화 전체 성공 후 .dev BE 1회 재기동 → Flyway pending 적용. 단계 실패 시 호출되지 않음(set -e).
+restart_dev_backend_after_successful_sync() {
+  apply_dev_be_restart_defaults
+  if [[ "$POST_SYNC_RESTART_DEV_BE" != "1" ]]; then
+    log "POST_SYNC_RESTART_DEV_BE=$POST_SYNC_RESTART_DEV_BE — .dev BE 재기동 skip (log=${LOG_FILE:-unset})"
+    return 0
+  fi
+
+  log "=== .dev BE 재기동 시작 unit=$DEV_BE_SYSTEMD_UNIT log=${LOG_FILE:-unset} ==="
+  if ! run_dev_systemctl restart "$DEV_BE_SYSTEMD_UNIT"; then
+    die "systemctl restart 실패 unit=$DEV_BE_SYSTEMD_UNIT log=${LOG_FILE:-unset}"
+  fi
+  wait_dev_be_health_ok
+  log_flyway_pending_readonly
+  log "=== .dev BE 재기동 완료 unit=$DEV_BE_SYSTEMD_UNIT log=${LOG_FILE:-unset} ==="
+}
+
+# LIB_ONLY / source 시 본문 미실행 (단위 테스트용)
+if [[ "${PROD_TO_DEV_DAILY_LIB_ONLY:-0}" == "1" || "${BASH_SOURCE[0]}" != "${0}" ]]; then
+  # shellcheck disable=SC2317
+  return 0 2>/dev/null || exit 0
+fi
+
 # 설정 로드
 if [[ -f /etc/mindgarden/prod-to-dev-sync.env ]]; then
   # shellcheck source=/dev/null
@@ -58,6 +199,8 @@ elif [[ -f "$SCRIPT_DIR/prod-to-dev-daily.env" ]]; then
 else
   die "설정 파일이 없습니다. /etc/mindgarden/prod-to-dev-sync.env 또는 $SCRIPT_DIR/prod-to-dev-daily.env 를 준비하세요."
 fi
+
+apply_dev_be_restart_defaults
 
 SYNC_MODE="${SYNC_MODE:-dump_live}"
 TMP_DIR="${TMP_DIR:-/var/tmp}"
@@ -93,7 +236,7 @@ LOG_FILE="${LOG_DIR}/prod-to-dev-sync_${RUN_ID}.log"
 
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-log "=== 운영→개발 DB 동기화 시작 (mode=$SYNC_MODE, D-1 label=$(yesterday_ymd_dash)) ==="
+log "=== 운영→개발 DB 동기화 시작 (mode=$SYNC_MODE, D-1 label=$(yesterday_ymd_dash), log=$LOG_FILE) ==="
 command -v mysql >/dev/null 2>&1 || die "mysql 클라이언트 없음(PATH 확인). which: $(command -v mysql || true)"
 command -v mysqldump >/dev/null 2>&1 || die "mysqldump 없음(PATH 확인). which: $(command -v mysqldump || true)"
 command -v gzip >/dev/null 2>&1 || die "gzip 없음"
@@ -122,6 +265,8 @@ mysqldump_prod() {
   else
     routine_flags=(--skip-routines --triggers --events)
   fi
+  # EXTRA_DUMP_OPTS 는 공백 구분 옵션 문자열(의도적 word-split)
+  # shellcheck disable=SC2086
   mysqldump -h "$PROD_MYSQL_HOST" -P "$PROD_MYSQL_PORT" -u "$PROD_MYSQL_USER" \
     ${PROD_MYSQL_PASSWORD:+-p"$PROD_MYSQL_PASSWORD"} \
     --single-transaction \
@@ -244,4 +389,7 @@ redeploy_dev_procedures_from_repo() {
 # Flyway 소유 온보딩 프로시저(FLYWAY_SOURCES.tsv)도 표준 배포 SQL 에 들어 있어 이 db-diff 로 함께 되살아난다.
 redeploy_dev_procedures_from_repo
 
-log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash) ==="
+# 동기화 단계가 모두 성공한 뒤에만 .dev BE 재기동 (Flyway pending 적용). 실패 시 여기까지 오지 않음.
+restart_dev_backend_after_successful_sync
+
+log "=== 완료: 개발 DB=${DEV_DB_NAME}, 참고 D-1 날짜 라벨=$(yesterday_ymd_dash), log=$LOG_FILE ==="

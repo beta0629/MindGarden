@@ -1,5 +1,6 @@
 package com.coresolution.consultation.service.impl;
 
+import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.constant.ShopClientOrderStatus;
 import com.coresolution.consultation.constant.ShopLatePaymentConstants;
 import com.coresolution.consultation.entity.Payment;
@@ -11,6 +12,7 @@ import com.coresolution.consultation.service.ShopLatePaymentRefundService;
 import com.coresolution.consultation.service.ShopNotificationHelper;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentCancelService;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
+import com.coresolution.consultation.service.support.ClientEventWriteSupport;
 import com.coresolution.consultation.util.OutsideTransactionScope;
 import com.coresolution.core.monitoring.SchedulerFailureNotifier;
 import java.math.BigDecimal;
@@ -54,6 +56,13 @@ public class ShopLatePaymentRefundServiceImpl implements ShopLatePaymentRefundSe
     private final ObjectProvider<SchedulerFailureNotifier> failureNotifierProvider;
     private final TransactionTemplate lockedTx;
     private final long refundClaimLeaseMs;
+
+    /**
+     * 내담자 타임라인({@code client_event}) 실시간 기록.
+     * 생성자 DI 호환 유지용 필드 주입.
+     */
+    @Autowired(required = false)
+    private ClientEventWriteSupport clientEventWriteSupport;
 
     public ShopLatePaymentRefundServiceImpl(
             PaymentRepository paymentRepository,
@@ -242,6 +251,10 @@ public class ShopLatePaymentRefundServiceImpl implements ShopLatePaymentRefundSe
             payment.setStatus(Payment.PaymentStatus.REFUND_REQUIRED);
         }
         paymentRepository.save(payment);
+        if (cancelled && clientEventWriteSupport != null) {
+            clientEventWriteSupport.recordPaymentRefunded(
+                    payment, ClientEventSource.PG_CALLBACK, payment.getFailureReason());
+        }
         return new Settled(
                 cancelled ? ShopLatePaymentOutcome.REFUNDED : ShopLatePaymentOutcome.REFUND_REQUIRED,
                 order,

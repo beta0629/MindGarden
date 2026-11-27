@@ -86,12 +86,21 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Check ClientEvent*IntegrationTest registered in critical list
+        run: |
+          node scripts/verification/check-client-event-critical-tests.test.js
+          node scripts/verification/check-client-event-critical-tests.js
+
       - name: Run critical backend test bundle
         run: mvn -B -ntp test -Pci-be-critical
 
       - name: Print #1718 time-test surefire results
         if: always()
         run: node scripts/verification/print-be-critical-time-test-results.js
+
+      - name: Re-check ClientEvent critical registration after suite
+        if: always()
+        run: node scripts/verification/check-client-event-critical-tests.js
 
       - name: Upload surefire reports
         if: always()

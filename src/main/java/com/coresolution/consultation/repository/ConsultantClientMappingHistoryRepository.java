@@ -55,4 +55,12 @@ public interface ConsultantClientMappingHistoryRepository
             String tenantId,
             Collection<Long> mappingIds,
             Collection<MappingHistoryEventType> eventTypes);
+
+    /**
+     * 테넌트 단위 이력 전체(발생 시각·ID 오름차순) — 백필 전용.
+     *
+     * @param tenantId 테넌트 ID
+     * @return 이력 목록
+     */
+    List<ConsultantClientMappingHistory> findByTenantIdOrderByCreatedAtAscIdAsc(String tenantId);
 }

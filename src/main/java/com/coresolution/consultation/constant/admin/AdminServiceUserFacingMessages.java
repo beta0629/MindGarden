@@ -556,6 +556,40 @@ public final class AdminServiceUserFacingMessages {
     public static final String MSG_ADDITIONAL_MAPPING_SESSIONS_INVALID =
             "추가 패키지 회기 수가 유효하지 않습니다.";
 
+    /** 매핑 회기 불변식 — total/used/remaining 중 음수. */
+    public static final String MSG_MAPPING_SESSION_COUNT_NEGATIVE_FMT =
+            "회기 수는 0 이상이어야 합니다. total=%d, used=%d, remaining=%d";
+
+    /** 매핑 회기 불변식 — total != used + remaining (mappingId 포함). */
+    public static final String MSG_MAPPING_SESSION_COUNT_MISMATCH_WITH_ID_FMT =
+            "회기 수 불일치입니다. mappingId=%d, total=%d, used=%d, remaining=%d "
+                    + "(total = used + remaining 이어야 합니다).";
+
+    /** 매핑 회기 불변식 — total != used + remaining. */
+    public static final String MSG_MAPPING_SESSION_COUNT_MISMATCH_FMT =
+            "회기 수 불일치입니다. total=%d, used=%d, remaining=%d "
+                    + "(total = used + remaining 이어야 합니다).";
+
+    /** 잔여 회기 단독 정정 — remaining &lt; 0. */
+    public static final String MSG_MAPPING_REMAINING_SESSIONS_NEGATIVE =
+            "잔여 회기 수는 0 이상이어야 합니다.";
+
+    /** 잔여 회기 단독 정정 — remaining &gt; total (인자: remaining, total). */
+    public static final String MSG_MAPPING_REMAINING_SESSIONS_EXCEEDS_TOTAL_FMT =
+            "잔여 회기 수(%d)가 총 회기 수(%d)를 초과할 수 없습니다.";
+
+    /** 총 회기만 변경 — total &lt; 0. */
+    public static final String MSG_MAPPING_TOTAL_SESSIONS_NEGATIVE =
+            "총 회기 수는 0 이상이어야 합니다.";
+
+    /** 총 회기만 변경 — total &lt; used (인자: total, used). */
+    public static final String MSG_MAPPING_TOTAL_SESSIONS_LESS_THAN_USED_FMT =
+            "총 회기 수(%d)는 사용된 회기 수(%d) 이상이어야 합니다.";
+
+    /** 사용 회기 음수. */
+    public static final String MSG_MAPPING_USED_SESSIONS_NEGATIVE =
+            "사용 회기 수는 0 이상이어야 합니다.";
+
     /**
      * 강제 종료 매칭 notes 한 줄 (인자: 일시 문자열, 사유, 환불 회기, 환불 금액).
      */

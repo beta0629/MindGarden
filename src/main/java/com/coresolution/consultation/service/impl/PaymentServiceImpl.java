@@ -36,16 +36,19 @@ import com.coresolution.consultation.service.ClientShopCheckoutService;
 import com.coresolution.consultation.service.PaymentService;
 import com.coresolution.consultation.service.ReserveFundService;
 import com.coresolution.consultation.service.StatisticsService;
+import com.coresolution.consultation.constant.ClientEventSource;
 import com.coresolution.consultation.service.portone.PortOneShopPaidMatch;
 import com.coresolution.consultation.service.portone.PortOneV2PaymentVerifyService;
 import com.coresolution.consultation.service.portone.PortOneVerifyUnknownRetryTracker;
 import com.coresolution.consultation.service.shop.ShopPaymentApprovalPolicy;
+import com.coresolution.consultation.service.support.ClientEventWriteSupport;
 import com.coresolution.consultation.util.ConsultationMessageTypeCodes;
 import com.coresolution.consultation.util.OutsideTransactionScope;
 import com.coresolution.consultation.dto.ConsultantClientMappingCreateRequest;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
 import com.coresolution.core.service.impl.BaseTenantEntityServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -94,6 +97,13 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
     private final ShopLatePaymentRefundService shopLatePaymentRefundService;
     /** PortOne 조회를 트랜잭션 밖에서 끝낸 뒤 상태 변경만 담는 짧은 트랜잭션 */
     private final TransactionTemplate shortTx;
+
+    /**
+     * 내담자 타임라인({@code client_event}) 실시간 기록.
+     * 생성자 DI 호환 유지용 필드 주입. 단위 테스트에서 빈이 없으면 skip.
+     */
+    @Autowired(required = false)
+    private ClientEventWriteSupport clientEventWriteSupport;
     
     public PaymentServiceImpl(
             PaymentRepository paymentRepository,
@@ -267,6 +277,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         } else {
             payment = paymentRepository.save(payment);
         }
+
+        recordClientPaymentStatusEvent(payment, status, null);
         
         switch (status) {
             case APPROVED:
@@ -464,7 +476,8 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
             throw new ShopDuplicatePaymentException(payment.getOrderId(), lockedOrder.get().getStatus());
         }
 
-        if (payment.getStatus() != Payment.PaymentStatus.APPROVED) {
+        boolean newlyApproved = payment.getStatus() != Payment.PaymentStatus.APPROVED;
+        if (newlyApproved) {
             validateStatusTransition(payment.getStatus(), Payment.PaymentStatus.APPROVED);
             payment.setStatus(Payment.PaymentStatus.APPROVED);
             payment.setApprovedAt(LocalDateTime.now());
@@ -475,6 +488,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 payment = paymentRepository.save(payment);
             }
             payment = paymentRepository.save(payment);
+            recordClientPaymentStatusEvent(payment, Payment.PaymentStatus.APPROVED, ClientEventSource.PG_CALLBACK);
         }
 
         // ERP/매핑/지점통계/적립 사이드이펙트 없음 — 주문 SSOT 만 반영. 예외는 전파(rollback-only 은폐 금지).
@@ -696,6 +710,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment = paymentRepository.save(payment);
         log.info("결제 취소 완료: {}", paymentId);
+        recordClientPaymentStatusEvent(payment, Payment.PaymentStatus.CANCELLED, null);
         cancelRelatedPaymentIncomeTransactions(payment);
 
         // 쇼핑 주문: PENDING_PAYMENT 고아 방지 — hold 해제·CREATED 복귀 (멱등·tenant fail-closed)
@@ -770,6 +785,7 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
         
         payment = paymentRepository.save(payment);
         log.info("결제 환불 완료: {}", paymentId);
+        recordClientPaymentStatusEvent(payment, Payment.PaymentStatus.REFUNDED, null);
 
         // 전액 환불 시: Path A 는 결제 연동 INCOME CANCEL.
         // Path B 쇼핑 매핑 입금 INCOME 은 유지하고 EXPENSE 는 clinic reverse 경로에서 생성한다.
@@ -1274,5 +1290,35 @@ public class PaymentServiceImpl extends BaseTenantEntityServiceImpl<Payment, Lon
                 commonCodeService,
                 messageTypeName,
                 ConsultationMessageTypeCodes.CANONICAL_PAYMENT_COMPLETION);
+    }
+
+    /**
+     * 결제 상태 확정 시 client_event 기록. APPROVED/CANCELLED/REFUNDED 만 대상.
+     * 실패 시 예외 전파(삼키지 않음).
+     *
+     * @param payment 저장 후 결제
+     * @param status 확정 상태
+     * @param sourceOverride null 이면 API/SYSTEM 해석
+     */
+    private void recordClientPaymentStatusEvent(
+            Payment payment, Payment.PaymentStatus status, ClientEventSource sourceOverride) {
+        if (clientEventWriteSupport == null || payment == null || status == null) {
+            return;
+        }
+        switch (status) {
+            case APPROVED:
+                clientEventWriteSupport.recordPaymentCompleted(payment, sourceOverride);
+                break;
+            case CANCELLED:
+                clientEventWriteSupport.recordPaymentCancelled(
+                        payment, sourceOverride, payment.getFailureReason());
+                break;
+            case REFUNDED:
+                clientEventWriteSupport.recordPaymentRefunded(
+                        payment, sourceOverride, payment.getFailureReason());
+                break;
+            default:
+                break;
+        }
     }
 }

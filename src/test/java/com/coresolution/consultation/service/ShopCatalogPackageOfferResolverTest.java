@@ -2,11 +2,13 @@ package com.coresolution.consultation.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.coresolution.consultation.constant.ConsultationPackageCodeConstants;
+import com.coresolution.consultation.constant.ShopCatalogCategory;
 import com.coresolution.consultation.constant.ShopCatalogSkuConstants;
 import com.coresolution.consultation.dto.shop.ShopCatalogOffer;
 import com.coresolution.consultation.dto.shop.ShopCatalogPackageIdentity;
@@ -123,12 +125,70 @@ class ShopCatalogPackageOfferResolverTest {
         assertEquals(ShopCatalogSkuConstants.PACKAGE_CODE_INVALID_MESSAGE, ex.getMessage());
     }
 
+    @Test
+    @DisplayName("extraData.category ASSESSMENT 를 identity 에 담는다")
+    void toIdentity_parsesAssessmentCategory() {
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP, "PACKAGE_001"))
+                .thenReturn(Optional.of(packageCode(
+                        true, "{\"sessions\":1,\"price\":20000,\"category\":\"assessment\"}")));
+        ShopCatalogPackageOfferResolver resolver =
+                new ShopCatalogPackageOfferResolver(commonCodeRepository, new ObjectMapper());
+
+        ShopCatalogPackageIdentity identity = resolver.requireIdentity(TENANT, "PACKAGE_001");
+
+        assertEquals(ShopCatalogCategory.ASSESSMENT, identity.catalogCategory());
+        assertTrue(identity.priceReady());
+    }
+
+    @Test
+    @DisplayName("extraData.category CONSULTATION 을 identity 에 담는다")
+    void toIdentity_parsesConsultationCategory() {
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP, "PACKAGE_001"))
+                .thenReturn(Optional.of(packageCode(
+                        true, "{\"sessions\":4,\"price\":80000,\"category\":\"CONSULTATION\"}")));
+        ShopCatalogPackageOfferResolver resolver =
+                new ShopCatalogPackageOfferResolver(commonCodeRepository, new ObjectMapper());
+
+        ShopCatalogPackageIdentity identity = resolver.requireIdentity(TENANT, "PACKAGE_001");
+
+        assertEquals(ShopCatalogCategory.CONSULTATION, identity.catalogCategory());
+    }
+
+    @Test
+    @DisplayName("extraData.category 없거나 무효면 null (이름·코드 추론 없음)")
+    void toIdentity_invalidOrMissingCategory_isNullWithoutNameInference() {
+        when(commonCodeRepository.findTenantCodesByGroup(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP))
+                .thenReturn(List.of(
+                        packageCodeWithValue(
+                                "PACKAGE_EXAM", "심리검사 패키지", true,
+                                "{\"sessions\":1,\"price\":20000}"),
+                        packageCodeWithValue(
+                                "PACKAGE_BAD", "검사", true,
+                                "{\"sessions\":1,\"price\":20000,\"category\":\"EXAM\"}")));
+        ShopCatalogPackageOfferResolver resolver =
+                new ShopCatalogPackageOfferResolver(commonCodeRepository, new ObjectMapper());
+
+        List<ShopCatalogPackageIdentity> rows = resolver.listActivePackages(TENANT);
+
+        assertEquals(2, rows.size());
+        assertNull(rows.get(0).catalogCategory());
+        assertNull(rows.get(1).catalogCategory());
+    }
+
     private static CommonCode packageCode(boolean active, String extraData) {
+        return packageCodeWithValue("PACKAGE_001", "10회기", active, extraData);
+    }
+
+    private static CommonCode packageCodeWithValue(
+            String codeValue, String koreanName, boolean active, String extraData) {
         CommonCode code = CommonCode.builder()
                 .codeGroup(ConsultationPackageCodeConstants.CODE_GROUP)
-                .codeValue("PACKAGE_001")
-                .codeLabel("10회기")
-                .koreanName("10회기")
+                .codeValue(codeValue)
+                .codeLabel(koreanName)
+                .koreanName(koreanName)
                 .isActive(active)
                 .extraData(extraData)
                 .build();

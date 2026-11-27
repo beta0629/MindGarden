@@ -31,6 +31,18 @@ public interface SctInvitationRepository extends JpaRepository<SctInvitation, Lo
 
     Optional<SctInvitation> findByTenantIdAndIdAndIsDeletedFalse(String tenantId, Long id);
 
+    /**
+     * verify — Redis 교환 코드 경로에서 초대 행 잠금(fail-count 원자성).
+     *
+     * @param tenantId 테넌트
+     * @param id       초대 ID
+     * @return 초대
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT i FROM SctInvitation i WHERE i.tenantId = :tenantId AND i.id = :id AND i.isDeleted = false")
+    Optional<SctInvitation> findByTenantIdAndIdAndIsDeletedFalseForUpdate(
+            @Param("tenantId") String tenantId, @Param("id") Long id);
+
     List<SctInvitation> findByTenantIdAndIsDeletedFalseOrderByCreatedAtDesc(String tenantId);
 
     List<SctInvitation> findByTenantIdAndClientIdAndIsDeletedFalseOrderByCreatedAtDesc(

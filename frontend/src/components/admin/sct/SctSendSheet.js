@@ -25,7 +25,7 @@ import {
   SCT_ONLINE_FORM_TYPES,
   SCT_UI
 } from '../../../constants/sctOnline';
-import SctPublicLinkCopy from './SctPublicLinkCopy';
+import SctInviteQrCard from './SctInviteQrCard';
 import './sctAdmin.css';
 
 /**
@@ -63,14 +63,16 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   const [email, setEmail] = useState('');
   const [expiresInDays, setExpiresInDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [centerDefaultDays, setCenterDefaultDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  const [sentPublicUrl, setSentPublicUrl] = useState('');
+  const [sentInvitation, setSentInvitation] = useState(null);
   const recommendedType = resolveSctRecommendedFormType(client);
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    setSentPublicUrl('');
+    setSentInvitation(null);
     let cancelled = false;
     (async() => {
       try {
@@ -86,6 +88,12 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         const days = settings?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS;
         setCenterDefaultDays(days);
         setExpiresInDays(days);
+        setOfficePhone(
+          typeof settings?.officePhone === 'string' ? settings.officePhone.trim() : ''
+        );
+        setMobilePhone(
+          typeof settings?.mobilePhone === 'string' ? settings.mobilePhone.trim() : ''
+        );
         const recommended = resolveSctRecommendedFormType(client);
         if (recommended && SCT_ONLINE_FORM_TYPES.includes(recommended)) {
           setFormType(recommended);
@@ -135,12 +143,19 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         clientId: client?.id != null ? Number(client.id) : undefined,
         phone: phone.trim() || undefined,
         email: email.trim() || undefined,
-        expiresInDays: Number(expiresInDays)
+        expiresInDays: Number(expiresInDays),
+        recipientName: client?.name || undefined
       });
       notificationManager.success(SCT_UI.SEND_SUCCESS);
       onSent?.();
-      if (canPublicLink && created?.publicUrl) {
-        setSentPublicUrl(created.publicUrl);
+      const hasQrTarget = Boolean(
+        created?.absoluteShortUrl
+        || created?.absoluteUrl
+        || created?.shortUrl
+        || created?.publicUrl
+      );
+      if (canPublicLink && hasQrTarget) {
+        setSentInvitation(created);
       } else {
         onClose();
       }
@@ -157,112 +172,125 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
     fromApi: forms.find((f) => f.formType === key)
   }));
 
+  const showingQr = Boolean(canPublicLink && sentInvitation);
+
   return (
     <UnifiedModal
       isOpen={isOpen}
       onClose={onClose}
-      title={SCT_UI.SEND}
+      title={showingQr ? SCT_UI.QR_SHEET_TITLE_SENT : SCT_UI.SEND}
       size="medium"
       className={SCT_CSS.SEND_SHEET}
-      actions={(
+      actions={showingQr ? null : (
         <>
           <MGButton type="button" variant="outline" preventDoubleClick={false} onClick={onClose}>
-            {sentPublicUrl ? SCT_UI.PRINT_CLOSE : SCT_UI.CANCEL}
+            {SCT_UI.CANCEL}
           </MGButton>
-          {sentPublicUrl ? null : (
-            <MGButton
-              type="button"
-              variant="primary"
-              preventDoubleClick={false}
-              loading={busy}
-              onClick={handleSend}
-            >
-              {SCT_UI.SEND_SMS}
-            </MGButton>
-          )}
+          <MGButton
+            type="button"
+            variant="primary"
+            preventDoubleClick={false}
+            loading={busy}
+            onClick={handleSend}
+          >
+            {SCT_UI.SEND_SMS}
+          </MGButton>
         </>
       )}
     >
       <div className={SCT_CSS.SEND_SHEET}>
-        {canPublicLink && sentPublicUrl ? (
-          <SctPublicLinkCopy publicUrl={sentPublicUrl} />
+        {showingQr ? (
+          <SctInviteQrCard
+            invitation={sentInvitation}
+            recipientName={toDisplayString(client?.name, sentInvitation?.recipientName || '')}
+            formTitle={
+              SCT_FORM_TYPE_LABEL[sentInvitation?.formType || formType]
+                ? `${SCT_FORM_TYPE_LABEL[sentInvitation?.formType || formType]} 문장완성 질문지`
+                : SCT_UI.TITLE
+            }
+            officePhone={officePhone}
+            mobilePhone={mobilePhone}
+            isReissued={false}
+            onConfirm={onClose}
+            onInvitationChange={setSentInvitation}
+          />
         ) : (
           <>
-        {hasActiveDraft ? (
-          <p className="mg-v2-sct-warn" role="status">{SCT_UI.RESEND_WARN}</p>
-        ) : null}
-        <p className={SCT_CSS.CAPTION} role="note">{SCT_UI.ONLINE_CHILD_HINT}</p>
-        {error ? (
-          <p className="mg-v2-sct-warn" role="alert"><SafeText>{error}</SafeText></p>
-        ) : null}
+            {hasActiveDraft ? (
+              <p className="mg-v2-sct-warn" role="status">{SCT_UI.RESEND_WARN}</p>
+            ) : null}
+            <p className={SCT_CSS.CAPTION} role="note">{SCT_UI.ONLINE_CHILD_HINT}</p>
+            {error ? (
+              <p className="mg-v2-sct-warn" role="alert"><SafeText>{error}</SafeText></p>
+            ) : null}
 
-        <div className="mg-v2-sct-field">
-          <label>{SCT_UI.RECEIVER}</label>
-          <SafeText>{toDisplayString(client?.name, '내담자')}</SafeText>
-        </div>
+            <div className="mg-v2-sct-field">
+              <label>{SCT_UI.RECEIVER}</label>
+              <SafeText>{toDisplayString(client?.name, '내담자')}</SafeText>
+            </div>
 
-        <div className="mg-v2-sct-field">
-          <label id="sct-form-kind">{SCT_UI.FORM_KIND}</label>
-          <div className="mg-v2-sct-kind-grid" role="group" aria-labelledby="sct-form-kind">
-            {kindOptions.map((opt) => (
-              <MGButton
-                key={opt.value}
-                type="button"
-                variant="outline"
-                preventDoubleClick={false}
-                aria-pressed={formType === opt.value}
-                onClick={() => setFormType(opt.value)}
-              >
-                {opt.label}
-                {recommendedType === opt.value ? ` · ${SCT_UI.RECOMMENDED}` : ''}
-              </MGButton>
-            ))}
-          </div>
-        </div>
+            <div className="mg-v2-sct-field">
+              <label id="sct-form-kind">{SCT_UI.FORM_KIND}</label>
+              <div className="mg-v2-sct-kind-grid" role="group" aria-labelledby="sct-form-kind">
+                {kindOptions.map((opt) => (
+                  <MGButton
+                    key={opt.value}
+                    type="button"
+                    variant="outline"
+                    preventDoubleClick={false}
+                    aria-pressed={formType === opt.value}
+                    onClick={() => setFormType(opt.value)}
+                  >
+                    {opt.label}
+                    {recommendedType === opt.value ? ` · ${SCT_UI.RECOMMENDED}` : ''}
+                  </MGButton>
+                ))}
+              </div>
+            </div>
 
-        <div className="mg-v2-sct-field">
-          <label htmlFor="sct-send-phone">{SCT_UI.PHONE_SEGMENT}</label>
-          <input
-            id="sct-send-phone"
-            className="mg-v2-sct-send-sheet__input"
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            readOnly={Boolean(client?.phone)}
-          />
-          <p className={SCT_CSS.CAPTION}>{SCT_UI.PHONE_VERIFY_HINT}</p>
-        </div>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-send-phone">{SCT_UI.PHONE_SEGMENT}</label>
+              <input
+                id="sct-send-phone"
+                className="mg-v2-sct-send-sheet__input"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                readOnly={Boolean(client?.phone)}
+              />
+              <p className={SCT_CSS.CAPTION}>{SCT_UI.PHONE_VERIFY_HINT}</p>
+            </div>
 
-        <div className="mg-v2-sct-field">
-          <label htmlFor="sct-send-email">{SCT_UI.EMAIL_SEGMENT}</label>
-          <input
-            id="sct-send-email"
-            className="mg-v2-sct-send-sheet__input"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-        </div>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-send-email">{SCT_UI.EMAIL_SEGMENT}</label>
+              <input
+                id="sct-send-email"
+                className="mg-v2-sct-send-sheet__input"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        <div className="mg-v2-sct-field">
-          <label htmlFor="sct-send-expiry">
-            {SCT_UI.EXPIRES}
-            {' ('}
-            {SCT_UI.USE_CENTER_DEFAULT}
-            {': '}
-            {centerDefaultDays}
-            일)
-          </label>
-          <input
-            id="sct-send-expiry"
-            className="mg-v2-sct-send-sheet__input"
-            type="number"
-            min={SCT_DEFAULTS.LINK_EXPIRY_MIN}
-            max={SCT_DEFAULTS.LINK_EXPIRY_MAX}
-            value={expiresInDays}
-            onChange={(e) => setExpiresInDays(e.target.value)}
-          />
-        </div>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-send-expiry">
+                {SCT_UI.EXPIRES}
+                {' ('}
+                {SCT_UI.USE_CENTER_DEFAULT}
+                {': '}
+                {centerDefaultDays}
+                일)
+              </label>
+              <input
+                id="sct-send-expiry"
+                className="mg-v2-sct-send-sheet__input"
+                type="number"
+                min={SCT_DEFAULTS.LINK_EXPIRY_MIN}
+                max={SCT_DEFAULTS.LINK_EXPIRY_MAX}
+                value={expiresInDays}
+                onChange={(e) => setExpiresInDays(e.target.value)}
+              />
+            </div>
           </>
         )}
       </div>

@@ -1,0 +1,207 @@
+package com.coresolution.consultation.sct.service.impl;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Optional;
+import com.coresolution.consultation.sct.constant.SctConstants;
+import com.coresolution.consultation.sct.constant.SctInviteStatus;
+import com.coresolution.consultation.sct.entity.SctInvitation;
+import com.coresolution.consultation.sct.entity.SctShortLink;
+import com.coresolution.consultation.sct.repository.SctInvitationRepository;
+import com.coresolution.consultation.sct.repository.SctShortLinkRepository;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
+import com.coresolution.consultation.sct.service.SctShortLinkService;
+import com.coresolution.consultation.sct.util.SctShortCodeGenerator;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+/**
+ * SCT 단축 링크 서비스.
+ *
+ * @author MindGarden
+ * @since 2026-11-27
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class SctShortLinkServiceImpl implements SctShortLinkService {
+
+    /** 초대 tokenExpiresAt(LocalDateTime) → Instant 변환 존(공개 verify 세션과 동일). */
+    private static final ZoneId TOKEN_EXPIRY_ZONE = ZoneId.of("Asia/Seoul");
+
+    private final SctShortLinkRepository shortLinkRepository;
+    private final SctInvitationRepository invitationRepository;
+    private final SctExchangeCodeStore exchangeCodeStore;
+
+    @Override
+    @Transactional
+    public SctShortLink createOrRotate(SctInvitation invitation) {
+        if (invitation == null || invitation.getId() == null
+                || !StringUtils.hasText(invitation.getTenantId())) {
+            throw new IllegalArgumentException("invitation with id and tenantId required");
+        }
+        String tenantId = invitation.getTenantId();
+        Long invitationId = invitation.getId();
+        shortLinkRepository.deactivateActiveForInvitation(tenantId, invitationId);
+
+        LocalDateTime expiresAt = invitation.getTokenExpiresAt();
+        if (expiresAt == null) {
+            throw new IllegalStateException("invitation tokenExpiresAt required for short link");
+        }
+
+        DataIntegrityViolationException lastCollision = null;
+        for (int attempt = 1; attempt <= SctConstants.SHORT_CODE_MAX_RETRIES; attempt++) {
+            String code = SctShortCodeGenerator.generate();
+            if (shortLinkRepository.existsByShortCodeAndIsDeletedFalse(code)) {
+                continue;
+            }
+            SctShortLink link = SctShortLink.builder()
+                    .invitationId(invitationId)
+                    .shortCode(code)
+                    .expiresAt(expiresAt)
+                    .isActive(true)
+                    .build();
+            link.setTenantId(tenantId);
+            try {
+                SctShortLink saved = shortLinkRepository.saveAndFlush(link);
+                log.info("SCT short-link created: tenant={} invitationId={} codePrefix={} attempt={}",
+                        tenantId, invitationId, codePrefix(code), attempt);
+                return saved;
+            } catch (DataIntegrityViolationException collision) {
+                lastCollision = collision;
+                log.warn("SCT short-link UK collision attempt={}/{} codePrefix={}",
+                        attempt, SctConstants.SHORT_CODE_MAX_RETRIES, codePrefix(code));
+            }
+        }
+        throw new IllegalStateException(
+                "SCT 단축 코드 발급에 실패했습니다(충돌 재시도 초과).", lastCollision);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Optional<SctShortLink> findActive(String tenantId, Long invitationId) {
+        if (!StringUtils.hasText(tenantId) || invitationId == null) {
+            return Optional.empty();
+        }
+        return shortLinkRepository
+                .findFirstByTenantIdAndInvitationIdAndIsActiveTrueAndIsDeletedFalseOrderByCreatedAtDesc(
+                        tenantId, invitationId);
+    }
+
+    @Override
+    @Transactional
+    public String resolveRedirectPath(String shortCode) {
+        if (!SctShortCodeGenerator.isValidFormat(shortCode)) {
+            log.info("SCT short-link redirect invalid format codePrefix={}", codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        Optional<SctShortLink> found =
+                shortLinkRepository.findByShortCodeAndIsDeletedFalse(shortCode.trim());
+        if (found.isEmpty()) {
+            log.info("SCT short-link redirect miss codePrefix={}", codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        SctShortLink link = found.get();
+        Optional<SctInvitation> invitationOpt = invitationRepository
+                .findByTenantIdAndIdAndIsDeletedFalse(link.getTenantId(), link.getInvitationId());
+        if (invitationOpt.isEmpty()) {
+            log.info("SCT short-link redirect orphan codePrefix={} tenant={}",
+                    codePrefix(shortCode), link.getTenantId());
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        SctInvitation invitation = invitationOpt.get();
+        if (!link.getTenantId().equals(invitation.getTenantId())) {
+            log.warn("SCT short-link tenant mismatch codePrefix={}", codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+
+        // 비활성·만료·종료 초대는 miss와 동일 경로 — 존재 오라클·교환 발급 방지
+        boolean inactive = !Boolean.TRUE.equals(link.getIsActive());
+        boolean codeExpired = link.getExpiresAt() != null
+                && link.getExpiresAt().isBefore(LocalDateTime.now());
+        boolean invitationClosed = isInvitationClosedForExchange(invitation.getStatus());
+        if (inactive || codeExpired || invitationClosed) {
+            log.info(
+                    "SCT short-link redirect closed codePrefix={} inactive={} expired={} inviteStatus={}",
+                    codePrefix(shortCode), inactive, codeExpired, invitation.getStatus());
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        if (!StringUtils.hasText(invitation.getTokenHash())) {
+            log.warn("SCT short-link redirect missing tokenHash codePrefix={}", codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+
+        LocalDateTime tokenExpiresAt = invitation.getTokenExpiresAt();
+        if (tokenExpiresAt == null) {
+            log.warn("SCT short-link redirect missing tokenExpiresAt codePrefix={}",
+                    codePrefix(shortCode));
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        Instant absoluteExpiresAt = tokenExpiresAt.atZone(TOKEN_EXPIRY_ZONE).toInstant();
+        try {
+            String exchange = exchangeCodeStore.issue(
+                    invitation.getId(),
+                    invitation.getTenantId(),
+                    null,
+                    invitation.getTokenHash(),
+                    absoluteExpiresAt);
+            log.info("SCT short-link redirect ok codePrefix={} exchangePrefix={}",
+                    codePrefix(shortCode), codePrefix(exchange));
+            return SctConstants.PUBLIC_SCT_WEB_PREFIX + exchange;
+        } catch (RuntimeException ex) {
+            log.warn("SCT short-link exchange issue failed codePrefix={}: {}",
+                    codePrefix(shortCode), ex.getMessage());
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+    }
+
+    @Override
+    @Transactional
+    public void refreshExpiry(String tenantId, Long invitationId, LocalDateTime expiresAt) {
+        if (!StringUtils.hasText(tenantId) || invitationId == null || expiresAt == null) {
+            return;
+        }
+        shortLinkRepository
+                .findByTenantIdAndInvitationIdAndIsActiveTrueAndIsDeletedFalse(tenantId, invitationId)
+                .forEach(link -> {
+                    link.setExpiresAt(expiresAt);
+                    shortLinkRepository.save(link);
+                });
+    }
+
+    @Override
+    @Transactional
+    public void deactivateForInvitation(String tenantId, Long invitationId) {
+        if (!StringUtils.hasText(tenantId) || invitationId == null) {
+            return;
+        }
+        int deactivated = shortLinkRepository.deactivateActiveForInvitation(tenantId, invitationId);
+        log.info("SCT short-link deactivated for cancel: tenant={} invitationId={} count={}",
+                tenantId, invitationId, deactivated);
+    }
+
+    /**
+     * 취소·만료·제출 초대는 단축 링크로 교환 코드를 발급하지 않는다.
+     *
+     * @param status 초대 status
+     * @return 종료 상태이면 true
+     */
+    private static boolean isInvitationClosedForExchange(String status) {
+        return SctInviteStatus.CANCELLED.name().equals(status)
+                || SctInviteStatus.EXPIRED.name().equals(status)
+                || SctInviteStatus.SUBMITTED.name().equals(status);
+    }
+
+    private static String codePrefix(String code) {
+        if (!StringUtils.hasText(code)) {
+            return "";
+        }
+        int keep = Math.min(2, code.length());
+        return code.substring(0, keep);
+    }
+}

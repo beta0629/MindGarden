@@ -135,6 +135,9 @@ class SctSecurityHighTest {
         SctInviteAccessAttemptRepository attemptRepository = mock(SctInviteAccessAttemptRepository.class);
         when(attemptRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
 
+        SctConsentService consentService = mock(SctConsentService.class);
+        when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
+
         SctPublicServiceImpl service = new SctPublicServiceImpl(
                 invitationRepository,
                 mock(SctFormTemplateRepository.class),
@@ -145,7 +148,7 @@ class SctSecurityHighTest {
                 new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
                 mock(SctExchangeCodeStore.class),
                 mock(SctFeatureGuard.class),
-                mock(SctConsentService.class),
+                consentService,
                 mock(SctSettingsService.class),
                 mock(AuditLogService.class));
 

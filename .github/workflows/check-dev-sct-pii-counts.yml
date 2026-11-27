@@ -552,7 +552,8 @@ jobs:
             #   실제로 있었는지 구분한다. deploy_since_ts(유닛 ActiveEnterTimestamp) 이후만.
             #   로거는 %logger{36} 마지막 컴포넌트. 키는 #1972 마스킹 토큰
             #   (bodyLength/codeLength/subjectLength/contentLength/templateId) 과
-            #   SctInvitationServiceImpl 의 기존 값-없는 SCT SMS 이벤트.
+            #   SctInvitationServiceImpl 의 기존 값-없는 SCT SMS 이벤트,
+            #   SctIdentityOtpServiceImpl 의 testMode accepted / sent.
             #   awk 는 mawk 가능: {n} 구간 금지, 정규식은 리터럴(ENVIRON 불필요), since 만 -v.
             if [ -n "${DEPLOY_TS:-}" ] && [ -n "$(echo $LOG_FILES | tr -d '[:space:]')" ]; then
               echo "post_deploy_event_count_status=OK"
@@ -560,6 +561,7 @@ jobs:
               sudo awk -v since="$DEPLOY_TS" '
                 BEGIN {
                   allow["SctInvitationServiceImpl"] = 1
+                  allow["SctIdentityOtpServiceImpl"] = 1
                   allow["EmailServiceImpl"] = 1
                   allow["MockEmailServiceImpl"] = 1
                   allow["NotificationServiceImpl"] = 1
@@ -570,28 +572,32 @@ jobs:
                   allow["SmsAuthController"] = 1
                   allow["SmsOtpVerificationServiceImpl"] = 1
                   allow["AuthController"] = 1
-                  nlog = 11
+                  nlog = 12
                   logs[1] = "SctInvitationServiceImpl"
-                  logs[2] = "EmailServiceImpl"
-                  logs[3] = "MockEmailServiceImpl"
-                  logs[4] = "NotificationServiceImpl"
-                  logs[5] = "NotificationDispatchHelper"
-                  logs[6] = "KakaoAlimTalkServiceImpl"
-                  logs[7] = "SmsGatewayServiceImpl"
-                  logs[8] = "SmsAuthService"
-                  logs[9] = "SmsAuthController"
-                  logs[10] = "SmsOtpVerificationServiceImpl"
-                  logs[11] = "AuthController"
-                  nkeys = 9
+                  logs[2] = "SctIdentityOtpServiceImpl"
+                  logs[3] = "EmailServiceImpl"
+                  logs[4] = "MockEmailServiceImpl"
+                  logs[5] = "NotificationServiceImpl"
+                  logs[6] = "NotificationDispatchHelper"
+                  logs[7] = "KakaoAlimTalkServiceImpl"
+                  logs[8] = "SmsGatewayServiceImpl"
+                  logs[9] = "SmsAuthService"
+                  logs[10] = "SmsAuthController"
+                  logs[11] = "SmsOtpVerificationServiceImpl"
+                  logs[12] = "AuthController"
+                  nkeys = 12
                   keys[1] = "SCT_SMS_dispatch"
                   keys[2] = "SCT_SMS_TEST_MODE_SKIP"
                   keys[3] = "SCT_SMS_LMS_fallback"
                   keys[4] = "SCT_SMS_short_overflow"
-                  keys[5] = "bodyLength"
-                  keys[6] = "codeLength"
-                  keys[7] = "subjectLength"
-                  keys[8] = "contentLength"
-                  keys[9] = "templateId"
+                  keys[5] = "SCT_identity_OTP_testMode_accepted"
+                  keys[6] = "SCT_identity_OTP_sent"
+                  keys[7] = "SCT_identity_OTP_send_disguised"
+                  keys[8] = "bodyLength"
+                  keys[9] = "codeLength"
+                  keys[10] = "subjectLength"
+                  keys[11] = "contentLength"
+                  keys[12] = "templateId"
                 }
                 {
                   ts = substr($0, 1, 19)
@@ -612,6 +618,9 @@ jobs:
                   else if (index($0, "SCT SMS TEST_MODE_SKIP")) key = "SCT_SMS_TEST_MODE_SKIP"
                   else if (index($0, "SCT SMS LMS fallback")) key = "SCT_SMS_LMS_fallback"
                   else if (index($0, "SCT SMS short overflow")) key = "SCT_SMS_short_overflow"
+                  else if (index($0, "SCT identity OTP testMode accepted")) key = "SCT_identity_OTP_testMode_accepted"
+                  else if (index($0, "SCT identity OTP sent")) key = "SCT_identity_OTP_sent"
+                  else if (index($0, "SCT identity OTP send disguised")) key = "SCT_identity_OTP_send_disguised"
                   else if (index($0, "bodyLength")) key = "bodyLength"
                   else if (index($0, "codeLength")) key = "codeLength"
                   else if (index($0, "subjectLength")) key = "subjectLength"

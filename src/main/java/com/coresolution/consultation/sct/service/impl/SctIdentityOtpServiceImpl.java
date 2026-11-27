@@ -35,6 +35,7 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
 import com.coresolution.consultation.sct.service.SctIdentityOtpDevCodeStore;
 import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
@@ -81,6 +82,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private final PasswordService passwordService;
     private final SctIdentityOtpSettings otpSettings;
     private final SctIdentityOtpRateLimiter rateLimiter;
+    private final SctIdentityOtpAttemptRecorder attemptRecorder;
     private final ObjectProvider<SctIdentityOtpDevCodeStore> devCodeStore;
 
     /**
@@ -96,6 +98,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
      * @param passwordService              코드 해시
      * @param otpSettings                  설정 SSOT
      * @param rateLimiter                  전용 rate limiter
+     * @param attemptRecorder              오답·잠금 REQUIRES_NEW 기록
      * @param devCodeStore                 .dev 전용(없으면 empty)
      */
     public SctIdentityOtpServiceImpl(
@@ -111,6 +114,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
             PasswordService passwordService,
             SctIdentityOtpSettings otpSettings,
             SctIdentityOtpRateLimiter rateLimiter,
+            SctIdentityOtpAttemptRecorder attemptRecorder,
             ObjectProvider<SctIdentityOtpDevCodeStore> devCodeStore) {
         this.invitationRepository = invitationRepository;
         this.formTemplateRepository = formTemplateRepository;
@@ -124,6 +128,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         this.passwordService = passwordService;
         this.otpSettings = otpSettings;
         this.rateLimiter = rateLimiter;
+        this.attemptRecorder = attemptRecorder;
         this.devCodeStore = devCodeStore;
     }
 
@@ -303,25 +308,22 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         int maxAttempts = otpSettings.maxAttempts(tenantId);
         int attempts = row.getAttempts() == null ? 0 : row.getAttempts();
         if (attempts >= maxAttempts) {
-            row.setStatus(PhoneOtpAttempt.STATUS_FAILED);
-            phoneOtpAttemptRepository.save(row);
+            attemptRecorder.markFailedIfMaxed(row.getId(), tenantId, maxAttempts);
             throw new SctOtpLockedException(SctConstants.MSG_OTP_LOCKED);
         }
 
         boolean matches = passwordService.matches(code, row.getCodeHash());
-        row.setAttempts(attempts + 1);
         if (!matches) {
-            if (row.getAttempts() >= maxAttempts) {
-                row.setStatus(PhoneOtpAttempt.STATUS_FAILED);
-                phoneOtpAttemptRepository.save(row);
-                recordAccessAttempt(invitation, false, clientIp);
+            SctIdentityOtpAttemptRecorder.WrongAttemptResult recorded =
+                    attemptRecorder.recordWrongAttempt(row.getId(), tenantId, maxAttempts);
+            recordAccessAttempt(invitation, false, clientIp);
+            if (recorded.locked()) {
                 throw new SctOtpLockedException(SctConstants.MSG_OTP_LOCKED);
             }
-            phoneOtpAttemptRepository.save(row);
-            recordAccessAttempt(invitation, false, clientIp);
             throw new SctOtpInvalidException(SctConstants.MSG_OTP_INVALID);
         }
 
+        row.setAttempts(attempts + 1);
         row.setStatus(PhoneOtpAttempt.STATUS_VERIFIED);
         row.setVerifiedAt(LocalDateTime.now());
         phoneOtpAttemptRepository.save(row);

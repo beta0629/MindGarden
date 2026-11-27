@@ -229,7 +229,7 @@ export const SCT_UI = Object.freeze({
   FEATURE_OFF_HIDDEN: 'SCT 기능이 꺼져 있습니다',
   SEND_SUCCESS: '질문지를 보냈습니다',
   PUBLIC_LINK_LABEL: '공개 링크',
-  PUBLIC_LINK_HINT: '이 링크는 발송·재발급 직후에만 표시됩니다. 복사해 .dev 에서 테스트하세요.',
+  PUBLIC_LINK_HINT: '이 링크는 발송·재발급 직후에만 표시됩니다. 복사하여 내담자에게 전달하세요.',
   COPY_LINK: '링크 복사',
   COPY_LINK_SUCCESS: '링크를 복사했습니다',
   COPY_LINK_FAIL: '복사하지 못했습니다',

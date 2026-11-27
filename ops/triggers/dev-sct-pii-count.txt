@@ -2,3 +2,4 @@
 # 2026-11-27 SCT 재게이트 ④⑤
 run=1
 precise-patterns 2026-11-27
+split+post-deploy+source 2026-11-27

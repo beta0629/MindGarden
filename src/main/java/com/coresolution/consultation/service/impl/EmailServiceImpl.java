@@ -85,7 +85,9 @@ public class EmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+        log.info("이메일 발송 요청: to={}, subjectLength={}",
+                EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
         
         try {
             // 이메일 유효성 검사
@@ -569,8 +571,9 @@ public class EmailServiceImpl implements EmailService {
             // 실제 이메일 발송
             javaMailSender.send(mimeMessage);
             
-            log.info("이메일 발송 성공: emailId={}, to={}, subject={}", 
-                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+            log.info("이메일 발송 성공: emailId={}, to={}, subjectLength={}",
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
             
             return EmailResponse.builder()
                     .emailId(emailId)

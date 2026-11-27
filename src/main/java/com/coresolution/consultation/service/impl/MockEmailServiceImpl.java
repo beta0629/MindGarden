@@ -46,7 +46,9 @@ public class MockEmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("Mock 이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+        log.info("Mock 이메일 발송 요청: to={}, subjectLength={}",
+                EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
         
         try {
             // 이메일 유효성 검사
@@ -533,8 +535,9 @@ public class MockEmailServiceImpl implements EmailService {
             // 실제 이메일 발송 시뮬레이션을 위한 지연
             Thread.sleep(100);
             
-            log.info("Mock 이메일 발송 시뮬레이션: emailId={}, to={}, subject={}, success={}", 
-                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject(), success);
+            log.info("Mock 이메일 발송 시뮬레이션: emailId={}, to={}, subjectLength={}, success={}",
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length(), success);
             
             EmailResponse response = EmailResponse.builder()
                     .emailId(emailId)

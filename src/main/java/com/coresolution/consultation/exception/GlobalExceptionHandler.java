@@ -143,6 +143,91 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * SCT PHONE 채널 — SMS OTP 확인 필요. HTTP 400.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleSctOtpRequired(
+            com.coresolution.consultation.sct.exception.SctOtpRequiredException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "휴대폰 본인확인은 인증번호 확인이 필요합니다."),
+            "SCT_OTP_REQUIRED",
+            HttpStatus.BAD_REQUEST.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * SCT 본인확인 SMS OTP rate limit. HTTP 429.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpRateLimitedException.class)
+    public ResponseEntity<ErrorResponse> handleSctOtpRateLimited(
+            com.coresolution.consultation.sct.exception.SctOtpRateLimitedException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
+            "SCT_OTP_RATE_LIMITED",
+            HttpStatus.TOO_MANY_REQUESTS.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+    }
+
+    /**
+     * SCT 본인확인 SMS OTP 오답·형식 오류. HTTP 400.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpInvalidException.class)
+    public ResponseEntity<ErrorResponse> handleSctOtpInvalid(
+            com.coresolution.consultation.sct.exception.SctOtpInvalidException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "인증번호가 올바르지 않습니다."),
+            "SCT_OTP_INVALID",
+            HttpStatus.BAD_REQUEST.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * SCT 본인확인 SMS OTP 만료. HTTP 400.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleSctOtpExpired(
+            com.coresolution.consultation.sct.exception.SctOtpExpiredException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "인증번호가 만료되었습니다. 다시 받아 주세요."),
+            "SCT_OTP_EXPIRED",
+            HttpStatus.BAD_REQUEST.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * SCT 본인확인 SMS OTP 오답 잠금. HTTP 429.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpLockedException.class)
+    public ResponseEntity<ErrorResponse> handleSctOtpLocked(
+            com.coresolution.consultation.sct.exception.SctOtpLockedException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
+            "SCT_OTP_LOCKED",
+            HttpStatus.TOO_MANY_REQUESTS.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+    }
+
+    /**
      * SCT 상태 충돌 — HTTP 409.
      */
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctConflictException.class)

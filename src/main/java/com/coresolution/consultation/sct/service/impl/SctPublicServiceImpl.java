@@ -32,6 +32,7 @@ import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctInviteAccessAttempt;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
+import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
@@ -44,8 +45,10 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.util.SctTokenHasher;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
@@ -84,8 +87,10 @@ public class SctPublicServiceImpl implements SctPublicService {
     private final SctInviteAccessAttemptRepository attemptRepository;
     private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final SctVerifySessionStore verifySessionStore;
+    private final SctExchangeCodeStore exchangeCodeStore;
     private final SctFeatureGuard sctFeatureGuard;
     private final SctConsentService sctConsentService;
+    private final SctSettingsService sctSettingsService;
     private final AuditLogService auditLogService;
 
     @PersistenceContext
@@ -94,9 +99,9 @@ public class SctPublicServiceImpl implements SctPublicService {
     @Override
     @Transactional
     public SctPublicMetaResponse getMeta(String rawToken) {
-        SctInvitation invitation = loadByToken(rawToken);
+        ResolvedPublicToken resolved = resolveTokenForMeta(rawToken);
+        SctInvitation invitation = resolved.invitation();
         bindTenantAndGuard(invitation);
-        assertReadable(invitation);
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         int itemCount = (int) formItemRepository.countByFormTemplateId(template.getId());
         boolean hasDraft = SctInviteStatus.DRAFT.name().equals(invitation.getStatus())
@@ -111,10 +116,13 @@ public class SctPublicServiceImpl implements SctPublicService {
         }
         SctConsentTemplate identityTpl = sctConsentService.activeIdentityContactTemplate();
         boolean identityOk = sctConsentService.hasIdentityContactConsent(invitation);
+        String status = StringUtils.hasText(resolved.statusOverride())
+                ? resolved.statusOverride()
+                : invitation.getStatus();
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
-                .status(invitation.getStatus())
+                .status(status)
                 .itemCount(itemCount)
                 .verifyChannelHint(channel)
                 .tokenExpiresAt(invitation.getTokenExpiresAt())
@@ -125,16 +133,17 @@ public class SctPublicServiceImpl implements SctPublicService {
                 .identityConsentBody(identityTpl == null ? null : identityTpl.getBodyText())
                 .identityConsentVersion(identityTpl == null ? null : identityTpl.getVersion())
                 .identityConsentSatisfied(identityOk)
+                .recipientName(invitation.getRecipientName())
+                .officePhone(sctSettingsService.resolvePublicOfficePhone(invitation.getTenantId()))
+                .mobilePhone(sctSettingsService.resolvePublicMobilePhone(invitation.getTenantId()))
+                .submittedAt(invitation.getSubmittedAt())
                 .build();
     }
 
     @Override
     @Transactional
     public SctVerifyResponse verify(String rawToken, SctVerifyRequest request, String clientIp) {
-        String hash = hashToken(rawToken);
-        SctInvitation invitation = invitationRepository
-                .findByTokenHashAndIsDeletedFalseForUpdate(hash)
-                .orElseGet(() -> resolveMissingToken(hash));
+        SctInvitation invitation = loadInvitationForVerify(rawToken);
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
         assertHasIdentityContactConsent(invitation);
@@ -347,29 +356,94 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private SctInvitation loadByToken(String rawToken) {
-        String hash = hashToken(rawToken);
-        return invitationRepository.findByTokenHashAndIsDeletedFalse(hash)
-                .orElseGet(() -> resolveMissingToken(hash));
+        ResolvedPublicToken resolved = resolveToken(rawToken, false);
+        if (SctConstants.PUBLIC_STATUS_REISSUED.equals(resolved.statusOverride())) {
+            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+        }
+        return resolved.invitation();
     }
 
     /**
-     * 활성 초대가 없을 때 — 회전 이력이면 410, 미존재면 404(동일 메시지·정보 누출 방지).
+     * 메타 전용 — 회전·비활성 단축 교환은 REISSUED status로 반환(410 대신).
      *
-     * @param tokenHash SHA-256 hex
-     * @return never (항상 예외)
+     * @param rawToken 초대 토큰 또는 교환 코드
+     * @return 해석 결과
      */
-    private SctInvitation resolveMissingToken(String tokenHash) {
-        if (rotatedTokenHashRepository.existsByTokenHash(tokenHash)) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+    private ResolvedPublicToken resolveTokenForMeta(String rawToken) {
+        return resolveToken(rawToken, true);
+    }
+
+    /**
+     * 초대 토큰 해시 → Redis 교환 코드 → 회전 이력 순으로 해석.
+     *
+     * @param rawToken             경로 토큰
+     * @param allowReissuedForMeta true면 회전/재발급을 REISSUED로 반환
+     * @return 해석 결과
+     */
+    private ResolvedPublicToken resolveToken(String rawToken, boolean allowReissuedForMeta) {
+        if (!StringUtils.hasText(rawToken)) {
+            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        }
+        String trimmed = rawToken.trim();
+        String hash = SctTokenHasher.sha256Hex(trimmed);
+        Optional<SctInvitation> byHash = invitationRepository.findByTokenHashAndIsDeletedFalse(hash);
+        if (byHash.isPresent()) {
+            return new ResolvedPublicToken(byHash.get(), null);
+        }
+
+        Optional<SctExchangeCodeStore.ExchangeEntry> exchange = exchangeCodeStore.resolve(trimmed);
+        if (exchange.isPresent()) {
+            SctExchangeCodeStore.ExchangeEntry entry = exchange.get();
+            SctInvitation invitation = invitationRepository
+                    .findByTenantIdAndIdAndIsDeletedFalse(entry.tenantId(), entry.invitationId())
+                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+            if (!invitation.getTenantId().equals(entry.tenantId())) {
+                throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            }
+            return new ResolvedPublicToken(invitation, entry.landingStatus());
+        }
+
+        Optional<SctRotatedTokenHash> rotated = rotatedTokenHashRepository.findByTokenHash(hash);
+        if (rotated.isPresent()) {
+            if (!allowReissuedForMeta) {
+                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            }
+            SctRotatedTokenHash rotatedRow = rotated.get();
+            SctInvitation invitation = invitationRepository
+                    .findByTenantIdAndIdAndIsDeletedFalse(
+                            rotatedRow.getTenantId(), rotatedRow.getInvitationId())
+                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+            return new ResolvedPublicToken(invitation, SctConstants.PUBLIC_STATUS_REISSUED);
         }
         throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
     }
 
-    private static String hashToken(String rawToken) {
+    /**
+     * @param invitation     초대
+     * @param statusOverride REISSUED 등 또는 null
+     */
+    private record ResolvedPublicToken(SctInvitation invitation, String statusOverride) {
+    }
+
+    /**
+     * verify — 평문 토큰은 pessimistic lock, 교환 코드는 일반 로드 후 재발급 거부.
+     *
+     * @param rawToken 토큰 또는 교환 코드
+     * @return 초대
+     */
+    private SctInvitation loadInvitationForVerify(String rawToken) {
         if (!StringUtils.hasText(rawToken)) {
             throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
         }
-        return SctTokenHasher.sha256Hex(rawToken);
+        String trimmed = rawToken.trim();
+        String hash = SctTokenHasher.sha256Hex(trimmed);
+        Optional<SctInvitation> locked =
+                invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(hash);
+        if (locked.isPresent()) {
+            return locked.get();
+        }
+        // 교환 코드·회전 이력 — ForUpdate 불가 시 일반 resolve(재발급은 410)
+        return loadByToken(trimmed);
     }
 
     private void bindTenantAndGuard(SctInvitation invitation) {

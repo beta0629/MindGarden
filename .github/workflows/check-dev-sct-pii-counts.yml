@@ -439,6 +439,50 @@ jobs:
             echo "log_otp_pattern_count=${OTP_COUNT}"
             echo "log_sct_identity_otp_needle_count=${IDENTITY_OTP_COUNT}"
 
+            # (4-a) SMS 본문 출처 분리 — SCT 전용 문구 / 공통 접두 (건수만)
+            SCT_ONLY_PATTERN='문장완성 질문지입니다|까지 작성해 주세요|\[마인드가든\] .*문장완성'
+            COMMON_PREFIX_PATTERN='\[마인드가든( 심리상담센터)?\]'
+            echo "log_sms_sct_only_count=$(_count_pattern_since "$SCT_ONLY_PATTERN")"
+            echo "log_sms_common_prefix_count=$(_count_pattern_since "$COMMON_PREFIX_PATTERN")"
+
+            # (4-b) .dev BE 배포(서비스 기동) 시각 이후 건수 — 기존 로그와 분리
+            DEPLOY_RAW="$(sudo systemctl show -p ActiveEnterTimestamp --value "$UNIT" 2>/dev/null || true)"
+            DEPLOY_TS="$(date -d "$DEPLOY_RAW" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || true)"
+            if [ -n "${DEPLOY_TS:-}" ]; then
+              echo "deploy_since_ts=${DEPLOY_TS}"
+              _SAVED_SINCE="${SINCE_TS:-}"
+              SINCE_TS="$DEPLOY_TS"
+              echo "post_deploy_sms_body_pattern_count=$(_count_pattern_since "$SMS_BODY_PATTERN")"
+              echo "post_deploy_sms_sct_only_count=$(_count_pattern_since "$SCT_ONLY_PATTERN")"
+              echo "post_deploy_sms_common_prefix_count=$(_count_pattern_since "$COMMON_PREFIX_PATTERN")"
+              echo "post_deploy_otp_pattern_count=$(_count_pattern_since "$OTP_PATTERN")"
+              SINCE_TS="$_SAVED_SINCE"
+            else
+              echo "deploy_since_ts=UNAVAILABLE"
+            fi
+
+            # (4-c) SMS 본문 매칭 출처 발췌 — 시각(KST)·로거·분류만. 본문·번호·이름·OTP 0자 출력.
+            #   리더 요청은 본문 앞 6자였으나 원문 0자 원칙 유지를 위해 분류(sct|common)로 대체.
+            if [ -n "$(echo $LOG_FILES | tr -d '[:space:]')" ] && [ -n "${SINCE_TS:-}" ]; then
+              for f in $LOG_FILES; do
+                [ -f "$f" ] || continue
+                sudo grep -hE "$SMS_BODY_PATTERN" "$f" 2>/dev/null || true
+              done | SCT_RE="$SCT_ONLY_PATTERN" awk -v since="$SINCE_TS" '
+                {
+                  ts = substr($0, 1, 19)
+                  if (ts < since) next
+                  if (ts !~ /^[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] [0-9][0-9]:[0-9][0-9]:[0-9][0-9]$/) { ts = "UNPARSED" }
+                  logger = "UNKNOWN"
+                  if (match($0, /\] +(TRACE|DEBUG|INFO|WARN|ERROR) +[A-Za-z0-9_.$]+ - /)) {
+                    seg = substr($0, RSTART, RLENGTH)
+                    n = split(seg, a, / +/)
+                    logger = a[3]
+                  }
+                  kind = ($0 ~ ENVIRON["SCT_RE"]) ? "sct" : "common"
+                  print "sms_match ts=" ts " logger=" logger " kind=" kind
+                }' | sort | uniq -c | awk '{c=$1; $1=""; sub(/^ /,""); print $0 " n=" c}' | head -n 60
+            fi
+
             # journalctl since 보조 건수 (라인 미출력)
             set +e
             J_SMS="$(sudo journalctl -u "$UNIT" --since "${SINCE_N} hours ago" --no-pager 2>/dev/null | grep -cE "$SMS_BODY_PATTERN" || true)"

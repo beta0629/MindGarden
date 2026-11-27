@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import com.coresolution.consultation.ConsultationManagementApplication;
 import com.coresolution.consultation.entity.SystemConfig;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
@@ -32,6 +33,7 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -46,6 +48,7 @@ import org.springframework.transaction.support.TransactionTemplate;
  */
 @SpringBootTest(classes = ConsultationManagementApplication.class)
 @ActiveProfiles("test")
+@Timeout(value = 3, unit = TimeUnit.MINUTES)
 @DisplayName("SCT identity OTP lock REQUIRES_NEW")
 class SctIdentityOtpLockRequiresNewIntegrationTest {
 

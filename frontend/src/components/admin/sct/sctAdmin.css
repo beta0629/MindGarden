@@ -317,6 +317,23 @@
   box-sizing: border-box;
 }
 
+/* PR 1963 정렬 — 설정 폼 입력 idle/focus (border-strong · neutral-900) */
+#sct-link-expiry,
+#sct-retention,
+#sct-office-phone,
+#sct-mobile-phone {
+  border-color: var(--mg-v2-color-border-strong);
+}
+
+#sct-link-expiry:focus,
+#sct-retention:focus,
+#sct-office-phone:focus,
+#sct-mobile-phone:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
+}
+
 .mg-v2-sct-send-sheet .mg-v2-sct-field {
   margin-bottom: var(--mg-v2-space-4);
 }

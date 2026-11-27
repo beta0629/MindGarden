@@ -158,12 +158,15 @@ public final class SctSmsMessageBuilder {
             case CHILD -> "아동용";
         };
         String date = formatKoreanMonthDaySpaced(expiresAt);
-        String office = StringUtils.hasText(officePhone) ? officePhone.trim() : "";
-        return "[마인드가든 심리상담센터]\n"
-                + typeLabel + " 문장완성 질문지입니다.\n"
-                + date + "까지 작성해 주세요.\n"
-                + "문의 " + office + "\n"
-                + absolutePublicUrl;
+        StringBuilder sb = new StringBuilder();
+        sb.append("[마인드가든 심리상담센터]\n")
+                .append(typeLabel).append(" 문장완성 질문지입니다.\n")
+                .append(date).append("까지 작성해 주세요.\n");
+        if (StringUtils.hasText(officePhone)) {
+            sb.append("문의 ").append(officePhone.trim()).append('\n');
+        }
+        sb.append(absolutePublicUrl);
+        return sb.toString();
     }
 
     private static String buildBody(String shortTitle, String koreanMonthDay, String absoluteUrl) {

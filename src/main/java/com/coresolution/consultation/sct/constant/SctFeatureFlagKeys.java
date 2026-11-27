@@ -23,6 +23,12 @@ public final class SctFeatureFlagKeys {
     /** 공개 랜딩 공개 휴대폰. SMS 본문에는 사용하지 않음. */
     public static final String PUBLIC_CONTACT_MOBILE = "sct.public.contact.mobile";
 
+    /** 공개 연락처 전화 — 숫자·하이픈만, 길이 1~{@link #PUBLIC_CONTACT_PHONE_MAX_LENGTH}. */
+    public static final String PUBLIC_CONTACT_PHONE_PATTERN = "^[0-9-]{1,20}$";
+
+    /** 공개 연락처 전화 최대 길이. */
+    public static final int PUBLIC_CONTACT_PHONE_MAX_LENGTH = 20;
+
     public static final int DEFAULT_LINK_EXPIRY_DAYS = 14;
     public static final int MIN_LINK_EXPIRY_DAYS = 1;
     public static final int MAX_LINK_EXPIRY_DAYS = 30;

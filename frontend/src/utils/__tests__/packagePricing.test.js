@@ -1,5 +1,6 @@
 import {
   EXTRA_DATA_KEYS,
+  EXTRA_DATA_CATEGORY,
   parseExtraData,
   buildExtraDataString,
   isPublicVisible,
@@ -20,7 +21,8 @@ const EMPTY_EXTRA = {
   items: [],
   discountRate: 0,
   originalPrice: null,
-  publicVisible: null
+  publicVisible: null,
+  category: null
 };
 
 describe('packagePricing', () => {
@@ -40,7 +42,8 @@ describe('packagePricing', () => {
         items: [],
         discountRate: 0,
         originalPrice: null,
-        publicVisible: null
+        publicVisible: null,
+        category: null
       });
     });
 
@@ -52,9 +55,19 @@ describe('packagePricing', () => {
         items: [],
         discountRate: 0,
         originalPrice: null,
-        publicVisible: null
+        publicVisible: null,
+        category: null
       };
       expect(parseExtraData(obj)).toEqual(obj);
+    });
+
+    it('category 를 ASSESSMENT|CONSULTATION 으로 파싱하고 누락 시 null 을 유지한다', () => {
+      expect(parseExtraData(JSON.stringify({ category: 'assessment' })).category)
+        .toBe(EXTRA_DATA_CATEGORY.ASSESSMENT);
+      expect(parseExtraData(JSON.stringify({ category: 'CONSULTATION' })).category)
+        .toBe(EXTRA_DATA_CATEGORY.CONSULTATION);
+      expect(parseExtraData(JSON.stringify({ sessions: 1 })).category).toBeNull();
+      expect(parseExtraData(JSON.stringify({ category: 'OTHER' })).category).toBeNull();
     });
 
     it('잘못된 JSON 은 안전한 기본 객체를 돌려준다', () => {
@@ -91,7 +104,7 @@ describe('packagePricing', () => {
   });
 
   describe('buildExtraDataString', () => {
-    it('지정한 키 순서대로 JSON 문자열을 생성한다 (publicVisible 기본 true)', () => {
+    it('지정한 키 순서대로 JSON 문자열을 생성한다 (publicVisible 기본 true, category 생략)', () => {
       const str = buildExtraDataString(20, 200000, '기본');
       expect(JSON.parse(str)).toEqual({
         [EXTRA_DATA_KEYS.SESSIONS]: 20,
@@ -102,6 +115,7 @@ describe('packagePricing', () => {
         [EXTRA_DATA_KEYS.ORIGINAL_PRICE]: 200000,
         [EXTRA_DATA_KEYS.PUBLIC_VISIBLE]: true
       });
+      expect(JSON.parse(str)).not.toHaveProperty(EXTRA_DATA_KEYS.CATEGORY);
     });
 
     it('remark 가 falsy 면 빈 문자열로 직렬화된다', () => {
@@ -121,6 +135,32 @@ describe('packagePricing', () => {
       expect(JSON.parse(str).publicVisible).toBe(false);
     });
 
+    it('category 를 정규화해 직렬화하고 parse → build roundtrip 으로 보존한다', () => {
+      const original = buildExtraDataString(
+        10,
+        200000,
+        '메모',
+        [{ value: 'A' }],
+        10,
+        220000,
+        false,
+        'assessment'
+      );
+      expect(JSON.parse(original).category).toBe(EXTRA_DATA_CATEGORY.ASSESSMENT);
+      const parsed = parseExtraData(original);
+      const rebuilt = buildExtraDataString(
+        parsed.sessions,
+        parsed.price,
+        parsed.remark,
+        parsed.items,
+        parsed.discountRate,
+        parsed.originalPrice,
+        parsed.publicVisible,
+        parsed.category
+      );
+      expect(JSON.parse(rebuilt)).toEqual(JSON.parse(original));
+    });
+
     it('parse → build roundtrip 으로 publicVisible 을 보존한다', () => {
       const original = buildExtraDataString(10, 200000, '메모', [{ value: 'A' }], 10, 220000, false);
       const parsed = parseExtraData(original);
@@ -138,8 +178,17 @@ describe('packagePricing', () => {
   });
 
   describe('withPublicVisible', () => {
-    it('기존 sessions/price/remark/items 를 유지한 채 publicVisible 만 갱신한다', () => {
-      const base = buildExtraDataString(10, 300000, '인기', [{ value: 'X' }], 5, 320000, true);
+    it('기존 sessions/price/remark/items/category 를 유지한 채 publicVisible 만 갱신한다', () => {
+      const base = buildExtraDataString(
+        10,
+        300000,
+        '인기',
+        [{ value: 'X' }],
+        5,
+        320000,
+        true,
+        EXTRA_DATA_CATEGORY.ASSESSMENT
+      );
       const next = withPublicVisible(base, false);
       const parsed = JSON.parse(next);
       expect(parsed.sessions).toBe(10);
@@ -149,6 +198,7 @@ describe('packagePricing', () => {
       expect(parsed.discountRate).toBe(5);
       expect(parsed.originalPrice).toBe(320000);
       expect(parsed.publicVisible).toBe(false);
+      expect(parsed.category).toBe(EXTRA_DATA_CATEGORY.ASSESSMENT);
     });
   });
 

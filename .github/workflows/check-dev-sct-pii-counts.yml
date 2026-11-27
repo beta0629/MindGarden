@@ -314,6 +314,69 @@ jobs:
             WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
 
             SELECT CONCAT(
+              'scope=all table=sct_consents col=guardian_name_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_name_enc IS NULL OR guardian_name_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_name_enc IS NOT NULL AND guardian_name_enc <> '' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_consents col=guardian_name_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN guardian_name_enc IS NULL OR guardian_name_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN guardian_name_enc IS NOT NULL AND guardian_name_enc <> '' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (guardian_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
+
+            SELECT CONCAT(
+              'scope=all table=sct_consents col=signer_name_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN signer_name_enc IS NULL OR signer_name_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN signer_name_enc IS NOT NULL AND signer_name_enc <> '' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_consents col=signer_name_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN signer_name_enc IS NULL OR signer_name_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN signer_name_enc IS NOT NULL AND signer_name_enc <> '' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (signer_name_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
+
+            SELECT CONCAT(
+              'scope=all table=sct_consents col=child_name_confirm_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN child_name_confirm_enc IS NULL OR child_name_confirm_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN child_name_confirm_enc IS NOT NULL AND child_name_confirm_enc <> '' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents;
+
+            SELECT CONCAT(
+              'scope=recent table=sct_consents col=child_name_confirm_enc',
+              ' total=', COUNT(*),
+              ' null_or_empty=', SUM(CASE WHEN child_name_confirm_enc IS NULL OR child_name_confirm_enc = '' THEN 1 ELSE 0 END),
+              ' v2=', SUM(CASE WHEN child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::' THEN 1 ELSE 0 END),
+              ' v1=', SUM(CASE WHEN child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') THEN 1 ELSE 0 END),
+              ' other_plain_est=', SUM(CASE WHEN child_name_confirm_enc IS NOT NULL AND child_name_confirm_enc <> '' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::') AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}::' AND NOT (child_name_confirm_enc REGEXP '^[A-Za-z0-9_.-]{1,32}:v2::')) THEN 1 ELSE 0 END)
+            ) AS line
+            FROM sct_consents
+            WHERE agreed_at >= NOW() - INTERVAL ${SINCE_N} HOUR;
+
+            SELECT CONCAT(
               'scope=all table=sct_consents col=guardian_relation tenant_id=', tenant_id,
               ' total=', COUNT(*),
               ' null_or_empty=', SUM(CASE WHEN guardian_relation IS NULL OR guardian_relation = '' THEN 1 ELSE 0 END),

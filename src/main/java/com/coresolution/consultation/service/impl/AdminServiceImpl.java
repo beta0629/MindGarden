@@ -7233,6 +7233,52 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
     }
 
     /**
+     * 매칭 회기 수 변경 요청의 dry-run 불변식 검증 (엔티티 mutate/save 없음).
+     *
+     * <p>ERP UpdateMappingInfo 자체 COMMIT 이전에 호출해야 한다.</p>
+     *
+     * @param id 매칭 ID
+     * @param dto 수정 요청
+     * @throws IllegalArgumentException 회기 불변식·파생 규칙 위반
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public void assertMappingSessionUpdate(Long id, ConsultantClientMappingCreateRequest dto) {
+        ConsultantClientMapping mapping = mappingRepository.findByTenantIdAndId(getTenantId(), id)
+                .orElseThrow(() -> new RuntimeException(AdminServiceUserFacingMessages.MSG_MAPPING_NOT_FOUND));
+        assertMappingSessionUpdateDryRun(id, mapping, dto);
+    }
+
+    /**
+     * {@link #applyMappingUpdate} 와 동일한 회기 derive/assert 로직의 dry-run (저장 없음).
+     *
+     * @param mappingId 매핑 ID
+     * @param mapping   현재 매핑 (변경하지 않음)
+     * @param dto       수정 요청
+     */
+    private void assertMappingSessionUpdateDryRun(Long mappingId, ConsultantClientMapping mapping,
+            ConsultantClientMappingCreateRequest dto) {
+        if (dto.getTotalSessions() == null && dto.getRemainingSessions() == null) {
+            return;
+        }
+        Integer total = mapping.getTotalSessions();
+        Integer used = mapping.getUsedSessions();
+        Integer remaining = mapping.getRemainingSessions();
+        if (dto.getTotalSessions() != null) {
+            total = dto.getTotalSessions();
+            remaining = MappingSessionCountInvariant.deriveRemainingFromTotalAndUsed(
+                    dto.getTotalSessions(), used);
+        }
+        if (dto.getRemainingSessions() != null
+                && (remaining == null || !dto.getRemainingSessions().equals(remaining))) {
+            used = MappingSessionCountInvariant.deriveUsedFromTotalAndRemaining(
+                    total, dto.getRemainingSessions());
+            remaining = dto.getRemainingSessions();
+        }
+        MappingSessionCountInvariant.assertInvariant(mappingId, total, used, remaining);
+    }
+
+    /**
      * 매칭 수정(JPA). ERP 동기화(UpdateMappingInfo)는 호출하지 않는다 — {@code MappingUpdateService} 가
      * 트랜잭션 밖에서 먼저 실행한다. 프로시저는 자체 COMMIT 하고 같은 행·version 을 고치므로 이 트랜잭션 안에서
      * 부르면 행 잠금 대기·낙관적 잠금 충돌이 난다.

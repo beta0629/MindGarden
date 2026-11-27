@@ -36,6 +36,8 @@ public class MappingUpdateServiceImpl implements MappingUpdateService {
     @Override
     public ConsultantClientMappingResponse update(Long id, ConsultantClientMappingCreateRequest request,
             String updatedBy) {
+        // ERP UpdateMappingInfo 는 자체 COMMIT 하므로 회기 불변식 위반을 먼저 거부한다 (400).
+        adminService.assertMappingSessionUpdate(id, request);
         adminService.planMappingPackageErpSync(id, request, updatedBy).ifPresent(this::syncToErp);
         return adminService.updateMapping(id, request, updatedBy);
     }

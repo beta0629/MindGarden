@@ -274,6 +274,17 @@ public interface AdminService {
             Long id, ConsultantClientMappingCreateRequest request, String updatedBy);
 
     /**
+     * 매칭 회기 수 변경 요청의 dry-run 불변식 검증 (엔티티 mutate/save 없음).
+     *
+     * <p>ERP UpdateMappingInfo 호출 전에 선행해야 한다. 위반 시 {@link IllegalArgumentException}(HTTP 400).</p>
+     *
+     * @param id 매칭 ID
+     * @param request 수정 요청
+     * @throws IllegalArgumentException 회기 불변식·파생 규칙 위반
+     */
+    void assertMappingSessionUpdate(Long id, ConsultantClientMappingCreateRequest request);
+
+    /**
      * 가계약(PENDING_PAYMENT) 매칭의 패키지·가격·총 회기만 동일 매핑에 갱신한다.
      *
      * <p>허용: {@code MappingStatus.PENDING_PAYMENT} (+ paymentStatus PENDING).

@@ -55,6 +55,8 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   const [email, setEmail] = useState('');
   const [expiresInDays, setExpiresInDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [centerDefaultDays, setCenterDefaultDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [sentInvitation, setSentInvitation] = useState(null);
@@ -77,6 +79,12 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         const days = settings?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS;
         setCenterDefaultDays(days);
         setExpiresInDays(days);
+        setOfficePhone(
+          typeof settings?.officePhone === 'string' ? settings.officePhone.trim() : ''
+        );
+        setMobilePhone(
+          typeof settings?.mobilePhone === 'string' ? settings.mobilePhone.trim() : ''
+        );
         if (onlineForms[0]?.formType) {
           setFormType(onlineForms[0].formType);
         } else {
@@ -188,6 +196,8 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
                 ? `${SCT_FORM_TYPE_LABEL[sentInvitation?.formType || formType]} 문장완성 질문지`
                 : SCT_UI.TITLE
             }
+            officePhone={officePhone}
+            mobilePhone={mobilePhone}
             isReissued={false}
             onConfirm={onClose}
             onInvitationChange={setSentInvitation}

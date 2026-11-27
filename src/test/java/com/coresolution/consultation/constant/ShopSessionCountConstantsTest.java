@@ -45,4 +45,27 @@ class ShopSessionCountConstantsTest {
         assertThrows(IllegalArgumentException.class, () -> ShopSessionCountConstants.resolveSessionsToGrant(0, 1));
         assertThrows(IllegalArgumentException.class, () -> ShopSessionCountConstants.resolveSessionsToGrant(1, 0));
     }
+
+    @Test
+    @DisplayName("minSessionCountForCategory — ASSESSMENT=0, 그 외=1")
+    void minSessionCountForCategory() {
+        assertEquals(
+                ShopSessionCountConstants.MIN_SESSION_COUNT_ASSESSMENT,
+                ShopSessionCountConstants.minSessionCountForCategory(ShopCatalogCategory.ASSESSMENT));
+        assertEquals(
+                ShopSessionCountConstants.MIN_SESSION_COUNT,
+                ShopSessionCountConstants.minSessionCountForCategory(ShopCatalogCategory.CONSULTATION));
+        assertEquals(
+                ShopSessionCountConstants.MIN_SESSION_COUNT,
+                ShopSessionCountConstants.minSessionCountForCategory(null));
+    }
+
+    @Test
+    @DisplayName("resolveSessionsToGrant(0) 은 ASSESSMENT 최소와 무관하게 거부")
+    void resolveSessionsToGrant_stillRejectsZero() {
+        IllegalArgumentException ex = assertThrows(
+                IllegalArgumentException.class,
+                () -> ShopSessionCountConstants.resolveSessionsToGrant(0, 1));
+        assertEquals(ShopSessionCountConstants.MSG_SESSION_COUNT_REQUIRED, ex.getMessage());
+    }
 }

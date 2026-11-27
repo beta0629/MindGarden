@@ -164,8 +164,9 @@ public class ShopCatalogPackageOfferResolver {
         String name = firstNonBlank(row.getKoreanName(), row.getCodeLabel(), code);
         Map<String, Object> extra = parseExtra(row.getExtraData());
         Long price = toWonOrNull(extra.get(EXTRA_PRICE));
-        Integer sessions = toSessionsOrNull(extra.get(EXTRA_SESSIONS));
         String catalogCategory = toCatalogCategoryOrNull(extra.get(EXTRA_CATEGORY));
+        int minSessions = ShopSessionCountConstants.minSessionCountForCategory(catalogCategory);
+        Integer sessions = toSessionsOrNull(extra.get(EXTRA_SESSIONS), minSessions);
         boolean active = Boolean.TRUE.equals(row.getIsActive());
         boolean priceReady = active && price != null && sessions != null && StringUtils.hasText(name);
         return new ShopCatalogPackageIdentity(code, name, price, sessions, active, priceReady, catalogCategory);
@@ -214,16 +215,24 @@ public class ShopCatalogPackageOfferResolver {
         return won;
     }
 
-    private static Integer toSessionsOrNull(Object value) {
+    /**
+     * 회기수 파싱. {@code min} 미만·비정수·범위 초과는 null.
+     * ASSESSMENT 는 min=0 이므로 0 회기를 허용한다.
+     *
+     * @param value extraData.sessions 원본
+     * @param min 카테고리별 최소 회기수
+     * @return 회기수 또는 null
+     */
+    private static Integer toSessionsOrNull(Object value, int min) {
         Double number = toFiniteDouble(value);
         if (number == null
-                || number < ShopSessionCountConstants.MIN_SESSION_COUNT
+                || number < min
                 || number > Integer.MAX_VALUE
                 || number != Math.rint(number)) {
             return null;
         }
         int sessions = number.intValue();
-        if (sessions < ShopSessionCountConstants.MIN_SESSION_COUNT) {
+        if (sessions < min) {
             return null;
         }
         return sessions;

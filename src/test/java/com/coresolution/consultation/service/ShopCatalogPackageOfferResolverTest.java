@@ -142,6 +142,57 @@ class ShopCatalogPackageOfferResolverTest {
     }
 
     @Test
+    @DisplayName("ASSESSMENT sessions=0 → identity.sessionCount=0, priceReady true")
+    void toIdentity_assessmentZeroSessions_priceReady() {
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP, "PACKAGE_001"))
+                .thenReturn(Optional.of(packageCode(
+                        true, "{\"sessions\":0,\"price\":20000,\"category\":\"ASSESSMENT\"}")));
+        ShopCatalogPackageOfferResolver resolver =
+                new ShopCatalogPackageOfferResolver(commonCodeRepository, new ObjectMapper());
+
+        ShopCatalogPackageIdentity identity = resolver.requireIdentity(TENANT, "PACKAGE_001");
+
+        assertEquals(ShopCatalogCategory.ASSESSMENT, identity.catalogCategory());
+        assertEquals(0, identity.sessionCount());
+        assertTrue(identity.priceReady());
+    }
+
+    @Test
+    @DisplayName("CONSULTATION sessions=0 → sessionCount null, priceReady false")
+    void toIdentity_consultationZeroSessions_notReady() {
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ConsultationPackageCodeConstants.CODE_GROUP, "PACKAGE_001"))
+                .thenReturn(Optional.of(packageCode(
+                        true, "{\"sessions\":0,\"price\":20000,\"category\":\"CONSULTATION\"}")));
+        ShopCatalogPackageOfferResolver resolver =
+                new ShopCatalogPackageOfferResolver(commonCodeRepository, new ObjectMapper());
+
+        ShopCatalogPackageIdentity identity = resolver.requireIdentity(TENANT, "PACKAGE_001");
+
+        assertEquals(ShopCatalogCategory.CONSULTATION, identity.catalogCategory());
+        assertNull(identity.sessionCount());
+        assertFalse(identity.priceReady());
+    }
+
+    @Test
+    @DisplayName("unlinked ASSESSMENT SKU sessionCount=0 을 유지한다")
+    void unlinked_assessmentZeroSessions_keepsZero() {
+        ShopCatalogSku sku = new ShopCatalogSku();
+        sku.setTitle("심리검사");
+        sku.setUnitPriceMinor(20000L);
+        sku.setSessionCount(0);
+        sku.setCatalogCategory(ShopCatalogCategory.ASSESSMENT);
+
+        ShopCatalogOffer offer = ShopCatalogOffer.unlinked(sku);
+
+        assertFalse(offer.linked());
+        assertTrue(offer.sellable());
+        assertEquals(0, offer.sessionCount());
+        assertEquals(20000L, offer.unitPriceMinor());
+    }
+
+    @Test
     @DisplayName("extraData.category CONSULTATION 을 identity 에 담는다")
     void toIdentity_parsesConsultationCategory() {
         when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(

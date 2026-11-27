@@ -12,6 +12,7 @@ import {
   filterAdminShopProducts,
   formatAdminShopDate,
   formatAdminShopShortDate,
+  isAdminShopProductSessionUnset,
   mapAdminShopServerProduct,
   normalizeAdminShopOrderSummary,
   resolveAdminShopExtendBaseDate,
@@ -25,6 +26,7 @@ import {
   ADMIN_SHOP_ORDER_PERIOD,
   ADMIN_SHOP_PRODUCT_SEGMENT
 } from '../../constants/adminShopSuite';
+import { SHOP_CATALOG_CATEGORY } from '../../constants/clientShopConstants';
 import { buildAdminShopOrderTimeline } from '../../components/admin/shop/AdminShopOrderDetailModal';
 
 const products = [
@@ -166,6 +168,22 @@ describe('adminShopSuite products — validity & server rows', () => {
     expect(validateAdminShopProductForm({ ...base, validityMonths: '' })).toMatchObject({ valid: true, validityMonths: null });
     expect(validateAdminShopProductForm({ ...base, validityMonths: '36' })).toMatchObject({ valid: true, validityMonths: 36 });
     expect(validateAdminShopProductForm({ ...base, validityMonths: '0' }).errors.validityMonths).toBe(true);
+  });
+
+  test('ASSESSMENT sessions=0 is set/valid; CONSULTATION sessions=0 is unset/invalid', () => {
+    expect(isAdminShopProductSessionUnset(0, SHOP_CATALOG_CATEGORY.ASSESSMENT)).toBe(false);
+    expect(isAdminShopProductSessionUnset(0, SHOP_CATALOG_CATEGORY.CONSULTATION)).toBe(true);
+    expect(isAdminShopProductSessionUnset(null, SHOP_CATALOG_CATEGORY.ASSESSMENT)).toBe(true);
+    expect(validateAdminShopProductForm({
+      ...base,
+      sessions: '0',
+      catalogCategory: SHOP_CATALOG_CATEGORY.ASSESSMENT
+    })).toMatchObject({ valid: true, sessions: 0 });
+    expect(validateAdminShopProductForm({
+      ...base,
+      sessions: '0',
+      catalogCategory: SHOP_CATALOG_CATEGORY.CONSULTATION
+    }).errors.sessions).toBe(true);
   });
 
   test('eventOnly·sessionMinutes flags validate without single event price fields', () => {

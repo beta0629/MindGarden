@@ -354,7 +354,7 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         row.setSortOrder(0);
         row.setSessionCount(identity.sessionCount() != null
                 ? identity.sessionCount()
-                : ShopSessionCountConstants.MIN_SESSION_COUNT);
+                : ShopSessionCountConstants.minSessionCountForCategory(identity.catalogCategory()));
         row.setUnitPriceMinor(identity.unitPriceMinor() != null ? identity.unitPriceMinor() : 0L);
         row.setTitle(identity.packageName());
         return row;
@@ -376,10 +376,29 @@ public class AdminShopCatalogSkuServiceImpl implements AdminShopCatalogSkuServic
         }
         if (identity.sessionCount() != null) {
             row.setSessionCount(identity.sessionCount());
-        } else if (row.getSessionCount() == null
-                || row.getSessionCount() < ShopSessionCountConstants.MIN_SESSION_COUNT) {
-            row.setSessionCount(ShopSessionCountConstants.MIN_SESSION_COUNT);
+        } else {
+            // ASSESSMENT 기존 0 은 1로 올리지 않음. 카테고리별 min 미만일 때만 기본값.
+            int minSessions = ShopSessionCountConstants.minSessionCountForCategory(
+                    resolveCategoryForSessionMin(row, identity));
+            if (row.getSessionCount() == null || row.getSessionCount() < minSessions) {
+                row.setSessionCount(minSessions);
+            }
         }
+    }
+
+    /**
+     * 회기 기본값용 카테고리 — identity SSOT 우선, 없으면 row 값.
+     *
+     * @param row SKU
+     * @param identity 패키지 요금
+     * @return 카테고리 문자열(없을 수 있음)
+     */
+    private static String resolveCategoryForSessionMin(
+            ShopCatalogSku row, ShopCatalogPackageIdentity identity) {
+        if (isValidCatalogCategory(identity.catalogCategory())) {
+            return identity.catalogCategory();
+        }
+        return row != null ? row.getCatalogCategory() : null;
     }
 
     /**

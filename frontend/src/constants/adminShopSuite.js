@@ -43,8 +43,41 @@ export const ADMIN_SHOP_ORDER_SHORT_ID_SEGMENT = 4;
 /** 몰 설명 최대 글자 수 */
 export const ADMIN_SHOP_PRODUCT_DESCRIPTION_MAX = 500;
 
-/** 회기 수 최소값(저장 가능) */
-export const ADMIN_SHOP_PRODUCT_SESSION_MIN = 1;
+/** 상담(CONSULTATION) 회기 수 최소값(저장 가능) */
+export const ADMIN_SHOP_PRODUCT_SESSION_MIN_CONSULTATION = 1;
+
+/** 검사(ASSESSMENT) 회기 수 최소값 — 0 허용 */
+export const ADMIN_SHOP_PRODUCT_SESSION_MIN_ASSESSMENT = 0;
+
+/**
+ * 카테고리별 회기 수 최소값.
+ * @type {Readonly<{ CONSULTATION: number, ASSESSMENT: number }>}
+ */
+export const ADMIN_SHOP_PRODUCT_SESSION_MIN_BY_CATEGORY = Object.freeze({
+  CONSULTATION: ADMIN_SHOP_PRODUCT_SESSION_MIN_CONSULTATION,
+  ASSESSMENT: ADMIN_SHOP_PRODUCT_SESSION_MIN_ASSESSMENT
+});
+
+/**
+ * CONSULTATION 기본 최소값 별칭 (기존 호출부 호환).
+ * @deprecated 카테고리별 최소는 {@link ADMIN_SHOP_PRODUCT_SESSION_MIN_BY_CATEGORY} 또는
+ *   {@link resolveAdminShopProductSessionMin} 사용
+ */
+export const ADMIN_SHOP_PRODUCT_SESSION_MIN = ADMIN_SHOP_PRODUCT_SESSION_MIN_CONSULTATION;
+
+/**
+ * 카탈로그 카테고리에 따른 회기 수 최소값.
+ *
+ * @param {string|null|undefined} catalogCategory
+ * @returns {number}
+ */
+export function resolveAdminShopProductSessionMin(catalogCategory) {
+  const raw = typeof catalogCategory === 'string' ? catalogCategory.trim().toUpperCase() : '';
+  if (raw === 'ASSESSMENT') {
+    return ADMIN_SHOP_PRODUCT_SESSION_MIN_ASSESSMENT;
+  }
+  return ADMIN_SHOP_PRODUCT_SESSION_MIN_CONSULTATION;
+}
 
 /** 유효기간(개월) 최소값 — 상한 없음, 비우면 기한 없음 */
 export const ADMIN_SHOP_PRODUCT_VALIDITY_MIN = 1;

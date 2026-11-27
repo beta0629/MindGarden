@@ -146,8 +146,11 @@ public class PiiCryptoService {
     /**
      * 안전한 복호화 (암호화되지 않은 경우 그대로 반환).
      *
+     * <p>버전 마커 암호문 복호화에 실패하면 마커가 벗겨진 페이로드가 아니라
+     * <strong>원본 암호문 문자열</strong>을 반환한다. (JPA flush 재암호화 파괴 방지)</p>
+     *
      * @param text 복호화할 텍스트
-     * @return 평문
+     * @return 평문 또는 (복호화 실패 시) 원본 암호문
      */
     public String safeDecrypt(String text) {
         if (text == null || text.trim().isEmpty()) {
@@ -158,6 +161,11 @@ public class PiiCryptoService {
             result = text;
         } else {
             result = decrypt(text);
+            String plain = PiiCipherFormats.requirePlaintextAfterDecrypt(text, result);
+            if (plain == null) {
+                return text;
+            }
+            result = plain;
         }
         if (result != null && result.startsWith(LEGACY_PREFIX)) {
             return result.substring(LEGACY_PREFIX.length());
@@ -168,7 +176,11 @@ public class PiiCryptoService {
     /**
      * 활성 키 GCM(v2) 암호문으로 보장한다. 레거시 CBC/타 키는 재암호화한다.
      * 암호문인데 복호화 실패 시 fail-closed ({@link IllegalStateException}) —
-     * ciphertext 를 GCM 으로 감싸지 않는다. 읽기 경로 {@link #decrypt}/{@link #safeDecrypt} 는 유지.
+     * ciphertext 를 GCM 으로 감싸지 않는다.
+     *
+     * <p><strong>JPA {@link PiiAttributeConverter} 쓰기 경로에서는 호출하지 않는다.</strong>
+     * JDBC 배치·키 로테이션·레거시 업그레이드 전용이다. 컨버터는 평문만
+     * {@link #encryptGcm(String)} 한다.</p>
      *
      * @param text 평문 또는 암호문
      * @return 활성 키 v2 암호문
@@ -350,9 +362,14 @@ public class PiiCryptoService {
         PersonalDataEncryptionKeyProvider.KeyMaterial keyMaterial = keyProvider.getKey(keyId);
         if (keyMaterial == null) {
             log.warn("암호화 키를 찾을 수 없습니다. keyId={}", keyId);
-            return randomIv
+            String fallback = randomIv
                 ? decryptWithRandomIvFallbackKeys(cipherPayload)
                 : decryptWithFallbackKeys(cipherPayload);
+            // 실패 시 마커 제거된 페이로드가 아니라 원본 암호문 전체 반환
+            if (cipherPayload.equals(fallback)) {
+                return encryptedText;
+            }
+            return fallback;
         }
 
         return randomIv
@@ -370,7 +387,7 @@ public class PiiCryptoService {
                 log.debug("암호화 키({})로 v2 복호화 실패: {}", material.getKeyId(), e.getMessage());
             }
         }
-        log.debug("v2 복호화 가능한 키를 찾지 못했습니다. 원본을 그대로 반환합니다.");
+        log.debug("v2 복호화 가능한 키를 찾지 못했습니다. 원본 암호문을 유지합니다.");
         return cipherPayload;
     }
 

@@ -7,7 +7,7 @@ import com.coresolution.consultation.constant.NotificationChannelPreferenceCode;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiCryptoService;
+import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.integrationtest.support.AbstractIntegrationTest;
 import java.time.LocalDateTime;
 import jakarta.persistence.EntityManager;
@@ -21,29 +21,34 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * PII AttributeConverter (Email / PersonalName / Phone) JPA 통합 round-trip 테스트.
+ * User PII AttributeConverter (레거시 CBC) JPA 통합 round-trip 테스트.
  *
- * <p>{@link com.coresolution.consultation.security.pii.PiiAttributeConverter},
- * {@link com.coresolution.consultation.security.pii.PiiAttributeConverter},
- * {@link com.coresolution.consultation.security.pii.PiiAttributeConverter} 가 실제
+ * <p>{@link com.coresolution.consultation.converter.EmailAttributeConverter},
+ * {@link com.coresolution.consultation.converter.PersonalNameAttributeConverter},
+ * {@link com.coresolution.consultation.converter.PhoneAttributeConverter} 가 실제
  * Hibernate 컨텍스트에서 다음 계약을 만족하는지 검증한다.
  * <ul>
- *   <li>save 시점에 평문 → AES-256/GCM 암호문으로 컬럼에 저장된다 (JdbcTemplate 로
- *       raw SELECT 시 활성 키 prefix "{keyId}::" 가 보임)</li>
+ *   <li>save 시점에 평문 → AES-256/CBC(v1) 암호문으로 컬럼에 저장된다 (JdbcTemplate 로
+ *       raw SELECT 시 활성 키 prefix "{keyId}::" 가 보이며, GCM "{keyId}:v2::" 는 아님)</li>
  *   <li>findById 등 load 시점에 컬럼 암호문 → 평문 entity 필드 복원</li>
- *   <li>멱등성: 서비스 레이어가 수동 {@code safeEncrypt} 한 cipher 를 entity 에 set 하더라도
- *       Converter 가 이중 암호화하지 않는다 (DB 에는 1차 cipher 그대로 저장)</li>
+ *   <li>멱등성: 서비스 레이어가 수동 {@code PersonalDataEncryptionUtil#safeEncrypt} 한
+ *       CBC cipher 를 entity 에 set 하더라도 Converter 가 이중 암호화하지 않는다
+ *       (활성 키 CBC 이면 패스스루)</li>
  * </ul>
- * </p>
+ * <p>users/clients GCM({@code PiiAttributeConverter}) 이관은 5차 범위이므로 이 IT 는
+ * 다루지 않는다.</p>
  *
  * @author CoreSolution
  * @since 2026-06-14
  */
-@DisplayName("PII AttributeConverter — JPA 통합 round-trip (User 엔티티)")
+@DisplayName("User PII AttributeConverter — 레거시 CBC JPA 통합 round-trip")
 @Transactional
 class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
 
     private static final String TEST_TENANT_ID = "pr4-pii-converter-tenant";
+    /** CBC v1 마커. GCM v2 마커({@code :v2::}) 와 구분한다. */
+    private static final String CBC_VERSION_DELIMITER = "::";
+    private static final String GCM_V2_MARKER = ":v2::";
 
     @Autowired
     private UserRepository userRepository;
@@ -52,18 +57,18 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     private JdbcTemplate jdbcTemplate;
 
     @Autowired
-    private PiiCryptoService encryptionUtil;
+    private PersonalDataEncryptionUtil encryptionUtil;
 
     @PersistenceContext
     private EntityManager entityManager;
 
     /**
      * H2 ddl-auto 는 Bean Validation {@code @Size(max=50)} 때문에 nickname 을
-     * VARCHAR(50) 으로 만들 수 있다. GCM 암호문(+keyId prefix)은 ~59–63자이므로
+     * VARCHAR(50) 으로 만들 수 있다. CBC 암호문(+keyId prefix)도 컬럼이 좁으면 잘리므로
      * 엔티티/운영 Flyway(≥512)와 맞게 IT 스키마만 넓힌다 (프로덕션 마이그레이션 변경 없음).
      */
     @BeforeEach
-    void widenPiiColumnsForGcmCiphertext() {
+    void widenPiiColumnsForCiphertext() {
         jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN email VARCHAR(512)");
         jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN name VARCHAR(512)");
         jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN nickname VARCHAR(512)");
@@ -76,7 +81,7 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("save: 평문 entity 필드가 DB 컬럼에는 활성 키 prefix 가 붙은 cipher 로 저장된다")
+    @DisplayName("save: 평문 entity 필드가 DB 컬럼에는 활성 키 CBC prefix({keyId}::) cipher 로 저장된다")
     void save_persistsEncryptedColumn() {
         User user = newPlainUser("alice-pr4@example.com", "홍길동", "010-1234-5678", "길동이");
 
@@ -93,10 +98,10 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
             "SELECT nickname FROM users WHERE id = ?", String.class, saved.getId());
 
         String activeKeyId = encryptionUtil.getActiveKeyId();
-        assertThat(rawEmail).startsWith(activeKeyId + ":v2::");
-        assertThat(rawName).startsWith(activeKeyId + ":v2::");
-        assertThat(rawPhone).startsWith(activeKeyId + ":v2::");
-        assertThat(rawNickname).startsWith(activeKeyId + ":v2::");
+        assertLegacyCbcCipher(rawEmail, activeKeyId);
+        assertLegacyCbcCipher(rawName, activeKeyId);
+        assertLegacyCbcCipher(rawPhone, activeKeyId);
+        assertLegacyCbcCipher(rawNickname, activeKeyId);
 
         assertThat(rawEmail).doesNotContain("alice-pr4@example.com");
         assertThat(rawName).doesNotContain("홍길동");
@@ -104,7 +109,7 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("load: DB 의 cipher 컬럼이 entity 로드 시 평문 필드로 복원된다 (round-trip)")
+    @DisplayName("load: DB 의 CBC cipher 컬럼이 entity 로드 시 평문 필드로 복원된다 (round-trip)")
     void load_decryptsToPlaintext() {
         User user = newPlainUser("bob-pr4@example.com", "이영희", "010-9999-0000", "영희님");
         User saved = userRepository.saveAndFlush(user);
@@ -120,11 +125,12 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("멱등성: 서비스 레이어가 수동 safeEncrypt 후 set 한 cipher 도 이중 암호화되지 않는다")
+    @DisplayName("멱등성: 서비스 레이어가 수동 CBC safeEncrypt 후 set 한 cipher 도 이중 암호화되지 않는다")
     void idempotent_serviceLayerManualEncryptCoexists() {
         String plainEmail = "carol-pr4@example.com";
+        // 레거시 EmailAttributeConverter 가 기대하는 CBC(v1) 형식
         String preEncryptedEmail = encryptionUtil.safeEncrypt(plainEmail);
-        assertThat(preEncryptedEmail).startsWith(encryptionUtil.getActiveKeyId() + ":v2::");
+        assertLegacyCbcCipher(preEncryptedEmail, encryptionUtil.getActiveKeyId());
 
         User user = newPlainUser(plainEmail, "박지성", "010-5555-6666", "지성");
         user.setEmail(preEncryptedEmail);
@@ -134,8 +140,9 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
 
         String rawEmail = jdbcTemplate.queryForObject(
             "SELECT email FROM users WHERE id = ?", String.class, id);
-        assertThat(rawEmail).contains(":v2::");
-        assertThat(com.coresolution.consultation.security.pii.PiiCipherFormats.looksV2(rawEmail)).isTrue();
+        // 활성 키 CBC → Converter safeEncrypt 가 패스스루 (고정 IV 이므로 동일 cipher)
+        assertThat(rawEmail).isEqualTo(preEncryptedEmail);
+        assertLegacyCbcCipher(rawEmail, encryptionUtil.getActiveKeyId());
 
         User reloaded = userRepository.findById(id).orElseThrow();
         assertThat(reloaded.getEmail()).isEqualTo(plainEmail);
@@ -162,6 +169,15 @@ class PiiAttributeConverterIntegrationTest extends AbstractIntegrationTest {
         assertThat(reloaded.getNickname()).isNull();
         assertThat(reloaded.getEmail()).isEqualTo("dave-pr4@example.com");
         assertThat(reloaded.getName()).isEqualTo("최영수");
+    }
+
+    /**
+     * 레거시 CBC(v1) 암호문 계약: {@code {activeKeyId}::...} 이고 GCM {@code :v2::} 가 아님.
+     */
+    private static void assertLegacyCbcCipher(String raw, String activeKeyId) {
+        assertThat(raw).isNotNull();
+        assertThat(raw).startsWith(activeKeyId + CBC_VERSION_DELIMITER);
+        assertThat(raw).doesNotContain(GCM_V2_MARKER);
     }
 
     private User newPlainUser(String email, String name, String phone, String nickname) {

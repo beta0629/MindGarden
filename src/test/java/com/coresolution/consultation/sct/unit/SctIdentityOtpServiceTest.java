@@ -10,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -41,6 +43,7 @@ import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
 import com.coresolution.consultation.sct.service.SctIdentityOtpDevCodeStore;
@@ -48,6 +51,7 @@ import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctIdentityOtpServiceImpl;
+import com.coresolution.consultation.sct.service.impl.SctPublicTokenResolverImpl;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -198,13 +202,20 @@ class SctIdentityOtpServiceTest {
 
         SctIdentityOtpAttemptRecorder attemptRecorder =
                 new SctIdentityOtpAttemptRecorder(phoneOtpAttemptRepository);
+        SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
+        lenient().when(exchangeCodeStore.resolve(any())).thenReturn(Optional.empty());
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository,
+                rotatedTokenHashRepository,
+                exchangeCodeStore,
+                PiiTestSecrets.hmacService());
         service = new SctIdentityOtpServiceImpl(
                 invitationRepository,
                 formTemplateRepository,
                 attemptRepository,
-                rotatedTokenHashRepository,
                 phoneOtpAttemptRepository,
                 verifySessionStore,
+                tokenResolver,
                 sctFeatureGuard,
                 sctConsentService,
                 smsAuthService,

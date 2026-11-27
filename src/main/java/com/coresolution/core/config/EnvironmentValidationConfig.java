@@ -32,6 +32,15 @@ public class EnvironmentValidationConfig {
     
     @Value("${encryption.personal-data.iv:}")
     private String encryptionIv;
+
+    @Value("${encryption.personal-data.key-versions:}")
+    private String encryptionKeyVersions;
+
+    @Value("${encryption.personal-data.iv-versions:}")
+    private String encryptionIvVersions;
+
+    @Value("${encryption.personal-data.hmac-secret:}")
+    private String hmacSecret;
     
     @Value("${spring.datasource.password:}")
     private String dbPassword;
@@ -57,15 +66,25 @@ public class EnvironmentValidationConfig {
             hasErrors = true;
         }
         
-        // 2. 암호화 키 검증
-        if (encryptionKey == null || encryptionKey.trim().isEmpty()) {
-            log.error("❌ 필수 환경 변수 누락: PERSONAL_DATA_ENCRYPTION_KEY");
+        // 2. 암호화 키 검증 — 키링(KEYS) 또는 레거시 단일 KEY
+        boolean hasKeyRing = encryptionKeyVersions != null && !encryptionKeyVersions.trim().isEmpty();
+        boolean hasLegacyKey = encryptionKey != null && !encryptionKey.trim().isEmpty();
+        if (!hasKeyRing && !hasLegacyKey) {
+            log.error("❌ 필수 환경 변수 누락: PERSONAL_DATA_ENCRYPTION_KEYS 또는 PERSONAL_DATA_ENCRYPTION_KEY");
             hasErrors = true;
         }
         
-        // 3. 암호화 IV 검증
-        if (encryptionIv == null || encryptionIv.trim().isEmpty()) {
-            log.error("❌ 필수 환경 변수 누락: PERSONAL_DATA_ENCRYPTION_IV");
+        // 3. 암호화 IV 검증 — 키링(IVS) 또는 레거시 단일 IV
+        boolean hasIvRing = encryptionIvVersions != null && !encryptionIvVersions.trim().isEmpty();
+        boolean hasLegacyIv = encryptionIv != null && !encryptionIv.trim().isEmpty();
+        if (!hasIvRing && !hasLegacyIv) {
+            log.error("❌ 필수 환경 변수 누락: PERSONAL_DATA_ENCRYPTION_IVS 또는 PERSONAL_DATA_ENCRYPTION_IV");
+            hasErrors = true;
+        }
+
+        // 3b. HMAC 시크릿 — 검색 해시 쓰기 fail-closed 전제. 값 자체는 로그하지 않음.
+        if (hmacSecret == null || hmacSecret.trim().isEmpty()) {
+            log.error("❌ 필수 환경 변수 누락: PERSONAL_DATA_HMAC_SECRET");
             hasErrors = true;
         }
         

@@ -32,8 +32,9 @@ describe('sctOnline SCT_UI — no developer/test-only copy', () => {
     expect(SCT_UI.PUBLIC_LINK_HINT).toMatch(/내담자/);
   });
 
-  test('SCT_UI user-facing strings ban .dev', () => {
+  test('SCT_UI user-facing strings ban .dev and 테스트하세요', () => {
     const blob = collectCopyStrings(SCT_UI).join(' ');
     expect(blob).not.toMatch(/\.dev/i);
+    expect(blob).not.toMatch(/테스트하세요/);
   });
 });

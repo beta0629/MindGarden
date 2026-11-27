@@ -26,8 +26,7 @@ import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.core.security.PasswordService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -82,6 +81,9 @@ class SctIdentityOtpLockRequiresNewIntegrationTest {
     private PasswordService passwordService;
 
     @Autowired
+    private PiiHmacService piiHmacService;
+
+    @Autowired
     private PlatformTransactionManager transactionManager;
 
     @Autowired
@@ -115,12 +117,12 @@ class SctIdentityOtpLockRequiresNewIntegrationTest {
                 .updatedAt(LocalDateTime.now())
                 .build());
 
-        String phoneHash = PhoneHashUtils.sha256Hex(MATCH_PHONE);
+        String phoneHash = piiHmacService.hmacHex(MATCH_PHONE);
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(template.getId())
                 .managementNo("MG-" + UUID.randomUUID().toString().substring(0, 8))
                 .targetPhoneHash(phoneHash)
-                .tokenHash(SctTokenHasher.sha256Hex(rawToken))
+                .tokenHash(piiHmacService.hmacHex(rawToken))
                 .tokenExpiresAt(LocalDateTime.now().plusDays(7))
                 .status(SctInviteStatus.SENT.name())
                 .sentByUserId(1L)

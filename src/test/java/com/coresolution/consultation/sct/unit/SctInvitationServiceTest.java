@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -54,7 +56,7 @@ import com.coresolution.consultation.sct.service.SctShortLinkService;
 import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
 import com.coresolution.consultation.sct.util.SctSmsMessageBuilder;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,6 +64,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -92,6 +95,9 @@ class SctInvitationServiceTest {
     @Mock private SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
     @Mock private SctTenantPublicUrlResolver tenantPublicUrlResolver;
     @Mock private SctShortLinkService sctShortLinkService;
+
+    @Spy
+    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
 
     @InjectMocks
     private SctInvitationServiceImpl invitationService;
@@ -279,7 +285,7 @@ class SctInvitationServiceTest {
 
     @Test
     void reissueLink_persistsOldTokenHashBeforeOverwrite() {
-        String oldHash = SctTokenHasher.sha256Hex("old-opaque-token-value-32bytes!!");
+        String oldHash = PiiTestSecrets.hmacService().hmacHex("old-opaque-token-value-32bytes!!");
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
                 .managementNo("SCT-000009")
@@ -764,7 +770,7 @@ class SctInvitationServiceTest {
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
                 .managementNo("SCT-000070")
-                .tokenHash(SctTokenHasher.sha256Hex("old-token-for-resend-prod-fixture!!"))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("old-token-for-resend-prod-fixture!!"))
                 .tokenExpiresAt(expires)
                 .targetPhone("01012345678")
                 .status(SctInviteStatus.SENT.name())
@@ -807,7 +813,7 @@ class SctInvitationServiceTest {
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
                 .managementNo("SCT-000071")
-                .tokenHash(SctTokenHasher.sha256Hex("old-token-for-resend-dev-fixture!!!"))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("old-token-for-resend-dev-fixture!!!"))
                 .tokenExpiresAt(expires)
                 .targetPhone("01012345678")
                 .status(SctInviteStatus.SENT.name())

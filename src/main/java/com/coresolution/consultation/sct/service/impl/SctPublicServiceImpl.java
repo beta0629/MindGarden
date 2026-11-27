@@ -51,9 +51,8 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -93,6 +92,7 @@ public class SctPublicServiceImpl implements SctPublicService {
     private final SctConsentService sctConsentService;
     private final SctSettingsService sctSettingsService;
     private final AuditLogService auditLogService;
+    private final PiiHmacService piiHmacService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -161,7 +161,7 @@ public class SctPublicServiceImpl implements SctPublicService {
             throw new SctVerifyLockedException("검증이 잠겼습니다. 잠시 후 다시 시도하세요.");
         }
         boolean matched = matchesContact(invitation, request);
-        String ipHash = SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp);
+        String ipHash = piiHmacService.hmacHex(clientIp == null ? "unknown" : clientIp);
         attemptRepository.save(SctInviteAccessAttempt.builder()
                 .tenantId(invitation.getTenantId())
                 .invitationId(invitation.getId())
@@ -394,8 +394,7 @@ public class SctPublicServiceImpl implements SctPublicService {
             throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
         }
         String trimmed = rawToken.trim();
-        String hash = SctTokenHasher.sha256Hex(trimmed);
-        Optional<SctInvitation> byHash = invitationRepository.findByTokenHashAndIsDeletedFalse(hash);
+        Optional<SctInvitation> byHash = findInvitationByTokenCandidates(trimmed);
         if (byHash.isPresent()) {
             return new ResolvedPublicToken(byHash.get(), null);
         }
@@ -405,7 +404,7 @@ public class SctPublicServiceImpl implements SctPublicService {
             return resolveExchangeEntry(exchange.get(), allowReissuedForMeta);
         }
 
-        Optional<SctRotatedTokenHash> rotated = rotatedTokenHashRepository.findByTokenHash(hash);
+        Optional<SctRotatedTokenHash> rotated = findRotatedByTokenCandidates(trimmed);
         if (rotated.isPresent()) {
             if (!allowReissuedForMeta) {
                 throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
@@ -418,6 +417,38 @@ public class SctPublicServiceImpl implements SctPublicService {
             return new ResolvedPublicToken(invitation, SctConstants.PUBLIC_STATUS_REISSUED);
         }
         throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+    }
+
+    private Optional<SctInvitation> findInvitationByTokenCandidates(String rawToken) {
+        for (String hash : piiHmacService.lookupCandidates(rawToken)) {
+            Optional<SctInvitation> found =
+                invitationRepository.findByTokenHashAndIsDeletedFalse(hash);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<SctInvitation> findInvitationByTokenCandidatesForUpdate(String rawToken) {
+        for (String hash : piiHmacService.lookupCandidates(rawToken)) {
+            Optional<SctInvitation> found =
+                invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(hash);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
+    }
+
+    private Optional<SctRotatedTokenHash> findRotatedByTokenCandidates(String rawToken) {
+        for (String hash : piiHmacService.lookupCandidates(rawToken)) {
+            Optional<SctRotatedTokenHash> found = rotatedTokenHashRepository.findByTokenHash(hash);
+            if (found.isPresent()) {
+                return found;
+            }
+        }
+        return Optional.empty();
     }
 
     /**
@@ -490,9 +521,7 @@ public class SctPublicServiceImpl implements SctPublicService {
             throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
         }
         String trimmed = rawToken.trim();
-        String hash = SctTokenHasher.sha256Hex(trimmed);
-        Optional<SctInvitation> locked =
-                invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(hash);
+        Optional<SctInvitation> locked = findInvitationByTokenCandidatesForUpdate(trimmed);
         if (locked.isPresent()) {
             return locked.get();
         }
@@ -610,11 +639,11 @@ public class SctPublicServiceImpl implements SctPublicService {
         }
         if (StringUtils.hasText(request.getPhone()) && invitation.getTargetPhoneHash() != null) {
             String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone());
-            return invitation.getTargetPhoneHash().equals(PhoneHashUtils.sha256Hex(normalized));
+            return piiHmacService.matches(normalized, invitation.getTargetPhoneHash());
         }
         if (StringUtils.hasText(request.getEmail()) && invitation.getTargetEmailHash() != null) {
             String normalized = request.getEmail().trim().toLowerCase(Locale.ROOT);
-            return invitation.getTargetEmailHash().equals(SctTokenHasher.sha256Hex(normalized));
+            return piiHmacService.matches(normalized, invitation.getTargetEmailHash());
         }
         return false;
     }

@@ -1,6 +1,7 @@
 package com.coresolution.consultation.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -118,12 +119,13 @@ class PhoneAttributeConverterTest {
     }
 
     @Test
-    @DisplayName("fail-safe: 컨텍스트 미초기화 시 평문 폴백")
-    void failSafe_whenHolderNotInitialized() {
+    @DisplayName("fail-closed: 컨텍스트 미초기화 시 WRITE는 예외, READ는 폴백")
+    void failClosed_whenHolderNotInitialized_writeThrows() {
         PersonalDataEncryptionContextHolder.setInstanceForTesting(null);
 
-        assertThat(converter.convertToDatabaseColumn("010-1111-2222"))
-                .isEqualTo("010-1111-2222");
+        assertThatThrownBy(() -> converter.convertToDatabaseColumn("010-1111-2222"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("평문 저장 금지");
         assertThat(converter.convertToEntityAttribute("v2::garbled"))
                 .isEqualTo("v2::garbled");
     }

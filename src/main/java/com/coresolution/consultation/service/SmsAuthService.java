@@ -50,9 +50,9 @@ public class SmsAuthService {
         String verificationCode;
 
         if (smsProperties.isTestMode()) {
-            // 테스트 모드: 고정 인증번호 사용 (비용 절약). mock 코드는 테스트모드에서만 로그.
+            // 테스트 모드: 고정 인증번호 사용 (비용 절약). 인증번호 평문은 로그에 남기지 않음.
             verificationCode = smsProperties.getMockVerificationCode();
-            log.info("🧪 테스트 모드: 고정 인증번호 사용 - {}", verificationCode);
+            log.info("🧪 테스트 모드: 고정 인증번호 사용 (코드 미로그)");
         } else {
             // 실제 모드: 랜덤 인증번호 생성 및 실제 SMS 발송
             verificationCode = generateVerificationCode();
@@ -78,8 +78,10 @@ public class SmsAuthService {
      */
     public boolean verifyCode(String phoneNumber, String inputCode, String sentCode) {
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력: {}, 발송: {}",
-                PhoneLogMasking.maskForLog(normalizedPhone), inputCode, sentCode);
+        log.info("🔍 SMS 인증번호 검증 - 전화번호: {}, 입력길이: {}, 발송길이: {}",
+                PhoneLogMasking.maskForLog(normalizedPhone),
+                inputCode == null ? 0 : inputCode.length(),
+                sentCode == null ? 0 : sentCode.length());
 
         if (inputCode == null || sentCode == null) {
             log.warn("⚠️ 인증번호가 null입니다.");
@@ -137,8 +139,8 @@ public class SmsAuthService {
         if (smsProperties.isTestMode()) {
             String maskedPhone = PhoneLogMasking.maskForLog(phoneNumber);
             List<String> urls = SmsMessageLogSupport.extractUrls(message);
-            log.info("SMS 테스트 모드 알림 미발송: testMode=true phone={} urls={} body={}",
-                    maskedPhone, urls, message);
+            log.info("SMS 테스트 모드 알림 미발송: testMode=true phone={} urls={} bodyLength={}",
+                    maskedPhone, urls, message == null ? 0 : message.length());
             return true;
         }
         return sendViaConfiguredProvider(phoneNumber, message);

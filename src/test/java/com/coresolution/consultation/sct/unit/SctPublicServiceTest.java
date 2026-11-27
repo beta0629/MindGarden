@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -58,8 +60,7 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
-import com.coresolution.consultation.util.PhoneHashUtils;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -110,6 +111,9 @@ class SctPublicServiceTest {
     @Mock private AuditLogService auditLogService;
     @Mock private EntityManager entityManager;
 
+    @Spy
+    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
+
     @InjectMocks
     private SctPublicServiceImpl sctPublicService;
 
@@ -121,8 +125,8 @@ class SctPublicServiceTest {
         invitation = SctInvitation.builder()
                 .formTemplateId(1L)
                 .targetPhone(PHONE)
-                .targetPhoneHash(PhoneHashUtils.sha256Hex(PHONE))
-                .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                .targetPhoneHash(PiiTestSecrets.hmacService().hmacHex(PHONE))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex(RAW_TOKEN))
                 .tokenExpiresAt(LocalDateTime.now().plusDays(7))
                 .status(SctInviteStatus.SENT.name())
                 .sentByUserId(1L)
@@ -167,7 +171,7 @@ class SctPublicServiceTest {
         invitation.setTargetPhoneHash(null);
         invitation.setTargetEmail(EMAIL);
         invitation.setTargetEmailHash(
-                SctTokenHasher.sha256Hex(EMAIL.trim().toLowerCase(java.util.Locale.ROOT)));
+                PiiTestSecrets.hmacService().hmacHex(EMAIL.trim().toLowerCase(java.util.Locale.ROOT)));
     }
 
     @Test
@@ -503,7 +507,7 @@ class SctPublicServiceTest {
                 .thenReturn(Optional.of(SctRotatedTokenHash.builder()
                         .tenantId(TENANT_A)
                         .invitationId(100L)
-                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .tokenHash(PiiTestSecrets.hmacService().hmacHex(RAW_TOKEN))
                         .rotatedAt(LocalDateTime.now())
                         .build()));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT_A, 100L))
@@ -564,7 +568,7 @@ class SctPublicServiceTest {
                 .thenReturn(Optional.of(SctRotatedTokenHash.builder()
                         .tenantId(TENANT_A)
                         .invitationId(100L)
-                        .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                        .tokenHash(PiiTestSecrets.hmacService().hmacHex(RAW_TOKEN))
                         .rotatedAt(LocalDateTime.now())
                         .build()));
 
@@ -645,7 +649,7 @@ class SctPublicServiceTest {
     @DisplayName("verify — tokenHash 회전 후 구 교환 코드 거부")
     void verify_exchangeTokenHashMismatch_throws404() {
         String exchange = "exchange-stale-after-reissue!!!!!";
-        String oldHash = SctTokenHasher.sha256Hex("old-token-before-reissue-rotate!");
+        String oldHash = PiiTestSecrets.hmacService().hmacHex("old-token-before-reissue-rotate!");
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
                 .thenReturn(Optional.empty());
         when(exchangeCodeStore.resolve(exchange)).thenReturn(Optional.of(

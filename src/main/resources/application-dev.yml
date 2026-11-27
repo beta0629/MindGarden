@@ -28,6 +28,7 @@ encryption:
     # 미주입 시 PersonalDataEncryptionKeyProvider 가 기동을 중단한다.
     key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:}
 
 # OAuth2 클라이언트 등록 (Google/Apple redirect-uri 기본값)
 # authorization-grant-type 미설정 시 authorizationGrantType cannot be null 기동 실패

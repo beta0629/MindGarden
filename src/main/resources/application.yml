@@ -453,6 +453,8 @@ encryption:
     # 레거시 단일 키/IV (하위 호환성)
     key: ${PERSONAL_DATA_ENCRYPTION_KEY:}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV:}
+    # HMAC-SHA256 검색 해시 시크릿 (값 로그 금지)
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:}
     algorithm: AES-256
     transformation: AES/CBC/PKCS5Padding
 

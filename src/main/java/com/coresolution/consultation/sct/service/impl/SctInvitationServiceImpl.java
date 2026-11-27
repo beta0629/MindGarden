@@ -56,9 +56,9 @@ import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctShortLinkService;
 import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
 import com.coresolution.consultation.sct.util.SctSmsMessageBuilder;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.sct.util.SctOpaqueTokenGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +96,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     private final SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
     private final SctTenantPublicUrlResolver tenantPublicUrlResolver;
     private final SctShortLinkService sctShortLinkService;
+    private final PiiHmacService piiHmacService;
 
     @Override
     @Transactional(readOnly = true)
@@ -185,7 +186,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
 
         boolean requiresGuardian = resolveRequiresGuardian(formType, linkedClient, request);
 
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
         String managementNo = nextManagementNo(tenantId);
 
@@ -200,9 +201,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .recipientName(recipientName)
                 .targetPhone(phone)
                 .targetEmail(email)
-                .targetPhoneHash(phone == null ? null : PhoneHashUtils.sha256Hex(phone))
-                .targetEmailHash(email == null ? null : SctTokenHasher.sha256Hex(email))
-                .tokenHash(SctTokenHasher.sha256Hex(rawToken))
+                .targetPhoneHash(phone == null ? null : piiHmacService.hmacHex(phone))
+                .targetEmailHash(email == null ? null : piiHmacService.hmacHex(email))
+                .tokenHash(piiHmacService.hmacHex(rawToken))
                 .tokenExpiresAt(expiresAt)
                 .status(SctInviteStatus.SENT.name())
                 .sentAt(LocalDateTime.now())
@@ -339,9 +340,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
             throw new SctConflictException("재발송할 수 없는 상태입니다. 새 초대를 발송하세요.");
         }
         // 미제출: 평문 토큰은 DB에 없으므로 신규 토큰·단축 코드 발급 후 해시 교체
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         persistRotatedTokenHash(invitation);
-        invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
+        invitation.setTokenHash(piiHmacService.hmacHex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
         invitationRepository.save(invitation);
         SctFormTemplate template = formTemplateRepository.findByIdAndIsDeletedFalse(
@@ -372,9 +373,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 || SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("링크를 재발급할 수 없는 상태입니다.");
         }
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         persistRotatedTokenHash(invitation);
-        invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
+        invitation.setTokenHash(piiHmacService.hmacHex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
         invitation.setVerifyFailCount(0);
         invitation.setVerifyLockedUntil(null);
@@ -464,9 +465,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         List<SctLinkCandidateResponse> candidates = new ArrayList<>();
         for (Client client : clients) {
             boolean phoneMatch = StringUtils.hasText(targetPhoneHash)
-                    && targetPhoneHash.equals(hashClientPhone(client));
+                    && matchesClientPhoneHash(client, targetPhoneHash);
             boolean emailMatch = StringUtils.hasText(targetEmailHash)
-                    && targetEmailHash.equals(hashClientEmail(client));
+                    && matchesClientEmailHash(client, targetEmailHash);
             if (!phoneMatch && !emailMatch) {
                 continue;
             }
@@ -495,39 +496,34 @@ public class SctInvitationServiceImpl implements SctInvitationService {
      * @param client 내담자
      * @return 해시 또는 null
      */
-    private static String hashClientPhone(Client client) {
-        if (client == null || !StringUtils.hasText(client.getPhone())) {
-            return null;
+    private boolean matchesClientPhoneHash(Client client, String storedHash) {
+        if (client == null || !StringUtils.hasText(client.getPhone()) || !StringUtils.hasText(storedHash)) {
+            return false;
         }
         try {
             String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(client.getPhone());
-            if (!StringUtils.hasText(normalized)) {
-                return null;
-            }
-            return PhoneHashUtils.sha256Hex(normalized);
+            return piiHmacService.matches(normalized, storedHash);
         } catch (Exception e) {
-            return null;
+            return false;
         }
     }
 
     /**
-     * Client.email(컨버터 복호) → 소문자 정규화 → SHA-256(초대 해시와 동일).
+     * Client.email(컨버터 복호) → 소문자 정규화 후 HMAC/레거시 SHA dual-verify.
      *
-     * @param client 내담자
-     * @return 해시 또는 null
+     * @param client     내담자
+     * @param storedHash 초대에 저장된 이메일 해시
+     * @return 일치 여부
      */
-    private static String hashClientEmail(Client client) {
-        if (client == null || !StringUtils.hasText(client.getEmail())) {
-            return null;
+    private boolean matchesClientEmailHash(Client client, String storedHash) {
+        if (client == null || !StringUtils.hasText(client.getEmail()) || !StringUtils.hasText(storedHash)) {
+            return false;
         }
         try {
             String normalized = client.getEmail().trim().toLowerCase(Locale.ROOT);
-            if (!StringUtils.hasText(normalized)) {
-                return null;
-            }
-            return SctTokenHasher.sha256Hex(normalized);
+            return piiHmacService.matches(normalized, storedHash);
         } catch (Exception e) {
-            return null;
+            return false;
         }
     }
 

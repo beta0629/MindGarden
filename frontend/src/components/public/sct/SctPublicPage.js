@@ -29,10 +29,7 @@ import {
   verifySctPublic
 } from '../../../utils/sctApi';
 import {
-  clearSctPublicDraft,
-  loadSctPublicDraft,
-  mergeSctPublicAnswers,
-  saveSctPublicDraft
+  clearSctPublicDraft
 } from '../../../utils/sctPublicDraftStorage';
 import { isSctVerifyRequiredError } from '../../../utils/sctPublicVerifyError';
 import useSctVisualViewport from '../../../hooks/useSctVisualViewport';
@@ -210,6 +207,17 @@ const SctPublicPage = () => {
     loadMeta();
   }, [loadMeta]);
 
+  // 레거시 localStorage 답변 키 정리 (이탈·만료·언마운트)
+  useEffect(() => {
+    if (step === STEP.EXPIRED || step === STEP.REISSUED || step === STEP.INVALID_LINK) {
+      clearSctPublicDraft(token);
+    }
+  }, [step, token]);
+
+  useEffect(() => () => {
+    clearSctPublicDraft(token);
+  }, [token]);
+
   useEffect(() => {
     if (!LANDING_STEPS.includes(step) && step !== STEP.INVALID_LINK) return undefined;
     const prevTitle = document.title;
@@ -306,8 +314,9 @@ const SctPublicPage = () => {
         };
       }
     });
-    const localAnswers = loadSctPublicDraft(token);
-    const nextAnswers = mergeSctPublicAnswers(serverAnswers, localAnswers);
+    // 서버 암호화 draft만 사용. localStorage 답변 본문 병합 금지.
+    clearSctPublicDraft(token);
+    const nextAnswers = serverAnswers;
     setAnswersMap(nextAnswers);
     if (formData?.status === SCT_STATUS.SUBMITTED) {
       setStep(STEP.ALREADY);
@@ -387,7 +396,7 @@ const SctPublicPage = () => {
           await completePendingSubmit(sid, merged);
         } catch (submitError) {
           if (isSctVerifyRequiredError(submitError)) {
-            saveSctPublicDraft(token, merged);
+            clearSctPublicDraft(token);
             pendingSubmitRef.current = true;
             setPendingSubmitAfterVerify(true);
             setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
@@ -586,7 +595,7 @@ const SctPublicPage = () => {
           await completePendingSubmit(verifySessionId, merged);
         } catch (submitError) {
           if (isSctVerifyRequiredError(submitError)) {
-            saveSctPublicDraft(token, merged);
+            clearSctPublicDraft(token);
             pendingSubmitRef.current = true;
             setPendingSubmitAfterVerify(true);
             setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
@@ -599,7 +608,7 @@ const SctPublicPage = () => {
       }
     } catch (error) {
       if (isSctVerifyRequiredError(error)) {
-        saveSctPublicDraft(token, answersMap);
+        clearSctPublicDraft(token);
         pendingSubmitRef.current = true;
         setPendingSubmitAfterVerify(true);
         setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
@@ -661,7 +670,7 @@ const SctPublicPage = () => {
       setStep(STEP.DONE);
     } catch (error) {
       if (isSctVerifyRequiredError(error)) {
-        saveSctPublicDraft(token, answersMap);
+        clearSctPublicDraft(token);
         pendingSubmitRef.current = true;
         setPendingSubmitAfterVerify(true);
         setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);

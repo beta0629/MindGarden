@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,8 +48,6 @@ import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctIdentityOtpServiceImpl;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.core.security.PasswordService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -114,8 +114,8 @@ class SctIdentityOtpServiceTest {
         invitation = SctInvitation.builder()
                 .formTemplateId(1L)
                 .targetPhone(PHONE)
-                .targetPhoneHash(PhoneHashUtils.sha256Hex(PHONE))
-                .tokenHash(SctTokenHasher.sha256Hex(RAW_TOKEN))
+                .targetPhoneHash(PiiTestSecrets.hmacService().hmacHex(PHONE))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex(RAW_TOKEN))
                 .tokenExpiresAt(LocalDateTime.now().plusDays(7))
                 .status(SctInviteStatus.SENT.name())
                 .sentByUserId(1L)
@@ -212,7 +212,8 @@ class SctIdentityOtpServiceTest {
                 otpSettings,
                 rateLimiter,
                 attemptRecorder,
-                devCodeStore);
+                devCodeStore,
+                PiiTestSecrets.hmacService());
     }
 
     @Test
@@ -243,7 +244,7 @@ class SctIdentityOtpServiceTest {
         PhoneOtpAttempt row = rowCaptor.getValue();
         assertEquals(PhoneOtpAttempt.PROVIDER_SCT_IDENTITY, row.getProvider());
         assertEquals("100", row.getProviderUserId());
-        assertEquals(PhoneHashUtils.sha256Hex(PHONE), row.getPhoneHash());
+        assertEquals(PiiTestSecrets.hmacService().hmacHex(PHONE), row.getPhoneHash());
         assertTrue(row.getCodeHash().startsWith("$2"));
         assertFalse(row.getCodeHash().matches("\\d{6}"));
 
@@ -336,7 +337,7 @@ class SctIdentityOtpServiceTest {
                 .tenantId(TENANT)
                 .provider(PhoneOtpAttempt.PROVIDER_SCT_IDENTITY)
                 .providerUserId("100")
-                .phoneHash(PhoneHashUtils.sha256Hex(PHONE))
+                .phoneHash(PiiTestSecrets.hmacService().hmacHex(PHONE))
                 .codeHash(passwordService.encodeSecret(CODE))
                 .attempts(0)
                 .dailyCount(1)
@@ -370,7 +371,7 @@ class SctIdentityOtpServiceTest {
                 .tenantId("other-tenant")
                 .provider(PhoneOtpAttempt.PROVIDER_SCT_IDENTITY)
                 .providerUserId("999")
-                .phoneHash(PhoneHashUtils.sha256Hex(PHONE))
+                .phoneHash(PiiTestSecrets.hmacService().hmacHex(PHONE))
                 .codeHash(passwordService.encodeSecret(CODE))
                 .attempts(0)
                 .dailyCount(1)
@@ -384,7 +385,7 @@ class SctIdentityOtpServiceTest {
                         eq(TENANT),
                         eq(PhoneOtpAttempt.PROVIDER_SCT_IDENTITY),
                         eq("100"),
-                        eq(PhoneHashUtils.sha256Hex(PHONE))))
+                        eq(PiiTestSecrets.hmacService().hmacHex(PHONE))))
                 .thenReturn(Optional.empty());
         assertThrows(SctOtpInvalidException.class, () -> service.confirmOtp(RAW_TOKEN,
                 SctIdentityOtpConfirmRequest.builder().phone(PHONE).code(CODE).build(),
@@ -397,7 +398,7 @@ class SctIdentityOtpServiceTest {
                 .tenantId(TENANT)
                 .provider(PhoneOtpAttempt.PROVIDER_SCT_IDENTITY)
                 .providerUserId("100")
-                .phoneHash(PhoneHashUtils.sha256Hex(PHONE))
+                .phoneHash(PiiTestSecrets.hmacService().hmacHex(PHONE))
                 .codeHash(passwordService.encodeSecret(code))
                 .attempts(attempts)
                 .dailyCount(1)

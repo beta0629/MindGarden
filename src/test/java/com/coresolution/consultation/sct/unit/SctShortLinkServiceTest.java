@@ -105,18 +105,31 @@ class SctShortLinkServiceTest {
     }
 
     @Test
-    @DisplayName("비활성(재발급) 단축 코드 → REISSUED 교환")
+    @DisplayName("비활성(재발급) 단축 코드 → invalid·교환 미발급(존재 오라클 방지)")
     void resolveRedirect_inactive_issuesReissuedExchange() {
         link.setIsActive(false);
         when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
                 .thenReturn(Optional.of(link));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
                 .thenReturn(Optional.of(invitation));
-        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(SctConstants.PUBLIC_STATUS_REISSUED)))
-                .thenReturn("reissueExchange");
 
-        String path = shortLinkService.resolveRedirectPath(CODE);
-        assertEquals(SctConstants.PUBLIC_SCT_WEB_PREFIX + "reissueExchange", path);
+        assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
+                shortLinkService.resolveRedirectPath(CODE));
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
+    }
+
+    @Test
+    @DisplayName("만료 단축 코드 → invalid·교환 미발급")
+    void resolveRedirect_expired_returnsInvalidWithoutExchange() {
+        link.setExpiresAt(LocalDateTime.now().minusMinutes(1));
+        when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
+                .thenReturn(Optional.of(link));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
+                .thenReturn(Optional.of(invitation));
+
+        assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
+                shortLinkService.resolveRedirectPath(CODE));
+        verify(exchangeCodeStore, never()).issue(any(), anyString(), any());
     }
 
     @Test

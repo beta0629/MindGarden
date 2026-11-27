@@ -119,6 +119,9 @@ public class SctPublicServiceImpl implements SctPublicService {
         String status = StringUtils.hasText(resolved.statusOverride())
                 ? resolved.statusOverride()
                 : invitation.getStatus();
+        // 종료 랜딩(REISSUED/EXPIRED)에서는 수신자명 PII 생략
+        boolean omitRecipientName = SctConstants.PUBLIC_STATUS_REISSUED.equals(status)
+                || SctInviteStatus.EXPIRED.name().equals(status);
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
@@ -133,7 +136,7 @@ public class SctPublicServiceImpl implements SctPublicService {
                 .identityConsentBody(identityTpl == null ? null : identityTpl.getBodyText())
                 .identityConsentVersion(identityTpl == null ? null : identityTpl.getVersion())
                 .identityConsentSatisfied(identityOk)
-                .recipientName(invitation.getRecipientName())
+                .recipientName(omitRecipientName ? null : invitation.getRecipientName())
                 .officePhone(sctSettingsService.resolvePublicOfficePhone(invitation.getTenantId()))
                 .mobilePhone(sctSettingsService.resolvePublicMobilePhone(invitation.getTenantId()))
                 .submittedAt(invitation.getSubmittedAt())
@@ -426,7 +429,8 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     /**
-     * verify — 평문 토큰은 pessimistic lock, 교환 코드는 일반 로드 후 재발급 거부.
+     * verify — 평문 토큰·교환 코드 모두 pessimistic write lock으로 fail-count 원자성 유지.
+     * 교환 코드에 REISSUED landingStatus면 410. 회전 해시는 loadByToken으로 410.
      *
      * @param rawToken 토큰 또는 교환 코드
      * @return 초대
@@ -442,7 +446,23 @@ public class SctPublicServiceImpl implements SctPublicService {
         if (locked.isPresent()) {
             return locked.get();
         }
-        // 교환 코드·회전 이력 — ForUpdate 불가 시 일반 resolve(재발급은 410)
+
+        Optional<SctExchangeCodeStore.ExchangeEntry> exchange = exchangeCodeStore.resolve(trimmed);
+        if (exchange.isPresent()) {
+            SctExchangeCodeStore.ExchangeEntry entry = exchange.get();
+            if (SctConstants.PUBLIC_STATUS_REISSUED.equals(entry.landingStatus())) {
+                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            }
+            SctInvitation invitation = invitationRepository
+                    .findByTenantIdAndIdAndIsDeletedFalseForUpdate(entry.tenantId(), entry.invitationId())
+                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+            if (!invitation.getTenantId().equals(entry.tenantId())) {
+                throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            }
+            return invitation;
+        }
+
+        // 회전 이력 등 — loadByToken이 410/404 처리
         return loadByToken(trimmed);
     }
 

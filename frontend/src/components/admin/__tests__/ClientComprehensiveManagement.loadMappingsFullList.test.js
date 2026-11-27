@@ -83,6 +83,13 @@ jest.mock('../../../utils/notification', () => ({
   showWarning: jest.fn()
 }));
 
+jest.mock('../../../contexts/SessionContext', () => ({
+  __esModule: true,
+  // UnifiedModal uses useContext(SessionContext) directly
+  SessionContext: require('react').createContext(null),
+  useSession: () => ({ user: { id: 1, role: 'ADMIN', roles: ['ADMIN'] } })
+}));
+
 jest.mock('../../../api/adminListFetch', () => {
   const actual = jest.requireActual('../../../api/adminListFetch');
   return {

@@ -61,10 +61,11 @@ describe('SctPublicPage smoke', () => {
   it('renders public app shell after meta load', async() => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.LANDING_START)).toBeInTheDocument();
     });
     expect(screen.getByTestId(SCT_TEST_ID.PUBLIC_APP)).toBeInTheDocument();
     expect(screen.getByTestId(SCT_TEST_ID.THUMB_BAR)).toBeInTheDocument();
+    expect(screen.getAllByText(SCT_UI.START).length).toBeGreaterThan(0);
   });
 
   it('caption class uses rem font-size token (0.75rem floor)', () => {
@@ -87,6 +88,7 @@ describe('SctPublicPage smoke', () => {
     await waitFor(() => {
       expect(screen.getByText(SCT_UI.EXPIRED_TITLE)).toBeInTheDocument();
     });
+    expect(screen.getByTestId(SCT_TEST_ID.LANDING)).toHaveAttribute('data-landing-kind', 'expired');
     expect(screen.getByText(SCT_UI.EXPIRED_BODY)).toBeInTheDocument();
   });
 

@@ -142,9 +142,9 @@ describe('SctPublicPage verify resume', () => {
   const goToReview = async() => {
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.START)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.LANDING_START)).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByText(SCT_UI.START));
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.LANDING_START));
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });
@@ -232,9 +232,9 @@ describe('SctPublicPage verify resume', () => {
 
     renderPage();
     await waitFor(() => {
-      expect(screen.getByText(SCT_UI.RESUME)).toBeInTheDocument();
+      expect(screen.getByTestId(SCT_TEST_ID.LANDING_START)).toHaveTextContent(SCT_UI.RESUME);
     });
-    fireEvent.click(screen.getByText(SCT_UI.RESUME));
+    fireEvent.click(screen.getByTestId(SCT_TEST_ID.LANDING_START));
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: SCT_UI.VERIFY })).toBeInTheDocument();
     });

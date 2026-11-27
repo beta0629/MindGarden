@@ -54,6 +54,7 @@ import {
 import SctThumbBar from './molecules/SctThumbBar';
 import SctProgressTicks from './molecules/SctProgressTicks';
 import SctQuestionItem from './molecules/SctQuestionItem';
+import SctPublicLanding, { SCT_LANDING_KIND } from './SctPublicLanding';
 import './sctPublic.css';
 
 const STEP = Object.freeze({
@@ -67,6 +68,7 @@ const STEP = Object.freeze({
   REVIEW: 'REVIEW',
   DONE: 'DONE',
   EXPIRED: 'EXPIRED',
+  REISSUED: 'REISSUED',
   INVALID_LINK: 'INVALID_LINK',
   ALREADY: 'ALREADY',
   ERROR: 'ERROR'
@@ -90,22 +92,12 @@ const isIdentityContactConsentRequiredError = (error) => {
   return String(code) === SCT_ERROR_CODE.IDENTITY_CONTACT_CONSENT_REQUIRED;
 };
 
-const formatExpiry = (iso) => {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return toDisplayString(iso, '—');
-    return d.toLocaleString('ko-KR', {
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch {
-    return toDisplayString(iso, '—');
-  }
-};
+const LANDING_STEPS = Object.freeze([
+  STEP.ENTRY,
+  STEP.EXPIRED,
+  STEP.REISSUED,
+  STEP.ALREADY
+]);
 
 /**
  * @returns {JSX.Element}
@@ -192,6 +184,8 @@ const SctPublicPage = () => {
       }
       if (data.status === SCT_STATUS.SUBMITTED) {
         setStep(STEP.ALREADY);
+      } else if (data.status === SCT_STATUS.REISSUED) {
+        setStep(STEP.REISSUED);
       } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
         setStep(STEP.EXPIRED);
       } else {
@@ -215,6 +209,27 @@ const SctPublicPage = () => {
   useEffect(() => {
     loadMeta();
   }, [loadMeta]);
+
+  useEffect(() => {
+    if (!LANDING_STEPS.includes(step) && step !== STEP.INVALID_LINK) return undefined;
+    const prevTitle = document.title;
+    document.title = SCT_UI.LANDING_OG_TITLE;
+    const ensureMeta = (attr, key, content) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    ensureMeta('property', 'og:title', SCT_UI.LANDING_OG_TITLE);
+    ensureMeta('property', 'og:description', SCT_UI.LANDING_OG_DESCRIPTION);
+    ensureMeta('name', 'description', SCT_UI.LANDING_OG_DESCRIPTION);
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [step]);
 
   useEffect(() => {
     const onFocusIn = (e) => {
@@ -736,25 +751,11 @@ const SctPublicPage = () => {
     body = <p className="mg-v2-sct-lead">{SCT_UI.LOADING}</p>;
   } else if (step === STEP.ERROR) {
     body = <p className="mg-v2-sct-alert" role="alert"><SafeText>{errorMsg}</SafeText></p>;
-  } else if (step === STEP.EXPIRED) {
-    body = (
-      <>
-        <h1 className="mg-v2-sct-h1">{SCT_UI.EXPIRED_TITLE}</h1>
-        <p className="mg-v2-sct-lead">{SCT_UI.EXPIRED_BODY}</p>
-      </>
-    );
   } else if (step === STEP.INVALID_LINK) {
     body = (
       <>
         <h1 className="mg-v2-sct-h1">{SCT_UI.INVALID_LINK_TITLE}</h1>
         <p className="mg-v2-sct-lead">{SCT_UI.INVALID_LINK_BODY}</p>
-      </>
-    );
-  } else if (step === STEP.ALREADY) {
-    body = (
-      <>
-        <h1 className="mg-v2-sct-h1">{SCT_UI.ALREADY_TITLE}</h1>
-        <p className="mg-v2-sct-lead">{SCT_UI.ALREADY_BODY}</p>
       </>
     );
   } else if (step === STEP.DONE) {
@@ -764,101 +765,23 @@ const SctPublicPage = () => {
         <p className="mg-v2-sct-lead">{SCT_UI.DONE_BODY}</p>
       </>
     );
-  } else if (step === STEP.ENTRY) {
-    const resumed = Boolean(meta?.hasDraft);
+  } else if (LANDING_STEPS.includes(step)) {
+    const landingKind = step === STEP.EXPIRED
+      ? SCT_LANDING_KIND.EXPIRED
+      : step === STEP.REISSUED
+        ? SCT_LANDING_KIND.REISSUED
+        : step === STEP.ALREADY
+          ? SCT_LANDING_KIND.SUBMITTED
+          : SCT_LANDING_KIND.INVITE;
     body = (
-      <>
-        <section className="mg-v2-sct-cover" aria-label={SCT_UI.TITLE}>
-          <div className="mg-v2-sct-cover__brand">{SCT_UI.BRAND}</div>
-          <h1 className="mg-v2-sct-cover__h">
-            문장완성
-            <br />
-            질문지
-          </h1>
-          <p className="mg-v2-sct-caption">
-            {kindLabel}
-            {' · '}
-            {meta?.itemCount || SCT_DEFAULTS.TOTAL_ITEMS}
-            문항
-          </p>
-        </section>
-        <section className="mg-v2-sct-sheet" aria-label={resumed ? SCT_UI.RESUME_HINT : SCT_UI.RECEIVER}>
-          <div>{resumed ? SCT_UI.RESUME_HINT : `${toDisplayString(meta?.title, SCT_UI.TITLE)}`}</div>
-          {resumed ? <SctProgressTicks answersMap={{}} /> : null}
-          <dl className="mg-v2-sct-kv">
-            <dt>{SCT_UI.FORM_KIND}</dt>
-            <dd>{kindLabel}</dd>
-            <dt>{SCT_UI.EXPIRES}</dt>
-            <dd>{formatExpiry(meta?.tokenExpiresAt)}</dd>
-            <dt>저장</dt>
-            <dd>{SCT_UI.AUTO_SAVE_HINT}</dd>
-          </dl>
-          {resumed ? (
-            <p className={`${SCT_CSS.CAPTION}`} data-testid={SCT_TEST_ID.CAPTION}>{SCT_UI.RESUME_CAP}</p>
-          ) : null}
-        </section>
-        <section>
-          <div className="mg-v2-sct-top__title">{SCT_UI.ENTRY_STEPS_TITLE}</div>
-          <ol className="mg-v2-sct-steps">
-            <li>
-              <span className="n">1</span>
-              <div>
-                {SCT_UI.STEP_IDENTITY_CONSENT}
-                <small>본인확인용 연락처 수집·이용 동의</small>
-              </div>
-            </li>
-            <li>
-              <span className="n">2</span>
-              <div>
-                {SCT_UI.STEP_VERIFY}
-                <small>
-                  {channel === SCT_CHANNEL.EMAIL
-                    ? '안내받은 이메일을 입력합니다'
-                    : '문자를 받은 휴대폰 번호를 입력합니다'}
-                </small>
-              </div>
-            </li>
-            <li>
-              <span className="n">3</span>
-              <div>
-                {SCT_UI.STEP_CONSENT}
-                <small>
-                  민감정보 수집·이용 동의
-                  {meta?.requiresGuardian ? ' · 보호자 동의' : ''}
-                </small>
-              </div>
-            </li>
-            <li>
-              <span className="n">4</span>
-              <div>
-                {SCT_UI.STEP_ITEMS}
-                <small>
-                  한 번에
-                  {perPage}
-                  문항씩
-                </small>
-              </div>
-            </li>
-            <li>
-              <span className="n">5</span>
-              <div>
-                {SCT_UI.STEP_SUBMIT}
-                <small>제출한 뒤에는 상담 때 함께 살펴봅니다</small>
-              </div>
-            </li>
-          </ol>
-          <p className="mg-v2-sct-notice mg-v2-sct-foot">
-            {toDisplayString(meta?.title, SCT_UI.TITLE)}
-          </p>
-        </section>
-      </>
-    );
-    bar = (
-      <SctThumbBar
-        primaryLabel={resumed ? SCT_UI.RESUME : SCT_UI.START}
-        onPrimary={openVerifyOrIdentityConsent}
+      <SctPublicLanding
+        kind={landingKind}
+        meta={meta || {}}
+        resumed={Boolean(meta?.hasDraft)}
+        onStart={openVerifyOrIdentityConsent}
       />
     );
+    bar = null;
   } else if (step === STEP.IDENTITY_CONSENT) {
     body = (
       <div data-testid={SCT_TEST_ID.IDENTITY_CONSENT_STEP}>

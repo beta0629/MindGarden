@@ -19,4 +19,8 @@ public class SctSettingsResponse {
     private Integer linkExpiryDays;
     private Integer retentionDays;
     private Boolean featureEnabled;
+    /** 공개 문의 사무실 전화 (system_config sct.public.contact.office). */
+    private String officePhone;
+    /** 공개 문의 휴대폰 (system_config sct.public.contact.mobile). */
+    private String mobilePhone;
 }

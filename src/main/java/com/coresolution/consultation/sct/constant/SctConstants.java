@@ -29,6 +29,42 @@ public final class SctConstants {
     public static final String SMS_RESULT_TEST_MODE_SKIP = "TEST_MODE_SKIP";
     public static final String SMS_RESULT_FAILED = "FAILED";
     public static final String SMS_RESULT_NO_PHONE = "NO_PHONE";
+    /** EUC-KR 단문 90B 초과 — 발송 차단(fail-closed). */
+    public static final String SMS_RESULT_BODY_TOO_LONG = "SMS_BODY_TOO_LONG";
+    /** 단축 링크 없음·생성 실패 후 LMS 폴백 발송. */
+    public static final String SMS_RESULT_LMS_FALLBACK = "LMS_FALLBACK";
+    /** 단축 링크 생성 실패. */
+    public static final String SMS_RESULT_SHORT_LINK_FAILED = "SHORT_LINK_FAILED";
+
+    /** SMS 단문 EUC-KR 바이트 상한. */
+    public static final int SMS_EUC_KR_MAX_BYTES = 90;
+
+    /** 단축 코드 길이. */
+    public static final int SHORT_CODE_LENGTH = 6;
+
+    /** 단축 코드 충돌 재시도 상한. */
+    public static final int SHORT_CODE_MAX_RETRIES = 12;
+
+    /**
+     * 단축 코드 문자셋 — 0/O/1/l/I 등 혼동 문자 제외.
+     */
+    public static final String SHORT_CODE_ALPHABET =
+            "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+
+    /** 단축 경로 접두. */
+    public static final String SHORT_LINK_WEB_PREFIX = "/s/";
+
+    /** 공개 SPA 경로 접두. */
+    public static final String PUBLIC_SCT_WEB_PREFIX = "/public/sct/";
+
+    /** 단축 링크 무효·만료·미존재 시 동일 리다이렉트 경로(존재 여부 누출 방지). */
+    public static final String SHORT_LINK_INVALID_REDIRECT_PATH = PUBLIC_SCT_WEB_PREFIX + "invalid";
+
+    /** Redis 교환 코드 TTL(분). */
+    public static final int SHORT_LINK_EXCHANGE_TTL_MINUTES = 10;
+
+    /** 공개 메타 — 재발급으로 무효화된 이전 토큰/단축 코드. */
+    public static final String PUBLIC_STATUS_REISSUED = "REISSUED";
 
     public static final String CONSENT_SENSITIVE_INFO = "SENSITIVE_INFO";
     public static final String CONSENT_GUARDIAN_UNDER_14 = "GUARDIAN_UNDER_14";

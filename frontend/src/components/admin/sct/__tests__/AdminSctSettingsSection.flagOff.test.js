@@ -37,12 +37,16 @@ describe('AdminSctSettingsSection feature OFF', () => {
     fetchSctSettings.mockResolvedValue({
       linkExpiryDays: 14,
       retentionDays: 365,
-      featureEnabled: false
+      featureEnabled: false,
+      officePhone: null,
+      mobilePhone: null
     });
     updateSctSettings.mockResolvedValue({
       linkExpiryDays: 14,
       retentionDays: 365,
-      featureEnabled: false
+      featureEnabled: false,
+      officePhone: null,
+      mobilePhone: null
     });
     fetchSctUnlinkedInvitations.mockResolvedValue([]);
     reissueSctInviteLink.mockResolvedValue({});

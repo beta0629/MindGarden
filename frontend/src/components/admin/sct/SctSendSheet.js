@@ -16,6 +16,7 @@ import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiEr
 import { RoleUtils, USER_ROLES } from '../../../constants/roles';
 import { useSession } from '../../../contexts/SessionContext';
 import { createSctInvitation, fetchSctForms, fetchSctSettings } from '../../../utils/sctApi';
+import { resolveSctRecommendedFormType } from '../../../utils/sctRecommendedFormType';
 import {
   SCT_CSS,
   SCT_DEFAULTS,
@@ -41,7 +42,14 @@ const canUseSctPublicLinkUi = (user) => (
  * @param {{
  *   isOpen: boolean,
  *   onClose: () => void,
- *   client: { id: number|string, phone?: string, email?: string, name?: string },
+ *   client: {
+ *     id: number|string,
+ *     phone?: string,
+ *     email?: string,
+ *     name?: string,
+ *     age?: number|string,
+ *     birthDate?: string
+ *   },
  *   hasActiveDraft?: boolean,
  *   onSent?: () => void
  * }} props
@@ -58,6 +66,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [sentPublicUrl, setSentPublicUrl] = useState('');
+  const recommendedType = resolveSctRecommendedFormType(client);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -77,7 +86,10 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
         const days = settings?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS;
         setCenterDefaultDays(days);
         setExpiresInDays(days);
-        if (onlineForms[0]?.formType) {
+        const recommended = resolveSctRecommendedFormType(client);
+        if (recommended && SCT_ONLINE_FORM_TYPES.includes(recommended)) {
+          setFormType(recommended);
+        } else if (onlineForms[0]?.formType) {
           setFormType(onlineForms[0].formType);
         } else {
           setFormType(SCT_FORM_TYPE.ADULT);
@@ -202,7 +214,7 @@ const SctSendSheet = ({ isOpen, onClose, client, hasActiveDraft = false, onSent 
                 onClick={() => setFormType(opt.value)}
               >
                 {opt.label}
-                {opt.fromApi ? ` · ${SCT_UI.RECOMMENDED}` : ''}
+                {recommendedType === opt.value ? ` · ${SCT_UI.RECOMMENDED}` : ''}
               </MGButton>
             ))}
           </div>
@@ -265,7 +277,10 @@ SctSendSheet.propTypes = {
     id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     phone: PropTypes.string,
     email: PropTypes.string,
-    name: PropTypes.string
+    name: PropTypes.string,
+    age: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    birthDate: PropTypes.string,
+    birth_date: PropTypes.string
   }),
   hasActiveDraft: PropTypes.bool,
   onSent: PropTypes.func

@@ -46,6 +46,12 @@ export const SCT_FORM_TYPE = Object.freeze({
   CHILD: 'CHILD'
 });
 
+/**
+ * 성인 연령 하한(만 나이). BE SctConsentKeys.ADULT_AGE SSOT 미러.
+ * @see com.coresolution.consultation.sct.constant.SctConsentKeys#ADULT_AGE
+ */
+export const SCT_ADULT_AGE = 19;
+
 /** 온라인 발송·실시 대상(아동용 제외) */
 export const SCT_ONLINE_FORM_TYPES = Object.freeze([
   SCT_FORM_TYPE.ADULT,

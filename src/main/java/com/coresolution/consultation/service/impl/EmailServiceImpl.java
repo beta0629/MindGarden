@@ -25,6 +25,7 @@ import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.salaryexport.SalaryCalculationStatementRows;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.NameLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.consultation.service.CommonCodeService;
 import com.coresolution.consultation.entity.CommonCode;
@@ -84,7 +85,9 @@ public class EmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+        log.info("이메일 발송 요청: to={}, subjectLength={}",
+                EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
         
         try {
             // 이메일 유효성 검사
@@ -433,8 +436,10 @@ public class EmailServiceImpl implements EmailService {
 
         // 이메일 전면 차단(정책)
         if (blockAllOutboundEmail && !isAllowlistedRecipient(request.getToEmail())) {
-            log.warn("⚠️ 이메일 전면 차단 정책으로 발송 차단: tenantId={}, to={}, subject={}",
-                    TenantContextHolder.getTenantId(), request.getToEmail(), request.getSubject());
+            log.warn("⚠️ 이메일 전면 차단 정책으로 발송 차단: tenantId={}, to={}, subjectLength={}",
+                    TenantContextHolder.getTenantId(),
+                    EmailLogMasking.maskForLog(request.getToEmail()),
+                    request.getSubject() == null ? 0 : request.getSubject().length());
             throw new IllegalArgumentException("이 시스템에서는 이메일 발송을 사용하지 않습니다.");
         }
 
@@ -566,8 +571,9 @@ public class EmailServiceImpl implements EmailService {
             // 실제 이메일 발송
             javaMailSender.send(mimeMessage);
             
-            log.info("이메일 발송 성공: emailId={}, to={}, subject={}", 
-                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+            log.info("이메일 발송 성공: emailId={}, to={}, subjectLength={}",
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
             
             return EmailResponse.builder()
                     .emailId(emailId)
@@ -1134,7 +1140,8 @@ public class EmailServiceImpl implements EmailService {
             String period, Map<String, Object> salaryData,
             byte[] attachment, String attachmentFilename) {
         try {
-            log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             EmailRequest request = buildSalaryCalculationEmailRequest(
                     toEmail, consultantName, period, salaryData, attachment, attachmentFilename);
             return sendEmail(request);
@@ -1203,7 +1210,8 @@ public class EmailServiceImpl implements EmailService {
     public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
                                          String period, String approvedAmount) {
         try {
-            log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("급여 승인 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
             String subject = String.format("[{{companyName}}] %s 급여 승인 완료 - %s", consultantName, period);
@@ -1237,7 +1245,8 @@ public class EmailServiceImpl implements EmailService {
     public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
                                         String period, String paidAmount, String payDate) {
         try {
-            log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             Map<String, Object> variables = enrichTemplateVariables(new java.util.HashMap<>());
             String subject = String.format("[{{companyName}}] %s 급여 지급 완료 - %s", consultantName, period);
@@ -1273,7 +1282,8 @@ public class EmailServiceImpl implements EmailService {
                                     String period, Map<String, Object> taxData, 
                                     String attachmentPath) {
         try {
-            log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             Map<String, Object> variables = enrichTemplateVariables(taxData);
             String subject = String.format("[{{companyName}}] %s 세금 내역서 - %s", consultantName, period);

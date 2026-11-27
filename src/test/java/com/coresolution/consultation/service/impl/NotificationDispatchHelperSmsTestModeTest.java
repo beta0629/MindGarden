@@ -14,7 +14,6 @@ import com.coresolution.consultation.constant.BatchNotificationTemplateCodes;
 import com.coresolution.consultation.service.KakaoAlimTalkService;
 import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.util.PhoneLogMasking;
-import com.coresolution.consultation.util.SmsMessageLogSupport;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +29,8 @@ import org.slf4j.LoggerFactory;
  * 2026-11-11 운영 RCA — SMS 테스트 모드는 실제 발송 없이 {@code true} 를 돌려줘
  * 발송 로그가 success=1 로 남던 문제. 미발송은 실패로 기록돼야 한다.
  *
- * <p>2026-11-24: 테스트 모드 early-return 전 INFO 로그에 마스킹 phone·본문·URL 포함.
+ * <p>2026-11-27: 테스트 모드 INFO 로그는 마스킹 phone·bodyLength 만 남기고
+ * 본문·URL 평문을 포함하지 않는다.</p>
  *
  * @author MindGarden
  * @since 2026-11-11
@@ -41,6 +41,7 @@ class NotificationDispatchHelperSmsTestModeTest {
 
     private static final String PHONE = "01000000000";
     private static final String CONTENT = "예약 확인 https://example.com/r/1";
+    private static final String CONTENT_URL = "https://example.com/r/1";
 
     @Mock
     private SmsAuthService smsAuthService;
@@ -68,7 +69,7 @@ class NotificationDispatchHelperSmsTestModeTest {
     }
 
     @Test
-    @DisplayName("테스트 모드 → 발송기 미호출, success=false + SMS_TEST_MODE_NOT_SENT + 본문·URL 로그")
+    @DisplayName("테스트 모드 → 발송기 미호출, success=false + SMS_TEST_MODE_NOT_SENT + bodyLength 로그(본문·URL 미포함)")
     void dispatchSms_testMode_isFailure() {
         when(smsAuthService.isTestMode()).thenReturn(true);
 
@@ -80,7 +81,6 @@ class NotificationDispatchHelperSmsTestModeTest {
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
 
         String masked = PhoneLogMasking.maskForLog(PHONE);
-        assertThat(SmsMessageLogSupport.extractUrls(CONTENT)).containsExactly("https://example.com/r/1");
 
         List<ILoggingEvent> infos = logAppender.list.stream()
                 .filter(e -> e.getLevel() == Level.INFO)
@@ -90,9 +90,12 @@ class NotificationDispatchHelperSmsTestModeTest {
             assertThat(msg).contains("SMS_TEST_MODE_NOT_SENT");
             assertThat(msg).contains("testMode=true");
             assertThat(msg).contains(masked);
-            assertThat(msg).contains("https://example.com/r/1");
-            assertThat(msg).contains(CONTENT);
+            assertThat(msg).contains("bodyLength=" + CONTENT.length());
             assertThat(msg).doesNotContain(PHONE);
+            assertThat(msg).doesNotContain(CONTENT);
+            assertThat(msg).doesNotContain(CONTENT_URL);
+            assertThat(msg).doesNotContain("urls=");
+            assertThat(msg).doesNotContain("content=");
         });
     }
 

@@ -3,6 +3,7 @@ package com.coresolution.consultation.controller;
 import java.util.HashMap;
 import java.util.Map;
 import com.coresolution.consultation.service.SmsAuthService;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.dto.ApiResponse;
 import org.springframework.http.ResponseEntity;
@@ -33,7 +34,7 @@ public class SmsAuthController extends BaseApiController {
      */
     @PostMapping("/send-code")
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendVerificationCode(@RequestParam String phoneNumber) {
-        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}", phoneNumber);
+        log.info("📱 SMS 인증번호 발송 요청 - 전화번호: {}", PhoneLogMasking.maskForLog(phoneNumber));
         
         // 전화번호 형식 검증
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
@@ -54,7 +55,8 @@ public class SmsAuthController extends BaseApiController {
         if (smsAuthService.isTestMode()) {
             response.put("verificationCode", verificationCode);
             response.put("testMode", true);
-            log.info("🧪 테스트 모드: 인증번호 반환 - {}", verificationCode);
+            log.info("🧪 테스트 모드: 인증번호 반환 - codeLength={}",
+                    verificationCode == null ? 0 : verificationCode.length());
         }
         
         return success("인증번호가 발송되었습니다.", response);
@@ -72,7 +74,9 @@ public class SmsAuthController extends BaseApiController {
             @RequestParam String verificationCode,
             @RequestParam String sentCode) {
         
-        log.info("🔍 SMS 인증번호 검증 요청 - 전화번호: {}, 입력: {}", phoneNumber, verificationCode);
+        log.info("🔍 SMS 인증번호 검증 요청 - 전화번호: {}, codeLength={}",
+                PhoneLogMasking.maskForLog(phoneNumber),
+                verificationCode == null ? 0 : verificationCode.length());
         
         // 입력값 검증
         if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
@@ -94,10 +98,10 @@ public class SmsAuthController extends BaseApiController {
         data.put("verified", isValid);
         
         if (isValid) {
-            log.info("✅ SMS 인증 성공 - 전화번호: {}", phoneNumber);
+            log.info("✅ SMS 인증 성공 - 전화번호: {}", PhoneLogMasking.maskForLog(phoneNumber));
             return success("인증이 완료되었습니다.", data);
         } else {
-            log.warn("❌ SMS 인증 실패 - 전화번호: {}", phoneNumber);
+            log.warn("❌ SMS 인증 실패 - 전화번호: {}", PhoneLogMasking.maskForLog(phoneNumber));
             throw new IllegalArgumentException("인증번호가 일치하지 않습니다.");
         }
     }

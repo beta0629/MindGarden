@@ -42,6 +42,7 @@ import com.coresolution.consultation.service.UserSessionService;
 import com.coresolution.consultation.dto.response.SessionSecurityFlagsResponse;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -1369,12 +1370,13 @@ public class AuthController extends BaseApiController {
         String phoneNumber = request.get("phoneNumber");
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
         OtpPurpose purpose = resolveOtpPurpose(request.get("purpose"));
-        log.info("OTP 인증 코드 전송 요청: phone={} purpose={}", normalizedPhone, purpose.getCode());
+        log.info("OTP 인증 코드 전송 요청: phone={} purpose={}",
+                PhoneLogMasking.maskForLog(normalizedPhone), purpose.getCode());
 
         SmsOtpSendStatus sendStatus = smsOtpVerificationService.getSendStatus(normalizedPhone);
         if (sendStatus.locked()) {
             log.info("OTP 발송 거부(잠김): phone={} retryAfterSeconds={}",
-                    normalizedPhone, sendStatus.retryAfterSeconds());
+                    PhoneLogMasking.maskForLog(normalizedPhone), sendStatus.retryAfterSeconds());
             Map<String, Object> lockedData = new HashMap<>();
             lockedData.put("retryAfterSeconds", sendStatus.retryAfterSeconds());
             lockedData.put("remainingAttempts", sendStatus.remainingAttempts());
@@ -1397,7 +1399,8 @@ public class AuthController extends BaseApiController {
         OtpDeliveryResult result = otpDeliveryService.deliver(
                 tenantId, sessionUserId, normalizedPhone, verificationCode, purpose, clientIp);
         if (result.getChannel() == OtpDeliveryChannel.FAILED) {
-            log.error("OTP 발송 실패: phone={} reason={}", normalizedPhone, result.getFailureReason());
+            log.error("OTP 발송 실패: phone={} reason={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone), result.getFailureReason());
             throw new RuntimeException("인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.");
         }
 
@@ -1561,7 +1564,9 @@ public class AuthController extends BaseApiController {
             throw new IllegalArgumentException("휴대폰 번호와 인증 코드를 입력해주세요.");
         }
         String normalizedPhone = LoginIdentifierUtils.normalizeAndValidateKoreanMobileForSms(phoneNumber);
-        log.info("SMS 인증 코드 검증 요청: {} - {}", normalizedPhone, verificationCode);
+        log.info("SMS 인증 코드 검증 요청: phone={}, codeLength={}",
+                PhoneLogMasking.maskForLog(normalizedPhone),
+                verificationCode == null ? 0 : verificationCode.length());
         
         if (!verificationCode.matches("^[0-9]{6}$")) {
             throw new IllegalArgumentException("6자리 인증 코드를 입력해주세요.");
@@ -1571,13 +1576,15 @@ public class AuthController extends BaseApiController {
         boolean isValid = smsOtpVerificationService.verifyAndConsume(normalizedPhone, verificationCode);
 
         if (isValid) {
-            log.info("SMS 인증 성공: {}", normalizedPhone);
+            log.info("SMS 인증 성공: phone={}", PhoneLogMasking.maskForLog(normalizedPhone));
             Map<String, Object> data = new HashMap<>();
             data.put("message", "인증이 완료되었습니다.");
             data.put("phoneNumber", normalizedPhone);
             return success(data);
         } else {
-            log.warn("SMS 인증 실패: {} - {}", normalizedPhone, verificationCode);
+            log.warn("SMS 인증 실패: phone={}, codeLength={}",
+                    PhoneLogMasking.maskForLog(normalizedPhone),
+                    verificationCode == null ? 0 : verificationCode.length());
             throw new IllegalArgumentException("인증 코드가 올바르지 않습니다.");
         }
     }
@@ -1600,7 +1607,9 @@ public class AuthController extends BaseApiController {
     private boolean sendSmsMessage(String phoneNumber, String message) {
         try {
             // 실제 SMS 서비스 연동 구현
-            log.info("SMS 발송 시작: {} -> {}", phoneNumber, message);
+            log.info("SMS 발송 시작: phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
             
             // SMS 서비스 선택 및 호출
             boolean smsSent = false;
@@ -1621,15 +1630,16 @@ public class AuthController extends BaseApiController {
             smsSent = simulateSmsSending(phoneNumber, message);
             
             if (smsSent) {
-                log.info("SMS 발송 성공: {}", phoneNumber);
+                log.info("SMS 발송 성공: phone={}", PhoneLogMasking.maskForLog(phoneNumber));
             } else {
-                log.error("SMS 발송 실패: {}", phoneNumber);
+                log.error("SMS 발송 실패: phone={}", PhoneLogMasking.maskForLog(phoneNumber));
             }
             
             return smsSent;
             
         } catch (Exception e) {
-            log.error("SMS 발송 중 예외 발생: {}, error: {}", phoneNumber, e.getMessage());
+            log.error("SMS 발송 중 예외 발생: phone={}, error: {}",
+                    PhoneLogMasking.maskForLog(phoneNumber), e.getMessage());
             return false;
         }
     }
@@ -1640,7 +1650,9 @@ public class AuthController extends BaseApiController {
     private boolean simulateSmsSending(String phoneNumber, String message) {
         try {
             // 시뮬레이션 로직
-            log.info("SMS 시뮬레이션: {} -> {}", phoneNumber, message);
+            log.info("SMS 시뮬레이션: phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
             
             // 실제 구현에서는 여기서 실제 SMS API 호출
             // 예: HTTP 요청, SDK 호출 등
@@ -1662,7 +1674,9 @@ public class AuthController extends BaseApiController {
     private boolean sendNaverCloudSms(String phoneNumber, String message) {
         try {
             // 네이버 클라우드 플랫폼 SMS API 완전 구현
-            log.info("네이버 클라우드 SMS 발송 시작: {} -> {}", phoneNumber, message);
+            log.info("네이버 클라우드 SMS 발송 시작: phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
             
             // 1. API 키 설정 (환경변수에서 가져오기)
             String accessKey = System.getenv("NAVER_CLOUD_ACCESS_KEY");
@@ -1704,7 +1718,8 @@ public class AuthController extends BaseApiController {
             // }
             
             // 현재는 시뮬레이션으로 성공 처리
-            log.info("네이버 클라우드 SMS 발송 시뮬레이션 성공: {}", phoneNumber);
+            log.info("네이버 클라우드 SMS 발송 시뮬레이션 성공: phone={}",
+                    PhoneLogMasking.maskForLog(phoneNumber));
             return true;
             
         } catch (Exception e) {
@@ -1720,7 +1735,9 @@ public class AuthController extends BaseApiController {
     private boolean sendKakaoAlimtalk(String phoneNumber, String message) {
         try {
             // 카카오 알림톡 API 완전 구현
-            log.info("카카오 알림톡 발송 시작: {} -> {}", phoneNumber, message);
+            log.info("카카오 알림톡 발송 시작: phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
             
             // 1. 액세스 토큰 발급
             String clientId = System.getenv("KAKAO_CLIENT_ID");
@@ -1769,7 +1786,8 @@ public class AuthController extends BaseApiController {
             // }
             
             // 현재는 시뮬레이션으로 성공 처리
-            log.info("카카오 알림톡 발송 시뮬레이션 성공: {}", phoneNumber);
+            log.info("카카오 알림톡 발송 시뮬레이션 성공: phone={}",
+                    PhoneLogMasking.maskForLog(phoneNumber));
             return true;
             
         } catch (Exception e) {
@@ -1785,7 +1803,9 @@ public class AuthController extends BaseApiController {
     private boolean sendAwsSns(String phoneNumber, String message) {
         try {
             // AWS SNS API 완전 구현
-            log.info("AWS SNS 발송 시작: {} -> {}", phoneNumber, message);
+            log.info("AWS SNS 발송 시작: phone={}, bodyLength={}",
+                    PhoneLogMasking.maskForLog(phoneNumber),
+                    message == null ? 0 : message.length());
             
             // 1. AWS 자격 증명 설정
             String accessKeyId = System.getenv("AWS_ACCESS_KEY_ID");
@@ -1823,7 +1843,8 @@ public class AuthController extends BaseApiController {
             // }
             
             // 현재는 시뮬레이션으로 성공 처리
-            log.info("AWS SNS 발송 시뮬레이션 성공: {}", phoneNumber);
+            log.info("AWS SNS 발송 시뮬레이션 성공: phone={}",
+                    PhoneLogMasking.maskForLog(phoneNumber));
             return true;
             
         } catch (Exception e) {

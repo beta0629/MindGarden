@@ -112,3 +112,7 @@
 **/SctIdentityOtpLockRequiresNewIntegrationTest.java
 # 2026-11-27 SCT OTP 교환코드 resolve (Public과 동일 경로)
 **/SctIdentityOtpExchangeCodeIntegrationTest.java
+
+# 2026-11-27 알림·SMS·이메일 로그 PII 마스킹
+**/NotificationServiceImplEmailSimulationLogPiiTest.java
+**/NotificationDispatchHelperSmsTestModeTest.java

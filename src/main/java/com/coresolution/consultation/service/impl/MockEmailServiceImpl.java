@@ -17,6 +17,7 @@ import com.coresolution.consultation.dto.EmailRequest;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.NameLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -45,7 +46,9 @@ public class MockEmailServiceImpl implements EmailService {
     
     @Override
     public EmailResponse sendEmail(EmailRequest request) {
-        log.info("Mock 이메일 발송 요청: to={}, subject={}", EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject());
+        log.info("Mock 이메일 발송 요청: to={}, subjectLength={}",
+                EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length());
         
         try {
             // 이메일 유효성 검사
@@ -372,7 +375,8 @@ public class MockEmailServiceImpl implements EmailService {
     public EmailResponse sendSalaryCalculationEmailWithResponse(String toEmail, String consultantName,
             String period, Map<String, Object> salaryData,
             byte[] attachment, String attachmentFilename) {
-        log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+        log.info("Mock 급여 계산서 이메일 발송: to={}, 상담사={}, 기간={}",
+                EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
         String subject = String.format("[mindgarden] %s 급여 계산서 - %s", consultantName, period);
         String content = "Mock 급여 계산서 이메일 내용";
         EmailRequest.EmailRequestBuilder builder = EmailRequest.builder()
@@ -404,7 +408,8 @@ public class MockEmailServiceImpl implements EmailService {
     public boolean sendSalaryApprovalEmail(String toEmail, String consultantName, 
                                          String period, String approvedAmount) {
         try {
-            log.info("Mock 급여 승인 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("Mock 급여 승인 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             String subject = String.format("[mindgarden] %s 급여 승인 완료 - %s", consultantName, period);
             String content = "Mock 급여 승인 이메일 내용";
@@ -431,7 +436,8 @@ public class MockEmailServiceImpl implements EmailService {
     public boolean sendSalaryPaymentEmail(String toEmail, String consultantName, 
                                         String period, String paidAmount, String payDate) {
         try {
-            log.info("Mock 급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("Mock 급여 지급 완료 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             String subject = String.format("[mindgarden] %s 급여 지급 완료 - %s", consultantName, period);
             String content = "Mock 급여 지급 완료 이메일 내용";
@@ -459,7 +465,8 @@ public class MockEmailServiceImpl implements EmailService {
                                     String period, Map<String, Object> taxData, 
                                     String attachmentPath) {
         try {
-            log.info("Mock 세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}", EmailLogMasking.maskForLog(toEmail), consultantName, period);
+            log.info("Mock 세금 내역서 이메일 발송: to={}, 상담사={}, 기간={}",
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(consultantName), period);
             
             String subject = String.format("[mindgarden] %s 세금 내역서 - %s", consultantName, period);
             String content = "Mock 세금 내역서 이메일 내용";
@@ -528,8 +535,9 @@ public class MockEmailServiceImpl implements EmailService {
             // 실제 이메일 발송 시뮬레이션을 위한 지연
             Thread.sleep(100);
             
-            log.info("Mock 이메일 발송 시뮬레이션: emailId={}, to={}, subject={}, success={}", 
-                emailId, EmailLogMasking.maskForLog(request.getToEmail()), request.getSubject(), success);
+            log.info("Mock 이메일 발송 시뮬레이션: emailId={}, to={}, subjectLength={}, success={}",
+                emailId, EmailLogMasking.maskForLog(request.getToEmail()),
+                request.getSubject() == null ? 0 : request.getSubject().length(), success);
             
             EmailResponse response = EmailResponse.builder()
                     .emailId(emailId)

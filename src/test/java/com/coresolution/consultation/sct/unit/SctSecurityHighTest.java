@@ -140,7 +140,7 @@ class SctSecurityHighTest {
                 mock(SctResponseAnswerRepository.class),
                 attemptRepository,
                 mock(SctRotatedTokenHashRepository.class),
-                new SctVerifySessionStore(),
+                new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
                 mock(SctFeatureGuard.class),
                 mock(SctConsentService.class),
                 mock(AuditLogService.class));

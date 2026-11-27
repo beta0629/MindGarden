@@ -1,7 +1,9 @@
 package com.coresolution.consultation.sct.controller;
 
 import com.coresolution.consultation.sct.constant.SctConsentKeys;
+import com.coresolution.consultation.sct.constant.SctConstants;
 import com.coresolution.consultation.sct.dto.SctConsentRequest;
+import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
 import com.coresolution.consultation.sct.dto.SctPublicFormResponse;
 import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
@@ -81,7 +83,7 @@ public class PublicSctController extends BaseApiController {
             HttpServletRequest http) {
         String verifySessionId = http.getHeader(SctConsentKeys.VERIFY_SESSION_HEADER);
         if (!StringUtils.hasText(verifySessionId)) {
-            throw new IllegalArgumentException("본인 확인이 필요합니다.");
+            throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
         }
         SctPublicFormResponse data = sctPublicService.getForm(token, verifySessionId);
         return success(data);

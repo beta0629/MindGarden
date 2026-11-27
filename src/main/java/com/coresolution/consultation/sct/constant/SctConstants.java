@@ -13,7 +13,17 @@ public final class SctConstants {
 
     public static final int VERIFY_MAX_FAILURES = 5;
     public static final int VERIFY_LOCK_MINUTES = 15;
-    public static final int VERIFY_SESSION_TTL_MINUTES = 30;
+
+    /**
+     * 본인확인 세션 유휴 TTL(분). form/draft/consent/submit 성공 validate 시 sliding.
+     * absolute cap = invitation.tokenExpiresAt — 초대 링크 만료를 넘기지 않음.
+     */
+    public static final int VERIFY_SESSION_IDLE_MINUTES = 30;
+
+    /**
+     * 호환 alias — {@link #VERIFY_SESSION_IDLE_MINUTES} 와 동일(고정 절대 TTL 아님).
+     */
+    public static final int VERIFY_SESSION_TTL_MINUTES = VERIFY_SESSION_IDLE_MINUTES;
 
     public static final String SMS_RESULT_SENT = "SENT";
     public static final String SMS_RESULT_TEST_MODE_SKIP = "TEST_MODE_SKIP";
@@ -57,6 +67,9 @@ public final class SctConstants {
     /** 파기 대상이 아닐 때. */
     public static final String MSG_DESTROY_NOT_ELIGIBLE =
             "보관 기간이 지나지 않아 파기할 수 없습니다.";
+
+    /** 공개 본인확인 세션 없음·만료·불일치. */
+    public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";
 
     private SctConstants() {
     }

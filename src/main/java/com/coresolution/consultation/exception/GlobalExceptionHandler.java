@@ -108,6 +108,23 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * SCT 공개 본인확인 세션 필요 — HTTP 401 Unauthorized.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctVerifyRequiredException.class)
+    public ResponseEntity<ErrorResponse> handleSctVerifyRequired(
+            com.coresolution.consultation.sct.exception.SctVerifyRequiredException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(), "본인 확인이 필요합니다."),
+            "SCT_VERIFY_REQUIRED",
+            HttpStatus.UNAUTHORIZED.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+    }
+
+    /**
      * SCT 상태 충돌 — HTTP 409.
      */
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctConflictException.class)

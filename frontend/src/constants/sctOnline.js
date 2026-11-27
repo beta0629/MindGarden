@@ -298,8 +298,24 @@ export const SCT_UI = Object.freeze({
   DRAFT_SAVED_AT: '마지막 저장',
   EXPIRES_AT: '작성 기한',
   SPINE_LABEL: '진행 표시',
-  SUBMITTED_AT: '제출 시각'
+  SUBMITTED_AT: '제출 시각',
+  /** 공개 제출 시 본인확인 세션 만료 — 재확인 안내 */
+  VERIFY_TO_SUBMIT: '본인확인 후 제출이 완료돼요',
+  /** 본인확인 재시도 CTA */
+  VERIFY_AGAIN: '본인 확인하기'
 });
+
+/** 공개 API 오류 코드 (BE GlobalExceptionHandler 와 맞춤) */
+export const SCT_ERROR_CODE = Object.freeze({
+  VERIFY_REQUIRED: 'SCT_VERIFY_REQUIRED',
+  GONE: 'SCT_GONE',
+  CONFLICT: 'SCT_CONFLICT',
+  VERIFY_LOCKED: 'SCT_VERIFY_LOCKED',
+  FEATURE_DISABLED: 'SCT_FEATURE_DISABLED'
+});
+
+/** 공개 응답 로컬 임시저장 localStorage 키 prefix (opaque token 접미) */
+export const SCT_PUBLIC_DRAFT_LS_PREFIX = 'mg.sctPublicDraft.v1';
 
 /**
  * PENDING 스트립 — answeredCount 가 있을 때만 n/50 포함.
@@ -481,6 +497,8 @@ export const SCT_TEST_ID = Object.freeze({
   STRIP_COPY: 'sct-journal-strip-copy',
   STRIP_DEADLINE: 'sct-journal-strip-deadline',
   STRIP_SUBMITTED_AT: 'sct-journal-strip-submitted-at',
-  PEEK_COPY: 'sct-journal-peek-copy'
+  PEEK_COPY: 'sct-journal-peek-copy',
+  VERIFY_AGAIN: 'sct-verify-again',
+  VERIFY_REQUIRED_ALERT: 'sct-verify-required-alert'
 });
 

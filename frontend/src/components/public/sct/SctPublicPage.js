@@ -22,9 +22,17 @@ import {
   fetchSctPublicForm,
   fetchSctPublicMeta,
   saveSctConsent,
+  saveSctDraft,
   submitSct,
   verifySctPublic
 } from '../../../utils/sctApi';
+import {
+  clearSctPublicDraft,
+  loadSctPublicDraft,
+  mergeSctPublicAnswers,
+  saveSctPublicDraft
+} from '../../../utils/sctPublicDraftStorage';
+import { isSctVerifyRequiredError } from '../../../utils/sctPublicVerifyError';
 import useSctVisualViewport from '../../../hooks/useSctVisualViewport';
 import useSctDraftAutosave, { SCT_SAVE_STATUS } from '../../../hooks/useSctDraftAutosave';
 import {
@@ -108,6 +116,8 @@ const SctPublicPage = () => {
   const [answersMap, setAnswersMap] = useState({});
   const [pageIndex, setPageIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [pendingSubmitAfterVerify, setPendingSubmitAfterVerify] = useState(false);
+  const pendingSubmitRef = useRef(false);
 
   const formType = meta?.formType || form?.formType || SCT_FORM_TYPE.ADULT;
   const isChild = formType === SCT_FORM_TYPE.CHILD;
@@ -190,6 +200,29 @@ const SctPublicPage = () => {
 
   const openVerify = () => setStep(STEP.VERIFY);
 
+  const goToReVerify = useCallback(() => {
+    setVerifySessionId('');
+    setVerifyError('');
+    setStep(STEP.VERIFY);
+  }, []);
+
+  /**
+   * 본인확인 재개 후 대기 중이던 제출 완료.
+   * @param {string} sid
+   * @param {Record<string, { formItemId: number, answerText?: string, notApplicable?: boolean }>} mergedAnswers
+   */
+  const completePendingSubmit = async(sid, mergedAnswers) => {
+    const answers = Object.values(mergedAnswers || {})
+      .filter((a) => a && a.formItemId != null);
+    await saveSctDraft(token, { verifySessionId: sid, answers });
+    await submitSct(token, { verifySessionId: sid });
+    clearSctPublicDraft(token);
+    pendingSubmitRef.current = false;
+    setPendingSubmitAfterVerify(false);
+    setVerifyError('');
+    setStep(STEP.DONE);
+  };
+
   const applyFormAndGoItems = async(sid, consent) => {
     const formData = await fetchSctPublicForm(token, sid);
     setForm(formData);
@@ -198,29 +231,49 @@ const SctPublicPage = () => {
     } else if (consent) {
       setConsentStatus(consent);
     }
-    const nextAnswers = {};
-    (formData?.items || []).forEach((it) => {
+    const itemsList = formData?.items || [];
+    const serverAnswers = {};
+    itemsList.forEach((it) => {
       if (it.answerText != null || it.notApplicable) {
-        nextAnswers[it.formItemId] = {
+        serverAnswers[it.formItemId] = {
           formItemId: it.formItemId,
           answerText: it.answerText || '',
           notApplicable: Boolean(it.notApplicable)
         };
       }
     });
+    const localAnswers = loadSctPublicDraft(token);
+    const nextAnswers = mergeSctPublicAnswers(serverAnswers, localAnswers);
     setAnswersMap(nextAnswers);
     if (formData?.status === SCT_STATUS.SUBMITTED) {
       setStep(STEP.ALREADY);
-      return;
+      return nextAnswers;
     }
-    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0) {
-      const answeredNos = (formData?.items || [])
-        .filter((it) => it.answerText || it.notApplicable)
-        .map((it) => it.itemNo);
-      const last = answeredNos.length ? Math.max(...answeredNos) : 0;
-      setPageIndex(Math.floor(last / perPage));
+    // 재방문 재개: 첫 미답 문항 페이지, 전부 답했으면 마지막 답 페이지
+    const isAnswered = (it) => {
+      const a = nextAnswers[it.formItemId] || nextAnswers[String(it.formItemId)];
+      if (a?.notApplicable) return true;
+      if (a?.answerText && String(a.answerText).trim()) return true;
+      return false;
+    };
+    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0 || itemsList.some(isAnswered)) {
+      const firstUnansweredIdx = itemsList.findIndex((it) => !isAnswered(it));
+      let resumeIdx = 0;
+      if (firstUnansweredIdx >= 0) {
+        resumeIdx = firstUnansweredIdx;
+      } else if (itemsList.length > 0) {
+        let lastAnsweredIdx = 0;
+        itemsList.forEach((it, idx) => {
+          if (isAnswered(it)) lastAnsweredIdx = idx;
+        });
+        resumeIdx = lastAnsweredIdx;
+      }
+      setPageIndex(Math.floor(resumeIdx / perPage));
+    } else {
+      setPageIndex(0);
     }
     setStep(STEP.ITEMS);
+    return nextAnswers;
   };
 
   const handleVerify = async() => {
@@ -250,7 +303,23 @@ const SctPublicPage = () => {
         return;
       }
       if (consent?.satisfied) {
-        await applyFormAndGoItems(sid, consent);
+        const merged = await applyFormAndGoItems(sid, consent);
+        if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
+          try {
+            await completePendingSubmit(sid, merged);
+          } catch (submitError) {
+            if (isSctVerifyRequiredError(submitError)) {
+              saveSctPublicDraft(token, merged);
+              pendingSubmitRef.current = true;
+              setPendingSubmitAfterVerify(true);
+              setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+              setStep(STEP.REVIEW);
+            } else {
+              setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+              setStep(STEP.REVIEW);
+            }
+          }
+        }
         return;
       }
       if (consent?.guardianRequired) {
@@ -332,9 +401,33 @@ const SctPublicPage = () => {
         });
       }
       setVerifyError('');
-      await applyFormAndGoItems(verifySessionId, { ...consentStatus, satisfied: true });
+      const merged = await applyFormAndGoItems(verifySessionId, { ...consentStatus, satisfied: true });
+      if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
+        try {
+          await completePendingSubmit(verifySessionId, merged);
+        } catch (submitError) {
+          if (isSctVerifyRequiredError(submitError)) {
+            saveSctPublicDraft(token, merged);
+            pendingSubmitRef.current = true;
+            setPendingSubmitAfterVerify(true);
+            setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+            setStep(STEP.REVIEW);
+          } else {
+            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setStep(STEP.REVIEW);
+          }
+        }
+      }
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      if (isSctVerifyRequiredError(error)) {
+        saveSctPublicDraft(token, answersMap);
+        pendingSubmitRef.current = true;
+        setPendingSubmitAfterVerify(true);
+        setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+        setStep(STEP.REVIEW);
+      } else {
+        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      }
     } finally {
       setBusy(false);
     }
@@ -382,13 +475,27 @@ const SctPublicPage = () => {
     try {
       await saveNow();
       await submitSct(token, { verifySessionId });
+      clearSctPublicDraft(token);
+      pendingSubmitRef.current = false;
+      setPendingSubmitAfterVerify(false);
+      setVerifyError('');
       setStep(STEP.DONE);
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+      if (isSctVerifyRequiredError(error)) {
+        saveSctPublicDraft(token, answersMap);
+        pendingSubmitRef.current = true;
+        setPendingSubmitAfterVerify(true);
+        setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+      } else {
+        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+      }
     } finally {
       setBusy(false);
     }
   };
+
+  const isVerifyRequiredUi = pendingSubmitAfterVerify
+    || verifyError === SCT_UI.VERIFY_TO_SUBMIT;
 
   const counts = useMemo(() => {
     let answered = 0;
@@ -864,14 +971,33 @@ const SctPublicPage = () => {
           </section>
         ) : null}
         {verifyError ? (
-          <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
+          <div
+            className="mg-v2-sct-alert"
+            role="alert"
+            data-testid={isVerifyRequiredUi ? SCT_TEST_ID.VERIFY_REQUIRED_ALERT : undefined}
+          >
+            <SafeText>{verifyError}</SafeText>
+            {isVerifyRequiredUi ? (
+              <div className="mg-v2-sct-alert__actions">
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  preventDoubleClick={false}
+                  onClick={goToReVerify}
+                  data-testid={SCT_TEST_ID.VERIFY_AGAIN}
+                >
+                  {SCT_UI.VERIFY_AGAIN}
+                </MGButton>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </>
     );
     bar = (
       <SctThumbBar
-        primaryLabel={SCT_UI.SUBMIT}
-        onPrimary={handleSubmit}
+        primaryLabel={isVerifyRequiredUi ? SCT_UI.VERIFY_AGAIN : SCT_UI.SUBMIT}
+        onPrimary={isVerifyRequiredUi ? goToReVerify : handleSubmit}
         secondaryLabel={SCT_UI.PREV}
         onSecondary={() => setStep(STEP.ITEMS)}
         loading={busy}

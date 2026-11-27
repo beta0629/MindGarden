@@ -1,3 +1,4 @@
 # .dev SCT PII 건수 점검(check-dev-sct-pii-counts.yml) 실행 트리거. 내용 변경 시 release/dev push 로 1회 실행.
 # 2026-11-27 SCT 재게이트 ④⑤
 run=1
+precise-patterns 2026-11-27

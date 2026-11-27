@@ -174,6 +174,7 @@
 .schedule-reassign-mapping__cells-wrap {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: var(--mg-v2-space-2);
 }
 
@@ -186,15 +187,22 @@
   display: grid;
   gap: var(--mg-v2-space-1);
   grid-template-columns: repeat(10, minmax(0, 1fr));
+  width: 100%;
+  justify-content: start;
 }
 
 .schedule-reassign-mapping__cells--row {
-  grid-template-columns: repeat(auto-fit, minmax(var(--mg-v2-space-6), 1fr));
+  width: auto;
+  max-width: 100%;
+  grid-template-columns: repeat(auto-fill, var(--mg-v2-space-6));
+  justify-content: start;
 }
 
 .schedule-reassign-mapping__cells--list {
-  grid-template-columns: repeat(auto-fit, minmax(var(--mg-v2-space-4), 1fr));
+  width: auto;
   max-width: 100%;
+  grid-template-columns: repeat(auto-fill, var(--mg-v2-space-4));
+  justify-content: start;
 }
 
 .schedule-reassign-mapping__cells--list .schedule-reassign-mapping__cell {
@@ -206,7 +214,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  align-self: start;
   aspect-ratio: 1 / 1;
+  width: 100%;
   min-height: var(--mg-v2-space-6);
   color: var(--mg-v2-color-text-secondary);
   font-size: var(--mg-v2-font-size-caption);

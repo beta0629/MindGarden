@@ -353,7 +353,7 @@
   min-height: var(--mg-v2-touch-target-min);
   padding: var(--mg-v2-space-3);
   box-sizing: border-box;
-  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-neutral-300, var(--mg-v2-color-border-default));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
   border-radius: var(--mg-v2-radius-md, 0.5rem);
   font-size: var(--mg-v2-font-size-body-md);
   color: var(--mg-v2-color-text-primary);
@@ -981,6 +981,14 @@
 .mg-v2-sct-sheet .mg-v2-sct-session__search-input:focus,
 .mg-v2-sct-sheet .mg-v2-sct-session__select:focus,
 .mg-v2-sct-sheet .mg-v2-sct-memo-ta:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
+}
+
+/* SCT 설정 — 링크 만료·보관일 focus (전역 .mg-v2-form-input 미수정, ID 스코프) */
+#sct-link-expiry:focus,
+#sct-retention:focus {
   outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
   outline-offset: var(--mg-v2-space-0-5);
   border-color: var(--mg-v2-color-neutral-900);

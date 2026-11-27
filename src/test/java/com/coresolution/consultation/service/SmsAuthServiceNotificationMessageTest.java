@@ -93,7 +93,7 @@ class SmsAuthServiceNotificationMessageTest {
     }
 
     @Test
-    @DisplayName("테스트 모드: Solapi 호출 없이 성공 + 본문·URL·마스킹 phone 로그")
+    @DisplayName("테스트 모드: Solapi 호출 없이 성공 + URL·마스킹 phone·bodyLength 로그 (본문 평문 금지)")
     void sendNotificationMessage_testMode_skipsProviderAndLogsBodyUrl() {
         smsProperties.setTestMode(true);
 
@@ -115,7 +115,9 @@ class SmsAuthServiceNotificationMessageTest {
             assertThat(msg).contains("testMode=true");
             assertThat(msg).contains(masked);
             assertThat(msg).contains("https://example.com/pay/ok");
-            assertThat(msg).contains(MESSAGE);
+            assertThat(msg).contains("bodyLength=");
+            assertThat(msg).contains(String.valueOf(MESSAGE.length()));
+            assertThat(msg).doesNotContain(MESSAGE);
             assertThat(msg).doesNotContain(PHONE);
         });
     }

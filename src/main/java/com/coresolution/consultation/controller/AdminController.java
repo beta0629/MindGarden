@@ -98,7 +98,6 @@ import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.AdminListPaging;
 import com.coresolution.consultation.util.PermissionCheckUtils;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.ClientPaymentHistorySsotUtils;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.controller.BaseApiController;
@@ -227,7 +226,6 @@ public class AdminController extends BaseApiController {
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final UserService userService;
     private final PiiCryptoService personalDataEncryptionUtil;
-    private final PiiHmacService piiHmacService;
     private final UserPersonalDataCacheService userPersonalDataCacheService;
     private final ConsultantStatsService consultantStatsService;
     private final ClientStatsService clientStatsService;
@@ -2276,10 +2274,8 @@ public class AdminController extends BaseApiController {
                     .body(ApiResponse.error("테넌트 정보를 찾을 수 없습니다."));
         }
         
-        // 테넌트별 이메일 HMAC 블라인드 인덱스 중복 확인
-        String emailNorm = email == null ? "" : email.trim().toLowerCase();
-        boolean isDuplicate = userRepository.existsByTenantIdAndEmailHash(
-                tenantId, piiHmacService.hmacHex(emailNorm));
+        // 테넌트별 이메일 중복 확인
+        boolean isDuplicate = userRepository.existsByTenantIdAndEmail(tenantId, email);
         
         Map<String, Object> result = new HashMap<>();
         result.put("email", email);

@@ -8,7 +8,6 @@ import com.coresolution.consultation.config.MindgardenSecurityProperties;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.exception.EntityNotFoundException;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.OAuth2DomainUtil;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -76,7 +75,6 @@ public class OnboardingController extends BaseApiController {
 
     private final OnboardingService onboardingService;
     private final UserRepository userRepository;
-    private final PiiHmacService piiHmacService;
     private final ObjectMapper objectMapper;
     private final CaptchaVerifier captchaVerifier;
     private final MindgardenSecurityProperties mindgardenSecurityProperties;
@@ -571,20 +569,17 @@ public class OnboardingController extends BaseApiController {
 
     /**
      * 테넌트 관리자를 연락 이메일로 찾는다.
-     * HMAC 블라인드 인덱스 우선, 미백필 시 테넌트 스캔 복호화 폴백.
+     * {@code findByEmailAndTenantId} 는 이메일 컨버터로 암호문과 맞추고,
+     * 프로시저가 넣은 평문은 조회된 엔티티의 복호화 값으로 맞춘다.
      *
      * @param contactEmail 정규화된 관리자 이메일
      * @param tenantId 테넌트 ID
      * @return 일치하는 사용자
      */
     private Optional<User> findAdminUserByContactEmail(String contactEmail, String tenantId) {
-        String emailNorm = OnboardingAdminContactEmailSupport.normalize(contactEmail);
-        if (StringUtils.hasText(emailNorm)) {
-            Optional<User> byHash = userRepository.findByEmailHashAndTenantId(
-                    piiHmacService.hmacHex(emailNorm), tenantId);
-            if (byHash.isPresent()) {
-                return byHash;
-            }
+        Optional<User> byConverted = userRepository.findByEmailAndTenantId(contactEmail, tenantId);
+        if (byConverted.isPresent()) {
+            return byConverted;
         }
         List<User> users = userRepository.findByTenantId(tenantId);
         if (users == null || users.isEmpty()) {

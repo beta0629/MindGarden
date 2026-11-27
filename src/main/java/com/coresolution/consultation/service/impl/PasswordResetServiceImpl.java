@@ -9,7 +9,6 @@ import com.coresolution.consultation.entity.PasswordResetToken;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.PasswordResetTokenRepository;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.service.PasswordResetService;
 import com.coresolution.consultation.service.UserService;
@@ -38,7 +37,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final EmailService emailService;
     private final UserService userService;
-    private final PiiHmacService piiHmacService;
     
     @Value("${app.password-reset.token-expiry-hours:24}")
     private int tokenExpiryHours;
@@ -62,9 +60,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
             log.info("✅ tenantId 추출 성공: tenantId={}, email={}", tenantId, EmailLogMasking.maskForLog(email));
             
             // 사용자 확인 (tenantId 필터링)
-            String emailNorm = email == null ? "" : email.trim().toLowerCase();
-            Optional<User> userOpt = userRepository.findByTenantIdAndEmailHash(
-                    tenantId, piiHmacService.hmacHex(emailNorm));
+            Optional<User> userOpt = userRepository.findByTenantIdAndEmail(tenantId, email);
             if (userOpt.isEmpty()) {
                 log.warn("❌ 존재하지 않는 이메일: {}", EmailLogMasking.maskForLog(email));
                 // 보안상 이유로 성공으로 응답 (이메일 존재 여부를 알려주지 않음)

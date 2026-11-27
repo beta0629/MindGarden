@@ -26,7 +26,6 @@ import com.coresolution.consultation.dto.auth.AdminForceLogoutRequest;
 import com.coresolution.consultation.dto.auth.CurrentSessionCredentials;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.consultation.service.AuthTokenRevocationService;
 import com.coresolution.consultation.service.DynamicPermissionService;
 import com.coresolution.consultation.service.JwtService;
@@ -214,7 +213,8 @@ class CurrentSessionLogoutScenarioTest {
         HttpSession adminSession = new MockHttpSession();
         adminSession.setAttribute(SessionConstants.USER_OBJECT, admin);
         when(userRepository.findAllByTenantIdAndEmail(TENANT, EMAIL)).thenReturn(List.of(user));
-        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository, authService, PiiTestSecrets.hmacService());
+        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository,
+            authService);
 
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(
             AdminForceLogoutRequest.builder().email(EMAIL).build(), adminSession);
@@ -240,7 +240,8 @@ class CurrentSessionLogoutScenarioTest {
         otherAdmin.setTenantId(TENANT + "-other");
         HttpSession adminSession = new MockHttpSession();
         adminSession.setAttribute(SessionConstants.USER_OBJECT, otherAdmin);
-        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository, authService, PiiTestSecrets.hmacService());
+        AdminSessionForceLogoutController controller = new AdminSessionForceLogoutController(userRepository,
+            authService);
 
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(
             AdminForceLogoutRequest.builder().email(EMAIL).build(), adminSession);

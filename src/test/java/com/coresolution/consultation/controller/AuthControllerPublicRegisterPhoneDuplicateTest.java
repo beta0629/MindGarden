@@ -4,9 +4,6 @@ import java.util.UUID;
 
 import com.coresolution.consultation.dto.RegisterRequest;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
-
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.service.BranchService;
@@ -22,7 +19,6 @@ import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.service.PermissionGroupService;
 import com.coresolution.core.service.UserRoleQueryService;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -31,12 +27,9 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.env.Environment;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
@@ -101,11 +94,6 @@ class AuthControllerPublicRegisterPhoneDuplicateTest {
     @InjectMocks
     private AuthController authController;
 
-    @BeforeEach
-    void injectHmac() {
-        ReflectionTestUtils.setField(authController, "piiHmacService", PiiTestSecrets.hmacService());
-    }
-
     @AfterEach
     void clearTenant() {
         TenantContextHolder.clear();
@@ -125,7 +113,7 @@ class AuthControllerPublicRegisterPhoneDuplicateTest {
             .agreePrivacy(true)
             .build();
 
-        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT_ID), anyString())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmail(TENANT_ID, email.toLowerCase())).thenReturn(false);
         when(userService.existsPhoneDuplicateForPublicSignup("01099998888", TENANT_ID)).thenReturn(true);
 
         try (MockedStatic<TenantContextHolder> tenant = org.mockito.Mockito.mockStatic(TenantContextHolder.class)) {

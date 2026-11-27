@@ -143,7 +143,6 @@ import com.coresolution.consultation.util.MappingSessionCountInvariant;
 import com.coresolution.consultation.util.PaymentSourceResolver;
 import com.coresolution.consultation.util.TaxCalculationUtil;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
 import com.coresolution.consultation.util.RrnValidationUtil;
@@ -236,13 +235,6 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
 
     @Autowired
     private TemporaryPasswordGenerator temporaryPasswordGenerator;
-
-    /**
-     * 이메일·전화 HMAC 블라인드 인덱스. 생성자 DI 호환 유지용 필드 주입
-     * (AdminServiceImpl 수동 new 단위 테스트 다수).
-     */
-    @Autowired
-    private PiiHmacService piiHmacService;
 
     /**
      * 내담자 타임라인({@code client_event}) 실시간 기록.
@@ -533,7 +525,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String emailPlain;
         if (hasEmail) {
             emailPlain = rawEmail.trim().toLowerCase();
-            if (userRepository.existsByTenantIdAndEmailHash(tenantId, piiHmacService.hmacHex(emailPlain))) {
+            String encryptedForLookup = encryptionUtil.safeEncrypt(emailPlain);
+            if (userRepository.existsByTenantIdAndEmail(tenantId, encryptedForLookup)) {
                 throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_EMAIL);
             }
         } else {
@@ -11853,8 +11846,8 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         String sanitized = ClientRegistrationConstants.sanitizeTenantIdForSyntheticEmailDomain(tenantId);
         for (int i = 0; i < 1000; i++) {
             String candidate = ClientRegistrationConstants.buildSyntheticEmail(normalizedDigits, sanitized, i);
-            if (!userRepository.existsByTenantIdAndEmailHash(
-                    tenantId, piiHmacService.hmacHex(candidate.toLowerCase()))) {
+            String enc = encryptionUtil.safeEncrypt(candidate);
+            if (!userRepository.existsByTenantIdAndEmail(tenantId, enc)) {
                 return candidate;
             }
         }
@@ -12717,9 +12710,7 @@ public class AdminServiceImpl extends BaseTenantAwareService implements AdminSer
         log.info("🔍 상담사 이메일로 매칭 조회 - 이메일: {}", EmailLogMasking.maskForLog(consultantEmail));
         String tenantId = getTenantId();
         
-        String consultantEmailNorm = consultantEmail == null ? "" : consultantEmail.trim().toLowerCase();
-        Optional<User> consultantOpt = userRepository.findByTenantIdAndEmailHash(
-                tenantId, piiHmacService.hmacHex(consultantEmailNorm));
+        Optional<User> consultantOpt = userRepository.findByTenantIdAndEmail(tenantId, consultantEmail);
         if (consultantOpt.isEmpty()) {
             log.warn("❌ 상담사를 찾을 수 없습니다 - 이메일: {}", EmailLogMasking.maskForLog(consultantEmail));
             return new ArrayList<>();

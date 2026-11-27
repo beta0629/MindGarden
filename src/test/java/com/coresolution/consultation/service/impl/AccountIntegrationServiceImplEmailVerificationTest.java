@@ -26,8 +26,6 @@ import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.repository.UserSocialAccountRepository;
 import com.coresolution.consultation.service.EmailService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.support.SecureNumericCodeGenerator;
 import com.coresolution.consultation.service.support.VerificationAttemptLimiter;
@@ -73,16 +71,11 @@ class AccountIntegrationServiceImplEmailVerificationTest {
         properties.getAccountIntegration().setEmailVerificationDailyLimit(100);
         VerificationAttemptLimiter limiter = new VerificationAttemptLimiter(properties);
         service = new AccountIntegrationServiceImpl(userRepository, userSocialAccountRepository,
-            mock(UserService.class), passwordService, emailService, PiiTestSecrets.hmacService(), properties,
+            mock(UserService.class), passwordService, emailService, properties,
             new SecureNumericCodeGenerator(), limiter);
         when(emailService.sendTemplateEmail(anyString(), anyString(), anyString(), anyMap()))
             .thenReturn(EmailResponse.builder().success(true).emailId("e1").build());
-        when(userRepository.findByTenantIdAndEmailHash(eq(TENANT_ID),
-                eq(PiiTestSecrets.hmacService().hmacHex(MEMBER_EMAIL))))
-            .thenReturn(Optional.of(member()));
-        when(userRepository.findByTenantIdAndEmailHash(eq(TENANT_ID),
-                eq(PiiTestSecrets.hmacService().hmacHex(OUTSIDER_EMAIL))))
-            .thenReturn(Optional.empty());
+        when(userRepository.findByTenantIdAndEmail(TENANT_ID, MEMBER_EMAIL)).thenReturn(Optional.of(member()));
 
         serviceLogger = (Logger) LoggerFactory.getLogger(AccountIntegrationServiceImpl.class);
         serviceLogger.setLevel(Level.DEBUG);

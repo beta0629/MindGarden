@@ -7,7 +7,6 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.auth.AdminForceLogoutRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.utils.SessionUtils;
@@ -56,7 +55,6 @@ public class AdminSessionForceLogoutController extends BaseApiController {
 
     private final UserRepository userRepository;
     private final AuthService authService;
-    private final PiiHmacService piiHmacService;
 
     /**
      * 동일 테넌트 사용자 계정 전체 강제 로그아웃.
@@ -89,9 +87,8 @@ public class AdminSessionForceLogoutController extends BaseApiController {
             return forbiddenTarget();
         }
 
-        String targetEmail = request.getEmail().trim().toLowerCase();
-        List<User> targets = userRepository.findAllByTenantIdAndEmailHash(
-                adminTenantId, piiHmacService.hmacHex(targetEmail));
+        String targetEmail = request.getEmail().trim();
+        List<User> targets = userRepository.findAllByTenantIdAndEmail(adminTenantId, targetEmail);
         User target = targets.isEmpty() ? null : targets.get(0);
         if (target == null || !adminTenantId.equals(target.getTenantId())) {
             log.warn("강제 로그아웃 거부 (동일 테넌트 대상 없음): actorId={}, email={}",

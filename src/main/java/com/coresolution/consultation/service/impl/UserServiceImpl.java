@@ -2,7 +2,6 @@ package com.coresolution.consultation.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -30,7 +29,6 @@ import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.SocialProvider;
 import com.coresolution.core.context.TenantContextHolder;
@@ -66,9 +64,6 @@ public class UserServiceImpl implements UserService {
     
     @Autowired
     private PiiCryptoService encryptionUtil;
-
-    @Autowired
-    private PiiHmacService piiHmacService;
     
     @Autowired
     private EmailService emailService;
@@ -411,26 +406,25 @@ public class UserServiceImpl implements UserService {
         // 로그인/인증은 서브도메인으로 테넌트 조회 후 사용. 테넌트 없이 이메일만 조회 시 복수 건·잘못된 사용자 반환 방지
         String tenantId = TenantContextHolder.getRequiredTenantId();
 
-        // 1) HMAC 블라인드 인덱스 (GCM ciphertext 동등검색 대체)
-        List<String> emailHashes = Arrays.asList(piiHmacService.lookupCandidates(normalizedEmail));
-        if (!emailHashes.isEmpty()) {
-            List<User> byHash = userRepository.findAllByTenantIdAndEmailHashIn(tenantId, emailHashes);
-            if (byHash != null && !byHash.isEmpty()) {
-                return Optional.of(byHash.get(0));
-            }
+        // 1) 평문 이메일로 조회 (테넌트 기준)
+        Optional<User> byPlain = userRepository.findByTenantIdAndEmail(tenantId, normalizedEmail);
+        if (byPlain.isPresent()) {
+            return byPlain;
         }
 
-        // 2) 백필 전 null hash 폴백: 테넌트 스캔 복호화 비교 (last resort)
-        List<User> tenantUsers = userRepository.findByTenantId(tenantId);
-        for (User u : tenantUsers) {
-            try {
-                String decrypted = encryptionUtil.safeDecrypt(u.getEmail());
-                if (decrypted != null && decrypted.trim().toLowerCase().equals(normalizedEmail)) {
-                    log.debug("findByEmail: 해시 미백필 복호화 폴백 조회 성공");
-                    return Optional.of(u);
+        // 2) 조회 실패 시: 관리자 생성 사용자 등 이메일 암호화 저장된 경우 복호화 비교
+        {
+            List<User> tenantUsers = userRepository.findByTenantId(tenantId);
+            for (User u : tenantUsers) {
+                try {
+                    String decrypted = encryptionUtil.decrypt(u.getEmail());
+                    if (decrypted != null && decrypted.trim().toLowerCase().equals(normalizedEmail)) {
+                        log.debug("findByEmail: 암호화 저장 이메일로 사용자 조회 성공 (복호화 비교)");
+                        return Optional.of(u);
+                    }
+                } catch (Exception e) {
+                    log.trace("findByEmail: 이메일 복호화 스킵 userId={}", u.getId());
                 }
-            } catch (Exception e) {
-                log.trace("findByEmail: 이메일 복호화 스킵 userId={}", u.getId());
             }
         }
 
@@ -445,12 +439,9 @@ public class UserServiceImpl implements UserService {
             return Collections.emptyList();
         }
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        List<String> emailHashes = Arrays.asList(piiHmacService.lookupCandidates(normalizedEmail));
-        if (!emailHashes.isEmpty()) {
-            List<User> byHash = userRepository.findAllByTenantIdAndEmailHashIn(tenantId, emailHashes);
-            if (byHash != null && !byHash.isEmpty()) {
-                return new ArrayList<>(byHash);
-            }
+        List<User> byPlain = userRepository.findAllByTenantIdAndEmail(tenantId, normalizedEmail);
+        if (byPlain != null && !byPlain.isEmpty()) {
+            return new ArrayList<>(byPlain);
         }
         List<User> matches = new ArrayList<>();
         for (User u : userRepository.findByTenantId(tenantId)) {
@@ -506,7 +497,7 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 테넌트 내 사용자 전화번호 — HMAC 블라인드 인덱스 우선, 미백필 시 복호화 스캔 폴백.
+     * 테넌트 내 사용자 전화번호를 복호화·정규화하여 일치하는 모든 행(DB 암호화 저장 대응).
      */
     private List<User> findAllUsersMatchingNormalizedPhoneInTenant(String normalizedDigits, String tenantId) {
         if (normalizedDigits == null || normalizedDigits.isEmpty()) {
@@ -515,13 +506,6 @@ public class UserServiceImpl implements UserService {
         if (tenantId == null || tenantId.isEmpty()) {
             log.warn("findAllUsersMatchingNormalizedPhoneInTenant: tenantId 없음 — 조회 생략");
             return Collections.emptyList();
-        }
-        List<String> phoneHashes = Arrays.asList(piiHmacService.lookupCandidates(normalizedDigits));
-        if (!phoneHashes.isEmpty()) {
-            List<User> byHash = userRepository.findAllByTenantIdAndPhoneHashIn(tenantId, phoneHashes);
-            if (byHash != null && !byHash.isEmpty()) {
-                return new ArrayList<>(byHash);
-            }
         }
         List<User> matches = new ArrayList<>();
         for (User u : userRepository.findByTenantId(tenantId)) {

@@ -26,8 +26,6 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.impl.UserServiceImpl;
 import com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.core.constant.OnboardingConstants;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.OnboardingAdminEmailCipher;
@@ -178,8 +176,7 @@ class OnboardingAdminEmailCipherFlowTest {
     void loginLookup_otherTenantMisses() {
         OnboardingAdminEmailCipher.Prepared prepared = OnboardingAdminEmailCipher.prepare(PLAIN_EMAIL);
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT), any()))
-            .thenReturn(List.of());
+        when(userRepository.findByTenantIdAndEmail(TENANT, PLAIN_EMAIL)).thenReturn(Optional.empty());
         when(userRepository.findByTenantId(TENANT)).thenReturn(List.of());
         TenantContextHolder.setTenantId(TENANT);
 
@@ -202,8 +199,7 @@ class OnboardingAdminEmailCipherFlowTest {
         User loaded = new User();
         loaded.setEmail(encryptionUtil.safeDecrypt(storedCipher));
         UserRepository userRepository = mock(UserRepository.class);
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT), any()))
-            .thenReturn(List.of());
+        when(userRepository.findByTenantIdAndEmail(TENANT, PLAIN_EMAIL)).thenReturn(Optional.empty());
         when(userRepository.findByTenantId(TENANT)).thenReturn(List.of(loaded));
         TenantContextHolder.setTenantId(TENANT);
 
@@ -216,7 +212,6 @@ class OnboardingAdminEmailCipherFlowTest {
         UserServiceImpl userService = new UserServiceImpl();
         ReflectionTestUtils.setField(userService, "userRepository", userRepository);
         ReflectionTestUtils.setField(userService, "encryptionUtil", encryptionUtil);
-        ReflectionTestUtils.setField(userService, "piiHmacService", PiiTestSecrets.hmacService());
         return userService;
     }
 

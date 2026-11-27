@@ -44,7 +44,6 @@ import com.coresolution.consultation.util.EmailLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.UserRoleCapabilityUtils;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.consultation.constant.SessionConstants;
 import com.coresolution.consultation.constant.SessionManagementConstants;
@@ -97,7 +96,6 @@ public class AuthController extends BaseApiController {
     private final RoleCommonCodeAuthorizationService roleCommonCodeAuthorizationService;
 
     private final PiiCryptoService encryptionUtil;
-    private final PiiHmacService piiHmacService;
     private final UserRepository userRepository;
     private final UserSocialAccountRepository userSocialAccountRepository;
     private final TenantRepository tenantRepository;
@@ -209,8 +207,7 @@ public class AuthController extends BaseApiController {
             // 데이터베이스에서 사용자 조회 (현재 테넌트만 — fail-closed)
             String tenantId = TenantContextHolder.getTenantId();
             if (tenantId != null && !tenantId.isEmpty()) {
-                currentUser = userRepository.findByTenantIdAndEmailHash(
-                        tenantId, piiHmacService.hmacHex(userId.trim().toLowerCase())).orElse(null);
+                currentUser = userRepository.findByTenantIdAndEmail(tenantId, userId).orElse(null);
             } else {
                 log.warn("current-user JWT: tenant 컨텍스트 없음 — 전역 이메일 조회 금지 userId={}", userId);
             }
@@ -448,7 +445,7 @@ public class AuthController extends BaseApiController {
         }
 
         String email = request.getEmail().trim().toLowerCase();
-        if (userRepository.existsByTenantIdAndEmailHash(tenantId, piiHmacService.hmacHex(email))) {
+        if (userRepository.existsByTenantIdAndEmail(tenantId, email)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
@@ -512,8 +509,7 @@ public class AuthController extends BaseApiController {
         boolean isDuplicate = false;
         if (StringUtils.hasText(trimmed)) {
             if (tenantId != null && !tenantId.isEmpty()) {
-                isDuplicate = userRepository.existsByTenantIdAndEmailHash(
-                        tenantId, piiHmacService.hmacHex(trimmed.toLowerCase()));
+                isDuplicate = userRepository.existsByTenantIdAndEmail(tenantId, trimmed);
             } else {
                 // fail-closed: tenant 없이 전역 existsByEmailAll 금지 (Host/서브도메인으로 tenant 해석 필요)
                 log.warn("duplicate-check/email: tenant 컨텍스트 없음 — 전역 스캔 거부");

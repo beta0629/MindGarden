@@ -6,8 +6,6 @@ import com.coresolution.consultation.repository.UserRepository;
 import com.coresolution.consultation.service.BranchService;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.core.context.TenantContextHolder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,17 +15,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 import com.coresolution.core.security.PasswordService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -35,7 +30,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 로그인 식별자 조회가 {@link TenantContextHolder} 기준으로 격리되는지 단위 검증한다.
+ * 로그인 식별자 조회({@link com.coresolution.consultation.service.impl.UserServiceImpl#findByEmail},
+ * {@link com.coresolution.consultation.service.impl.UserServiceImpl#findByLoginPrincipal},
+ * {@link com.coresolution.consultation.service.impl.UserServiceImpl#findByPhone})가
+ * {@link TenantContextHolder} 기준으로 격리되는지 단위 검증한다.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl 로그인 조회 테넌트 스코프")
@@ -58,11 +56,8 @@ class UserServiceImplLoginLookupTenantScopeTest {
     @InjectMocks
     private UserServiceImpl userService;
 
-    private final PiiHmacService hmac = PiiTestSecrets.hmacService();
-
     @BeforeEach
     void setTenantA() {
-        ReflectionTestUtils.setField(userService, "piiHmacService", hmac);
         TenantContextHolder.setTenantId(TENANT_A);
     }
 
@@ -81,30 +76,30 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
-    @DisplayName("findByEmail: 현재 테넌트·HMAC 블라인드 인덱스로 조회")
+    @DisplayName("findByEmail: 현재 테넌트·소문자 정규화로 findByTenantIdAndEmail만 조회")
     void findByEmail_usesTenantScopedRepository() {
         User u = baseUser("u1", "user@test.com");
         u.setTenantId(TENANT_A);
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT_A), any()))
-            .thenReturn(List.of(u));
+        when(userRepository.findByTenantIdAndEmail(eq(TENANT_A), eq("user@test.com")))
+            .thenReturn(Optional.of(u));
 
         Optional<User> result = userService.findByEmail("  User@Test.COM  ");
 
         assertThat(result).contains(u);
-        verify(userRepository).findAllByTenantIdAndEmailHashIn(eq(TENANT_A), any());
-        verify(userRepository, never()).findAllByTenantIdAndEmailHashIn(eq(TENANT_B), any());
+        verify(userRepository).findByTenantIdAndEmail(TENANT_A, "user@test.com");
+        verify(userRepository, never()).findByTenantIdAndEmail(eq(TENANT_B), anyString());
     }
 
     @Test
-    @DisplayName("findByEmail: 해시 미매칭 시 같은 테넌트 사용자만 순회·복호화 비교")
+    @DisplayName("findByEmail: 평문 매칭 실패 시 같은 테넌트 사용자만 순회·복호화 비교")
     void findByEmail_encryptedLegacy_sameTenantOnly() {
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT_A), any()))
-            .thenReturn(Collections.emptyList());
+        when(userRepository.findByTenantIdAndEmail(TENANT_A, "legacy@test.com"))
+            .thenReturn(Optional.empty());
 
         User encUser = baseUser("u2", "cipherblob");
         encUser.setTenantId(TENANT_A);
         when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(encUser));
-        when(encryptionUtil.safeDecrypt("cipherblob")).thenReturn("legacy@test.com");
+        when(encryptionUtil.decrypt("cipherblob")).thenReturn("legacy@test.com");
 
         Optional<User> result = userService.findByEmail("legacy@test.com");
 
@@ -118,8 +113,8 @@ class UserServiceImplLoginLookupTenantScopeTest {
     void findByLoginPrincipal_email_usesTenantEmailLookup() {
         User u = baseUser("u3", "mail@test.com");
         u.setTenantId(TENANT_A);
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT_A), any()))
-            .thenReturn(List.of(u));
+        when(userRepository.findByTenantIdAndEmail(TENANT_A, "mail@test.com"))
+            .thenReturn(Optional.of(u));
 
         Optional<User> result = userService.findByLoginPrincipal("Mail@Test.com");
 
@@ -127,13 +122,11 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
-    @DisplayName("findByLoginPrincipal: 휴대폰 형태는 테넌트 내 해시/복호화 매칭만")
+    @DisplayName("findByLoginPrincipal: 휴대폰 형태는 테넌트 내 복호화·정규화 매칭만")
     void findByLoginPrincipal_phone_tenantScopedDecrypt() {
         User u = baseUser("u4", "p@test.com");
         u.setTenantId(TENANT_A);
         u.setPhone("enc-phone");
-        when(userRepository.findAllByTenantIdAndPhoneHashIn(eq(TENANT_A), any()))
-            .thenReturn(Collections.emptyList());
         when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(u));
         when(encryptionUtil.safeDecrypt("enc-phone")).thenReturn("010-1234-5678");
 
@@ -154,7 +147,7 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
-    @DisplayName("findAllByLoginPrincipal: 휴대폰 다중 매치 — 동일 번호 모든 사용자 반환")
+    @DisplayName("findAllByLoginPrincipal: 휴대폰 다중 매치 — 동일 번호 모든 사용자 반환(silent first 차단)")
     void findAllByLoginPrincipal_phone_returnsAllMatches() {
         User a = baseUser("ua", "a@test.com");
         a.setTenantId(TENANT_A);
@@ -162,8 +155,6 @@ class UserServiceImplLoginLookupTenantScopeTest {
         User b = baseUser("ub", "b@test.com");
         b.setTenantId(TENANT_A);
         b.setPhone("enc-2");
-        when(userRepository.findAllByTenantIdAndPhoneHashIn(eq(TENANT_A), any()))
-            .thenReturn(Collections.emptyList());
         when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(a, b));
         when(encryptionUtil.safeDecrypt("enc-1")).thenReturn("010-1111-2222");
         when(encryptionUtil.safeDecrypt("enc-2")).thenReturn("01011112222");
@@ -178,8 +169,8 @@ class UserServiceImplLoginLookupTenantScopeTest {
     void findAllByLoginPrincipal_email_returnsZeroOrOne() {
         User u = baseUser("ue", "e@test.com");
         u.setTenantId(TENANT_A);
-        when(userRepository.findAllByTenantIdAndEmailHashIn(eq(TENANT_A), any()))
-            .thenReturn(List.of(u));
+        when(userRepository.findByTenantIdAndEmail(TENANT_A, "e@test.com"))
+            .thenReturn(Optional.of(u));
 
         List<User> result = userService.findAllByLoginPrincipal("E@Test.com");
 
@@ -187,7 +178,7 @@ class UserServiceImplLoginLookupTenantScopeTest {
     }
 
     @Test
-    @DisplayName("findAllByLoginPrincipal: 휴대폰인데 tenant 없으면 빈 목록")
+    @DisplayName("findAllByLoginPrincipal: 휴대폰인데 tenant 없으면 빈 목록(silent enumeration 차단)")
     void findAllByLoginPrincipal_phone_noTenant_returnsEmpty() {
         TenantContextHolder.clear();
         assertThat(userService.findAllByLoginPrincipal("01000000000")).isEmpty();
@@ -208,24 +199,61 @@ class UserServiceImplLoginLookupTenantScopeTest {
     void findByPhone_withTenant_usesNormalizedTenantScan() {
         User u = baseUser("u5", "x@test.com");
         u.setTenantId(TENANT_A);
-        u.setPhone("enc-phone");
-        when(userRepository.findAllByTenantIdAndPhoneHashIn(eq(TENANT_A), any()))
-            .thenReturn(Collections.emptyList());
+        u.setPhone("ph-cipher");
         when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(u));
-        when(encryptionUtil.safeDecrypt("enc-phone")).thenReturn("01099998888");
+        when(encryptionUtil.safeDecrypt("ph-cipher")).thenReturn("01000000000");
 
-        Optional<User> result = userService.findByPhone("010-9999-8888");
+        Optional<User> result = userService.findByPhone("010-0000-0000");
 
         assertThat(result).contains(u);
     }
 
+    @Test
+    @DisplayName("existsPhoneDuplicateForPublicSignup: 무효 숫자열이면 false·리포지토리 미호출")
+    void existsPhoneDuplicate_invalid_returnsFalse() {
+        assertThat(userService.existsPhoneDuplicateForPublicSignup("", TENANT_A)).isFalse();
+        assertThat(userService.existsPhoneDuplicateForPublicSignup("123", TENANT_A)).isFalse();
+        verify(userRepository, never()).findByTenantId(anyString());
+        verify(userRepository, never()).findAllWithNonBlankPhone();
+    }
+
+    @Test
+    @DisplayName("existsPhoneDuplicateForPublicSignup: 테넌트 ID 있으면 테넌트 사용자만 스캔")
+    void existsPhoneDuplicate_tenantScoped_matchesDecrypt() {
+        User u = baseUser("u6", "z@test.com");
+        u.setTenantId(TENANT_A);
+        u.setPhone("enc-p");
+        when(userRepository.findByTenantId(TENANT_A)).thenReturn(List.of(u));
+        when(encryptionUtil.safeDecrypt("enc-p")).thenReturn("010-9999-8888");
+
+        assertThat(userService.existsPhoneDuplicateForPublicSignup("01099998888", TENANT_A)).isTrue();
+        verify(userRepository, never()).findAllWithNonBlankPhone();
+    }
+
+    @Test
+    @DisplayName("existsPhoneDuplicateForPublicSignup: 테넌트 없으면 fail-closed (전역 스캔 금지)")
+    void existsPhoneDuplicate_missingTenant_failsClosed() {
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicateForPublicSignup("01011112222", null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> userService.existsPhoneDuplicateForPublicSignup("01011112222", ""))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("tenantId");
+        verify(userRepository, never()).findAllWithNonBlankPhone();
+        verify(userRepository, never()).findByTenantId(anyString());
+    }
+
     private static User baseUser(String userId, String email) {
-        User u = new User();
-        u.setUserId(userId);
-        u.setEmail(email);
-        u.setRole(UserRole.CLIENT);
-        u.setPassword("encoded");
-        u.setName("n");
-        return u;
+        return User.builder()
+            .userId(userId)
+            .email(email)
+            .password("{bcrypt}$2a$10$0000000000000000000000e")
+            .name("n")
+            .role(UserRole.CONSULTANT)
+            .isActive(true)
+            .isPasswordChanged(true)
+            .build();
     }
 }

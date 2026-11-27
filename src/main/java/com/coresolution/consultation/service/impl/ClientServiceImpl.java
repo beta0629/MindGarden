@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.Client;
 import com.coresolution.consultation.repository.ClientRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.ClientService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.security.TenantAccessControlService;
@@ -29,15 +28,12 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
         implements ClientService {
     
     private final ClientRepository clientRepository;
-    private final PiiHmacService piiHmacService;
     
     public ClientServiceImpl(
             ClientRepository clientRepository,
-            TenantAccessControlService accessControlService,
-            PiiHmacService piiHmacService) {
+            TenantAccessControlService accessControlService) {
         super(clientRepository, accessControlService);
         this.clientRepository = clientRepository;
-        this.piiHmacService = piiHmacService;
     }
     
     // ==================== BaseTenantEntityServiceImpl 추상 메서드 구현 ====================
@@ -291,9 +287,7 @@ public class ClientServiceImpl extends BaseTenantEntityServiceImpl<Client, Long>
     @Override
     public Optional<Client> findByEmail(String email) {
         String tenantId = TenantContextHolder.getRequiredTenantId();
-        String emailNorm = email == null ? "" : email.trim().toLowerCase();
-        return clientRepository.findByTenantIdAndEmailHashAndIsDeletedFalse(
-                tenantId, piiHmacService.hmacHex(emailNorm));
+        return clientRepository.findByTenantIdAndEmailAndIsDeletedFalse(tenantId, email);
     }
     
     @Override

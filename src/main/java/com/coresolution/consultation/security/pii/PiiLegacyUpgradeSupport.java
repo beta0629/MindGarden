@@ -1,7 +1,6 @@
 package com.coresolution.consultation.security.pii;
 
 import java.util.Locale;
-import com.coresolution.consultation.util.LoginIdentifierUtils;
 import org.springframework.util.StringUtils;
 
 /**
@@ -103,7 +102,7 @@ public final class PiiLegacyUpgradeSupport {
     }
 
     /**
-     * 전화번호를 {@link LoginIdentifierUtils#normalizeKoreanMobileDigits(String)} 와 동일 규칙으로 정규화한다.
+     * 전화번호를 숫자만 남기고 82 국가코드를 0 으로 정규화한다.
      *
      * @param phone 원본
      * @return 정규화 숫자열 또는 null
@@ -112,8 +111,11 @@ public final class PiiLegacyUpgradeSupport {
         if (phone == null) {
             return null;
         }
-        String digits = LoginIdentifierUtils.normalizeKoreanMobileDigits(phone);
-        return StringUtils.hasText(digits) ? digits : null;
+        String digits = phone.replaceAll("[^0-9]", "");
+        if (digits.startsWith("82") && digits.length() >= 11) {
+            digits = "0" + digits.substring(2);
+        }
+        return digits;
     }
 
     /**

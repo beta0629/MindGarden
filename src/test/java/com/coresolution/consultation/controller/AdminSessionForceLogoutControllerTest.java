@@ -3,7 +3,6 @@ package com.coresolution.consultation.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,8 +15,6 @@ import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.auth.AdminForceLogoutRequest;
 import com.coresolution.consultation.entity.User;
 import com.coresolution.consultation.repository.UserRepository;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.consultation.service.AuthService;
 import com.coresolution.consultation.utils.SessionUtils;
 import com.coresolution.core.context.TenantContextHolder;
@@ -62,7 +59,7 @@ class AdminSessionForceLogoutControllerTest {
     @BeforeEach
     void setUp() {
         sessionUtilsStatic = mockStatic(SessionUtils.class);
-        controller = new AdminSessionForceLogoutController(userRepository, authService, PiiTestSecrets.hmacService());
+        controller = new AdminSessionForceLogoutController(userRepository, authService);
         TenantContextHolder.clear();
     }
 
@@ -119,7 +116,7 @@ class AdminSessionForceLogoutControllerTest {
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(request(), session);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(userRepository, never()).findAllByTenantIdAndEmailHash(anyString(), anyString());
+        verify(userRepository, never()).findAllByTenantIdAndEmail(anyString(), anyString());
         verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
     }
 
@@ -127,12 +124,12 @@ class AdminSessionForceLogoutControllerTest {
     @DisplayName("다른 테넌트 관리자 → 403 (자기 테넌트에서만 조회, 교차 테넌트 대상 미존재)")
     void adminOfAnotherTenant_403() {
         loginAs(user(1L, UserRole.ADMIN, TENANT_B, "admin-b@example.com"));
-        when(userRepository.findAllByTenantIdAndEmailHash(eq(TENANT_B), anyString())).thenReturn(List.of());
+        when(userRepository.findAllByTenantIdAndEmail(TENANT_B, TARGET_EMAIL)).thenReturn(List.of());
 
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(request(), session);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(userRepository, never()).findAllByTenantIdAndEmailHash(eq(TENANT_A), anyString());
+        verify(userRepository, never()).findAllByTenantIdAndEmail(TENANT_A, TARGET_EMAIL);
         verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
     }
 
@@ -145,7 +142,7 @@ class AdminSessionForceLogoutControllerTest {
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(request(), session);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-        verify(userRepository, never()).findAllByTenantIdAndEmailHash(anyString(), anyString());
+        verify(userRepository, never()).findAllByTenantIdAndEmail(anyString(), anyString());
         verify(authService, never()).terminateAllSessionsForUser(any(User.class), anyString());
     }
 
@@ -166,7 +163,7 @@ class AdminSessionForceLogoutControllerTest {
         loginAs(user(1L, UserRole.ADMIN, TENANT_A, "admin-a@example.com"));
         TenantContextHolder.setTenantId(TENANT_A);
         User target = user(2L, UserRole.CLIENT, TENANT_A, TARGET_EMAIL);
-        when(userRepository.findAllByTenantIdAndEmailHash(eq(TENANT_A), anyString())).thenReturn(List.of(target));
+        when(userRepository.findAllByTenantIdAndEmail(TENANT_A, TARGET_EMAIL)).thenReturn(List.of(target));
 
         ResponseEntity<ApiResponse<Void>> response = controller.forceLogout(request(), session);
 

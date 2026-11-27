@@ -49,8 +49,6 @@ import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.service.erp.financial.FinancialTransactionService;
 import com.coresolution.consultation.service.support.TemporaryPasswordGenerator;
 import com.coresolution.consultation.security.pii.PiiCryptoService;
-import com.coresolution.consultation.security.pii.PiiHmacService;
-import com.coresolution.consultation.security.pii.PiiTestSecrets;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.repository.TenantRoleRepository;
 import com.coresolution.core.repository.UserRoleAssignmentRepository;
@@ -127,7 +125,6 @@ class AdminServiceImplRegisterNoTempPasswordSmsTest {
 
     @BeforeEach
     void setTenant() {
-        ReflectionTestUtils.setField(adminService, "piiHmacService", PiiTestSecrets.hmacService());
         TenantContextHolder.setTenantId(TENANT);
         lenient().when(temporaryPasswordGenerator.generate()).thenReturn("Kp9@mxzw");
         ReflectionTestUtils.setField(adminService, "temporaryPasswordGenerator", temporaryPasswordGenerator);
@@ -146,7 +143,7 @@ class AdminServiceImplRegisterNoTempPasswordSmsTest {
         request.setPassword("");
 
         when(userService.existsPhoneDuplicateForPublicSignup("01011112222", TENANT)).thenReturn(false);
-        when(userRepository.existsByTenantIdAndEmailHash(eq(TENANT), anyString())).thenReturn(false);
+        when(userRepository.existsByTenantIdAndEmail(eq(TENANT), anyString())).thenReturn(false);
         when(userIdGenerator.generateUniqueUserIdFromPhone("01011112222", TENANT)).thenReturn("01011112222");
         when(passwordService.encodeSecret(anyString())).thenReturn("hashed-temp");
         when(encryptionUtil.safeEncrypt(anyString())).thenAnswer(inv -> "enc:" + inv.getArgument(0));

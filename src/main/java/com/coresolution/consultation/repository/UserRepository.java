@@ -164,48 +164,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
 
     /**
-     * 테넌트 + 이메일 HMAC 블라인드 인덱스로 활성-유사 사용자 존재 여부.
-     *
-     * <p>AES-GCM 랜덤 nonce 로 ciphertext 동등검색이 깨지므로 신규 경로는 본 메서드를 사용한다.
-     * {@code emailHash} 는 정규화(trim+lower) 후 {@code PiiHmacService#hmacHex} (또는 dual-verify 후보).</p>
-     *
-     * @param tenantId  테넌트 ID
-     * @param emailHash HMAC(또는 레거시 SHA) hex
-     * @return 존재하면 true
-     * @since 2026-11-27
-     */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
-            + "WHERE u.tenantId = :tenantId AND u.emailHash = :emailHash "
-            + "AND u.isDeleted = false "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    boolean existsByTenantIdAndEmailHash(
-            @Param("tenantId") String tenantId, @Param("emailHash") String emailHash);
-
-    /**
-     * dual-verify 후보(HMAC·레거시 SHA) 중 하나라도 일치하면 true.
-     *
-     * @param tenantId    테넌트 ID
-     * @param emailHashes 후보 해시 목록
-     * @return 존재하면 true
-     * @since 2026-11-27
-     */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
-            + "WHERE u.tenantId = :tenantId AND u.emailHash IN :emailHashes "
-            + "AND u.isDeleted = false "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    boolean existsByTenantIdAndEmailHashIn(
-            @Param("tenantId") String tenantId,
-            @Param("emailHashes") java.util.Collection<String> emailHashes);
-
-    /**
      * 본인 PK 를 제외한 tenant 내 이메일 중복 여부.
      *
      * <p>마이페이지 이메일 변경(Phase B) 흐름에서 사용한다. {@link #existsByTenantIdAndEmail}
@@ -231,29 +189,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByTenantIdAndEmailAndIdNot(
             @Param("tenantId") String tenantId,
             @Param("email") String email,
-            @Param("excludeUserId") Long excludeUserId);
-
-    /**
-     * 본인 PK 제외 + 이메일 HMAC 블라인드 인덱스 중복 여부.
-     *
-     * @param tenantId      tenant 식별자
-     * @param emailHash     HMAC hex
-     * @param excludeUserId 본인 PK
-     * @return 중복이면 true
-     * @since 2026-11-27
-     */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
-            + "WHERE u.tenantId = :tenantId AND u.emailHash = :emailHash "
-            + "AND u.id <> :excludeUserId "
-            + "AND u.isDeleted = false "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    boolean existsByTenantIdAndEmailHashAndIdNot(
-            @Param("tenantId") String tenantId,
-            @Param("emailHash") String emailHash,
             @Param("excludeUserId") Long excludeUserId);
 
     /**
@@ -298,43 +233,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
             + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
             + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     Optional<User> findByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
-
-    /**
-     * 테넌트 + 이메일 HMAC 으로 활성-유사 사용자 조회.
-     *
-     * @param tenantId  테넌트 ID
-     * @param emailHash HMAC hex
-     * @return 사용자
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.emailHash = :emailHash "
-            + "AND u.isDeleted = false "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    Optional<User> findByTenantIdAndEmailHash(
-            @Param("tenantId") String tenantId, @Param("emailHash") String emailHash);
-
-    /**
-     * dual-verify 후보 해시로 활성-유사 사용자 조회.
-     *
-     * @param tenantId    테넌트 ID
-     * @param emailHashes 후보 해시
-     * @return 사용자 (복수 시 임의 1건 — 호출부에서 목록 API 사용 권장)
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.emailHash IN :emailHashes "
-            + "AND u.isDeleted = false "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    Optional<User> findFirstByTenantIdAndEmailHashIn(
-            @Param("tenantId") String tenantId,
-            @Param("emailHashes") java.util.Collection<String> emailHashes);
     
     /**
      * 테넌트별 이메일로 모든 사용자 조회 (같은 이메일로 여러 계정이 있을 수 있음)
@@ -342,60 +240,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.email = :email AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
     List<User> findAllByTenantIdAndEmail(@Param("tenantId") String tenantId, @Param("email") String email);
-
-    /**
-     * 테넌트 + 이메일 HMAC 으로 미삭제 사용자 목록.
-     *
-     * @param tenantId  테넌트 ID
-     * @param emailHash HMAC hex
-     * @return 사용자 목록
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.emailHash = :emailHash "
-            + "AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
-    List<User> findAllByTenantIdAndEmailHash(
-            @Param("tenantId") String tenantId, @Param("emailHash") String emailHash);
-
-    /**
-     * dual-verify 후보 해시로 미삭제 사용자 목록.
-     *
-     * @param tenantId    테넌트 ID
-     * @param emailHashes 후보 해시
-     * @return 사용자 목록
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.emailHash IN :emailHashes "
-            + "AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
-    List<User> findAllByTenantIdAndEmailHashIn(
-            @Param("tenantId") String tenantId,
-            @Param("emailHashes") java.util.Collection<String> emailHashes);
-
-    /**
-     * 테넌트 + 전화 HMAC 으로 미삭제 사용자 목록.
-     *
-     * @param tenantId  테넌트 ID
-     * @param phoneHash HMAC hex
-     * @return 사용자 목록
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.phoneHash = :phoneHash "
-            + "AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
-    List<User> findAllByTenantIdAndPhoneHash(
-            @Param("tenantId") String tenantId, @Param("phoneHash") String phoneHash);
-
-    /**
-     * dual-verify 후보 전화 해시로 미삭제 사용자 목록.
-     *
-     * @param tenantId    테넌트 ID
-     * @param phoneHashes 후보 해시
-     * @return 사용자 목록
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.tenantId = :tenantId AND u.phoneHash IN :phoneHashes "
-            + "AND u.isDeleted = false ORDER BY u.isActive DESC, u.createdAt DESC")
-    List<User> findAllByTenantIdAndPhoneHashIn(
-            @Param("tenantId") String tenantId,
-            @Param("phoneHashes") java.util.Collection<String> phoneHashes);
     
     /**
      * @Deprecated - 🚨 극도로 위험: 모든 테넌트 이메일 정보 노출!
@@ -428,17 +272,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
      */
     @Query("SELECT u FROM User u WHERE u.email = ?1 AND u.tenantId = ?2 AND u.isDeleted = false")
     Optional<User> findByEmailAndTenantId(String email, String tenantId);
-
-    /**
-     * 이메일 HMAC + 테넌트 ID로 미삭제 사용자 조회.
-     *
-     * @param emailHash HMAC hex
-     * @param tenantId  테넌트 ID
-     * @return 사용자
-     * @since 2026-11-27
-     */
-    @Query("SELECT u FROM User u WHERE u.emailHash = ?1 AND u.tenantId = ?2 AND u.isDeleted = false")
-    Optional<User> findByEmailHashAndTenantId(String emailHash, String tenantId);
     
     /**
      * @Deprecated - 새로운 테넌트별 이메일 중복 허용 정책에 따라 사용을 금지합니다. 테넌트 식별자가 포함된 메서드를 사용하세요.
@@ -1857,24 +1690,6 @@ public interface UserRepository extends BaseRepository<User, Long> {
             + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
     boolean existsByTenantIdAndEmailAndActiveLifecycle(
             @Param("tenantId") String tenantId, @Param("email") String email);
-
-    /**
-     * 활성-유사 + 이메일 HMAC 존재 여부.
-     *
-     * @param tenantId  테넌트 ID
-     * @param emailHash HMAC hex
-     * @return 존재하면 true
-     * @since 2026-11-27
-     */
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END FROM User u "
-            + "WHERE u.tenantId = :tenantId AND u.emailHash = :emailHash "
-            + "AND u.lifecycleState IN "
-            + "(com.coresolution.consultation.constant.LifecycleState.ACTIVE, "
-            + " com.coresolution.consultation.constant.LifecycleState.SUSPENDED, "
-            + " com.coresolution.consultation.constant.LifecycleState.WITHDRAWAL_PENDING, "
-            + " com.coresolution.consultation.constant.LifecycleState.DORMANT)")
-    boolean existsByTenantIdAndEmailHashAndActiveLifecycle(
-            @Param("tenantId") String tenantId, @Param("emailHash") String emailHash);
 
     /**
      * 활성-유사 상태 + userId 존재 여부 — 동일 user_id 재가입 가드.

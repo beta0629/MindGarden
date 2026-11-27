@@ -13,20 +13,23 @@ import org.junit.jupiter.api.Test;
 
 /**
  * SCT SMS 본문·EUC-KR 바이트·한국어 날짜.
+ * URL 길이만으로 축소 단계가 갈리며 host/profile 분기는 없다.
  *
  * @author MindGarden
  * @since 2026-11-27
  */
 class SctSmsMessageBuilderTest {
 
-    private static final String PROD = "https://mindgarden.core-solution.co.kr/s/k9P2mX";
-    private static final String DEV = "https://mindgarden.dev.core-solution.co.kr/s/k9P2mX";
+    /** 짧은 절대 URL — spaced date로 ≤90B. */
+    private static final String SHORT_URL = "https://mindgarden.core-solution.co.kr/s/k9P2mX";
+    /** 긴 절대 URL(+4B) — compact date 필요. */
+    private static final String LONG_URL = "https://mindgarden.dev.core-solution.co.kr/s/k9P2mX";
 
     @Test
-    @DisplayName("성인 PROD 단문 ≤90B")
-    void adultProd_underOrEqual90() {
+    @DisplayName("성인 짧은 URL — spaced date ≤90B")
+    void adultShortUrl_usesSpacedDate() {
         LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
-        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, PROD);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, SHORT_URL);
         assertNotNull(body);
         assertEquals(87, SctSmsMessageBuilder.eucKrByteLength(body));
         assertTrue(body.contains("12월 9일"));
@@ -34,12 +37,23 @@ class SctSmsMessageBuilderTest {
     }
 
     @Test
-    @DisplayName("성인 DEV — 날짜 공백 제거로 ≤90B")
-    void adultDev_compactsDate() {
+    @DisplayName("성인 긴 URL — 날짜 공백 제거로 ≤90B")
+    void adultLongUrl_compactsDate() {
         LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
-        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, DEV);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, LONG_URL);
         assertNotNull(body);
         assertEquals(90, SctSmsMessageBuilder.eucKrByteLength(body));
+        assertTrue(body.contains("12월9일"));
+    }
+
+    @Test
+    @DisplayName("청소년 긴 URL — 짧은 제목으로 ≤90B")
+    void adolescentLongUrl_usesCompactTitle() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 9, 23, 59);
+        String body = SctSmsMessageBuilder.buildShortSmsBody("ADOLESCENT", expires, LONG_URL);
+        assertNotNull(body);
+        assertTrue(SctSmsMessageBuilder.eucKrByteLength(body) <= SctConstants.SMS_EUC_KR_MAX_BYTES);
+        assertTrue(body.contains(SctSmsMessageBuilder.shortTitleAdolescentCompact()));
         assertTrue(body.contains("12월9일"));
     }
 

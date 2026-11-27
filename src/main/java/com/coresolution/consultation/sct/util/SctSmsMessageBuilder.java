@@ -14,6 +14,10 @@ import org.springframework.util.StringUtils;
  * <p>단문 템플릿: {@code [마인드가든] {shortTitle} {koreanMonthDay}까지\n{absoluteShortUrl}}.
  * 본문에 전화번호를 넣지 않는다.</p>
  *
+ * <p>PROD/DEV 동일 코드 경로. 절대 URL 길이(EUC-KR 바이트)만으로
+ * spaced date → compact date → (청소년) 짧은 제목 순으로 축소한다.
+ * host·profile 분기 없음.</p>
+ *
  * @author MindGarden
  * @since 2026-11-27
  */
@@ -51,11 +55,11 @@ public final class SctSmsMessageBuilder {
     }
 
     /**
-     * DEV 도메인(+4B)용 짧은 청소년 제목.
+     * 바이트 초과 시 쓰는 짧은 청소년 제목(URL 길이만으로 선택).
      *
      * @return 청소년 질문지
      */
-    public static String shortTitleAdolescentDevCompact() {
+    public static String shortTitleAdolescentCompact() {
         return "청소년 질문지";
     }
 
@@ -73,7 +77,7 @@ public final class SctSmsMessageBuilder {
     }
 
     /**
-     * 한국어 월·일 (공백 제거: {@code 12월9일}) — DEV 바이트 절약.
+     * 한국어 월·일 (공백 제거: {@code 12월9일}) — URL이 길 때 바이트 절약.
      *
      * @param expiresAt 만료 시각
      * @return 월·일
@@ -100,6 +104,7 @@ public final class SctSmsMessageBuilder {
 
     /**
      * 단문 SMS 본문 조립. ≤90B가 되도록 날짜 공백·청소년 제목을 단계적으로 축소한다.
+     * 절대 URL 길이만으로 축소 단계가 결정되며 host/profile 분기는 없다.
      *
      * @param formType         양식 유형
      * @param expiresAt        만료
@@ -122,12 +127,12 @@ public final class SctSmsMessageBuilder {
             return compactDate;
         }
         if (SctFormType.ADOLESCENT.name().equalsIgnoreCase(formType)) {
-            String adolescentDev = buildBody(
-                    shortTitleAdolescentDevCompact(),
+            String adolescentCompact = buildBody(
+                    shortTitleAdolescentCompact(),
                     formatKoreanMonthDayCompact(expiresAt),
                     absoluteShortUrl);
-            if (eucKrByteLength(adolescentDev) <= SctConstants.SMS_EUC_KR_MAX_BYTES) {
-                return adolescentDev;
+            if (eucKrByteLength(adolescentCompact) <= SctConstants.SMS_EUC_KR_MAX_BYTES) {
+                return adolescentCompact;
             }
         }
         return null;

@@ -57,7 +57,8 @@ public class SctConsent {
     @Column(name = "guardian_name_enc", length = 512)
     private String guardianName;
 
-    @Column(name = "guardian_relation", length = 40)
+    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Column(name = "guardian_relation", length = 512)
     private String guardianRelation;
 
     @Convert(converter = PersonalNameAttributeConverter.class)

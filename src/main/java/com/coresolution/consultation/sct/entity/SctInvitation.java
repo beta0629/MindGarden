@@ -2,6 +2,7 @@ package com.coresolution.consultation.sct.entity;
 
 import java.time.LocalDateTime;
 import com.coresolution.consultation.converter.EmailAttributeConverter;
+import com.coresolution.consultation.converter.PersonalNameAttributeConverter;
 import com.coresolution.consultation.converter.PhoneAttributeConverter;
 import com.coresolution.consultation.entity.BaseEntity;
 import jakarta.persistence.Column;
@@ -55,7 +56,8 @@ public class SctInvitation extends BaseEntity {
     @Column(name = "management_no", nullable = false, length = 32)
     private String managementNo;
 
-    @Column(name = "recipient_name", length = 120)
+    @Convert(converter = PersonalNameAttributeConverter.class)
+    @Column(name = "recipient_name", length = 512)
     private String recipientName;
 
     @Convert(converter = PhoneAttributeConverter.class)
@@ -108,9 +110,6 @@ public class SctInvitation extends BaseEntity {
 
     @Column(name = "verify_locked_until")
     private LocalDateTime verifyLockedUntil;
-
-    @Column(name = "respondent_meta_json", columnDefinition = "TEXT")
-    private String respondentMetaJson;
 
     @Column(name = "requires_guardian", nullable = false)
     @lombok.Builder.Default

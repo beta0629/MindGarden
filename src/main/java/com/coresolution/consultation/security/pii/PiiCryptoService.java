@@ -167,9 +167,12 @@ public class PiiCryptoService {
 
     /**
      * 활성 키 GCM(v2) 암호문으로 보장한다. 레거시 CBC/타 키는 재암호화한다.
+     * 암호문인데 복호화 실패 시 fail-closed ({@link IllegalStateException}) —
+     * ciphertext 를 GCM 으로 감싸지 않는다. 읽기 경로 {@link #decrypt}/{@link #safeDecrypt} 는 유지.
      *
      * @param text 평문 또는 암호문
      * @return 활성 키 v2 암호문
+     * @throws IllegalStateException 암호문 복호화 실패
      */
     public String ensureActiveKeyEncryption(String text) {
         if (text == null || text.trim().isEmpty()) {
@@ -182,7 +185,12 @@ public class PiiCryptoService {
 
         if (PiiCipherFormats.looksEncrypted(text)) {
             String decrypted = decryptCompatible(text);
-            return encryptGcm(decrypted);
+            String plain = PiiCipherFormats.requirePlaintextAfterDecrypt(text, decrypted);
+            if (plain == null) {
+                throw new IllegalStateException(
+                    "PII 재암호화 실패: 암호문을 복호화할 수 없습니다 (키링 불일치 가능).");
+            }
+            return encryptGcm(plain);
         }
 
         return encryptGcm(text);

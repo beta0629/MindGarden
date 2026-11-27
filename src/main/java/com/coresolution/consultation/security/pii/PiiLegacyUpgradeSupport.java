@@ -31,6 +31,7 @@ public final class PiiLegacyUpgradeSupport {
 
     /**
      * 평문/CBC → GCM. 이미 v2 이면 null(변경 없음).
+     * 암호문인데 복호화 실패(키링 불일치 등)면 skip — ciphertext 를 GCM 으로 감싸지 않는다.
      *
      * @param crypto 암호화 서비스
      * @param value  현재 컬럼 값
@@ -45,8 +46,12 @@ public final class PiiLegacyUpgradeSupport {
         if (PiiCipherFormats.looksV2(value)) {
             return null;
         }
-        String plain = crypto.decryptCompatible(value);
+        String decrypted = crypto.decryptCompatible(value);
+        String plain = PiiCipherFormats.requirePlaintextAfterDecrypt(value, decrypted);
         if (!StringUtils.hasText(plain)) {
+            if (PiiCipherFormats.looksEncrypted(value)) {
+                counts.skipped++;
+            }
             return null;
         }
         String gcm = crypto.encryptGcm(plain);
@@ -89,6 +94,7 @@ public final class PiiLegacyUpgradeSupport {
 
     /**
      * 저장값에서 평문을 복원한다 (이미 평문이면 그대로).
+     * 암호문인데 복호화 실패면 null — ciphertext 로 HMAC 하지 않는다.
      *
      * @param crypto 암호화 서비스
      * @param stored 컬럼 값
@@ -98,7 +104,8 @@ public final class PiiLegacyUpgradeSupport {
         if (!StringUtils.hasText(stored)) {
             return null;
         }
-        return crypto.decryptCompatible(stored);
+        String decrypted = crypto.decryptCompatible(stored);
+        return PiiCipherFormats.requirePlaintextAfterDecrypt(stored, decrypted);
     }
 
     /**

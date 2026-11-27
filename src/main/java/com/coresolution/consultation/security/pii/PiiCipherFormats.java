@@ -89,4 +89,39 @@ public final class PiiCipherFormats {
         }
         return marker;
     }
+
+    /**
+     * 복호화 결과가 평문인지 검증한다. 암호문 입력인데 복호화가 실패(원본 반환·암호문 유지·페이로드만 반환)
+     * 하면 null 을 돌려 GCM 재암호화·HMAC 을 막는다.
+     *
+     * <p>평문 입력은 그대로 통과한다. {@code decrypt}/{@code safeDecrypt} 읽기 fail-open 은 유지하되,
+     * 업그레이드·재암호화 경로에서만 이 가드를 사용한다.</p>
+     *
+     * @param original  복호화 전 값
+     * @param decrypted {@code decryptCompatible} 결과
+     * @return 평문으로 확신할 수 있으면 decrypted, 아니면 null
+     */
+    public static String requirePlaintextAfterDecrypt(String original, String decrypted) {
+        if (!StringUtils.hasText(original)) {
+            return null;
+        }
+        if (!looksEncrypted(original)) {
+            return decrypted;
+        }
+        if (!StringUtils.hasText(decrypted)) {
+            return null;
+        }
+        if (decrypted.equals(original) || looksEncrypted(decrypted)) {
+            return null;
+        }
+        // 키 부재 시 decrypt 가 마커를 벗긴 base64 페이로드만 반환하는 fail-open
+        int delimiterIndex = original.indexOf(VERSION_DELIMITER);
+        if (delimiterIndex > 0) {
+            String payload = original.substring(delimiterIndex + VERSION_DELIMITER.length());
+            if (payload.equals(decrypted)) {
+                return null;
+            }
+        }
+        return decrypted;
+    }
 }

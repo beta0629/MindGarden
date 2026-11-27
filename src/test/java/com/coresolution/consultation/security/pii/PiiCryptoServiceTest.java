@@ -84,6 +84,34 @@ class PiiCryptoServiceTest {
         assertThat(crypto.decryptCompatible(upgraded)).isEqualTo(BODY);
     }
 
+    @Test
+    @DisplayName("ensureActiveKeyEncryption — 복호화 불가 암호문은 fail-closed")
+    void ensureActive_undecryptable_throws() {
+        PersonalDataEncryptionKeyProvider other = newProvider(
+            new String[] { "test" },
+            KEY_ID + ":other-ring-encryption-key-32b-!!",
+            KEY_ID + ":other-ring-iv-16!");
+        other.initialize();
+        PiiCryptoService otherRing = new PiiCryptoService(other);
+        String foreignCbc = otherRing.encryptCbcForLegacyCompat(BODY);
+
+        assertThat(PiiCipherFormats.looksEncrypted(foreignCbc)).isTrue();
+        // 읽기 경로는 fail-open 유지
+        assertThat(crypto.decryptCompatible(foreignCbc)).isEqualTo(foreignCbc);
+        assertThatThrownBy(() -> crypto.ensureActiveKeyEncryption(foreignCbc))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("복호화");
+    }
+
+    @Test
+    @DisplayName("ensureActiveKeyEncryption — 가짜 마커도 fail-closed")
+    void ensureActive_fakeMarker_throws() {
+        String fake = "k1::YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=";
+        assertThatThrownBy(() -> crypto.ensureActiveKeyEncryption(fake))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("복호화");
+    }
+
     private PersonalDataEncryptionKeyProvider newProvider(String[] profiles, String keys, String ivs) {
         MockEnvironment environment = new MockEnvironment();
         environment.setActiveProfiles(profiles);

@@ -68,11 +68,13 @@ public class SctExchangeCodeStore {
      * @param invitationId   초대
      * @param tenantId       테넌트
      * @param landingStatus  null이면 초대 status 사용. REISSUED 등 오버라이드
+     * @param tokenHash      발급 시점 초대 tokenHash(재발급·재발송 무효화용)
      * @return opaque 교환 코드
      */
-    public String issue(Long invitationId, String tenantId, String landingStatus) {
-        if (invitationId == null || !StringUtils.hasText(tenantId)) {
-            throw new IllegalArgumentException("exchange issue requires invitationId and tenantId");
+    public String issue(Long invitationId, String tenantId, String landingStatus, String tokenHash) {
+        if (invitationId == null || !StringUtils.hasText(tenantId) || !StringUtils.hasText(tokenHash)) {
+            throw new IllegalArgumentException(
+                    "exchange issue requires invitationId, tenantId and tokenHash");
         }
         StringRedisTemplate redis = requireRedis("issue");
         String code = generateOpaqueCode();
@@ -81,7 +83,8 @@ public class SctExchangeCodeStore {
                 invitationId,
                 tenantId.trim(),
                 StringUtils.hasText(landingStatus) ? landingStatus.trim() : null,
-                false);
+                false,
+                tokenHash.trim());
         try {
             String json = JSON.writeValueAsString(entry);
             redis.opsForValue().set(key, json, ttlSeconds, TimeUnit.SECONDS);
@@ -123,7 +126,8 @@ public class SctExchangeCodeStore {
                         entry.invitationId(),
                         entry.tenantId(),
                         entry.landingStatus(),
-                        true);
+                        true,
+                        entry.tokenHash());
                 Long ttl = redis.getExpire(key, TimeUnit.SECONDS);
                 String json = JSON.writeValueAsString(marked);
                 if (ttl != null && ttl > 0) {
@@ -177,7 +181,8 @@ public class SctExchangeCodeStore {
             ExchangeEntry entry = JSON.readValue(raw, ExchangeEntry.class);
             if (entry == null
                     || entry.invitationId() == null
-                    || !StringUtils.hasText(entry.tenantId())) {
+                    || !StringUtils.hasText(entry.tenantId())
+                    || !StringUtils.hasText(entry.tokenHash())) {
                 return null;
             }
             return entry;
@@ -193,11 +198,13 @@ public class SctExchangeCodeStore {
      * @param tenantId      테넌트
      * @param landingStatus 상태 오버라이드(REISSUED 등) 또는 null
      * @param used          최초 resolve 여부
+     * @param tokenHash     발급 시점 초대 tokenHash
      */
     public record ExchangeEntry(
             Long invitationId,
             String tenantId,
             String landingStatus,
-            boolean used) {
+            boolean used,
+            String tokenHash) {
     }
 }

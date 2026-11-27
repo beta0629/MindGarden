@@ -312,6 +312,34 @@ class SctInvitationServiceTest {
     }
 
     @Test
+    @DisplayName("cancel — 단축 링크 비활성 후 CANCELLED")
+    void cancel_deactivatesShortLinks() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000010")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(3))
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(55L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        var response = invitationService.cancel("t1", staff, 55L);
+
+        assertEquals(SctInviteStatus.CANCELLED.name(), response.getStatus());
+        assertEquals(SctInviteStatus.CANCELLED.name(), existing.getStatus());
+        verify(sctShortLinkService).deactivateForInvitation("t1", 55L);
+    }
+
+    @Test
     void existingInvitationExpiryUnchanged_whenSettingsChange() {
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)

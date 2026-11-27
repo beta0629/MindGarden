@@ -311,6 +311,8 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
         invitation.setCancelledAt(LocalDateTime.now());
         invitationRepository.save(invitation);
+        // 단축 링크 비활성 — 신규 교환 발급 차단. 기존 교환은 Public resolve 시 status로 거부.
+        sctShortLinkService.deactivateForInvitation(tenantId, invitation.getId());
         auditLogService.record(AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actor.getId())

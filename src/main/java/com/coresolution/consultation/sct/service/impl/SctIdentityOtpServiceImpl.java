@@ -37,6 +37,7 @@ import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctIdentityOtpAttemptRecorder;
 import com.coresolution.consultation.sct.service.SctIdentityOtpDevCodeStore;
 import com.coresolution.consultation.sct.service.SctIdentityOtpRateLimiter;
+import com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctIdentityOtpSettings;
 import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
@@ -369,6 +370,8 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
                 .verifySessionId(sessionId)
                 .expiresInSeconds(verifySessionStore.remainingSeconds(absoluteExpiry(invitation)))
                 .consent(consent)
+                .deviceCookieRef(SctDeviceSessionCookieSupport.refFor(
+                        invitation.getTenantId(), invitation.getId()))
                 .build();
     }
 

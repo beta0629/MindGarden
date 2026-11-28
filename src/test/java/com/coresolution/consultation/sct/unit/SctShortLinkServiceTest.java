@@ -135,17 +135,35 @@ class SctShortLinkServiceTest {
     }
 
     @Test
-    @DisplayName("CANCELLED 초대 → invalid·교환 미발급")
-    void resolveRedirect_cancelledInvitation_returnsInvalidWithoutExchange() {
+    @DisplayName("CANCELLED 초대(링크 비활성이어도) → 교환 코드 경로로 취소 안내(일반 invalid 아님)")
+    void resolveRedirect_cancelledInvitation_issuesExchangeForCancelledNotice() {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        link.setIsActive(false); // 취소 시 단축 링크는 비활성화된다
         when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
                 .thenReturn(Optional.of(link));
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
                 .thenReturn(Optional.of(invitation));
+        when(exchangeCodeStore.issue(eq(10L), eq(TENANT), eq(null), eq("hash"), any()))
+                .thenReturn("cancelledLandingCode");
+
+        assertEquals(SctConstants.PUBLIC_SCT_WEB_PREFIX + "cancelledLandingCode",
+                shortLinkService.resolveRedirectPath(CODE));
+    }
+
+    @Test
+    @DisplayName("CANCELLED 이면서 이미 절대 만료가 지난 경우 → invalid(교환 발급 거부)")
+    void resolveRedirect_cancelledAndPastExpiry_invalid() {
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        invitation.setTokenExpiresAt(LocalDateTime.now().minusDays(1));
+        when(shortLinkRepository.findByShortCodeAndIsDeletedFalse(CODE))
+                .thenReturn(Optional.of(link));
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse(TENANT, 10L))
+                .thenReturn(Optional.of(invitation));
+        when(exchangeCodeStore.issue(any(), anyString(), any(), any(), any()))
+                .thenThrow(new IllegalArgumentException("exchange absolute expiry already passed"));
 
         assertEquals(SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH,
                 shortLinkService.resolveRedirectPath(CODE));
-        verify(exchangeCodeStore, never()).issue(any(), anyString(), any(), any(), any());
     }
 
     @Test

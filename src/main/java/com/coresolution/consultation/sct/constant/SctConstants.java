@@ -118,6 +118,10 @@ public final class SctConstants {
     /** 초대 기한 만료(또는 상태 불명 종료). */
     public static final String MSG_LINK_GONE = "링크가 만료되었거나 취소되었습니다.";
 
+    /** 재발급·재발송으로 닫힌 이전 링크. */
+    public static final String MSG_LINK_REISSUED =
+            "새 링크가 문자로 발송되었습니다. 가장 최근에 받은 문자의 링크로 다시 열어 주세요.";
+
     /** 센터가 취소한 초대. */
     public static final String MSG_LINK_CANCELLED = "센터에서 취소한 링크입니다. 필요하시면 센터에 문의해 주세요.";
 

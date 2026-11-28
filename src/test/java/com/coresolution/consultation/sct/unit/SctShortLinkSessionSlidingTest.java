@@ -260,14 +260,14 @@ class SctShortLinkSessionSlidingTest {
     }
 
     @Test
-    @DisplayName("재발급(tokenHash 교체) → 이전 교환 코드 404 거부")
+    @DisplayName("재발급(tokenHash 교체) → 이전 교환 코드 410 SCT_LINK_REISSUED 거부(만료 아님)")
     void reissuedInvitation_rejected() {
         String code = issueExchange(inviteAbsolute());
         clock.advance(Duration.ofMinutes(1));
         String sid = issueVerifySession();
         sctPublicService.saveDraft(code, draft(sid, "a"));
         invitation.setTokenHash(PiiTestSecrets.hmacService().hmacHex("rotated-new-token-value-32bytes!!"));
-        assertThrows(EntityNotFoundException.class,
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkReissuedException.class,
                 () -> sctPublicService.saveDraft(code, draft(sid, "b")));
     }
 
@@ -377,7 +377,62 @@ class SctShortLinkSessionSlidingTest {
 
         invitation.setStatus(SctInviteStatus.SENT.name());
         invitation.setTokenHash(PiiTestSecrets.hmacService().hmacHex("rotated-new-token-value-32bytes!!"));
-        assertThrows(EntityNotFoundException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkReissuedException.class,
+                () -> sctPublicService.resumeDeviceSession(code, sid));
+    }
+
+    @Test
+    @DisplayName("취소 초대의 교환 코드 meta → 410 SCT_LINK_CANCELLED (일반 404·만료 아님)")
+    void cancelledInvitation_exchangeMeta_isCancelledNotInvalid() {
+        String code = issueExchange(inviteAbsolute());
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkCancelledException.class,
+                () -> sctPublicService.getMeta(code));
+    }
+
+    @Test
+    @DisplayName("같은 단말·새 교환 코드(탭 닫고 단축링크 재진입) — 재인증 없이 같은 세션으로 resume, 쿠키 이름은 초대 기준")
+    void resume_newExchangeCode_sameDeviceSession() {
+        String first = issueExchange(inviteAbsolute());
+        assertTrue(exchangeCodeStore.resolve(first).isPresent());
+        clock.advance(Duration.ofMinutes(1));
+        String sid = issueVerifySession();
+        String refBefore = sctPublicService.resolveDeviceCookieRef(first);
+
+        // 탭을 닫고 80분 뒤 같은 단축링크를 다시 열면 새 교환 코드가 발급된다
+        clock.advance(Duration.ofMinutes(80));
+        String second = issueExchange(inviteAbsolute());
+        assertTrue(!first.equals(second));
+        assertEquals(refBefore, sctPublicService.resolveDeviceCookieRef(second),
+                "교환 코드가 달라도 쿠키 이름(초대·테넌트 해시)은 동일");
+        assertEquals(sid, sctPublicService.resumeDeviceSession(second, sid).getVerifySessionId());
+        sctPublicService.saveDraft(second, draft(sid, "after-reentry"));
+    }
+
+    @Test
+    @DisplayName("쿠키 이름 접미는 초대 ID·테넌트 기준 — 다른 초대/테넌트와 다름")
+    void deviceCookieRef_isInvitationAndTenantScoped() {
+        String code = issueExchange(inviteAbsolute());
+        String ref = sctPublicService.resolveDeviceCookieRef(code);
+        assertEquals(com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport
+                .refFor(TENANT_A, 100L), ref);
+        assertTrue(!ref.equals(com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport
+                .refFor(TENANT_A, 999L)));
+        assertTrue(!ref.equals(com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport
+                .refFor("tenant-b", 100L)));
+    }
+
+    @Test
+    @DisplayName("취소·만료·재발급·제출완료에서는 쿠키 이름 해석(resolveDeviceCookieRef)도 거부")
+    void resolveDeviceCookieRef_rejectedWhenClosed() {
+        String code = issueExchange(inviteAbsolute());
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkCancelledException.class,
+                () -> sctPublicService.resolveDeviceCookieRef(code));
+        invitation.setStatus(SctInviteStatus.EXPIRED.name());
+        assertThrows(SctGoneException.class, () -> sctPublicService.resolveDeviceCookieRef(code));
+        invitation.setStatus(SctInviteStatus.SUBMITTED.name());
+        assertThrows(SctConflictException.class, () -> sctPublicService.resolveDeviceCookieRef(code));
     }
 
     @Test

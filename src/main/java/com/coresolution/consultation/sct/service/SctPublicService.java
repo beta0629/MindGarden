@@ -30,6 +30,15 @@ public interface SctPublicService {
      */
     SctVerifyResponse resumeDeviceSession(String rawToken, String deviceSessionId);
 
+    /**
+     * 이 링크(교환 코드 포함)가 가리키는 초대·테넌트의 단말 쿠키 이름 접미.
+     * 취소·만료·재발급·제출 완료 상태는 resume 과 같은 규칙으로 거부한다.
+     *
+     * @param rawToken opaque 토큰(교환 코드 포함)
+     * @return 쿠키 이름 접미
+     */
+    String resolveDeviceCookieRef(String rawToken);
+
     SctPublicFormResponse getForm(String rawToken, String verifySessionId);
 
     void saveDraft(String rawToken, SctDraftSaveRequest request);

@@ -46,6 +46,7 @@ import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
 import com.coresolution.consultation.sct.service.SctSettingsService;
@@ -197,7 +198,18 @@ public class SctPublicServiceImpl implements SctPublicService {
                 .verifySessionId(sessionId)
                 .expiresInSeconds(verifySessionStore.remainingSeconds(absoluteExpiry(invitation)))
                 .consent(consent)
+                .deviceCookieRef(SctDeviceSessionCookieSupport.refFor(
+                        invitation.getTenantId(), invitation.getId()))
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public String resolveDeviceCookieRef(String rawToken) {
+        SctInvitation invitation = loadByToken(rawToken);
+        bindTenantAndGuard(invitation);
+        assertWritableOrVerify(invitation);
+        return SctDeviceSessionCookieSupport.refFor(invitation.getTenantId(), invitation.getId());
     }
 
     @Override

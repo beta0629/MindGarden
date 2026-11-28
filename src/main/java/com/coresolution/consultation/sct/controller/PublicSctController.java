@@ -77,7 +77,7 @@ public class PublicSctController extends BaseApiController {
             HttpServletRequest http,
             HttpServletResponse response) {
         SctVerifyResponse data = sctPublicService.verify(token, request, clientIp(http));
-        bindDevice(token, data, http, response);
+        bindDevice(data, http, response);
         return success(data);
     }
 
@@ -115,7 +115,7 @@ public class PublicSctController extends BaseApiController {
             HttpServletResponse response) {
         SctVerifyResponse data =
                 sctIdentityOtpService.confirmOtp(token, request, clientIp(http));
-        bindDevice(token, data, http, response);
+        bindDevice(data, http, response);
         return success(data);
     }
 
@@ -131,7 +131,8 @@ public class PublicSctController extends BaseApiController {
     public ResponseEntity<?> resumeSession(
             @PathVariable String token,
             HttpServletRequest http) {
-        String deviceSessionId = deviceSessionCookieSupport.read(http).orElse(null);
+        String ref = sctPublicService.resolveDeviceCookieRef(token);
+        String deviceSessionId = deviceSessionCookieSupport.read(http, ref).orElse(null);
         SctVerifyResponse data = sctPublicService.resumeDeviceSession(token, deviceSessionId);
         return success(data);
     }
@@ -205,13 +206,15 @@ public class PublicSctController extends BaseApiController {
     /**
      * 본인확인 성공 직후 verify 세션 ID 를 단말(브라우저)에 HttpOnly 쿠키로 바인딩.
      */
-    private void bindDevice(String token, SctVerifyResponse data,
+    private void bindDevice(SctVerifyResponse data,
             HttpServletRequest http, HttpServletResponse response) {
-        if (data == null || !StringUtils.hasText(data.getVerifySessionId())) {
+        if (data == null || !StringUtils.hasText(data.getVerifySessionId())
+                || !StringUtils.hasText(data.getDeviceCookieRef())) {
             return;
         }
         response.addHeader(HttpHeaders.SET_COOKIE, deviceSessionCookieSupport.build(
-                token, data.getVerifySessionId(), data.getExpiresInSeconds(), http).toString());
+                data.getDeviceCookieRef(), data.getVerifySessionId(),
+                data.getExpiresInSeconds(), http).toString());
     }
 
     private static String clientIp(HttpServletRequest request) {

@@ -10,6 +10,7 @@ import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.sct.exception.SctGoneException;
 import com.coresolution.core.dto.ErrorResponse;
 import com.coresolution.consultation.sct.exception.SctLinkCancelledException;
+import com.coresolution.consultation.sct.exception.SctLinkReissuedException;
 import com.coresolution.consultation.sct.exception.SctOtpLockedException;
 import com.coresolution.consultation.sct.exception.SctOtpRateLimitedException;
 import java.util.Map;
@@ -49,6 +50,18 @@ class GlobalExceptionHandlerSctErrorCodeTest {
 
         assertTrue(SctGoneException.forInvitationStatus("CANCELLED") instanceof SctLinkCancelledException);
         assertFalse(SctGoneException.forInvitationStatus("EXPIRED") instanceof SctLinkCancelledException);
+    }
+
+    @Test
+    @DisplayName("재발급으로 닫힌 링크 → 410 SCT_LINK_REISSUED (만료·취소와 구분)")
+    void reissuedIsDistinct() {
+        ResponseEntity<ErrorResponse> res = handler.handleSctLinkReissued(
+                new SctLinkReissuedException(
+                        com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_REISSUED),
+                request());
+        assertEquals(HttpStatus.GONE, res.getStatusCode());
+        assertEquals("SCT_LINK_REISSUED", res.getBody().getErrorCode());
+        assertFalse(res.getBody().getMessage().contains("만료되었거나 취소"));
     }
 
     @Test

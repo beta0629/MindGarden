@@ -133,3 +133,64 @@ jobs:
             chmod +x "$CHECK_SH" 2>/dev/null || true
             bash "$CHECK_SH" "production"
             exit 0
+
+  check-prod-keyring:
+    name: production host PII keyring + log counts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare remote run dir (production keyring)
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          script: |
+            set -euo pipefail
+            RUN_DIR="/tmp/mg-pii-keyring-check/${{ github.run_id }}"
+            mkdir -p "$RUN_DIR"
+            chmod 700 "$RUN_DIR"
+
+      - name: Upload keyring check script (production)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          source: scripts/ops/check-prod-pii-keyring-activation.py
+          target: /tmp/mg-pii-keyring-check/${{ github.run_id }}/
+          strip_components: 2
+          overwrite: true
+
+      - name: Run read-only keyring + log count check (production)
+        uses: appleboy/ssh-action@c4f70287fc37c43b14b30b407224bbbc8e8c6327 # master 2026-08-16 (v1.2.5+10) 고정
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: 22
+          timeout: 180s
+          script_stop: false
+          script: |
+            set +e
+            set -u
+            set +x
+            CHECK_PY="/tmp/mg-pii-keyring-check/${{ github.run_id }}/check-prod-pii-keyring-activation.py"
+            if [ ! -f "$CHECK_PY" ]; then
+              echo "::error::check script missing at $CHECK_PY"
+              ls -la "/tmp/mg-pii-keyring-check/${{ github.run_id }}/" 2>/dev/null || true
+              exit 1
+            fi
+            if ! command -v python3 >/dev/null 2>&1; then
+              echo "::error::python3 missing on production host"
+              exit 1
+            fi
+            python3 "$CHECK_PY" "2026-11-28 00:59:00 UTC"
+            rc=$?
+            rm -rf "/tmp/mg-pii-keyring-check/${{ github.run_id }}"
+            exit "$rc"

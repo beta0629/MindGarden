@@ -17,7 +17,6 @@ import { useParams } from 'react-router-dom';
 import MGButton from '../../common/MGButton';
 import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
-import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import {
   confirmSctIdentityOtp,
   fetchSctPublicForm,
@@ -33,9 +32,11 @@ import {
   clearSctPublicDraft
 } from '../../../utils/sctPublicDraftStorage';
 import {
+  isSctLinkCancelledError,
   isSctLinkSessionExpiredError,
   isSctLinkUnusableError,
-  isSctVerifyRequiredError
+  isSctVerifyRequiredError,
+  resolveSctPublicErrorMessage
 } from '../../../utils/sctPublicVerifyError';
 import useSctVisualViewport from '../../../hooks/useSctVisualViewport';
 import useSctDraftAutosave, { SCT_SAVE_STATUS } from '../../../hooks/useSctDraftAutosave';
@@ -70,6 +71,7 @@ const STEP = Object.freeze({
   REVIEW: 'REVIEW',
   DONE: 'DONE',
   EXPIRED: 'EXPIRED',
+  CANCELLED: 'CANCELLED',
   REISSUED: 'REISSUED',
   INVALID_LINK: 'INVALID_LINK',
   LINK_SESSION_EXPIRED: 'LINK_SESSION_EXPIRED',
@@ -98,6 +100,7 @@ const isIdentityContactConsentRequiredError = (error) => {
 const LANDING_STEPS = Object.freeze([
   STEP.ENTRY,
   STEP.EXPIRED,
+  STEP.CANCELLED,
   STEP.REISSUED,
   STEP.ALREADY
 ]);
@@ -141,6 +144,8 @@ const SctPublicPage = () => {
   const [paused, setPaused] = useState(false);
   const [pendingSubmitAfterVerify, setPendingSubmitAfterVerify] = useState(false);
   const pendingSubmitRef = useRef(false);
+  const navLockRef = useRef(false);
+  const [navBusy, setNavBusy] = useState(false);
 
   const formType = meta?.formType || form?.formType || SCT_FORM_TYPE.ADULT;
   const isChild = formType === SCT_FORM_TYPE.CHILD;
@@ -191,7 +196,9 @@ const SctPublicPage = () => {
         setStep(STEP.ALREADY);
       } else if (data.status === SCT_STATUS.REISSUED) {
         setStep(STEP.REISSUED);
-      } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
+      } else if (data.status === SCT_STATUS.CANCELLED) {
+        setStep(STEP.CANCELLED);
+      } else if (data.status === SCT_STATUS.EXPIRED) {
         setStep(STEP.EXPIRED);
       } else {
         // 같은 단말이면 재인증 없이 이어쓴다(HttpOnly 단말 쿠키). 아니면 effect 가 ENTRY 로 보낸다.
@@ -201,12 +208,14 @@ const SctPublicPage = () => {
       const statusCode = error?.status ?? error?.response?.status;
       if (isSctLinkSessionExpiredError(error)) {
         setStep(STEP.LINK_SESSION_EXPIRED);
+      } else if (isSctLinkCancelledError(error)) {
+        setStep(STEP.CANCELLED);
       } else if (statusCode === 410) {
         setStep(STEP.EXPIRED);
       } else if (statusCode === 404) {
         setStep(STEP.INVALID_LINK);
       } else {
-        setErrorMsg(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+        setErrorMsg(resolveSctPublicErrorMessage(error, SCT_UI.LOAD_FAIL));
         setStep(STEP.ERROR);
       }
     } finally {
@@ -220,8 +229,8 @@ const SctPublicPage = () => {
 
   // 레거시 localStorage 답변 키 정리 (이탈·만료·언마운트)
   useEffect(() => {
-    if (step === STEP.EXPIRED || step === STEP.REISSUED || step === STEP.INVALID_LINK
-      || step === STEP.LINK_SESSION_EXPIRED) {
+    if (step === STEP.EXPIRED || step === STEP.CANCELLED || step === STEP.REISSUED
+      || step === STEP.INVALID_LINK || step === STEP.LINK_SESSION_EXPIRED) {
       clearSctPublicDraft(token);
     }
   }, [step, token]);
@@ -378,7 +387,7 @@ const SctPublicPage = () => {
       setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: true } : prev));
       setStep(STEP.VERIFY);
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
     } finally {
       setBusy(false);
     }
@@ -415,7 +424,7 @@ const SctPublicPage = () => {
             setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
             setStep(STEP.REVIEW);
           } else {
-            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setVerifyError(resolveSctPublicErrorMessage(submitError, SCT_UI.LOAD_FAIL));
             setStep(STEP.REVIEW);
           }
         }
@@ -485,7 +494,7 @@ const SctPublicPage = () => {
       if (handleIdentityConsentRequired(error)) {
         return;
       }
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+      setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.MISMATCH));
     } finally {
       setBusy(false);
     }
@@ -515,7 +524,7 @@ const SctPublicPage = () => {
       if (handleIdentityConsentRequired(error)) {
         return;
       }
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+      setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.MISMATCH));
     } finally {
       setBusy(false);
     }
@@ -549,7 +558,7 @@ const SctPublicPage = () => {
       if (handleIdentityConsentRequired(error)) {
         return;
       }
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+      setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.MISMATCH));
     } finally {
       setBusy(false);
     }
@@ -572,7 +581,7 @@ const SctPublicPage = () => {
       setVerifyError('');
       setStep(STEP.CONSENT);
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
     } finally {
       setBusy(false);
     }
@@ -634,7 +643,7 @@ const SctPublicPage = () => {
             setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
             setStep(STEP.REVIEW);
           } else {
-            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setVerifyError(resolveSctPublicErrorMessage(submitError, SCT_UI.LOAD_FAIL));
             setStep(STEP.REVIEW);
           }
         }
@@ -647,21 +656,24 @@ const SctPublicPage = () => {
         setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
         setStep(STEP.REVIEW);
       } else {
-        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+        setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
       }
     } finally {
       setBusy(false);
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
+  // 중복 클릭·재개 계산 오차로 pageIndex 가 범위를 벗어나도 화면은 항상 유효한 단계를 보여 준다.
+  const currentPage = Math.min(Math.max(pageIndex, 0), totalPages - 1);
+
   const pageItems = useMemo(() => {
-    const start = pageIndex * perPage;
+    const start = currentPage * perPage;
     return items.slice(start, start + perPage);
-  }, [items, pageIndex, perPage]);
+  }, [items, currentPage, perPage]);
 
   const pageFrom = pageItems[0]?.itemNo;
   const pageTo = pageItems[pageItems.length - 1]?.itemNo;
-  const totalPages = Math.max(1, Math.ceil(items.length / perPage));
 
   const updateAnswer = (item, next) => {
     setAnswersMap((prev) => ({
@@ -675,20 +687,30 @@ const SctPublicPage = () => {
   };
 
   const goPrev = () => {
-    if (pageIndex <= 0) {
+    if (navLockRef.current) return;
+    if (currentPage <= 0) {
       setStep(STEP.CONSENT);
       return;
     }
-    setPageIndex((p) => p - 1);
+    setPageIndex(currentPage - 1);
   };
 
   const goNext = async() => {
-    await saveNow();
-    if (pageIndex >= totalPages - 1) {
-      setStep(STEP.REVIEW);
-      return;
+    // 저장 대기 중 연속 클릭이 단계를 건너뛰거나 마지막을 넘기지 않도록 한 번에 하나만 처리
+    if (navLockRef.current) return;
+    navLockRef.current = true;
+    setNavBusy(true);
+    try {
+      await saveNow();
+      if (currentPage >= totalPages - 1) {
+        setStep(STEP.REVIEW);
+        return;
+      }
+      setPageIndex(currentPage + 1);
+    } finally {
+      navLockRef.current = false;
+      setNavBusy(false);
     }
-    setPageIndex((p) => p + 1);
   };
 
   const handleSubmit = async() => {
@@ -717,9 +739,9 @@ const SctPublicPage = () => {
       } else if (isSctLinkUnusableError(error)) {
         setVerifyError(isSctLinkSessionExpiredError(error)
           ? SCT_UI.LINK_SESSION_EXPIRED
-          : resolveUserFacingApiErrorMessage(error, SCT_UI.LINK_SESSION_EXPIRED));
+          : resolveSctPublicErrorMessage(error, SCT_UI.LINK_SESSION_EXPIRED));
       } else {
-        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+        setVerifyError(resolveSctPublicErrorMessage(error, SCT_UI.LOAD_FAIL));
       }
     } finally {
       setBusy(false);
@@ -830,11 +852,13 @@ const SctPublicPage = () => {
   } else if (LANDING_STEPS.includes(step)) {
     const landingKind = step === STEP.EXPIRED
       ? SCT_LANDING_KIND.EXPIRED
-      : step === STEP.REISSUED
-        ? SCT_LANDING_KIND.REISSUED
-        : step === STEP.ALREADY
-          ? SCT_LANDING_KIND.SUBMITTED
-          : SCT_LANDING_KIND.INVITE;
+      : step === STEP.CANCELLED
+        ? SCT_LANDING_KIND.CANCELLED
+        : step === STEP.REISSUED
+          ? SCT_LANDING_KIND.REISSUED
+          : step === STEP.ALREADY
+            ? SCT_LANDING_KIND.SUBMITTED
+            : SCT_LANDING_KIND.INVITE;
     body = (
       <SctPublicLanding
         kind={landingKind}
@@ -1160,7 +1184,7 @@ const SctPublicPage = () => {
       );
       bar = (
         <SctThumbBar
-          primaryLabel={pageIndex >= totalPages - 1 ? SCT_UI.SUBMIT : SCT_UI.NEXT}
+          primaryLabel={currentPage >= totalPages - 1 ? SCT_UI.SUBMIT : SCT_UI.NEXT}
           onPrimary={goNext}
           secondaryLabel={SCT_UI.PREV}
           onSecondary={goPrev}
@@ -1169,7 +1193,7 @@ const SctPublicPage = () => {
             await saveNow();
             setPaused(true);
           }}
-          loading={busy}
+          loading={busy || navBusy}
         />
       );
     }

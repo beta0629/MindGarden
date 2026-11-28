@@ -34,4 +34,16 @@ class SctIdentityOtpRateLimiterTest {
         assertFalse(limiter.tryAcquire("a", 1));
         assertTrue(limiter.tryAcquire("b", 1));
     }
+
+    @Test
+    @DisplayName("한도 초과 시 남은 대기 초 > 0, 여유 있으면 0")
+    void retryAfterSeconds() {
+        SctIdentityOtpRateLimiter limiter = new SctIdentityOtpRateLimiter();
+        String key = "invite:t1:2";
+        org.junit.jupiter.api.Assertions.assertEquals(0L, limiter.retryAfterSeconds(key, 2));
+        limiter.tryAcquire(key, 2);
+        limiter.tryAcquire(key, 2);
+        long wait = limiter.retryAfterSeconds(key, 2);
+        assertTrue(wait > 0L && wait <= 3600L);
+    }
 }

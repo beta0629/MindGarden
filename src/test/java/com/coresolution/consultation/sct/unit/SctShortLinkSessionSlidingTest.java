@@ -241,7 +241,7 @@ class SctShortLinkSessionSlidingTest {
         sctPublicService.saveDraft(code, draft(sid, "a"));
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
         clock.advance(Duration.ofMinutes(61));
-        assertThrows(SctGoneException.class,
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkCancelledException.class,
                 () -> sctPublicService.submit(code, SctSubmitRequest.builder().verifySessionId(sid).build()));
     }
 
@@ -253,8 +253,10 @@ class SctShortLinkSessionSlidingTest {
         String sid = issueVerifySession();
         sctPublicService.saveDraft(code, draft(sid, "a"));
         invitation.setStatus(SctInviteStatus.EXPIRED.name());
-        assertThrows(SctGoneException.class,
+        SctGoneException gone = assertThrows(SctGoneException.class,
                 () -> sctPublicService.saveDraft(code, draft(sid, "b")));
+        // 기한 만료는 취소 예외가 아니다(오표시 방지)
+        assertFalse(gone instanceof com.coresolution.consultation.sct.exception.SctLinkCancelledException);
     }
 
     @Test
@@ -366,7 +368,8 @@ class SctShortLinkSessionSlidingTest {
         assertEquals(sid, sctPublicService.resumeDeviceSession(code, sid).getVerifySessionId());
 
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
-        assertThrows(SctGoneException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+        assertThrows(com.coresolution.consultation.sct.exception.SctLinkCancelledException.class,
+                () -> sctPublicService.resumeDeviceSession(code, sid));
         invitation.setStatus(SctInviteStatus.EXPIRED.name());
         assertThrows(SctGoneException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
         invitation.setStatus(SctInviteStatus.SUBMITTED.name());

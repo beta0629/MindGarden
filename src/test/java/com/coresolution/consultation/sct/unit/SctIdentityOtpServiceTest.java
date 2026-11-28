@@ -358,8 +358,13 @@ class SctIdentityOtpServiceTest {
         recent.setId(9L);
         savedRow.set(recent);
 
-        assertThrows(SctOtpRateLimitedException.class, () -> service.sendOtp(RAW_TOKEN,
-                SctIdentityOtpSendRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        SctOtpRateLimitedException ex = assertThrows(SctOtpRateLimitedException.class,
+                () -> service.sendOtp(RAW_TOKEN,
+                        SctIdentityOtpSendRequest.builder().phone(PHONE).build(), "127.0.0.1"));
+        // 남은 대기 시간이 응답에 실린다(쿨다운 60초 - 경과 10초 근처)
+        org.junit.jupiter.api.Assertions.assertNotNull(ex.getRetryAfterSeconds());
+        org.junit.jupiter.api.Assertions.assertTrue(
+                ex.getRetryAfterSeconds() > 0L && ex.getRetryAfterSeconds() <= 60L);
     }
 
     @Test

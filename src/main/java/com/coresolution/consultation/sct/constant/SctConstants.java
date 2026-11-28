@@ -113,7 +113,13 @@ public final class SctConstants {
             "링크 사용 시간이 지났습니다. 문자의 링크를 다시 열면 답이 이어집니다.";
 
     /** 공개 링크 없음(존재 여부 비공개). */
-    public static final String MSG_LINK_NOT_FOUND = "SCT 링크를 찾을 수 없습니다.";
+    public static final String MSG_LINK_NOT_FOUND = "링크를 찾을 수 없습니다. 문자로 받은 최신 링크인지 확인해 주세요.";
+
+    /** 초대 기한 만료(또는 상태 불명 종료). */
+    public static final String MSG_LINK_GONE = "링크가 만료되었거나 취소되었습니다.";
+
+    /** 센터가 취소한 초대. */
+    public static final String MSG_LINK_CANCELLED = "센터에서 취소한 링크입니다. 필요하시면 센터에 문의해 주세요.";
 
     /** 공개 본인확인 세션 없음·만료·불일치. */
     public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";

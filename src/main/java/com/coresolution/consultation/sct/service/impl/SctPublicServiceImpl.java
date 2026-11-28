@@ -453,14 +453,14 @@ public class SctPublicServiceImpl implements SctPublicService {
     private void assertReadable(SctInvitation invitation) {
         if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
                 || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
     }
 
     private void assertWritableOrVerify(SctInvitation invitation) {
         if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
                 || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
         if (SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("이미 제출된 질문지입니다.");

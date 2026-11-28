@@ -111,6 +111,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.GONE).body(error);
     }
 
+    /**
+     * 센터가 취소한 SCT 링크 — 410, 기한 만료(SCT_GONE)와 구분되는 코드.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctLinkCancelledException.class)
+    public ResponseEntity<ErrorResponse> handleSctLinkCancelled(
+            com.coresolution.consultation.sct.exception.SctLinkCancelledException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(),
+                com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_CANCELLED),
+            com.coresolution.consultation.sct.exception.SctLinkCancelledException.ERROR_CODE,
+            HttpStatus.GONE.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctGoneException.class)
     public ResponseEntity<ErrorResponse> handleSctGone(
             com.coresolution.consultation.sct.exception.SctGoneException e,
@@ -178,20 +196,40 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * SCT 본인확인 SMS OTP rate limit. HTTP 429.
+     * SCT 본인확인 SMS OTP rate limit. HTTP 429 + {@code data.retryAfterSeconds}(+ Retry-After 헤더).
      */
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpRateLimitedException.class)
-    public ResponseEntity<ErrorResponse> handleSctOtpRateLimited(
+    public ResponseEntity<Map<String, Object>> handleSctOtpRateLimited(
             com.coresolution.consultation.sct.exception.SctOtpRateLimitedException e,
             HttpServletRequest request) {
-        ErrorResponse error = ErrorResponse.of(
+        return sctRetryAfterResponse(
             clientSafeMessage(e.getMessage(), "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요."),
-            "SCT_OTP_RATE_LIMITED",
-            HttpStatus.TOO_MANY_REQUESTS.value(),
-            ApiUriSanitizer.forLogging(request.getRequestURI()),
-            request.getMethod()
-        );
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+            "SCT_OTP_RATE_LIMITED", e.getRetryAfterSeconds(), request);
+    }
+
+    /**
+     * SCT OTP 429 공통 본문 — 오류 코드·고정 문구·남은 대기 초만 담는다(코드·번호 비노출).
+     */
+    private static ResponseEntity<Map<String, Object>> sctRetryAfterResponse(
+            String message, String errorCode, Long retryAfterSeconds, HttpServletRequest request) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("success", false);
+        body.put("message", message);
+        body.put("errorCode", errorCode);
+        body.put("status", HttpStatus.TOO_MANY_REQUESTS.value());
+        if (retryAfterSeconds != null && retryAfterSeconds > 0L) {
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("retryAfterSeconds", retryAfterSeconds);
+            body.put("data", data);
+        }
+        body.put("timestamp", java.time.LocalDateTime.now().toString());
+        body.put("path", ApiUriSanitizer.forLogging(request.getRequestURI()));
+        body.put("method", request.getMethod());
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS);
+        if (retryAfterSeconds != null && retryAfterSeconds > 0L) {
+            builder.header(HttpHeaders.RETRY_AFTER, String.valueOf(retryAfterSeconds));
+        }
+        return builder.body(body);
     }
 
     /**
@@ -229,20 +267,15 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * SCT 본인확인 SMS OTP 오답 잠금. HTTP 429.
+     * SCT 본인확인 SMS OTP 오답 잠금. HTTP 429 + {@code data.retryAfterSeconds}(+ Retry-After 헤더).
      */
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctOtpLockedException.class)
-    public ResponseEntity<ErrorResponse> handleSctOtpLocked(
+    public ResponseEntity<Map<String, Object>> handleSctOtpLocked(
             com.coresolution.consultation.sct.exception.SctOtpLockedException e,
             HttpServletRequest request) {
-        ErrorResponse error = ErrorResponse.of(
+        return sctRetryAfterResponse(
             clientSafeMessage(e.getMessage(), "인증 시도 횟수를 초과했습니다. 잠시 후 다시 시도해 주세요."),
-            "SCT_OTP_LOCKED",
-            HttpStatus.TOO_MANY_REQUESTS.value(),
-            ApiUriSanitizer.forLogging(request.getRequestURI()),
-            request.getMethod()
-        );
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+            "SCT_OTP_LOCKED", e.getRetryAfterSeconds(), request);
     }
 
     /**
@@ -443,6 +476,17 @@ public class GlobalExceptionHandler {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
         }
         log.warn("Illegal state: {}", e.getMessage());
+        if (msg.contains(ApiRequestErrorMessages.SESSION_INVALIDATED_MARKER)) {
+            // Spring Session 영문 예외 원문은 응답에 싣지 않는다(내담자 공개 화면 노출 방지).
+            ErrorResponse invalidated = ErrorResponse.of(
+                ApiRequestErrorMessages.SESSION_INVALIDATED,
+                ApiRequestErrorMessages.CODE_SESSION_INVALIDATED,
+                HttpStatus.BAD_REQUEST.value(),
+                ApiUriSanitizer.forLogging(request.getRequestURI()),
+                request.getMethod()
+            );
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(invalidated);
+        }
         ErrorResponse error = ErrorResponse.of(
             clientSafeMessage(e.getMessage(), ApiRequestErrorMessages.INVALID_PARAMETER_VALUE),
             "ILLEGAL_STATE",

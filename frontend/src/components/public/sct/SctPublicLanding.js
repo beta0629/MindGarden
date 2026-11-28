@@ -27,6 +27,7 @@ import './sctPublicLanding.css';
 export const SCT_LANDING_KIND = Object.freeze({
   INVITE: 'invite',
   EXPIRED: 'expired',
+  CANCELLED: 'cancelled',
   SUBMITTED: 'submitted',
   REISSUED: 'reissued'
 });
@@ -137,7 +138,7 @@ HelpChapter.propTypes = {
 
 /**
  * @param {{
- *   kind: 'invite'|'expired'|'submitted'|'reissued',
+ *   kind: 'invite'|'expired'|'cancelled'|'submitted'|'reissued',
  *   meta: object,
  *   resumed?: boolean,
  *   onStart?: () => void
@@ -154,7 +155,8 @@ const SctPublicLanding = ({ kind, meta, resumed = false, onStart }) => {
   const officePhone = typeof meta?.officePhone === 'string' ? meta.officePhone.trim() : '';
   const mobilePhone = typeof meta?.mobilePhone === 'string' ? meta.mobilePhone.trim() : '';
   const officeHref = toSctTelHref(officePhone);
-  const isClosed = kind === SCT_LANDING_KIND.EXPIRED || kind === SCT_LANDING_KIND.REISSUED;
+  const isClosed = kind === SCT_LANDING_KIND.EXPIRED || kind === SCT_LANDING_KIND.REISSUED
+    || kind === SCT_LANDING_KIND.CANCELLED;
   const isErrState = kind !== SCT_LANDING_KIND.INVITE;
   const expiryLabel = formatSctExpiryUntil(meta?.tokenExpiresAt);
   const expiryPlain = formatSctKoreanDateTime(meta?.tokenExpiresAt);
@@ -187,6 +189,18 @@ const SctPublicLanding = ({ kind, meta, resumed = false, onStart }) => {
     stateRows = [
       [SCT_UI.FORM_KIND, formTitle],
       [SCT_UI.LANDING_DEADLINE_LABEL, expiryPlain || '—'],
+      officePhone ? [SCT_UI.LANDING_OFFICE_LABEL, officePhone] : null
+    ].filter(Boolean);
+  } else if (kind === SCT_LANDING_KIND.CANCELLED) {
+    stateBadge = SCT_UI.CANCELLED_BADGE;
+    stateTagCls = 'is-err';
+    stateIconKind = 'alert';
+    stateIconCls = 'is-err';
+    stateTitle = SCT_UI.CANCELLED_TITLE;
+    stateLead = SCT_UI.CANCELLED_BODY;
+    stateRows = [
+      [SCT_UI.FORM_KIND, formTitle],
+      ['안내', SCT_UI.CANCELLED_HINT],
       officePhone ? [SCT_UI.LANDING_OFFICE_LABEL, officePhone] : null
     ].filter(Boolean);
   } else if (kind === SCT_LANDING_KIND.SUBMITTED) {

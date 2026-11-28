@@ -84,6 +84,26 @@ public class SctIdentityOtpRateLimiter {
     }
 
     /**
+     * 상한에 걸렸을 때 다시 시도 가능해질 때까지 남은 초(슬라이딩 1시간 창). 여유가 있으면 0.
+     *
+     * @param bucketKey    키
+     * @param limitPerHour 상한
+     * @return 남은 초
+     */
+    public long retryAfterSeconds(String bucketKey, int limitPerHour) {
+        Objects.requireNonNull(bucketKey, "bucketKey");
+        if (limitPerHour <= 0) {
+            return 0L;
+        }
+        Instant now = clock.instant();
+        SlidingWindow window = windows.computeIfAbsent(bucketKey, k -> new SlidingWindow());
+        synchronized (window) {
+            window.evictOlderThan(now.minus(Duration.ofHours(1)));
+            return window.secondsUntilBelow(limitPerHour, now);
+        }
+    }
+
+    /**
      * 성공·실패 무관 시도 기록.
      *
      * @param bucketKey 키
@@ -118,6 +138,22 @@ public class SctIdentityOtpRateLimiter {
 
         int size() {
             return timestamps.size();
+        }
+
+        long secondsUntilBelow(int limit, Instant now) {
+            int excess = timestamps.size() - limit;
+            if (excess < 0) {
+                return 0L;
+            }
+            Iterator<Instant> it = timestamps.iterator();
+            Instant pivot = null;
+            for (int i = 0; i <= excess && it.hasNext(); i++) {
+                pivot = it.next();
+            }
+            if (pivot == null) {
+                return 0L;
+            }
+            return Math.max(1L, Duration.between(now, pivot.plus(Duration.ofHours(1))).getSeconds());
         }
     }
 }

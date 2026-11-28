@@ -10,8 +10,11 @@ package com.coresolution.consultation.constant;
  */
 public final class ShopSessionCountConstants {
 
-    /** 회기수 최소값(양의 정수). */
+    /** 회기수 최소값(양의 정수). 결제·부여(grant)에도 이 값을 유지한다. */
     public static final int MIN_SESSION_COUNT = 1;
+
+    /** 검사(ASSESSMENT) 카탈로그 회기수 최소값 — 0 허용(판매 조건). */
+    public static final int MIN_SESSION_COUNT_ASSESSMENT = 0;
 
     /**
      * 단회기 판정 임계값.
@@ -28,6 +31,22 @@ public final class ShopSessionCountConstants {
     public static final String MSG_SESSION_COUNT_REQUIRED = "회기수는 1 이상의 양의 정수여야 합니다.";
 
     private ShopSessionCountConstants() {
+    }
+
+    /**
+     * 카탈로그 카테고리별 회기수 최소값.
+     * <p>ASSESSMENT → {@link #MIN_SESSION_COUNT_ASSESSMENT}, 그 외 → {@link #MIN_SESSION_COUNT}.</p>
+     * <p>결제·회기 부여({@link #resolveSessionsToGrant})에는 사용하지 않는다.</p>
+     *
+     * @param category 카탈로그 카테고리 (ASSESSMENT|CONSULTATION 등)
+     * @return 카테고리별 최소 회기수
+     */
+    public static int minSessionCountForCategory(String category) {
+        if (category != null
+                && ShopCatalogCategory.ASSESSMENT.equals(category.trim().toUpperCase())) {
+            return MIN_SESSION_COUNT_ASSESSMENT;
+        }
+        return MIN_SESSION_COUNT;
     }
 
     /**

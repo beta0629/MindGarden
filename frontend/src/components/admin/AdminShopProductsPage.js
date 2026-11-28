@@ -278,7 +278,7 @@ const AdminShopProductsPage = () => {
     const isHome = kind === TOGGLE.HOME;
     const checked = isHome ? product.homePublic : product.mallVisible;
     const stopped = product.active === false;
-    const unset = !isHome && isAdminShopProductSessionUnset(product.sessions);
+    const unset = !isHome && isAdminShopProductSessionUnset(product.sessions, product.category);
     const blocked = stopped || (!checked && unset);
     const toggle = (
       <Switch
@@ -313,7 +313,7 @@ const AdminShopProductsPage = () => {
   };
 
   const renderCell = (key, product) => {
-    const unset = isAdminShopProductSessionUnset(product.sessions);
+    const unset = isAdminShopProductSessionUnset(product.sessions, product.category);
     const stopped = product.active === false;
     const editId = resolveEditId(product);
     switch (key) {

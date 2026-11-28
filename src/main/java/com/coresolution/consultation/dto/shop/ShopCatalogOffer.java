@@ -26,17 +26,20 @@ public record ShopCatalogOffer(
 
     /**
      * 요금 관리에 연결되지 않은 SKU의 저장값.
+     * <p>ASSESSMENT 는 sessionCount 0 을 허용하며 MIN=1 로 올리지 않는다.</p>
      *
      * @param sku 카탈로그 SKU
      * @return 항상 sellable 인 오퍼 (가격 없음은 0)
      */
     public static ShopCatalogOffer unlinked(ShopCatalogSku sku) {
-        int sessions = ShopSessionCountConstants.MIN_SESSION_COUNT;
+        int minSessions = sku != null
+                ? ShopSessionCountConstants.minSessionCountForCategory(sku.getCatalogCategory())
+                : ShopSessionCountConstants.MIN_SESSION_COUNT;
+        int sessions = minSessions;
         long price = 0L;
         String name = "";
         if (sku != null) {
-            if (sku.getSessionCount() != null
-                    && sku.getSessionCount() >= ShopSessionCountConstants.MIN_SESSION_COUNT) {
+            if (sku.getSessionCount() != null && sku.getSessionCount() >= minSessions) {
                 sessions = sku.getSessionCount();
             }
             if (sku.getUnitPriceMinor() != null) {

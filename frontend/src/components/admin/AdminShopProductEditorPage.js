@@ -41,10 +41,10 @@ import {
   ADMIN_SHOP_PRODUCT_EDITOR_V2_COPY,
   ADMIN_SHOP_COMPOSITION_COPY,
   ADMIN_SHOP_PRODUCT_ROUTES,
-  ADMIN_SHOP_PRODUCT_SESSION_MIN,
   ADMIN_SHOP_PRODUCTS_COPY,
   ADMIN_SHOP_SUITE_TEST_IDS,
-  formatAdminShopCopy
+  formatAdminShopCopy,
+  resolveAdminShopProductSessionMin
 } from '../../constants/adminShopSuite';
 import {
   ADMIN_SHOP_CATALOG_CATEGORY_FIELD_LABEL,
@@ -590,7 +590,8 @@ function AdminShopProductEditorPage({ isNew }) {
     }
   };
   const priceText = validation.price != null ? formatShopMoney(validation.price) : '—';
-  const sessionsText = validation.sessions != null && validation.sessions >= ADMIN_SHOP_PRODUCT_SESSION_MIN
+  const sessionMin = resolveAdminShopProductSessionMin(form.catalogCategory);
+  const sessionsText = validation.sessions != null && validation.sessions >= sessionMin
     ? `${validation.sessions}${ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNIT}`
     : ADMIN_SHOP_PRODUCTS_COPY.SESSION_UNSET;
 

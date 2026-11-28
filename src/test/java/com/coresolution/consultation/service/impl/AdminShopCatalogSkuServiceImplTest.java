@@ -619,6 +619,38 @@ class AdminShopCatalogSkuServiceImplTest {
     }
 
     @Test
+    @DisplayName("patchPackageCatalogVisible — ASSESSMENT sessions=0·priceReady면 sellable·0 유지")
+    void patchPackageCatalogVisible_assessmentZeroSessions_sellableWhenPriceReady() {
+        ShopCatalogSku existing = new ShopCatalogSku();
+        existing.setId(31L);
+        existing.setTenantId(TENANT);
+        existing.setSkuCode("SHOP-ASSESS-0");
+        existing.setSourcePackageCode("PACKAGE_EXAM");
+        existing.setTitle("검사");
+        existing.setUnitPriceMinor(20000L);
+        existing.setSessionCount(0);
+        existing.setCatalogCategory(ShopCatalogCategory.ASSESSMENT);
+        existing.setCatalogVisible(false);
+        existing.setThumbnailUrl(THUMB);
+        existing.setActive(true);
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 0, true, true, ShopCatalogCategory.ASSESSMENT));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of(existing));
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        adminShopCatalogSkuService.patchPackageCatalogVisible(TENANT, "PACKAGE_EXAM", true);
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(0, captor.getValue().getSessionCount());
+        assertEquals(ShopCatalogCategory.ASSESSMENT, captor.getValue().getCatalogCategory());
+        assertEquals(true, captor.getValue().getCatalogVisible());
+    }
+
+    @Test
     @DisplayName("findOrCreateLinked — 신규 생성 시 identity 카테고리를 사용한다")
     void findOrCreateLinked_createUsesIdentityCategory() {
         CommonCode exam = new CommonCode();

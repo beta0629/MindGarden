@@ -14,7 +14,8 @@ import {
   ADMIN_SHOP_PRODUCT_CATEGORY_ALL,
   ADMIN_SHOP_PRODUCT_SEGMENT,
   ADMIN_SHOP_PRODUCT_SESSION_MIN,
-  ADMIN_SHOP_PRODUCT_VALIDITY_MIN
+  ADMIN_SHOP_PRODUCT_VALIDITY_MIN,
+  resolveAdminShopProductSessionMin
 } from '../constants/adminShopSuite';
 import {
   isAdminShopPgCancelled,
@@ -582,12 +583,16 @@ export function computeAdminShopPerSessionPrice(price, sessions) {
 }
 
 /**
+ * 회기 미설정 여부. ASSESSMENT 는 sessions===0 을 설정된 값으로 본다.
+ *
  * @param {number|null|undefined} sessions
+ * @param {string|null|undefined} [catalogCategory]
  * @returns {boolean}
  */
-export function isAdminShopProductSessionUnset(sessions) {
+export function isAdminShopProductSessionUnset(sessions, catalogCategory) {
+  const min = resolveAdminShopProductSessionMin(catalogCategory);
   const s = Number(sessions);
-  return sessions == null || !Number.isFinite(s) || s < ADMIN_SHOP_PRODUCT_SESSION_MIN;
+  return sessions == null || !Number.isFinite(s) || s < min;
 }
 
 /** 상품 행 종류 */
@@ -983,7 +988,8 @@ export function validateAdminShopProductForm(form) {
   if (!toDisplayString(form?.name, '').trim()) {
     errors.name = true;
   }
-  if (sessions == null || sessions < ADMIN_SHOP_PRODUCT_SESSION_MIN) {
+  const sessionMin = resolveAdminShopProductSessionMin(form?.catalogCategory);
+  if (sessions == null || sessions < sessionMin) {
     errors.sessions = true;
   }
   if (price == null) {

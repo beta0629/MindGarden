@@ -378,7 +378,7 @@ public interface ScheduleService {
     /**
      * 관리자용 전체 스케줄 통계 조회
      */
-    Map<String, Object> getScheduleStatisticsForAdmin(LocalDate startDate, LocalDate endDate);
+    Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate);
     
     /**
      * 오늘의 스케줄 통계 조회

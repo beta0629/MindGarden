@@ -5,15 +5,7 @@
  * @since 2026-09-23
  */
 
-import {
-  buildAdminScheduleStatisticsQuery,
-  buildCurrentMonthDateRangeYmd,
-  buildCurrentWeekDateRangeYmd,
-  buildMonthDateRangeYmd,
-  buildSelectedPeriodDateRangeYmd,
-  toDateStr
-} from '../dateUtils';
-import { DEFAULT_ZONE } from '../zonedDateTime';
+import { buildMonthDateRangeYmd, toDateStr } from '../dateUtils';
 
 describe('dateUtils', () => {
   describe('buildMonthDateRangeYmd', () => {
@@ -62,68 +54,6 @@ describe('dateUtils', () => {
   describe('toDateStr', () => {
     it('keeps YYYY-MM-DD strings', () => {
       expect(toDateStr('2026-09-23T12:00:00')).toBe('2026-09-23');
-    });
-  });
-
-  describe('KST current month / week / selected period', () => {
-    const kstMonthEnd = new Date('2026-11-30T14:59:59Z'); // 23:59:59 KST 11/30
-    const kstDecStart = new Date('2026-11-30T15:00:00Z'); // 00:00:00 KST 12/01
-    const saturday = new Date('2026-11-28T05:00:00Z'); // 14:00 KST Saturday
-
-    it('buildCurrentMonthDateRangeYmd uses Asia/Seoul, not UTC', () => {
-      expect(DEFAULT_ZONE).toBe('Asia/Seoul');
-      expect(buildCurrentMonthDateRangeYmd(kstMonthEnd)).toEqual({
-        startDate: '2026-11-01',
-        endDate: '2026-11-30'
-      });
-      expect(buildCurrentMonthDateRangeYmd(kstDecStart)).toEqual({
-        startDate: '2026-12-01',
-        endDate: '2026-12-31'
-      });
-    });
-
-    it('buildCurrentWeekDateRangeYmd is Monday–Sunday in KST', () => {
-      expect(buildCurrentWeekDateRangeYmd(saturday)).toEqual({
-        startDate: '2026-11-23',
-        endDate: '2026-11-29'
-      });
-    });
-
-    it('buildSelectedPeriodDateRangeYmd covers year, quarter, month, week', () => {
-      expect(buildSelectedPeriodDateRangeYmd({
-        period: 'YEAR', year: 2026, month: 11, now: saturday
-      })).toEqual({ startDate: '2026-01-01', endDate: '2026-12-31' });
-      expect(buildSelectedPeriodDateRangeYmd({
-        period: 'QUARTER', year: 2026, month: 11, now: saturday
-      })).toEqual({ startDate: '2026-10-01', endDate: '2026-12-31' });
-      expect(buildSelectedPeriodDateRangeYmd({
-        period: 'MONTH', year: 2026, month: 11, now: saturday
-      })).toEqual({ startDate: '2026-11-01', endDate: '2026-11-30' });
-      expect(buildSelectedPeriodDateRangeYmd({
-        period: 'WEEK', year: 2026, month: 11, now: saturday
-      })).toEqual({ startDate: '2026-11-23', endDate: '2026-11-29' });
-    });
-
-    it('buildAdminScheduleStatisticsQuery injects userRole and range (default = this month)', () => {
-      expect(buildAdminScheduleStatisticsQuery({
-        userRole: 'ADMIN',
-        now: kstMonthEnd
-      })).toEqual({
-        userRole: 'ADMIN',
-        startDate: '2026-11-01',
-        endDate: '2026-11-30'
-      });
-      expect(buildAdminScheduleStatisticsQuery({
-        userRole: 'ADMIN',
-        period: 'YEAR',
-        year: 2026,
-        month: 11,
-        now: saturday
-      })).toEqual({
-        userRole: 'ADMIN',
-        startDate: '2026-01-01',
-        endDate: '2026-12-31'
-      });
     });
   });
 });

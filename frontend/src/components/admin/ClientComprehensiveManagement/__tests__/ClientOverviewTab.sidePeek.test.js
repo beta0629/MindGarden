@@ -37,12 +37,26 @@ jest.mock('../../../../hooks/useSctFeatureEnabled', () => ({
   default: () => ({ enabled: false, loading: false, refresh: jest.fn() })
 }));
 
+jest.mock('../../../../contexts/SessionContext', () => {
+  const { USER_ROLES: ROLES } = require('../../../../constants/roles');
+  return {
+    __esModule: true,
+    useSession: () => ({ user: { id: 1, role: ROLES.ADMIN } })
+  };
+});
+
+jest.mock('../../client-event-timeline/ClientEventTimelineList', () => ({
+  __esModule: true,
+  default: () => <div data-testid="client-event-timeline">history-mock</div>
+}));
+
 import ClientOverviewTab from '../ClientOverviewTab';
 import SidePeekShell from '../../../common/organisms/SidePeekShell';
 import ClientSidePeekContent from '../molecules/ClientSidePeekContent';
 import { SIDE_PEEK_SHELL_REGION_PEEK } from '../../../../constants/sidePeekShellConstants';
 import { maskEncryptedDisplay, getUserStatusKoreanNameSync } from '../../../../utils/codeHelper';
 import { PACKAGE_PAYMENT_HISTORY_UI } from '../../../../constants/packagePaymentHistory';
+import { CLIENT_EVENT_TIMELINE_UI } from '../../../../constants/clientEventTimeline';
 
 const SAMPLE_CLIENT = {
   id: 101,
@@ -106,6 +120,7 @@ describe('ClientOverviewTab — SidePeekShell stub', () => {
     expect(within(peekPanel).getByText(/010/)).toBeInTheDocument();
     expect(within(peekPanel).getByText(PACKAGE_PAYMENT_HISTORY_UI.SECTION_TITLE)).toBeInTheDocument();
     expect(within(peekPanel).getByTestId('package-payment-history-list')).toBeInTheDocument();
+    expect(within(peekPanel).getByRole('tab', { name: CLIENT_EVENT_TIMELINE_UI.TAB_HISTORY })).toBeInTheDocument();
   });
 
   test('overflow 「상세」 → peek 오픈', async() => {

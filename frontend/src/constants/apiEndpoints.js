@@ -43,7 +43,9 @@ export const API_ENDPOINTS = {
         `/api/v1/admin/clients/${clientId}/package-payment-history`,
       /** 내담자별 회기 승계 이력 (표시 전용) */
       SESSION_TRANSFER_HISTORY: (clientId) =>
-        `/api/v1/admin/clients/${clientId}/session-transfer-history`
+        `/api/v1/admin/clients/${clientId}/session-transfer-history`,
+      /** 내담자 관리용 타임라인(client_event) */
+      EVENTS: (clientId) => `/api/v1/admin/clients/${clientId}/events`
     },
     
     MAPPINGS: {

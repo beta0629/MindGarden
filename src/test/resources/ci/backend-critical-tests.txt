@@ -116,4 +116,8 @@
 # 2026-11-27 알림·SMS·이메일 로그 PII 마스킹
 **/NotificationServiceImplEmailSimulationLogPiiTest.java
 **/EmailServiceImplSendEmailLogPiiTest.java
+
+# 2026-11-28 운영 PII 키링 회전(신규 활성 + 기존 보조) — v1/v2 복호화·신규 v2 쓰기
+**/PiiKeyringRotationDecryptTest.java
+**/EnvironmentValidationConfigHmacTest.java
 **/NotificationDispatchHelperSmsTestModeTest.java

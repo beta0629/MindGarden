@@ -22,6 +22,7 @@ import {
   confirmSctIdentityOtp,
   fetchSctPublicForm,
   fetchSctPublicMeta,
+  resumeSctDeviceSession,
   saveSctConsent,
   saveSctDraft,
   sendSctIdentityOtp,
@@ -122,6 +123,7 @@ const SctPublicPage = () => {
   const [otpHint, setOtpHint] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [resumePending, setResumePending] = useState(false);
 
   const [consentStatus, setConsentStatus] = useState(null);
   const [identityConsentAgreed, setIdentityConsentAgreed] = useState(false);
@@ -192,7 +194,8 @@ const SctPublicPage = () => {
       } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
         setStep(STEP.EXPIRED);
       } else {
-        setStep(STEP.ENTRY);
+        // 같은 단말이면 재인증 없이 이어쓴다(HttpOnly 단말 쿠키). 아니면 effect 가 ENTRY 로 보낸다.
+        setResumePending(true);
       }
     } catch (error) {
       const statusCode = error?.status ?? error?.response?.status;
@@ -425,6 +428,26 @@ const SctPublicPage = () => {
       setStep(STEP.CONSENT);
     }
   };
+
+  // 같은 링크 재진입(새로고침·새 탭): 단말 쿠키가 유효하면 OTP 없이 서버 저장 답부터 이어쓰기.
+  // 쿠키가 없거나 무효(다른 단말·링크만 가진 제3자)면 기존 본인확인(ENTRY → OTP).
+  useEffect(() => {
+    if (!resumePending) return;
+    setResumePending(false);
+    (async() => {
+      try {
+        const res = await resumeSctDeviceSession(token);
+        if (res?.verifySessionId) {
+          await applyVerifySuccess(res);
+          return;
+        }
+      } catch (error) {
+        // 재개 실패는 항상 본인확인으로 되돌린다(fail-closed)
+      }
+      setStep(STEP.ENTRY);
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumePending, token]);
 
   const handleIdentityConsentRequired = (error) => {
     if (!isIdentityContactConsentRequiredError(error)) {

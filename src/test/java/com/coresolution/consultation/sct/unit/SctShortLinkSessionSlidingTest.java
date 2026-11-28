@@ -3,6 +3,7 @@ package com.coresolution.consultation.sct.unit;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -23,6 +24,8 @@ import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.dto.SctDraftAnswerItem;
 import com.coresolution.consultation.sct.dto.SctDraftSaveRequest;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
+import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
@@ -71,7 +74,6 @@ class SctShortLinkSessionSlidingTest {
     private static final String TENANT_A = "tenant-a";
     private static final String RAW_TOKEN = "short-link-sliding-raw-token-32b!";
     private static final long LANDING_SECONDS = SctConstants.SHORT_LINK_EXCHANGE_TTL_MINUTES * 60L;
-    private static final long IDLE_SECONDS = SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L;
 
     @Mock private SctInvitationRepository invitationRepository;
     @Mock private SctFormTemplateRepository formTemplateRepository;
@@ -97,7 +99,7 @@ class SctShortLinkSessionSlidingTest {
     void setUp() {
         SctVerifySessionRedisTestSupport.RedisHarness redis =
                 SctVerifySessionRedisTestSupport.memoryRedis();
-        verifySessionStore = new SctVerifySessionStore(redis.provider(), clock, IDLE_SECONDS);
+        verifySessionStore = new SctVerifySessionStore(redis.provider(), clock);
         exchangeCodeStore = new SctExchangeCodeStore(redis.provider(), clock, LANDING_SECONDS);
         PiiHmacService hmac = PiiTestSecrets.hmacService();
 
@@ -297,6 +299,97 @@ class SctShortLinkSessionSlidingTest {
         String ref = SctExchangeCodeStore.logRef(RAW_TOKEN);
         assertEquals(8, ref.length());
         assertFalse(RAW_TOKEN.contains(ref));
+    }
+
+    @Test
+    @DisplayName("본인확인 1회 후 무입력 90분 — draft·submit 성공(OTP 재요구 없음)")
+    void verifiedOnce_noInputFor90Minutes_draftAndSubmitSucceed() {
+        String code = issueExchange(inviteAbsolute());
+        assertTrue(exchangeCodeStore.resolve(code).isPresent()); // 첫 진입(착지)
+        clock.advance(Duration.ofMinutes(1));
+        String sid = issueVerifySession();
+        clock.advance(Duration.ofMinutes(90));
+        sctPublicService.saveDraft(code, draft(sid, "after-idle"));
+        clock.advance(Duration.ofMinutes(90));
+        sctPublicService.submit(code, SctSubmitRequest.builder().verifySessionId(sid).build());
+        assertEquals(SctInviteStatus.SUBMITTED.name(), invitation.getStatus());
+    }
+
+    @Test
+    @DisplayName("같은 단말 재진입 — 단말 쿠키 세션이 유효하면 90분 무입력 후에도 재인증 없이 resume")
+    void resume_sameDeviceCookie_returnsSessionWithoutOtp() {
+        String code = issueExchange(inviteAbsolute());
+        assertTrue(exchangeCodeStore.resolve(code).isPresent()); // 첫 진입(착지)
+        clock.advance(Duration.ofMinutes(1));
+        String sid = issueVerifySession();
+        clock.advance(Duration.ofMinutes(90));
+
+        SctVerifyResponse res = sctPublicService.resumeDeviceSession(code, sid);
+
+        assertEquals(sid, res.getVerifySessionId());
+        assertTrue(res.getExpiresInSeconds() > 0);
+        sctPublicService.saveDraft(code, draft(res.getVerifySessionId(), "resumed"));
+    }
+
+    @Test
+    @DisplayName("링크만 가진 제3자·다른 단말(쿠키 없음/무효) — resume 거부(세션 없음)·draft 거부 → OTP 필요")
+    void resume_withoutOrWrongDeviceCookie_noSession() {
+        String code = issueExchange(inviteAbsolute());
+        clock.advance(Duration.ofMinutes(1));
+        issueVerifySession();
+
+        assertNull(sctPublicService.resumeDeviceSession(code, null).getVerifySessionId());
+        assertNull(sctPublicService.resumeDeviceSession(code, "").getVerifySessionId());
+        assertNull(sctPublicService.resumeDeviceSession(code, "forged-device-session-id").getVerifySessionId());
+        assertThrows(SctVerifyRequiredException.class,
+                () -> sctPublicService.saveDraft(code, draft("forged-device-session-id", "x")));
+    }
+
+    @Test
+    @DisplayName("다른 초대의 단말 세션·다른 테넌트로 발급된 세션은 resume 불가(테넌트 격리)")
+    void resume_sessionOfOtherInvitationOrTenant_rejected() {
+        String code = issueExchange(inviteAbsolute());
+        clock.advance(Duration.ofMinutes(1));
+        String otherInvitation = verifySessionStore.issue(999L, TENANT_A, inviteAbsolute());
+        String otherTenant = verifySessionStore.issue(100L, "tenant-b", inviteAbsolute());
+
+        assertNull(sctPublicService.resumeDeviceSession(code, otherInvitation).getVerifySessionId());
+        assertNull(sctPublicService.resumeDeviceSession(code, otherTenant).getVerifySessionId());
+    }
+
+    @Test
+    @DisplayName("취소·만료·재발급·제출완료에서는 유효 쿠키여도 resume 거부")
+    void resume_rejectedWhenCancelledExpiredReissuedSubmitted() {
+        String code = issueExchange(inviteAbsolute());
+        clock.advance(Duration.ofMinutes(1));
+        String sid = issueVerifySession();
+        assertEquals(sid, sctPublicService.resumeDeviceSession(code, sid).getVerifySessionId());
+
+        invitation.setStatus(SctInviteStatus.CANCELLED.name());
+        assertThrows(SctGoneException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+        invitation.setStatus(SctInviteStatus.EXPIRED.name());
+        assertThrows(SctGoneException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+        invitation.setStatus(SctInviteStatus.SUBMITTED.name());
+        assertThrows(SctConflictException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+
+        invitation.setStatus(SctInviteStatus.SENT.name());
+        invitation.setTokenHash(PiiTestSecrets.hmacService().hmacHex("rotated-new-token-value-32bytes!!"));
+        assertThrows(EntityNotFoundException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
+    }
+
+    @Test
+    @DisplayName("초대 절대 만료 이후에는 단말 세션도 무효")
+    void resume_rejectedAfterInvitationAbsolute() {
+        Instant absolute = clock.instant().plus(Duration.ofMinutes(120));
+        invitation.setTokenExpiresAt(LocalDateTime.ofInstant(absolute, ZoneId.of("Asia/Seoul")));
+        String code = issueExchange(absolute);
+        assertTrue(exchangeCodeStore.resolve(code).isPresent()); // 첫 진입(착지)
+        clock.advance(Duration.ofMinutes(1));
+        String sid = verifySessionStore.issue(100L, TENANT_A, absolute);
+        clock.advance(Duration.ofMinutes(60));
+        assertEquals(sid, sctPublicService.resumeDeviceSession(code, sid).getVerifySessionId());
+        clock.advance(Duration.ofMinutes(61));
+        assertThrows(RuntimeException.class, () -> sctPublicService.resumeDeviceSession(code, sid));
     }
 
     /** 테스트 시계. */

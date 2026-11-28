@@ -102,8 +102,7 @@ class SctPublicServiceTest {
     @Spy
     private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore(
             redisHarness.provider(),
-            Clock.systemUTC(),
-            SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+            Clock.systemUTC());
 
     @Mock private SctExchangeCodeStore exchangeCodeStore;
     @Mock private SctFeatureGuard sctFeatureGuard;

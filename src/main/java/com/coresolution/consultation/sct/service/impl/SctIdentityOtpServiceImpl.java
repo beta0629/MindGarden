@@ -343,7 +343,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
-                .expiresInSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60)
+                .expiresInSeconds(verifySessionStore.remainingSeconds(absoluteExpiry(invitation)))
                 .consent(consent)
                 .build();
     }
@@ -516,7 +516,8 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private Instant absoluteExpiry(SctInvitation invitation) {
         LocalDateTime expires = invitation.getTokenExpiresAt();
         if (expires == null) {
-            return Instant.now().plusSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+            // 절대 만료가 없으면 세션을 발급·승인하지 않는다(fail-closed, 임의 기본 수명 금지).
+            return null;
         }
         return expires.atZone(TOKEN_EXPIRY_ZONE).toInstant();
     }

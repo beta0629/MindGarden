@@ -20,11 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 /**
- * SCT 공개 verify 세션 — Redis 전용(fail-closed).
+ * SCT 공개 verify 세션(단말 세션) — Redis 전용(fail-closed).
  *
  * <p>키: {@code sct:verify-session:} + SHA-256(sessionId). 값: invitationId·tenantId JSON(PII 없음).
- * 유휴 TTL({@link SctConstants#VERIFY_SESSION_IDLE_MINUTES})은 활동 시 sliding 하며,
- * absolute cap 은 초대 {@code tokenExpiresAt} 을 넘기지 않는다.</p>
+ * 본인확인(OTP) 성공 시 1회 발급되며 유휴(idle) 만료가 없다. 수명은 초대 {@code tokenExpiresAt}
+ * (절대 만료)까지다. 취소·재발급·제출완료는 초대/토큰 해석 단계에서 거부된다.
+ * 같은 단말 재진입은 이 세션 ID 를 담은 HttpOnly 쿠키로만 이어진다
+ * ({@link SctDeviceSessionCookieSupport}).</p>
  *
  * <p>ConcurrentHashMap 폴백 없음. Redis 부재·장애 시 issue 는 실패, validate 는 empty.</p>
  *
@@ -40,19 +42,15 @@ public class SctVerifySessionStore {
 
     private final ObjectProvider<StringRedisTemplate> redisTemplateProvider;
     private final Clock clock;
-    private final long idleSeconds;
 
     /**
-     * Spring 주입 — idle = {@link SctConstants#VERIFY_SESSION_IDLE_MINUTES}.
+     * Spring 주입.
      *
      * @param redisTemplateProvider Redis (필수; 없으면 issue fail-closed)
      */
     @Autowired
     public SctVerifySessionStore(ObjectProvider<StringRedisTemplate> redisTemplateProvider) {
-        this(
-                redisTemplateProvider,
-                Clock.systemUTC(),
-                SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+        this(redisTemplateProvider, Clock.systemUTC());
     }
 
     /**
@@ -60,17 +58,26 @@ public class SctVerifySessionStore {
      *
      * @param redisTemplateProvider Redis
      * @param clock                 시각
-     * @param idleSeconds           유휴 TTL 초
      */
     public SctVerifySessionStore(
             ObjectProvider<StringRedisTemplate> redisTemplateProvider,
-            Clock clock,
-            long idleSeconds) {
+            Clock clock) {
         this.redisTemplateProvider = redisTemplateProvider;
         this.clock = clock == null ? Clock.systemUTC() : clock;
-        this.idleSeconds = idleSeconds > 0
-                ? idleSeconds
-                : SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L;
+    }
+
+    /**
+     * 절대 만료까지 남은 초(응답 {@code expiresInSeconds}·쿠키 Max-Age 용). 최소 1.
+     *
+     * @param absoluteExpiresAt 절대 만료
+     * @return 남은 초
+     */
+    public int remainingSeconds(Instant absoluteExpiresAt) {
+        if (absoluteExpiresAt == null) {
+            return 1;
+        }
+        long seconds = Duration.between(clock.instant(), absoluteExpiresAt).getSeconds();
+        return (int) Math.max(1L, Math.min(seconds, Integer.MAX_VALUE));
     }
 
     /**
@@ -112,7 +119,7 @@ public class SctVerifySessionStore {
     }
 
     /**
-     * 세션 검증 + 유휴 TTL sliding ({@code min(now+idle, absoluteExpiresAt)}).
+     * 세션 검증. 유휴 만료·TTL 연장 없음 — 절대 만료(초대 tokenExpiresAt)까지 유효.
      *
      * @param sessionId         세션
      * @param invitationId      초대
@@ -150,11 +157,6 @@ public class SctVerifySessionStore {
                 redis.delete(key);
                 return Optional.empty();
             }
-            long ttlSeconds = computeTtlSeconds(now, effectiveAbsolute);
-            Boolean expireOk = redis.expire(key, ttlSeconds, TimeUnit.SECONDS);
-            if (Boolean.FALSE.equals(expireOk)) {
-                return Optional.empty();
-            }
             return Optional.of(entry.tenantId());
         } catch (Exception e) {
             log.warn("SCT verify session Redis validate 실패(fail-closed): {}", e.getMessage());
@@ -172,9 +174,7 @@ public class SctVerifySessionStore {
     }
 
     private long computeTtlSeconds(Instant now, Instant absoluteExpiresAt) {
-        Instant idleEnd = now.plusSeconds(idleSeconds);
-        Instant capped = idleEnd.isBefore(absoluteExpiresAt) ? idleEnd : absoluteExpiresAt;
-        long seconds = Duration.between(now, capped).getSeconds();
+        long seconds = Duration.between(now, absoluteExpiresAt).getSeconds();
         if (seconds < 1L) {
             throw new IllegalArgumentException("verify session TTL would be empty");
         }

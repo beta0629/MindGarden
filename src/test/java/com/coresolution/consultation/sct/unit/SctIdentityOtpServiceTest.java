@@ -111,8 +111,7 @@ class SctIdentityOtpServiceTest {
         harness.map().clear();
         verifySessionStore = new SctVerifySessionStore(
                 harness.provider(),
-                Clock.systemUTC(),
-                SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+                Clock.systemUTC());
         rateLimiter = new SctIdentityOtpRateLimiter();
 
         invitation = SctInvitation.builder()

@@ -14,17 +14,6 @@ public final class SctConstants {
     public static final int VERIFY_MAX_FAILURES = 5;
     public static final int VERIFY_LOCK_MINUTES = 15;
 
-    /**
-     * 본인확인 세션 유휴 TTL(분). form/draft/consent/submit 성공 validate 시 sliding.
-     * absolute cap = invitation.tokenExpiresAt — 초대 링크 만료를 넘기지 않음.
-     */
-    public static final int VERIFY_SESSION_IDLE_MINUTES = 30;
-
-    /**
-     * 호환 alias — {@link #VERIFY_SESSION_IDLE_MINUTES} 와 동일(고정 절대 TTL 아님).
-     */
-    public static final int VERIFY_SESSION_TTL_MINUTES = VERIFY_SESSION_IDLE_MINUTES;
-
     public static final String SMS_RESULT_SENT = "SENT";
     public static final String SMS_RESULT_TEST_MODE_SKIP = "TEST_MODE_SKIP";
     public static final String SMS_RESULT_FAILED = "FAILED";

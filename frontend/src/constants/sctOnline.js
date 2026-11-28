@@ -17,6 +17,7 @@ export const SCT_API = Object.freeze({
   publicVerify: (token) => `/api/v1/public/sct/${token}/verify`,
   publicIdentityOtpSend: (token) => `/api/v1/public/sct/${token}/identity/otp/send`,
   publicIdentityOtpConfirm: (token) => `/api/v1/public/sct/${token}/identity/otp/confirm`,
+  publicSessionResume: (token) => `/api/v1/public/sct/${token}/session/resume`,
   publicForm: (token) => `/api/v1/public/sct/${token}/form`,
   publicDraft: (token) => `/api/v1/public/sct/${token}/draft`,
   publicConsents: (token) => `/api/v1/public/sct/${token}/consents`,

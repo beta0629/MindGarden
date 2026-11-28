@@ -7,12 +7,14 @@ import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctGoneException;
+import com.coresolution.consultation.sct.exception.SctLinkSessionExpiredException;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
 import com.coresolution.consultation.security.pii.PiiHmacService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -22,9 +24,13 @@ import org.springframework.util.StringUtils;
  * <p>교환 코드 → 초대는 반드시 {@code findByTenantIdAndId...}(tenantId 포함).
  * tokenHash 바인딩·취소/만료는 fail-closed.</p>
  *
+ * <p>교환 코드 사용 시간 초과는 410 {@link SctLinkSessionExpiredException}, 미존재는 404.
+ * 로그에는 토큰·코드 원문 대신 {@link SctExchangeCodeStore#logRef(String)} 해시 접두만 남긴다.</p>
+ *
  * @author MindGarden
  * @since 2026-11-27
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
@@ -49,6 +55,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
         if (exchange.isPresent()) {
             return resolveExchangeEntry(exchange.get(), allowReissuedForMeta);
         }
+        throwIfExchangeExpired(trimmed);
 
         Optional<SctRotatedTokenHash> rotated = findRotatedByTokenCandidates(trimmed);
         if (rotated.isPresent()) {
@@ -62,7 +69,20 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
                     .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
             return new ResolvedPublicToken(invitation, SctConstants.PUBLIC_STATUS_REISSUED);
         }
-        throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+        log.warn("SCT public link miss: ref={}", SctExchangeCodeStore.logRef(trimmed));
+        throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
+    }
+
+    /**
+     * 발급됐으나 사용 시간이 지난 교환 코드 → 410(없음 404 와 구분).
+     *
+     * @param trimmed 토큰/교환 코드
+     */
+    private void throwIfExchangeExpired(String trimmed) {
+        if (exchangeCodeStore.isExpired(trimmed)) {
+            log.warn("SCT public link session expired: ref={}", SctExchangeCodeStore.logRef(trimmed));
+            throw new SctLinkSessionExpiredException(SctConstants.MSG_LINK_SESSION_EXPIRED);
+        }
     }
 
     @Override
@@ -167,11 +187,13 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
     private void assertExchangeBoundToInvitation(
             SctExchangeCodeStore.ExchangeEntry entry, SctInvitation invitation) {
         if (!invitation.getTenantId().equals(entry.tenantId())) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            log.warn("SCT exchange tenant mismatch: invitationId={}", entry.invitationId());
+            throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
         }
         if (!StringUtils.hasText(entry.tokenHash())
                 || !entry.tokenHash().equals(invitation.getTokenHash())) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            log.warn("SCT exchange token rotated (reissue/resend): invitationId={}", entry.invitationId());
+            throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
         }
     }
 

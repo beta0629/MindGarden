@@ -176,7 +176,13 @@ export const SCT_UI = Object.freeze({
   NA_BUTTON: '해당 없음',
   SAVE_SAVED: '저장됨',
   SAVE_SAVING: '저장 중…',
-  SAVE_OFFLINE: '연결 끊김 · 기기에 보관',
+  SAVE_OFFLINE: '저장하지 못했습니다 · 화면의 답은 그대로 있어요',
+  /** 링크 사용 시간 초과(404/410) — 서버 임시저장 답은 남아 있음 */
+  LINK_SESSION_EXPIRED: '링크 사용 시간이 지났습니다. 문자의 링크를 다시 열면 답이 이어집니다',
+  LINK_SESSION_EXPIRED_TITLE: '링크 사용 시간이 지났습니다',
+  LINK_SESSION_EXPIRED_BODY: '문자로 받은 링크를 다시 열면 저장된 답이 이어집니다.',
+  /** 제출 직전 임시저장 실패 — 제출 차단 */
+  SAVE_BEFORE_SUBMIT_FAIL: '답을 저장하지 못해 제출하지 않았습니다. 연결을 확인한 뒤 다시 눌러 주세요',
   PENDING_TITLE: '아직 제출 전입니다',
   SETTINGS_SECTION: '문장완성 질문지(SCT)',
   SETTINGS_LINK_EXPIRY: '링크 만료(일)',
@@ -425,6 +431,8 @@ export const SCT_ERROR_CODE = Object.freeze({
   OTP_EXPIRED: 'SCT_OTP_EXPIRED',
   OTP_LOCKED: 'SCT_OTP_LOCKED',
   GONE: 'SCT_GONE',
+  /** 단축 링크 교환 코드(공개 링크) 사용 시간 초과 — 초대 만료(GONE)와 구분 */
+  LINK_SESSION_EXPIRED: 'SCT_LINK_SESSION_EXPIRED',
   CONFLICT: 'SCT_CONFLICT',
   VERIFY_LOCKED: 'SCT_VERIFY_LOCKED',
   FEATURE_DISABLED: 'SCT_FEATURE_DISABLED'

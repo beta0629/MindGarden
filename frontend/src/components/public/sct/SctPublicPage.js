@@ -31,7 +31,11 @@ import {
 import {
   clearSctPublicDraft
 } from '../../../utils/sctPublicDraftStorage';
-import { isSctVerifyRequiredError } from '../../../utils/sctPublicVerifyError';
+import {
+  isSctLinkSessionExpiredError,
+  isSctLinkUnusableError,
+  isSctVerifyRequiredError
+} from '../../../utils/sctPublicVerifyError';
 import useSctVisualViewport from '../../../hooks/useSctVisualViewport';
 import useSctDraftAutosave, { SCT_SAVE_STATUS } from '../../../hooks/useSctDraftAutosave';
 import {
@@ -67,6 +71,7 @@ const STEP = Object.freeze({
   EXPIRED: 'EXPIRED',
   REISSUED: 'REISSUED',
   INVALID_LINK: 'INVALID_LINK',
+  LINK_SESSION_EXPIRED: 'LINK_SESSION_EXPIRED',
   ALREADY: 'ALREADY',
   ERROR: 'ERROR'
 });
@@ -153,7 +158,8 @@ const SctPublicPage = () => {
     token,
     verifySessionId,
     answersMap,
-    enabled: step === STEP.ITEMS && Boolean(verifySessionId)
+    // REVIEW 포함 — 제출 직전 saveNow 가 실제로 서버 저장을 확인한다(no-op 금지).
+    enabled: (step === STEP.ITEMS || step === STEP.REVIEW) && Boolean(verifySessionId)
   });
 
   const loadMeta = useCallback(async() => {
@@ -189,8 +195,10 @@ const SctPublicPage = () => {
         setStep(STEP.ENTRY);
       }
     } catch (error) {
-      const statusCode = error?.status;
-      if (statusCode === 410) {
+      const statusCode = error?.status ?? error?.response?.status;
+      if (isSctLinkSessionExpiredError(error)) {
+        setStep(STEP.LINK_SESSION_EXPIRED);
+      } else if (statusCode === 410) {
         setStep(STEP.EXPIRED);
       } else if (statusCode === 404) {
         setStep(STEP.INVALID_LINK);
@@ -209,7 +217,8 @@ const SctPublicPage = () => {
 
   // 레거시 localStorage 답변 키 정리 (이탈·만료·언마운트)
   useEffect(() => {
-    if (step === STEP.EXPIRED || step === STEP.REISSUED || step === STEP.INVALID_LINK) {
+    if (step === STEP.EXPIRED || step === STEP.REISSUED || step === STEP.INVALID_LINK
+      || step === STEP.LINK_SESSION_EXPIRED) {
       clearSctPublicDraft(token);
     }
   }, [step, token]);
@@ -219,7 +228,8 @@ const SctPublicPage = () => {
   }, [token]);
 
   useEffect(() => {
-    if (!LANDING_STEPS.includes(step) && step !== STEP.INVALID_LINK) return undefined;
+    if (!LANDING_STEPS.includes(step) && step !== STEP.INVALID_LINK
+      && step !== STEP.LINK_SESSION_EXPIRED) return undefined;
     const prevTitle = document.title;
     document.title = SCT_UI.LANDING_OG_TITLE;
     const ensureMeta = (attr, key, content) => {
@@ -661,7 +671,14 @@ const SctPublicPage = () => {
   const handleSubmit = async() => {
     setBusy(true);
     try {
-      await saveNow();
+      const saved = await saveNow();
+      if (!saved?.ok) {
+        // 저장 실패 시 제출하지 않는다. 화면의 답은 그대로 둔다.
+        setVerifyError(saved?.status === SCT_SAVE_STATUS.LINK_EXPIRED
+          ? SCT_UI.LINK_SESSION_EXPIRED
+          : SCT_UI.SAVE_BEFORE_SUBMIT_FAIL);
+        return;
+      }
       await submitSct(token, { verifySessionId });
       clearSctPublicDraft(token);
       pendingSubmitRef.current = false;
@@ -674,6 +691,10 @@ const SctPublicPage = () => {
         pendingSubmitRef.current = true;
         setPendingSubmitAfterVerify(true);
         setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+      } else if (isSctLinkUnusableError(error)) {
+        setVerifyError(isSctLinkSessionExpiredError(error)
+          ? SCT_UI.LINK_SESSION_EXPIRED
+          : resolveUserFacingApiErrorMessage(error, SCT_UI.LINK_SESSION_EXPIRED));
       } else {
         setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
       }
@@ -681,6 +702,8 @@ const SctPublicPage = () => {
       setBusy(false);
     }
   };
+
+  const saveFailed = status === SCT_SAVE_STATUS.OFFLINE || status === SCT_SAVE_STATUS.LINK_EXPIRED;
 
   const isVerifyRequiredUi = pendingSubmitAfterVerify
     || verifyError === SCT_UI.VERIFY_TO_SUBMIT;
@@ -720,7 +743,7 @@ const SctPublicPage = () => {
         </div>
         {showSave && statusText ? (
           <span
-            className={`${SCT_CSS.SAVE}${status === SCT_SAVE_STATUS.SAVING || status === SCT_SAVE_STATUS.OFFLINE ? ` is-${status === SCT_SAVE_STATUS.OFFLINE ? 'offline' : 'saving'}` : ''}`}
+            className={`${SCT_CSS.SAVE}${saveFailed ? ' is-offline' : ''}${status === SCT_SAVE_STATUS.SAVING ? ' is-saving' : ''}`}
             role="status"
           >
             <i aria-hidden="true" />
@@ -765,6 +788,13 @@ const SctPublicPage = () => {
       <>
         <h1 className="mg-v2-sct-h1">{SCT_UI.INVALID_LINK_TITLE}</h1>
         <p className="mg-v2-sct-lead">{SCT_UI.INVALID_LINK_BODY}</p>
+      </>
+    );
+  } else if (step === STEP.LINK_SESSION_EXPIRED) {
+    body = (
+      <>
+        <h1 className="mg-v2-sct-h1">{SCT_UI.LINK_SESSION_EXPIRED_TITLE}</h1>
+        <p className="mg-v2-sct-lead">{SCT_UI.LINK_SESSION_EXPIRED_BODY}</p>
       </>
     );
   } else if (step === STEP.DONE) {

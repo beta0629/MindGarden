@@ -93,6 +93,24 @@ public class GlobalExceptionHandler {
     /**
      * SCT 만료·취소 — HTTP 410 Gone.
      */
+    /**
+     * SCT 공개 링크(단축 링크 교환 코드) 사용 시간 초과 — 410, 초대 만료와 구분되는 코드.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctLinkSessionExpiredException.class)
+    public ResponseEntity<ErrorResponse> handleSctLinkSessionExpired(
+            com.coresolution.consultation.sct.exception.SctLinkSessionExpiredException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(),
+                com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_SESSION_EXPIRED),
+            com.coresolution.consultation.sct.exception.SctLinkSessionExpiredException.ERROR_CODE,
+            HttpStatus.GONE.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctGoneException.class)
     public ResponseEntity<ErrorResponse> handleSctGone(
             com.coresolution.consultation.sct.exception.SctGoneException e,

@@ -20,6 +20,16 @@ public interface SctPublicService {
 
     SctVerifyResponse verify(String rawToken, SctVerifyRequest request, String clientIp);
 
+    /**
+     * 같은 단말 재진입(새로고침·새 탭) — 단말 쿠키의 verify 세션이 유효하면 재인증 없이 세션을 돌려준다.
+     * 쿠키가 없거나 무효이면 {@code verifySessionId=null} (OTP 본인확인 필요). 링크만으로는 세션이 생기지 않는다.
+     *
+     * @param rawToken        opaque 토큰(교환 코드 포함)
+     * @param deviceSessionId 단말 쿠키 값(nullable)
+     * @return 세션 응답 또는 verifySessionId 없는 응답
+     */
+    SctVerifyResponse resumeDeviceSession(String rawToken, String deviceSessionId);
+
     SctPublicFormResponse getForm(String rawToken, String verifySessionId);
 
     void saveDraft(String rawToken, SctDraftSaveRequest request);

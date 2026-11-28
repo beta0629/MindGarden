@@ -43,7 +43,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
     @Override
     public ResolvedPublicToken resolveToken(String rawToken, boolean allowReissuedForMeta) {
         if (!StringUtils.hasText(rawToken)) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
         }
         String trimmed = rawToken.trim();
         Optional<SctInvitation> byHash = findInvitationByTokenCandidates(trimmed);
@@ -66,7 +66,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
             SctInvitation invitation = invitationRepository
                     .findByTenantIdAndIdAndIsDeletedFalse(
                             rotatedRow.getTenantId(), rotatedRow.getInvitationId())
-                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND));
             return new ResolvedPublicToken(invitation, SctConstants.PUBLIC_STATUS_REISSUED);
         }
         log.warn("SCT public link miss: ref={}", SctExchangeCodeStore.logRef(trimmed));
@@ -97,7 +97,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
     @Override
     public SctInvitation loadInvitationForVerify(String rawToken) {
         if (!StringUtils.hasText(rawToken)) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
+            throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
         }
         String trimmed = rawToken.trim();
         Optional<SctInvitation> locked = findInvitationByTokenCandidatesForUpdate(trimmed);
@@ -114,7 +114,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
             SctInvitation invitation = invitationRepository
                     .findByTenantIdAndIdAndIsDeletedFalseForUpdate(
                             entry.tenantId(), entry.invitationId())
-                    .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+                    .orElseThrow(() -> new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND));
             assertExchangeBoundToInvitation(entry, invitation);
             assertExchangeInvitationNotClosed(invitation);
             return invitation;
@@ -172,7 +172,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
         }
         SctInvitation invitation = invitationRepository
                 .findByTenantIdAndIdAndIsDeletedFalse(entry.tenantId(), entry.invitationId())
-                .orElseThrow(() -> new EntityNotFoundException("SCT 링크를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND));
         assertExchangeBoundToInvitation(entry, invitation);
         assertExchangeInvitationNotClosed(invitation);
         return new ResolvedPublicToken(invitation, entry.landingStatus());
@@ -205,7 +205,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
     private void assertExchangeInvitationNotClosed(SctInvitation invitation) {
         if (SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())
                 || SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
     }
 }

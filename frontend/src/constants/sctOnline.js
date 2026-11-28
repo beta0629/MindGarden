@@ -17,6 +17,7 @@ export const SCT_API = Object.freeze({
   publicVerify: (token) => `/api/v1/public/sct/${token}/verify`,
   publicIdentityOtpSend: (token) => `/api/v1/public/sct/${token}/identity/otp/send`,
   publicIdentityOtpConfirm: (token) => `/api/v1/public/sct/${token}/identity/otp/confirm`,
+  publicSessionResume: (token) => `/api/v1/public/sct/${token}/session/resume`,
   publicForm: (token) => `/api/v1/public/sct/${token}/form`,
   publicDraft: (token) => `/api/v1/public/sct/${token}/draft`,
   publicConsents: (token) => `/api/v1/public/sct/${token}/consents`,
@@ -224,6 +225,11 @@ export const SCT_UI = Object.freeze({
     '쓰시던 내용이 있더라도 기한이 지나면 열 수 없습니다. 센터로 연락해 주시면 새 링크를 보내 드립니다.',
   EXPIRED_COVER_FOOT: '이 링크는 더 이상 열 수 없습니다. 새 링크가 필요하면 센터로 문의해 주세요.',
   EXPIRED_BADGE: '만료됨',
+  /** 센터가 취소한 초대(기한 만료와 구분) */
+  CANCELLED_BADGE: '취소됨',
+  CANCELLED_TITLE: '센터에서 취소한 링크입니다',
+  CANCELLED_BODY: '이 링크는 센터에서 취소해 더 이상 열 수 없습니다. 필요하시면 센터로 문의해 주세요.',
+  CANCELLED_HINT: '새 링크가 필요하면 센터로 문의해 주세요',
   /** 공개 링크 토큰 없음·404(삼킴) — 존재 여부 비공개 */
   INVALID_LINK_TITLE: '링크가 올바르지 않습니다',
   INVALID_LINK_BODY: '주소를 다시 확인하거나 센터에 문의해 주세요.',
@@ -305,6 +311,17 @@ export const SCT_UI = Object.freeze({
   A6_CONTACT_PREFIX: '문의 및 링크 재요청:',
   A6_REISSUE_NOTE: '새 링크를 재발급하면 이 QR 카드는 사용할 수 없습니다.',
   MISMATCH: '번호가 일치하지 않습니다',
+  /** 서버·예외 원문 대신 에러코드로 매핑하는 공개 화면 문구 */
+  ERR_SESSION_INVALIDATED: '연결 상태가 바뀌어 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
+  ERR_OTP_INVALID: '인증번호가 올바르지 않습니다. 문자로 받은 번호를 다시 확인해 주세요.',
+  ERR_OTP_EXPIRED: '인증번호가 만료되었습니다. 인증번호를 다시 받아 주세요.',
+  ERR_OTP_RATE_LIMITED: '인증번호 요청이 많아 잠시 후 다시 받을 수 있어요.',
+  ERR_OTP_LOCKED: '인증 시도 횟수를 넘어 잠시 쉬어야 해요. 잠시 후 다시 시도해 주세요.',
+  ERR_RETRY_AFTER_SECONDS: (sec) => `${sec}초 뒤에 다시 시도해 주세요.`,
+  ERR_RETRY_AFTER_MINUTES: (min) => `약 ${min}분 뒤에 다시 시도해 주세요.`,
+  ERR_LINK_NOT_FOUND: '링크를 찾을 수 없습니다. 문자로 받은 최신 링크인지 확인해 주세요.',
+  ERR_LINK_GONE: '링크가 만료되었습니다. 센터로 문의해 주세요.',
+  ERR_GENERIC: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
   ATTEMPTS_LEFT: '남은 시도',
   CONSENT_OPTIONAL_NOTE: '동의하지 않아도 상담은 받을 수 있습니다',
   GUARDIAN_NAME: '보호자 이름',
@@ -433,6 +450,11 @@ export const SCT_ERROR_CODE = Object.freeze({
   GONE: 'SCT_GONE',
   /** 단축 링크 교환 코드(공개 링크) 사용 시간 초과 — 초대 만료(GONE)와 구분 */
   LINK_SESSION_EXPIRED: 'SCT_LINK_SESSION_EXPIRED',
+  /** 센터가 취소한 초대 — 기한 만료(GONE)와 구분 */
+  LINK_CANCELLED: 'SCT_LINK_CANCELLED',
+  /** 세션 무효화(서버 영문 예외 원문 대신 사용) */
+  SESSION_INVALIDATED: 'SESSION_INVALIDATED',
+  ENTITY_NOT_FOUND: 'ENTITY_NOT_FOUND',
   CONFLICT: 'SCT_CONFLICT',
   VERIFY_LOCKED: 'SCT_VERIFY_LOCKED',
   FEATURE_DISABLED: 'SCT_FEATURE_DISABLED'

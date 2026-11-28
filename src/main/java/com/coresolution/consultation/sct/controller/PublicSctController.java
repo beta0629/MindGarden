@@ -13,14 +13,17 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.service.SctDeviceSessionCookieSupport;
 import com.coresolution.consultation.sct.service.SctIdentityOtpService;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.core.controller.BaseApiController;
 import com.coresolution.core.util.HttpRequestClientIp;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +48,7 @@ public class PublicSctController extends BaseApiController {
 
     private final SctPublicService sctPublicService;
     private final SctIdentityOtpService sctIdentityOtpService;
+    private final SctDeviceSessionCookieSupport deviceSessionCookieSupport;
 
     /**
      * 링크 메타.
@@ -70,8 +74,10 @@ public class PublicSctController extends BaseApiController {
     public ResponseEntity<?> verify(
             @PathVariable String token,
             @RequestBody SctVerifyRequest request,
-            HttpServletRequest http) {
+            HttpServletRequest http,
+            HttpServletResponse response) {
         SctVerifyResponse data = sctPublicService.verify(token, request, clientIp(http));
+        bindDevice(token, data, http, response);
         return success(data);
     }
 
@@ -105,9 +111,28 @@ public class PublicSctController extends BaseApiController {
     public ResponseEntity<?> confirmIdentityOtp(
             @PathVariable String token,
             @RequestBody SctIdentityOtpConfirmRequest request,
-            HttpServletRequest http) {
+            HttpServletRequest http,
+            HttpServletResponse response) {
         SctVerifyResponse data =
                 sctIdentityOtpService.confirmOtp(token, request, clientIp(http));
+        bindDevice(token, data, http, response);
+        return success(data);
+    }
+
+    /**
+     * 같은 단말 재진입 — HttpOnly 단말 쿠키의 verify 세션이 유효하면 재인증 없이 세션 반환.
+     * 쿠키가 없으면 200 + verifySessionId=null (링크만으로는 세션 없음 → OTP).
+     *
+     * @param token 토큰
+     * @param http  HTTP
+     * @return {@link SctVerifyResponse}
+     */
+    @PostMapping("/{token}/session/resume")
+    public ResponseEntity<?> resumeSession(
+            @PathVariable String token,
+            HttpServletRequest http) {
+        String deviceSessionId = deviceSessionCookieSupport.read(http).orElse(null);
+        SctVerifyResponse data = sctPublicService.resumeDeviceSession(token, deviceSessionId);
         return success(data);
     }
 
@@ -175,6 +200,18 @@ public class PublicSctController extends BaseApiController {
             @Valid @RequestBody SctSubmitRequest request) {
         sctPublicService.submit(token, request);
         return success("제출되었습니다.");
+    }
+
+    /**
+     * 본인확인 성공 직후 verify 세션 ID 를 단말(브라우저)에 HttpOnly 쿠키로 바인딩.
+     */
+    private void bindDevice(String token, SctVerifyResponse data,
+            HttpServletRequest http, HttpServletResponse response) {
+        if (data == null || !StringUtils.hasText(data.getVerifySessionId())) {
+            return;
+        }
+        response.addHeader(HttpHeaders.SET_COOKIE, deviceSessionCookieSupport.build(
+                token, data.getVerifySessionId(), data.getExpiresInSeconds(), http).toString());
     }
 
     private static String clientIp(HttpServletRequest request) {

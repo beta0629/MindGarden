@@ -195,7 +195,28 @@ public class SctPublicServiceImpl implements SctPublicService {
         SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
-                .expiresInSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60)
+                .expiresInSeconds(verifySessionStore.remainingSeconds(absoluteExpiry(invitation)))
+                .consent(consent)
+                .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SctVerifyResponse resumeDeviceSession(String rawToken, String deviceSessionId) {
+        SctInvitation invitation = loadByToken(rawToken);
+        bindTenantAndGuard(invitation);
+        assertWritableOrVerify(invitation);
+        Instant absolute = absoluteExpiry(invitation);
+        Optional<String> tenant = verifySessionStore.validate(
+                deviceSessionId, invitation.getId(), absolute);
+        if (tenant.isEmpty() || !tenant.get().equals(invitation.getTenantId())) {
+            return SctVerifyResponse.builder().build();
+        }
+        SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
+        SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
+        return SctVerifyResponse.builder()
+                .verifySessionId(deviceSessionId.trim())
+                .expiresInSeconds(verifySessionStore.remainingSeconds(absolute))
                 .consent(consent)
                 .build();
     }
@@ -432,14 +453,14 @@ public class SctPublicServiceImpl implements SctPublicService {
     private void assertReadable(SctInvitation invitation) {
         if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
                 || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
     }
 
     private void assertWritableOrVerify(SctInvitation invitation) {
         if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
                 || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
         if (SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("이미 제출된 질문지입니다.");
@@ -473,7 +494,7 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     /**
-     * 초대 링크 절대 만료 — verify 세션 sliding 상한.
+     * 초대 링크 절대 만료 — verify 세션 수명(유휴 만료 없음). 만료 시각이 없으면 null.
      *
      * @param invitation 초대
      * @return absolute Instant
@@ -481,7 +502,8 @@ public class SctPublicServiceImpl implements SctPublicService {
     private Instant absoluteExpiry(SctInvitation invitation) {
         LocalDateTime expires = invitation.getTokenExpiresAt();
         if (expires == null) {
-            return Instant.now().plusSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+            // 절대 만료가 없으면 세션을 발급·승인하지 않는다(fail-closed, 임의 기본 수명 금지).
+            return null;
         }
         return expires.atZone(TOKEN_EXPIRY_ZONE).toInstant();
     }

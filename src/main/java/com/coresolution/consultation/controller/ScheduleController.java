@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.coresolution.consultation.constant.ProfessionalProviderTypeConstants;
+import com.coresolution.consultation.constant.ApiRequestErrorMessages;
 import com.coresolution.consultation.constant.ScheduleStatus;
 import com.coresolution.consultation.constant.UserRole;
 import com.coresolution.consultation.dto.ConsultationRecordDraftResponse;
@@ -917,8 +918,8 @@ public class ScheduleController extends BaseApiController {
     @GetMapping("/admin/statistics")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getScheduleStatisticsForAdmin(
             @RequestParam String userRole,
-            @RequestParam(required = false) String startDate,
-            @RequestParam(required = false) String endDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String dateRange,
             @RequestParam(required = false) String chartType,
@@ -926,6 +927,10 @@ public class ScheduleController extends BaseApiController {
         
         log.info("📊 관리자용 스케줄 통계 조회 요청: 역할 {}, 시작일: {}, 종료일: {}, 상태: {}, 날짜범위: {}, 차트타입: {}", 
                 userRole, startDate, endDate, status, dateRange, chartType);
+        // 기간 누락·형식 오류는 바인딩 단계에서 400(MISSING_REQUEST_PARAMETER / INVALID_DATE_FORMAT). 역전된 기간도 400.
+        if (startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException(ApiRequestErrorMessages.INVALID_DATE_RANGE);
+        }
         
         ResponseEntity<?> permissionResponse = PermissionCheckUtils.checkStatisticsPermission(session, dynamicPermissionService);
         if (permissionResponse != null) {

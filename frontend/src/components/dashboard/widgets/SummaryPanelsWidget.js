@@ -26,6 +26,7 @@ import MGButton from '../../common/MGButton';
 import { buildErpMgButtonClassName, ERP_MG_BUTTON_LOADING_TEXT } from '../../erp/common/erpMgButtonProps';
 import '../SummaryPanels.css';
 import { SCHEDULE_API } from '../../../constants/api';
+import { buildAdminScheduleStatisticsQuery } from '../../../utils/dateUtils';
 import { useTranslation } from 'react-i18next';
 
 // T5 표준화 2026-05-21: API 경로 리터럴 → 로컬 상수 (운영 게이트 P0)
@@ -57,7 +58,10 @@ const SummaryPanelsWidget = ({ widget, user }) => {
       return {
         ...baseConfig,
         url: API_SCHEDULES_ADMIN_STATISTICS,
-        params: { ...baseConfig.params, userRole: USER_ROLES.ADMIN }
+        params: {
+          ...baseConfig.params,
+          ...buildAdminScheduleStatisticsQuery({ userRole: USER_ROLES.ADMIN })
+        }
       };
     }
     

@@ -7,6 +7,7 @@ import { useUserIdScopedLoad } from '../../hooks/useUserIdScopedLoad';
 import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import StandardizedApi from '../../utils/standardizedApi';
 import { DASHBOARD_API } from '../../constants/api';
+import { buildAdminScheduleStatisticsQuery } from '../../utils/dateUtils';
 import { USER_ROLES, RoleUtils } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import { DEFAULT_MENU_ITEMS } from '../dashboard-v2/constants/menuItems';
@@ -274,9 +275,13 @@ const ConsultationReport = () => {
         userRole: USER_ROLES.CONSULTANT
       });
     } else if (RoleUtils.isAdmin(sessionUser)) {
-      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS, {
-        userRole: USER_ROLES.ADMIN
-      });
+      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS,
+        buildAdminScheduleStatisticsQuery({
+          userRole: USER_ROLES.ADMIN,
+          period: selectedPeriod,
+          year: selectedYear,
+          month: selectedMonth
+        }));
     }
 
     let consultations = [];
@@ -295,7 +300,7 @@ const ConsultationReport = () => {
       setReportData(null);
       console.log('⚠️ 상담 리포트 데이터 없음');
     }
-  }, [userRef, processReportData]);
+  }, [userRef, processReportData, selectedPeriod, selectedYear, selectedMonth]);
 
   const { load: loadReportData } = useSoftResourceLoad(setLoading, async() => {
     try {

@@ -111,7 +111,7 @@ describe('PackagePaymentHistoryList date labels', () => {
     expect(screen.getByTestId('pkg-payment-history-remaining')).toHaveTextContent('잔여 3회');
     expect(screen.getByText('2회')).toBeInTheDocument();
     expect(screen.getByTestId('pkg-payment-history-merge-hint'))
-      .toHaveTextContent('활성 매핑 #501에 합산됨');
+      .toHaveTextContent('활성 배정 #501에 합산됨');
     expect(screen.getByText('종료됨')).toBeInTheDocument();
   });
 

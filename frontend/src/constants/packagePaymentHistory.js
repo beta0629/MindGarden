@@ -36,10 +36,10 @@ export const PACKAGE_PAYMENT_HISTORY_UI = Object.freeze({
    * 추가패키지 병합 TERMINATED — 종료=잔여0 오해 방지.
    * {mappingId} = 합산 대상 활성 매핑 ID
    */
-  MERGED_INTO_ACTIVE_FMT: '활성 매핑 #{mappingId}에 합산됨',
+  MERGED_INTO_ACTIVE_FMT: '활성 배정 #{mappingId}에 합산됨',
   AMOUNT_SUFFIX: '원',
   REFERENCE_PREFIX: '참조:',
-  MAPPING_ID_PREFIX: '매핑 #',
+  MAPPING_ID_PREFIX: '배정 #',
   TYPE_LABELS: Object.freeze({
     INITIAL_MAPPING: '최초 배정',
     /** 동일 내담자 타임라인에서 INITIAL_MAPPING 이 2건+일 때, 최초가 아닌 행 표시용 */

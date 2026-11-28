@@ -44,7 +44,7 @@ export const SESSION_SUCCESSION_UI = {
   OCCUPYING_BANNER_SUFFIX: '건은 승계되지 않고 이전 당사자에게 남습니다.',
   OCCUPYING_BANNER_STATIC:
     '스케줄에 이미 등록된 회기는 승계되지 않고 기존 당사자에게 남습니다.',
-  PAYMENT_NOTICE: '결제·입금·영수증 정보는 원 매핑에 남습니다.',
+  PAYMENT_NOTICE: '결제·입금·영수증 정보는 원 배정에 남습니다.',
   ZERO_TRANSFERABLE: '스케줄에 묶인 회기만 남아 승계할 수 없습니다.',
   SAME_CLIENT_ERROR: '수혜자는 이전 당사자와 달라야 합니다.',
   BENEFICIARY_REQUIRED: '수혜자를 선택하거나 신규 등록해 주세요.',
@@ -61,11 +61,11 @@ export const SESSION_SUCCESSION_UI = {
   CLIENT_LIST_PLACEHOLDER: '내담자 선택',
   /** 신규 등록 탭 — execute 전 매핑 미생성 안내 */
   NEW_CLIENT_EXECUTE_NOTICE:
-    '신규 내담자 등록과 매핑 생성은 승계 실행 단계에서 한 번에 처리됩니다.',
+    '신규 내담자 등록과 배정 생성은 승계 실행 단계에서 한 번에 처리됩니다.',
   DONE_SUCCESS_LEAD: '{count}회 승계가 완료되었습니다.',
   DONE_BENEFICIARY_LABEL: '수혜자',
   DONE_CONSULTANT_LABEL: '담당 상담사',
-  DONE_MAPPING_ID_LABEL: '생성된 매핑 ID',
+  DONE_MAPPING_ID_LABEL: '생성된 배정 ID',
   DONE_REMAINING_SUFFIX: '남은 회기 {count}회',
   DONE_SIDEBAR_GUIDANCE:
     '통합스케줄 사이드바에서 {beneficiaryName} 카드를 확인하세요.'

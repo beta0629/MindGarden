@@ -107,7 +107,7 @@ const ClientSelector = ({
                     allClientMappings[clientId] = mappingsByClientId[clientId] || {
                         hasMapping: false,
                         remainingSessions: 0,
-                        packageName: '매핑 없음',
+                        packageName: '배정 없음',
                         // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                         mappingStatus: 'INACTIVE',
                         lastSessionDate: null,
@@ -229,7 +229,7 @@ const ClientSelector = ({
             CHECK_MAPPING: API_SCHEDULES_CLIENT_MAPPING_CHECK
         };
         const MESSAGES = {
-            NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
+            NO_MAPPING: '배정이 설정되지 않은 내담자입니다.',
             NO_SESSIONS: '남은 세션이 없는 내담자입니다.'
         };
         const MAPPING_STATUS = {
@@ -282,7 +282,7 @@ const ClientSelector = ({
                 return {
                     hasMapping: false,
                     remainingSessions: 0,
-                    packageName: '매핑 없음',
+                    packageName: '배정 없음',
                     // ⚠️ 표준화 2025-12-05: 하드코딩된 상태값을 공통코드에서 동적 조회하세요. getCommonCodes('STATUS_GROUP') 사용
                     mappingStatus: MAPPING_STATUS.INACTIVE,
                     lastSessionDate: null,
@@ -318,7 +318,7 @@ const ClientSelector = ({
      */
     const handleClientClick = async(client) => {
         const MESSAGES = {
-            NO_MAPPING: '매핑이 설정되지 않은 내담자입니다.',
+            NO_MAPPING: '배정이 설정되지 않은 내담자입니다.',
             NO_SESSIONS: '남은 세션이 없는 내담자입니다.'
         };
         

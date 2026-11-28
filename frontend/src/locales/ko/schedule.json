@@ -104,7 +104,7 @@
     "calendar": {
       "sessionLabelFormat": "{{sequence}}회기",
       "sessionAriaLabelBooking": "이 일정 {{sequence}}회기",
-      "sessionAriaLabelRemaining": "매핑 잔여 {{remaining}}"
+      "sessionAriaLabelRemaining": "배정 잔여 {{remaining}}"
     }
   },
   "TimeSlotGrid": {

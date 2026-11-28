@@ -1234,7 +1234,7 @@ const IntegratedMatchingSchedule = () => {
     try {
       await StandardizedApi.post(
         API_ENDPOINTS.ADMIN.MAPPINGS.TERMINATE(mappingId),
-        { reason: '관리자 취소 — 디러티 PENDING_PAYMENT 정리' }
+        { reason: '관리자 취소 — 미결제 PENDING_PAYMENT 정리' }
       );
       notificationManager.success('배정이 취소되었습니다.');
       setCancelTargetMapping(null);

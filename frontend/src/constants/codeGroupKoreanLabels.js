@@ -22,7 +22,7 @@ export const CODE_GROUP_KO_FALLBACK = Object.freeze({
 
   STATUS: '상태',
   PRIORITY: '우선순위',
-  MAPPING_STATUS: '매핑상태',
+  MAPPING_STATUS: '배정상태',
   ROLE: '역할',
   PERMISSION: '권한',
   ROLE_PERMISSION: '역할권한',

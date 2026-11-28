@@ -349,7 +349,7 @@ export const MAPPING_REMAINING_CHIP_PREFIX = '잔여';
 /** 회차 칩 aria 접두사 */
 export const SESSION_SEQUENCE_CHIP_ARIA_PREFIX = '이 일정';
 /** 잔여 칩 aria 접두사 */
-export const MAPPING_REMAINING_CHIP_ARIA_PREFIX = '매핑';
+export const MAPPING_REMAINING_CHIP_ARIA_PREFIX = '배정';
 
 /** 통합 스케줄 범례 — 회차 vs 잔여를 N/M회로 섞지 않음 */
 export const SCHEDULE_LEGEND_SESSION_LABELS_TITLE = '회기 표기';

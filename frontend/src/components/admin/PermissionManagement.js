@@ -45,11 +45,11 @@ const PERMISSION_CATEGORIES = {
         { code: 'CONSULTANT_TRANSFER', name: '상담사 소속 변경', description: '상담사 소속 변경' },
         { code: 'CONSULTANT_RATING_VIEW', name: '상담사 평가 조회', description: '상담사 평가 정보 조회' }
     ],
-    '매핑 관리': [
-        { code: 'MAPPING_VIEW', name: '매핑 조회', description: '상담사-내담자 매핑 조회' },
-        { code: 'MAPPING_MANAGE', name: '매핑 관리', description: '상담사-내담자 매핑 생성/수정/삭제' },
+    '배정 관리': [
+        { code: 'MAPPING_VIEW', name: '배정 조회', description: '상담사-내담자 배정 조회' },
+        { code: 'MAPPING_MANAGE', name: '배정 관리', description: '상담사-내담자 배정 생성/수정/삭제' },
         { code: 'CONSULTATION_PACKAGE_MANAGE', name: '상담 패키지 관리', description: '상담 패키지 설정 및 관리' },
-        { code: 'DUPLICATE_MAPPING_MANAGE', name: '중복 매핑 관리', description: '중복 매핑 처리' }
+        { code: 'DUPLICATE_MAPPING_MANAGE', name: '중복 배정 관리', description: '중복 배정 처리' }
     ],
     '일정 관리': [
         { code: 'SCHEDULE_VIEW', name: '일정 조회', description: '일정 목록 및 정보 조회' },

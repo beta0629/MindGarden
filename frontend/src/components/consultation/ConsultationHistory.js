@@ -10,6 +10,7 @@ import { useSoftResourceLoad } from '../../hooks/useSoftResourceLoad';
 import StandardizedApi from '../../utils/standardizedApi';
 import { getCommonCodes } from '../../utils/commonCodeApi';
 import { DASHBOARD_API } from '../../constants/api';
+import { buildAdminScheduleStatisticsQuery } from '../../utils/dateUtils';
 import { USER_ROLES, RoleUtils } from '../../constants/roles';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
 import ContentArea from '../dashboard-v2/content/ContentArea';
@@ -60,9 +61,8 @@ const ConsultationHistory = () => {
         userRole: USER_ROLES.CONSULTANT
       });
     } else if (RoleUtils.isAdmin(sessionUser) || RoleUtils.isStaff(sessionUser)) {
-      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS, {
-        userRole: USER_ROLES.ADMIN
-      });
+      response = await StandardizedApi.get(DASHBOARD_API.ADMIN_STATS,
+        buildAdminScheduleStatisticsQuery({ userRole: USER_ROLES.ADMIN }));
     }
 
     if (response?.success && response?.data) {

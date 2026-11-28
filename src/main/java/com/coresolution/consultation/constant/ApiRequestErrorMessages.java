@@ -25,6 +25,9 @@ public final class ApiRequestErrorMessages {
     /** 날짜·시간 파싱 실패 (예: {@code ?startDate=bad}) */
     public static final String INVALID_DATE_FORMAT = "날짜 형식이 올바르지 않습니다. (예: 2026-01-31)";
 
+    /** 시작일이 종료일보다 늦은 기간 */
+    public static final String INVALID_DATE_RANGE = "시작일은 종료일보다 늦을 수 없습니다.";
+
     /** 요청 값을 대상 타입으로 변환하지 못함 */
     public static final String INVALID_PARAMETER_VALUE = "요청 값의 형식이 올바르지 않습니다.";
 

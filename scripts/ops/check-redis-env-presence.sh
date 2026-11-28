@@ -320,6 +320,30 @@ run_per_host_redis_discovery() {
   if { [ -n "$binds_6379" ] || [ -n "$binds_6380" ]; } && [ "${ANY_REDIS_HOST_SET}" -eq 0 ]; then
     echo "env_draft_hint=REDIS_HOST=127.0.0.1 REDIS_PORT=6379 REDIS_PASSWORD=<SET_IN_ENV_FILE_NOT_HERE>"
   fi
+
+  # Unauthenticated local PING (no password, no REDISCLI_AUTH). Values never printed.
+  # Result only: PONG | NOAUTH | FAIL | NO_REDIS_CLI | SKIP_NOT_LISTENING
+  echo "4) unauthenticated local ping (127.0.0.1:6379, no AUTH)"
+  if [ -z "$binds_6379" ]; then
+    echo "redis_unauth_ping=SKIP_NOT_LISTENING"
+  elif ! command -v redis-cli >/dev/null 2>&1; then
+    echo "redis_unauth_ping=NO_REDIS_CLI"
+  else
+    unset REDISCLI_AUTH || true
+    set +e
+    _unauth_out="$(redis-cli -h 127.0.0.1 -p 6379 --no-auth-warning ping 2>&1 | tr -d '\r')"
+    _unauth_rc=$?
+    set -e
+    if [ "$_unauth_out" = "PONG" ]; then
+      echo "redis_unauth_ping=PONG"
+    else
+      case "$_unauth_out" in
+        *NOAUTH*) echo "redis_unauth_ping=NOAUTH" ;;
+        *) echo "redis_unauth_ping=FAIL" ;;
+      esac
+    fi
+    unset _unauth_out _unauth_rc
+  fi
 }
 
 echo "1) discover ${ENV_DIR}/*.env (names only)"

@@ -39,6 +39,15 @@ public final class ApiRequestErrorMessages {
 
     public static final String CODE_INVALID_PARAMETER_TYPE = "INVALID_PARAMETER_TYPE";
 
+    public static final String CODE_SESSION_INVALIDATED = "SESSION_INVALIDATED";
+
+    /** Spring Session 이 던지는 영문 원문 조각(응답 노출 금지, 매핑 키로만 사용) */
+    public static final String SESSION_INVALIDATED_MARKER = "Session was invalidated";
+
+    /** 세션이 중간에 무효화된 요청 */
+    public static final String SESSION_INVALIDATED =
+            "연결 상태가 바뀌어 요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+
     public static final String CODE_INVALID_DATE_FORMAT = "INVALID_DATE_FORMAT";
 
     public static final String CODE_INVALID_PARAMETER_VALUE = "INVALID_PARAMETER_VALUE";

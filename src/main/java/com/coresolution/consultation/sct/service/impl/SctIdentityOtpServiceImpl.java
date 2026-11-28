@@ -179,7 +179,29 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
                 || !rateLimiter.hasCapacity(inviteKey, inviteLimit)
                 || !rateLimiter.hasCapacity(phoneKey, phoneLimit)
                 || !rateLimiter.hasCapacity(ipKey, ipLimit)) {
-            throw new SctOtpRateLimitedException(SctConstants.MSG_OTP_RATE_LIMITED);
+            long retryAfter = 0L;
+            if (inviteDb >= inviteLimit) {
+                retryAfter = Math.max(retryAfter, retryAfterFromRows(
+                        phoneOtpAttemptRepository
+                                .findByTenantIdAndProviderAndProviderUserIdAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(
+                                        tenantId, PhoneOtpAttempt.PROVIDER_SCT_IDENTITY,
+                                        String.valueOf(invitation.getId()), hourAgo),
+                        inviteLimit));
+            }
+            if (phoneDb >= phoneLimit) {
+                retryAfter = Math.max(retryAfter, retryAfterFromRows(
+                        phoneOtpAttemptRepository
+                                .findByTenantIdAndProviderAndPhoneHashAndCreatedAtGreaterThanEqualOrderByCreatedAtAsc(
+                                        tenantId, PhoneOtpAttempt.PROVIDER_SCT_IDENTITY, phoneHash, hourAgo),
+                        phoneLimit));
+            }
+            retryAfter = Math.max(retryAfter, rateLimiter.retryAfterSeconds(inviteKey, inviteLimit));
+            retryAfter = Math.max(retryAfter, rateLimiter.retryAfterSeconds(phoneKey, phoneLimit));
+            retryAfter = Math.max(retryAfter, rateLimiter.retryAfterSeconds(ipKey, ipLimit));
+            log.info("SCT identity OTP send rate-limited: invitationId={}, retryAfterSec={}",
+                    invitation.getId(), retryAfter);
+            throw new SctOtpRateLimitedException(SctConstants.MSG_OTP_RATE_LIMITED,
+                    retryAfter > 0L ? retryAfter : null);
         }
 
         int cooldown = otpSettings.resendCooldownSeconds(tenantId);
@@ -196,12 +218,14 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
                 LocalDateTime unlockAt = last.getCreatedAt()
                         .plusMinutes(otpSettings.lockMinutes(tenantId));
                 if (unlockAt.isAfter(LocalDateTime.now())) {
-                    throw new SctOtpLockedException(SctConstants.MSG_OTP_LOCKED);
+                    throw new SctOtpLockedException(SctConstants.MSG_OTP_LOCKED,
+                            Math.max(1L, Duration.between(LocalDateTime.now(), unlockAt).getSeconds()));
                 }
             }
             long elapsed = Duration.between(last.getCreatedAt(), LocalDateTime.now()).getSeconds();
             if (elapsed < cooldown) {
-                throw new SctOtpRateLimitedException(SctConstants.MSG_OTP_RATE_LIMITED);
+                throw new SctOtpRateLimitedException(SctConstants.MSG_OTP_RATE_LIMITED,
+                        Math.max(1L, cooldown - elapsed));
             }
         }
 
@@ -343,7 +367,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
-                .expiresInSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60)
+                .expiresInSeconds(verifySessionStore.remainingSeconds(absoluteExpiry(invitation)))
                 .consent(consent)
                 .build();
     }
@@ -440,6 +464,21 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
         return publicTokenResolver.loadInvitationForVerify(rawToken);
     }
 
+    /**
+     * 시간당 한도 초과 시 다시 시도 가능해질 때까지 남은 초(한도 아래로 내려가는 시점의 row 기준).
+     */
+    private static long retryAfterFromRows(java.util.List<PhoneOtpAttempt> rowsAsc, int limit) {
+        int index = rowsAsc.size() - limit;
+        if (index < 0 || limit <= 0) {
+            return 0L;
+        }
+        LocalDateTime createdAt = rowsAsc.get(index).getCreatedAt();
+        if (createdAt == null) {
+            return 0L;
+        }
+        return Math.max(1L, Duration.between(LocalDateTime.now(), createdAt.plusHours(1)).getSeconds());
+    }
+
     private Optional<PhoneOtpAttempt> findLatestSctOtpAttempt(
             String tenantId, Long invitationId, String normalizedPhone) {
         for (String phoneHash : piiHmacService.lookupCandidates(normalizedPhone)) {
@@ -486,7 +525,7 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private void assertWritableOrVerify(SctInvitation invitation) {
         if (SctInviteStatus.EXPIRED.name().equals(invitation.getStatus())
                 || SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw SctGoneException.forInvitationStatus(invitation.getStatus());
         }
         if (SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("이미 제출된 질문지입니다.");
@@ -516,7 +555,8 @@ public class SctIdentityOtpServiceImpl implements SctIdentityOtpService {
     private Instant absoluteExpiry(SctInvitation invitation) {
         LocalDateTime expires = invitation.getTokenExpiresAt();
         if (expires == null) {
-            return Instant.now().plusSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+            // 절대 만료가 없으면 세션을 발급·승인하지 않는다(fail-closed, 임의 기본 수명 금지).
+            return null;
         }
         return expires.atZone(TOKEN_EXPIRY_ZONE).toInstant();
     }

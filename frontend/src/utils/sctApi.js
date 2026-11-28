@@ -68,6 +68,20 @@ export async function confirmSctIdentityOtp(token, body) {
 }
 
 /**
+ * 같은 단말 재진입(새로고침·새 탭) — HttpOnly 단말 쿠키로 서버가 본인확인 세션을 이어준다.
+ * 쿠키가 없으면 verifySessionId 없는 응답(OTP 필요). 세션 ID 는 메모리에만 두고 저장하지 않는다.
+ *
+ * @param {string} token
+ * @returns {Promise<object>}
+ */
+export async function resumeSctDeviceSession(token) {
+  const res = await StandardizedApi.post(SCT_API.publicSessionResume(token), {}, {
+    skipSessionRefresh: true
+  });
+  return resolveApiObjectData(res) || res;
+}
+
+/**
  * GET form — verifySessionId 는 쿼리가 아니라 헤더 {@link SCT_VERIFY_SESSION_HEADER}.
  *
  * @param {string} token

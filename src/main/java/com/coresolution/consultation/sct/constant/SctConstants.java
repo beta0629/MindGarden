@@ -14,17 +14,6 @@ public final class SctConstants {
     public static final int VERIFY_MAX_FAILURES = 5;
     public static final int VERIFY_LOCK_MINUTES = 15;
 
-    /**
-     * 본인확인 세션 유휴 TTL(분). form/draft/consent/submit 성공 validate 시 sliding.
-     * absolute cap = invitation.tokenExpiresAt — 초대 링크 만료를 넘기지 않음.
-     */
-    public static final int VERIFY_SESSION_IDLE_MINUTES = 30;
-
-    /**
-     * 호환 alias — {@link #VERIFY_SESSION_IDLE_MINUTES} 와 동일(고정 절대 TTL 아님).
-     */
-    public static final int VERIFY_SESSION_TTL_MINUTES = VERIFY_SESSION_IDLE_MINUTES;
-
     public static final String SMS_RESULT_SENT = "SENT";
     public static final String SMS_RESULT_TEST_MODE_SKIP = "TEST_MODE_SKIP";
     public static final String SMS_RESULT_FAILED = "FAILED";
@@ -60,7 +49,10 @@ public final class SctConstants {
     /** 단축 링크 무효·만료·미존재 시 동일 리다이렉트 경로(존재 여부 누출 방지). */
     public static final String SHORT_LINK_INVALID_REDIRECT_PATH = PUBLIC_SCT_WEB_PREFIX + "invalid";
 
-    /** Redis 교환 코드 TTL(분). */
+    /**
+     * 단축 링크 교환 코드 착지 TTL(분) — 발급 후 첫 사용까지의 창.
+     * 첫 사용 뒤에는 작성 중 시간 제한 없이 초대 tokenExpiresAt 까지 유지.
+     */
     public static final int SHORT_LINK_EXCHANGE_TTL_MINUTES = 10;
 
     /** 공개 메타 — 재발급으로 무효화된 이전 토큰/단축 코드. */
@@ -115,6 +107,19 @@ public final class SctConstants {
     /** 파기 대상이 아닐 때. */
     public static final String MSG_DESTROY_NOT_ELIGIBLE =
             "보관 기간이 지나지 않아 파기할 수 없습니다.";
+
+    /** 공개 링크(단축 링크 교환 코드) 사용 시간 초과 — 문자 링크 재진입 안내. */
+    public static final String MSG_LINK_SESSION_EXPIRED =
+            "링크 사용 시간이 지났습니다. 문자의 링크를 다시 열면 답이 이어집니다.";
+
+    /** 공개 링크 없음(존재 여부 비공개). */
+    public static final String MSG_LINK_NOT_FOUND = "링크를 찾을 수 없습니다. 문자로 받은 최신 링크인지 확인해 주세요.";
+
+    /** 초대 기한 만료(또는 상태 불명 종료). */
+    public static final String MSG_LINK_GONE = "링크가 만료되었거나 취소되었습니다.";
+
+    /** 센터가 취소한 초대. */
+    public static final String MSG_LINK_CANCELLED = "센터에서 취소한 링크입니다. 필요하시면 센터에 문의해 주세요.";
 
     /** 공개 본인확인 세션 없음·만료·불일치. */
     public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";

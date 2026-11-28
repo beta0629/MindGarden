@@ -102,8 +102,7 @@ class SctPublicServiceTest {
     @Spy
     private SctVerifySessionStore verifySessionStore = new SctVerifySessionStore(
             redisHarness.provider(),
-            Clock.systemUTC(),
-            SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+            Clock.systemUTC());
 
     @Mock private SctExchangeCodeStore exchangeCodeStore;
     @Mock private SctFeatureGuard sctFeatureGuard;
@@ -562,7 +561,7 @@ class SctPublicServiceTest {
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> sctPublicService.getMeta(RAW_TOKEN));
-        assertEquals("SCT 링크를 찾을 수 없습니다.", ex.getMessage());
+        assertEquals(com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_NOT_FOUND, ex.getMessage());
     }
 
     @Test
@@ -667,7 +666,7 @@ class SctPublicServiceTest {
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
                 () -> sctPublicService.verify(
                         exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
-        assertEquals("SCT 링크를 찾을 수 없습니다.", ex.getMessage());
+        assertEquals(com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_NOT_FOUND, ex.getMessage());
         verify(attemptRepository, never()).save(any());
     }
 

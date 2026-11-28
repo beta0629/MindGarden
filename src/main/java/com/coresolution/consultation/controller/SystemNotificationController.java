@@ -440,7 +440,7 @@ public class SystemNotificationController extends BaseApiController {
         Long userId = currentUser.getId();
         String userName = currentUser.getName();
         
-        log.info("📢 공지 생성 - 작성자 ID: {}, 이름: {}", userId, userName);
+        log.info("📢 공지 생성 - 작성자 ID: {}", userId);
 
         try {
         setTenantContextFromUser(currentUser);

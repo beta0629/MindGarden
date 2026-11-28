@@ -1,6 +1,6 @@
 /**
  * SCT 공개 응답 페이지 — /public/sct/:token
- * 흐름: 진입 → 본인확인 → (보호자) → 동의 → 문항 → 제출확인 → 완료
+ * 흐름: 진입 → 본인확인용 동의 → 본인확인 → (보호자) → 동의 → 문항 → 제출확인 → 완료
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -19,12 +19,19 @@ import SafeText from '../../common/SafeText';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
 import {
+  confirmSctIdentityOtp,
   fetchSctPublicForm,
   fetchSctPublicMeta,
   saveSctConsent,
+  saveSctDraft,
+  sendSctIdentityOtp,
   submitSct,
   verifySctPublic
 } from '../../../utils/sctApi';
+import {
+  clearSctPublicDraft
+} from '../../../utils/sctPublicDraftStorage';
+import { isSctVerifyRequiredError } from '../../../utils/sctPublicVerifyError';
 import useSctVisualViewport from '../../../hooks/useSctVisualViewport';
 import useSctDraftAutosave, { SCT_SAVE_STATUS } from '../../../hooks/useSctDraftAutosave';
 import {
@@ -32,6 +39,7 @@ import {
   SCT_CONSENT_TYPE,
   SCT_CSS,
   SCT_DEFAULTS,
+  SCT_ERROR_CODE,
   SCT_FORM_TYPE,
   SCT_FORM_TYPE_LABEL,
   SCT_ITEMS_PER_PAGE,
@@ -43,11 +51,13 @@ import {
 import SctThumbBar from './molecules/SctThumbBar';
 import SctProgressTicks from './molecules/SctProgressTicks';
 import SctQuestionItem from './molecules/SctQuestionItem';
+import SctPublicLanding, { SCT_LANDING_KIND } from './SctPublicLanding';
 import './sctPublic.css';
 
 const STEP = Object.freeze({
   LOADING: 'LOADING',
   ENTRY: 'ENTRY',
+  IDENTITY_CONSENT: 'IDENTITY_CONSENT',
   VERIFY: 'VERIFY',
   GUARDIAN: 'GUARDIAN',
   CONSENT: 'CONSENT',
@@ -55,27 +65,36 @@ const STEP = Object.freeze({
   REVIEW: 'REVIEW',
   DONE: 'DONE',
   EXPIRED: 'EXPIRED',
+  REISSUED: 'REISSUED',
   INVALID_LINK: 'INVALID_LINK',
   ALREADY: 'ALREADY',
   ERROR: 'ERROR'
 });
 
-const formatExpiry = (iso) => {
-  if (!iso) return '—';
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return toDisplayString(iso, '—');
-    return d.toLocaleString('ko-KR', {
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } catch {
-    return toDisplayString(iso, '—');
+/**
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+const isIdentityContactConsentRequiredError = (error) => {
+  if (error == null || typeof error !== 'object') {
+    return false;
   }
+  const body = error.response && typeof error.response.data === 'object'
+    ? error.response.data
+    : null;
+  const code = (body && (body.errorCode || body.code))
+    || error.errorCode
+    || error.code
+    || '';
+  return String(code) === SCT_ERROR_CODE.IDENTITY_CONTACT_CONSENT_REQUIRED;
 };
+
+const LANDING_STEPS = Object.freeze([
+  STEP.ENTRY,
+  STEP.EXPIRED,
+  STEP.REISSUED,
+  STEP.ALREADY
+]);
 
 /**
  * @returns {JSX.Element}
@@ -93,10 +112,15 @@ const SctPublicPage = () => {
   const [channel, setChannel] = useState(SCT_CHANNEL.PHONE);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpHint, setOtpHint] = useState('');
   const [verifyError, setVerifyError] = useState('');
   const [busy, setBusy] = useState(false);
 
   const [consentStatus, setConsentStatus] = useState(null);
+  const [identityConsentAgreed, setIdentityConsentAgreed] = useState(false);
+  const [identityConsentLocalSatisfied, setIdentityConsentLocalSatisfied] = useState(false);
   const [sensitiveAgreed, setSensitiveAgreed] = useState(false);
   const [instructionRead, setInstructionRead] = useState(false);
   const [signerName, setSignerName] = useState('');
@@ -108,6 +132,8 @@ const SctPublicPage = () => {
   const [answersMap, setAnswersMap] = useState({});
   const [pageIndex, setPageIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [pendingSubmitAfterVerify, setPendingSubmitAfterVerify] = useState(false);
+  const pendingSubmitRef = useRef(false);
 
   const formType = meta?.formType || form?.formType || SCT_FORM_TYPE.ADULT;
   const isChild = formType === SCT_FORM_TYPE.CHILD;
@@ -150,8 +176,13 @@ const SctPublicPage = () => {
       } else if (data.verifyChannelHint === SCT_CHANNEL.PHONE) {
         setChannel(SCT_CHANNEL.PHONE);
       }
+      if (data.identityConsentSatisfied) {
+        setIdentityConsentLocalSatisfied(true);
+      }
       if (data.status === SCT_STATUS.SUBMITTED) {
         setStep(STEP.ALREADY);
+      } else if (data.status === SCT_STATUS.REISSUED) {
+        setStep(STEP.REISSUED);
       } else if (data.status === SCT_STATUS.EXPIRED || data.status === SCT_STATUS.CANCELLED) {
         setStep(STEP.EXPIRED);
       } else {
@@ -176,6 +207,38 @@ const SctPublicPage = () => {
     loadMeta();
   }, [loadMeta]);
 
+  // 레거시 localStorage 답변 키 정리 (이탈·만료·언마운트)
+  useEffect(() => {
+    if (step === STEP.EXPIRED || step === STEP.REISSUED || step === STEP.INVALID_LINK) {
+      clearSctPublicDraft(token);
+    }
+  }, [step, token]);
+
+  useEffect(() => () => {
+    clearSctPublicDraft(token);
+  }, [token]);
+
+  useEffect(() => {
+    if (!LANDING_STEPS.includes(step) && step !== STEP.INVALID_LINK) return undefined;
+    const prevTitle = document.title;
+    document.title = SCT_UI.LANDING_OG_TITLE;
+    const ensureMeta = (attr, key, content) => {
+      let el = document.querySelector(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.setAttribute('content', content);
+    };
+    ensureMeta('property', 'og:title', SCT_UI.LANDING_OG_TITLE);
+    ensureMeta('property', 'og:description', SCT_UI.LANDING_OG_DESCRIPTION);
+    ensureMeta('name', 'description', SCT_UI.LANDING_OG_DESCRIPTION);
+    return () => {
+      document.title = prevTitle;
+    };
+  }, [step]);
+
   useEffect(() => {
     const onFocusIn = (e) => {
       const t = e.target;
@@ -188,7 +251,49 @@ const SctPublicPage = () => {
     return () => document.removeEventListener('focusin', onFocusIn);
   }, []);
 
-  const openVerify = () => setStep(STEP.VERIFY);
+  const hasIdentityConsent = Boolean(
+    identityConsentLocalSatisfied || meta?.identityConsentSatisfied
+  );
+
+  const openVerifyOrIdentityConsent = () => {
+    if (hasIdentityConsent) {
+      setStep(STEP.VERIFY);
+    } else {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+    }
+  };
+
+  const goToReVerify = useCallback(() => {
+    setVerifySessionId('');
+    setVerifyError('');
+    setOtpCode('');
+    setOtpSent(false);
+    setOtpHint('');
+    if (identityConsentLocalSatisfied || meta?.identityConsentSatisfied) {
+      setStep(STEP.VERIFY);
+    } else {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+    }
+  }, [identityConsentLocalSatisfied, meta?.identityConsentSatisfied]);
+
+  /**
+   * 본인확인 재개 후 대기 중이던 제출 완료.
+   * @param {string} sid
+   * @param {Record<string, { formItemId: number, answerText?: string, notApplicable?: boolean }>} mergedAnswers
+   */
+  const completePendingSubmit = async(sid, mergedAnswers) => {
+    const answers = Object.values(mergedAnswers || {})
+      .filter((a) => a && a.formItemId != null);
+    await saveSctDraft(token, { verifySessionId: sid, answers });
+    await submitSct(token, { verifySessionId: sid });
+    clearSctPublicDraft(token);
+    pendingSubmitRef.current = false;
+    setPendingSubmitAfterVerify(false);
+    setVerifyError('');
+    setStep(STEP.DONE);
+  };
 
   const applyFormAndGoItems = async(sid, consent) => {
     const formData = await fetchSctPublicForm(token, sid);
@@ -198,67 +303,219 @@ const SctPublicPage = () => {
     } else if (consent) {
       setConsentStatus(consent);
     }
-    const nextAnswers = {};
-    (formData?.items || []).forEach((it) => {
+    const itemsList = formData?.items || [];
+    const serverAnswers = {};
+    itemsList.forEach((it) => {
       if (it.answerText != null || it.notApplicable) {
-        nextAnswers[it.formItemId] = {
+        serverAnswers[it.formItemId] = {
           formItemId: it.formItemId,
           answerText: it.answerText || '',
           notApplicable: Boolean(it.notApplicable)
         };
       }
     });
+    // 서버 암호화 draft만 사용. localStorage 답변 본문 병합 금지.
+    clearSctPublicDraft(token);
+    const nextAnswers = serverAnswers;
     setAnswersMap(nextAnswers);
     if (formData?.status === SCT_STATUS.SUBMITTED) {
       setStep(STEP.ALREADY);
-      return;
+      return nextAnswers;
     }
-    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0) {
-      const answeredNos = (formData?.items || [])
-        .filter((it) => it.answerText || it.notApplicable)
-        .map((it) => it.itemNo);
-      const last = answeredNos.length ? Math.max(...answeredNos) : 0;
-      setPageIndex(Math.floor(last / perPage));
+    // 재방문 재개: 첫 미답 문항 페이지, 전부 답했으면 마지막 답 페이지
+    const isAnswered = (it) => {
+      const a = nextAnswers[it.formItemId] || nextAnswers[String(it.formItemId)];
+      if (a?.notApplicable) return true;
+      if (a?.answerText && String(a.answerText).trim()) return true;
+      return false;
+    };
+    if (meta?.hasDraft || Object.keys(nextAnswers).length > 0 || itemsList.some(isAnswered)) {
+      const firstUnansweredIdx = itemsList.findIndex((it) => !isAnswered(it));
+      let resumeIdx = 0;
+      if (firstUnansweredIdx >= 0) {
+        resumeIdx = firstUnansweredIdx;
+      } else if (itemsList.length > 0) {
+        let lastAnsweredIdx = 0;
+        itemsList.forEach((it, idx) => {
+          if (isAnswered(it)) lastAnsweredIdx = idx;
+        });
+        resumeIdx = lastAnsweredIdx;
+      }
+      setPageIndex(Math.floor(resumeIdx / perPage));
+    } else {
+      setPageIndex(0);
     }
     setStep(STEP.ITEMS);
+    return nextAnswers;
+  };
+
+  const handleIdentityConsentAgree = async() => {
+    if (!identityConsentAgreed) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    setVerifyError('');
+    try {
+      await saveSctConsent(token, {
+        consentType: SCT_CONSENT_TYPE.IDENTITY_CONTACT,
+        agreed: true
+      });
+      setIdentityConsentLocalSatisfied(true);
+      setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: true } : prev));
+      setStep(STEP.VERIFY);
+    } catch (error) {
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  /**
+   * verify/confirm 성공 후 공통 세션 적용.
+   * @param {object} res
+   */
+  const applyVerifySuccess = async(res) => {
+    const sid = res?.verifySessionId;
+    if (!sid) {
+      setVerifyError(SCT_UI.MISMATCH);
+      return;
+    }
+    setVerifySessionId(sid);
+    const consent = res?.consent || null;
+    setConsentStatus(consent);
+    if (consent?.revoked) {
+      setErrorMsg(SCT_UI.LOAD_FAIL);
+      setStep(STEP.ERROR);
+      return;
+    }
+    if (consent?.satisfied) {
+      const merged = await applyFormAndGoItems(sid, consent);
+      if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
+        try {
+          await completePendingSubmit(sid, merged);
+        } catch (submitError) {
+          if (isSctVerifyRequiredError(submitError)) {
+            clearSctPublicDraft(token);
+            pendingSubmitRef.current = true;
+            setPendingSubmitAfterVerify(true);
+            setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+            setStep(STEP.REVIEW);
+          } else {
+            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setStep(STEP.REVIEW);
+          }
+        }
+      }
+      return;
+    }
+    if (consent?.guardianRequired) {
+      setStep(STEP.GUARDIAN);
+    } else {
+      setStep(STEP.CONSENT);
+    }
+  };
+
+  const handleIdentityConsentRequired = (error) => {
+    if (!isIdentityContactConsentRequiredError(error)) {
+      return false;
+    }
+    setIdentityConsentLocalSatisfied(false);
+    setIdentityConsentAgreed(false);
+    setMeta((prev) => (prev ? { ...prev, identityConsentSatisfied: false } : prev));
+    setStep(STEP.IDENTITY_CONSENT);
+    return true;
+  };
+
+  const handleOtpSend = async() => {
+    setVerifyError('');
+    setOtpHint('');
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
+    const trimmed = phone.trim();
+    if (!trimmed) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await sendSctIdentityOtp(token, { phone: trimmed });
+      setOtpSent(true);
+      setOtpCode('');
+      setOtpHint(res?.maskedPhone
+        ? `${SCT_UI.OTP_SENT_HINT} (${res.maskedPhone})`
+        : SCT_UI.OTP_SENT_HINT);
+    } catch (error) {
+      if (handleIdentityConsentRequired(error)) {
+        return;
+      }
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleOtpConfirm = async() => {
+    setVerifyError('');
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
+    const trimmedPhone = phone.trim();
+    const trimmedCode = otpCode.trim();
+    if (!trimmedPhone || !trimmedCode) {
+      setVerifyError(SCT_UI.VALIDATE_REQUIRED);
+      return;
+    }
+    setBusy(true);
+    try {
+      const res = await confirmSctIdentityOtp(token, {
+        phone: trimmedPhone,
+        code: trimmedCode
+      });
+      await applyVerifySuccess(res);
+    } catch (error) {
+      if (handleIdentityConsentRequired(error)) {
+        return;
+      }
+      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleVerify = async() => {
     setVerifyError('');
-    const body = channel === SCT_CHANNEL.EMAIL
-      ? { email: email.trim() }
-      : { phone: phone.trim() };
-    if ((channel === SCT_CHANNEL.PHONE && !body.phone)
-      || (channel === SCT_CHANNEL.EMAIL && !body.email)) {
+    if (!hasIdentityConsent) {
+      setIdentityConsentAgreed(false);
+      setStep(STEP.IDENTITY_CONSENT);
+      return;
+    }
+    if (channel === SCT_CHANNEL.PHONE) {
+      if (otpSent) {
+        await handleOtpConfirm();
+      } else {
+        await handleOtpSend();
+      }
+      return;
+    }
+    const body = { email: email.trim() };
+    if (!body.email) {
       setVerifyError(SCT_UI.VALIDATE_REQUIRED);
       return;
     }
     setBusy(true);
     try {
       const res = await verifySctPublic(token, body);
-      const sid = res?.verifySessionId;
-      if (!sid) {
-        setVerifyError(SCT_UI.MISMATCH);
-        return;
-      }
-      setVerifySessionId(sid);
-      const consent = res?.consent || null;
-      setConsentStatus(consent);
-      if (consent?.revoked) {
-        setErrorMsg(SCT_UI.LOAD_FAIL);
-        setStep(STEP.ERROR);
-        return;
-      }
-      if (consent?.satisfied) {
-        await applyFormAndGoItems(sid, consent);
-        return;
-      }
-      if (consent?.guardianRequired) {
-        setStep(STEP.GUARDIAN);
-      } else {
-        setStep(STEP.CONSENT);
-      }
+      await applyVerifySuccess(res);
     } catch (error) {
+      if (handleIdentityConsentRequired(error)) {
+        return;
+      }
       setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.MISMATCH));
     } finally {
       setBusy(false);
@@ -332,9 +589,33 @@ const SctPublicPage = () => {
         });
       }
       setVerifyError('');
-      await applyFormAndGoItems(verifySessionId, { ...consentStatus, satisfied: true });
+      const merged = await applyFormAndGoItems(verifySessionId, { ...consentStatus, satisfied: true });
+      if (pendingSubmitRef.current || pendingSubmitAfterVerify) {
+        try {
+          await completePendingSubmit(verifySessionId, merged);
+        } catch (submitError) {
+          if (isSctVerifyRequiredError(submitError)) {
+            clearSctPublicDraft(token);
+            pendingSubmitRef.current = true;
+            setPendingSubmitAfterVerify(true);
+            setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+            setStep(STEP.REVIEW);
+          } else {
+            setVerifyError(resolveUserFacingApiErrorMessage(submitError, SCT_UI.LOAD_FAIL));
+            setStep(STEP.REVIEW);
+          }
+        }
+      }
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      if (isSctVerifyRequiredError(error)) {
+        clearSctPublicDraft(token);
+        pendingSubmitRef.current = true;
+        setPendingSubmitAfterVerify(true);
+        setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+        setStep(STEP.REVIEW);
+      } else {
+        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.VALIDATE_REQUIRED));
+      }
     } finally {
       setBusy(false);
     }
@@ -382,13 +663,27 @@ const SctPublicPage = () => {
     try {
       await saveNow();
       await submitSct(token, { verifySessionId });
+      clearSctPublicDraft(token);
+      pendingSubmitRef.current = false;
+      setPendingSubmitAfterVerify(false);
+      setVerifyError('');
       setStep(STEP.DONE);
     } catch (error) {
-      setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+      if (isSctVerifyRequiredError(error)) {
+        clearSctPublicDraft(token);
+        pendingSubmitRef.current = true;
+        setPendingSubmitAfterVerify(true);
+        setVerifyError(SCT_UI.VERIFY_TO_SUBMIT);
+      } else {
+        setVerifyError(resolveUserFacingApiErrorMessage(error, SCT_UI.LOAD_FAIL));
+      }
     } finally {
       setBusy(false);
     }
   };
+
+  const isVerifyRequiredUi = pendingSubmitAfterVerify
+    || verifyError === SCT_UI.VERIFY_TO_SUBMIT;
 
   const counts = useMemo(() => {
     let answered = 0;
@@ -465,25 +760,11 @@ const SctPublicPage = () => {
     body = <p className="mg-v2-sct-lead">{SCT_UI.LOADING}</p>;
   } else if (step === STEP.ERROR) {
     body = <p className="mg-v2-sct-alert" role="alert"><SafeText>{errorMsg}</SafeText></p>;
-  } else if (step === STEP.EXPIRED) {
-    body = (
-      <>
-        <h1 className="mg-v2-sct-h1">{SCT_UI.EXPIRED_TITLE}</h1>
-        <p className="mg-v2-sct-lead">{SCT_UI.EXPIRED_BODY}</p>
-      </>
-    );
   } else if (step === STEP.INVALID_LINK) {
     body = (
       <>
         <h1 className="mg-v2-sct-h1">{SCT_UI.INVALID_LINK_TITLE}</h1>
         <p className="mg-v2-sct-lead">{SCT_UI.INVALID_LINK_BODY}</p>
-      </>
-    );
-  } else if (step === STEP.ALREADY) {
-    body = (
-      <>
-        <h1 className="mg-v2-sct-h1">{SCT_UI.ALREADY_TITLE}</h1>
-        <p className="mg-v2-sct-lead">{SCT_UI.ALREADY_BODY}</p>
       </>
     );
   } else if (step === STEP.DONE) {
@@ -493,91 +774,66 @@ const SctPublicPage = () => {
         <p className="mg-v2-sct-lead">{SCT_UI.DONE_BODY}</p>
       </>
     );
-  } else if (step === STEP.ENTRY) {
-    const resumed = Boolean(meta?.hasDraft);
+  } else if (LANDING_STEPS.includes(step)) {
+    const landingKind = step === STEP.EXPIRED
+      ? SCT_LANDING_KIND.EXPIRED
+      : step === STEP.REISSUED
+        ? SCT_LANDING_KIND.REISSUED
+        : step === STEP.ALREADY
+          ? SCT_LANDING_KIND.SUBMITTED
+          : SCT_LANDING_KIND.INVITE;
     body = (
-      <>
-        <section className="mg-v2-sct-cover" aria-label={SCT_UI.TITLE}>
-          <div className="mg-v2-sct-cover__brand">{SCT_UI.BRAND}</div>
-          <h1 className="mg-v2-sct-cover__h">
-            문장완성
-            <br />
-            질문지
-          </h1>
-          <p className="mg-v2-sct-caption">
-            {kindLabel}
-            {' · '}
-            {meta?.itemCount || SCT_DEFAULTS.TOTAL_ITEMS}
-            문항
-          </p>
-        </section>
-        <section className="mg-v2-sct-sheet" aria-label={resumed ? SCT_UI.RESUME_HINT : SCT_UI.RECEIVER}>
-          <div>{resumed ? SCT_UI.RESUME_HINT : `${toDisplayString(meta?.title, SCT_UI.TITLE)}`}</div>
-          {resumed ? <SctProgressTicks answersMap={{}} /> : null}
-          <dl className="mg-v2-sct-kv">
-            <dt>{SCT_UI.FORM_KIND}</dt>
-            <dd>{kindLabel}</dd>
-            <dt>{SCT_UI.EXPIRES}</dt>
-            <dd>{formatExpiry(meta?.tokenExpiresAt)}</dd>
-            <dt>저장</dt>
-            <dd>{SCT_UI.AUTO_SAVE_HINT}</dd>
-          </dl>
-          {resumed ? (
-            <p className={`${SCT_CSS.CAPTION}`} data-testid={SCT_TEST_ID.CAPTION}>{SCT_UI.RESUME_CAP}</p>
-          ) : null}
-        </section>
-        <section>
-          <div className="mg-v2-sct-top__title">{SCT_UI.ENTRY_STEPS_TITLE}</div>
-          <ol className="mg-v2-sct-steps">
-            <li>
-              <span className="n">1</span>
-              <div>
-                {SCT_UI.STEP_VERIFY}
-                <small>문자를 받은 휴대폰 번호를 입력합니다</small>
-              </div>
-            </li>
-            <li>
-              <span className="n">2</span>
-              <div>
-                {SCT_UI.STEP_CONSENT}
-                <small>
-                  민감정보 수집·이용 동의
-                  {meta?.requiresGuardian ? ' · 보호자 동의' : ''}
-                </small>
-              </div>
-            </li>
-            <li>
-              <span className="n">3</span>
-              <div>
-                {SCT_UI.STEP_ITEMS}
-                <small>
-                  한 번에
-                  {perPage}
-                  문항씩
-                </small>
-              </div>
-            </li>
-            <li>
-              <span className="n">4</span>
-              <div>
-                {SCT_UI.STEP_SUBMIT}
-                <small>제출한 뒤에는 상담 때 함께 살펴봅니다</small>
-              </div>
-            </li>
-          </ol>
-          <p className="mg-v2-sct-notice mg-v2-sct-foot">
-            {toDisplayString(meta?.title, SCT_UI.TITLE)}
-          </p>
-        </section>
-      </>
+      <SctPublicLanding
+        kind={landingKind}
+        meta={meta || {}}
+        resumed={Boolean(meta?.hasDraft)}
+        onStart={openVerifyOrIdentityConsent}
+      />
+    );
+    bar = null;
+  } else if (step === STEP.IDENTITY_CONSENT) {
+    body = (
+      <div data-testid={SCT_TEST_ID.IDENTITY_CONSENT_STEP}>
+        {renderTop(SCT_UI.STEP_IDENTITY_CONSENT, false)}
+        <h1 className="mg-v2-sct-h1">
+          {toDisplayString(
+            meta?.identityConsentTitle,
+            SCT_UI.IDENTITY_CONSENT_FALLBACK_TITLE
+          )}
+        </h1>
+        {verifyError ? (
+          <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
+        ) : null}
+        <div className="mg-v2-sct-consent-body">
+          <SafeText>
+            {toDisplayString(
+              meta?.identityConsentBody,
+              SCT_UI.IDENTITY_CONSENT_REQUIRED
+            )}
+          </SafeText>
+        </div>
+        {checkBtn(
+          identityConsentAgreed,
+          () => setIdentityConsentAgreed((v) => !v),
+          SCT_UI.IDENTITY_CONSENT_REQUIRED
+        )}
+      </div>
     );
     bar = (
       <SctThumbBar
-        primaryLabel={resumed ? SCT_UI.RESUME : SCT_UI.START}
-        onPrimary={openVerify}
+        primaryLabel={SCT_UI.IDENTITY_CONSENT_CONTINUE}
+        onPrimary={handleIdentityConsentAgree}
+        primaryDisabled={!identityConsentAgreed}
+        loading={busy}
+        secondaryLabel={SCT_UI.PREV}
+        onSecondary={() => setStep(STEP.ENTRY)}
       />
     );
   } else if (step === STEP.VERIFY) {
+    const phoneChannel = channel === SCT_CHANNEL.PHONE;
+    const verifyPrimaryLabel = phoneChannel
+      ? (otpSent ? SCT_UI.OTP_CONFIRM : SCT_UI.OTP_SEND)
+      : SCT_UI.VERIFY_SUBMIT;
     body = (
       <>
         {renderTop(SCT_UI.VERIFY, false)}
@@ -588,7 +844,12 @@ const SctPublicPage = () => {
             type="button"
             variant={channel === SCT_CHANNEL.PHONE ? 'primary' : 'outline'}
             preventDoubleClick={false}
-            onClick={() => setChannel(SCT_CHANNEL.PHONE)}
+            onClick={() => {
+              setChannel(SCT_CHANNEL.PHONE);
+              setOtpSent(false);
+              setOtpCode('');
+              setOtpHint('');
+            }}
           >
             {SCT_UI.PHONE_SEGMENT}
           </MGButton>
@@ -596,7 +857,12 @@ const SctPublicPage = () => {
             type="button"
             variant={channel === SCT_CHANNEL.EMAIL ? 'primary' : 'outline'}
             preventDoubleClick={false}
-            onClick={() => setChannel(SCT_CHANNEL.EMAIL)}
+            onClick={() => {
+              setChannel(SCT_CHANNEL.EMAIL);
+              setOtpSent(false);
+              setOtpCode('');
+              setOtpHint('');
+            }}
           >
             {SCT_UI.EMAIL_SEGMENT}
           </MGButton>
@@ -611,19 +877,44 @@ const SctPublicPage = () => {
         {verifyError ? (
           <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
         ) : null}
-        {channel === SCT_CHANNEL.PHONE ? (
-          <div className="mg-v2-sct-field">
-            <label htmlFor="sct-phone">{SCT_UI.PHONE_SEGMENT}</label>
-            <input
-              id="sct-phone"
-              type="tel"
-              inputMode="tel"
-              autoComplete="tel"
-              value={phone}
-              aria-invalid={Boolean(verifyError)}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+        {otpHint ? (
+          <p className={SCT_CSS.CAPTION}><SafeText>{otpHint}</SafeText></p>
+        ) : null}
+        {phoneChannel ? (
+          <>
+            <div className="mg-v2-sct-field">
+              <label htmlFor="sct-phone">{SCT_UI.PHONE_SEGMENT}</label>
+              <input
+                id="sct-phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                value={phone}
+                aria-invalid={Boolean(verifyError)}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setOtpSent(false);
+                  setOtpCode('');
+                  setOtpHint('');
+                }}
+              />
+            </div>
+            {otpSent ? (
+              <div className="mg-v2-sct-field">
+                <label htmlFor="sct-otp-code">{SCT_UI.OTP_CODE}</label>
+                <input
+                  id="sct-otp-code"
+                  data-testid={SCT_TEST_ID.OTP_CODE}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={otpCode}
+                  aria-invalid={Boolean(verifyError)}
+                  onChange={(e) => setOtpCode(e.target.value)}
+                />
+              </div>
+            ) : null}
+          </>
         ) : (
           <div className="mg-v2-sct-field">
             <label htmlFor="sct-email">{SCT_UI.EMAIL_SEGMENT}</label>
@@ -641,11 +932,22 @@ const SctPublicPage = () => {
     );
     bar = (
       <SctThumbBar
-        primaryLabel={SCT_UI.VERIFY_SUBMIT}
+        primaryLabel={verifyPrimaryLabel}
         onPrimary={handleVerify}
+        primaryDisabled={!hasIdentityConsent}
         loading={busy}
-        secondaryLabel={SCT_UI.PREV}
-        onSecondary={() => setStep(STEP.ENTRY)}
+        secondaryLabel={otpSent && phoneChannel ? SCT_UI.OTP_RESEND : SCT_UI.PREV}
+        onSecondary={otpSent && phoneChannel
+          ? () => {
+            setOtpSent(false);
+            setOtpCode('');
+            setOtpHint('');
+            setVerifyError('');
+          }
+          : () => setStep(STEP.ENTRY)}
+        primaryTestId={phoneChannel
+          ? (otpSent ? SCT_TEST_ID.OTP_CONFIRM : SCT_TEST_ID.OTP_SEND)
+          : undefined}
       />
     );
   } else if (step === STEP.GUARDIAN) {
@@ -864,14 +1166,33 @@ const SctPublicPage = () => {
           </section>
         ) : null}
         {verifyError ? (
-          <div className="mg-v2-sct-alert" role="alert"><SafeText>{verifyError}</SafeText></div>
+          <div
+            className="mg-v2-sct-alert"
+            role="alert"
+            data-testid={isVerifyRequiredUi ? SCT_TEST_ID.VERIFY_REQUIRED_ALERT : undefined}
+          >
+            <SafeText>{verifyError}</SafeText>
+            {isVerifyRequiredUi ? (
+              <div className="mg-v2-sct-alert__actions">
+                <MGButton
+                  type="button"
+                  variant="primary"
+                  preventDoubleClick={false}
+                  onClick={goToReVerify}
+                  data-testid={SCT_TEST_ID.VERIFY_AGAIN}
+                >
+                  {SCT_UI.VERIFY_AGAIN}
+                </MGButton>
+              </div>
+            ) : null}
+          </div>
         ) : null}
       </>
     );
     bar = (
       <SctThumbBar
-        primaryLabel={SCT_UI.SUBMIT}
-        onPrimary={handleSubmit}
+        primaryLabel={isVerifyRequiredUi ? SCT_UI.VERIFY_AGAIN : SCT_UI.SUBMIT}
+        onPrimary={isVerifyRequiredUi ? goToReVerify : handleSubmit}
         secondaryLabel={SCT_UI.PREV}
         onSecondary={() => setStep(STEP.ITEMS)}
         loading={busy}

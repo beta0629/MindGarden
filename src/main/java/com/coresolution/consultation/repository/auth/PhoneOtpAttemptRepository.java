@@ -5,7 +5,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import com.coresolution.consultation.entity.auth.PhoneOtpAttempt;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 
@@ -33,6 +37,18 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
     Optional<PhoneOtpAttempt> findByIdAndTenantIdAndStatus(Long id, String tenantId, String status);
 
     /**
+     * OTP 오답 시도 횟수 원자적 갱신용 행 잠금(PESSIMISTIC_WRITE).
+     *
+     * @param id       otp 행 PK
+     * @param tenantId 멀티테넌트 격리
+     * @return 잠긴 row 또는 empty
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM PhoneOtpAttempt p WHERE p.id = :id AND p.tenantId = :tenantId")
+    Optional<PhoneOtpAttempt> findByIdAndTenantIdForUpdate(
+            @Param("id") Long id, @Param("tenantId") String tenantId);
+
+    /**
      * 동일 (tenant, provider, providerUserId, phoneHash) 의 가장 최근 row — 재발송 쿨다운 검사용.
      */
     Optional<PhoneOtpAttempt> findFirstByTenantIdAndProviderAndProviderUserIdAndPhoneHashOrderByCreatedAtDesc(
@@ -45,6 +61,18 @@ public interface PhoneOtpAttemptRepository extends JpaRepository<PhoneOtpAttempt
      */
     long countByTenantIdAndProviderAndProviderUserIdAndCreatedAtGreaterThanEqual(
         String tenantId, String provider, String providerUserId, LocalDateTime fromInclusive);
+
+    /**
+     * SCT 본인확인 — 동일 phone_hash 시간당 발송 상한용.
+     *
+     * @param tenantId      테넌트
+     * @param provider      {@link PhoneOtpAttempt#PROVIDER_SCT_IDENTITY}
+     * @param phoneHash     정규화 번호 SHA-256 hex
+     * @param fromInclusive 윈도우 시작
+     * @return 발송 건수
+     */
+    long countByTenantIdAndProviderAndPhoneHashAndCreatedAtGreaterThanEqual(
+        String tenantId, String provider, String phoneHash, LocalDateTime fromInclusive);
 
     /**
      * 만료된 row 청소 cron 용 — status=PENDING 이면서 expires_at &lt; now 인 row.

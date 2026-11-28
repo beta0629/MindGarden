@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.coresolution.consultation.constant.UserRole;
-import com.coresolution.consultation.converter.EmailAttributeConverter;
+import com.coresolution.consultation.security.pii.PiiAttributeConverter;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.core.context.TenantContextHolder;
 import com.coresolution.core.domain.onboarding.OnboardingRequest;
@@ -141,7 +141,7 @@ class OnboardingApprovalMysqlIntegrationTest {
                 tenantId);
         String storedEmail = String.valueOf(row.get("email"));
         String storedUserId = String.valueOf(row.get("user_id"));
-        String expectedCipher = new EmailAttributeConverter()
+        String expectedCipher = new PiiAttributeConverter()
                 .convertToDatabaseColumn(contactEmail.toLowerCase());
 
         assertThat(storedEmail).doesNotContain("@");

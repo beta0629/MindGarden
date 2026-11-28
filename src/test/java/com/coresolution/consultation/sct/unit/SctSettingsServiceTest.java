@@ -2,8 +2,12 @@ package com.coresolution.consultation.sct.unit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,6 +56,31 @@ class SctSettingsServiceTest {
     }
 
     @Test
+    void resolvePublicContactPhones_fromTenantThenGlobal() {
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
+                        .configValue("02-0000-1111")
+                        .isActive(true)
+                        .build()));
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("t1")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)
+                        .configValue("010-0000-1111")
+                        .isActive(true)
+                        .build()));
+
+        assertEquals("02-0000-1111", settingsService.resolvePublicOfficePhone("t1"));
+        assertEquals("010-0000-1111", settingsService.resolvePublicMobilePhone("t1"));
+    }
+
+    @Test
     void defaultRetentionIs365() {
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
                 SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
@@ -78,34 +107,55 @@ class SctSettingsServiceTest {
     @Test
     void getSettingsWhenDisabledReturnsFeatureEnabledFalse() {
         when(sctFeatureGuard.isEnabled("t1")).thenReturn(false);
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        stubDefaultExpiryAndRetention();
+        stubEmptyPublicContactPhones();
 
         SctSettingsResponse res = settingsService.getSettings("t1");
 
         assertFalse(Boolean.TRUE.equals(res.getFeatureEnabled()));
         assertEquals(14, res.getLinkExpiryDays());
         assertEquals(365, res.getRetentionDays());
+        assertNull(res.getOfficePhone());
+        assertNull(res.getMobilePhone());
         verify(sctFeatureGuard, never()).requireEnabled(any());
+    }
+
+    @Test
+    void getSettingsIncludesPublicContactPhonesFromSystemConfig() {
+        when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
+        stubDefaultExpiryAndRetention();
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
+                        .configValue("02-0000-1111")
+                        .isActive(true)
+                        .build()));
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue(
+                eq("t1"), eq(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)))
+                .thenReturn(Optional.of(SystemConfig.builder()
+                        .tenantId("t1")
+                        .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)
+                        .configValue("010-0000-1111")
+                        .isActive(true)
+                        .build()));
+
+        SctSettingsResponse res = settingsService.getSettings("t1");
+
+        assertEquals("02-0000-1111", res.getOfficePhone());
+        assertEquals("010-0000-1111", res.getMobilePhone());
+        assertEquals(14, res.getLinkExpiryDays());
+        assertTrue(Boolean.TRUE.equals(res.getFeatureEnabled()));
     }
 
     @Test
     void updateFeatureEnabledWhenDisabledWritesAuditWithFeatureFlag() {
         when(sctFeatureGuard.isEnabled("t1")).thenReturn(false);
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        stubDefaultExpiryAndRetention();
+        stubEmptyPublicContactPhones();
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
                 SctFeatureFlagKeys.FEATURE_SCT_ENABLED)).thenReturn(Optional.empty());
         when(systemConfigRepository.save(any())).thenAnswer(i -> i.getArgument(0));
@@ -148,6 +198,7 @@ class SctSettingsServiceTest {
                 SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
         when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
                 SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        stubEmptyPublicContactPhones();
         when(systemConfigRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -170,14 +221,8 @@ class SctSettingsServiceTest {
     @Test
     void clearRetentionResetsToDefault365() {
         when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
-        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
-                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        stubDefaultExpiryAndRetention();
+        stubEmptyPublicContactPhones();
         when(systemConfigRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
 
@@ -185,6 +230,159 @@ class SctSettingsServiceTest {
                 SctSettingsUpdateRequest.builder().clearRetention(true).build(),
                 1L, "ADMIN");
         assertEquals(365, res.getRetentionDays());
+    }
+
+    @Test
+    void updatePublicContactPhones_savesAndReturnsResolved() {
+        when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
+        stubDefaultExpiryAndRetention();
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.save(any())).thenAnswer(invocation -> {
+            SystemConfig saved = invocation.getArgument(0);
+            if (SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE.equals(saved.getConfigKey())) {
+                when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                        SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE))
+                        .thenReturn(Optional.of(saved));
+            }
+            if (SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE.equals(saved.getConfigKey())) {
+                when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                        SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE))
+                        .thenReturn(Optional.of(saved));
+            }
+            return saved;
+        });
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        SctSettingsResponse res = settingsService.updateSettings("t1",
+                SctSettingsUpdateRequest.builder()
+                        .officePhone("02-0000-1111")
+                        .mobilePhone("010-0000-1111")
+                        .build(),
+                9L, "ADMIN");
+
+        assertEquals("02-0000-1111", res.getOfficePhone());
+        assertEquals("010-0000-1111", res.getMobilePhone());
+        ArgumentCaptor<SystemConfig> cfgCaptor = ArgumentCaptor.forClass(SystemConfig.class);
+        verify(systemConfigRepository, org.mockito.Mockito.atLeast(2)).save(cfgCaptor.capture());
+        assertTrue(cfgCaptor.getAllValues().stream().anyMatch(c ->
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE.equals(c.getConfigKey())
+                        && "02-0000-1111".equals(c.getConfigValue())
+                        && "t1".equals(c.getTenantId())));
+        assertTrue(cfgCaptor.getAllValues().stream().anyMatch(c ->
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE.equals(c.getConfigKey())
+                        && "010-0000-1111".equals(c.getConfigValue())
+                        && "t1".equals(c.getTenantId())));
+
+        ArgumentCaptor<AuditLog> auditCaptor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).record(auditCaptor.capture());
+        assertTrueContains(auditCaptor.getValue().getAfterJson(), "02-0000-1111");
+        assertTrueContains(auditCaptor.getValue().getMetadataJson(),
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE);
+        assertTrueContains(auditCaptor.getValue().getMetadataJson(),
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE);
+    }
+
+    @Test
+    void updatePublicContactPhones_blankUpsertsTenantOnly_neverTouchesGlobal() {
+        when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
+        stubDefaultExpiryAndRetention();
+        SystemConfig existingOffice = SystemConfig.builder()
+                .tenantId("t1")
+                .configKey(SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)
+                .configValue("02-0000-1111")
+                .isActive(true)
+                .build();
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE))
+                .thenReturn(Optional.of(existingOffice));
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        SctSettingsResponse res = settingsService.updateSettings("t1",
+                SctSettingsUpdateRequest.builder().officePhone("  ").mobilePhone("").build(),
+                9L, "ADMIN");
+
+        assertNull(res.getOfficePhone());
+        ArgumentCaptor<SystemConfig> cfgCaptor = ArgumentCaptor.forClass(SystemConfig.class);
+        verify(systemConfigRepository, org.mockito.Mockito.atLeast(1)).save(cfgCaptor.capture());
+        assertTrue(cfgCaptor.getAllValues().stream().anyMatch(c ->
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE.equals(c.getConfigKey())
+                        && "".equals(c.getConfigValue())
+                        && "t1".equals(c.getTenantId())));
+        verify(systemConfigRepository, never()).save(argThat(c ->
+                c != null && (c.getTenantId() == null || c.getTenantId().isEmpty())));
+        verify(systemConfigRepository, never()).delete(any());
+        verify(systemConfigRepository, never())
+                .findByTenantIdAndConfigKeyAndIsActiveTrue(eq("other-tenant"), any());
+    }
+
+    @Test
+    void updatePublicContactPhones_invalidFormat_throwsIllegalArgument() {
+        when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
+        stubDefaultExpiryAndRetention();
+        stubEmptyPublicContactPhones();
+
+        assertThrows(IllegalArgumentException.class, () ->
+                settingsService.updateSettings("t1",
+                        SctSettingsUpdateRequest.builder().officePhone("abc-call").build(),
+                        9L, "ADMIN"));
+        assertThrows(IllegalArgumentException.class, () ->
+                settingsService.updateSettings("t1",
+                        SctSettingsUpdateRequest.builder().mobilePhone("---").build(),
+                        9L, "ADMIN"));
+        verify(systemConfigRepository, never()).save(any());
+        verify(auditLogService, never()).record(any());
+    }
+
+    @Test
+    void updatePublicContactPhones_nullSkipsChange() {
+        when(sctFeatureGuard.isEnabled("t1")).thenReturn(true);
+        stubDefaultExpiryAndRetention();
+        stubEmptyPublicContactPhones();
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        settingsService.updateSettings("t1",
+                SctSettingsUpdateRequest.builder().linkExpiryDays(null).build(),
+                9L, "ADMIN");
+
+        verify(systemConfigRepository, never()).save(argThat(c ->
+                c != null && (SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE.equals(c.getConfigKey())
+                        || SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE.equals(c.getConfigKey()))));
+    }
+
+    private void stubDefaultExpiryAndRetention() {
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.LINK_EXPIRY_DAYS)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.RETENTION_DAYS)).thenReturn(Optional.empty());
+    }
+
+    private void stubEmptyPublicContactPhones() {
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_OFFICE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("t1",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
+        when(systemConfigRepository.findByTenantIdAndConfigKeyAndIsActiveTrue("",
+                SctFeatureFlagKeys.PUBLIC_CONTACT_MOBILE)).thenReturn(Optional.empty());
     }
 
     private static void assertTrueContains(String hay, String needle) {

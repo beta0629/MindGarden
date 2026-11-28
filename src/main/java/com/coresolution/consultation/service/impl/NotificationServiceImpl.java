@@ -20,6 +20,7 @@ import com.coresolution.consultation.service.SmsAuthService;
 import com.coresolution.consultation.service.SmsTemplateService;
 import com.coresolution.consultation.service.TenantKakaoAlimtalkSettingsService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.NameLogMasking;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.core.context.TenantContextHolder;
@@ -71,8 +72,8 @@ public class NotificationServiceImpl implements NotificationService {
         }
         
         try {
-            log.info("📤 통합 알림 발송: 사용자={}, 타입={}, 우선순위={}", 
-                user.getName(), notificationType, priority);
+            log.info("📤 통합 알림 발송: userId={}, 사용자={}, 타입={}, 우선순위={}",
+                user.getId(), NameLogMasking.maskForLog(user.getName()), notificationType, priority);
             
             boolean emailEnabled = isEmailEnabled(user);
             
@@ -95,7 +96,8 @@ public class NotificationServiceImpl implements NotificationService {
                         String emailMessage = buildEmailMessage(notificationType, params);
                         boolean success = sendEmail(user.getEmail(), emailSubject, emailMessage);
                         if (success) {
-                            log.info("✅ 이메일 발송 성공: {}", user.getName());
+                            log.info("✅ 이메일 발송 성공: userId={}, 사용자={}",
+                                    user.getId(), NameLogMasking.maskForLog(user.getName()));
                             return true;
                         }
                     }
@@ -103,11 +105,13 @@ public class NotificationServiceImpl implements NotificationService {
             }
             
             // 모든 방법 실패 시 시스템 내 알림으로 대체
-            log.warn("⚠️ 모든 알림 방법 실패 - 시스템 내 알림으로 대체: {}", user.getName());
+            log.warn("⚠️ 모든 알림 방법 실패 - 시스템 내 알림으로 대체: userId={}, 사용자={}",
+                    user.getId(), NameLogMasking.maskForLog(user.getName()));
             return sendSystemNotification(user, notificationType, params);
             
         } catch (Exception e) {
-            log.error("❌ 통합 알림 발송 실패: 사용자={}, 타입={}", user.getName(), notificationType, e);
+            log.error("❌ 통합 알림 발송 실패: userId={}, 사용자={}, 타입={}",
+                    user.getId(), NameLogMasking.maskForLog(user.getName()), notificationType, e);
             return false;
         }
     }
@@ -178,7 +182,8 @@ public class NotificationServiceImpl implements NotificationService {
                 Map<String, String> alimTalkParams = buildAlimTalkParams(notificationType, params);
                 injectRecipientNameIfAbsent(alimTalkParams, user);
                 if (sendKakaoAlimTalk(phoneNumber, notificationType, alimTalkParams)) {
-                    log.info("✅ 카카오 알림톡 발송 성공: {}", user.getName());
+                    log.info("✅ 카카오 알림톡 발송 성공: userId={}, 사용자={}",
+                            user.getId(), NameLogMasking.maskForLog(user.getName()));
                     return true;
                 }
             } else if (ch == NotificationPhysicalChannel.SMS && phoneNumber != null) {
@@ -186,12 +191,13 @@ public class NotificationServiceImpl implements NotificationService {
                 if (smsMessage == null) {
                     // SMS_TEMPLATE 공통코드 미시드 → 의미 없는 fallback 발송 차단(2026-05-23 라운드).
                     // 알림톡 검수 통과 후 자연 해소되며, 인앱·푸시 채널은 영향 없음.
-                    log.info("SMS 발송 skip — SMS_TEMPLATE 미발견: user={}, type={}",
-                            user.getName(), notificationType.name());
+                    log.info("SMS 발송 skip — SMS_TEMPLATE 미발견: userId={}, type={}",
+                            user.getId(), notificationType.name());
                     continue;
                 }
                 if (sendSms(phoneNumber, smsMessage)) {
-                    log.info("✅ SMS 발송 성공: {}", user.getName());
+                    log.info("✅ SMS 발송 성공: userId={}, 사용자={}",
+                            user.getId(), NameLogMasking.maskForLog(user.getName()));
                     return true;
                 }
             }
@@ -235,7 +241,8 @@ public class NotificationServiceImpl implements NotificationService {
                 return encryptionUtil.decrypt(user.getPhone());
             }
         } catch (Exception e) {
-            log.warn("전화번호 복호화 실패: 사용자={}", user.getName(), e);
+            log.warn("전화번호 복호화 실패: userId={}, 사용자={}",
+                    user.getId(), NameLogMasking.maskForLog(user.getName()), e);
         }
         return null;
     }
@@ -521,7 +528,8 @@ public class NotificationServiceImpl implements NotificationService {
      */
     private boolean sendSystemNotification(User user, NotificationType type, String[] params) {
         try {
-            log.info("🔔 시스템 내 알림 발송: 사용자={}, 타입={}", user.getName(), type);
+            log.info("🔔 시스템 내 알림 발송: userId={}, 사용자={}, 타입={}",
+                    user.getId(), NameLogMasking.maskForLog(user.getName()), type);
             
             // Alert 엔티티 생성
             Alert alert = new Alert();
@@ -543,7 +551,8 @@ public class NotificationServiceImpl implements NotificationService {
             // Alert 저장
             alertRepository.save(alert);
             
-            log.info("✅ 시스템 내 알림 저장 완료: alertId={}, 사용자={}", alert.getId(), user.getName());
+            log.info("✅ 시스템 내 알림 저장 완료: alertId={}, userId={}, 사용자={}",
+                    alert.getId(), user.getId(), NameLogMasking.maskForLog(user.getName()));
             return true;
             
         } catch (Exception e) {
@@ -647,14 +656,15 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public boolean sendEmailNotification(Long userId, String subject, String content, String type) {
         try {
-            log.info("📧 이메일 알림 발송: 사용자ID={}, 제목={}, 타입={}", userId, subject, type);
+            log.info("📧 이메일 알림 발송: 사용자ID={}, subjectLength={}, 타입={}",
+                    userId, subject == null ? 0 : subject.length(), type);
             
             // TODO: 실제 이메일 발송 구현 (SMTP 서버 설정 필요)
             // 현재는 시뮬레이션 모드로 로그만 출력
             log.info("📧 이메일 발송 시뮬레이션:");
             log.info("  - 수신자 ID: {}", userId);
-            log.info("  - 제목: {}", subject);
-            log.info("  - 내용: {}", content);
+            log.info("  - subjectLength: {}", subject == null ? 0 : subject.length());
+            log.info("  - contentLength: {}", content == null ? 0 : content.length());
             log.info("  - 타입: {}", type);
             
             // 시뮬레이션에서는 항상 성공으로 처리

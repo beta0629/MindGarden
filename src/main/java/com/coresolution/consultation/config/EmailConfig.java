@@ -100,17 +100,6 @@ public class EmailConfig {
         mailSender.setUsername(mailUserId);
         mailSender.setPassword(mailPassword);
         
-        // 디버그: 이메일 설정 로그 (비밀번호는 마스킹)
-        System.out.println("=== EmailConfig Debug ===");
-        System.out.println("MAIL_HOST (env): " + System.getenv("MAIL_HOST"));
-        System.out.println("MAIL_USERNAME (env): " + System.getenv("MAIL_USERNAME"));
-        System.out.println("MAIL_PASSWORD length (env): " + (System.getenv("MAIL_PASSWORD") != null ? System.getenv("MAIL_PASSWORD").length() : 0));
-        System.out.println("Host (final): " + mailSender.getHost());
-        System.out.println("Port (final): " + mailSender.getPort());
-        System.out.println("UserId (final): " + mailSender.getUsername());
-        System.out.println("Password length (final): " + (mailPassword != null ? mailPassword.length() : 0));
-        System.out.println("Password is empty: " + (mailPassword == null || mailPassword.isEmpty()));
-        System.out.println("========================");
 
         // SMTP 프로퍼티 설정
         Properties props = mailSender.getJavaMailProperties();

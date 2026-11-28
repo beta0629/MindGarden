@@ -42,4 +42,20 @@ public interface SctSettingsService {
      * @return 일수
      */
     int resolveRetentionDays(String tenantId);
+
+    /**
+     * 공개 랜딩 사무실 전화(system_config). 없으면 null.
+     *
+     * @param tenantId 테넌트
+     * @return 사무실 번호
+     */
+    String resolvePublicOfficePhone(String tenantId);
+
+    /**
+     * 공개 랜딩 공개 휴대폰(system_config). 없으면 null.
+     *
+     * @param tenantId 테넌트
+     * @return 휴대폰 번호
+     */
+    String resolvePublicMobilePhone(String tenantId);
 }

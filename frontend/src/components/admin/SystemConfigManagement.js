@@ -20,7 +20,7 @@ import { useSession } from '../../contexts/SessionContext';
 import { useConfirm, useSettingToggleSave, useReservationReminderDispatchFlags } from '../../hooks';
 import notificationManager from '../../utils/notification';
 import AdminCommonLayout from '../layout/AdminCommonLayout';
-import { USER_ROLES } from '../../constants/roles';
+import { RoleUtils } from '../../constants/roles';
 import UnifiedLoading from '../common/UnifiedLoading';
 import ChipMultiSelect from '../common/ChipMultiSelect';
 import SettingSwitchRow from '../common/molecules/SettingSwitchRow';
@@ -159,6 +159,7 @@ const stringifyTargetRoles = (roles) => {
 const SystemConfigManagement = () => {
   const { user, isLoggedIn, hasCheckedSession } = useSession();
   const { t } = useTranslation(['admin', 'common']);
+  const isAdmin = RoleUtils.isAdmin(user);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [wellness, setWellness] = useState(DEFAULT_WELLNESS);
@@ -427,7 +428,7 @@ const SystemConfigManagement = () => {
       return;
     }
     // 시스템 설정 API 는 ADMIN 전용 (STAFF 403) — 메뉴 정책과 동일
-    if (user.role !== USER_ROLES.ADMIN) {
+    if (!RoleUtils.isAdmin(user)) {
       notificationManager.show(t('systemConfig.error.noAccess'), 'error');
       setLoading(false);
       return;
@@ -479,6 +480,26 @@ const SystemConfigManagement = () => {
           <div className="mg-v2-loading-container" aria-busy="true" aria-live="polite">
             <UnifiedLoading type="inline" text={loadingText} />
           </div>
+        </SettingsPageShell>
+      </AdminCommonLayout>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <AdminCommonLayout>
+        <SettingsPageShell
+          title={pageTitle}
+          titleId={SYSTEM_CONFIG_TITLE_ID}
+          className={SYSTEM_CONFIG_SHELL_CLASS}
+        >
+          <p
+            className="mg-v2-sct-caption"
+            role="status"
+            data-testid="system-config-access-denied"
+          >
+            {t('systemConfig.error.noAccess')}
+          </p>
         </SettingsPageShell>
       </AdminCommonLayout>
     );

@@ -1,0 +1,53 @@
+<svg viewBox="24 224 556 416" xmlns="http://www.w3.org/2000/svg" version="1.1" data-name="레이어_1">
+ <!-- Generator: Adobe Illustrator 29.7.1, SVG Export Plug-In . SVG Version: 2.1.1 Build 8)  -->
+ <defs>
+  <linearGradient y2="0.65928" x2="0.9784" y1="0.26592" x1="0.11213" id="linear-gradient">
+   <stop stop-color="#ffd900" offset="0"/>
+   <stop stop-color="#fac119" offset="0.27"/>
+   <stop stop-color="#ef845c" offset="1"/>
+  </linearGradient>
+  <linearGradient y2="0.26738" x2="0.93338" y1="0.6656" x1="0.10958" id="linear-gradient1">
+   <stop stop-color="#f39737" offset="0"/>
+   <stop stop-color="#ed705d" offset="0.68"/>
+   <stop stop-color="#e95377" offset="1"/>
+  </linearGradient>
+  <linearGradient y2="0.21361" x2="0.95112" y1="0.6284" x1="0.10105" id="linear-gradient2">
+   <stop stop-color="#00b1a9" offset="0"/>
+   <stop stop-color="#70529f" offset="1"/>
+  </linearGradient>
+  <linearGradient y2="0.71551" x2="0.9936" y1="0.31123" x1="0.15732" id="linear-gradient3">
+   <stop stop-color="#70529f" offset="0"/>
+   <stop stop-color="#6d569f" offset="0.02"/>
+   <stop stop-color="#5f70a5" offset="0.16"/>
+   <stop stop-color="#5680a8" offset="0.28"/>
+   <stop stop-color="#5386aa" offset="0.38"/>
+   <stop stop-color="#00b1a9" offset="0.99"/>
+  </linearGradient>
+  <linearGradient y2="0.50005" x2="1" y1="0.50005" x1="0.00033" id="linear-gradient4">
+   <stop stop-color="#ef845c" offset="0"/>
+   <stop stop-color="#ef8757" offset="0.21"/>
+   <stop stop-color="#f1924b" offset="0.42"/>
+   <stop stop-color="#f5a537" offset="0.63"/>
+   <stop stop-color="#fabf1b" offset="0.83"/>
+   <stop stop-color="#ffd900" offset="1"/>
+  </linearGradient>
+  <linearGradient y2="0.50001" x2="0.99998" y1="0.50001" x1="0.00031" id="linear-gradient5">
+   <stop stop-color="#00b1a9" offset="0"/>
+   <stop stop-color="#2c8ba5" offset="0.23"/>
+   <stop stop-color="#516ca1" offset="0.46"/>
+   <stop stop-color="#67599f" offset="0.64"/>
+   <stop stop-color="#70529f" offset="0.76"/>
+  </linearGradient>
+ </defs>
+ <g>
+  <title>Layer 1</title>
+  <g stroke="null" id="svg_7">
+   <path stroke="null" id="svg_1" fill="url(#linear-gradient)" d="m296.00119,449.46442s4.38256,-138.68409 -152.93259,-202.82314c-17.53023,-7.66428 -40.56463,-19.7319 -83.33092,-13.14768c-15.34934,3.28173 -27.41695,16.45017 -24.67526,31.23871c0.27002,4.38256 1.64086,20.00191 18.09103,43.30632c16.45017,23.30441 18.36105,36.7221 20.02268,52.07144c1.64086,15.34934 -4.67334,78.38756 114.29961,96.74861c0,0 110.374,14.80931 87.71348,107.02997c13.62539,-27.39618 23.2421,-64.74139 20.81196,-114.44501l0,0.02077z" class="st5"/>
+   <path stroke="null" id="svg_2" fill="url(#linear-gradient1)" d="m187.45498,456.87946s-50.99138,25.85917 -54.64697,54.35619c-3.65559,28.49701 4.02946,38.36296 16.0763,53.7123c12.06761,15.34934 18.63107,22.28666 24.11446,49.32974c3.28173,16.45017 21.55969,21.55969 40.9385,13.89541c11.58989,-4.59026 40.89695,-23.34595 61.23119,-64.26368c22.63976,-92.22066 -87.71348,-107.02997 -87.71348,-107.02997z" class="st1"/>
+   <path stroke="null" id="svg_3" fill="url(#linear-gradient2)" d="m307.54954,449.46442s-4.38256,-138.68409 152.93259,-202.82314c17.53023,-7.66428 40.56463,-19.7319 83.31015,-13.14768c15.34934,3.28173 27.41695,16.45017 24.67526,31.23871c-0.27002,4.38256 -1.64086,20.00191 -18.09103,43.30632c-16.45017,23.30441 -18.36105,36.7221 -20.00191,52.07144c-1.64086,15.34934 4.65257,78.38756 -114.29961,96.74861c0,0 -110.35323,14.80931 -87.71348,107.02997c-13.62539,-27.39618 -23.2421,-64.74139 -20.81196,-114.44501l0,0.02077z" class="st0"/>
+   <path stroke="null" id="svg_4" fill="url(#linear-gradient3)" d="m416.09575,456.87946s50.99138,25.85917 54.64697,54.35619c3.65559,28.49701 -4.02946,38.36296 -16.0763,53.7123c-12.06761,15.34934 -18.63107,22.28666 -24.11446,49.32974c-3.3025,16.45017 -21.55969,21.55969 -40.9385,13.89541c-11.61066,-4.59026 -40.89695,-23.34595 -61.23119,-64.26368c-22.63976,-92.22066 87.71348,-107.02997 87.71348,-107.02997z" class="st4"/>
+   <path stroke="null" id="svg_5" fill="url(#linear-gradient4)" d="m246.29758,271.12961c33.62731,23.76136 49.14281,82.77012 49.14281,82.77012c-5.67032,-64.13905 -45.13412,-99.59416 -53.35921,-104.32981c-8.22509,-4.75643 -12.98151,2.01473 -12.98151,2.01473c-5.48339,12.42071 14.80931,18.09103 17.17714,19.54496l0.02077,0z" class="st2"/>
+   <path stroke="null" id="svg_6" fill="url(#linear-gradient5)" d="m357.25315,271.12961c2.36783,-1.45393 22.66053,-7.12425 17.17714,-19.54496c0,0 -4.75643,-6.75039 -12.98151,-2.01473c-8.22509,4.75643 -47.68888,40.19076 -53.35921,104.32981c0,0 15.53627,-59.02953 49.16358,-82.77012z" class="st3"/>
+  </g>
+ </g>
+</svg>

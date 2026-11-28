@@ -1,11 +1,14 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,12 +29,14 @@ import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptReposi
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
 import com.coresolution.consultation.sct.service.impl.SctPublicServiceImpl;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.sct.service.impl.SctPublicTokenResolverImpl;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.service.AuditLogService;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import jakarta.servlet.FilterChain;
@@ -106,15 +111,26 @@ class SctSecurityHighTest {
                 .isEqualTo(1.0);
     }
 
+    /**
+     * EMAIL 전용 초대 — PHONE({@code targetPhoneHash}) 은 OTP 가드로 fail-count 경로에 들어가지 않음.
+     *
+     * @param email 대상 이메일
+     * @return 초대 빌더에 넣을 해시
+     */
+    private static String emailHash(String email) {
+        return PiiTestSecrets.hmacService().hmacHex(email.trim().toLowerCase(Locale.ROOT));
+    }
+
     @Test
     void verifyFailCount_parallelCannotBypassLock() throws Exception {
         String raw = "parallel-verify-token-32bytes!!!!";
-        String phone = "01011112222";
+        String email = "user@example.com";
+        // EMAIL 전용: PHONE OTP 가드를 우회해 verify fail-count·잠금 직렬화를 검증
         SctInvitation invitation = SctInvitation.builder()
                 .formTemplateId(1L)
-                .targetPhone(phone)
-                .targetPhoneHash(PhoneHashUtils.sha256Hex(phone))
-                .tokenHash(SctTokenHasher.sha256Hex(raw))
+                .targetEmail(email)
+                .targetEmailHash(emailHash(email))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex(raw))
                 .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
                 .status("SENT")
                 .sentByUserId(1L)
@@ -133,17 +149,27 @@ class SctSecurityHighTest {
         SctInviteAccessAttemptRepository attemptRepository = mock(SctInviteAccessAttemptRepository.class);
         when(attemptRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
 
+        SctConsentService consentService = mock(SctConsentService.class);
+        when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
+
+        PiiHmacService hmac = PiiTestSecrets.hmacService();
+        SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
+        SctRotatedTokenHashRepository rotatedRepo = mock(SctRotatedTokenHashRepository.class);
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository, rotatedRepo, exchangeCodeStore, hmac);
         SctPublicServiceImpl service = new SctPublicServiceImpl(
                 invitationRepository,
                 mock(SctFormTemplateRepository.class),
                 mock(SctFormItemRepository.class),
                 mock(SctResponseAnswerRepository.class),
                 attemptRepository,
-                mock(SctRotatedTokenHashRepository.class),
-                new SctVerifySessionStore(),
+                new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
+                tokenResolver,
                 mock(SctFeatureGuard.class),
-                mock(SctConsentService.class),
-                mock(AuditLogService.class));
+                consentService,
+                mock(SctSettingsService.class),
+                mock(AuditLogService.class),
+                hmac);
 
         int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
@@ -151,7 +177,7 @@ class SctSecurityHighTest {
         CountDownLatch done = new CountDownLatch(threads);
         AtomicInteger locked = new AtomicInteger();
         AtomicInteger mismatch = new AtomicInteger();
-        SctVerifyRequest bad = SctVerifyRequest.builder().phone("01099998888").build();
+        SctVerifyRequest bad = SctVerifyRequest.builder().email("other@example.com").build();
 
         for (int i = 0; i < threads; i++) {
             pool.submit(() -> {
@@ -178,6 +204,106 @@ class SctSecurityHighTest {
         assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
         pool.shutdownNow();
 
+        verify(invitationRepository, times(threads))
+                .findByTokenHashAndIsDeletedFalseForUpdate(ArgumentMatchers.anyString());
+        assertThat(invitation.getVerifyFailCount()).isEqualTo(SctConstants.VERIFY_MAX_FAILURES);
+        assertThat(invitation.getVerifyLockedUntil()).isNotNull();
+        assertThat(locked.get()).isGreaterThanOrEqualTo(1);
+        assertThat(mismatch.get() + locked.get()).isEqualTo(threads);
+    }
+
+    @Test
+    void verifyFailCount_exchangePath_usesForUpdateAndSerializes() throws Exception {
+        String exchangeCode = "opaque-exchange-verify-code-32b!";
+        String email = "user@example.com";
+        // EMAIL 전용 + exchange: PESSIMISTIC_WRITE(forUpdate by id) 직렬화 유지
+        SctInvitation invitation = SctInvitation.builder()
+                .formTemplateId(1L)
+                .targetEmail(email)
+                .targetEmailHash(emailHash(email))
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("other-raw-token-not-used!!!!"))
+                .tokenExpiresAt(java.time.LocalDateTime.now().plusDays(1))
+                .status("SENT")
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .requiresGuardian(false)
+                .build();
+        invitation.setId(42L);
+        invitation.setTenantId("t1");
+
+        SctInvitationRepository invitationRepository = mock(SctInvitationRepository.class);
+        when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(
+                ArgumentMatchers.anyString()))
+                .thenReturn(java.util.Optional.empty());
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate("t1", 42L))
+                .thenReturn(java.util.Optional.of(invitation));
+        when(invitationRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SctExchangeCodeStore exchangeCodeStore = mock(SctExchangeCodeStore.class);
+        when(exchangeCodeStore.resolve(exchangeCode)).thenReturn(java.util.Optional.of(
+                new SctExchangeCodeStore.ExchangeEntry(
+                        42L, "t1", null, false, invitation.getTokenHash())));
+
+        SctInviteAccessAttemptRepository attemptRepository = mock(SctInviteAccessAttemptRepository.class);
+        when(attemptRepository.save(ArgumentMatchers.any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SctConsentService consentService = mock(SctConsentService.class);
+        when(consentService.hasIdentityContactConsent(ArgumentMatchers.any())).thenReturn(true);
+
+        PiiHmacService hmac = PiiTestSecrets.hmacService();
+        SctPublicTokenResolverImpl tokenResolver = new SctPublicTokenResolverImpl(
+                invitationRepository,
+                mock(SctRotatedTokenHashRepository.class),
+                exchangeCodeStore,
+                hmac);
+        SctPublicServiceImpl service = new SctPublicServiceImpl(
+                invitationRepository,
+                mock(SctFormTemplateRepository.class),
+                mock(SctFormItemRepository.class),
+                mock(SctResponseAnswerRepository.class),
+                attemptRepository,
+                new SctVerifySessionStore(SctVerifySessionRedisTestSupport.memoryRedis().provider()),
+                tokenResolver,
+                mock(SctFeatureGuard.class),
+                consentService,
+                mock(SctSettingsService.class),
+                mock(AuditLogService.class),
+                hmac);
+
+        int threads = SctConstants.VERIFY_MAX_FAILURES + 3;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(threads);
+        AtomicInteger locked = new AtomicInteger();
+        AtomicInteger mismatch = new AtomicInteger();
+        SctVerifyRequest bad = SctVerifyRequest.builder().email("other@example.com").build();
+
+        for (int i = 0; i < threads; i++) {
+            pool.submit(() -> {
+                try {
+                    start.await();
+                    synchronized (invitation) {
+                        try {
+                            service.verify(exchangeCode, bad, "127.0.0.1");
+                        } catch (SctVerifyLockedException e) {
+                            locked.incrementAndGet();
+                        } catch (IllegalArgumentException e) {
+                            mismatch.incrementAndGet();
+                        }
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    done.countDown();
+                }
+            });
+        }
+        start.countDown();
+        assertThat(done.await(10, TimeUnit.SECONDS)).isTrue();
+        pool.shutdownNow();
+
+        verify(invitationRepository, times(threads))
+                .findByTenantIdAndIdAndIsDeletedFalseForUpdate("t1", 42L);
         assertThat(invitation.getVerifyFailCount()).isEqualTo(SctConstants.VERIFY_MAX_FAILURES);
         assertThat(invitation.getVerifyLockedUntil()).isNotNull();
         assertThat(locked.get()).isGreaterThanOrEqualTo(1);

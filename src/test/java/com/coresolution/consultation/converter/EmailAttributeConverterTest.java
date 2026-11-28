@@ -1,6 +1,7 @@
 package com.coresolution.consultation.converter;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.coresolution.consultation.util.PersonalDataEncryptionKeyProvider;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
@@ -125,12 +126,13 @@ class EmailAttributeConverterTest {
     }
 
     @Test
-    @DisplayName("fail-safe: Spring 컨테이너 미초기화 시 평문 입력을 그대로 반환")
-    void failSafe_whenHolderNotInitialized() {
+    @DisplayName("fail-closed: Spring 컨테이너 미초기화 시 WRITE는 예외, READ는 폴백")
+    void failClosed_whenHolderNotInitialized_writeThrows() {
         PersonalDataEncryptionContextHolder.setInstanceForTesting(null);
 
-        assertThat(converter.convertToDatabaseColumn("frank@example.com"))
-                .isEqualTo("frank@example.com");
+        assertThatThrownBy(() -> converter.convertToDatabaseColumn("frank@example.com"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("평문 저장 금지");
         assertThat(converter.convertToEntityAttribute("v2::garbled"))
                 .isEqualTo("v2::garbled");
     }

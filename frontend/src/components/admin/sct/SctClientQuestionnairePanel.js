@@ -12,6 +12,7 @@ import SafeText from '../../common/SafeText';
 import StatusBadge from '../../common/StatusBadge';
 import UnifiedLoading from '../../common/UnifiedLoading';
 import UnifiedModal from '../../common/modals/UnifiedModal';
+import { formatDate } from '../../../utils/common';
 import notificationManager from '../../../utils/notification';
 import { toDisplayString } from '../../../utils/safeDisplay';
 import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiErrorMessage';
@@ -22,9 +23,9 @@ import {
   destroySctInvitation,
   fetchSctClientInvitations,
   fetchSctInvitation,
+  fetchSctSettings,
   reissueSctInviteLink
 } from '../../../utils/sctApi';
-import SctPublicLinkCopy from './SctPublicLinkCopy';
 import useSctFeatureEnabled from '../../../hooks/useSctFeatureEnabled';
 import {
   SCT_CSS,
@@ -35,15 +36,21 @@ import {
   SCT_UI
 } from '../../../constants/sctOnline';
 import SctSendSheet from './SctSendSheet';
+import SctInviteQrCard from './SctInviteQrCard';
 import './sctAdmin.css';
 
-const formatDate = (iso) => {
-  if (!iso) return '—';
-  try {
-    return new Date(iso).toLocaleDateString('ko-KR');
-  } catch {
-    return toDisplayString(iso, '—');
-  }
+const SCT_DATE_DISPLAY_FORMAT = 'YYYY.MM.DD';
+const SCT_DATE_EMPTY = '—';
+
+/**
+ * SCT 초대 행 날짜 — YYYY.MM.DD (공통 formatDate).
+ * @param {string|number|Date|null|undefined} iso
+ * @returns {string}
+ */
+const formatSctInviteDate = (iso) => {
+  if (!iso) return SCT_DATE_EMPTY;
+  const formatted = formatDate(iso, SCT_DATE_DISPLAY_FORMAT);
+  return formatted || SCT_DATE_EMPTY;
 };
 
 /**
@@ -70,7 +77,9 @@ const SctClientQuestionnairePanel = ({ client }) => {
   const [detail, setDetail] = useState(null);
   const [destroyTarget, setDestroyTarget] = useState(null);
   const [destroyBusy, setDestroyBusy] = useState(false);
-  const [reissuedUrl, setReissuedUrl] = useState('');
+  const [reissuedInvite, setReissuedInvite] = useState(null);
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
 
   const clientId = client?.id;
 
@@ -81,8 +90,17 @@ const SctClientQuestionnairePanel = ({ client }) => {
     }
     setLoading(true);
     try {
-      const rows = await fetchSctClientInvitations(clientId);
+      const [rows, settings] = await Promise.all([
+        fetchSctClientInvitations(clientId),
+        fetchSctSettings().catch(() => null)
+      ]);
       setList(rows);
+      setOfficePhone(
+        typeof settings?.officePhone === 'string' ? settings.officePhone.trim() : ''
+      );
+      setMobilePhone(
+        typeof settings?.mobilePhone === 'string' ? settings.mobilePhone.trim() : ''
+      );
     } catch (e) {
       notificationManager.show(
         resolveUserFacingApiErrorMessage(e, SCT_UI.LOAD_FAIL),
@@ -188,42 +206,49 @@ const SctClientQuestionnairePanel = ({ client }) => {
           ) : (
             list.map((row) => (
               <article key={row.id} className="mg-v2-sct-admin__row">
-                <div>
-                  <SafeText>
-                    {SCT_FORM_TYPE_LABEL[row.formType] || row.formType}
-                  </SafeText>
+                <div className="mg-v2-sct-admin__row-line1">
+                  <span className="mg-v2-sct-admin__row-title">
+                    <SafeText>
+                      {SCT_FORM_TYPE_LABEL[row.formType] || row.formType}
+                    </SafeText>
+                  </span>
+                  <div className="mg-v2-sct-admin__row-badges">
+                    <StatusBadge status={row.status}>
+                      {SCT_STATUS_LABEL[row.status] || row.status}
+                    </StatusBadge>
+                    {row.destroyEligible ? (
+                      <span
+                        className="mg-v2-sct-tag mg-v2-sct-tag--danger"
+                        data-testid={SCT_TEST_ID.DESTROY_BADGE}
+                      >
+                        {SCT_UI.DESTROY_ELIGIBLE}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+                <div className="mg-v2-sct-admin__row-meta">
                   {row.managementNo ? (
-                    <p
-                      className={SCT_CSS.CAPTION}
+                    <span
+                      className="mg-v2-sct-admin__row-meta-item"
                       data-testid={SCT_TEST_ID.MANAGEMENT_NO}
                     >
                       {SCT_UI.MANAGEMENT_NO}
                       {': '}
                       <SafeText>{row.managementNo}</SafeText>
-                    </p>
-                  ) : null}
-                </div>
-                <div className="lab-m">
-                  <SafeText>
-                    {toDisplayString(row.maskedPhone || row.maskedEmail, '—')}
-                  </SafeText>
-                </div>
-                <div className="lab-m">{formatDate(row.sentAt)}</div>
-                <div className="lab-m">{formatDate(row.tokenExpiresAt)}</div>
-                <div>
-                  <StatusBadge status={row.status}>
-                    {SCT_STATUS_LABEL[row.status] || row.status}
-                  </StatusBadge>
-                  {row.destroyEligible ? (
-                    <span
-                      className="mg-v2-sct-tag mg-v2-sct-tag--danger"
-                      data-testid={SCT_TEST_ID.DESTROY_BADGE}
-                    >
-                      {SCT_UI.DESTROY_ELIGIBLE}
                     </span>
                   ) : null}
+                  <span className="mg-v2-sct-admin__row-meta-item">
+                    <SafeText>
+                      {toDisplayString(row.maskedPhone || row.maskedEmail, SCT_DATE_EMPTY)}
+                    </SafeText>
+                  </span>
+                  <span className="mg-v2-sct-admin__row-dates">
+                    {formatSctInviteDate(row.sentAt)}
+                    ~
+                    {formatSctInviteDate(row.tokenExpiresAt)}
+                  </span>
                 </div>
-                <div>
+                <div className="mg-v2-sct-admin__row-actions">
                   {row.status === SCT_STATUS.SUBMITTED ? (
                     <MGButton
                       type="button"
@@ -267,8 +292,11 @@ const SctClientQuestionnairePanel = ({ client }) => {
                       onClick={async() => {
                         try {
                           const refreshed = await reissueSctInviteLink(row.id);
-                          if (refreshed?.publicUrl) {
-                            setReissuedUrl(refreshed.publicUrl);
+                          if (refreshed?.absoluteShortUrl
+                            || refreshed?.absoluteUrl
+                            || refreshed?.shortUrl
+                            || refreshed?.publicUrl) {
+                            setReissuedInvite(refreshed);
                             notificationManager.success(SCT_UI.REISSUE_SUCCESS);
                           }
                           reload();
@@ -343,8 +371,23 @@ const SctClientQuestionnairePanel = ({ client }) => {
         </section>
       ) : null}
 
-      {canPublicLink && reissuedUrl ? (
-        <SctPublicLinkCopy publicUrl={reissuedUrl} className="mg-v2-sct-admin__reissue-link" />
+      {canPublicLink && reissuedInvite ? (
+        <div className="mg-v2-sct-admin__reissue-link">
+          <SctInviteQrCard
+            invitation={reissuedInvite}
+            recipientName={toDisplayString(client?.name, reissuedInvite.recipientName || '')}
+            formTitle={
+              SCT_FORM_TYPE_LABEL[reissuedInvite.formType]
+                ? `${SCT_FORM_TYPE_LABEL[reissuedInvite.formType]} 문장완성 질문지`
+                : SCT_UI.TITLE
+            }
+            officePhone={officePhone}
+            mobilePhone={mobilePhone}
+            isReissued
+            onConfirm={() => setReissuedInvite(null)}
+            onInvitationChange={setReissuedInvite}
+          />
+        </div>
       ) : null}
 
       <SctSendSheet

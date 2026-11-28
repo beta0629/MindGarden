@@ -1,6 +1,8 @@
 package com.coresolution.consultation.sct.service.impl;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -24,6 +26,7 @@ import com.coresolution.consultation.sct.dto.SctPublicMetaResponse;
 import com.coresolution.consultation.sct.dto.SctSubmitRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyRequest;
 import com.coresolution.consultation.sct.dto.SctVerifyResponse;
+import com.coresolution.consultation.sct.entity.SctConsentTemplate;
 import com.coresolution.consultation.sct.entity.SctFormItem;
 import com.coresolution.consultation.sct.entity.SctFormTemplate;
 import com.coresolution.consultation.sct.entity.SctInvitation;
@@ -31,20 +34,23 @@ import com.coresolution.consultation.sct.entity.SctInviteAccessAttempt;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctGoneException;
+import com.coresolution.consultation.sct.exception.SctIdentityContactConsentRequiredException;
+import com.coresolution.consultation.sct.exception.SctOtpRequiredException;
 import com.coresolution.consultation.sct.exception.SctVerifyLockedException;
+import com.coresolution.consultation.sct.exception.SctVerifyRequiredException;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
-import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
+import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
+import com.coresolution.consultation.sct.service.SctSettingsService;
 import com.coresolution.consultation.sct.service.SctVerifySessionStore;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.core.context.TenantContextHolder;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -69,16 +75,21 @@ public class SctPublicServiceImpl implements SctPublicService {
     /** 동시 임시저장(@Version) 충돌 시 재시도 상한. */
     private static final int DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS = 3;
 
+    /** 초대 tokenExpiresAt(LocalDateTime) → Instant 변환 존. */
+    private static final ZoneId TOKEN_EXPIRY_ZONE = ZoneId.of("Asia/Seoul");
+
     private final SctInvitationRepository invitationRepository;
     private final SctFormTemplateRepository formTemplateRepository;
     private final SctFormItemRepository formItemRepository;
     private final SctResponseAnswerRepository answerRepository;
     private final SctInviteAccessAttemptRepository attemptRepository;
-    private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final SctVerifySessionStore verifySessionStore;
+    private final SctPublicTokenResolver publicTokenResolver;
     private final SctFeatureGuard sctFeatureGuard;
     private final SctConsentService sctConsentService;
+    private final SctSettingsService sctSettingsService;
     private final AuditLogService auditLogService;
+    private final PiiHmacService piiHmacService;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -86,9 +97,10 @@ public class SctPublicServiceImpl implements SctPublicService {
     @Override
     @Transactional
     public SctPublicMetaResponse getMeta(String rawToken) {
-        SctInvitation invitation = loadByToken(rawToken);
+        SctPublicTokenResolver.ResolvedPublicToken resolved =
+                publicTokenResolver.resolveToken(rawToken, true);
+        SctInvitation invitation = resolved.invitation();
         bindTenantAndGuard(invitation);
-        assertReadable(invitation);
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         int itemCount = (int) formItemRepository.countByFormTemplateId(template.getId());
         boolean hasDraft = SctInviteStatus.DRAFT.name().equals(invitation.getStatus())
@@ -101,34 +113,53 @@ public class SctPublicServiceImpl implements SctPublicService {
         } else if (StringUtils.hasText(invitation.getTargetEmailHash())) {
             channel = SctConsentKeys.CHANNEL_EMAIL;
         }
+        SctConsentTemplate identityTpl = sctConsentService.activeIdentityContactTemplate();
+        boolean identityOk = sctConsentService.hasIdentityContactConsent(invitation);
+        String status = StringUtils.hasText(resolved.statusOverride())
+                ? resolved.statusOverride()
+                : invitation.getStatus();
+        // 종료 랜딩(REISSUED/EXPIRED/CANCELLED)에서는 수신자명 PII 생략
+        boolean omitRecipientName = SctConstants.PUBLIC_STATUS_REISSUED.equals(status)
+                || SctInviteStatus.EXPIRED.name().equals(status)
+                || SctInviteStatus.CANCELLED.name().equals(status);
         return SctPublicMetaResponse.builder()
                 .formType(template.getFormType())
                 .title(template.getTitle())
-                .status(invitation.getStatus())
+                .status(status)
                 .itemCount(itemCount)
                 .verifyChannelHint(channel)
                 .tokenExpiresAt(invitation.getTokenExpiresAt())
                 .hasDraft(hasDraft)
                 .requiresGuardian(requiresGuardian)
                 .signerBand(sctConsentService.resolveSignerBand(template.getFormType(), requiresGuardian))
+                .identityConsentTitle(identityTpl == null ? null : identityTpl.getTitle())
+                .identityConsentBody(identityTpl == null ? null : identityTpl.getBodyText())
+                .identityConsentVersion(identityTpl == null ? null : identityTpl.getVersion())
+                .identityConsentSatisfied(identityOk)
+                .recipientName(omitRecipientName ? null : invitation.getRecipientName())
+                .officePhone(sctSettingsService.resolvePublicOfficePhone(invitation.getTenantId()))
+                .mobilePhone(sctSettingsService.resolvePublicMobilePhone(invitation.getTenantId()))
+                .submittedAt(invitation.getSubmittedAt())
                 .build();
     }
 
     @Override
     @Transactional
     public SctVerifyResponse verify(String rawToken, SctVerifyRequest request, String clientIp) {
-        String hash = hashToken(rawToken);
-        SctInvitation invitation = invitationRepository
-                .findByTokenHashAndIsDeletedFalseForUpdate(hash)
-                .orElseGet(() -> resolveMissingToken(hash));
+        SctInvitation invitation = publicTokenResolver.loadInvitationForVerify(rawToken);
         bindTenantAndGuard(invitation);
         assertWritableOrVerify(invitation);
+        assertHasIdentityContactConsent(invitation);
+        // PHONE 채널은 SMS OTP confirm 으로만 세션 발급(링크+해시만으로 세션 금지)
+        if (StringUtils.hasText(invitation.getTargetPhoneHash())) {
+            throw new SctOtpRequiredException(SctConstants.MSG_OTP_REQUIRED);
+        }
         if (invitation.getVerifyLockedUntil() != null
                 && invitation.getVerifyLockedUntil().isAfter(LocalDateTime.now())) {
             throw new SctVerifyLockedException("검증이 잠겼습니다. 잠시 후 다시 시도하세요.");
         }
         boolean matched = matchesContact(invitation, request);
-        String ipHash = SctTokenHasher.sha256Hex(clientIp == null ? "unknown" : clientIp);
+        String ipHash = piiHmacService.hmacHex(clientIp == null ? "unknown" : clientIp);
         attemptRepository.save(SctInviteAccessAttempt.builder()
                 .tenantId(invitation.getTenantId())
                 .invitationId(invitation.getId())
@@ -155,12 +186,15 @@ public class SctPublicServiceImpl implements SctPublicService {
             invitation.setLinkOpenedAt(LocalDateTime.now());
         }
         invitationRepository.save(invitation);
-        String sessionId = verifySessionStore.issue(invitation.getId(), invitation.getTenantId());
+        String sessionId = verifySessionStore.issue(
+                invitation.getId(),
+                invitation.getTenantId(),
+                absoluteExpiry(invitation));
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         SctConsentStatusView consent = sctConsentService.resolveStatus(invitation, template.getFormType());
         return SctVerifyResponse.builder()
                 .verifySessionId(sessionId)
-                .expiresInSeconds(SctConstants.VERIFY_SESSION_TTL_MINUTES * 60)
+                .expiresInSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60)
                 .consent(consent)
                 .build();
     }
@@ -235,6 +269,9 @@ public class SctPublicServiceImpl implements SctPublicService {
     /**
      * 임시저장 1회 시도 — 초대 재조회·검증·답변 upsert·draftSavedAt 반영.
      *
+     * <p>초안 답은 {@code sct_response_answers} 에 초대 수명 동안 보관된다.
+     * verify 세션 만료·재시작으로 세션이 사라져도 답행은 삭제하지 않는다.</p>
+     *
      * @param rawToken 공개 토큰
      * @param request  임시저장 요청
      */
@@ -264,7 +301,14 @@ public class SctPublicServiceImpl implements SctPublicService {
             String rawToken, SctConsentRequest request, String clientIp, String userAgent) {
         SctInvitation invitation = loadByToken(rawToken);
         bindTenantAndGuard(invitation);
-        requireVerifySession(request.getVerifySessionId(), invitation);
+        boolean identityContact = request != null
+                && SctConstants.CONSENT_IDENTITY_CONTACT.equals(request.getConsentType());
+        if (!identityContact) {
+            if (request == null || !StringUtils.hasText(request.getVerifySessionId())) {
+                throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
+            }
+            requireVerifySession(request.getVerifySessionId(), invitation);
+        }
         assertWritable(invitation);
         SctFormTemplate template = requireTemplate(invitation.getFormTemplateId());
         sctConsentService.recordPublicConsent(
@@ -319,29 +363,7 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private SctInvitation loadByToken(String rawToken) {
-        String hash = hashToken(rawToken);
-        return invitationRepository.findByTokenHashAndIsDeletedFalse(hash)
-                .orElseGet(() -> resolveMissingToken(hash));
-    }
-
-    /**
-     * 활성 초대가 없을 때 — 회전 이력이면 410, 미존재면 404(동일 메시지·정보 누출 방지).
-     *
-     * @param tokenHash SHA-256 hex
-     * @return never (항상 예외)
-     */
-    private SctInvitation resolveMissingToken(String tokenHash) {
-        if (rotatedTokenHashRepository.existsByTokenHash(tokenHash)) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
-        }
-        throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
-    }
-
-    private static String hashToken(String rawToken) {
-        if (!StringUtils.hasText(rawToken)) {
-            throw new EntityNotFoundException("SCT 링크를 찾을 수 없습니다.");
-        }
-        return SctTokenHasher.sha256Hex(rawToken);
+        return publicTokenResolver.loadByToken(rawToken);
     }
 
     private void bindTenantAndGuard(SctInvitation invitation) {
@@ -398,10 +420,39 @@ public class SctPublicServiceImpl implements SctPublicService {
     }
 
     private void requireVerifySession(String sessionId, SctInvitation invitation) {
-        Optional<String> tenant = verifySessionStore.validate(sessionId, invitation.getId());
+        Optional<String> tenant = verifySessionStore.validate(
+                sessionId,
+                invitation.getId(),
+                absoluteExpiry(invitation));
         if (tenant.isEmpty() || !tenant.get().equals(invitation.getTenantId())) {
-            throw new IllegalArgumentException("본인 확인이 필요합니다.");
+            throw new SctVerifyRequiredException(SctConstants.MSG_VERIFY_REQUIRED);
         }
+    }
+
+    /**
+     * 본인확인(verify) 전 IDENTITY_CONTACT 동의 fail-closed.
+     *
+     * @param invitation 초대(토큰으로 해석된 행 — tenantId 포함)
+     */
+    private void assertHasIdentityContactConsent(SctInvitation invitation) {
+        if (!sctConsentService.hasIdentityContactConsent(invitation)) {
+            throw new SctIdentityContactConsentRequiredException(
+                    SctConstants.MSG_IDENTITY_CONTACT_CONSENT_REQUIRED);
+        }
+    }
+
+    /**
+     * 초대 링크 절대 만료 — verify 세션 sliding 상한.
+     *
+     * @param invitation 초대
+     * @return absolute Instant
+     */
+    private Instant absoluteExpiry(SctInvitation invitation) {
+        LocalDateTime expires = invitation.getTokenExpiresAt();
+        if (expires == null) {
+            return Instant.now().plusSeconds(SctConstants.VERIFY_SESSION_IDLE_MINUTES * 60L);
+        }
+        return expires.atZone(TOKEN_EXPIRY_ZONE).toInstant();
     }
 
     private boolean matchesContact(SctInvitation invitation, SctVerifyRequest request) {
@@ -410,11 +461,11 @@ public class SctPublicServiceImpl implements SctPublicService {
         }
         if (StringUtils.hasText(request.getPhone()) && invitation.getTargetPhoneHash() != null) {
             String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(request.getPhone());
-            return invitation.getTargetPhoneHash().equals(PhoneHashUtils.sha256Hex(normalized));
+            return piiHmacService.matches(normalized, invitation.getTargetPhoneHash());
         }
         if (StringUtils.hasText(request.getEmail()) && invitation.getTargetEmailHash() != null) {
             String normalized = request.getEmail().trim().toLowerCase(Locale.ROOT);
-            return invitation.getTargetEmailHash().equals(SctTokenHasher.sha256Hex(normalized));
+            return piiHmacService.matches(normalized, invitation.getTargetEmailHash());
         }
         return false;
     }

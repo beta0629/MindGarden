@@ -1,5 +1,6 @@
 /**
  * SCT 임시저장 debounce + 수동 저장
+ * 답변 본문은 서버 암호화 draft만 사용. localStorage 평문 미러 없음.
  *
  * @author MindGarden
  * @since 2026-11-23
@@ -32,6 +33,7 @@ export default function useSctDraftAutosave({
 }) {
   const [status, setStatus] = useState(SCT_SAVE_STATUS.IDLE);
   const [savedAtLabel, setSavedAtLabel] = useState('');
+  const [localSaved, setLocalSaved] = useState(false);
   const timerRef = useRef(null);
   const latestRef = useRef({ token, verifySessionId, answersMap });
   const inFlightRef = useRef(false);
@@ -41,7 +43,12 @@ export default function useSctDraftAutosave({
 
   const persist = useCallback(async() => {
     const snap = latestRef.current;
-    if (!snap.token || !snap.verifySessionId || !enabled) {
+    if (!snap.token || !enabled) {
+      return;
+    }
+    // 로컬 답변 미러 비활성 — localSaved는 항상 false
+    setLocalSaved(false);
+    if (!snap.verifySessionId) {
       return;
     }
     if (inFlightRef.current) {
@@ -54,7 +61,10 @@ export default function useSctDraftAutosave({
       do {
         pendingRef.current = false;
         const current = latestRef.current;
-        if (!current.token || !current.verifySessionId || !enabled) {
+        if (!current.token || !enabled) {
+          break;
+        }
+        if (!current.verifySessionId) {
           break;
         }
         const answers = Object.values(current.answersMap || {})
@@ -69,11 +79,7 @@ export default function useSctDraftAutosave({
         setStatus(SCT_SAVE_STATUS.SAVED);
       } while (pendingRef.current);
     } catch (error) {
-      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-        setStatus(SCT_SAVE_STATUS.OFFLINE);
-      } else {
-        setStatus(SCT_SAVE_STATUS.OFFLINE);
-      }
+      setStatus(SCT_SAVE_STATUS.OFFLINE);
     } finally {
       inFlightRef.current = false;
     }
@@ -82,7 +88,7 @@ export default function useSctDraftAutosave({
   const saveNow = useCallback(() => persist(), [persist]);
 
   useEffect(() => {
-    if (!enabled || !token || !verifySessionId) {
+    if (!enabled || !token) {
       return undefined;
     }
     if (timerRef.current) {
@@ -118,5 +124,5 @@ export default function useSctDraftAutosave({
     return '';
   })();
 
-  return { status, statusText, savedAtLabel, saveNow };
+  return { status, statusText, savedAtLabel, saveNow, localSaved };
 }

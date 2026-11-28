@@ -22,6 +22,8 @@ class MindgardenSecurityPropertiesRateLimitTest {
         assertThat(rateLimit.getOnboardingCreatePath()).isEqualTo("/api/v1/onboarding/requests");
         assertThat(rateLimit.getOnboardingPublicPathPrefix()).isEqualTo("/api/v1/onboarding/");
         assertThat(rateLimit.getOnboardingPublicRequestsPerMinute()).isEqualTo(30);
+        assertThat(rateLimit.getSctShortLinkPathPrefix()).isEqualTo("/s/");
+        assertThat(rateLimit.getSctShortLinkRequestsPerMinute()).isEqualTo(20);
     }
 
     @Test

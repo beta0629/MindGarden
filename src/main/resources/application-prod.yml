@@ -239,6 +239,7 @@ encryption:
   personal-data:
     key: ${PERSONAL_DATA_ENCRYPTION_KEY}
     iv: ${PERSONAL_DATA_ENCRYPTION_IV}
+    hmac-secret: ${PERSONAL_DATA_HMAC_SECRET:}
 
 # 세션 관리 설정은 위에서 이미 정의됨 (중복 제거)
 

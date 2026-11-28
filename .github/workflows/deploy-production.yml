@@ -157,6 +157,15 @@ jobs:
       PERSONAL_DATA_ENCRYPTION_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
       PERSONAL_DATA_ENCRYPTION_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
       MINDGARDEN_DORMANT_PII_ENC_KEY: ${{ secrets.MINDGARDEN_DORMANT_PII_ENC_KEY }}
+      # T-34 키 전략 B: 신규 활성 키는 environment prod 의 *_NEXT / HMAC / REDIS_* 로만 등록한다.
+      # repo 의 기존 KEYS/IVS/ACTIVE_KEY_ID 는 덮어쓰지 않는다. 값은 echo 하지 말 것.
+      PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID_NEXT: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID_NEXT }}
+      PERSONAL_DATA_ENCRYPTION_KEYS_NEXT: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS_NEXT }}
+      PERSONAL_DATA_ENCRYPTION_IVS_NEXT: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS_NEXT }}
+      PERSONAL_DATA_HMAC_SECRET: ${{ secrets.PERSONAL_DATA_HMAC_SECRET }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
       # ops-portal-migration Phase 1 (PR #362, 2026-06-15):
       # OpsTenantConstants#validate() 가 BE 부팅 시 본 키 미설정/blank 면 fail-fast.
       # 운영 본사 tenantId 는 단일 값(`tenant-incheon-counseling-001`)이며
@@ -854,41 +863,179 @@ jobs:
     # ============================================================================
 
     # ============================================================================
-    # [PII 회전 선행 PR-1 SSOT 2026-06-14] PII KEY/IV 회전 env 자동 주입 + 검증 (운영)
-    # 배경: PII KEY/IV 회전 재암호화 마이그 설계 (PR #335,
-    #       docs/standards/PII_KEY_ROTATION_REENCRYPTION_DESIGN.md) 합의 §6 4건 후속.
-    #       Phase 0~4 진입 전 차단 해제용 운영 SSOT 보강 — 회전 인프라 환경변수 4종을
-    #       /etc/mindgarden/prod-from-dev.env 로 멱등 동기화한다.
-    # 키 set:
-    #   - PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID : 현재 활성 키 ID (단일 값, 회전 시 갱신)
-    #   - PERSONAL_DATA_ENCRYPTION_KEYS          : CSV 다중 키 set (메인 + 휴면 키 모두 포함)
-    #   - PERSONAL_DATA_ENCRYPTION_IVS           : CSV 다중 IV set (KEYS 와 동일 keyId)
-    #   - MINDGARDEN_DORMANT_PII_ENC_KEY         : 휴면 사용자 PII 별도 키
-    # 정책:
-    #   - skip_when=all_missing — 4종 모두 비면 skip, 일부만 채워져도 채워진 키만 graceful 반영.
-    #     운영 secret 등록은 Phase 1 진입 전 사용자 작업이며, 기존 BE Converter/Util 동작 영향 최소화.
-    # 하위 PR-2:
-    #   - composite action PRESERVE_KEYS 가드에 본 4종 추가 — 다른 sync step 갱신 도중
-    #     PII 키 라인이 사라지는 회귀 차단 (PR #299 DB_PRESERVE_KEYS 동일 패턴).
+    # [T-34 키 전략 B] 신규 활성 키링 + 기존 키 보조 병합 주입 (재시작 전 fail-closed)
+    # - repo secret PERSONAL_DATA_ENCRYPTION_KEYS/IVS/ACTIVE_KEY_ID 는 기존 키(복호화 보조). 덮어쓰지 않음.
+    # - environment prod 의 *_NEXT + PERSONAL_DATA_HMAC_SECRET + REDIS_HOST 를 신규로 사용.
+    # - 러너에서 NEXT,기존 KEYS/IVS 를 쉼표 병합한 뒤 prod.env 의 표준 이름(ACTIVE/KEYS/IVS)으로 동기화.
+    # - 값 echo·set -x 금지. 시크릿 미등록 시 이 단계에서 배포 실패 — 블루그린/재시작 전이라
+    #   현재 운영 프로세스는 그대로 유지된다. 시크릿 등록 전에 본 워크플로를 돌리면 배포만 중단됨.
     # ============================================================================
-    - name: 🔑 PII KEY/IV 회전 env 자동 주입 + 검증
+    - name: 🔑 PII 키링 병합·필수 시크릿 가드 (재시작 전, 값 미출력)
+      env:
+        EXISTING_ACTIVE: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID }}
+        EXISTING_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS }}
+        EXISTING_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS }}
+        NEXT_ACTIVE: ${{ secrets.PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID_NEXT }}
+        NEXT_KEYS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_KEYS_NEXT }}
+        NEXT_IVS: ${{ secrets.PERSONAL_DATA_ENCRYPTION_IVS_NEXT }}
+        HMAC_SECRET: ${{ secrets.PERSONAL_DATA_HMAC_SECRET }}
+        REDIS_HOST_IN: ${{ secrets.REDIS_HOST }}
+        REDIS_PORT_IN: ${{ secrets.REDIS_PORT }}
+      run: |
+        set -euo pipefail
+        set +x
+        missing=0
+        _need() {
+          local name="$1" val="$2"
+          if [ -z "${val}" ]; then
+            echo "::error title=시크릿 누락::${name} 가 비어 있습니다. GitHub environment prod 에 등록한 뒤 재실행하세요. 현재 운영 프로세스는 재시작하지 않습니다."
+            missing=1
+          else
+            echo "secret_present name=${name} state=SET len=${#val}"
+          fi
+        }
+        _need PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID "${EXISTING_ACTIVE:-}"
+        _need PERSONAL_DATA_ENCRYPTION_KEYS "${EXISTING_KEYS:-}"
+        _need PERSONAL_DATA_ENCRYPTION_IVS "${EXISTING_IVS:-}"
+        _need PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID_NEXT "${NEXT_ACTIVE:-}"
+        _need PERSONAL_DATA_ENCRYPTION_KEYS_NEXT "${NEXT_KEYS:-}"
+        _need PERSONAL_DATA_ENCRYPTION_IVS_NEXT "${NEXT_IVS:-}"
+        _need PERSONAL_DATA_HMAC_SECRET "${HMAC_SECRET:-}"
+        _need REDIS_HOST "${REDIS_HOST_IN:-}"
+        if [ "$missing" -ne 0 ]; then
+          exit 1
+        fi
+        case "${NEXT_KEYS}" in
+          "${NEXT_ACTIVE}:"*) ;;
+          *)
+            echo "::error title=키링 형식 오류::PERSONAL_DATA_ENCRYPTION_KEYS_NEXT 가 ACTIVE_KEY_ID_NEXT 접두와 맞지 않습니다 (값 미출력)."
+            exit 1
+            ;;
+        esac
+        case "${NEXT_IVS}" in
+          "${NEXT_ACTIVE}:"*) ;;
+          *)
+            echo "::error title=키링 형식 오류::PERSONAL_DATA_ENCRYPTION_IVS_NEXT 가 ACTIVE_KEY_ID_NEXT 접두와 맞지 않습니다 (값 미출력)."
+            exit 1
+            ;;
+        esac
+        MERGED_KEYS="${NEXT_KEYS},${EXISTING_KEYS}"
+        MERGED_IVS="${NEXT_IVS},${EXISTING_IVS}"
+        REDIS_PORT_OUT="${REDIS_PORT_IN:-}"
+        if [ -z "${REDIS_PORT_OUT}" ]; then
+          REDIS_PORT_OUT="6379"
+          echo "REDIS_PORT 미설정 — 기본값 6379 사용"
+        fi
+        echo "::add-mask::${MERGED_KEYS}"
+        echo "::add-mask::${MERGED_IVS}"
+        echo "::add-mask::${NEXT_ACTIVE}"
+        echo "::add-mask::${HMAC_SECRET}"
+        echo "::add-mask::${REDIS_HOST_IN}"
+        {
+          printf 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID=%s\n' "${NEXT_ACTIVE}"
+          printf 'PERSONAL_DATA_ENCRYPTION_KEYS=%s\n' "${MERGED_KEYS}"
+          printf 'PERSONAL_DATA_ENCRYPTION_IVS=%s\n' "${MERGED_IVS}"
+          printf 'PERSONAL_DATA_HMAC_SECRET=%s\n' "${HMAC_SECRET}"
+          printf 'REDIS_HOST=%s\n' "${REDIS_HOST_IN}"
+          printf 'REDIS_PORT=%s\n' "${REDIS_PORT_OUT}"
+        } >> "$GITHUB_ENV"
+        echo "keyring_compose=OK active_is_next=yes auxiliary_existing=yes (values omitted)"
+
+    - name: 🔑 PII 키링·HMAC env 자동 주입 + 검증
       uses: ./.github/actions/sync-prod-env-key
       with:
-        step_name: 'PII KEY/IV 회전'
-        keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY'
-        # SSOT 통일 (cutover 정합, 2026-06-15 PR-4 후속): prod.env 단일 EnvironmentFile (DB_ENV_SSOT_POLICY.md §1).
-        # cutover-prod-env-ssot.yml 실행 (run 27528336064) 으로 prod-from-dev.env 폐기됨에 따라
-        # composite action default env_path 회귀 차단 (HQ_TENANT_ID 와 동일 패턴 — PR #390 보강).
+        step_name: 'PII 키링 병합 + HMAC'
+        keys: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS PERSONAL_DATA_HMAC_SECRET'
         env_path: '/etc/mindgarden/prod.env'
         ssh_host: ${{ secrets.PRODUCTION_HOST }}
         ssh_user: ${{ secrets.PRODUCTION_USER }}
         ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
-        # 누락 허용 — Phase 1 진입 전 부분 등록 단계에서 BE 기동 영향 최소화.
-        skip_when: 'all_missing'
-        # 채워진 키가 모두 현재 값과 같으면 no-op
+        # 앞 단계 가드를 통과한 값만 주입. 비면 배포 실패(재시작 전).
+        skip_when: 'any_missing'
         noop_compare: 'true'
+        db_fail_fast: 'false'
+
+    - name: 🔑 휴면 PII 키 env 주입 (기존 유지, 누락 시 skip)
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'MINDGARDEN_DORMANT_PII_ENC_KEY'
+        keys: 'MINDGARDEN_DORMANT_PII_ENC_KEY'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'all_missing'
+        noop_compare: 'true'
+        db_fail_fast: 'false'
+
+    - name: 🔑 REDIS_HOST/PORT env 자동 주입
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'REDIS_HOST/PORT'
+        keys: 'REDIS_HOST REDIS_PORT'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        skip_when: 'any_missing'
+        noop_compare: 'true'
+        db_fail_fast: 'false'
+
+    - name: 🔑 REDIS_PASSWORD env 주입 (빈 값 허용)
+      uses: ./.github/actions/sync-prod-env-key
+      with:
+        step_name: 'REDIS_PASSWORD'
+        keys: 'REDIS_PASSWORD'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        # requirepass 없는 운영 Redis 를 가정 — 비어 있으면 이 키만 skip, HOST/PORT 는 유지.
+        skip_when: 'any_missing'
+        noop_compare: 'true'
+        db_fail_fast: 'false'
+
+    - name: 🛑 PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'PII ACTIVE_KEY_ID'
+        key: 'PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+    - name: 🛑 PERSONAL_DATA_ENCRYPTION_KEYS 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'PII KEYS'
+        key: 'PERSONAL_DATA_ENCRYPTION_KEYS'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+    - name: 🛑 PERSONAL_DATA_HMAC_SECRET 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'PII HMAC'
+        key: 'PERSONAL_DATA_HMAC_SECRET'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+    - name: 🛑 REDIS_HOST 빈 값 가드 (재시작 전)
+      uses: ./.github/actions/assert-env-key-nonempty
+      with:
+        step_name: 'REDIS_HOST'
+        key: 'REDIS_HOST'
+        env_path: '/etc/mindgarden/prod.env'
+        ssh_host: ${{ secrets.PRODUCTION_HOST }}
+        ssh_user: ${{ secrets.PRODUCTION_USER }}
+        ssh_key: ${{ secrets.PRODUCTION_SSH_KEY }}
     # ============================================================================
-    # [/PII 회전 선행 PR-1 SSOT 2026-06-14]
+    # [/T-34 키 전략 B]
     # ============================================================================
 
     # prod.env 존재 시 SESSION_COOKIE_DOMAIN 미설정 → 테넌트 서브도메인에서 세션 쿠키 불일치·401 가능.

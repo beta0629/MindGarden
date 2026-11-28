@@ -176,7 +176,11 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
                     // 센터 홈페이지 공개 테넌트 API (상담 상품·문의 등)
                     .requestMatchers(HttpMethod.GET, "/api/v1/public/tenants/**").permitAll()
+                    // SCT OTP 평문 peek 는 공개 permitAll 보다 먼저 차단(.dev 관리자 경로로만 제공).
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/public/sct/*/identity/otp/dev-code").denyAll()
                     .requestMatchers("/api/v1/public/sct/**").permitAll()
+                    .requestMatchers("/s/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(
@@ -325,7 +329,11 @@ public class SecurityConfig {
                     .requestMatchers("/api/v1/public/kr-public-data/**").permitAll()
                     // 센터 홈페이지 공개 테넌트 API (상담 상품·문의 등)
                     .requestMatchers(HttpMethod.GET, "/api/v1/public/tenants/**").permitAll()
+                    // SCT OTP 평문 peek 는 공개 permitAll 보다 먼저 차단(.dev 관리자 경로로만 제공).
+                    .requestMatchers(HttpMethod.GET,
+                        "/api/v1/public/sct/*/identity/otp/dev-code").denyAll()
                     .requestMatchers("/api/v1/public/sct/**").permitAll()
+                    .requestMatchers("/s/**").permitAll()
                     // /api/v1/ops/onboarding/** permitAll 제거 — /api/v1/ops/** authenticated 적용
                     // 공개 엔드포인트: Trinity 온보딩에서 사용하는 요금제 조회 API
                     .requestMatchers(

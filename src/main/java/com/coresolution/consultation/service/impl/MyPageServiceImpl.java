@@ -26,6 +26,7 @@ import com.coresolution.consultation.service.RefreshTokenService;
 import com.coresolution.consultation.service.SmsOtpVerificationService;
 import com.coresolution.consultation.service.UserService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.PhoneLogMasking;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
 import com.coresolution.consultation.util.PersonalDataEncryptionUtil;
 import com.coresolution.consultation.util.ProfileImageUrlGuard;
@@ -384,14 +385,14 @@ public class MyPageServiceImpl implements MyPageService {
             SmsOtpVerificationFailedException failure = SmsOtpVerificationFailedException.fromStatus(
                     smsOtpVerificationService.getSendStatus(normalizedPhone));
             log.warn("마이페이지 휴대전화 변경 OTP 검증 실패: userId={}, phone={}, locked={}, remainingAttempts={}",
-                    userId, normalizedPhone, failure.isLocked(), failure.getRemainingAttempts());
+                    userId, PhoneLogMasking.maskForLog(normalizedPhone), failure.isLocked(), failure.getRemainingAttempts());
             throw failure;
         }
 
         // 4. tenant 내 중복 검사 (본인 제외) — 같은 테넌트에 동일 번호 가진 다른 사용자가 있으면 차단.
         boolean duplicate = userService.existsPhoneDuplicate(normalizedPhone, tenantId, userId);
         if (duplicate) {
-            log.warn("마이페이지 휴대전화 변경 중복 차단: userId={}, phone={}", userId, normalizedPhone);
+            log.warn("마이페이지 휴대전화 변경 중복 차단: userId={}, phone={}", userId, PhoneLogMasking.maskForLog(normalizedPhone));
             throw new IllegalArgumentException(ClientRegistrationConstants.MSG_DUPLICATE_PHONE);
         }
 

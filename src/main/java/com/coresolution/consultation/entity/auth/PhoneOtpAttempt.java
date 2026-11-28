@@ -82,6 +82,12 @@ public class PhoneOtpAttempt {
     public static final String PROVIDER_PASSWORD_RESET = "PASSWORD_RESET";
 
     /**
+     * SCT 공개 본인확인 SMS OTP 흐름용 provider.
+     * OAuth/PASSWORD_RESET/PROFILE 과 격리한다. provider_user_id 에는 invitationId 문자열을 넣는다.
+     */
+    public static final String PROVIDER_SCT_IDENTITY = "SCT_IDENTITY";
+
+    /**
      * 비밀번호 찾기 resetProofToken 소비 후 상태 — VERIFIED 행의 1회용 증명 소진.
      */
     public static final String STATUS_CONSUMED = "CONSUMED";

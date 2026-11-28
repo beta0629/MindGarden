@@ -63,6 +63,9 @@ class SctTenantPublicUrlResolverTest {
         assertEquals(
                 "https://acmeclinic.dev.example-parent.test/public/sct/" + RAW_TOKEN,
                 url);
+
+        String shortUrl = resolver.resolveAbsoluteShortUrl(TENANT_ID, "k9P2mX");
+        assertEquals("https://acmeclinic.dev.example-parent.test/s/k9P2mX", shortUrl);
     }
 
     @Test

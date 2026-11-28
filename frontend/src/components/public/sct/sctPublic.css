@@ -104,6 +104,8 @@
   font-size: var(--mg-v2-font-size-h1);
   font-weight: var(--mg-v2-font-weight-bold);
   line-height: var(--mg-v2-font-line-height-heading);
+  /* 전역 h1 색보다 우선 — cover bg(text-primary) 대비 ≥4.5:1 */
+  color: var(--mg-v2-color-text-inverse);
 }
 
 .mg-v2-sct-app--child .mg-v2-sct-cover__h {
@@ -165,14 +167,23 @@
   width: 100%;
   min-height: var(--mg-v2-touch-target-min);
   padding: var(--mg-v2-space-3);
+  box-sizing: border-box;
   font-size: var(--mg-v2-font-size-body-md);
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
   border-radius: var(--mg-v2-radius-md, 0.5rem);
-  background: var(--mg-v2-color-surface-main, #fff);
+  background: var(--mg-v2-color-neutral-50, var(--mg-v2-color-surface-bg));
   color: var(--mg-v2-color-text-primary);
 }
 
+.mg-v2-sct-field input:focus,
+.mg-v2-sct-field textarea:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
+}
+
 .mg-v2-sct-field input[aria-invalid='true'],
+.mg-v2-sct-field textarea[aria-invalid='true'],
 .mg-v2-sct-alert {
   border-color: var(--mg-v2-color-danger-main, var(--mg-v2-color-error));
 }
@@ -187,6 +198,10 @@
   font-size: var(--mg-v2-font-size-body-md);
 }
 
+.mg-v2-sct-alert__actions {
+  margin-top: var(--mg-v2-space-3);
+}
+
 .mg-v2-sct-check {
   display: flex;
   gap: var(--mg-v2-space-3);
@@ -195,16 +210,17 @@
   font-size: var(--mg-v2-font-size-body-md);
 }
 
-.mg-v2-sct-check button {
+/* 전역 button { border: none } 보다 특이도 강화 — unchecked 테두리 ≥3:1 */
+.mg-v2-sct-app .mg-v2-sct-check button {
   flex: 0 0 auto;
   width: var(--mg-v2-touch-target-min);
   height: var(--mg-v2-touch-target-min);
-  border: 1px solid var(--mg-v2-color-border-main, var(--mg-v2-color-border));
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
   border-radius: var(--mg-v2-radius-sm, 0.25rem);
   background: var(--mg-v2-color-surface-main, #fff);
 }
 
-.mg-v2-sct-check button[aria-checked='true'] {
+.mg-v2-sct-app .mg-v2-sct-check button[aria-checked='true'] {
   background: var(--mg-v2-color-text-primary);
   border-color: var(--mg-v2-color-text-primary);
   color: var(--mg-v2-color-text-inverse);
@@ -317,13 +333,21 @@
 .mg-v2-sct-q__ans {
   width: 100%;
   min-height: calc(var(--mg-v2-space-8) * 2);
-  border: none;
-  background: transparent;
+  box-sizing: border-box;
+  padding: var(--mg-v2-space-3);
+  border: var(--mg-v2-border-width-thin) solid var(--mg-v2-color-border-strong);
+  border-radius: var(--mg-v2-radius-md, 0.5rem);
+  background: var(--mg-v2-color-neutral-50, var(--mg-v2-color-surface-bg));
   resize: vertical;
   font-size: var(--mg-v2-font-size-body-md);
   line-height: var(--mg-v2-font-line-height-body);
   color: var(--mg-v2-color-text-primary);
-  padding: 0;
+}
+
+.mg-v2-sct-q__ans:focus {
+  outline: var(--mg-v2-border-width-thick) solid var(--mg-v2-color-neutral-900);
+  outline-offset: var(--mg-v2-space-0-5);
+  border-color: var(--mg-v2-color-neutral-900);
 }
 
 .mg-v2-sct-app--child .mg-v2-sct-q__ans {

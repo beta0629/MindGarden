@@ -40,6 +40,34 @@ export async function verifySctPublic(token, body) {
 }
 
 /**
+ * PHONE 본인확인 — SMS OTP 발송.
+ *
+ * @param {string} token
+ * @param {{ phone: string }} body
+ * @returns {Promise<object>}
+ */
+export async function sendSctIdentityOtp(token, body) {
+  const res = await StandardizedApi.post(SCT_API.publicIdentityOtpSend(token), body, {
+    skipSessionRefresh: true
+  });
+  return resolveApiObjectData(res) || res;
+}
+
+/**
+ * PHONE 본인확인 — SMS OTP 확인 후 verify 세션.
+ *
+ * @param {string} token
+ * @param {{ phone: string, code: string }} body
+ * @returns {Promise<object>}
+ */
+export async function confirmSctIdentityOtp(token, body) {
+  const res = await StandardizedApi.post(SCT_API.publicIdentityOtpConfirm(token), body, {
+    skipSessionRefresh: true
+  });
+  return resolveApiObjectData(res) || res;
+}
+
+/**
  * GET form — verifySessionId 는 쿼리가 아니라 헤더 {@link SCT_VERIFY_SESSION_HEADER}.
  *
  * @param {string} token

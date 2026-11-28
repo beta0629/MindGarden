@@ -6,6 +6,7 @@ import com.coresolution.consultation.constant.EmailConstants;
 import com.coresolution.consultation.dto.EmailResponse;
 import com.coresolution.consultation.service.EmailService;
 import com.coresolution.consultation.util.EmailLogMasking;
+import com.coresolution.consultation.util.NameLogMasking;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -64,7 +65,7 @@ public class EmailUtil {
             }
 
             log.info("{} 이메일 발송 시작: toEmail={}, toName={}, templateType={}", context,
-                    EmailLogMasking.maskForLog(toEmail), toName, templateType);
+                    EmailLogMasking.maskForLog(toEmail), NameLogMasking.maskForLog(toName), templateType);
 
             EmailResponse response = emailService.sendTemplateEmail(templateType, toEmail, toName, variables);
 

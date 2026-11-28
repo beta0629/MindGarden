@@ -1,5 +1,7 @@
 package com.coresolution.consultation.sct.unit;
 
+import com.coresolution.consultation.security.pii.PiiTestSecrets;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -37,6 +39,7 @@ import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.exception.SctFeatureDisabledException;
 import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
+import com.coresolution.consultation.sct.entity.SctShortLink;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
 import com.coresolution.consultation.sct.repository.SctFormTemplateRepository;
@@ -49,9 +52,11 @@ import com.coresolution.consultation.sct.service.SctClinicalAccessDeniedAuditWri
 import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctSettingsService;
+import com.coresolution.consultation.sct.service.SctShortLinkService;
 import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
 import com.coresolution.consultation.sct.service.impl.SctInvitationServiceImpl;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.sct.util.SctSmsMessageBuilder;
+import com.coresolution.consultation.security.pii.PiiHmacService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -59,6 +64,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
@@ -88,6 +94,10 @@ class SctInvitationServiceTest {
     @Mock private SctRotatedTokenHashRepository rotatedTokenHashRepository;
     @Mock private SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
     @Mock private SctTenantPublicUrlResolver tenantPublicUrlResolver;
+    @Mock private SctShortLinkService sctShortLinkService;
+
+    @Spy
+    private PiiHmacService piiHmacService = PiiTestSecrets.hmacService();
 
     @InjectMocks
     private SctInvitationServiceImpl invitationService;
@@ -116,6 +126,21 @@ class SctInvitationServiceTest {
                 .build();
         lenient().when(tenantPublicUrlResolver.resolveAbsolutePublicUrl(anyString(), anyString()))
                 .thenAnswer(inv -> "https://demo.dev.example.test/public/sct/" + inv.getArgument(1));
+        lenient().when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(anyString(), anyString()))
+                .thenAnswer(inv -> "https://demo.dev.example.test/s/" + inv.getArgument(1));
+        lenient().when(sctShortLinkService.createOrRotate(any(SctInvitation.class)))
+                .thenAnswer(inv -> {
+                    SctInvitation invitation = inv.getArgument(0);
+                    SctShortLink link = SctShortLink.builder()
+                            .invitationId(invitation.getId())
+                            .shortCode("k9P2mX")
+                            .expiresAt(invitation.getTokenExpiresAt())
+                            .isActive(true)
+                            .build();
+                    link.setTenantId(invitation.getTenantId());
+                    link.setId(900L);
+                    return link;
+                });
     }
 
     private void stubManagementNo(String tenantId) {
@@ -183,6 +208,8 @@ class SctInvitationServiceTest {
         assertTrue(org.springframework.util.StringUtils.hasText(created.getPublicUrl()));
         assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
         assertTrue(org.springframework.util.StringUtils.hasText(created.getToken()));
+        assertEquals(Integer.valueOf(21), created.getLinkExpiryDays());
+        assertEquals("/s/k9P2mX", created.getShortUrl());
     }
 
     @Test
@@ -258,7 +285,7 @@ class SctInvitationServiceTest {
 
     @Test
     void reissueLink_persistsOldTokenHashBeforeOverwrite() {
-        String oldHash = SctTokenHasher.sha256Hex("old-opaque-token-value-32bytes!!");
+        String oldHash = PiiTestSecrets.hmacService().hmacHex("old-opaque-token-value-32bytes!!");
         SctInvitation existing = SctInvitation.builder()
                 .formTemplateId(10L)
                 .managementNo("SCT-000009")
@@ -289,6 +316,34 @@ class SctInvitationServiceTest {
         assertEquals("t1", rotatedCaptor.getValue().getTenantId());
         assertTrue(response.getPublicUrl() != null && response.getPublicUrl().contains("/public/sct/"));
         assertFalse(oldHash.equals(existing.getTokenHash()));
+    }
+
+    @Test
+    @DisplayName("cancel — 단축 링크 비활성 후 CANCELLED")
+    void cancel_deactivatesShortLinks() {
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000010")
+                .tokenHash("abc")
+                .tokenExpiresAt(LocalDateTime.now().plusDays(3))
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(55L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 55L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(auditLogService.record(any())).thenAnswer(i -> i.getArgument(0));
+
+        var response = invitationService.cancel("t1", staff, 55L);
+
+        assertEquals(SctInviteStatus.CANCELLED.name(), response.getStatus());
+        assertEquals(SctInviteStatus.CANCELLED.name(), existing.getStatus());
+        verify(sctShortLinkService).deactivateForInvitation("t1", 55L);
     }
 
     @Test
@@ -641,8 +696,8 @@ class SctInvitationServiceTest {
     }
 
     @Test
-    @DisplayName("SMS 본문에 테넌트 절대 URL 포함·publicUrl은 상대경로 유지")
-    void createInvitation_smsBodyUsesAbsoluteTenantUrl() {
+    @DisplayName("SMS 본문에 단축 절대 URL 포함·QR용 absoluteShortUrl·전화 번호 없음")
+    void createInvitation_smsBodyUsesAbsoluteShortUrl() {
         when(sctSettingsService.resolveLinkExpiryDays("t1")).thenReturn(14);
         stubManagementNo("t1");
         when(formTemplateRepository
@@ -666,10 +721,14 @@ class SctInvitationServiceTest {
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(smsAuthService).sendNotificationMessage(eq("01012345678"), messageCaptor.capture());
         String body = messageCaptor.getValue();
-        assertTrue(body.contains("https://demo.dev.example.test/public/sct/"));
-        assertFalse(body.contains("링크: /public/sct/"));
+        assertTrue(body.contains("https://demo.dev.example.test/s/k9P2mX"));
+        assertFalse(body.contains("032-"));
+        assertFalse(body.contains("010-"));
+        assertTrue(body.contains("성인 문장완성"));
         assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
-        assertTrue(created.getAbsoluteUrl().startsWith("https://demo.dev.example.test/public/sct/"));
+        assertTrue(created.getAbsoluteShortUrl().startsWith("https://demo.dev.example.test/s/"));
+        assertEquals("/s/k9P2mX", created.getShortUrl());
+        assertEquals(Integer.valueOf(14), created.getLinkExpiryDays());
         assertEquals(SctConstants.SMS_RESULT_SENT, created.getSmsDispatchResult());
     }
 
@@ -696,14 +755,108 @@ class SctInvitationServiceTest {
                         .formType("ADULT").phone("01012345678").build());
 
         verify(tenantPublicUrlResolver, org.mockito.Mockito.atLeastOnce())
-                .resolveAbsolutePublicUrl(eq("t1"), anyString());
+                .resolveAbsoluteShortUrl(eq("t1"), anyString());
         verify(smsAuthService, never()).sendNotificationMessage(anyString(), anyString());
         assertEquals(SctConstants.SMS_RESULT_TEST_MODE_SKIP, created.getSmsDispatchResult());
         assertTrue(created.getPublicUrl().startsWith("/public/sct/"));
+        assertEquals("/s/k9P2mX", created.getShortUrl());
     }
 
     @Test
-    @DisplayName("테넌트 절대 URL 조립 실패 — 발송 전 fail-closed")
+    @DisplayName("운영 단축 URL + 12월 11일 — EUC-KR 88B 단문 SENT")
+    void resendSms_prodShortUrl_dec11_staysShortSms() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String prodShort = "https://mindgarden.core-solution.co.kr/s/k9P2mX";
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000070")
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("old-token-for-resend-prod-fixture!!"))
+                .tokenExpiresAt(expires)
+                .targetPhone("01012345678")
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(70L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 70L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(rotatedTokenHashRepository.existsByTokenHash(anyString())).thenReturn(false);
+        when(rotatedTokenHashRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(eq("t1"), anyString()))
+                .thenReturn(prodShort);
+        when(smsAuthService.isTestMode()).thenReturn(false);
+        when(smsAuthService.sendNotificationMessage(anyString(), anyString())).thenReturn(true);
+
+        var result = invitationService.resendSms("t1", admin, 70L);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsAuthService).sendNotificationMessage(eq("01012345678"), messageCaptor.capture());
+        String body = messageCaptor.getValue();
+        assertEquals(88, SctSmsMessageBuilder.eucKrByteLength(body));
+        assertTrue(body.contains(prodShort));
+        assertTrue(body.contains("12월 11일"));
+        assertFalse(body.contains("문의"));
+        assertEquals(SctConstants.SMS_RESULT_SENT, result.getSmsDispatchResult());
+        verify(sctSettingsService, never()).resolvePublicOfficePhone(anyString());
+    }
+
+    @Test
+    @DisplayName(".dev 단축 URL + 12월 11일 — 91B overflow → LMS_FALLBACK")
+    void resendSms_devShortUrl_dec11_fallsBackToLms() {
+        LocalDateTime expires = LocalDateTime.of(2026, 12, 11, 23, 59);
+        String devShort = "https://mindgarden.dev.core-solution.co.kr/s/k9P2mX";
+        String publicUrl = "https://mindgarden.dev.core-solution.co.kr/public/sct/token-fixture";
+        SctInvitation existing = SctInvitation.builder()
+                .formTemplateId(10L)
+                .managementNo("SCT-000071")
+                .tokenHash(PiiTestSecrets.hmacService().hmacHex("old-token-for-resend-dev-fixture!!!"))
+                .tokenExpiresAt(expires)
+                .targetPhone("01012345678")
+                .status(SctInviteStatus.SENT.name())
+                .sentByUserId(1L)
+                .verifyFailCount(0)
+                .build();
+        existing.setId(71L);
+        existing.setTenantId("t1");
+
+        when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalse("t1", 71L))
+                .thenReturn(Optional.of(existing));
+        when(formTemplateRepository.findByIdAndIsDeletedFalse(10L)).thenReturn(Optional.of(template));
+        when(rotatedTokenHashRepository.existsByTokenHash(anyString())).thenReturn(false);
+        when(rotatedTokenHashRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(invitationRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(eq("t1"), anyString()))
+                .thenReturn(devShort);
+        when(tenantPublicUrlResolver.resolveAbsolutePublicUrl(eq("t1"), anyString()))
+                .thenReturn(publicUrl);
+        when(sctSettingsService.resolvePublicOfficePhone("t1")).thenReturn(null);
+        when(smsAuthService.isTestMode()).thenReturn(false);
+        when(smsAuthService.sendNotificationMessage(anyString(), anyString())).thenReturn(true);
+
+        assertNull(SctSmsMessageBuilder.buildShortSmsBody("ADULT", expires, devShort));
+        assertEquals(91, SctSmsMessageBuilder.measureMostCompactShortSmsEucKrBytes(
+                "ADULT", expires, devShort));
+
+        var result = invitationService.resendSms("t1", admin, 71L);
+
+        ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
+        verify(smsAuthService).sendNotificationMessage(eq("01012345678"), messageCaptor.capture());
+        String body = messageCaptor.getValue();
+        assertTrue(body.contains(publicUrl));
+        assertFalse(body.contains("문의"));
+        assertTrue(body.contains("성인용 문장완성"));
+        assertEquals(SctConstants.SMS_RESULT_LMS_FALLBACK, result.getSmsDispatchResult());
+        verify(sctSettingsService).resolvePublicOfficePhone("t1");
+        verify(tenantPublicUrlResolver, org.mockito.Mockito.atLeastOnce())
+                .resolveAbsolutePublicUrl(eq("t1"), anyString());
+    }
+
+    @Test
+    @DisplayName("단축 URL 조립 실패 — 발송 전 fail-closed")
     void createInvitation_urlResolveFails_beforeSend() {
         when(sctSettingsService.resolveLinkExpiryDays("t1")).thenReturn(14);
         when(managementNoSeqRepository.findByTenantIdForUpdate("t1"))
@@ -722,7 +875,7 @@ class SctInvitationServiceTest {
             }
             return i;
         });
-        when(tenantPublicUrlResolver.resolveAbsolutePublicUrl(anyString(), anyString()))
+        when(tenantPublicUrlResolver.resolveAbsoluteShortUrl(anyString(), anyString()))
                 .thenThrow(new IllegalStateException(
                         "SCT 공개 링크용 테넌트 도메인을 확인할 수 없습니다."));
 

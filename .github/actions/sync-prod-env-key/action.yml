@@ -280,12 +280,12 @@ runs:
           # 가드 보호 대상에 편입. 단, 누락 허용 (DB FAIL-FAST 와 달리 PII 는 빈 값 허용) 으로
           # Phase 1 진입 전 BE 기동 영향 최소화. 회전이 끝난 뒤 보존 가드가 회귀 차단을 담당한다.
           DB_PRESERVE_KEYS="DB_HOST DB_NAME DB_USERNAME DB_PASSWORD DB_PORT DB_DRIVER_CLASS_NAME DB_URL DB_SCHEMA"
-          PII_PRESERVE_KEYS="PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY"
+          PII_PRESERVE_KEYS="PERSONAL_DATA_ENCRYPTION_ACTIVE_KEY_ID PERSONAL_DATA_ENCRYPTION_KEYS PERSONAL_DATA_ENCRYPTION_IVS MINDGARDEN_DORMANT_PII_ENC_KEY PERSONAL_DATA_HMAC_SECRET REDIS_HOST REDIS_PORT REDIS_PASSWORD"
           PRESERVE_KEYS="$DB_PRESERVE_KEYS $PII_PRESERVE_KEYS"
           # 변수명은 기존 운영 가드 추적성을 위해 DB_PRESERVED_FILE 유지 (DB+PII 통합 보존 파일).
           DB_PRESERVED_FILE="$HOME/.prod-from-dev.env.preserved_db_keys.$$"
           rm -f "$DB_PRESERVED_FILE"
-          echo "🛡️ PRESERVE 가드 보호 키 set (12종): DB(8) + PII/DORMANT(4)"
+          echo "🛡️ PRESERVE 가드 보호 키 set: DB(8) + PII/DORMANT/HMAC/REDIS"
           for _pkey in $PRESERVE_KEYS; do
             _existing=$(sudo grep -E "^[[:space:]]*${_pkey}=" "$PROD_ENV_FILE" 2>/dev/null | tail -n1 || true)
             if [ -n "$_existing" ]; then

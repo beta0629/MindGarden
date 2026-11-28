@@ -11,6 +11,9 @@ public final class SctConsentKeys {
     /** web-handoff 동의 문구 버전. */
     public static final String TEMPLATE_VERSION_HANDOFF = "handoff-2026-11-23";
 
+    /** 본인확인용 연락처 수집·이용 동의 문구 버전. */
+    public static final String TEMPLATE_VERSION_IDENTITY_CONTACT = "identity-contact-2026-11-27";
+
     public static final String VERIFY_SESSION_HEADER = "X-Sct-Verify-Session";
 
     public static final String CONFIG_GUARDIAN_VERIFY_MODE = "sct.guardian.verify.mode";

@@ -9,6 +9,7 @@ package com.coresolution.consultation.dto.shop;
  * @param sessionCount 회기수. 준비되지 않으면 null
  * @param active 요금 관리 사용 여부
  * @param priceReady 단가·회기가 판매 가능하면 true
+ * @param catalogCategory ASSESSMENT|CONSULTATION. 공통코드 extraData.category 가 없거나 무효면 null
  * @author MindGarden
  * @since 2026-09-24
  */
@@ -18,6 +19,7 @@ public record ShopCatalogPackageIdentity(
         Long unitPriceMinor,
         Integer sessionCount,
         boolean active,
-        boolean priceReady
+        boolean priceReady,
+        String catalogCategory
 ) {
 }

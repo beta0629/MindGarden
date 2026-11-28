@@ -115,6 +115,17 @@ export function validateAdminShopCatalogFieldCode(form) {
 }
 
 /**
+ * 상품 코드 저장 후 패키지 요금 SKU content PUT(findOrCreateLinked) 동기화 여부.
+ * packageCode 가 있으면 항상 true — 몰 입력이 비어 있어도 카테고리·SKU 생성/동기화가 필요하다.
+ *
+ * @param {string|null|undefined} packageCode
+ * @returns {boolean}
+ */
+export function shouldSyncAdminShopPackageContent(packageCode) {
+  return Boolean(toDisplayString(packageCode, '').trim());
+}
+
+/**
  * CONSULTATION 은 상담사 users.id 가 필수다. ASSESSMENT 는 저장하지 않는다.
  *
  * @param {object|null|undefined} form

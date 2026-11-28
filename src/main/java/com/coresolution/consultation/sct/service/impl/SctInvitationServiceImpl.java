@@ -37,6 +37,7 @@ import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctManagementNoSeq;
 import com.coresolution.consultation.sct.entity.SctResponseAnswer;
 import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
+import com.coresolution.consultation.sct.entity.SctShortLink;
 import com.coresolution.consultation.sct.exception.SctConflictException;
 import com.coresolution.consultation.sct.repository.SctDomainMemoRepository;
 import com.coresolution.consultation.sct.repository.SctFormItemRepository;
@@ -52,10 +53,12 @@ import com.coresolution.consultation.sct.service.SctConsentService;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctInvitationService;
 import com.coresolution.consultation.sct.service.SctSettingsService;
+import com.coresolution.consultation.sct.service.SctShortLinkService;
 import com.coresolution.consultation.sct.service.SctTenantPublicUrlResolver;
-import com.coresolution.consultation.sct.util.SctTokenHasher;
+import com.coresolution.consultation.sct.util.SctSmsMessageBuilder;
+import com.coresolution.consultation.security.pii.PiiHmacService;
+import com.coresolution.consultation.sct.util.SctOpaqueTokenGenerator;
 import com.coresolution.consultation.util.LoginIdentifierUtils;
-import com.coresolution.consultation.util.PhoneHashUtils;
 import com.coresolution.consultation.util.PhoneLogMasking;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,8 +78,6 @@ import org.springframework.util.StringUtils;
 @RequiredArgsConstructor
 public class SctInvitationServiceImpl implements SctInvitationService {
 
-    private static final String PUBLIC_SCT_WEB_PREFIX = "/public/sct/";
-
     private final SctFeatureGuard sctFeatureGuard;
     private final SctSettingsService sctSettingsService;
     private final SctFormTemplateRepository formTemplateRepository;
@@ -94,6 +95,8 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     private final SctRotatedTokenHashRepository rotatedTokenHashRepository;
     private final SctClinicalAccessDeniedAuditWriter clinicalAccessDeniedAuditWriter;
     private final SctTenantPublicUrlResolver tenantPublicUrlResolver;
+    private final SctShortLinkService sctShortLinkService;
+    private final PiiHmacService piiHmacService;
 
     @Override
     @Transactional(readOnly = true)
@@ -183,7 +186,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
 
         boolean requiresGuardian = resolveRequiresGuardian(formType, linkedClient, request);
 
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(expiryDays);
         String managementNo = nextManagementNo(tenantId);
 
@@ -198,9 +201,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .recipientName(recipientName)
                 .targetPhone(phone)
                 .targetEmail(email)
-                .targetPhoneHash(phone == null ? null : PhoneHashUtils.sha256Hex(phone))
-                .targetEmailHash(email == null ? null : SctTokenHasher.sha256Hex(email))
-                .tokenHash(SctTokenHasher.sha256Hex(rawToken))
+                .targetPhoneHash(phone == null ? null : piiHmacService.hmacHex(phone))
+                .targetEmailHash(email == null ? null : piiHmacService.hmacHex(email))
+                .tokenHash(piiHmacService.hmacHex(rawToken))
                 .tokenExpiresAt(expiresAt)
                 .status(SctInviteStatus.SENT.name())
                 .sentAt(LocalDateTime.now())
@@ -211,7 +214,10 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setTenantId(tenantId);
         invitation = invitationRepository.save(invitation);
 
-        String smsResult = dispatchSms(tenantId, phone, template.getTitle(), expiresAt, rawToken);
+        SctShortLink shortLink = createShortLinkSafe(invitation);
+        String smsResult = dispatchSms(
+                tenantId, phone, template.getFormType(), expiresAt, rawToken, shortLink,
+                invitation.getId());
         invitation.setSmsDispatchResult(smsResult);
         invitation = invitationRepository.save(invitation);
 
@@ -228,9 +234,10 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .build());
 
         SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
+        response.setLinkExpiryDays(expiryDays);
         // STAFF는 SMS 발송용 초대 생성만 — publicUrl/평문 토큰 미노출(임상 본문 403 정합)
         if (canReceiveOneShotPublicLink(actor)) {
-            attachOneShotPublicLink(response, tenantId, rawToken);
+            attachOneShotPublicLink(response, tenantId, rawToken, shortLink);
         }
         return response;
     }
@@ -306,6 +313,8 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         invitation.setStatus(SctInviteStatus.CANCELLED.name());
         invitation.setCancelledAt(LocalDateTime.now());
         invitationRepository.save(invitation);
+        // 단축 링크 비활성 — 신규 교환 발급 차단. 기존 교환은 Public resolve 시 status로 거부.
+        sctShortLinkService.deactivateForInvitation(tenantId, invitation.getId());
         auditLogService.record(AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actor.getId())
@@ -330,19 +339,25 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 || SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("재발송할 수 없는 상태입니다. 새 초대를 발송하세요.");
         }
-        // 미제출: 동일 토큰 재문자 — 평문 토큰은 DB에 없으므로 신규 토큰 발급 후 해시 교체
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        // 미제출: 평문 토큰은 DB에 없으므로 신규 토큰·단축 코드 발급 후 해시 교체
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         persistRotatedTokenHash(invitation);
-        invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
+        invitation.setTokenHash(piiHmacService.hmacHex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
+        invitationRepository.save(invitation);
         SctFormTemplate template = formTemplateRepository.findByIdAndIsDeletedFalse(
                 invitation.getFormTemplateId()).orElseThrow();
+        SctShortLink shortLink = createShortLinkSafe(invitation);
         String smsResult = dispatchSms(
-                tenantId, invitation.getTargetPhone(), template.getTitle(),
-                invitation.getTokenExpiresAt(), rawToken);
+                tenantId, invitation.getTargetPhone(), template.getFormType(),
+                invitation.getTokenExpiresAt(), rawToken, shortLink, invitation.getId());
         invitation.setSmsDispatchResult(smsResult);
         invitationRepository.save(invitation);
-        return toMetaResponse(invitation, template.getFormType());
+        SctInvitationResponse response = toMetaResponse(invitation, template.getFormType());
+        if (canReceiveOneShotPublicLink(actor)) {
+            attachOneShotPublicLink(response, tenantId, rawToken, shortLink);
+        }
+        return response;
     }
 
     @Override
@@ -358,13 +373,14 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 || SctInviteStatus.SUBMITTED.name().equals(invitation.getStatus())) {
             throw new SctConflictException("링크를 재발급할 수 없는 상태입니다.");
         }
-        String rawToken = SctTokenHasher.generateOpaqueToken();
+        String rawToken = SctOpaqueTokenGenerator.generateOpaqueToken();
         persistRotatedTokenHash(invitation);
-        invitation.setTokenHash(SctTokenHasher.sha256Hex(rawToken));
+        invitation.setTokenHash(piiHmacService.hmacHex(rawToken));
         invitation.setSentAt(LocalDateTime.now());
         invitation.setVerifyFailCount(0);
         invitation.setVerifyLockedUntil(null);
         invitationRepository.save(invitation);
+        SctShortLink shortLink = createShortLinkSafe(invitation);
         auditLogService.record(AuditLog.builder()
                 .tenantId(tenantId)
                 .actorUserId(actor.getId())
@@ -377,7 +393,7 @@ public class SctInvitationServiceImpl implements SctInvitationService {
                 .build());
         SctInvitationResponse response = toMetaResponse(
                 invitation, resolveFormType(invitation.getFormTemplateId()));
-        attachOneShotPublicLink(response, tenantId, rawToken);
+        attachOneShotPublicLink(response, tenantId, rawToken, shortLink);
         return response;
     }
 
@@ -449,9 +465,9 @@ public class SctInvitationServiceImpl implements SctInvitationService {
         List<SctLinkCandidateResponse> candidates = new ArrayList<>();
         for (Client client : clients) {
             boolean phoneMatch = StringUtils.hasText(targetPhoneHash)
-                    && targetPhoneHash.equals(hashClientPhone(client));
+                    && matchesClientPhoneHash(client, targetPhoneHash);
             boolean emailMatch = StringUtils.hasText(targetEmailHash)
-                    && targetEmailHash.equals(hashClientEmail(client));
+                    && matchesClientEmailHash(client, targetEmailHash);
             if (!phoneMatch && !emailMatch) {
                 continue;
             }
@@ -480,39 +496,34 @@ public class SctInvitationServiceImpl implements SctInvitationService {
      * @param client 내담자
      * @return 해시 또는 null
      */
-    private static String hashClientPhone(Client client) {
-        if (client == null || !StringUtils.hasText(client.getPhone())) {
-            return null;
+    private boolean matchesClientPhoneHash(Client client, String storedHash) {
+        if (client == null || !StringUtils.hasText(client.getPhone()) || !StringUtils.hasText(storedHash)) {
+            return false;
         }
         try {
             String normalized = LoginIdentifierUtils.normalizeKoreanMobileDigits(client.getPhone());
-            if (!StringUtils.hasText(normalized)) {
-                return null;
-            }
-            return PhoneHashUtils.sha256Hex(normalized);
+            return piiHmacService.matches(normalized, storedHash);
         } catch (Exception e) {
-            return null;
+            return false;
         }
     }
 
     /**
-     * Client.email(컨버터 복호) → 소문자 정규화 → SHA-256(초대 해시와 동일).
+     * Client.email(컨버터 복호) → 소문자 정규화 후 HMAC/레거시 SHA dual-verify.
      *
-     * @param client 내담자
-     * @return 해시 또는 null
+     * @param client     내담자
+     * @param storedHash 초대에 저장된 이메일 해시
+     * @return 일치 여부
      */
-    private static String hashClientEmail(Client client) {
-        if (client == null || !StringUtils.hasText(client.getEmail())) {
-            return null;
+    private boolean matchesClientEmailHash(Client client, String storedHash) {
+        if (client == null || !StringUtils.hasText(client.getEmail()) || !StringUtils.hasText(storedHash)) {
+            return false;
         }
         try {
             String normalized = client.getEmail().trim().toLowerCase(Locale.ROOT);
-            if (!StringUtils.hasText(normalized)) {
-                return null;
-            }
-            return SctTokenHasher.sha256Hex(normalized);
+            return piiHmacService.matches(normalized, storedHash);
         } catch (Exception e) {
-            return null;
+            return false;
         }
     }
 
@@ -689,31 +700,83 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     /**
-     * SCT 초대 SMS 발송. 본문 링크는 테넌트 도메인 절대 URL(fail-closed).
+     * SCT 초대 SMS 발송. 단축 URL 단문(≤90B EUC-KR). 초과 시 LMS 폴백(실패 아님).
+     * 본문에 전화번호 없음. 로그에는 초대 ID·바이트·사유만(번호·본문·토큰·URL 금지).
      *
-     * @param tenantId  테넌트 ID
-     * @param phone     수신 번호(없으면 NO_PHONE)
-     * @param formTitle 양식 제목
-     * @param expiresAt 만료 시각
-     * @param rawToken  평문 토큰
+     * @param tenantId     테넌트 ID
+     * @param phone        수신 번호(없으면 NO_PHONE)
+     * @param formType     양식 유형
+     * @param expiresAt    만료 시각
+     * @param rawToken     평문 토큰(LMS 폴백용)
+     * @param shortLink    단축 링크(없으면 LMS 폴백)
+     * @param invitationId 초대 ID(로그용)
      * @return SMS 발송 결과 코드
      */
     private String dispatchSms(
-            String tenantId, String phone, String formTitle, LocalDateTime expiresAt, String rawToken) {
+            String tenantId,
+            String phone,
+            String formType,
+            LocalDateTime expiresAt,
+            String rawToken,
+            SctShortLink shortLink,
+            Long invitationId) {
         if (!StringUtils.hasText(phone)) {
             return SctConstants.SMS_RESULT_NO_PHONE;
         }
-        String link = tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken);
-        String message = "[마인드가든] " + formTitle + " 작성 요청입니다. 기한: "
-                + expiresAt + ". 링크: " + link;
+        String message = null;
+        String resultOnSuccess = SctConstants.SMS_RESULT_SENT;
+        int eucKrBytes = 0;
+        boolean useLms = shortLink == null || !StringUtils.hasText(shortLink.getShortCode());
+        String lmsReason = "NO_SHORT_LINK";
+
+        if (!useLms) {
+            String absoluteShort = tenantPublicUrlResolver.resolveAbsoluteShortUrl(
+                    tenantId, shortLink.getShortCode());
+            message = SctSmsMessageBuilder.buildShortSmsBody(formType, expiresAt, absoluteShort);
+            if (message == null) {
+                int overflowBytes = SctSmsMessageBuilder.measureMostCompactShortSmsEucKrBytes(
+                        formType, expiresAt, absoluteShort);
+                log.warn(
+                        "SCT SMS short overflow invitationId={} eucKrBytes={} reason=SHORT_EUC_KR_OVERFLOW",
+                        invitationId, overflowBytes);
+                useLms = true;
+                lmsReason = "SHORT_EUC_KR_OVERFLOW";
+            } else {
+                eucKrBytes = SctSmsMessageBuilder.eucKrByteLength(message);
+            }
+        }
+
+        if (useLms) {
+            String office = sctSettingsService.resolvePublicOfficePhone(tenantId);
+            String longUrl = tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken);
+            message = SctSmsMessageBuilder.buildLmsFallbackBody(
+                    formType, expiresAt, office, longUrl);
+            eucKrBytes = SctSmsMessageBuilder.eucKrByteLength(message);
+            resultOnSuccess = SctConstants.SMS_RESULT_LMS_FALLBACK;
+            log.info("SCT SMS LMS fallback invitationId={} eucKrBytes={} reason={}",
+                    invitationId, eucKrBytes, lmsReason);
+        }
+
         if (smsAuthService.isTestMode()) {
-            log.info("SCT SMS TEST_MODE_SKIP phone={} message={}",
-                    PhoneLogMasking.maskForLog(phone),
-                    SctTenantPublicUrlResolver.maskSmsMessageForLog(message, rawToken));
+            log.info("SCT SMS TEST_MODE_SKIP invitationId={} eucKrBytes={}",
+                    invitationId, eucKrBytes);
             return SctConstants.SMS_RESULT_TEST_MODE_SKIP;
         }
         boolean ok = smsAuthService.sendNotificationMessage(phone, message);
-        return ok ? SctConstants.SMS_RESULT_SENT : SctConstants.SMS_RESULT_FAILED;
+        log.info("SCT SMS dispatch invitationId={} eucKrBytes={} result={}",
+                invitationId, eucKrBytes,
+                ok ? resultOnSuccess : SctConstants.SMS_RESULT_FAILED);
+        return ok ? resultOnSuccess : SctConstants.SMS_RESULT_FAILED;
+    }
+
+    private SctShortLink createShortLinkSafe(SctInvitation invitation) {
+        try {
+            return sctShortLinkService.createOrRotate(invitation);
+        } catch (RuntimeException ex) {
+            log.warn("SCT short-link create failed invitationId={} tenant={}: {}",
+                    invitation.getId(), invitation.getTenantId(), ex.getMessage());
+            return null;
+        }
     }
 
     private SctFormTemplate resolveActiveTemplate(SctFormType formType) {
@@ -799,20 +862,29 @@ public class SctInvitationServiceImpl implements SctInvitationService {
     }
 
     /**
-     * one-shot publicUrl(상대)·absoluteUrl·평문 토큰 — ADMIN·CONSULTANT만 수신.
+     * one-shot publicUrl·absoluteUrl·shortUrl·평문 토큰 — ADMIN·CONSULTANT만 수신.
      *
-     * @param response 응답
-     * @param tenantId 테넌트 ID
-     * @param rawToken 평문 토큰
+     * @param response  응답
+     * @param tenantId  테넌트 ID
+     * @param rawToken  평문 토큰
+     * @param shortLink 단축 링크(없으면 short 필드 null)
      */
     private void attachOneShotPublicLink(
-            SctInvitationResponse response, String tenantId, String rawToken) {
+            SctInvitationResponse response,
+            String tenantId,
+            String rawToken,
+            SctShortLink shortLink) {
         if (!StringUtils.hasText(rawToken) || response == null) {
             return;
         }
         response.setToken(rawToken);
-        response.setPublicUrl(PUBLIC_SCT_WEB_PREFIX + rawToken);
+        response.setPublicUrl(SctConstants.PUBLIC_SCT_WEB_PREFIX + rawToken);
         response.setAbsoluteUrl(tenantPublicUrlResolver.resolveAbsolutePublicUrl(tenantId, rawToken));
+        if (shortLink != null && StringUtils.hasText(shortLink.getShortCode())) {
+            response.setShortUrl(SctConstants.SHORT_LINK_WEB_PREFIX + shortLink.getShortCode());
+            response.setAbsoluteShortUrl(
+                    tenantPublicUrlResolver.resolveAbsoluteShortUrl(tenantId, shortLink.getShortCode()));
+        }
     }
 
     /**

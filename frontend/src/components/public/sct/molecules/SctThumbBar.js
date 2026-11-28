@@ -19,7 +19,8 @@ import { SCT_CSS, SCT_TEST_ID, SCT_UI } from '../../../../constants/sctOnline';
  *   onSecondary?: () => void,
  *   showPause?: boolean,
  *   onPause?: () => void,
- *   loading?: boolean
+ *   loading?: boolean,
+ *   primaryTestId?: string
  * }} props
  */
 const SctThumbBar = ({
@@ -30,7 +31,8 @@ const SctThumbBar = ({
   onSecondary,
   showPause = false,
   onPause,
-  loading = false
+  loading = false,
+  primaryTestId
 }) => (
   <footer className={SCT_CSS.BAR} data-testid={SCT_TEST_ID.THUMB_BAR}>
     {showPause ? (
@@ -64,6 +66,7 @@ const SctThumbBar = ({
       onClick={onPrimary}
       disabled={primaryDisabled || loading}
       loading={loading}
+      data-testid={primaryTestId}
     >
       {primaryLabel}
     </MGButton>
@@ -78,7 +81,8 @@ SctThumbBar.propTypes = {
   onSecondary: PropTypes.func,
   showPause: PropTypes.bool,
   onPause: PropTypes.func,
-  loading: PropTypes.bool
+  loading: PropTypes.bool,
+  primaryTestId: PropTypes.string
 };
 
 export default SctThumbBar;

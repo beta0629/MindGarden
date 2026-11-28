@@ -16,11 +16,32 @@ import { resolveUserFacingApiErrorMessage } from '../../../utils/userFacingApiEr
 import { fetchSctSettings, updateSctSettings } from '../../../utils/sctApi';
 import {
   SCT_DEFAULTS,
+  SCT_PUBLIC_CONTACT_PHONE_PATTERN,
   SCT_TEST_ID,
   SCT_UI
 } from '../../../constants/sctOnline';
 import AdminSctUnlinkedPanel from './AdminSctUnlinkedPanel';
 import './sctAdmin.css';
+
+/**
+ * 공개 연락처 형식 검증. 빈 값은 허용(비움).
+ *
+ * @param {string} value
+ * @returns {boolean}
+ */
+const isValidPublicContactPhone = (value) => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  if (!trimmed) {
+    return true;
+  }
+  if (trimmed.length > SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX) {
+    return false;
+  }
+  if (!SCT_PUBLIC_CONTACT_PHONE_PATTERN.test(trimmed)) {
+    return false;
+  }
+  return /\d/.test(trimmed);
+};
 
 /**
  * feature.sct.enabled OFF여도 섹션을 렌더해 ADMIN이 토글로 켤 수 있게 한다.
@@ -31,6 +52,8 @@ const AdminSctSettingsSection = () => {
   const [linkExpiryDays, setLinkExpiryDays] = useState(SCT_DEFAULTS.LINK_EXPIRY_DAYS);
   const [retentionDays, setRetentionDays] = useState(String(SCT_DEFAULTS.RETENTION_DAYS));
   const [featureEnabled, setFeatureEnabled] = useState(false);
+  const [officePhone, setOfficePhone] = useState('');
+  const [mobilePhone, setMobilePhone] = useState('');
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -41,6 +64,8 @@ const AdminSctSettingsSection = () => {
       setLinkExpiryDays(data?.linkExpiryDays ?? SCT_DEFAULTS.LINK_EXPIRY_DAYS);
       setRetentionDays(String(data?.retentionDays ?? SCT_DEFAULTS.RETENTION_DAYS));
       setFeatureEnabled(data?.featureEnabled === true);
+      setOfficePhone(typeof data?.officePhone === 'string' ? data.officePhone : '');
+      setMobilePhone(typeof data?.mobilePhone === 'string' ? data.mobilePhone : '');
       setLoaded(true);
       setError(null);
     } catch (e) {
@@ -83,16 +108,26 @@ const AdminSctSettingsSection = () => {
       notificationManager.show(SCT_UI.VALIDATE_REQUIRED, 'error');
       return;
     }
+    if (!isValidPublicContactPhone(officePhone) || !isValidPublicContactPhone(mobilePhone)) {
+      notificationManager.show(SCT_UI.VALIDATE_PUBLIC_CONTACT_PHONE, 'error');
+      return;
+    }
     setSaving(true);
     try {
+      const officeValue = typeof officePhone === 'string' ? officePhone.trim() : '';
+      const mobileValue = typeof mobilePhone === 'string' ? mobilePhone.trim() : '';
       const saved = await updateSctSettings({
         linkExpiryDays: days,
         retentionDays: retention,
-        featureEnabled
+        featureEnabled,
+        officePhone: officeValue,
+        mobilePhone: mobileValue
       });
       setLinkExpiryDays(saved?.linkExpiryDays ?? days);
       setRetentionDays(String(saved?.retentionDays ?? retention));
       setFeatureEnabled(saved?.featureEnabled === true);
+      setOfficePhone(typeof saved?.officePhone === 'string' ? saved.officePhone : officeValue);
+      setMobilePhone(typeof saved?.mobilePhone === 'string' ? saved.mobilePhone : mobileValue);
       notificationManager.success(SCT_UI.SETTINGS_SAVE_SUCCESS);
     } catch (err) {
       notificationManager.show(
@@ -165,6 +200,47 @@ const AdminSctSettingsSection = () => {
             />
             <p className="mg-v2-sct-caption">{SCT_UI.SETTINGS_RETENTION_HINT}</p>
           </div>
+          {isAdmin ? (
+            <div className="mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="sct-office-phone">
+                {SCT_UI.SETTINGS_OFFICE_PHONE}
+              </label>
+              <input
+                id="sct-office-phone"
+                className="mg-v2-form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
+                value={officePhone}
+                disabled={saving}
+                data-testid={SCT_TEST_ID.SETTINGS_OFFICE_PHONE}
+                onChange={(ev) => setOfficePhone(ev.target.value)}
+              />
+            </div>
+          ) : null}
+          {isAdmin ? (
+            <div className="mg-v2-settings-field">
+              <label className="mg-v2-form-label" htmlFor="sct-mobile-phone">
+                {SCT_UI.SETTINGS_MOBILE_PHONE}
+              </label>
+              <input
+                id="sct-mobile-phone"
+                className="mg-v2-form-input"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                maxLength={SCT_DEFAULTS.PUBLIC_CONTACT_PHONE_MAX}
+                value={mobilePhone}
+                disabled={saving}
+                data-testid={SCT_TEST_ID.SETTINGS_MOBILE_PHONE}
+                onChange={(ev) => setMobilePhone(ev.target.value)}
+              />
+              <p className="mg-v2-sct-caption" role="note">
+                {SCT_UI.SETTINGS_PUBLIC_CONTACT_HINT}
+              </p>
+            </div>
+          ) : null}
           {isAdmin ? (
             <div>
               <SettingsButton type="submit" disabled={saving}>

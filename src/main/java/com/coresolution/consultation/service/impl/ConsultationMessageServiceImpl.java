@@ -328,7 +328,8 @@ public class ConsultationMessageServiceImpl extends BaseTenantEntityServiceImpl<
             Long userId, String userType, String keyword, String messageType, 
             Boolean isImportant, Boolean isUrgent, Pageable pageable) {
         
-        log.info("📨 메시지 검색 - 사용자 ID: {}, 유형: {}, 키워드: {}", userId, userType, keyword);
+        log.info("📨 메시지 검색 - 사용자 ID: {}, 유형: {}, keywordLength: {}",
+                userId, userType, keyword == null ? 0 : keyword.length());
         
         String tenantId = TenantContextHolder.getRequiredTenantId();
         // 표준화 2025-12-05: enum 활용

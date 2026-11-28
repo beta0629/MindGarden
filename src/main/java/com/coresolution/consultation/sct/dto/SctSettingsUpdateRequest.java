@@ -33,4 +33,14 @@ public class SctSettingsUpdateRequest {
      * SCT 기능 플래그(feature.sct.enabled). null 이면 변경하지 않음.
      */
     private Boolean featureEnabled;
+    /**
+     * 공개 랜딩 사무실 전화. null 이면 변경 안 함.
+     * 빈 문자열(blank)이면 테넌트 행만 비움.
+     */
+    private String officePhone;
+    /**
+     * 공개 랜딩 공개 휴대폰. null 이면 변경 안 함.
+     * 빈 문자열(blank)이면 테넌트 행만 비움.
+     */
+    private String mobilePhone;
 }

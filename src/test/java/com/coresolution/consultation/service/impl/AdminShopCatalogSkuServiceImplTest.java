@@ -381,7 +381,7 @@ class AdminShopCatalogSkuServiceImplTest {
     void updatePackageContent_copiesIdentityFromFeeAndKeepsDescription() {
         when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
                 .thenReturn(new ShopCatalogPackageIdentity(
-                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true, null));
         when(shopCatalogSkuRepository
                 .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
                 .thenReturn(List.of());
@@ -419,7 +419,7 @@ class AdminShopCatalogSkuServiceImplTest {
     void updatePackageContent_visibleWithoutThumbnail_throws() {
         when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
                 .thenReturn(new ShopCatalogPackageIdentity(
-                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true, null));
         when(shopCatalogSkuRepository
                 .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
                 .thenReturn(List.of());
@@ -439,7 +439,7 @@ class AdminShopCatalogSkuServiceImplTest {
     void updatePackageContent_consultationWithoutConsultant_throws() {
         when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
                 .thenReturn(new ShopCatalogPackageIdentity(
-                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true, null));
         when(shopCatalogSkuRepository
                 .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
                 .thenReturn(List.of());
@@ -461,7 +461,7 @@ class AdminShopCatalogSkuServiceImplTest {
     void updatePackageContent_consultation_savesConsultantId() {
         when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_001"))
                 .thenReturn(new ShopCatalogPackageIdentity(
-                        "PACKAGE_001", "10회기", 150000L, 10, true, true));
+                        "PACKAGE_001", "10회기", 150000L, 10, true, true, null));
         when(shopCatalogSkuRepository
                 .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_001"))
                 .thenReturn(List.of());
@@ -494,7 +494,7 @@ class AdminShopCatalogSkuServiceImplTest {
                 .thenReturn(Optional.of(exam));
         when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
                 .thenReturn(new ShopCatalogPackageIdentity(
-                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true));
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true, null));
         when(shopCatalogSkuRepository
                 .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
                 .thenReturn(List.of());
@@ -513,6 +513,145 @@ class AdminShopCatalogSkuServiceImplTest {
         assertNull(captor.getValue().getConsultantId());
         assertNull(item.consultantId());
         verify(userRepository, never()).findByTenantIdAndId(any(), any());
+    }
+
+    @Test
+    @DisplayName("patchPackageCatalogVisible — 기존 ASSESSMENT SKU 는 노출 토글 후에도 ASSESSMENT 유지")
+    void patchPackageCatalogVisible_keepsExistingAssessment() {
+        ShopCatalogSku existing = new ShopCatalogSku();
+        existing.setId(21L);
+        existing.setTenantId(TENANT);
+        existing.setSkuCode("SHOP-ASSESS-1");
+        existing.setSourcePackageCode("PACKAGE_EXAM");
+        existing.setTitle("검사");
+        existing.setUnitPriceMinor(20000L);
+        existing.setSessionCount(1);
+        existing.setCatalogCategory(ShopCatalogCategory.ASSESSMENT);
+        existing.setCatalogVisible(false);
+        existing.setThumbnailUrl(THUMB);
+        existing.setActive(true);
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true, null));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of(existing));
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        adminShopCatalogSkuService.patchPackageCatalogVisible(TENANT, "PACKAGE_EXAM", true);
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(ShopCatalogCategory.ASSESSMENT, captor.getValue().getCatalogCategory());
+        assertEquals(true, captor.getValue().getCatalogVisible());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — identity.catalogCategory=ASSESSMENT 이면 SKU 가 ASSESSMENT")
+    void updatePackageContent_identityAssessment_setsAssessment() {
+        CommonCode exam = new CommonCode();
+        exam.setCodeValue("MMPI");
+        exam.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT);
+        exam.setIsActive(true);
+        exam.setIsDeleted(false);
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT, "MMPI"))
+                .thenReturn(Optional.of(exam));
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true, ShopCatalogCategory.ASSESSMENT));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-EXAM");
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_EXAM",
+                new ShopCatalogPackageContentRequest(
+                        "검사 안내", false, 0, null, "MMPI", null, null, false, null));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(ShopCatalogCategory.ASSESSMENT, captor.getValue().getCatalogCategory());
+    }
+
+    @Test
+    @DisplayName("updatePackageContent — identity.catalogCategory=null 이면 기존 ASSESSMENT 유지")
+    void updatePackageContent_nullIdentityCategory_keepsExistingAssessment() {
+        CommonCode exam = new CommonCode();
+        exam.setCodeValue("MMPI");
+        exam.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT);
+        exam.setIsActive(true);
+        exam.setIsDeleted(false);
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT, "MMPI"))
+                .thenReturn(Optional.of(exam));
+        ShopCatalogSku existing = new ShopCatalogSku();
+        existing.setId(22L);
+        existing.setTenantId(TENANT);
+        existing.setSkuCode("SHOP-ASSESS-2");
+        existing.setSourcePackageCode("PACKAGE_EXAM");
+        existing.setTitle("검사");
+        existing.setUnitPriceMinor(20000L);
+        existing.setSessionCount(1);
+        existing.setCatalogCategory(ShopCatalogCategory.ASSESSMENT);
+        existing.setCatalogVisible(false);
+        existing.setActive(true);
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true, null));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of(existing));
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_EXAM",
+                new ShopCatalogPackageContentRequest(
+                        "검사 안내", false, 0, null, "MMPI", null, null, false, null));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(ShopCatalogCategory.ASSESSMENT, captor.getValue().getCatalogCategory());
+    }
+
+    @Test
+    @DisplayName("findOrCreateLinked — 신규 생성 시 identity 카테고리를 사용한다")
+    void findOrCreateLinked_createUsesIdentityCategory() {
+        CommonCode exam = new CommonCode();
+        exam.setCodeValue("MMPI");
+        exam.setCodeGroup(ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT);
+        exam.setIsActive(true);
+        exam.setIsDeleted(false);
+        when(commonCodeRepository.findByTenantIdAndCodeGroupAndCodeValue(
+                TENANT, ShopCatalogSkuConstants.FIELD_CODE_GROUP_ASSESSMENT, "MMPI"))
+                .thenReturn(Optional.of(exam));
+        when(shopCatalogPackageOfferResolver.requireIdentity(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(new ShopCatalogPackageIdentity(
+                        "PACKAGE_EXAM", "검사", 20000L, 1, true, true, ShopCatalogCategory.ASSESSMENT));
+        when(shopCatalogSkuRepository
+                .findByTenantIdAndSourcePackageCodeAndIsDeletedFalseOrderByIdAsc(TENANT, "PACKAGE_EXAM"))
+                .thenReturn(List.of());
+        when(shopCatalogSkuCodeGenerator.generateNextCode(TENANT)).thenReturn("SHOP-FEE-NEW");
+        when(shopCatalogSkuRepository.save(any(ShopCatalogSku.class))).thenAnswer(inv -> {
+            ShopCatalogSku saved = inv.getArgument(0);
+            saved.setId(30L);
+            return saved;
+        });
+
+        adminShopCatalogSkuService.updatePackageContent(
+                TENANT,
+                "PACKAGE_EXAM",
+                new ShopCatalogPackageContentRequest(
+                        "검사 안내", false, 0, null, "MMPI", null, null, false, null));
+
+        ArgumentCaptor<ShopCatalogSku> captor = ArgumentCaptor.forClass(ShopCatalogSku.class);
+        verify(shopCatalogSkuRepository).save(captor.capture());
+        assertEquals(ShopCatalogCategory.ASSESSMENT, captor.getValue().getCatalogCategory());
+        assertEquals("SHOP-FEE-NEW", captor.getValue().getSkuCode());
     }
 
     @Test

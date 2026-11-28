@@ -5,7 +5,6 @@ import { useSession } from '../../contexts/SessionContext';
 import { authAPI, apiGet } from '../../utils/ajax';
 import { sessionManager } from '../../utils/sessionManager';
 import { DASHBOARD_API, API_BASE_URL } from '../../constants/api';
-import { buildAdminScheduleStatisticsQuery } from '../../utils/dateUtils';
 import { redirectToDynamicDashboard, getLegacyDashboardPath } from '../../utils/dashboardUtils';
 import { getDefaultApiHeaders } from '../../utils/apiHeaders';
 import { RoleUtils, USER_ROLES, LEGACY_USER_ROLES } from '../../constants/roles';
@@ -425,8 +424,9 @@ const CommonDashboard = ({ user: propUser }) => {
       console.log('📊 관리자 시스템 데이터 로드 시작');
       
       try {
-        const statsResponse = await apiGet(DASHBOARD_API.ADMIN_STATS,
-          buildAdminScheduleStatisticsQuery({ userRole: USER_ROLES.ADMIN }));
+        const statsResponse = await apiGet(DASHBOARD_API.ADMIN_STATS, {
+          userRole: USER_ROLES.ADMIN
+        });
         
         console.log('📊 관리자 통계 응답:', statsResponse);
         

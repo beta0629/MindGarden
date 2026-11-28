@@ -2951,11 +2951,14 @@ public class ScheduleServiceImpl extends BaseTenantEntityServiceImpl<Schedule, L
     }
 
     @Override
-    public Map<String, Object> getScheduleStatisticsForAdmin(LocalDate start, LocalDate end) {
-        log.info("📊 관리자용 전체 스케줄 통계 조회 시작 - 시작일: {}, 종료일: {}", start, end);
+    public Map<String, Object> getScheduleStatisticsForAdmin(String startDate, String endDate) {
+        log.info("📊 관리자용 전체 스케줄 통계 조회 시작 - 시작일: {}, 종료일: {}", startDate, endDate);
         
         try {
             Map<String, Object> statistics = new HashMap<>();
+            
+            LocalDate start = startDate != null ? LocalDate.parse(startDate) : null;
+            LocalDate end = endDate != null ? LocalDate.parse(endDate) : null;
             
             String tenantId = TenantContextHolder.getTenantId();
             

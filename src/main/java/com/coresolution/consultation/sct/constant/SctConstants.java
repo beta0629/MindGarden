@@ -60,7 +60,10 @@ public final class SctConstants {
     /** 단축 링크 무효·만료·미존재 시 동일 리다이렉트 경로(존재 여부 누출 방지). */
     public static final String SHORT_LINK_INVALID_REDIRECT_PATH = PUBLIC_SCT_WEB_PREFIX + "invalid";
 
-    /** Redis 교환 코드 TTL(분). */
+    /**
+     * 단축 링크 교환 코드 착지 TTL(분) — 발급 후 첫 사용까지의 창.
+     * 첫 사용 뒤에는 작성 중 시간 제한 없이 초대 tokenExpiresAt 까지 유지.
+     */
     public static final int SHORT_LINK_EXCHANGE_TTL_MINUTES = 10;
 
     /** 공개 메타 — 재발급으로 무효화된 이전 토큰/단축 코드. */
@@ -115,6 +118,13 @@ public final class SctConstants {
     /** 파기 대상이 아닐 때. */
     public static final String MSG_DESTROY_NOT_ELIGIBLE =
             "보관 기간이 지나지 않아 파기할 수 없습니다.";
+
+    /** 공개 링크(단축 링크 교환 코드) 사용 시간 초과 — 문자 링크 재진입 안내. */
+    public static final String MSG_LINK_SESSION_EXPIRED =
+            "링크 사용 시간이 지났습니다. 문자의 링크를 다시 열면 답이 이어집니다.";
+
+    /** 공개 링크 없음(존재 여부 비공개). */
+    public static final String MSG_LINK_NOT_FOUND = "SCT 링크를 찾을 수 없습니다.";
 
     /** 공개 본인확인 세션 없음·만료·불일치. */
     public static final String MSG_VERIFY_REQUIRED = "본인 확인이 필요합니다.";

@@ -44,6 +44,7 @@ import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctInviteAccessAttemptRepository;
 import com.coresolution.consultation.sct.repository.SctResponseAnswerRepository;
 import com.coresolution.consultation.sct.service.SctConsentService;
+import com.coresolution.consultation.sct.service.SctExchangeCodeStore;
 import com.coresolution.consultation.sct.service.SctFeatureGuard;
 import com.coresolution.consultation.sct.service.SctPublicService;
 import com.coresolution.consultation.sct.service.SctPublicTokenResolver;
@@ -247,6 +248,15 @@ public class SctPublicServiceImpl implements SctPublicService {
     @Override
     @Transactional
     public void saveDraft(String rawToken, SctDraftSaveRequest request) {
+        try {
+            saveDraftWithRetry(rawToken, request);
+        } catch (RuntimeException e) {
+            logPublicWriteFailure("draft", rawToken, e);
+            throw e;
+        }
+    }
+
+    private void saveDraftWithRetry(String rawToken, SctDraftSaveRequest request) {
         OptimisticLockingFailureException lastConflict = null;
         for (int attempt = 1; attempt <= DRAFT_OPTIMISTIC_LOCK_MAX_ATTEMPTS; attempt++) {
             try {
@@ -318,6 +328,27 @@ public class SctPublicServiceImpl implements SctPublicService {
     @Override
     @Transactional
     public void submit(String rawToken, SctSubmitRequest request) {
+        try {
+            submitOnce(rawToken, request);
+        } catch (RuntimeException e) {
+            logPublicWriteFailure("submit", rawToken, e);
+            throw e;
+        }
+    }
+
+    /**
+     * 공개 draft/submit 실패 — 원인 클래스·토큰 해시 접두만(토큰·답변·PII 원문 금지).
+     *
+     * @param op       draft | submit
+     * @param rawToken 공개 토큰/교환 코드
+     * @param e        예외
+     */
+    private static void logPublicWriteFailure(String op, String rawToken, RuntimeException e) {
+        log.warn("SCT public {} 실패: reason={} ref={}",
+                op, e.getClass().getSimpleName(), SctExchangeCodeStore.logRef(rawToken));
+    }
+
+    private void submitOnce(String rawToken, SctSubmitRequest request) {
         SctInvitation invitation = loadByToken(rawToken);
         bindTenantAndGuard(invitation);
         requireVerifySession(request.getVerifySessionId(), invitation);

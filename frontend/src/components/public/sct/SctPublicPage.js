@@ -33,6 +33,7 @@ import {
 } from '../../../utils/sctPublicDraftStorage';
 import {
   isSctLinkCancelledError,
+  isSctLinkReissuedError,
   isSctLinkSessionExpiredError,
   isSctLinkUnusableError,
   isSctVerifyRequiredError,
@@ -210,6 +211,8 @@ const SctPublicPage = () => {
         setStep(STEP.LINK_SESSION_EXPIRED);
       } else if (isSctLinkCancelledError(error)) {
         setStep(STEP.CANCELLED);
+      } else if (isSctLinkReissuedError(error)) {
+        setStep(STEP.REISSUED);
       } else if (statusCode === 410) {
         setStep(STEP.EXPIRED);
       } else if (statusCode === 404) {

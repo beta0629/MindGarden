@@ -652,8 +652,8 @@ class SctPublicServiceTest {
     }
 
     @Test
-    @DisplayName("verify — tokenHash 회전 후 구 교환 코드 거부")
-    void verify_exchangeTokenHashMismatch_throws404() {
+    @DisplayName("verify — tokenHash 회전 후 구 교환 코드 → 410 SCT_LINK_REISSUED")
+    void verify_exchangeTokenHashMismatch_throwsReissued410() {
         String exchange = "exchange-stale-after-reissue!!!!!";
         String oldHash = PiiTestSecrets.hmacService().hmacHex("old-token-before-reissue-rotate!");
         when(invitationRepository.findByTokenHashAndIsDeletedFalseForUpdate(any()))
@@ -663,10 +663,11 @@ class SctPublicServiceTest {
         when(invitationRepository.findByTenantIdAndIdAndIsDeletedFalseForUpdate(TENANT_A, 100L))
                 .thenReturn(Optional.of(invitation));
 
-        EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
+        com.coresolution.consultation.sct.exception.SctLinkReissuedException ex = assertThrows(
+                com.coresolution.consultation.sct.exception.SctLinkReissuedException.class,
                 () -> sctPublicService.verify(
                         exchange, SctVerifyRequest.builder().phone(PHONE).build(), "127.0.0.1"));
-        assertEquals(com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_NOT_FOUND, ex.getMessage());
+        assertEquals(com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_REISSUED, ex.getMessage());
         verify(attemptRepository, never()).save(any());
     }
 

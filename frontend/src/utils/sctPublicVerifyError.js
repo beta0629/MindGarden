@@ -99,6 +99,15 @@ export function isSctLinkCancelledError(error) {
 }
 
 /**
+ * 재발급·재발송으로 닫힌 이전 링크 — 410 + SCT_LINK_REISSUED.
+ * @param {unknown} error
+ * @returns {boolean}
+ */
+export function isSctLinkReissuedError(error) {
+  return codeOfError(error) === SCT_ERROR_CODE.LINK_REISSUED;
+}
+
+/**
  * 429 본문 {@code data.retryAfterSeconds}(남은 대기 초). 없으면 null.
  * @param {unknown} error
  * @returns {number|null}
@@ -155,6 +164,8 @@ export function resolveSctPublicErrorMessage(error, fallback) {
       return withRetry(SCT_UI.ERR_OTP_LOCKED, error);
     case SCT_ERROR_CODE.LINK_CANCELLED:
       return SCT_UI.CANCELLED_BODY;
+    case SCT_ERROR_CODE.LINK_REISSUED:
+      return SCT_UI.ERR_LINK_REISSUED;
     case SCT_ERROR_CODE.LINK_SESSION_EXPIRED:
       return SCT_UI.LINK_SESSION_EXPIRED;
     case SCT_ERROR_CODE.GONE:

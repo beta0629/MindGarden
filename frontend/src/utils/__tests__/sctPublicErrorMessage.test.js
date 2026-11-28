@@ -9,6 +9,7 @@ import { SCT_ERROR_CODE, SCT_UI } from '../../constants/sctOnline';
 import {
   getSctRetryAfterSeconds,
   isSctLinkCancelledError,
+  isSctLinkReissuedError,
   resolveSctPublicErrorMessage
 } from '../sctPublicVerifyError';
 
@@ -42,6 +43,13 @@ describe('resolveSctPublicErrorMessage', () => {
       err(429, SCT_ERROR_CODE.OTP_LOCKED, 'x', { retryAfterSeconds: 601 })))
       .toContain('약 11분 뒤');
     expect(getSctRetryAfterSeconds(err(429, SCT_ERROR_CODE.OTP_RATE_LIMITED, 'x'))).toBeNull();
+  });
+
+  it('재발급 코드 → 재발급 전용 한글 문구(만료 문구 아님)', () => {
+    const e = err(410, SCT_ERROR_CODE.LINK_REISSUED, 'x');
+    expect(isSctLinkReissuedError(e)).toBe(true);
+    expect(isSctLinkReissuedError(err(410, SCT_ERROR_CODE.GONE, 'x'))).toBe(false);
+    expect(resolveSctPublicErrorMessage(e)).toBe(SCT_UI.ERR_LINK_REISSUED);
   });
 
   it('취소 판별', () => {

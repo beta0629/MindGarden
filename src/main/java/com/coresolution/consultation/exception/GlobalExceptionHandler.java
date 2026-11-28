@@ -129,6 +129,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.GONE).body(error);
     }
 
+    /**
+     * 재발급·재발송으로 닫힌 SCT 링크 — 410, 기한 만료(SCT_GONE)와 구분되는 코드.
+     */
+    @ExceptionHandler(com.coresolution.consultation.sct.exception.SctLinkReissuedException.class)
+    public ResponseEntity<ErrorResponse> handleSctLinkReissued(
+            com.coresolution.consultation.sct.exception.SctLinkReissuedException e,
+            HttpServletRequest request) {
+        ErrorResponse error = ErrorResponse.of(
+            clientSafeMessage(e.getMessage(),
+                com.coresolution.consultation.sct.constant.SctConstants.MSG_LINK_REISSUED),
+            com.coresolution.consultation.sct.exception.SctLinkReissuedException.ERROR_CODE,
+            HttpStatus.GONE.value(),
+            ApiUriSanitizer.forLogging(request.getRequestURI()),
+            request.getMethod()
+        );
+        return ResponseEntity.status(HttpStatus.GONE).body(error);
+    }
+
     @ExceptionHandler(com.coresolution.consultation.sct.exception.SctGoneException.class)
     public ResponseEntity<ErrorResponse> handleSctGone(
             com.coresolution.consultation.sct.exception.SctGoneException e,

@@ -7,6 +7,7 @@ import com.coresolution.consultation.sct.constant.SctInviteStatus;
 import com.coresolution.consultation.sct.entity.SctInvitation;
 import com.coresolution.consultation.sct.entity.SctRotatedTokenHash;
 import com.coresolution.consultation.sct.exception.SctGoneException;
+import com.coresolution.consultation.sct.exception.SctLinkReissuedException;
 import com.coresolution.consultation.sct.exception.SctLinkSessionExpiredException;
 import com.coresolution.consultation.sct.repository.SctInvitationRepository;
 import com.coresolution.consultation.sct.repository.SctRotatedTokenHashRepository;
@@ -60,7 +61,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
         Optional<SctRotatedTokenHash> rotated = findRotatedByTokenCandidates(trimmed);
         if (rotated.isPresent()) {
             if (!allowReissuedForMeta) {
-                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+                throw new SctLinkReissuedException(SctConstants.MSG_LINK_REISSUED);
             }
             SctRotatedTokenHash rotatedRow = rotated.get();
             SctInvitation invitation = invitationRepository
@@ -89,7 +90,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
     public SctInvitation loadByToken(String rawToken) {
         ResolvedPublicToken resolved = resolveToken(rawToken, false);
         if (SctConstants.PUBLIC_STATUS_REISSUED.equals(resolved.statusOverride())) {
-            throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+            throw new SctLinkReissuedException(SctConstants.MSG_LINK_REISSUED);
         }
         return resolved.invitation();
     }
@@ -109,7 +110,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
         if (exchange.isPresent()) {
             SctExchangeCodeStore.ExchangeEntry entry = exchange.get();
             if (SctConstants.PUBLIC_STATUS_REISSUED.equals(entry.landingStatus())) {
-                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+                throw new SctLinkReissuedException(SctConstants.MSG_LINK_REISSUED);
             }
             SctInvitation invitation = invitationRepository
                     .findByTenantIdAndIdAndIsDeletedFalseForUpdate(
@@ -167,7 +168,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
             SctExchangeCodeStore.ExchangeEntry entry, boolean allowReissuedForMeta) {
         if (SctConstants.PUBLIC_STATUS_REISSUED.equals(entry.landingStatus())) {
             if (!allowReissuedForMeta) {
-                throw new SctGoneException("링크가 만료되었거나 취소되었습니다.");
+                throw new SctLinkReissuedException(SctConstants.MSG_LINK_REISSUED);
             }
         }
         SctInvitation invitation = invitationRepository
@@ -193,7 +194,7 @@ public class SctPublicTokenResolverImpl implements SctPublicTokenResolver {
         if (!StringUtils.hasText(entry.tokenHash())
                 || !entry.tokenHash().equals(invitation.getTokenHash())) {
             log.warn("SCT exchange token rotated (reissue/resend): invitationId={}", entry.invitationId());
-            throw new EntityNotFoundException(SctConstants.MSG_LINK_NOT_FOUND);
+            throw new SctLinkReissuedException(SctConstants.MSG_LINK_REISSUED);
         }
     }
 

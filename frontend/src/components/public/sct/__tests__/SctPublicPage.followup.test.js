@@ -159,6 +159,17 @@ describe('SctPublicPage follow-up (cancelled / errors / step guard)', () => {
     expect(screen.queryByText(SCT_UI.EXPIRED_TITLE)).not.toBeInTheDocument();
   });
 
+  it('meta 410 + SCT_LINK_REISSUED → 재발급 안내(만료·취소 아님)', async() => {
+    fetchSctPublicMeta.mockRejectedValue(
+      apiError(410, SCT_ERROR_CODE.LINK_REISSUED, SCT_UI.ERR_LINK_REISSUED));
+    renderPage();
+    await waitFor(() => {
+      expect(screen.getByText(SCT_UI.REISSUED_TITLE)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(SCT_UI.EXPIRED_TITLE)).not.toBeInTheDocument();
+    expect(screen.queryByText(SCT_UI.CANCELLED_TITLE)).not.toBeInTheDocument();
+  });
+
   it('기한 만료(meta EXPIRED)는 기존 만료 안내 유지', async() => {
     fetchSctPublicMeta.mockResolvedValue({ ...META, status: 'EXPIRED' });
     renderPage();

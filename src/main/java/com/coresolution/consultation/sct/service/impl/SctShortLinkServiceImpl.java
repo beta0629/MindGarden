@@ -120,6 +120,12 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
 
+        // 센터가 취소한 초대: 일반 invalid 404 대신 교환 코드 → meta 410 SCT_LINK_CANCELLED 로 취소 안내.
+        // 교환 코드는 취소 초대에서 meta 외 모든 호출이 410 으로 막히고 세션·답변 접근은 없다.
+        if (SctInviteStatus.CANCELLED.name().equals(invitation.getStatus())) {
+            return issueClosedLandingPath(shortCode, invitation);
+        }
+
         // 비활성·만료·종료 초대는 miss와 동일 경로 — 존재 오라클·교환 발급 방지
         boolean inactive = !Boolean.TRUE.equals(link.getIsActive());
         boolean codeExpired = link.getExpiresAt() != null
@@ -156,6 +162,30 @@ public class SctShortLinkServiceImpl implements SctShortLinkService {
         } catch (RuntimeException ex) {
             log.warn("SCT short-link exchange issue failed codePrefix={}: {}",
                     codePrefix(shortCode), ex.getMessage());
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+    }
+
+    /**
+     * 취소된 초대의 단축 링크 — 절대 만료 전이면 교환 코드 경로, 아니면(만료 지남) invalid.
+     */
+    private String issueClosedLandingPath(String shortCode, SctInvitation invitation) {
+        LocalDateTime tokenExpiresAt = invitation.getTokenExpiresAt();
+        if (tokenExpiresAt == null || !StringUtils.hasText(invitation.getTokenHash())) {
+            return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
+        }
+        try {
+            String exchange = exchangeCodeStore.issue(
+                    invitation.getId(),
+                    invitation.getTenantId(),
+                    null,
+                    invitation.getTokenHash(),
+                    tokenExpiresAt.atZone(TOKEN_EXPIRY_ZONE).toInstant());
+            log.info("SCT short-link redirect cancelled-landing codePrefix={} exchangePrefix={}",
+                    codePrefix(shortCode), codePrefix(exchange));
+            return SctConstants.PUBLIC_SCT_WEB_PREFIX + exchange;
+        } catch (RuntimeException ex) {
+            log.info("SCT short-link cancelled landing unavailable codePrefix={}", codePrefix(shortCode));
             return SctConstants.SHORT_LINK_INVALID_REDIRECT_PATH;
         }
     }

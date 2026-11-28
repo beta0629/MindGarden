@@ -320,6 +320,7 @@ export const SCT_UI = Object.freeze({
   ERR_RETRY_AFTER_SECONDS: (sec) => `${sec}초 뒤에 다시 시도해 주세요.`,
   ERR_RETRY_AFTER_MINUTES: (min) => `약 ${min}분 뒤에 다시 시도해 주세요.`,
   ERR_LINK_NOT_FOUND: '링크를 찾을 수 없습니다. 문자로 받은 최신 링크인지 확인해 주세요.',
+  ERR_LINK_REISSUED: '새 링크가 문자로 발송되었습니다. 가장 최근에 받은 문자의 링크로 다시 열어 주세요.',
   ERR_LINK_GONE: '링크가 만료되었습니다. 센터로 문의해 주세요.',
   ERR_GENERIC: '요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.',
   ATTEMPTS_LEFT: '남은 시도',
@@ -452,6 +453,8 @@ export const SCT_ERROR_CODE = Object.freeze({
   LINK_SESSION_EXPIRED: 'SCT_LINK_SESSION_EXPIRED',
   /** 센터가 취소한 초대 — 기한 만료(GONE)와 구분 */
   LINK_CANCELLED: 'SCT_LINK_CANCELLED',
+  /** 재발급·재발송으로 닫힌 이전 링크 — 기한 만료(GONE)와 구분 */
+  LINK_REISSUED: 'SCT_LINK_REISSUED',
   /** 세션 무효화(서버 영문 예외 원문 대신 사용) */
   SESSION_INVALIDATED: 'SESSION_INVALIDATED',
   ENTITY_NOT_FOUND: 'ENTITY_NOT_FOUND',
